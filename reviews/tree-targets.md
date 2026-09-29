@@ -213,11 +213,46 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 2 on opus
 | R1 | 2 | Pin the resolve-error rule with a test that makes a resolve fail, and show that the probe above now bites. |
 | R2 | 2 | Pin that a relative `BENCH_KIT` resolves against the working directory: with the directory elsewhere, `KitSourceCheckout(root)` answers false. |
 
+## TT-C2 ticket 2 repair evidence, cycle 1
+
+The session `claude:bench-writer/tt-t2-repair-1` ran on opus at high effort, with a cap of 3 attempts. It started at `fa840bcf` and committed `9958ef57` on a lane pass in the first attempt. This repair is cycle 1 of the two repair cycles for chunk TT-C2. The repair adds two tests to `internal/gate/kit_source_test.go` and changes no production code.
+
+- R1: `TestKitSourceCheckoutAnswersFalseOnAResolveError` makes a directory, moves into it with `t.Chdir`, and removes it. Then `BENCH_KIT` is `.`, and `KitSourceCheckout(".")` must answer false. A host that cannot remove its working directory, or that still gives `.` an absolute spelling, skips through `capability.Environment`. On this Linux host the test runs, and a verbose run showed a pass with no skip. The review probe for R1 was silent in round 1. It now bites.
+- R2: `TestKitSourceCheckoutResolvesARelativeKitAgainstTheWorkingDirectory` sets `BENCH_KIT` to `.` and moves to a second temporary directory. Then `KitSourceCheckout(root)` must answer false. A probe that joins only a relative kit onto the root fails this new test alone. The two earlier tests stay green under that probe, so the new test is necessary. `TestKitSourceCheckoutMatchesThroughASymlinkSpelling` is unchanged.
+
+The sweep of duplicated facts found no second statement. Each new test builds its own fixture from `t.TempDir` and copies no helper. Each new expectation is independent, and the R1 and R2 probes below record its red.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` at the source of `9958ef57`, and each restore reads `yes`. The JSON payload holds the exact command and output of each probe. The first row is the plan probe `2-kit-probe`, which the session ran again with the exact plan command.
+
+| Target | File | Mutation | Test | Verdict |
+|---|---|---|---|---|
+| TT51 | `internal/gate/kit_source.go` | swap: `canonicalpath.Resolve` to a function that returns `filepath.EvalSymlinks(p)` | TestKitSourceCheckoutResolvesARelativeKit | bit |
+| R1 | `internal/gate/kit_source.go` | swap: `return resolved, err == nil` to `_ = err; return resolved, true` | TestKitSourceCheckoutAnswersFalseOnAResolveError | bit |
+| R2 | `internal/gate/kit_source.go` | swap: `kit := KitDir()` to a line that joins a relative kit onto the root | TestKitSourceCheckoutResolvesARelativeKitAgainstTheWorkingDirectory | bit |
+
+A first R2 probe swapped `resolvedPath(kit)` to `resolvedPath(filepath.Join(root, kit))`. It bit, but it also failed the symlink test, because it joined an absolute kit too. The table holds the narrower probe, which fails only the new test.
+
+### Verification
+
+The session ran each TT-C2 plan verification on the source of `9958ef57`, and each passed. The JSON payload holds each result. The session also ran these checks, and each passed:
+
+- `bench test --package ./internal/conformance --run TestBranchNativeArchitectureCensus`;
+- `bench test --check skip-ownership`, because the R1 test can skip;
+- `bench structure --growth f981cd3d`, which reported that no source file grew past its budget.
+
+After the commit, `bench preflight build tree-targets` reported 14 green checks, 1 check that does not apply, and 0 red checks.
+
+The chunk tip is now the repair commit `9958ef57`. The source digest is the tree of `9958ef57` without this record file, which is `80fbc1c6`. The same rule at `c8b9bb94` gives the round 1 digest `673171b5`, which confirms the method.
+
+The spec changed at `fa840bcf`, so the plan digest changed from `ab6c7f85` to `834182d7`. The `ReadPlan` rule at `c8b9bb94` gives the earlier digest `ab6c7f85`, which confirms the method. The payload keeps the earlier amendment and adds one amendment from `ab6c7f85` to `834182d7`. That amendment maps each chunk ID to itself, because the plan change at `fa840bcf` changes only the ticket 2 assignments. The TT-C1 chunk keeps the digest of its own tip. The round 1 entries keep their earlier source digest as history.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/tree-targets/spec.md",
-  "plan_digest": "sha256:ab6c7f85535262e57e3235e5da67d2460d1b56586d98b7ce78c6a487073539fb",
+  "plan_digest": "sha256:834182d7bb87b440ee0493ba5fd18fb70360c237bae9e7a24acfe73bc8fc91a0",
   "implementation_session": "",
   "chunks": [
     {
@@ -684,9 +719,9 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 2 on opus
     {
       "id": "TT-C2",
       "base": "196e1cda291a9d974f881435f6e1284b1838b241",
-      "tip": "c8b9bb94eb15029a84abd137e1fbac93e8990480",
-      "plan_digest": "sha256:ab6c7f85535262e57e3235e5da67d2460d1b56586d98b7ce78c6a487073539fb",
-      "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
+      "tip": "9958ef5736447d203ae32ccbd37f7a2d5e3e7869",
+      "plan_digest": "sha256:834182d7bb87b440ee0493ba5fd18fb70360c237bae9e7a24acfe73bc8fc91a0",
+      "source_digest": "80fbc1c6ab2706d7744da73a60e0cb634a2b61aa",
       "acceptance_rows": [
         "TT51",
         "TT52"
@@ -796,6 +831,111 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 2 on opus
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
             }
           }
+        },
+        {
+          "id": "tt-c2-2-gate-r2",
+          "performer": "claude:bench-writer/tt-t2-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "80fbc1c6ab2706d7744da73a60e0cb634a2b61aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t2-repair-1-20260929/2-gate@9958ef57",
+            "digest": "sha256:02157bfbbc7b83c5edc5885f013f613418b6a2a04b8e2e747e8fbede60b8d994",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,15012\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c2-2-kit-probe-r2",
+          "performer": "claude:bench-writer/tt-t2-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "80fbc1c6ab2706d7744da73a60e0cb634a2b61aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t2-repair-1-20260929/2-kit-probe@9958ef57",
+            "digest": "sha256:ae46cc7910f244123f80980980c0327c8b49bab4bb92b1dd5901d9056426f02f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckoutResolvesARelativeKit,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
+          },
+          "requirement": "2-kit-probe",
+          "command": "bench probe internal/gate/kit_source.go --swap 'canonicalpath.Resolve' --with 'func(p string) (string, error) { _ = canonicalpath.Resolve; return filepath.EvalSymlinks(p) }' --package ./internal/gate --run TestKitSourceCheckoutResolvesARelativeKit",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t2-repair-1-20260929/2-kit-probe@9958ef57",
+              "digest": "sha256:ae46cc7910f244123f80980980c0327c8b49bab4bb92b1dd5901d9056426f02f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckoutResolvesARelativeKit,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
+            }
+          }
+        },
+        {
+          "id": "tt-c2-repair-probe-r1-resolve-error-r2",
+          "performer": "claude:bench-writer/tt-t2-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "80fbc1c6ab2706d7744da73a60e0cb634a2b61aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t2-repair-1-20260929/r1-resolve-error-probe@9958ef57",
+            "digest": "sha256:960e457746c0ce9a48e7c4945445963bc9cafb5eb3fb8b0cd8e8deb47735e29d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,4\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestKitSourceCheckoutAnswersFalseOnAResolveError,\"kit_source_test.go:84: KitSourceCheckout(\\\".\\\") with a deleted working directory = true, want false\""
+          },
+          "requirement": "repair-probe-R1-resolve-error",
+          "command": "bench probe internal/gate/kit_source.go --swap 'return resolved, err == nil' --with '_ = err; return resolved, true' --package ./internal/gate --run TestKitSourceCheckout",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t2-repair-1-20260929/r1-resolve-error-probe@9958ef57",
+              "digest": "sha256:960e457746c0ce9a48e7c4945445963bc9cafb5eb3fb8b0cd8e8deb47735e29d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,4\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestKitSourceCheckoutAnswersFalseOnAResolveError,\"kit_source_test.go:84: KitSourceCheckout(\\\".\\\") with a deleted working directory = true, want false\""
+            }
+          }
+        },
+        {
+          "id": "tt-c2-repair-probe-r2-root-join-r2",
+          "performer": "claude:bench-writer/tt-t2-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "80fbc1c6ab2706d7744da73a60e0cb634a2b61aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t2-repair-1-20260929/r2-root-join-probe@9958ef57",
+            "digest": "sha256:e253b5a62b1fe6c80d7ab81ddb55270b20584dd8f57398c763ae92c12bfe73f7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,4\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestKitSourceCheckoutResolvesARelativeKitAgainstTheWorkingDirectory,..."
+          },
+          "requirement": "repair-probe-R2-root-join",
+          "command": "bench probe internal/gate/kit_source.go --swap 'kit := KitDir()' --with 'kit := KitDir(); if !filepath.IsAbs(kit) { kit = filepath.Join(root, kit) }' --package ./internal/gate --run TestKitSourceCheckout",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t2-repair-1-20260929/r2-root-join-probe@9958ef57",
+              "digest": "sha256:e253b5a62b1fe6c80d7ab81ddb55270b20584dd8f57398c763ae92c12bfe73f7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,4\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestKitSourceCheckoutResolvesARelativeKitAgainstTheWorkingDirectory,..."
+            }
+          }
         }
       ],
       "reviews": [
@@ -875,6 +1015,24 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 2 on opus
     {
       "from": "sha256:82131a586bf62c0c3278a5dd81e06c3709beb7d6f263935fa90651ae0c7eccc8",
       "to": "sha256:ab6c7f85535262e57e3235e5da67d2460d1b56586d98b7ce78c6a487073539fb",
+      "chunk_ids": {
+        "TT-C1": [
+          "TT-C1"
+        ],
+        "TT-C2": [
+          "TT-C2"
+        ],
+        "TT-C3": [
+          "TT-C3"
+        ],
+        "TT-C4": [
+          "TT-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ab6c7f85535262e57e3235e5da67d2460d1b56586d98b7ce78c6a487073539fb",
+      "to": "sha256:834182d7bb87b440ee0493ba5fd18fb70360c237bae9e7a24acfe73bc8fc91a0",
       "chunk_ids": {
         "TT-C1": [
           "TT-C1"
