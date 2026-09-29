@@ -560,11 +560,30 @@ The orchestrator ran the five final verifications of the plan on the source of `
 
 `main` moved during the build, because the staleness-pass landing added `e69d9ca0` and its parents. The review chain refuses a `main` merge after the first chunk, so `bench worktree land` composes those commits.
 
+## QU-C3 re-verification after the main fold
+
+The session `claude:bench-writer/scq-t3-reverify-1` ran on opus at high effort, with a cap of 3 attempts. The orchestrator folded `main` at `e69d9ca0` into the integration source with the merge commit `551637e5`. The session ran at the source of `7840fdfd` and changed no guidance, code, or test.
+
+The session ran each QU-C3 plan verification on the source of `7840fdfd`, and each passed:
+
+| Requirement | Command | Result |
+|---|---|---|
+| 3-workflow | `bench test --check docs-currency-workflow` | pass |
+| 3-skills | `bench test --check skills-index-command-adapters` | pass |
+| 3-budgets | `bench test --check guidance-prose-budgets` | pass |
+| 3-prose | `bench test --check prose-mechanics` | pass |
+
+The merge added anchors and canary fixtures, so the session also ran `bench test --package` on `./internal/anchors` and `./internal/conformance`. Each run passed. The conformance run had three capability skips, the same as in the cycle 2 run.
+
+The chunk tip is now the first record commit of this section. The source digest is the tree of `7840fdfd` without this record file. The session applied the `SourceDigest` rule. The same steps at `6a686c5f` give the cycle 2 digest `3206a6a2`, which confirms the method.
+
+The spec changed at `7840fdfd`, so the plan digest changed from `049050e1` to `f54e6978`. The session applied the `ReadPlan` rule. The same rule at `ee8621ab` gives the earlier digest `049050e1`, which confirms the method. The payload keeps the earlier amendments and adds one amendment from `049050e1` to `f54e6978`. That amendment maps each chunk ID to itself, because the plan change at `7840fdfd` adds only this re-verification assignment. The reviews and the completion stay unchanged.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/session-context-queries/spec.md",
-  "plan_digest": "sha256:049050e1555e3c60f58dbf417780c64adc02b086723170691fa2a5e8640af0f2",
+  "plan_digest": "sha256:f54e6978620dfb5609082c5f604a0a7773168cf014f1f7f078477957fed75e08",
   "implementation_session": "",
   "chunks": [
     {
@@ -2491,9 +2510,9 @@ The orchestrator ran the five final verifications of the plan on the source of `
     {
       "id": "QU-C3",
       "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
-      "tip": "0e77d29a68a6cec0528741fbdd15721cfa4d0e53",
-      "plan_digest": "sha256:049050e1555e3c60f58dbf417780c64adc02b086723170691fa2a5e8640af0f2",
-      "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+      "tip": "7840fdfd2e3955b6828b49adce763a6832361765",
+      "plan_digest": "sha256:f54e6978620dfb5609082c5f604a0a7773168cf014f1f7f078477957fed75e08",
+      "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
       "acceptance_rows": [
         "QU11",
         "QU12",
@@ -3271,6 +3290,78 @@ The orchestrator ran the five final verifications of the plan on the source of `
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-cli/SKILL.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,guidance-prose-budgets,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: prose-budget exceeded: .agents/skills/bench-craft-cli/SKILL.md is 121 lines, over its 120-line budget\"\nskips[0]{package,test,reason}:"
             }
           }
+        },
+        {
+          "id": "qu-c3-3-workflow-r4",
+          "performer": "claude:bench-writer/scq-t3-reverify-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-reverify-1-20260929/3-workflow@7840fdfd",
+            "digest": "sha256:ebf377d75cf748aa7ab6e0dcf495ec54280b063d41f492da437379e30910ed77",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,705\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-3-skills-r4",
+          "performer": "claude:bench-writer/scq-t3-reverify-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-reverify-1-20260929/3-skills@7840fdfd",
+            "digest": "sha256:472a895b89509a549a8f828fa577306a5abcfe1b30784015367f032941f50b4c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,8\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-skills",
+          "command": "bench test --check skills-index-command-adapters",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-3-budgets-r4",
+          "performer": "claude:bench-writer/scq-t3-reverify-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-reverify-1-20260929/3-budgets@7840fdfd",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-3-prose-r4",
+          "performer": "claude:bench-writer/scq-t3-reverify-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-reverify-1-20260929/3-prose@7840fdfd",
+            "digest": "sha256:9f3f88af5e85bdd2bec92cb061cfb2d9dc3feb6af33ca921f3c4a63e46774ff9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,141\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -3684,6 +3775,21 @@ The orchestrator ran the five final verifications of the plan on the source of `
     {
       "from": "sha256:1cdbae9a4cc49752da076fbfcfc115b5d9d42f152f7512e140be292157976c8b",
       "to": "sha256:049050e1555e3c60f58dbf417780c64adc02b086723170691fa2a5e8640af0f2",
+      "chunk_ids": {
+        "QU-C1": [
+          "QU-C1"
+        ],
+        "QU-C2": [
+          "QU-C2"
+        ],
+        "QU-C3": [
+          "QU-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:049050e1555e3c60f58dbf417780c64adc02b086723170691fa2a5e8640af0f2",
+      "to": "sha256:f54e6978620dfb5609082c5f604a0a7773168cf014f1f7f078477957fed75e08",
       "chunk_ids": {
         "QU-C1": [
           "QU-C1"
