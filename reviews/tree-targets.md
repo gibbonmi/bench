@@ -109,6 +109,29 @@ The session ran each TT-C1 plan verification on the source of `258edfd9`, and ea
 
 The chunk tip is now the repair commit `258edfd9`. The source digest is the tree of `258edfd9` without this record file. The same rule at `a08359f9` gives the round 1 digest `48cf94fb`, which confirms the method. The spec changed at `56caf792`, so the plan digest changed. The `ReadPlan` rule at `a08359f9` gives the round 1 digest `7355203a`, which confirms the method. The round 1 entries keep their earlier source digest as history.
 
+## TT-C1 chunk review, round 2, and close
+
+The frozen pair is base `f981cd3db1a4f27eddba5feede40a80e205bf1c1` and tip `196e1cda291a9d974f881435f6e1284b1838b241`. The shared evidence is `sha256:c994d11ef9b198c5abebdfd70863b3bb017e5b2e2bdb24b4785d9c73873a4199`. This round is the confirming round of all three axes. Each axis ran in a new fresh `bench-reviewer` session on opus at high effort, and each read only the repair delta `a08359f9..196e1cda`. Only the Coverage axis ran probes, and it left the tree clean.
+
+## Standards
+
+Findings: 0. R1, R2, and R3 are confirmed. The repair delta adds no duplicated knowledge.
+
+## Spec
+
+Findings: 0. All seven ticket 1 rows stay met, and the repair writes only fenced paths and this record.
+
+## Coverage
+
+Findings: 0. The R2 and R3 probes bite. The coordinator asked about a later `--in` on a repository verb. No test pins it, and a probe that also refuses a later `--in` stayed silent. The approved row for story 24 is TT37 in ticket 4, so this gap goes to the ticket 4 charge.
+
+## Advice
+
+- Ticket 4 adds a repository-verb case to `TestTreeTargetOnlyAsFirstArgument`, such as `bench version x --in primary`, which reaches the verb grammar.
+- `TestCommandScopeCheckBites` pins only a literal `0`. A planted row with an undeclared identifier would also pin the membership test. No such constant exists today.
+
+Chunk TT-C1 closes after one repair cycle.
+
 ```bench-review-record
 {
   "version": 2,
@@ -119,7 +142,7 @@ The chunk tip is now the repair commit `258edfd9`. The source digest is the tree
     {
       "id": "TT-C1",
       "base": "f981cd3db1a4f27eddba5feede40a80e205bf1c1",
-      "tip": "258edfd920b7a457d86c55a374799f43a602cd99",
+      "tip": "196e1cda291a9d974f881435f6e1284b1838b241",
       "plan_digest": "sha256:82131a586bf62c0c3278a5dd81e06c3709beb7d6f263935fa90651ae0c7eccc8",
       "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
       "acceptance_rows": [
@@ -508,6 +531,72 @@ The chunk tip is now the repair commit `258edfd9`. The source digest is the tree
             "R2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "tt-c1-standards-r2",
+          "performer": "claude:bench-reviewer/tt-c1-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c1-standards-r2@196e1cda",
+            "digest": "sha256:1edd83e66a84c21d094be64f07753ea71a6b2bb24a2f7734f1995e7d8e3101d9",
+            "excerpt": "Standards: 0 findings. All three folds hold, and the repair delta adds no duplicated knowledge that blocks."
+          },
+          "axis": "Standards",
+          "base": "f981cd3db1a4f27eddba5feede40a80e205bf1c1",
+          "tip": "196e1cda291a9d974f881435f6e1284b1838b241",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c1-standards-r1"
+          ]
+        },
+        {
+          "id": "tt-c1-spec-r2",
+          "performer": "claude:bench-reviewer/tt-c1-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c1-spec-r2@196e1cda",
+            "digest": "sha256:7e4bda2be89752b8ef5cb073ac14fd3ec66eb7094f8cedecb7549e7ecfa6b1ee",
+            "excerpt": "Spec: 0 findings. Nothing in the repair delta a08359f9..196e1cda breaks TT1-TT7."
+          },
+          "axis": "Spec",
+          "base": "f981cd3db1a4f27eddba5feede40a80e205bf1c1",
+          "tip": "196e1cda291a9d974f881435f6e1284b1838b241",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c1-spec-r1"
+          ]
+        },
+        {
+          "id": "tt-c1-coverage-r2",
+          "performer": "claude:bench-reviewer/tt-c1-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f0adccfef21bee43abd80bd3bdc3e92edfc7ecac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c1-coverage-r2@196e1cda",
+            "digest": "sha256:5684929f3d87c592dea74ce2ff19b7ee826e0dbb818dfa448499e24a6826d261",
+            "excerpt": "Coverage: 0 findings. R1, R2, and R3 are confirmed, and no candidate in the repair delta survived refutation."
+          },
+          "axis": "Coverage",
+          "base": "f981cd3db1a4f27eddba5feede40a80e205bf1c1",
+          "tip": "196e1cda291a9d974f881435f6e1284b1838b241",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c1-coverage-r1"
+          ]
         }
       ]
     }
