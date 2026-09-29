@@ -248,6 +248,30 @@ The chunk tip is now the repair commit `9958ef57`. The source digest is the tree
 
 The spec changed at `fa840bcf`, so the plan digest changed from `ab6c7f85` to `834182d7`. The `ReadPlan` rule at `c8b9bb94` gives the earlier digest `ab6c7f85`, which confirms the method. The payload keeps the earlier amendment and adds one amendment from `ab6c7f85` to `834182d7`. That amendment maps each chunk ID to itself, because the plan change at `fa840bcf` changes only the ticket 2 assignments. The TT-C1 chunk keeps the digest of its own tip. The round 1 entries keep their earlier source digest as history.
 
+## TT-C2 chunk review, round 2, and close
+
+The frozen pair is base `196e1cda291a9d974f881435f6e1284b1838b241` and tip `74daf800f8a11d85083711b31aaabc47797ebc73`. The shared evidence is `sha256:51ffd8bccc3a331ce2f82d1887d076e60c37d5fd9c833c9323ddd5001b418730`. This round is the confirming round of all three axes. Each axis ran in a new fresh `bench-reviewer` session on opus at high effort, and each read only the repair delta `fa840bcf..74daf800`. Only the Coverage axis ran probes, and it left the tree clean.
+
+## Standards
+
+Findings: 0. R1 and R2 are confirmed, and both skips go through `capability.Environment`.
+
+## Spec
+
+Findings: 0. TT51 and TT52 stay met, and the repair delta stays inside the ticket 2 fence.
+
+## Coverage
+
+Findings: 0. Two independent probes, one for each fold, each bit on the new test alone.
+
+## Advice
+
+- The comment on the resolve-error test says both resolves fail. Only the root resolve runs, because the check returns before it resolves the kit.
+- The skip-ownership diagnostic and the capability package describe the seam in two different ways. A later drain can decide which wording owns the rule.
+- `canonicalpath.Resolve` keeps the symlink spelling of a working directory for a relative path. The spec records this as pending reviewer decision 4.
+
+Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardening cycle.
+
 ```bench-review-record
 {
   "version": 2,
@@ -719,7 +743,7 @@ The spec changed at `fa840bcf`, so the plan digest changed from `ab6c7f85` to `8
     {
       "id": "TT-C2",
       "base": "196e1cda291a9d974f881435f6e1284b1838b241",
-      "tip": "9958ef5736447d203ae32ccbd37f7a2d5e3e7869",
+      "tip": "74daf800f8a11d85083711b31aaabc47797ebc73",
       "plan_digest": "sha256:834182d7bb87b440ee0493ba5fd18fb70360c237bae9e7a24acfe73bc8fc91a0",
       "source_digest": "80fbc1c6ab2706d7744da73a60e0cb634a2b61aa",
       "acceptance_rows": [
@@ -1000,6 +1024,72 @@ The spec changed at `fa840bcf`, so the plan digest changed from `ab6c7f85` to `8
             "R1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "tt-c2-standards-r2",
+          "performer": "claude:bench-reviewer/tt-c2-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "80fbc1c6ab2706d7744da73a60e0cb634a2b61aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c2-standards-r2@74daf800",
+            "digest": "sha256:5d837ef413d374d65c9cbc67ba30448ceec30b9ccbbb83e605662944cabcdf60",
+            "excerpt": "Standards: 0 findings. The repair delta adds two independent tests, their reds are recorded, and it duplicates no knowledge."
+          },
+          "axis": "Standards",
+          "base": "196e1cda291a9d974f881435f6e1284b1838b241",
+          "tip": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c2-standards-r1"
+          ]
+        },
+        {
+          "id": "tt-c2-spec-r2",
+          "performer": "claude:bench-reviewer/tt-c2-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "80fbc1c6ab2706d7744da73a60e0cb634a2b61aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c2-spec-r2@74daf800",
+            "digest": "sha256:7689a934a4416af7c4fccc3144660a5029377a3e83cd2dbe97b40eb9270f1050",
+            "excerpt": "Spec: 0 findings. Both repair folds meet their routing rows, and the repair delta stays inside ticket 2's Writes: fence."
+          },
+          "axis": "Spec",
+          "base": "196e1cda291a9d974f881435f6e1284b1838b241",
+          "tip": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c2-spec-r1"
+          ]
+        },
+        {
+          "id": "tt-c2-coverage-r2",
+          "performer": "claude:bench-reviewer/tt-c2-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "80fbc1c6ab2706d7744da73a60e0cb634a2b61aa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c2-coverage-r2@74daf800",
+            "digest": "sha256:8cfa87072452331a0032e77d4728c7b97624e2a0a2e5b4b8093b0283e6a204c9",
+            "excerpt": "Coverage: 0 findings. R1 and R2 are both confirmed by independent bypasses that the new tests catch."
+          },
+          "axis": "Coverage",
+          "base": "196e1cda291a9d974f881435f6e1284b1838b241",
+          "tip": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c2-coverage-r1"
+          ]
         }
       ]
     }
