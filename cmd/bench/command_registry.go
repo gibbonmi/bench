@@ -124,6 +124,7 @@ type commandDefinition struct {
 	AXI        commandAXIDisposition
 	Inventory  commandInventory
 	Bound      boundDisposition
+	Scope      treeScope
 	// Leaves is the family table of a command whose first argument names a leaf. Each
 	// leaf declares its own bound disposition on its row. The dispatcher and the bound
 	// both read this one table, so no family runs a leaf that the bound does not see.
@@ -164,6 +165,7 @@ type commandLeaf struct {
 	Grammar string
 	Root    leafRootNeed
 	Bound   boundDisposition
+	Scope   treeScope
 	// Retires marks a leaf that retires an assignment. Its spill goes to the primary scope,
 	// so the retirement cannot remove a spill that is still open.
 	Retires bool
@@ -210,6 +212,9 @@ func leafNamed(leaves []commandLeaf, args []string) (commandLeaf, bool) {
 // the bound disposition, so `bench help` with an argument stays bounded. A family routes
 // its leaves through the shared leaf dispatcher, which reads the same table as the bound.
 func (definition commandDefinition) run(c Command, args []string) int {
+	if definition.refusesTreeTarget(c, args) {
+		return 2
+	}
 	if definition.Kind == commandHelp {
 		return helpCommand(c, args)
 	}
