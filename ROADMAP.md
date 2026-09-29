@@ -63,6 +63,8 @@ findings in the owner details.
 
 **FT350 (MEDIUM, decision required) — ref transactions define atomic observation and preservation guarantees.**
 
+**FT353 (HIGH, decision required) — each unique unrecorded `bench/assign` ref has an owner, a deadline, and one sanctioned adopt-and-land route.**
+
 ## Planning, ownership, and review integrity
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
@@ -106,6 +108,8 @@ findings in the owner details.
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
 
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
+
+**FT352 (MEDIUM, decision required) — the orchestrator reads its own context size, and a spec can then restore a gated ticket fork.**
 
 **FT125 (LOW) — section, story, symbol, and worktree readers return precise slices.**
 
