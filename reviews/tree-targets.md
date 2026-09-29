@@ -132,11 +132,59 @@ Findings: 0. The R2 and R3 probes bite. The coordinator asked about a later `--i
 
 Chunk TT-C1 closes after one repair cycle.
 
+## TT-C2 author evidence
+
+Ticket 2 had a fresh `bench-writer` successor author, `tt-t2-author-2`, on opus at high effort, with a cap of 3 attempts. The first author, `tt-t2-author`, stopped because the plan probe could not compile, and it committed nothing. The coordinator replaced the plan probe in the plan commit `9100a74a`.
+
+The successor started at `9100a74a` with the uncommitted diff of the first author. The successor verified that diff again with its own runs and kept it without a change. It committed `e43254d5` on a lane pass in the first attempt. The successor then committed this record in a second commit.
+
+The chunk pair is `196e1cda..e43254d5`. The base is the accepted TT-C1 tip, because a plan commit is never a chunk base. The payload names the ticket commit as the tip, because a record cannot name its own commit. The source digest does not change at the record commit, because the record file is outside the graded source.
+
+The production edit was already in the tree at the start. So each red came from a `bench probe` and not from a run before the edit. The red and green log for each row follows:
+
+- TT51: a probe restored the exact old helper, `filepath.EvalSymlinks` with a `filepath.Clean` fallback. `TestKitSourceCheckoutResolvesARelativeKit` failed with `with BENCH_KIT=. = false, want true`, and the symlink test stayed green. The plan probe `2-kit-probe` gave the same red. After the restore, the test passed.
+- TT52: the symlink test is unchanged. A probe that dropped the symlink step for the root failed it with `kit-link = false, want true`. A probe that made any two resolved paths match failed it with `consumer = true, want false`. After each restore, the test passed.
+
+The author reported these deviations from the ticket. The Spec axis grades each one.
+
+- `resolvedPath` returns a spelling and a success flag. So two failed resolves never compare equal as two empty spellings.
+- No test drives the resolve-error branch. The only refusal of `canonicalpath.Resolve` is a failed working-directory read, and no acceptance row names that branch.
+- The first post-commit preflight reported `binary-seal` red, because the worktree binary was older than the source. The author ran `bench worktree build`, and the second preflight was green.
+
+The sweep of duplicated facts found no second statement. `kit_source.go` spells `canonicalpath.Resolve` once, and the new test uses its own fixture of three lines with no copied helper. Each independent expectation has a red above.
+
+The author applied the `SourceDigest` and `ReadPlan` rules to the tree of `e43254d5`. The same steps at `196e1cda` give the TT-C1 digests `f0adccfe` and `82131a58`, which confirms the method. The plan changed at `5685e187` and at `9100a74a`, so the payload has one amendment from `82131a58` to `ab6c7f85`. The amendment maps each chunk ID to itself, because the plan delta changes only the ticket 2 author assignments and the ticket 2 plan probe.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`. The first row is the plan probe `2-kit-probe`. The JSON payload holds the exact command and output of the first three rows at `e43254d5`. The last two rows ran on the source before the ticket commit, so only this table holds them.
+
+| File | Mutation | Test | Row | Verdict |
+|---|---|---|---|---|
+| `internal/gate/kit_source.go` | swap: `canonicalpath.Resolve` to a function that returns `filepath.EvalSymlinks(p)` | TestKitSourceCheckoutResolvesARelativeKit | TT51 | bit |
+| `internal/gate/kit_source.go` | swap: `resolvedPath(root)` to `filepath.Clean(root), true` | TestKitSourceCheckoutMatchesThroughASymlinkSpelling | TT52 | bit |
+| `internal/gate/kit_source.go` | swap: `return ok && resolvedRoot == resolvedKit` to `return ok && resolvedRoot+resolvedKit != ""` | TestKitSourceCheckoutMatchesThroughASymlinkSpelling | TT52 | bit |
+| `internal/gate/kit_source.go` | swap: `canonicalpath.Resolve(path)` to the old helper body, before the commit | TestKitSourceCheckoutResolvesARelativeKit | TT51 | bit |
+| `internal/gate/kit_source.go` | swap: `return ok && resolvedRoot == resolvedKit` to `return ok && resolvedRoot != ""`, before the commit | none | TT52 | invalid |
+
+The last probe did not compile, because it left `resolvedKit` unused. The third row is its replacement.
+
+### Verification
+
+The author ran each TT-C2 plan verification on the source of `e43254d5`, and each passed. The JSON payload holds each result. The author also ran these checks, and each passed:
+
+- `bench test --package ./internal/conformance --run TestBranchNativeArchitectureCensus`;
+- `bench test --package ./internal/worktree --run TestParallelCensusOnTheLiveTree`;
+- `bench test --check canonical-path-owner`;
+- `bench structure --growth f981cd3d`, which reported that no source file grew past its budget.
+
+A verbose run of each census test showed that the test ran and passed. After the commit and the worktree build, `bench preflight build tree-targets` reported 14 green checks, 1 check that does not apply, and 0 red checks.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/tree-targets/spec.md",
-  "plan_digest": "sha256:82131a586bf62c0c3278a5dd81e06c3709beb7d6f263935fa90651ae0c7eccc8",
+  "plan_digest": "sha256:ab6c7f85535262e57e3235e5da67d2460d1b56586d98b7ce78c6a487073539fb",
   "implementation_session": "",
   "chunks": [
     {
@@ -599,6 +647,125 @@ Chunk TT-C1 closes after one repair cycle.
           ]
         }
       ]
+    },
+    {
+      "id": "TT-C2",
+      "base": "196e1cda291a9d974f881435f6e1284b1838b241",
+      "tip": "e43254d58037b0033b3bb9328961a9f5448ba7c0",
+      "plan_digest": "sha256:ab6c7f85535262e57e3235e5da67d2460d1b56586d98b7ce78c6a487073539fb",
+      "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
+      "acceptance_rows": [
+        "TT51",
+        "TT52"
+      ],
+      "verification": [
+        {
+          "id": "tt-c2-2-gate-r1",
+          "performer": "claude:bench-writer/tt-t2-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t2-author-2-20260929/2-gate@e43254d5",
+            "digest": "sha256:49a9464dd2afdab3deac20382c8d92a0f1a47e5781b9adfee0bd7f4f12ce2874",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,14924\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c2-2-kit-probe-r1",
+          "performer": "claude:bench-writer/tt-t2-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t2-author-2-20260929/2-kit-probe@e43254d5",
+            "digest": "sha256:ed2820500b31123ca67f43cfb395446dde80693a6108a241afa962db3c618007",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckoutResolvesARelativeKit,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,3"
+          },
+          "requirement": "2-kit-probe",
+          "command": "bench probe internal/gate/kit_source.go --swap 'canonicalpath.Resolve' --with 'func(p string) (string, error) { _ = canonicalpath.Resolve; return filepath.EvalSymlinks(p) }' --package ./internal/gate --run TestKitSourceCheckoutResolvesARelativeKit",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t2-author-2-20260929/2-kit-probe@e43254d5",
+              "digest": "sha256:ed2820500b31123ca67f43cfb395446dde80693a6108a241afa962db3c618007",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckoutResolvesARelativeKit,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,3"
+            }
+          }
+        },
+        {
+          "id": "tt-c2-author-probe-tt52-link-r1",
+          "performer": "claude:bench-writer/tt-t2-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t2-author-2-20260929/tt52-link@e43254d5",
+            "digest": "sha256:f3a3e2bedf569ef2dfc157bd1bc3a3c2ef701515c0e6dcfb45f27cd0b6b11b78",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
+          },
+          "requirement": "author-probe-TT52-link",
+          "command": "bench probe internal/gate/kit_source.go --swap 'resolvedPath(root)' --with 'filepath.Clean(root), true' --package ./internal/gate --run 'TestKitSourceCheckout'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t2-author-2-20260929/tt52-link@e43254d5",
+              "digest": "sha256:f3a3e2bedf569ef2dfc157bd1bc3a3c2ef701515c0e6dcfb45f27cd0b6b11b78",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
+            }
+          }
+        },
+        {
+          "id": "tt-c2-author-probe-tt52-unrelated-r1",
+          "performer": "claude:bench-writer/tt-t2-author-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t2-author-2-20260929/tt52-unrelated@e43254d5",
+            "digest": "sha256:f6c1775d1d958a5cc36da568a1225d9386b1a739e497dca559da93e0af2dabdc",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
+          },
+          "requirement": "author-probe-TT52-unrelated",
+          "command": "bench probe internal/gate/kit_source.go --swap 'return ok && resolvedRoot == resolvedKit' --with 'return ok && resolvedRoot+resolvedKit != \"\"' --package ./internal/gate --run 'TestKitSourceCheckout'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t2-author-2-20260929/tt52-unrelated@e43254d5",
+              "digest": "sha256:f6c1775d1d958a5cc36da568a1225d9386b1a739e497dca559da93e0af2dabdc",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -607,6 +774,26 @@ Chunk TT-C1 closes after one repair cycle.
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:82131a586bf62c0c3278a5dd81e06c3709beb7d6f263935fa90651ae0c7eccc8",
+      "to": "sha256:ab6c7f85535262e57e3235e5da67d2460d1b56586d98b7ce78c6a487073539fb",
+      "chunk_ids": {
+        "TT-C1": [
+          "TT-C1"
+        ],
+        "TT-C2": [
+          "TT-C2"
+        ],
+        "TT-C3": [
+          "TT-C3"
+        ],
+        "TT-C4": [
+          "TT-C4"
+        ]
+      }
+    }
+  ]
 }
 ```
