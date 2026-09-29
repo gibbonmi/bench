@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -53,21 +54,10 @@ func historyFixture(t *testing.T) historyFixtureData {
 	return f
 }
 
-// initGitRepo initializes an empty repository on main with a fixed committer identity
-// and returns its root. It is the one Git setup of the spec package tests.
-func initGitRepo(t *testing.T) string {
-	t.Helper()
-	root := t.TempDir()
-	runGit(t, root, "init", "-q", "-b", "main")
-	runGit(t, root, "config", "user.email", "a@b.c")
-	runGit(t, root, "config", "user.name", "a")
-	return root
-}
-
 // emptyHistoryRepo initializes a repository and makes it the working directory.
 func emptyHistoryRepo(t *testing.T) historyFixtureData {
 	t.Helper()
-	root := initGitRepo(t)
+	root := gittest.RepoOnBranch(t, "main")
 	t.Chdir(root)
 	return historyFixtureData{root: root, hash: map[string]string{}}
 }

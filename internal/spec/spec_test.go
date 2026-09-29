@@ -14,24 +14,14 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // writeSpec writes content to <dir>/specs/<slug>/spec.md and returns the path.
 func writeSpec(t *testing.T, dir, slug, content string) string {
 	t.Helper()
-	specsDir := filepath.Join(dir, "specs")
-	if err := os.MkdirAll(specsDir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	path := filepath.Join(specsDir, slug, "spec.md")
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	return path
+	return writeFolderSpec(t, dir, slug, content)
 }
 
 func writeFolderSpec(t *testing.T, dir, slug, content string) string {
@@ -503,7 +493,7 @@ func retireRepo(t *testing.T, slug, body string, extraFiles map[string]string) (
 // retirePrimary builds the repository itself and returns its primary checkout.
 func retirePrimary(t *testing.T, slug, body string, extraFiles map[string]string) (root string) {
 	t.Helper()
-	root = initGitRepo(t)
+	root = gittest.RepoOnBranch(t, "main")
 	writeFolderSpec(t, root, slug, body)
 	for path, content := range extraFiles {
 		full := filepath.Join(root, filepath.FromSlash(path))

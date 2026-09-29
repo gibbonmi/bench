@@ -202,7 +202,8 @@ func TestSelectedHistoryPreservesProducer(t *testing.T) {
 // byteFixture commits three deletions of one flat spec. Each positional row is 2 indent
 // bytes, an 8-byte hash, a 10-byte date, the 6-byte kind `delete`, a 1-byte subject,
 // 3 commas, and a newline: 31 bytes. The header `history[3]{hash,date,kind,subject}:`
-// and its newline are 36 bytes.
+// and its newline are 36 bytes. The commit days fix the hashes. With the gittest identity,
+// these days give no delete hash that TOON quotes, such as one with a leading zero digit.
 func byteFixture(t *testing.T) historyFixtureData {
 	t.Helper()
 	f := emptyHistoryRepo(t)
@@ -216,9 +217,9 @@ func byteFixture(t *testing.T) historyFixtureData {
 		if err := os.WriteFile(flat, []byte("spec\n"), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		f.commit(t, "add-"+subject, 2*i+1, "add bytes spec")
+		f.commit(t, "add-"+subject, 2*i+11, "add bytes spec")
 		runGit(t, f.root, "rm", "-q", "specs/bytes.md")
-		f.commit(t, subject, 2*i+2, subject)
+		f.commit(t, subject, 2*i+12, subject)
 	}
 	return f
 }
