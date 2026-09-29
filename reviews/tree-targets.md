@@ -366,6 +366,39 @@ The successor ran each TT-C3 plan verification on the source of `93b7c071`, and 
 
 The first post-commit preflight reported `binary-seal` red, because the worktree build was older than the source. After `bench worktree build`, `bench preflight build tree-targets` reported 14 green checks, 1 check that does not apply, and 0 red checks.
 
+## TT-C3 chunk review, round 1
+
+The frozen pair is base `74daf800f8a11d85083711b31aaabc47797ebc73` and tip `5444f36ac57e3310026b62439bcf7648d49871df`. The shared evidence is `sha256:6aae40c43e205e132c18b04f6744eb48ca19059cae6432db32034816d803e5e7`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort. Only the Coverage axis ran probes, and it left the tree clean.
+
+The raw finding count is 3: Standards 0, Spec 1, and Coverage 2. Each finding names its own fix, so 3 repair targets remain. The coordinator also corrects the spec text on the table renderer, which is a plan change and not a repair target.
+
+## Standards
+
+Findings: 0. Each independent header expectation has a recorded red.
+
+## Spec
+
+Findings: 1. The worst issue is that a label with a control byte drops the row.
+
+- `cmd/bench/tree_scope.go:73-76` returns no row when `treetarget.Row` fails. The ledger accepts a label with a control byte, so such an assignment gives a tree-scoped response with no row. The spec says the row is the first block of each tree-scoped response that resolves a root and exits other than 2. The spec's import list names `internal/sanitize`, so the tree convention renders such a label through it. Target R1, `auto-fix`, confidence 6. The coordinator routes this as a spec predicate and flags the rendering choice for reviewer veto.
+
+## Coverage
+
+Findings: 2. The worst issue is two untested timing rules of the row.
+
+- The exempt path's exit-2 rule has no test. A probe that printed the row on stderr at every exit stayed silent across `./cmd/bench`. `bench release-preflight` with no arguments is exempt and tree-scoped, and it exits 2. Target R2, `auto-fix`, confidence 7.
+- No test pins that the dispatcher computes the row before the verb runs. A probe that computed the row after the verb stayed silent. A verb that moves HEAD, such as `bench commit`, would then name the new commit. Target R3, `auto-fix`, confidence 7.
+
+## TT-C3 repair routing
+
+Each repair goes to one fresh `bench-writer` repair session for ticket 3 on opus at high effort. Ticket 3's `Writes:` line holds every path. This is cycle 1 of the two repair cycles for chunk TT-C3.
+
+| Target | Ticket | Repair |
+|---|---|---|
+| R1 | 3 | Render a label that TOON cannot carry through `sanitize`, so the row always prints, and pin it. |
+| R2 | 3 | Test an exempt tree-scoped call that exits 2, with no row on either stream. |
+| R3 | 3 | Test that the row names the tree state from before the verb, with a planted verb that moves HEAD. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -1190,7 +1223,7 @@ The first post-commit preflight reported `binary-seal` red, because the worktree
     {
       "id": "TT-C3",
       "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
-      "tip": "93b7c07191c61c306292d1f770c977e5684097fe",
+      "tip": "5444f36ac57e3310026b62439bcf7648d49871df",
       "plan_digest": "sha256:ea3ee9d0bf9cd3b6386e8aff692c80c514b0ee1075b723a9256ba5a30f8d0430",
       "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
       "acceptance_rows": [
@@ -1415,7 +1448,73 @@ The first post-commit preflight reported `binary-seal` red, because the worktree
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "tt-c3-standards-r1",
+          "performer": "claude:bench-reviewer/tt-c3-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c3-standards-r1@5444f36a",
+            "digest": "sha256:32cdaa396edc864c7068c324872251161c1d2dbc21308b3305b6250d96b7b904",
+            "excerpt": "Standards: 0 findings. No candidate survived refutation."
+          },
+          "axis": "Standards",
+          "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "tip": "5444f36ac57e3310026b62439bcf7648d49871df",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "tt-c3-spec-r1",
+          "performer": "claude:bench-reviewer/tt-c3-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c3-spec-r1@5444f36a",
+            "digest": "sha256:13bac55949b81ea1e0f4437864611c99d03c8b5abc1cff0fb3eb02279b8d8ca0",
+            "excerpt": "Spec: 1 finding. Worst: a ledger label that TOON cannot carry silently drops the identity row."
+          },
+          "axis": "Spec",
+          "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "tip": "5444f36ac57e3310026b62439bcf7648d49871df",
+          "finding_ids": [
+            "R1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "tt-c3-coverage-r1",
+          "performer": "claude:bench-reviewer/tt-c3-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c3-coverage-r1@5444f36a",
+            "digest": "sha256:c0be25e82cf536b1609a854f06d8770ed52fb4eab45340c583cd3f9feb3bd9c1",
+            "excerpt": "Coverage: 2 findings. Worst: two binding spec rules about when the row is printed have no test, and two mutations that break them pass the whole ./cmd/bench suite."
+          },
+          "axis": "Coverage",
+          "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "tip": "5444f36ac57e3310026b62439bcf7648d49871df",
+          "finding_ids": [
+            "R2",
+            "R3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
