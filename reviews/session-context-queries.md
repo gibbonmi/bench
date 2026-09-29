@@ -400,6 +400,49 @@ The source digest is the tree of `9348571b` without this record file. The record
 
 The spec changed at `996ddbc9`, so the plan digest changed from `94546d72` to `6244a752`. The author applied the `ReadPlan` rule. The same rule at `cb28194c` gives the earlier digest `94546d72`, which confirms the method. The payload keeps the earlier amendments and adds one amendment from `94546d72` to `6244a752`. That amendment maps each chunk ID to itself, because the plan change at `996ddbc9` adds only the ticket 3 author assignment. The QU-C1 and QU-C2 chunks keep the digests of their own tips.
 
+## QU-C3 chunk review, round 1
+
+The frozen pair is base `cb28194c364610f803f1d9f4945543c9364a0f7e` and tip `ee78005bec1159b018ae3c9b890fe2a82b5998a6`. The chunk tip moves to that last record commit, and the source digest stays the same. The shared evidence is `sha256:c484032da091da698fc545ea2a2b04f7d1fd7091b3bb2c21ecb4f8e673526aeb`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, on the conditional review line. Only the Coverage axis ran probes, and it left the tree clean.
+
+The raw finding count is 7: Standards 4, Spec 1, and Coverage 2. One Coverage finding and the drain check gap are `no-op`, so 6 repair targets remain.
+
+## Standards
+
+Findings: 4. The worst issue is a stale pointer in `craft-cli`.
+
+- `.agents/skills/bench-craft-cli/SKILL.md:117-118` compares membership with "the table above". The new focused-read table now sits between the approved-query table and that sentence. Target R2. `auto-fix`. Confidence 7.
+- In `.agents/commands/bench-drain.md:103`, "its `detail` command" reads as the `detail` of a roadmap row, but the column belongs to each spec history result. Line 102 also names the read differently from the `craft-cli` table label. Target R3. `auto-fix`. Confidence 6.
+- `.agents/commands/bench-drain.md:105` restates the index inventory fact of lines 27-29 with a different term. Target R4. `auto-fix`. Confidence 5.
+- `.agents/skills/bench-craft-cli/SKILL.md:112` gives two instructions in one sentence. Target R5. `auto-fix`. Confidence 6.
+
+## Spec
+
+Findings: 1. QU11, QU12, and QU13 are met, and each command and flag in the new text matches the current code. The worst issue is an inaccurate record sentence.
+
+- The QU-C3 author evidence says that the port keeps all current text. The debug section at `.agents/commands/bench-debug.md:131-137` was compressed to stay inside its budget, and it dropped three current phrases. Target R6. `auto-fix`. Confidence 6.
+
+## Coverage
+
+Findings: 2. The worst issue is a red conformance test.
+
+- The worktree paths row adds a second copy of the cell `` | `bench worktree list` | `` to `.agents/skills/bench-craft-cli/SKILL.md:59`. `TestAXIGuidanceContractBites/omitted_member` at `internal/conformance/axi_query_registry_test.go:202-203` requires one copy, and it fails with count 2. The author's check runs did not select that test. Target R1. `auto-fix`. Confidence 10.
+- No check compares the selected grammars in the focused-read table with the command registry. QU11 and QU12 are review-owned, so this is a `no-op`. Confidence 8.
+
+The check of the drain `disable-model-invocation` value tests only that the key is present. That gap is older than this delta. The selected views fail with the installed `bench` before landing, which is expected.
+
+## QU-C3 repair routing
+
+Each repair goes to one fresh `bench-writer` repair session for ticket 3. This is cycle 1 of the two repair cycles for chunk QU-C3.
+
+| Target | Ticket | Repair |
+|---|---|---|
+| R1 | 3 | Keep one copy of the approved `bench worktree list` cell in `craft-cli`, and run `TestAXIGuidanceContractBites` green. |
+| R2 | 3 | Make the membership sentence name the approved-query table, or move the focused-read section after `## Conformance`. |
+| R3 | 3 | Make the drain paragraph name the `detail` command of each spec history result, with the table's own label. |
+| R4 | 3 | Remove the restated inventory sentence from the drain paragraph, and keep that the discovery adds no capture unit. |
+| R5 | 3 | Split the two instructions of the batching sentence. |
+| R6 | 3 | Correct the author evidence about the debug section, and name the dropped phrases. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -2331,7 +2374,7 @@ The spec changed at `996ddbc9`, so the plan digest changed from `94546d72` to `6
     {
       "id": "QU-C3",
       "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
-      "tip": "77e10a68d55582a381999e35e6b0aa6094db1d09",
+      "tip": "ee78005bec1159b018ae3c9b890fe2a82b5998a6",
       "plan_digest": "sha256:6244a75248316eabb8a40057d601fe0e48324308a3f23854b083997610363842",
       "source_digest": "7e57e1157ff3178edf22930b925fd955f03ead9e",
       "acceptance_rows": [
@@ -2713,7 +2756,77 @@ The spec changed at `996ddbc9`, so the plan digest changed from `94546d72` to `6
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "qu-c3-standards-r1",
+          "performer": "claude:bench-reviewer/qu-c3-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7e57e1157ff3178edf22930b925fd955f03ead9e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-standards-r1@ee78005b",
+            "digest": "sha256:2ea21af411fbfaa7d7d7026832f7b3c4b9f7cfd5c8532dcd0a2667e36c5b05c5",
+            "excerpt": "Standards: 4 findings. Worst: the craft-cli sentence about the table above now points at the new focused-read table."
+          },
+          "axis": "Standards",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "ee78005bec1159b018ae3c9b890fe2a82b5998a6",
+          "finding_ids": [
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "qu-c3-spec-r1",
+          "performer": "claude:bench-reviewer/qu-c3-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7e57e1157ff3178edf22930b925fd955f03ead9e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-spec-r1@ee78005b",
+            "digest": "sha256:fe7037608fd6494686515da10c703f44aaee5bde04893ec4f2107057fa23864f",
+            "excerpt": "Spec: 1 finding. QU11, QU12, and QU13 are met, but the record says the port keeps all current text of the debug section."
+          },
+          "axis": "Spec",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "ee78005bec1159b018ae3c9b890fe2a82b5998a6",
+          "finding_ids": [
+            "R6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "qu-c3-coverage-r1",
+          "performer": "claude:bench-reviewer/qu-c3-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7e57e1157ff3178edf22930b925fd955f03ead9e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-coverage-r1@ee78005b",
+            "digest": "sha256:b50cd95034db25147ff0d8b064d66e36d1fe4a317e8a0743fa9c0f2bd17788c2",
+            "excerpt": "Coverage: 1 blocking finding. The second bench worktree list cell in craft-cli turns TestAXIGuidanceContractBites red."
+          },
+          "axis": "Coverage",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "ee78005bec1159b018ae3c9b890fe2a82b5998a6",
+          "finding_ids": [
+            "R1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
