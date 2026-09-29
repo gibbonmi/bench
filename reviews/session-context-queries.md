@@ -821,7 +821,7 @@ The spec and ticket 2 changed at `c000539f`, so the plan digest changed from `3f
     {
       "id": "QU-C2",
       "base": "af66f28584c2ee8507fa350bedea483500a05e72",
-      "tip": "07ed51fe42a36fcf3b76797bdca1a63caca07598",
+      "tip": "5cd5ed323ee357717bb16349e25be5e68b307219",
       "plan_digest": "sha256:3b519948a80d9e65489cfd832f8debf2b99338916e7a10b48c56f95652e8cbfb",
       "source_digest": "035ebb12f5e5a165611a2fdb121f392164351a42",
       "acceptance_rows": [
