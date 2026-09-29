@@ -368,7 +368,7 @@ The ticket edits three guidance files and no code:
 The author reports these deviations from the stream source. The Standards and Spec axes grade each one.
 
 - The stream wrote each selected grammar in each of the three files. The `craft-cli` table now holds the only guidance example of each selected view, and the debug and drain text point at it. The debug file keeps its anchored `git log --diff-filter=D -- specs/` query, and the `craft-cli` archive row also shows that query as its focused read.
-- The stream diff also reverted current text in the debug and drain files, because the stream base was older. The port keeps all current text, and it adds only the focused-read intent.
+- The stream diff also reverted current text in the debug and drain files, because the stream base was older. The port keeps all current text except in the debug section `## Finding a retired spec`. That section was compressed to stay inside its 170-line budget. It dropped three current phrases: "merges and dedupes them", "Bench promotes a spec", and "in place of the two hand runs". The port adds only the focused-read intent.
 - The author did not add a `--help` pointer, because `.bench/BENCH.md` already names each verb's `--help` as the grammar owner.
 - No anchor needle moved, so the diff leaves the anchor registry files, the command registry files, the two conformance tests, and each canary unchanged.
 
@@ -443,11 +443,42 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 3. This i
 | R5 | 3 | Split the two instructions of the batching sentence. |
 | R6 | 3 | Correct the author evidence about the debug section, and name the dropped phrases. |
 
+## QU-C3 ticket 3 repair evidence, cycle 1
+
+The session `claude:bench-writer/scq-t3-repair-1` ran on opus at high effort, with a cap of 3 attempts. It started at `e572aede` and committed `6fc8ff9b` on a lane pass in the first attempt. This repair is cycle 1 of the two repair cycles for chunk QU-C3.
+
+- R1: the complete-detail cell of the worktree paths row now reads "The default `bench worktree list` view". The approved-query row keeps the only copy of the cell `` | `bench worktree list` | ``. Before the change, `TestAXIGuidanceContractBites/omitted_member` failed with the anchor count 2. After the change, the test passes.
+- R2: the membership sentence of `## Conformance` now compares both directions "with the approved-query table". The paragraph now has one sentence on each line, so `craft-cli` stays at 119 of its 120 lines.
+- R3: the drain paragraph now names the "Spec histories" focused read in `craft-cli`. The next sentence starts at a spec history result and tells the reader to "follow the `detail` command of that result".
+- R4: the drain clause that restated the index inventory is removed. The sentence "These focused reads add no capture unit." keeps the remaining fact.
+- R5: the batching sentence is now two instructions: "Batch the independent archive and log discovery reads." and "Fetch only the relevant bodies after that discovery."
+- R6: the QU-C3 author evidence now names the three phrases that the debug section dropped. The phrase "merges and dedupes them" carried a fact that the debug guidance still needs. `bench spec history` shows a commit that both queries find in one row only. The debug sentence now ends "with one row for each commit", and the file stays at 170 of its 170 lines. The other two phrases lost no fact: the next line still names "any promoted decision", and the merged table still replaces the two hand runs.
+
+### Probe verdicts
+
+The probe ran through `bench probe` at the source of `6fc8ff9b`, and its restore reads `yes`. The JSON payload holds its exact command and output.
+
+| Target | File | Mutation | Verdict | Failed tests |
+|---|---|---|---|---|
+| R1 | `.agents/skills/bench-craft-cli/SKILL.md` | swap: the new complete-detail cell back to the bare `bench worktree list` cell | bit | TestAXIGuidanceContractBites/omitted_member, with the anchor count 2 |
+
+The probe shows that the one-copy guard of the subtest still bites. The passing subtest also shows that an omitted approved row still gives the `guidance advertises` diagnostic.
+
+### Verification
+
+The session ran each QU-C3 plan verification on the source of `6fc8ff9b`, and each passed. The session also ran `bench test --package` on `./internal/conformance` and `./internal/anchors`, and each passed. The conformance run selects `TestAXIGuidanceContractBites`, and it had three capability skips. `bench gate-prose` passed on the three guidance files.
+
+The session ran `bench anchors` on each file before the first edit and after the edits. Each run reported 34 anchors on the debug file, 39 on the drain file, and 3 on the `craft-cli` file. Each list after the edits is the same as the list before the edits.
+
+The chunk tip is now the first record commit of this section. The source digest is the tree of `6fc8ff9b` without this record file. The record commits change only this file, so the digest is the same at each record commit. The session applied the `SourceDigest` rule. The same steps at `9348571b` give the author digest `7e57e115`, which confirms the method.
+
+The spec changed at `e572aede`, so the plan digest changed from `6244a752` to `1cdbae9a`. The session applied the `ReadPlan` rule. The same rule at `6a88e82d` gives the earlier digest `6244a752`, which confirms the method. The payload keeps the earlier amendments and adds one amendment from `6244a752` to `1cdbae9a`. That amendment maps each chunk ID to itself, because the plan change at `e572aede` adds only the ticket 3 repair cycle 1 assignment. The QU-C1 and QU-C2 chunks keep the digests of their own tips.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/session-context-queries/spec.md",
-  "plan_digest": "sha256:6244a75248316eabb8a40057d601fe0e48324308a3f23854b083997610363842",
+  "plan_digest": "sha256:1cdbae9a4cc49752da076fbfcfc115b5d9d42f152f7512e140be292157976c8b",
   "implementation_session": "",
   "chunks": [
     {
@@ -2375,8 +2406,8 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 3. This i
       "id": "QU-C3",
       "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
       "tip": "ee78005bec1159b018ae3c9b890fe2a82b5998a6",
-      "plan_digest": "sha256:6244a75248316eabb8a40057d601fe0e48324308a3f23854b083997610363842",
-      "source_digest": "7e57e1157ff3178edf22930b925fd955f03ead9e",
+      "plan_digest": "sha256:1cdbae9a4cc49752da076fbfcfc115b5d9d42f152f7512e140be292157976c8b",
+      "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
       "acceptance_rows": [
         "QU11",
         "QU12",
@@ -2754,6 +2785,233 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 3. This i
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-debug.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,skills-index-command-adapters,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,8\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: command 'bench-debug' frontmatter carries disable-model-invocation though the invocation policy makes it model-invocable on Claude\"\nskips[0]{package,test,reason}:"
             }
           }
+        },
+        {
+          "id": "qu-c3-3-workflow-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/3-workflow@6fc8ff9b",
+            "digest": "sha256:63e7c2a95070fcb8b212d28391aecab3ab65c0aea4a65757a5a9c91c084d2bc6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,692\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-3-skills-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/3-skills@6fc8ff9b",
+            "digest": "sha256:472a895b89509a549a8f828fa577306a5abcfe1b30784015367f032941f50b4c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,8\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-skills",
+          "command": "bench test --check skills-index-command-adapters",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-3-budgets-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/3-budgets@6fc8ff9b",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-3-prose-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/3-prose@6fc8ff9b",
+            "digest": "sha256:b5f40331eca9046e7d54f119f56db0e46849c8d44b25673abb699ffa37b83015",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,131\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-package-conformance-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/package-conformance@6fc8ff9b",
+            "digest": "sha256:568e3378a8d2133abf8395f0245d2de62a6425edd9235bca4dec115b5c385e68",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,32894\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:"
+          },
+          "requirement": "package-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-anchors-package-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/anchors-package@6fc8ff9b",
+            "digest": "sha256:bacb59fdd28a3e579f355e3c51e71d16e27ec75b2df0cca64144e32615468b31",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,944\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "author-anchors-package",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-axi-guidance-bites-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/axi-guidance-bites@6fc8ff9b",
+            "digest": "sha256:472a895b89509a549a8f828fa577306a5abcfe1b30784015367f032941f50b4c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,8\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "author-axi-guidance-bites",
+          "command": "bench test --package ./internal/conformance --run TestAXIGuidanceContractBites",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-gate-prose-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/gate-prose@6fc8ff9b",
+            "digest": "sha256:4176425138d50c69a8de024f15026530b098f82dec27fc56616e862745c24c65",
+            "excerpt": "prose[3]{path,verdict}:\n  .agents/skills/bench-craft-cli/SKILL.md,pass\n  .agents/commands/bench-debug.md,pass\n  .agents/commands/bench-drain.md,pass"
+          },
+          "requirement": "author-gate-prose",
+          "command": "bench gate-prose . -- .agents/skills/bench-craft-cli/SKILL.md .agents/commands/bench-debug.md .agents/commands/bench-drain.md",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-anchors-debug-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/anchors-debug@6fc8ff9b",
+            "digest": "sha256:6fa400248d179579de9ec9d04589850f0bdccf42e4383e02c9e090d5006ac7e1",
+            "excerpt": "anchors[34]{kind,section,step,needle,line}:\n  require,\"\",0,diff-filter=D,131"
+          },
+          "requirement": "author-anchors-debug",
+          "command": "bench anchors .agents/commands/bench-debug.md",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-anchors-drain-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/anchors-drain@6fc8ff9b",
+            "digest": "sha256:97cf4a74f84efa44e7c31bad0e757c53bac7d5ae0a1709b7ed41b43e4d0e9da8",
+            "excerpt": "anchors[39]{kind,section,step,needle,line}:\n  require,\"\",0,Reconcile first,42"
+          },
+          "requirement": "author-anchors-drain",
+          "command": "bench anchors .agents/commands/bench-drain.md",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-anchors-cli-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/anchors-cli@6fc8ff9b",
+            "digest": "sha256:889632342fd309a9d68f68e57d6b9d3f8e71874c0c57a9e6e10d62daa47a0aff",
+            "excerpt": "anchors[3]{kind,section,step,needle,line}:\n  require,\"\",0,An ambiguous bare name answers its candidates with one re-query action per candidate row.,84\n  forbid,\"\",0,Only an over-cap default discloses,0\n  require,\"\",0,The active rows with a present tree share one `bench worktree path <target>` action and one `bench worktree exec <target> -- <command>` action.,88\nhelp[0]{cmd,why}:"
+          },
+          "requirement": "author-anchors-cli",
+          "command": "bench anchors .agents/skills/bench-craft-cli/SKILL.md",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-r1-probe-r2",
+          "performer": "claude:bench-writer/scq-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-1-20260929/r1-probe@6fc8ff9b",
+            "digest": "sha256:d9885381c5bac97decdf4c1fd43cb4551544592987dbb36d1ec3e0a83b4130ca",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-cli/SKILL.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestAXIGuidanceContractBites,passed,13\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,7\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestAXIGuidanceContractBites/omitted_member,\"axi_query_registry_test.go:203: mutation anchor \\\"| `bench worktree list` |\\\" count = 2, want 1\"\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "author-probe-R1-worktree-cell",
+          "command": "bench probe .agents/skills/bench-craft-cli/SKILL.md --swap '| The default `bench worktree list` view |' --with '| `bench worktree list` |' --package ./internal/conformance --run TestAXIGuidanceContractBites",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t3-repair-1-20260929/r1-probe@6fc8ff9b",
+              "digest": "sha256:d9885381c5bac97decdf4c1fd43cb4551544592987dbb36d1ec3e0a83b4130ca",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-cli/SKILL.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestAXIGuidanceContractBites,passed,13\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,7\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestAXIGuidanceContractBites/omitted_member,\"axi_query_registry_test.go:203: mutation anchor \\\"| `bench worktree list` |\\\" count = 2, want 1\"\nskips[0]{package,test,reason}:"
+            }
+          }
         }
       ],
       "reviews": [
@@ -2885,6 +3143,21 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 3. This i
     {
       "from": "sha256:94546d7283167eda11336ea2d54c2ff98bc1bc6aa47c556bc41b6a52db59a814",
       "to": "sha256:6244a75248316eabb8a40057d601fe0e48324308a3f23854b083997610363842",
+      "chunk_ids": {
+        "QU-C1": [
+          "QU-C1"
+        ],
+        "QU-C2": [
+          "QU-C2"
+        ],
+        "QU-C3": [
+          "QU-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6244a75248316eabb8a40057d601fe0e48324308a3f23854b083997610363842",
+      "to": "sha256:1cdbae9a4cc49752da076fbfcfc115b5d9d42f152f7512e140be292157976c8b",
       "chunk_ids": {
         "QU-C1": [
           "QU-C1"
