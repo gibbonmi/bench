@@ -80,19 +80,50 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 1, whose 
 | R4 | 1 | Assert the exact selected grammar usage for each `--target`-only case, and show that the dropped half now bites. |
 | R5 | 1 | Record each author probe as a verification entry with its exact `bench probe` command and output, and relabel the QU18 row with the detail-route mutation. |
 
+## QU-C1 ticket 1 repair evidence, cycle 1
+
+The session `claude:bench-writer/scq-t1-repair-1` ran on opus at high effort, with a cap of 3 attempts. It started at `c20b8e33` and committed `5dabe9b0` on a lane pass in the first attempt. This repair is cycle 1 of the two repair cycles for chunk QU-C1.
+
+- R1: `list.go` owns `assignmentsReadRefusal`, and `path.go` owns `errTargetControls`. The selected view reads both owners. The selected view owns its stored-path refusal, `selectedPathUnrepresentable`. The copy in `merge.go` stays, because that file is outside the fence.
+- R2: each cited expectation now reads its owner. The partial-failure test reads `errTargetUnassigned` and the ambiguity error that `selectAssignment` returns for the shared label. The bare help reads `worktreeListGrammar.Help`, the detail route reads `usage.WorktreeList`, and the stored-path row reads `selectedPathUnrepresentable`.
+- R3: the QU26 comment keeps the derivation of 6 lines and no longer argues the red. The spec keeps that red.
+- R4: each grammar case now asserts its exact usage line. The TOON usage renderers, the usage constants, and the selected grammar help build each line. The bare grammar refuses `--target` as an unknown argument, so the two `--target`-only cases fail when the selected route misses. The probe that omits the `--target` half of `selectsWorktrees` now bites. In round 1, the Coverage axis showed that the same mutation stayed silent.
+- R5: each author probe now has a verification entry with its exact `bench probe` command and a verbatim output excerpt. The QU18 probe now swaps the detail action `list` to `path`, and `TestSelectedWorktreeDetailRoute` catches it.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` at the repair source. Each probe bit, and each restore reads `yes`. The JSON payload holds the exact command of each probe. The first row is the plan probe `1-state-probe`.
+
+| Target | File | Mutation | Failed tests |
+|---|---|---|---|
+| QU1 | `internal/worktree/list_selected.go` | swap: `string(selected.State)` to `string(intent.StateActive)` | TestSelectedWorktreeFacts |
+| R4 | `internal/worktree/list_selected.go` | omission: the `--target` half of `selectsWorktrees` | TestSelectedWorktreeGrammar |
+| QU9 | `internal/worktree/list.go` | swap: `return out + help, 0` to `return help + out, 0` | five subtests of TestSelectedWorktreesPreserveDefault |
+| QU3 | `internal/worktree/list_selected.go` | swap: `if seenIDs[selected.ID] {` to `if false {` | TestSelectedWorktreeAliases and four subtests of TestSelectedWorktreeHostilePath |
+| QU26 | `internal/worktree/list_selected.go` | swap: add a second help action after the `list` action | TestSelectedWorktreeWithinResponseBound, which counted 7 lines |
+| QU18 | `internal/worktree/list_selected.go` | swap: `axi.KnownArgument("list"))})` to `axi.KnownArgument("path"))})` | TestSelectedWorktreeDetailRoute |
+
+### Verification
+
+The session ran each QU-C1 plan verification on the source of `5dabe9b0`, and each passed. The bare-matrix excerpt omits its two skip rows. Each skip is an environment capability skip for unix sockets. The session also ran `bench test --package` on `./internal/conformance`, `./internal/worktree`, `./internal/usage`, and `./cmd/bench`, and each passed. The conformance run had three capability skips, and the worktree run had two.
+
+The chunk tip is now the repair commit `5dabe9b0`. The source digest is the tree of `5dabe9b0` without this record file. The record commit changes only this file, so the digest stays the same at the record commit. `bench preflight review` does not print the digest. The session therefore applied the `SourceDigest` rule: read the tree into a temporary index, remove the record path, and write the tree. The same steps at `a5a527c8` give the round 1 digest `38ce13f3`, which confirms the method.
+
+The spec changed at `c20b8e33`, so the plan digest changed. The session applied the `ReadPlan` rule. The digest is the SHA-256 of a JSON array that holds the spec bytes and the three ticket bytes in plan order, each as base64. The same rule at `0e94692d` gives the earlier digest `48ff3619`, which confirms the method. The round 1 entries keep their earlier source digest as history.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/session-context-queries/spec.md",
-  "plan_digest": "sha256:48ff3619814e6377b7425a7faa8366aa66f4387386f07421a97bed71e08742b2",
+  "plan_digest": "sha256:f9fea3c85e266e859b0c4e9edb5774fbda605a5695653938479cb0dfaf6dfdb7",
   "implementation_session": "",
   "chunks": [
     {
       "id": "QU-C1",
       "base": "12c7d857c6fe14e03c618c1584d3374371068277",
-      "tip": "a5a527c8425cafe6eac17c7515bd328e6ba7d65d",
-      "plan_digest": "sha256:48ff3619814e6377b7425a7faa8366aa66f4387386f07421a97bed71e08742b2",
-      "source_digest": "38ce13f3f0ef7c3764e0ce9b7048bcaea8436850",
+      "tip": "5dabe9b0ad3f873c2b756e2f56f3751229a4c7cd",
+      "plan_digest": "sha256:f9fea3c85e266e859b0c4e9edb5774fbda605a5695653938479cb0dfaf6dfdb7",
+      "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
       "acceptance_rows": [
         "QU1",
         "QU2",
@@ -185,6 +216,306 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 1, whose 
               "ref": "claude:agent/scq-t1-author-20260928/1-state-probe@7c258f25",
               "digest": "sha256:c559177136fb05e5aa5d1d92ffb2e9eccde2316a06566cf1f1694d306cbbce3b",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreeFacts,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,168"
+            }
+          }
+        },
+        {
+          "id": "qu-c1-1-worktree-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/1-worktree@5dabe9b0",
+            "digest": "sha256:f6e97e5ac6a4f441d9265e510277e640a12bd575dc775e6dcba2ba6a2af945d4",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,777\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-worktree",
+          "command": "bench test --package ./internal/worktree --run TestSelected",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c1-1-bare-matrix-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/1-bare-matrix@5dabe9b0",
+            "digest": "sha256:78c4a69acc9f00daa8d90ef4e869141426b98bac3918557e97c24efd341add3b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,4188\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "1-bare-matrix",
+          "command": "bench test --package ./internal/worktree --run 'TestList|TestPath|TestCleanLanded|TestLanded|TestUnlanded|TestParallelCensusOnTheLiveTree|TestSerialSetStaysBelowTheCeiling|TestPackage'",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c1-1-command-route-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/1-command-route@5dabe9b0",
+            "digest": "sha256:bc5d9c693df8b4c8c83c134577c8074058deb01c6b30f9828a33e0c8ea79f1a5",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,1993\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-command-route",
+          "command": "bench test --package ./cmd/bench --run 'TestSelected|TestCommandRegistryAXI|TestAXIRegistry|TestHelp|TestKept|TestWorktree'",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c1-1-state-probe-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/1-state-probe@5dabe9b0",
+            "digest": "sha256:c55e0f0a1f4a87f1929f242f58239b73a46b8dec834b925c9200ea5a126bfd53",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreeFacts,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,158\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "1-state-probe",
+          "command": "bench probe internal/worktree/list_selected.go --swap 'string(selected.State)' --with 'string(intent.StateActive)' --package ./internal/worktree --run TestSelectedWorktreeFacts",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t1-repair-1-20260928/1-state-probe@5dabe9b0",
+              "digest": "sha256:c55e0f0a1f4a87f1929f242f58239b73a46b8dec834b925c9200ea5a126bfd53",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreeFacts,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,158\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c1-package-conformance-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/package-conformance@5dabe9b0",
+            "digest": "sha256:16491fd9244d7c2434fa5c630ad4c80305a039783ea1648fc85ac698eb9c7e76",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,35276\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:"
+          },
+          "requirement": "package-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c1-package-worktree-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/package-worktree@5dabe9b0",
+            "digest": "sha256:8f5512dcfbcceb2047c290b3b844587ece47a6f13edd9c03b58e20c6f0f16ba2",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,51600\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "package-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c1-package-usage-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/package-usage@5dabe9b0",
+            "digest": "sha256:489a0e3e84df961e64996a7446fd5a006fad20c6193cd1d255d673c5e5427c1d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/usage,pass,2\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "package-usage",
+          "command": "bench test --package ./internal/usage",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c1-package-cmd-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/package-cmd@5dabe9b0",
+            "digest": "sha256:75bc4f17768213043b6cbc71d4515976f2cf2be21067f24637a96499b5357a28",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,12639\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "package-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c1-r4-target-route-probe-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/r4-target-route-probe@5dabe9b0",
+            "digest": "sha256:63ae3c2b1472b91b4fad0459e92a94678b47fa256b9a21fb3cb46e3a11132462",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreeGrammar,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,4\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-R4",
+          "command": "bench probe internal/worktree/list_selected.go --omit ' || usage.FlagPresent(selectedWorktreeGrammar, args, \"--target\")' --package ./internal/worktree --run TestSelectedWorktreeGrammar",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t1-repair-1-20260928/r4-target-route-probe@5dabe9b0",
+              "digest": "sha256:63ae3c2b1472b91b4fad0459e92a94678b47fa256b9a21fb3cb46e3a11132462",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreeGrammar,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,4\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c1-qu9-probe-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/qu9-probe@5dabe9b0",
+            "digest": "sha256:7cb6a15b4fec6f51e0d20370efc3a52f535894b66d906a11f7b2690d5609151a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list.go,swap,failed,5,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreesPreserveDefault,passed,7\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,270\nfailures[5]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU9",
+          "command": "bench probe internal/worktree/list.go --swap 'return out + help, 0' --with 'return help + out, 0' --package ./internal/worktree --run TestSelectedWorktreesPreserveDefault",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t1-repair-1-20260928/qu9-probe@5dabe9b0",
+              "digest": "sha256:7cb6a15b4fec6f51e0d20370efc3a52f535894b66d906a11f7b2690d5609151a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list.go,swap,failed,5,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreesPreserveDefault,passed,7\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,270\nfailures[5]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c1-qu3-probe-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/qu3-probe@5dabe9b0",
+            "digest": "sha256:40f6f363529d51095e2cdb854808ffd025b24858f1e377273d0936d0cb3149c7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,swap,failed,5,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreeHostilePath|TestSelectedWorktreeAliases,passed,6\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,692\nfailures[5]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU3",
+          "command": "bench probe internal/worktree/list_selected.go --swap 'if seenIDs[selected.ID] {' --with 'if false {' --package ./internal/worktree --run 'TestSelectedWorktreeHostilePath|TestSelectedWorktreeAliases'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t1-repair-1-20260928/qu3-probe@5dabe9b0",
+              "digest": "sha256:40f6f363529d51095e2cdb854808ffd025b24858f1e377273d0936d0cb3149c7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,swap,failed,5,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreeHostilePath|TestSelectedWorktreeAliases,passed,6\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,692\nfailures[5]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c1-qu26-probe-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/qu26-probe@5dabe9b0",
+            "digest": "sha256:24d013954e3ade6c60ef5347820e993a75b4459b65c129b1d8da7a572c38e025",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestSelectedWorktreeWithinResponseBound,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,62\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU26",
+          "command": "bench probe internal/worktree/list_selected.go --swap 'axi.KnownArgument(\"list\"))})' --with 'axi.KnownArgument(\"list\")), axi.ExecutableInvocation(\"probe an added help action\", axi.KnownArgument(\"help\"))})' --package ./cmd/bench --run TestSelectedWorktreeWithinResponseBound",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t1-repair-1-20260928/qu26-probe@5dabe9b0",
+              "digest": "sha256:24d013954e3ade6c60ef5347820e993a75b4459b65c129b1d8da7a572c38e025",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestSelectedWorktreeWithinResponseBound,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,62\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c1-qu18-probe-r2",
+          "performer": "claude:bench-writer/scq-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t1-repair-1-20260928/qu18-probe@5dabe9b0",
+            "digest": "sha256:ea69fd11b25f9a223df3f4e9165d2fd2be0ccaf938584f03f23a70b1fc74e2f2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreeDetailRoute,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,152\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU18",
+          "command": "bench probe internal/worktree/list_selected.go --swap 'axi.KnownArgument(\"list\"))})' --with 'axi.KnownArgument(\"path\"))})' --package ./internal/worktree --run TestSelectedWorktreeDetailRoute",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t1-repair-1-20260928/qu18-probe@5dabe9b0",
+              "digest": "sha256:ea69fd11b25f9a223df3f4e9165d2fd2be0ccaf938584f03f23a70b1fc74e2f2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/list_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestSelectedWorktreeDetailRoute,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,152\nfailures[1]{package,test,line}:"
             }
           }
         }
