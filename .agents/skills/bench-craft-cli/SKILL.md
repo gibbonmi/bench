@@ -110,7 +110,7 @@ Keep the source identity with each result, so that its complete detail stays rec
 
 Capture the output and exit status of a non-Bench command once, because a rerun can change the evidence.
 Batch the independent archive and log discovery reads.
-Fetch only the relevant bodies after that discovery.
+After that discovery, fetch only the relevant bodies.
 Keep polling, mutation, verification, approval, and publication as separate operations.
 
 ## Conformance
