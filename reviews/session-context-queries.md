@@ -747,7 +747,7 @@ The spec changed at `3704d6b4`, so the plan digest changed. The author applied t
     {
       "id": "QU-C2",
       "base": "af66f28584c2ee8507fa350bedea483500a05e72",
-      "tip": "be5f882d10cf9500166b5b9c03364b8c54f3bcb3",
+      "tip": "5f69aebda023509c341cb4dae00fedabe9123c49",
       "plan_digest": "sha256:3f398b8941d8bd9961b643b3be948be65c4ff159bec5e0708e26575152510a9c",
       "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
       "acceptance_rows": [
