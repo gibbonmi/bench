@@ -2460,7 +2460,7 @@ The spec changed at `ee8621ab`, so the plan digest changed from `1cdbae9a` to `0
     {
       "id": "QU-C3",
       "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
-      "tip": "6a686c5fc25d07ba9a0f60599ee42d0b0b5789be",
+      "tip": "967727e3b6cfd69b6922ea53b550622a3569f73d",
       "plan_digest": "sha256:049050e1555e3c60f58dbf417780c64adc02b086723170691fa2a5e8640af0f2",
       "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
       "acceptance_rows": [
