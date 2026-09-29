@@ -180,6 +180,39 @@ The author ran each TT-C2 plan verification on the source of `e43254d5`, and eac
 
 A verbose run of each census test showed that the test ran and passed. After the commit and the worktree build, `bench preflight build tree-targets` reported 14 green checks, 1 check that does not apply, and 0 red checks.
 
+## TT-C2 chunk review, round 1
+
+The frozen pair is base `196e1cda291a9d974f881435f6e1284b1838b241` and tip `c8b9bb94eb15029a84abd137e1fbac93e8990480`. The shared evidence is `sha256:c69050cd5095eff839318373b2c019d536391f96ff3e71d7cbfef921a4ff6c30`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort. Only the Coverage axis ran probes, and it left the tree clean.
+
+The raw finding count is 2: Standards 1, Spec 0, and Coverage 1. The coordinator classifies the Standards item as advice, because row tags in test doc comments are the tree convention, as the TT-C1 review also found. The coordinator adds one target that every author of this ticket shares. So 2 repair targets remain.
+
+## Standards
+
+Findings: 0 after classification. The axis reported the `(TT51)` row tag in the new test doc comment at `internal/gate/kit_source_test.go:38`. More than 20 test files use row tags in this way, so the tag stays.
+
+## Spec
+
+Findings: 0. TT51 and TT52 are met, and the three recorded deviations are acceptable.
+
+## Coverage
+
+Findings: 1. The worst issue is that no test pins the resolve-error rule.
+
+- Spec lines 276-277 say "A resolve error answers no match." A probe that swapped `return resolved, err == nil` for `_ = err; return resolved, true` in `internal/gate/kit_source.go` stayed silent. With a deleted working directory, `BENCH_KIT` set to `.`, and the root `.`, both resolves fail, and the mutant answers true. Target R1, `auto-fix`, confidence 6.
+
+## TT-C2 coordinator additions
+
+- R2: the new test pins only the positive relative case. In another author's tree for this ticket, a probe that resolved a relative kit against the root and not the working directory stayed silent. With `BENCH_KIT` set to `.`, every root would then count as the kit source. The same positive-only test is in this tree. `auto-fix`.
+
+## TT-C2 repair routing
+
+Each repair goes to one fresh `bench-writer` repair session for ticket 2 on opus at high effort. Ticket 2's `Writes:` line holds every path. This is cycle 1 of the two repair cycles for chunk TT-C2, and it is the chunk's one hardening cycle.
+
+| Target | Ticket | Repair |
+|---|---|---|
+| R1 | 2 | Pin the resolve-error rule with a test that makes a resolve fail, and show that the probe above now bites. |
+| R2 | 2 | Pin that a relative `BENCH_KIT` resolves against the working directory: with the directory elsewhere, `KitSourceCheckout(root)` answers false. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -651,7 +684,7 @@ A verbose run of each census test showed that the test ran and passed. After the
     {
       "id": "TT-C2",
       "base": "196e1cda291a9d974f881435f6e1284b1838b241",
-      "tip": "e43254d58037b0033b3bb9328961a9f5448ba7c0",
+      "tip": "c8b9bb94eb15029a84abd137e1fbac93e8990480",
       "plan_digest": "sha256:ab6c7f85535262e57e3235e5da67d2460d1b56586d98b7ce78c6a487073539fb",
       "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
       "acceptance_rows": [
@@ -765,7 +798,70 @@ A verbose run of each census test showed that the test ran and passed. After the
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "tt-c2-standards-r1",
+          "performer": "claude:bench-reviewer/tt-c2-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c2-standards-r1@c8b9bb94",
+            "digest": "sha256:cd216dc517b69fdccdfbc6d81170c4adf06ee6dfb62fe5259c168a90cf6e46db",
+            "excerpt": "Standards: 1 item, classified as advice by the coordinator. The new test doc comment carries a row tag, which the tree uses in more than 20 test files."
+          },
+          "axis": "Standards",
+          "base": "196e1cda291a9d974f881435f6e1284b1838b241",
+          "tip": "c8b9bb94eb15029a84abd137e1fbac93e8990480",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "tt-c2-spec-r1",
+          "performer": "claude:bench-reviewer/tt-c2-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c2-spec-r1@c8b9bb94",
+            "digest": "sha256:964b583f87b5e59b3d03729acbb796195fe6cc03d7e826a7000b70cc96302976",
+            "excerpt": "Spec: 0 findings. TT51 and TT52 are met, and the three recorded deviations are acceptable."
+          },
+          "axis": "Spec",
+          "base": "196e1cda291a9d974f881435f6e1284b1838b241",
+          "tip": "c8b9bb94eb15029a84abd137e1fbac93e8990480",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "tt-c2-coverage-r1",
+          "performer": "claude:bench-reviewer/tt-c2-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "673171b5be48cb53a7038841dc6fe6cd56c7a727",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c2-coverage-r1@c8b9bb94",
+            "digest": "sha256:883be48740407f42cb1a7459945ac9b4fa8304bca2145f037bdb94150069786b",
+            "excerpt": "Coverage: 1 finding. Worst: nothing guards the spec's resolve-error rule, and a mutation that removes it stays green."
+          },
+          "axis": "Coverage",
+          "base": "196e1cda291a9d974f881435f6e1284b1838b241",
+          "tip": "c8b9bb94eb15029a84abd137e1fbac93e8990480",
+          "finding_ids": [
+            "R1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
