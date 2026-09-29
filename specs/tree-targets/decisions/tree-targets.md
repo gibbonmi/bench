@@ -25,7 +25,7 @@ Canonical terms for this map:
 The lifecycle verbs keep `<target>` for their worktree operand; that operand is not a tree target.
 
 A map-owned asset stays in the map's assets folder,
-decisions/tree-targets/assets/.
+specs/tree-targets/decisions/tree-targets/assets/.
 
 ## Decisions so far
 
