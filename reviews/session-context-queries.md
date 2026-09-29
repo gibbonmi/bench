@@ -199,6 +199,8 @@ The author applied the `SourceDigest` rule to the tree of `be5f882d`. The rule r
 
 The spec changed at `3704d6b4`, so the plan digest changed. The author applied the `ReadPlan` rule. The digest is the SHA-256 of a JSON array that holds the spec bytes and the three ticket bytes in plan order, each as base64. The same rule at `a2c71f7a` gives the earlier digest `f9fea3c8`, which confirms the method. The QU-C1 chunk keeps the digest of its own tip.
 
+The checkpoint gate refused the first record with `stale plan amendment`, because the QU-C1 tip carries the earlier plan. The payload now has one amendment from `f9fea3c8` to `3f398b89`, and it maps each chunk ID to itself. The plan delta at `3704d6b4` adds only the ticket 2 author assignment, so no chunk changes its tickets, rows, or verification.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1457,6 +1459,23 @@ The spec changed at `3704d6b4`, so the plan digest changed. The author applied t
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:f9fea3c85e266e859b0c4e9edb5774fbda605a5695653938479cb0dfaf6dfdb7",
+      "to": "sha256:3f398b8941d8bd9961b643b3be948be65c4ff159bec5e0708e26575152510a9c",
+      "chunk_ids": {
+        "QU-C1": [
+          "QU-C1"
+        ],
+        "QU-C2": [
+          "QU-C2"
+        ],
+        "QU-C3": [
+          "QU-C3"
+        ]
+      }
+    }
+  ]
 }
 ```
