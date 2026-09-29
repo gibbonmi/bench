@@ -399,11 +399,50 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 3 on opus
 | R2 | 3 | Test an exempt tree-scoped call that exits 2, with no row on either stream. |
 | R3 | 3 | Test that the row names the tree state from before the verb, with a planted verb that moves HEAD. |
 
+## TT-C3 ticket 3 repair evidence, cycle 1
+
+The session `claude:bench-writer/tt-t3-repair-1` ran on opus at high effort, with a cap of 3 attempts. It started at `fe44447f` and committed `744ef656` on a lane pass in the first attempt. This repair is cycle 1 of the two repair cycles for chunk TT-C3.
+
+- R1: `treetarget.Row` escapes a target label that fails `sanitize.LineSafe` through `sanitize.Controls`, so the row always prints. The predicate is the one that `internal/worktree/list_selected.go` uses for a hostile operand. A pointer such as `target-1` names a request ordinal, and a row has no request, so the label prints escaped. `sanitize.Strip` could make a hostile label read as `primary`, so the session did not use it. `TestRowEscapesHostileLabel` records a ledger label with a BEL byte and asserts the escaped cell and no raw control byte. The coordinator flagged the rendering choice for reviewer veto.
+- R2: `TestExemptTreeRowFollowsExitRule` runs one planted exempt tree-scoped verb at exit 1 and at exit 2. At exit 1, stderr holds the row, so the checkout prints a row. At exit 2, neither stream holds a `tree[` line. The review probe for R2 was silent in round 1. It now bites.
+- R3: `TestTreeRowPrecedesVerb` plants a tree-scoped verb that writes an untracked file. On the bounded path and on the exempt path, the row still reads `dirty` `false`. The review probe for R3 was silent in round 1. It now bites, and a second probe that computes the exempt row after the verb also bites.
+
+`plantedTreeVerb` now takes a bound disposition and a handler, so four row tests share one planted registry. The new `exitingHandler` repeats the three-line closure in `runBoundFixture` of `cmd/bench/response_bound_test.go`. That file is outside the ticket 3 fence, so the session did not fold the two. The sweep of duplicated facts found no other second source. The independent expectations are the escaped cell, the exit 1 row, no row at exit 2, and the clean row after a dirtying verb. The probes below record a red for each.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` on the source of `744ef656`, and each restore reads `yes`. The JSON payload holds the exact command and output of each probe. The first row is the plan probe `3-unassigned-probe`, which the session ran again with the exact plan command.
+
+| Target | File | Mutation | Test | Verdict |
+|---|---|---|---|---|
+| TT13, TT14 | `internal/treetarget/identify.go` | swap: `"unassigned"` to `"primary"` | TestIdentifyUnownedWorktree | bit |
+| R1 | `internal/treetarget/identify.go` | swap: the `LineSafe` condition to `false && …` | TestRowEscapesHostileLabel | bit |
+| R2 | `cmd/bench/tree_scope.go` | swap: `shownRow(row, exit)` to `row` in `finishExempt` | TestExemptTreeRowFollowsExitRule | bit |
+| R2 | `cmd/bench/tree_scope.go` | swap: `if exit == 2 {` to `if exit != 0 {` | TestExemptTreeRowFollowsExitRule | bit |
+| R3 | `cmd/bench/census_output.go` | swap: `row` to `definition.treeRow(args)` in the owner lead | TestTreeRowPrecedesVerb | bit |
+| R3 | `cmd/bench/command_registry.go` | swap: compute the exempt row after the verb | TestTreeRowPrecedesVerb | bit |
+
+The two review probes for R2 and R3 ran on all of `./cmd/bench`, and each failed only the new test.
+
+### Verification
+
+The session ran each TT-C3 plan verification on the source of `744ef656`, and each passed. The JSON payload holds each result. The session also ran these checks on the same source, and each passed:
+
+- `bench test --check system`;
+- `bench structure --growth f981cd3d`, which reported that no source file grew past its budget;
+- `gofmt -l` on the changed packages.
+
+The first post-commit preflight reported `binary-seal` red, because the worktree build was older than the source. After `bench worktree build`, `bench preflight build tree-targets` reported 14 green checks, 1 check that does not apply, and 0 red checks.
+
+The chunk tip is now the repair commit `744ef656`. The source digest is the tree of `744ef656` without this record file, which is `564566b2`. The same rule at `5444f36a` gives the round 1 digest `8bf44343`, which confirms the method.
+
+The spec changed at `fe44447f`, so the plan digest changed from `ea3ee9d0` to `51bdf6fe`. The `ReadPlan` rule at `156beff0` gives `ea3ee9d0`, which confirms the method. The payload adds one amendment that maps each chunk ID to itself, because no chunk ID changed. The TT-C1 and TT-C2 chunks keep the digests of their own tips. The round 1 entries keep their earlier source digest as history.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/tree-targets/spec.md",
-  "plan_digest": "sha256:ea3ee9d0bf9cd3b6386e8aff692c80c514b0ee1075b723a9256ba5a30f8d0430",
+  "plan_digest": "sha256:51bdf6fe67e2a33a0106d4f13992621fbee9b36369e2c1c19dd499a8582856e3",
   "implementation_session": "",
   "chunks": [
     {
@@ -1223,9 +1262,9 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 3 on opus
     {
       "id": "TT-C3",
       "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
-      "tip": "5444f36ac57e3310026b62439bcf7648d49871df",
-      "plan_digest": "sha256:ea3ee9d0bf9cd3b6386e8aff692c80c514b0ee1075b723a9256ba5a30f8d0430",
-      "source_digest": "8bf4434336ae7fb7c412c3cde6930803bbe93b01",
+      "tip": "744ef656c2ca44264fe806267abbc6c46d4dc287",
+      "plan_digest": "sha256:51bdf6fe67e2a33a0106d4f13992621fbee9b36369e2c1c19dd499a8582856e3",
+      "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
       "acceptance_rows": [
         "TT10",
         "TT11",
@@ -1446,6 +1485,234 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 3 on opus
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeRowLeadsTreeResponse,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,20"
             }
           }
+        },
+        {
+          "id": "tt-c3-3-cmd-r2",
+          "performer": "claude:bench-writer/tt-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-repair-1-20260929/3-cmd@744ef656",
+            "digest": "sha256:5eb85dd2dc451b0c96b38206d8df9517571cb0928b4f0636d81e20d6db3d9114",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13480\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c3-3-treetarget-r2",
+          "performer": "claude:bench-writer/tt-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-repair-1-20260929/3-treetarget@744ef656",
+            "digest": "sha256:639b706779298abc145a0e675fd3def5df15c324c4f707dd4e280d349cf7873f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,pass,172\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-treetarget",
+          "command": "bench test --package ./internal/treetarget",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c3-3-responsebound-r2",
+          "performer": "claude:bench-writer/tt-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-repair-1-20260929/3-responsebound@744ef656",
+            "digest": "sha256:8c1f8bc69daea97ad2fc2fa98df0e2306d2fbd59f3128b89c4df97188e4a437d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,268\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-responsebound",
+          "command": "bench test --package ./internal/responsebound",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c3-3-unassigned-probe-r2",
+          "performer": "claude:bench-writer/tt-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-repair-1-20260929/3-unassigned-probe@744ef656",
+            "digest": "sha256:bd6a7cad29435f241c06ba9eb4ebf9c48af94713cff4652fef179e60999866c1",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestIdentifyUnownedWorktree,passed,3\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,48"
+          },
+          "requirement": "3-unassigned-probe",
+          "command": "bench probe internal/treetarget/identify.go --swap '\"unassigned\"' --with '\"primary\"' --package ./internal/treetarget --run TestIdentifyUnownedWorktree",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-repair-1-20260929/3-unassigned-probe@744ef656",
+              "digest": "sha256:bd6a7cad29435f241c06ba9eb4ebf9c48af94713cff4652fef179e60999866c1",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestIdentifyUnownedWorktree,passed,3\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,48"
+            }
+          }
+        },
+        {
+          "id": "tt-c3-repair-probe-r1-hostile-label-r2",
+          "performer": "claude:bench-writer/tt-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-repair-1-20260929/r1-hostile-label-probe@744ef656",
+            "digest": "sha256:b7d039e0d721c873fcc235600faf27dc0e8221b79652844047e43c0df6d4839a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRowEscapesHostileLabel,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,40\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRowEscapesHostileLabel,\"identify_test.go:90: hostile label row = (\\\"\\\", toon: unsupported control character U+0007 in string), ..."
+          },
+          "requirement": "repair-probe-R1-hostile-label",
+          "command": "bench probe internal/treetarget/identify.go --swap '\tif !sanitize.LineSafe(target) {' --with '\tif false && !sanitize.LineSafe(target) {' --package ./internal/treetarget --run TestRowEscapesHostileLabel",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-repair-1-20260929/r1-hostile-label-probe@744ef656",
+              "digest": "sha256:b7d039e0d721c873fcc235600faf27dc0e8221b79652844047e43c0df6d4839a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/identify.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRowEscapesHostileLabel,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,40\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRowEscapesHostileLabel,\"identify_test.go:90: hostile label row = (\\\"\\\", toon: unsupported control character U+0007 in string), ..."
+            }
+          }
+        },
+        {
+          "id": "tt-c3-repair-probe-r2-exempt-exit2-r2",
+          "performer": "claude:bench-writer/tt-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-repair-1-20260929/r2-exempt-exit2-probe@744ef656",
+            "digest": "sha256:9160321bccd66ade4d48f658c6fc870a7ae5f9b2ad4041159bd034200c6ea498",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,all,passed,322\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,16945\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/cmd/bench,TestExemptTreeRowFollowsExitRule,\"tree_scope_test.go:184: exempt exit 2 = (2, ..."
+          },
+          "requirement": "repair-probe-R2-exempt-exit2",
+          "command": "bench probe cmd/bench/tree_scope.go --swap 'fmt.Fprint(c.Stderr, shownRow(row, exit))' --with 'fmt.Fprint(c.Stderr, row)' --package ./cmd/bench",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-repair-1-20260929/r2-exempt-exit2-probe@744ef656",
+              "digest": "sha256:9160321bccd66ade4d48f658c6fc870a7ae5f9b2ad4041159bd034200c6ea498",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,all,passed,322\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,16945\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/cmd/bench,TestExemptTreeRowFollowsExitRule,\"tree_scope_test.go:184: exempt exit 2 = (2, ..."
+            }
+          }
+        },
+        {
+          "id": "tt-c3-repair-probe-r2-exit1-control-r2",
+          "performer": "claude:bench-writer/tt-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-repair-1-20260929/r2-exit1-control-probe@744ef656",
+            "digest": "sha256:9dc5d0cc7ac9f78be47eada48f1adf12f66db9e06434e84e381ece63a33513f8",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestExemptTreeRowFollowsExitRule,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,17\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/cmd/bench,TestExemptTreeRowFollowsExitRule,\"tree_scope_test.go:180: exempt exit 1 = (1, ..."
+          },
+          "requirement": "repair-probe-R2-exit1-control",
+          "command": "bench probe cmd/bench/tree_scope.go --swap 'if exit == 2 {' --with 'if exit != 0 {' --package ./cmd/bench --run TestExemptTreeRowFollowsExitRule",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-repair-1-20260929/r2-exit1-control-probe@744ef656",
+              "digest": "sha256:9dc5d0cc7ac9f78be47eada48f1adf12f66db9e06434e84e381ece63a33513f8",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestExemptTreeRowFollowsExitRule,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,17\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/cmd/bench,TestExemptTreeRowFollowsExitRule,\"tree_scope_test.go:180: exempt exit 1 = (1, ..."
+            }
+          }
+        },
+        {
+          "id": "tt-c3-repair-probe-r3-bounded-after-r2",
+          "performer": "claude:bench-writer/tt-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-repair-1-20260929/r3-bounded-after-probe@744ef656",
+            "digest": "sha256:3692c62f5111c79f344103b9089a9caf16e89fed387118113d3de3fab9147691",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/census_output.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,all,passed,322\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,15134\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/cmd/bench,TestTreeRowPrecedesVerb,\"tree_scope_test.go:197: bounded dirtying verb = (0, ..."
+          },
+          "requirement": "repair-probe-R3-bounded-after",
+          "command": "bench probe cmd/bench/census_output.go --swap 'owner.Lead(shownRow(row, exit))' --with 'owner.Lead(shownRow(definition.treeRow(args), exit))' --package ./cmd/bench",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-repair-1-20260929/r3-bounded-after-probe@744ef656",
+              "digest": "sha256:3692c62f5111c79f344103b9089a9caf16e89fed387118113d3de3fab9147691",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/census_output.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,all,passed,322\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,15134\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/cmd/bench,TestTreeRowPrecedesVerb,\"tree_scope_test.go:197: bounded dirtying verb = (0, ..."
+            }
+          }
+        },
+        {
+          "id": "tt-c3-repair-probe-r3-exempt-after-r2",
+          "performer": "claude:bench-writer/tt-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t3-repair-1-20260929/r3-exempt-after-probe@744ef656",
+            "digest": "sha256:dff5feaef5f3854751bcf06a32a8f3b5a7f4388ad0ed008d7754c8243561ee9d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/command_registry.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeRowPrecedesVerb,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,37\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/cmd/bench,TestTreeRowPrecedesVerb,\"tree_scope_test.go:201: exempt dirtying verb = (0, ..."
+          },
+          "requirement": "repair-probe-R3-exempt-after",
+          "command": "bench probe cmd/bench/command_registry.go --swap 'return c.finishExempt(row, definition.run(c, args[1:]))' --with 'exit := definition.run(c, args[1:]); return c.finishExempt(definition.treeRow(args[1:]), exit)' --package ./cmd/bench --run TestTreeRowPrecedesVerb",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t3-repair-1-20260929/r3-exempt-after-probe@744ef656",
+              "digest": "sha256:dff5feaef5f3854751bcf06a32a8f3b5a7f4388ad0ed008d7754c8243561ee9d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/command_registry.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeRowPrecedesVerb,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,37\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/cmd/bench,TestTreeRowPrecedesVerb,\"tree_scope_test.go:201: exempt dirtying verb = (0, ..."
+            }
+          }
         }
       ],
       "reviews": [
@@ -1564,6 +1831,24 @@ Each repair goes to one fresh `bench-writer` repair session for ticket 3 on opus
     {
       "from": "sha256:834182d7bb87b440ee0493ba5fd18fb70360c237bae9e7a24acfe73bc8fc91a0",
       "to": "sha256:ea3ee9d0bf9cd3b6386e8aff692c80c514b0ee1075b723a9256ba5a30f8d0430",
+      "chunk_ids": {
+        "TT-C1": [
+          "TT-C1"
+        ],
+        "TT-C2": [
+          "TT-C2"
+        ],
+        "TT-C3": [
+          "TT-C3"
+        ],
+        "TT-C4": [
+          "TT-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ea3ee9d0bf9cd3b6386e8aff692c80c514b0ee1075b723a9256ba5a30f8d0430",
+      "to": "sha256:51bdf6fe67e2a33a0106d4f13992621fbee9b36369e2c1c19dd499a8582856e3",
       "chunk_ids": {
         "TT-C1": [
           "TT-C1"
