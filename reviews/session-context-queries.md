@@ -273,6 +273,34 @@ The chunk tip is now the first record commit of this section. The source digest 
 
 The spec and ticket 2 changed at `c000539f`, so the plan digest changed from `3f398b89` to `3b519948`. The session applied the `ReadPlan` rule. The same rule at `f4927b60` gives the earlier digest `3f398b89`, which confirms the method. The payload keeps the earlier amendment and adds one amendment from `3f398b89` to `3b519948`. That amendment maps each chunk ID to itself, because the plan change at `c000539f` changes only the ticket 2 fence and its assignments. The QU-C1 chunk keeps the digest of its own tip.
 
+## QU-C2 chunk review, round 2
+
+The frozen pair is base `af66f28584c2ee8507fa350bedea483500a05e72` and tip `85286d10941fd081c775d5c133cbb1e32b4d8f65`. The chunk tip moves to that last record commit, and the source digest stays the same. The shared evidence is `sha256:1acacfccfc6a6e5704437790841cfd582c081d5851ab6b497d3733ef967a84b8`. Each axis ran in a new fresh `bench-reviewer` session on opus at high effort, and each read only the repair delta `c000539f..85286d10`. Only the Coverage axis ran probes, and it left the tree clean.
+
+## Standards
+
+Findings: 1. The worst issue is that the R2 fold adds a second owner of test repository setup.
+
+- `initGitRepo` at `internal/spec/history_command_test.go:56-64` makes an empty repository on a named branch with a commit identity. `gittest.RepoOnBranch` at `internal/gittest/gittest.go:140-149` already does this, and 24 files use it. `internal/gittest` does not depend on `internal/spec`, so the swap adds no cycle. Target R4. `auto-fix`. Confidence 7.
+
+R1 and R3 are confirmed. The duplicate refused indices at `internal/worktree/list_selected_test.go:222-223` are a `no-op` at confidence 3.
+
+## Spec
+
+Findings: 0. All thirteen ticket 2 rows stay met. QU3, QU9, and QU16 stay met in the worktree view, and the bare output is unchanged. The repair writes only fenced paths and this record. The R2 helper touches `internal/spec/spec_test.go` without a change of expectation, which the spec allows.
+
+## Coverage
+
+Findings: 0. Both blanked `detail` cells now bite. The recorded `2-limit-probe` reruns with the recorded verdict. A change of the label format inside `sanitize.TargetPointer` bites only in the owner test. That result is correct, because the spec fixes no label text and the view probes of the position still bite.
+
+## QU-C2 repair routing, cycle 2
+
+Target R4 goes to one fresh `bench-writer` repair session for ticket 2. This is cycle 2 of the two repair cycles for chunk QU-C2.
+
+| Target | Ticket | Repair |
+|---|---|---|
+| R4 | 2 | Remove `initGitRepo`, and make `retirePrimary` and `emptyHistoryRepo` call `gittest.RepoOnBranch`. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -821,7 +849,7 @@ The spec and ticket 2 changed at `c000539f`, so the plan digest changed from `3f
     {
       "id": "QU-C2",
       "base": "af66f28584c2ee8507fa350bedea483500a05e72",
-      "tip": "5cd5ed323ee357717bb16349e25be5e68b307219",
+      "tip": "85286d10941fd081c775d5c133cbb1e32b4d8f65",
       "plan_digest": "sha256:3b519948a80d9e65489cfd832f8debf2b99338916e7a10b48c56f95652e8cbfb",
       "source_digest": "035ebb12f5e5a165611a2fdb121f392164351a42",
       "acceptance_rows": [
@@ -1934,6 +1962,74 @@ The spec and ticket 2 changed at `c000539f`, so the plan digest changed from `3f
             "R3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "qu-c2-standards-r2",
+          "performer": "claude:bench-reviewer/qu-c2-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "035ebb12f5e5a165611a2fdb121f392164351a42",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/qu-c2-standards-r2@85286d10",
+            "digest": "sha256:2143a97da386b89a271a59cee3c1f5223416f0162c5b35d76abf7984f01e51da",
+            "excerpt": "Standards: 1 finding. Worst: the new initGitRepo helper duplicates gittest.RepoOnBranch, the existing owner of test repository setup."
+          },
+          "axis": "Standards",
+          "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "tip": "85286d10941fd081c775d5c133cbb1e32b4d8f65",
+          "finding_ids": [
+            "R4"
+          ],
+          "supersedes": [
+            "qu-c2-standards-r1"
+          ]
+        },
+        {
+          "id": "qu-c2-spec-r2",
+          "performer": "claude:bench-reviewer/qu-c2-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "035ebb12f5e5a165611a2fdb121f392164351a42",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c2-spec-r2@85286d10",
+            "digest": "sha256:31b3852a61727af38107f9640476ba1116210d3e54c77ded1b9d062e68b16efd",
+            "excerpt": "Spec: 0 findings. All thirteen ticket 2 rows and the touched ticket 1 rows stay met, and the repair stays inside the ticket 2 fence."
+          },
+          "axis": "Spec",
+          "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "tip": "85286d10941fd081c775d5c133cbb1e32b4d8f65",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c2-spec-r1"
+          ]
+        },
+        {
+          "id": "qu-c2-coverage-r2",
+          "performer": "claude:bench-reviewer/qu-c2-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "035ebb12f5e5a165611a2fdb121f392164351a42",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c2-coverage-r2@85286d10",
+            "digest": "sha256:d617a9729c1198862c35abe4f3339ae2646eb4a35fb3cb95fdb8b02823750c86",
+            "excerpt": "Coverage: 0 findings. Both blanked detail cells now bite, and the recorded 2-limit-probe reruns with the recorded verdict."
+          },
+          "axis": "Coverage",
+          "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "tip": "85286d10941fd081c775d5c133cbb1e32b4d8f65",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c2-coverage-r1"
+          ]
         }
       ]
     }
