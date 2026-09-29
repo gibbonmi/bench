@@ -301,11 +301,42 @@ Target R4 goes to one fresh `bench-writer` repair session for ticket 2. This is 
 |---|---|---|
 | R4 | 2 | Remove `initGitRepo`, and make `retirePrimary` and `emptyHistoryRepo` call `gittest.RepoOnBranch`. |
 
+## QU-C2 ticket 2 repair evidence, cycle 2
+
+The session `claude:bench-writer/scq-t2-repair-2` ran on opus at high effort, with a cap of 3 attempts. It started at `90a7e396` and committed `9cdbfc64` on a lane pass in the first attempt. The first commit call failed the lane `structure` check, because the `gittest` import grew `internal/spec/spec_test.go` from 787 to 788 lines. This repair is cycle 2 of the two repair cycles for chunk QU-C2.
+
+- R4: `initGitRepo` is removed. `retirePrimary` and `emptyHistoryRepo` call `gittest.RepoOnBranch(t, "main")`. `internal/gittest` does not depend on `internal/spec`, so the import adds no cycle. No spec test or fixture reads the commit identity, and no expectation changed.
+
+The session reports two deviations. The Standards and Spec axes grade each one.
+
+- The identity changes each fixture hash, and the QU24 byte fixture needs three delete hashes that TOON does not quote. With the owner identity and the earlier days 1 to 6, one delete hash was `052a016f`. TOON quotes a digit string with a leading zero, and the `ParseFloat` guard of the test does not catch that form. So `TestSelectedHistoryTrueBytes` failed with the row `"052a016f",2025-01-06,delete,c`, which is not 31 bytes. The byte fixture now commits on days 11 to 16, and its comment states why the days matter. The byte expectations do not change.
+- To keep `internal/spec/spec_test.go` within its structure budget, `writeSpec` now calls `writeFolderSpec`. Both helpers wrote the same file, `<dir>/specs/<slug>/spec.md`. The first `MkdirAll` of `writeSpec` was redundant, so the behavior does not change. The file now has 777 lines, which is less than the 787 lines at `90a7e396`.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` at the source of `9cdbfc64`, and each restore reads `yes`. The JSON payload holds the exact command of each probe that bit. The first row is the plan probe `2-limit-probe`.
+
+| Target | File | Mutation | Verdict | Failed tests |
+|---|---|---|---|---|
+| QU5 | `internal/spec/history_selected.go` | swap: `events[:limit]` to `events` | bit | two subtests of TestSelectedSpecLimit |
+| R4 | `internal/spec/spec_test.go` | swap: the `writeSpec` slug `slug` to `slug+"-x"` | bit | TestFactsIncludesFolderSpecsAndMalformedEvidence, TestResolveBaseAnchorsFallbackFromAnyCwd, and TestResolveConvention |
+| R4 | `internal/spec/history_selected_test.go` | swap: the delete day `2*i+12` to `2*i+2` | silent | none |
+
+The silent row is expected. It moves only the delete days, and that set of days also gives bare hashes. The red for the fixture days is the run before the change, at days 1 to 6 with the owner identity.
+
+### Verification
+
+The session ran each QU-C2 plan verification on the source of `9cdbfc64`, and each passed. The `2-history` run is the whole `./internal/spec` package. The session also ran `bench test --package` on `./internal/conformance` and `./cmd/bench`, and each passed. The conformance run had three capability skips. R4 changes only spec package tests, so the QU-C1 verifications are not in scope.
+
+The chunk tip is now the first record commit of this section. The source digest is the tree of `9cdbfc64` without this record file. The record commits change only this file, so the digest is the same at each record commit. The session applied the `SourceDigest` rule. The same steps at `07ed51fe` give the cycle 1 digest `035ebb12`, which confirms the method.
+
+The spec changed at `90a7e396`, so the plan digest changed from `3b519948` to `94546d72`. The session applied the `ReadPlan` rule. The same rule at `85286d10` gives the earlier digest `3b519948`, which confirms the method. The payload keeps the earlier amendments and adds one amendment from `3b519948` to `94546d72`. That amendment maps each chunk ID to itself, because the plan change at `90a7e396` adds only the ticket 2 repair cycle 2 assignment. The QU-C1 chunk keeps the digest of its own tip.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/session-context-queries/spec.md",
-  "plan_digest": "sha256:3b519948a80d9e65489cfd832f8debf2b99338916e7a10b48c56f95652e8cbfb",
+  "plan_digest": "sha256:94546d7283167eda11336ea2d54c2ff98bc1bc6aa47c556bc41b6a52db59a814",
   "implementation_session": "",
   "chunks": [
     {
@@ -849,9 +880,9 @@ Target R4 goes to one fresh `bench-writer` repair session for ticket 2. This is 
     {
       "id": "QU-C2",
       "base": "af66f28584c2ee8507fa350bedea483500a05e72",
-      "tip": "85286d10941fd081c775d5c133cbb1e32b4d8f65",
-      "plan_digest": "sha256:3b519948a80d9e65489cfd832f8debf2b99338916e7a10b48c56f95652e8cbfb",
-      "source_digest": "035ebb12f5e5a165611a2fdb121f392164351a42",
+      "tip": "9cdbfc6461f6398336e0de614903213dda059de0",
+      "plan_digest": "sha256:94546d7283167eda11336ea2d54c2ff98bc1bc6aa47c556bc41b6a52db59a814",
+      "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
       "acceptance_rows": [
         "QU4",
         "QU5",
@@ -1895,6 +1926,136 @@ Target R4 goes to one fresh `bench-writer` repair session for ticket 2. This is 
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryHostileSubject,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,65\nfailures[1]{package,test,line}:"
             }
           }
+        },
+        {
+          "id": "qu-c2-2-history-r3",
+          "performer": "claude:bench-writer/scq-t2-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-repair-2-20260928/2-history@9cdbfc64",
+            "digest": "sha256:966e74e69cc5472619b78eba866e359826c6afc50698b5269969b494f752accc",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,pass,1016\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-history",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c2-2-command-route-r3",
+          "performer": "claude:bench-writer/scq-t2-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-repair-2-20260928/2-command-route@9cdbfc64",
+            "digest": "sha256:e93e0dc467278c3ba73b378579e61613eed9f3683d6f27b403f5a003ffc87ccf",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,1457\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-command-route",
+          "command": "bench test --package ./cmd/bench --run 'TestSelected|TestHelp|TestAXIRegistry'",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c2-2-limit-probe-r3",
+          "performer": "claude:bench-writer/scq-t2-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-repair-2-20260928/2-limit-probe@9cdbfc64",
+            "digest": "sha256:a53ad428543afee9f8134a57764c54d491894477c8cf520e7b5e7c9f6adb455d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecLimit,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,67\nfailures[2]{package,test,line}:"
+          },
+          "requirement": "2-limit-probe",
+          "command": "bench probe internal/spec/history_selected.go --swap 'events[:limit]' --with 'events' --package ./internal/spec --run TestSelectedSpecLimit",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-repair-2-20260928/2-limit-probe@9cdbfc64",
+              "digest": "sha256:a53ad428543afee9f8134a57764c54d491894477c8cf520e7b5e7c9f6adb455d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecLimit,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,67\nfailures[2]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-package-conformance-r3",
+          "performer": "claude:bench-writer/scq-t2-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-repair-2-20260928/package-conformance@9cdbfc64",
+            "digest": "sha256:7c630f0792a30129f9571f8a6b236c9724be9e0cd13826ee2d6638b4a2ce8698",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,34029\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:"
+          },
+          "requirement": "package-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c2-package-cmd-r3",
+          "performer": "claude:bench-writer/scq-t2-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-repair-2-20260928/package-cmd@9cdbfc64",
+            "digest": "sha256:96d2eee25494415392a1168fae550c336d7d82fdd57c8beb83e08c4130e0fab6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,11022\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "package-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c2-r4-writespec-probe-r3",
+          "performer": "claude:bench-writer/scq-t2-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-repair-2-20260928/r4-writespec-probe@9cdbfc64",
+            "digest": "sha256:7cef2df674bdef1c023f06129b220e2dfd0fe67d88ad8b0e05f5fd842fb90cd2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/spec_test.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,all,passed,105\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,1018\nfailures[3]{package,test,line}:"
+          },
+          "requirement": "author-probe-R4-writespec",
+          "command": "bench probe internal/spec/spec_test.go --swap 'return writeFolderSpec(t, dir, slug, content)' --with 'return writeFolderSpec(t, dir, slug+\"-x\", content)' --package ./internal/spec",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-repair-2-20260928/r4-writespec-probe@9cdbfc64",
+              "digest": "sha256:7cef2df674bdef1c023f06129b220e2dfd0fe67d88ad8b0e05f5fd842fb90cd2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/spec_test.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,all,passed,105\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,1018\nfailures[3]{package,test,line}:"
+            }
+          }
         }
       ],
       "reviews": [
@@ -2060,6 +2221,21 @@ Target R4 goes to one fresh `bench-writer` repair session for ticket 2. This is 
     {
       "from": "sha256:3f398b8941d8bd9961b643b3be948be65c4ff159bec5e0708e26575152510a9c",
       "to": "sha256:3b519948a80d9e65489cfd832f8debf2b99338916e7a10b48c56f95652e8cbfb",
+      "chunk_ids": {
+        "QU-C1": [
+          "QU-C1"
+        ],
+        "QU-C2": [
+          "QU-C2"
+        ],
+        "QU-C3": [
+          "QU-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3b519948a80d9e65489cfd832f8debf2b99338916e7a10b48c56f95652e8cbfb",
+      "to": "sha256:94546d7283167eda11336ea2d54c2ff98bc1bc6aa47c556bc41b6a52db59a814",
       "chunk_ids": {
         "QU-C1": [
           "QU-C1"
