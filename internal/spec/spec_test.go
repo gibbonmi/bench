@@ -18,12 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// writeSpec writes content to <dir>/specs/<slug>/spec.md and returns the path.
-func writeSpec(t *testing.T, dir, slug, content string) string {
-	t.Helper()
-	return writeFolderSpec(t, dir, slug, content)
-}
-
+// writeFolderSpec writes content to <dir>/specs/<slug>/spec.md and returns the path.
 func writeFolderSpec(t *testing.T, dir, slug, content string) string {
 	t.Helper()
 	path := filepath.Join(dir, "specs", slug, "spec.md")
@@ -80,7 +75,7 @@ func TestImplementedDerivesExactBytesAndRefusesMalformedStatus(t *testing.T) {
 // through the unknown-subcommand branch, and the named spec keeps every byte.
 func TestSpecImplementedIsAnUnknownSubcommand(t *testing.T) {
 	dir := t.TempDir()
-	path := writeSpec(t, dir, "x", "# spec\n\nStatus: staged\n")
+	path := writeFolderSpec(t, dir, "x", "# spec\n\nStatus: staged\n")
 	before, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -173,7 +168,7 @@ func TestSpecSubcommandUsageRefusals(t *testing.T) {
 
 func TestResolveConvention(t *testing.T) {
 	dir := t.TempDir()
-	slugPath := writeSpec(t, dir, "mine", "Status: staged\n")
+	slugPath := writeFolderSpec(t, dir, "mine", "Status: staged\n")
 
 	// a bare slug resolves to <base>/specs/<slug>/spec.md
 	_, resolved, _, ok, err := Resolve(dir, "mine")
@@ -203,7 +198,7 @@ func TestResolveConvention(t *testing.T) {
 
 func TestResolveBaseAnchorsFallbackFromAnyCwd(t *testing.T) {
 	root := t.TempDir()
-	writeSpec(t, root, "anchored", "Status: staged\n")
+	writeFolderSpec(t, root, "anchored", "Status: staged\n")
 	// Resolve from a different cwd: the fallback must still hit <root>/specs.
 	_, resolved, _, ok, err := Resolve(root, "anchored")
 	if err != nil || !ok {
@@ -234,7 +229,7 @@ func TestResolveFolderFormFromDeeperCWD(t *testing.T) {
 
 func TestFactsIncludesFolderSpecsAndMalformedEvidence(t *testing.T) {
 	root := t.TempDir()
-	writeSpec(t, root, "flat", "Status: staged\n")
+	writeFolderSpec(t, root, "flat", "Status: staged\n")
 	writeFolderSpec(t, root, "good", "Status: staged\nRoadmap: FT1\n")
 	writeFolderSpec(t, root, "bad", "# no metadata\n")
 

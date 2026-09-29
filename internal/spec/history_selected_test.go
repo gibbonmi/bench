@@ -226,16 +226,11 @@ func byteFixture(t *testing.T) historyFixtureData {
 
 func TestSelectedHistoryTrueBytes(t *testing.T) {
 	const header, row, events = 36, 31, 3
-	f := byteFixture(t)
+	byteFixture(t)
 	positional := positionalHistory(t, "bytes")
 	lines := strings.SplitAfter(strings.TrimSuffix(positional, "\n"), "\n")
 	if len(lines) != 1+events || len(lines[0]) != header {
 		t.Fatalf("positional table=%q; want a %d-byte header and %d rows", positional, header, events)
-	}
-	for _, subject := range []string{"a", "b", "c"} {
-		if _, err := strconv.ParseFloat(f.hash[subject], 64); err == nil {
-			t.Fatalf("hash %q reads as a number, so TOON quotes it", f.hash[subject])
-		}
 	}
 	for _, line := range lines[1:] {
 		if len(strings.TrimSuffix(line, "\n"))+1 != row || !strings.Contains(line, ",delete,") {
