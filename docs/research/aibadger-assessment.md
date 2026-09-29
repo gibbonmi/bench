@@ -86,7 +86,7 @@ Those constraints remain closed. Sources: `AGENTS.md:34`, `projects/benchkit.md:
 
 The session-context efficiency program already coordinates measurement, focused queries, complete-output preservation, and cleanup.
 Its query and overflow specs remain staged at this baseline. New numeric defaults require measurement and reviewer approval.
-Sources: `specs/session-context-efficiency/spec.md:23`, `specs/session-context-queries/spec.md:16`, `specs/session-context-overflow/spec.md:16`.
+Sources: `specs/session-context-efficiency/spec.md:23`, `d056fd5e:specs/session-context-queries/spec.md:16`, `specs/session-context-overflow/spec.md:16`.
 
 The compiled decision map keeps measurement before new per-surface byte budgets.
 Source: `specs/session-context-efficiency/decisions/session-context-efficiency.md:37`.

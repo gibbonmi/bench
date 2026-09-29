@@ -25,7 +25,7 @@ remaining build targets.
 
 | Child spec | Delivered outcome | Prerequisite |
 | --- | --- | --- |
-| [Queries](../session-context-queries/spec.md) | Task-shaped reads and both selected query families | None; the FT336 spec owns the default output budget |
+| Queries, implemented at `7072d08b` and retired | Task-shaped reads and both selected query families | None; the FT336 spec owns the default output budget |
 | [Overflow](../session-context-overflow/spec.md) | Verified complete-output preservation and bounded replacement | Measurement, budget review, and runtime capability evidence |
 
 ## User stories

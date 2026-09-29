@@ -4,7 +4,7 @@
 
 Re-author or re-review the overflow stream against the current `main`, because `main` changed its spec after the wave stopped.
 The reviewer dropped the shared-delegate-startup stream on 2026-09-28, because it contradicts the current fresh-author and fresh-repair rules.
-The reviewer chose on 2026-09-28 to re-author the queries stream on `main`, with its tip as the reference source for fresh ticket authors.
+The reviewer chose on 2026-09-28 to re-author the queries stream on `main`, with its tip as the reference source for fresh ticket authors. That build landed at `7072d08b` on 2026-09-29.
 
 Scope: the Codex parallel implementation wave on three staged specs, its measurements, and its model findings.
 Evidence status: each stream passed its own chunk checkpoints on its branch. No wave source landed on `main`.
