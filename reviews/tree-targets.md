@@ -272,6 +272,8 @@ Findings: 0. Two independent probes, one for each fold, each bit on the new test
 
 Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardening cycle.
 
+The first checkpoint run refused the TT-C2 verification entries. Each entry held the digest of its full command output, not the digest of its embedded excerpt. The coordinator set each digest to the SHA-256 of its excerpt. This correction is evidence-only: it changes no finding, observation, source identity, or verification outcome. The second checkpoint run was green.
+
 ```bench-review-record
 {
   "version": 2,

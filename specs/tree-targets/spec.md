@@ -686,7 +686,7 @@ because map ticket 1 closed the `--in` value set.
 
 The staleness pass found two behavioral gaps. Ticket 3 waits for the first
 decision, and ticket 4 waits for the second. The TT-C1 review found a third
-gap, which blocks no ticket.
+gap, and the TT-C2 review found a fourth. Neither blocks a ticket.
 
 1. The row and the response bound. `bounds.ResponseLines` limits one response
    to 10 lines, and the spec does not say whether the two row lines count. The
@@ -711,3 +711,10 @@ gap, which blocks no ticket.
    The wrapper prints its own usage line on stderr at exit 2, and the verb does
    not run. The fence holds no wrapper path. The proposed rule: accept the
    wrapper's refusal for a wrapper-only verb, and record it as a known form.
+4. The symlinked working directory. For a relative path,
+   `canonicalpath.Resolve` keeps the spelling of a working directory that a
+   process entered through a symlink. There, `BENCH_KIT` set to `.` does not
+   match the physical root. TT51 can fail where the temporary directory is a
+   symlink, as on macOS. The fix belongs in `internal/canonicalpath`, which
+   the fence does not hold. The proposed route: park it with `bench idea` for a
+   separate light-path fix before this spec lands.
