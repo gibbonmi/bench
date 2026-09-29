@@ -474,6 +474,36 @@ The chunk tip is now the first record commit of this section. The source digest 
 
 The spec changed at `e572aede`, so the plan digest changed from `6244a752` to `1cdbae9a`. The session applied the `ReadPlan` rule. The same rule at `6a88e82d` gives the earlier digest `6244a752`, which confirms the method. The payload keeps the earlier amendments and adds one amendment from `6244a752` to `1cdbae9a`. That amendment maps each chunk ID to itself, because the plan change at `e572aede` adds only the ticket 3 repair cycle 1 assignment. The QU-C1 and QU-C2 chunks keep the digests of their own tips.
 
+## QU-C3 chunk review, round 2
+
+The frozen pair is base `cb28194c364610f803f1d9f4945543c9364a0f7e` and tip `654e3d2f30609567fea96c105e1afd43227edadf`. The chunk tip moves to that last record commit, and the source digest stays the same. The shared evidence is `sha256:3e5abced5afb98df4e1108bca13b3a18e181499dddf366b3efead19371aa41c0`. Each axis ran in a new fresh `bench-reviewer` session on opus at high effort, and each read only the repair delta `e572aede..654e3d2f`. Only the Coverage axis ran probes, and it left the tree clean.
+
+## Standards
+
+Findings: 2. R1 to R6 are confirmed. The worst issue is a condition after its instruction in guidance that ships to every linked repository.
+
+- `.agents/skills/bench-craft-cli/SKILL.md:113` reads "Fetch only the relevant bodies after that discovery." The STE rules put the condition before the instruction. Target R7. `auto-fix`. Confidence 5.
+- In the QU-C3 repair evidence, the sentence "That section was compressed to stay inside its 170-line budget" is passive and names no agent. Target R8. `auto-fix`. Confidence 6.
+
+A four-noun cluster in the same section is a `no-op` at confidence 3.
+
+## Spec
+
+Findings: 0. QU11, QU12, and QU13 stay met. The R6 correction is accurate, and `internal/spec/history.go` dedupes each commit by its full hash, so the restored debug phrase is true.
+
+## Coverage
+
+Findings: 0. The whole `./internal/conformance` and `./internal/anchors` packages pass, and the four plan checks pass. The recorded R1 probe bites again with the recorded output. Each pinned needle in the three guidance files still matches.
+
+## QU-C3 repair routing, cycle 2
+
+Targets R7 and R8 go to one fresh `bench-writer` repair session for ticket 3. This is cycle 2 of the two repair cycles for chunk QU-C3.
+
+| Target | Ticket | Repair |
+|---|---|---|
+| R7 | 3 | Put the condition of the `craft-cli` fetch sentence before its instruction. |
+| R8 | 3 | Name the agent in the record sentence about the compressed debug section. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -2405,7 +2435,7 @@ The spec changed at `e572aede`, so the plan digest changed from `6244a752` to `1
     {
       "id": "QU-C3",
       "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
-      "tip": "40745f2652d154945cf8bb5a1767164cdfebf84f",
+      "tip": "654e3d2f30609567fea96c105e1afd43227edadf",
       "plan_digest": "sha256:1cdbae9a4cc49752da076fbfcfc115b5d9d42f152f7512e140be292157976c8b",
       "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
       "acceptance_rows": [
@@ -3083,6 +3113,75 @@ The spec changed at `e572aede`, so the plan digest changed from `6244a752` to `1
             "R1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "qu-c3-standards-r2",
+          "performer": "claude:bench-reviewer/qu-c3-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-standards-r2@654e3d2f",
+            "digest": "sha256:00bc22db80750aec2f046f886d437b23bbe93d335c4953d7b71714d8e30fe93f",
+            "excerpt": "Standards: 2 findings. Worst: a craft-cli sentence puts its condition after the instruction; R1 to R6 are confirmed."
+          },
+          "axis": "Standards",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "654e3d2f30609567fea96c105e1afd43227edadf",
+          "finding_ids": [
+            "R7",
+            "R8"
+          ],
+          "supersedes": [
+            "qu-c3-standards-r1"
+          ]
+        },
+        {
+          "id": "qu-c3-spec-r2",
+          "performer": "claude:bench-reviewer/qu-c3-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-spec-r2@654e3d2f",
+            "digest": "sha256:285f2f94b610ceecbc1bf21234ce20f379d94bc489574d9127a4f55911b665d4",
+            "excerpt": "Spec: 0 findings. QU11, QU12, and QU13 stay met, and the R6 record correction is accurate."
+          },
+          "axis": "Spec",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "654e3d2f30609567fea96c105e1afd43227edadf",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c3-spec-r1"
+          ]
+        },
+        {
+          "id": "qu-c3-coverage-r2",
+          "performer": "claude:bench-reviewer/qu-c3-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-coverage-r2@654e3d2f",
+            "digest": "sha256:91fb3cd3c0ec3e0ab0c8255b8263d98266c5fe939bb100362d13e7094dc94a5f",
+            "excerpt": "Coverage: 0 findings. The conformance and anchors packages and the four plan checks pass, and the R1 probe bites again."
+          },
+          "axis": "Coverage",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "654e3d2f30609567fea96c105e1afd43227edadf",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c3-coverage-r1"
+          ]
         }
       ]
     }
