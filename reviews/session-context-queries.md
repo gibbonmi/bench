@@ -558,7 +558,7 @@ The orchestrator reconciled the 25 acceptance rows of the three chunks. Each row
 
 The orchestrator ran the five final verifications of the plan on the source of `0e77d29a`, and each passed. The `worktree` run had two capability skips for unix sockets. The source digest is `3206a6a2`, because each commit after `6a686c5f` changes only this record.
 
-`main` moved during the build, because the staleness-pass landing added `e69d9ca0` and its parents. The review chain refuses a `main` merge after the first chunk, so `bench worktree land` composes those commits.
+This first reconciliation is superseded. The landing refused it, because `main` moved during the build and the completion composition changed `.agents/commands/bench-implement-spec.md`. The sections below record the fold of `main` and the final reconciliation at the folded source.
 
 ## QU-C3 re-verification after the main fold
 
@@ -573,11 +573,35 @@ The session ran each QU-C3 plan verification on the source of `7840fdfd`, and ea
 | 3-budgets | `bench test --check guidance-prose-budgets` | pass |
 | 3-prose | `bench test --check prose-mechanics` | pass |
 
-The merge added anchors and canary fixtures, so the session also ran `bench test --package` on `./internal/anchors` and `./internal/conformance`. Each run passed. The conformance run had three capability skips, the same as in the cycle 2 run.
+The merge changed `.agents/commands/bench-implement-spec.md`, `internal/anchors/registry_data.go`, and `internal/anchors/registry_chunk_chain.go`, and it added canary fixtures. So the session also ran `bench test --package` on `./internal/anchors` and `./internal/conformance`. Each run passed. The conformance run had three capability skips, the same as in the cycle 2 run.
 
 The chunk tip is now the first record commit of this section. The source digest is the tree of `7840fdfd` without this record file. The session applied the `SourceDigest` rule. The same steps at `6a686c5f` give the cycle 2 digest `3206a6a2`, which confirms the method.
 
 The spec changed at `7840fdfd`, so the plan digest changed from `049050e1` to `f54e6978`. The session applied the `ReadPlan` rule. The same rule at `ee8621ab` gives the earlier digest `049050e1`, which confirms the method. The payload keeps the earlier amendments and adds one amendment from `049050e1` to `f54e6978`. That amendment maps each chunk ID to itself, because the plan change at `7840fdfd` adds only this re-verification assignment. The reviews and the completion stay unchanged.
+
+## QU-C3 fold round 4 and final reconciliation
+
+`.agents/commands/bench-implement-spec.md` allows a `main` merge only before the first chunk. The completion check at `internal/gate/completion.go` requires the source tree to carry every destination change, and no land flag acknowledges a destination delta. A read-only fable consultation at high effort, by reviewer direction, found this fold as the only route that the code accepts.
+
+The route keeps every check. It merges `main` after the last chunk and re-verifies QU-C3 with a fresh assignment. Then it runs a review round without a charge and lands with the folded `main` tip as the base. FT342 owns the permanent route, and a `bench learning` entry records this occurrence.
+
+The frozen pair is base `cb28194c364610f803f1d9f4945543c9364a0f7e` and tip `789dfee68a09a326e5f27f5f6fb150d365ac38d8`. Review preflight is red on the seven folded `main` paths, so this round ran without a prepared charge. Each axis ran in a new fresh `bench-reviewer` session on opus at high effort, and each read the fold delta `0e77d29a..789dfee6`. Only the Coverage axis ran tests, and it left the tree clean.
+
+## Standards
+
+Findings: 0 blocking. The build guidance and the folded `main` change cover separate topics, and the merge has no resolution hunks. The axis named the fold against the phase rule, which the consultation above decided. It also named the contradicting reconciliation line and the stale completion, which this section corrects.
+
+## Spec
+
+Findings: 0 blocking. The merge touches none of the 24 paths that the build wrote, and QU11, QU12, and QU13 stay met. The plan change at `7840fdfd` adds only the re-verification assignment.
+
+## Coverage
+
+Findings: 0. `./internal/anchors`, `./internal/conformance`, `./internal/spec`, `./internal/worktree`, and `./cmd/bench` pass. Each anchor in the four affected guidance files resolves, and each canary fixture bites.
+
+## Final reconciliation at the folded source
+
+The orchestrator reconciled the 25 acceptance rows again, and each row stays covered. The orchestrator ran the five final verifications of the plan on the source of `789dfee6`, and each passed. The `worktree` run had two capability skips for unix sockets. The completion source digest is now `30aea23c`, and the new entries supersede the entries at `3206a6a2`.
 
 ```bench-review-record
 {
@@ -2510,7 +2534,7 @@ The spec changed at `7840fdfd`, so the plan digest changed from `049050e1` to `f
     {
       "id": "QU-C3",
       "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
-      "tip": "9bfdc9fde9909de7ce414b1ccce7baad425260c3",
+      "tip": "789dfee68a09a326e5f27f5f6fb150d365ac38d8",
       "plan_digest": "sha256:f54e6978620dfb5609082c5f604a0a7773168cf014f1f7f078477957fed75e08",
       "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
       "acceptance_rows": [
@@ -3568,13 +3592,79 @@ The spec changed at `7840fdfd`, so the plan digest changed from `049050e1` to `f
           "supersedes": [
             "qu-c3-coverage-r2"
           ]
+        },
+        {
+          "id": "qu-c3-standards-r4",
+          "performer": "claude:bench-reviewer/qu-c3-standards-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-standards-r4@789dfee6",
+            "digest": "sha256:2ace6fee6147efd8dcc07499add5dc8e56097ebc37be2435b8751c25881b2271",
+            "excerpt": "Standards: 0 blocking findings. The fold adds no duplicated knowledge or conflict between the build guidance and the folded main change."
+          },
+          "axis": "Standards",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "789dfee68a09a326e5f27f5f6fb150d365ac38d8",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c3-standards-r3"
+          ]
+        },
+        {
+          "id": "qu-c3-spec-r4",
+          "performer": "claude:bench-reviewer/qu-c3-spec-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-spec-r4@789dfee6",
+            "digest": "sha256:0d079084d0072c4aa7869f367251ca50b4a051f7807347a35297cc45ab68953c",
+            "excerpt": "Spec: 0 blocking findings. The merge touches no path that the build wrote, and QU11, QU12, and QU13 stay met."
+          },
+          "axis": "Spec",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "789dfee68a09a326e5f27f5f6fb150d365ac38d8",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c3-spec-r3"
+          ]
+        },
+        {
+          "id": "qu-c3-coverage-r4",
+          "performer": "claude:bench-reviewer/qu-c3-coverage-r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-coverage-r4@789dfee6",
+            "digest": "sha256:95ca8e0fdf6c3e38ba6b59c35b4b61c640948559be95d8c1c58cb0baab35d54b",
+            "excerpt": "Coverage: 0 findings. The five affected packages pass, every anchor in the four guidance files resolves, and every canary fixture bites."
+          },
+          "axis": "Coverage",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "789dfee68a09a326e5f27f5f6fb150d365ac38d8",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c3-coverage-r3"
+          ]
         }
       ]
     }
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+    "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
     "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
     "reconciliation": {
       "QU1": "covered",
@@ -3689,6 +3779,96 @@ The spec changed at `7840fdfd`, so the plan digest changed from `049050e1` to `f
           "ref": "claude:orchestrator/workflow@0e77d29a",
           "digest": "sha256:7a4ec32694c4a5d67a4f1a512e5aadeecbcb80e9812a9a6ff1d7c6e866ed84f5",
           "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,730\nfailures[0]{package,test,line}:"
+        },
+        "requirement": "workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-coverage-r2",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/coverage@789dfee6",
+          "digest": "sha256:c30f837bbf45da317434fcb9290ba6e2a7084d85e78f2741282e0f932017cab2",
+          "excerpt": "ok: coverage map valid — 25 row(s)"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/session-context-queries/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-worktree-r2",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/worktree@789dfee6",
+          "digest": "sha256:b06fecd5fa6ffad32b7f13f8f498945a54ffdd174ea01a39bd741b1a6c739bbc",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,50915\nfailures[0]{package,test,line}:"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-history-r2",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/history@789dfee6",
+          "digest": "sha256:31951145cc349750a93593634e24e734acb60e26e89e416b6d037eb1f4330379",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,pass,1017\nfailures[0]{package,test,line}:"
+        },
+        "requirement": "history",
+        "command": "bench test --package ./internal/spec",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-commands-r2",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/commands@789dfee6",
+          "digest": "sha256:1d74e1bc88889886788e4500de7ead57a267804bfb12aa713ff29d03f343e080",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,11270\nfailures[0]{package,test,line}:"
+        },
+        "requirement": "commands",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-workflow-r2",
+        "performer": "claude:session_01HvaChf55KS1vG4A5DV4mwW",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "30aea23c4a3396f5cfbadec5d9898c7cac79487c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:orchestrator/workflow@789dfee6",
+          "digest": "sha256:0a6fbce05bacac7ea1253a7b653a8a4a45937b1df6c7781700d20a5f71401b6d",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,709\nfailures[0]{package,test,line}:"
         },
         "requirement": "workflow",
         "command": "bench test --check docs-currency-workflow",
