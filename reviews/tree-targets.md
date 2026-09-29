@@ -438,6 +438,34 @@ The chunk tip is now the repair commit `744ef656`. The source digest is the tree
 
 The spec changed at `fe44447f`, so the plan digest changed from `ea3ee9d0` to `51bdf6fe`. The `ReadPlan` rule at `156beff0` gives `ea3ee9d0`, which confirms the method. The payload adds one amendment that maps each chunk ID to itself, because no chunk ID changed. The TT-C1 and TT-C2 chunks keep the digests of their own tips. The round 1 entries keep their earlier source digest as history.
 
+## TT-C3 chunk review, round 2
+
+The frozen pair is base `74daf800f8a11d85083711b31aaabc47797ebc73` and tip `7251523e83a6993521cbd51db6531daf2297d9b9`. The shared evidence is `sha256:37b6823245848942030c2bd1d8a39475060da0aa2ba9d57f0cf168f53b2f8ac1`. This round is the confirming round of all three axes, and each axis read only the repair delta `fe44447f..7251523e`.
+
+## Standards
+
+Findings: 2. The worst issue is that the label escape is conditional.
+
+- `internal/treetarget/identify.go:49-50` calls `sanitize.Controls` only when `sanitize.LineSafe` fails. So a hostile label and a literal label with a backslash escape can print the same cell. The `LineSafe` contract says a caller that fails the predicate emits a pointer, not an escaped value. The `sanitize` package names `Strip` as its duty for a table cell that must read as its source text. Target R4, `auto-fix`, confidence 7. The coordinator routes this to `sanitize.Strip` and flags the choice for reviewer veto.
+- The repair widened `plantedTreeVerb` in `cmd/bench/tree_scope_test.go:28-40` into a second copy of `runBoundFixture` in `cmd/bench/response_bound_test.go:67-79`. `AGENTS.md` names a fixture harness pasted N times as duplicated knowledge. Target R5, `auto-fix`, confidence 6. The fix needs `cmd/bench/response_bound_test.go` in the ticket 3 fence, which the coordinator adds in a plan commit first.
+
+## Spec
+
+Findings: 0. R1, R2, and R3 are confirmed, and the rows stay met.
+
+## Coverage
+
+Findings: 0. R1, R2, and R3 are pinned, and an independent probe on the shared exit-2 guard bit.
+
+## TT-C3 repair routing, cycle 2
+
+Each repair goes to one fresh `bench-writer` repair session for ticket 3 on opus at high effort. This is cycle 2 of the two repair cycles for chunk TT-C3.
+
+| Target | Ticket | Repair |
+|---|---|---|
+| R4 | 3 | Render every label through `sanitize.Strip`, and pin a hostile label with a test. |
+| R5 | 3 | Give `plantedTreeVerb` and `runBoundFixture` one harness with a scope parameter. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -1262,7 +1290,7 @@ The spec changed at `fe44447f`, so the plan digest changed from `ea3ee9d0` to `5
     {
       "id": "TT-C3",
       "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
-      "tip": "744ef656c2ca44264fe806267abbc6c46d4dc287",
+      "tip": "7251523e83a6993521cbd51db6531daf2297d9b9",
       "plan_digest": "sha256:51bdf6fe67e2a33a0106d4f13992621fbee9b36369e2c1c19dd499a8582856e3",
       "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
       "acceptance_rows": [
@@ -1780,6 +1808,75 @@ The spec changed at `fe44447f`, so the plan digest changed from `ea3ee9d0` to `5
             "R3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "tt-c3-standards-r2",
+          "performer": "claude:bench-reviewer/tt-c3-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c3-standards-r2@7251523e",
+            "digest": "sha256:0a8f16ad1bde8930661c043809d66d48c45c70a37864e7a0fdc6f6bf85c02e49",
+            "excerpt": "Standards: 2 findings. Worst: the escape is conditional, so a hostile label and a plain label can print the same row."
+          },
+          "axis": "Standards",
+          "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "tip": "7251523e83a6993521cbd51db6531daf2297d9b9",
+          "finding_ids": [
+            "R4",
+            "R5"
+          ],
+          "supersedes": [
+            "tt-c3-standards-r1"
+          ]
+        },
+        {
+          "id": "tt-c3-spec-r2",
+          "performer": "claude:bench-reviewer/tt-c3-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c3-spec-r2@7251523e",
+            "digest": "sha256:9ea04d04426becf63cc9f6918508ec0849c26b48cef82cfabbc964e7c4fd3311",
+            "excerpt": "Spec: 0 findings. All three folds are confirmed against the repair delta fe44447f..7251523e."
+          },
+          "axis": "Spec",
+          "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "tip": "7251523e83a6993521cbd51db6531daf2297d9b9",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c3-spec-r1"
+          ]
+        },
+        {
+          "id": "tt-c3-coverage-r2",
+          "performer": "claude:bench-reviewer/tt-c3-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "564566b25b32a0cd36399364a16fd537671887c9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c3-coverage-r2@7251523e",
+            "digest": "sha256:53f5c0d9920812caf87f92aefeafd2e4679f173f73e0a653a8c20de84882b60d",
+            "excerpt": "Coverage: 0 findings. All three folds are pinned, and an independent R2 bypass is caught."
+          },
+          "axis": "Coverage",
+          "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "tip": "7251523e83a6993521cbd51db6531daf2297d9b9",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c3-coverage-r1"
+          ]
         }
       ]
     }
