@@ -762,7 +762,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/tt-t2-author-2-20260929/2-gate@e43254d5",
-            "digest": "sha256:49a9464dd2afdab3deac20382c8d92a0f1a47e5781b9adfee0bd7f4f12ce2874",
+            "digest": "sha256:17c46a859802dedd68119f61c2de7da193d5c035dfabf55cae2ec5a68144950d",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,14924\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "2-gate",
@@ -780,7 +780,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/tt-t2-author-2-20260929/2-kit-probe@e43254d5",
-            "digest": "sha256:ed2820500b31123ca67f43cfb395446dde80693a6108a241afa962db3c618007",
+            "digest": "sha256:7f3561247e94d373bec956747a595f7c2b89bc5a2bfb30f195fab60d2e04d586",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckoutResolvesARelativeKit,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,3"
           },
           "requirement": "2-kit-probe",
@@ -793,7 +793,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
             "restore": "pass",
             "native_ref": {
               "ref": "claude:agent/tt-t2-author-2-20260929/2-kit-probe@e43254d5",
-              "digest": "sha256:ed2820500b31123ca67f43cfb395446dde80693a6108a241afa962db3c618007",
+              "digest": "sha256:7f3561247e94d373bec956747a595f7c2b89bc5a2bfb30f195fab60d2e04d586",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckoutResolvesARelativeKit,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,3"
             }
           }
@@ -809,7 +809,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/tt-t2-author-2-20260929/tt52-link@e43254d5",
-            "digest": "sha256:f3a3e2bedf569ef2dfc157bd1bc3a3c2ef701515c0e6dcfb45f27cd0b6b11b78",
+            "digest": "sha256:fda4978fa5de5e49400f8434ca9a382d4c46e90359b85cd10f027ee244631b8f",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
           },
           "requirement": "author-probe-TT52-link",
@@ -822,7 +822,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
             "restore": "pass",
             "native_ref": {
               "ref": "claude:agent/tt-t2-author-2-20260929/tt52-link@e43254d5",
-              "digest": "sha256:f3a3e2bedf569ef2dfc157bd1bc3a3c2ef701515c0e6dcfb45f27cd0b6b11b78",
+              "digest": "sha256:fda4978fa5de5e49400f8434ca9a382d4c46e90359b85cd10f027ee244631b8f",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
             }
           }
@@ -838,7 +838,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/tt-t2-author-2-20260929/tt52-unrelated@e43254d5",
-            "digest": "sha256:f6c1775d1d958a5cc36da568a1225d9386b1a739e497dca559da93e0af2dabdc",
+            "digest": "sha256:fda4978fa5de5e49400f8434ca9a382d4c46e90359b85cd10f027ee244631b8f",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
           },
           "requirement": "author-probe-TT52-unrelated",
@@ -851,7 +851,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
             "restore": "pass",
             "native_ref": {
               "ref": "claude:agent/tt-t2-author-2-20260929/tt52-unrelated@e43254d5",
-              "digest": "sha256:f6c1775d1d958a5cc36da568a1225d9386b1a739e497dca559da93e0af2dabdc",
+              "digest": "sha256:fda4978fa5de5e49400f8434ca9a382d4c46e90359b85cd10f027ee244631b8f",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
             }
           }
@@ -867,7 +867,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/tt-t2-repair-1-20260929/2-gate@9958ef57",
-            "digest": "sha256:02157bfbbc7b83c5edc5885f013f613418b6a2a04b8e2e747e8fbede60b8d994",
+            "digest": "sha256:4c41fe5ef4b8170f76c7de34b809b9abdc3232c0c369b0ce6008255a9e770db0",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,15012\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
           },
           "requirement": "2-gate",
@@ -885,7 +885,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/tt-t2-repair-1-20260929/2-kit-probe@9958ef57",
-            "digest": "sha256:ae46cc7910f244123f80980980c0327c8b49bab4bb92b1dd5901d9056426f02f",
+            "digest": "sha256:dbd03c9fd1d394189f42d4b936d0487b0567f29294ff483509ae30bd5628b202",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckoutResolvesARelativeKit,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
           },
           "requirement": "2-kit-probe",
@@ -898,7 +898,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
             "restore": "pass",
             "native_ref": {
               "ref": "claude:agent/tt-t2-repair-1-20260929/2-kit-probe@9958ef57",
-              "digest": "sha256:ae46cc7910f244123f80980980c0327c8b49bab4bb92b1dd5901d9056426f02f",
+              "digest": "sha256:dbd03c9fd1d394189f42d4b936d0487b0567f29294ff483509ae30bd5628b202",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckoutResolvesARelativeKit,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,4"
             }
           }
@@ -914,7 +914,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/tt-t2-repair-1-20260929/r1-resolve-error-probe@9958ef57",
-            "digest": "sha256:960e457746c0ce9a48e7c4945445963bc9cafb5eb3fb8b0cd8e8deb47735e29d",
+            "digest": "sha256:4cce62584c926c2604b00e1671176b0bdc5f482fb158517f751c30384e59c54b",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,4\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestKitSourceCheckoutAnswersFalseOnAResolveError,\"kit_source_test.go:84: KitSourceCheckout(\\\".\\\") with a deleted working directory = true, want false\""
           },
           "requirement": "repair-probe-R1-resolve-error",
@@ -927,7 +927,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
             "restore": "pass",
             "native_ref": {
               "ref": "claude:agent/tt-t2-repair-1-20260929/r1-resolve-error-probe@9958ef57",
-              "digest": "sha256:960e457746c0ce9a48e7c4945445963bc9cafb5eb3fb8b0cd8e8deb47735e29d",
+              "digest": "sha256:4cce62584c926c2604b00e1671176b0bdc5f482fb158517f751c30384e59c54b",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,4\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestKitSourceCheckoutAnswersFalseOnAResolveError,\"kit_source_test.go:84: KitSourceCheckout(\\\".\\\") with a deleted working directory = true, want false\""
             }
           }
@@ -943,7 +943,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/tt-t2-repair-1-20260929/r2-root-join-probe@9958ef57",
-            "digest": "sha256:e253b5a62b1fe6c80d7ab81ddb55270b20584dd8f57398c763ae92c12bfe73f7",
+            "digest": "sha256:cb3abc032eaba68dc252a9f2b0032298ada73de1277d4750d32f0ac45e5179ad",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,4\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestKitSourceCheckoutResolvesARelativeKitAgainstTheWorkingDirectory,..."
           },
           "requirement": "repair-probe-R2-root-join",
@@ -956,7 +956,7 @@ Chunk TT-C2 closes after one repair cycle. That cycle is the chunk's one hardeni
             "restore": "pass",
             "native_ref": {
               "ref": "claude:agent/tt-t2-repair-1-20260929/r2-root-join-probe@9958ef57",
-              "digest": "sha256:e253b5a62b1fe6c80d7ab81ddb55270b20584dd8f57398c763ae92c12bfe73f7",
+              "digest": "sha256:cb3abc032eaba68dc252a9f2b0032298ada73de1277d4750d32f0ac45e5179ad",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/kit_source.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestKitSourceCheckout,passed,4\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/gate,TestKitSourceCheckoutResolvesARelativeKitAgainstTheWorkingDirectory,..."
             }
           }
