@@ -28,6 +28,9 @@ type listRow struct {
 
 // ListCommand implements the read-only AXI worktree population query.
 func ListCommand(root, _ string, args []string) (string, int) {
+	if selectsWorktrees(args) {
+		return listSelectedWorktrees(root, args)
+	}
 	j := defaultJoins()
 	_, line, code := usage.Parse(worktreeListGrammar, args)
 	if line != "" {

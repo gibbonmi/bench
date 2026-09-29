@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Session context queries
+
+- Added `bench worktree list --view paths --target <target>`. It gives the identity, path, and state of each selected worktree, one error row for each failed target, and the complete-inventory action. The bare `bench worktree list` output does not change.
+
 ### Broker rehearsal
 
 - Fixed final-check guidance to restore the durable shim target before candidate worktree release.

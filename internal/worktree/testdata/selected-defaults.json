@@ -1,0 +1,106 @@
+{
+  "active": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tables": [
+      {
+        "name": "worktrees",
+        "fields": ["id", "label", "request", "state", "source", "tree", "lease", "landed", "ignored"],
+        "rows": [
+          ["{{ID}}", "chosen active", "request-active", "active", "assignment", "present", "none", true, 0]
+        ]
+      },
+      {
+        "name": "help",
+        "fields": ["cmd", "why"],
+        "rows": [
+          ["bench worktree path <target>", "inspect an active worktree by its id"],
+          ["bench worktree exec <target> -- <command>", "run a command in an active worktree by its id"],
+          ["bench worktree clean --landed", "clean landed assignments"]
+        ]
+      }
+    ]
+  },
+  "cleanup-pending": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tables": [
+      {
+        "name": "worktrees",
+        "fields": ["id", "label", "request", "state", "source", "tree", "lease", "landed", "ignored"],
+        "rows": [
+          ["{{ID}}", "chosen cleanup-pending", "request-cleanup-pending", "cleanup-pending", "assignment", "present", "none", true, 0]
+        ]
+      },
+      {
+        "name": "help",
+        "fields": ["cmd", "why"],
+        "rows": [
+          ["bench worktree release --request request-cleanup-pending {{PATH}}", "resume the cleanup-pending assignment"]
+        ]
+      }
+    ]
+  },
+  "complete": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tables": [
+      {
+        "name": "worktrees",
+        "fields": ["id", "label", "request", "state", "source", "tree", "lease", "landed", "ignored"],
+        "rows": [
+          ["{{ID}}", "chosen complete", "request-complete", "complete", "assignment", "present", "none", true, 0]
+        ]
+      },
+      {
+        "name": "help",
+        "fields": ["cmd", "why"],
+        "rows": []
+      }
+    ]
+  },
+  "recovered": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tables": [
+      {
+        "name": "worktrees",
+        "fields": ["id", "label", "request", "state", "source", "tree", "lease", "landed", "ignored"],
+        "rows": [
+          ["{{ID}}", "chosen recovered", "request-recovered", "recovered", "assignment", "present", "none", true, 0]
+        ]
+      },
+      {
+        "name": "help",
+        "fields": ["cmd", "why"],
+        "rows": []
+      }
+    ]
+  },
+  "empty": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tables": [
+      {
+        "name": "worktrees",
+        "fields": ["id", "label", "request", "state", "source", "tree", "lease", "landed", "ignored"],
+        "rows": []
+      },
+      {
+        "name": "help",
+        "fields": ["cmd", "why"],
+        "rows": []
+      }
+    ]
+  },
+  "no-repository": {
+    "stdout": "error: not in a git repository — run inside a Bench-linked repo\n",
+    "stderr": "",
+    "exit": 1
+  }
+}
