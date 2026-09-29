@@ -34,3 +34,16 @@ func TestKitSourceCheckoutMatchesThroughASymlinkSpelling(t *testing.T) {
 		t.Fatal("KitSourceCheckout(\"\") = true, want false")
 	}
 }
+
+// TestKitSourceCheckoutResolvesARelativeKit pins the absolute compare (TT51). A BENCH_KIT
+// of "." names the current directory, so a compare that kept the relative spelling would
+// answer false for the root that the current directory is.
+func TestKitSourceCheckoutResolvesARelativeKit(t *testing.T) {
+	root := t.TempDir()
+	t.Chdir(root)
+	t.Setenv("BENCH_KIT", ".")
+
+	if !KitSourceCheckout(root) {
+		t.Fatalf("KitSourceCheckout(%q) with BENCH_KIT=. = false, want true", root)
+	}
+}

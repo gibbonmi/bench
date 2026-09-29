@@ -3,6 +3,8 @@ package gate
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 )
 
 // KitDir resolves the kit directory an adoption-side reader installs from. Its fallback is
@@ -27,19 +29,23 @@ func KitDir() string {
 // never carries the consumer-side copy of either, and a row that sent its reader to bench
 // link would name a remedy that breaks the shim route and the land route. A consumer repo
 // never satisfies the predicate, because its kit resolves to a package or cache directory
-// outside the repository. Both paths resolve through symlinks first, so a repository
-// reached by one spelling and a BENCH_KIT set to another still match.
+// outside the repository. Both paths take their canonical absolute spelling first, so a
+// repository reached by one spelling and a BENCH_KIT set to another, or to a relative
+// path, still match. A path with no canonical spelling matches nothing.
 func KitSourceCheckout(root string) bool {
 	kit := KitDir()
 	if root == "" || kit == "" {
 		return false
 	}
-	return resolvedPath(root) == resolvedPath(kit)
+	resolvedRoot, ok := resolvedPath(root)
+	if !ok {
+		return false
+	}
+	resolvedKit, ok := resolvedPath(kit)
+	return ok && resolvedRoot == resolvedKit
 }
 
-func resolvedPath(path string) string {
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		return resolved
-	}
-	return filepath.Clean(path)
+func resolvedPath(path string) (string, bool) {
+	resolved, err := canonicalpath.Resolve(path)
+	return resolved, err == nil
 }
