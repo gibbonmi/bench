@@ -529,6 +529,29 @@ The chunk tip is now the first record commit of this section. The source digest 
 
 The spec changed at `ee8621ab`, so the plan digest changed from `1cdbae9a` to `049050e1`. The session applied the `ReadPlan` rule. The same rule at `78a50ee5` gives the earlier digest `1cdbae9a`, which confirms the method. The payload keeps the earlier amendments and adds one amendment from `1cdbae9a` to `049050e1`. That amendment maps each chunk ID to itself, because the plan change at `ee8621ab` adds only the ticket 3 repair cycle 2 assignment. The QU-C1 and QU-C2 chunks keep the digests of their own tips.
 
+## QU-C3 chunk review, round 3, and close
+
+The frozen pair is base `cb28194c364610f803f1d9f4945543c9364a0f7e` and tip `0e77d29a68a6cec0528741fbdd15721cfa4d0e53`. The chunk tip moves to that last record commit, and the source digest stays the same. The shared evidence is `sha256:0b8c77cabada87adf3a7281bc599a1202f23f74c64ee887e9b9c0b224d854d91`. Each axis ran in a new fresh `bench-reviewer` session on opus at high effort, and each read only the repair delta `ee8621ab..0e77d29a`. Only the Coverage axis ran probes, and it left the tree clean.
+
+## Standards
+
+Findings: 0. R7 and R8 are confirmed.
+
+## Spec
+
+Findings: 0. QU11, QU12, and QU13 stay met, and the delta writes only the fenced `craft-cli` file and this record.
+
+## Coverage
+
+Findings: 0. The whole `./internal/conformance` and `./internal/anchors` packages pass, and the four plan checks pass. The recorded R1 probe bites with the recorded output.
+
+## Advice
+
+- In the author evidence, the sentence after the R8 correction starts with "It". That pronoun can now point to the author and not to the debug section.
+- The cycle 2 section stacks four nouns in one phrase about the repair assignment.
+
+Chunk QU-C3 closes after two repair cycles.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2460,7 +2483,7 @@ The spec changed at `ee8621ab`, so the plan digest changed from `1cdbae9a` to `0
     {
       "id": "QU-C3",
       "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
-      "tip": "967727e3b6cfd69b6922ea53b550622a3569f73d",
+      "tip": "0e77d29a68a6cec0528741fbdd15721cfa4d0e53",
       "plan_digest": "sha256:049050e1555e3c60f58dbf417780c64adc02b086723170691fa2a5e8640af0f2",
       "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
       "acceptance_rows": [
@@ -3379,6 +3402,72 @@ The spec changed at `ee8621ab`, so the plan digest changed from `1cdbae9a` to `0
           "finding_ids": [],
           "supersedes": [
             "qu-c3-coverage-r1"
+          ]
+        },
+        {
+          "id": "qu-c3-standards-r3",
+          "performer": "claude:bench-reviewer/qu-c3-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-standards-r3@0e77d29a",
+            "digest": "sha256:8c1a50f6546ed5ff965bbd914ff0a7cba613946ef6dbf4f1a0943dba73baf4a3",
+            "excerpt": "Standards: 0 blocking findings. R7 and R8 are confirmed in the repair delta."
+          },
+          "axis": "Standards",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "0e77d29a68a6cec0528741fbdd15721cfa4d0e53",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c3-standards-r2"
+          ]
+        },
+        {
+          "id": "qu-c3-spec-r3",
+          "performer": "claude:bench-reviewer/qu-c3-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-spec-r3@0e77d29a",
+            "digest": "sha256:a6c38c8fa8f46596ac463579a731a1372880f3163701ffadd5be281603de84be",
+            "excerpt": "Spec: 0 findings. QU11, QU12, and QU13 stay met, and the delta writes only fenced paths and the record."
+          },
+          "axis": "Spec",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "0e77d29a68a6cec0528741fbdd15721cfa4d0e53",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c3-spec-r2"
+          ]
+        },
+        {
+          "id": "qu-c3-coverage-r3",
+          "performer": "claude:bench-reviewer/qu-c3-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c3-coverage-r3@0e77d29a",
+            "digest": "sha256:e481762294a42dbdc0aa444ee3d63f5ff66a4f1c0bcbd4f651f16a625d33c4e4",
+            "excerpt": "Coverage: 0 findings. The conformance and anchors packages and the four plan checks pass, and the R1 probe bites as recorded."
+          },
+          "axis": "Coverage",
+          "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "tip": "0e77d29a68a6cec0528741fbdd15721cfa4d0e53",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c3-coverage-r2"
           ]
         }
       ]
