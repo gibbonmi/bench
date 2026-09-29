@@ -500,6 +500,30 @@ The chunk tip is now the repair commit `9b7df67e`. The source digest is the tree
 
 The spec changed at `92e86104`, so the plan digest changed from `51bdf6fe` to `49d7c345`. The `ReadPlan` rule at `744ef656` gives `51bdf6fe`, which confirms the method. The payload adds one amendment that maps each chunk ID to itself, because no chunk ID changed. The earlier entries keep their earlier source digests as history.
 
+## TT-C3 chunk review, round 3, and close
+
+The frozen pair is base `74daf800f8a11d85083711b31aaabc47797ebc73` and tip `9e742c5434c327e7174f85dd427331004b2bcef6`. The shared evidence is `sha256:a185d294f8016f0b67c880a7f5b8c78859c637767c3d68bf96a6cc1173cb0664`. This round is the confirming round of all three axes after repair cycle 2, and each axis read only the repair delta `92e86104..9e742c54`.
+
+## Standards
+
+Findings: 0. R4 and R5 are confirmed, and one planted-command harness remains.
+
+## Spec
+
+Findings: 0. R4 and R5 are confirmed, and the rows of ticket 3 stay met.
+
+## Coverage
+
+Findings: 0. R4 and R5 are pinned, and an independent scope probe bit.
+
+## Advice
+
+- `TestRowStripsHostileLabel` tests only the BEL byte. A table over more than one refused byte would pin the whole strip rule.
+- `sanitize.Strip` passes DEL and the C1 controls through, because TOON accepts them. A stripped label can also equal another label. The rendering choice stays flagged for reviewer veto.
+- On the bounded path, no test covers a tree call that exits with a code other than 0 or 2. The exempt path has an exit-1 control.
+
+Chunk TT-C3 closes after two repair cycles, the full allowance.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1324,7 +1348,7 @@ The spec changed at `92e86104`, so the plan digest changed from `51bdf6fe` to `4
     {
       "id": "TT-C3",
       "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
-      "tip": "9b7df67ed7ba80ccc2f23ea4857c99db588c69f2",
+      "tip": "9e742c5434c327e7174f85dd427331004b2bcef6",
       "plan_digest": "sha256:49d7c3455ec98c0ab034c4bb473f14b0515ff390730eefb988e644e95f92b708",
       "source_digest": "ef1d5964df6ea99a501c802627517db74e027f95",
       "acceptance_rows": [
@@ -2051,6 +2075,72 @@ The spec changed at `92e86104`, so the plan digest changed from `51bdf6fe` to `4
           "finding_ids": [],
           "supersedes": [
             "tt-c3-coverage-r1"
+          ]
+        },
+        {
+          "id": "tt-c3-standards-r3",
+          "performer": "claude:bench-reviewer/tt-c3-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef1d5964df6ea99a501c802627517db74e027f95",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c3-standards-r3@9e742c54",
+            "digest": "sha256:7863fde2cc7954de942cd6c3b4d04a59d8b3cde5e6b6bd8a1a401ce6bf450689",
+            "excerpt": "Standards: 0 findings. No candidate in repair delta 92e86104..9e742c54 survived refutation."
+          },
+          "axis": "Standards",
+          "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "tip": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c3-standards-r2"
+          ]
+        },
+        {
+          "id": "tt-c3-spec-r3",
+          "performer": "claude:bench-reviewer/tt-c3-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef1d5964df6ea99a501c802627517db74e027f95",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c3-spec-r3@9e742c54",
+            "digest": "sha256:0d72e169f72ca467a8e2d1eb74d0b3e35fba86359bfa9893555dd01c8aad4c8a",
+            "excerpt": "Spec: 0 findings. R4 and R5 are confirmed, and the rows of this ticket stay met."
+          },
+          "axis": "Spec",
+          "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "tip": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c3-spec-r2"
+          ]
+        },
+        {
+          "id": "tt-c3-coverage-r3",
+          "performer": "claude:bench-reviewer/tt-c3-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ef1d5964df6ea99a501c802627517db74e027f95",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c3-coverage-r3@9e742c54",
+            "digest": "sha256:64e9cd5d5624348bc4eb3ff69f5b32caa9458f92b3e117250071658bd0aa1454",
+            "excerpt": "Coverage: 0 findings. Both folds hold, and the only surviving bypass narrows a test sample of a requirement the code already meets."
+          },
+          "axis": "Coverage",
+          "base": "74daf800f8a11d85083711b31aaabc47797ebc73",
+          "tip": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c3-coverage-r2"
           ]
         }
       ]
