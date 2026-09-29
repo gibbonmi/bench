@@ -332,6 +332,29 @@ The chunk tip is now the first record commit of this section. The source digest 
 
 The spec changed at `90a7e396`, so the plan digest changed from `3b519948` to `94546d72`. The session applied the `ReadPlan` rule. The same rule at `85286d10` gives the earlier digest `3b519948`, which confirms the method. The payload keeps the earlier amendments and adds one amendment from `3b519948` to `94546d72`. That amendment maps each chunk ID to itself, because the plan change at `90a7e396` adds only the ticket 2 repair cycle 2 assignment. The QU-C1 chunk keeps the digest of its own tip.
 
+## QU-C2 chunk review, round 3, and close
+
+The frozen pair is base `af66f28584c2ee8507fa350bedea483500a05e72` and tip `cb28194c364610f803f1d9f4945543c9364a0f7e`. The chunk tip moves to that last record commit, and the source digest stays the same. The shared evidence is `sha256:4f1e1ae0534e4346ff68cbca6c87392876754c5ac65dd91068374ac39903e260`. Each axis ran in a new fresh `bench-reviewer` session on opus at high effort, and each read only the repair delta `90a7e396..cb28194c`. Only the Coverage axis ran probes, and it left the tree clean.
+
+## Standards
+
+Findings: 0. R4 is confirmed, because `retirePrimary` and `emptyHistoryRepo` both call `gittest.RepoOnBranch`. The day shift of the byte fixture is sound, because the identity, the dates, and the content fix each hash. The row-length assertion goes red if a hash ever needs quotes.
+
+## Spec
+
+Findings: 0. QU24 stays met: the fixture keeps the kind `delete` and `core.abbrev 8`, and the exact 31-byte row check refuses a quoted hash. Every other ticket 2 row stays met, and the delta changes no expectation.
+
+## Coverage
+
+Findings: 0. Three runs of `./internal/spec` pass. The recorded `2-limit-probe`, the `writeSpec` probe, and the QU24 byte probe each bite again with the recorded verdicts.
+
+## Advice
+
+- The `ParseFloat` guard at `internal/spec/history_selected_test.go:236-238` is an incomplete copy of the quoting rule of the TOON encoder. The 31-byte row check enforces the rule, so a later cleanup can remove the guard.
+- `writeSpec` at `internal/spec/spec_test.go:22-25` is now an alias of `writeFolderSpec`. A later cleanup can point its callers at `writeFolderSpec`.
+
+Chunk QU-C2 closes after two repair cycles.
+
 ```bench-review-record
 {
   "version": 2,
@@ -880,7 +903,7 @@ The spec changed at `90a7e396`, so the plan digest changed from `3b519948` to `9
     {
       "id": "QU-C2",
       "base": "af66f28584c2ee8507fa350bedea483500a05e72",
-      "tip": "eccd2516464d50f726cbc6bca81edfce3e30ab40",
+      "tip": "cb28194c364610f803f1d9f4945543c9364a0f7e",
       "plan_digest": "sha256:94546d7283167eda11336ea2d54c2ff98bc1bc6aa47c556bc41b6a52db59a814",
       "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
       "acceptance_rows": [
@@ -2190,6 +2213,72 @@ The spec changed at `90a7e396`, so the plan digest changed from `3b519948` to `9
           "finding_ids": [],
           "supersedes": [
             "qu-c2-coverage-r1"
+          ]
+        },
+        {
+          "id": "qu-c2-standards-r3",
+          "performer": "claude:bench-reviewer/qu-c2-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c2-standards-r3@cb28194c",
+            "digest": "sha256:eea7fd53d20bda7f5aa2aab01a7efa9baea6481e8ddc7a1a81e4e4a0db313fca",
+            "excerpt": "Standards: 0 findings. R4 is confirmed, and the fixture day shift and the writeSpec delegation are sound."
+          },
+          "axis": "Standards",
+          "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "tip": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c2-standards-r2"
+          ]
+        },
+        {
+          "id": "qu-c2-spec-r3",
+          "performer": "claude:bench-reviewer/qu-c2-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c2-spec-r3@cb28194c",
+            "digest": "sha256:065efc3aa65b633c175af92277639fc1ea1b4f016d00c3015a230a8dc9c99af6",
+            "excerpt": "Spec: 0 findings. QU24 stays met with the new fixture days, and every other ticket 2 row stays met."
+          },
+          "axis": "Spec",
+          "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "tip": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c2-spec-r2"
+          ]
+        },
+        {
+          "id": "qu-c2-coverage-r3",
+          "performer": "claude:bench-reviewer/qu-c2-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "41d771fa79501ce8d68da37e486e5367b3af148f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c2-coverage-r3@cb28194c",
+            "digest": "sha256:021636eeea53ee7a63a663e480f9390d1d84d050e15d0e4542126784877928c3",
+            "excerpt": "Coverage: 0 findings. Three spec package runs pass, and the recorded limit, writeSpec, and QU24 byte probes each bite again."
+          },
+          "axis": "Coverage",
+          "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "tip": "cb28194c364610f803f1d9f4945543c9364a0f7e",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c2-coverage-r2"
           ]
         }
       ]
