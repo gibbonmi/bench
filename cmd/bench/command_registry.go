@@ -13,7 +13,6 @@ import (
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/repairpilot"
-	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -89,13 +88,6 @@ func preflightHelpRows(order int) []helpRow {
 		rows = append(rows, helpRow{Order: order, Suffix: row.Suffix, Description: row.Description})
 	}
 	return rows
-}
-
-// specHelpRows are the root help rows of the spec subcommands.
-var specHelpRows = []helpRow{
-	{Order: 41, Suffix: " retire <slug>", Description: "delete a merged spec + its review pickup (validated)"},
-	{Order: 42, Suffix: " history <slug>", Description: "retire/delete commits for a spec, newest first (TOON)"},
-	{Order: 42, Suffix: strings.TrimPrefix(spec.SelectedHistoryUsage, "bench spec"), Description: "selected histories with complete counts and recovery commands"},
 }
 
 type commandAXIDisposition struct {
