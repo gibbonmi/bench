@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "If every red row is a `*-closure` row, `fence-writes`, or `completion-plan`, the staleness pass below takes the red. Any other red stops the phase.",
+    "new": "If any row is red, the staleness pass below takes the red."
+  }
+]
