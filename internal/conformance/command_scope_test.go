@@ -2,7 +2,7 @@ package conformance
 
 import (
 	"fmt"
-	"os"
+	"go/ast"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -23,19 +23,21 @@ func checkCommandScopes(root, path, body string) []string {
 	}
 	var diags []string
 	for _, entry := range entries {
-		declared := len(entry.fields["Scope"]) != 0
+		// A family or a plumbing line carries no Scope field at all, so even a zero value
+		// on such a line is a declaration that the rule refuses.
+		written := len(entry.fields["Scope"]) != 0
 		switch {
 		case len(entry.fields["Leaves"]) != 0:
-			if declared {
+			if written {
 				diags = append(diags, fmt.Sprintf("command family %q declares a scope", entry.name))
 			}
 		case parityInternalCommand(entry):
-			if declared {
+			if written {
 				diags = append(diags, fmt.Sprintf("plumbing command %q declares a scope", entry.name))
 			}
 		// The help-inventory check refuses any classification other than the public
 		// and the internal one, so a classified entry that is not internal is public.
-		case len(entry.fields["Inventory"]) == 1 && !declared:
+		case len(entry.fields["Inventory"]) == 1 && !declaresScope(entry):
 			diags = append(diags, fmt.Sprintf("command %q declares no scope", entry.name))
 		}
 	}
@@ -49,11 +51,24 @@ func checkCommandScopes(root, path, body string) []string {
 		return append(diags, worktreeLeafFile+" cannot be parsed for worktree leaves: "+err.Error())
 	}
 	for _, leaf := range leaves {
-		if len(leaf.fields["Scope"]) == 0 {
+		if !declaresScope(leaf) {
 			diags = append(diags, fmt.Sprintf("worktree leaf %q declares no scope", leaf.name))
 		}
 	}
 	return diags
+}
+
+// declaredScopes names the values of the scope type in `cmd/bench`. The zero value means
+// undeclared, so only a line that names one of these values declares a scope.
+var declaredScopes = map[string]bool{"scopeTree": true, "scopeRepository": true}
+
+func declaresScope(entry commandRegistryEntry) bool {
+	values := entry.fields["Scope"]
+	if len(values) != 1 {
+		return false
+	}
+	value, ok := values[0].(*ast.Ident)
+	return ok && declaredScopes[value.Name]
 }
 
 // TestCommandScopeCheckBites is the recorded bite proof for the four scope rules. It plants
@@ -61,24 +76,16 @@ func checkCommandScopes(root, path, body string) []string {
 // obey them, and runs the real subcommand-routing check over the planted tree.
 func TestCommandScopeCheckBites(t *testing.T) {
 	root := t.TempDir()
-	write := func(rel, body string) {
-		t.Helper()
-		path := filepath.Join(root, filepath.FromSlash(rel))
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	write(dispatchFile, "package main\n\nvar commandRegistry = []commandDefinition{\n"+
+	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(dispatchFile)), "package main\n\nvar commandRegistry = []commandDefinition{\n"+
 		"\t{Name: \"x\", Inventory: publicInventory(helpRow{Order: 1, Description: \"x\"})},\n"+
-		"\t{Name: \"declared\", Inventory: publicInventory(helpRow{Order: 2, Description: \"declared\"}), Scope: scopeTree},\n"+
+		"\t{Name: \"zero\", Inventory: publicInventory(helpRow{Order: 2, Description: \"zero\"}), Scope: 0},\n"+
+		"\t{Name: \"declared\", Inventory: publicInventory(helpRow{Order: 3, Description: \"declared\"}), Scope: scopeTree},\n"+
 		"\t{Name: \"z\", Inventory: internalInventory, Scope: scopeRepository},\n"+
 		"\t{Name: \"quiet\", Inventory: internalInventory},\n"+
-		"\t{Name: \"f\", Inventory: publicInventory(helpRow{Order: 3, Description: \"f\"}), Scope: scopeRepository, Leaves: worktreeLeaves},\n"+
+		"\t{Name: \"f\", Inventory: publicInventory(helpRow{Order: 4, Description: \"f\"}), Scope: scopeRepository, Leaves: worktreeLeaves},\n"+
 		"}\n")
-	write(worktreeLeafFile, "package main\n\nvar worktreeLeaves = []commandLeaf{\n\t{Name: \"y\"},\n\t{Name: \"leaf\", Scope: scopeRepository},\n}\n")
+	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(worktreeLeafFile)), "package main\n\nvar worktreeLeaves = []commandLeaf{\n"+
+		"\t{Name: \"y\"},\n\t{Name: \"zeroleaf\", Scope: 0},\n\t{Name: \"leaf\", Scope: scopeRepository},\n}\n")
 
 	var got []string
 	for _, diag := range checkSubcommandRouting(root) {
@@ -91,6 +98,8 @@ func TestCommandScopeCheckBites(t *testing.T) {
 		`command family "f" declares a scope`,
 		`plumbing command "z" declares a scope`,
 		`worktree leaf "y" declares no scope`,
+		`command "zero" declares no scope`,
+		`worktree leaf "zeroleaf" declares no scope`,
 	}
 	sort.Strings(want)
 	if !reflect.DeepEqual(got, want) {
