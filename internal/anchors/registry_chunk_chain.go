@@ -2,7 +2,10 @@ package anchors
 
 // chunkChainAnchors pin the chunk chain and the record order that the implement and
 // review phases state, and the hardening cap that the bounded repair policy states.
+// The first row pins the build-entry route that sends a staleness-class preflight red
+// to the staleness pass before the chain starts.
 var chunkChainAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Require, Needle: "If every red row is a `*-closure` row, `fence-writes`, or `completion-plan`, the staleness pass below takes the red. Any other red stops the phase.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped or widened the staleness route for a red build preflight"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug>`.", Diagnostic: "chunk chain: build preflight runs through the worktree after each ticket commit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "The author commits the verification and probe record before the axis dispatch.", Diagnostic: "chunk chain: the probe record commits before the axis dispatch"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "Prepare the review charge from that record commit. The sequence is the author record commit, then the review charge, then the axis dispatch.", Diagnostic: "chunk chain: the review charge follows the author record commit and precedes the axis dispatch"},
