@@ -43,6 +43,43 @@ Each probe ran through `bench probe`, and each restore reads `yes`. The first ro
 
 The author ran each TT-C1 verification on the source of `166a3a8f`, and each passed. The JSON payload holds each result. The conformance excerpt omits its three skip rows. Each skip is an environment capability skip for unix sockets or device nodes. The author also ran these checks, and each passed: `bench structure --growth f981cd3d`, `bench canary`, and the named checks `canary-fixture-compliance`, `package-core-guard`, `conformance-canary-families`, and `axi-query-registry`. After the commit, `bench preflight build tree-targets` reported 14 green checks, 1 check that does not apply, and 0 red checks.
 
+## TT-C1 chunk review, round 1
+
+The frozen pair is base `f981cd3db1a4f27eddba5feede40a80e205bf1c1` and tip `a08359f9550f64d92d524dfebc3f7e6143a31118`. The coordinator moved the chunk tip from the ticket commit to the record commit, and the source digest stays the same. The shared evidence is `sha256:bd1140010578a62d29360a6a33d4647e322f10a032106ee66ede731b1edd3df3`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, on the conditional review line. Only the Coverage axis ran probes, and it left the tree clean. The whole-project gate was green at the frozen tip.
+
+The raw finding count is 2: Standards 1, Spec 0, and Coverage 1. The Spec axis gave the Coverage finding as advice. The coordinator adds one target that the chunk shares with every other author of this ticket: no test drives the refusal over each repository verb. So 3 repair targets remain.
+
+## Standards
+
+Findings: 1. The worst issue is a new private copy of a fixture-writing helper.
+
+- `internal/conformance/command_scope_test.go:66-75` adds a `write` closure that does the work of `writeFixtureFile` at `internal/conformance/package_core_checks_test.go:295`, in the same package. `AGENTS.md` names a fixture harness pasted N times as duplicated knowledge. Target R1. `auto-fix`. Confidence 5.
+
+## Spec
+
+Findings: 0. All seven rows TT1 to TT7 are met, and the classification matches the spec table. The axis gave two items as advice. The first is the zero-value scope gap, which the Coverage axis files as a finding. The second is the TT7 premise below.
+
+## Coverage
+
+Findings: 1. The worst issue is that the scope check grades only the presence of the `Scope` field.
+
+- `internal/conformance/command_scope_test.go:26` and `:52` test only that the key exists. A probe that set `Scope: 0` on the `models` line in `cmd/bench/main.go` stayed silent under `--check subcommand-routing` and under `./cmd/bench`. Spec lines 120-121 say "Its zero value means undeclared", and line 128 says a public definition "declares exactly one scope". The author's reason, that an undeclared value needs an explicit conversion, is false, because Go accepts an untyped `0`. Target R2, `auto-fix`, confidence 6.
+
+## TT-C1 coordinator additions
+
+- R3: `TestRepositoryVerbRefusesTreeTarget` drives only `version` and `idea`. In another author's tree for this ticket, a probe that narrowed the refusal to `version` stayed silent across `./cmd/bench`. With that mutation, `bench shift --in primary x` would start a loop with the objective `--in primary x`. The same two-verb test is in this tree. `auto-fix`.
+- The TT7 premise is a non-behavioral spec contradiction. The `idea` grammar already refuses `--in` at exit 2, so the row's "why it catches" clause cannot occur. The coordinator follows the tree convention: TT7 keeps its behavior, TT6 and R3 carry the bite, and the spec row states this. The reviewer can veto this reading.
+
+## TT-C1 repair routing
+
+Each repair goes to one fresh `bench-writer` repair session for ticket 1 on opus at high effort. Ticket 1's `Writes:` line holds every path. This is cycle 1 of the two repair cycles for chunk TT-C1.
+
+| Target | Ticket | Repair |
+|---|---|---|
+| R1 | 1 | Use the package's `writeFixtureFile` helper instead of the new closure. |
+| R2 | 1 | Accept only `scopeTree` and `scopeRepository` as a declaration, and plant a `Scope: 0` row in `TestCommandScopeCheckBites`. |
+| R3 | 1 | Drive the refusal over every repository-scoped definition that is not a family, read from `commandRegistry`, and show that a refusal narrowed to `version` bites. |
+
 ```bench-review-record
 {
   "version": 2,
@@ -53,7 +90,7 @@ The author ran each TT-C1 verification on the source of `166a3a8f`, and each pas
     {
       "id": "TT-C1",
       "base": "f981cd3db1a4f27eddba5feede40a80e205bf1c1",
-      "tip": "166a3a8f6cb850de7a5e15b5b273dd415b46ff17",
+      "tip": "a08359f9550f64d92d524dfebc3f7e6143a31118",
       "plan_digest": "sha256:7355203a687409e19b68ed6613479e382ad1682b9ccc27fc2000604a45e2920c",
       "source_digest": "48cf94fbd9d931f23b9390333303f8cabd76fad6",
       "acceptance_rows": [
@@ -208,7 +245,72 @@ The author ran each TT-C1 verification on the source of `166a3a8f`, and each pas
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "tt-c1-standards-r1",
+          "performer": "claude:bench-reviewer/tt-c1-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "48cf94fbd9d931f23b9390333303f8cabd76fad6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c1-standards-r1@a08359f9",
+            "digest": "sha256:1b7c505b57a1d115541cfa1a921376528a7b0546793765610614dfbe8da848b1",
+            "excerpt": "Standards: 1 finding. Worst: the bite test adds a new private copy of a file-writing fixture helper that the same package already has."
+          },
+          "axis": "Standards",
+          "base": "f981cd3db1a4f27eddba5feede40a80e205bf1c1",
+          "tip": "a08359f9550f64d92d524dfebc3f7e6143a31118",
+          "finding_ids": [
+            "R1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "tt-c1-spec-r1",
+          "performer": "claude:bench-reviewer/tt-c1-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "48cf94fbd9d931f23b9390333303f8cabd76fad6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c1-spec-r1@a08359f9",
+            "digest": "sha256:ab5b650410c319daa5c3c75b3d5c285fe8a123842460ae08651799828e0bd5e2",
+            "excerpt": "Spec: 0 findings. Every TT1-TT7 row is met, and the classification matches the spec table exactly."
+          },
+          "axis": "Spec",
+          "base": "f981cd3db1a4f27eddba5feede40a80e205bf1c1",
+          "tip": "a08359f9550f64d92d524dfebc3f7e6143a31118",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "tt-c1-coverage-r1",
+          "performer": "claude:bench-reviewer/tt-c1-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "48cf94fbd9d931f23b9390333303f8cabd76fad6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c1-coverage-r1@a08359f9",
+            "digest": "sha256:c02fe3282a13d4e8a6123d01bc66a60a820c74944fd3afb5d131c0ca1c1e05d9",
+            "excerpt": "Coverage: 1 finding. Worst: the scope check checks only that a Scope key is present, so a registry line with Scope: 0 passes both the gate and the full cmd/bench suite."
+          },
+          "axis": "Coverage",
+          "base": "f981cd3db1a4f27eddba5feede40a80e205bf1c1",
+          "tip": "a08359f9550f64d92d524dfebc3f7e6143a31118",
+          "finding_ids": [
+            "R2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
