@@ -21,6 +21,15 @@ import (
 // internal/diff's parseLogFormat uses.
 const historyLogFormat = "--format=%H%x00%h%x00%cI%x00%s"
 
+// historyCmd is the command name that the positional and selected history grammars share.
+const historyCmd = "bench spec history"
+
+// historyUsage is the help line of the positional history grammar.
+const historyUsage = "usage: " + historyCmd + " <spec.md | slug>"
+
+// historyDerivationFailed names a failed git history query on each history route.
+const historyDerivationFailed = "git history derivation failed"
+
 // historyEntry is one merged, deduped row: a commit tagged retire or delete. The row is
 // keyed by its full hash for dedupe. It carries the full ISO-8601 timestamp for the
 // sort; the rendered date is this field's first 10 bytes.
@@ -146,9 +155,13 @@ func historyDeleteLog(slug string) ([]byte, error) {
 // state when neither query matches. It reports structured stdout errors on a git
 // failure or an unrepresentable TOON cell, such as a control byte in a commit subject.
 // Exit codes are honest: 0 for ok, including the empty state, 1 for a git or render
-// failure, and 2 for a usage error.
+// failure, and 2 for a usage error. A `--spec` or `--limit` flag selects the bounded
+// multi-spec view of history_selected.go before the positional operand parses.
 func historyCommand(rest []string) (string, int) {
-	arg, out, code, ok := specArg("bench spec history", "usage: bench spec history <spec.md | slug>\n", rest)
+	if selectsHistories(rest) {
+		return selectedHistories(rest)
+	}
+	arg, out, code, ok := specArg(historyCmd, historyUsage+"\n", rest)
 	if !ok {
 		return out, code
 	}
@@ -159,15 +172,21 @@ func historyCommand(rest []string) (string, int) {
 
 	facts, err := History(slug)
 	if err != nil {
-		return toon.Errorf("git history derivation failed", err.Error()) + "\n", 1
+		return toon.Errorf(historyDerivationFailed, err.Error()) + "\n", 1
 	}
-	rows := make([][]string, len(facts))
-	for i, e := range facts {
-		rows[i] = []string{e.Hash, e.Date, e.Kind, e.Subject}
-	}
-	tbl, err := toon.Table("history", []string{"hash", "date", "kind", "subject"}, rows)
+	tbl, err := renderHistory(facts)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
 	return tbl, 0
+}
+
+// renderHistory renders the complete positional history table. The positional route
+// prints it, and the selected route counts its bytes, so both read one rendering.
+func renderHistory(facts []HistoryFact) (string, error) {
+	rows := make([][]string, len(facts))
+	for i, e := range facts {
+		rows[i] = []string{e.Hash, e.Date, e.Kind, e.Subject}
+	}
+	return toon.Table("history", []string{"hash", "date", "kind", "subject"}, rows)
 }

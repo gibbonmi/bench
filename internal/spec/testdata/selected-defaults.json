@@ -1,0 +1,167 @@
+[
+  {
+    "Name": "mixed",
+    "Args": [
+      "mixed"
+    ],
+    "Rows": [
+      [
+        "{{newest}}",
+        "2025-01-08",
+        "retire",
+        "quoted \"café\", tab\tvalue spec-retire: mixed"
+      ],
+      [
+        "{{mixed-delete}}",
+        "2025-01-06",
+        "delete",
+        "remove mixed spec"
+      ],
+      [
+        "{{both}}",
+        "2025-01-03",
+        "retire",
+        "spec-retire: mixed"
+      ]
+    ]
+  },
+  {
+    "Name": "flat-path",
+    "Args": [
+      "specs/mixed.md"
+    ],
+    "History": "mixed"
+  },
+  {
+    "Name": "folder-path",
+    "Args": [
+      "{{ROOT}}/specs/mixed/spec.md"
+    ],
+    "History": "mixed"
+  },
+  {
+    "Name": "retire-only",
+    "Args": [
+      "retire-only"
+    ],
+    "Rows": [
+      [
+        "{{retire}}",
+        "2025-01-02",
+        "retire",
+        "spec-retire: retire-only"
+      ]
+    ]
+  },
+  {
+    "Name": "delete-only",
+    "Args": [
+      "only-delete"
+    ],
+    "Rows": [
+      [
+        "{{delete}}",
+        "2025-01-04",
+        "delete",
+        "remove obsolete spec"
+      ]
+    ]
+  },
+  {
+    "Name": "prefix-slug",
+    "Args": [
+      "mixed-extra"
+    ],
+    "Rows": [
+      [
+        "{{prefix}}",
+        "2025-01-07",
+        "retire",
+        "spec-retire: mixed-extra"
+      ]
+    ]
+  },
+  {
+    "Name": "empty",
+    "Args": [
+      "absent"
+    ],
+    "Rows": []
+  },
+  {
+    "Name": "no-repository",
+    "Args": [
+      "mixed"
+    ],
+    "Exit": 1,
+    "NoRepository": true
+  },
+  {
+    "Name": "help",
+    "Args": [
+      "--help"
+    ],
+    "Help": true
+  },
+  {
+    "Name": "short-help",
+    "Args": [
+      "-h"
+    ],
+    "Help": true
+  },
+  {
+    "Name": "help-word",
+    "Args": [
+      "help"
+    ],
+    "Help": true
+  },
+  {
+    "Name": "missing-operand",
+    "Args": [],
+    "Exit": 2,
+    "MissingArgument": true
+  },
+  {
+    "Name": "unknown-flag",
+    "Args": [
+      "--unknown"
+    ],
+    "Exit": 2,
+    "UnknownArgument": "--unknown"
+  },
+  {
+    "Name": "extra-operand",
+    "Args": [
+      "mixed",
+      "extra"
+    ],
+    "Exit": 2,
+    "UnknownArgument": "extra"
+  },
+  {
+    "Name": "reserved-help-slug",
+    "Args": [
+      "--",
+      "help"
+    ],
+    "Rows": []
+  },
+  {
+    "Name": "reserved-spec-flag-slug",
+    "Args": [
+      "--",
+      "--spec"
+    ],
+    "Rows": []
+  },
+  {
+    "Name": "reserved-limit-flag-slug",
+    "Args": [
+      "--",
+      "--limit"
+    ],
+    "Rows": []
+  }
+]

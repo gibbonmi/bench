@@ -8,6 +8,7 @@ import (
 
 const (
 	WorktreeList        = "bench worktree list"
+	WorktreeListPaths   = WorktreeList + " --view paths --target <target> [--target <target>]..."
 	WorktreePath        = "bench worktree path <target>"
 	WorktreeExec        = "bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]"
 	WorktreeShow        = "bench worktree show <target> <rev>:<path>"
@@ -30,6 +31,7 @@ const WorktreeExecGate = "bench worktree exec <target> -- bench gate"
 
 var worktreeCommands = []string{
 	WorktreeList,
+	WorktreeListPaths,
 	WorktreePath,
 	WorktreeExec,
 	WorktreeShow,

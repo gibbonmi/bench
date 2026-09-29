@@ -124,6 +124,17 @@ func TestStripKeepsOnlyTabBelowSpace(t *testing.T) {
 	}
 }
 
+// TestTargetPointerNamesThePosition pins the pointer that replaces an unsafe operand. The
+// selected-view tests read TargetPointer, so this literal is the one independent copy of
+// the label shape.
+func TestTargetPointerNamesThePosition(t *testing.T) {
+	for position, want := range map[int]string{1: "target-1", 3: "target-3", 12: "target-12"} {
+		if got := TargetPointer(position); got != want || !LineSafe(got) {
+			t.Errorf("TargetPointer(%d) = %q, want line-safe %q", position, got, want)
+		}
+	}
+}
+
 // TestPreformattedPreservesLayoutWhitespace pins the <pre>-panel variant. Newline and
 // tab pass through verbatim, so multi-line layout survives. Carriage return and every
 // other control rune still escape through the same \uXXXX mechanism Controls uses. A

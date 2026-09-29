@@ -28,6 +28,9 @@ type listRow struct {
 
 // ListCommand implements the read-only AXI worktree population query.
 func ListCommand(root, _ string, args []string) (string, int) {
+	if selectsWorktrees(args) {
+		return listSelectedWorktrees(root, args)
+	}
 	j := defaultJoins()
 	_, line, code := usage.Parse(worktreeListGrammar, args)
 	if line != "" {
@@ -46,7 +49,7 @@ func ListCommand(root, _ string, args []string) (string, int) {
 	}
 	assignments, err := intent.Assignments(root)
 	if err != nil {
-		return toon.Errorf("cannot read worktree assignments", "repair the Bench intent ledger and retry") + "\n", 1
+		return assignmentsReadRefusal(), 1
 	}
 
 	def, defaultResolved := git.ResolvedDefault(root)
@@ -100,6 +103,12 @@ func ListCommand(root, _ string, args []string) (string, int) {
 		return toon.RenderError(err) + "\n", 1
 	}
 	return out + help, 0
+}
+
+// assignmentsReadRefusal is the response of each list view when the intent ledger cannot
+// be read, so the bare and selected views name one repair.
+func assignmentsReadRefusal() string {
+	return toon.Errorf("cannot read worktree assignments", "repair the Bench intent ledger and retry") + "\n"
 }
 
 // actionsForRows derives the help rows from the row states. An active row with a present

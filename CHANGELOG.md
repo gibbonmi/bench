@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Session context queries
+
+- Added `bench worktree list --view paths --target <target>`. It gives the identity, path, and state of each selected worktree, one error row for each failed target, and the complete-inventory action. The bare `bench worktree list` output does not change.
+- Added `bench spec history --spec <slug-or-path> --limit <positive-count>`. The `--spec` flag can repeat. For each selected spec, it gives the complete event and byte counts, the omitted event count, the exact complete-history command, and its own error. It shows at most the limit of newest events for each spec. The positional `bench spec history <slug>` output does not change.
+
 ### Broker rehearsal
 
 - Fixed final-check guidance to restore the durable shim target before candidate worktree release.
