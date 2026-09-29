@@ -1,8 +1,7 @@
 **FT6 (LOW, parked pending evidence — leave parked):**
 
-`bench refs`, `bench
-detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row, and
-`conformanceFamilies`-vs-dispatch reconcile meta-check. The per-anchor
+`bench refs`, `bench detect`, `bench doc`, `bench specs --retired`, and the
+doctor binary-presence row. The per-anchor
 bite-proof meta-test graduated to FT326 on observed anchor rot. `bench symbols` is not carried. Restore it only if
 agents demonstrably burn turns on symbol search.
 
