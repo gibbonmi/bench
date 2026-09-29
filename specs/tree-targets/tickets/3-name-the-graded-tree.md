@@ -1,7 +1,7 @@
 # 3. Name the graded tree in each tree-scoped response
 
 Blocked by: 1-declare-command-scope.md
-Writes: internal/treetarget/ (new), cmd/bench/tree_scope.go (new), cmd/bench/tree_scope_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, cmd/bench/main_test.go, cmd/bench/selected_queries_test.go, cmd/bench/isolated_command_fixtures_test.go, cmd/bench/spill_support_test.go, cmd/bench/census_output_test.go, cmd/bench/preflight_version_test.go, cmd/bench/commit_chain_test.go, cmd/bench/response_bound_exempt_test.go, cmd/bench/census_output.go, internal/responsebound/owner.go, internal/responsebound/owner_test.go, internal/systemtest/
+Writes: internal/treetarget/ (new), cmd/bench/tree_scope.go (new), cmd/bench/tree_scope_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, cmd/bench/main_test.go, cmd/bench/selected_queries_test.go, cmd/bench/isolated_command_fixtures_test.go, cmd/bench/spill_support_test.go, cmd/bench/census_output_test.go, cmd/bench/preflight_version_test.go, cmd/bench/commit_chain_test.go, cmd/bench/response_bound_exempt_test.go, cmd/bench/response_bound_test.go, cmd/bench/census_output.go, internal/responsebound/owner.go, internal/responsebound/owner_test.go, internal/systemtest/
 Covers: TT10, TT11, TT12, TT13, TT14, TT15, TT16, TT17, TT18, TT19, TT20, TT21, TT22, TT23, TT24, TT25, TT56, TT60, TT61
 
 ## What to build
