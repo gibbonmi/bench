@@ -8,6 +8,8 @@ Covers: TT8, TT9, TT26, TT27, TT28, TT29, TT30, TT31, TT32, TT33, TT34, TT35, TT
 
 Chunk: TT-C4.
 
+This ticket waits for pending reviewer decision 2 in the spec, the label lookup precedence.
+
 `--in <label|primary>` as the first argument of a tree-scoped verb runs that verb as one child in the tree target. Resolve the value in the seven-step order of the spec's tree-target section. Add an exported exact-label lookup in `internal/worktree/tree_target.go`. It keeps the state, missing-tree, and creation-bundle checks of `resolveAssignmentIn`, and it accepts no id, prefix, or path. After the label lookup fails, it calls `targetPath` and answers a typed path-shape error.
 
 Start the child with a new exported runner beside `runWorktreeChild`. It uses `execEnv` and prints no `worktree:` line. The child directory is `canonicalpath.Resolve` of the target root. The child argv is the executable, the verb, and the remaining arguments. The parent prints no row, applies no bound, and returns the child's exit code.
