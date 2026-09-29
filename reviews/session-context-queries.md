@@ -111,6 +111,32 @@ The chunk tip is now the repair commit `5dabe9b0`. The source digest is the tree
 
 The spec changed at `c20b8e33`, so the plan digest changed. The session applied the `ReadPlan` rule. The digest is the SHA-256 of a JSON array that holds the spec bytes and the three ticket bytes in plan order, each as base64. The same rule at `0e94692d` gives the earlier digest `48ff3619`, which confirms the method. The round 1 entries keep their earlier source digest as history.
 
+## QU-C1 chunk review, round 2, and close
+
+The frozen pair is base `12c7d857c6fe14e03c618c1584d3374371068277` and tip `af66f28584c2ee8507fa350bedea483500a05e72`. Review preflight requires the current tip, so the chunk tip moves from the repair commit to its record commit. The source digest stays the same, because the record file is outside the graded source. The shared evidence is `sha256:3fc4def3080bc8ce0b2a2e0ea9beba27732da43cd413e907564734f1320ec418`.
+
+This round is the confirming round of all three axes. Each axis ran in a new fresh `bench-reviewer` session on opus at high effort. Each axis read only the repair delta `c20b8e33..af66f285`. Only the Coverage axis ran probes, and it left the tree clean.
+
+## Standards
+
+Findings: 0. R1, R2, and R3 are confirmed. The repair delta adds no duplicated knowledge.
+
+## Spec
+
+Findings: 0. All nine ticket 1 rows stay met, and the repair writes only fenced paths and this record.
+
+## Coverage
+
+Findings: 0. The R4 probe now bites. The recorded QU18 and QU26 probes rerun with the recorded verdicts. The R1 refactor removed no assertion, and no spec row pins the exact text of the shared refusals.
+
+## Advice
+
+- The Spec axis found that the comment at `internal/worktree/list_selected_test.go:241-242` overstates its claim. For the case with a duplicate `--view`, both grammars print the same refusal line. The other nine cases separate the two routes, so the test still catches a missed route. The coordinator kept this note as advice and opened no repair cycle for it.
+- The literal at `internal/worktree/merge.go:177` still restates the text of `errTargetControls`. That file is outside the ticket 1 fence.
+- A package-wide probe run in `./internal/worktree` has a red baseline on `TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion`, because prospective authorization reports an infrastructure refusal. That red is an environment fact outside the diff.
+
+Chunk QU-C1 closes after one repair cycle.
+
 ```bench-review-record
 {
   "version": 2,
@@ -121,7 +147,7 @@ The spec changed at `c20b8e33`, so the plan digest changed. The session applied 
     {
       "id": "QU-C1",
       "base": "12c7d857c6fe14e03c618c1584d3374371068277",
-      "tip": "5dabe9b0ad3f873c2b756e2f56f3751229a4c7cd",
+      "tip": "af66f28584c2ee8507fa350bedea483500a05e72",
       "plan_digest": "sha256:f9fea3c85e266e859b0c4e9edb5774fbda605a5695653938479cb0dfaf6dfdb7",
       "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
       "acceptance_rows": [
@@ -587,6 +613,72 @@ The spec changed at `c20b8e33`, so the plan digest changed. The session applied 
             "R5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "qu-c1-standards-r2",
+          "performer": "claude:bench-reviewer/qu-c1-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c1-standards-r2@af66f285",
+            "digest": "sha256:a86947d0ec76138a0f495fc2327d4d19c9fe79b26dbbd67f3a9b1fde18aaf3c8",
+            "excerpt": "Standards: 0 findings. R1, R2, and R3 are confirmed in the repair delta, with no new duplicated knowledge."
+          },
+          "axis": "Standards",
+          "base": "12c7d857c6fe14e03c618c1584d3374371068277",
+          "tip": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c1-standards-r1"
+          ]
+        },
+        {
+          "id": "qu-c1-spec-r2",
+          "performer": "claude:bench-reviewer/qu-c1-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c1-spec-r2@af66f285",
+            "digest": "sha256:f00d59ab3c70c20104f6f562e6d79eeb1310774497e0b730289d27add4c32ccb",
+            "excerpt": "Spec: 0 findings. All nine ticket 1 rows stay met, and the repair stays inside the ticket 1 fence."
+          },
+          "axis": "Spec",
+          "base": "12c7d857c6fe14e03c618c1584d3374371068277",
+          "tip": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c1-spec-r1"
+          ]
+        },
+        {
+          "id": "qu-c1-coverage-r2",
+          "performer": "claude:bench-reviewer/qu-c1-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff12b6e59d21a2e93b480a6e237715a329309ec3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/qu-c1-coverage-r2@af66f285",
+            "digest": "sha256:a33bc032f7c572ef304b1c15d311d843571db5cb8003af098c87858ae76054e2",
+            "excerpt": "Coverage: 0 findings. The R4 probe now bites, and the recorded QU18 and QU26 probes rerun with the recorded verdicts."
+          },
+          "axis": "Coverage",
+          "base": "12c7d857c6fe14e03c618c1584d3374371068277",
+          "tip": "af66f28584c2ee8507fa350bedea483500a05e72",
+          "finding_ids": [],
+          "supersedes": [
+            "qu-c1-coverage-r1"
+          ]
         }
       ]
     }
