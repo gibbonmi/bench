@@ -368,7 +368,7 @@ The ticket edits three guidance files and no code:
 The author reports these deviations from the stream source. The Standards and Spec axes grade each one.
 
 - The stream wrote each selected grammar in each of the three files. The `craft-cli` table now holds the only guidance example of each selected view, and the debug and drain text point at it. The debug file keeps its anchored `git log --diff-filter=D -- specs/` query, and the `craft-cli` archive row also shows that query as its focused read.
-- The stream diff also reverted current text in the debug and drain files, because the stream base was older. The port keeps all current text except in the debug section `## Finding a retired spec`. That section was compressed to stay inside its 170-line budget. It dropped three current phrases: "merges and dedupes them", "Bench promotes a spec", and "in place of the two hand runs". The port adds only the focused-read intent.
+- The stream diff also reverted current text in the debug and drain files, because the stream base was older. The port keeps all current text except in the debug section `## Finding a retired spec`. The ticket 3 author compressed that section to stay inside its 170-line budget. It dropped three current phrases: "merges and dedupes them", "Bench promotes a spec", and "in place of the two hand runs". The port adds only the focused-read intent.
 - The author did not add a `--help` pointer, because `.bench/BENCH.md` already names each verb's `--help` as the grammar owner.
 - No anchor needle moved, so the diff leaves the anchor registry files, the command registry files, the two conformance tests, and each canary unchanged.
 
@@ -504,11 +504,36 @@ Targets R7 and R8 go to one fresh `bench-writer` repair session for ticket 3. Th
 | R7 | 3 | Put the condition of the `craft-cli` fetch sentence before its instruction. |
 | R8 | 3 | Name the agent in the record sentence about the compressed debug section. |
 
+## QU-C3 ticket 3 repair evidence, cycle 2
+
+The session `claude:bench-writer/scq-t3-repair-2` ran on opus at high effort, with a cap of 3 attempts. It started at `ee8621ab` and committed `6a686c5f` on a lane pass in the first attempt. This repair is cycle 2 of the two repair cycles for chunk QU-C3.
+
+- R7: the `craft-cli` fetch sentence now reads "After that discovery, fetch only the relevant bodies." The condition now comes before the instruction. `craft-cli` stays at 119 of its 120 lines, and no anchor pins the sentence.
+- R8: the QU-C3 author evidence now reads "The ticket 3 author compressed that section to stay inside its 170-line budget." The cycle 1 R6 repair wrote the passive sentence into that section, so the session corrected it there. The cycle 1 section keeps its quote of the R5 text, because that quote records the cycle 1 result.
+
+### Probe verdicts
+
+The probe ran through `bench probe` at the source of `6a686c5f`, and its restore reads `yes`. The JSON payload holds its exact command and output.
+
+| Target | File | Mutation | Verdict | Failed tests |
+|---|---|---|---|---|
+| R7 | `.agents/skills/bench-craft-cli/SKILL.md` | swap: the repaired sentence to the same sentence and two added lines | bit | TestRootConformance, with the file at 121 lines over its 120-line budget |
+
+No check grades the order of a condition and its instruction, so the Standards axis owns R7. The probe shows that the line budget still guards the repaired file.
+
+### Verification
+
+The session ran each QU-C3 plan verification on the source of `6a686c5f`, and each passed. The session also ran `bench test --package` on `./internal/conformance` and `./internal/anchors`, and each passed. The conformance run had three capability skips. `bench gate-prose` passed on the `craft-cli` file and on this record. `bench anchors` reported the same 3 anchors on the `craft-cli` file as the cycle 1 list.
+
+The chunk tip is now the first record commit of this section. The source digest is the tree of `6a686c5f` without this record file. The record commits change only this file, so the digest is the same at each record commit. The session applied the `SourceDigest` rule. The same steps at `6fc8ff9b` give the cycle 1 digest `a010313d`, which confirms the method.
+
+The spec changed at `ee8621ab`, so the plan digest changed from `1cdbae9a` to `049050e1`. The session applied the `ReadPlan` rule. The same rule at `78a50ee5` gives the earlier digest `1cdbae9a`, which confirms the method. The payload keeps the earlier amendments and adds one amendment from `1cdbae9a` to `049050e1`. That amendment maps each chunk ID to itself, because the plan change at `ee8621ab` adds only the ticket 3 repair cycle 2 assignment. The QU-C1 and QU-C2 chunks keep the digests of their own tips.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/session-context-queries/spec.md",
-  "plan_digest": "sha256:1cdbae9a4cc49752da076fbfcfc115b5d9d42f152f7512e140be292157976c8b",
+  "plan_digest": "sha256:049050e1555e3c60f58dbf417780c64adc02b086723170691fa2a5e8640af0f2",
   "implementation_session": "",
   "chunks": [
     {
@@ -2435,9 +2460,9 @@ Targets R7 and R8 go to one fresh `bench-writer` repair session for ticket 3. Th
     {
       "id": "QU-C3",
       "base": "cb28194c364610f803f1d9f4945543c9364a0f7e",
-      "tip": "654e3d2f30609567fea96c105e1afd43227edadf",
-      "plan_digest": "sha256:1cdbae9a4cc49752da076fbfcfc115b5d9d42f152f7512e140be292157976c8b",
-      "source_digest": "a010313dad3ba6b70ddc6bb119932f392fb7dbf8",
+      "tip": "6a686c5fc25d07ba9a0f60599ee42d0b0b5789be",
+      "plan_digest": "sha256:049050e1555e3c60f58dbf417780c64adc02b086723170691fa2a5e8640af0f2",
+      "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
       "acceptance_rows": [
         "QU11",
         "QU12",
@@ -3042,6 +3067,179 @@ Targets R7 and R8 go to one fresh `bench-writer` repair session for ticket 3. Th
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-cli/SKILL.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestAXIGuidanceContractBites,passed,13\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,7\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestAXIGuidanceContractBites/omitted_member,\"axi_query_registry_test.go:203: mutation anchor \\\"| `bench worktree list` |\\\" count = 2, want 1\"\nskips[0]{package,test,reason}:"
             }
           }
+        },
+        {
+          "id": "qu-c3-3-workflow-r3",
+          "performer": "claude:bench-writer/scq-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-2-20260929/3-workflow@6a686c5f",
+            "digest": "sha256:b476ae51cdf3a705e68d587a8180554da827e9a5be2c2444e78d043ab43bafb5",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,726\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-3-skills-r3",
+          "performer": "claude:bench-writer/scq-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-2-20260929/3-skills@6a686c5f",
+            "digest": "sha256:c224ae6aff6b0057319e254320ee168971646da0b2de6eae4c92751c0643cf54",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-skills",
+          "command": "bench test --check skills-index-command-adapters",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-3-budgets-r3",
+          "performer": "claude:bench-writer/scq-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-2-20260929/3-budgets@6a686c5f",
+            "digest": "sha256:6f72c99a424331a3381e284e55ffa703b490f81e19b498e848e8bfc5d9ca25ed",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-3-prose-r3",
+          "performer": "claude:bench-writer/scq-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-2-20260929/3-prose@6a686c5f",
+            "digest": "sha256:714354918ad17a8d71545f6a2f7805514fdd48a92d705429f2182508b3b5876b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,133\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "3-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-package-conformance-r3",
+          "performer": "claude:bench-writer/scq-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-2-20260929/package-conformance@6a686c5f",
+            "digest": "sha256:1377f541edb419568212b417434c9c021fb56dabdeaca8cb86b03cfb4c9f7aad",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,33312\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:"
+          },
+          "requirement": "package-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-anchors-package-r3",
+          "performer": "claude:bench-writer/scq-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-2-20260929/anchors-package@6a686c5f",
+            "digest": "sha256:1e05dafe680226a22ecd21f99335feb8678d67304a67b2d49d95766aae266cf9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,962\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "author-anchors-package",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-gate-prose-r3",
+          "performer": "claude:bench-writer/scq-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-2-20260929/gate-prose@6a686c5f",
+            "digest": "sha256:17c901f137f73426a9d455b0fe1347163b2dac6964f76d5329f145c87a94963e",
+            "excerpt": "prose[1]{path,verdict}:\n  .agents/skills/bench-craft-cli/SKILL.md,pass"
+          },
+          "requirement": "author-gate-prose",
+          "command": "bench gate-prose . -- .agents/skills/bench-craft-cli/SKILL.md",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-anchors-cli-r3",
+          "performer": "claude:bench-writer/scq-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-2-20260929/anchors-cli@6a686c5f",
+            "digest": "sha256:889632342fd309a9d68f68e57d6b9d3f8e71874c0c57a9e6e10d62daa47a0aff",
+            "excerpt": "anchors[3]{kind,section,step,needle,line}:\n  require,\"\",0,An ambiguous bare name answers its candidates with one re-query action per candidate row.,84\n  forbid,\"\",0,Only an over-cap default discloses,0\n  require,\"\",0,The active rows with a present tree share one `bench worktree path <target>` action and one `bench worktree exec <target> -- <command>` action.,88\nhelp[0]{cmd,why}:"
+          },
+          "requirement": "author-anchors-cli",
+          "command": "bench anchors .agents/skills/bench-craft-cli/SKILL.md",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c3-r7-probe-r3",
+          "performer": "claude:bench-writer/scq-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3206a6a2be639aaa589fc8ba03f75f342231bbf6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t3-repair-2-20260929/r7-probe@6a686c5f",
+            "digest": "sha256:080c66ee508b82451e01614408ef172918c2b4632a48b1f67bd182e6e0615a16",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-cli/SKILL.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,guidance-prose-budgets,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: prose-budget exceeded: .agents/skills/bench-craft-cli/SKILL.md is 121 lines, over its 120-line budget\"\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "author-probe-R7-budget",
+          "command": "bench probe .agents/skills/bench-craft-cli/SKILL.md --swap 'After that discovery, fetch only the relevant bodies.' --with $'After that discovery, fetch only the relevant bodies.\\n\\nProbe line.' --check guidance-prose-budgets",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t3-repair-2-20260929/r7-probe@6a686c5f",
+              "digest": "sha256:080c66ee508b82451e01614408ef172918c2b4632a48b1f67bd182e6e0615a16",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/skills/bench-craft-cli/SKILL.md,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,guidance-prose-budgets,^TestRootConformance$,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: prose-budget exceeded: .agents/skills/bench-craft-cli/SKILL.md is 121 lines, over its 120-line budget\"\nskips[0]{package,test,reason}:"
+            }
+          }
         }
       ],
       "reviews": [
@@ -3257,6 +3455,21 @@ Targets R7 and R8 go to one fresh `bench-writer` repair session for ticket 3. Th
     {
       "from": "sha256:6244a75248316eabb8a40057d601fe0e48324308a3f23854b083997610363842",
       "to": "sha256:1cdbae9a4cc49752da076fbfcfc115b5d9d42f152f7512e140be292157976c8b",
+      "chunk_ids": {
+        "QU-C1": [
+          "QU-C1"
+        ],
+        "QU-C2": [
+          "QU-C2"
+        ],
+        "QU-C3": [
+          "QU-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1cdbae9a4cc49752da076fbfcfc115b5d9d42f152f7512e140be292157976c8b",
+      "to": "sha256:049050e1555e3c60f58dbf417780c64adc02b086723170691fa2a5e8640af0f2",
       "chunk_ids": {
         "QU-C1": [
           "QU-C1"
