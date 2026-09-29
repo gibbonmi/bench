@@ -109,7 +109,7 @@ func runPreflight(t *testing.T, args []string) string {
 	if code := (Command{Stdout: &stdout, Stderr: &stderr}).Run(args); code != 0 || stderr.Len() != 0 {
 		t.Fatalf("%v = (%d, stderr=%q):\n%s", args, code, stderr.String(), stdout.String())
 	}
-	return spilledResponse(t, stdout.String())
+	return spilledResponse(t, withoutTreeRow(stdout.String()))
 }
 
 // readManifestStream follows the default stream from the successor of its summary until

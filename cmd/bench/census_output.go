@@ -13,14 +13,16 @@ import (
 // prints the response after the command returns, and the command's own exit code stays the
 // verb's exit. The spill scope and the census output record share one root lookup. It runs
 // at most once and only when first needed, so a spill that opens after the verb removed its
-// own tree finds no root and takes the capped store outside any repository.
-func (c Command) runBounded(definition commandDefinition, args []string) int {
+// own tree finds no root and takes the capped store outside any repository. The owner
+// prints the identity row first, outside the bound, unless the exit rule of shownRow drops it.
+func (c Command) runBounded(definition commandDefinition, args []string, row string) int {
 	leaf, _ := leafNamed(definition.Leaves, args)
 	root := sync.OnceValue(boundaryRoot)
 	owner := responsebound.New(worktree.Home(), c.Stdout, c.Stderr, root, leaf.Retires)
 	var resolved string
 	c.Stdout, c.Stderr, c.resolved = owner.Stdout(), owner.Stderr(), &resolved
 	exit := definition.run(c, args)
+	owner.Lead(shownRow(row, exit))
 	owner.Finish()
 	_ = recordOutput(owner.Size(), outputHead(definition, leaf), resolved, root())
 	return exit

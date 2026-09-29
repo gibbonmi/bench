@@ -325,10 +325,11 @@ func (c Command) Run(args []string) int {
 		finishSpan(exit)
 		return exit
 	}
+	row := definition.treeRow(args[1:])
 	if !definition.bound(args[1:]).bounded {
-		return definition.run(c, args[1:])
+		return c.finishExempt(row, definition.run(c, args[1:]))
 	}
-	return c.runBounded(definition, args[1:])
+	return c.runBounded(definition, args[1:], row)
 }
 
 func commandImplementationID(definition commandDefinition) string {

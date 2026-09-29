@@ -695,7 +695,7 @@ func TestSkillsIndexRoutesThroughDispatch(t *testing.T) {
 func runKeptRoute(argv []string) (string, int) {
 	var stdout, stderr bytes.Buffer
 	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)
-	return stdout.String() + stderr.String(), code
+	return withoutTreeRow(stdout.String()) + stderr.String(), code
 }
 
 // TestSkillsIndexDistinguishesMissingGitFromOutsideRepository grades the two ways

@@ -49,6 +49,14 @@ func requireComplete(t *testing.T, argv []string, run boundRun, want string) {
 	}
 }
 
+// withoutRows answers run without the leading identity row of each stream. A planted
+// tree-scoped verb prints the row first on stdout when it is bounded and on stderr when it
+// is exempt, and these tests grade only the verb output.
+func withoutRows(run boundRun) boundRun {
+	run.stdout, run.stderr = withoutTreeRow(run.stdout), withoutTreeRow(run.stderr)
+	return run
+}
+
 // requireBounded fails unless run printed the projection of a fixtureLines response: 10
 // stdout lines whose fifth is the spill line.
 func requireBounded(t *testing.T, argv []string, run boundRun) {
@@ -90,8 +98,8 @@ func TestHelpExemptionNeedsOneArgument(t *testing.T) {
 // writes the page to a file, stays bounded.
 func TestDashboardStdoutStaysComplete(t *testing.T) {
 	registry := registryWith("dashboard", linesHandler(stdoutOf, fixtureLines))
-	requireComplete(t, []string{"dashboard", "--stdout"}, runRegistry(t, registry, "dashboard", "--stdout"), numberedLines(fixtureLines))
-	requireBounded(t, []string{"dashboard"}, runRegistry(t, registry, "dashboard"))
+	requireComplete(t, []string{"dashboard", "--stdout"}, withoutRows(runRegistry(t, registry, "dashboard", "--stdout")), numberedLines(fixtureLines))
+	requireBounded(t, []string{"dashboard"}, withoutRows(runRegistry(t, registry, "dashboard")))
 
 	t.Setenv(benchhome.Env, t.TempDir())
 	page := runAXICommandAt(t, newAXIEnvelopeRepo(t), []string{"dashboard", "--stdout"})
@@ -142,6 +150,6 @@ func TestPlumbingStaysOutsideBound(t *testing.T) {
 func TestShipTierStaysComplete(t *testing.T) {
 	for _, name := range []string{"release-preflight", "prep-release", "release"} {
 		registry := registryWith(name, linesHandler(stdoutOf, fixtureLines))
-		requireComplete(t, []string{name}, runRegistry(t, registry, name), numberedLines(fixtureLines))
+		requireComplete(t, []string{name}, withoutRows(runRegistry(t, registry, name)), numberedLines(fixtureLines))
 	}
 }

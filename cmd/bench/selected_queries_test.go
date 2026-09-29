@@ -180,7 +180,7 @@ func TestSelectedHistoryWithinResponseBound(t *testing.T) {
 	if _, spilled := responseboundtest.Find(printed); spilled {
 		t.Fatalf("selected response spilled: %q", printed)
 	}
-	if lines := strings.Count(printed, "\n"); lines != 8 || !strings.HasSuffix(printed, "\n") {
+	if lines := strings.Count(withoutTreeRow(printed), "\n"); lines != 8 || !strings.HasSuffix(printed, "\n") {
 		t.Fatalf("selected response has %d lines, want exactly 8: %q", lines, printed)
 	}
 }

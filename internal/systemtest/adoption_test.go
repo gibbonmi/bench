@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
 
 func TestDetectedProjectGateRejectsIgnoredDeclaredInput(t *testing.T) {
@@ -147,7 +148,7 @@ func TestAdoptionSmokeJourney(t *testing.T) {
 		t.Fatal(err)
 	}
 	empty := gate("gate", "--fresh")
-	if empty.code != 1 || !strings.Contains(empty.stderr, "canary fixture inventory is empty") {
+	if empty.code != 1 || !strings.Contains(boundedStderr(t, empty), "canary fixture inventory is empty") {
 		t.Fatalf("gate with an empty tests/canary = (%d, %q, %q)", empty.code, empty.stdout, empty.stderr)
 	}
 	assertPrivateHomeEmpty(t, home)
@@ -191,6 +192,17 @@ func hasExactLine(output, want string) bool {
 	return false
 }
 
+// boundedStderr answers the stderr of a gate call. Each nested Bench call prints its own
+// identity row, so a gate response can pass the bound and spill. The spill file then holds
+// both streams in arrival order, and this answers that complete output.
+func boundedStderr(t *testing.T, result processResult) string {
+	t.Helper()
+	if spill, ok := responseboundtest.Find(result.stdout); ok {
+		return readSpillFile(t, spill.Path)
+	}
+	return result.stderr
+}
+
 func assertPrivateHomeEmpty(t *testing.T, home string) {
 	t.Helper()
 	entries, err := os.ReadDir(home)
@@ -201,10 +213,10 @@ func assertPrivateHomeEmpty(t *testing.T, home string) {
 		t.Fatal(err)
 	}
 	// The seam record lives at <home>/otel/<key>/traces.jsonl by the FT274 spec's
-	// decision, so a gate run writes it even in a private home. Every other entry
-	// stays a leak.
+	// decision, so a gate run writes it even in a private home. A gate response that
+	// spills writes its spill file under <home>/responses. Every other entry stays a leak.
 	for _, entry := range entries {
-		if entry.Name() == "otel" {
+		if entry.Name() == "otel" || entry.Name() == "responses" {
 			continue
 		}
 		t.Fatalf("private BENCH_HOME %s is not empty: %v", home, entries)

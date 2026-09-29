@@ -36,7 +36,7 @@ func TestRunStatusRouteEmitsOneNextRow(t *testing.T) {
 	if code := (Command{Stdout: stdout}).Run([]string{"status", "--route"}); code != 0 {
 		t.Fatalf("status --route exit = %d, want 0", code)
 	}
-	if got := readFile(t, stdout); !strings.HasPrefix(got, "next[1]{state,why,command}:\n") {
+	if got := readFile(t, stdout); !strings.HasPrefix(withoutTreeRow(got), "next[1]{state,why,command}:\n") {
 		t.Fatalf("status --route = %q, want one next row", got)
 	}
 }

@@ -39,7 +39,7 @@ func useCensusFamily(t *testing.T, lines, exit int) {
 func dispatch(argv ...string) (string, int) {
 	var out bytes.Buffer
 	code := Command{Stdout: &out, Stderr: &out}.Run(argv)
-	return out.String(), code
+	return withoutTreeRow(out.String()), code
 }
 
 // censusAssignment creates one Bench assignment of a new repository under a private Bench
