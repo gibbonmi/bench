@@ -80,14 +80,19 @@ func TestIdentifyNamesActiveLabel(t *testing.T) {
 }
 
 // The ledger accepts a label with a control byte that TOON refuses. The row still prints,
-// with the byte escaped, so no raw control byte reaches the response.
-func TestRowEscapesHostileLabel(t *testing.T) {
-	root := committedRepo(t)
-	linked := linkedWorktree(t, root)
-	putAssignment(t, root, linked, "al\x07pha", intent.StateActive)
-	row, err := Row(Identify(linked))
-	if want := `  "al\\u0007pha",`; err != nil || !strings.Contains(row, "\n"+want) || strings.ContainsRune(row, '\x07') {
-		t.Fatalf("hostile label row = (%q, %v), want the row with target cell %q", row, err, want)
+// with the byte removed. A literal backslash label keeps its text, so the two labels print
+// different cells.
+func TestRowStripsHostileLabel(t *testing.T) {
+	for _, row := range []struct{ name, label, cell string }{
+		{"hostile", "al\x07pha", "\n  alpha,"},
+		{"literal", `al\u0007pha`, "\n  \"al\\\\u0007pha\","},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			got, err := Row(Identity{Target: row.label, Head: "none", Dirty: false})
+			if err != nil || !strings.Contains(got, row.cell) {
+				t.Fatalf("label %q row = (%q, %v), want the target cell %q", row.label, got, err, row.cell)
+			}
+		})
 	}
 }
 

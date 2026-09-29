@@ -133,18 +133,12 @@ func TestTreeRowOutsideRepository(t *testing.T) {
 	}
 }
 
-// plantedTreeVerb registers one tree-scoped verb with bound and run, and runs it in a new
-// primary checkout. It answers the row block of the clean checkout and the run.
+// plantedTreeVerb runs one planted tree-scoped verb with bound and run in a new primary
+// checkout. It answers the row block of the clean checkout and the run.
 func plantedTreeVerb(t *testing.T, bound boundDisposition, run commandHandler) (string, boundRun) {
 	t.Helper()
 	row := treeRowRepo(t)
-	return row, runRegistry(t, []commandDefinition{{
-		Name:      "planted",
-		Inventory: publicInventory(helpRow{Order: 1, Description: "print numbered lines"}),
-		Bound:     bound,
-		Scope:     scopeTree,
-		Run:       run,
-	}}, "planted")
+	return row, runPlanted(t, bound, scopeTree, run)
 }
 
 // TT25: a spilled tree-scoped response keeps the row header as its first inline line.
@@ -163,23 +157,15 @@ func TestTreeRowOutsideResponseBound(t *testing.T) {
 	}
 }
 
-// exitingHandler answers a handler that prints one numbered line on stdout and exits exit.
-func exitingHandler(exit int) commandHandler {
-	return func(c Command, args []string) int {
-		linesHandler(stdoutOf, 1)(c, args)
-		return exit
-	}
-}
-
 // TT20, TT56: an exempt call prints the row on stderr only when its exit is not 2. The exit
 // 1 row shows that the checkout prints a row, so the exit 2 row is not silent by accident.
 func TestExemptTreeRowFollowsExitRule(t *testing.T) {
 	exempt := boundExempt(boundReasonArtifact)
-	row, run := plantedTreeVerb(t, exempt, exitingHandler(1))
+	row, run := plantedTreeVerb(t, exempt, exitingHandler(1, 1))
 	if run.code != 1 || run.stdout != numberedLines(1) || run.stderr != row {
 		t.Fatalf("exempt exit 1 = (%d, %q, %q), want the row %q on stderr", run.code, run.stdout, run.stderr, row)
 	}
-	_, run = plantedTreeVerb(t, exempt, exitingHandler(2))
+	_, run = plantedTreeVerb(t, exempt, exitingHandler(1, 2))
 	if run.code != 2 || strings.Contains(run.stdout+run.stderr, "tree[") {
 		t.Fatalf("exempt exit 2 = (%d, %q, %q), want no row on either stream", run.code, run.stdout, run.stderr)
 	}
@@ -190,7 +176,7 @@ func TestExemptTreeRowFollowsExitRule(t *testing.T) {
 func TestTreeRowPrecedesVerb(t *testing.T) {
 	dirty := func(c Command, args []string) int {
 		writeAXIFixture(t, "untracked.txt", "new\n")
-		return exitingHandler(0)(c, args)
+		return exitingHandler(1, 0)(c, args)
 	}
 	row, run := plantedTreeVerb(t, boundResponse, dirty)
 	if want := row + numberedLines(1); run.code != 0 || run.stdout != want {

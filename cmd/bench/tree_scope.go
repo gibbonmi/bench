@@ -48,8 +48,8 @@ func (definition commandDefinition) scope(args []string) treeScope {
 // treeRow answers the identity row block of one call, or the empty string for a call that
 // prints no row. Only a tree-scoped call that is not a help form and that runs inside a
 // repository prints the row. The dispatcher computes it before the verb runs, so the row
-// names the tree that the verb read. The renderer escapes a hostile label, so only an
-// encoder refusal that the row cells cannot produce drops the row.
+// names the tree that the verb read. The renderer strips the control bytes of a hostile
+// label, so only an encoder refusal that the row cells cannot produce drops the row.
 func (definition commandDefinition) treeRow(args []string) string {
 	if definition.scope(args) != scopeTree || definition.helpForm(args) {
 		return ""

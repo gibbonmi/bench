@@ -42,12 +42,9 @@ func Identify(root string) Identity {
 
 // Row renders the identity as the block `tree[1]{target,head,dirty}:` with its one row.
 // The ledger accepts a label with a control byte, and TOON refuses some of those bytes. So
-// a label that is not line safe prints escaped, and the row always prints. The other cells
-// come from Git or from fixed words, so the encoder refuses none of them.
+// the label renders through sanitize.Strip, the duty for a table cell, and the row always
+// prints. The other cells come from Git or from fixed words, so the encoder refuses none.
 func Row(identity Identity) (string, error) {
-	target := identity.Target
-	if !sanitize.LineSafe(target) {
-		target = sanitize.Controls(target)
-	}
-	return toon.TableTyped("tree", []string{"target", "head", "dirty"}, [][]any{{target, identity.Head, identity.Dirty}})
+	cells := [][]any{{sanitize.Strip(identity.Target), identity.Head, identity.Dirty}}
+	return toon.TableTyped("tree", []string{"target", "head", "dirty"}, cells)
 }
