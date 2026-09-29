@@ -10,7 +10,7 @@ Chunk: TT-C3.
 
 The two row lines do not count toward the response bound, by the reviewer's decision of 2026-09-29. When the spill file cannot open, the owner prints no row.
 
-Create the package `internal/treetarget` with an `Identify` function and a row renderer. `Identify` answers the target, head, and dirty values for a root, as the spec's identity-row section states. The renderer prints the block `tree[1]{target,head,dirty}:` through `toon.Table`.
+Create the package `internal/treetarget` with an `Identify` function and a row renderer. `Identify` answers the target, head, and dirty values for a root, as the spec's identity-row section states. The renderer prints the block `tree[1]{target,head,dirty}:` through `toon.TableTyped`.
 
 The dispatcher computes the row before the verb runs. The bounded response owner writes it at finish as the first block, and only when the exit is not 2. A call with an exempt bound disposition prints the row on stderr after the verb returns, under the same exit rule. A help form, a repository-scoped verb, a grammar refusal at exit 2, and a call outside a repository print no row.
 
