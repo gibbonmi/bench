@@ -109,6 +109,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench commit -m <msg> [--preflight-build <slug>] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
   bench spec retire <slug>   delete a merged spec + its review pickup (validated)
   bench spec history <slug>  retire/delete commits for a spec, newest first (TOON)
+  bench spec history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
   bench version              print the installed Bench version (os/arch)
 `
 
