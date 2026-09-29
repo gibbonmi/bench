@@ -127,13 +127,13 @@ seam, tangled callers), report it as a separate finding, after the fix lands.
 
 ## Finding a retired spec
 
-The feature you are debugging may have no live spec. Bench promotes a spec, then deletes
-it on merge, so a shipped feature's spec lives in git history, not in the working tree. Do not
-assume nobody specified the behavior: `git log --diff-filter=D -- specs/` lists
-every deleted spec, and `git log --grep=spec-retire` finds the retirement commits
-(and any decision it promoted). Recover the origin spec there before you hypothesise.
-For a single known slug, `bench spec history <slug>` runs both queries, merges and dedupes
-them, and renders one newest-first table in place of the two hand runs.
+The feature may have no live spec, because Bench deletes a spec on merge. Do not assume that nobody specified the behavior.
+`git log --diff-filter=D -- specs/` lists every deleted spec, and `git log --grep=spec-retire` finds the retirement commits and any promoted decision.
+Recover the origin spec from git history before you hypothesise.
+
+For one known slug, `bench spec history <slug>` merges both queries into one newest-first table.
+For several slugs or for other evidence, use the focused reads in `craft-cli`.
+When a focused result omits evidence that the diagnosis needs, follow its complete-detail route.
 
 ## How it meets the rest of Bench
 

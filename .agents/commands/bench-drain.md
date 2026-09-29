@@ -99,6 +99,11 @@ status, so this pass is the backstop for anything spec-retire missed. The
 empty-state recommendation is only trustworthy if the roadmap is current. Write
 no completion markers; history lives in git.
 
+When several rows need the shipped-row check, use the selected spec history read in `craft-cli` once.
+If omitted events leave the status of a row uncertain, follow its `detail` command before you decide.
+For archive and log evidence that a row or a capture unit names, use the focused reads in `craft-cli`.
+The index stays the complete capture inventory, and this discovery adds no capture unit.
+
 Audit top-level decision maps against shipped work and recorded closure decisions in the same pass.
 For each obsolete map, promote durable decisions, repair references, and remove its index and topic folder together.
 A map closed without a spec follows this retirement path too; `ready` means ready for spec authoring.
