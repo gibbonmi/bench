@@ -79,6 +79,18 @@ func TestIdentifyNamesActiveLabel(t *testing.T) {
 	}
 }
 
+// The ledger accepts a label with a control byte that TOON refuses. The row still prints,
+// with the byte escaped, so no raw control byte reaches the response.
+func TestRowEscapesHostileLabel(t *testing.T) {
+	root := committedRepo(t)
+	linked := linkedWorktree(t, root)
+	putAssignment(t, root, linked, "al\x07pha", intent.StateActive)
+	row, err := Row(Identify(linked))
+	if want := `  "al\\u0007pha",`; err != nil || !strings.Contains(row, "\n"+want) || strings.ContainsRune(row, '\x07') {
+		t.Fatalf("hostile label row = (%q, %v), want the row with target cell %q", row, err, want)
+	}
+}
+
 // TT13, TT14: a linked worktree that no active assignment owns is unassigned, both with
 // no ledger and with a released assignment.
 func TestIdentifyUnownedWorktree(t *testing.T) {

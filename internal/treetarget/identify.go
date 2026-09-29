@@ -6,6 +6,7 @@ package treetarget
 import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -40,7 +41,13 @@ func Identify(root string) Identity {
 }
 
 // Row renders the identity as the block `tree[1]{target,head,dirty}:` with its one row.
-// It answers an error only for a label that holds a control byte TOON cannot carry.
+// The ledger accepts a label with a control byte, and TOON refuses some of those bytes. So
+// a label that is not line safe prints escaped, and the row always prints. The other cells
+// come from Git or from fixed words, so the encoder refuses none of them.
 func Row(identity Identity) (string, error) {
-	return toon.TableTyped("tree", []string{"target", "head", "dirty"}, [][]any{{identity.Target, identity.Head, identity.Dirty}})
+	target := identity.Target
+	if !sanitize.LineSafe(target) {
+		target = sanitize.Controls(target)
+	}
+	return toon.TableTyped("tree", []string{"target", "head", "dirty"}, [][]any{{target, identity.Head, identity.Dirty}})
 }

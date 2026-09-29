@@ -133,23 +133,23 @@ func TestTreeRowOutsideRepository(t *testing.T) {
 	}
 }
 
-// plantedTreeVerb registers one tree-scoped bounded verb that prints lines numbered lines,
-// and runs it in a new primary checkout. It answers the row block and the run.
-func plantedTreeVerb(t *testing.T, lines int) (string, boundRun) {
+// plantedTreeVerb registers one tree-scoped verb with bound and run, and runs it in a new
+// primary checkout. It answers the row block of the clean checkout and the run.
+func plantedTreeVerb(t *testing.T, bound boundDisposition, run commandHandler) (string, boundRun) {
 	t.Helper()
 	row := treeRowRepo(t)
 	return row, runRegistry(t, []commandDefinition{{
 		Name:      "planted",
 		Inventory: publicInventory(helpRow{Order: 1, Description: "print numbered lines"}),
-		Bound:     boundResponse,
+		Bound:     bound,
 		Scope:     scopeTree,
-		Run:       linesHandler(stdoutOf, lines),
+		Run:       run,
 	}}, "planted")
 }
 
 // TT25: a spilled tree-scoped response keeps the row header as its first inline line.
 func TestTreeRowSurvivesSpill(t *testing.T) {
-	_, run := plantedTreeVerb(t, 40)
+	_, run := plantedTreeVerb(t, boundResponse, linesHandler(stdoutOf, 40))
 	if first, _, _ := strings.Cut(run.stdout, "\n"); first+"\n" != treeRowHeader || !strings.Contains(run.stdout, "\nspilled{lines=40,") {
 		t.Fatalf("spilled tree response = %q, want the row header first and a spill line", run.stdout)
 	}
@@ -157,8 +157,47 @@ func TestTreeRowSurvivesSpill(t *testing.T) {
 
 // TT60: the two row lines do not count toward the bound, so 10 verb lines do not spill.
 func TestTreeRowOutsideResponseBound(t *testing.T) {
-	row, run := plantedTreeVerb(t, 10)
+	row, run := plantedTreeVerb(t, boundResponse, linesHandler(stdoutOf, 10))
 	if want := row + numberedLines(10); run.code != 0 || run.stdout != want {
 		t.Fatalf("10-line tree response = (%d, %q), want (0, %q)", run.code, run.stdout, want)
+	}
+}
+
+// exitingHandler answers a handler that prints one numbered line on stdout and exits exit.
+func exitingHandler(exit int) commandHandler {
+	return func(c Command, args []string) int {
+		linesHandler(stdoutOf, 1)(c, args)
+		return exit
+	}
+}
+
+// TT20, TT56: an exempt call prints the row on stderr only when its exit is not 2. The exit
+// 1 row shows that the checkout prints a row, so the exit 2 row is not silent by accident.
+func TestExemptTreeRowFollowsExitRule(t *testing.T) {
+	exempt := boundExempt(boundReasonArtifact)
+	row, run := plantedTreeVerb(t, exempt, exitingHandler(1))
+	if run.code != 1 || run.stdout != numberedLines(1) || run.stderr != row {
+		t.Fatalf("exempt exit 1 = (%d, %q, %q), want the row %q on stderr", run.code, run.stdout, run.stderr, row)
+	}
+	_, run = plantedTreeVerb(t, exempt, exitingHandler(2))
+	if run.code != 2 || strings.Contains(run.stdout+run.stderr, "tree[") {
+		t.Fatalf("exempt exit 2 = (%d, %q, %q), want no row on either stream", run.code, run.stdout, run.stderr)
+	}
+}
+
+// The dispatcher computes the row before the verb runs, so the row names the tree that the
+// verb read. A verb that makes the tree dirty still prints the clean row, on both paths.
+func TestTreeRowPrecedesVerb(t *testing.T) {
+	dirty := func(c Command, args []string) int {
+		writeAXIFixture(t, "untracked.txt", "new\n")
+		return exitingHandler(0)(c, args)
+	}
+	row, run := plantedTreeVerb(t, boundResponse, dirty)
+	if want := row + numberedLines(1); run.code != 0 || run.stdout != want {
+		t.Fatalf("bounded dirtying verb = (%d, %q, %q), want (0, %q)", run.code, run.stdout, run.stderr, want)
+	}
+	row, run = plantedTreeVerb(t, boundExempt(boundReasonArtifact), dirty)
+	if run.code != 0 || run.stderr != row {
+		t.Fatalf("exempt dirtying verb = (%d, %q, %q), want the row %q on stderr", run.code, run.stdout, run.stderr, row)
 	}
 }
