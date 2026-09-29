@@ -137,11 +137,73 @@ Findings: 0. The R4 probe now bites. The recorded QU18 and QU26 probes rerun wit
 
 Chunk QU-C1 closes after one repair cycle.
 
+## QU-C2 author evidence
+
+Ticket 2 had a fresh `bench-writer` author, `scq-t2-author`, on opus at high effort, with a cap of 3 attempts. The author started at `3704d6b4` and made two ticket commits on lane passes in the first attempt: `665412ed` and `be5f882d`. The first commit moved the spec help rows to a registry variable, which kept `cmd/bench/main.go` inside its line budget. `TestRootConformance` refuses that form, because each public help row must be a literal `helpRow` value on its registry entry. The second commit puts the three rows back on the `spec` entry as literal values, on one line.
+
+The chunk base is `af66f285`, the QU-C1 tip. The chunk tip is the first record commit of this section. The second record commit only writes that tip into the payload.
+
+The author recorded the positional baseline before the selected route existed. At that point, the only production change was three new constants in `internal/spec/history.go`, and `TestSelectedHistoriesPreserveDefault` passed. The author then added the selected tests and the selected view without its route. Each selected test in `internal/spec` failed with `usage: bench spec history (unknown argument: --limit)`, and the grammar test failed with `(unknown argument: --spec)`. `TestSelectedHistoryTrueBytes` failed on a fixture defect first: a removal also removed the empty `specs` directory. The author fixed the fixture, added the route, and each test passed.
+
+The author reported these deviations from the ticket and the stream source. The Spec axis grades each one.
+
+- The spec package owns its own refusal cell, `spec operand contains control characters`. The worktree refusal `errTargetControls` is unexported in another package, and a shared owner needs a path outside the ticket fence.
+- `internal/spec/history.go` adds three owners: `historyCmd`, `historyUsage`, and `historyDerivationFailed`. Both history routes read them, and the tests read them for each expected usage line and error cell.
+- The positional baseline fixture has seven new cases. They are a prefix slug, `help`, the short help flag, the `--limit` operand, and three refusals. Each refusal case names its owner, not a literal.
+- Five expectations are independent: the positional table schema, the event table schema, the summary table schema, the `target-<n>` ordinal, and the `bench help` row. A probe below shows the red of each one.
+- `TestSelectedSpecLimit` and `TestSelectedSpecOmissions` run the limits 1, 2, 3, and 4. The stream ran 1, 3, and 4, and QU5 names the limit 2.
+- QU24 has its own fixture with the kind `delete`, `core.abbrev 8`, and 1-byte subjects. The test reads the expected count from the positional stdout and asserts the rows of 31 bytes and the header of 36 bytes. `TestSelectedHistoryTrueBytesCountsUTF8` also compares the multibyte `mixed` history with its positional stdout.
+- The `bench help` inventory has a row for the selected grammar, as in the stream. `internal/spec/spec.go` keeps its `bench spec --help` text.
+- The command route test in `cmd/bench` does not assert the literal detail command. QU7 grades the detail route in `internal/spec`.
+- No check required an edit to these `Writes:` paths, so the diff leaves them unchanged:
+  - `internal/spec/history_test.go`, `internal/spec/spec.go`, and `internal/spec/spec_test.go`;
+  - `cmd/bench/command_registry.go` and `cmd/bench/command_registry_test.go`;
+  - the two conformance tests, the anchor registry files, and the three canaries.
+- One shell step wrote test text through a heredoc and not through `bench worktree exec`. The text is in the ticket commit.
+
+`bench preflight build session-context-queries` reported 12 green checks, 2 not-applicable checks, and 1 red check. The red check is `base-current`, because `main` has three commits that are not in this branch. The author did not merge `main`, because a merge into the integration worktree is the orchestrator's decision.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` at `be5f882d`. Each probe bit, and each restore reads `yes`. The JSON payload holds the exact command and output excerpt of each probe. The first row is the plan probe `2-limit-probe`. Two more probes did not compile, so they are not in the table.
+
+| Row | File | Mutation | Failed tests |
+|---|---|---|---|
+| QU5 | `internal/spec/history_selected.go` | swap: `events[:limit]` to `events` | two subtests of TestSelectedSpecLimit |
+| QU4 | `internal/spec/history.go` | swap: `if retireTokenMatches(e.subject, slug) {` to `if true {` | TestSelectedSpecHistories |
+| QU4 | `internal/spec/history_selected.go` | swap: the event field `slug` to `spec` | TestSelectedSpecHistories |
+| QU6 | `internal/spec/history_selected.go` | swap: `total - len(events), detail` to `0, detail` | TestSelectedSpecOmissions |
+| QU6 | `internal/spec/history_selected.go` | swap: the summary field `omitted_events` to `omitted` | TestSelectedSpecOmissions |
+| QU7 | `internal/spec/history_selected.go` | swap: `if SlugOf(slug) != slug {` to `if false {` | the `x.md.md` and `.md` subtests of TestSelectedSpecDetailRoute |
+| QU7 | `internal/spec/history_selected.go` | omission: ` \|\| operand == "help"` | the `help` subtest of TestSelectedSpecDetailRoute |
+| QU7 | `internal/spec/history_selected.go` | swap: `strings.HasPrefix(operand, "-")` to `strings.HasPrefix(operand, "--help")` | the `--limit` subtest of TestSelectedSpecDetailRoute |
+| QU8 | `internal/spec/history_selected.go` | swap: the failed-history row to a whole-command error return | TestSelectedSpecPartialFailure |
+| QU19 | `internal/spec/history.go` | swap: `slug := SlugOf(arg)` to `slug := arg` | the flat-path and folder-path subtests of TestSelectedHistoriesPreserveDefault |
+| QU19 | `internal/spec/history.go` | swap: the positional field `subject` to `title` | ten subtests of TestSelectedHistoriesPreserveDefault |
+| QU20 | `internal/spec/history_selected.go` | omission: the `--limit` half of `selectsHistories` | TestSelectedHistoryGrammar |
+| QU20 | `internal/spec/history_selected.go` | omission: the `--spec` half of `selectsHistories` | TestSelectedHistoryGrammar |
+| QU21 | `internal/spec/history_selected.go` | swap: the `LineSafe` guard to a guard that never refuses | TestSelectedHistoryHostileTarget |
+| QU21 | `internal/spec/history_selected.go` | swap: the ordinal `i+1` to `i` | TestSelectedHistoryHostileTarget |
+| QU22 | `internal/spec/history_selected.go` | swap: `events[:limit]` to `events` | TestSelectedHistoriesExcludeOldOutput |
+| QU23 | `internal/spec/history.go` | swap: `return out, nil` to `return out[:min(len(out), 1)], nil` | TestSelectedHistoryPreservesProducer |
+| QU24 | `internal/spec/history_selected.go` | swap: render the complete table after the limit | TestSelectedHistoryTrueBytes, which read 67 bytes and not 129, and TestSelectedHistoryTrueBytesCountsUTF8 |
+| QU25 | `internal/spec/history_selected.go` | swap: `renderHistory(events)` to `renderHistory(nil)` | TestSelectedHistoryHostileSubject |
+| QU27 | `internal/spec/history_selected.go` | swap: `events[:limit]` to `events` | TestSelectedHistoryWithinResponseBound, which counted 10 lines |
+| help row | `cmd/bench/main.go` | omission: the selected history `helpRow` | TestHelpInventoryIsComplete and TestSelectedHistoryHelpDiscovery |
+
+### Verification
+
+The author ran each QU-C2 plan verification at `be5f882d`, and each passed. The `2-history` run is the whole `./internal/spec` package. The author also ran `bench test --package ./internal/conformance` and `bench test --package ./cmd/bench` at `be5f882d`, and each passed. The conformance run had three capability skips. The known red of `TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion` did not occur, because no worktree package run was in scope.
+
+The author applied the `SourceDigest` rule to the tree of `be5f882d`. The rule reads the tree into a temporary index, removes the record path, and writes the tree. The record commits change only this file, so the digest is the same at each record commit. The same steps at `af66f285` give the QU-C1 digest `ff12b6e5`, which confirms the method.
+
+The spec changed at `3704d6b4`, so the plan digest changed. The author applied the `ReadPlan` rule. The digest is the SHA-256 of a JSON array that holds the spec bytes and the three ticket bytes in plan order, each as base64. The same rule at `a2c71f7a` gives the earlier digest `f9fea3c8`, which confirms the method. The QU-C1 chunk keeps the digest of its own tip.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/session-context-queries/spec.md",
-  "plan_digest": "sha256:f9fea3c85e266e859b0c4e9edb5774fbda605a5695653938479cb0dfaf6dfdb7",
+  "plan_digest": "sha256:3f398b8941d8bd9961b643b3be948be65c4ff159bec5e0708e26575152510a9c",
   "implementation_session": "",
   "chunks": [
     {
@@ -681,6 +743,712 @@ Chunk QU-C1 closes after one repair cycle.
           ]
         }
       ]
+    },
+    {
+      "id": "QU-C2",
+      "base": "af66f28584c2ee8507fa350bedea483500a05e72",
+      "tip": "be5f882d10cf9500166b5b9c03364b8c54f3bcb3",
+      "plan_digest": "sha256:3f398b8941d8bd9961b643b3be948be65c4ff159bec5e0708e26575152510a9c",
+      "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+      "acceptance_rows": [
+        "QU4",
+        "QU5",
+        "QU6",
+        "QU7",
+        "QU8",
+        "QU19",
+        "QU20",
+        "QU21",
+        "QU22",
+        "QU23",
+        "QU24",
+        "QU25",
+        "QU27"
+      ],
+      "verification": [
+        {
+          "id": "qu-c2-2-history-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/2-history@be5f882d",
+            "digest": "sha256:be43b789eff57e934e99def4b39025f3da2a77dbde518bd37e34f31eebeb157c",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,pass,1279\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-history",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c2-2-command-route-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/2-command-route@be5f882d",
+            "digest": "sha256:b76fe80025821b64d350b306b5b6c74a209b9c6a50a946831f73172c8f6de1c0",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,2100\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-command-route",
+          "command": "bench test --package ./cmd/bench --run 'TestSelected|TestHelp|TestAXIRegistry'",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c2-2-limit-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/2-limit-probe@be5f882d",
+            "digest": "sha256:f8a60708577f122dfcbdf044be4f0c625bc93d4ac531f5c2b8235aa614d0a7e9",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecLimit,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,82\nfailures[2]{package,test,line}:"
+          },
+          "requirement": "2-limit-probe",
+          "command": "bench probe internal/spec/history_selected.go --swap 'events[:limit]' --with 'events' --package ./internal/spec --run TestSelectedSpecLimit",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/2-limit-probe@be5f882d",
+              "digest": "sha256:f8a60708577f122dfcbdf044be4f0c625bc93d4ac531f5c2b8235aa614d0a7e9",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecLimit,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,82\nfailures[2]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-package-conformance-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/package-conformance@be5f882d",
+            "digest": "sha256:06c7b78cab815b5dba5f0f85623e7d81c11732d679afbe54043e360647089878",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,40717\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:"
+          },
+          "requirement": "package-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c2-package-cmd-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/package-cmd@be5f882d",
+            "digest": "sha256:7b571f46d35aaf414ab598d1e3e75c7d6af941244b9bb2d57439f9c5bb6db78a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14373\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "package-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "qu-c2-qu4-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu4-probe@be5f882d",
+            "digest": "sha256:4456efd1b3890a4e6c1557a1fdd5510ddae9668572865b1b65a35ba38dd8e492",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecHistories,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,61\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU4",
+          "command": "bench probe internal/spec/history.go --swap 'if retireTokenMatches(e.subject, slug) {' --with 'if true {' --package ./internal/spec --run TestSelectedSpecHistories",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu4-probe@be5f882d",
+              "digest": "sha256:4456efd1b3890a4e6c1557a1fdd5510ddae9668572865b1b65a35ba38dd8e492",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecHistories,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,61\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu4-schema-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu4-schema-probe@be5f882d",
+            "digest": "sha256:0420dc95c96ecbf034e7df1b96f2dcf581e3669d4338a6442cc080261cf743b6",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecHistories,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,62\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU4-schema",
+          "command": "bench probe internal/spec/history_selected.go --swap '[]string{\"slug\", \"hash\", \"date\", \"kind\", \"subject\"}' --with '[]string{\"spec\", \"hash\", \"date\", \"kind\", \"subject\"}' --package ./internal/spec --run TestSelectedSpecHistories",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu4-schema-probe@be5f882d",
+              "digest": "sha256:0420dc95c96ecbf034e7df1b96f2dcf581e3669d4338a6442cc080261cf743b6",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecHistories,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,62\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu6-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu6-probe@be5f882d",
+            "digest": "sha256:6456db2859e2c0fb15a0f18f3b5d9046b7ae31cf44c83b158bab453e379b13d3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecOmissions,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,57\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU6",
+          "command": "bench probe internal/spec/history_selected.go --swap 'total - len(events), detail' --with '0, detail' --package ./internal/spec --run TestSelectedSpecOmissions",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu6-probe@be5f882d",
+              "digest": "sha256:6456db2859e2c0fb15a0f18f3b5d9046b7ae31cf44c83b158bab453e379b13d3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecOmissions,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,57\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu6-schema-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu6-schema-probe@be5f882d",
+            "digest": "sha256:b3ea65801aa03ef34488750634a89da776527ecff386c02bed818aac2387d288",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecOmissions,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,63\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU6-schema",
+          "command": "bench probe internal/spec/history_selected.go --swap '\"omitted_events\", \"detail\"' --with '\"omitted\", \"detail\"' --package ./internal/spec --run TestSelectedSpecOmissions",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu6-schema-probe@be5f882d",
+              "digest": "sha256:b3ea65801aa03ef34488750634a89da776527ecff386c02bed818aac2387d288",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecOmissions,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,63\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu7-operand-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu7-operand-probe@be5f882d",
+            "digest": "sha256:9ee4c51395779bc5f27afef9124031139255ff91c5325b8b29ef76f2b8ddb13c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecDetailRoute,passed,11\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,151\nfailures[2]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU7-operand",
+          "command": "bench probe internal/spec/history_selected.go --swap 'if SlugOf(slug) != slug {' --with 'if false {' --package ./internal/spec --run TestSelectedSpecDetailRoute",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu7-operand-probe@be5f882d",
+              "digest": "sha256:9ee4c51395779bc5f27afef9124031139255ff91c5325b8b29ef76f2b8ddb13c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecDetailRoute,passed,11\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,151\nfailures[2]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu7-help-marker-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu7-help-marker-probe@be5f882d",
+            "digest": "sha256:ed983f5009082cee16fcfb673c07a6483b4e921a956890fa68cfa2e4924d5802",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecDetailRoute,passed,11\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,148\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU7-help-marker",
+          "command": "bench probe internal/spec/history_selected.go --omit ' || operand == \"help\"' --package ./internal/spec --run TestSelectedSpecDetailRoute",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu7-help-marker-probe@be5f882d",
+              "digest": "sha256:ed983f5009082cee16fcfb673c07a6483b4e921a956890fa68cfa2e4924d5802",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecDetailRoute,passed,11\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,148\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu7-flag-marker-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu7-flag-marker-probe@be5f882d",
+            "digest": "sha256:09063846a023be7555b92dc661091382503ceb37e4f47901f364d754f5667c51",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecDetailRoute,passed,11\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,154\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU7-flag-marker",
+          "command": "bench probe internal/spec/history_selected.go --swap 'strings.HasPrefix(operand, \"-\")' --with 'strings.HasPrefix(operand, \"--help\")' --package ./internal/spec --run TestSelectedSpecDetailRoute",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu7-flag-marker-probe@be5f882d",
+              "digest": "sha256:09063846a023be7555b92dc661091382503ceb37e4f47901f364d754f5667c51",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecDetailRoute,passed,11\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,154\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu8-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu8-probe@be5f882d",
+            "digest": "sha256:74792f50e88d782e9115cc964c920989224d942779100faa0f6a2d15859cb0a4",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecPartialFailure,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,52\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU8",
+          "command": "bench probe internal/spec/history_selected.go --swap 'summaries = append(summaries, []any{target, slug, nil, nil, nil, detail, historyDerivationFailed})' --with 'return toon.Errorf(historyDerivationFailed, err.Error()) + \"\\n\", 1' --package ./internal/spec --run TestSelectedSpecPartialFailure",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu8-probe@be5f882d",
+              "digest": "sha256:74792f50e88d782e9115cc964c920989224d942779100faa0f6a2d15859cb0a4",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedSpecPartialFailure,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,52\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu19-slug-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu19-slug-probe@be5f882d",
+            "digest": "sha256:19ef82b55ef3c061fb85f7df85a28c28b1300526901a51b36dc6663fbd028efd",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoriesPreserveDefault,passed,18\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,86\nfailures[2]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU19",
+          "command": "bench probe internal/spec/history.go --swap 'slug := SlugOf(arg)' --with 'slug := arg' --package ./internal/spec --run TestSelectedHistoriesPreserveDefault",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu19-slug-probe@be5f882d",
+              "digest": "sha256:19ef82b55ef3c061fb85f7df85a28c28b1300526901a51b36dc6663fbd028efd",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoriesPreserveDefault,passed,18\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,86\nfailures[2]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu19-schema-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu19-schema-probe@be5f882d",
+            "digest": "sha256:f25ebd5c3c33e5db7dff577f2302563302c900cf9928ee2597373c7f08cb45ca",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history.go,swap,failed,10,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoriesPreserveDefault,passed,18\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,89\nfailures[10]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU19-schema",
+          "command": "bench probe internal/spec/history.go --swap '[]string{\"hash\", \"date\", \"kind\", \"subject\"}' --with '[]string{\"hash\", \"date\", \"kind\", \"title\"}' --package ./internal/spec --run TestSelectedHistoriesPreserveDefault",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu19-schema-probe@be5f882d",
+              "digest": "sha256:f25ebd5c3c33e5db7dff577f2302563302c900cf9928ee2597373c7f08cb45ca",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history.go,swap,failed,10,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoriesPreserveDefault,passed,18\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,89\nfailures[10]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu20-limit-route-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu20-limit-route-probe@be5f882d",
+            "digest": "sha256:166ed8dfd38541cf4b0843768c9fd68317523ea015a36ef353b14a25e7a0cfe3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryGrammar,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,2\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU20-limit",
+          "command": "bench probe internal/spec/history_selected.go --omit ' || usage.FlagPresent(selectedHistoryGrammar, args, \"--limit\")' --package ./internal/spec --run TestSelectedHistoryGrammar",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu20-limit-route-probe@be5f882d",
+              "digest": "sha256:166ed8dfd38541cf4b0843768c9fd68317523ea015a36ef353b14a25e7a0cfe3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryGrammar,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,2\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu20-spec-route-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu20-spec-route-probe@be5f882d",
+            "digest": "sha256:6dd7ce97b82a45e7f7099c2913342839b26a3f3f6101375d0f037f158dc4cab3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryGrammar,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,3\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU20-spec",
+          "command": "bench probe internal/spec/history_selected.go --omit 'usage.FlagPresent(selectedHistoryGrammar, args, \"--spec\") || ' --package ./internal/spec --run TestSelectedHistoryGrammar",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu20-spec-route-probe@be5f882d",
+              "digest": "sha256:6dd7ce97b82a45e7f7099c2913342839b26a3f3f6101375d0f037f158dc4cab3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryGrammar,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,3\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu21-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu21-probe@be5f882d",
+            "digest": "sha256:9b544caf5a147f43361ac78e777ac74429149db55f4d886adfb01576e590e7be",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryHostileTarget,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,56\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU21",
+          "command": "bench probe internal/spec/history_selected.go --swap 'if !sanitize.LineSafe(target) {' --with 'if !sanitize.LineSafe(target) && false {' --package ./internal/spec --run TestSelectedHistoryHostileTarget",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu21-probe@be5f882d",
+              "digest": "sha256:9b544caf5a147f43361ac78e777ac74429149db55f4d886adfb01576e590e7be",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryHostileTarget,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,56\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu21-ordinal-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu21-ordinal-probe@be5f882d",
+            "digest": "sha256:1ff73050493c8a7b723d2a43ea862234e74e2d08d9b660019d71b4820ad6395b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryHostileTarget,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,51\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU21-ordinal",
+          "command": "bench probe internal/spec/history_selected.go --swap 'fmt.Sprintf(\"target-%d\", i+1)' --with 'fmt.Sprintf(\"target-%d\", i)' --package ./internal/spec --run TestSelectedHistoryHostileTarget",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu21-ordinal-probe@be5f882d",
+              "digest": "sha256:1ff73050493c8a7b723d2a43ea862234e74e2d08d9b660019d71b4820ad6395b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryHostileTarget,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,51\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu22-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu22-probe@be5f882d",
+            "digest": "sha256:6fcee7a4a25030a104f15007960c9167847d73f48778e0b355c9bdf4484f8d67",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoriesExcludeOldOutput,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,52\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU22",
+          "command": "bench probe internal/spec/history_selected.go --swap 'events[:limit]' --with 'events' --package ./internal/spec --run TestSelectedHistoriesExcludeOldOutput",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu22-probe@be5f882d",
+              "digest": "sha256:6fcee7a4a25030a104f15007960c9167847d73f48778e0b355c9bdf4484f8d67",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoriesExcludeOldOutput,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,52\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu23-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu23-probe@be5f882d",
+            "digest": "sha256:e4375d851fa16de74795cf6efbb1c2d2da62f605faaf0ed5f32f252516c0a798",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryPreservesProducer,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,52\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU23",
+          "command": "bench probe internal/spec/history.go --swap 'return out, nil' --with 'return out[:min(len(out), 1)], nil' --package ./internal/spec --run TestSelectedHistoryPreservesProducer",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu23-probe@be5f882d",
+              "digest": "sha256:e4375d851fa16de74795cf6efbb1c2d2da62f605faaf0ed5f32f252516c0a798",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryPreservesProducer,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,52\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu24-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu24-probe@be5f882d",
+            "digest": "sha256:fc0329b3f05c2dded75374617b95c8488dba88b9d6d970bc83736ade839e55b3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryTrueBytes,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,99\nfailures[2]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU24",
+          "command": "bench probe internal/spec/history_selected.go --swap 'complete, err := renderHistory(events)' --with 'complete, err := renderHistory(events[:min(len(events), limit)])' --package ./internal/spec --run TestSelectedHistoryTrueBytes",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu24-probe@be5f882d",
+              "digest": "sha256:fc0329b3f05c2dded75374617b95c8488dba88b9d6d970bc83736ade839e55b3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryTrueBytes,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,99\nfailures[2]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu25-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu25-probe@be5f882d",
+            "digest": "sha256:bc7aea1ad2f942a60e1ed2b9a5715e243f7c5f8e02ab89c8686a5e80caa072cd",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryHostileSubject,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,75\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU25",
+          "command": "bench probe internal/spec/history_selected.go --swap 'complete, err := renderHistory(events)' --with 'complete, err := renderHistory(nil)' --package ./internal/spec --run TestSelectedHistoryHostileSubject",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu25-probe@be5f882d",
+              "digest": "sha256:bc7aea1ad2f942a60e1ed2b9a5715e243f7c5f8e02ab89c8686a5e80caa072cd",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestSelectedHistoryHostileSubject,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,75\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-qu27-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/qu27-probe@be5f882d",
+            "digest": "sha256:96e59370c06c32b442e842a93986862ba629ec0a507b76ac535016a22193aa8b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestSelectedHistoryWithinResponseBound,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,37\nfailures[1]{package,test,line}:"
+          },
+          "requirement": "author-probe-QU27",
+          "command": "bench probe internal/spec/history_selected.go --swap 'events[:limit]' --with 'events' --package ./cmd/bench --run TestSelectedHistoryWithinResponseBound",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/qu27-probe@be5f882d",
+              "digest": "sha256:96e59370c06c32b442e842a93986862ba629ec0a507b76ac535016a22193aa8b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/history_selected.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestSelectedHistoryWithinResponseBound,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,37\nfailures[1]{package,test,line}:"
+            }
+          }
+        },
+        {
+          "id": "qu-c2-help-row-probe-r1",
+          "performer": "claude:bench-writer/scq-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6a15a97496ee8ca6b239466850d1585297ad5b8e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/scq-t2-author-20260928/help-row-probe@be5f882d",
+            "digest": "sha256:40fd509a5f42ee5db59fe41653c669a349c8e930e56e0e5603384394f0e45a2d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/main.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestHelpInventoryIsComplete|TestSelectedHistoryHelpDiscovery,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,20\nfailures[2]{package,test,line}:"
+          },
+          "requirement": "author-probe-help-row",
+          "command": "bench probe cmd/bench/main.go --omit ', helpRow{Order: 42, Suffix: strings.TrimPrefix(spec.SelectedHistoryUsage, \"bench spec\"), Description: \"selected histories with complete counts and recovery commands\"}' --package ./cmd/bench --run 'TestHelpInventoryIsComplete|TestSelectedHistoryHelpDiscovery'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/scq-t2-author-20260928/help-row-probe@be5f882d",
+              "digest": "sha256:40fd509a5f42ee5db59fe41653c669a349c8e930e56e0e5603384394f0e45a2d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,cmd/bench/main.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestHelpInventoryIsComplete|TestSelectedHistoryHelpDiscovery,passed,2\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,fail,20\nfailures[2]{package,test,line}:"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
