@@ -2831,6 +2831,71 @@ Findings: 0. The mutation that always escapes reds only the backslash row, and t
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/flag.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunRefusesBeforeChild,passed,15\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,244\nfailures[2]{package,test,line}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunRefusesBeforeChild/TT29_missing_value,\"run_test.go:198: gate --in [] = (2, \\\"usage: bench gate --in (missing argument: <label>)\\\\\\\\n\\\", \\\"\\\"), want (2, \\\"usage: bench gate --in (missing argument: <label|primary>)\\\\\\\\n\\\", \\\"\\\")\"\n  github.com/gibbonmi/bench/internal/treetarget,TestRunRefusesBeforeChild/TT57_empty_value,\"run_test.go:198: gate --in [\\\"\\\"] = (2, \\\"usage: bench gate --in (missing argument: <label>)\\\\\\\\n\\\", \\\"\\\"), want (2, \\\"usage: bench gate --in (missing argument: <label|primary>)\\\\\\\\n\\\", \\\"\\\")\"\nskips[0]{package,test,reason}:"
             }
           }
+        },
+        {
+          "id": "tt-c4-5-treetarget-final",
+          "performer": "claude:bench-writer/tt-t5-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t5-repair-2-20260930/5-treetarget@2aedfeff",
+            "digest": "sha256:f67c1742fa2bfe161b24497e306e9a88a4c6cad35678e639353b922400bf8386",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,pass,1365\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-treetarget",
+          "command": "bench test --package ./internal/treetarget",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c4-5-system-final",
+          "performer": "claude:bench-writer/tt-t5-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t5-repair-2-20260930/5-system@2aedfeff",
+            "digest": "sha256:057eeff4b94aba5c41ea6821056db6c5ce0deaffd000b40896087aa40b454eb3",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,57286\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c4-5-build-probe-final",
+          "performer": "claude:bench-writer/tt-t5-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t5-repair-2-20260930/5-build-probe@2aedfeff",
+            "digest": "sha256:db28fc80166bc54e68ce2a0bfb43d65363a3138c0120ede35a0fa8681bfeb7e5",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/build.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunKitWorktreeBuild,passed,9\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,801\nfailures[3]{package,test,line}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunKitWorktreeBuild/TT44_no_build,\"build_test.go:126: status --in \\\"alpha\\\" = (1, \\\"\\\", \\\"bench status --in: worktree build is absent\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\")\"\n  github.com/gibbonmi/bench/internal/treetarget,TestRunKitWorktreeBuild/TT47_a_label_that_needs_quoting,\"build_test.go:126: status --in \\\"my alpha\\\" = (1, \\\"\\\", \\\"bench status --in: worktree build is absent\\\\\\\\nnext=bench worktree build 'my alpha'\\\\\\\\n\\\"), want (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build 'my alpha'\\\\\\\\n\\\")\"\n  github.com/gibbonmi/bench/internal/treetarget,TestRunKitWorktreeBuild/TT47_a_label_with_a_backslash,\"build_test.go:126: status --in \\\"a\\\\\\\\\\\\\\\\b\\\" = (1, \\\"\\\", \\\"bench status --in: worktree build is absent\\\\\\\\nnext=bench worktree build 'a\\\\\\\\\\\\\\\\b'\\\\\\\\n\\\"), want (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build 'a\\\\\\\\\\\\\\\\b'\\\\\\\\n\\\")\"\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "5-build-probe",
+          "command": "bench probe internal/treetarget/build.go --swap 'worktree build is missing' --with 'worktree build is absent' --package ./internal/treetarget --run TestRunKitWorktreeBuild",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t5-repair-2-20260930/5-build-probe@2aedfeff",
+              "digest": "sha256:db28fc80166bc54e68ce2a0bfb43d65363a3138c0120ede35a0fa8681bfeb7e5",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/build.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunKitWorktreeBuild,passed,9\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,801\nfailures[3]{package,test,line}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunKitWorktreeBuild/TT44_no_build,\"build_test.go:126: status --in \\\"alpha\\\" = (1, \\\"\\\", \\\"bench status --in: worktree build is absent\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\")\"\n  github.com/gibbonmi/bench/internal/treetarget,TestRunKitWorktreeBuild/TT47_a_label_that_needs_quoting,\"build_test.go:126: status --in \\\"my alpha\\\" = (1, \\\"\\\", \\\"bench status --in: worktree build is absent\\\\\\\\nnext=bench worktree build 'my alpha'\\\\\\\\n\\\"), want (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build 'my alpha'\\\\\\\\n\\\")\"\n  github.com/gibbonmi/bench/internal/treetarget,TestRunKitWorktreeBuild/TT47_a_label_with_a_backslash,\"build_test.go:126: status --in \\\"a\\\\\\\\\\\\\\\\b\\\" = (1, \\\"\\\", \\\"bench status --in: worktree build is absent\\\\\\\\nnext=bench worktree build 'a\\\\\\\\\\\\\\\\b'\\\\\\\\n\\\"), want (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build 'a\\\\\\\\\\\\\\\\b'\\\\\\\\n\\\")\"\nskips[0]{package,test,reason}:"
+            }
+          }
         }
       ],
       "reviews": [
