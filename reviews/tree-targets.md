@@ -895,11 +895,27 @@ These points are for reviewer veto:
 - `auxiliaryInputsManifest` stays as a second name for `BuildInputsManifest`. `DeclaresBuildInputs` and the tests of `internal/freshness` read it, and their files are outside the fence. The value has one source.
 - `printTargetRefusal` passes the `next=` line through `sanitize.Controls`, which writes a backslash as two. So a label with a backslash now prints two backslashes in the repair command. Each other `next=` line of the shared printer does the same. No label of TT44 to TT47 holds a backslash.
 
+## TT-C4 repair cycle 1 close
+
+The orchestrator verified both repair sessions against the tree. At each record commit, the tree was clean, and `bench preflight build tree-targets` reported 0 red checks. The `./internal/treetarget` tests passed at each record commit. Each changed path is inside the `Writes:` line of its ticket. The repair cycle count for TT-C4 is now 1 of 2.
+
+After the ticket 5 repair, `de2fcede` corrects the spec import edge. The label quoting moved into `internal/worktree`, which already imports `internal/axi`. So `internal/treetarget` no longer imports that package.
+
+The chunk tip is now `de2fcede`. The source digest is the tree of `de2fcede` without this record file, which is `bb432a07`. The plan digest changed from `8e3a0940` to `69e2173a`. The same two rules at `3831024c` give the round 1 values `8e3a0940` and `4cd18319`, which confirms the method. The payload adds one amendment that maps each chunk ID to itself. The round 1 entries keep their earlier source digest as history.
+
+The repair sessions flagged these items for the round 2 review:
+
+- The ticket 5 repair keeps `auxiliaryInputsManifest` as a second name for `BuildInputsManifest`, because two readers of that name are outside the fence. The value has one source.
+- The shared refusal printer passes the `next=` line through `sanitize.Controls`, so a label with a backslash now prints two backslashes in the repair command.
+- The `<target>` placeholder of `usage.WorktreeBuild` is now filled in the new seam and in `internal/preflight`. `buildVerb` in `internal/worktree/build.go` still spells the verb itself.
+- The ticket 4 bundle test pins the refusal for a branch that is not checked out, and not the refusal for a changed owner marker.
+- The ticket 4 repair did not probe the child name read in `runInTreeTarget`. A wrong name there can make the test binary start itself in a loop.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/tree-targets/spec.md",
-  "plan_digest": "sha256:8e3a09402b758dab396e7e37828fde90bc8eee75ecd288aab9535bffd0c92886",
+  "plan_digest": "sha256:69e2173a8c44f664538a2bbbee23627474ffcf545426ba0d4e45fd8d73038c52",
   "implementation_session": "",
   "chunks": [
     {
@@ -2519,9 +2535,9 @@ These points are for reviewer veto:
     {
       "id": "TT-C4",
       "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
-      "tip": "3831024c361eab0bad94374b8fb864bd85a76c4e",
-      "plan_digest": "sha256:8e3a09402b758dab396e7e37828fde90bc8eee75ecd288aab9535bffd0c92886",
-      "source_digest": "4cd183192b9630a45f19387992ba0e1c68cab351",
+      "tip": "de2fcede5bc59786a5360f6c614c30e650f4edb4",
+      "plan_digest": "sha256:69e2173a8c44f664538a2bbbee23627474ffcf545426ba0d4e45fd8d73038c52",
+      "source_digest": "bb432a07ca08fc6e2ad92631f998dc2418a176b1",
       "acceptance_rows": [
         "TT8",
         "TT9",
@@ -2735,6 +2751,24 @@ These points are for reviewer veto:
     {
       "from": "sha256:49d7c3455ec98c0ab034c4bb473f14b0515ff390730eefb988e644e95f92b708",
       "to": "sha256:8e3a09402b758dab396e7e37828fde90bc8eee75ecd288aab9535bffd0c92886",
+      "chunk_ids": {
+        "TT-C1": [
+          "TT-C1"
+        ],
+        "TT-C2": [
+          "TT-C2"
+        ],
+        "TT-C3": [
+          "TT-C3"
+        ],
+        "TT-C4": [
+          "TT-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8e3a09402b758dab396e7e37828fde90bc8eee75ecd288aab9535bffd0c92886",
+      "to": "sha256:69e2173a8c44f664538a2bbbee23627474ffcf545426ba0d4e45fd8d73038c52",
       "chunk_ids": {
         "TT-C1": [
           "TT-C1"
