@@ -839,6 +839,62 @@ No new row can skip, so the session did not run `bench test --check skip-ownersh
 
 `internal/treetarget/build_test.go` is a ticket 5 file, but the fence holds `internal/treetarget/` as a prefix. The removal of `worktree.WrapperEnv` needs its change, or the package does not compile. The `creation bundle` row detaches HEAD, which fails the branch predicate of the bundle. The owner-marker component needs a helper of `internal/worktree` or a second spelling of the marker path, so the session did not use it.
 
+## TT-C4 ticket 5 repair evidence, cycle 1
+
+The session `claude:bench-writer/tt-t5-repair-1` ran on opus at xhigh effort, with a cap of 3 attempts. It started at `b11dec4f` and committed `8ae24503` on a lane pass in the first attempt. This repair is cycle 1 of the two repair cycles for chunk TT-C4.
+
+- R4: the new seam `PrintTreeBuildRefusal` in `internal/worktree/tree_target.go` prints the build refusal through `printTargetRefusal`. It makes the `next=` line from `usage.WorktreeBuild`, and `axi.ShellQuote` writes the label as one shell word. `Run` calls the seam, and `printBuildRefusal` is removed. The two refusal texts stay in `internal/treetarget/build.go`. TT44, TT45, TT46, and TT47 keep their exact lines, and neither line names the executable path.
+- R5: `internal/freshness/freshness_buildinputs.go` exports `BuildInputsManifest` and `BuildInputLine`. The manifest parser and `BuildInputLine` use one separator constant. `kittest.WriteTree` writes its manifest through both. The other kit-tree fixtures stay, by the reviewer decision.
+- R6: the row `TT43 TT48 a current build` of `TestRunKitWorktreeBuild` asserts that the child sees `BENCH_HOME` set to the home of the call. The name comes from `benchhome.Env`. The review probe for C4-C2 was silent in round 1. The session ran it again before the new assertion, and it was silent. It now bites.
+
+The sweep of duplicated facts found no new second source in the delta. The seam makes the `next=` line with the same `<target>` replacement as the build-seal row of `internal/preflight`, so the placeholder has two readers. `internal/usage` and `internal/preflight` are outside the fence. The independent expectations are the four refusal lines, which the round 1 author recorded, and the home of the child. The probes below record a red for each.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`. The R4 and R6 probes ran again on the source that `8ae24503` commits. The R5 probes and the plan probe `5-build-probe` ran on the final tree before the commit, and no file changed after them. The plan probe used the exact plan command.
+
+| Target | File | Mutation | Test | Verdict |
+|---|---|---|---|---|
+| TT44, TT47 | `internal/treetarget/build.go` | swap: `worktree build is missing` to `worktree build is absent` | TestRunKitWorktreeBuild | bit |
+| R4 | `internal/worktree/path.go` | swap: `next=` to `next: ` in `printTargetRefusal` | TestRunKitWorktreeBuild | bit |
+| R4 | `internal/worktree/tree_target.go` | swap: the quoted label to the label with its quotes trimmed | TestRunKitWorktreeBuild | bit |
+| R4 | `internal/worktree/tree_target.go` | swap: the `<target>` placeholder to `<label>` | TestRunKitWorktreeBuild | bit |
+| R5 | `internal/freshness/freshness_buildinputs.go` | swap: the separator in `BuildInputLine` to `:` | TestRunKitWorktreeBuild | bit |
+| R5 | `internal/freshness/freshness_buildinputs.go` | swap: `auxiliaryInputsManifest` to a different path | TestRunKitWorktreeBuild | bit |
+| R6 | `internal/treetarget/run.go` | swap: `call.Home` to `""` in the `RunTreeChild` call, before the new assertion | TestRunKitWorktreeBuild | silent |
+| R6 | `internal/treetarget/run.go` | swap: `call.Home` to `""` in the `RunTreeChild` call | TestRunKitWorktreeBuild | bit |
+
+The printer probe failed TT44, TT45, TT46, and TT47, so the build refusal uses the shared printer. The quoting probe failed TT47 alone. The placeholder probe failed the four refusal rows with `next=bench worktree build <target>`.
+
+The separator probe failed the three rows that publish a build, with a malformed manifest line, so `kittest.WriteTree` writes the line form of `internal/freshness`. The path probe moved the path that `DeclaresBuildInputs` reads, and it failed 5 subtests. The home probe failed the current-build row with an empty `BENCH_HOME`.
+
+A first try of the quoting probe removed the only `axi` call, and the package did not compile. Its verdict was `invalid`, and the table holds the rerun. A probe that moved the value of `BuildInputsManifest` was `invalid` too, because the private build of the probe reads the real manifest of the kit.
+
+### Verification
+
+The session ran each ticket 5 plan verification, and each passed:
+
+- `bench test --package ./internal/treetarget`, in 1107 ms on the source that `8ae24503` commits;
+- `bench test --check system`, in 56243 ms before the commit, and in 49304 ms after the worktree build;
+- the plan probe `5-build-probe`, which bit.
+
+The session also ran these checks, and each passed:
+
+- `bench test --package ./internal/freshness`, in 9415 ms;
+- `bench test --package ./internal/worktree`, in 49319 ms, with two environment capability skips for unix sockets;
+- `bench test --package ./cmd/bench`, in 14435 ms;
+- `bench test --package ./internal/conformance --run TestRootConformance`, in 6663 ms;
+- `bench structure --growth f981cd3d`, which reported that no source file grew past its budget;
+- `gofmt -l` and `go vet -tags system` on the changed packages.
+
+No new row can skip, so the session did not run `bench test --check skip-ownership`. The commit ran with `--preflight-build tree-targets`. The lane ran gofmt, vet, build, and structure, and it passed. The worktree build was green, and the preflight reported 15 green checks, 1 check that does not apply, and 0 red checks.
+
+These points are for reviewer veto:
+
+- The proof checklist of the spec says that `internal/treetarget` imports `internal/axi` for `axi.ShellQuote`. That edge is now gone, because the quoting moved to `internal/worktree`, which already imports `internal/axi`. The spec is outside the fence, so the sentence stays.
+- `auxiliaryInputsManifest` stays as a second name for `BuildInputsManifest`. `DeclaresBuildInputs` and the tests of `internal/freshness` read it, and their files are outside the fence. The value has one source.
+- `printTargetRefusal` passes the `next=` line through `sanitize.Controls`, which writes a backslash as two. So a label with a backslash now prints two backslashes in the repair command. Each other `next=` line of the shared printer does the same. No label of TT44 to TT47 holds a backslash.
+
 ```bench-review-record
 {
   "version": 2,
