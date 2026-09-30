@@ -57,7 +57,7 @@ func runCommitChain(t *testing.T, slug, published string, commitExit, buildExit,
 	}
 	var out, errOut bytes.Buffer
 	code = Command{Stdout: &out, Stderr: &errOut, Executable: "bench"}.Run(append(args, "--", "a.txt"))
-	return out.String(), code, calls
+	return withoutTreeRow(out.String()), code, calls
 }
 
 // wantChainLine is the public spelling of the chain line, written apart from its renderer,

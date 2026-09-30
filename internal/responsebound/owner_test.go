@@ -254,6 +254,24 @@ func TestOwnerMidwayFailureKeepsEveryByte(t *testing.T) {
 	}
 }
 
+// TT61: when the spill file cannot open, the owner passes the output through, so it prints
+// no lead after that output. A regular file in place of the Bench home makes the spill
+// store unwritable for every user.
+func TestOwnerPrintsNoRowWhenSpillCannotOpen(t *testing.T) {
+	blocker := filepath.Join(t.TempDir(), "blocker")
+	if err := os.WriteFile(blocker, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var sink bytes.Buffer
+	owner := New(filepath.Join(blocker, "home"), &sink, &sink, outsideRepository, false)
+	owner.Lead("tree[1]{target,head,dirty}:\n  primary,none,false\n")
+	writes := stdoutLines(numbered(1, 25)...)
+	got := respondWith(t, owner, &sink, writes)
+	if !strings.HasPrefix(got, joined(writes)+"spill-failed{reason=") || strings.Contains(got, "tree[") {
+		t.Fatalf("response = %q, want the verb output, the spill-failed line, and no row", got)
+	}
+}
+
 // BO22: an empty response prints nothing and creates no spill store.
 func TestOwnerEmptyResponse(t *testing.T) {
 	home := privateHome(t)

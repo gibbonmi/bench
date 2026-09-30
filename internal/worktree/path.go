@@ -118,6 +118,16 @@ func (e ambiguousTargetError) Error() string {
 	return "target is ambiguous: " + strings.Join(e.IDs, ", ")
 }
 
+// ambiguousAssignments is the ambiguity refusal of matched. It names every colliding id,
+// because the id is the address that resolves the collision the operator just hit.
+func ambiguousAssignments(matched []intent.Assignment) ambiguousTargetError {
+	ids := make([]string, 0, len(matched))
+	for _, a := range matched {
+		ids = append(ids, a.ID)
+	}
+	return ambiguousTargetError{IDs: ids}
+}
+
 func selectAssignment(assignments []intent.Assignment, target string) (intent.Assignment, error) {
 	path, isPath, err := targetPath(target)
 	if err != nil {
@@ -147,13 +157,7 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 		return intent.Assignment{}, errTargetUnassigned
 	}
 	if len(matched) > 1 {
-		// The refusal names every colliding id, because the id is the address that
-		// resolves the collision the operator just hit.
-		ids := make([]string, 0, len(matched))
-		for _, a := range matched {
-			ids = append(ids, a.ID)
-		}
-		return intent.Assignment{}, ambiguousTargetError{IDs: ids}
+		return intent.Assignment{}, ambiguousAssignments(matched)
 	}
 	return matched[0], nil
 }
@@ -174,6 +178,10 @@ func matchingAssignments(assignments []intent.Assignment, matches func(intent.As
 // its detail sentence: the operator reads the named check, not the refused record. The
 // second line names the verb that answers the refusal; a target that never resolved is
 // answered by the lookup, so that is the default.
+//
+// A line that passes lineSafe prints as is, so a pasted repair command names the label the
+// operator typed, a backslash included. A line that fails it escapes through
+// sanitize.Controls, so no raw control byte reaches the terminal.
 func printTargetRefusal(stderr io.Writer, verb string, err error) int {
 	reason, next := err.Error(), "bench worktree list"
 	var refused refusalError
@@ -183,8 +191,12 @@ func printTargetRefusal(stderr io.Writer, verb string, err error) int {
 			next = refused.next
 		}
 	}
-	fmt.Fprintln(stderr, verb+": "+sanitize.Controls(reason))
-	fmt.Fprintln(stderr, "next="+sanitize.Controls(next))
+	for _, line := range []string{verb + ": " + reason, "next=" + next} {
+		if !lineSafe(line) {
+			line = sanitize.Controls(line)
+		}
+		fmt.Fprintln(stderr, line)
+	}
 	return 1
 }
 

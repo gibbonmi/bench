@@ -70,6 +70,8 @@ type Owner struct {
 	written    int64
 	refused    []byte
 	reason     string
+	// lead is the block that Finish prints first on stdout, outside the bound.
+	lead string
 }
 
 // New returns the owner of one response whose original streams are stdout and stderr.
@@ -180,12 +182,25 @@ func (o *Owner) spill(p []byte) {
 	}
 }
 
-// Finish prints the response. A response within the bound replays each write to its own
-// stream in arrival order. An over-bound response prints its head, the spill line, and
-// its tail on stdout.
+// Lead sets the block that Finish prints first on stdout. The block is outside the bound:
+// it counts toward neither value, and the spill file does not hold it. A response whose
+// spill file could not open has already passed its bytes through, and a lead after them
+// would not come first, so Finish prints no lead for that response.
+func (o *Owner) Lead(block string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.lead = block
+}
+
+// Finish prints the response after the lead. A response within the bound replays each
+// write to its own stream in arrival order. An over-bound response prints its head, the
+// spill line, and its tail on stdout.
 func (o *Owner) Finish() {
 	o.mu.Lock()
 	defer o.mu.Unlock()
+	if o.phase != passing && o.phase != finished {
+		_, _ = io.WriteString(o.stdout, o.lead)
+	}
 	switch o.phase {
 	case retaining:
 		for _, w := range o.retained {

@@ -1,12 +1,16 @@
 # 4. Run a tree-scoped verb in its named tree target
 
 Blocked by: 3-name-the-graded-tree.md
-Writes: internal/treetarget/ (new), internal/worktree/tree_target.go (new), internal/worktree/tree_target_test.go (new), internal/worktree/exec.go, cmd/bench/tree_scope.go (new), cmd/bench/tree_scope_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/
-Covers: TT8, TT9, TT26, TT27, TT28, TT29, TT30, TT31, TT32, TT33, TT34, TT35, TT36, TT37, TT38, TT39, TT40, TT41, TT49, TT53, TT54, TT55, TT57, TT58, TT59
+Writes: internal/treetarget/ (new), internal/worktree/tree_target.go (new), internal/worktree/tree_target_test.go (new), internal/worktree/exec.go, cmd/bench/tree_scope.go (new), cmd/bench/tree_scope_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main_test.go, cmd/bench/selected_queries_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/, internal/canonicalpath/canonicalpath.go, internal/canonicalpath/canonicalpath_test.go, internal/worktree/path.go, internal/env/wrapper.go
+Covers: TT8, TT9, TT26, TT27, TT28, TT29, TT30, TT31, TT32, TT33, TT34, TT35, TT36, TT37, TT38, TT39, TT40, TT41, TT49, TT53, TT54, TT55, TT57, TT58, TT59, TT62
 
 ## What to build
 
 Chunk: TT-C4.
+
+The label lookup follows step 5 of the spec's tree-target section: exactly one active match wins, by the reviewer's decision of 2026-09-29. `canonicalpath.Resolve` makes a relative path absolute before it resolves symlinks, so a symlinked working directory gives the physical spelling (TT62).
+
+`TestTreeTargetOnlyAsFirstArgument` also drives a repository verb with a late `--in`, such as `bench version x --in primary`, which reaches the verb's own grammar. The TT-C1 review found that no test pins this case.
 
 `--in <label|primary>` as the first argument of a tree-scoped verb runs that verb as one child in the tree target. Resolve the value in the seven-step order of the spec's tree-target section. Add an exported exact-label lookup in `internal/worktree/tree_target.go`. It keeps the state, missing-tree, and creation-bundle checks of `resolveAssignmentIn`, and it accepts no id, prefix, or path. After the label lookup fails, it calls `targetPath` and answers a typed path-shape error.
 

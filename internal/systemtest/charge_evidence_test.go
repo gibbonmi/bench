@@ -18,6 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
+	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 )
 
 // evidenceJourney is one disposable repository with a staged build spec and the Bench
@@ -225,7 +226,7 @@ func TestEvidenceInterruptedPublication(t *testing.T) {
 				t.Fatalf("interrupted %s left %v, want one temporary pack and no artifact", stage, entries)
 			}
 			identity := identityOf(t, j.prepare(t, worktree))
-			if read := systemSelected(t, worktree.path, j.env(), "preflight", "evidence", identity); read.code != 0 || !strings.HasPrefix(read.stdout, "evidence_summary[1]") {
+			if read := systemSelected(t, worktree.path, j.env(), "preflight", "evidence", identity); read.code != 0 || !strings.HasPrefix(treetargettest.WithoutRow(read.stdout), "evidence_summary[1]") {
 				t.Fatalf("read after interruption = (%d, %q)", read.code, read.stdout)
 			}
 		})
@@ -315,7 +316,7 @@ func TestEvidenceSiblingRead(t *testing.T) {
 	manifest := chargeevidence.Cursor{Identity: identity}.String()
 	first := j.read(t, origin.path, identity, "--cursor", manifest)
 	second := j.read(t, sibling.path, identity, "--cursor", manifest)
-	if first.code != 0 || second.code != 0 || first.stdout != second.stdout || !strings.HasPrefix(second.stdout, "page[1]") {
+	if first.code != 0 || second.code != 0 || treetargettest.WithoutRow(first.stdout) != treetargettest.WithoutRow(second.stdout) || !strings.HasPrefix(treetargettest.WithoutRow(second.stdout), "page[1]") {
 		t.Fatalf("sibling read = (%d, %d):\n%q\n%q", first.code, second.code, first.stdout, second.stdout)
 	}
 }
@@ -341,7 +342,7 @@ func TestEvidenceReleaseRead(t *testing.T) {
 	if before.code != 0 || after.code != 0 || before.stdout != after.stdout {
 		t.Fatalf("read after release = (%d):\n%q\nbefore:\n%q", after.code, after.stdout, before.stdout)
 	}
-	if verified := j.read(t, reader.path, identity, "--verify"); verified.code != 0 || !strings.HasPrefix(verified.stdout, "verified[1]") {
+	if verified := j.read(t, reader.path, identity, "--verify"); verified.code != 0 || !strings.HasPrefix(treetargettest.WithoutRow(verified.stdout), "verified[1]") {
 		t.Fatalf("verify after release = (%d, %q)", verified.code, verified.stdout)
 	}
 }

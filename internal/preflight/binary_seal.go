@@ -3,7 +3,6 @@ package preflight
 import (
 	"errors"
 	"os"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -57,6 +56,6 @@ func binarySealCheck(f Facts) CheckResult {
 		return red("binary-seal", f.BinarySealRefusal.Error())
 	}
 	row := red("binary-seal", f.BinarySealRefusal.Reason())
-	row.Next = strings.Replace(usage.WorktreeBuild, "<target>", f.AssignmentTarget, 1)
+	row.Next = usage.WorktreeBuildFor(f.AssignmentTarget)
 	return row
 }

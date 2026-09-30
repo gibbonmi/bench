@@ -84,7 +84,7 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 	if code := (Command{Stdout: &directRoot}).Run(nil); code != 0 {
 		t.Fatalf("in-process root exit = %d, want 0", code)
 	}
-	if !strings.HasPrefix(directRoot.String(), "next[1]{state,why,command}:\n") {
+	if !strings.HasPrefix(withoutTreeRow(directRoot.String()), "next[1]{state,why,command}:\n") {
 		t.Fatalf("in-process root = %q, want next route table", directRoot.String())
 	}
 
@@ -119,7 +119,7 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 	}
 
 	binaryRoot := run(binary)
-	if !strings.HasPrefix(binaryRoot, "next[1]{state,why,command}:\n") {
+	if !strings.HasPrefix(withoutTreeRow(binaryRoot), "next[1]{state,why,command}:\n") {
 		t.Fatalf("binary root = %q, want next route table", binaryRoot)
 	}
 	if binaryRoot != directRoot.String() {
@@ -134,7 +134,7 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 	if !strings.HasPrefix(binaryHelp, "bench — Pocock"+" pipeline") {
 		t.Fatalf("binary help = %q, want inventory", binaryHelp)
 	}
-	if !strings.Contains(binaryHelp, "bench canary [root]        validate fixture inventory") {
+	if !strings.Contains(binaryHelp, "bench canary [--in <label|primary>] [root]  validate fixture inventory") {
 		t.Fatalf("binary help missing canary inventory wording:\n%s", binaryHelp)
 	}
 	if strings.Contains(binaryHelp, "run the gate against known-broken fixtures") {
@@ -160,7 +160,7 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 		{argv: []string{"harnesses", "codex"}, header: "schema: 1\ncells[13]{field,value,source,checked}:\n"},
 	} {
 		binaryHarnesses := spilledResponse(t, run(binary, probe.argv...))
-		if !strings.HasPrefix(binaryHarnesses, probe.header) {
+		if !strings.HasPrefix(withoutTreeRow(binaryHarnesses), probe.header) {
 			t.Errorf("binary %v = %q, want the %q header", probe.argv, binaryHarnesses, probe.header)
 		}
 		if wrapperHarnesses := spilledResponse(t, run(wrapper, probe.argv...)); wrapperHarnesses != binaryHarnesses {
@@ -190,7 +190,7 @@ func TestHelpKeepsStatusPublicRoute(t *testing.T) {
 		if code := (Command{Stdout: &stdout}).Run([]string{"help"}); code != 0 {
 			t.Fatalf("help exit = %d, want 0", code)
 		}
-		const row = "  bench status               ambient dashboard: what needs attention + the next action\n"
+		const row = "  bench status [--in <label|primary>]  ambient dashboard: what needs attention + the next action\n"
 		if !strings.Contains(stdout.String(), row) {
 			t.Fatalf("help omitted independently required public status row %q", row)
 		}

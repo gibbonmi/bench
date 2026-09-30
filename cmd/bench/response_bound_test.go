@@ -61,29 +61,35 @@ func stdoutOf(c Command) io.Writer { return c.Stdout }
 
 func stderrOf(c Command) io.Writer { return c.Stderr }
 
-// runBoundFixture registers one public command that prints lines numbered lines and
-// exits exit, declared with bound, and runs it through the production dispatcher under a
-// private Bench home.
-func runBoundFixture(t *testing.T, bound boundDisposition, lines, exit int) (stdout, stderr, home string, code int) {
+// runPlanted registers one public command declared with bound and scope that runs run, and
+// runs it through the production dispatcher under a private Bench home. The zero scope
+// declares none, so the response carries no tree row.
+func runPlanted(t *testing.T, bound boundDisposition, scope treeScope, run commandHandler) boundRun {
 	t.Helper()
-	run := runRegistry(t, []commandDefinition{{
-		Name:      "fixture",
+	return runRegistry(t, []commandDefinition{{
+		Name:      "planted",
 		Inventory: publicInventory(helpRow{Order: 1, Description: "print numbered lines"}),
 		Bound:     bound,
-		Run: func(c Command, args []string) int {
-			linesHandler(stdoutOf, lines)(c, args)
-			return exit
-		},
-	}}, "fixture")
-	return run.stdout, run.stderr, run.home, run.code
+		Scope:     scope,
+		Run:       run,
+	}}, "planted")
+}
+
+// exitingHandler answers a handler that prints lines numbered lines on stdout and exits
+// exit.
+func exitingHandler(lines, exit int) commandHandler {
+	return func(c Command, args []string) int {
+		linesHandler(stdoutOf, lines)(c, args)
+		return exit
+	}
 }
 
 // BO1: a bounded public command that prints 25 lines produces exactly 10 stdout lines.
 func TestDispatcherBoundsPublicResponse(t *testing.T) {
-	stdout, stderr, _, code := runBoundFixture(t, boundResponse, 25, 0)
-	lines := strings.Split(strings.TrimSuffix(stdout, "\n"), "\n")
-	if code != 0 || stderr != "" || len(lines) != 10 {
-		t.Fatalf("bounded fixture = (%d, %q, %q), want exactly 10 stdout lines", code, stdout, stderr)
+	run := runPlanted(t, boundResponse, 0, exitingHandler(25, 0))
+	lines := strings.Split(strings.TrimSuffix(run.stdout, "\n"), "\n")
+	if run.code != 0 || run.stderr != "" || len(lines) != 10 {
+		t.Fatalf("bounded fixture = (%d, %q, %q), want exactly 10 stdout lines", run.code, run.stdout, run.stderr)
 	}
 	if !strings.HasPrefix(lines[4], "spilled{lines=25,") {
 		t.Fatalf("fifth line = %q, want the spill line", lines[4])
@@ -93,33 +99,33 @@ func TestDispatcherBoundsPublicResponse(t *testing.T) {
 // BO2: a bounded command that prints exactly 10 lines produces its exact bytes and no
 // spill file.
 func TestDispatcherPassesBoundaryResponse(t *testing.T) {
-	stdout, stderr, home, code := runBoundFixture(t, boundResponse, 10, 0)
-	if want := numberedLines(10); code != 0 || stderr != "" || stdout != want {
-		t.Fatalf("boundary fixture = (%d, %q, %q), want (0, %q, \"\")", code, stdout, stderr, want)
+	run := runPlanted(t, boundResponse, 0, exitingHandler(10, 0))
+	if want := numberedLines(10); run.code != 0 || run.stderr != "" || run.stdout != want {
+		t.Fatalf("boundary fixture = (%d, %q, %q), want (0, %q, \"\")", run.code, run.stdout, run.stderr, want)
 	}
-	if entries, err := os.ReadDir(home); err != nil || len(entries) != 0 {
+	if entries, err := os.ReadDir(run.home); err != nil || len(entries) != 0 {
 		t.Fatalf("a 10-line response wrote the Bench home: %v (%v)", entries, err)
 	}
 }
 
 // BO7: the bound keeps the command's own exit code.
 func TestDispatcherKeepsExitCode(t *testing.T) {
-	stdout, _, _, code := runBoundFixture(t, boundResponse, 30, 3)
-	if code != 3 {
-		t.Fatalf("bounded fixture exit = %d, want 3", code)
+	run := runPlanted(t, boundResponse, 0, exitingHandler(30, 3))
+	if run.code != 3 {
+		t.Fatalf("bounded fixture exit = %d, want 3", run.code)
 	}
-	if lines := strings.Count(stdout, "\n"); lines != 10 {
-		t.Fatalf("bounded fixture printed %d lines, want 10: %q", lines, stdout)
+	if lines := strings.Count(run.stdout, "\n"); lines != 10 {
+		t.Fatalf("bounded fixture printed %d lines, want 10: %q", lines, run.stdout)
 	}
 }
 
 // An exempt entry prints every line.
 func TestDispatcherPassesExemptResponse(t *testing.T) {
-	stdout, _, home, _ := runBoundFixture(t, boundExempt("fixture reason"), 25, 0)
-	if want := numberedLines(25); stdout != want {
-		t.Fatalf("exempt fixture stdout = %q, want %q", stdout, want)
+	run := runPlanted(t, boundExempt("fixture reason"), 0, exitingHandler(25, 0))
+	if want := numberedLines(25); run.stdout != want {
+		t.Fatalf("exempt fixture stdout = %q, want %q", run.stdout, want)
 	}
-	if entries, err := os.ReadDir(home); err != nil || len(entries) != 0 {
+	if entries, err := os.ReadDir(run.home); err != nil || len(entries) != 0 {
 		t.Fatalf("an exempt response wrote the Bench home: %v (%v)", entries, err)
 	}
 }

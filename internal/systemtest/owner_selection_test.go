@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 )
 
 func TestFocusedRunUsesSelectedVerdict(t *testing.T) {
@@ -248,7 +249,7 @@ func TestCanaryInventoryAndSelectedExecutable(t *testing.T) {
 	}
 	result := owner.runSelected(owner.repos[1], "canary", owner.kit)
 	want := fmt.Sprintf("canary inventory ok (%d fixture bindings)\n", len(fixtures))
-	if result.code != 0 || result.stdout != want {
+	if result.code != 0 || treetargettest.WithoutRow(result.stdout) != want {
 		t.Fatalf("canary inventory = (%d, %q, %q)", result.code, result.stdout, result.stderr)
 	}
 	if !strings.Contains(result.stderr, "command-registry:canary") {

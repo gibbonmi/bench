@@ -67,5 +67,5 @@ func runAXICommandAsAt(t *testing.T, cwd, executable string, argv []string) axiC
 	}()
 	var stdout, stderr bytes.Buffer
 	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: executable}.Run(argv)
-	return axiCommandResult{stdout: spilledResponse(t, stdout.String()), stderr: stderr.String(), code: code}
+	return axiCommandResult{stdout: spilledResponse(t, withoutTreeRow(stdout.String())), stderr: stderr.String(), code: code}
 }

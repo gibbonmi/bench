@@ -1,6 +1,6 @@
 # Explicit tree targets for tree-scoped Bench verbs (spec A)
 
-Status: staged
+Status: implemented
 
 Roadmap: FT341
 
@@ -45,6 +45,7 @@ as the residual work for spec B.
 Line: opus / high.
 Implementation-line reason: TT-C4 is the hardest chunk, because it starts a child executable, routes its environment, and refuses before candidate code runs. The spec fixes each output byte and each refusal. The child route has one real seam uncertainty, and the gate only observes it through the system suite.
 Harder chunks: TT-C4.
+Tickets 4 and 5 run on opus at xhigh effort, by the reviewer's direction of 2026-09-29 after the model comparison on tickets 1 to 3.
 
 The scope declaration:
 
@@ -120,7 +121,8 @@ row after spec A retires. Map ticket 7 fixes the split.
 The command registry gains one scope type with two values, `tree` and
 `repository`. Its zero value means undeclared. The type sits on the command
 definition and on the leaf row of a command family. The dispatcher reads it once
-for each call.
+for each call. At run time, an undeclared definition prints no row and takes no
+tree target. So a planted test registry keeps its current output.
 
 Three rules fix where a declaration sits:
 
@@ -169,10 +171,18 @@ argument. The refusal prints `toon.Usage("bench <name>", "--in")` on stdout at
 exit 2, and the verb does not run. A family routes its first argument as a leaf
 name, so `bench worktree --in <x>` keeps its unknown-leaf answer.
 
+A wrapper-only definition, such as `repair`, never reaches the dispatcher. The
+wrapper answers `--in` with its own usage line on stderr at exit 2, and the verb
+does not run. This form is the reviewer's decision of 2026-09-29.
+
 ### The identity row
 
-The row renders through `toon.Table` as the block `tree[1]{target,head,dirty}:`
-with one row. It is the first block of each tree-scoped response that resolves a
+The row is one TOON table block with the header `tree[1]{target,head,dirty}`.
+It renders through `toon.TableTyped`, so the `dirty` cell prints a bare `true`
+or `false`. The `target` cell renders the label through `sanitize.Strip`, the
+package's duty for a table cell. So a label with a control byte still gives a row.
+
+The row is the first block of each tree-scoped response that resolves a
 repository root and exits with a code other than 2. The dispatcher computes the
 row before the verb runs. The bounded response owner writes it at finish as the
 first block, and only when the exit is not 2. So a spilled response keeps the
@@ -180,6 +190,17 @@ row as its first inline line.
 
 A grammar refusal at exit 2 prints only its usage line, as it does today. This
 rule is the reviewer's decision of 2026-09-29, and TT56 pins it.
+
+The two row lines do not count toward the response bound. At finish, the owner
+prints the row before the replayed or projected output. When the spill file
+cannot open, the owner has already flushed the verb output, so it prints no
+row. This rule is the reviewer's decision of 2026-09-29, and TT60 and TT61 pin
+it.
+
+A Bench verb can start a Bench child, as the gate starts `bench test`. That child
+prints its own row, because each child call is its own response. So a
+parent response can grow past the bound and spill. This rule is the reviewer's
+decision of 2026-09-29.
 
 The cells have these values:
 
@@ -203,8 +224,8 @@ any other position, the verb's own parser receives it. The dispatcher consumes
 2. A value that starts with `-`, such as `--help`, exits 2 with `toon.Usage("bench <name> --in", <value>)` on stdout.
 3. A value with a control character refuses at exit 1 through the worktree target refusal.
 4. The keyword `primary` names the primary checkout, the first entry of `git.Worktrees`.
-5. A value that equals the label of exactly one active assignment names that worktree.
-6. A value that matches no label and that `targetPath` in `internal/worktree` reads as a path exits 2 with `toon.Usage("bench <name> --in", <value>)` on stdout. `targetPath` reads an absolute path, `~`, a `~/` prefix, `.`, and each value with `/` as a path.
+5. The lookup compares the value with the label of every ledger row. Exactly one active match names that worktree. With no active match, exactly one match in another state gives the state refusal. Two or more active matches, or two or more inactive matches with no active match, give the ambiguity refusal. This order is the reviewer's decision of 2026-09-29.
+6. A value that matches no label and that `targetPath` in `internal/worktree` reads as a path exits 2 with `toon.Usage("bench <name> --in", <value>)` on stdout. `targetPath` reads each of these values as a path shape: an absolute path, `~`, `~user`, a `~/` prefix, `.`, and each value with `/`. A `~user` value gives a path refusal.
 7. Any other value refuses at exit 1 through the worktree target refusal, with the verb `bench <name> --in`.
 
 Step 6 reuses `targetPath` and restates none of its rules. The label resolver in
@@ -276,6 +297,11 @@ The gate's `resolvedPath` helper delegates to `canonicalpath.Resolve`, so
 answers no match. A relative kit directory now matches the root it names, where
 the old helper compared an unabsolute spelling.
 
+For a relative path, `canonicalpath.Resolve` makes the path absolute before it
+resolves symlinks. So a working directory that a process entered through a
+symlink gives the physical spelling, not the symlink spelling. Ticket 4 owns
+this change, by the reviewer's decision of 2026-09-29, and TT62 pins it.
+
 ### The help rows
 
 Root help renders each row of a tree-scoped definition as
@@ -290,8 +316,9 @@ scope type, the refusal, the row hook, and the help insertion live in a new
 file, `cmd/bench/tree_scope.go`. The old file only gains the two fields and
 the calls into that file.
 
-`cmd/bench/main.go`, `cmd/bench/main_test.go`, and
-`internal/conformance/subcommand_routing_test.go` are over budget already. An
+`cmd/bench/main.go`, `cmd/bench/main_test.go`,
+`internal/conformance/subcommand_routing_test.go`, and
+`internal/conformance/axi_query_registry_test.go` are over budget already. An
 edit there keeps each file at or under its current line count. Each registry
 line in `main.go` takes its scope inline.
 
@@ -301,8 +328,8 @@ line in `main.go` takes its scope inline.
 | --- | --- | --- | --- | --- |
 | TT-C1 / `1-declare-command-scope.md` | Each public leaf declares its scope, the gate refuses an undeclared leaf, and a repository verb refuses `--in`. | TT1, TT2, TT3, TT4, TT5, TT6, TT7 | `bench test --package ./cmd/bench`, `bench test --check subcommand-routing` | no |
 | TT-C2 / `2-derive-kit-source-path.md` | The kit-source predicate uses the canonical derivation. | TT51, TT52 | `bench test --package ./internal/gate` | no |
-| TT-C3 / `3-name-the-graded-tree.md` | Each tree-scoped response names the tree that it read. | TT10, TT11, TT12, TT13, TT14, TT15, TT16, TT17, TT18, TT19, TT20, TT21, TT22, TT23, TT24, TT25, TT56 | `bench test --package ./cmd/bench`, `bench test --package ./internal/treetarget` | no |
-| TT-C4 / `4-run-verbs-in-tree-target.md`, `5-run-kit-worktree-build.md` | A tree-scoped verb runs in a named tree target, and a kit worktree target runs its own current build. | TT8, TT9, TT26, TT27, TT28, TT29, TT30, TT31, TT32, TT33, TT34, TT35, TT36, TT37, TT38, TT39, TT40, TT41, TT57, TT58, TT59, TT43, TT44, TT45, TT46, TT47, TT48, TT49, TT50, TT53, TT54, TT55 | `bench test --package ./internal/treetarget`, `bench test --package ./internal/worktree`, `bench test --package ./cmd/bench`, `bench test --check system` | yes |
+| TT-C3 / `3-name-the-graded-tree.md` | Each tree-scoped response names the tree that it read. | TT10, TT11, TT12, TT13, TT14, TT15, TT16, TT17, TT18, TT19, TT20, TT21, TT22, TT23, TT24, TT25, TT56, TT60, TT61 | `bench test --package ./cmd/bench`, `bench test --package ./internal/treetarget` | no |
+| TT-C4 / `4-run-verbs-in-tree-target.md`, `5-run-kit-worktree-build.md` | A tree-scoped verb runs in a named tree target, and a kit worktree target runs its own current build. | TT8, TT9, TT26, TT27, TT28, TT29, TT30, TT31, TT32, TT33, TT34, TT35, TT36, TT37, TT38, TT39, TT40, TT41, TT57, TT58, TT59, TT43, TT44, TT45, TT46, TT47, TT48, TT49, TT50, TT53, TT54, TT55, TT62 | `bench test --package ./internal/treetarget`, `bench test --package ./internal/worktree`, `bench test --package ./internal/canonicalpath`, `bench test --package ./cmd/bench`, `bench test --check system` | yes |
 
 TT-C1 creates the scope field that TT-C3 and TT-C4 consume, so its review
 closes first. TT-C3 creates the identity row that each TT-C4 child prints.
@@ -324,7 +351,7 @@ closes first. TT-C3 creates the identity row that each TT-C4 child prints.
 The identity row adds a first block to each tree-scoped response through the
 dispatcher that exits with a code other than 2. The enumeration below covers
 each fixture the row reds. Its needles are each literal `.Run([]string{"<verb>"`
-call, each `Run(nil)` call, and each call of the six dispatch helpers in
+call, each `Run(nil)` call, and each call of the four dispatch helpers in
 `cmd/bench` tests. The system needle is each exact or prefix comparison of a
 tree-scoped stdout in `internal/systemtest`.
 
@@ -344,23 +371,27 @@ That one edit covers each helper call site. The sites include
 `help_inventory_test.go` lines 195 to 237, `response_bound_test.go` line 132,
 and `selected_queries_test.go` lines 40 to 135.
 
-Seven direct sites compare an exact or prefix stdout, and ticket 3 edits each in
+These direct sites compare an exact or prefix stdout, and ticket 3 edits each in
 place:
 
 - `cmd/bench/main_test.go` line 87, the `Run(nil)` prefix of `status --route`.
-- `cmd/bench/main_test.go` line 116, the prefix of the built binary's root route.
+- `cmd/bench/main_test.go` line 122, the prefix of the built binary's root route.
+- `cmd/bench/main_test.go` line 163, the prefix of the built binary's `harnesses` probes, when the response does not spill.
+- `cmd/bench/commit_chain_test.go` lines 79 and 136, the exact stdout of `commit` through `runCommitChain`.
 - `cmd/bench/selected_queries_test.go` line 183, the exact line count of `spec history`.
-- `cmd/bench/isolated_command_fixtures_test.go` line 38, the prefix of `status --route`.
+- `cmd/bench/isolated_command_fixtures_test.go` line 39, the prefix of `status --route`.
 - `internal/systemtest/owner_selection_test.go` lines 250 and 251, the exact `canary` stdout.
-- `internal/systemtest/charge_evidence_test.go` lines 228, 318, and 344, the prefixes of `preflight evidence`.
+- `internal/systemtest/charge_evidence_test.go` lines 228 and 344, the prefixes of `preflight evidence`.
+- `internal/systemtest/charge_evidence_test.go` line 318, which compares the reads of two worktrees and the `page[1]` prefix. Both comparisons drop the row.
+- `cmd/bench/response_bound_exempt_test.go` lines 93 and 145, where `requireComplete` demands an empty stderr, and the planted `dashboard` and ship-tier calls now print the exempt row there. The bounded `dashboard` case also gains the two row lines.
+- `internal/systemtest/adoption_test.go` line 150 and later, where the scaffolded gate's nested Bench calls each print a row, so the gate response can spill.
 
 These sites stay green, and ticket 3 does not edit them:
 
 - `cmd/bench/gate_route_test.go` lines 60 to 66 and line 98 take exit 2, so they print no row.
 - The help forms at `commit_chain_test.go` line 149, `help_inventory_test.go` line 134, and `main_test.go` lines 200 and 264 print no row.
 - `main_test.go` line 54 and `isolated_command_fixtures_test.go` line 58 compare substrings.
-- `response_bound_exempt_test.go` line 97 compares the stdout of `dashboard --stdout`, and the exempt row goes to stderr.
-- `main_test.go` line 118 and `charge_evidence_test.go` lines 341 and 386 compare two reads of one tree.
+- `main_test.go` lines 125 and 129 and `charge_evidence_test.go` lines 341 and 386 compare two reads of one tree.
 - `status_route_converge_test.go` line 50 finds its command by a substring index.
 - The `land_route_test.go`, `owner_land_race_test.go`, and `version` comparisons run repository-scoped verbs.
 
@@ -384,7 +415,7 @@ These sites stay green, and ticket 3 does not edit them:
 | TT4 | 3 | A planted internal-inventory definition with a scope reports `plumbing command "z" declares a scope` | planned TestCommandScopeCheckBites in internal/conformance, through a planted registry source | A check that only demands presence accepts a plumbing scope. |
 | TT5 | 2 | A planted family definition with a scope reports `command family "f" declares a scope` | planned TestCommandScopeCheckBites in internal/conformance, through a planted registry source | A check that treats a family as a plain definition accepts the extra scope. |
 | TT6 | 4 | `bench version --in primary` exits 2, stdout is `usage: bench version (unknown argument: --in)`, and no version line prints | planned TestRepositoryVerbRefusesTreeTarget in cmd/bench, through `Command{}.Run` | `versionCommand` ignores its arguments and prints the version at exit 0 today. |
-| TT7 | 4 | `bench idea --in primary x` exits 2 and leaves `capture/IDEAS.md` absent | planned TestRepositoryVerbRefusesTreeTarget in cmd/bench, through `Command{}.Run` in a temporary repository | A refusal after the verb runs leaves the parked line in the inbox. |
+| TT7 | 4 | `bench idea --in primary x` exits 2 and leaves `capture/IDEAS.md` absent | planned TestRepositoryVerbRefusesTreeTarget in cmd/bench, through `Command{}.Run` in a temporary repository | A refusal after the verb runs leaves the parked line in the inbox. The `idea` grammar already refuses `--in`, so TT6 and the refusal test over every repository verb carry the bite. |
 | TT8 | 5 | Root help renders each tree-scoped row with the `--in` insertion that the help-rows section states | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`), with its expectation changed in place | The independent expectation holds the insertion, so a row without it fails the whole-text match. |
 | TT9 | 5 | A registry with one tree and one repository definition renders the insertion on the tree row only | planned TestHelpRendersTreeTargetFromScope in cmd/bench, through a planted registry | A renderer that inserts on every row, or on none, fails one side. |
 | TT10 | 6 | In a primary checkout, the first stdout block of `bench roadmap` is `tree[1]{target,head,dirty}:` with one row | planned TestTreeRowLeadsTreeResponse in cmd/bench, through `Command{}.Run` in a temporary repository | A row after the verb output, or no row, fails the prefix match. |
@@ -432,10 +463,13 @@ These sites stay green, and ticket 3 does not edit them:
 | TT50 | 30 | In the system suite, a kit worktree with a stale build refuses `bench status --in alpha` and starts no child | planned TestTreeTargetRefusesStaleKitBuild in internal/systemtest, through the real executable | A dispatcher route that skips `freshness.Verify` in the real binary runs the stale build. |
 | TT51 | 33 | With `BENCH_KIT` set to `.` and the current directory at the root, `KitSourceCheckout(root)` answers true | planned TestKitSourceCheckoutResolvesARelativeKit in internal/gate, through `t.Chdir` | The old helper compares the unabsolute spelling `.` with the root and answers false. |
 | TT52 | 33 | A symlinked root spelling still matches the kit, and an unrelated directory does not | `internal/gate/kit_source_test.go` (`TestKitSourceCheckoutMatchesThroughASymlinkSpelling`) | A delegation that drops the symlink step answers false for the link. |
-| TT53 | 34 | With the Bench home reached through a symlink, the child's `PWD` equals `canonicalpath.Resolve` of the recorded worktree path | planned TestRunStartsChildInTarget in internal/treetarget, through a symlinked home | A child directory that keeps the recorded spelling prints the symlink path. |
+| TT53 | 34 | With the Bench home reached through a symlink, the child's `PWD` equals `canonicalpath.Resolve` of the recorded worktree path | planned TestRunStartsChildInTarget in internal/treetarget, through a symlinked home | A child directory that keeps the recorded spelling prints the symlink path. No reachable fixture gives that red today, because the create verb records the physical path and the ownership check refuses a symlinked one. The row keeps `canonicalpath.Resolve` as a guard, and the reviewer can veto it. |
 | TT54 | 35 | `bench worktree exec alpha -- <executable> status` exits 0, and its row names `alpha` | planned TestTreeTargetRunsInNamedWorktree in internal/systemtest, through the real executable | A dispatcher that refuses an exec child breaks the route this spec keeps. |
 | TT55 | 36 | The real executable run with its directory inside `alpha` and no `--in` prints the row target `alpha` | planned TestTreeTargetRunsInNamedWorktree in internal/systemtest, through the real executable | A default that already targets the primary checkout prints `primary`. |
 | TT56 | 39 | `bench gate --brief` exits 2 with an empty stdout and the gate usage on stderr | `cmd/bench/gate_route_test.go` (`TestRunGateRejectsBriefUsage`) | A row that the owner writes at every finish makes stdout non-empty. |
+| TT60 | 6 | A planted tree-scoped verb that prints exactly 10 lines does not spill, and its stdout is the two row lines and then the 10 verb lines | planned TestTreeRowOutsideResponseBound in cmd/bench, through a planted registry | A row that counts toward the bound spills a response of 10 verb lines. |
+| TT61 | 6 | When the spill file cannot open, the response carries the verb output and no `tree[` line | planned TestOwnerPrintsNoRowWhenSpillCannotOpen in internal/responsebound, through an unwritable spill directory | A row written after the passing flush lands after the verb output. |
+| TT62 | 34 | With `BENCH_KIT` set to `.` and the working directory entered through a symlink to the root, `KitSourceCheckout` of the physical root answers true | planned TestResolveRelativeUnderSymlinkedWorkingDirectory in internal/canonicalpath, through `t.Chdir` to a symlink | A resolve that makes the path absolute after the symlink step keeps the symlink spelling and answers false. |
 
 Not covered: story 37 — spec B owns these behaviors, and map ticket 6 holds the decision.
 Not covered: story 38 — FT125 owns the filter, and map ticket 7 excludes it.
@@ -481,8 +515,8 @@ it swaps no package variable.
 Hostile input, shell CLI surface: the `--in` value is a caller-controlled
 string. A control character refuses in escaped form through `sanitize.Controls`,
 by TT36. A tab, a newline, or a return is a control character there. A label
-cell with a comma prints through `toon.Table`, which quotes it. The label in the
-repair command passes through `sanitize.ShellQuote`, by TT47. The value
+cell with a comma prints through `toon.TableTyped`, which quotes it. The label in the
+repair command passes through `axi.ShellQuote`, by TT47. The value
 never reaches a shell, because the child argv is a direct exec.
 
 **Won't handle:**
@@ -508,6 +542,12 @@ never reaches a shell, because the child argv is a direct exec.
 - `cmd/bench/spill_support_test.go`
 - `cmd/bench/census_output_test.go`
 - `cmd/bench/preflight_version_test.go`
+- `cmd/bench/commit_chain_test.go`
+- `cmd/bench/census_output.go`
+- `internal/responsebound/owner.go`
+- `internal/responsebound/owner_test.go`
+- `cmd/bench/response_bound_exempt_test.go`
+- `cmd/bench/response_bound_test.go`
 - `internal/conformance/subcommand_routing_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/axi_query_registry_test.go`
@@ -518,7 +558,16 @@ never reaches a shell, because the child argv is a direct exec.
 - `internal/treetarget/`
 - `internal/worktree/tree_target.go`
 - `internal/worktree/tree_target_test.go`
+- `internal/canonicalpath/canonicalpath.go`
+- `internal/canonicalpath/canonicalpath_test.go`
 - `internal/worktree/exec.go`
+- `internal/worktree/path.go`
+- `internal/env/wrapper.go`
+- `internal/freshness/freshness_buildinputs.go`
+- `internal/usage/worktree.go`
+- `internal/preflight/binary_seal.go`
+- `internal/preflight/binary_seal_test.go`
+- `internal/anchors/registry_data.go`
 - `internal/systemtest/`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 - `reviews/tree-targets.md`
@@ -573,19 +622,20 @@ Readers of the command registry fields and of the help rows:
 
 - `cmd/bench/command_registry.go`: `Command.Run`, `renderCommandHelp`, `leafRoot`, and `dispatchLeafFamily`.
 - `cmd/bench/census_output.go`: `runBounded` opens the bound owner that the row writes into.
+- `internal/responsebound/owner.go`: `Owner.Finish` writes the retained or projected response, so the row reaches it at finish.
 - `internal/conformance/subcommand_routing_test.go`: `parseCommandRegistry` and `dispatchRegistry`.
 - `internal/conformance/axi_query_registry_test.go`, `entry_point_parity_test.go`, and `help_inventory_single_source_test.go` call `parseCommandRegistry`. The move keeps its name and signature, so they do not change.
 - `cmd/bench/help_inventory_test.go`: `TestHelpInventoryIsComplete` pins the whole root help. `internal/conformance/help_inventory_single_source_test.go` reads source bytes, and no row changes them.
-- The guidance files that name `bench coverage <spec>` and `bench gate` spell invocations, not help rows. The search found no other copy of a root help row outside `CHANGELOG.md` history and dated audit inputs.
+- The guidance files that name `bench coverage <spec>` and `bench gate` spell invocations, not help rows. Two root help rows are also pinned in `cmd/bench/main_test.go` lines 137 and 193. Ticket 4 edits both in place at the current line count. The search found no other copy of a root help row outside `CHANGELOG.md` history and dated audit inputs.
 - `.bench/hooks`, `.bench/adapters`, `bin`, `scripts`, and `.github/workflows` run no tree-scoped verb whose stdout they parse. The session-start hook runs the plumbing verb `session-inspect`.
 
 Proof checklist:
 
-- Cited symbols: each symbol resolves in the tree at `e80e4e41`.
+- Cited symbols: each symbol resolves in the tree at `f981cd3d`.
   - In `cmd/bench`: `commandDefinition`, `commandLeaf`, `Command.Run`, `renderCommandHelp`, `runBounded`, `worktreeLeaves`, `commandRegistry`, `publicInventory`, `internalInventory`, `versionCommand`, and `boundExemptWith`.
   - In `internal/worktree`: `resolveAssignmentIn`, `selectAssignment`, `printTargetRefusal`, `runWorktreeChild`, `execEnv`, `nameWorktree`, `errTargetUnassigned`, and `errTargetControls`.
-  - In other packages: `git.Root`, `git.IsPrimaryCheckout`, `git.Worktrees`, `git.ResolveCommit`, `git.WorktreeDirty`, `intent.AssignmentForWorktree`, `intent.AssignmentsOwning`, `freshness.DeclaresBuildInputs`, `freshness.Verify`, `freshness.Publish`, `freshness.PublishedExecutable`, `canonicalpath.Resolve`, `gate.KitSourceCheckout`, `toon.Table`, `toon.Usage`, `toon.MissingArg`, `sanitize.ShellQuote`, and `sanitize.Controls`.
-- Import edges: `internal/treetarget` is new, and only `cmd/bench` imports it. `internal/gate` already imports `internal/canonicalpath` through `subject.go`. `internal/worktree` already imports `internal/intent`, `internal/freshness`, and `internal/sanitize`.
+  - In other packages: `git.Root`, `git.IsPrimaryCheckout`, `git.Worktrees`, `git.ResolveCommit`, `git.WorktreeDirty`, `intent.AssignmentForWorktree`, `intent.AssignmentsOwning`, `freshness.DeclaresBuildInputs`, `freshness.Verify`, `freshness.Publish`, `freshness.PublishedExecutable`, `canonicalpath.Resolve`, `gate.KitSourceCheckout`, `toon.Table`, `toon.Usage`, `toon.MissingArg`, `axi.ShellQuote`, and `sanitize.Controls`.
+- Import edges: `internal/treetarget` is new, and only `cmd/bench` imports it. `internal/gate` already imports `internal/canonicalpath` through `subject.go`. `internal/worktree` already imports `internal/intent`, `internal/freshness`, `internal/sanitize`, and `internal/axi`.
 - Source-row clauses and occurrences: the source trace table above. The FT341 occurrences motivate the problem, and each one is a wrong-tree or exec-route incident.
 - Promised field labels: `tree{target,head,dirty}` and the cell values `primary`, `unassigned`, `none`, `true`, `false`, and `unknown`.
 - Changed-function callers: `resolvedPath` has one caller, `KitSourceCheckout`. `KitSourceCheckout` has callers in `cmd/bench/command_registry.go`, in `internal/adopt`, and in `internal/worktree/joins.go` line 119, and their answers change only for a relative kit spelling. `runWorktreeChild` has one caller, `execAttributed`, and it keeps the `worktree:` line.
@@ -608,8 +658,12 @@ Reviewer disposition of the ownership fences: open.
 
 The fence holds `internal/systemtest/` as a prefix, because ticket 3 sweeps its
 exact comparisons and tickets 4 and 5 add the system rows. The fence holds no
-file of `internal/intent`, `internal/freshness`, or `internal/canonicalpath`,
-because the build only calls them.
+file of `internal/intent`, because the build only calls it. It holds the two
+`internal/canonicalpath` files for ticket 4. The TT-C4 repairs add the owner
+files of `internal/env`, `internal/freshness`, `internal/usage`, and
+`internal/preflight` that their findings name. The fence holds
+`internal/anchors/registry_data.go` only for the anchor closure of
+`internal/usage/worktree.go`.
 
 The build preflight binds four more paths to the `cmd/bench` and
 `internal/worktree` files. They are `cmd/bench/command_registry_test.go`, the two
@@ -623,8 +677,12 @@ helper once. It holds no helper call site, such as `anchor_help_test.go` or
 no `gate_route_test.go`, because its calls exit 2 and print no row.
 
 The staged spec `specs/ft290-test-projection/spec.md` also fences
-`cmd/bench/main.go`, `cmd/bench/command_registry.go`, and
-`cmd/bench/help_inventory_test.go`. The build that starts second takes the
+`cmd/bench/main.go`, `cmd/bench/command_registry.go`,
+`cmd/bench/command_registry_test.go`, `cmd/bench/help_inventory_test.go`,
+`internal/conformance/axi_query_registry_test.go`,
+`internal/conformance/subcommand_routing_table_test.go`, and
+`tests/canary/package-core-guard/unrouted-subcommand`. None of its work has
+landed. The build that starts second takes the
 mid-tier staleness audit that `.agents/commands/bench-implement-spec.md` line 19
 requires over those files. The reviewer recommends that one of the two builds
 lands before the other dispatches.
@@ -632,7 +690,7 @@ lands before the other dispatches.
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"TT-C1","tickets":["1-declare-command-scope.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"routing","command":"bench test --check subcommand-routing"}]},{"id":"TT-C2","tickets":["2-derive-kit-source-path.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"TT-C3","tickets":["3-name-the-graded-tree.md"],"verification":[{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"treetarget","command":"bench test --package ./internal/treetarget"}]},{"id":"TT-C4","tickets":["4-run-verbs-in-tree-target.md","5-run-kit-worktree-build.md"],"verification":[{"id":"treetarget","command":"bench test --package ./internal/treetarget"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"system","command":"bench test --check system"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/tree-targets/spec.md"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"treetarget","command":"bench test --package ./internal/treetarget"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"routing","command":"bench test --check subcommand-routing"},{"id":"system","command":"bench test --check system"}]}
+{"version":2,"execution":{"mode":"delegate","run_id":"tree-targets-full-20260929","orchestrator_session":"claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620","author_limit":1,"assignments":{"1-declare-command-scope.md":[{"session":"claude:bench-writer/tt-t1-author","assignment":"tt-t1-author","model":"opus","effort":"high","source":"f981cd3db1a4f27eddba5feede40a80e205bf1c1","native_ref":"claude:agent/tt-t1-author-20260929@f981cd3db1a4f27eddba5feede40a80e205bf1c1"},{"session":"claude:bench-writer/tt-t1-repair-1","assignment":"tt-t1-repair-1","model":"opus","effort":"high","source":"f84ddebca7406bd6f7ea1e33e391235fc4e344e2","native_ref":"claude:agent/tt-t1-repair-1-20260929@f84ddebca7406bd6f7ea1e33e391235fc4e344e2","predecessor":"claude:bench-writer/tt-t1-author","trigger":"user-directed","stopped":"The author returned its final report after record commit a08359f9 and holds no write.","preserved":"f84ddebca7406bd6f7ea1e33e391235fc4e344e2"}],"2-derive-kit-source-path.md":[{"session":"claude:bench-writer/tt-t2-author","assignment":"tt-t2-author","model":"opus","effort":"high","source":"f84c016ec166fe2fcb4a8e0691248ece461d04ee","native_ref":"claude:agent/tt-t2-author-20260929@f84c016ec166fe2fcb4a8e0691248ece461d04ee"},{"session":"claude:bench-writer/tt-t2-author-2","assignment":"tt-t2-author-2","model":"opus","effort":"high","source":"5685e1878a659a8f6fdeb2d2ece1f073f651a989","native_ref":"claude:agent/tt-t2-author-2-20260929@5685e1878a659a8f6fdeb2d2ece1f073f651a989","predecessor":"claude:bench-writer/tt-t2-author","trigger":"terminal-failure","stopped":"The author returned a blocked report because the plan probe 2-kit-probe could not compile, and it committed nothing.","preserved":"5685e1878a659a8f6fdeb2d2ece1f073f651a989"},{"session":"claude:bench-writer/tt-t2-repair-1","assignment":"tt-t2-repair-1","model":"opus","effort":"high","source":"54e5b7f1653d6e81945636d29e93956577004604","native_ref":"claude:agent/tt-t2-repair-1-20260929@54e5b7f1653d6e81945636d29e93956577004604","predecessor":"claude:bench-writer/tt-t2-author-2","trigger":"user-directed","stopped":"The author returned its final report after record commit c8b9bb94 and holds no write.","preserved":"54e5b7f1653d6e81945636d29e93956577004604"}],"3-name-the-graded-tree.md":[{"session":"claude:bench-writer/tt-t3-author","assignment":"tt-t3-author","model":"opus","effort":"high","source":"b4f4d260410334dc937af7631e36d1b43a9c7a68","native_ref":"claude:agent/tt-t3-author-20260929@b4f4d260410334dc937af7631e36d1b43a9c7a68"},{"session":"claude:bench-writer/tt-t3-author-2","assignment":"tt-t3-author-2","model":"opus","effort":"high","source":"c050dc968e92de7d937a8263f08b8b084a5040f5","native_ref":"claude:agent/tt-t3-author-2-20260929@c050dc968e92de7d937a8263f08b8b084a5040f5","predecessor":"claude:bench-writer/tt-t3-author","trigger":"terminal-failure","stopped":"The author returned a blocked report for a fence gap and a behavioral question, and it committed nothing.","preserved":"c050dc968e92de7d937a8263f08b8b084a5040f5"},{"session":"claude:bench-writer/tt-t3-repair-1","assignment":"tt-t3-repair-1","model":"opus","effort":"high","source":"156beff050059a8862697f32fd2408581ad424d9","native_ref":"claude:agent/tt-t3-repair-1-20260929@156beff050059a8862697f32fd2408581ad424d9","predecessor":"claude:bench-writer/tt-t3-author-2","trigger":"user-directed","stopped":"The author returned its final report after record commit 5444f36a and holds no write.","preserved":"156beff050059a8862697f32fd2408581ad424d9"},{"session":"claude:bench-writer/tt-t3-repair-2","assignment":"tt-t3-repair-2","model":"opus","effort":"high","source":"03eb72d897ad99cd3a896d3283713c2125ff75c1","native_ref":"claude:agent/tt-t3-repair-2-20260929@03eb72d897ad99cd3a896d3283713c2125ff75c1","predecessor":"claude:bench-writer/tt-t3-repair-1","trigger":"user-directed","stopped":"The repair session returned its final report after record commit 7251523e and holds no write.","preserved":"03eb72d897ad99cd3a896d3283713c2125ff75c1"}],"4-run-verbs-in-tree-target.md":[{"session":"claude:bench-writer/tt-t4-author","assignment":"tt-t4-author","model":"opus","effort":"xhigh","source":"3147c5937ed03736b1635269d2239135b9c7e649","native_ref":"claude:agent/tt-t4-author-20260929@3147c5937ed03736b1635269d2239135b9c7e649"},{"session":"claude:bench-writer/tt-t4-author-2","assignment":"tt-t4-author-2","model":"opus","effort":"xhigh","source":"b6a210018932050d655d720160cc46217fe79c46","native_ref":"claude:agent/tt-t4-author-2-20260929@b6a210018932050d655d720160cc46217fe79c46","predecessor":"claude:bench-writer/tt-t4-author","trigger":"terminal-failure","stopped":"The author returned a blocked report for a fence gap and committed nothing.","preserved":"b6a210018932050d655d720160cc46217fe79c46"},{"session":"claude:bench-writer/tt-t4-author-3","assignment":"tt-t4-author-3","model":"opus","effort":"xhigh","source":"3114c18124aaef89c2fcd153af5f3a81933209cd","native_ref":"claude:agent/tt-t4-author-3-20260929@3114c18124aaef89c2fcd153af5f3a81933209cd","predecessor":"claude:bench-writer/tt-t4-author-2","trigger":"session-lost","stopped":"The orchestrator session ended before the author returned, and no writer process remains. The author left an uncommitted partial diff, and the orchestrator preserved it outside the tree.","preserved":"3114c18124aaef89c2fcd153af5f3a81933209cd"},{"session":"claude:bench-writer/tt-t4-repair-1","assignment":"tt-t4-repair-1","model":"opus","effort":"xhigh","source":"57075580decf5fd1938e4bb7cb6b9ef9c73d16b5","native_ref":"claude:agent/tt-t4-repair-1-20260930@57075580decf5fd1938e4bb7cb6b9ef9c73d16b5","predecessor":"claude:bench-writer/tt-t4-author-3","trigger":"user-directed","stopped":"The author returned its final report after record commit af260923 and holds no write.","preserved":"57075580decf5fd1938e4bb7cb6b9ef9c73d16b5"}],"5-run-kit-worktree-build.md":[{"session":"claude:bench-writer/tt-t5-author","assignment":"tt-t5-author","model":"opus","effort":"xhigh","source":"af26092346bef2174624ce1887d1265529ed59f8","native_ref":"claude:agent/tt-t5-author-20260929@af26092346bef2174624ce1887d1265529ed59f8"},{"session":"claude:bench-writer/tt-t5-repair-1","assignment":"tt-t5-repair-1","model":"opus","effort":"xhigh","source":"46cd7b0592c0606b476aa6420c7b0341a4b95702","native_ref":"claude:agent/tt-t5-repair-1-20260930@46cd7b0592c0606b476aa6420c7b0341a4b95702","predecessor":"claude:bench-writer/tt-t5-author","trigger":"user-directed","stopped":"The author returned its final report after record commit 3831024c and holds no write.","preserved":"46cd7b0592c0606b476aa6420c7b0341a4b95702"},{"session":"claude:bench-writer/tt-t5-repair-2","assignment":"tt-t5-repair-2","model":"opus","effort":"xhigh","source":"5112377cc7f09076a72ca59cc032afa545d3bedb","native_ref":"claude:agent/tt-t5-repair-2-20260930@5112377cc7f09076a72ca59cc032afa545d3bedb","predecessor":"claude:bench-writer/tt-t5-repair-1","trigger":"user-directed","stopped":"The repair session returned its final report after record commit b3c8cc75 and holds no write.","preserved":"5112377cc7f09076a72ca59cc032afa545d3bedb"}]}},"chunks":[{"id":"TT-C1","tickets":["1-declare-command-scope.md"],"verification":[{"id":"1-cmd","command":"bench test --package ./cmd/bench","ticket":"1-declare-command-scope.md"},{"id":"1-routing","command":"bench test --check subcommand-routing","ticket":"1-declare-command-scope.md"},{"id":"1-conformance","command":"bench test --package ./internal/conformance","ticket":"1-declare-command-scope.md"},{"id":"1-scope-probe","command":"bench probe cmd/bench/tree_scope.go --swap '\"--in\"' --with '\"--in-x\"' --package ./cmd/bench --run TestRepositoryVerbRefusesTreeTarget","probe":"swap","ticket":"1-declare-command-scope.md"}]},{"id":"TT-C2","tickets":["2-derive-kit-source-path.md"],"verification":[{"id":"2-gate","command":"bench test --package ./internal/gate","ticket":"2-derive-kit-source-path.md"},{"id":"2-kit-probe","command":"bench probe internal/gate/kit_source.go --swap 'canonicalpath.Resolve' --with 'func(p string) (string, error) { _ = canonicalpath.Resolve; return filepath.EvalSymlinks(p) }' --package ./internal/gate --run TestKitSourceCheckoutResolvesARelativeKit","probe":"swap","ticket":"2-derive-kit-source-path.md"}]},{"id":"TT-C3","tickets":["3-name-the-graded-tree.md"],"verification":[{"id":"3-cmd","command":"bench test --package ./cmd/bench","ticket":"3-name-the-graded-tree.md"},{"id":"3-treetarget","command":"bench test --package ./internal/treetarget","ticket":"3-name-the-graded-tree.md"},{"id":"3-responsebound","command":"bench test --package ./internal/responsebound","ticket":"3-name-the-graded-tree.md"},{"id":"3-unassigned-probe","command":"bench probe internal/treetarget/identify.go --swap '\"unassigned\"' --with '\"primary\"' --package ./internal/treetarget --run TestIdentifyUnownedWorktree","probe":"swap","ticket":"3-name-the-graded-tree.md"}]},{"id":"TT-C4","tickets":["4-run-verbs-in-tree-target.md","5-run-kit-worktree-build.md"],"verification":[{"id":"4-treetarget","command":"bench test --package ./internal/treetarget","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-worktree","command":"bench test --package ./internal/worktree","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-canonicalpath","command":"bench test --package ./internal/canonicalpath","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-cmd","command":"bench test --package ./cmd/bench","ticket":"4-run-verbs-in-tree-target.md"},{"id":"4-system","command":"bench test --check system","ticket":"4-run-verbs-in-tree-target.md"},{"id":"5-treetarget","command":"bench test --package ./internal/treetarget","ticket":"5-run-kit-worktree-build.md"},{"id":"5-system","command":"bench test --check system","ticket":"5-run-kit-worktree-build.md"},{"id":"4-flag-probe","command":"bench probe internal/treetarget/flag.go --swap '<label|primary>' --with '<label>' --package ./internal/treetarget --run TestRunRefusesBeforeChild","probe":"swap","ticket":"4-run-verbs-in-tree-target.md"},{"id":"5-build-probe","command":"bench probe internal/treetarget/build.go --swap 'worktree build is missing' --with 'worktree build is absent' --package ./internal/treetarget --run TestRunKitWorktreeBuild","probe":"swap","ticket":"5-run-kit-worktree-build.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/tree-targets/spec.md"},{"id":"cmd","command":"bench test --package ./cmd/bench"},{"id":"treetarget","command":"bench test --package ./internal/treetarget"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"routing","command":"bench test --check subcommand-routing"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ### Flagged additions
@@ -654,6 +712,7 @@ Each addition below is not in a map ticket answer. The reviewer can veto each on
 - The Bench-home clause of the repository predicate. It classifies `assessment`, `cache`, `models`, and `repair-pilot`, which read only state under the Bench home.
 - The empty-value and dash-value steps of the value order, TT57 and TT58.
 - The one test helper that removes a leading row inside the four dispatch helpers.
+- The run-time rule for a definition with no declared scope: no row and no tree target. The staleness pass added it, because planted test registries declare no scope.
 
 ### Open reviewer decision
 
@@ -666,3 +725,19 @@ at create. This spec changes neither, and it records the question for spec B.
 
 The reviewer leans to a duplicate-label refusal at `bench worktree create`,
 because map ticket 1 closed the `--in` value set.
+
+### Reviewer decisions during the build
+
+The build found five behavioral gaps, and the reviewer decided each one on
+2026-09-29. Each rule now lives in its spec section.
+
+1. The row and the response bound: the two row lines do not count toward the
+   bound. The identity-row section holds the rule, and TT60 and TT61 pin it.
+2. The label lookup precedence: exactly one active match wins. Step 5 of the
+   tree-target section holds the rule, and TT34 and TT35 pin it.
+3. The wrapper-only `repair` verb: the wrapper's own refusal stands. The
+   repository-refusal section holds the rule.
+4. The symlinked working directory: ticket 4 fixes `canonicalpath.Resolve`.
+   The path-derivation section holds the rule, and TT62 pins it.
+5. The nested Bench call: each child prints its own row. The identity-row
+   section holds the rule.

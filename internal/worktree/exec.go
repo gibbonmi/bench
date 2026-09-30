@@ -110,6 +110,20 @@ func execAttributed(assignment *string, parsed usage.Result, root, home string, 
 }
 
 func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	return nameWorktree(stderr, dir, runChild(worktreeExecGrammar.Cmd, argv, dir, home, extraEnv, stdin, stdout, stderr))
+}
+
+// RunTreeChild runs argv in dir as the one child of a tree-scoped call, and answers the
+// child's exit. The child takes the exec child environment. It prints no worktree line,
+// because the child names its own tree in its response. verb names the call in a start
+// failure.
+func RunTreeChild(verb string, argv []string, dir, home string, stdin io.Reader, stdout, stderr io.Writer) int {
+	return runChild(verb, argv, dir, home, nil, stdin, stdout, stderr)
+}
+
+// runChild is the one child runner of the exec verb and the tree-scoped call. It answers
+// the child's exit, 1 for a start failure, and 130 for an interrupt.
+func runChild(verb string, argv []string, dir, home string, extraEnv []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
 	cmd := exec.Command(argv[0], argv[1:]...)
@@ -120,14 +134,14 @@ func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin 
 	// delay lets exec return at the child's own exit with the output that arrived.
 	cmd.WaitDelay = bounds.FixedWindow(bounds.ExecWaitDelay)
 	if err := cmd.Start(); err != nil {
-		fmt.Fprintf(stderr, "bench worktree exec: %v\n", err)
-		return nameWorktree(stderr, dir, 1)
+		fmt.Fprintf(stderr, "%s: %v\n", verb, err)
+		return 1
 	}
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
 	select {
 	case err := <-done:
-		return nameWorktree(stderr, dir, childExitCode(cmd, err))
+		return childExitCode(cmd, err)
 	case <-ctx.Done():
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
 		select {
@@ -137,15 +151,15 @@ func runWorktreeChild(argv []string, dir, home string, extraEnv []string, stdin 
 			<-done
 		}
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		return nameWorktree(stderr, dir, 130)
+		return 130
 	}
 }
 
 // nameWorktree returns code, and names the tree the child ran in when that code is a
-// failure. Every exit path returns through here, so the line prints one time for one
-// child run and never on a green run. It follows the child's own stderr, which the verb
-// passes through unchanged, so the reader gets the failure first and then the path the
-// recovery command needs.
+// failure. The exec verb returns every child exit through here, so the line prints one
+// time for one child run and never on a green run. It follows the child's own stderr,
+// which the verb passes through unchanged, so the reader gets the failure first and then
+// the path the recovery command needs.
 func nameWorktree(stderr io.Writer, dir string, code int) int {
 	if code == 0 {
 		return code
@@ -191,7 +205,7 @@ func execEnv(dir, home string, extra []string) []string {
 	if !isRegularFile(wrapper) {
 		return base
 	}
-	return append(base, "BENCH_WRAPPER="+wrapper)
+	return append(base, env.WrapperEnv+"="+wrapper)
 }
 
 // withHome puts the caller's resolved home on a child environment. The inherited

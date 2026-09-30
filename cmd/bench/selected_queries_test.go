@@ -110,7 +110,7 @@ func retireSpecs(t *testing.T, root string, count int, slugs ...string) {
 func TestSelectedHistoryHelpDiscovery(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	result := runAXICommandAt(t, root, []string{"help"})
-	if result.code != 0 || !strings.Contains(result.stdout, "  "+spec.SelectedHistoryUsage+"  ") {
+	if definition, _ := commandByName("spec"); result.code != 0 || !strings.Contains(result.stdout, "  bench spec"+definition.treeTargetInsertion()+strings.TrimPrefix(spec.SelectedHistoryUsage, "bench spec")+"  ") {
 		t.Fatalf("selected history discovery=%#v", result)
 	}
 	result = runAXICommandAt(t, root, []string{"spec", "history", "--spec", "chosen", "--help"})
@@ -180,7 +180,7 @@ func TestSelectedHistoryWithinResponseBound(t *testing.T) {
 	if _, spilled := responseboundtest.Find(printed); spilled {
 		t.Fatalf("selected response spilled: %q", printed)
 	}
-	if lines := strings.Count(printed, "\n"); lines != 8 || !strings.HasSuffix(printed, "\n") {
+	if lines := strings.Count(withoutTreeRow(printed), "\n"); lines != 8 || !strings.HasSuffix(printed, "\n") {
 		t.Fatalf("selected response has %d lines, want exactly 8: %q", lines, printed)
 	}
 }
