@@ -29,7 +29,7 @@ findings in the owner details.
 
 **FT141 (HIGH, decision required) — red verdicts are attributed against an exact-tree baseline.**
 
-**FT341 (HIGH) — each Bench verb declares its tree scope, and a tree-scoped verb takes an explicit target.**
+**FT341 (HIGH) — a Bench verb reaches a worktree only through `--in`: exec refuses a Bench child, and directory inference ends.**
 
 **FT305 (HIGH, decision required) — durable local factory execution survives a worker or conversation stop.**
 
@@ -46,6 +46,8 @@ findings in the owner details.
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
 **FT344 (MEDIUM) — every rebuild remedy for a pool worktree names `bench worktree build` from one owner.**
+
+**FT354 (MEDIUM, decision required) — Bench has one shell-quoting derivation.**
 
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
 
@@ -178,6 +180,8 @@ qualification requirements are met.
 
 **FT345 (LOW, parked pending a repro) — worktree retirement surfaces agree on the row state and name a route that can succeed.**
 
+**FT355 (MEDIUM, parked pending a repro) — the OTel crash system test reaps its child and removes its own home.**
+
 
 ## Release and bank reassessment gate
 
@@ -242,7 +246,7 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `$bench-shape-idea FT341` to settle explicit tree targets.
+1. Run `$bench-write-spec FT341` to author spec B: exec refuses a Bench child, and directory inference ends.
 2. Run `$bench-shape-idea FT215` to close lane correctness decisions.
 3. Run `$bench-shape-idea FT318` to settle the native review-record writer.
 
