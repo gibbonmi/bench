@@ -1,7 +1,7 @@
 # 5. Run a kit worktree target on its own current build
 
 Blocked by: 4-run-verbs-in-tree-target.md
-Writes: internal/treetarget/ (new), internal/systemtest/, internal/worktree/path.go, internal/worktree/tree_target.go, internal/freshness/freshness_buildinputs.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/treetarget/ (new), internal/systemtest/, internal/worktree/path.go, internal/worktree/tree_target.go, internal/freshness/freshness_buildinputs.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/usage/worktree.go, internal/preflight/binary_seal.go, internal/preflight/binary_seal_test.go, internal/anchors/registry_data.go
 Covers: TT43, TT44, TT45, TT46, TT47, TT48, TT50
 
 ## What to build
@@ -10,7 +10,7 @@ Chunk: TT-C4.
 
 A label target whose root declares Bench build inputs by `freshness.DeclaresBuildInputs` is a kit worktree target. Its child executable is `freshness.PublishedExecutable` of the target root. The executable runs only after `freshness.Verify` accepts it against that root.
 
-A missing build refuses with `bench <name> --in: worktree build is missing`. Any other `Verify` refusal prints `bench <name> --in: worktree build does not match the tree`. Both refusals then print `next=bench worktree build <label>`, with the label through `sanitize.ShellQuote` when it needs quoting. Each refusal exits 1 before any child starts, and neither line prints the executable path.
+A missing build refuses with `bench <name> --in: worktree build is missing`. Any other `Verify` refusal prints `bench <name> --in: worktree build does not match the tree`. Both refusals then print `next=bench worktree build <label>`, with the label through `axi.ShellQuote`, which quotes it only when it needs quoting. Each refusal exits 1 before any child starts, and neither line prints the executable path.
 
 The tests publish a marker script through `freshness.Publish`, so the seal is real. The stale case edits one listed build input after the publication. The changed case appends one byte to the published executable. Add one system row with `BENCH_KIT` set to the kit root, through the real executable.
 
