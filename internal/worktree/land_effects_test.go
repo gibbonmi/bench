@@ -22,7 +22,7 @@ func brokerChangingLanding(t *testing.T, request string) (root string, creation 
 	t.Helper()
 	root, creation, _, _, _, home = publicLandingFixture(t, request, "", "")
 	writeGoMainFixture(t, root)
-	mustWrite(t, filepath.Join(root, "scripts", "go-build.inputs"), []byte("build_script=scripts/go-build.sh\n"), 0o644)
+	mustWrite(t, filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest)), []byte(freshness.BuildInputLine("build_script", "scripts/go-build.sh")), 0o644)
 	spec := filepath.Join(root, "specs", "x", "spec.md")
 	body, err := os.ReadFile(spec)
 	if err != nil {
@@ -166,7 +166,7 @@ func brokerDestinationFixture(t *testing.T, request string) (root string, creati
 	writeGoMainFixture(t, root)
 	gitRun(t, root, "add", ".")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker sources")
-	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
+	commitLandingBuildInputs(t, root)
 	base = gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
 	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))

@@ -213,7 +213,7 @@ func writeGateEntryFixture(t *testing.T, h Harness, kit string) string {
 		"internal/freshness/freshness.go",
 		"internal/freshness/check/main.go",
 		"scripts/go-build.sh",
-		"scripts/go-build.inputs",
+		freshness.BuildInputsManifest,
 		"package.json",
 		"internal/releaseevidence/requirements.json",
 	} {

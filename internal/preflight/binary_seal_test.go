@@ -93,10 +93,10 @@ func sealFixtureRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
 	for name, body := range map[string]string{
-		"go.mod":                  "module example.com/sealfixture\n\ngo 1.25\n",
-		"cmd/bench/main.go":       "package main\n\nfunc main() {}\n",
-		"scripts/go-build.sh":     "#!/usr/bin/env bash\n",
-		"scripts/go-build.inputs": "build_script=scripts/go-build.sh\n",
+		"go.mod":                      "module example.com/sealfixture\n\ngo 1.25\n",
+		"cmd/bench/main.go":           "package main\n\nfunc main() {}\n",
+		"scripts/go-build.sh":         "#!/usr/bin/env bash\n",
+		freshness.BuildInputsManifest: freshness.BuildInputLine("build_script", "scripts/go-build.sh"),
 	} {
 		preflighttest.MustWriteFile(t, filepath.Join(root, filepath.FromSlash(name)), body)
 	}

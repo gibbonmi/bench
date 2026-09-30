@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
@@ -128,18 +129,20 @@ func subjectManifestPath(root string) string {
 // exists to catch, not an expectation to mirror.
 func stampedPackageVersion(t *testing.T, root string) string {
 	t.Helper()
-	inputs, err := os.ReadFile(filepath.Join(root, "scripts", "go-build.inputs"))
+	inputs, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest)))
 	if err != nil {
 		t.Fatal(err)
 	}
+	// The line owner renders the key and its separator; an empty path leaves that prefix.
+	prefix := strings.TrimSuffix(freshness.BuildInputLine("package_version", ""), "\n")
 	source := ""
 	for _, line := range strings.Split(string(inputs), "\n") {
-		if key, value, ok := strings.Cut(line, "="); ok && key == "package_version" {
+		if value, ok := strings.CutPrefix(line, prefix); ok {
 			source = value
 		}
 	}
 	if source == "" {
-		t.Fatal("scripts/go-build.inputs names no package_version input")
+		t.Fatalf("%s names no package_version input", freshness.BuildInputsManifest)
 	}
 	body, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(source)))
 	if err != nil {

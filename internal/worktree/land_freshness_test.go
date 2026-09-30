@@ -27,7 +27,7 @@ func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testin
 	request := "land-owner-no-candidate-code"
 	root, creation, _, _, tally, home := publicLandingFixture(t, request, "", "")
 	marker := filepath.Join(t.TempDir(), "candidate-ran")
-	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
+	commitLandingBuildInputs(t, root)
 	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\ngit rev-parse main > "+marker+"\nexit 1\n"), 0o755)
 	gitRun(t, root, "add", "scripts/go-build.sh")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "candidate build entry")
@@ -63,7 +63,7 @@ func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.
 	t.Parallel()
 	request := "land-owner-single-process"
 	root, creation, _, _, tally, home := publicLandingFixture(t, request, "", "")
-	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
+	commitLandingBuildInputs(t, root)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
 	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
@@ -100,7 +100,7 @@ func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 	binary := testRunBinary(t)
 	request := "land-owner-forged-primary"
 	root, creation, _, _, tally, _ := publicLandingFixture(t, request, "dist/bench", "dist/")
-	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
+	commitLandingBuildInputs(t, root)
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
 	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))

@@ -436,7 +436,7 @@ func runAXIGit(t *testing.T, args ...string) string {
 // rebuild path would name or execute the sentinel and go red here.
 func TestWorktreeLandNeverConsultsTheInvokedExecutable(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
-	writeAXIFixture(t, filepath.Join(root, "scripts", "go-build.inputs"), "build_script=scripts/go-build.sh\n")
+	declareBuildInputs(t, root)
 	ran := filepath.Join(t.TempDir(), "sentinel-ran")
 	sentinel := filepath.Join(t.TempDir(), "invoked-bench")
 	writeAXIFixture(t, sentinel, "#!/bin/sh\n: > "+ran+"\n")
