@@ -766,6 +766,28 @@ Findings: 3. Worst: no test pins the missing-tree or the creation-bundle refusal
 - The kit holds two `ShellQuote` derivations, in `internal/axi` and `internal/sanitize`.
 - `internal/treetarget/treetargettest` imports `internal/treetarget`, against the rule that only `cmd/bench` imports it. TT-C3 landed this import.
 
+## TT-C4 repair routing
+
+This is cycle 1 of the two repair cycles for chunk TT-C4. The reviewer decided C4-S4 and C4-C3 on 2026-09-30. Each affected ticket gets one fresh `bench-writer` repair session on opus at xhigh effort, with a cap of 3 attempts. That line matches the ticket 4 and ticket 5 authors. The ticket 4 session runs first, and the ticket 5 session starts after the ticket 4 repair commits green.
+
+| Target | Finding | Ticket | Repair |
+|---|---|---|---|
+| R1 | C4-S1 | 4 | `TreeTarget` and `selectAssignment` build the ambiguity id list through one helper. |
+| R2 | C4-S3 | 4 | `internal/env` names the wrapper variable once. `execEnv` and `cmd/bench/tree_scope.go` use that name, and `worktree.WrapperEnv` goes. |
+| R3 | C4-C1 | 4 | Tests pin `--in` on an active label with a removed worktree and on an invalid creation bundle. Each test asserts the refusal, its `next=` line, and no marker. |
+| R4 | C4-S2 | 5 | `printBuildRefusal` prints through the `internal/worktree` refusal printer, and `usage.WorktreeBuild` gives the verb spelling. TT44 and TT47 keep their exact lines. |
+| R5 | C4-S4 | 5 | `internal/freshness` exports the manifest path and the line form, and `kittest.WriteTree` uses them. |
+| R6 | C4-C2 | 5 | The TT48 test asserts that the child's `BENCH_HOME` is the resolved home. |
+
+The reviewer decisions and the other dispositions are these:
+
+- C4-S4: the reviewer chose the narrow repair R5. The other kit-tree fixtures stay, and a parked idea records their consolidation.
+- C4-C3: the reviewer routed the terminal hang to spec B, which owns the exec route. A learning records it, and TT-C4 has no repair target for it.
+- C4-P1: the plan commit corrects the spec text to name `axi.ShellQuote` and the `internal/axi` import edge. This is a non-behavioral contradiction, so the tree convention stays, flagged for reviewer veto.
+- C4-P2: no repair. The tree convention stays, flagged for reviewer veto.
+
+The plan commit expands the fences before dispatch. Ticket 4 gains `internal/worktree/path.go` and `internal/env/wrapper.go`. Ticket 5 gains `internal/worktree/path.go`, `internal/worktree/tree_target.go`, and `internal/freshness/freshness_buildinputs.go`. A learning records the expansion.
+
 ```bench-review-record
 {
   "version": 2,
