@@ -911,6 +911,51 @@ The repair sessions flagged these items for the round 2 review:
 - The ticket 4 bundle test pins the refusal for a branch that is not checked out, and not the refusal for a changed owner marker.
 - The ticket 4 repair did not probe the child name read in `runInTreeTarget`. A wrong name there can make the test binary start itself in a loop.
 
+## TT-C4 chunk review, round 2
+
+This round confirms repair cycle 1. The frozen pair is base `9e742c5434c327e7174f85dd427331004b2bcef6` and tip `b6eeb1bc74dcf5446b6a5d8abc6d98e647a7e6e8`. The shared evidence is `sha256:b0a21d730a71b847e6970b8369a448ad17c00c767159ac382168c5a778051efd`. By the reviewer's direction, each axis ran as a fresh `bench-reviewer` session on fable at high effort. Each axis read the repair delta `3831024c..b6eeb1bc` without this record file. Only the Coverage axis ran probes, and the tree stayed clean.
+
+The raw finding counts are 1 for Standards, 3 for Spec, and 0 for Coverage. No two findings name one fix, so the de-duplicated repair-target count is 4. The folds R1 to R6 hold on every axis.
+
+## Standards
+
+Findings: 1. Worst: the repair delta adds a second hand-spelled fill of the `<target>` slot of `usage.WorktreeBuild`.
+
+- C4-S5, confidence 4, ask-user: `PrintTreeBuildRefusal` fills the slot with `strings.Replace` (`internal/worktree/tree_target.go:74`). `internal/preflight/binary_seal.go:60` fills the same slot with the same expression. The rule is one source per fact in `AGENTS.md`. The collapse point is outside every TT-C4 fence.
+
+## Spec
+
+Findings: 3. Worst: the C4-P1 fold holds in the spec but not in ticket 5, which still names `sanitize.ShellQuote`.
+
+- C4-P3, confidence 8, auto-fix: `specs/tree-targets/tickets/5-run-kit-worktree-build.md:13` names `sanitize.ShellQuote`, which always quotes. The spec and the tree use `axi.ShellQuote`.
+- C4-P4, confidence 7, auto-fix: the fence disposition says that the fence holds no file of `internal/freshness` or `internal/canonicalpath` (`specs/tree-targets/spec.md:656-658`). The ownership list now holds a file of each package.
+- C4-P5, confidence 4, ask-user: the shared printer passes the `next=` line through `sanitize.Controls`, which writes a backslash as two (`internal/worktree/path.go:191`). So the label `a\b` gives a repair command that names a different label. The ledger accepts that label, and no row pins it.
+
+## Coverage
+
+Findings: 0. Every fold in the repair delta is pinned by a test that goes red under an independent mutation.
+
+The two round 1 probes now bite: the lookup with only the state check reds both new rows, and the empty child home reds TT48. One probe for each of R1, R2, R4, and R5 also bit. The child name read in `runInTreeTarget` is pinned by `TestTreeTargetOnlyAsFirstArgument`, and its red is reachable only through a recursive start.
+
+## TT-C4 round 2 advice
+
+- `auxiliaryInputsManifest` is a second name for `BuildInputsManifest`, and the value has one source. Fold the name when its two readers enter a fence.
+- `buildVerb` in `internal/worktree/build.go` still spells the build verb beside `usage.WorktreeBuild`.
+- `internal/worktree/build.go` quotes a label through `sanitize.ShellQuote`, so the build verb and the tree-target refusal spell one label two ways.
+- A probe of the manifest reader in `internal/freshness` is invalid, because the private build of `bench probe` reads the kit manifest through the mutated reader.
+- The pin of the child name in `runInTreeTarget` reds only through a recursive start. A pin that is safe to probe needs an injectable running executable.
+
+## TT-C4 repair routing, cycle 2
+
+This is cycle 2 of the two repair cycles for chunk TT-C4, so it is the last cycle that the allowance permits. The reviewer decided C4-P5 and C4-S5 on 2026-09-30. Both repair targets belong to ticket 5. They go to one fresh `bench-writer` repair session on opus at xhigh effort, with a cap of 3 attempts.
+
+| Target | Finding | Ticket | Repair |
+|---|---|---|---|
+| R7 | C4-P5 | 5 | The shared refusal printer escapes a line through `sanitize.Controls` only when the line fails `sanitize.LineSafe`. This is the TT-C3 R1 rule for the row label. A test pins a backslash label as typed and a control byte as escaped. |
+| R8 | C4-S5 | 5 | One function in `internal/usage` fills the `<target>` slot of `usage.WorktreeBuild`. The new seam, `internal/preflight/binary_seal.go`, and its test use that function. |
+
+The plan commit corrects C4-P3 and C4-P4 in the ticket and spec text, because both contradictions are non-behavioral. It also expands the ticket 5 fence with `internal/usage/worktree.go`, `internal/preflight/binary_seal.go`, and `internal/preflight/binary_seal_test.go`. A learning records the expansion.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2535,7 +2580,7 @@ The repair sessions flagged these items for the round 2 review:
     {
       "id": "TT-C4",
       "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
-      "tip": "de2fcede5bc59786a5360f6c614c30e650f4edb4",
+      "tip": "b6eeb1bc74dcf5446b6a5d8abc6d98e647a7e6e8",
       "plan_digest": "sha256:69e2173a8c44f664538a2bbbee23627474ffcf545426ba0d4e45fd8d73038c52",
       "source_digest": "bb432a07ca08fc6e2ad92631f998dc2418a176b1",
       "acceptance_rows": [
@@ -2646,6 +2691,78 @@ The repair sessions flagged these items for the round 2 review:
             "C4-C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "tt-c4-standards-r2",
+          "performer": "claude:bench-reviewer/tt-c4-standards-r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "bb432a07ca08fc6e2ad92631f998dc2418a176b1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c4-standards-r2@b6eeb1bc",
+            "digest": "sha256:e5f1f57134a8a602dc3e85575fba9f4cbdd3aac6024c2d93dabee68728d7e101",
+            "excerpt": "Standards: 1 finding. Worst: the repair delta adds a second hand-spelled fill of the `<target>` slot of `usage.WorktreeBuild`."
+          },
+          "axis": "Standards",
+          "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "tip": "b6eeb1bc74dcf5446b6a5d8abc6d98e647a7e6e8",
+          "finding_ids": [
+            "C4-S5"
+          ],
+          "supersedes": [
+            "tt-c4-standards-r1"
+          ]
+        },
+        {
+          "id": "tt-c4-spec-r2",
+          "performer": "claude:bench-reviewer/tt-c4-spec-r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "bb432a07ca08fc6e2ad92631f998dc2418a176b1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c4-spec-r2@b6eeb1bc",
+            "digest": "sha256:0fb190a86caa94755d1b365cc8675669022eeef73107e3dbf4ab9d4206e1d68a",
+            "excerpt": "Spec: 3 findings. Worst: the C4-P1 fold holds in the spec but not in ticket 5, which still names `sanitize.ShellQuote`."
+          },
+          "axis": "Spec",
+          "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "tip": "b6eeb1bc74dcf5446b6a5d8abc6d98e647a7e6e8",
+          "finding_ids": [
+            "C4-P3",
+            "C4-P4",
+            "C4-P5"
+          ],
+          "supersedes": [
+            "tt-c4-spec-r1"
+          ]
+        },
+        {
+          "id": "tt-c4-coverage-r2",
+          "performer": "claude:bench-reviewer/tt-c4-coverage-r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "bb432a07ca08fc6e2ad92631f998dc2418a176b1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c4-coverage-r2@b6eeb1bc",
+            "digest": "sha256:7dd73fb935206ece935dc9a5474d6e51d47a29ef955c78f405663ba46e33afae",
+            "excerpt": "Coverage: 0 findings. Every fold in the repair delta is pinned by a test that goes red under an independent mutation."
+          },
+          "axis": "Coverage",
+          "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "tip": "b6eeb1bc74dcf5446b6a5d8abc6d98e647a7e6e8",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c4-coverage-r1"
+          ]
         }
       ]
     }
