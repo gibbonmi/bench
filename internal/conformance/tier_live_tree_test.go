@@ -17,7 +17,6 @@ import (
 // the reverse direction: it rejects every detected reader absent from this classification or
 // the executable registry.
 var classifiedLiveTreeTests = map[string]bool{
-	"TestCanaryFixtureRegistryClassifiesEveryFixture":              true,
 	"TestConformanceMetaBites":                                     true,
 	"TestCoreSubprocessFailuresUseProbeFormatter":                  true,
 	"TestDecisionMapIntegrityCheckValidatesEveryCandidate":         true,
@@ -47,7 +46,6 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestBranchNativeArchitectureCensus":                           true,
 	"TestRecurrenceMaintenanceContractCheckBites":                  true,
 	"TestResidualCheckCallsCrossCompileMatrix":                     true,
-	"TestRetiredConformanceFixturesDoNotLeaveShellTwinMessages":    true,
 	"TestRetroImprovementMarkersFixtureInventoryRejectsDeletion":   true,
 	"TestRetroImprovementMarkersFixturesCoverEveryDiagnosticClass": true,
 	"TestRetainedWorkflow":                                         true,
