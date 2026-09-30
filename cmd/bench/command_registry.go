@@ -325,6 +325,9 @@ func (c Command) Run(args []string) int {
 		finishSpan(exit)
 		return exit
 	}
+	if exit, targeted := c.runInTreeTarget(definition, args[1:]); targeted {
+		return exit
+	}
 	row := definition.treeRow(args[1:])
 	if !definition.bound(args[1:]).bounded {
 		return c.finishExempt(row, definition.run(c, args[1:]))
@@ -358,6 +361,7 @@ func renderCommandHelp() string {
 			continue
 		}
 		for _, row := range definition.Inventory.Rows {
+			row.Suffix = definition.treeTargetInsertion() + row.Suffix
 			prefix := row.Prefix
 			if prefix == "" {
 				prefix = "bench"

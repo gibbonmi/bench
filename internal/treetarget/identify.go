@@ -1,6 +1,7 @@
 // Package treetarget names the tree that one tree-scoped Bench call reads. It answers the
 // identity row that each tree-scoped response prints as its first block, so a reader
-// knows which checkout the response graded without a path in the output.
+// knows which checkout the response graded without a path in the output. It also runs a
+// call that names its tree target as one child in that tree.
 package treetarget
 
 import (
@@ -9,6 +10,10 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
+
+// primaryTarget names the primary checkout, both as the target cell of the identity row
+// and as the tree-target keyword.
+const primaryTarget = "primary"
 
 // Identity holds the three cells of one identity row.
 type Identity struct {
@@ -27,7 +32,7 @@ type Identity struct {
 func Identify(root string) Identity {
 	identity := Identity{Target: "unassigned", Head: "none", Dirty: "unknown"}
 	if primary, err := git.IsPrimaryCheckout(root); err == nil && primary {
-		identity.Target = "primary"
+		identity.Target = primaryTarget
 	} else if assignment, ok := intent.AssignmentForWorktree(root); ok {
 		identity.Target = assignment.Label
 	}

@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/treetarget"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // treeScope states which tree a public command leaf serves. Each public definition that is
@@ -24,16 +26,51 @@ const (
 // treeTargetFlag is the one spelling of the tree-target flag.
 const treeTargetFlag = "--in"
 
+// leadsWithTreeTarget reports whether args name a tree target. The flag counts only as the
+// first argument after the verb. In any other position the verb's own grammar reads it.
+func leadsWithTreeTarget(args []string) bool {
+	return len(args) > 0 && args[0] == treeTargetFlag
+}
+
 // refusesTreeTarget answers the repository refusal. A repository-scoped definition that
 // gets the tree-target flag as its first argument prints the usage line and does not run,
 // so an ignored target never looks accepted. A family declares no scope, so its first
 // argument still routes as a leaf name.
 func (definition commandDefinition) refusesTreeTarget(c Command, args []string) bool {
-	if definition.Scope != scopeRepository || len(args) == 0 || args[0] != treeTargetFlag {
+	if definition.Scope != scopeRepository || !leadsWithTreeTarget(args) {
 		return false
 	}
 	fmt.Fprintln(c.Stdout, toon.Usage("bench "+definition.Name, treeTargetFlag))
 	return true
+}
+
+// runInTreeTarget runs a tree-scoped call that names its tree target as one child in that
+// tree, and answers the child's exit and true. Every other call answers false and runs in
+// this process. The running executable goes by its absolute path, because the child
+// directory is another tree, where the spelling of argv[0] can name another file. When
+// that path is unknown it stays empty, and a child start that needs it fails with its own
+// error.
+func (c Command) runInTreeTarget(definition commandDefinition, args []string) (int, bool) {
+	if definition.Scope != scopeTree || !leadsWithTreeTarget(args) {
+		return 0, false
+	}
+	running, _ := os.Executable()
+	return treetarget.Run(treetarget.Call{
+		Name: definition.Name, Flag: treeTargetFlag, Args: args[1:],
+		Root: boundaryRoot(), Home: worktree.Home(),
+		Wrapper: os.Getenv(worktree.WrapperEnv), Running: running,
+		Stdin: c.Stdin, Stdout: c.Stdout, Stderr: c.Stderr,
+	}), true
+}
+
+// treeTargetInsertion answers the root help text that each row of definition carries after
+// the verb name: the tree-target form for a tree-scoped definition, and nothing otherwise.
+// The help and the dispatcher read the same scope field.
+func (definition commandDefinition) treeTargetInsertion() string {
+	if definition.Scope != scopeTree {
+		return ""
+	}
+	return " [" + treeTargetFlag + " " + treetarget.Operand + "]"
 }
 
 // scope answers the scope of one call. A call that names a family leaf takes the scope of

@@ -10,9 +10,11 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // TT6 and TT7: each repository-scoped verb refuses a tree target as its first argument,
@@ -101,6 +103,35 @@ func TestTreeRowLeadsTreeResponse(t *testing.T) {
 	}
 	if _, cells, _ := strings.Cut(want, "  primary,"); len(strings.Split(cells, ",")[0]) != 40 {
 		t.Fatalf("row %q does not carry the 40-character HEAD commit", want)
+	}
+}
+
+// TT37: the tree-target flag names a tree target only as the first argument after the verb.
+// A late flag reaches the verb's own grammar: the gate refuses it at exit 2, and `bench
+// version` ignores its arguments. The invoking wrapper is a marker script, so a started
+// child leaves the marker and never runs this test binary. The first-position call starts
+// that child, so the absent marker of a late flag is not silent by accident.
+func TestTreeTargetOnlyAsFirstArgument(t *testing.T) {
+	treeRowRepo(t)
+	marker := filepath.Join(t.TempDir(), "child-started")
+	wrapper := filepath.Join(t.TempDir(), "wrapper")
+	writeExecutable(t, wrapper, "#!/bin/sh\n: > '"+marker+"'\n")
+	t.Setenv(worktree.WrapperEnv, wrapper)
+	if stdout, stderr, code := runTreeCall("gate", "--fresh", "--in", "primary"); code != 2 || stdout != "" || stderr != gate.CommandUsage+"\n" {
+		t.Fatalf("gate --fresh --in primary = (%d, %q, %q), want (2, \"\", %q)", code, stdout, stderr, gate.CommandUsage+"\n")
+	}
+	version, _, _ := runTreeCall("version")
+	if stdout, stderr, code := runTreeCall("version", "x", "--in", "primary"); code != 0 || stdout != version || stderr != "" {
+		t.Fatalf("version x --in primary = (%d, %q, %q), want (0, %q, \"\")", code, stdout, stderr, version)
+	}
+	if _, err := os.Stat(marker); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("a late tree-target flag started a child: %v", err)
+	}
+	if stdout, stderr, code := runTreeCall("status", "--in", "primary"); code != 0 || stdout != "" {
+		t.Fatalf("status --in primary = (%d, %q, %q), want the child's exit 0 and no parent row", code, stdout, stderr)
+	}
+	if _, err := os.Stat(marker); err != nil {
+		t.Fatalf("a first-position tree-target flag started no child: %v", err)
 	}
 }
 

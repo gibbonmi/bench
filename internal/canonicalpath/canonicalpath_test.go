@@ -140,3 +140,42 @@ func TestResolveFollowsALinkAndKeepsAnAbsentPath(t *testing.T) {
 		}
 	})
 }
+
+// TT62: a working directory entered through a link keeps the link spelling in PWD. A relative
+// path takes its absolute form before the link resolves, so it names the physical directory,
+// and a relative kit such as "." matches the physical root that the kit-source predicate
+// compares. The dot-dot row keeps a link component before its "..", so an absolute form that
+// cleans the text before the link resolves pops the wrong component.
+func TestResolveRelativeUnderSymlinkedWorkingDirectory(t *testing.T) {
+	base := t.TempDir()
+	physical := filepath.Join(base, "physical")
+	child := filepath.Join(physical, "child")
+	if err := os.MkdirAll(filepath.Join(child, "grand"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(child, "grand"), filepath.Join(physical, "jump")); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(base, "link")
+	if err := os.Symlink(physical, link); err != nil {
+		t.Fatal(err)
+	}
+	wantRoot, err := filepath.EvalSymlinks(physical)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantChild, err := filepath.EvalSymlinks(child)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(link)
+	for _, row := range []struct{ path, want string }{
+		{".", wantRoot},
+		{"jump" + string(filepath.Separator) + "..", wantChild},
+	} {
+		got, err := Resolve(row.path)
+		if err != nil || got != row.want {
+			t.Errorf("Resolve(%q) under the linked working directory = (%q, %v), want the physical %q", row.path, got, err, row.want)
+		}
+	}
+}

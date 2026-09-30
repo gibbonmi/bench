@@ -30,26 +30,30 @@ func Operand(root, cwd, arg string) (path, display string) {
 // carries no link to follow, so it keeps its absolute spelling. The only refusal is the
 // working-directory failure that leaves a relative path with no absolute form.
 //
-// filepath.EvalSymlinks runs on path first, before any lexical cleaning. A ".." that
-// follows a symbolic link component must pop off the link's resolved target, not off the
-// unresolved literal text, or a root shaped "<base>/jump/.." — jump a symlink to
+// A relative path joins the working directory before any link resolves. A process that
+// entered its directory through a link reads that link spelling back as its working
+// directory, so a link step that ran first would leave the link spelling in the answer.
+// The join is plain concatenation, not filepath.Join, because a lexical clean would pop a
+// ".." off the unresolved text.
+//
+// filepath.EvalSymlinks then runs before any lexical cleaning. A ".." that follows a
+// symbolic link component must pop off the link's resolved target, not off the unresolved
+// literal text, or a root shaped "<base>/jump/.." — jump a symlink to
 // "<base>/physical/child" — resolves to "<base>" instead of the physical "<base>/physical"
-// the OS actually reaches. filepath.Abs then only makes the already-resolved path absolute;
-// it sees no ".." left to mis-clean. When path does not exist, EvalSymlinks fails, and the
-// fallback keeps today's absolute, lexically cleaned spelling of path itself, because
-// nothing under an absent path resolves.
+// the OS actually reaches. When path does not exist, EvalSymlinks fails, and the fallback
+// keeps the absolute, lexically cleaned spelling of path itself, because nothing under an
+// absent path resolves.
 func Resolve(path string) (string, error) {
+	if !filepath.IsAbs(path) {
+		cwd, err := filepath.Abs(".")
+		if err != nil {
+			return "", err
+		}
+		path = cwd + string(filepath.Separator) + path
+	}
 	resolved, err := filepath.EvalSymlinks(path)
 	if err != nil {
-		abs, absErr := filepath.Abs(path)
-		if absErr != nil {
-			return "", absErr
-		}
-		return filepath.Clean(abs), nil
+		return filepath.Clean(path), nil
 	}
-	abs, err := filepath.Abs(resolved)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Clean(abs), nil
+	return filepath.Clean(resolved), nil
 }

@@ -37,61 +37,82 @@ func TestHelpRendersPublicCommandRegistryRows(t *testing.T) {
 	}
 }
 
+// TT9: root help inserts the tree-target form on the row of a tree-scoped definition only.
+// The two rows are authored apart from the renderer, so a renderer that inserts the form on
+// every row, or on no row, fails one side.
+func TestHelpRendersTreeTargetFromScope(t *testing.T) {
+	old := commandRegistry
+	t.Cleanup(func() { commandRegistry = old })
+	commandRegistry = []commandDefinition{
+		{Name: "help", Inventory: publicInventory(), Kind: commandHelp},
+		{Name: "reader", Scope: scopeTree, Inventory: publicInventory(helpRow{Order: 1, Suffix: " <path>", Description: "read one tree"})},
+		{Name: "ledger", Scope: scopeRepository, Inventory: publicInventory(helpRow{Order: 2, Description: "read the ledger"})},
+	}
+	var stdout bytes.Buffer
+	if code := (Command{Stdout: &stdout}).Run([]string{"help"}); code != 0 {
+		t.Fatalf("help exit = %d, want 0", code)
+	}
+	want := helpInventoryTitle + "\n  bench reader [--in <label|primary>] <path>  read one tree\n  bench ledger               read the ledger\n"
+	if stdout.String() != want {
+		t.Fatalf("help = %q, want %q", stdout.String(), want)
+	}
+}
+
 func TestHelpInventoryIsComplete(t *testing.T) {
 	// The independently authored expectation is the omission oracle. Deriving it from
 	// commandRegistry would let a deleted public or child row disappear from both sides.
 	const want = `bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
-  bench setup [--plan|--yes]  inspect, preview, and converge the current repository
-  bench link [copy|symlink]  safely wire the kit into this repo for every harness
-  bench init                 scaffold .bench/gate.sh in the current repo
-  bench unlink [--dry-run]   remove the per-repo Bench footprint the manifest records
-  bench upgrade [--check] [--force]  plan and apply a relink onto the installed kit version
+  bench setup [--in <label|primary>] [--plan|--yes]  inspect, preview, and converge the current repository
+  bench link [--in <label|primary>] [copy|symlink]  safely wire the kit into this repo for every harness
+  bench init [--in <label|primary>]  scaffold .bench/gate.sh in the current repo
+  bench unlink [--in <label|primary>] [--dry-run]  remove the per-repo Bench footprint the manifest records
+  bench upgrade [--in <label|primary>] [--check] [--force]  plan and apply a relink onto the installed kit version
   bench models               list advisory model-id candidates for the line binding
-  bench structure            flag oversized files + crowded dirs (wire into the gate)
+  bench structure [--in <label|primary>]  flag oversized files + crowded dirs (wire into the gate)
   bench cache                report the Bench Go build cache footprint (bytes, files, last trim)
   bench cache clean          take the cache lock and empty the Bench Go build cache (refuses under a live run)
-  bench skills-index [--check|--write]  print skills-index drift (default) or regenerate it
+  bench skills-index [--in <label|primary>] [--check|--write]  print skills-index drift (default) or regenerate it
   bench capture drain [show|commit|abort] [<drain-id>]  seal or finish one concurrent-safe capture drain
   bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
   bench learning "<title>" --what --right [--rule]  append one open entry to capture/learnings.md (the drain verdicts it)
-  bench retro <slug> (--body <markdown> | --scaffold)  draft, or validate and create, one primary-local implementation retrospective
-  bench roadmap              show the top 10 roadmap rows + drain state
-  bench status               ambient dashboard: what needs attention + the next action
-  bench handoff [--harness <name>] [--next <command>] [--state-file <path>]  print the cold-start pin block and rewrite capture/session-handoff.md
+  bench retro [--in <label|primary>] <slug> (--body <markdown> | --scaffold)  draft, or validate and create, one primary-local implementation retrospective
+  bench roadmap [--in <label|primary>]  show the top 10 roadmap rows + drain state
+  bench status [--in <label|primary>]  ambient dashboard: what needs attention + the next action
+  bench handoff [--in <label|primary>] [--harness <name>] [--next <command>] [--state-file <path>]  print the cold-start pin block and rewrite capture/session-handoff.md
   bench commands --brief     print the direct, read-only command probe
-  bench dashboard [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
-  bench canary [root]        validate fixture inventory
-  bench anchors <file|dir>   anchors pinning a repo-relative file as TOON (kind, section, needle, line); a directory grades each anchored file below it
+  bench dashboard [--in <label|primary>] [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
+  bench canary [--in <label|primary>] [root]  validate fixture inventory
+  bench anchors [--in <label|primary>] <file|dir>  anchors pinning a repo-relative file as TOON (kind, section, needle, line); a directory grades each anchored file below it
   bench learnings            open journal entries as a TOON table (date, title)
-  bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
-  bench guards               every guard's deny surface as TOON (guard, boundary, denies)
-  bench diff                 review base + changed files as TOON (--full appends log + diff body; --base freezes source)
-  bench harnesses [<harness> [--record <path> --format <source-id>]]  the harness record as TOON; one name prints that harness's cells; both flags observe one named session record
+  bench maps [--in <label|primary>]  unresolved decision-map tickets as TOON (map, ticket, type, state)
+  bench guards [--in <label|primary>]  every guard's deny surface as TOON (guard, boundary, denies)
+  bench diff [--in <label|primary>]  review base + changed files as TOON (--full appends log + diff body; --base freezes source)
+  bench harnesses [--in <label|primary>] [<harness> [--record <path> --format <source-id>]]  the harness record as TOON; one name prints that harness's cells; both flags observe one named session record
   bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>  store and inspect local workflow cost and quality
-  bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
-  bench preflight review <slug> [--base <commit>] [--source-tip <commit>]  review-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
-  bench preflight review <slug> --charge --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable review evidence artifact and print its bounded orientation
-  bench preflight build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
-  bench preflight build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
-  bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
-  bench preflight evidence <id> [--cursor <cursor>]  print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor
-  bench preflight evidence <id> --source <source-id> [--cursor <cursor>]  print one bounded fragment of one declared source stream and its exact successor
-  bench preflight evidence <id> --verify  verify every stored page and source digest of a prepared evidence artifact
-  bench preflight evidence <id> --check-current  bind a prepared evidence artifact to the current assignment and source pair
-  bench preflight evidence <id> --to <dir>  export every verified source of a prepared evidence artifact to its own file in an absent or empty directory
-  bench preflight evidence-clean [--cursor <cursor>]  print one bounded page of the exact evidence deletion targets and its fingerprint
-  bench preflight evidence-clean --apply <fingerprint>  delete exactly the targets one fingerprinted cleanup plan named
+  bench coverage [--in <label|primary>] <spec>  acceptance-coverage state and rows as TOON (--check to validate)
+  bench preflight [--in <label|primary>] review <slug> [--base <commit>] [--source-tip <commit>]  review-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
+  bench preflight [--in <label|primary>] review <slug> --charge --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable review evidence artifact and print its bounded orientation
+  bench preflight [--in <label|primary>] build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
+  bench preflight [--in <label|primary>] build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
+  bench preflight [--in <label|primary>] build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
+  bench preflight [--in <label|primary>] evidence <id> [--cursor <cursor>]  print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor
+  bench preflight [--in <label|primary>] evidence <id> --source <source-id> [--cursor <cursor>]  print one bounded fragment of one declared source stream and its exact successor
+  bench preflight [--in <label|primary>] evidence <id> --verify  verify every stored page and source digest of a prepared evidence artifact
+  bench preflight [--in <label|primary>] evidence <id> --check-current  bind a prepared evidence artifact to the current assignment and source pair
+  bench preflight [--in <label|primary>] evidence <id> --to <dir>  export every verified source of a prepared evidence artifact to its own file in an absent or empty directory
+  bench preflight [--in <label|primary>] evidence-clean [--cursor <cursor>]  print one bounded page of the exact evidence deletion targets and its fingerprint
+  bench preflight [--in <label|primary>] evidence-clean --apply <fingerprint>  delete exactly the targets one fingerprinted cleanup plan named
   bench repair-pilot activate | report [--full]  collect and report attributed repair evidence for an explicit local pilot
-  bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
-  bench probe <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
-  bench outline [path] [--full] [--production|--test]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
-  bench consumers <qualified-symbol>... [--production|--test] [--full]  every resolved Go reference edge as TOON (symbol when several, file:line, via, enclosing); identifies edges, never blessed seams
+  bench test [--in <label|primary>] [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
+  bench probe [--in <label|primary>] <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
+  bench outline [--in <label|primary>] [path] [--full] [--production|--test]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
+  bench consumers [--in <label|primary>] <qualified-symbol>... [--production|--test] [--full]  every resolved Go reference edge as TOON (symbol when several, file:line, via, enclosing); identifies edges, never blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
-  bench gate [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]  run the project gate (the oracle; --fresh ignores a reusable green)
-  bench prep-release         ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
-  bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
-  bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]  governed npm publication
+  bench gate [--in <label|primary>] [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]  run the project gate (the oracle; --fresh ignores a reusable green)
+  bench prep-release [--in <label|primary>]  ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
+  bench release-preflight [--in <label|primary>] --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
+  bench release [--in <label|primary>] prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]  governed npm publication
   bench worktree shell [--refresh] [objective] create an owned worktree subshell and release it on exit
   bench worktree list        list assignments and registered worktrees as TOON
   bench worktree path <target>  print one active owned worktree's absolute path for the file tools
@@ -106,10 +127,10 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>  resume incomplete post-publication landing work
   bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
-  bench commit -m <msg> [--preflight-build <slug>] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
-  bench spec retire <slug>   delete a merged spec + its review pickup (validated)
-  bench spec history <slug>  retire/delete commits for a spec, newest first (TOON)
-  bench spec history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
+  bench commit [--in <label|primary>] -m <msg> [--preflight-build <slug>] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
+  bench spec [--in <label|primary>] retire <slug>  delete a merged spec + its review pickup (validated)
+  bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
+  bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
   bench version              print the installed Bench version (os/arch)
 `
 
@@ -135,8 +156,10 @@ func TestEvidenceHelpInventory(t *testing.T) {
 		t.Fatalf("preflight help exit = %d", code)
 	}
 	var rootForms, preflightForms []string
+	preflight, _ := commandByName("preflight")
+	rootPrefix := "  bench preflight" + preflight.treeTargetInsertion() + " "
 	for _, line := range strings.Split(root.String(), "\n") {
-		if form, ok := strings.CutPrefix(line, "  bench preflight "); ok {
+		if form, ok := strings.CutPrefix(line, rootPrefix); ok {
 			command, _, _ := strings.Cut(form, "  ")
 			rootForms = append(rootForms, command)
 		}

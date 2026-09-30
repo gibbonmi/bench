@@ -728,7 +728,7 @@ func TestHelpSpecRowsNameRetireAndHistoryOnly(t *testing.T) {
 	if strings.Contains(help, "bench spec implemented") {
 		t.Errorf("bench help still advertises a retired subcommand:\n%s", help)
 	}
-	for _, want := range []string{"bench spec retire <slug>", "bench spec history <slug>"} {
+	for _, want := range []string{"bench spec [--in <label|primary>] retire <slug>", "bench spec [--in <label|primary>] history <slug>"} {
 		if !strings.Contains(help, want) {
 			t.Errorf("bench help is missing %q:\n%s", want, help)
 		}
@@ -737,7 +737,7 @@ func TestHelpSpecRowsNameRetireAndHistoryOnly(t *testing.T) {
 
 func TestTestHelpNamesOnlyRunnableFocusedForms(t *testing.T) {
 	help := renderCommandHelp()
-	if !strings.Contains(help, "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>") {
+	if !strings.Contains(help, "bench test [--in <label|primary>] [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>") {
 		t.Errorf("bench help is missing the focused test grammar:\n%s", help)
 	}
 }

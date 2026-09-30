@@ -134,7 +134,7 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 	if !strings.HasPrefix(binaryHelp, "bench — Pocock"+" pipeline") {
 		t.Fatalf("binary help = %q, want inventory", binaryHelp)
 	}
-	if !strings.Contains(binaryHelp, "bench canary [root]        validate fixture inventory") {
+	if !strings.Contains(binaryHelp, "bench canary [--in <label|primary>] [root]  validate fixture inventory") {
 		t.Fatalf("binary help missing canary inventory wording:\n%s", binaryHelp)
 	}
 	if strings.Contains(binaryHelp, "run the gate against known-broken fixtures") {
@@ -190,7 +190,7 @@ func TestHelpKeepsStatusPublicRoute(t *testing.T) {
 		if code := (Command{Stdout: &stdout}).Run([]string{"help"}); code != 0 {
 			t.Fatalf("help exit = %d, want 0", code)
 		}
-		const row = "  bench status               ambient dashboard: what needs attention + the next action\n"
+		const row = "  bench status [--in <label|primary>]  ambient dashboard: what needs attention + the next action\n"
 		if !strings.Contains(stdout.String(), row) {
 			t.Fatalf("help omitted independently required public status row %q", row)
 		}

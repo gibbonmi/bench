@@ -110,7 +110,7 @@ func retireSpecs(t *testing.T, root string, count int, slugs ...string) {
 func TestSelectedHistoryHelpDiscovery(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	result := runAXICommandAt(t, root, []string{"help"})
-	if result.code != 0 || !strings.Contains(result.stdout, "  "+spec.SelectedHistoryUsage+"  ") {
+	if definition, _ := commandByName("spec"); result.code != 0 || !strings.Contains(result.stdout, "  bench spec"+definition.treeTargetInsertion()+strings.TrimPrefix(spec.SelectedHistoryUsage, "bench spec")+"  ") {
 		t.Fatalf("selected history discovery=%#v", result)
 	}
 	result = runAXICommandAt(t, root, []string{"spec", "history", "--spec", "chosen", "--help"})
