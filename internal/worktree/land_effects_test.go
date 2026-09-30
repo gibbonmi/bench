@@ -166,7 +166,7 @@ func brokerDestinationFixture(t *testing.T, request string) (root string, creati
 	writeGoMainFixture(t, root)
 	gitRun(t, root, "add", ".")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker sources")
-	commitLandingBuildInputs(t, root, freshness.BuildInputLine("build_script", "scripts/go-build.sh"))
+	commitLandingBuildInputs(t, root)
 	base = gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, creation.Path, "rebase", "main")
 	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))

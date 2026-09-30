@@ -141,11 +141,11 @@ func exitCode(err error) int {
 // landing in the dev context, where the command has to prove its own executable. It is
 // committed rather than dropped in place so the destination stays clean. The freshness
 // refusal is then the only thing a landing can fail on.
-func commitLandingBuildInputs(t *testing.T, root, body string) {
+func commitLandingBuildInputs(t *testing.T, root string) {
 	t.Helper()
 	manifest := filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest))
 	mustMkdirAll(t, filepath.Dir(manifest), 0o755)
-	mustWrite(t, manifest, []byte(body), 0o644)
+	mustWrite(t, manifest, []byte(freshness.BuildInputLine("build_script", "scripts/go-build.sh")), 0o644)
 	gitRun(t, root, "add", freshness.BuildInputsManifest)
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare go build inputs")
 }

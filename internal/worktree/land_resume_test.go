@@ -71,7 +71,7 @@ func TestLandCommandPublicResumeCompletesPublishedReleaseWithoutRepublishing(t *
 	// the published commit stands. The manifest is committed because an untracked file
 	// would trip the resume's own untracked-collision proof and hide the effect behind
 	// another refusal.
-	commitLandingBuildInputs(t, root, "build_script=scripts/go-build.sh\n")
+	commitLandingBuildInputs(t, root)
 	destination := gitOutput(t, root, "rev-parse", "main")
 	code, stdout, stderr = land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
 	if code != 3 || !strings.Contains(stdout, "source_base="+base) || !strings.Contains(stdout, "worktree=incomplete:refresh,next=") || !strings.Contains(stderr, "landing refresh failed") {

@@ -1,7 +1,7 @@
 # Derive the build-input manifest path and line in the kit test fixtures
 
 Blocked by: none
-Writes: cmd/bench/commands_brief_test.go, cmd/bench/command_registry_test.go, cmd/bench/build_subject_mode_test.go, internal/worktree/land_effects_test.go, internal/worktree/land_fixtures_test.go, internal/gate/prospective_owner_test.go, internal/preflight/binary_seal_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/adopt/broker_test.go, internal/freshness/freshness_digest_test.go, internal/probe/probe_test.go, internal/runbinary/runbinary_test.go, internal/conformance/gate_entry_test.go
+Writes: cmd/bench/commands_brief_test.go, cmd/bench/command_registry_test.go, cmd/bench/build_subject_mode_test.go, internal/worktree/land_effects_test.go, internal/worktree/land_fixtures_test.go, internal/gate/prospective_owner_test.go, internal/preflight/binary_seal_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/adopt/broker_test.go, internal/freshness/freshness_digest_test.go, internal/probe/probe_test.go, internal/runbinary/runbinary_test.go, internal/conformance/gate_entry_test.go, internal/worktree/land_freshness_test.go, internal/worktree/land_resume_test.go
 Covers: none
 
 ## What to build
