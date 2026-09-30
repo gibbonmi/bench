@@ -954,7 +954,7 @@ This is cycle 2 of the two repair cycles for chunk TT-C4, so it is the last cycl
 | R7 | C4-P5 | 5 | The shared refusal printer escapes a line through `sanitize.Controls` only when the line fails `sanitize.LineSafe`. This is the TT-C3 R1 rule for the row label. A test pins a backslash label as typed and a control byte as escaped. |
 | R8 | C4-S5 | 5 | One function in `internal/usage` fills the `<target>` slot of `usage.WorktreeBuild`. The new seam, `internal/preflight/binary_seal.go`, and its test use that function. |
 
-The plan commit corrects C4-P3 and C4-P4 in the ticket and spec text, because both contradictions are non-behavioral. It also expands the ticket 5 fence with `internal/usage/worktree.go`, `internal/preflight/binary_seal.go`, and `internal/preflight/binary_seal_test.go`. A learning records the expansion.
+The plan commit corrects C4-P3 and C4-P4 in the ticket and spec text, because both contradictions are non-behavioral. It also expands the ticket 5 fence with `internal/usage/worktree.go`, `internal/preflight/binary_seal.go`, and `internal/preflight/binary_seal_test.go`. The anchor closure of `internal/usage/worktree.go` adds `internal/anchors/registry_data.go`. A learning records the expansion.
 
 ## TT-C4 ticket 5 repair evidence, cycle 2
 
@@ -1023,6 +1023,32 @@ The repair session flagged these items for the round 3 review:
 - The shared printer now prints a line that passes `sanitize.LineSafe` as is. So a BEL byte, which escapes, and the typed text of its escape print the same line. The TT-C3 round 2 review raised this effect for the row label.
 - On every verb that uses the shared printer, a reason line with a backslash now prints as is instead of doubled.
 - The TT-C3 R4 repair changed `treetarget.Row` to `sanitize.Strip`, so the repair followed the R1 rule that the cycle 2 routing states.
+
+## TT-C4 chunk review, round 3, and close
+
+This round confirms repair cycle 2. The frozen pair is base `9e742c5434c327e7174f85dd427331004b2bcef6` and tip `8683fb91ded58702f32bb85707a9ce1aec05335f`. The shared evidence is `sha256:ad073f5ff37ec3a44f726e85a45fcf7aed98143d922ea334c83853a9f8056055`. By the reviewer's direction, each axis ran as a fresh `bench-reviewer` session on fable at high effort. Each axis read the cycle 2 delta `b6eeb1bc..8683fb91` without this record file. Only the Coverage axis ran probes, and the tree stayed clean.
+
+The raw finding count is 0 on each axis, so the de-duplicated repair-target count is 0. The repair allowance is 2 of 2, and no blocking condition remains. The folds C4-P3, C4-P4, R7, and R8 hold on every axis. An evidence-only correction adds the anchor registry path to the cycle 2 routing text.
+
+## Standards
+
+Findings: 0. `usage.WorktreeBuildFor` is the one fill of the build grammar, and `printTargetRefusal` is the one site in `internal/worktree` that escapes an unsafe line. Both independent test expectations meet the exception in `AGENTS.md`, because a named mutation reds each one.
+
+## Spec
+
+Findings: 0. Ticket 5 names `axi.ShellQuote`, and the fence disposition matches the ownership list. TT43 to TT48 keep their exact lines. No spec row or sentence forbids the effects that the repair flagged.
+
+## Coverage
+
+Findings: 0. The mutation that always escapes reds only the backslash row, and the mutation that never escapes reds only the control-byte row. The mutation that leaves the slot open reds only the independent suffix check in `internal/preflight`. A label with a control byte never reaches the build refusal through `treetarget.Run`, so the flagged BEL effect is not a reachable gap.
+
+## TT-C4 round 3 advice
+
+- No test in `internal/worktree` pins the escape gate of the shared printer. The pin lives in `internal/treetarget` through the exported printer. A table test in `internal/worktree` would pin the gate at the seam of the five worktree verbs.
+- The doc of `sanitize.LineSafe` says that a caller emits a pointer when a value fails the predicate. `printTargetRefusal` escapes instead, so that doc could name the exception.
+- The spec section on reviewer decisions during the build lists only the decisions of 2026-09-29. The decisions of 2026-09-30 on C4-S4, C4-C3, C4-P5, and C4-S5 are only in this record.
+- The fence disposition text names the TT-C4 repairs, which is history rather than current state.
+- `internal/axi` and `internal/sanitize` each hold a `ShellQuote`, and `internal/worktree/build.go` quotes a label through the second one. `buildVerb` still spells the build verb beside `usage.WorktreeBuild`.
 
 ```bench-review-record
 {
@@ -2648,7 +2674,7 @@ The repair session flagged these items for the round 3 review:
     {
       "id": "TT-C4",
       "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
-      "tip": "e63bdad289365af966af165c18202f34bbde7670",
+      "tip": "8683fb91ded58702f32bb85707a9ce1aec05335f",
       "plan_digest": "sha256:023fbb2cc8db4856e566c05dde98e63cf529fa95676ea13a7f819bbbdcb3ad90",
       "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
       "acceptance_rows": [
@@ -2830,6 +2856,72 @@ The repair session flagged these items for the round 3 review:
           "finding_ids": [],
           "supersedes": [
             "tt-c4-coverage-r1"
+          ]
+        },
+        {
+          "id": "tt-c4-standards-r3",
+          "performer": "claude:bench-reviewer/tt-c4-standards-r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c4-standards-r3@8683fb91",
+            "digest": "sha256:ea22a598e8c4f239c8c5a347d5a369e0adf3135eadd4a501373fe931dbf0c1de",
+            "excerpt": "Standards: 0 findings. Both folds hold, and neither repair flag is a finding under the bounded repair policy."
+          },
+          "axis": "Standards",
+          "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "tip": "8683fb91ded58702f32bb85707a9ce1aec05335f",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c4-standards-r2"
+          ]
+        },
+        {
+          "id": "tt-c4-spec-r3",
+          "performer": "claude:bench-reviewer/tt-c4-spec-r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c4-spec-r3@8683fb91",
+            "digest": "sha256:a0500ac5b9183447324828bfd0df2917782bee328804ff5b8c5262ceaf60f0e5",
+            "excerpt": "Spec: 0 findings. Every fold holds, and neither repair flag contradicts a spec row or spec sentence."
+          },
+          "axis": "Spec",
+          "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "tip": "8683fb91ded58702f32bb85707a9ce1aec05335f",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c4-spec-r2"
+          ]
+        },
+        {
+          "id": "tt-c4-coverage-r3",
+          "performer": "claude:bench-reviewer/tt-c4-coverage-r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-c4-coverage-r3@8683fb91",
+            "digest": "sha256:85b3d4d00ce7bd8793f7f4856c48ab3b52d0e3642cb4d3bc533633530ed7ae1b",
+            "excerpt": "Coverage: 0 findings. Both folds hold, and each half of the LineSafe gate and the R8 fill bite under an independent probe."
+          },
+          "axis": "Coverage",
+          "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "tip": "8683fb91ded58702f32bb85707a9ce1aec05335f",
+          "finding_ids": [],
+          "supersedes": [
+            "tt-c4-coverage-r2"
           ]
         }
       ]
