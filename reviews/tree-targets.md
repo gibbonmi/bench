@@ -640,6 +640,87 @@ The successor ran each check below on the source of `d5bad995`, and each passed:
 
 The commit ran with `--preflight-build tree-targets`. The lane passed, the worktree build was green, and `bench preflight build tree-targets` reported 15 green checks, 1 check that does not apply, and 0 red checks.
 
+## TT-C4 ticket 5 author evidence
+
+Ticket 5 had a fresh `bench-writer` author, `tt-t5-author`, on opus at xhigh effort, with a cap of 4 attempts. The author started at `79e79c51` with a clean tree. It committed `c587623b` on a lane pass in the third attempt. The first two attempts made the package rows green, but the system row failed on the observation line that the fixture environment turns on. The author then committed this record in a second commit.
+
+The ticket changed these parts:
+
+- `internal/treetarget/build.go` is new. It holds the executable choice of ticket 4 and extends that choice to a kit worktree target. It also holds the two refusal texts and the refusal printer.
+- `internal/treetarget/run.go` calls the new choice after it resolves the child directory. A refusal prints before any child starts.
+- `internal/treetarget/kittest` is a new test support package. It writes the smallest tree that declares Bench build inputs, and it edits the one listed build input. The internal tests of `internal/treetarget` and the system suite both import it. The package `treetargettest` cannot hold it, because `treetargettest` imports `internal/treetarget`, so an internal test of `internal/treetarget` cannot import `treetargettest`.
+- `internal/treetarget/build_test.go` adds `TestRunKitWorktreeBuild`. `internal/systemtest/tree_target_test.go` adds `TestTreeTargetRefusesStaleKitBuild`.
+- `runTreeTarget` in the system suite removes `BENCH_COMMAND_OBSERVE` from the fixture environment, so stderr holds only the lines of the verb. The five rows of ticket 4 read only stdout, so their result does not change.
+
+### Red and green log
+
+The tests were in the tree before the first production edit. The author ran them against the source of `79e79c51`, and each row failed:
+
+- TT43: the wrapper started, and the check for an absent wrapper marker failed.
+- TT44, TT45, TT46, and TT47: each call exited 0 through the wrapper, where each row wants exit 1 and the two refusal lines.
+- TT50: the system suite ran `bench status --in alpha` at exit 0, and stdout started with the row of `alpha`.
+
+After the production edit, each row passed. Each red below came from a `bench probe` or from a copy-aside edit, and each row passed again after the restore:
+
+- TT43: a probe that ignored the build inputs started the wrapper. The current-build row failed on the wrapper marker, and the four refusal rows exited 0.
+- TT44: the plan probe failed TT44 and TT47. A probe that started the wrapper after a refusal failed the four refusal rows at exit 0. A probe that always quoted the label failed TT44, TT45, and TT46 with `'alpha'`.
+- TT45: a probe that checked only the executable digest through `freshness.VerifyExecutable` started the stale child, and TT45 alone failed.
+- TT46: a probe that compared only the source digest of the seal started the changed child, and TT46 alone failed.
+- The mismatch line: a probe that read each refusal as a missing build failed TT45 and TT46.
+- TT47: a probe that printed the label with no quotes failed TT47 alone with `my alpha`.
+- TT48: three probes of `internal/worktree/exec.go` failed the current-build row. In the first probe, the child took the parent environment and carried `BENCH_RUN_BINARY`. In the second probe, the child took only `BENCH_KIT` from the parent and carried the kit root. In the third probe, the child did not get the wrapper of its tree, and `BENCH_WRAPPER` was empty.
+- The primary control: a probe that removed the primary guard refused `--in primary` in a kit primary checkout as a missing build.
+- TT50: a copy-aside edit made `worktreeBuild` ignore the `freshness.Verify` refusal. The system suite then started the stale build at exit 0. The author restored the file from the copy and confirmed the bytes with `cmp`.
+
+The two absence checks of TT48 bite only when the parent environment carries `BENCH_RUN_BINARY` and `BENCH_KIT`. `bench test` gives both to the Go child, and the probe output shows both values. A plain `go test` run gives neither, so there the two checks pass with no bite.
+
+### Deviations
+
+- Non-behavioral reading, for reviewer veto: the spec and the ticket name `sanitize.ShellQuote` for the label in the repair command. That function always quotes, but TT44 fixes `alpha` with no quotes. No exported function of `internal/sanitize` tells when a value needs quoting. `axi.ShellQuote` quotes a value only when the value needs it. Its comment names it the one derivation of the kit's shell quoting for a command line that a reader can run again. So the build uses `axi.ShellQuote` and adds no second copy of the rule for safe characters.
+- The output of `axi.ShellQuote` is the same for each label that the spec names. For a label with a single quote, the two functions write different escapes that the shell reads as the same word. `internal/treetarget` now imports `internal/axi`, which the import list of the spec does not name.
+- The kit check reads the root that `canonicalpath.Resolve` gives, because ticket 4 already runs the child in that root. `freshness` refuses a path with a symbolic link in it, so the physical root keeps a linked Bench home usable.
+- A build is missing when `os.Lstat` of the published path reports no file after a `Verify` refusal. A missing seal or a missing build input gives the line `worktree build does not match the tree`.
+- `TestRunKitWorktreeBuild` adds one control that no coverage row names: in a kit primary checkout with no build, `--in primary` starts the wrapper. The spec states that the primary target never runs a worktree build.
+- The system row writes its build as a script of one line that makes a marker. The marker-script harness of ticket 4 is in a test file of `internal/treetarget`, so the system suite cannot import it. The system row needs only the presence of the marker.
+
+The sweep of duplicated facts found no second copy in the delta. `kittest.WriteTree` is the one kit tree for three callers in two packages. `kittest.EditBuildInput` is the one stale edit for two callers. `kittest.Wrapper` is the one path that the fixture writes and that the TT48 expectation reads. `freshness.PublishedExecutable`, `runbinary.Env`, and `worktree.WrapperEnv` name the build path and two of the three variables.
+
+The independent expectations are the two refusal lines and the repair command with and without quotes. The child argv, the child directory, and the three facts of the child environment are independent expectations too. The log above records a red for each. The system row repeats the stale-build expectation of `TestRunKitWorktreeBuild`, because it grades the real executable. Its red is the copy-aside run. The two `freshness.Publish` calls stay in test files, because the publication topology check refuses a call from any other file that is not a test.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`. The probes ran on the source that `c587623b` commits, with one exception: the package comment of `internal/treetarget/identify.go` changed after the probes. The first row is the plan probe `5-build-probe`, with the exact plan command. The second row is the author's own probe of the central property.
+
+| File | Mutation | Test | Row | Verdict |
+|---|---|---|---|---|
+| `internal/treetarget/build.go` | swap: `worktree build is missing` to `worktree build is absent` | TestRunKitWorktreeBuild | TT44, TT47 | bit |
+| `internal/treetarget/build.go` | self-probe, swap: ignore the `freshness.Verify` refusal | TestRunKitWorktreeBuild | TT44, TT45, TT46, TT47 | bit |
+| `internal/treetarget/build.go` | swap: ignore the build inputs | TestRunKitWorktreeBuild | TT43 and the four refusal rows | bit |
+| `internal/treetarget/build.go` | swap: start the wrapper after a refusal | TestRunKitWorktreeBuild | TT44, TT45, TT46, TT47 | bit |
+| `internal/treetarget/build.go` | swap: check the executable digest only | TestRunKitWorktreeBuild | TT45 | bit |
+| `internal/treetarget/build.go` | swap: check the source digest only | TestRunKitWorktreeBuild | TT46 | bit |
+| `internal/treetarget/build.go` | swap: read each refusal as a missing build | TestRunKitWorktreeBuild | TT45, TT46 | bit |
+| `internal/treetarget/build.go` | swap: print the label with no quotes | TestRunKitWorktreeBuild | TT47 | bit |
+| `internal/treetarget/build.go` | swap: always quote the label | TestRunKitWorktreeBuild | TT44, TT45, TT46 | bit |
+| `internal/treetarget/build.go` | swap: remove the primary guard | TestRunKitWorktreeBuild | primary control | bit |
+| `internal/worktree/exec.go` | swap: take the parent environment | TestRunKitWorktreeBuild | TT48 | bit |
+| `internal/worktree/exec.go` | swap: take `BENCH_KIT` from the parent | TestRunKitWorktreeBuild | TT48 | bit |
+| `internal/worktree/exec.go` | swap: remove the wrapper of the tree | TestRunKitWorktreeBuild | TT48 | bit |
+
+The system row TT50 took a copy-aside edit, because `bench probe` does not take the system suite. The log above names the edit.
+
+### Verification
+
+The author ran each check below on the source of `c587623b`, and each passed:
+
+- `bench test --package ./internal/treetarget`, in 1394 ms, where the run before the production edit failed 5 subtests;
+- `bench test --check system`, in 54232 ms, where the run before the production edit and the copy-aside run each failed TT50;
+- `bench test --package ./cmd/bench`, in 14032 ms;
+- `bench test --package ./internal/conformance --run TestRootConformance`, in 7039 ms;
+- `bench structure --growth 79e79c51`, which reported that no source file grew past its budget.
+
+No new test can skip, so the author did not run `bench test --check skip-ownership`. The commit ran with `--preflight-build tree-targets`. The lane ran gofmt, vet, build, and structure, and it passed. The worktree build was green, and `bench preflight build tree-targets` reported 15 green checks, 1 check that does not apply, and 0 red checks.
+
 ```bench-review-record
 {
   "version": 2,
