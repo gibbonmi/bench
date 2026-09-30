@@ -10,6 +10,8 @@ Spec A of FT341 landed at `27e67a812dd2e5237d15ed3c825c752f93b4e999` from the so
 
 The first landing attempt refused after every gate phase passed. The kit test run could not remove its temporary directory, because a crash system test left a subtree there. The retry landed with a green gate, and both landing effects completed.
 
+After the landing, the reviewer extended the TT-C4 repair allowance to three cycles. The third cycle landed as the light-path ticket `tt-c4-repair3` at `482d7fd27b4586b1043a121bbe525b68d87ac984` with a green gate. It corrects the `sanitize.LineSafe` doc and pins the escape rule of the shared refusal printer in `internal/worktree`.
+
 ## Gate-stage timings
 
 - landing: commit 27e67a812dd2e5237d15ed3c825c752f93b4e999, trace 7ec202c208baba0cc28bda73246e8c7d
@@ -32,6 +34,7 @@ The first landing attempt refused after every gate phase passed. The kit test ru
 | TT-C4 R6 | the TT48 test pins the child home | verified | 9 | true | opus / xhigh / repair |
 | TT-C4 R7 | the shared printer escapes only a line that fails `LineSafe` | verified | 9 | true | opus / xhigh / repair |
 | TT-C4 R8 | one function fills the build grammar | verified | 9 | true | opus / xhigh / repair |
+| TT-C4 cycle 3 | a test in `internal/worktree` pins the escape rule of the shared printer | verified | 9 | true | opus / high / repair |
 | C4-S1 | the ambiguity id list has two sources | finding | 7 | true | fable / high / reviewer |
 | C4-S2 | the build refusal restates the shared printer | finding | 6 | true | fable / high / reviewer |
 | C4-S3 | `WrapperEnv` restates `env.WrapperRouting` | finding | 6 | true | fable / high / reviewer |
@@ -46,7 +49,7 @@ The first landing attempt refused after every gate phase passed. The kit test ru
 | C4-P4 | the fence disposition contradicts the ownership list | finding | 7 | true | fable / high / reviewer |
 | C4-P5 | a backslash label prints a wrong repair command | finding | 4 | true | fable / high / reviewer |
 
-The Brier mean is 0.107 over 20 labeled pairs, with 1 abstention. C4-P2 abstains, because its veto flag is still open. This table holds only the claims of the 2026-09-30 session. The review record holds the claims of the earlier sessions: TT-C1 to TT-C3 and the first ticket 4 and ticket 5 authors. This retro does not label them.
+The Brier mean is 0.107 over 20 labeled pairs, with 1 abstention. The TT-C4 cycle 3 row came after that computation and is not in the mean. C4-P2 abstains, because its veto flag is still open. This table holds only the claims of the 2026-09-30 session. The review record holds the claims of the earlier sessions: TT-C1 to TT-C3 and the first ticket 4 and ticket 5 authors. This retro does not label them.
 
 ## Coordinator catches
 
