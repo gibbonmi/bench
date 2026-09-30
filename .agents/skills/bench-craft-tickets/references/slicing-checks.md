@@ -32,7 +32,7 @@ differ.
 
 - A lane-check ticket proves its check through the real lane over a composed tree. A
   stand-in harness can pass while the lane refuses the same tree.
-- A posture change that reds a fixture helper makes the slicer list every call site of that helper before the map locks. An unlisted call site reds at the first gate run of the build.
+- A posture change that reds a fixture helper makes the slicer list every call site of that helper before the map locks. A posture change for new output also names each stream that the output reaches. An unlisted call site or stream reds at the first gate run of the build.
 - A combined behavior row belongs to the ticket that completes its final consumer. An
   earlier ticket cannot prove a behavior whose consumer does not exist yet.
 - A retirement pass gives each sentence that grants the retired behavior its own forbid row and red-capable check. One forbid row for a family of sentences leaves the others free to return.
@@ -44,6 +44,8 @@ differ.
   for each affected ticket. The slicer adds each listed closure file to the `Writes:` line of that ticket.
   The spec goes to review, to sign-off, and to its landing only on a green preflight of its current ticket graph.
   Review then grades the final fence, not an earlier one.
+- A plan commit that renames a spec symbol runs one `rg` for the old symbol across every ticket, and it corrects each hit.
+- A fence expansion reads the fence section of the spec and corrects each sentence that names the added package.
 - Each acceptance claim names an available producer and an executable check at its ticket checkpoint. A claim whose producer lands in a later ticket has no evidence at that checkpoint.
 - A ticket that preserves or moves a ref names a check for each of the head, the tip, and the checked-out-ref shapes. A check on one shape leaves the other shapes free to fail.
 - A rule for one member of an enumerated family goes on its declaration row, and `Writes:` names the declaration table and its dispatch test.
@@ -52,3 +54,4 @@ differ.
   A rendered output shape is a block name, a row kind, a table header, a line format, or a help line.
   The search covers the tests, the help inventories, the generated references, and their anchor registry files.
   The spec-wide fence masks a hit that is absent from one ticket's `Writes:` line, so the fence alone does not close the gap.
+- A ticket that moves a test expectation names the file that holds the old expectation in its own `Writes:` line. Otherwise the old expectation stays behind as a second copy.
