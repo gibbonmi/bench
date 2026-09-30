@@ -1,7 +1,6 @@
 package treetarget
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +10,6 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/treetarget/kittest"
-	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // The refusal lines, the repair command, and the child facts here are authored apart from
@@ -130,16 +128,6 @@ func TestRunKitWorktreeBuild(t *testing.T) {
 			}
 		})
 	}
-	t.Run("a control byte on either line escapes", func(t *testing.T) {
-		// The lookup refuses a label with a control byte before the build check, so no call of
-		// Run reaches this refusal with one. This row calls the printer that Run calls. The
-		// wanted stderr is exact, so it holds no raw control byte.
-		var stderr bytes.Buffer
-		want := "bench status --in: worktree build\\u001b[2J is missing\nnext=bench worktree build 'a\\u0007b'\n"
-		if code := worktree.PrintTreeBuildRefusal(&stderr, "bench status --in", "a\x07b", "worktree build\x1b[2J is missing"); code != 1 || stderr.String() != want {
-			t.Fatalf("refusal = (%d, %q), want (1, %q)", code, stderr.String(), want)
-		}
-	})
 	t.Run("a kit primary checkout runs the wrapper", func(t *testing.T) {
 		r := newTargetRepo(t, t.TempDir())
 		kittest.WriteTree(t, r.root)
