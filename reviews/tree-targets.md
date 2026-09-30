@@ -1050,6 +1050,29 @@ Findings: 0. The mutation that always escapes reds only the backslash row, and t
 - The fence disposition text names the TT-C4 repairs, which is history rather than current state.
 - `internal/axi` and `internal/sanitize` each hold a `ShellQuote`, and `internal/worktree/build.go` quotes a label through the second one. `buildVerb` still spells the build verb beside `usage.WorktreeBuild`.
 
+## Final reconciliation
+
+The orchestrator reconciled the integrated source after the TT-C4 checkpoint passed at `c5263b2b`. The source digest is `14b329b1`, and the plan digest is `023fbb2c`. The checkpoints of TT-C1, TT-C2, TT-C3, and TT-C4 each passed on their own chunk tip.
+
+Each acceptance row of the five tickets is covered. `bench coverage --check` reported a valid map with 61 rows. Each of the 61 rows names a test that the tree defines. A script read each seam cell and searched the test files for its function, and it found no missing test. The Spec axis of each chunk audited each row of that chunk against its seam.
+
+The orchestrator ran the seven final verification commands on the integrated source, and each passed:
+
+- `bench coverage --check specs/tree-targets/spec.md`;
+- `bench test --package ./cmd/bench`;
+- `bench test --package ./internal/treetarget`;
+- `bench test --package ./internal/worktree`, with two unix-socket skips that the environment causes;
+- `bench test --package ./internal/gate`;
+- `bench test --check subcommand-routing`;
+- `bench test --check system`.
+
+These items stay flagged for reviewer veto:
+
+- C4-P2: the TT34 stderr line prints the state refusal of the shared resolver.
+- The row label renders through `sanitize.Strip`.
+- C4-P1: the spec names `axi.ShellQuote`.
+- C4-P5: the shared refusal printer escapes a line only when it fails `sanitize.LineSafe`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -3113,11 +3136,200 @@ Findings: 0. The mutation that always escapes reds only the backslash row, and t
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+    "performer": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620",
+    "reconciliation": {
+      "TT1": "covered",
+      "TT2": "covered",
+      "TT3": "covered",
+      "TT4": "covered",
+      "TT5": "covered",
+      "TT6": "covered",
+      "TT7": "covered",
+      "TT51": "covered",
+      "TT52": "covered",
+      "TT10": "covered",
+      "TT11": "covered",
+      "TT12": "covered",
+      "TT13": "covered",
+      "TT14": "covered",
+      "TT15": "covered",
+      "TT16": "covered",
+      "TT17": "covered",
+      "TT18": "covered",
+      "TT19": "covered",
+      "TT20": "covered",
+      "TT21": "covered",
+      "TT22": "covered",
+      "TT23": "covered",
+      "TT24": "covered",
+      "TT25": "covered",
+      "TT56": "covered",
+      "TT60": "covered",
+      "TT61": "covered",
+      "TT8": "covered",
+      "TT9": "covered",
+      "TT26": "covered",
+      "TT27": "covered",
+      "TT28": "covered",
+      "TT29": "covered",
+      "TT30": "covered",
+      "TT31": "covered",
+      "TT32": "covered",
+      "TT33": "covered",
+      "TT34": "covered",
+      "TT35": "covered",
+      "TT36": "covered",
+      "TT37": "covered",
+      "TT38": "covered",
+      "TT39": "covered",
+      "TT40": "covered",
+      "TT41": "covered",
+      "TT49": "covered",
+      "TT53": "covered",
+      "TT54": "covered",
+      "TT55": "covered",
+      "TT57": "covered",
+      "TT58": "covered",
+      "TT59": "covered",
+      "TT62": "covered",
+      "TT43": "covered",
+      "TT44": "covered",
+      "TT45": "covered",
+      "TT46": "covered",
+      "TT47": "covered",
+      "TT48": "covered",
+      "TT50": "covered"
+    },
+    "verification": [
+      {
+        "id": "tt-final-coverage",
+        "performer": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620/final/coverage@c5263b2b",
+          "digest": "sha256:dc2563ad82ba586054e2fad1712fc1d0518e1b1e4d38a5cc7e3569019c923a03",
+          "excerpt": "ok: coverage map valid — 61 row(s)\nuncited: 57 row(s) with no seam-cell citation — TT2, TT3, TT4, TT5, TT6, TT7, TT9, TT10, TT11, TT12, TT13, TT14, TT15, TT16, TT17, TT18, TT19, TT20, TT21, TT22, TT23, TT24, TT25, TT26, TT27, TT28, TT29, TT30, TT31, TT59, TT57, TT58, TT32, TT33, TT34, TT35, TT36, TT37, TT38, TT39, TT40, TT41, TT43, TT44, TT45, TT46, TT47, TT48, TT49, TT50, TT51, TT53, TT54, TT55, TT60, TT61, TT62"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/tree-targets/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "tt-final-cmd",
+        "performer": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620/final/cmd@c5263b2b",
+          "digest": "sha256:26b1e4eb92287869f4ceec7a12de747e776ed6b628cbec5972adb45f5a3547bf",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15085\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "cmd",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "tt-final-treetarget",
+        "performer": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620/final/treetarget@c5263b2b",
+          "digest": "sha256:7c0846842c7c4d8504c624488106abc34451f23b296f7a198a476f4b76888595",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,pass,1382\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "treetarget",
+        "command": "bench test --package ./internal/treetarget",
+        "exit_code": 0
+      },
+      {
+        "id": "tt-final-worktree",
+        "performer": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620/final/worktree@c5263b2b",
+          "digest": "sha256:580d659dff9fd550ca4ea0f44014b2c8b1a6fb7f6c68b7b7deb9946318565995",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,57148\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:99: unix sockets unavailable: listen unix /tmp/UVMMFO/t/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket465060849/001/.bench-home/worktrees/001-3319691437/e45b3b77dcfbc4d0fc3ac1b1702bf526-30139860dfc65dc8… (280 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/UVMMFO/t/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket2418496650/001/.bench-home/worktrees/001-1810148377/efc852acc07c546311d57785f154e5a1-bd93c9959ed8388fb0401e… (279 bytes)\""
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "tt-final-gate",
+        "performer": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620/final/gate@c5263b2b",
+          "digest": "sha256:8462acb7d384e4951e82c789a203f784d8c24b18d32aab2fddda6b02be6fd4e9",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,16222\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "gate",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "tt-final-routing",
+        "performer": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620/final/routing@c5263b2b",
+          "digest": "sha256:b9c4f45a572a2a62cbffed8813c9b436eab7c63fbca5fef9f5fa6c0cb2a1419e",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,21\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "routing",
+        "command": "bench test --check subcommand-routing",
+        "exit_code": 0
+      },
+      {
+        "id": "tt-final-system",
+        "performer": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-5f50eb9d-8745-4b3e-ba70-5791cef42620/final/system@c5263b2b",
+          "digest": "sha256:74c459f19eda1f2a05f17101ec553445f271a7874cf4bcca129aa89c7ea0a183",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,58552\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
