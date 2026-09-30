@@ -1,7 +1,7 @@
 # Name the repair retention and the plan-commit sweeps in the build guidance
 
 Blocked by: none
-Writes: .claude/commands/bench-implement-spec.md, .agents/skills/bench-craft-tickets/references/slicing-checks.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go
+Writes: .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-tickets/references/slicing-checks.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_debug_loop.go, internal/anchors/registry_ft311_preparation.go, internal/anchors/registry_retained_workflow.go
 Covers: none
 
 ## What to build
@@ -14,7 +14,7 @@ The tree-targets build found five gaps in the build guidance. Close each gap at 
 - A posture change for new output names each stream that the output reaches. Fold this clause into the existing slicing check about the call sites of a helper that the change turns red. A helper that asserts on stderr went red after the posture list marked its file green.
 - A ticket that moves a test expectation names the file that holds the old expectation in `Writes:`. Put this clause beside the slicing check about a changed rendered output shape.
 
-Put the first rule in the implement-spec command beside its author retention sentence. Put the other four rules in the slicing checks. Keep each anchored sentence, or update its anchor registry entry in the same commit.
+Put the first rule in the tracked implement-spec command under `.agents/commands` beside its author retention sentence. Put the other four rules in the slicing checks. Keep each anchored sentence, or update its anchor registry entry in the same commit.
 
 ## Acceptance
 
