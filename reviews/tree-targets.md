@@ -1073,6 +1073,44 @@ These items stay flagged for reviewer veto:
 - C4-P1: the spec names `axi.ShellQuote`.
 - C4-P5: the shared refusal printer escapes a line only when it fails `sanitize.LineSafe`.
 
+## TT-C4 repair cycle 3, reviewer extension
+
+On 2026-09-30, the reviewer extended the TT-C4 repair allowance from 2 cycles to 3 cycles. The ticket `specs/tt-c4-repair3/tickets/1-pin-the-shared-refusal-escape.md` is the only work that cycle 3 permits. That ticket has two parts:
+
+- The doc correction of `sanitize.LineSafe`. A reviewer classified the old doc as a stale-claim finding against the approved C4-P5 printer.
+- The pin of the escape rule in `internal/worktree`. This pin is optional advice from round 3.
+
+The other round 3 advice items are out of scope. The two `ShellQuote` functions encode different behavior, so that item goes to a parked idea. `buildVerb` is the verb itself, not a second grammar. The spec-text items retire with the spec.
+
+### Repair evidence
+
+The session `claude:bench-writer` ran in the worktree `tt-repair3` on opus at high effort, with a cap of 3 attempts. It started at `7c205b6e` and committed this record with the repair in the first attempt, on a lane pass.
+
+- The doc of `sanitize.LineSafe` now names two responses to a value that fails the predicate. The caller emits a pointer, or a printer that owns the whole line escapes that line through `sanitize.Controls`.
+- The new test `TestTargetRefusalEscapesOnlyAnUnsafeLine` calls `printTargetRefusal` in its package. It has four rows: a plain label, a label with a backslash, a control byte in the detail, and a control byte in the label. Each row wants the exact stderr lines. The detail row also holds a backslash label, so the test wants the escape on the unsafe line only.
+
+The production code of the printer did not change.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` with `--package ./internal/worktree --run TestTargetRefusalEscapesOnlyAnUnsafeLine`, and each restore reads `yes`.
+
+| File | Mutation | Verdict | Failed rows |
+|---|---|---|---|
+| `internal/worktree/path.go` | swap: `if !lineSafe(line) {` to `if true {` | bit | the backslash label, the control byte in the detail |
+| `internal/worktree/path.go` | swap: `if !lineSafe(line) {` to `if false {` | bit | the control byte in the detail, the control byte in the label |
+
+### Verification
+
+Each of these checks passed on the final tree:
+
+- `bench test --in tt-repair3 --package ./internal/worktree`, with two unix-socket skips that the environment causes;
+- `bench test --in tt-repair3 --package ./internal/sanitize`;
+- `bench test --in tt-repair3 --package ./internal/treetarget`;
+- `bench gate-prose` on this file.
+
+This item is for reviewer veto. The row `a control byte on either line escapes` of `TestRunKitWorktreeBuild` in `internal/treetarget` now wants the same escaped lines as the new test. That row is outside the fence of this ticket, so it stays.
+
 ```bench-review-record
 {
   "version": 2,
