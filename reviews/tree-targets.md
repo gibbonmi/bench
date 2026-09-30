@@ -956,6 +956,62 @@ This is cycle 2 of the two repair cycles for chunk TT-C4, so it is the last cycl
 
 The plan commit corrects C4-P3 and C4-P4 in the ticket and spec text, because both contradictions are non-behavioral. It also expands the ticket 5 fence with `internal/usage/worktree.go`, `internal/preflight/binary_seal.go`, and `internal/preflight/binary_seal_test.go`. A learning records the expansion.
 
+## TT-C4 ticket 5 repair evidence, cycle 2
+
+The session `claude:bench-writer/tt-t5-repair-2` ran on opus at xhigh effort, with a cap of 3 attempts. It started at `b7d695a4` and committed `64270a11` on a lane pass in the first attempt. This repair is cycle 2 of the two repair cycles for chunk TT-C4.
+
+- R7: `printTargetRefusal` in `internal/worktree/path.go` prints a line that passes `lineSafe` as it is. It escapes a line through `sanitize.Controls` only when the line fails `lineSafe`, which calls `sanitize.LineSafe`. So the label `a\b` gives `next=bench worktree build 'a\b'`, and the pasted repair names that label. The new row `TT47 a label with a backslash` of `TestRunKitWorktreeBuild` pins that line at the `--in` seam.
+- R7: the new row `a control byte on either line escapes` calls `worktree.PrintTreeBuildRefusal` with an ESC byte in the detail and a BEL byte in the label. It wants the two lines exact and escaped, so no raw control byte gets to stderr. The lookup refuses a label with a control byte before the build check, so no call of `Run` gets to this refusal with one.
+- R8: the new function `usage.WorktreeBuildFor` in `internal/usage/worktree.go` fills the `<target>` slot of `usage.WorktreeBuild`. `PrintTreeBuildRefusal`, `binarySealCheck`, and `TestBinarySealRemedyNamesTheWorktreeBuildVerb` call it. The test expectation reads the same fill as the row, so a fill that leaves the slot open passes the equality check. A new check in the test therefore requires that the remedy ends with the target.
+
+Before the production edit, the backslash row failed, because the printer wrote `'a\\b'`. The control-byte row passed, because the printer then escaped each line. After the edit, each row passed.
+
+The sweep of duplicated facts found no new second source in the delta. This is the last repair cycle, so the session did the sweep on the Standards, Spec, and Coverage axes. The three fills of the slot now have one source. The printer uses `lineSafe` and `sanitize.Controls`, and it adds no second escape rule. `buildVerb` in `internal/worktree/build.go` still spells the build verb, and that file is outside the fence. The session removed a raw-byte check from the control-byte row, because the exact stderr check covers it.
+
+The independent expectations are the backslash line, the two escaped lines, and the check that the remedy names the target. The probes below record a red for each.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`. The four probes that grade `./internal/treetarget` ran again after the last test edit. The two probes that grade `./internal/preflight` ran before that edit, which changed no file of that package. No file changed after the probes. The first row is the plan probe `5-build-probe`, with the exact plan command.
+
+| Target | File | Mutation | Test | Verdict |
+|---|---|---|---|---|
+| TT44, TT47 | `internal/treetarget/build.go` | swap: `worktree build is missing` to `worktree build is absent` | TestRunKitWorktreeBuild | bit |
+| R7 | `internal/worktree/path.go` | swap: the `lineSafe` condition to also escape a line that starts with `next=` | TestRunKitWorktreeBuild | bit |
+| R7 | `internal/worktree/path.go` | swap: the `lineSafe` condition to `false && …` | TestRunKitWorktreeBuild | bit |
+| R8 | `internal/usage/worktree.go` | swap: the `<target>` slot to `<label>` in `WorktreeBuildFor` | TestBinarySealRemedyNamesTheWorktreeBuildVerb | bit |
+| R8 | `internal/usage/worktree.go` | swap: the `<target>` slot to `<label>` in `WorktreeBuildFor` | TestRunKitWorktreeBuild | bit |
+| R8 | `internal/preflight/binary_seal.go` | swap: the filled command to `usage.WorktreeBuild` | TestBinarySealRemedyNamesTheWorktreeBuildVerb | bit |
+
+The plan probe failed the rows `TT44 no build` and both TT47 rows. The first R7 probe failed only the backslash row, with `'a\\b'`. The second R7 probe failed only the control-byte row, with a raw ESC and a raw BEL. The slot probe failed the preflight test on the new target check. It also failed 6 rows of `TestRunKitWorktreeBuild` with `next=bench worktree build <target>`. The site probe failed the equality check of the preflight test.
+
+### Verification
+
+The session ran each ticket 5 plan verification, and each passed:
+
+- `bench test --package ./internal/treetarget`, in 1434 ms on the final tree, where the run before the production edit failed the backslash row;
+- `bench test --check system`, in 59183 ms before the commit, and in 58909 ms after the worktree build;
+- the plan probe `5-build-probe`, which bit.
+
+The session also ran these checks, and each passed:
+
+- `bench test --package ./internal/worktree`, in 59595 ms, with two environment capability skips for unix sockets;
+- `bench test --package ./internal/usage`, in 2 ms, where a silent `bench probe` of `EmptyOperand` ran 30 tests, so the run is not a skip;
+- `bench test --package ./internal/preflight`, in 22253 ms;
+- `bench test --package ./cmd/bench`, in 19300 ms;
+- `bench test --package ./internal/conformance --run TestRootConformance`, in 7668 ms;
+- `bench test --check single-control-escaper`, in 15 ms;
+- `bench structure --growth f981cd3d`, which reported that no source file grew past its budget;
+- `gofmt -l` and `go vet` on the changed packages.
+
+No existing test of the shared printer wants a doubled backslash, and `./internal/worktree` and `./cmd/bench` passed with no test change. No new row can skip, so the session did not run `bench test --check skip-ownership`. The anchor check needed no change to `internal/anchors/registry_data.go`. The commit ran with `--preflight-build tree-targets`. The lane ran gofmt, vet, build, structure, and docs-currency-workflow, and it passed. The worktree build was green, and the preflight reported 15 green checks, 1 check that does not apply, and 0 red checks.
+
+These points are for reviewer veto:
+
+- The routing row names the TT-C3 R1 rule. `treetarget.Row` now uses `sanitize.Strip`, by the TT-C3 R4 repair, so the printer follows the R1 rule and not the current row.
+- With this rule, an escaped control byte and a typed backslash escape can print the same line. A BEL byte and the typed text `\u0007` both print `\u0007`. The TT-C3 round 2 review named this effect for the row label.
+- On each verb of the shared printer, a reason line with a backslash now prints as it is. An example is a path in a file system error.
+
 ```bench-review-record
 {
   "version": 2,
