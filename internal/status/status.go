@@ -292,24 +292,20 @@ func (s Signal) invocable() bool {
 // dashboard so neither re-parses `<git-dir>/bench-last-gate`. Present is false when no
 // cache file exists. Stale marks a ready verdict the gate no longer stands behind for
 // this subject: a record whose tree or oracle has drifted. It also covers an exact-tip
-// non-reusable green the gate cannot compose as a whole-tree verdict. Partition carries
-// narrowness at component granularity: non-nil for a partial verdict that graded only
-// the components whose inputs moved, nil for a full record.
+// non-reusable green the gate cannot compose as a whole-tree verdict.
 // Status/CachedTree/WorkTree/Timestamp carry the raw fields for a human view; the board
 // reduces them to its severity rows.
 type GateInfo struct {
-	Present        bool
-	State          string
-	PendingStatus  string
-	Status         string
-	CachedTree     string
-	WorkTree       string
-	Stale          bool
-	Partition      *gate.Partition
-	CheckPartition *gate.CheckPartition
-	Timestamp      string
-	Reason         string
-	CacheBytes     int
+	Present       bool
+	State         string
+	PendingStatus string
+	Status        string
+	CachedTree    string
+	WorkTree      string
+	Stale         bool
+	Timestamp     string
+	Reason        string
+	CacheBytes    int
 }
 
 // Query controls a status read without changing the board's shared signal ordering.
@@ -525,12 +521,6 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 	// is no longer in the tree. Only a verdict the gate still stands behind reaches the
 	// rows below.
 	if gv.Stale {
-		// An exact-tip narrow verdict stays distinct from drift even when the gate no
-		// longer composes it as a whole-tree green. A moved tree is drift instead.
-		if gv.CachedTree == gv.WorkTree && (gv.Partition != nil || gv.CheckPartition != nil) {
-			detail := partialGreenDetail(gv.Partition, gv.CheckPartition)
-			return append(rows, row{7, "gate", detail, commandAction(freshGateAction)})
-		}
 		detail, command := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree, gv.Reason)
 		return append(rows, row{7, "gate", detail, command})
 	}
@@ -554,8 +544,6 @@ func GateVerdict(root string) GateInfo {
 	if !in.RecordedAt.IsZero() {
 		gi.Timestamp = in.RecordedAt.Format(time.RFC3339)
 	}
-	gi.Partition = in.Partition
-	gi.CheckPartition = in.CheckPartition
 	// A drifted record is stale whatever verdict it carries: the gate has already decided it
 	// describes another tree or another oracle. A green the gate will not reuse is stale on
 	// the reuse rule alone. A composed whole-tree green can only rescue the second case: it
@@ -577,29 +565,6 @@ func staleGateDetailAction(root, cachedTree, currentTree, reason string) (detail
 		detail += "; " + reason
 	}
 	return detail + ")", commandAction(gateAction)
-}
-
-func skippedComponentNames(p *gate.Partition) []string {
-	return componentNames(p.Skipped)
-}
-
-func partialGreenDetail(partition *gate.Partition, checks *gate.CheckPartition) string {
-	var details []string
-	if partition != nil {
-		details = append(details, "skipped: "+strings.Join(skippedComponentNames(partition), ", "))
-	}
-	if checks != nil {
-		details = append(details, "inherited checks: "+strings.Join(componentNames(checks.Inherited), ", "))
-	}
-	return "partial green (" + strings.Join(details, "; ") + ")"
-}
-
-func componentNames(components []gate.ComponentSkip) []string {
-	names := make([]string, len(components))
-	for i, component := range components {
-		names[i] = component.Component
-	}
-	return names
 }
 
 // appendGit adds the git signal (sev 1). Its details are the dirty paths, the unpushed

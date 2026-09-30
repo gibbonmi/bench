@@ -284,7 +284,6 @@ func TestRouteForInvokesReadyMapWhosePathContainsSpaces(t *testing.T) {
 }
 
 func TestGateActionNormalization(t *testing.T) {
-	partial := &gate.Partition{}
 	for _, tc := range []struct {
 		name string
 		gate GateInfo
@@ -295,7 +294,6 @@ func TestGateActionNormalization(t *testing.T) {
 		{"invalid", GateInfo{Present: true, State: string(gate.Invalid)}, "bench gate"},
 		{"unavailable", GateInfo{Present: true, State: string(gate.Unavailable)}, "bench gate --fresh"},
 		{"drifted", GateInfo{Present: true, State: string(gate.Ready), Stale: true, CachedTree: "old", WorkTree: "new"}, "bench gate"},
-		{"exact-tip partial", GateInfo{Present: true, State: string(gate.Ready), Stale: true, CachedTree: "tree", WorkTree: "tree", Partition: partial}, "bench gate --fresh"},
 		{"locked-pending", GateInfo{Present: true, State: string(gate.Pending), PendingStatus: "locked-pending"}, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

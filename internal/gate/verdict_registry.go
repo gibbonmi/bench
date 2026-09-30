@@ -30,24 +30,6 @@ var verdictRecordClasses = []verdictRecordClass{
 		validate: validateFullRecord,
 	},
 	{
-		name:         "partial verdict",
-		reuseRefusal: "partial verdict",
-		fields:       []string{"executed", "oracle", "recorded_at", "schema", "skip_evidence", "skipped", "state", "status", "tree"},
-		validate:     validatePartialRecord,
-	},
-	{
-		name:         "check-partial verdict",
-		reuseRefusal: "partial verdict",
-		fields:       []string{"check_evidence", "check_executed", "check_inherited", "oracle", "recorded_at", "schema", "state", "status", "tree"},
-		validate:     validateCheckPartialRecord,
-	},
-	{
-		name:         "combined-partial verdict",
-		reuseRefusal: "partial verdict",
-		fields:       []string{"check_evidence", "check_executed", "check_inherited", "executed", "oracle", "recorded_at", "schema", "skip_evidence", "skipped", "state", "status", "tree"},
-		validate:     validateCombinedPartialRecord,
-	},
-	{
 		name:     "pending",
 		fields:   []string{"oracle", "owner_pid", "schema", "started_at", "state", "tree"},
 		validate: validatePendingRecord,
@@ -85,33 +67,6 @@ func selectVerdictRecordClass(data []byte) (verdictRecordClass, error) {
 
 func validateFullRecord(_ []byte, r verdictRecord, now time.Time) error {
 	return validateReadyRecord(r, now)
-}
-
-func validatePartialRecord(data []byte, r verdictRecord, now time.Time) error {
-	if err := validateReadyRecord(r, now); err != nil {
-		return err
-	}
-	tm, _ := time.Parse(time.RFC3339, r.RecordedAt)
-	return validatePartition(data, r, tm)
-}
-
-func validateCheckPartialRecord(data []byte, r verdictRecord, now time.Time) error {
-	if err := validateReadyRecord(r, now); err != nil {
-		return err
-	}
-	tm, _ := time.Parse(time.RFC3339, r.RecordedAt)
-	return validateCheckPartition(data, r, tm)
-}
-
-func validateCombinedPartialRecord(data []byte, r verdictRecord, now time.Time) error {
-	if err := validateReadyRecord(r, now); err != nil {
-		return err
-	}
-	tm, _ := time.Parse(time.RFC3339, r.RecordedAt)
-	if err := validatePartition(data, r, tm); err != nil {
-		return err
-	}
-	return validateCheckPartition(data, r, tm)
 }
 
 func validatePendingRecord(_ []byte, r verdictRecord, now time.Time) error {
