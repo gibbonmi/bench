@@ -2712,7 +2712,127 @@ Findings: 0. The mutation that always escapes reds only the backslash row, and t
         "TT48",
         "TT50"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "tt-c4-4-treetarget-final",
+          "performer": "claude:bench-writer/tt-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t4-repair-1-20260930/4-treetarget@3e795fb0",
+            "digest": "sha256:88ea307c50c3fe32966e3506b3c23e963e52eeded3dd1c6d5086670f3c449842",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,pass,1392\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-treetarget",
+          "command": "bench test --package ./internal/treetarget",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c4-4-worktree-final",
+          "performer": "claude:bench-writer/tt-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t4-repair-1-20260930/4-worktree@3e795fb0",
+            "digest": "sha256:3ba0001180ebf2bbe9fe6d11b437dbfba4b1aefe9b8ef0958b5aa05e3b1f0310",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,56341\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:99: unix sockets unavailable: listen unix /tmp/M7SE6W/t/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket1807812107/001/.bench-home/worktrees/001-1533700669/7ec2ba8544a26fa7c87967a38236a6aa-ed8f3600128c34c… (281 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/M7SE6W/t/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket3896056435/001/.bench-home/worktrees/001-746813304/993d21eb21e9dfdd7fc269f5762a7e3d-160977ded12b6a50ce6c1c2… (278 bytes)\""
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c4-4-canonicalpath-final",
+          "performer": "claude:bench-writer/tt-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t4-repair-1-20260930/4-canonicalpath@3e795fb0",
+            "digest": "sha256:6b7e9d512a3d8d24b6199cf48bdbb57c0e0f3fd413f1da104c4c9ea1ff42a7f1",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/canonicalpath,pass,4\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-canonicalpath",
+          "command": "bench test --package ./internal/canonicalpath",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c4-4-cmd-final",
+          "performer": "claude:bench-writer/tt-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t4-repair-1-20260930/4-cmd@3e795fb0",
+            "digest": "sha256:2193904f7f00bf653916a1acc77790e444368274fbcc409a082593fe2b1ef2ac",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14617\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c4-4-system-final",
+          "performer": "claude:bench-writer/tt-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t4-repair-1-20260930/4-system@3e795fb0",
+            "digest": "sha256:4ddfea51fbd9074a206bea4b0b09f66311f80459f681b508f36a9eb7d4862235",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,57500\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "tt-c4-4-flag-probe-final",
+          "performer": "claude:bench-writer/tt-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/tt-t4-repair-1-20260930/4-flag-probe@3e795fb0",
+            "digest": "sha256:885a8e3dd93769ed568134aa2b661905440c98d92b9e50c91a38ac9efa6280cd",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/flag.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunRefusesBeforeChild,passed,15\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,244\nfailures[2]{package,test,line}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunRefusesBeforeChild/TT29_missing_value,\"run_test.go:198: gate --in [] = (2, \\\"usage: bench gate --in (missing argument: <label>)\\\\\\\\n\\\", \\\"\\\"), want (2, \\\"usage: bench gate --in (missing argument: <label|primary>)\\\\\\\\n\\\", \\\"\\\")\"\n  github.com/gibbonmi/bench/internal/treetarget,TestRunRefusesBeforeChild/TT57_empty_value,\"run_test.go:198: gate --in [\\\"\\\"] = (2, \\\"usage: bench gate --in (missing argument: <label>)\\\\\\\\n\\\", \\\"\\\"), want (2, \\\"usage: bench gate --in (missing argument: <label|primary>)\\\\\\\\n\\\", \\\"\\\")\"\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "4-flag-probe",
+          "command": "bench probe internal/treetarget/flag.go --swap '<label|primary>' --with '<label>' --package ./internal/treetarget --run TestRunRefusesBeforeChild",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/tt-t4-repair-1-20260930/4-flag-probe@3e795fb0",
+              "digest": "sha256:885a8e3dd93769ed568134aa2b661905440c98d92b9e50c91a38ac9efa6280cd",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/treetarget/flag.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunRefusesBeforeChild,passed,15\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,244\nfailures[2]{package,test,line}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunRefusesBeforeChild/TT29_missing_value,\"run_test.go:198: gate --in [] = (2, \\\"usage: bench gate --in (missing argument: <label>)\\\\\\\\n\\\", \\\"\\\"), want (2, \\\"usage: bench gate --in (missing argument: <label|primary>)\\\\\\\\n\\\", \\\"\\\")\"\n  github.com/gibbonmi/bench/internal/treetarget,TestRunRefusesBeforeChild/TT57_empty_value,\"run_test.go:198: gate --in [\\\"\\\"] = (2, \\\"usage: bench gate --in (missing argument: <label>)\\\\\\\\n\\\", \\\"\\\"), want (2, \\\"usage: bench gate --in (missing argument: <label|primary>)\\\\\\\\n\\\", \\\"\\\")\"\nskips[0]{package,test,reason}:"
+            }
+          }
+        }
+      ],
       "reviews": [
         {
           "id": "tt-c4-standards-r1",
