@@ -3,8 +3,11 @@ package worktree
 import (
 	"errors"
 	"io"
+	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // ErrTreeTargetPath is the outcome of a tree-target value that names no label and that the
@@ -62,4 +65,12 @@ func pathShaped(value string) bool {
 // exit 1.
 func PrintTreeTargetRefusal(stderr io.Writer, verb string, err error) int {
 	return printTargetRefusal(stderr, verb, err)
+}
+
+// PrintTreeBuildRefusal prints detail as the refusal of verb for the kit worktree target
+// label, whose own build cannot start, and answers exit 1. The repair is the build verb on
+// label, with the label as one shell word. Neither line names the executable path.
+func PrintTreeBuildRefusal(stderr io.Writer, verb, label, detail string) int {
+	next := strings.Replace(usage.WorktreeBuild, "<target>", axi.ShellQuote(label), 1)
+	return printTargetRefusal(stderr, verb, refusalError{refusal{detail: detail, next: next}})
 }

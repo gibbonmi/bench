@@ -26,11 +26,11 @@ const buildInput = "scripts/go-build.sh"
 func WriteTree(t testing.TB, root string) {
 	t.Helper()
 	for name, body := range map[string]string{
-		"go.mod":                  "module benchkit\n\ngo 1.21\n",
-		"cmd/bench/main.go":       "package main\n\nfunc main() {}\n",
-		"scripts/go-build.inputs": "build_script=" + buildInput + "\n",
-		buildInput:                "#!/bin/sh\n",
-		Wrapper:                   "#!/bin/sh\n",
+		"go.mod":                      "module benchkit\n\ngo 1.21\n",
+		"cmd/bench/main.go":           "package main\n\nfunc main() {}\n",
+		freshness.BuildInputsManifest: freshness.BuildInputLine("build_script", buildInput),
+		buildInput:                    "#!/bin/sh\n",
+		Wrapper:                       "#!/bin/sh\n",
 	} {
 		path := filepath.Join(root, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

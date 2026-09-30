@@ -2,12 +2,9 @@ package treetarget
 
 import (
 	"errors"
-	"fmt"
-	"io"
 	"io/fs"
 	"os"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/freshness"
 )
 
@@ -42,13 +39,4 @@ func worktreeBuild(root string) (executable, refusal string) {
 		return "", "worktree build is missing"
 	}
 	return "", "worktree build does not match the tree"
-}
-
-// printBuildRefusal prints the refusal of a kit worktree target whose build cannot start,
-// and answers exit 1. The repair names the label as one shell word, quoted only when it
-// needs quoting. Neither line names the executable path.
-func printBuildRefusal(stderr io.Writer, command, label, refusal string) int {
-	fmt.Fprintln(stderr, command+": "+refusal)
-	fmt.Fprintln(stderr, "next=bench worktree build "+axi.ShellQuote(label))
-	return 1
 }

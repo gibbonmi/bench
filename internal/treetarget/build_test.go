@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -85,6 +86,9 @@ func TestRunKitWorktreeBuild(t *testing.T) {
 		}
 		if got, want := child.env[env.WrapperEnv], filepath.Join(k.tree, kittest.Wrapper); got != want {
 			t.Errorf("child %s = %q, want the wrapper of the target %q", env.WrapperEnv, got, want)
+		}
+		if got := child.env[benchhome.Env]; got != k.home {
+			t.Errorf("child %s = %q, want the resolved home %q", benchhome.Env, got, k.home)
 		}
 	})
 	refusal := func(reason, label string) string {

@@ -13,7 +13,23 @@ import (
 	"syscall"
 )
 
-const auxiliaryInputsManifest = "scripts/go-build.inputs"
+// BuildInputsManifest is the path, relative to a source root, of the manifest that lists the
+// auxiliary Bench build inputs. A root that holds it declares Bench build inputs.
+const BuildInputsManifest = "scripts/go-build.inputs"
+
+// auxiliaryInputsManifest names BuildInputsManifest for DeclaresBuildInputs and for the tests
+// of this package.
+const auxiliaryInputsManifest = BuildInputsManifest
+
+// buildInputSeparator separates the key of one manifest line from its path. BuildInputLine
+// writes it, and auxiliaryBuildInputs reads it.
+const buildInputSeparator = "="
+
+// BuildInputLine renders one line of the build-input manifest: the key, the separator, and
+// the path of the input relative to the source root.
+func BuildInputLine(key, path string) string {
+	return key + buildInputSeparator + path + "\n"
+}
 
 type listedPackage struct {
 	Dir          string
@@ -88,10 +104,10 @@ func buildInputs(root string) ([]string, error) {
 }
 
 func auxiliaryBuildInputs(root string) ([]string, error) {
-	manifest := filepath.Join(root, filepath.FromSlash(auxiliaryInputsManifest))
+	manifest := filepath.Join(root, filepath.FromSlash(BuildInputsManifest))
 	data, err := regularContents(manifest)
 	if err != nil {
-		return nil, fmt.Errorf("read auxiliary build-input manifest %q: %w", auxiliaryInputsManifest, err)
+		return nil, fmt.Errorf("read auxiliary build-input manifest %q: %w", BuildInputsManifest, err)
 	}
 	paths := []string{manifest}
 	keys := map[string]struct{}{}
@@ -100,9 +116,9 @@ func auxiliaryBuildInputs(root string) ([]string, error) {
 		if line == "" {
 			continue
 		}
-		key, name, ok := strings.Cut(line, "=")
+		key, name, ok := strings.Cut(line, buildInputSeparator)
 		if !ok || key == "" || name == "" || strings.TrimSpace(key) != key || strings.TrimSpace(name) != name {
-			return nil, fmt.Errorf("malformed auxiliary build input at %s:%d", auxiliaryInputsManifest, number+1)
+			return nil, fmt.Errorf("malformed auxiliary build input at %s:%d", BuildInputsManifest, number+1)
 		}
 		if _, exists := keys[key]; exists {
 			return nil, fmt.Errorf("duplicate auxiliary build input key %q", key)
@@ -118,7 +134,7 @@ func auxiliaryBuildInputs(root string) ([]string, error) {
 		paths = append(paths, path)
 	}
 	if len(paths) == 1 {
-		return nil, fmt.Errorf("auxiliary build-input manifest %q is empty", auxiliaryInputsManifest)
+		return nil, fmt.Errorf("auxiliary build-input manifest %q is empty", BuildInputsManifest)
 	}
 	return paths, nil
 }

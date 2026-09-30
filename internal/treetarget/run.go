@@ -60,7 +60,7 @@ func Run(call Call) int {
 	}
 	executable, refusal := childExecutable(call, value, dir)
 	if refusal != "" {
-		return printBuildRefusal(call.Stderr, command, value, refusal)
+		return worktree.PrintTreeBuildRefusal(call.Stderr, command, value, refusal)
 	}
 	argv := append([]string{executable, call.Name}, rest...)
 	return worktree.RunTreeChild(command, argv, dir, call.Home, call.Stdin, call.Stdout, call.Stderr)
