@@ -788,6 +788,57 @@ The reviewer decisions and the other dispositions are these:
 
 The plan commit expands the fences before dispatch. Ticket 4 gains `internal/worktree/path.go` and `internal/env/wrapper.go`. Ticket 5 gains `internal/worktree/path.go`, `internal/worktree/tree_target.go`, and `internal/freshness/freshness_buildinputs.go`. A learning records the expansion.
 
+## TT-C4 ticket 4 repair evidence, cycle 1
+
+The session `claude:bench-writer/tt-t4-repair-1` ran on opus at xhigh effort, with a cap of 3 attempts. It started at `63666844` and committed `764a1966` on a lane pass in the first attempt. This repair is cycle 1 of the two repair cycles for chunk TT-C4.
+
+- R1: the new helper `ambiguousAssignments` in `internal/worktree/path.go` makes the ambiguity refusal from the matched assignments. `TreeTarget` and `selectAssignment` both call it, so the id list has one source.
+- R2: `internal/env/wrapper.go` declares the constant `WrapperEnv`, and `WrapperRouting` uses it. `execEnv`, `runInTreeTarget`, the system helper `runTreeTarget`, and two tests read that constant. The constant `worktree.WrapperEnv` is removed. The other `"BENCH_WRAPPER"` literals are outside the fence, so they stay.
+- R3: `TestRunRefusesBeforeChild` has two new rows. Each row asserts exit 1, one refusal line, its `next=` line, and no marker. The row `missing tree` removes the tree of the active label `gone`, and it wants `worktree tree is missing` and `next=bench worktree clean --landed`. The branch of `gone` is the tip of `main`, so the recovery route is the batch clean. The row `creation bundle` detaches HEAD in the tree of the active label `detached`, and it wants `assignment branch is not checked out` and `next=bench worktree list`. The review probe for C4-C1 was silent in round 1, and it now bites.
+
+The sweep of duplicated facts found no second source in the delta. Two exec tests in `internal/worktree` keep the literal `BENCH_WRAPPER`, and their file is outside the fence. They are independent expectations, and the R2 probe records a red for each. The independent expectations of the new rows are the two refusal lines and the two `next=` lines. The probes below record a red for each.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` on the source that `764a1966` commits, and each restore reads `yes`. The first row is the plan probe `4-flag-probe`, which the session ran again with the exact plan command.
+
+| Target | File | Mutation | Test | Verdict |
+|---|---|---|---|---|
+| TT29, TT57 | `internal/treetarget/flag.go` | swap: `<label\|primary>` to `<label>` | TestRunRefusesBeforeChild | bit |
+| R3 | `internal/worktree/tree_target.go` | swap: the shared resolver call to the state check alone | TestRunRefusesBeforeChild | bit |
+| R3 | `internal/worktree/path.go` | swap: the missing-tree condition to `false && …` | TestRunRefusesBeforeChild | bit |
+| R3 | `internal/worktree/path.go` | swap: the bundle condition to `false && …` | TestRunRefusesBeforeChild | bit |
+| R3 | `internal/worktree/path.go` | swap: the recovery line to its `why` text | TestRunRefusesBeforeChild | bit |
+| R1 | `internal/worktree/path.go` | swap: `a.ID` to `a.Label` in `ambiguousAssignments` | TestRunRefusesBeforeChild | bit |
+| R1 | `internal/worktree/path.go` | swap: `a.ID` to `a.Label` in `ambiguousAssignments` | TestTargetVerbsNameTheResolverReason | bit |
+| R2 | `internal/env/wrapper.go` | swap: the `WrapperEnv` value to `BENCH_WRAPPER_X` | TestExecChildDropsWrapperRouting, TestExecPWDMatchesChildDirectory | bit |
+
+The state-check probe failed both new rows. The `detached` row started a child at exit 0, and the `gone` row reached the child start. The missing-tree probe failed only the `missing tree` row, with the owner-marker refusal. The bundle probe failed only the `creation bundle` row, and a child started. The two R1 probes failed TT35 and the `ambiguous` resolver case, so both callers use the helper. The R2 probe failed four tests, because the strip and the child value both read the one constant.
+
+A first try of the recovery-line probe did not compile, and its verdict was `invalid`. The table holds the rerun. The session did not probe the name in `runInTreeTarget`, because a wrong name there starts the `cmd/bench` test binary as the child.
+
+### Verification
+
+The session ran each ticket 4 plan verification on the source that `764a1966` commits, and each passed:
+
+- `bench test --package ./internal/treetarget`, in 1051 ms;
+- `bench test --package ./internal/worktree`, in 48931 ms, with two environment capability skips for unix sockets;
+- `bench test --package ./internal/canonicalpath`, in 4 ms, where the ticket 4 author record shows a red revert in 4 ms, so the tests run;
+- `bench test --package ./cmd/bench`, in 15028 ms;
+- `bench test --check system`, in 49940 ms, and in 49738 ms again after the worktree build;
+- the plan probe `4-flag-probe`, which bit.
+
+The session also ran these checks, and each passed:
+
+- `bench test --package ./internal/env`, in 854 ms;
+- `bench test --package ./internal/conformance --run TestRootConformance`, in 6298 ms;
+- `bench structure --growth f981cd3d`, which reported that no source file grew past its budget;
+- `gofmt -l` and `go vet -tags system` on the changed packages.
+
+No new row can skip, so the session did not run `bench test --check skip-ownership`. The commit ran with `--preflight-build tree-targets`. The lane ran gofmt, vet, build, and structure, and it passed. The worktree build was green, and the preflight reported 15 green checks, 1 check that does not apply, and 0 red checks. A later `bench preflight build tree-targets` reported 14 green checks, 1 check that does not apply, and 0 red checks.
+
+`internal/treetarget/build_test.go` is a ticket 5 file, but the fence holds `internal/treetarget/` as a prefix. The removal of `worktree.WrapperEnv` needs its change, or the package does not compile. The `creation bundle` row detaches HEAD, which fails the branch predicate of the bundle. The owner-marker component needs a helper of `internal/worktree` or a second spelling of the marker path, so the session did not use it.
+
 ```bench-review-record
 {
   "version": 2,
