@@ -721,11 +721,56 @@ The author ran each check below on the source of `c587623b`, and each passed:
 
 No new test can skip, so the author did not run `bench test --check skip-ownership`. The commit ran with `--preflight-build tree-targets`. The lane ran gofmt, vet, build, and structure, and it passed. The worktree build was green, and `bench preflight build tree-targets` reported 15 green checks, 1 check that does not apply, and 0 red checks.
 
+## TT-C4 chunk review, round 1
+
+The frozen pair is base `9e742c5434c327e7174f85dd427331004b2bcef6` and tip `3831024c361eab0bad94374b8fb864bd85a76c4e`. The shared evidence is `sha256:4121fa0407fc63e9321af8d4f62d5ca3dc09bdf7f151335bb751bd23008c2ce0`. By the reviewer's direction, each axis ran as a fresh `bench-reviewer` session on fable at high effort. Only the Coverage axis ran probes, and the tree stayed clean.
+
+The raw finding counts are 4 for Standards, 2 for Spec, and 3 for Coverage. No two findings name one fix. The de-duplicated repair-target count is 8, because P2 needs no repair.
+
+## Standards
+
+Findings: 4. Worst: the ticket 5 build refusal prints its own refusal shape and a third spelling of the `bench worktree build` verb.
+
+- C4-S1, confidence 7, auto-fix: `TreeTarget` builds the ambiguity id list with the same four lines as `selectAssignment` (`internal/worktree/tree_target.go:42-46`, `internal/worktree/path.go:152-156`). The rule is one source per fact in `AGENTS.md`. The fix needs `internal/worktree/path.go` in the fence.
+- C4-S2, confidence 6, auto-fix: `printBuildRefusal` prints the refusal and its `next=` line by hand (`internal/treetarget/build.go:50-53`). `printTargetRefusal` owns that shape (`internal/worktree/path.go:171-189`), and `usage.WorktreeBuild` owns the verb spelling (`internal/usage/worktree.go:15`). The fix needs an owner seam in `internal/worktree`.
+- C4-S3, confidence 6, auto-fix: the new constant `WrapperEnv` (`internal/worktree/exec.go:212`) names the variable that `env.WrapperRouting` already owns (`internal/env/wrapper.go:10`). The fix needs `internal/env/wrapper.go` in the fence.
+- C4-S4, confidence 5, ask-user: `kittest.WriteTree` restates the manifest path and the line grammar that `internal/freshness` owns (`internal/treetarget/kittest/kittest.go:26-46`, `internal/freshness/freshness_buildinputs.go:16,98-119`). It is also a third kit-tree fixture. The home of the helper is a reviewer decision.
+
+## Spec
+
+Findings: 2. Worst: the spec names `sanitize.ShellQuote` for the repair label, but that function always quotes, and TT44 fixes a bare `alpha`.
+
+- C4-P1, confidence 6, ask-user: `specs/tree-targets/spec.md` names `sanitize.ShellQuote` for the label and omits `internal/axi` from the import list of `internal/treetarget`. The build uses `axi.ShellQuote`, which meets TT44 and TT47. The behavior is met, and the spec text is wrong at two places.
+- C4-P2, confidence 6, no-op: TT34 says that stderr names the released state. The printed line is the state refusal of the current worktree resolver, which step 5 and the lookup rule of the spec require. The row text is a paraphrase, and the tree convention stays, flagged for reviewer veto.
+
+Each other TT-C4 row is met at its named seam.
+
+## Coverage
+
+Findings: 3. Worst: no test pins the missing-tree or the creation-bundle refusal on the `--in` path, so a lookup that drops both checks stays green.
+
+- C4-C1, confidence 8, auto-fix: no `--in` test covers an active label with a removed worktree or an invalid creation bundle. The probe that kept only the state check was silent in `./internal/worktree` and `./internal/treetarget`. A row must pin the `worktree tree is missing` refusal, its `next=` line, and no marker.
+- C4-C2, confidence 7, auto-fix: no test asserts the child's `BENCH_HOME`. The probe that passed an empty home to `RunTreeChild` was silent in `./internal/treetarget`. The child environment row must name the resolved home.
+- C4-C3, confidence 5, ask-user: `bench setup --in <label>` at an interactive terminal can hang. The shared runner puts the child in its own process group, so a terminal read stops the child, and the parent waits with no deadline. The same defect exists for `bench worktree exec <label> -- bench setup`. The route is a reviewer decision.
+
+## TT-C4 round 1 advice
+
+- `TreeTarget` selects the record again by id through `resolveAssignmentIn`. So a sibling whose label equals that id can turn a unique label match into an ambiguity refusal.
+- TT36 tests only U+0001. A table over tab, newline, and return would pin `lineSafe` for the new caller.
+- Step 4 is pinned only by the system row TT28. A unit row that calls `--in primary` from a linked worktree root would pin it at the fast seam.
+- The TT48 absence checks bite only when the parent sets `BENCH_RUN_BINARY` and `BENCH_KIT`. The subtest can set both itself.
+- No test pins `--in <label>` outside a repository, which prints the not-in-repo line at exit 1.
+- The `test` help row shows the flag only on its first alternative.
+- `valueUsage` escapes a backslash, so the usage value differs from the literal `toon.Usage` form.
+- `kittest.WriteTree` writes each file with mode `0o755`, and only the two scripts need the execute bit.
+- The kit holds two `ShellQuote` derivations, in `internal/axi` and `internal/sanitize`.
+- `internal/treetarget/treetargettest` imports `internal/treetarget`, against the rule that only `cmd/bench` imports it. TT-C3 landed this import.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/tree-targets/spec.md",
-  "plan_digest": "sha256:49d7c3455ec98c0ab034c4bb473f14b0515ff390730eefb988e644e95f92b708",
+  "plan_digest": "sha256:8e3a09402b758dab396e7e37828fde90bc8eee75ecd288aab9535bffd0c92886",
   "implementation_session": "",
   "chunks": [
     {
@@ -2341,6 +2386,123 @@ No new test can skip, so the author did not run `bench test --check skip-ownersh
           ]
         }
       ]
+    },
+    {
+      "id": "TT-C4",
+      "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+      "tip": "3831024c361eab0bad94374b8fb864bd85a76c4e",
+      "plan_digest": "sha256:8e3a09402b758dab396e7e37828fde90bc8eee75ecd288aab9535bffd0c92886",
+      "source_digest": "4cd183192b9630a45f19387992ba0e1c68cab351",
+      "acceptance_rows": [
+        "TT8",
+        "TT9",
+        "TT26",
+        "TT27",
+        "TT28",
+        "TT29",
+        "TT30",
+        "TT31",
+        "TT32",
+        "TT33",
+        "TT34",
+        "TT35",
+        "TT36",
+        "TT37",
+        "TT38",
+        "TT39",
+        "TT40",
+        "TT41",
+        "TT49",
+        "TT53",
+        "TT54",
+        "TT55",
+        "TT57",
+        "TT58",
+        "TT59",
+        "TT62",
+        "TT43",
+        "TT44",
+        "TT45",
+        "TT46",
+        "TT47",
+        "TT48",
+        "TT50"
+      ],
+      "verification": [],
+      "reviews": [
+        {
+          "id": "tt-c4-standards-r1",
+          "performer": "claude:bench-reviewer/tt-c4-standards-r1",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4cd183192b9630a45f19387992ba0e1c68cab351",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c4-standards-r1@3831024c",
+            "digest": "sha256:f6f5608cf246b6418c9010f248025b56dd199cf31f72b280745c787bc1e3252a",
+            "excerpt": "Standards: 4 findings. Worst: ticket 5's build refusal re-derives the worktree target refusal printer and the `bench worktree build` verb spelling across the fence."
+          },
+          "axis": "Standards",
+          "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "tip": "3831024c361eab0bad94374b8fb864bd85a76c4e",
+          "finding_ids": [
+            "C4-S1",
+            "C4-S2",
+            "C4-S3",
+            "C4-S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "tt-c4-spec-r1",
+          "performer": "claude:bench-reviewer/tt-c4-spec-r1",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4cd183192b9630a45f19387992ba0e1c68cab351",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c4-spec-r1@3831024c",
+            "digest": "sha256:4af61a40043681b2e37ca3754df54824ba3325c0b46203b5c1a24d4f492ebcb2",
+            "excerpt": "Spec: 2 findings. Worst: the spec contradicts itself on the label quoting function, and the build followed the acceptance rows (TT44/TT47) over the named symbol and the import list."
+          },
+          "axis": "Spec",
+          "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "tip": "3831024c361eab0bad94374b8fb864bd85a76c4e",
+          "finding_ids": [
+            "C4-P1",
+            "C4-P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "tt-c4-coverage-r1",
+          "performer": "claude:bench-reviewer/tt-c4-coverage-r1",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4cd183192b9630a45f19387992ba0e1c68cab351",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/tt-c4-coverage-r1@3831024c",
+            "digest": "sha256:a8ad58eb9660360ab65060fc3c71efaea9b9e71f559a960f2fc9a73ad3dcfd48",
+            "excerpt": "Coverage: 3 findings. Worst: no test pins the missing-tree or creation-bundle refusal on the `--in` path, so a lookup that drops both checks stays green in both packages."
+          },
+          "axis": "Coverage",
+          "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
+          "tip": "3831024c361eab0bad94374b8fb864bd85a76c4e",
+          "finding_ids": [
+            "C4-C1",
+            "C4-C2",
+            "C4-C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2426,6 +2588,24 @@ No new test can skip, so the author did not run `bench test --check skip-ownersh
     {
       "from": "sha256:51bdf6fe67e2a33a0106d4f13992621fbee9b36369e2c1c19dd499a8582856e3",
       "to": "sha256:49d7c3455ec98c0ab034c4bb473f14b0515ff390730eefb988e644e95f92b708",
+      "chunk_ids": {
+        "TT-C1": [
+          "TT-C1"
+        ],
+        "TT-C2": [
+          "TT-C2"
+        ],
+        "TT-C3": [
+          "TT-C3"
+        ],
+        "TT-C4": [
+          "TT-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:49d7c3455ec98c0ab034c4bb473f14b0515ff390730eefb988e644e95f92b708",
+      "to": "sha256:8e3a09402b758dab396e7e37828fde90bc8eee75ecd288aab9535bffd0c92886",
       "chunk_ids": {
         "TT-C1": [
           "TT-C1"
