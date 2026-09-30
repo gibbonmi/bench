@@ -2,12 +2,15 @@ package env
 
 import "strings"
 
+// WrapperEnv names the variable that holds the path of the wrapper that rooted this run.
+const WrapperEnv = "BENCH_WRAPPER"
+
 // WrapperRouting names the variables bin/bench.sh exports before it execs the Bench
 // binary, so the binary can find the kit its wrapper belongs to. They describe the
 // wrapper that started this process, not the tree a child runs in. A child launched
 // against a different tree has to resolve its own kit, and an inherited value points
 // it silently back at the caller's.
-var WrapperRouting = []string{"BENCH_KIT", "BENCH_WRAPPER"}
+var WrapperRouting = []string{"BENCH_KIT", WrapperEnv}
 
 // WithoutWrapperRouting returns base with every WrapperRouting assignment removed,
 // along with any extra names the caller's own child contract adds. Every other

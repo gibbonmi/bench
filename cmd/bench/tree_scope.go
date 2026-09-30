@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/treetarget"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -58,7 +59,7 @@ func (c Command) runInTreeTarget(definition commandDefinition, args []string) (i
 	return treetarget.Run(treetarget.Call{
 		Name: definition.Name, Flag: treeTargetFlag, Args: args[1:],
 		Root: boundaryRoot(), Home: worktree.Home(),
-		Wrapper: os.Getenv(worktree.WrapperEnv), Running: running,
+		Wrapper: os.Getenv(env.WrapperEnv), Running: running,
 		Stdin: c.Stdin, Stdout: c.Stdout, Stderr: c.Stderr,
 	}), true
 }

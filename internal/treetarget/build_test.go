@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/treetarget/kittest"
-	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // The refusal lines, the repair command, and the child facts here are authored apart from
@@ -83,8 +83,8 @@ func TestRunKitWorktreeBuild(t *testing.T) {
 				t.Errorf("child %s = %q, want it unset", name, value)
 			}
 		}
-		if got, want := child.env[worktree.WrapperEnv], filepath.Join(k.tree, kittest.Wrapper); got != want {
-			t.Errorf("child %s = %q, want the wrapper of the target %q", worktree.WrapperEnv, got, want)
+		if got, want := child.env[env.WrapperEnv], filepath.Join(k.tree, kittest.Wrapper); got != want {
+			t.Errorf("child %s = %q, want the wrapper of the target %q", env.WrapperEnv, got, want)
 		}
 	})
 	refusal := func(reason, label string) string {

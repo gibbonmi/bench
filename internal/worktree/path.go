@@ -118,6 +118,16 @@ func (e ambiguousTargetError) Error() string {
 	return "target is ambiguous: " + strings.Join(e.IDs, ", ")
 }
 
+// ambiguousAssignments is the ambiguity refusal of matched. It names every colliding id,
+// because the id is the address that resolves the collision the operator just hit.
+func ambiguousAssignments(matched []intent.Assignment) ambiguousTargetError {
+	ids := make([]string, 0, len(matched))
+	for _, a := range matched {
+		ids = append(ids, a.ID)
+	}
+	return ambiguousTargetError{IDs: ids}
+}
+
 func selectAssignment(assignments []intent.Assignment, target string) (intent.Assignment, error) {
 	path, isPath, err := targetPath(target)
 	if err != nil {
@@ -147,13 +157,7 @@ func selectAssignment(assignments []intent.Assignment, target string) (intent.As
 		return intent.Assignment{}, errTargetUnassigned
 	}
 	if len(matched) > 1 {
-		// The refusal names every colliding id, because the id is the address that
-		// resolves the collision the operator just hit.
-		ids := make([]string, 0, len(matched))
-		for _, a := range matched {
-			ids = append(ids, a.ID)
-		}
-		return intent.Assignment{}, ambiguousTargetError{IDs: ids}
+		return intent.Assignment{}, ambiguousAssignments(matched)
 	}
 	return matched[0], nil
 }

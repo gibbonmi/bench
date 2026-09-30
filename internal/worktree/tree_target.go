@@ -39,11 +39,7 @@ func TreeTarget(root, label string) (string, error) {
 	case len(labeled) == 0:
 		return "", errTargetUnassigned
 	case len(labeled) > 1:
-		ids := make([]string, 0, len(labeled))
-		for _, a := range labeled {
-			ids = append(ids, a.ID)
-		}
-		return "", ambiguousTargetError{IDs: ids}
+		return "", ambiguousAssignments(labeled)
 	}
 	// The id is the one address that names exactly this record, so the shared resolver
 	// applies its checks to the record that the label selected.

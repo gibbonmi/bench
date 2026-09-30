@@ -11,10 +11,10 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/treetarget/kittest"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
-	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // The row cells here are authored apart from the renderer: the spec fixes one row of the
@@ -44,7 +44,7 @@ func treeTargetFixture(t *testing.T) (recordedPublicationRepo, systemLandingWork
 func runTreeTarget(t *testing.T, fixture recordedPublicationRepo, dir string, args ...string) processResult {
 	t.Helper()
 	unobserved := capability.WithoutEnvironment(fixture.environment(fixture.home), "BENCH_COMMAND_OBSERVE")
-	return systemSelected(t, dir, append(unobserved, worktree.WrapperEnv), args...)
+	return systemSelected(t, dir, append(unobserved, env.WrapperEnv), args...)
 }
 
 // treeRowCells answers the cells of the identity row that leads stdout, unquoted and joined

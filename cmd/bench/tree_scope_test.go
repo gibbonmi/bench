@@ -10,11 +10,11 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
-	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // TT6 and TT7: each repository-scoped verb refuses a tree target as its first argument,
@@ -116,7 +116,7 @@ func TestTreeTargetOnlyAsFirstArgument(t *testing.T) {
 	marker := filepath.Join(t.TempDir(), "child-started")
 	wrapper := filepath.Join(t.TempDir(), "wrapper")
 	writeExecutable(t, wrapper, "#!/bin/sh\n: > '"+marker+"'\n")
-	t.Setenv(worktree.WrapperEnv, wrapper)
+	t.Setenv(env.WrapperEnv, wrapper)
 	if stdout, stderr, code := runTreeCall("gate", "--fresh", "--in", "primary"); code != 2 || stdout != "" || stderr != gate.CommandUsage+"\n" {
 		t.Fatalf("gate --fresh --in primary = (%d, %q, %q), want (2, \"\", %q)", code, stdout, stderr, gate.CommandUsage+"\n")
 	}

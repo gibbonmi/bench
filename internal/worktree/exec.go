@@ -205,11 +205,8 @@ func execEnv(dir, home string, extra []string) []string {
 	if !isRegularFile(wrapper) {
 		return base
 	}
-	return append(base, WrapperEnv+"="+wrapper)
+	return append(base, env.WrapperEnv+"="+wrapper)
 }
-
-// WrapperEnv names the variable that holds the path of the wrapper that rooted this run.
-const WrapperEnv = "BENCH_WRAPPER"
 
 // withHome puts the caller's resolved home on a child environment. The inherited
 // assignment is dropped first, so the child reads exactly one value for the name.

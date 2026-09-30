@@ -143,8 +143,10 @@ func TestRunStartsChildInTarget(t *testing.T) {
 // TT29, TT30, TT31, TT33, TT34, TT35, TT36, TT57, TT58, TT59: a value that names no active
 // assignment by its exact label refuses before any child starts. A missing, empty, dash, or
 // path value is a grammar refusal at exit 2 on stdout, and its usage line escapes a control
-// character. Every other refusal is the worktree target refusal at exit 1 on stderr. Each
-// wanted line is exact and holds no raw control byte.
+// character. Every other refusal is the worktree target refusal at exit 1 on stderr. An
+// active label whose tree is gone, or whose tree no longer holds the assignment branch,
+// fails the missing-tree or the creation-bundle check of the lookup. Each wanted line is
+// exact and holds no raw control byte.
 func TestRunRefusesBeforeChild(t *testing.T) {
 	r := newTargetRepo(t, t.TempDir())
 	alpha := r.create(t, "tree-target-alpha", "alpha")
@@ -155,6 +157,14 @@ func TestRunRefusesBeforeChild(t *testing.T) {
 	}
 	twinA := r.create(t, "tree-target-twin-a", "twin")
 	twinB := r.create(t, "tree-target-twin-b", "twin")
+	// The gone branch is still the tip of main, so it has landed, and the refusal routes to
+	// the batch clean.
+	gone := r.create(t, "tree-target-gone", "gone")
+	if err := os.RemoveAll(gone.Worktree); err != nil {
+		t.Fatal(err)
+	}
+	detached := r.create(t, "tree-target-detached", "detached")
+	gitIn(t, detached.Worktree, "checkout", "-q", "--detach")
 	missing := "usage: bench gate --in (missing argument: <label|primary>)\n"
 	usage := func(value string) string { return "usage: bench gate --in (unknown argument: " + value + ")\n" }
 	refusal := func(reason string) string { return "bench gate --in: " + reason + "\nnext=bench worktree list\n" }
@@ -178,6 +188,8 @@ func TestRunRefusesBeforeChild(t *testing.T) {
 		{name: "TT34 released label", args: []string{"retired"}, code: 1, stderr: refusal("assignment " + retired.ID + " is not active")},
 		{name: "TT35 colliding label", args: []string{"twin"}, code: 1, stderr: ambiguous(twinA.ID, twinB.ID), alt: ambiguous(twinB.ID, twinA.ID)},
 		{name: "TT36 control character", args: []string{"al\x01pha"}, code: 1, stderr: refusal("target contains control characters")},
+		{name: "missing tree", args: []string{"gone"}, code: 1, stderr: "bench gate --in: worktree tree is missing\nnext=bench worktree clean --landed\n"},
+		{name: "creation bundle", args: []string{"detached"}, code: 1, stderr: refusal("assignment branch is not checked out")},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			script, marker := markerScript(t, "exit 0")
