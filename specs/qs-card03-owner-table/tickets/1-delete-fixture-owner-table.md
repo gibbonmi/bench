@@ -1,7 +1,7 @@
 # Delete the canary fixture-owner table
 
 Blocked by: none
-Writes: internal/conformance/registry_test.go, internal/conformance/registry_validation_test.go, internal/conformance/canary_fixtures_test.go (new), internal/conformance/tier_live_tree_test.go
+Writes: internal/conformance/registry_test.go, internal/conformance/registry_validation_test.go, internal/conformance/canary_fixtures_test.go (new), internal/conformance/tier_live_tree_test.go, capture/restructure-backlog.md
 Covers: none
 
 ## What to build
@@ -14,7 +14,7 @@ Three other owners hold each fact that the table restates:
 - The universal fixture bite requires a non-empty `EXPECT` file, a bound family, and a registered check that is not meta for each fixture.
 - The conformance family check reports each unbound canary family.
 
-Delete the table and the three tests that read it. Move the `canaryFixturePaths` helper, which the fixture bite uses, into a new file named for it. Do not put the helper into `fixture_bite_test.go`, because that file is above its structure budget grant. Remove the two deleted test names from the live-tree classification.
+Delete the table and the three tests that read it. Move the `canaryFixturePaths` helper, which the fixture bite uses, into a new file named for it. Do not put the helper into `fixture_bite_test.go`, because that file is above its structure budget grant. Remove the two deleted test names from the live-tree classification. Remove each restructure backlog pin that tells a future split to update the deleted table.
 
 ## Acceptance
 
@@ -22,4 +22,5 @@ Delete the table and the three tests that read it. Move the `canaryFixturePaths`
 - [ ] No Go source names `fixtureRegistration`, `canaryFixtureRegistry`, `canaryFixtureFamilyRegistry`, or `fixtureRegistrationFor`.
 - [ ] `canaryFixturePaths` is unchanged in `internal/conformance/canary_fixtures_test.go`.
 - [ ] The live-tree classification names no deleted test, and `TestClassifiedLiveTreeInventoryNamesDetectedTests` passes.
+- [ ] `capture/restructure-backlog.md` names no pin in the deleted table.
 - [ ] The conformance package tests and the fixture bite pass.
