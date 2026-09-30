@@ -142,11 +142,6 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			gitRun(t, root, "add", "tracked.txt")
 			return root, Query{}
 		}},
-		{name: "gate partial", signal: "gate", detail: "partial green", setup: func(t *testing.T) (string, Query) {
-			root := cleanRepo(t)
-			writePartialGateCache(t, root, gitRun(t, root, "write-tree"), "docs")
-			return root, Query{}
-		}},
 		{name: "gate interrupted", signal: "gate", detail: "interrupted-pending", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			writePendingGate(t, root)

@@ -30,5 +30,5 @@ func composedGreenAtKit(root, _ string) bool {
 	if err != nil || now.Sub(recorded) >= freshness {
 		return false
 	}
-	return !loaded.record.partitions() && !loaded.record.checkPartitions()
+	return loaded.class.reuseRefusal == ""
 }

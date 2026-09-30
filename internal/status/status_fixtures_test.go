@@ -53,11 +53,10 @@ func writeFullGateCache(t *testing.T, root, cachedTree, status string) {
 	}
 }
 
-// writePartialGateCache installs a ready partial green naming cachedTree, skipping the
-// given components. It uses the mode and exact field set the gate's loader requires of
-// the partial class. Each skipped component carries ancestor-form evidence (an identity
-// and the time it was authored), the simpler of the two forms validatePartition accepts.
-func writePartialGateCache(t *testing.T, root, cachedTree string, skipped ...string) {
+// writeLegacyPartialGateCache installs a ready green naming cachedTree in the field set of
+// the retired partial class, skipping the given components. Each skipped component
+// carries the ancestor evidence form, an identity and the time it was authored.
+func writeLegacyPartialGateCache(t *testing.T, root, cachedTree string, skipped ...string) {
 	t.Helper()
 	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
 	recorded := time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339)

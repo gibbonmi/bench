@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -21,18 +20,6 @@ func TestVerdictRecordClassRegistryMatchesExpectation(t *testing.T) {
 		{
 			name:   "full verdict",
 			fields: []string{"oracle", "recorded_at", "schema", "state", "status", "tree"},
-		},
-		{
-			name:   "partial verdict",
-			fields: []string{"executed", "oracle", "recorded_at", "schema", "skip_evidence", "skipped", "state", "status", "tree"},
-		},
-		{
-			name:   "check-partial verdict",
-			fields: []string{"check_evidence", "check_executed", "check_inherited", "oracle", "recorded_at", "schema", "state", "status", "tree"},
-		},
-		{
-			name:   "combined-partial verdict",
-			fields: []string{"check_evidence", "check_executed", "check_inherited", "executed", "oracle", "recorded_at", "schema", "skip_evidence", "skipped", "state", "status", "tree"},
 		},
 		{
 			name:   "pending",
@@ -66,14 +53,11 @@ func TestVerdictRecordClassesAtInspect(t *testing.T) {
 		make  func(string, string, time.Time) []byte
 	}{
 		{name: "full_ready", state: Ready, make: inspectFullRecord},
-		{name: "partial_ready", state: Ready, make: inspectPartialRecord},
-		{name: "check_partial_ready", state: Ready, make: inspectCheckPartialRecord},
-		{name: "combined_partial_ready", state: Ready, make: inspectCombinedPartialRecord},
+		{name: "legacy_partial_invalid", state: Invalid, make: inspectLegacyPartialRecord},
+		{name: "legacy_check_partial_invalid", state: Invalid, make: inspectLegacyCheckPartialRecord},
+		{name: "legacy_combined_partial_invalid", state: Invalid, make: inspectLegacyCombinedPartialRecord},
 		{name: "mixed_class_invalid", state: Invalid, make: inspectMixedClassRecord},
 		{name: "full_invalid_status", state: Invalid, make: inspectFullInvalidStatusRecord},
-		{name: "partial_executed_skipped_overlap_invalid", state: Invalid, make: inspectPartialOverlapRecord},
-		{name: "check_partial_missing_evidence_invalid", state: Invalid, make: inspectCheckMissingEvidenceRecord},
-		{name: "combined_partial_executed_skipped_overlap_invalid", state: Invalid, make: inspectCombinedOverlapRecord},
 		{name: "pending_owner_pid_zero_invalid", state: Invalid, make: inspectPendingOwnerZeroRecord},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -109,52 +93,53 @@ func inspectFullRecord(tree, oracle string, now time.Time) []byte {
 	return inspectJSON(inspectReadyRecord(tree, oracle, now))
 }
 
-func inspectPartialRecord(tree, oracle string, now time.Time) []byte {
-	record := inspectReadyRecord(tree, oracle, now)
-	record.Executed = []string{"conformance", "conformance-suite"}
-	record.Skipped = []string{"build", "vet"}
-	record.SkipEvidence = map[string]skipEvidence{
-		"build": {Seal: strings.Repeat("b", 64)},
-		"vet":   {Identity: strings.Repeat("c", 64), AuthoredAt: now.Add(-time.Minute).Format(time.RFC3339)},
-	}
-	return inspectJSON(record)
+// The partial classes are retired, and nothing writes them. A legacy on-disk record in any
+// of their field sets must read as an invalid cache, so it can never pass as a full green.
+func inspectLegacyPartialRecord(tree, oracle string, now time.Time) []byte {
+	return inspectLegacyRecord(tree, oracle, now, legacyPartitionFields(now))
 }
 
-func inspectCheckPartialRecord(tree, oracle string, now time.Time) []byte {
-	record := inspectReadyRecord(tree, oracle, now)
-	addCheckPartition(&record)
-	record.CheckEvidence = map[string]skipEvidence{
-		record.CheckInherited[0]: {Identity: strings.Repeat("d", 64), AuthoredAt: now.Add(-time.Minute).Format(time.RFC3339)},
-	}
-	return inspectJSON(record)
+func inspectLegacyCheckPartialRecord(tree, oracle string, now time.Time) []byte {
+	return inspectLegacyRecord(tree, oracle, now, legacyCheckPartitionFields(now))
 }
 
-func inspectCombinedPartialRecord(tree, oracle string, now time.Time) []byte {
-	record := inspectReadyRecord(tree, oracle, now)
-	record.Executed = []string{"conformance", "conformance-suite"}
-	record.Skipped = []string{"build", "vet"}
-	record.SkipEvidence = map[string]skipEvidence{
-		"build": {Seal: strings.Repeat("b", 64)},
-		"vet":   {Identity: strings.Repeat("c", 64), AuthoredAt: now.Add(-time.Minute).Format(time.RFC3339)},
+func inspectLegacyCombinedPartialRecord(tree, oracle string, now time.Time) []byte {
+	fields := legacyPartitionFields(now)
+	for name, value := range legacyCheckPartitionFields(now) {
+		fields[name] = value
 	}
-	addCheckPartition(&record)
-	record.CheckEvidence = map[string]skipEvidence{
-		record.CheckInherited[0]: {Identity: strings.Repeat("d", 64), AuthoredAt: now.Add(-time.Minute).Format(time.RFC3339)},
-	}
-	return inspectJSON(record)
+	return inspectLegacyRecord(tree, oracle, now, fields)
 }
 
-func addCheckPartition(record *verdictRecord) {
-	for _, check := range registry.Checks {
-		if !check.RunsAt(registry.Dev) {
-			continue
-		}
-		if check.Meta || len(record.CheckInherited) > 0 {
-			record.CheckExecuted = append(record.CheckExecuted, check.Name)
-		} else {
-			record.CheckInherited = []string{check.Name}
-		}
+func legacyPartitionFields(now time.Time) map[string]any {
+	return map[string]any{
+		"executed": []string{"conformance"},
+		"skipped":  []string{"build"},
+		"skip_evidence": map[string]any{
+			"build": map[string]string{"identity": strings.Repeat("c", 64), "authored_at": now.Add(-time.Minute).Format(time.RFC3339)},
+		},
 	}
+}
+
+func legacyCheckPartitionFields(now time.Time) map[string]any {
+	return map[string]any{
+		"check_executed":  []string{"conformance-meta"},
+		"check_inherited": []string{"line-routing"},
+		"check_evidence": map[string]any{
+			"line-routing": map[string]string{"identity": strings.Repeat("d", 64), "authored_at": now.Add(-time.Minute).Format(time.RFC3339)},
+		},
+	}
+}
+
+func inspectLegacyRecord(tree, oracle string, now time.Time, extra map[string]any) []byte {
+	record := map[string]any{
+		"schema": verdictSchema, "state": "ready", "status": "green", "tree": tree, "oracle": oracle,
+		"recorded_at": now.Add(-time.Minute).Format(time.RFC3339),
+	}
+	for name, value := range extra {
+		record[name] = value
+	}
+	return inspectJSON(record)
 }
 
 func inspectMixedClassRecord(tree, oracle string, now time.Time) []byte {
@@ -167,35 +152,6 @@ func inspectMixedClassRecord(tree, oracle string, now time.Time) []byte {
 func inspectFullInvalidStatusRecord(tree, oracle string, now time.Time) []byte {
 	record := inspectReadyRecord(tree, oracle, now)
 	record.Status = "bogus"
-	return inspectJSON(record)
-}
-
-func inspectPartialOverlapRecord(tree, oracle string, now time.Time) []byte {
-	record := inspectReadyRecord(tree, oracle, now)
-	record.Executed = []string{"build"}
-	record.Skipped = []string{"build"}
-	record.SkipEvidence = map[string]skipEvidence{"build": {Seal: strings.Repeat("b", 64)}}
-	return inspectJSON(record)
-}
-
-func inspectCheckMissingEvidenceRecord(tree, oracle string, now time.Time) []byte {
-	record := inspectReadyRecord(tree, oracle, now)
-	addCheckPartition(&record)
-	record.CheckEvidence = map[string]skipEvidence{
-		"not-inherited": {Identity: strings.Repeat("d", 64), AuthoredAt: now.Add(-time.Minute).Format(time.RFC3339)},
-	}
-	return inspectJSON(record)
-}
-
-func inspectCombinedOverlapRecord(tree, oracle string, now time.Time) []byte {
-	record := inspectReadyRecord(tree, oracle, now)
-	record.Executed = []string{"build"}
-	record.Skipped = []string{"build"}
-	record.SkipEvidence = map[string]skipEvidence{"build": {Seal: strings.Repeat("b", 64)}}
-	addCheckPartition(&record)
-	record.CheckEvidence = map[string]skipEvidence{
-		record.CheckInherited[0]: {Identity: strings.Repeat("d", 64), AuthoredAt: now.Add(-time.Minute).Format(time.RFC3339)},
-	}
 	return inspectJSON(record)
 }
 

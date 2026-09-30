@@ -13,9 +13,9 @@ func TestInspectVerdictClassReuseReason(t *testing.T) {
 		reusable   bool
 		reason     string
 	}{
-		{name: "partial", makeRecord: inspectPartialRecord, reason: "partial verdict"},
-		{name: "check-partial", makeRecord: inspectCheckPartialRecord, reason: "partial verdict"},
-		{name: "combined-partial", makeRecord: inspectCombinedPartialRecord, reason: "partial verdict"},
+		{name: "legacy-partial", makeRecord: inspectLegacyPartialRecord, reason: "invalid cache record"},
+		{name: "legacy-check-partial", makeRecord: inspectLegacyCheckPartialRecord, reason: "invalid cache record"},
+		{name: "legacy-combined-partial", makeRecord: inspectLegacyCombinedPartialRecord, reason: "invalid cache record"},
 		{name: "full", makeRecord: inspectFullRecord, reusable: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
