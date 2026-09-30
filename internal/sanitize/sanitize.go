@@ -145,7 +145,8 @@ func writeEscaped(b *strings.Builder, runes []rune, preserveLayout bool) {
 // there forges a line and an ESC drives the terminal that prints it. Quoting does not
 // substitute, because single quotes make a newline literal but still emit the byte, and
 // escaping does not substitute either, because an escaped path names a tree that does
-// not exist. A caller that fails this predicate emits a pointer instead of the value.
+// not exist. When a value fails this predicate, the caller emits a pointer instead of the
+// value, or a printer that owns the whole line escapes that line through Controls.
 //
 // Display-hostile runes outside the control categories — a bidi override, U+2028,
 // invalid UTF-8 — pass. This guards line structure, not how a terminal renders one line.
