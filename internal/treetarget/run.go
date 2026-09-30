@@ -58,7 +58,11 @@ func Run(call Call) int {
 	if err != nil {
 		return worktree.PrintTreeTargetRefusal(call.Stderr, command, err)
 	}
-	argv := append([]string{childExecutable(call), call.Name}, rest...)
+	executable, refusal := childExecutable(call, value, dir)
+	if refusal != "" {
+		return printBuildRefusal(call.Stderr, command, value, refusal)
+	}
+	argv := append([]string{executable, call.Name}, rest...)
 	return worktree.RunTreeChild(command, argv, dir, call.Home, call.Stdin, call.Stdout, call.Stderr)
 }
 
@@ -76,14 +80,4 @@ func targetRoot(root, value string) (string, error) {
 		return "", errors.New("the repository registers no primary checkout")
 	}
 	return worktrees[0].Path, nil
-}
-
-// childExecutable answers the executable that the child runs. The invoking wrapper resolves
-// the kit of the tree that it runs in, so it wins. A direct run of the executable has no
-// wrapper, and the child runs the same executable.
-func childExecutable(call Call) string {
-	if call.Wrapper != "" {
-		return call.Wrapper
-	}
-	return call.Running
 }

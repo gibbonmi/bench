@@ -1,7 +1,8 @@
 // Package treetarget names the tree that one tree-scoped Bench call reads. It answers the
 // identity row that each tree-scoped response prints as its first block, so a reader
 // knows which checkout the response graded without a path in the output. It also runs a
-// call that names its tree target as one child in that tree.
+// call that names its tree target as one child in that tree, and a kit worktree target
+// runs its own current build.
 package treetarget
 
 import (

@@ -3,11 +3,16 @@
 package systemtest
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/treetarget/kittest"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -34,10 +39,12 @@ func treeTargetFixture(t *testing.T) (recordedPublicationRepo, systemLandingWork
 }
 
 // runTreeTarget runs the selected executable in dir. The environment removes the invoking
-// wrapper, so a tree-target child is the running executable.
+// wrapper, so a tree-target child is the running executable. It also removes the command
+// observation, so stderr holds only the lines of the verb.
 func runTreeTarget(t *testing.T, fixture recordedPublicationRepo, dir string, args ...string) processResult {
 	t.Helper()
-	return systemSelected(t, dir, append(fixture.environment(fixture.home), worktree.WrapperEnv), args...)
+	unobserved := capability.WithoutEnvironment(fixture.environment(fixture.home), "BENCH_COMMAND_OBSERVE")
+	return systemSelected(t, dir, append(unobserved, worktree.WrapperEnv), args...)
 }
 
 // treeRowCells answers the cells of the identity row that leads stdout, unquoted and joined
@@ -78,5 +85,31 @@ func TestTreeTargetRunsInNamedWorktree(t *testing.T) {
 				t.Fatalf("bench %q in %s = (%d, %q, %q), want exit 0, the row %q first, and %q", row.args, row.dir, result.code, result.stdout, result.stderr, row.row, row.body)
 			}
 		})
+	}
+}
+
+// TT50: the real executable, with BENCH_KIT set to the kit root, refuses a kit worktree
+// target whose build no longer matches the tree, and it starts no child. The build is a
+// script that freshness.Publish seals and that writes a marker when it runs.
+func TestTreeTargetRefusesStaleKitBuild(t *testing.T) {
+	fixture, alpha := treeTargetFixture(t)
+	kittest.WriteTree(t, alpha.path)
+	marker := filepath.Join(t.TempDir(), "marker")
+	script := filepath.Join(t.TempDir(), "bench")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\n: > '"+marker+"'\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	build := freshness.PublishedExecutable(alpha.path)
+	if err := freshness.Publish(alpha.path, script, build, filepath.Dir(build), "tree-target"); err != nil {
+		t.Fatal(err)
+	}
+	kittest.EditBuildInput(t, alpha.path)
+	result := runTreeTarget(t, fixture, fixture.root, "status", "--in", "alpha")
+	want := "bench status --in: worktree build does not match the tree\nnext=bench worktree build alpha\n"
+	if result.code != 1 || result.stdout != "" || result.stderr != want {
+		t.Fatalf("bench status --in alpha = (%d, %q, %q), want (1, \"\", %q)", result.code, result.stdout, result.stderr, want)
+	}
+	if _, err := os.Stat(marker); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("a child started: %v", err)
 	}
 }
