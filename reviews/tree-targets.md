@@ -1012,11 +1012,23 @@ These points are for reviewer veto:
 - With this rule, an escaped control byte and a typed backslash escape can print the same line. A BEL byte and the typed text `\u0007` both print `\u0007`. The TT-C3 round 2 review named this effect for the row label.
 - On each verb of the shared printer, a reason line with a backslash now prints as it is. An example is a path in a file system error.
 
+## TT-C4 repair cycle 2 close
+
+The orchestrator verified the ticket 5 cycle 2 repair against the tree. At the record commit `e63bdad2`, the tree was clean, and `bench preflight build tree-targets` reported 0 red checks. The `./internal/treetarget` and `./internal/preflight` tests passed. Each changed path is inside the ticket 5 `Writes:` line. The repair cycle count for TT-C4 is now 2 of 2, so the allowance is exhausted.
+
+The chunk tip is now `e63bdad2`. The source digest is the tree of `e63bdad2` without this record file, which is `14b329b1`. The plan digest changed from `69e2173a` to `023fbb2c` at the plan commit `b7d695a4`. The same rules at `b6eeb1bc` give the round 2 values `69e2173a` and `bb432a07`, which confirms the method. The payload adds one amendment that maps each chunk ID to itself.
+
+The repair session flagged these items for the round 3 review:
+
+- The shared printer now prints a line that passes `sanitize.LineSafe` as is. So a BEL byte, which escapes, and the typed text of its escape print the same line. The TT-C3 round 2 review raised this effect for the row label.
+- On every verb that uses the shared printer, a reason line with a backslash now prints as is instead of doubled.
+- The TT-C3 R4 repair changed `treetarget.Row` to `sanitize.Strip`, so the repair followed the R1 rule that the cycle 2 routing states.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/tree-targets/spec.md",
-  "plan_digest": "sha256:69e2173a8c44f664538a2bbbee23627474ffcf545426ba0d4e45fd8d73038c52",
+  "plan_digest": "sha256:023fbb2cc8db4856e566c05dde98e63cf529fa95676ea13a7f819bbbdcb3ad90",
   "implementation_session": "",
   "chunks": [
     {
@@ -2636,9 +2648,9 @@ These points are for reviewer veto:
     {
       "id": "TT-C4",
       "base": "9e742c5434c327e7174f85dd427331004b2bcef6",
-      "tip": "b6eeb1bc74dcf5446b6a5d8abc6d98e647a7e6e8",
-      "plan_digest": "sha256:69e2173a8c44f664538a2bbbee23627474ffcf545426ba0d4e45fd8d73038c52",
-      "source_digest": "bb432a07ca08fc6e2ad92631f998dc2418a176b1",
+      "tip": "e63bdad289365af966af165c18202f34bbde7670",
+      "plan_digest": "sha256:023fbb2cc8db4856e566c05dde98e63cf529fa95676ea13a7f819bbbdcb3ad90",
+      "source_digest": "14b329b171beb1915beb5e4b75163aa5be661473",
       "acceptance_rows": [
         "TT8",
         "TT9",
@@ -2942,6 +2954,24 @@ These points are for reviewer veto:
     {
       "from": "sha256:8e3a09402b758dab396e7e37828fde90bc8eee75ecd288aab9535bffd0c92886",
       "to": "sha256:69e2173a8c44f664538a2bbbee23627474ffcf545426ba0d4e45fd8d73038c52",
+      "chunk_ids": {
+        "TT-C1": [
+          "TT-C1"
+        ],
+        "TT-C2": [
+          "TT-C2"
+        ],
+        "TT-C3": [
+          "TT-C3"
+        ],
+        "TT-C4": [
+          "TT-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:69e2173a8c44f664538a2bbbee23627474ffcf545426ba0d4e45fd8d73038c52",
+      "to": "sha256:023fbb2cc8db4856e566c05dde98e63cf529fa95676ea13a7f819bbbdcb3ad90",
       "chunk_ids": {
         "TT-C1": [
           "TT-C1"
