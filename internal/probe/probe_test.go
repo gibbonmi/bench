@@ -67,7 +67,7 @@ func newFixture(t *testing.T) *fixture {
 	// The build-input manifest and the version file complete the digest closure the
 	// run-binary seal is graded against. Both sit outside the module's own sources, so a
 	// probe's mutation never invalidates the selected executable mid-run.
-	writeFixtureFile(t, filepath.Join(root, "scripts", "go-build.inputs"), "package_version=package.json\n", 0o644)
+	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest)), freshness.BuildInputLine("package_version", "package.json"), 0o644)
 	writeFixtureFile(t, filepath.Join(root, "package.json"), "{\"version\":\"0.0.0\"}\n", 0o644)
 	gitInit(t, root)
 

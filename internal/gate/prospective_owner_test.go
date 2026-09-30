@@ -228,7 +228,7 @@ func TestProspectiveEvidenceKeysToTheTreeAndBaselineRunnerIdentity(t *testing.T)
 	if got := baselineRunnerIdentity(identityRoot); got != unboundBaselineRunner {
 		t.Fatalf("undeclared baseline runner identity = %q, want %q", got, unboundBaselineRunner)
 	}
-	writeGateFixtureFile(t, identityRoot, "scripts/go-build.inputs", "build_script=scripts/go-build.sh\n", 0o644)
+	writeGateFixtureFile(t, identityRoot, benchfreshness.BuildInputsManifest, benchfreshness.BuildInputLine("build_script", "scripts/go-build.sh"), 0o644)
 	if got := baselineRunnerIdentity(identityRoot); got == unboundBaselineRunner {
 		t.Fatal("a declared build recipe still answered the unbound runner identity")
 	}
@@ -329,7 +329,7 @@ func TestProspectiveBuildRefusalLeavesNoBundle(t *testing.T) {
 	root, _, tempRoot := prospectiveProducerFixture(t, "#!/bin/sh\nexit 0\n")
 	writeGateFixtureFile(t, root, "go.mod", "module prospectivefixture\n\ngo 1.24\n", 0o644)
 	writeGateFixtureFile(t, root, "scripts/go-build.sh", "#!/bin/sh\nexit 0\n", 0o755)
-	writeGateFixtureFile(t, root, "scripts/go-build.inputs", "build_script=scripts/go-build.sh\n", 0o644)
+	writeGateFixtureFile(t, root, benchfreshness.BuildInputsManifest, benchfreshness.BuildInputLine("build_script", "scripts/go-build.sh"), 0o644)
 	outcomeCommit(t, root, "declare prospective build")
 	tree := outcomeGit(t, root, "write-tree")
 	old := prospectiveRunBinary

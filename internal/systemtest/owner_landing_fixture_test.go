@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -94,7 +95,11 @@ func configureArtifactLandingFixture(t *testing.T, root string) {
 	if err := os.WriteFile(filepath.Join(root, "scripts", "go-build.sh"), []byte(f.Script(build)), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "scripts", "go-build.inputs"), []byte("build_script=scripts/go-build.sh\n"), 0o644); err != nil {
+	manifest := filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest))
+	if err := os.MkdirAll(filepath.Dir(manifest), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifest, []byte(freshness.BuildInputLine("build_script", "scripts/go-build.sh")), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	f.Environment = []string{"HOME", "LAND_BASELINE_BENCH", "LAND_GATE_TALLY", "LAND_GATE_TREES", "LAND_RACE_READY", "LAND_RACE_RELEASE"}

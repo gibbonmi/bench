@@ -91,9 +91,6 @@ func commandsBriefCheckout(t *testing.T, staged string) (string, string) {
 		filepath.Join(kit, "go.mod"):                  "module benchprobe\n\ngo 1.21\n",
 		filepath.Join(kit, "cmd", "bench", "main.go"): "package main\n\nfunc main() {}\n",
 		filepath.Join(kit, "scripts", "go-build.sh"):  "# the probe checkout's build entry point\n",
-		// One auxiliary input is enough; the manifest's own presence is what
-		// DeclaresBuildInputs reads, and its entries are what the digest covers.
-		filepath.Join(kit, "scripts", "go-build.inputs"): "build_script=scripts/go-build.sh\n",
 	} {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
@@ -102,6 +99,7 @@ func commandsBriefCheckout(t *testing.T, staged string) (string, string) {
 			t.Fatal(err)
 		}
 	}
+	declareBuildInputs(t, kit)
 	gitInitRepo(t, kit)
 	root, err := git.RootAt(kit)
 	if err != nil {
@@ -118,6 +116,14 @@ func commandsBriefCheckout(t *testing.T, staged string) (string, string) {
 		t.Fatal(err)
 	}
 	return root, binary
+}
+
+// declareBuildInputs writes the build-input manifest under root, so the checkout declares Go
+// build inputs. One auxiliary input is enough: DeclaresBuildInputs reads the presence of the
+// manifest, and the digest covers its entries.
+func declareBuildInputs(t *testing.T, root string) {
+	t.Helper()
+	writeAXIFixture(t, filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest)), freshness.BuildInputLine("build_script", "scripts/go-build.sh"))
 }
 
 // commandsBriefBreakSeal rewrites the source digest the seal records, which is the exact

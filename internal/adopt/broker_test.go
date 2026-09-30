@@ -112,10 +112,10 @@ func TestPublishedBrokerManifestCarriesTheStampedVersion(t *testing.T) {
 func writeSealFixture(t *testing.T, root string) {
 	t.Helper()
 	for name, body := range map[string]string{
-		"go.mod":                  "module example.com/doctorfixture\n\ngo 1.25\n",
-		"cmd/bench/main.go":       "package main\n\nfunc main() {}\n",
-		"scripts/go-build.sh":     "#!/usr/bin/env bash\n",
-		"scripts/go-build.inputs": "build_script=scripts/go-build.sh\n",
+		"go.mod":                      "module example.com/doctorfixture\n\ngo 1.25\n",
+		"cmd/bench/main.go":           "package main\n\nfunc main() {}\n",
+		"scripts/go-build.sh":         "#!/usr/bin/env bash\n",
+		freshness.BuildInputsManifest: freshness.BuildInputLine("build_script", "scripts/go-build.sh"),
 	} {
 		path := filepath.Join(root, name)
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

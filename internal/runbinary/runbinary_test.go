@@ -203,10 +203,10 @@ func writeInheritedSourceFixture(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
 	for name, body := range map[string]string{
-		"go.mod":                  "module example.com/runbinaryfixture\n\ngo 1.25\n",
-		"cmd/bench/main.go":       "package main\n\nfunc main() {}\n",
-		"scripts/go-build.sh":     "#!/usr/bin/env bash\nexit 0\n",
-		"scripts/go-build.inputs": "build_script=scripts/go-build.sh\n",
+		"go.mod":                      "module example.com/runbinaryfixture\n\ngo 1.25\n",
+		"cmd/bench/main.go":           "package main\n\nfunc main() {}\n",
+		"scripts/go-build.sh":         "#!/usr/bin/env bash\nexit 0\n",
+		freshness.BuildInputsManifest: freshness.BuildInputLine("build_script", "scripts/go-build.sh"),
 	} {
 		path := filepath.Join(root, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

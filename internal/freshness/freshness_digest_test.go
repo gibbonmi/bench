@@ -228,7 +228,7 @@ func TestDigestTracksInputsDeclaredByTheBuildOwnerManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := file.WriteString("future_input=declared-later.txt\n"); err != nil {
+	if _, err := file.WriteString(BuildInputLine("future_input", "declared-later.txt")); err != nil {
 		_ = file.Close()
 		t.Fatal(err)
 	}
@@ -291,8 +291,10 @@ func writeBuildFixtureAt(t *testing.T, root string) string {
 		"cmd/bench/main.go":       "package main\n\nimport \"example.com/freshnessfixture/internal/local\"\n\nfunc main() { _ = local.Value }\n",
 		"internal/local/local.go": "package local\n\nconst Value = \"value\"\n",
 		"scripts/go-build.sh":     "#!/usr/bin/env bash\n",
-		"scripts/go-build.inputs": "build_script=scripts/go-build.sh\npackage_version=package.json\ngo_requirements=internal/releaseevidence/requirements.json\n",
-		"package.json":            "{\"version\":\"0.0.0\"}\n",
+		auxiliaryInputsManifest: BuildInputLine("build_script", "scripts/go-build.sh") +
+			BuildInputLine("package_version", "package.json") +
+			BuildInputLine("go_requirements", "internal/releaseevidence/requirements.json"),
+		"package.json": "{\"version\":\"0.0.0\"}\n",
 		"internal/releaseevidence/requirements.json": "{}\n",
 	}
 	for name, body := range files {
@@ -321,7 +323,7 @@ func TestDeclaresBuildInputsReadsPresenceRatherThanContent(t *testing.T) {
 	}{
 		{name: "absent", place: func(*testing.T, string) {}},
 		{name: "regular", declare: true, place: func(t *testing.T, path string) {
-			if err := os.WriteFile(path, []byte("build_script=scripts/go-build.sh\n"), 0o644); err != nil {
+			if err := os.WriteFile(path, []byte(BuildInputLine("build_script", "scripts/go-build.sh")), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}},
@@ -332,7 +334,7 @@ func TestDeclaresBuildInputsReadsPresenceRatherThanContent(t *testing.T) {
 		}},
 		{name: "live-symlink", declare: true, place: func(t *testing.T, path string) {
 			target := filepath.Join(filepath.Dir(path), "elsewhere.inputs")
-			if err := os.WriteFile(target, []byte("build_script=scripts/go-build.sh\n"), 0o644); err != nil {
+			if err := os.WriteFile(target, []byte(BuildInputLine("build_script", "scripts/go-build.sh")), 0o644); err != nil {
 				t.Fatal(err)
 			}
 			if err := os.Symlink(target, path); err != nil {
