@@ -1,7 +1,7 @@
 # 5. Run a kit worktree target on its own current build
 
 Blocked by: 4-run-verbs-in-tree-target.md
-Writes: internal/treetarget/ (new), internal/systemtest/
+Writes: internal/treetarget/ (new), internal/systemtest/, internal/worktree/path.go, internal/worktree/tree_target.go, internal/freshness/freshness_buildinputs.go
 Covers: TT43, TT44, TT45, TT46, TT47, TT48, TT50
 
 ## What to build

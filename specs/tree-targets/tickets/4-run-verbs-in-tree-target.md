@@ -1,7 +1,7 @@
 # 4. Run a tree-scoped verb in its named tree target
 
 Blocked by: 3-name-the-graded-tree.md
-Writes: internal/treetarget/ (new), internal/worktree/tree_target.go (new), internal/worktree/tree_target_test.go (new), internal/worktree/exec.go, cmd/bench/tree_scope.go (new), cmd/bench/tree_scope_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main_test.go, cmd/bench/selected_queries_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/, internal/canonicalpath/canonicalpath.go, internal/canonicalpath/canonicalpath_test.go
+Writes: internal/treetarget/ (new), internal/worktree/tree_target.go (new), internal/worktree/tree_target_test.go (new), internal/worktree/exec.go, cmd/bench/tree_scope.go (new), cmd/bench/tree_scope_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main_test.go, cmd/bench/selected_queries_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/, internal/canonicalpath/canonicalpath.go, internal/canonicalpath/canonicalpath_test.go, internal/worktree/path.go, internal/env/wrapper.go
 Covers: TT8, TT9, TT26, TT27, TT28, TT29, TT30, TT31, TT32, TT33, TT34, TT35, TT36, TT37, TT38, TT39, TT40, TT41, TT49, TT53, TT54, TT55, TT57, TT58, TT59, TT62
 
 ## What to build
