@@ -51,6 +51,13 @@ func WorktreeUsage() string {
 	return "usage: bench worktree [--refresh] [objective...]\n       " + strings.Join(worktreeCommands, "\n       ") + "\n       " + WorktreeExecGate + "\n"
 }
 
+// WorktreeBuildFor is WorktreeBuild with target in its `<target>` slot, so each remedy that
+// names the build of one worktree fills the grammar one way. The caller quotes target when
+// its sink needs a shell word.
+func WorktreeBuildFor(target string) string {
+	return strings.Replace(WorktreeBuild, "<target>", target, 1)
+}
+
 // PrimaryCheckoutRefusal is the one refusal a Bench write verb prints from the primary
 // checkout. Within Bench, main receives writes only through landings, so every verb
 // that writes the tree redirects to a worktree with this line.

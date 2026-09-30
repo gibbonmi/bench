@@ -3,7 +3,6 @@ package worktree
 import (
 	"errors"
 	"io"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -71,6 +70,6 @@ func PrintTreeTargetRefusal(stderr io.Writer, verb string, err error) int {
 // label, whose own build cannot start, and answers exit 1. The repair is the build verb on
 // label, with the label as one shell word. Neither line names the executable path.
 func PrintTreeBuildRefusal(stderr io.Writer, verb, label, detail string) int {
-	next := strings.Replace(usage.WorktreeBuild, "<target>", axi.ShellQuote(label), 1)
+	next := usage.WorktreeBuildFor(axi.ShellQuote(label))
 	return printTargetRefusal(stderr, verb, refusalError{refusal{detail: detail, next: next}})
 }

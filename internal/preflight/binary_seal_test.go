@@ -232,8 +232,13 @@ func TestBinarySealRemedyNamesTheWorktreeBuildVerb(t *testing.T) {
 
 	f.AssignmentTarget = "a1b2c3"
 	owned, _ := checkRow(Decide(f), "binary-seal")
-	if want := strings.Replace(usage.WorktreeBuild, "<target>", f.AssignmentTarget, 1); owned.Verdict != verdictRed || owned.Next != want {
+	if want := usage.WorktreeBuildFor(f.AssignmentTarget); owned.Verdict != verdictRed || owned.Next != want {
 		t.Errorf("owned binary-seal row = %+v, want red with next %q", owned, want)
+	}
+	// The expectation above reads the fill that the row uses, so this check is the one that
+	// sees a fill that leaves the slot open.
+	if !strings.HasSuffix(owned.Next, " "+f.AssignmentTarget) {
+		t.Errorf("owned binary-seal next %q does not name the target %q", owned.Next, f.AssignmentTarget)
 	}
 	for _, cell := range []string{owned.Detail, owned.Next} {
 		if strings.Contains(cell, "cd ") || strings.Contains(cell, "scripts/go-build.sh") {
