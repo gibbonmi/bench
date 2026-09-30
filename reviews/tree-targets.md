@@ -524,6 +524,122 @@ Findings: 0. R4 and R5 are pinned, and an independent scope probe bit.
 
 Chunk TT-C3 closes after two repair cycles, the full allowance.
 
+## TT-C4 ticket 4 author evidence
+
+Ticket 4 had a fresh `bench-writer` successor author, `tt-t4-author-3`, on opus at xhigh effort, with a cap of 4 attempts. The first author, `tt-t4-author`, stopped blocked on a fence gap and committed nothing. The second author, `tt-t4-author-2`, lost its session and left an uncommitted partial diff. The coordinator kept that diff outside the tree.
+
+The successor started at `ada9184e` with a clean tree. It committed `d5bad995` on a lane pass in the first attempt. The successor then committed this record in a second commit.
+
+The successor read the preserved diff as prior art and verified each kept part again with its own runs. It kept these parts:
+
+- `internal/treetarget/flag.go`, `internal/worktree/tree_target.go`, and the constant `primaryTarget`, with no change.
+- The split of `runChild` out of `runWorktreeChild` in `internal/worktree/exec.go`, and the constant `WrapperEnv`.
+- The change to `canonicalpath.Resolve` and its test `TestResolveRelativeUnderSymlinkedWorkingDirectory`.
+- The help insertion, the test `TestHelpRendersTreeTargetFromScope`, and the help-row edits in four `cmd/bench` test files.
+- `internal/treetarget/run.go`, its tests, the lookup tests in `internal/worktree`, `TestTreeTargetOnlyAsFirstArgument`, and the system test, with the changes below.
+
+The successor changed these parts of the preserved diff:
+
+- `treetarget.Call` takes the invoking wrapper as a field. So the `internal/treetarget` tests bind no process environment, and the dispatcher reads `BENCH_WRAPPER` through `worktree.WrapperEnv`.
+- `TestRunStartsChildInTarget` does not bind `BENCH_KIT` or `BENCH_RUN_BINARY`, because TT48 in ticket 5 owns the child environment.
+- The system test reads the row cells through `treetargettest.WithoutRow` and `systemTOONCell`. The literal row of the preserved test failed two system runs, because TOON quotes a HEAD that starts with a zero and a digit.
+- `TestTreeTargetPrefersOneActiveLabel` creates the retired assignment first, so a lookup that takes the first match fails.
+- `TestTreeTargetOnlyAsFirstArgument` binds no Bench home, because `TestMain` already gives each test a private home.
+
+### Red and green log
+
+The production code was in the tree before the first test run. So each red came from a `bench probe`, from a revert of one file to HEAD, or from a copy-aside edit for the system suite. After each probe and each restore, the test passed again.
+
+- TT8: a probe omitted the help insertion. `TestHelpInventoryIsComplete` failed, and so did the pinned help rows in `TestHelpKeepsStatusPublicRoute`, `TestRootAndHelpAlignWrapperAndBinary`, and four other help tests.
+- TT9: the same omission failed the tree row of `TestHelpRendersTreeTargetFromScope`. A probe that inserted the flag on every row failed its repository row.
+- TT26, TT28, and TT41: a copy-aside edit made the dispatcher ignore `--in`. The system suite failed the three rows with `usage: bench status (unknown argument: --in)` and the coverage equivalent.
+- TT54: in the same system run, a copy-aside edit made `bench worktree exec` refuse a child named `bench`. The row failed at exit 2, and TT55 stayed green.
+- TT55: a copy-aside edit made `boundaryRoot` answer the primary checkout. The row failed with the target `primary`.
+- TT27: a probe kept `--in alpha` in the child argv, and a probe ran the child in the parent root. Each failed `TestRunStartsChildInTarget`. A probe that printed a `worktree:` line in the parent failed the check for no parent output.
+- TT53: a probe gave the child the directory spelling `<root>/.`, and the PWD check failed. A probe that dropped `canonicalpath.Resolve` stayed silent, as the spec states, because the create verb records the physical path.
+- TT29 and TT57: the plan probe `4-flag-probe` failed both rows. A probe that removed the empty-value test failed TT57 alone with the unassigned refusal at exit 1.
+- TT58: a probe that removed the dash step failed TT58 and the dash row with a control character. A probe that printed the raw value failed that dash row alone.
+- TT30, TT31, and TT59: three probes of `pathShaped` each dropped one path shape. They failed TT30 with TT59, TT31 with the `~nobody` row, and TT59 alone.
+- TT32: a probe ran the path-shape test before the label lookup, and `team/alpha` gave the usage line at exit 2. A probe that answered the primary root failed the child directory check.
+- TT33: a probe answered the primary root for an unknown label, and a child started at exit 0.
+- TT34: a probe accepted each ledger state, and the released label started a child.
+- TT35: a probe took the first of two colliding matches, and a child started.
+- TT36: a probe removed the control-character test, and the value gave the unassigned refusal.
+- The marker checks of `TestRunRefusesBeforeChild`: a probe started a child before the lookup, and the 8 lookup rows failed on the marker. A probe started a child before the grammar steps, and all 12 rows failed on the marker.
+- TT37: a probe moved a late `--in` to the front, and `bench gate --fresh --in primary` started the child at exit 0. A probe refused a late `--in` on a repository verb, and `bench version x --in primary` exited 2.
+- TT37 controls: a probe that ignored `--in` failed the first-position call. A probe that consumed `--in` and started no child failed the marker control. A probe that started a silent child for a late flag failed the late-flag marker check.
+- TT38: three probes in `internal/worktree/exec.go` failed `TestRunPassesChildResult`. The probes added the `worktree:` line, capped the exit at 1, and dropped the child stdout.
+- TT39: a probe bypassed the wrapper, and the wrapper marker was absent. A probe that also started the running executable failed the check for its absent marker.
+- TT40: a probe demanded a wrapper, and the direct run failed with `exec: no command`.
+- TT49: a probe ran `<root>/dist/bench`, and the stray marker existed in both subtests. A probe that kept `--in alpha` in the argv failed both argv checks.
+- TT62: a revert of `internal/canonicalpath/canonicalpath.go` to HEAD failed the `.` row with the link spelling. A probe that joined the working directory through `filepath.Join` failed the `jump/..` row.
+- The lookup tests in `internal/worktree`: a probe that ignored the active match gave the ambiguity refusal. A probe that took the first match gave the state refusal instead of the ambiguity.
+- A probe that ran the general resolver first failed the id, prefix, label-prefix, and absolute-path rows of `TestTreeTargetTakesOnlyAnExactLabel`. A probe that dropped the path-shape outcome failed its two path rows.
+
+### Deviations
+
+- Non-behavioral reading, for reviewer veto: TT34 asks that stderr names the released state. The state refusal of step 5 prints `assignment <id> is not active`, and the shared printer drops the observed state. `internal/worktree/path.go` owns that printer and is outside the fence.
+- `internal/treetarget/identify.go` gains the constant `primaryTarget`, which the row cell and the keyword share. The ticket marks `internal/treetarget/` as new, but ticket 3 created it, and the fence holds it as a prefix.
+- Outside a repository, a call with `--in` prints the not-in-repo line on stderr at exit 1 after the grammar steps. The spec states no rule for this case.
+- The usage line of a dash value or a path value escapes the value through `sanitize.Controls`, so a backslash prints doubled. Only a dash value can carry a control character, because step 3 runs before step 6.
+- `TestTreeTargetOnlyAsFirstArgument` binds `BENCH_WRAPPER` to a marker script in `cmd/bench`. Without it, a late-flag mutation would start the test binary itself as the child. No `internal/worktree` test binds the environment, so the serial census does not change.
+- `internal/systemtest/tree_target_test.go` imports `internal/worktree` for `WrapperEnv`.
+
+The sweep of duplicated facts found one repeated fragment. `TreeTarget` builds the ambiguity id list with the same four lines as `selectAssignment` in `internal/worktree/path.go`, which is outside the fence. `Operand`, `primaryTarget`, `treeTargetFlag`, `leadsWithTreeTarget`, `WrapperEnv`, and `runChild` each hold one fact that two callers share. The independent expectations are the usage lines, the refusal lines, the child argv, directory, and PWD, the help rows, and the row cells. The log above records a red for each.
+
+### Probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`. The probes ran on the source that `d5bad995` commits, with one exception. Before the commit, the successor removed a redundant raw-byte clause from `TestRunRefusesBeforeChild`. So the plan probe and the before-lookup probe ran again at `d5bad995`, and both bit. The first row is the plan probe `4-flag-probe`, with the exact plan command. The second row is the successor's own probe of the central property.
+
+| File | Mutation | Test | Row | Verdict |
+|---|---|---|---|---|
+| `internal/treetarget/flag.go` | swap: `<label\|primary>` to `<label>` | TestRunRefusesBeforeChild | TT29, TT57 | bit |
+| `cmd/bench/tree_scope.go` | self-probe, swap: the target guard to `if true \|\| …` | TestTreeTargetOnlyAsFirstArgument | TT37 | bit |
+| `internal/treetarget/run.go` | swap: start a child before the lookup | TestRunRefusesBeforeChild | 8 lookup rows | bit |
+| `internal/treetarget/run.go` | swap: start a child before the grammar steps | TestRunRefusesBeforeChild | 12 rows | bit |
+| `internal/treetarget/run.go` | swap: keep `--in alpha` in the child argv | TestRunStartsChildInTarget | TT27 | bit |
+| `internal/treetarget/run.go` | swap: resolve the parent root | TestRunStartsChildInTarget | TT27 | bit |
+| `internal/treetarget/run.go` | swap: the child directory to `dir+"/."` | TestRunStartsChildInTarget | TT53 | bit |
+| `internal/treetarget/run.go` | swap: drop `canonicalpath.Resolve` | TestRunStartsChildInTarget | TT53 | silent |
+| `internal/treetarget/flag.go` | swap: remove the empty-value test | TestRunRefusesBeforeChild | TT57 | bit |
+| `internal/treetarget/flag.go` | swap: remove the dash step | TestRunRefusesBeforeChild | TT58 | bit |
+| `internal/treetarget/flag.go` | swap: print the raw value | TestRunRefusesBeforeChild | dash row | bit |
+| `internal/worktree/tree_target.go` | swap: three `pathShaped` omissions | TestRunRefusesBeforeChild | TT30, TT31, TT59 | bit |
+| `internal/worktree/tree_target.go` | swap: path shape before the label lookup | TestRunLabelWinsOverPathShape | TT32 | bit |
+| `internal/worktree/tree_target.go` | swap: answer the primary root for no match | TestRunRefusesBeforeChild | TT33 | bit |
+| `internal/worktree/tree_target.go` | swap: accept each ledger state | TestRunRefusesBeforeChild | TT34 | bit |
+| `internal/worktree/tree_target.go` | swap: `> 1` to `> 2` for the ambiguity | TestRunRefusesBeforeChild | TT35 | bit |
+| `internal/worktree/tree_target.go` | swap: remove the control-character test | TestRunRefusesBeforeChild | TT36 | bit |
+| `internal/worktree/exec.go` | swap: three child-result faults | TestRunPassesChildResult | TT38 | bit |
+| `internal/treetarget/run.go` | swap: bypass the wrapper | TestRunSelectsChildExecutable | TT39 | bit |
+| `internal/treetarget/run.go` | swap: demand a wrapper | TestRunSelectsChildExecutable | TT40 | bit |
+| `internal/treetarget/run.go` | swap: run `<root>/dist/bench` | TestRunSelectsChildExecutable | TT49 | bit |
+| `cmd/bench/command_registry.go` | omit: the help insertion | eight help tests | TT8, TT9 | bit |
+| `cmd/bench/tree_scope.go` | swap: insert the flag on every row | TestHelpRendersTreeTargetFromScope | TT9 | bit |
+| `cmd/bench/tree_scope.go` | swap: move a late `--in` to the front | TestTreeTargetOnlyAsFirstArgument | TT37 | bit |
+| `internal/canonicalpath/canonicalpath.go` | swap: join through `filepath.Join` | TestResolveRelativeUnderSymlinkedWorkingDirectory | TT62 | bit |
+| `cmd/bench/main.go` | swap: remove the `anchors` scope | the `subcommand-routing` check | liveness | bit |
+
+A first try of three probes did not compile, and each verdict was `invalid`. The table holds the rerun of each. The system rows TT26, TT28, TT41, TT54, and TT55 took copy-aside edits, because `bench probe` does not take the system suite. The log above names each edit. Those runs came before `runTreeTarget` took `worktree.WrapperEnv` in place of the same literal name.
+
+### Verification
+
+The successor ran each check below on the source of `d5bad995`, and each passed:
+
+- `bench test --package ./internal/treetarget`, in 456 ms;
+- `bench test --package ./internal/worktree`, in 52022 ms, with two environment capability skips for unix sockets;
+- `bench test --package ./internal/canonicalpath`, in 4 ms, where the revert run failed in 4 ms, so the tests run;
+- `bench test --package ./cmd/bench`, in 12893 ms;
+- `bench test --check system`, in 52478 ms;
+- `bench test --check subcommand-routing`, in 20 ms, where the liveness probe bit in 20 ms;
+- `bench test --package ./internal/conformance --run TestRootConformance`, in 6658 ms;
+- `bench test --check skip-ownership`, in 41 ms;
+- `bench test --package ./internal/conformance`, in 38202 ms, with three environment capability skips;
+- `bench structure --growth f981cd3d`, which reported that no source file grew past its budget;
+- `gofmt -l` and `go vet -tags system` on the changed packages.
+
+The commit ran with `--preflight-build tree-targets`. The lane passed, the worktree build was green, and `bench preflight build tree-targets` reported 15 green checks, 1 check that does not apply, and 0 red checks.
+
 ```bench-review-record
 {
   "version": 2,
