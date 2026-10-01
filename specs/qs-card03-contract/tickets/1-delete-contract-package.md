@@ -1,7 +1,7 @@
 # Delete the contract package and its marker-wait check
 
 Blocked by: none
-Writes: internal/contract/marker_wait.go, internal/contract/marker_wait_test.go, internal/conformance/marker_wait_deadline_test.go, internal/conformance/wait_deadline_literal_test.go, internal/conformance/checks_test.go, internal/conformance/registry/checks.go, internal/conformance/registry/packages.go, internal/freshness/publication_topology_test.go, internal/commit/commit_test.go, projects/benchkit.md, tests/canary/package-core-guard/bounds-dot-import-wait/BASE, tests/canary/package-core-guard/bounds-dot-import-wait/EXPECT, tests/canary/package-core-guard/bounds-dot-import-wait/MUTATE.json, tests/canary/package-core-guard/bounds-raw-elapsed-wait/BASE, tests/canary/package-core-guard/bounds-raw-elapsed-wait/EXPECT, tests/canary/package-core-guard/bounds-raw-elapsed-wait/MUTATE.json, tests/canary/package-core-guard/bounds-raw-injected-wait/BASE, tests/canary/package-core-guard/bounds-raw-injected-wait/EXPECT, tests/canary/package-core-guard/bounds-raw-injected-wait/MUTATE.json
+Writes: internal/contract/marker_wait.go, internal/contract/marker_wait_test.go, internal/conformance/marker_wait_deadline_test.go, internal/conformance/wait_deadline_literal_test.go, internal/conformance/checks_test.go, internal/conformance/bounds_policy_test.go, internal/conformance/registry/checks.go, internal/conformance/registry/packages.go, internal/freshness/publication_topology_test.go, internal/commit/commit_test.go, projects/benchkit.md, tests/canary/package-core-guard/bounds-dot-import-wait/BASE, tests/canary/package-core-guard/bounds-dot-import-wait/EXPECT, tests/canary/package-core-guard/bounds-dot-import-wait/MUTATE.json, tests/canary/package-core-guard/bounds-raw-elapsed-wait/BASE, tests/canary/package-core-guard/bounds-raw-elapsed-wait/EXPECT, tests/canary/package-core-guard/bounds-raw-elapsed-wait/MUTATE.json, tests/canary/package-core-guard/bounds-raw-injected-wait/BASE, tests/canary/package-core-guard/bounds-raw-injected-wait/EXPECT, tests/canary/package-core-guard/bounds-raw-injected-wait/MUTATE.json
 Covers: none
 
 ## What to build
@@ -16,6 +16,8 @@ Three `bounds-policy` canary fixtures use the deleted wait file as their subject
 
 Keep the guards that refuse a retired shape. These are the retired gate fragment in the gate entry check and the contract path rules in the build census.
 
+The deleted wait was the only live code that showed two classified wait shapes read green under `bounds-policy`. These shapes are a classified duration argument to an injected duration function and a classified window in a current-time deadline compare. Add a unit test that plants each shape in a temporary root and expects no diagnostic. Pair each shape with its raw form and expect the named diagnostic.
+
 ## Acceptance
 
 - [ ] No Go source names `WaitForTwoLegMarkers`, `MarkerWaitMiss`, `checkMarkerWaitDeadlines`, or `marker-wait-deadlines`.
@@ -24,4 +26,5 @@ Keep the guards that refuse a retired shape. These are the retired gate fragment
 - [ ] The `wait-deadline-literals` check keeps its duration-literal scanner, and its bite test passes.
 - [ ] The three `bounds-policy` fixtures bite on `internal/chargeevidence/store.go`, and each red goes away after restore.
 - [ ] The gate entry check keeps its retired contract fragment, and the build census keeps its contract path rules.
+- [ ] A `bounds-policy` unit test gives no diagnostic for a classified injected duration argument or a classified current-time deadline compare. Each raw form gives its diagnostic. A probe that rejects each classified form turns the test red.
 - [ ] `go vet ./...`, the changed-package tests, and the touched conformance checks pass.
