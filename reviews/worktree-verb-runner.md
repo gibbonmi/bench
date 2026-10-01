@@ -357,6 +357,41 @@ The author ran each check on the source of `c56f6107`, and each passed. `bench t
 
 `TestPackageTestCountPin` passed with `worktreeTestCount` at 688, and `TestSerialSetStaysBelowTheCeiling` passed at the ceiling of 46. The diff adds no `t.Setenv` call. The author also ran `bench test --package ./internal/conformance` and `bench structure --growth ef2cd35f`, and each passed.
 
+## VR-C2 ticket 3 author evidence
+
+Ticket 3 had a fresh `bench-writer` author, `vr-t3-author`, on opus at medium effort, with a cap of 3 attempts. The author started at `8331ef2b` on the chunk base `ef2cd35f`. The author committed `1c202cd6` on a lane pass in the first attempt, and then committed this record alone. The build preflight on `1c202cd6` reported 13 green checks, 2 checks that do not apply, and 0 red checks.
+
+The ticket is a pure migration, so no row has a new test. The red for VR26 is the tuple scan at the base, and the regression probe bit before and after the change.
+
+- VR26: `newOwnedAssignment`, `newPendingAssignment`, and `newOwnedSubmoduleAssignment` each return `ownedAssignment`, which `verb_fixture_test.go` declares. At `8331ef2b` the tuple scan printed 32 lines, and three of them were these builders. At `1c202cd6` the scan printed 29 lines, and none of them was one of these builders.
+
+The author reported these choices. The Spec axis grades each one.
+
+- Each call site that reads two or more parts reads one value `f`, and each read names its field. A call site that reads one part reads that field directly from the builder result.
+- `restoredAssignment` embeds `ownedAssignment`, so one `call` method builds the call value from the root and the home.
+- A reset call value that sets only the root, the home, and the arguments now comes from `f.call`. A call value that also sets `joins` keeps its literal, because a split would add a line.
+- One test in `resume_test.go` builds two assignments in one scope. The first value is `o`, and the second value is `f`.
+- No check required an edit to the five registry paths, so the diff leaves them unchanged.
+
+### Ticket 3 probe verdicts
+
+The probe used the same mutation and run as ticket 2, and each restore reads `yes`.
+
+| Source | Verdict | Failed tests |
+|---|---|---|
+| `8331ef2b`, before the first edit | bit | `TestResetApplyRefusesAStalePlan`, `TestResetFingerprintTracksTheIndex`, `TestResetRestoreRefusesAStaleIndex`, `TestResetRestoreRefusesAStalePlan` |
+| `1c202cd6` | bit | `TestResetApplyRefusesAStalePlan`, `TestResetFingerprintTracksTheIndex`, `TestResetRestoreRefusesAStaleIndex`, `TestResetRestoreRefusesAStalePlan` |
+
+### Ticket 3 line counts and VR46 pre-check
+
+Each over-budget file that ticket 3 writes has the same line count at `ef2cd35f` and at `1c202cd6`. The counts are `worktree_test.go` 1031, `resume_test.go` 598, `identity_component_test.go` 509, `lifecycle_test.go` 436, `exec_test.go` 432, and `ownership_test.go` 421. Only `verb_fixture_test.go` grew, by 6 lines. `bench structure --growth ef2cd35f` passed.
+
+The author counted the `t.Fatal`, `t.Fatalf`, `t.Error`, and `t.Errorf` calls and the `requireTest` and `mustNoError` calls in each function of each package test file. The count was 2534 in 1027 functions at `8331ef2b` and at `1c202cd6`. No function count changed.
+
+### Ticket 3 verification
+
+The author ran each check on the source of `1c202cd6`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The package excerpt omits its two skip rows, and each skip is a unix socket capability skip. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
+
 ```bench-review-record
 {
   "version": 2,
@@ -828,7 +863,7 @@ The author ran each check on the source of `c56f6107`, and each passed. `bench t
     {
       "id": "VR-C2",
       "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
-      "tip": "c56f6107c954278484cee53eec9b4d56bbd32d44",
+      "tip": "1c202cd6dcb344a14f67c35b26bcc50da0d67376",
       "plan_digest": "pending",
       "source_digest": "pending",
       "acceptance_rows": [
@@ -854,6 +889,24 @@ The author ran each check on the source of `c56f6107`, and each passed. `bench t
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,50660\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "2-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c2-3-worktree-r1",
+          "performer": "claude:bench-writer/vr-t3-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6e41a0cc15f3366a8dac08ef745a6ab39d1f59e8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t3-author-20261001/3-worktree@1c202cd6",
+            "digest": "sha256:6f671bc8e81d4b1cc7f709d80f29d761ab5e98f01aee96ab4509415334ce598d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,51143\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "3-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
