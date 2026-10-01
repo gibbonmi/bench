@@ -351,6 +351,6 @@ func changedCommand(version string, args []string, base, sourceTip string, full 
 	}
 	decls := touchedDecls(pkgs, root, added)
 	rows := blastRows(pkgs, root, decls, changed)
-	deleted := deletedRows(pkgs, root, hunks, readBaseSources(root, subject.Base, hunks))
+	deleted := deletedRows(hunks, readBaseSources(root, subject.Base, hunks), readTipSources(root, subject.Tip, hunks))
 	return blastResponse(source, len(pkgs), len(decls), rows, deleted, full, args)
 }

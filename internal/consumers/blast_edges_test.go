@@ -82,6 +82,51 @@ func TestDeletionOnlyEditTouchesTheSurvivingDeclaration(t *testing.T) {
 	}
 }
 
+// The build-tag fixture is one repository whose target package holds a file that only a
+// build tag selects. The default build context does not load that file, so the stubbed
+// loader leaves it out, as the real loader does. The tip edits the body of `Fixture` and
+// deletes `Gone`, and both sit inside one removed run.
+const (
+	taggedKeep = "package target\n" +
+		"\n" +
+		"func Keep() {}\n"
+	taggedBase = "//go:build system\n" + // 1
+		"\n" + // 2
+		"package target\n" + // 3
+		"\n" + // 4
+		"func Fixture() int { return 1 }\n" + // 5
+		"\n" + // 6
+		"func Gone() {}\n" // 7
+	taggedTip = "//go:build system\n" + // 1
+		"\n" + // 2
+		"package target\n" + // 3
+		"\n" + // 4
+		"func Fixture() int { return 2 }\n" // 5
+)
+
+// A body edit in a file that only a build tag selects keeps its declaration, so it is not
+// a deletion, and a declaration the same run removed still is one. The loader never reads
+// that file, so the deletion test must read the tip's own sources.
+func TestBodyEditInBuildTaggedFileIsNotADeletion(t *testing.T) {
+	root := gittest.RepoOnBranch(t, "main")
+	base := commitTree(t, root, map[string]string{
+		"target/target.go": taggedKeep,
+		"target/tagged.go": taggedBase,
+	}, "base")
+	commitTree(t, root, map[string]string{"target/tagged.go": taggedTip}, "tip")
+	t.Chdir(root)
+	stubLoad(t, func(root string) []fixturePkg {
+		return []fixturePkg{{path: "example.com/fx/target", files: map[string]string{root + "/target/target.go": taggedKeep}}}
+	})
+	out, code := run(t, "--changed", "--base", base, "--source-tip", head(t), "--full")
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0; out=%q", code, out)
+	}
+	if !strings.Contains(out, "blast_deleted[1]{changed_symbol,base_file,base_line}:\n  target.Gone,target/tagged.go,7\n") {
+		t.Fatalf("stdout = %q, want one blast_deleted row for target.Gone and none for the kept target.Fixture", out)
+	}
+}
+
 // BL8 (story 19): blast rows come only from the frozen pair, so a dirty checkout refuses
 // rather than positioning rows in working-tree bytes the pair never froze.
 func TestDirtyCheckoutRefusesTheChangedQuery(t *testing.T) {

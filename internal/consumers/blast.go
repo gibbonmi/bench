@@ -200,19 +200,21 @@ func blastRows(pkgs []*Package, root string, decls []touchedDecl, changed map[st
 
 // deletedRows names every declaration the base declared inside a removed line run whose
 // name the tip's package no longer declares. A package is a directory, so a declaration
-// moved between files of one package is not a deletion. baseSources maps a
-// repository-relative path to that path's base-side bytes, so this function parses rather
-// than reads: the `git show` calls stay at the command's rim.
-func deletedRows(pkgs []*Package, root string, hunks []fileHunks, baseSources map[string]string) []deletedRow {
-	live := tipDeclNames(pkgs, root)
+// moved between files of one package is not a deletion. baseSources and tipSources map a
+// repository-relative path to that path's bytes on each side, so this function parses
+// rather than reads: the `git show` calls stay at the command's rim. The tip side is read
+// from the pair, not from the loaded packages, because the loader omits every file the
+// default build context excludes, and a declaration in such a file is still declared.
+func deletedRows(hunks []fileHunks, baseSources, tipSources map[string]string) []deletedRow {
+	live := sourceDeclNames(tipSources)
 	var out []deletedRow
 	for _, fh := range hunks {
 		source, ok := baseSources[fh.BasePath]
-		if !ok || len(fh.Removed) == 0 {
+		if !ok || !fh.dropsBaseLines() {
 			continue
 		}
 		fset := token.NewFileSet()
-		file, err := parseBaseFile(fset, fh.BasePath, source)
+		file, err := parseDecls(fset, fh.BasePath, source)
 		if err != nil {
 			continue
 		}
@@ -241,25 +243,28 @@ func deletedRows(pkgs []*Package, root string, hunks []fileHunks, baseSources ma
 	return out
 }
 
-// parseBaseFile parses one base-side file for its declarations only. The base revision is
-// not type-checked: a blast answer never enumerates base-side consumers, so the parse
-// needs the declaration names and their spans and nothing else.
-func parseBaseFile(fset *token.FileSet, name, source string) (*ast.File, error) {
+// parseDecls parses one file of a pair side for its declarations only. Neither side is
+// type-checked here: a blast answer never enumerates base-side consumers, and the deletion
+// test needs only the declaration names and their spans.
+func parseDecls(fset *token.FileSet, name, source string) (*ast.File, error) {
 	return parser.ParseFile(fset, name, source, parser.SkipObjectResolution)
 }
 
-// tipDeclNames keys every tip declaration by its package directory and its spelling. The
-// directory is the key rather than the import path because the base side is parsed
-// without type information and knows only where the file sits.
-func tipDeclNames(pkgs []*Package, root string) map[string]bool {
+// sourceDeclNames keys every declaration of the tip sources by its package directory and
+// its spelling. The directory is the key rather than the import path because the base side
+// is parsed without type information and knows only where the file sits. A file that does
+// not parse declares nothing.
+func sourceDeclNames(sources map[string]string) map[string]bool {
 	live := map[string]bool{}
-	for _, pkg := range pkgs {
-		for _, file := range pkg.Files {
-			rel := relPath(root, pkg.Fset.Position(file.Pos()).Filename)
-			dir := path.Dir(rel)
-			for _, site := range topLevelDecls(pkg.Fset, file) {
-				live[dir+"\x00"+site.Name] = true
-			}
+	for name, source := range sources {
+		fset := token.NewFileSet()
+		file, err := parseDecls(fset, name, source)
+		if err != nil {
+			continue
+		}
+		dir := path.Dir(name)
+		for _, site := range topLevelDecls(fset, file) {
+			live[dir+"\x00"+site.Name] = true
 		}
 	}
 	return live
