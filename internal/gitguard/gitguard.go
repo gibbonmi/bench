@@ -52,7 +52,8 @@ const (
 	resetAdvice  = "Reset through Bench: " + usage.WorktreeReset + " plans a recoverable reset, and --apply applies it."
 )
 
-// denyTable is the ordered source for every destructive class; classification returns
+// denyTable is the ordered source for every deny class, the destructive classes and the
+// git command the lexer cannot parse; classification returns
 // its labels in the live block verdict. The advice column is the one source of the
 // sentence a refusal appends, and only a class whose fix the agent can type carries one.
 var denyTable = []struct{ key, label, advice string }{
@@ -83,6 +84,7 @@ var denyTable = []struct{ key, label, advice string }{
 	{"stash-drop", "git stash drop", ""},
 	{"stash-clear", "git stash clear", ""},
 	{"rm-force", "git rm -rf", ""},
+	{"unlexed", "git in a command the guard cannot parse", shellcommand.UnlexedAdvice},
 }
 
 var denyLabels = func() map[string]string {
@@ -123,9 +125,14 @@ func CommandFromEnvelope(data []byte) string {
 
 // Classify returns the deny label for command, or "" to allow. It tokenizes then scans
 // with wrapper recursion enabled; chk supplies ref/branch truth to the two verdicts
-// that need it.
+// that need it. A command the lexer refuses fails closed when any word is git, because
+// the fallback split cannot show which git subcommand the shell runs.
 func Classify(command string, chk Checker) string {
-	return scan(shellcommand.Parse(command), chk, true)
+	stream := shellcommand.Parse(command)
+	if _, held := stream.UnlexedCommand(isGit); held {
+		return denyLabels["unlexed"]
+	}
+	return scan(stream, chk, true)
 }
 
 // BlockMessage is the actionable refusal the guard returns to the agent for a blocked

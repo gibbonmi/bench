@@ -16,6 +16,12 @@ const blockedPrefixWant = "BLOCKED: Bench response is bounded, complete, and sel
 // the directory, written here independently of the production constant.
 const isolationSentenceWant = "Run the Bench command as its own step, with no earlier step that sets the environment or feeds it."
 
+// notBenchResolver resolves no word to Bench, so only a literal Bench name is a Bench
+// head and no verdict depends on the machine's PATH.
+func notBenchResolver() Resolver {
+	return Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
+}
+
 func TestClassifyFollowOns(t *testing.T) {
 	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(path string) (string, error) {
 		if path == "/work/kit-command" {
@@ -64,7 +70,7 @@ func TestCommandFromEnvelope(t *testing.T) {
 // TestInvokesBenchWalksOneWrapperLevel proves the exported Bench test reads a
 // wrapped string, so a `bash -c` call that runs Bench is a Bench call.
 func TestInvokesBenchWalksOneWrapperLevel(t *testing.T) {
-	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
+	resolver := notBenchResolver()
 	for _, command := range []string{"bench status", "bash -c 'bench status'", "bench worktree exec a -- sed -i x /pool/id/b", "sh -c 'cd /tmp && bench gate'"} {
 		if !InvokesBench(command, resolver) {
 			t.Errorf("InvokesBench(%q) = false, want true", command)
@@ -84,7 +90,7 @@ func TestInvokesBenchWalksOneWrapperLevel(t *testing.T) {
 // refuses. A refuse row that carries a want also grades the refusal line.
 // (Coverage rows G1, G2, G3, G4, G5, G7, G14, KG14, KG15, and the lead rows L1 to L11.)
 func TestClassifySpanScopedFollowOns(t *testing.T) {
-	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
+	resolver := notBenchResolver()
 	for _, tc := range []struct{ row, command string }{
 		{"G1", "bench worktree exec L -- cp a b; cp b a"},
 		{"G1", "bench worktree exec L -- cp a b && rg -n x b"},
@@ -134,7 +140,7 @@ func TestClassifySpanScopedFollowOns(t *testing.T) {
 // sentence and then names the Bench segment and the operator that caused it.
 // (Coverage rows G8, G9, G10.)
 func TestClassifyNamesTheSegmentAndTheOperator(t *testing.T) {
-	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
+	resolver := notBenchResolver()
 	for _, tc := range []struct{ row, command, want string }{
 		{"G8", "cat a && cd /tmp; bench maps", "segment=bench maps operator=;"},
 		{"G9", "bench gate 2>&1", "segment=bench gate operator=2>&1"},
@@ -163,7 +169,7 @@ func TestClassifyNamesTheSegmentAndTheOperator(t *testing.T) {
 // — an assignment, an environment shaper, a pipe, or a `||` — reads the isolation
 // sentence, because the current directory is not what those leads spoil.
 func TestClassifyNamesTheSideOfTheOperator(t *testing.T) {
-	resolver := Resolver{Getwd: func() (string, error) { return "/work", nil }, EvalSymlinks: func(string) (string, error) { return "", errors.New("not bench") }}
+	resolver := notBenchResolver()
 	const prefix = blockedPrefixWant
 	for _, tc := range []struct{ name, command, want string }{
 		{

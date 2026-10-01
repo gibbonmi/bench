@@ -33,8 +33,9 @@ func TestParseFoldsQuotedOperators(t *testing.T) {
 }
 
 // An unbalanced quote or a trailing backslash stops the lexer. Parse then splits on
-// whitespace and newlines, so a guard still sees each later command as its own simple
-// command and does not read it as quoted data.
+// whitespace and operator runs, newlines included, and marks the stream Unlexed. A
+// guard still sees each later command as its own simple command and does not read it
+// as quoted data.
 func TestParseKeepsLaterCommandsVisibleAfterAnUnbalancedInput(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -50,6 +51,7 @@ func TestParseKeepsLaterCommandsVisibleAfterAnUnbalancedInput(t *testing.T) {
 					{Word, "git"}, {Word, "push"}, {Word, "--force"},
 				},
 				Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 6}},
+				Unlexed:  true,
 			},
 		},
 		{
@@ -58,6 +60,7 @@ func TestParseKeepsLaterCommandsVisibleAfterAnUnbalancedInput(t *testing.T) {
 			want: Stream{
 				Tokens:   []Token{{Word, "echo"}, {Word, "\"oops"}, {ControlOperator, ";"}, {Word, "git"}, {Word, "push"}},
 				Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 5}},
+				Unlexed:  true,
 			},
 		},
 		{
@@ -69,6 +72,7 @@ func TestParseKeepsLaterCommandsVisibleAfterAnUnbalancedInput(t *testing.T) {
 					{Word, "git"}, {Word, "push"}, {Word, "origin\\"},
 				},
 				Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 6}},
+				Unlexed:  true,
 			},
 		},
 	} {

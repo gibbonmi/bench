@@ -31,10 +31,12 @@ type SimpleCommand struct {
 	End   int
 }
 
-// Stream is the shell token stream and its simple-command spans.
+// Stream is the shell token stream and its simple-command spans. Unlexed marks a
+// command the lexer refused, whose tokens come from the fallback split.
 type Stream struct {
 	Tokens   []Token
 	Commands []SimpleCommand
+	Unlexed  bool
 }
 
 // RoutinePrefix identifies the executable behind shell assignments and routine prefixes.
@@ -63,7 +65,7 @@ func Parse(command string) Stream {
 	if !ok {
 		raw = fallbackSplit(command)
 	}
-	stream := Stream{Tokens: make([]Token, 0, len(raw))}
+	stream := Stream{Tokens: make([]Token, 0, len(raw)), Unlexed: !ok}
 	start := 0
 	for _, rawToken := range raw {
 		token := Token{Kind: Word, Text: rawToken}
@@ -360,17 +362,6 @@ func lex(s string) (tokens []string, ok bool) {
 	}
 	flush()
 	return tokens, true
-}
-
-func fallbackSplit(s string) []string {
-	var tokens []string
-	for index, line := range strings.Split(s, "\n") {
-		if index > 0 {
-			tokens = append(tokens, ";")
-		}
-		tokens = append(tokens, strings.Fields(line)...)
-	}
-	return tokens
 }
 
 var heredocOpRe = regexp.MustCompile(`<<<|<<(-?)[ \t]*(?:'([^']+)'|"([^"]+)"|\\?([A-Za-z0-9_][A-Za-z0-9_-]*))`)

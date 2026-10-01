@@ -64,6 +64,8 @@ const (
 	SideBeforeDirectory
 	// SideRedirection is a redirection inside the Bench segment.
 	SideRedirection
+	// SideUnlexed is a command the lexer refused, where no operator position is known.
+	SideUnlexed
 )
 
 // Verdict is the guard's decision for one command. Segment holds the Bench
@@ -91,6 +93,8 @@ func repairSentence(side Side) string {
 		return "Run the Bench command as its own step, with no earlier step that sets the environment or feeds it."
 	case SideRedirection:
 		return "Run the Bench command without a redirection."
+	case SideUnlexed:
+		return shellcommand.UnlexedAdvice
 	default:
 		return followOnSentence
 	}
@@ -105,9 +109,14 @@ func repairSentence(side Side) string {
 // `&&` after the span when every later simple command is non-Bench. Any other Bench
 // head refuses on an operator or a redirection from its span to the end of the stream.
 // The named token follows one precedence: a redirection inside the span, else a refused
-// control operator before the span, else the one after it.
+// control operator before the span, else the one after it. A command the lexer refuses
+// fails closed on the first segment that holds a Bench word.
 func Classify(command string, resolver Resolver) Verdict {
-	return judge(shellcommand.Parse(command), resolver, true)
+	stream := shellcommand.Parse(command)
+	if span, held := stream.UnlexedCommand(func(word string) bool { return isBench(word, resolver) }); held {
+		return Verdict{Blocked: true, Segment: shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End]), Side: SideUnlexed}
+	}
+	return judge(stream, resolver, true)
 }
 
 // judge walks the spans in order. The outer flag marks the top-level stream: a

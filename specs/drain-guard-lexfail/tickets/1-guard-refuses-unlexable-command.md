@@ -1,7 +1,7 @@
 # Refuse a guarded command the lexer cannot parse
 
 Blocked by: none
-Writes: internal/shellcommand/shellcommand.go, internal/shellcommand/unlexed.go (new), internal/shellcommand/shellcommand_test.go, internal/shellcommand/unlexed_test.go (new), internal/gitguard/gitguard.go, internal/gitguard/scan.go, internal/gitguard/unlexed_test.go (new), internal/benchguard/benchguard.go, internal/benchguard/unlexed_test.go (new)
+Writes: internal/shellcommand/shellcommand.go, internal/shellcommand/unlexed.go (new), internal/shellcommand/shellcommand_test.go, internal/shellcommand/unlexed_test.go (new), internal/gitguard/gitguard.go, internal/gitguard/scan.go, internal/gitguard/unlexed_test.go (new), internal/benchguard/benchguard.go, internal/benchguard/benchguard_test.go, internal/benchguard/unlexed_test.go (new)
 Covers: none
 
 ## What to build
@@ -25,7 +25,7 @@ Make these changes:
 - The Bench follow-on guard refuses with that repair sentence and the segment that holds the Bench word.
 - A command that the lexer parses keeps its current verdict in both guards.
 
-The fallback code moves to a new file, because `shellcommand.go` is over its structure budget.
+The fallback code moves to a new file, because `shellcommand.go` is over its structure budget. The new Bench guard test needs the resolver that names no Bench executable. The existing tests repeat that resolver four times, so one test helper replaces all of the copies.
 
 ## Acceptance
 
