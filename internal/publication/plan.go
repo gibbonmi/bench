@@ -1,6 +1,6 @@
 // Package publication owns governed npm publication. It owns a registry port
-// with two adapters. The hermetic fixture adapter is the one the gate
-// exercises; the public-npm adapter shells the npm CLI for the runbook. It
+// with two adapters: a hermetic fixture adapter, and a public-npm adapter that
+// shells the npm CLI for the runbook. It
 // also owns a resumable first-publication state machine, and the durable
 // publication-record.json that makes a retry idempotent.
 //

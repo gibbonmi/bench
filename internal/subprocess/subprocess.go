@@ -1,8 +1,8 @@
-// Package subprocess is the one seam for running an external command and
-// capturing its outcome. Conformance probes, the test harness, and the canary
-// runner all cross it instead of hand-rolling capture: the exit-code
-// derivation lives here once, and the two capture modes differ only in whether
-// stdout and stderr stay separate or interleave.
+// Package subprocess runs an external command and captures its outcome, and it
+// holds the termination signals a Bench command traps. Capture and CaptureMerged
+// share one exit-code derivation and differ only in whether stdout and stderr stay
+// separate or interleave. The package does not start, cancel, or kill a process
+// group. Each owner that detaches a child into its own group does that work itself.
 package subprocess
 
 import (

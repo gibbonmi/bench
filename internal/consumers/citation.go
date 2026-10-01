@@ -49,9 +49,9 @@ func (c citation) state() string {
 	return "clean"
 }
 
-// cmd is the replay spelling of the run. Each argument renders through the kit's one
-// shell-quoting owner, so a revision name carrying a shell metacharacter keeps its token
-// boundary and the printed line replays as the argv that produced the answer.
+// cmd is the replay spelling of the run. Each argument renders as one shell token, so a
+// revision name carrying a shell metacharacter keeps its token boundary and the printed
+// line replays as the argv that produced the answer.
 func (c citation) cmd() string {
 	parts := []string{"bench", "consumers"}
 	for _, arg := range c.args {

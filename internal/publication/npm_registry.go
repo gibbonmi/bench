@@ -14,8 +14,8 @@ import (
 )
 
 // NPMCLIRegistry is the public-npm adapter: it shells the real `npm` CLI in a
-// scratch directory. It is runbook-only — the gate never exercises it, since
-// the gate has no network egress and no publish credential. Auth material
+// scratch directory. It serves the runbook, because a real publish needs network
+// egress and a publish credential, and the gate has neither. Auth material
 // (an npm token, OIDC trust) lives in the ambient npm config/environment the
 // CLI reads itself. This adapter never reads a credential value into memory,
 // the record, or any evidence.

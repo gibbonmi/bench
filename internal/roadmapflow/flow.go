@@ -1,8 +1,7 @@
 // Package roadmapflow derives the board's flow from the detail files each commit touched.
 // The flow is the rows opened, fed, and retired over a window of recent history. This
-// package lives beside package roadmap, not inside it. Package roadmap sits at 11 source
-// files against a reviewer-owned directory budget of 12. The open mass this package
-// reports is read back through roadmap.LoadTree, so the row count keeps one source.
+// package reads its open mass back through roadmap.LoadTree, so the row count keeps one
+// source.
 package roadmapflow
 
 import (
