@@ -152,6 +152,13 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
 - The VR1 `clean` row does not refuse an empty expectation. A check that the rendered refusal is not empty closes that gap.
 - In the conflict test, a second `value` shadows the first one.
 
+## VR-C1 verification rerun
+
+A fresh `bench-writer` session, `vr-t1-verify-2`, ran on opus at medium effort, with a cap of 1 attempt. The session changed no code and no spec. Plan commit `51f0951e` added the coverage rows VR60 and VR61 after the last verification, so the ticket 1 checks ran again on that source. The source digest is `9b1948029d85ed2ec2df74290d084ae136196359`, the tree of `51f0951e` without this record file.
+
+- `1-worktree`: `bench test --package ./internal/worktree` passed. The SKIP set holds the two socket capability subtests.
+- `1-probe`: the swap of `unapplicableFingerprint` to `"probe-placeholder"` bit, with 1 failed test. The restore reads `yes`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -311,6 +318,53 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
               "ref": "claude:agent/vr-t1-repair-1-20261001/1-probe@3a318142",
               "digest": "sha256:d4c62cc4f91e4a5a9a0f48e10c988ef86c408c95989af5576fede4b1d6e87bda",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbResultFingerprintTreatsAPlaceholderAsAbsent,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,36"
+            }
+          }
+        },
+        {
+          "id": "vr-c1-1-worktree-r3",
+          "performer": "claude:bench-writer/vr-t1-verify-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b1948029d85ed2ec2df74290d084ae136196359",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t1-verify-2-20261001/1-worktree@51f0951e",
+            "digest": "sha256:5520df147faeccab0adfafbe80226e4f8bde0fff627ed689ee9fc7b7cf751b25",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,49455\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "1-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c1-1-probe-r3",
+          "performer": "claude:bench-writer/vr-t1-verify-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b1948029d85ed2ec2df74290d084ae136196359",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t1-verify-2-20261001/1-probe@51f0951e",
+            "digest": "sha256:6689340540929a0f4d1d45b2e180f465fe41003a75e8ee8cdccd8f01214d0e78",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbResultFingerprintTreatsAPlaceholderAsAbsent,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,33"
+          },
+          "requirement": "1-probe",
+          "command": "bench probe internal/worktree/verb_runner_test.go --swap 'unapplicableFingerprint' --with '\"probe-placeholder\"' --package ./internal/worktree --run TestVerbResultFingerprintTreatsAPlaceholderAsAbsent",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/vr-t1-verify-2-20261001/1-probe@51f0951e",
+              "digest": "sha256:6689340540929a0f4d1d45b2e180f465fe41003a75e8ee8cdccd8f01214d0e78",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbResultFingerprintTreatsAPlaceholderAsAbsent,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,33"
             }
           }
         }
