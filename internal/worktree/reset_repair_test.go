@@ -12,19 +12,19 @@ import (
 
 func TestResetApplyReconcilesAnUnfinishedMerge(t *testing.T) {
 	t.Parallel()
-	j, root, home, _, created := mergeFixture(t, "reset-merge")
-	creation := created[0]
+	f := mergeFixture(t, "reset-merge")
+	creation := f.created[0]
 	commitInWorktree(t, creation.Path, "target.txt", "target\n", "target work")
-	incoming := commitOnDefault(t, root, "incoming.txt", "incoming\n")
-	j.mergeReconcile = func(string, string) error { return errors.New("reconcile fault") }
-	code, out, errout := runMerge(t, j, root, home, "--from", incoming, creation.Assignment.ID)
-	requireTest(t, code == 3, "fixture merge = %d %s %s", code, out, errout)
-	tip := gitOutput(t, root, "rev-parse", creation.Assignment.Branch)
+	incoming := commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
+	f.joins.mergeReconcile = func(string, string) error { return errors.New("reconcile fault") }
+	merged := runVerb(t, verbMerge, f.merge("--from", incoming, creation.Assignment.ID))
+	requireTest(t, merged.exit == 3, "fixture merge = %d %s %s", merged.exit, merged.stdout, merged.stderr)
+	tip := gitOutput(t, f.root, "rev-parse", creation.Assignment.Branch)
 	requireTest(t, gitOutput(t, creation.Path, "status", "--porcelain=v1") != "", "fixture merge was reconciled")
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", tip, creation.Assignment.ID}})
+	plan := runVerb(t, verbReset, f.call("--to", tip, creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", tip, creation.Assignment.ID, "--apply", fingerprint}})
+	result := runVerb(t, verbReset, f.call("--to", tip, creation.Assignment.ID, "--apply", fingerprint))
 	requireTest(t, result.exit == 0 && gitOutput(t, creation.Path, "rev-parse", "HEAD") == tip && gitOutput(t, creation.Path, "status", "--porcelain=v1") == "", "merge repair = %d %s %s", result.exit, result.stdout, result.stderr)
 	body, err := os.ReadFile(filepath.Join(creation.Path, "incoming.txt"))
 	mustNoError(t, err)

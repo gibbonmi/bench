@@ -33,6 +33,27 @@ type ownedAssignment struct {
 	creation Creation
 }
 
+// reauthorizeSet is an owned assignment and the reviewed base and tip that a reauthorize
+// names for it.
+type reauthorizeSet struct {
+	ownedAssignment
+	base, tip string
+}
+
+// mergeSet is a repository, one owned registration for each label, the seam set that the
+// merge verb runs with, and the file that the seam set's lane appends to.
+type mergeSet struct {
+	repoHome
+	joins   joins
+	tally   string
+	created []Creation
+}
+
+// merge builds a merge verb call that runs the merge verb's joins form with the set's seams.
+func (f mergeSet) merge(args ...string) verbCall {
+	return f.callWith(f.joins, args...)
+}
+
 // reclaimPoolFixture is a repository, a private home, and the pool parent under that
 // home. The pool parent holds one key for each repository, and the builder creates it.
 type reclaimPoolFixture struct {

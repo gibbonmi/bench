@@ -758,18 +758,18 @@ func identityComponentDetail(t *testing.T, fixture identityComponentFixture, cre
 // so the sibling's branch stays untouched.
 func TestCreateFromStartsAtTheSiblingTip(t *testing.T) {
 	t.Parallel()
-	_, root, home, _, created := mergeFixture(t, "delegate")
-	sibling := created[0]
+	f := mergeFixture(t, "delegate")
+	sibling := f.created[0]
 	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
 	tip := gitOutput(t, sibling.Path, "rev-parse", "HEAD")
 
 	const request = "create-from-tip"
-	r := runVerb(t, verbCreate, repoHome{root, home}.call(
+	r := runVerb(t, verbCreate, f.call(
 		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label))
 	if r.exit != 0 {
 		t.Fatalf("create --from = (%d, %q, %q), want 0", r.exit, r.stdout, r.stderr)
 	}
-	record, ok, err := intent.FindAssignmentForRequest(root, request)
+	record, ok, err := intent.FindAssignmentForRequest(f.root, request)
 	mustNoError(t, err)
 	if !ok {
 		t.Fatalf("request %q registered no assignment", request)
@@ -795,12 +795,12 @@ func TestCreateFromStartsAtTheSiblingTip(t *testing.T) {
 // the ledger gains no second record.
 func TestCreateFromReplayReturnsTheRecord(t *testing.T) {
 	t.Parallel()
-	_, root, home, _, created := mergeFixture(t, "delegate")
-	sibling := created[0]
+	f := mergeFixture(t, "delegate")
+	sibling := f.created[0]
 	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
 
 	const request = "create-from-replay"
-	call := repoHome{root, home}.call("--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
+	call := f.call("--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
 	first := runVerb(t, verbCreate, call)
 	if first.exit != 0 {
 		t.Fatalf("create --from = (%d, %q, %q), want 0", first.exit, first.stdout, first.stderr)
@@ -814,7 +814,7 @@ func TestCreateFromReplayReturnsTheRecord(t *testing.T) {
 	if second.stdout != first.stdout {
 		t.Errorf("replay stdout = %q, want the first run's %q", second.stdout, first.stdout)
 	}
-	assignments, err := intent.Assignments(root)
+	assignments, err := intent.Assignments(f.root)
 	mustNoError(t, err)
 	held := 0
 	for _, a := range assignments {
@@ -832,13 +832,13 @@ func TestCreateFromReplayReturnsTheRecord(t *testing.T) {
 // the default tip.
 func TestCreateFromRefusesAnUnknownSibling(t *testing.T) {
 	t.Parallel()
-	_, root, home, _, _ := mergeFixture(t, "delegate")
-	before := assignmentCount(t, root)
+	f := mergeFixture(t, "delegate")
+	before := assignmentCount(t, f.root)
 
-	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, f.call(
 		"--request", "create-from-unknown", "--label", "dependent", "--from", "no-such-label")),
 		"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
-	if after := assignmentCount(t, root); after != before {
+	if after := assignmentCount(t, f.root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
 	}
 }
@@ -847,23 +847,23 @@ func TestCreateFromRefusesAnUnknownSibling(t *testing.T) {
 // names `bench commit` at the sibling and a detached sibling names its assignment branch.
 func TestCreateFromRefusesADirtyOrDetachedSibling(t *testing.T) {
 	t.Parallel()
-	_, root, home, _, created := mergeFixture(t, "delegate")
-	sibling := created[0]
+	f := mergeFixture(t, "delegate")
+	sibling := f.created[0]
 	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
-	before := assignmentCount(t, root)
+	before := assignmentCount(t, f.root)
 	mustWrite(t, filepath.Join(sibling.Path, "sibling.txt"), []byte("uncommitted\n"), 0o644)
 
-	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, f.call(
 		"--request", "create-from-dirty", "--label", "dependent", "--from", sibling.Assignment.Label)),
 		"bench worktree create: sibling checkout is not clean\n",
 		"next=bench worktree exec "+sibling.Assignment.ID+" -- bench commit\n")
 
 	gitRun(t, sibling.Path, "checkout", "-q", "--", "sibling.txt")
 	gitRun(t, sibling.Path, "checkout", "-q", "--detach", "HEAD")
-	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, f.call(
 		"--request", "create-from-detached", "--label", "dependent", "--from", sibling.Assignment.Label)),
 		"bench worktree create: sibling is not on its assignment branch\n", "next=bench worktree list\n")
-	if after := assignmentCount(t, root); after != before {
+	if after := assignmentCount(t, f.root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusals", after, before)
 	}
 }
@@ -873,17 +873,17 @@ func TestCreateFromRefusesADirtyOrDetachedSibling(t *testing.T) {
 // that ran would have written its own table there.
 func TestCreateFromWithRefreshRefusesBeforeTheRefresh(t *testing.T) {
 	t.Parallel()
-	_, root, home, _, created := mergeFixture(t, "delegate")
-	sibling := created[0]
-	before := assignmentCount(t, root)
+	f := mergeFixture(t, "delegate")
+	sibling := f.created[0]
+	before := assignmentCount(t, f.root)
 
-	r := runVerb(t, verbCreate, repoHome{root, home}.call("--request", "create-from-refresh",
+	r := runVerb(t, verbCreate, f.call("--request", "create-from-refresh",
 		"--label", "dependent", "--refresh", "--from", sibling.Assignment.Label))
 	want := toon.Usage(createGrammar.Cmd, "--from with --refresh") + "\n"
 	if r.exit != 2 || r.stdout != "" || r.stderr != want {
 		t.Fatalf("create --refresh --from = (%d, %q, %q), want (2, empty, %q)", r.exit, r.stdout, r.stderr, want)
 	}
-	if after := assignmentCount(t, root); after != before {
+	if after := assignmentCount(t, f.root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
 	}
 }
@@ -892,14 +892,14 @@ func TestCreateFromWithRefreshRefusesBeforeTheRefresh(t *testing.T) {
 // both ids. A first-match lookup would start the new worktree at the wrong sibling.
 func TestCreateFromRefusesAnAmbiguousPrefix(t *testing.T) {
 	t.Parallel()
-	_, root, home, _, created := mergeFixture(t, "delegate-alpha", "delegate-beta")
-	before := assignmentCount(t, root)
+	f := mergeFixture(t, "delegate-alpha", "delegate-beta")
+	before := assignmentCount(t, f.root)
 
-	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, f.call(
 		"--request", "create-from-ambiguous", "--label", "dependent", "--from", "delegate-")),
 		"bench worktree create: target is ambiguous: ",
-		created[0].Assignment.ID, created[1].Assignment.ID, "next=bench worktree list\n")
-	if after := assignmentCount(t, root); after != before {
+		f.created[0].Assignment.ID, f.created[1].Assignment.ID, "next=bench worktree list\n")
+	if after := assignmentCount(t, f.root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
 	}
 }
@@ -909,13 +909,13 @@ func TestCreateFromRefusesAnAmbiguousPrefix(t *testing.T) {
 // instead, and the file's bytes stay as written.
 func TestCreateFromRefusesControlBytes(t *testing.T) {
 	t.Parallel()
-	_, root, home, _, _ := mergeFixture(t, "delegate")
-	address, err := intent.Address(root)
+	f := mergeFixture(t, "delegate")
+	address, err := intent.Address(f.root)
 	mustNoError(t, err)
 	malformed := []byte("{ this is not a ledger\n")
 	mustWrite(t, address, malformed, 0o600)
 
-	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, f.call(
 		"--request", "create-from-control", "--label", "dependent", "--from", "a\x01b")),
 		"bench worktree create: --from contains control characters\n", "next=bench worktree list\n")
 	after, err := os.ReadFile(address)
@@ -929,17 +929,17 @@ func TestCreateFromRefusesControlBytes(t *testing.T) {
 // no sibling. A lookup over every state would start the new worktree at a retired tip.
 func TestCreateFromRefusesARetiredSibling(t *testing.T) {
 	t.Parallel()
-	_, root, home, _, created := mergeFixture(t, "delegate")
-	sibling := created[0]
+	f := mergeFixture(t, "delegate")
+	sibling := f.created[0]
 	retired := sibling.Assignment
 	retired.State = intent.StateComplete
-	mustNoError(t, intent.PutAssignment(root, retired))
-	before := assignmentCount(t, root)
+	mustNoError(t, intent.PutAssignment(f.root, retired))
+	before := assignmentCount(t, f.root)
 
-	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, f.call(
 		"--request", "create-from-retired", "--label", "dependent", "--from", sibling.Assignment.Label)),
 		"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
-	if after := assignmentCount(t, root); after != before {
+	if after := assignmentCount(t, f.root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
 	}
 }
@@ -953,32 +953,32 @@ func TestCreateFromRefusesAFailedSiblingIdentityComponent(t *testing.T) {
 	for _, component := range []string{componentOwnerMarker, componentLock} {
 		t.Run(component, func(t *testing.T) {
 			t.Parallel()
-			_, root, home, _, created := mergeFixture(t, "delegate")
-			sibling := created[0]
-			before := assignmentCount(t, root)
+			f := mergeFixture(t, "delegate")
+			sibling := f.created[0]
+			before := assignmentCount(t, f.root)
 			fixture := identityComponentFixtureFor(t, component)
-			fixture.mutate(t, root, sibling)
+			fixture.mutate(t, f.root, sibling)
 
-			requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call("--request", "create-from-"+component,
+			requireCreateFromRefusal(t, runVerb(t, verbCreate, f.call("--request", "create-from-"+component,
 				"--label", "dependent", "--from", sibling.Assignment.Label)),
 				"bench worktree create: "+identityComponentDetail(t, fixture, sibling)+"\n",
 				"next=bench worktree list\n")
-			if after := assignmentCount(t, root); after != before {
+			if after := assignmentCount(t, f.root); after != before {
 				t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
 			}
 		})
 	}
 	t.Run(componentAssignmentState, func(t *testing.T) {
 		t.Parallel()
-		_, root, home, _, created := mergeFixture(t, "delegate")
-		sibling := created[0]
-		before := assignmentCount(t, root)
-		identityComponentFixtureFor(t, componentAssignmentState).mutate(t, root, sibling)
+		f := mergeFixture(t, "delegate")
+		sibling := f.created[0]
+		before := assignmentCount(t, f.root)
+		identityComponentFixtureFor(t, componentAssignmentState).mutate(t, f.root, sibling)
 
-		requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call("--request", "create-from-state",
+		requireCreateFromRefusal(t, runVerb(t, verbCreate, f.call("--request", "create-from-state",
 			"--label", "dependent", "--from", sibling.Assignment.Label)),
 			"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
-		if after := assignmentCount(t, root); after != before {
+		if after := assignmentCount(t, f.root); after != before {
 			t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
 		}
 	})
