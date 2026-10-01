@@ -51,6 +51,18 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **seam** — a stable interface where a test attaches and where you compose rather
   than invent. Each repo lists its seams in `projects/<name>.md`. Not "boundary",
   not "interface layer" — seam.
+- **joins seam** — one field of the worktree package's joins value that a test
+  replaces. It is a seam scoped to one package. Not "hook", not "stub point" —
+  joins seam.
+- **verb entry** — the exported command function of one worktree verb. It is the one
+  place the verb reads the kit root, the Bench home, and the clock. Not "verb
+  boundary", not "command wrapper" — verb entry.
+- **verb runner** — the one test helper in the worktree package that calls a verb
+  entry and returns a verb result. Not "run wrapper", not "test harness" — verb
+  runner.
+- **verb result** — the value the verb runner returns: the exit code, the rows read
+  through `axitest`, and the fingerprint. Not "output tuple", not "captured
+  buffers" — verb result.
 - **fresh test run** — one Go test run with successful test-result reuse disabled
   while the ordinary build and module caches remain available. For this kit, the
   whole-tree form is `go test -count=1 ./...`. Not "cold test" or "clean-cache
