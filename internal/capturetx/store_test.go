@@ -3,18 +3,16 @@ package capturetx
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestAppendSerializesConcurrentWriters(t *testing.T) {
-	root := t.TempDir()
-	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	path := filepath.Join(root, "capture", "IDEAS.md")
 	source := Source{Name: "capture/IDEAS.md", Path: path}
 	const writers = 20
