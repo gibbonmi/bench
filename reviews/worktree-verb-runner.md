@@ -125,7 +125,9 @@ This round confirms repair 1. The frozen pair is base `0c95c9447c20189f3f2155719
 
 The raw finding count is 2: Standards 0, Spec 2, and Coverage 0. Every fold of R1 to R6 holds. Both Spec findings name spec text, not code, so they use no repair cycle. The consumed allowance stays at 1 of 2 repair cycles.
 
-The coordinator made three evidence-only corrections to this record. The repair verification entries named the full tree `bef4351236549fad5b2cef6e5958d23b685aabb8` as their source digest. The source digest excludes this record file, so the entries now name `0dee07c82fe40e1420c5629289bd195d4e8ff5cd`. The plan digest now reads the plan at `f3b6ad76`, which adds VR60 and VR61. Each author and repair result digest hashed the whole command output, so each digest now hashes its embedded excerpt, as the record parser requires.
+Plan commit `f3b6ad76` closed both Spec findings, but it changed the source past the reviewed tip. A later commit restores the reviewed spec bytes. The VR-C2 enabling plan commit applies the same amendment, and the VR-C2 review covers it.
+
+The coordinator made three evidence-only corrections to this record. The repair verification entries named the full tree `bef4351236549fad5b2cef6e5958d23b685aabb8` as their source digest. The source digest excludes this record file, so the entries now name `0dee07c82fe40e1420c5629289bd195d4e8ff5cd`. The plan digest reads the plan at the reviewed tip `d44d28ce`. Each author and repair result digest hashed the whole command output, so each digest now hashes its embedded excerpt, as the record parser requires.
 
 The chunk record for VR44 to VR46 follows. All 688 top-level tests pass, which is the base 664 plus 24 added tests. The SKIP set holds the two socket capability subtests. No existing test lost a failure call. The only edits to existing files are setup lines in `clean_unclaimed_test.go` and the count constant.
 
@@ -137,8 +139,8 @@ Findings: 0. All five folds hold. The shared fault builder sits in the runner ch
 
 Findings: 2. The worst issue is a coverage map that did not name the two record-branch tests.
 
-- R7: `specs/worktree-verb-runner/spec.md` had no row for the record-branch absent rule and conflict rule. Plan commit `f3b6ad76` adds VR60 and VR61, and ticket 1 covers both. `auto-fix`. Confidence 5.
-- R8: the VR1 row said that every expectation reads its usage constant, but the `show` and `build` rows read the grammar `Cmd` field. Plan commit `f3b6ad76` states that source in VR1, in the ticket, and in the reader sweep. This change is non-behavioral, and the reviewer can veto it. `auto-fix`. Confidence 6.
+- R7: `specs/worktree-verb-runner/spec.md` had no row for the record-branch absent rule and conflict rule. The VR-C2 enabling plan commit adds VR60 and VR61, and ticket 1 covers both. `auto-fix`. Confidence 5.
+- R8: the VR1 row said that every expectation reads its usage constant, but the `show` and `build` rows read the grammar `Cmd` field. The VR-C2 enabling plan commit states that source in VR1, in the ticket, and in the reader sweep. This change is non-behavioral, and the reviewer can veto it. `auto-fix`. Confidence 6.
 
 ### Coverage, round 2
 
@@ -154,14 +156,14 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
 {
   "version": 2,
   "spec": "specs/worktree-verb-runner/spec.md",
-  "plan_digest": "sha256:53cb1a1fe5e8e1c000b919dcde0b788f21556ae3e122fd755105b89e68d88e0e",
+  "plan_digest": "sha256:7f4493adf64a9e170b14b594c30d78e85d97387dbc1c661dcb55e917d17f841f",
   "implementation_session": "",
   "chunks": [
     {
       "id": "VR-C1",
       "base": "0c95c9447c20189f3f2155719ef965bffc339856",
       "tip": "d44d28ce6ff1964ffc4cb77d969cecdb881356eb",
-      "plan_digest": "sha256:53cb1a1fe5e8e1c000b919dcde0b788f21556ae3e122fd755105b89e68d88e0e",
+      "plan_digest": "sha256:7f4493adf64a9e170b14b594c30d78e85d97387dbc1c661dcb55e917d17f841f",
       "source_digest": "0dee07c82fe40e1420c5629289bd195d4e8ff5cd",
       "acceptance_rows": [
         "VR1",
@@ -186,9 +188,7 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
         "VR20",
         "VR21",
         "VR22",
-        "VR59",
-        "VR60",
-        "VR61"
+        "VR59"
       ],
       "verification": [
         {
