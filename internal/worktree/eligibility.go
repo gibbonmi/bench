@@ -6,43 +6,20 @@ import (
 
 // The ordered eligibility decisions live in the pure child package
 // internal/worktree/lifecyclepolicy: the single answer to "is this worktree
-// ours and safe to remove, and if not, why". This file is the parent's seam to
-// it. PlanExplicitWithOptions in subshell.go gathers every Git and filesystem
-// fact, builds one explicitFacts value from what it gathered, and calls
-// decideExplicit exactly once. PlanAutomatic in classifier.go layers its own
-// stricter reading on top: it calls PlanExplicit first, gathers the
-// automatic-specific facts decideAutomatic needs, and calls decideAutomatic
-// exactly once.
+// ours and safe to remove, and if not, why". PlanExplicitWithOptions in
+// subshell.go gathers every Git and filesystem fact, builds one
+// lifecyclepolicy.ExplicitFacts value from what it gathered, and calls
+// lifecyclepolicy.DecideExplicit exactly once. PlanAutomatic in classifier.go
+// layers its own stricter reading on top: it calls PlanExplicit first, gathers
+// the automatic-specific facts lifecyclepolicy.DecideAutomatic needs, and calls
+// it exactly once. This file holds the projections from a CleanupPlan into a
+// policy input.
 //
 // Nothing outside the policy package orders or selects an eligibility action or
 // reason before execution. subshell.go and classifier.go only project the
 // returned verdict onto the operator-facing CleanupPlan. This includes any
 // lookup (a recovery ref prediction) that needs I/O the decision itself must
 // not perform.
-
-type landedness = lifecyclepolicy.Landedness
-
-const (
-	landednessDetached         = lifecyclepolicy.LandednessDetached
-	landednessUnknownNoDefault = lifecyclepolicy.LandednessUnknownNoDefault
-	landednessUnknownError     = lifecyclepolicy.LandednessUnknownError
-	landednessProven           = lifecyclepolicy.LandednessProven
-)
-
-type explicitFacts = lifecyclepolicy.ExplicitFacts
-type explicitVerdict = lifecyclepolicy.ExplicitVerdict
-type automaticFacts = lifecyclepolicy.AutomaticFacts
-type automaticVerdict = lifecyclepolicy.AutomaticVerdict
-
-const (
-	recoveryNoLookup      = lifecyclepolicy.RecoveryNoLookup
-	recoveryLookupOwned   = lifecyclepolicy.RecoveryLookupOwned
-	recoveryLookupForeign = lifecyclepolicy.RecoveryLookupForeign
-)
-
-func decideExplicit(f explicitFacts) explicitVerdict { return lifecyclepolicy.DecideExplicit(f) }
-
-func decideAutomatic(f automaticFacts) automaticVerdict { return lifecyclepolicy.DecideAutomatic(f) }
 
 // explicitOutcome projects an already-decided plan into the typed slice the
 // automatic policy decision reads. It is a translation, not a decision: every

@@ -42,7 +42,7 @@ func TestLandCommandStatesTheCensusCountAndDropsTheRecords(t *testing.T) {
 	recordRawCalls(t, home, root, creation.Path, 3)
 	survivor := seedHandoffSections(t, root, creation.Assignment)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.HasSuffix(stdout.String(), ",census=3}\n") {
 		t.Fatalf("landed record = (%d, %q, %q), want census=3 as the last key", code, stdout.String(), stderr.String())
 	}
@@ -59,7 +59,7 @@ func TestLandCommandStatesZeroForAnAssignmentWithNoRecords(t *testing.T) {
 	request := "census-landed-zero"
 	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.HasSuffix(stdout.String(), ",census=0}\n") {
 		t.Fatalf("landed record = (%d, %q, %q), want census=0", code, stdout.String(), stderr.String())
 	}
@@ -75,7 +75,7 @@ func TestLandCommandPrintsTheCensusHeadBreakdown(t *testing.T) {
 	recordRawCallsWithHead(t, home, root, creation.Path, "sed -i s/a/b/", 2)
 	recordRawCallsWithHead(t, home, root, creation.Path, "awk -f x", 1)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stderr.String(), "census heads{sed=2,awk=1}\n") {
 		t.Fatalf("landing evidence = (%d, %q, %q), want the head breakdown on stderr", code, stdout.String(), stderr.String())
 	}
@@ -91,7 +91,7 @@ func TestLandCommandPrintsNoHeadsLineWithoutRecords(t *testing.T) {
 	request := "census-landed-no-heads"
 	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || strings.Contains(stderr.String(), "census heads{") || !strings.HasSuffix(stdout.String(), ",census=0}\n") {
 		t.Fatalf("empty census landing = (%d, %q, %q), want no heads line and census=0", code, stdout.String(), stderr.String())
 	}
@@ -106,7 +106,7 @@ func TestLandCommandRefusalKeepsTheCensusRecords(t *testing.T) {
 	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
 	recordRawCalls(t, home, root, creation.Path, 2)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs("no-such-request", base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs("no-such-request", base, tip, creation.Path), &stdout, &stderr)
 	if code == 0 || !strings.Contains(stdout.String(), "refused{") || strings.Contains(stdout.String(), "landed{") {
 		t.Fatalf("refused landing = (%d, %q, %q), want a refusal and no landed record", code, stdout.String(), stderr.String())
 	}

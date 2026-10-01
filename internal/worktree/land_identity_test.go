@@ -37,7 +37,7 @@ func TestLandCommandInvalidatesAChangedRequestBeforeComposition(t *testing.T) {
 	j, composed := forbidLandingComposition()
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs("land-identity-request-changed", base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs("land-identity-request-changed", base, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
 		t.Fatalf("changed request = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
 	}
@@ -52,7 +52,7 @@ func TestLandCommandInvalidatesAChangedReviewBaseBeforeComposition(t *testing.T)
 	j, composed := forbidLandingComposition()
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, tip, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, tip, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
 		t.Fatalf("changed review base = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
 	}
@@ -68,7 +68,7 @@ func TestLandCommandInvalidatesAChangedSourceTipBeforeComposition(t *testing.T) 
 	j, composed := forbidLandingComposition()
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.Contains(stdout.String(), "source tip mismatch") {
 		t.Fatalf("changed source tip = (%d, %q, %q), want a tip-mismatch refusal", code, stdout.String(), stderr.String())
 	}
@@ -86,7 +86,7 @@ func TestLandCommandInvalidatesAChangedSourceFingerprintBeforeTheGate(t *testing
 	j, composed := forbidLandingComposition()
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	// The sentence and the repair read from the registry, so each keeps one source. The
 	// hostile-source surface stays bounded: the refusal carries a route and no path table,
 	// so no source-authored path name reaches the operator's terminal.
@@ -133,7 +133,7 @@ func TestLandCommandRefusesAReviewBaseThatIsNotAnAncestorOfTheDestination(t *tes
 	j, composed := forbidLandingComposition()
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", specLessLandArgs(request, fold, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, specLessLandArgs(request, fold, tip, creation.Path), &stdout, &stderr)
 	// The expectation is spelled out here rather than read from landingBaseNotAncestorDetail,
 	// so a mutation of that constant turns this test red instead of passing silently.
 	const wantDetail = "review base is not an ancestor of the landing destination: --base takes the landing base, the default-branch tip the source folded, not the fold commit the review read"
@@ -165,7 +165,7 @@ func TestLandCommandRefusesAReviewBaseBehindTheRecordedStart(t *testing.T) {
 	j, composed := forbidLandingComposition()
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", specLessLandArgs(request, earlier, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, specLessLandArgs(request, earlier, tip, creation.Path), &stdout, &stderr)
 	want := "detail=" + reviewedRangeDetail + ",observed=" + earlier + ",wanted=" + base
 	if code != 1 || !strings.Contains(stdout.String(), want) {
 		t.Fatalf("earlier ancestor base = (%d, %q, %q), want a refusal carrying %q", code, stdout.String(), stderr.String(), want)

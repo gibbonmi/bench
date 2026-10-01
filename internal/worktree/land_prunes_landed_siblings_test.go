@@ -36,7 +36,7 @@ func TestLandCommandPrunesSquashFoldedSiblingBranch(t *testing.T) {
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("land = (%d, %q, %q), want 0", code, stdout.String(), stderr.String())
 	}
@@ -56,7 +56,7 @@ func TestLandCommandReportsIncompletePrune(t *testing.T) {
 	broken := defaultJoins()
 	broken.pruneLandedBranches = func(string) (int, error) { return 0, errors.New("prune refused") }
 	var stdout, stderr bytes.Buffer
-	code := landWith(broken, root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(broken, root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:prune") {
 		t.Fatalf("interrupted prune = (%d, %q, %q), want exit 3 and incomplete:prune", code, stdout.String(), stderr.String())
 	}

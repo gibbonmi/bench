@@ -16,7 +16,7 @@ func TestLandAndReauthorizeResolveIdentifierOperands(t *testing.T) {
 	root, creation, home := newOwnedAssignment(t, "operand-land")
 	chdir(t, root)
 	var stdout bytes.Buffer
-	code := LandCommand(root, home, "", []string{"--request", "wrong-token", "--base", creation.Assignment.Start, "--source-tip", creation.Assignment.Start, "-m", "land", creation.Assignment.Label}, &stdout, io.Discard)
+	code := LandCommand(root, home, []string{"--request", "wrong-token", "--base", creation.Assignment.Start, "--source-tip", creation.Assignment.Start, "-m", "land", creation.Assignment.Label}, &stdout, io.Discard)
 	if code == 0 {
 		t.Fatal("a mismatched request landed")
 	}

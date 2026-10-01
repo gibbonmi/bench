@@ -46,7 +46,7 @@ func TestLandCommandAllowsLocalCaptureInDestinationAndReleases(t *testing.T) {
 	writeLocalCapture(t, root)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("land with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
 	}
@@ -70,14 +70,14 @@ func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	broken := working
 	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("interrupt") }
 	var stdout, stderr bytes.Buffer
-	if code := landWith(broken, root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
+	if code := landWith(broken, root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
 		t.Fatalf("interrupted land = (%d, %q, %q), want incomplete", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
+	if code := landWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("resume with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
 	}
 }
@@ -95,7 +95,7 @@ func TestLandCommandKeepsUndeclaredIgnoredFileInDestination(t *testing.T) {
 	mustWrite(t, filepath.Join(root, "foreign.tmp"), []byte("foreign\n"), 0o600)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("land with an undeclared ignored file = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
 	}

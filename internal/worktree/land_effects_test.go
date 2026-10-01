@@ -73,7 +73,7 @@ func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
 	root, creation, base, tip, home := brokerChangingLanding(t, request)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(kitCheckoutJoins(true), root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(kitCheckoutJoins(true), root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:refresh") {
 		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
@@ -95,7 +95,7 @@ func TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout(t *testing.T) 
 	root, creation, base, tip, home := brokerChangingLanding(t, request)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(kitCheckoutJoins(false), root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(kitCheckoutJoins(false), root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:refresh") {
 		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
@@ -208,7 +208,7 @@ func TestLandSkipsTheRefreshWithoutBuildInputs(t *testing.T) {
 	j, calls := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable")) {
 		t.Fatalf("landing without build inputs = (%d, %q, %q), want a not-applicable refresh", code, stdout.String(), stderr.String())
 	}
@@ -230,7 +230,7 @@ func TestLandSkipsAFreshBroker(t *testing.T) {
 	j, calls := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
 		t.Fatalf("landing with a fresh broker = (%d, %q, %q), want a complete refresh", code, stdout.String(), stderr.String())
 	}
@@ -251,7 +251,7 @@ func TestLandRefreshesTheBrokerAfterPublication(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
 		t.Fatalf("landing with a stale broker = (%d, %q, %q), want a complete refresh at exit 0", code, stdout.String(), stderr.String())
 	}
@@ -273,7 +273,7 @@ func TestLandReportsAFailedRefresh(t *testing.T) {
 	j, calls := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed", "pending")) {
 		t.Fatalf("failed refresh = (%d, %q, %q), want exit 3 with a failed refresh", code, stdout.String(), stderr.String())
 	}
@@ -313,7 +313,7 @@ func TestLandRefreshReadsTheSeal(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("unsealed refresh = (%d, %q, %q), want exit 3 with a failed refresh", code, stdout.String(), stderr.String())
 	}
@@ -332,7 +332,7 @@ func TestLandEffectsRowPrecedesTheLandedRecord(t *testing.T) {
 	j, _ := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	if code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
+	if code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
 		t.Fatalf("landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	lines := strings.Split(strings.TrimSuffix(stdout.String(), "\n"), "\n")
@@ -362,7 +362,7 @@ func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 
 	var stdout, stderr bytes.Buffer
-	if code := landWith(interrupted, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
+	if code := landWith(interrupted, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if *calls != 0 {

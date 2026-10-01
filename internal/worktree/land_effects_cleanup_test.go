@@ -80,7 +80,7 @@ func TestLandCleansTheFoldedSibling(t *testing.T) {
 	j, _ := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "complete")) {
 		t.Fatalf("folded-sibling landing = (%d, %q, %q), want a complete cleanup at exit 0", code, stdout.String(), stderr.String())
 	}
@@ -111,7 +111,7 @@ func TestLandLeavesAPriorLandedAssignment(t *testing.T) {
 	j, _ := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "complete")) {
 		t.Fatalf("narrowed landing = (%d, %q, %q), want a complete cleanup at exit 0", code, stdout.String(), stderr.String())
 	}
@@ -138,7 +138,7 @@ func TestLandRetainsAnUnprovenSibling(t *testing.T) {
 	j, _ := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "complete")) {
 		t.Fatalf("retaining landing = (%d, %q, %q), want a complete cleanup at exit 0", code, stdout.String(), stderr.String())
 	}
@@ -187,7 +187,7 @@ func TestLandReportsAFailedCleanup(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "failed")) {
 		t.Fatalf("faulted cleanup = (%d, %q, %q), want exit 3 with a failed cleanup", code, stdout.String(), stderr.String())
 	}
@@ -218,7 +218,7 @@ func TestResumeLandCompletesTheUnfinishedEffects(t *testing.T) {
 	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 
 	var stdout, stderr bytes.Buffer
-	if code := landWith(interrupted, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
+	if code := landWith(interrupted, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -274,7 +274,7 @@ func TestResumeLandRunsTheEffectsAfterRelease(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	if code := landWith(failing, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
+	if code := landWith(failing, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("failed-refresh landing = (%d, %q, %q), want a pending cleanup at exit 3", code, stdout.String(), stderr.String())
 	}
 	requirePresent(t, sibling.Path, "sibling worktree")

@@ -29,7 +29,3 @@ func Home() string { return benchhome.Dir() }
 
 // subshellShell resolves the interactive shell the subshell command launches.
 func subshellShell() string { return os.Getenv("SHELL") }
-
-// landingAlreadyRebuilt reports whether this landing process already ran once under
-// a rebuild marker, so a second stale verdict refuses instead of rebuilding again.
-func landingAlreadyRebuilt() bool { return os.Getenv(rebuiltLandingEnv) != "" }

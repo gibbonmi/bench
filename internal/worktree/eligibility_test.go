@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 )
 
 func TestExplicitEligibilityAllowsRuntimeIgnoredResidue(t *testing.T) {
@@ -29,15 +30,15 @@ func TestExplicitEligibilityAllowsRuntimeIgnoredResidue(t *testing.T) {
 	}
 }
 
-// TestEligibilityVerdictProjectsWithoutSecondDecision proves decideExplicit is the whole
-// decision. It independently gathers the same typed facts PlanExplicitWithOptions
-// gathers, through the same package-private evidence functions: validateOwnerMarker,
-// ProbeLease, classifyNestedState, inventoryIgnored, git.LandedInDefault. It never
-// copies production's own answer. Calling decideExplicit directly reproduces the exact
-// action, reason, typed landedness, and recovery/branch-deletion authority
-// PlanExplicitWithOptions itself returns. A second decision made in subshell.go, or a
-// plan mutated after decideExplicit returned, would make this independent comparison
-// diverge from PlanExplicitWithOptions's own projection.
+// TestEligibilityVerdictProjectsWithoutSecondDecision proves lifecyclepolicy.DecideExplicit
+// is the whole decision. It independently gathers the same typed facts
+// PlanExplicitWithOptions gathers, through the same package-private evidence functions:
+// validateOwnerMarker, ProbeLease, classifyNestedState, inventoryIgnored,
+// git.LandedInDefault. It never copies production's own answer. Calling DecideExplicit
+// directly reproduces the exact action, reason, typed landedness, and
+// recovery/branch-deletion authority PlanExplicitWithOptions itself returns. A second
+// decision made in subshell.go, or a plan mutated after DecideExplicit returned, would
+// make this independent comparison diverge from PlanExplicitWithOptions's own projection.
 func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
 	t.Parallel()
 	t.Run("clean-remove", func(t *testing.T) {
@@ -51,7 +52,7 @@ func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
 	})
 }
 
-// assertVerdictMatchesPlan gathers explicitFacts for path independently of
+// assertVerdictMatchesPlan gathers the explicit facts for path independently of
 // PlanExplicitWithOptions and decides a verdict from them directly. It asserts every
 // field the projection is responsible for carrying onto CleanupPlan: action, reason,
 // typed landedness, and branch/recovery authority. Every field must agree with what
@@ -61,7 +62,7 @@ func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOp
 	target, err := canonicalPath(path)
 	mustNoError(t, err)
 	facts := gatherExplicitFactsForTest(t, root, target, options)
-	verdict := decideExplicit(facts)
+	verdict := lifecyclepolicy.DecideExplicit(facts)
 
 	plan, err := PlanExplicitWithOptions(root, path, options)
 	mustNoError(t, err)
@@ -76,10 +77,10 @@ func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOp
 
 	wantRecovery := verdict.Recovery
 	switch verdict.RecoveryLookup {
-	case recoveryLookupOwned:
+	case lifecyclepolicy.RecoveryLookupOwned:
 		wantRecovery, err = nextRecoveryRef(root, *verdict.Assignment)
 		mustNoError(t, err)
-	case recoveryLookupForeign:
+	case lifecyclepolicy.RecoveryLookupForeign:
 		admin, adminErr := git.AdminDir(target)
 		mustNoError(t, adminErr)
 		wantRecovery, err = predictedForeignRef(root, target, admin)
@@ -92,11 +93,11 @@ func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOp
 		"independently resolved recovery ref %q, want it to match the projected plan recovery %q", wantRecovery, plan.Recovery)
 }
 
-// gatherExplicitFactsForTest independently gathers the same explicitFacts
+// gatherExplicitFactsForTest independently gathers the same explicit facts
 // PlanExplicitWithOptions gathers for target, in the same order. This lets
-// TestEligibilityVerdictProjectsWithoutSecondDecision call decideExplicit on them
+// TestEligibilityVerdictProjectsWithoutSecondDecision call DecideExplicit on them
 // without going through subshell.go's own projection at all.
-func gatherExplicitFactsForTest(t *testing.T, root, target string, options CleanupOptions) explicitFacts {
+func gatherExplicitFactsForTest(t *testing.T, root, target string, options CleanupOptions) lifecyclepolicy.ExplicitFacts {
 	t.Helper()
 	root = canonicalRoot(root)
 	worktrees, err := git.Worktrees(root)
@@ -113,7 +114,7 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 	admin, err := git.AdminDir(target)
 	mustNoError(t, err)
 
-	facts := explicitFacts{
+	facts := lifecyclepolicy.ExplicitFacts{
 		RegistrationBranchRef:  registration.BranchRef,
 		RegistrationLockReason: registration.LockReason,
 		RegistrationLocked:     registration.Locked,

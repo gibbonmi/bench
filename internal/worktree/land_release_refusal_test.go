@@ -23,7 +23,7 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
 	mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
 	// The route reads from the registry, so the face's repair keeps one source. The
 	// caller's own re-run rides behind it and this row does not pin it.
 	wantNext := "next=" + landingRefusalFaceByName(faceDestinationNotClean).route("")
@@ -55,7 +55,7 @@ func TestLandCommandRefusalListsCollidingPaths(t *testing.T) {
 		return diff.SourceRange{Base: base, Tip: tip}, nil
 	}
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs("refusal-collision", base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs("refusal-collision", base, tip, creation.Path), &stdout, &stderr)
 	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceDestinationCollision).detail)
 	if code != 1 || !printed || !strings.HasPrefix(next, landingRefusalFaceByName(faceDestinationCollision).route("")) ||
 		!strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n  owned.txt\n") || strings.Contains(stdout.String(), ".env") ||
@@ -88,7 +88,7 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 		return diff.SourceRange{Base: base, Tip: tip}, nil
 	}
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, "", landArgs("refusal-controls", base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, home, landArgs("refusal-controls", base, tip, creation.Path), &stdout, &stderr)
 	unsafe := strings.ContainsFunc(stdout.String(), func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
 	wantPathRow := `  "bad\\n\\u001b,comma"` + "\n"
 	if code != 1 || unsafe || !strings.Contains(stdout.String(), "refused{") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n"+wantPathRow) || strings.Count(stdout.String(), "\n") != 4 || stderr.Len() != 0 {

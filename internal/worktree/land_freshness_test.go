@@ -37,7 +37,7 @@ func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testin
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, filepath.Join(root, "dist", "bench"), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("stable-owner landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
@@ -71,7 +71,7 @@ func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.
 
 	ownerPid := os.Getpid()
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, filepath.Join(root, "dist", "bench"), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("single-owner landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
@@ -172,7 +172,7 @@ func TestLandCommandLeavesTheDestinationUnchangedAfterARedProspectiveGate(t *tes
 	marker := projectGreenMarker(t, root)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
 		t.Fatalf("red prospective gate = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
 	}
@@ -215,7 +215,7 @@ func TestLandCommandRemovesEveryTemporaryProspectiveArtifact(t *testing.T) {
 			bindEnv(t, "TMPDIR", private)
 
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != tc.want {
+			if code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != tc.want {
 				t.Fatalf("landing exit = %d, want %d; stdout=%q stderr=%q", code, tc.want, stdout.String(), stderr.String())
 			}
 			if residue := temporaryProspectiveArtifacts(t, private); len(residue) != 0 {
@@ -268,7 +268,7 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 			broken := tc.break_(working)
 
 			var stdout, stderr bytes.Buffer
-			if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.name) {
+			if code := landWith(broken, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.name) {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			published := gitOutput(t, root, "rev-parse", "main")
@@ -276,7 +276,7 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 			stdout.Reset()
 			stderr.Reset()
 			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
+			if code := landWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 				t.Fatalf("resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			if got := gitOutput(t, root, "rev-parse", "main"); got != published {
@@ -309,7 +309,7 @@ func TestLandCommandCarriesTheBaselineScheduleRootIntoTheProspectiveGate(t *test
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
+	if code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
 		t.Fatalf("landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	got := strings.TrimSpace(fixtureFileText(t, recorded))

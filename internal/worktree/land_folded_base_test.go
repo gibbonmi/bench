@@ -23,7 +23,7 @@ func TestLandFenceRefusalNamesTheFoldedDefaultBase(t *testing.T) {
 		"merge", "-q", "--no-ff", "-m", "fold the destination", destination)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceSourceNotFenced).detail)
 	if code != 1 || !printed {
 		t.Fatalf("folded-base landing = (%d, %q, %q), want the fence refusal", code, stdout.String(), stderr.String())

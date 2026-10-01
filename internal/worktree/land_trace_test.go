@@ -22,7 +22,7 @@ func TestLandRecordsOneTraceForThePhases(t *testing.T) {
 	root, creation, base, tip, _, home := specLessLandingFixture(t, request)
 
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
+	if code := LandCommand(root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
 		t.Fatalf("land = %d, want 0: %q %q", code, stdout.String(), stderr.String())
 	}
 

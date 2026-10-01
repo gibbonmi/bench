@@ -147,7 +147,7 @@ func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
 			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 			fixture.mutate(t, root, creation)
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, home, "", landArgs(fixture.request(request), base, tip, creation.Path), &stdout, &stderr)
+			code := LandCommand(root, home, landArgs(fixture.request(request), base, tip, creation.Path), &stdout, &stderr)
 			want := "refused{" + fixture.want(creation, base, tip) + "}\n"
 			if code != 1 || stdout.String() != want {
 				t.Fatalf("%s landing = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
@@ -168,7 +168,7 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 			fixture.mutate(t, root, creation)
 			var stdout, stderr bytes.Buffer
 			args := []string{"--resume", published, "--request", fixture.request(request), "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			code := LandCommand(root, home, "", args, &stdout, &stderr)
+			code := LandCommand(root, home, args, &stdout, &stderr)
 			want := "refused{" + fixture.want(creation, base, tip) + "}\n"
 			if code != 1 || stdout.String() != want {
 				t.Fatalf("%s resume = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
@@ -186,7 +186,7 @@ func interruptLandingAtMarker(t *testing.T, root string, creation Creation, requ
 		return errors.New("injected marker interruption")
 	}
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, Home(), "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, root, Home(), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 3 {
 		t.Fatalf("interrupted landing = (%d, %q, %q), want exit 3", code, stdout.String(), stderr.String())
 	}
@@ -307,7 +307,7 @@ func landingFaceResume(t *testing.T, fixture landingRefusalFixture, root, home, 
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	broken := defaultJoins()
 	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
-	if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), stdout, stderr); code != 3 {
+	if code := landWith(broken, root, home, landArgs(request, base, tip, creation.Path), stdout, stderr); code != 3 {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
@@ -315,7 +315,7 @@ func landingFaceResume(t *testing.T, fixture landingRefusalFixture, root, home, 
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	return landWith(defaultJoins(), root, home, "", args, stdout, stderr)
+	return landWith(defaultJoins(), root, home, args, stdout, stderr)
 }
 
 // landingFaceNext reads the next= value out of the refused record whose detail names the
@@ -374,7 +374,7 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 				if fixture.tip != nil {
 					tip = fixture.tip(t, creation)
 				}
-				code = LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+				code = LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 			}
 			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(fixture.face).detail)
 			if code != 1 || !printed || next == "" {
@@ -485,7 +485,7 @@ func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 	registration.mutate(t, root, creation)
 	identityComponentFixtureFor(t, componentLock).mutate(t, root, creation)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	want := "refused{" + registration.want(creation, base, tip) + "}\n"
 	if code != 1 || stdout.String() != want {
 		t.Fatalf("double-fault landing = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)

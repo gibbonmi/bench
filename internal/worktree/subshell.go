@@ -15,6 +15,7 @@ import (
 	refreshop "github.com/gibbonmi/bench/internal/refresh"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"go.opentelemetry.io/otel/attribute"
 	"io"
 	"os"
@@ -208,7 +209,7 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 		return CleanupPlan{}, err
 	}
 	plan := CleanupPlan{Target: target, Action: ActionRemove, Tracked: "clean", Recovery: "none", registration: *registration, discardIgnored: options.DiscardIgnored, discardBranch: options.DiscardBranch}
-	facts := explicitFacts{
+	facts := lifecyclepolicy.ExplicitFacts{
 		RegistrationBranchRef:   registration.BranchRef,
 		RegistrationLockReason:  registration.LockReason,
 		RegistrationLocked:      registration.Locked,
@@ -307,12 +308,11 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	facts.NestedState, facts.NestedErr = nested, nestedErr
 	ignored, ignoredCanonical, ignoredErr := inventoryIgnored(j, target, options.Full)
 	plan.Ignored = ignored
-	declaredIgnored := buildOutputErr == nil && ignoredWithinLandingAllowance(ignored, buildOutputs)
 	facts.BuildOutputErr = buildOutputErr
 	facts.IgnoredErr = ignoredErr
 	facts.IgnoredOverLimit = ignored.OverLimit
 	facts.IgnoredCount = ignored.Count
-	facts.DeclaredIgnored = declaredIgnored
+	facts.DeclaredIgnored = buildOutputErr == nil && ignoredWithinLandingAllowance(ignored, buildOutputs)
 	facts.HeadDetached = headRef == "detached"
 	facts.DefaultKnown = defaultOID != "none"
 	facts.HeadRef, facts.Head = headRef, head
@@ -321,7 +321,7 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	}
 	facts.UnsafeTarget = unsafeTarget
 
-	verdict := decideExplicit(facts)
+	verdict := lifecyclepolicy.DecideExplicit(facts)
 	plan.Action, plan.ReasonCode, plan.Reason = verdict.Action, verdict.ReasonCode, verdict.Reason
 	plan.owned, plan.assignment = verdict.Owned, verdict.Assignment
 	plan.Tracked = verdict.Tracked
@@ -344,9 +344,9 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	}
 	recovery := verdict.Recovery
 	switch verdict.RecoveryLookup {
-	case recoveryLookupOwned:
+	case lifecyclepolicy.RecoveryLookupOwned:
 		recovery, err = nextRecoveryRef(root, *plan.assignment)
-	case recoveryLookupForeign:
+	case lifecyclepolicy.RecoveryLookupForeign:
 		recovery, err = predictedForeignRef(root, target, admin)
 	}
 	if err != nil {

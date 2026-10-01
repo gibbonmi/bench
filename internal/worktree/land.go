@@ -54,27 +54,23 @@ var resumeLandGrammar = usage.Grammar{
 // range carries.
 const reviewedRangeDetail = "review base is outside the assignment's reviewed range"
 
-// rebuiltLandingEnv survives only for the retired rebuild guard in effects.go; the
-// stable owner never rebuilds or re-executes a landing, so nothing sets it.
-const rebuiltLandingEnv = "BENCH_LANDING_REBUILT"
-
 // LandCommand is the first-run reviewed-source landing operation. It performs every
 // reversible proof before the exact-tree owner receives authority to publish. The
 // invoked process is the one promotion owner for the complete landing: it never
 // consults, rebuilds, or re-executes a repository executable, so candidate landing
 // code cannot run during its own promotion.
-func LandCommand(root, home, executable string, args []string, stdout, stderr io.Writer) int {
-	return landWith(defaultJoins(), root, home, executable, args, stdout, stderr)
+func LandCommand(root, home string, args []string, stdout, stderr io.Writer) int {
+	return landWith(defaultJoins(), root, home, args, stdout, stderr)
 }
 
 // landWith is LandCommand with the seam set resolved explicitly at the caller's boundary.
 // It is also the landing's record boundary: one span covers the composition and the
 // publication, and the resume path runs inside it, so a resumed landing records the same
 // seam as the first run.
-func landWith(j joins, root, home, executable string, args []string, stdout, stderr io.Writer) int {
+func landWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
 	var measures landingMeasures
 	ctx, finishSpan := beginLandingSpan(home, root)
-	exit := landAttributed(ctx, &measures, j, root, home, executable, args, stdout, stderr)
+	exit := landAttributed(ctx, &measures, j, root, home, args, stdout, stderr)
 	finishSpan(exit, measures)
 	return exit
 }
@@ -123,7 +119,7 @@ func beginLandingSpan(home, root string) (context.Context, func(int, landingMeas
 
 // landAttributed is the first-run landing itself, with the span's measures written to
 // measures as each becomes known.
-func landAttributed(ctx context.Context, measures *landingMeasures, j joins, root, home, _ string, args []string, stdout, stderr io.Writer) int {
+func landAttributed(ctx context.Context, measures *landingMeasures, j joins, root, home string, args []string, stdout, stderr io.Writer) int {
 	j.home = home
 	if hasResumeFlag(args) {
 		return resumeLandWith(j, root, home, args, stdout, stderr)
