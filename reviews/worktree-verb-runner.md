@@ -758,11 +758,24 @@ The ticket 6 author ran `bench test --package ./internal/worktree` again at `6af
 
 The ticket 7 author ran `bench test --package ./internal/worktree` again at `b94f4719`, after the plan commit `3a571df8` changed the spec text. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c3-7-worktree-r3`.
 
+## VR-C3 chunk review, round 3
+
+This round confirms plan commit `3a571df8` and the three verification reruns. The frozen pair is base `f03e7fb9b46e5cdbe0ae55d94f171b209fe27447` and tip `7fa02b429a66aa71b4303e483b82e074622c80bd`. The shared evidence is `sha256:14972d007a4afdaba154c6f320c0a8564b1c4d20b5ffce50ceb53b4cfa21841f`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the delta `0e657ac8..7fa02b42`, which changes no test code.
+
+The raw finding count is 0. R19 and R20 hold. The amended `<files>` list removes only `verb_runner_check_test.go` from the ticket 5 rows, which is the exemption that the census and VR41 already apply. Each review-owned command over tickets 5, 6, and 7 prints no line, except the one `LandCommand` line that VR35 allows. The consumed allowance stays at 1 of 2 repair cycles.
+
+The chunk record for VR44 to VR47 is unchanged from round 2, because no test code changed. The package run at the tip passes, and the SKIP set holds the two socket capability subtests. The VR-C3 plan commits added assignments and text corrections only. So the payload maps each VR-C2 plan chunk ID to the same ID in the current plan.
+
+### Advice, VR-C3 round 3
+
+- Ticket 9 owns `identity_component_test.go`, which is not a `land_*` file. The VR-C4 review reads it under VR38.
+- This record mixes a word scale and a number scale for confidence.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/worktree-verb-runner/spec.md",
-  "plan_digest": "sha256:fc14637963d16b0fca7a4058f4eac565d31a02cb563e2fcdc1331d0547ba5c47",
+  "plan_digest": "sha256:dedfa63fd559b5ec09dc6e3227dc0085296ed59f9a64718abf049429445a5e63",
   "implementation_session": "",
   "chunks": [
     {
@@ -1509,9 +1522,9 @@ The ticket 7 author ran `bench test --package ./internal/worktree` again at `b94
     {
       "id": "VR-C3",
       "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
-      "tip": "ab9d305b314690959e5f68d3c751ff90169b8f29",
-      "plan_digest": "sha256:76c2080cabf7a682039d7570abbfba170c11c247f78c80a9f3ca6149334653bc",
-      "source_digest": "9fa1b3df144d6b1bfc4425a4a3e65f769589d816",
+      "tip": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+      "plan_digest": "sha256:dedfa63fd559b5ec09dc6e3227dc0085296ed59f9a64718abf049429445a5e63",
+      "source_digest": "8f281195dbc46bcaf8569bb903bc0a6d4eea3827",
       "acceptance_rows": [
         "VR28",
         "VR29",
@@ -1824,6 +1837,72 @@ The ticket 7 author ran `bench test --package ./internal/worktree` again at `b94
           "supersedes": [
             "vr-c3-coverage-r1"
           ]
+        },
+        {
+          "id": "vr-c3-standards-r3",
+          "performer": "claude:bench-reviewer/vr-c3-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8f281195dbc46bcaf8569bb903bc0a6d4eea3827",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c3-standards-r3@7fa02b42",
+            "digest": "sha256:272a7d3644ee6588e1708f8ce98572f1aba0d1a66618591b7aaa8bd51436661b",
+            "excerpt": "Standards: 0 findings. R19 is fixed, and the <files> sentence is accurate and agrees with the census rule and VR41."
+          },
+          "axis": "Standards",
+          "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "tip": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c3-standards-r2"
+          ]
+        },
+        {
+          "id": "vr-c3-spec-r3",
+          "performer": "claude:bench-reviewer/vr-c3-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8f281195dbc46bcaf8569bb903bc0a6d4eea3827",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c3-spec-r3@7fa02b42",
+            "digest": "sha256:c2279b81d17fecb307704e9cb3dd01ccb46e338f74c7a4be36dcdc2e9e923d88",
+            "excerpt": "Spec: 0 findings. R20 is closed; each review-owned command over tickets 5 to 7 prints no line except the allowed LandCommand line, and the payload is correct."
+          },
+          "axis": "Spec",
+          "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "tip": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c3-spec-r2"
+          ]
+        },
+        {
+          "id": "vr-c3-coverage-r3",
+          "performer": "claude:bench-reviewer/vr-c3-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8f281195dbc46bcaf8569bb903bc0a6d4eea3827",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c3-coverage-r3@7fa02b42",
+            "digest": "sha256:048bb85c5797853dc447f7a9705388b31ac0f7c7c97b9a924e1b2efb88e36eb6",
+            "excerpt": "Coverage: 0 findings. No test code changed since round 2; the package passes, and the amended <files> list hides no direct call outside tickets 9 and 10."
+          },
+          "axis": "Coverage",
+          "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "tip": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c3-coverage-r2"
+          ]
         }
       ]
     }
@@ -1839,6 +1918,27 @@ The ticket 7 author ran `bench test --package ./internal/worktree` again at `b94
     {
       "from": "sha256:095153eee4b7547b074ceddeb588e1a6a77a4e4663f33dd70ed0b00e55144d39",
       "to": "sha256:fc14637963d16b0fca7a4058f4eac565d31a02cb563e2fcdc1331d0547ba5c47",
+      "chunk_ids": {
+        "VR-C1": [
+          "VR-C1"
+        ],
+        "VR-C2": [
+          "VR-C2"
+        ],
+        "VR-C3": [
+          "VR-C3"
+        ],
+        "VR-C4": [
+          "VR-C4"
+        ],
+        "VR-C5": [
+          "VR-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:fc14637963d16b0fca7a4058f4eac565d31a02cb563e2fcdc1331d0547ba5c47",
+      "to": "sha256:dedfa63fd559b5ec09dc6e3227dc0085296ed59f9a64718abf049429445a5e63",
       "chunk_ids": {
         "VR-C1": [
           "VR-C1"
