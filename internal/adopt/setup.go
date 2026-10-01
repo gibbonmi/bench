@@ -281,7 +281,7 @@ func renderSetupPreview(root string, facts setupFacts) string {
 	if facts.gateInputsExists {
 		fmt.Fprintln(&b, "  .bench/gate-inputs.json exists -> left as-is (reviewer-owned content)")
 	} else {
-		fmt.Fprintln(&b, "  .bench/gate-inputs.json absent -> will be seeded declaring BENCH_HOME and HOME")
+		fmt.Fprintln(&b, "  .bench/gate-inputs.json absent -> will be seeded declaring "+strings.Join(seededGateInputEnvironment, ", "))
 	}
 
 	if facts.profileExists {
@@ -352,17 +352,18 @@ func consumerGateHygieneCheck() string {
 `
 }
 
-// scaffoldGateInputs is the seeded gate input manifest every adopted repository starts
-// from. The gate launches its script with PATH plus only the names declared here. The
-// installed wrapper's first statement reads HOME, to derive BENCH_HOME, under set -u. A
-// repository with no manifest cannot run its own gate at all. The declared tools are the
-// ones that wrapper and the scaffolded gate invoke. paths stays empty, because the seeded
-// gate closes over no tracked file beyond the script the gate already reads itself.
+// seededGateInputEnvironment is the one source of the names the seed and the preview declare.
+var seededGateInputEnvironment = []string{"BENCH_HOME", "BENCH_KIT", "BENCH_RUN_BINARY", "HOME"}
+
+// scaffoldGateInputs is the seeded manifest every adopted repository starts from; a repository
+// with no manifest cannot run its gate. The gate gives its script PATH plus only the declared
+// names. The wrapper's first statement reads HOME under set -u to derive BENCH_HOME. The tools
+// are those the wrapper and gate invoke. paths stays empty: the gate reads no other tracked file.
 func scaffoldGateInputs() string {
 	return `{
   "schema": 1,
   "closure": "local",
-  "environment": ["BENCH_HOME", "BENCH_KIT", "BENCH_RUN_BINARY", "HOME"],
+  "environment": ["` + strings.Join(seededGateInputEnvironment, `", "`) + `"],
   "paths": [],
   "tools": ["bash", "basename", "dirname", "git", "readlink", "uname"]
 }

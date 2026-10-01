@@ -3,7 +3,6 @@ package adopt
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"io"
 	"os"
 	"os/exec"
@@ -90,13 +89,7 @@ func TestAskQuestionsEmptySetIsANoop(t *testing.T) {
 // row on the first line, then prints both streams of setup.
 func runInteractiveSetup(t *testing.T, answers string) string {
 	t.Helper()
-	var seed struct {
-		Environment []string `json:"environment"`
-	}
-	if err := json.Unmarshal([]byte(scaffoldGateInputs()), &seed); err != nil {
-		t.Fatalf("decode the seeded gate input manifest: %v", err)
-	}
-	for _, name := range seed.Environment {
+	for _, name := range seededGateInputEnvironment {
 		if _, ok := os.LookupEnv(name); !ok {
 			t.Setenv(name, t.TempDir())
 		}
@@ -193,8 +186,14 @@ func TestSetupPreviewNamesGateInputs(t *testing.T) {
 	kit := os.Getenv("BENCH_KIT")
 
 	absent := renderSetupPreview(root, inspectRepo(root, kit))
-	if !strings.Contains(absent, "  .bench/gate-inputs.json absent -> will be seeded declaring BENCH_HOME and HOME\n") {
+	const seedLine = "  .bench/gate-inputs.json absent -> will be seeded declaring "
+	start := strings.Index(absent, seedLine)
+	if start < 0 {
 		t.Fatalf("preview does not announce the seed when absent:\n%s", absent)
+	}
+	line, _, _ := strings.Cut(absent[start+len(seedLine):], "\n")
+	if names := strings.Split(line, ", "); !slices.Equal(names, seededGateInputEnvironment) {
+		t.Fatalf("seed preview names %q, want exactly %q", names, seededGateInputEnvironment)
 	}
 
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
