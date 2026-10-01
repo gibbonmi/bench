@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/worktree-verb-runner/decisions/worktree-seams.md` (ready compiled map).
 
-Verification log: pending — the coordinator sets the value when the review round closes.
+Verification log: 3 iteration(s) to accept — the reviewer raised the cap from 2 to 3. Iteration 1 found 11 findings and iteration 2 found 5. Iteration 3 found 4 findings and used the last iteration under the cap. The coordinator confirmed the iteration-3 folds by a read of the diff and of the cited code, with no fourth review, on the reviewer's approval.
 
 ## Problem
 
