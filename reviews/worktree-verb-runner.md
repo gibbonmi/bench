@@ -727,6 +727,10 @@ The session ran each check on the source of `dd018e9a`, and each passed. `bench 
 
 The VR46 count per test function has no drop from `ad20f903`, and `TestCleanSetHostileOperand` gained one check. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. The JSON payload holds the package result as `vr-c3-5-worktree-r2`.
 
+## VR-C3 ticket 6 verification rerun
+
+The ticket 6 author ran `bench test --package ./internal/worktree` again at `ca795b48`, on the final chunk source of the repair commit `dd018e9a`. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c3-6-worktree-r2`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1561,6 +1565,24 @@ The VR46 count per test function has no drop from `ad20f903`, and `TestCleanSetH
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63086\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "5-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c3-6-worktree-r2",
+          "performer": "claude:bench-writer/vr-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4dbbb22b505557068d752ccda30cc86fc1d5ce42",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t6-author-20261001/6-worktree@ca795b48",
+            "digest": "sha256:c38a0463e3b631471c72937f5f87cb2de14e4b56f53cd2dd94ac9733e6b12cf7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62531\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "6-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
