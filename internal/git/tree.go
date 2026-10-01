@@ -110,15 +110,15 @@ func reverseAppliesToDefault(root, branch, def string) bool {
 	if !idxOK(root, idx, "read-tree", def) {
 		return false
 	}
-	check := idxCommand(root, idx, "apply", "--cached", "--check", "--reverse", "--no-ignore-whitespace", "--whitespace=nowarn")
+	check := IndexCommand(root, idx, "apply", "--cached", "--check", "--reverse", "--no-ignore-whitespace", "--whitespace=nowarn")
 	check.Stdin = bytes.NewReader(patch)
 	return check.Run() == nil
 }
 
-// idxCommand builds a `git -C root <args>` command whose index is the throwaway idx
-// file rather than the repository's own. This is the shared invocation form for
-// TreeHash.
-func idxCommand(root, idx string, args ...string) *exec.Cmd {
+// IndexCommand builds a `git -C root <args>` command whose index is the throwaway idx
+// file rather than the repository's own. It is the one owner of the index-file
+// invocation form; the caller chooses how to run the command and shape its result.
+func IndexCommand(root, idx string, args ...string) *exec.Cmd {
 	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
 	cmd.Env = append(os.Environ(), "GIT_INDEX_FILE="+idx)
 	return cmd
@@ -126,14 +126,14 @@ func idxCommand(root, idx string, args ...string) *exec.Cmd {
 
 // idxOK reports whether the throwaway-index git command exited zero.
 func idxOK(root, idx string, args ...string) bool {
-	return idxCommand(root, idx, args...).Run() == nil
+	return IndexCommand(root, idx, args...).Run() == nil
 }
 
 // idxOutput runs the throwaway-index git command and returns stdout with a single
 // trailing newline trimmed.
 func idxOutput(root, idx string, args ...string) (string, error) {
 	var out bytes.Buffer
-	cmd := idxCommand(root, idx, args...)
+	cmd := IndexCommand(root, idx, args...)
 	cmd.Stdout = &out
 	err := cmd.Run()
 	return strings.TrimRight(out.String(), "\n"), err
