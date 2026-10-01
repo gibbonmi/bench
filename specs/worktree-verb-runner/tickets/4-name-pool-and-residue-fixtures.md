@@ -1,7 +1,7 @@
 # Name the pool and residue fixtures
 
 Blocked by: 3-name-assignment-fixtures.md
-Writes: internal/worktree/verb_fixture_test.go, internal/worktree/clean_branch_test.go, internal/worktree/live_binary_test.go, internal/worktree/orphan_render_test.go, internal/worktree/pool_reclaim_facts_test.go, internal/worktree/pool_reclaim_test.go, internal/worktree/pool_root_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/verb_fixture_test.go (new), internal/worktree/clean_branch_test.go, internal/worktree/live_binary_test.go, internal/worktree/orphan_render_test.go, internal/worktree/pool_reclaim_facts_test.go, internal/worktree/pool_reclaim_test.go, internal/worktree/pool_root_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: VR27
 
 ## What to build
