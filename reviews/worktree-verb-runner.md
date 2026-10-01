@@ -684,7 +684,7 @@ Eight checks for no 64-hex text in stdout became `mustNoFingerprint`, which read
 Findings: 3. The worst issue is a record that called a weaker check narrower.
 
 - R17: `reviews/worktree-verb-runner.md:564` called the `mustNoFingerprint` check narrower, and line 585 counted five readers where seven exist. This commit corrects both. `auto-fix`. Confidence 7.
-- R18: `verb_fixture_test.go:109` and `list_selected_test.go:94` declare the table names `worktree_cleanup` and `selected`, but `verb_runner_check_test.go` still spells both literals. The repair makes the runner tests read the two constants. The production literals stay, because this spec changes no production file, and the ideas inbox holds that pair. `ask-user` for the production pair; `auto-fix` for the test side. Confidence 5.
+- R18: `verb_fixture_test.go:109` and `list_selected_test.go:105` declare the table names `worktree_cleanup` and `worktrees`, but `verb_runner_check_test.go` still spells both literals. The repair makes the runner tests read the two constants. The production literals stay, because this spec changes no production file, and the ideas inbox holds that pair. `ask-user` for the production pair; `auto-fix` for the test side. Confidence 5.
 
 The axis found the ticket 5 helpers clean: each reads rows that `mustRows` already decoded, and none runs a verb or splits rendered text.
 
@@ -734,6 +734,17 @@ The ticket 6 author ran `bench test --package ./internal/worktree` again at `ca7
 ## VR-C3 ticket 7 verification rerun
 
 The ticket 7 author ran `bench test --package ./internal/worktree` again at `e1dd94ba`, on the final chunk source of the repair commit `dd018e9a`. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c3-7-worktree-r2`.
+
+## VR-C3 chunk review, round 2
+
+This round confirms repair 1 of VR-C3. The frozen pair is base `f03e7fb9b46e5cdbe0ae55d94f171b209fe27447` and tip `0e657ac86837fb80a43c5eeeb071ba0aa6163e7c`. The shared evidence is `sha256:3eef31371a0510df20e4b077b2aaf9818e92e60cf6ad77ac9f25bb494fc8e6ee`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the repair delta `ab9d305b..0e657ac8`. Only the Coverage axis ran tests and probes, and it left the tree clean.
+
+The raw finding count is 2: Standards 1 and Spec 1. R14, R15, R16, R17, and R18 hold. The consumed allowance stays at 1 of 2 repair cycles, because neither finding needs a code repair.
+
+- R19: the R18 entry of this record named `list_selected_test.go:94` and the table `selected`. The tree declares `selectedTable` as `worktrees` at line 105. This commit corrects the entry. `auto-fix`. Confidence high.
+- R20: the spec defines `<files>` as every test file on a ticket's `Writes:` line. The ticket 5 line now holds `verb_runner_check_test.go`, so the VR30 command prints the runner's own direct calls. The census and VR41 exempt the two runner files, and VR30 does not. A plan commit makes `<files>` exclude the two runner files, and the reviewer can veto it. `auto-fix`. Confidence 8.
+
+The Coverage axis found no gap. A producer mutation of the placeholder bit all six hostile subtests, and a rename of each table bit the runner tests. All 688 top-level tests pass, and no assertion count fell.
 
 ```bench-review-record
 {
@@ -1677,6 +1688,76 @@ The ticket 7 author ran `bench test --package ./internal/worktree` again at `e1d
             "R14"
           ],
           "supersedes": []
+        },
+        {
+          "id": "vr-c3-standards-r2",
+          "performer": "claude:bench-reviewer/vr-c3-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4dbbb22b505557068d752ccda30cc86fc1d5ce42",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c3-standards-r2@0e657ac8",
+            "digest": "sha256:e754ced6443e061bb1041875261e2a70107c63764e71aa0b3e265a27d6ff4cca",
+            "excerpt": "Standards: 1 finding. R14, R16, R17 and the R18 code hold; the record names the wrong line and value for selectedTable."
+          },
+          "axis": "Standards",
+          "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "tip": "0e657ac86837fb80a43c5eeeb071ba0aa6163e7c",
+          "finding_ids": [
+            "R19"
+          ],
+          "supersedes": [
+            "vr-c3-standards-r1"
+          ]
+        },
+        {
+          "id": "vr-c3-spec-r2",
+          "performer": "claude:bench-reviewer/vr-c3-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4dbbb22b505557068d752ccda30cc86fc1d5ce42",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c3-spec-r2@0e657ac8",
+            "digest": "sha256:73e4a4cf7a4d1dafd0f7917ea4531148ed72abd2d123cd8b4a7b997623be85d1",
+            "excerpt": "Spec: 1 finding. R15, R16 and the repair hold; VR30 over the amended ticket 5 files prints the runner file's own direct calls."
+          },
+          "axis": "Spec",
+          "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "tip": "0e657ac86837fb80a43c5eeeb071ba0aa6163e7c",
+          "finding_ids": [
+            "R20"
+          ],
+          "supersedes": [
+            "vr-c3-spec-r1"
+          ]
+        },
+        {
+          "id": "vr-c3-coverage-r2",
+          "performer": "claude:bench-reviewer/vr-c3-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4dbbb22b505557068d752ccda30cc86fc1d5ce42",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c3-coverage-r2@0e657ac8",
+            "digest": "sha256:82a4143794fdcf66f0c2ccc5694bd41b1724407eee498b95cdb74f353819ebcb",
+            "excerpt": "Coverage: 0 findings. R14 and R18 hold under new producer probes; 688 tests pass and no assertion count fell."
+          },
+          "axis": "Coverage",
+          "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "tip": "0e657ac86837fb80a43c5eeeb071ba0aa6163e7c",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c3-coverage-r1"
+          ]
         }
       ]
     }
