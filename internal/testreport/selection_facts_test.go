@@ -96,9 +96,20 @@ func TestProbeNotesDeriveTheirTokens(t *testing.T) {
 	if lines := strings.Count(notes, "\n  "); lines != 4 {
 		t.Fatalf("notes hold %d facts, want 4:\n%s", lines, notes)
 	}
-	for _, token := range []string{proseCheckName, gate.SystemPhaseName, usage.WorktreeBuild, HandProbeRoute} {
+	for _, token := range []string{PackageExpressionNote, proseCheckName, gate.SystemPhaseName, usage.WorktreeBuild, HandProbeRoute} {
 		if !strings.Contains(notes, token) {
 			t.Fatalf("notes = %q, want the runner's own %q", notes, token)
 		}
+	}
+}
+
+// TestHelpStatesThePackageExpressionRule grades that bench test --help names the
+// one-expression rule before the check inventory. Two drain authors passed a
+// space-separated package list and read only a missing-directory failure.
+func TestHelpStatesThePackageExpressionRule(t *testing.T) {
+	output, code := Command(t.TempDir(), []string{"--help"})
+	want := "\nnotes:\n  " + PackageExpressionNote + "\nchecks:\n"
+	if code != 0 || !strings.Contains(output, want) {
+		t.Fatalf("help = (%q, %d), want the package note %q before the inventory", output, code, want)
 	}
 }

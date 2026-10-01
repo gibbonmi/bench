@@ -61,13 +61,18 @@ func namedCheckRunPattern() string {
 // caller for them after a hand mutation, so the probe's refusal and its help name this route.
 const HandProbeRoute = "copy the file aside, edit it, run bench test --check <name>, and restore the copy"
 
+// PackageExpressionNote states the one-expression rule of --package. The run passes the
+// value to Go as one typed argument, so a space-separated list fails as one missing
+// directory. Both the bench test help and the probe help print this sentence.
+const PackageExpressionNote = "--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; run one call per package or use a parent ./... pattern."
+
 // ProbeNotes states the four facts a caller needs to name a focused run correctly: what
 // each selection form takes, which two names are not probe targets, the hand route for
 // those two, and why an edited tree needs a rebuild first. The probe's help prints this
 // block, so the owner's behavior and its description stay one source.
 func ProbeNotes() string {
 	return "notes:\n  " + strings.Join([]string{
-		"--package <expr> takes a Go package expression, as bench test --package does.",
+		PackageExpressionNote,
 		"--check <name> names a conformance check from the bench test --help inventory, and " +
 			proseCheckName + " and " + gate.SystemPhaseName + " are not probe targets.",
 		"For " + proseCheckName + " or " + gate.SystemPhaseName + ", " + HandProbeRoute + ".",

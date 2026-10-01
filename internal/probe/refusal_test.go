@@ -289,7 +289,7 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 // probeHelpNotes is the four facts the help owes, spelled independently of the producer.
 // A dropped or reworded note reds this row rather than passing as a fresh expectation.
 var probeHelpNotes = []string{
-	"--package <expr> takes a Go package expression, as bench test --package does.",
+	"--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; run one call per package or use a parent ./... pattern.",
 	"--check <name> names a conformance check from the bench test --help inventory, and prose and system are not probe targets.",
 	"For prose or system, copy the file aside, edit it, run bench test --check <name>, and restore the copy.",
 	"A named check compiles from the run binary's source, so an edited tree needs bench worktree build <target> first.",
