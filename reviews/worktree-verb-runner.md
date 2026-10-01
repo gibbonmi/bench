@@ -746,6 +746,10 @@ The raw finding count is 2: Standards 1 and Spec 1. R14, R15, R16, R17, and R18 
 
 The Coverage axis found no gap. A producer mutation of the placeholder bit all six hostile subtests, and a rename of each table bit the runner tests. All 688 top-level tests pass, and no assertion count fell.
 
+## VR-C3 ticket 5 verification rerun
+
+The ticket 5 repair session ran `bench test --package ./internal/worktree` again at `3a571df8`, after the plan commit changed the spec text. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c3-5-worktree-r3`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1616,6 +1620,24 @@ The Coverage axis found no gap. A producer mutation of the placeholder bit all s
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,65127\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "7-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c3-5-worktree-r3",
+          "performer": "claude:bench-writer/vr-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8f281195dbc46bcaf8569bb903bc0a6d4eea3827",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t5-repair-1-20261001/5-worktree@3a571df8",
+            "digest": "sha256:f2f9f4ca8d47170c125213dd6d658b1c7c230bdbab97cc79a816642dcb565c4b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63990\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "5-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
