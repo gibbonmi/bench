@@ -617,6 +617,56 @@ No ticket file declares an output buffer pair for a verb call. The buffers left 
 
 The author ran each check on the source of `a531f85b`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The two skips are unix socket capability skips. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
 
+## VR-C3 ticket 7 author evidence
+
+Ticket 7 had a fresh `bench-writer` author, `vr-t7-author`, on opus at medium effort, with a cap of 3 attempts. The author started at `5b61f38f` on the chunk base `f03e7fb9`. The author committed `c6252480` on a lane pass in the first attempt, and then committed this record alone. The build preflight on `c6252480` reported 13 green checks, 2 checks that do not apply, and 0 red checks.
+
+The ticket is a pure migration, so no row has a new test. For each row, the red is the scan output at the start, and the green is the scan output at `c6252480`.
+
+- VR33: at `5b61f38f` the VR33 command printed 1 line, the `runMerge` declaration in `merge_test.go`. At `c6252480` it printed no line.
+- VR34: at `5b61f38f` the tuple scan listed `mergeFixture` and `reauthorizeFixture`. At `c6252480` the scan lists neither builder. The scan still lists the landing builders that tickets 8 and 9 own.
+- VR35: at `5b61f38f` the verb form command printed 13 lines over the ticket files. At `c6252480` it printed 1 line, the `LandCommand` call in `delegated_integration_test.go` that ticket 9 moves.
+
+The author reported these choices. The Spec axis grades each one.
+
+- `mergeFixture` returns a `mergeSet` value. The value carries a `repoHome`, the joins value, the tally file, and the registrations. Its `merge` method builds the joins form call through `callWith`. Thus each merge call is one runner line, and each `mergeLane` and `mergeReconcile` stub still runs.
+- `reauthorizeFixture` returns a `reauthorizeSet` value. The value embeds `ownedAssignment` and adds the reviewed base and tip. The rollback test passes its stubbed joins value through `callWith`.
+- `requireMergeRefusal` and `requireMergeLaneRefusal` take the verb result in place of the exit code and the streams. `requireMergeUnchanged` takes the merge set, the target, and the previous tip. Each assertion in the three helpers stays.
+- The `fold` method in `delegated_integration_test.go` builds its call from a `repoHome` value with the journey's joins value. The `LandCommand` call in that file stays for ticket 9.
+- In `reset_repair_test.go`, the two reset calls use the merge set's `call` method in place of a `verbCall` literal.
+- One failure message named `ReauthorizeCommand` in call form. The author changed it to `reauthorize %q`, as ticket 6 did. No assertion changed.
+- No check required an edit to the five registry paths, so the diff leaves them unchanged. `mergedRecord` stays.
+
+### Ticket 7 probe verdicts
+
+Each probe ran the `Merge` tests, and each restore reads `yes`. The first probe drops the conflict paths from the merge conflict refusal. The second probe makes the unreadable fingerprint refusal return 0.
+
+| Probe | Source | Verdict | Failed tests |
+|---|---|---|---|
+| Conflict paths | `5b61f38f`, before the first edit | bit | `TestMergeRefusalEscapesAControlBytePath`, `TestMergeRefusesAConflictingNonCapturePath` |
+| Conflict paths | `c6252480` | bit | `TestMergeRefusalEscapesAControlBytePath`, `TestMergeRefusesAConflictingNonCapturePath` |
+| Unreadable fingerprint | `5b61f38f`, before the first edit | silent | none |
+| Unreadable fingerprint | `c6252480` | silent | none |
+
+For each probe, the two failing sets are equal. The second probe is silent at the base, so its silent result at the tip is not a loss.
+
+### Ticket 7 line counts and VR46 pre-check
+
+| File | `f03e7fb9` | `5b61f38f` | `c6252480` |
+|---|---|---|---|
+| `merge_test.go` | 932 | 932 | 922 |
+| `worktree_test.go` | 1031 | 985 | 985 |
+
+Each file stays at or below its line count at `f03e7fb9`. `bench structure --growth f03e7fb9` passed.
+
+The author counted the `t.Fatal`, `t.Fatalf`, `t.Error`, `t.Errorf`, `t.FailNow`, `t.Fail`, `requireTest`, and `mustNoError` calls in each top-level test of the package. The count was 2241 in 703 tests at `5b61f38f`, and 2241 in 703 tests at `c6252480`. No test lost a call, so the VR46 table has no row. The deleted `runMerge` helper held no failure call.
+
+### Ticket 7 VR47 and verification
+
+No ticket file declares an output buffer pair for a verb call outside the excepted landing call. In `delegated_integration_test.go`, one buffer pair feeds the `LandCommand` call that ticket 9 moves. The other pair feeds `gate.RunCommand`, which is not a worktree verb. The buffer in `worktree_test.go` is the advisory writer of a joins value.
+
+The author ran each check on the source of `c6252480`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The two skips are unix socket capability skips. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1368,7 +1418,7 @@ The author ran each check on the source of `a531f85b`, and each passed. `bench t
     {
       "id": "VR-C3",
       "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
-      "tip": "a531f85b72e779a551c28d20d28e932ad02f87bf",
+      "tip": "c62524804a6671685a958797d836c89673324e12",
       "plan_digest": "pending",
       "source_digest": "pending",
       "acceptance_rows": [
@@ -1415,6 +1465,24 @@ The author ran each check on the source of `a531f85b`, and each passed. `bench t
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,52046\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "6-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c3-7-worktree-r1",
+          "performer": "claude:bench-writer/vr-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9fa1b3df144d6b1bfc4425a4a3e65f769589d816",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t7-author-20261001/7-worktree@c6252480",
+            "digest": "sha256:8f3aba6cc1fa109db02771be8823eaf68b3de2b281332d3d34488e2d7eb6e673",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62556\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "7-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
