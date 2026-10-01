@@ -191,11 +191,9 @@ func TestSetupPreviewNamesGateInputs(t *testing.T) {
 	if start < 0 {
 		t.Fatalf("preview does not announce the seed when absent:\n%s", absent)
 	}
-	line, _, _ := strings.Cut(absent[start:], "\n")
-	for _, name := range seededGateInputEnvironment {
-		if !strings.Contains(line, name) {
-			t.Fatalf("seed preview line %q does not name seeded environment name %s", line, name)
-		}
+	line, _, _ := strings.Cut(absent[start+len(seedLine):], "\n")
+	if names := strings.Split(line, ", "); !slices.Equal(names, seededGateInputEnvironment) {
+		t.Fatalf("seed preview names %q, want exactly %q", names, seededGateInputEnvironment)
 	}
 
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {

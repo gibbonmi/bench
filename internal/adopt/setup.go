@@ -355,10 +355,10 @@ func consumerGateHygieneCheck() string {
 // seededGateInputEnvironment is the one source of the names the seed and the preview declare.
 var seededGateInputEnvironment = []string{"BENCH_HOME", "BENCH_KIT", "BENCH_RUN_BINARY", "HOME"}
 
-// scaffoldGateInputs is the seeded gate input manifest. The gate gives its script PATH plus
-// only the declared names, and the installed wrapper reads HOME under set -u to derive
-// BENCH_HOME, so a repository with no manifest cannot run its gate. The tools are the ones
-// that wrapper and the gate invoke; paths stays empty, as the gate reads no other tracked file.
+// scaffoldGateInputs is the seeded manifest every adopted repository starts from; a repository
+// with no manifest cannot run its gate. The gate gives its script PATH plus only the declared
+// names. The wrapper's first statement reads HOME under set -u to derive BENCH_HOME. The tools
+// are those the wrapper and gate invoke. paths stays empty: the gate reads no other tracked file.
 func scaffoldGateInputs() string {
 	return `{
   "schema": 1,
