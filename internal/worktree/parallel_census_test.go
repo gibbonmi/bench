@@ -1099,7 +1099,7 @@ func TestPackageTestCountPin(t *testing.T) {
 	}
 	switch count := len(facts); {
 	case count < worktreeTestCount:
-		t.Fatalf("the package declares %d top-level tests, below the pin of %d: a test was removed or merged", count, worktreeTestCount)
+		t.Fatalf("the package declares %d top-level tests, below the pin of %d: a test was removed, merged, renamed off the Test prefix, or moved to another package", count, worktreeTestCount)
 	case count > worktreeTestCount:
 		t.Fatalf("the package declares %d top-level tests, above the pin of %d: raise worktreeTestCount to %d in this change", count, worktreeTestCount, count)
 	}
