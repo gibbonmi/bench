@@ -1,7 +1,7 @@
 # The session-start resume names aged active rows stale-active
 
 Blocked by: none
-Writes: internal/worktree/lifecyclepolicy/lifecyclepolicy.go, internal/worktree/lifecyclepolicy/lifecyclepolicy_test.go, internal/worktree/classifier.go, internal/worktree/worktree.go, internal/worktree/landed_test.go, internal/worktree/orphan_render_test.go, internal/worktree/orphan_test.go, CHANGELOG.md
+Writes: internal/worktree/lifecyclepolicy/lifecyclepolicy.go, internal/worktree/lifecyclepolicy/lifecyclepolicy_test.go, internal/worktree/classifier.go, internal/worktree/worktree.go, internal/worktree/landed_test.go, internal/worktree/orphan_render_test.go, internal/worktree/orphan_test.go, CHANGELOG.md, CONTEXT.md
 Covers: none
 
 ## What to build

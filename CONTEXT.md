@@ -103,9 +103,14 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **landed assignment** — an assignment worktree whose ledger state is `active`
   and whose branch has landed on the default branch. Its lease is not live:
   nobody released it. Bench derives this classification; it is never a ledger state.
-  `bench worktree clean --landed` retires it. Not "orphan" (that names age
+  `bench worktree clean --landed` retires it. Not "stale-active" (that names age
   alone), not "stale", "idle", "abandoned", or "unreleased" (true of every
   active row) — landed.
+- **stale-active assignment** — an assignment worktree whose ledger state is
+  `active`, whose branch has not landed, and whose age passes the stale window.
+  Bench derives this classification; it is never a ledger state. The session-start
+  resume reports it with a plan-only `bench worktree clean <path>`. Not "orphan",
+  not "abandoned", not "dead" (the ledger still says active) — stale-active.
 - **unclaimed ref** — a branch under `refs/heads/bench/assign/` or
   `refs/heads/bench/shift-` that no assignment record names and no checkout holds.
   The ref inventory gives it exactly one class: landed, subsumed, or unique. Not
