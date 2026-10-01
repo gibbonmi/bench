@@ -8,8 +8,8 @@ The chunk pair is `0c95c944..137fb303`. The base is the `main` tip, because a pl
 
 The author wrote each test before the code that it grades, in three stages. The red and green log for each row follows:
 
-- Stage 1: every runner function and reader was a stub, and the runner returned exit -1. The package run had 35 failures. All 22 planned tests failed, and VR1 failed in each of its 14 key subtests.
-- Stage 2: the runner and `checkVerbCall` were complete, and the readers and must forms were stubs. VR1 to VR5, VR17 to VR19, VR21, and VR22 passed. VR6 to VR14, VR16, and VR59 failed for the reader reason, with 11 failures.
+- Stage 1: every runner function and reader was a stub, and the runner returned exit -1. All 22 planned tests failed, and VR1 failed in each of its 14 key subtests, which gives 36 failure rows. The log records 35 failures. The stub source is not in the history, so the count is not reproducible.
+- Stage 2: the runner and `checkVerbCall` were complete, and the readers and must forms were stubs. VR1 to VR5, VR17 to VR19, VR21, and VR22 passed. VR6 to VR14, VR16, and VR59 failed for the reader reason, with 11 failures. The log does not record the stage 2 result of VR15, and that result is not reproducible.
 - Stage 3: after the readers and the must forms, all 22 tests passed.
 - VR15: in stage 1, the test failed in its fixture only, because the stub runner gave no plan. A probe of the finished must form gave the row its own red. The probe made every reader error fail the recorder, and the test failed on the `none` plan.
 - VR20 is review-owned. The call value declares the `kit` and `clock` fields beside `root` and `home`.
@@ -87,6 +87,37 @@ Findings: 2. The worst issue is the untested record branch of the fingerprint re
 ### Command contribution
 
 The implementation command did not contribute. The ticket told the author to build the fault as an outside test does, but its `Writes:` line did not hold the owning file. Ticket slicing owns that fix: the first ticket that needs a shared builder names it and writes its owning file.
+
+## VR-C1 repair 1
+
+A fresh `bench-writer` repair session, `vr-t1-repair-1`, ran on opus at medium effort, with a cap of 2 attempts. The session started at `c71d932b` and committed `3a318142` on a lane pass in the first attempt. The lane passed with 15 green checks, 1 check that does not apply, and 0 red checks. The source digest of the repair is `bef4351236549fad5b2cef6e5958d23b685aabb8`. This record is a second commit.
+
+The repair changes only test files. The red and green route for each target follows:
+
+- R1: a new builder, `addBrokenUnclaimedBranch`, owns the broken unclaimed ref and its reason comment. `TestCleanUnclaimedErrorRowRefusesTheSet` and `TestVerbResultFingerprintTreatsAPlaceholderAsAbsent` both call it, and the assertions of the clean test do not change. The builder is in `verb_runner_check_test.go`, not beside `addUnclaimedBranch`. In `clean_set_apply_test.go`, the builder made the file 417 lines, and the structure lane refused it at its budget of 400. Red: a swap in the builder that makes the ref name a commit failed both tests.
+- R2: the `clean` row of VR1 renders `cleanInvocationError` into a buffer, and the expectation is that whole output. Red: a swap that sends the `clean` key to the reclaim entry failed the `clean` subtest.
+- R3: the `show` and `build` rows read `worktreeShowGrammar.Cmd` and `buildGrammar.Cmd`. The `usageCommand` helper is deleted. Red: a swap that sends the `show` key to the build entry failed the `show` subtest.
+- R4: the VR10 test asserts that the record holds the `fingerprint=` cell with the value, and does not assert its position. Red: a reader that cuts the cell at the first `0` failed the test.
+- R5: the stage 1 and stage 2 lines of the author evidence now state what this record cannot reproduce. The stub source is not in the history.
+- R6: two new tests read the record branch. `TestVerbResultFingerprintReadsANoOpRecordAsAbsent` reads a real no-op `reset` plan and expects the no-fingerprint error. `TestVerbResultFingerprintRefusesConflictingRecords` adds a second copy of a real `reset` record with a different fingerprint and expects a conflict error. A shared builder, `resetRunnerPlan`, gives both tests and VR10 a real plan. `worktreeTestCount` is now 688.
+
+### Repair probe verdicts
+
+Each probe ran through `bench probe`, and each restore reads `yes`. The first two rows ran on the committed source, and the JSON payload holds the plan probe.
+
+| File | Mutation | Test | Target | Verdict |
+|---|---|---|---|---|
+| `internal/worktree/verb_runner_test.go` | swap: `values = recordFingerprints(stdout)` to a return of the first record cell | both R6 tests | R6 | bit, 2 failed |
+| `internal/worktree/verb_runner_test.go` | swap: `unapplicableFingerprint` to `"probe-placeholder"` | TestVerbResultFingerprintTreatsAPlaceholderAsAbsent | VR59 | bit |
+| `internal/worktree/verb_runner_test.go` | swap: `if value != values[0] {` to `if false {` | TestVerbResultFingerprintRefusesConflictingRecords | R6 | bit |
+| `internal/worktree/verb_runner_check_test.go` | swap: `"hash-object", "-w", "tracked.txt"` to `"rev-parse", "HEAD"` | both R1 tests | R1 | bit, 2 failed |
+| `internal/worktree/verb_runner_test.go` | swap: the `clean` entry to `ReclaimCommand` | TestVerbRunnerKeyReachesItsOwnVerb/clean | R2 | bit |
+| `internal/worktree/verb_runner_test.go` | swap: the `show` entry to `BuildCommand` | TestVerbRunnerKeyReachesItsOwnVerb/show | R3 | bit |
+| `internal/worktree/verb_runner_test.go` | swap: the record cell cut at `,` to a cut at `0` | TestVerbResultFingerprintReadsTheRecordCell | R4 | bit |
+
+### Repair verification
+
+The session ran each check on the source of `3a318142`, and each passed: `bench test --package ./internal/worktree`, the plan probe `1-probe`, `bench test --package ./internal/conformance`, and `bench structure --growth 0c95c944`. `TestPackageTestCountPin` passed at 688 tests, and `TestSerialSetStaysBelowTheCeiling` passed at the ceiling of 46. The two new tests call `t.Parallel()` and bind no environment. The digest of the `1-worktree` result is of the text that the session received, because that output did not spill to a file.
 
 ```bench-review-record
 {
@@ -200,6 +231,53 @@ The implementation command did not contribute. The ticket told the author to bui
               "ref": "claude:agent/vr-t1-author-20261001/vr17-joins-probe@137fb303",
               "digest": "sha256:e5057e77d067575ac77ddc8c33bd59bc2f2039837e80396a88e8daa674bdac0b",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbRunnerPassesTheJoinsValue,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,60"
+            }
+          }
+        },
+        {
+          "id": "vr-c1-1-worktree-r2",
+          "performer": "claude:bench-writer/vr-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bef4351236549fad5b2cef6e5958d23b685aabb8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t1-repair-1-20261001/1-worktree@3a318142",
+            "digest": "sha256:3b0e5610d71f6cda08db16661fa2df4d23290fc2553212129a31ebe52159e2a7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,50325\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "1-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c1-1-probe-r2",
+          "performer": "claude:bench-writer/vr-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bef4351236549fad5b2cef6e5958d23b685aabb8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t1-repair-1-20261001/1-probe@3a318142",
+            "digest": "sha256:282e44d62d85fa731ff381b4097bdaf4ebbd75d3405b5241bb5fecc56af50be0",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbResultFingerprintTreatsAPlaceholderAsAbsent,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,36"
+          },
+          "requirement": "1-probe",
+          "command": "bench probe internal/worktree/verb_runner_test.go --swap 'unapplicableFingerprint' --with '\"probe-placeholder\"' --package ./internal/worktree --run TestVerbResultFingerprintTreatsAPlaceholderAsAbsent",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/vr-t1-repair-1-20261001/1-probe@3a318142",
+              "digest": "sha256:282e44d62d85fa731ff381b4097bdaf4ebbd75d3405b5241bb5fecc56af50be0",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbResultFingerprintTreatsAPlaceholderAsAbsent,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,36"
             }
           }
         }
