@@ -55,7 +55,7 @@ func scanWords(tokens []string, chk Checker, allowWrapper, elsewhere bool) strin
 	}
 	base := filepath.Base(tokens[j])
 	switch {
-	case base == "git":
+	case isGit(tokens[j]):
 		sub, argsStart, ok := FindSubcommand(tokens, j+1, len(tokens))
 		if !ok {
 			return ""
@@ -96,6 +96,9 @@ func worktreeExecChild(words []string) ([]string, bool) {
 	}
 	return nil, false
 }
+
+// isGit reports whether a word names the git executable, bare or by path.
+func isGit(word string) bool { return filepath.Base(word) == "git" }
 
 // benchExecutables are the command names that run Bench: the installed CLI and the
 // repository wrapper.
