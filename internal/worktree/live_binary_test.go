@@ -18,7 +18,7 @@ import (
 // build output, plus one owned assignment holding an empty dist/. This is the exact shape
 // that lets a release reach the residue guard's removal loop. It returns the private
 // home the registration lives under, so the fixture binds no process environment.
-func newResidueGuardFixture(t *testing.T, request string) (string, Creation, string) {
+func newResidueGuardFixture(t *testing.T, request string) ownedAssignment {
 	t.Helper()
 	root := newWorktreeRepo(t)
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644)
@@ -29,7 +29,7 @@ func newResidueGuardFixture(t *testing.T, request string) (string, Creation, str
 	home := filepath.Join(root, ".bench-home")
 	creation := mustCreate(t, root, home, request, "residue guard")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
-	return root, creation, home
+	return ownedAssignment{root: root, creation: creation, home: home}
 }
 
 // stubbedLiveBinaryJoins returns a seam set whose residue-guard warning sink is the
@@ -51,17 +51,17 @@ func stubbedLiveBinaryJoins(running string) (joins, *bytes.Buffer) {
 func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 	t.Parallel()
 	const request = "landed-live-binary"
-	root, creation, home := newResidueGuardFixture(t, request)
-	live := filepath.Join(creation.Path, "dist", "bench")
+	f := newResidueGuardFixture(t, request)
+	live := filepath.Join(f.creation.Path, "dist", "bench")
 	mustWrite(t, live, []byte("binary\n"), 0o755)
 	j, warnings := stubbedLiveBinaryJoins(live)
 
 	var stdout bytes.Buffer
-	code := releaseCommandWith(j, root, home, []string{"--request", request, creation.Path}, &stdout, io.Discard)
+	code := releaseCommandWith(j, f.root, f.home, []string{"--request", request, f.creation.Path}, &stdout, io.Discard)
 	requireTest(t, code == 0, "live-binary release exit=%d stdout=%q", code, stdout.String())
 
 	warned := warnings.String()
-	rebuild := freshness.RebuildAction(creation.Path)
+	rebuild := freshness.RebuildAction(f.creation.Path)
 	requireTest(t, strings.Contains(warned, live), "warning %q does not name the binary it removed (%s)", warned, live)
 	requireTest(t, strings.Contains(warned, rebuild), "warning %q does not name the rebuild invocation (%s)", warned, rebuild)
 	requireTest(t, !strings.Contains(warned, "go build "), "warning %q names plain `go build`, which leaves the package version unstamped", warned)
@@ -139,15 +139,15 @@ func TestResidueGuardRemovesForeignBinariesWithoutWarning(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request := "landed-foreign-" + strings.ReplaceAll(tc.name, " ", "-")
-			root, creation, home := newResidueGuardFixture(t, request)
-			foreign := filepath.Join(creation.Path, "dist", tc.residue)
+			f := newResidueGuardFixture(t, request)
+			foreign := filepath.Join(f.creation.Path, "dist", tc.residue)
 			mustWrite(t, foreign, []byte("binary\n"), 0o755)
 			elsewhere := filepath.Join(t.TempDir(), "bench")
 			mustWrite(t, elsewhere, []byte("the binary answering bench\n"), 0o755)
 			j, warnings := stubbedLiveBinaryJoins(elsewhere)
 
 			var stdout bytes.Buffer
-			code := releaseCommandWith(j, root, home, []string{"--request", request, creation.Path}, &stdout, io.Discard)
+			code := releaseCommandWith(j, f.root, f.home, []string{"--request", request, f.creation.Path}, &stdout, io.Discard)
 			requireTest(t, code == 0, "foreign release exit=%d stdout=%q", code, stdout.String())
 			requireTest(t, warnings.Len() == 0, "foreign %s warned: %q", foreign, warnings.String())
 		})

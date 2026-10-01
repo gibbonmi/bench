@@ -23,11 +23,11 @@ import (
 // exactly those facts.
 func TestReclaimFactAdapterTranslatesDeadAndLivePointers(t *testing.T) {
 	t.Parallel()
-	pool, _, _ := newReclaimPool(t)
-	deadTarget := plantDeadChild(t, pool, "dead-key", "wt")
-	plantLiveChild(t, pool, "live-key", "wt")
+	f := newReclaimPool(t)
+	deadTarget := plantDeadChild(t, f.pool, "dead-key", "wt")
+	plantLiveChild(t, f.pool, "live-key", "wt")
 
-	dead := gatherPoolKeyFacts(filepath.Join(pool, "dead-key"), "dead-key")
+	dead := gatherPoolKeyFacts(filepath.Join(f.pool, "dead-key"), "dead-key")
 	requireTest(t, dead.Shape == reclaimpolicy.ShapeDir && len(dead.Children) == 1, "dead-key facts = %+v, want one directory child", dead)
 	pointer := dead.Children[0].Pointer
 	requireTest(t, dead.Children[0].Name == "wt" && dead.Children[0].Shape == reclaimpolicy.ShapeDir,
@@ -37,13 +37,13 @@ func TestReclaimFactAdapterTranslatesDeadAndLivePointers(t *testing.T) {
 	requireTest(t, pointer.TargetExistence == reclaimpolicy.ExistenceAbsent && pointer.TargetErr == "",
 		"dead pointer existence = %+v, want a proven absence", pointer)
 
-	live := gatherPoolKeyFacts(filepath.Join(pool, "live-key"), "live-key")
+	live := gatherPoolKeyFacts(filepath.Join(f.pool, "live-key"), "live-key")
 	requireTest(t, live.Children[0].Pointer.TargetExistence == reclaimpolicy.ExistencePresent,
 		"live pointer facts = %+v, want a present target", live.Children[0].Pointer)
 
 	requireTest(t, reclaimpolicy.ClassifyKey(dead).Reclaimable() && !reclaimpolicy.ClassifyKey(live).Reclaimable(),
 		"policy verdicts over the translated facts diverge from the pool's truth")
-	produced := classifyPoolKey(filepath.Join(pool, "dead-key"), "dead-key")
+	produced := classifyPoolKey(filepath.Join(f.pool, "dead-key"), "dead-key")
 	requireTest(t, produced.Verdict == poolVerdictReclaim && produced.Targets[0] == deadTarget,
 		"production classifier = %#v, want the policy verdict over these facts", produced)
 }
@@ -54,13 +54,13 @@ func TestReclaimFactAdapterTranslatesDeadAndLivePointers(t *testing.T) {
 // read provably absent after the source repository is deleted.
 func TestReclaimFactAdapterTranslatesARealRegistrationKey(t *testing.T) {
 	t.Parallel()
-	pool, _, home := newReclaimPool(t)
+	f := newReclaimPool(t)
 	source := newWorktreeRepo(t)
 	key := filepath.Base(Pool(canonicalRoot(source)))
-	created := mustCreate(t, source, home, "fa-registration", "fareg")
-	requireTest(t, filepath.Dir(created.Path) == filepath.Join(pool, key), "created worktree %q is not under key %q", created.Path, key)
+	created := mustCreate(t, source, f.home, "fa-registration", "fareg")
+	requireTest(t, filepath.Dir(created.Path) == filepath.Join(f.pool, key), "created worktree %q is not under key %q", created.Path, key)
 
-	registered := gatherPoolKeyFacts(filepath.Join(pool, key), key)
+	registered := gatherPoolKeyFacts(filepath.Join(f.pool, key), key)
 	requireTest(t, len(registered.Children) == 1 && registered.Children[0].Pointer.TargetExistence == reclaimpolicy.ExistencePresent,
 		"registered facts = %+v, want the real registration's target present", registered)
 	target, ok := reclaimpolicy.GitdirTarget(registered.Children[0].Pointer.Body)
@@ -68,7 +68,7 @@ func TestReclaimFactAdapterTranslatesARealRegistrationKey(t *testing.T) {
 		"registration pointer body %q parsed to %q, want git's admin directory", registered.Children[0].Pointer.Body, target)
 
 	mustNoError(t, os.RemoveAll(source))
-	orphaned := gatherPoolKeyFacts(filepath.Join(pool, key), key)
+	orphaned := gatherPoolKeyFacts(filepath.Join(f.pool, key), key)
 	requireTest(t, orphaned.Children[0].Pointer.TargetExistence == reclaimpolicy.ExistenceAbsent,
 		"orphaned facts = %+v, want the deleted repository's target absent", orphaned)
 	markProof(t, "reclaim/adapter/facts")
@@ -80,19 +80,19 @@ func TestReclaimFactAdapterTranslatesARealRegistrationKey(t *testing.T) {
 // body — proof the adapter never opened it.
 func TestReclaimFactAdapterTranslatesHostileShapesUnopened(t *testing.T) {
 	t.Parallel()
-	pool, _, _ := newReclaimPool(t)
+	f := newReclaimPool(t)
 
-	mustNoError(t, os.Symlink(t.TempDir(), filepath.Join(pool, "symlinked-key")))
-	linked := gatherPoolKeyFacts(filepath.Join(pool, "symlinked-key"), "symlinked-key")
+	mustNoError(t, os.Symlink(t.TempDir(), filepath.Join(f.pool, "symlinked-key")))
+	linked := gatherPoolKeyFacts(filepath.Join(f.pool, "symlinked-key"), "symlinked-key")
 	requireTest(t, linked.Shape == reclaimpolicy.ShapeSymlink && len(linked.Children) == 0,
 		"symlink facts = %+v, want an undescended symlink shape", linked)
 
-	child := filepath.Join(pool, "fifo-git", "wt")
+	child := filepath.Join(f.pool, "fifo-git", "wt")
 	mustMkdirAll(t, child, 0o755)
 	if err := syscall.Mkfifo(filepath.Join(child, ".git"), 0o644); err != nil {
 		capability.Capability(t, capability.Fifo, "FIFOs unavailable on this filesystem: "+err.Error())
 	}
-	fifo := gatherPoolKeyFacts(filepath.Join(pool, "fifo-git"), "fifo-git")
+	fifo := gatherPoolKeyFacts(filepath.Join(f.pool, "fifo-git"), "fifo-git")
 	pointer := fifo.Children[0].Pointer
 	requireTest(t, pointer.Shape == reclaimpolicy.ShapeOther && pointer.Body == "" && pointer.ReadErr == "",
 		"fifo pointer facts = %+v, want an unopened non-regular shape", pointer)
@@ -107,23 +107,23 @@ func TestReclaimFactAdapterTranslatesDeniedReads(t *testing.T) {
 	if os.Geteuid() == 0 {
 		capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny the stat that leaves existence unknown")
 	}
-	pool, _, _ := newReclaimPool(t)
+	f := newReclaimPool(t)
 
-	plantDeadChild(t, pool, "unreadable-child", "wt")
-	sealed := filepath.Join(pool, "unreadable-child", "wt")
+	plantDeadChild(t, f.pool, "unreadable-child", "wt")
+	sealed := filepath.Join(f.pool, "unreadable-child", "wt")
 	t.Cleanup(func() { _ = os.Chmod(sealed, 0o700) })
 	mustChmod(t, sealed, 0o000)
-	denied := gatherPoolKeyFacts(filepath.Join(pool, "unreadable-child"), "unreadable-child")
+	denied := gatherPoolKeyFacts(filepath.Join(f.pool, "unreadable-child"), "unreadable-child")
 	requireTest(t, denied.Children[0].Pointer.Shape == reclaimpolicy.ShapeUnreadable &&
 		strings.Contains(denied.Children[0].Pointer.ShapeErr, "permission denied"),
 		"denied pointer facts = %+v, want an unreadable shape naming the denial", denied.Children[0].Pointer)
 
 	deniedDir := filepath.Join(t.TempDir(), "denied")
 	mustMkdirAll(t, deniedDir, 0o700)
-	plantChild(t, pool, "unstattable-target", "wt", filepath.Join(deniedDir, "gone", ".git"))
+	plantChild(t, f.pool, "unstattable-target", "wt", filepath.Join(deniedDir, "gone", ".git"))
 	t.Cleanup(func() { _ = os.Chmod(deniedDir, 0o700) })
 	mustChmod(t, deniedDir, 0o000)
-	unknown := gatherPoolKeyFacts(filepath.Join(pool, "unstattable-target"), "unstattable-target")
+	unknown := gatherPoolKeyFacts(filepath.Join(f.pool, "unstattable-target"), "unstattable-target")
 	pointer := unknown.Children[0].Pointer
 	requireTest(t, pointer.TargetExistence == reclaimpolicy.ExistenceUnknown && strings.Contains(pointer.TargetErr, "permission denied"),
 		"denied target facts = %+v, want unknown existence naming the denial", pointer)

@@ -199,11 +199,11 @@ func TestResumeSummaryNamesTheReclaimCommandOnlyWhenKeysAreReclaimable(t *testin
 func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 	t.Parallel()
 	t.Run("hostile pool", func(t *testing.T) {
-		pool, root, home := newReclaimPool(t)
-		plantHostilePool(t, pool, root)
+		f := newReclaimPool(t)
+		plantHostilePool(t, f.pool, f.root)
 
-		summary, _ := mustResumeClean(t, root, home)
-		plan, code := mustReclaim(t, root, home)
+		summary, _ := mustResumeClean(t, f.root, f.home)
+		plan, code := mustReclaim(t, f.root, f.home)
 		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
 		want := planReclaimableCount(t, plan)
 		requireTest(t, want == 3, "the hostile pool plans %d reclaimable keys, want the two dead and the empty one: %q", want, plan)
@@ -211,12 +211,12 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 			"resume reported %d reclaimable keys, the plan targets %d:\n%s\n%s", resumeReclaimableCount(t, summary), want, summary, plan)
 	})
 	t.Run("clean pool", func(t *testing.T) {
-		pool, root, home := newReclaimPool(t)
-		plantLiveChild(t, pool, "live-key", "wt")
-		mustMkdirAll(t, filepath.Join(pool, filepath.Base(Pool(canonicalRoot(root)))), 0o700)
+		f := newReclaimPool(t)
+		plantLiveChild(t, f.pool, "live-key", "wt")
+		mustMkdirAll(t, filepath.Join(f.pool, filepath.Base(Pool(canonicalRoot(f.root)))), 0o700)
 
-		summary, _ := mustResumeClean(t, root, home)
-		plan, code := mustReclaim(t, root, home)
+		summary, _ := mustResumeClean(t, f.root, f.home)
+		plan, code := mustReclaim(t, f.root, f.home)
 		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
 		want := planReclaimableCount(t, plan)
 		requireTest(t, want == 0, "the clean pool plans %d reclaimable keys, want none: %q", want, plan)
@@ -231,14 +231,14 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 // just counted as reclaimable.
 func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
 	t.Parallel()
-	pool, root, home := newReclaimPool(t)
-	plantHostilePool(t, pool, root)
-	before := poolListing(t, pool)
+	f := newReclaimPool(t)
+	plantHostilePool(t, f.pool, f.root)
+	before := poolListing(t, f.pool)
 
-	summary, _ := mustResumeClean(t, root, home)
+	summary, _ := mustResumeClean(t, f.root, f.home)
 	requireTest(t, resumeReclaimableCount(t, summary) > 0, "the fixture pool reported nothing reclaimable:\n%s", summary)
-	requireTest(t, poolListing(t, pool) == before,
-		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
+	requireTest(t, poolListing(t, f.pool) == before,
+		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, f.pool))
 }
 
 // [P4] A resume that cannot read the pool still succeeds at its own work.
