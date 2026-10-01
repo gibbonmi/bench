@@ -119,7 +119,9 @@ surfaces against the table.
 
 Most phases are reviewer-chosen entry points that
 a model does not start unbidden. The maintenance phases stay off the model's
-reach entirely on Claude; read a phase's own row for which case applies.
+reach on Claude; read a phase's own row for which case applies.
+`/bench-drain` is the maintenance exception on Claude: the model may start it,
+because the drain lands nothing until the reviewer approves its batch diff.
 `$bench-debug` is
 the exception: Codex may invoke it implicitly, because a reported symptom
 should route to the bug path without the operator remembering the phase name.

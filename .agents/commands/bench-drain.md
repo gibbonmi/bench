@@ -1,6 +1,5 @@
 ---
 description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain capture/IDEAS.md, the retros, and the learnings journal into it, and propose the pass as one batch diff. The single exit for parked ideas and open learnings. Maintenance, not a phase.
-disable-model-invocation: true
 ---
 
 # /bench-drain — reconcile the roadmap, drain the capture
