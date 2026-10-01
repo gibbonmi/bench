@@ -16,7 +16,7 @@ The verb result carries the exit code, stdout, stderr, and the exec assignment. 
 
 The core rows reader, `readVerbRows`, decodes stdout through `axitest.DecodeDocument` and returns the rows of one table block, or an error. The core fingerprint reader, `readVerbFingerprint`, returns the agreed `fingerprint` cell of a decoded table, or else the `fingerprint=` cell of the one record line. It returns an error when no value or two different values exist.
 
-When the agreed value is empty or equals the package constant `unapplicableFingerprint`, it returns the no-fingerprint error. This rule covers the table cell and the record cell. A failed explicit set writes the constant, a faulted unclaimed set writes an empty value, and a no-op reset plan writes a literal `none`. Compare with the constant; do not restate its text.
+When the agreed value is empty or equals the package constant `unapplicableFingerprint`, it returns the no-fingerprint error. This rule covers the table cell and the record cell. A failed explicit set writes the constant, a faulted unclaimed set writes an empty value, and a no-op reset plan writes a literal `none`. Compare with the constant; do not restate its text. Name `unapplicableFingerprint` exactly once in `verb_runner_test.go`, comments included, because the plan's named probe swaps that one name.
 
 Keep both reader names, because no test local in the package uses them.
 
