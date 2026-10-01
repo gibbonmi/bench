@@ -232,13 +232,14 @@ func restoreNext(commit string, paths []string) string {
 // project declares no lane. The `bench help` row and the --dry-run help line read it.
 const LaneClause = "run the declared lane (or the gate when no lane is declared)"
 
-// helpText adds one concrete example and the exit-code meanings the grammar line
-// cannot carry. A usage error prints the grammar line alone, so only a help request
-// pays for them. The example shows the trailing `-- <path>...` form, so a caller does
-// not learn the argument shape by tripping the usage line. The command layer that runs
-// the chain adds the --preflight-build line.
+// helpText adds one concrete example, the deletion route, and the exit-code meanings
+// the grammar line cannot carry. A usage error prints the grammar line alone, so only a
+// help request pays for them. The example shows the trailing `-- <path>...` form, so a
+// caller does not learn the argument shape by tripping the usage line. The command
+// layer that runs the chain adds the --preflight-build line.
 var helpText = grammar.Help + "\n" +
 	"example: bench commit -m \"fix: tighten the guard\" -- internal/gitguard/scan.go docs/adr/0007.md\n" +
+	"deleted path: name a file or folder deleted from the worktree and the commit publishes its deletion; no git rm is needed\n" +
 	"--dry-run: " + LaneClause + " on the exact composed snapshot and report the outcome; commit nothing\n" +
 	"exit 1: refused before publication; nothing was committed\n" +
 	"exit 2: grammar error\n" +

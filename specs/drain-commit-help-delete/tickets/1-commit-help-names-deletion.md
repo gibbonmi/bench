@@ -1,7 +1,7 @@
 # Name the deletion route in bench commit help
 
 Blocked by: none
-Writes: internal/commit/commit.go, internal/commit/landing_test.go
+Writes: internal/commit/commit.go, internal/commit/deletion_test.go (new)
 Covers: none
 
 ## What to build
@@ -10,7 +10,7 @@ A learning of 2026-09-30 records that a delegated author ran a raw `git rm` to d
 
 This ticket adds one line to the `bench commit --help` text. The line states that a deleted named path commits as a deletion. This applies to a file and to a folder, so no raw `git rm` is necessary. The help text in `internal/commit` stays the one source of this fact.
 
-No current test proves the behavior through the verb. One test in `internal/commit/landing_test.go` removes a tracked file and a tracked folder and names both to the command. The test asserts that the published commit tracks neither path and that the checkout is clean. A second test asserts that the help text has the deletion line.
+No current test proves the behavior through the verb. The new file `internal/commit/deletion_test.go` holds both tests, because `landing_test.go` is over its structure budget. One test removes a tracked file and a tracked folder and names both to the command. The test asserts that the published commit tracks neither path and that the checkout is clean. A second test asserts that the help text has the deletion line.
 
 ## Acceptance
 
