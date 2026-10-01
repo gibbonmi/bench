@@ -8,7 +8,7 @@ Covers: VR28, VR29, VR30
 
 Move every `release`, `clean`, `resume-clean`, `reclaim`, `list`, and `path` verb call in the listed files onto the verb runner. A stubbed call passes its joins value through the runner. Read each fingerprint with `mustFingerprint` and each examined table with `mustRows`.
 
-Delete `runCleanup`, `runCleanupWith`, `runDiscard`, `planAndApply`, `runResume`, `runResumeAt`, `mustResumeClean`, `mustReclaim`, `cleanupRowFingerprint`, `reclaimFingerprint`, and the test-side rows reader `cleanupRows`. Each `cleanupRows` caller reads the `worktree_cleanup` table with `mustRows`. Change `landedSetFixture`, `retainedMemberFixture`, `removableSetFixture`, and `refusedUnlandedRelease` to return one named value each, declared in `verb_fixture_test.go`.
+Delete `runCleanup`, `runCleanupWith`, `runDiscard`, `planAndApply`, `runResume`, `runResumeAt`, `mustResumeClean`, `mustReclaim`, `cleanupRowFingerprint`, `reclaimFingerprint`, and the test-side row readers `cleanupRows`, `cleanupRowFields`, `cleanupRowValue`, `cleanupRowsField`, `rowForTarget`, and `unclaimedVerdicts`. These readers split rendered rows on commas, so they cannot read the rows that `mustRows` returns. Each caller reads the `worktree_cleanup` table with `mustRows`. The fingerprint-column read of `cleanupRowsField` in `clean_set_command_test.go` becomes `mustFingerprint`. Change `landedSetFixture`, `retainedMemberFixture`, `removableSetFixture`, and `refusedUnlandedRelease` to return one named value each, declared in `verb_fixture_test.go`.
 
 Replace each inline fingerprint match in these files:
 

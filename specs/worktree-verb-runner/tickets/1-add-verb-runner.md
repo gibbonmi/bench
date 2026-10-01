@@ -14,7 +14,11 @@ The function `checkVerbCall` returns an error for a call with a kit value or a c
 
 The verb result carries the exit code, stdout, stderr, and the exec assignment. The `exec` key calls `ExecCommandResolving`, so the result carries its assignment.
 
-The core rows reader, `readVerbRows`, decodes stdout through `axitest.DecodeDocument` and returns the rows of one table block, or an error. The core fingerprint reader, `readVerbFingerprint`, returns the agreed `fingerprint` cell of a decoded table, or else the `fingerprint=` cell of the one record line. It returns an error when no value or two different values exist. When the agreed value equals the package constant `unapplicableFingerprint`, it returns the no-fingerprint error, because an error plan carries that placeholder. Keep both reader names, because no test local in the package uses them.
+The core rows reader, `readVerbRows`, decodes stdout through `axitest.DecodeDocument` and returns the rows of one table block, or an error. The core fingerprint reader, `readVerbFingerprint`, returns the agreed `fingerprint` cell of a decoded table, or else the `fingerprint=` cell of the one record line. It returns an error when no value or two different values exist.
+
+When the agreed value is empty or equals the package constant `unapplicableFingerprint`, it returns the no-fingerprint error. This rule covers the table cell and the record cell. A failed explicit set writes the constant, a faulted unclaimed set writes an empty value, and a no-op reset plan writes a literal `none`. Compare with the constant; do not restate its text.
+
+Keep both reader names, because no test local in the package uses them.
 
 The must-form methods `mustRows`, `mustFingerprint`, and `mustNoFingerprint` take a `testing.TB` and fail it on a core reader result that the method does not accept. Migrated tests use only the must forms. Each core reader and `checkVerbCall` is a top-level function whose last result is an `error`, so the ticket 11 census can find it. The must forms call only `Helper` and `Fatalf` on the `testing.TB`, and each returns right after its `Fatalf` call.
 
@@ -33,7 +37,8 @@ Contract for later tickets: the verb keys, the call value's fields, the verb res
 - [ ] The core rows reader returns the rows of a real `list` table and an error for a table followed by a non-TOON line.
 - [ ] The core fingerprint reader returns the cell of a real `clean --landed` plan and the record cell of a real `reset --to` plan.
 - [ ] The core fingerprint reader returns an error for no fingerprint and for two different fingerprints, and it returns a numeric-looking cell exactly.
-- [ ] The core fingerprint reader returns the no-fingerprint error for a real `clean` error plan whose rows carry the `none` placeholder.
+- [ ] The core fingerprint reader returns the no-fingerprint error for a real explicit-set `clean` error plan whose rows carry the `none` placeholder.
+- [ ] The core fingerprint reader returns the no-fingerprint error for a real faulted `clean --discard-branch --unclaimed` plan whose rows carry an empty value. Build the fault as `TestCleanUnclaimedErrorRowRefusesTheSet` does: a loose branch ref file that names a blob.
 - [ ] `mustRows` and `mustFingerprint` fail a test recorder on a core reader error.
 - [ ] `mustNoFingerprint` accepts a real error plan with the `none` placeholder and fails a test recorder on stdout with a fingerprint.
 - [ ] A joins value's stub runs, stdin reaches an exec child, and the exec result carries the resolved assignment.

@@ -100,7 +100,11 @@ The function `checkVerbCall` returns an error for a call with a kit value or a c
 
 **The verb result.** The verb result carries the exit code, stdout, stderr, and the assignment that the exec verb resolved. A verb that returns its output as a string, for example `list`, fills stdout and leaves stderr empty. The core rows reader, `readVerbRows`, decodes stdout with `axitest.DecodeDocument` and returns the rows of one table block, or an error.
 
-The core fingerprint reader, `readVerbFingerprint`, returns one value or an error. It reads the `fingerprint` cell of every row in a decoded table, and all cells must agree. When stdout does not decode, it reads the `fingerprint=` cell of the one record line that carries it. An error plan carries the placeholder `unapplicableFingerprint` in each row. When the agreed value equals that constant, the reader returns the no-fingerprint error. The reader compares with the constant and does not restate its text.
+The core fingerprint reader, `readVerbFingerprint`, returns one value or an error. It reads the `fingerprint` cell of every row in a decoded table, and all cells must agree. When stdout does not decode, it reads the `fingerprint=` cell of the one record line that carries it.
+
+A plan with no applicable fingerprint does not always omit the cell. A failed explicit set writes the placeholder `unapplicableFingerprint` in each row. A faulted `--discard-branch --unclaimed` set writes an empty value in each row. A stale set refusal echoes the fingerprint that the apply requested.
+
+When the agreed value is empty or equals `unapplicableFingerprint`, the reader returns the no-fingerprint error. This rule applies to the table cell and to the record cell. A no-op reset plan writes a literal `none` in its record, and the reader catches it through the same constant. The reader compares with the constant and does not restate its text.
 
 The two core reader names are pinned. No test file in the package declares a local with either name, so the census reports only a real reader call.
 
@@ -176,7 +180,6 @@ Ticket 11 owns those rows because it is the last ticket that touches the package
 | VR13 | 9 | `mustFingerprint` fails a test recorder when the core fingerprint reader returns an error | planned `TestVerbResultMustFingerprintFailsOnAReaderError` in internal/worktree/verb_runner_check_test.go | A must form that ignores the error leaves the recorder without a failure |
 | VR14 | 8 | The core fingerprint reader returns a numeric-looking value exactly as the producer wrote it before `toon.Table` quoted it | planned `TestVerbResultFingerprintKeepsANumericLookingCell` in internal/worktree/verb_runner_check_test.go | A reader that keeps the quotes or decodes a number returns different text |
 | VR15 | 10 | `mustNoFingerprint` leaves a test recorder unfailed for a real error plan whose rows carry the `none` placeholder | planned `TestVerbResultMustNoFingerprintAcceptsAnErrorPlan` in internal/worktree/verb_runner_check_test.go | A must form that treats every reader error as a failure fails the recorder |
-| VR59 | 7 | The core fingerprint reader returns the no-fingerprint error for a real `clean` error plan whose rows carry the `none` placeholder | planned `TestVerbResultFingerprintTreatsThePlaceholderAsAbsent` in internal/worktree/verb_runner_check_test.go | A reader that returns the agreed cell gives `none` with no error, so an error plan passes as a fingerprint |
 | VR16 | 10 | `mustNoFingerprint` fails a test recorder for a real plan that carries a fingerprint | planned `TestVerbResultMustNoFingerprintRefusesAPlan` in internal/worktree/verb_runner_check_test.go | A must form that never fails leaves the recorder without a failure |
 | VR17 | 11 | With a joins value, the runner calls the verb's joins form with that value, and the value's stub runs | planned `TestVerbRunnerPassesTheJoinsValue` in internal/worktree/verb_runner_check_test.go | A runner that calls the verb entry runs the default instead, and the stub's probe stays at zero |
 | VR18 | 12 | Stdin that the call carries reaches the exec child | planned `TestVerbRunnerFeedsStdinToExec` in internal/worktree/verb_runner_check_test.go | A runner that passes a nil reader gives the child an empty input, and its echo differs |
@@ -189,7 +192,7 @@ Ticket 11 owns those rows because it is the last ticket that touches the package
 | VR25 | 17 | The ticket 2 reset files call no verb form directly | review-owned: the verb form command over the ticket 2 files prints no line | A surviving direct call prints its file and line |
 | VR26 | 20 | `newOwnedAssignment`, `newPendingAssignment`, and `newOwnedSubmoduleAssignment` each return one named fixture value that `verb_fixture_test.go` declares | review-owned: the tuple scan omits the three builders | A positional builder appears in the scan output |
 | VR27 | 20 | `unprovableLandedAssignment`, `newResidueGuardFixture`, `newReclaimPool`, and `poolRootFixture` each return one named fixture value that `verb_fixture_test.go` declares | review-owned: the tuple scan omits the four builders | A positional builder appears in the scan output |
-| VR28 | 18, 19 | No cleanup-family run wrapper, fingerprint extractor, test-side rows reader, or inline fingerprint match exists in the ticket 5 files | review-owned: the VR28 command in Further notes prints no line | A surviving declaration or inline match prints its file and line |
+| VR28 | 18, 19 | No cleanup-family run wrapper, fingerprint extractor, test-side row reader, or inline fingerprint match exists in the ticket 5 files | review-owned: the VR28 command in Further notes prints no line | A surviving declaration or inline match prints its file and line |
 | VR29 | 20 | `landedSetFixture`, `retainedMemberFixture`, `removableSetFixture`, and `refusedUnlandedRelease` each return one named fixture value | review-owned: the tuple scan omits the four builders | A positional builder appears in the scan output |
 | VR30 | 17 | The ticket 5 files call no verb form directly | review-owned: the verb form command over the ticket 5 files prints no line | A surviving direct call prints its file and line |
 | VR31 | 18, 19 | No `runCreate`, no `execAtOwnedTarget`, and no inline fingerprint match exists in the ticket 6 files | review-owned: the VR31 command in Further notes prints no line | A surviving declaration or inline match prints its file and line |
@@ -202,7 +205,7 @@ Ticket 11 owns those rows because it is the last ticket that touches the package
 | VR38 | 17 | The ticket 9 files call no verb form directly | review-owned: the verb form command over the ticket 9 files prints no line | A surviving direct call prints its file and line |
 | VR39 | 17, 19 | The ticket 10 files call no verb form directly and hold no inline fingerprint match | review-owned: the VR39 command in Further notes prints no line | A surviving direct call or inline match prints its file and line |
 | VR40 | 20 | No test-file function in the package returns a positional fixture tuple | review-owned: the tuple scan in Further notes prints no line | A positional builder that any ticket missed appears in the scan output |
-| VR41 | 18, 19 | No run wrapper, fingerprint extractor, test-side rows reader, or inline fingerprint match exists in the package outside the runner files | review-owned: the VR41 command in Further notes prints no line | A surviving wrapper, extractor, or match prints its file and line |
+| VR41 | 18, 19 | No run wrapper, fingerprint extractor, test-side row reader, or inline fingerprint match exists in the package outside the runner files | review-owned: the VR41 command in Further notes prints no line | A surviving wrapper, extractor, or match prints its file and line |
 | VR42 | 21 | The package's top-level test count equals `worktreeTestCount`, which rises only by the tests this spec adds | `internal/worktree/parallel_census_test.go` (`TestPackageTestCountPin`) | A removed or merged test drops the count below the pin |
 | VR43 | 22 | The serial set stays at or below the ceiling of 46 | `internal/worktree/parallel_census_test.go` (`TestSerialSetStaysBelowTheCeiling`) | A runner that binds the process environment adds every caller to the serial set |
 | VR44 | 23 | The PASS name set of the package's fresh test run equals the chunk base's set plus the added tests | review-owned: each chunk review compares the `go test -count=1 -json ./internal/worktree` name sets | A migration that makes a test skip moves its name out of the PASS set |
@@ -220,6 +223,7 @@ Ticket 11 owns those rows because it is the last ticket that touches the package
 | VR56 | 33 | The census reports a call to the function that a synthetic verb entry calls with `defaultJoins()` first | planned `TestVerbCallCensusDerivesTheJoinsForm` in internal/worktree/verb_call_census_test.go | A census with a fixed joins form list returns no report for the synthetic joins form |
 | VR57 | 34 | The census reports a call outside the runner files to a synthetic runner-file function whose last result is an `error` | planned `TestVerbCallCensusReportsACoreReaderCall` in internal/worktree/verb_call_census_test.go | A census that knows only verb forms returns no report, so a test can discard a reader error |
 | VR58 | 35 | The census reports no line on the live package tree | planned `TestVerbCallCensusOnTheLiveTree` in internal/worktree/verb_call_census_test.go | A surviving direct verb call or core reader call on the live tree is reported with its file and line |
+| VR59 | 7 | The core fingerprint reader returns the no-fingerprint error for a real explicit-set `clean` error plan whose rows carry the `none` placeholder, and for a real faulted `clean --discard-branch --unclaimed` plan whose rows carry an empty value | planned `TestVerbResultFingerprintTreatsAPlaceholderAsAbsent` in internal/worktree/verb_runner_check_test.go | A reader that returns the agreed cell gives `none` or the empty string with no error, so an error plan passes as a fingerprint |
 
 Not covered: story 25 — the source rules out a line-count target, so no row grades a line count.
 Not covered: story 36 — no ticket plans a production edit, and the bound registry paths sit in the fence for the preflight binding only.
@@ -391,7 +395,7 @@ A run wrapper is a test-file helper that calls a verb form and returns its outpu
 - merge, ticket 7: `runMerge`
 - landing, ticket 9: `landIn`
 
-The fingerprint extractors are `resetFingerprint` and `restoreFingerprint` in ticket 2, and `reclaimFingerprint` and `cleanupRowFingerprint` in ticket 5. The test-side rows reader is `cleanupRows` in ticket 5, and `mustRows` replaces it.
+The fingerprint extractors are `resetFingerprint` and `restoreFingerprint` in ticket 2, and `reclaimFingerprint` and `cleanupRowFingerprint` in ticket 5. The test-side row readers are `cleanupRows`, `cleanupRowFields`, `cleanupRowValue`, `cleanupRowsField`, `rowForTarget`, and `unclaimedVerdicts`, all in ticket 5. Each splits rendered rows on commas, so none can read the `[]any` rows that `Document.Rows` returns. `mustRows` replaces them, and `mustFingerprint` replaces the fingerprint-column read of `cleanupRowsField`.
 
 The inline fingerprint matches are ten sites. Each goes to the ticket that writes its file:
 
@@ -411,12 +415,12 @@ The inline fingerprint matches are ten sites. Each goes to the ticket that write
 The commands run from the repository root. `<files>` is the list of `internal/worktree` test files on that ticket's `Writes:` line.
 
 - VR23: `rg -n '^func (runReset|runResetWith|resetFingerprint|restoreFingerprint)\(' internal/worktree`
-- VR28: `rg -n '^func (runCleanup|runCleanupWith|runDiscard|planAndApply|runResume|runResumeAt|mustResumeClean|mustReclaim|cleanupRowFingerprint|reclaimFingerprint|cleanupRows)\(|setFingerprint|\[0-9a-f\]\{64\}' <files>`
+- VR28: `rg -n '^func (runCleanup|runCleanupWith|runDiscard|planAndApply|runResume|runResumeAt|mustResumeClean|mustReclaim|cleanupRowFingerprint|reclaimFingerprint|cleanupRows|cleanupRowFields|cleanupRowValue|cleanupRowsField|rowForTarget|unclaimedVerdicts)\(|setFingerprint|\[0-9a-f\]\{64\}' <files>`
 - VR31: `rg -n '^func (runCreate|execAtOwnedTarget)\(|\[0-9a-f\]\{64\}' <files>`
 - VR33: `rg -n '^func runMerge\(' internal/worktree`
 - VR37: `rg -n '^func landIn\(' internal/worktree`
 - VR39: the verb form command over `<files>`, then `rg -n '\[0-9a-f\]\{64\}' <files>`
-- VR41: `rg -n '^func (runCleanup|runCleanupWith|runDiscard|planAndApply|runReset|runResetWith|runMerge|runCreate|runResume|runResumeAt|landIn|execAtOwnedTarget|mustResumeClean|mustReclaim|resetFingerprint|restoreFingerprint|reclaimFingerprint|cleanupRowFingerprint|cleanupRows)\(|setFingerprint|\[0-9a-f\]\{64\}' internal/worktree --glob '*_test.go' --glob '!verb_runner_test.go' --glob '!verb_runner_check_test.go'`
+- VR41: `rg -n '^func (runCleanup|runCleanupWith|runDiscard|planAndApply|runReset|runResetWith|runMerge|runCreate|runResume|runResumeAt|landIn|execAtOwnedTarget|mustResumeClean|mustReclaim|resetFingerprint|restoreFingerprint|reclaimFingerprint|cleanupRowFingerprint|cleanupRows|cleanupRowFields|cleanupRowValue|cleanupRowsField|rowForTarget|unclaimedVerdicts)\(|setFingerprint|\[0-9a-f\]\{64\}' internal/worktree --glob '*_test.go' --glob '!verb_runner_test.go' --glob '!verb_runner_check_test.go'`
 - The verb form command: `rg -n '\b(BuildCommand|ExecCommand|ExecCommandResolving|LandCommand|ResumeLandCommand|ListCommand|MergeCommand|PathCommand|ReclaimCommand|ReauthorizeCommand|ResetCommand|ResumeCleanCommand|ShowCommand|Subshell|CleanCommand|ReleaseCommand|CreateCommand|PoolCommand|LeaseFileCommand|buildWith|landWith|resumeLandWith|mergeWith|reauthorizeWith|resetWith|resumeCleanCommandWith|cleanCommandWith|releaseCommandWith)\(' <files>`. That name list is the census's derived set on the base tree, and the census replaces the command after ticket 11.
 
 A hit inside an expected-output literal that the test compares whole is not a reader. The Coverage axis names each such hit.
@@ -474,7 +478,7 @@ Tickets 1 and 11 change only the `worktreeTestCount` value in `parallel_census_t
 - Source-row clauses and occurrences: the Source trace table quotes each clause; the map is the only occurrence.
 - Promised field labels: `fingerprint` as a table field; `fingerprint=` as a record cell, emitted by `reset.go`. The two pinned refusal messages in Implementation decisions.
 - Changed-function callers: no production function changes. The deleted test helpers' callers are the test files in the fence.
-- Copy survival: VR41 fails when one run wrapper, one fingerprint extractor, the test-side rows reader, or one inline match survives. VR58 fails when one direct verb call or core reader call survives.
+- Copy survival: VR41 fails when one run wrapper, one fingerprint extractor, one test-side row reader, or one inline match survives. VR58 fails when one direct verb call or core reader call survives.
 - Rendered-shape readers: none; no rendered output shape changes.
 
 ### Probes run during authoring
