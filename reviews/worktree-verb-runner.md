@@ -392,6 +392,40 @@ The author counted the `t.Fatal`, `t.Fatalf`, `t.Error`, and `t.Errorf` calls an
 
 The author ran each check on the source of `1c202cd6`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The package excerpt omits its two skip rows, and each skip is a unix socket capability skip. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
 
+## VR-C2 ticket 4 author evidence
+
+Ticket 4 had a fresh `bench-writer` author, `vr-t4-author`, on opus at medium effort, with a cap of 3 attempts. The author started at `1b56289c` on the chunk base `ef2cd35f`. The author committed `d9f08fdf` on a lane pass in the first attempt, and then committed this record alone. The build preflight on `d9f08fdf` reported 13 green checks, 2 checks that do not apply, and 0 red checks.
+
+The ticket is a pure migration, so no row has a new test. The red for VR27 is the tuple scan at the base, and the regression probe bit before and after the change.
+
+- VR27: `unprovableLandedAssignment` and `newResidueGuardFixture` each return `ownedAssignment`. `newReclaimPool` and `poolRootFixture` each return `poolFixture`. `verb_fixture_test.go` declares both types. At `d9f08fdf` the tuple scan printed 25 lines, and none of them was one of these four builders.
+
+The author reported these choices. The Spec axis grades each one.
+
+- `unprovableLandedAssignment` and `newResidueGuardFixture` return the root, the registration, and the home, which is the shape of `ownedAssignment`. Thus the author reused that type and declared no new type for them.
+- `newReclaimPool` and `poolRootFixture` both return a root, a home, and a pool path, so they share the new type `poolFixture`. The pool of `newReclaimPool` is the parent of the pool keys. The pool of `poolRootFixture` is the pool root of one repository. The comment of each builder states which pool it prepares.
+- A scratch tool rewrote each call site. The tool replaced each destructured call with one value `f`, and it replaced each resolved use of a part with its field. The tool changed no string literal.
+- No check required an edit to the five registry paths, so the diff leaves them unchanged.
+
+### Ticket 4 probe verdicts
+
+The probe swapped the drift check in `pool_reclaim.go` for a check that is always false, and it ran the `Reclaim` tests. Each restore reads `yes`.
+
+| Source | Verdict | Failed tests |
+|---|---|---|
+| `1b56289c`, before the first edit | bit | `TestReclaimApplyRefusesAFingerprintThePoolNoLongerMatches` |
+| `d9f08fdf` | bit | `TestReclaimApplyRefusesAFingerprintThePoolNoLongerMatches` |
+
+### Ticket 4 line counts and VR46 pre-check
+
+The over-budget file `pool_reclaim_test.go` has 546 lines at `ef2cd35f` and at `d9f08fdf`. Only `verb_fixture_test.go` grew, by 8 lines. `bench structure --growth ef2cd35f` passed.
+
+The author counted the `t.Fatal`, `t.Fatalf`, `t.Error`, and `t.Errorf` calls and the `requireTest` and `mustNoError` calls in each function of each package test file. The count was 2534 in 1027 functions at `1b56289c` and at `d9f08fdf`. No function count changed.
+
+### Ticket 4 verification
+
+The author ran each check on the source of `d9f08fdf`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The package excerpt omits its two skip rows, and each skip is a unix socket capability skip. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
+
 ```bench-review-record
 {
   "version": 2,
@@ -863,7 +897,7 @@ The author ran each check on the source of `1c202cd6`, and each passed. `bench t
     {
       "id": "VR-C2",
       "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
-      "tip": "1c202cd6dcb344a14f67c35b26bcc50da0d67376",
+      "tip": "d9f08fdf2e2cef9a657ccdadfacd2db61cf88ee4",
       "plan_digest": "pending",
       "source_digest": "pending",
       "acceptance_rows": [
@@ -907,6 +941,24 @@ The author ran each check on the source of `1c202cd6`, and each passed. `bench t
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,51143\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "3-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c2-4-worktree-r1",
+          "performer": "claude:bench-writer/vr-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "36e7b63fe9a09b930fd31563be5ea77eadf841f4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t4-author-20261001/4-worktree@d9f08fdf",
+            "digest": "sha256:152b3e7832dee3346d958f133579e16c04106e00fc47dd07f52220938552966b",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,51513\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "4-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
