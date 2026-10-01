@@ -716,6 +716,17 @@ Three new probes bit on the selected list, the show stream route, and the inside
 
 R14 and R18 go to one fresh repair session for ticket 5. A plan commit adds `verb_runner_check_test.go` to the ticket 5 `Writes:` line and corrects the spec text for R16. After the repair, the ticket 6 and ticket 7 authors rerun their verification at the final chunk source.
 
+## VR-C3 repair 1
+
+The fresh repair session `claude:bench-writer/vr-t5-repair-1` ran on opus at medium effort, from base `ad20f903735acee7170604ff80ff59d94c0e3792`. The repair commit is `dd018e9a990c30bb113e5ba4902a3c1ea8aa6d09`, and it changes no production file.
+
+- R14: `TestCleanSetHostileOperand` keeps `mustNoFingerprint`. It also reads the decoded `mustRows` rows through `textRows`, and it requires each fingerprint cell to equal the literal `none`. Before the repair, the probe that sets `unapplicableFingerprint` to the empty string was silent for this test. After the repair, the same probe bit, with 6 failed tests at the new check.
+- R18: the runner tests in `verb_runner_check_test.go` read `cleanupTable` and `selectedTable` in place of the two table-name literals. No assertion changed.
+
+The session ran each check on the source of `dd018e9a`, and each passed. `bench preflight build worktree-verb-runner` was green, and `bench test --package ./internal/worktree` passed with the two socket capability skips. The VR-C1 plan probe on `TestVerbResultFingerprintTreatsAPlaceholderAsAbsent` bit. `bench structure --growth f03e7fb9b46e5cdbe0ae55d94f171b209fe27447` was ok.
+
+The VR46 count per test function has no drop from `ad20f903`, and `TestCleanSetHostileOperand` gained one check. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. The JSON payload holds the package result as `vr-c3-5-worktree-r2`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1532,6 +1543,24 @@ R14 and R18 go to one fresh repair session for ticket 5. A plan commit adds `ver
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62556\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "7-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c3-5-worktree-r2",
+          "performer": "claude:bench-writer/vr-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4dbbb22b505557068d752ccda30cc86fc1d5ce42",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t5-repair-1-20261001/5-worktree@dd018e9a",
+            "digest": "sha256:d53c8a017a57001205a0220949727f6130b750f792b581b6c32c0bc33d54c02a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63086\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "5-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
