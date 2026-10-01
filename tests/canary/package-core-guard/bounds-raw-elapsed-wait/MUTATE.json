@@ -1,7 +1,7 @@
 [
   {
-    "path": "internal/contract/marker_wait.go",
-    "old": "now().Sub(started) < bounds.FixedWindow(deadline)",
-    "new": "now().Sub(started) < deadline"
+    "path": "internal/chargeevidence/store.go",
+    "old": "func OpenStore(",
+    "new": "func unclassifiedElapsedWait(now func() time.Time, deadline time.Duration) bool {\n\tstarted := now()\n\treturn now().Sub(started) < deadline\n}\n\nfunc OpenStore("
   }
 ]

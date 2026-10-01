@@ -7,9 +7,8 @@ import (
 )
 
 // The integrated command behavior (block-check, gate, flip, stage, commit, exit codes)
-// is gate-observed through the CLI in internal/contract/runtime; this unit test pins only
-// the pure argument parser, whose branch table the black-box tests exercise only by
-// outcome. The rendered reason text belongs to the shared grammar and its toon renderer,
+// belongs to the black-box command tests; this unit test pins only the pure argument
+// parser, whose branch table those tests exercise only by outcome. The rendered reason text belongs to the shared grammar and its toon renderer,
 // so the misuse cases assert the whole line rather than a local phrasing.
 func TestParseArgs(t *testing.T) {
 	cases := []struct {

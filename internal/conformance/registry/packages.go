@@ -13,11 +13,10 @@ const ConformancePackage = "internal/conformance"
 var ReleaseOnlyPackages = []string{"internal/releasepreflight", "internal/releaseevidence", "internal/publication"}
 
 // IsExcludedTestPackage reports whether the unfiltered core `go test` leaves a package to
-// some other surface. The gate's own contract phase runs internal/contract with the
-// subject root pinned. The filtered invocation runs the conformance package. The ship
+// some other surface. The filtered invocation runs the conformance package. The ship
 // tier runs the release-only packages.
 func IsExcludedTestPackage(pkg string, tier Tier) bool {
-	if isContractPackage(pkg) || isPackage(pkg, ConformancePackage) {
+	if isPackage(pkg, ConformancePackage) {
 		return true
 	}
 	if tier == Ship {
@@ -29,12 +28,6 @@ func IsExcludedTestPackage(pkg string, tier Tier) bool {
 		}
 	}
 	return false
-}
-
-func isContractPackage(pkg string) bool {
-	return isPackage(pkg, "internal/contract") ||
-		strings.HasPrefix(pkg, "internal/contract/") ||
-		strings.Contains(pkg, "/internal/contract/")
 }
 
 // isPackage matches a module-relative package path against a `go list` import path. The

@@ -432,7 +432,6 @@ current-state advertisement of its non-meta input bindings:
 | `data-handling-derivation` | `go-source+data-handling` |
 | `single-control-escaper` | `go-source` |
 | `bounds-policy` | `catch-all` |
-| `marker-wait-deadlines` | `go-source` |
 | `canonical-path-owner` | `go-source` |
 | `published-executable-path` | `catch-all` |
 | `go-build-vcs` | `catch-all` |

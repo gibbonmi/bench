@@ -137,9 +137,6 @@ func freshnessPublishTokenOwners() map[string]bool {
 
 func skippedPublicationTopologyDir(name string) bool {
 	top := strings.Split(name, "/")[0]
-	if strings.HasPrefix(name, "internal/contract") {
-		return true
-	}
 	switch top {
 	case ".git", ".agents", "capture", "decisions", "dist", "node_modules", "specs", "vendor":
 		return true

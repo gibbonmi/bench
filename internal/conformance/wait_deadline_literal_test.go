@@ -17,17 +17,16 @@ import (
 // migrated wait in the tree spells its deadline that way.
 const derivedDeadlineHelper = "TestDeadline"
 
-// checkWaitDeadlineLiterals fails a test wait whose deadline is a numeric duration. The
-// marker-wait check grades one helper's slow leg; this one grades the general shape behind
-// it. A wall-clock guess in an outer wait passes on an idle machine and flakes on a loaded
+// checkWaitDeadlineLiterals fails a test wait whose deadline is a numeric duration. A
+// wall-clock guess in an outer wait passes on an idle machine and flakes on a loaded
 // one, and the value it should carry is derivable: bounds.TestDeadline(inner) returns a
 // window strictly greater than the bound the wait contains.
 //
 // A poll interval is the exception the shape needs. A tick fires many times inside the
 // wait, so its literal is a sampling rate, not a deadline, and it stays legal.
 //
-// The check reads the deadline argument, as the marker-wait check does, and it does not
-// resolve a named window back to its declaration. A window a package names is already a
+// The check reads the deadline argument, and it does not resolve a named window back to
+// its declaration. A window a package names is already a
 // reviewed policy value, and the defect this catches is the number written at the wait.
 func checkWaitDeadlineLiterals(root string) []string {
 	var diags []string
@@ -178,9 +177,9 @@ func negativeOffset(expr ast.Expr) bool {
 }
 
 // literalDeadline reports whether a deadline expression carries a wall-clock number. It
-// reuses containsNumericLiteral, the marker-wait scanner, and adds one stop rule on top of
-// it: a TestDeadline call is already derived, and descending into it would read the inner
-// bound as the defect it exists to fix.
+// adds one stop rule on top of containsNumericLiteral: a TestDeadline call is already
+// derived, and descending into it would read the inner bound as the defect it exists to
+// fix.
 func literalDeadline(expr ast.Expr) bool {
 	switch node := expr.(type) {
 	case *ast.ParenExpr:
@@ -195,6 +194,21 @@ func literalDeadline(expr ast.Expr) bool {
 		}
 	}
 	return containsNumericLiteral(expr)
+}
+
+// containsNumericLiteral reports whether an expression holds an integer or a float
+// literal anywhere beneath it.
+func containsNumericLiteral(expr ast.Expr) bool {
+	found := false
+	ast.Inspect(expr, func(node ast.Node) bool {
+		literal, ok := node.(*ast.BasicLit)
+		if ok && (literal.Kind == token.INT || literal.Kind == token.FLOAT) {
+			found = true
+			return false
+		}
+		return !found
+	})
+	return found
 }
 
 // derivedDeadline recognises the bounds helper through either spelling. The bounds package

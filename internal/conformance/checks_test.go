@@ -53,7 +53,6 @@ func init() {
 		"data-handling-derivation":      {checkDataHandlingDerivation, registry.Dev, registry.SubjectRoot},
 		"single-control-escaper":        {checkSingleControlEscaper, registry.Dev, registry.SubjectRoot},
 		"bounds-policy":                 {checkBoundsPolicy, registry.Dev, registry.SubjectRoot},
-		"marker-wait-deadlines":         {checkMarkerWaitDeadlines, registry.Dev, registry.SubjectRoot},
 		"canonical-path-owner":          {checkCanonicalPathOwner, registry.Dev, registry.SubjectRoot},
 		"published-executable-path":     {checkPublishedExecutablePath, registry.Dev, registry.SubjectRoot},
 		"go-build-vcs":                  {checkGoBuildVCS, registry.Dev, registry.SubjectRoot},

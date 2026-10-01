@@ -23,7 +23,6 @@ var Checks = []Check{
 	{Name: "data-handling-derivation", Implementation: "checkDataHandlingDerivation", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoAndDataHandling},
 	{Name: "single-control-escaper", Implementation: "checkSingleControlEscaper", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "bounds-policy", Implementation: "checkBoundsPolicy", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
-	{Name: "marker-wait-deadlines", Implementation: "checkMarkerWaitDeadlines", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "canonical-path-owner", Implementation: "checkCanonicalPathOwner", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "published-executable-path", Implementation: "checkPublishedExecutablePath", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "go-build-vcs", Implementation: "checkGoBuildVCS", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
