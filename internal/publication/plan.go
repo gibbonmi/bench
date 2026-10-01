@@ -1,8 +1,8 @@
 // Package publication owns governed npm publication. It owns a registry port
 // with two adapters: a hermetic fixture adapter, and a public-npm adapter that
-// shells the npm CLI for the runbook. It
-// also owns a resumable first-publication state machine, and the durable
-// publication-record.json that makes a retry idempotent.
+// shells the npm CLI for the runbook. It also owns a resumable
+// first-publication state machine, and the durable publication-record.json
+// that makes a retry idempotent.
 //
 // The package never reads a credential into evidence or the record.
 package publication
