@@ -22,9 +22,14 @@ Add tests through `Unlink`, with real temporary repositories that a real `Link` 
 
 Put the tests in `link_transaction_test.go`, because the `internal/adopt/` directory has no file-count headroom and `adopt_test.go` is above its line budget. Move the consumer-repository setup into one helper there, and make the relink test in `adopt_test.go` use it. Change no production code.
 
+The review repairs add a clean dry-run test and a collision-only round trip, and remove a guard for an impossible collision row.
+
 ## Acceptance
 
 - [ ] Each case above has a test that passes on the current tree.
 - [ ] A `bench probe` on the keep-or-remove decision in `unlink.go` turns at least two of the tests red, and the restored file turns them green.
 - [ ] The relink test and the new tests share one consumer-repository helper.
 - [ ] `go vet ./...` and `bench test --changed` pass, and `internal/adopt` statement coverage goes up.
+- [ ] A dry run over a clean linked repository exits 0, and the manifest, the managed hook, `AGENTS.md`, and each manifest row keep their bytes. A `bench probe` on each dry-run guard in `unlink.go` (the manifest removal, the hook removal, and the `AGENTS.md` strip) turns this test red.
+- [ ] On a repository with only a project-owned collision, link reports the collision and exits 3. Unlink then exits 0, keeps the collision bytes, and removes the manifest.
+- [ ] The partial-unlink test has no guard for a collision manifest row, and its comment does not say that unlink reports the collision.
