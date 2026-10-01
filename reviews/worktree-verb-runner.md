@@ -750,6 +750,10 @@ The Coverage axis found no gap. A producer mutation of the placeholder bit all s
 
 The ticket 5 repair session ran `bench test --package ./internal/worktree` again at `3a571df8`, after the plan commit changed the spec text. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c3-5-worktree-r3`.
 
+## VR-C3 ticket 6 second verification rerun
+
+The ticket 6 author ran `bench test --package ./internal/worktree` again at `6af285fc`, after the plan commit `3a571df8` changed the spec text. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c3-6-worktree-r3`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1638,6 +1642,24 @@ The ticket 5 repair session ran `bench test --package ./internal/worktree` again
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63990\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "5-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c3-6-worktree-r3",
+          "performer": "claude:bench-writer/vr-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8f281195dbc46bcaf8569bb903bc0a6d4eea3827",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t6-author-20261001/6-worktree@6af285fc",
+            "digest": "sha256:642ab82cb41ced67f310a4e2260da60a0e0491def7ba70158ca3a7a6fe6db866",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63437\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "6-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
