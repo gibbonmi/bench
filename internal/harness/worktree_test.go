@@ -2,18 +2,22 @@ package harness
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
-// The worktree-lifecycle hook passes each Claude worktree event to WorktreeCommand and
-// states that a malformed event must refuse rather than bypass the lifecycle. Each test
-// here feeds one malformed event and reads the verdict: the exit code, the stderr
-// verdict, and an empty stdout, because create prints a path only on success.
+// The worktree-lifecycle hook passes each Claude worktree event to WorktreeCommand, and
+// WorktreeCommand states that all event validation happens before the shared lifecycle
+// is called. Each test here feeds one malformed event and reads the verdict: the exit
+// code, the stderr verdict, and an empty stdout, because create prints a path only on
+// success.
 
 const (
 	createFieldVerdict = "bench worktree-hook create: event requires session_id, cwd, and name"
@@ -31,8 +35,15 @@ var oversizeVerdict = fmt.Sprintf("invalid event JSON: event exceeds %d-byte lim
 // test unless the hook refused with exit want and a stderr that holds verdict.
 func assertRefused(t *testing.T, args []string, event string, want int, verdict string) {
 	t.Helper()
+	assertReaderRefused(t, args, strings.NewReader(event), want, verdict)
+}
+
+// assertReaderRefused is assertRefused with stdin as a reader, so a test can feed a
+// stdin whose read fails.
+func assertReaderRefused(t *testing.T, args []string, stdin io.Reader, want int, verdict string) {
+	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := WorktreeCommand(args, strings.NewReader(event), &stdout, &stderr)
+	code := WorktreeCommand(args, stdin, &stdout, &stderr)
 	if code != want || stdout.Len() != 0 || !strings.Contains(stderr.String(), verdict) {
 		t.Errorf("WorktreeCommand(%q) = exit %d, stdout %q, stderr %q; want exit %d, empty stdout, stderr holding %q", args, code, stdout.String(), stderr.String(), want, verdict)
 	}
@@ -56,6 +67,20 @@ func TestWorktreeCommandRefusesAnUnknownAction(t *testing.T) {
 	t.Parallel()
 	for _, args := range [][]string{nil, {""}, {"delete"}, {"Create"}, {"create", "remove"}} {
 		assertRefused(t, args, `{"session_id":"s"}`, 2, "usage: bench worktree-hook create|remove")
+	}
+}
+
+// A stdin read that fails partway refuses even when the bytes read before the failure
+// form a complete event. The event names only directories outside any repository, so
+// a mutation that ignores the read error still reaches no repository.
+func TestWorktreeCommandRefusesAnEventWhoseReadFails(t *testing.T) {
+	isolateRemove(t)
+	const readFailure = "event stdin closed"
+	outside := t.TempDir()
+	event := `{"session_id":"s","cwd":"` + outside + `","name":"n","worktree_path":"` + outside + `"}`
+	for _, action := range []string{"create", "remove"} {
+		stdin := io.MultiReader(strings.NewReader(event), iotest.ErrReader(errors.New(readFailure)))
+		assertReaderRefused(t, []string{action}, stdin, 1, "bench worktree-hook "+action+": invalid event JSON: "+readFailure)
 	}
 }
 
