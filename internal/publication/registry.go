@@ -4,8 +4,9 @@ import "context"
 
 // Registry is the npm-registry port the state machine drives. Two adapters
 // implement it. FixtureRegistry works over HTTP against the hermetic
-// offline-registry.mjs fixture, used by the gate. NPMCLIRegistry shells the
-// real `npm` CLI, for the runbook path only, never exercised by the gate.
+// offline-registry.mjs fixture. NPMCLIRegistry shells the real `npm` CLI for the
+// runbook path. No gate path starts a registry: the gate runs FixtureRegistry
+// against an unreachable base URL and NPMCLIRegistry against an `npm` stub.
 //
 // Neither adapter, nor any caller, ever puts a credential into the durable
 // record or the evidence trail. Auth material stays in the process

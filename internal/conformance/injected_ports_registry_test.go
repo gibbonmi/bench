@@ -56,7 +56,7 @@ var injectedPortRegistry = []injectedPortRow{
 	},
 	{
 		pkg: "internal/publication", port: "Registry",
-		exempt: "the only adapter without gate coverage is NPMCLIRegistry, which is runbook-only: the gate drives FixtureRegistry against the hermetic offline registry, and no NPMCLIRegistry path performs gate egress or touches a credential (internal/publication/registry.go:5-11)",
+		exempt: "a real-producer test needs a live npm registry, and NPMCLIRegistry is runbook-only: it never performs gate egress or touches a credential (the Registry port comment in internal/publication/registry.go states each adapter's gate coverage)",
 	},
 	{
 		pkg: "internal/preflight", port: "reviewEvidenceObserver",

@@ -278,9 +278,9 @@ func validHarnessPhase(phase string) bool {
 	}
 }
 
-// ShellQuote renders one value as a single POSIX shell token. It is the one derivation of
-// the kit's shell quoting, so every surface that prints a replayable command line — a help
-// row here, a citation's replay spelling elsewhere — keeps the same token boundaries.
+// ShellQuote renders one value as a single POSIX shell token for a command line that a
+// reader replays. A value of only shell-safe characters stays bare, so a plain slug or
+// path prints without quotes.
 func ShellQuote(value string) string {
 	if shellSafeToken(value) {
 		return value
