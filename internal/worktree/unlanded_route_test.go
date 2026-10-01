@@ -12,55 +12,54 @@ import (
 )
 
 // refusedUnlandedRelease builds the FT345 row: an assignment with one unlanded commit,
-// whose release refused and left it cleanup-pending. It returns the refusal's stderr.
-func refusedUnlandedRelease(t *testing.T, request string) (string, Creation, string, string) {
+// whose release refused and left it cleanup-pending. It carries the refusal's stderr.
+func refusedUnlandedRelease(t *testing.T, request string) refusedRelease {
 	t.Helper()
 	f := newOwnedAssignment(t, request)
 	commitInWorktree(t, f.creation.Path, "unique.txt", "throwaway\n", "unlanded work")
-	var stdout, stderr strings.Builder
-	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-" + request, f.creation.Path}, &stdout, &stderr)
-	requireTest(t, code == 1 && strings.Contains(stderr.String(), "worktree retained (unmerged)"), "release exit=%d stderr=%q", code, stderr.String())
+	release := runVerb(t, verbRelease, f.call("--request", "landed-"+request, f.creation.Path))
+	requireTest(t, release.exit == 1 && strings.Contains(release.stderr, "worktree retained (unmerged)"), "release exit=%d stderr=%q", release.exit, release.stderr)
 	assignment, err := assignmentByID(f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, assignment.State == intent.StateCleanupPending, "state = %q, want cleanup-pending", assignment.State)
-	return f.root, f.creation, f.home, stderr.String()
+	return refusedRelease{ownedAssignment: f, stderr: release.stderr}
 }
 
 // requireDiscardRoute runs the clean the surface named and requires it to plan and apply
 // the removal, so the named route is one that succeeds.
-func requireDiscardRoute(t *testing.T, root, home, path string, selector ...string) {
+func requireDiscardRoute(t *testing.T, f refusedRelease, selector ...string) {
 	t.Helper()
 	args := append([]string{"--discard-branch"}, selector...)
-	plan, planErr, planCode := runCleanup(t, root, home, args...)
-	requireTest(t, planCode == 0 && strings.Contains(plan, ",remove,"), "plan = (%d, %q, %q), want remove", planCode, plan, planErr)
-	applied, applyErr, applyCode := runCleanup(t, root, home, append(args, "--apply", cleanupRowFingerprint(t, plan))...)
-	requireTest(t, applyCode == 0 && strings.Contains(applied, ",removed,"), "apply = (%d, %q, %q), want removed", applyCode, applied, applyErr)
-	_, statErr := os.Lstat(path)
-	requireTest(t, os.IsNotExist(statErr), "apply left %s: %v", path, statErr)
+	plan := runVerb(t, verbClean, f.call(args...))
+	requireTest(t, plan.exit == 0 && strings.Contains(plan.stdout, ",remove,"), "plan = (%d, %q, %q), want remove", plan.exit, plan.stdout, plan.stderr)
+	applied := runVerb(t, verbClean, f.call(append(args, "--apply", plan.mustFingerprint(t))...))
+	requireTest(t, applied.exit == 0 && strings.Contains(applied.stdout, ",removed,"), "apply = (%d, %q, %q), want removed", applied.exit, applied.stdout, applied.stderr)
+	_, statErr := os.Lstat(f.creation.Path)
+	requireTest(t, os.IsNotExist(statErr), "apply left %s: %v", f.creation.Path, statErr)
 }
 
 func TestUnlandedReleaseRefusalNamesTheDiscardClean(t *testing.T) {
 	t.Parallel()
-	root, creation, home, stderr := refusedUnlandedRelease(t, "unlanded-next")
-	want := "next=bench worktree clean --discard-branch " + axi.ShellQuote(creation.Path)
-	requireTest(t, strings.Contains(stderr, want+"\n"), "release refusal = %q, want %q", stderr, want)
-	requireDiscardRoute(t, root, home, creation.Path, creation.Path)
+	f := refusedUnlandedRelease(t, "unlanded-next")
+	want := "next=bench worktree clean --discard-branch " + axi.ShellQuote(f.creation.Path)
+	requireTest(t, strings.Contains(f.stderr, want+"\n"), "release refusal = %q, want %q", f.stderr, want)
+	requireDiscardRoute(t, f, f.creation.Path)
 }
 
 func TestUnlandedCleanupPendingListRowNamesTheDiscardClean(t *testing.T) {
 	t.Parallel()
-	root, creation, home, _ := refusedUnlandedRelease(t, "unlanded-list")
-	list, code := ListCommand(root, home, nil)
-	requireTest(t, code == 0, "list exit=%d output=%q", code, list)
-	argv, err := axitest.RecoverHelpCommandArgv(list)
+	f := refusedUnlandedRelease(t, "unlanded-list")
+	list := runVerb(t, verbList, f.call())
+	requireTest(t, list.exit == 0, "list exit=%d output=%q", list.exit, list.stdout)
+	argv, err := axitest.RecoverHelpCommandArgv(list.stdout)
 	mustNoError(t, err)
-	want := []string{"bench", "worktree", "clean", "--discard-branch", creation.Path}
+	want := []string{"bench", "worktree", "clean", "--discard-branch", f.creation.Path}
 	requireTest(t, slices.Equal(argv, want), "list help argv = %q, want %q", argv, want)
-	requireDiscardRoute(t, root, home, creation.Path, argv[4:]...)
+	requireDiscardRoute(t, f, argv[4:]...)
 }
 
 func TestCleanTargetAcceptsCleanupPendingRow(t *testing.T) {
 	t.Parallel()
-	root, creation, home, _ := refusedUnlandedRelease(t, "unlanded-target")
-	requireDiscardRoute(t, root, home, creation.Path, "--target", creation.Assignment.Label)
+	f := refusedUnlandedRelease(t, "unlanded-target")
+	requireDiscardRoute(t, f, "--target", f.creation.Assignment.Label)
 }

@@ -46,10 +46,10 @@ func TestCleanSetDiscardModifiers(t *testing.T) {
 				creation := mustCreate(t, root, home, "set-discard-ignored", "discard ignored")
 				landAssignment(t, root, creation, "landed.txt")
 				mustWrite(t, filepath.Join(creation.Path, "ignored.txt"), []byte("residue\n"), 0o644)
-				bare, _, bareCode := runCleanup(t, root, home, "--target", creation.Assignment.ID)
-				if bareCode != 0 || !strings.Contains(bare, creation.Path+",retain,") ||
-					!strings.Contains(bare, "ignored residuals require --discard-ignored") {
-					t.Fatalf("bare set plan = (%d, %q), want the ignored residue retained", bareCode, bare)
+				bare := runVerb(t, verbClean, repoHome{root, home}.call("--target", creation.Assignment.ID))
+				if bare.exit != 0 || !strings.Contains(bare.stdout, creation.Path+",retain,") ||
+					!strings.Contains(bare.stdout, "ignored residuals require --discard-ignored") {
+					t.Fatalf("bare set plan = (%d, %q), want the ignored residue retained", bare.exit, bare.stdout)
 				}
 				return creation
 			},
@@ -63,31 +63,32 @@ func TestCleanSetDiscardModifiers(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			root := newWorktreeRepo(t)
-			home := filepath.Join(root, ".bench-home")
-			creation := tc.fixture(t, root, home)
-			plan, planErr, planCode := runCleanup(t, root, home, tc.modifier, "--target", creation.Assignment.ID)
-			if planCode != 0 || planErr != "" {
-				t.Fatalf("%s plan = (%d, %q, %q), want one applicable plan", tc.name, planCode, plan, planErr)
+			f := repoHome{root, filepath.Join(root, ".bench-home")}
+			creation := tc.fixture(t, f.root, f.home)
+			plan := runVerb(t, verbClean, f.call(tc.modifier, "--target", creation.Assignment.ID))
+			if plan.exit != 0 || plan.stderr != "" {
+				t.Fatalf("%s plan = (%d, %q, %q), want one applicable plan", tc.name, plan.exit, plan.stdout, plan.stderr)
 			}
-			if !strings.Contains(plan, "bench worktree clean "+tc.modifier+" --target ") {
-				t.Fatalf("%s plan = %q, want the modifier in the rendered apply command", tc.name, plan)
+			if !strings.Contains(plan.stdout, "bench worktree clean "+tc.modifier+" --target ") {
+				t.Fatalf("%s plan = %q, want the modifier in the rendered apply command", tc.name, plan.stdout)
 			}
-			applied, applyErr, applyCode := runCleanup(t, root, home, tc.modifier, "--target", creation.Assignment.ID, "--apply", cleanupRowFingerprint(t, plan))
-			if applyCode != 0 || applyErr != "" || strings.Count(applied, ",removed,") != 1 {
-				t.Fatalf("%s apply = (%d, %q, %q), want one removal", tc.name, applyCode, applied, applyErr)
+			applied := runVerb(t, verbClean, f.call(tc.modifier, "--target", creation.Assignment.ID, "--apply", plan.mustFingerprint(t)))
+			if applied.exit != 0 || applied.stderr != "" || strings.Count(applied.stdout, ",removed,") != 1 {
+				t.Fatalf("%s apply = (%d, %q, %q), want one removal", tc.name, applied.exit, applied.stdout, applied.stderr)
 			}
 			if _, err := os.Lstat(creation.Path); !os.IsNotExist(err) {
 				t.Fatalf("%s apply left %s: %v", tc.name, creation.Path, err)
 			}
-			tc.effect(t, root, creation)
+			tc.effect(t, f.root, creation)
 		})
 	}
 }
 
 func TestCleanSetGrammar(t *testing.T) {
 	t.Parallel()
-	root, home, first, second, _ := landedSetFixture(t)
-	before, err := intent.Assignments(root)
+	f := landedSetFixture(t)
+	first := f.first
+	before, err := intent.Assignments(f.root)
 	mustNoError(t, err)
 	for _, args := range [][]string{
 		// A call that names no selection mode is as unscoped as one that names two, so the
@@ -108,25 +109,25 @@ func TestCleanSetGrammar(t *testing.T) {
 		{"--target", first.Assignment.ID, "--apply-current"},
 		{"--target", first.Assignment.ID, "--apply", "short"},
 	} {
-		stdout, stderr, code := runCleanup(t, root, home, args...)
-		if code != 2 || stderr != "" || !strings.Contains(stdout, "invalid invocation; run "+usage.WorktreeClean) {
-			t.Fatalf("args=%q exit=%d stdout=%q stderr=%q, want usage refusal", args, code, stdout, stderr)
+		result := runVerb(t, verbClean, f.call(args...))
+		if result.exit != 2 || result.stderr != "" || !strings.Contains(result.stdout, "invalid invocation; run "+usage.WorktreeClean) {
+			t.Fatalf("args=%q exit=%d stdout=%q stderr=%q, want usage refusal", args, result.exit, result.stdout, result.stderr)
 		}
-		if rows := cleanupRows(stdout); len(rows) != 1 {
+		if rows := result.mustRows(t, cleanupTable); len(rows) != 1 {
 			t.Fatalf("args=%q rows=%#v, want the usage row alone and no plan", args, rows)
 		}
 	}
-	after, err := intent.Assignments(root)
+	after, err := intent.Assignments(f.root)
 	mustNoError(t, err)
 	if len(after) != len(before) {
 		t.Fatalf("grammar refusals changed the ledger: %#v -> %#v", before, after)
 	}
-	for _, creation := range []Creation{first, second} {
+	for _, creation := range []Creation{f.first, f.second} {
 		if _, statErr := os.Stat(creation.Path); statErr != nil {
 			t.Fatalf("grammar refusal removed %s: %v", creation.Path, statErr)
 		}
 	}
-	if _, _, code := runCleanup(t, root, home, "--target", first.Assignment.ID, "--discard-ignored", "--full"); code == 2 {
+	if runVerb(t, verbClean, f.call("--target", first.Assignment.ID, "--discard-ignored", "--full")).exit == 2 {
 		t.Fatal("the explicit set refused its own modifiers")
 	}
 }
@@ -145,31 +146,27 @@ func TestCleanSetHostileOperand(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			root, home, first, second, _ := landedSetFixture(t)
-			stdout, stderr, code := runCleanup(t, root, home, "--target", first.Assignment.ID, "--target", tc.target)
-			if code != 1 || stderr != "" {
-				t.Fatalf("hostile plan exit=%d stdout=%q stderr=%q, want a reported failure", code, stdout, stderr)
+			f := landedSetFixture(t)
+			plan := runVerb(t, verbClean, f.call("--target", f.first.Assignment.ID, "--target", tc.target))
+			if plan.exit != 1 || plan.stderr != "" {
+				t.Fatalf("hostile plan exit=%d stdout=%q stderr=%q, want a reported failure", plan.exit, plan.stdout, plan.stderr)
 			}
-			if rows := cleanupRows(stdout); len(rows) != 2 {
+			if rows := plan.mustRows(t, cleanupTable); len(rows) != 2 {
 				t.Fatalf("hostile plan rows = %#v, want every selection outcome", rows)
 			}
-			for _, fingerprint := range cleanupRowsField(t, stdout, 5) {
-				if fingerprint != "none" {
-					t.Fatalf("hostile plan = %q, want no applicable fingerprint", stdout)
-				}
+			plan.mustNoFingerprint(t)
+			if strings.Contains(plan.stdout, "bench worktree clean --target") {
+				t.Fatalf("hostile plan = %q, want no replayable action", plan.stdout)
 			}
-			if strings.Contains(stdout, "bench worktree clean --target") {
-				t.Fatalf("hostile plan = %q, want no replayable action", stdout)
+			if strings.ContainsRune(plan.stdout, '\x1b') || strings.Contains(plan.stdout, tc.target) && strings.ContainsAny(tc.target, "\n\x1b") {
+				t.Fatalf("hostile plan = %q, want the operand rendered as data", plan.stdout)
 			}
-			if strings.ContainsRune(stdout, '\x1b') || strings.Contains(stdout, tc.target) && strings.ContainsAny(tc.target, "\n\x1b") {
-				t.Fatalf("hostile plan = %q, want the operand rendered as data", stdout)
-			}
-			for _, creation := range []Creation{first, second} {
+			for _, creation := range []Creation{f.first, f.second} {
 				if _, err := os.Stat(creation.Path); err != nil {
 					t.Fatalf("hostile plan removed %s: %v", creation.Path, err)
 				}
 			}
-			if _, err := os.Lstat(filepath.Join(root, "pwned")); !os.IsNotExist(err) {
+			if _, err := os.Lstat(filepath.Join(f.root, "pwned")); !os.IsNotExist(err) {
 				t.Fatalf("hostile operand reached a shell: %v", err)
 			}
 		})

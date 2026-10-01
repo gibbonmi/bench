@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +29,7 @@ func newResidueGuardFixture(t *testing.T, request string) ownedAssignment {
 	home := filepath.Join(root, ".bench-home")
 	creation := mustCreate(t, root, home, request, "residue guard")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)
-	return ownedAssignment{root: root, creation: creation, home: home}
+	return ownedAssignment{repoHome: repoHome{root, home}, creation: creation}
 }
 
 // stubbedLiveBinaryJoins returns a seam set whose residue-guard warning sink is the
@@ -57,9 +56,8 @@ func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 	mustWrite(t, live, []byte("binary\n"), 0o755)
 	j, warnings := stubbedLiveBinaryJoins(live)
 
-	var stdout bytes.Buffer
-	code := releaseCommandWith(j, f.root, f.home, []string{"--request", request, f.creation.Path}, &stdout, io.Discard)
-	requireTest(t, code == 0, "live-binary release exit=%d stdout=%q", code, stdout.String())
+	release := runVerb(t, verbRelease, f.callWith(j, "--request", request, f.creation.Path))
+	requireTest(t, release.exit == 0, "live-binary release exit=%d stdout=%q", release.exit, release.stdout)
 
 	warned := warnings.String()
 	rebuild := freshness.RebuildAction(f.creation.Path)
@@ -147,9 +145,8 @@ func TestResidueGuardRemovesForeignBinariesWithoutWarning(t *testing.T) {
 			mustWrite(t, elsewhere, []byte("the binary answering bench\n"), 0o755)
 			j, warnings := stubbedLiveBinaryJoins(elsewhere)
 
-			var stdout bytes.Buffer
-			code := releaseCommandWith(j, f.root, f.home, []string{"--request", request, f.creation.Path}, &stdout, io.Discard)
-			requireTest(t, code == 0, "foreign release exit=%d stdout=%q", code, stdout.String())
+			release := runVerb(t, verbRelease, f.callWith(j, "--request", request, f.creation.Path))
+			requireTest(t, release.exit == 0, "foreign release exit=%d stdout=%q", release.exit, release.stdout)
 			requireTest(t, warnings.Len() == 0, "foreign %s warned: %q", foreign, warnings.String())
 		})
 	}

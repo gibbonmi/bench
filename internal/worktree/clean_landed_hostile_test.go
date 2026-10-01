@@ -23,16 +23,16 @@ func TestCleanLandedQuotesSpaceAndGlobPaths(t *testing.T) {
 	landAssignment(t, root, dirty, "dirty.txt")
 	mustWrite(t, filepath.Join(dirty.Path, "dirty.txt"), []byte("changed\n"), 0o644)
 
-	stdout, stderr, code := runCleanup(t, root, home, "--landed")
-	if code != 0 || stderr != "" {
-		t.Fatalf("exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	plan := runVerb(t, verbClean, repoHome{root, home}.call("--landed"))
+	if plan.exit != 0 || plan.stderr != "" {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
-	if !strings.Contains(stdout, clean.Path+",remove,") || !strings.Contains(stdout, "bench worktree clean '"+dirty.Path+"'") || !strings.Contains(stdout, "bench worktree clean --landed --apply ") {
-		t.Fatalf("output=%q, want safe row and pasteable help", stdout)
+	if !strings.Contains(plan.stdout, clean.Path+",remove,") || !strings.Contains(plan.stdout, "bench worktree clean '"+dirty.Path+"'") || !strings.Contains(plan.stdout, "bench worktree clean --landed --apply ") {
+		t.Fatalf("output=%q, want safe row and pasteable help", plan.stdout)
 	}
-	_, applyErr, applyCode := runCleanup(t, root, home, "--landed", "--apply", cleanupRowFingerprint(t, stdout))
-	if applyCode != 0 || applyErr != "" {
-		t.Fatalf("apply exit=%d stderr=%q", applyCode, applyErr)
+	applied := runVerb(t, verbClean, repoHome{root, home}.call("--landed", "--apply", plan.mustFingerprint(t)))
+	if applied.exit != 0 || applied.stderr != "" {
+		t.Fatalf("apply exit=%d stderr=%q", applied.exit, applied.stderr)
 	}
 	if _, err := os.Lstat(clean.Path); !os.IsNotExist(err) {
 		t.Fatalf("safe hostile path was not removed: %v", err)
@@ -49,15 +49,14 @@ func TestCleanLandedControlBytePathRetained(t *testing.T) {
 	creation := mustCreate(t, root, home, "landed-control", "control")
 	landAssignment(t, root, creation, "control.txt")
 
-	stdout, stderr, code := runCleanup(t, root, home, "--landed")
+	plan := runVerb(t, verbClean, repoHome{root, home}.call("--landed"))
 	pointer := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree clean ."
-	if code != 0 || stderr != "" || strings.ContainsRune(stdout, '\x1b') || !strings.Contains(stdout, "sha256:") || !strings.Contains(stdout, ",retain,") || !strings.Contains(stdout, "unsafe control bytes") || strings.Count(stdout, pointer) != 1 {
-		t.Fatalf("plan exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	if plan.exit != 0 || plan.stderr != "" || strings.ContainsRune(plan.stdout, '\x1b') || !strings.Contains(plan.stdout, "sha256:") || !strings.Contains(plan.stdout, ",retain,") || !strings.Contains(plan.stdout, "unsafe control bytes") || strings.Count(plan.stdout, pointer) != 1 {
+		t.Fatalf("plan exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
-	fingerprint := cleanupRowFingerprint(t, stdout)
-	applied, applyErr, applyCode := runCleanup(t, root, home, "--landed", "--apply", fingerprint)
-	if applyCode != 0 || applyErr != "" || strings.ContainsRune(applied, '\x1b') {
-		t.Fatalf("apply exit=%d stdout=%q stderr=%q", applyCode, applied, applyErr)
+	applied := runVerb(t, verbClean, repoHome{root, home}.call("--landed", "--apply", plan.mustFingerprint(t)))
+	if applied.exit != 0 || applied.stderr != "" || strings.ContainsRune(applied.stdout, '\x1b') {
+		t.Fatalf("apply exit=%d stdout=%q stderr=%q", applied.exit, applied.stdout, applied.stderr)
 	}
 	if _, err := os.Lstat(creation.Path); err != nil {
 		t.Fatalf("retained control-byte path disappeared: %v", err)
@@ -71,9 +70,9 @@ func TestCleanLandedTabPathRendersOneRow(t *testing.T) {
 	creation := mustCreate(t, root, home, "landed-tab", "tab")
 	landAssignment(t, root, creation, "tab.txt")
 
-	stdout, stderr, code := runCleanup(t, root, home, "--landed")
-	if code != 0 || stderr != "" || !strings.HasPrefix(stdout, "worktree_cleanup[1]") || strings.ContainsRune(stdout, '\t') || !strings.Contains(stdout, `\t`) {
-		t.Fatalf("exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	plan := runVerb(t, verbClean, repoHome{root, home}.call("--landed"))
+	if plan.exit != 0 || plan.stderr != "" || !strings.HasPrefix(plan.stdout, "worktree_cleanup[1]") || strings.ContainsRune(plan.stdout, '\t') || !strings.Contains(plan.stdout, `\t`) {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
 }
 
@@ -125,14 +124,13 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 			}
 			tc.make(t, creation.Path)
 
-			stdout, stderr, code := runCleanupWith(t, j, root, home, "--landed")
-			if code != 0 || stderr != "" || !strings.Contains(stdout, ",retain,") || !strings.Contains(stdout, "assignment path shape is "+tc.shape) {
-				t.Fatalf("plan exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+			plan := runVerb(t, verbClean, repoHome{root, home}.callWith(j, "--landed"))
+			if plan.exit != 0 || plan.stderr != "" || !strings.Contains(plan.stdout, ",retain,") || !strings.Contains(plan.stdout, "assignment path shape is "+tc.shape) {
+				t.Fatalf("plan exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 			}
-			fingerprint := cleanupRowFingerprint(t, stdout)
-			_, applyErr, applyCode := runCleanupWith(t, j, root, home, "--landed", "--apply", fingerprint)
-			if applyCode != 0 || applyErr != "" {
-				t.Fatalf("apply exit=%d stderr=%q", applyCode, applyErr)
+			applied := runVerb(t, verbClean, repoHome{root, home}.callWith(j, "--landed", "--apply", plan.mustFingerprint(t)))
+			if applied.exit != 0 || applied.stderr != "" {
+				t.Fatalf("apply exit=%d stderr=%q", applied.exit, applied.stderr)
 			}
 			if plannerCalls != 0 {
 				t.Fatalf("special path reached explicit planner %d time(s)", plannerCalls)
@@ -195,13 +193,12 @@ func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
 			bindEnv(t, "BENCH_TEST_REAL_GIT", realGit)
 			bindEnv(t, "PATH", wrapper+string(os.PathListSeparator)+os.Getenv("PATH"))
 
-			if listing, code := ListCommand(root, home, nil); code != 0 || !strings.Contains(listing, creation.Assignment.ID) {
-				t.Fatalf("ListCommand = (%d, %q), want complete assignment row", code, listing)
+			if listing := runVerb(t, verbList, repoHome{root, home}.call()); listing.exit != 0 || !strings.Contains(listing.stdout, creation.Assignment.ID) {
+				t.Fatalf("ListCommand = (%d, %q), want complete assignment row", listing.exit, listing.stdout)
 			}
 			assertNoTargetGitCalls(t, log, "ListCommand")
-			var stdout, stderr strings.Builder
-			if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 0 {
-				t.Fatalf("ResumeCleanCommand = (%d, %q, %q), want completion", code, stdout.String(), stderr.String())
+			if resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call()); resumed.exit != 0 {
+				t.Fatalf("ResumeCleanCommand = (%d, %q, %q), want completion", resumed.exit, resumed.stdout, resumed.stderr)
 			}
 			assertNoTargetGitCalls(t, log, "ResumeCleanCommand")
 		})

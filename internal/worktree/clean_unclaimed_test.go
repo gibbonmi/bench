@@ -62,13 +62,13 @@ func TestPlanUnclaimedShiftResidueBranch(t *testing.T) {
 		t.Fatalf("plan reason = %q, want shift residue branch", set.rows[1].reason)
 	}
 
-	plan, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-	if code != 0 || !strings.Contains(plan, "class=landed; shift residue branch") {
-		t.Fatalf("plan exit=%d stdout=%q, want the landed shift reason", code, plan)
+	plan := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed"))
+	if plan.exit != 0 || !strings.Contains(plan.stdout, "class=landed; shift residue branch") {
+		t.Fatalf("plan exit=%d stdout=%q, want the landed shift reason", plan.exit, plan.stdout)
 	}
-	output, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply", cleanupRowFingerprint(t, plan))
-	if code != 0 || !strings.Contains(output, "refs/heads/"+residue+",removed,") || strings.Contains(output, unique+",removed,") {
-		t.Fatalf("apply exit=%d stdout=%q, want the residue removed and the unique ref kept", code, output)
+	applied := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed", "--apply", plan.mustFingerprint(t)))
+	if applied.exit != 0 || !strings.Contains(applied.stdout, "refs/heads/"+residue+",removed,") || strings.Contains(applied.stdout, unique+",removed,") {
+		t.Fatalf("apply exit=%d stdout=%q, want the residue removed and the unique ref kept", applied.exit, applied.stdout)
 	}
 	if git.OK("-C", root, "show-ref", "--verify", "--quiet", "refs/heads/"+residue) {
 		t.Fatalf("apply retained %q", residue)
@@ -101,17 +101,17 @@ func TestCleanUnclaimedApplyCurrent(t *testing.T) {
 		unique := addUnclaimedBranch(t, root, "e")
 		commitOnBranch(t, root, unique, "unique.txt", "unique\n")
 
-		output, stderr, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply-current")
-		planned := strings.Index(output, branch+",discard-remove,")
-		removed := strings.Index(output, branch+",removed,")
-		if code != 0 || stderr != "" || planned < 0 || removed < 0 || planned >= removed {
-			t.Fatalf("cleanup = exit %d stdout=%q stderr=%q, want plan before removal", code, output, stderr)
+		applied := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed", "--apply-current"))
+		planned := strings.Index(applied.stdout, branch+",discard-remove,")
+		removed := strings.Index(applied.stdout, branch+",removed,")
+		if applied.exit != 0 || applied.stderr != "" || planned < 0 || removed < 0 || planned >= removed {
+			t.Fatalf("cleanup = exit %d stdout=%q stderr=%q, want plan before removal", applied.exit, applied.stdout, applied.stderr)
 		}
 		if git.OK("-C", root, "show-ref", "--verify", "--quiet", branch) {
 			t.Fatalf("apply-current retained %q", branch)
 		}
-		if !strings.Contains(output, unique+",retain,") || !git.OK("-C", root, "show-ref", "--verify", "--quiet", unique) {
-			t.Fatalf("apply-current did not retain unique %q: %q", unique, output)
+		if !strings.Contains(applied.stdout, unique+",retain,") || !git.OK("-C", root, "show-ref", "--verify", "--quiet", unique) {
+			t.Fatalf("apply-current did not retain unique %q: %q", unique, applied.stdout)
 		}
 	})
 
@@ -130,13 +130,12 @@ func TestCleanUnclaimedApplyCurrent(t *testing.T) {
 	} {
 		t.Run("refuses "+tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			home := filepath.Join(root, ".bench-home")
 			branch := intent.AssignmentBranchRef(strings.Repeat("5", 32), strings.Repeat("6", 32))
 			gitRun(t, root, "branch", strings.TrimPrefix(branch, "refs/heads/"))
 
-			stdout, stderr, code := runCleanup(t, root, home, tc.args...)
-			if code != 2 || stderr != "" || !strings.Contains(stdout, usage.WorktreeClean) {
-				t.Fatalf("cleanup = exit %d stdout=%q stderr=%q, want usage refusal", code, stdout, stderr)
+			result := runVerb(t, verbClean, repoHome{root, filepath.Join(root, ".bench-home")}.call(tc.args...))
+			if result.exit != 2 || result.stderr != "" || !strings.Contains(result.stdout, usage.WorktreeClean) {
+				t.Fatalf("cleanup = exit %d stdout=%q stderr=%q, want usage refusal", result.exit, result.stdout, result.stderr)
 			}
 			if !git.OK("-C", root, "show-ref", "--verify", "--quiet", branch) {
 				t.Fatalf("invalid invocation deleted %q", branch)
@@ -148,22 +147,22 @@ func TestCleanUnclaimedApplyCurrent(t *testing.T) {
 func TestCleanUnclaimedDiscardBranchRefusesMovedPlan(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
-	home := filepath.Join(root, ".bench-home")
+	f := repoHome{root, filepath.Join(root, ".bench-home")}
 	branch := unclaimedBranchRef("e")
 	short := strings.TrimPrefix(branch, "refs/heads/")
 	gitRun(t, root, "checkout", "-qb", short)
 	commitInWorktree(t, root, "first.txt", "first\n", "first")
 	gitRun(t, root, "checkout", "-q", "main")
-	plan, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-	if code != 0 {
-		t.Fatalf("plan exit=%d stdout=%q", code, plan)
+	plan := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed"))
+	if plan.exit != 0 {
+		t.Fatalf("plan exit=%d stdout=%q", plan.exit, plan.stdout)
 	}
 	gitRun(t, root, "checkout", "-q", short)
 	commitInWorktree(t, root, "second.txt", "second\n", "second")
 	gitRun(t, root, "checkout", "-q", "main")
-	output, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply", cleanupRowFingerprint(t, plan))
-	if code != 1 || !strings.Contains(output, errStaleFingerprint.Error()) {
-		t.Fatalf("apply exit=%d stdout=%q, want stale refusal", code, output)
+	applied := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed", "--apply", plan.mustFingerprint(t)))
+	if applied.exit != 1 || !strings.Contains(applied.stdout, errStaleFingerprint.Error()) {
+		t.Fatalf("apply exit=%d stdout=%q, want stale refusal", applied.exit, applied.stdout)
 	}
 	if !git.OK("-C", root, "show-ref", "--verify", "--quiet", branch) {
 		t.Fatalf("stale apply deleted %q", branch)
@@ -173,23 +172,23 @@ func TestCleanUnclaimedDiscardBranchRefusesMovedPlan(t *testing.T) {
 func TestCleanUnclaimedDiscardBranchRefusesChangedSet(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
-	home := filepath.Join(root, ".bench-home")
+	f := repoHome{root, filepath.Join(root, ".bench-home")}
 	first := intent.AssignmentBranchRef(strings.Repeat("1", 32), strings.Repeat("2", 32))
 	second := intent.AssignmentBranchRef(strings.Repeat("3", 32), strings.Repeat("4", 32))
 	gitRun(t, root, "checkout", "-qb", strings.TrimPrefix(first, "refs/heads/"))
 	commitInWorktree(t, root, "first-set.txt", "first\n", "first set member")
 	gitRun(t, root, "checkout", "-q", "main")
-	plan, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-	if code != 0 {
-		t.Fatalf("plan exit=%d stdout=%q", code, plan)
+	plan := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed"))
+	if plan.exit != 0 {
+		t.Fatalf("plan exit=%d stdout=%q", plan.exit, plan.stdout)
 	}
 	gitRun(t, root, "checkout", "-qb", strings.TrimPrefix(second, "refs/heads/"))
 	commitInWorktree(t, root, "second-set.txt", "second\n", "second set member")
 	gitRun(t, root, "checkout", "-q", "main")
 
-	output, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply", cleanupRowFingerprint(t, plan))
-	if code != 1 || !strings.Contains(output, errStaleFingerprint.Error()) {
-		t.Fatalf("apply exit=%d stdout=%q, want changed-set refusal", code, output)
+	applied := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed", "--apply", plan.mustFingerprint(t)))
+	if applied.exit != 1 || !strings.Contains(applied.stdout, errStaleFingerprint.Error()) {
+		t.Fatalf("apply exit=%d stdout=%q, want changed-set refusal", applied.exit, applied.stdout)
 	}
 	for _, ref := range []string{first, second} {
 		if !git.OK("-C", root, "show-ref", "--verify", "--quiet", ref) {
@@ -213,13 +212,12 @@ func TestCleanUnclaimedRequiresExactAuthorizationGrammar(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newWorktreeRepo(t)
-			home := filepath.Join(root, ".bench-home")
 			ref := intent.AssignmentBranchRef(strings.Repeat("5", 32), strings.Repeat("6", 32))
 			gitRun(t, root, "branch", strings.TrimPrefix(ref, "refs/heads/"))
 
-			stdout, stderr, code := runCleanup(t, root, home, tc.args...)
-			if code != 2 || stderr != "" || !strings.Contains(stdout, usage.WorktreeClean) {
-				t.Fatalf("cleanup = exit %d stdout=%q stderr=%q, want usage refusal", code, stdout, stderr)
+			result := runVerb(t, verbClean, repoHome{root, filepath.Join(root, ".bench-home")}.call(tc.args...))
+			if result.exit != 2 || result.stderr != "" || !strings.Contains(result.stdout, usage.WorktreeClean) {
+				t.Fatalf("cleanup = exit %d stdout=%q stderr=%q, want usage refusal", result.exit, result.stdout, result.stderr)
 			}
 			if !git.OK("-C", root, "show-ref", "--verify", "--quiet", ref) {
 				t.Fatalf("invalid invocation deleted %q", ref)
@@ -266,12 +264,11 @@ func TestCleanUnclaimedBulkSweepKeepsUniqueRefs(t *testing.T) {
 			}
 			args := []string{"--discard-branch", "--unclaimed", mode}
 			if mode == "--apply" {
-				plan, _, _ := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-				args = append(args, cleanupRowFingerprint(t, plan))
+				args = append(args, runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed")).mustFingerprint(t))
 			}
-			output, stderr, code := runCleanup(t, root, home, args...)
-			if code != 0 || stderr != "" || strings.Count(output, ",removed,") != len(removed) {
-				t.Fatalf("apply exit=%d stderr=%q stdout=%q, want %d removals", code, stderr, output, len(removed))
+			applied := runVerb(t, verbClean, repoHome{root, home}.call(args...))
+			if applied.exit != 0 || applied.stderr != "" || strings.Count(applied.stdout, ",removed,") != len(removed) {
+				t.Fatalf("apply exit=%d stderr=%q stdout=%q, want %d removals", applied.exit, applied.stderr, applied.stdout, len(removed))
 			}
 			for i, ref := range removed {
 				if git.OK("-C", root, "show-ref", "--verify", "--quiet", ref) || !reachableFromAHead(t, root, tips[i]) {
@@ -294,17 +291,17 @@ func TestCleanUnclaimedPlanNamesApplyOnlyWhenARowRemoves(t *testing.T) {
 	root, home := unclaimedBranchFixture(t)
 	unique := addUnclaimedBranch(t, root, "a")
 	commitOnBranch(t, root, unique, "unique.txt", "unique\n")
-	plan, stderr, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-	rows := cleanupRows(plan)
-	if code != 0 || stderr != "" || strings.Contains(plan, "--apply") || len(rows) != 1 ||
-		!strings.HasSuffix(cleanupRowValue(cleanupRowFields(rows[0])[6]), "; bench worktree clean --discard-branch --target "+strings.TrimPrefix(unique, "refs/heads/")) {
-		t.Fatalf("unique-only plan exit=%d stderr=%q stdout=%q, want a retained row and no apply action", code, stderr, plan)
+	plan := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed"))
+	rows := textRows(t, plan.mustRows(t, cleanupTable))
+	if plan.exit != 0 || plan.stderr != "" || strings.Contains(plan.stdout, "--apply") || len(rows) != 1 ||
+		!strings.HasSuffix(rows[0]["detail"], "; bench worktree clean --discard-branch --target "+strings.TrimPrefix(unique, "refs/heads/")) {
+		t.Fatalf("unique-only plan exit=%d stderr=%q stdout=%q, want a retained row and no apply action", plan.exit, plan.stderr, plan.stdout)
 	}
 	addUnclaimedBranch(t, root, "b")
-	plan, stderr, code = runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-	action := "bench worktree clean --discard-branch --unclaimed --apply " + cleanupRowFingerprint(t, plan)
-	if code != 0 || stderr != "" || !strings.Contains(plan, action) {
-		t.Fatalf("landed plan exit=%d stderr=%q stdout=%q, want %q", code, stderr, plan, action)
+	plan = runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed"))
+	action := "bench worktree clean --discard-branch --unclaimed --apply " + plan.mustFingerprint(t)
+	if plan.exit != 0 || plan.stderr != "" || !strings.Contains(plan.stdout, action) {
+		t.Fatalf("landed plan exit=%d stderr=%q stdout=%q, want %q", plan.exit, plan.stderr, plan.stdout, action)
 	}
 }
 
@@ -314,20 +311,17 @@ func TestCleanUnclaimedErrorRowRefusesTheSet(t *testing.T) {
 	root, home := unclaimedBranchFixture(t)
 	landed, broken := addUnclaimedBranch(t, root, "a"), addBrokenUnclaimedBranch(t, root, "b")
 
-	plan, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-	if code != 1 || strings.Contains(plan, "--apply") || setFingerprint.MatchString(plan) {
-		t.Errorf("plan exit=%d stdout=%q, want exit 1 with no fingerprint and no apply action", code, plan)
+	plan := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed"))
+	if plan.exit != 1 || strings.Contains(plan.stdout, "--apply") {
+		t.Errorf("plan exit=%d stdout=%q, want exit 1 with no fingerprint and no apply action", plan.exit, plan.stdout)
 	}
-	fields := map[string][]string{}
-	for _, row := range cleanupRows(plan) {
-		fields[cleanupRowValue(cleanupRowFields(row)[0])] = cleanupRowFields(row)
-	}
-	if row := fields[broken]; len(row) != len(cleanupFields) || row[1] != "error" || !strings.Contains(row[6], broken) || !strings.Contains(row[6], "blob") {
+	plan.mustNoFingerprint(t)
+	if row := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")[broken]; len(row) != len(cleanupFields) || row["action"] != "error" || !strings.Contains(row["detail"], broken) || !strings.Contains(row["detail"], "blob") {
 		t.Errorf("broken ref row = %q, want an error naming the ref and the blob", row)
 	}
-	output, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply-current")
-	if code != 1 || strings.Contains(output, ",removed,") || !git.OK("-C", root, "show-ref", "--verify", "--quiet", landed) {
-		t.Fatalf("apply-current exit=%d stdout=%q, want a refusal that keeps %q", code, output, landed)
+	applied := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed", "--apply-current"))
+	if applied.exit != 1 || strings.Contains(applied.stdout, ",removed,") || !git.OK("-C", root, "show-ref", "--verify", "--quiet", landed) {
+		t.Fatalf("apply-current exit=%d stdout=%q, want a refusal that keeps %q", applied.exit, applied.stdout, landed)
 	}
 }
 
@@ -335,18 +329,19 @@ func TestCleanUnclaimedErrorRowRefusesTheSet(t *testing.T) {
 func TestCleanUnclaimedPlanIsReadOnlyAndQuietWhenEmpty(t *testing.T) {
 	t.Parallel()
 	root, home := unclaimedBranchFixture(t)
-	empty, stderr, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-	if code != 0 || stderr != "" || len(cleanupRows(empty)) != 0 || !strings.HasPrefix(empty, "worktree_cleanup[0]") {
-		t.Fatalf("empty plan exit=%d stderr=%q stdout=%q, want the empty table", code, stderr, empty)
+	f := repoHome{root, home}
+	empty := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed"))
+	if empty.exit != 0 || empty.stderr != "" || len(empty.mustRows(t, cleanupTable)) != 0 || !strings.HasPrefix(empty.stdout, "worktree_cleanup[0]") {
+		t.Fatalf("empty plan exit=%d stderr=%q stdout=%q, want the empty table", empty.exit, empty.stderr, empty.stdout)
 	}
 	addUnclaimedBranch(t, root, "a")
 	unique := addUnclaimedBranch(t, root, "b")
 	addUnclaimedBranchAt(t, root, "c", commitOnBranch(t, root, unique, "unique.txt", "unique\n"))
 	refs := gitOutput(t, root, "for-each-ref")
-	first, _, firstCode := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-	second, _, secondCode := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-	if firstCode != 0 || secondCode != 0 || first != second || len(cleanupRows(first)) != 3 || gitOutput(t, root, "for-each-ref") != refs {
-		t.Fatalf("plans = (%d, %q) then (%d, %q), want identical rows and unchanged refs", firstCode, first, secondCode, second)
+	first := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed"))
+	second := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed"))
+	if first.exit != 0 || second.exit != 0 || first.stdout != second.stdout || len(first.mustRows(t, cleanupTable)) != 3 || gitOutput(t, root, "for-each-ref") != refs {
+		t.Fatalf("plans = (%d, %q) then (%d, %q), want identical rows and unchanged refs", first.exit, first.stdout, second.exit, second.stdout)
 	}
 }
 
@@ -379,11 +374,11 @@ func TestCleanUnclaimedStaleClassRefusesTheOldPlan(t *testing.T) {
 			commitOnBranch(t, root, unique, "unique.txt", "unique\n")
 			subsumed := addUnclaimedBranchAt(t, root, "d", commitOnBranch(t, root, addUnclaimedBranch(t, root, "b"), "held.txt", "held\n"))
 			uniqueTip := gitOutput(t, root, "rev-parse", unique)
-			plan, _, _ := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
+			plan := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed"))
 			tc.mutate(t, root, home, unique, subsumed)
-			output, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply", cleanupRowFingerprint(t, plan))
-			if code != 1 || !strings.Contains(output, errStaleFingerprint.Error()) || !strings.Contains(output, "bench worktree clean --discard-branch --unclaimed") {
-				t.Fatalf("apply exit=%d stdout=%q, want the stale refusal and the re-plan command", code, output)
+			applied := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed", "--apply", plan.mustFingerprint(t)))
+			if applied.exit != 1 || !strings.Contains(applied.stdout, errStaleFingerprint.Error()) || !strings.Contains(applied.stdout, "bench worktree clean --discard-branch --unclaimed") {
+				t.Fatalf("apply exit=%d stdout=%q, want the stale refusal and the re-plan command", applied.exit, applied.stdout)
 			}
 			if !git.OK("-C", root, "show-ref", "--verify", "--quiet", landed) || gitOutput(t, root, "rev-parse", unique) != uniqueTip {
 				t.Fatalf("stale apply changed %q or %q", landed, unique)

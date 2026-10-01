@@ -387,13 +387,11 @@ func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
 	f := newPendingAssignment(t, "release-crash-window")
 	plan, err := ApplyAutomatic(f.root, f.creation.Path, nil)
 	requireTest(t, err == nil && plan.Action == ActionRemoved, "automatic cleanup = %#v, %v", plan, err)
-	args := []string{"--request", "landed-release-crash-window", f.creation.Path}
-	var first, firstErr strings.Builder
-	code := ReleaseCommand(f.root, f.home, args, &first, &firstErr)
-	requireTest(t, code == 0 && firstErr.String() == "", "release reconciliation code=%d stderr=%q", code, firstErr.String())
-	var replay, replayErr strings.Builder
-	code = ReleaseCommand(f.root, f.home, args, &replay, &replayErr)
-	requireTest(t, code == 0 && replay.String() == first.String() && replayErr.String() == "", "release replay code=%d stdout=%q stderr=%q", code, replay.String(), replayErr.String())
+	call := f.call("--request", "landed-release-crash-window", f.creation.Path)
+	first := runVerb(t, verbRelease, call)
+	requireTest(t, first.exit == 0 && first.stderr == "", "release reconciliation code=%d stderr=%q", first.exit, first.stderr)
+	replay := runVerb(t, verbRelease, call)
+	requireTest(t, replay.exit == 0 && replay.stdout == first.stdout && replay.stderr == "", "release replay code=%d stdout=%q stderr=%q", replay.exit, replay.stdout, replay.stderr)
 	repo, _, _ := cleanupIdentity(f.root, f.creation.Path)
 	_, found, err := intent.CleanupReceiptFor(f.root, repo, releaseOperation, f.creation.Path, intent.RequestDigest("landed-release-crash-window"))
 	requireTest(t, err == nil && found, "release receipt missing: %v", err)
@@ -410,11 +408,10 @@ func TestReleaseUnmergedAssignmentRetains(t *testing.T) {
 	f := newOwnedAssignment(t, "unmerged-release")
 	commitInWorktree(t, f.creation.Path, "unique.txt", "preserve\n", "unique work")
 
-	var stdout, stderr strings.Builder
-	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-unmerged-release", f.creation.Path}, &stdout, &stderr)
-	requireTest(t, code == 1, "unmerged release exit=%d stderr=%q", code, stderr.String())
-	requireTest(t, strings.Contains(stderr.String(), "worktree retained (unmerged)") && strings.Contains(stderr.String(), "assignment branch has not landed"),
-		"unmerged reason missing: %q", stderr.String())
+	release := runVerb(t, verbRelease, f.call("--request", "landed-unmerged-release", f.creation.Path))
+	requireTest(t, release.exit == 1, "unmerged release exit=%d stderr=%q", release.exit, release.stderr)
+	requireTest(t, strings.Contains(release.stderr, "worktree retained (unmerged)") && strings.Contains(release.stderr, "assignment branch has not landed"),
+		"unmerged reason missing: %q", release.stderr)
 	_, statErr := os.Stat(f.creation.Path)
 	requireTest(t, statErr == nil, "unmerged worktree removed: %v", statErr)
 	assignment, err := assignmentByID(f.root, f.creation.Assignment.ID)

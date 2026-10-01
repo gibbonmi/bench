@@ -12,9 +12,8 @@ import (
 func TestReleaseFromInsideItsOwnTreeCompletes(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "release-inside")
-	var stdout, stderr strings.Builder
-	code := ReleaseCommand(f.creation.Path, f.home, []string{"--request", "landed-release-inside", f.creation.Path}, &stdout, &stderr)
-	requireTest(t, code == 0 && strings.Contains(stdout.String(), ",complete,removed\n"), "release from inside = (%d, %q, %q), want exit 0 and a removed row", code, stdout.String(), stderr.String())
+	release := runVerb(t, verbRelease, repoHome{f.creation.Path, f.home}.call("--request", "landed-release-inside", f.creation.Path))
+	requireTest(t, release.exit == 0 && strings.Contains(release.stdout, ",complete,removed\n"), "release from inside = (%d, %q, %q), want exit 0 and a removed row", release.exit, release.stdout, release.stderr)
 	_, statErr := os.Lstat(f.creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "release left %s: %v", f.creation.Path, statErr)
 	_, err := assignmentByID(f.root, f.creation.Assignment.ID)

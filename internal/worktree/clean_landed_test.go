@@ -1,11 +1,9 @@
 package worktree
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,7 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-func landedSetFixture(t *testing.T) (string, string, Creation, Creation, Creation) {
+func landedSetFixture(t *testing.T) landedSet {
 	t.Helper()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
@@ -26,105 +24,83 @@ func landedSetFixture(t *testing.T) (string, string, Creation, Creation, Creatio
 	landAssignment(t, root, second, "second.txt")
 	landAssignment(t, root, dirty, "dirty.txt")
 	mustWrite(t, filepath.Join(dirty.Path, "dirty.txt"), []byte("changed\n"), 0o644)
-	return root, home, first, second, dirty
-}
-
-func runCleanup(t *testing.T, root, home string, args ...string) (string, string, int) {
-	t.Helper()
-	return runCleanupWith(t, defaultJoins(), root, home, args...)
-}
-
-// runCleanupWith runs cleanup under the caller's own seam set.
-func runCleanupWith(t *testing.T, j joins, root, home string, args ...string) (string, string, int) {
-	t.Helper()
-	var stdout, stderr bytes.Buffer
-	code := cleanCommandWith(j, root, home, args, &stdout, &stderr)
-	return stdout.String(), stderr.String(), code
-}
-
-func cleanupRowFingerprint(t *testing.T, output string) string {
-	t.Helper()
-	match := regexp.MustCompile(`,("?[0-9a-f]{64}"?),`).FindStringSubmatch(output)
-	if len(match) != 2 {
-		t.Fatalf("output has no row fingerprint: %q", output)
-	}
-	return cleanupRowValue(match[1])
+	return landedSet{repoHome: repoHome{root, home}, first: first, second: second, dirty: dirty}
 }
 
 func TestCleanLandedPlansRepositoryWideSet(t *testing.T) {
 	t.Parallel()
-	root, home, first, second, dirty := landedSetFixture(t)
-	stdout, stderr, code := runCleanup(t, root, home, "--landed")
-	if code != 0 {
-		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	f := landedSetFixture(t)
+	plan := runVerb(t, verbClean, f.call("--landed"))
+	if plan.exit != 0 {
+		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
 	wantByID := map[string]string{
-		first.Assignment.ID: first.Path, second.Assignment.ID: second.Path, dirty.Assignment.ID: dirty.Path,
+		f.first.Assignment.ID: f.first.Path, f.second.Assignment.ID: f.second.Path, f.dirty.Assignment.ID: f.dirty.Path,
 	}
-	ids := []string{first.Assignment.ID, second.Assignment.ID, dirty.Assignment.ID}
+	ids := []string{f.first.Assignment.ID, f.second.Assignment.ID, f.dirty.Assignment.ID}
 	sort.Strings(ids)
 	positions := make([]int, len(ids))
 	for i, id := range ids {
-		positions[i] = strings.Index(stdout, wantByID[id])
+		positions[i] = strings.Index(plan.stdout, wantByID[id])
 		if positions[i] < 0 {
-			t.Fatalf("output=%q, want assignment %s", stdout, id)
+			t.Fatalf("output=%q, want assignment %s", plan.stdout, id)
 		}
 		if i > 0 && positions[i] <= positions[i-1] {
-			t.Fatalf("output=%q, want assignment-id order %v", stdout, ids)
+			t.Fatalf("output=%q, want assignment-id order %v", plan.stdout, ids)
 		}
 	}
-	if strings.Count(stdout, ",remove,") != 2 || !strings.Contains(stdout, ",retain,dirty,") || strings.Contains(stdout, "refs/bench/recovery/") {
-		t.Fatalf("output=%q, want two removes, one dirty retain, and no recovery ref", stdout)
+	if strings.Count(plan.stdout, ",remove,") != 2 || !strings.Contains(plan.stdout, ",retain,dirty,") || strings.Contains(plan.stdout, "refs/bench/recovery/") {
+		t.Fatalf("output=%q, want two removes, one dirty retain, and no recovery ref", plan.stdout)
 	}
 }
 
 func TestCleanLandedPlanSharesOneFingerprint(t *testing.T) {
 	t.Parallel()
-	root, home, _, _, _ := landedSetFixture(t)
-	stdout, stderr, code := runCleanup(t, root, home, "--landed")
-	if code != 0 {
-		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	f := landedSetFixture(t)
+	plan := runVerb(t, verbClean, f.call("--landed"))
+	if plan.exit != 0 {
+		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
-	matches := regexp.MustCompile(`[0-9a-f]{64}`).FindAllString(stdout, -1)
-	if len(matches) < 3 || matches[0] != matches[1] || matches[1] != matches[2] {
-		t.Fatalf("output=%q, want one shared row fingerprint", stdout)
+	if rows := plan.mustRows(t, cleanupTable); len(rows) != 3 {
+		t.Fatalf("output=%q, want one shared row fingerprint", plan.stdout)
 	}
+	plan.mustFingerprint(t)
 }
 
 func TestCleanLandedFingerprintBindsSetMembership(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
-	home := filepath.Join(root, ".bench-home")
-	first := mustCreate(t, root, home, "fingerprint-member-first", "first")
-	landAssignment(t, root, first, "first.txt")
-	before, beforeErr, beforeCode := runCleanup(t, root, home, "--landed")
-	if beforeCode != 0 || beforeErr != "" {
-		t.Fatalf("first plan exit=%d stdout=%q stderr=%q", beforeCode, before, beforeErr)
+	f := repoHome{root, filepath.Join(root, ".bench-home")}
+	first := mustCreate(t, f.root, f.home, "fingerprint-member-first", "first")
+	landAssignment(t, f.root, first, "first.txt")
+	before := runVerb(t, verbClean, f.call("--landed"))
+	if before.exit != 0 || before.stderr != "" {
+		t.Fatalf("first plan exit=%d stdout=%q stderr=%q", before.exit, before.stdout, before.stderr)
 	}
 
-	second := mustCreate(t, root, home, "fingerprint-member-second", "second")
-	landAssignment(t, root, second, "second.txt")
-	after, afterErr, afterCode := runCleanup(t, root, home, "--landed")
-	if afterCode != 0 || afterErr != "" {
-		t.Fatalf("second plan exit=%d stdout=%q stderr=%q", afterCode, after, afterErr)
+	second := mustCreate(t, f.root, f.home, "fingerprint-member-second", "second")
+	landAssignment(t, f.root, second, "second.txt")
+	after := runVerb(t, verbClean, f.call("--landed"))
+	if after.exit != 0 || after.stderr != "" {
+		t.Fatalf("second plan exit=%d stdout=%q stderr=%q", after.exit, after.stdout, after.stderr)
 	}
-	if cleanupRowFingerprint(t, before) == cleanupRowFingerprint(t, after) {
-		t.Fatalf("set fingerprint did not change when membership changed: before=%q after=%q", before, after)
+	if before.mustFingerprint(t) == after.mustFingerprint(t) {
+		t.Fatalf("set fingerprint did not change when membership changed: before=%q after=%q", before.stdout, after.stdout)
 	}
 }
 
 func TestCleanLandedPlanAdvertisesApplyAndRemedies(t *testing.T) {
 	t.Parallel()
-	root, home, first, second, dirty := landedSetFixture(t)
-	stdout, stderr, code := runCleanup(t, root, home, "--landed")
-	if code != 0 {
-		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	f := landedSetFixture(t)
+	plan := runVerb(t, verbClean, f.call("--landed"))
+	if plan.exit != 0 {
+		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
-	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(stdout)
-	if !strings.Contains(stdout, "bench worktree clean --landed --apply "+fingerprint) || !strings.Contains(stdout, "bench worktree clean "+dirty.Path) {
-		t.Fatalf("output=%q, want apply and dirty-row remedy", stdout)
+	fingerprint := plan.mustFingerprint(t)
+	if !strings.Contains(plan.stdout, "bench worktree clean --landed --apply "+fingerprint) || !strings.Contains(plan.stdout, "bench worktree clean "+f.dirty.Path) {
+		t.Fatalf("output=%q, want apply and dirty-row remedy", plan.stdout)
 	}
-	for _, creation := range []Creation{first, second, dirty} {
+	for _, creation := range []Creation{f.first, f.second, f.dirty} {
 		if _, err := os.Stat(creation.Path); err != nil {
 			t.Fatalf("bare plan removed %s: %v", creation.Path, err)
 		}
@@ -134,11 +110,11 @@ func TestCleanLandedPlanAdvertisesApplyAndRemedies(t *testing.T) {
 func TestCleanLandedEmptySetExitsClean(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
-	home := filepath.Join(root, ".bench-home")
+	f := repoHome{root, filepath.Join(root, ".bench-home")}
 	for attempt := 0; attempt < 2; attempt++ {
-		stdout, stderr, code := runCleanup(t, root, home, "--landed")
-		if code != 0 || stdout != "worktree_cleanup[0]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n" || stderr != "" {
-			t.Fatalf("attempt %d exit=%d stdout=%q stderr=%q", attempt, code, stdout, stderr)
+		plan := runVerb(t, verbClean, f.call("--landed"))
+		if plan.exit != 0 || plan.stdout != "worktree_cleanup[0]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n" || plan.stderr != "" {
+			t.Fatalf("attempt %d exit=%d stdout=%q stderr=%q", attempt, plan.exit, plan.stdout, plan.stderr)
 		}
 	}
 }
@@ -146,22 +122,21 @@ func TestCleanLandedEmptySetExitsClean(t *testing.T) {
 func TestCleanLandedApplyOnEmptySetRefused(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
-	home := filepath.Join(root, ".bench-home")
-	stdout, stderr, code := runCleanup(t, root, home, "--landed", "--apply", strings.Repeat("a", 64))
-	if code != 2 || !strings.Contains(stdout, "invalid invocation; run "+usage.WorktreeClean) || stderr != "" {
-		t.Fatalf("exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	result := runVerb(t, verbClean, repoHome{root, filepath.Join(root, ".bench-home")}.call("--landed", "--apply", strings.Repeat("a", 64)))
+	if result.exit != 2 || !strings.Contains(result.stdout, "invalid invocation; run "+usage.WorktreeClean) || result.stderr != "" {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", result.exit, result.stdout, result.stderr)
 	}
 }
 
 func TestCleanLandedRefusesPathOperand(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
-	home := filepath.Join(root, ".bench-home")
+	f := repoHome{root, filepath.Join(root, ".bench-home")}
 	wantUsage := usage.WorktreeClean
 	for _, args := range [][]string{{"--landed", root}, {root, "--landed"}} {
-		stdout, stderr, code := runCleanup(t, root, home, args...)
-		if code != 2 || !strings.Contains(stdout, wantUsage) || stderr != "" {
-			t.Fatalf("args=%q exit=%d stdout=%q stderr=%q", args, code, stdout, stderr)
+		result := runVerb(t, verbClean, f.call(args...))
+		if result.exit != 2 || !strings.Contains(result.stdout, wantUsage) || result.stderr != "" {
+			t.Fatalf("args=%q exit=%d stdout=%q stderr=%q", args, result.exit, result.stdout, result.stderr)
 		}
 	}
 }
@@ -169,11 +144,11 @@ func TestCleanLandedRefusesPathOperand(t *testing.T) {
 func TestCleanLandedRefusesMalformedFingerprint(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
-	home := filepath.Join(root, ".bench-home")
+	f := repoHome{root, filepath.Join(root, ".bench-home")}
 	for _, fingerprint := range []string{strings.Repeat("a", 63), strings.Repeat("a", 65), strings.Repeat("g", 64), strings.Repeat("A", 64)} {
-		stdout, stderr, code := runCleanup(t, root, home, "--landed", "--apply", fingerprint)
-		if code != 2 || !strings.Contains(stdout, usage.WorktreeClean) || stderr != "" {
-			t.Fatalf("fingerprint=%q exit=%d stdout=%q stderr=%q", fingerprint, code, stdout, stderr)
+		result := runVerb(t, verbClean, f.call("--landed", "--apply", fingerprint))
+		if result.exit != 2 || !strings.Contains(result.stdout, usage.WorktreeClean) || result.stderr != "" {
+			t.Fatalf("fingerprint=%q exit=%d stdout=%q stderr=%q", fingerprint, result.exit, result.stdout, result.stderr)
 		}
 	}
 }
@@ -206,13 +181,13 @@ func TestCleanLandedSelectorPartition(t *testing.T) {
 	complete.Assignment.State = intent.StateComplete
 	mustNoError(t, intent.PutAssignment(root, complete.Assignment))
 
-	stdout, stderr, code := runCleanup(t, root, home, "--landed")
-	if code != 0 || stderr != "" || !strings.Contains(stdout, unknown.Path+",retain,") || !strings.Contains(stdout, "assignment lease state is unknown") {
-		t.Fatalf("exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	plan := runVerb(t, verbClean, repoHome{root, home}.call("--landed"))
+	if plan.exit != 0 || plan.stderr != "" || !strings.Contains(plan.stdout, unknown.Path+",retain,") || !strings.Contains(plan.stdout, "assignment lease state is unknown") {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
 	for _, excluded := range []Creation{live, unlanded, pending, recovered, complete} {
-		if strings.Contains(stdout, excluded.Path) {
-			t.Fatalf("output=%q, unexpectedly selected %s", stdout, excluded.Path)
+		if strings.Contains(plan.stdout, excluded.Path) {
+			t.Fatalf("output=%q, unexpectedly selected %s", plan.stdout, excluded.Path)
 		}
 	}
 }
@@ -226,12 +201,12 @@ func TestCleanLandedPlanApplyCarriesModifiers(t *testing.T) {
 	creation := landedMember(t, root, home, "landed-apply-modifiers", "landed.txt")
 	mustWrite(t, filepath.Join(creation.Path, "ignored-one.txt"), []byte("residue\n"), 0o644)
 
-	stdout, stderr, code := runCleanup(t, root, home, "--discard-ignored", "--full", "--landed")
-	if code != 0 || stderr != "" {
-		t.Fatalf("plan = (%d, %q, %q), want one applicable plan", code, stdout, stderr)
+	plan := runVerb(t, verbClean, repoHome{root, home}.call("--discard-ignored", "--full", "--landed"))
+	if plan.exit != 0 || plan.stderr != "" {
+		t.Fatalf("plan = (%d, %q, %q), want one applicable plan", plan.exit, plan.stdout, plan.stderr)
 	}
-	want := "bench worktree clean --discard-ignored --full --landed --apply " + cleanupRowFingerprint(t, stdout)
-	if !strings.Contains(stdout, want) {
-		t.Fatalf("plan = %q, want the advertised apply command %q", stdout, want)
+	want := "bench worktree clean --discard-ignored --full --landed --apply " + plan.mustFingerprint(t)
+	if !strings.Contains(plan.stdout, want) {
+		t.Fatalf("plan = %q, want the advertised apply command %q", plan.stdout, want)
 	}
 }

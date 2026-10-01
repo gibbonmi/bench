@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"slices"
@@ -29,13 +28,12 @@ func TestResumeSummaryCountsLandedAssignments(t *testing.T) {
 	landAssignment(t, root, landed, "landed.txt")
 	commitInWorktree(t, active.Path, "active.txt", "active\n", "active")
 
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	if !strings.Contains(stdout.String(), "retained active=1 landed=1") {
-		t.Fatalf("summary=%q, want active and landed counts", stdout.String())
+	if !strings.Contains(resumed.stdout, "retained active=1 landed=1") {
+		t.Fatalf("summary=%q, want active and landed counts", resumed.stdout)
 	}
 	if _, err := os.Stat(landed.Path); err != nil {
 		t.Fatalf("landed worktree was removed: %v", err)
@@ -51,13 +49,12 @@ func TestResumeSummaryCountsLandedProofWithoutBranchAdvance(t *testing.T) {
 	home := filepath.Join(root, ".bench-home")
 	mustCreate(t, root, home, "landed-proof", "landed proof")
 
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	if !strings.Contains(stdout.String(), "retained landed=1") {
-		t.Fatalf("summary=%q, want a landed proof to count without a branch advance", stdout.String())
+	if !strings.Contains(resumed.stdout, "retained landed=1") {
+		t.Fatalf("summary=%q, want a landed proof to count without a branch advance", resumed.stdout)
 	}
 }
 
@@ -81,12 +78,11 @@ func TestResumeSummaryPartitionsLandedLeases(t *testing.T) {
 	mustNoError(t, err)
 	mustWrite(t, unknownLease, []byte("not-a-lease\n"), 0o600)
 
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	summary := stdout.String()
+	summary := resumed.stdout
 	if !strings.Contains(summary, "landed=2") || !strings.Contains(summary, "live-lease=1") || strings.Contains(summary, "landed=3") {
 		t.Fatalf("summary=%q, want dead/unknown landed and live lease separate", summary)
 	}
@@ -106,11 +102,11 @@ func TestResumeSummaryLiveLeaseWinsOverResidue(t *testing.T) {
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte(strconv.Itoa(os.Getpid())+" 2026-07-15T00:00:00Z\n"), 0o600)
 
-	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 0 {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	summary := stdout.String()
+	summary := resumed.stdout
 	if !strings.Contains(summary, "live-lease=1") || strings.Contains(summary, "landed=") || strings.Contains(summary, "ignored=") {
 		t.Fatalf("summary=%q, want live lease precedence", summary)
 	}
@@ -130,12 +126,11 @@ func TestResumeSummaryKeepsLandedClassificationAboveResidue(t *testing.T) {
 	mustWrite(t, filepath.Join(ignored.Path, "ignored.txt"), []byte("residue\n"), 0o644)
 	mustWrite(t, filepath.Join(dirty.Path, "dirty-landed.txt"), []byte("changed\n"), 0o644)
 
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	summary := stdout.String()
+	summary := resumed.stdout
 	if !strings.Contains(summary, "retained landed=2") || strings.Contains(summary, "ignored=") || strings.Contains(summary, "dirty=") || strings.Contains(summary, "stale-active") {
 		t.Fatalf("summary=%q, want residue-independent landed count", summary)
 	}
@@ -158,12 +153,11 @@ func TestResumeSummarySeparatesAgedLandedAndActiveAssignments(t *testing.T) {
 	backdate(t, root, landed.Assignment, 8*24*time.Hour)
 	backdate(t, root, active.Assignment, 8*24*time.Hour)
 
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	summary := stdout.String()
+	summary := resumed.stdout
 	if !strings.Contains(summary, "retained landed=1 stale-active=1;") || !strings.Contains(summary, "\nstale-active "+active.Assignment.ID+": ") || strings.Contains(summary, landed.Assignment.ID) || strings.Contains(summary, "orphan") {
 		t.Fatalf("summary=%q, want only the non-landed stale-active line", summary)
 	}
@@ -176,12 +170,11 @@ func TestResumeSummaryAdvertisesLandedSweep(t *testing.T) {
 	creation := mustCreate(t, root, home, "advertise-landed", "advertised")
 	landAssignment(t, root, creation, "advertised.txt")
 
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	summary := stdout.String()
+	summary := resumed.stdout
 	if strings.Count(summary, "bench worktree clean --landed") != 1 || strings.Contains(summary, "--discard-ignored") {
 		t.Fatalf("summary=%q, want one safe landed sweep advertisement", summary)
 	}
@@ -195,16 +188,16 @@ func TestLandedClassifierUnknownDefaultStaysActive(t *testing.T) {
 	landAssignment(t, root, creation, "unknown-default.txt")
 	gitRun(t, root, "branch", "-m", "main", "trunk")
 
-	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 1 || !strings.Contains(stderr.String(), "no resolvable default branch") {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q, want the existing no-default refusal", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 1 || !strings.Contains(resumed.stderr, "no resolvable default branch") {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q, want the existing no-default refusal", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	if !strings.Contains(stdout.String(), "retained active=1") || strings.Contains(stdout.String(), "landed=") {
-		t.Fatalf("summary=%q, want unknown landedness under active", stdout.String())
+	if !strings.Contains(resumed.stdout, "retained active=1") || strings.Contains(resumed.stdout, "landed=") {
+		t.Fatalf("summary=%q, want unknown landedness under active", resumed.stdout)
 	}
-	list, code := ListCommand(root, home, nil)
-	if code != 0 || strings.Contains(list, "clean --landed") {
-		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", code, list)
+	list := runVerb(t, verbList, repoHome{root, home}.call())
+	if list.exit != 0 || strings.Contains(list.stdout, "clean --landed") {
+		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", list.exit, list.stdout)
 	}
 }
 
@@ -216,16 +209,16 @@ func TestLandedClassifierErroredProofStaysActive(t *testing.T) {
 	landAssignment(t, root, creation, "errored-proof.txt")
 	gitRun(t, root, "update-ref", "-d", creation.Assignment.Branch)
 
-	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 0 {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	if !strings.Contains(stdout.String(), "retained active=1") || strings.Contains(stdout.String(), "landed=") {
-		t.Fatalf("summary=%q, want errored proof under active", stdout.String())
+	if !strings.Contains(resumed.stdout, "retained active=1") || strings.Contains(resumed.stdout, "landed=") {
+		t.Fatalf("summary=%q, want errored proof under active", resumed.stdout)
 	}
-	list, code := ListCommand(root, home, nil)
-	if code != 0 || strings.Contains(list, "clean --landed") {
-		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", code, list)
+	list := runVerb(t, verbList, repoHome{root, home}.call())
+	if list.exit != 0 || strings.Contains(list.stdout, "clean --landed") {
+		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", list.exit, list.stdout)
 	}
 }
 
@@ -250,11 +243,11 @@ func TestLandedClassifierOnlyActiveStateQualifies(t *testing.T) {
 	complete.Assignment.State = intent.StateComplete
 	mustNoError(t, intent.PutAssignment(root, complete.Assignment))
 
-	before, code := ListCommand(root, home, nil)
-	if code != 0 || !strings.Contains(before, cleanupPending.Path) || !strings.Contains(before, "resume the cleanup-pending assignment") {
-		t.Fatalf("ListCommand = (%d, %q), want the cleanup-pending release action", code, before)
+	before := runVerb(t, verbList, repoHome{root, home}.call())
+	if before.exit != 0 || !strings.Contains(before.stdout, cleanupPending.Path) || !strings.Contains(before.stdout, "resume the cleanup-pending assignment") {
+		t.Fatalf("ListCommand = (%d, %q), want the cleanup-pending release action", before.exit, before.stdout)
 	}
-	argv, err := axitest.RecoverHelpCommandArgv(before)
+	argv, err := axitest.RecoverHelpCommandArgv(before.stdout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -263,16 +256,16 @@ func TestLandedClassifierOnlyActiveStateQualifies(t *testing.T) {
 		t.Fatalf("release action argv = %q, want %q", argv, release)
 	}
 
-	var stdout, stderr bytes.Buffer
-	if code := ResumeCleanCommand(root, home, nil, &stdout, &stderr); code != 0 {
-		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	if resumed.exit != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
 	}
-	if strings.Contains(stdout.String(), "landed=") {
-		t.Fatalf("summary=%q, want no landed count for settled states", stdout.String())
+	if strings.Contains(resumed.stdout, "landed=") {
+		t.Fatalf("summary=%q, want no landed count for settled states", resumed.stdout)
 	}
-	list, code := ListCommand(root, home, nil)
-	if code != 0 || strings.Contains(list, "clean --landed") {
-		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", code, list)
+	list := runVerb(t, verbList, repoHome{root, home}.call())
+	if list.exit != 0 || strings.Contains(list.stdout, "clean --landed") {
+		t.Fatalf("ListCommand exit=%d output=%q, want no landed action", list.exit, list.stdout)
 	}
 }
 
@@ -311,10 +304,11 @@ func TestListCommandAdvertisesOneLandedSweep(t *testing.T) {
 	active := mustCreate(t, root, home, "list-active", "active")
 	landAssignment(t, root, landed, "list-landed.txt")
 
-	out, code := ListCommand(root, home, nil)
-	if code != 0 {
-		t.Fatalf("ListCommand exit=%d output=%q", code, out)
+	list := runVerb(t, verbList, repoHome{root, home}.call())
+	if list.exit != 0 {
+		t.Fatalf("ListCommand exit=%d output=%q", list.exit, list.stdout)
 	}
+	out := list.stdout
 	if strings.Count(out, "bench worktree clean --landed") != 1 {
 		t.Fatalf("ListCommand output=%q, want one landed action", out)
 	}

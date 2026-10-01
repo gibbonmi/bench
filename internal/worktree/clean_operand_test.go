@@ -1,9 +1,7 @@
 package worktree
 
 import (
-	"bytes"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -22,10 +20,9 @@ func TestCleanCommandRefusesAnOperandItCannotResolve(t *testing.T) {
 		{"tilde-prefixed", "~/.bench/worktrees/absent", "target is not registered"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var stdout, stderr bytes.Buffer
-			code := CleanCommand(f.root, f.home, []string{tc.target}, &stdout, &stderr)
-			if code == 0 || !bytes.Contains(stdout.Bytes(), []byte(tc.detail)) {
-				t.Fatalf("%s clean code=%d stdout=%q", tc.name, code, stdout.String())
+			result := runVerb(t, verbClean, f.call(tc.target))
+			if result.exit == 0 || !strings.Contains(result.stdout, tc.detail) {
+				t.Fatalf("%s clean code=%d stdout=%q", tc.name, result.exit, result.stdout)
 			}
 		})
 	}
@@ -40,10 +37,9 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 	mustWrite(t, filepath.Join(f.creation.Path, ".gitignore"), []byte("residual.log\n"), 0o644)
 	gitRun(t, f.creation.Path, "add", ".gitignore")
 	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore residual")
-	var stdout, stderr bytes.Buffer
-	code := CleanCommand(f.root, f.home, []string{f.creation.Path}, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("resolved retain code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	result := runVerb(t, verbClean, f.call(f.creation.Path))
+	if result.exit != 0 {
+		t.Fatalf("resolved retain code=%d stdout=%q stderr=%q", result.exit, result.stdout, result.stderr)
 	}
 }
 
@@ -54,31 +50,27 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 	f := newOwnedAssignment(t, "portable")
 	bindEnv(t, "HOME", f.root)
-	var printed, stderr bytes.Buffer
-	if code := PathCommand(f.root, f.home, []string{f.creation.Assignment.Label}, &printed, &stderr); code != 0 {
-		t.Fatalf("path exited %d: %s", code, stderr.String())
+	printed := runVerb(t, verbPath, f.call(f.creation.Assignment.Label))
+	if printed.exit != 0 {
+		t.Fatalf("path exited %d: %s", printed.exit, printed.stderr)
 	}
-	portable := strings.TrimSpace(printed.String())
+	portable := strings.TrimSpace(printed.stdout)
 	if !filepath.IsAbs(portable) {
 		t.Fatalf("path printed %q, want a resolved absolute path", portable)
 	}
-	var planned bytes.Buffer
-	if code := CleanCommand(f.root, f.home, []string{portable}, &planned, &stderr); code != 0 {
-		t.Fatalf("clean %q exited %d: %s", portable, code, planned.String())
+	planned := runVerb(t, verbClean, f.call(portable))
+	if planned.exit != 0 {
+		t.Fatalf("clean %q exited %d: %s", portable, planned.exit, planned.stdout)
 	}
-	if !strings.Contains(planned.String(), ",remove,") {
-		t.Fatalf("clean %q planned no removal: %s", portable, planned.String())
+	if !strings.Contains(planned.stdout, ",remove,") {
+		t.Fatalf("clean %q planned no removal: %s", portable, planned.stdout)
 	}
-	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(planned.String())
-	if fingerprint == "" {
-		t.Fatalf("plan carried no fingerprint: %s", planned.String())
+	applied := runVerb(t, verbClean, f.call(portable, "--apply", planned.mustFingerprint(t)))
+	if applied.exit != 0 {
+		t.Fatalf("apply against the portable path exited %d: %s", applied.exit, applied.stdout)
 	}
-	var applied bytes.Buffer
-	if code := CleanCommand(f.root, f.home, []string{portable, "--apply", fingerprint}, &applied, &stderr); code != 0 {
-		t.Fatalf("apply against the portable path exited %d: %s", code, applied.String())
-	}
-	if !strings.Contains(applied.String(), ",removed,") {
-		t.Fatalf("apply did not remove: %s", applied.String())
+	if !strings.Contains(applied.stdout, ",removed,") {
+		t.Fatalf("apply did not remove: %s", applied.stdout)
 	}
 }
 
@@ -88,9 +80,8 @@ func TestCleanCommandAcceptsTheAbsolutePathThatPathPrints(t *testing.T) {
 func TestCleanCommandRefusesAnUnsupportedHomeTarget(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "homeform")
-	var stdout, stderr bytes.Buffer
-	code := CleanCommand(f.root, f.home, []string{"~someone/else"}, &stdout, &stderr)
-	if code == 0 || !bytes.Contains(stdout.Bytes(), []byte("unsupported home target")) {
-		t.Fatalf("unsupported home target code=%d stdout=%q", code, stdout.String())
+	result := runVerb(t, verbClean, f.call("~someone/else"))
+	if result.exit == 0 || !strings.Contains(result.stdout, "unsupported home target") {
+		t.Fatalf("unsupported home target code=%d stdout=%q", result.exit, result.stdout)
 	}
 }

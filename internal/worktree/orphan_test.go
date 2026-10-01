@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/intent"
-	"io"
 	"path/filepath"
 	"testing"
 	"time"
@@ -140,6 +139,6 @@ func TestReleaseAndPlanExplicitAcceptUnstampedAssignment(t *testing.T) {
 	plan, err := PlanExplicit(f.root, f.creation.Path)
 	requireTest(t, err == nil && plan.Action == ActionRemove && plan.ReasonCode == "",
 		"PlanExplicit over an unstamped assignment = %#v, %v", plan, err)
-	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-unstamped-lock", f.creation.Path}, io.Discard, io.Discard)
-	requireTest(t, code == 0, "ReleaseCommand over an unstamped assignment exit=%d", code)
+	release := runVerb(t, verbRelease, f.call("--request", "landed-unstamped-lock", f.creation.Path))
+	requireTest(t, release.exit == 0, "ReleaseCommand over an unstamped assignment exit=%d", release.exit)
 }

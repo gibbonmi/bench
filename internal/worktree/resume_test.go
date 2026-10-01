@@ -7,7 +7,6 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,13 +19,12 @@ func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	journeyFIFOWorktreeAdmin(t, root, "resume")
-	var stdout, stderr bytes.Buffer
-	done := make(chan int, 1)
-	go func() { done <- ResumeCleanCommand(root, Home(), nil, &stdout, &stderr) }()
+	done := make(chan verbResult, 1)
+	go func() { done <- runVerb(t, verbResumeClean, repoHome{root, Home()}.call()) }()
 	select {
-	case code := <-done:
-		out := stdout.String() + stderr.String()
-		requireTest(t, code == 1, "ResumeCleanCommand code=%d output=%q", code, out)
+	case resumed := <-done:
+		out := resumed.stdout + resumed.stderr
+		requireTest(t, resumed.exit == 1, "ResumeCleanCommand code=%d output=%q", resumed.exit, out)
 		requireTest(t, strings.Contains(out, "worktrees/resume/gitdir") && strings.Contains(out, "fifo") && strings.Contains(out, "inspect and remove it") && !strings.Contains(out, "git worktree list failed"), "resume output = %q", out)
 	case <-time.After(bounds.TestDeadline(0)):
 		t.Fatal("resume cleanup blocked on malformed worktree admin entry")
@@ -68,10 +66,9 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	owned := mustCreate(t, root, home, "resume-owned", "owned cleanup")
 	markPending(t, root, owned.Assignment)
 	before, _ := os.ReadFile(filepath.Join(dirty, "dirty.txt"))
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
-	requireTest(t, stdout.String() == expectedResumeSummary(1, 0, "; retained foreign=2 live-lease=1 unexpected-lock=1", 2, 0, 0, 0), "resume report = %q", stdout.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	requireTest(t, resumed.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", resumed.exit, resumed.stdout, resumed.stderr)
+	requireTest(t, resumed.stdout == expectedResumeSummary(1, 0, "; retained foreign=2 live-lease=1 unexpected-lock=1", 2, 0, 0, 0), "resume report = %q", resumed.stdout)
 	_, err = os.Stat(owned.Path)
 	requireTest(t, os.IsNotExist(err), "verified owned worktree remains: %v", err)
 	for _, path := range []string{clean, dirty, locked, pool} {
@@ -97,12 +94,11 @@ func TestResumeCleanKeepsIgnoredOnlyOutOfPoolWorktree(t *testing.T) {
 	markPending(t, root, owned.Assignment)
 	ignored := filepath.Join(candidate, "ignored.txt")
 	mustWrite(t, ignored, []byte("retain me\n"), 0o644)
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, Home(), nil, &stdout, &stderr)
-	requireTest(t, code == 0, "ResumeCleanCommand exit=%d stdout=%s stderr=%s", code, stdout.String(), stderr.String())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, Home()}.call())
+	requireTest(t, resumed.exit == 0, "ResumeCleanCommand exit=%d stdout=%s stderr=%s", resumed.exit, resumed.stdout, resumed.stderr)
 	_, err := os.Stat(ignored)
 	requireTest(t, err == nil, "ignored-only WIP was not retained: %v", err)
-	requireTest(t, strings.Contains(stdout.String(), "retained ignored=1"), "ignored-only WIP not classified as retained dirty state: %q", stdout.String())
+	requireTest(t, strings.Contains(resumed.stdout, "retained ignored=1"), "ignored-only WIP not classified as retained dirty state: %q", resumed.stdout)
 }
 
 func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
@@ -183,15 +179,15 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 			}
 			return nil
 		}
-		code := releaseCommandWith(faulted, o.root, o.home, []string{"--request", "landed-release-receipt-order", o.creation.Path}, io.Discard, io.Discard)
-		requireTest(t, code != 0, "terminal receipt fault unexpectedly succeeded")
+		faultedRelease := runVerb(t, verbRelease, o.callWith(faulted, "--request", "landed-release-receipt-order", o.creation.Path))
+		requireTest(t, faultedRelease.exit != 0, "terminal receipt fault unexpectedly succeeded")
 		repo, _, _ := cleanupIdentity(o.root, o.creation.Path)
 		receipt, found, err := intent.CleanupReceiptFor(o.root, repo, releaseOperation, o.creation.Path, intent.RequestDigest("landed-release-receipt-order"))
 		requireTest(t, err == nil && found && receipt.Branch == o.creation.Assignment.Branch && receipt.BranchOID == tip, "terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
 		_, err = assignmentByID(o.root, o.creation.Assignment.ID)
 		requireTest(t, err == nil, "assignment compacted before terminal receipt checkpoint: %v", err)
-		code = ReleaseCommand(o.root, o.home, []string{"--request", "landed-release-receipt-order", o.creation.Path}, io.Discard, io.Discard)
-		requireTest(t, code == 0, "terminal receipt replay exit=%d", code)
+		replayed := runVerb(t, verbRelease, o.call("--request", "landed-release-receipt-order", o.creation.Path))
+		requireTest(t, replayed.exit == 0, "terminal receipt replay exit=%d", replayed.exit)
 		receipt, found, err = intent.CleanupReceiptFor(o.root, repo, releaseOperation, o.creation.Path, intent.RequestDigest("landed-release-receipt-order"))
 		requireTest(t, err == nil && found && receipt.Branch == o.creation.Assignment.Branch && receipt.BranchOID == tip, "replayed terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
 		f := newOwnedAssignment(t, "concurrent-release")
@@ -205,15 +201,9 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 			}
 			return nil
 		}
-		type outcome struct {
-			code           int
-			stdout, stderr string
-		}
-		results := make(chan outcome, 2)
+		results := make(chan verbResult, 2)
 		apply := func() {
-			var stdout, stderr bytes.Buffer
-			code := releaseCommandWith(j, f.root, f.home, []string{"--request", "landed-concurrent-release", f.creation.Path}, &stdout, &stderr)
-			results <- outcome{code, stdout.String(), stderr.String()}
+			results <- runVerb(t, verbRelease, f.callWith(j, "--request", "landed-concurrent-release", f.creation.Path))
 		}
 		go apply()
 		<-attempted
@@ -222,15 +212,12 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		<-attempted
 		close(proceed)
 		first, second := <-results, <-results
-		requireTest(t, first.code == 0 && second.code == 0 && first.stderr == "" && second.stderr == "" && first.stdout == second.stdout,
+		requireTest(t, first.exit == 0 && second.exit == 0 && first.stderr == "" && second.stderr == "" && first.stdout == second.stdout,
 			"concurrent release = %#v / %#v", first, second)
-		var replay, replayErr bytes.Buffer
-		code = ReleaseCommand(f.root, f.home, []string{"--request", "landed-concurrent-release", f.creation.Path}, &replay, &replayErr)
-		requireTest(t, code == 0 && replay.String() == first.stdout, "compacted release replay code=%d stdout=%q stderr=%q", code, replay.String(), replayErr.String())
-		code = ReleaseCommand(f.root, f.home, []string{"--request", "changed", f.creation.Path}, io.Discard, io.Discard)
-		requireTest(t, code != 0, "changed request replay was authorized")
-		code = ReleaseCommand(f.root, f.home, []string{"--request", "landed-concurrent-release", f.root}, io.Discard, io.Discard)
-		requireTest(t, code != 0, "changed path replay was authorized")
+		replay := runVerb(t, verbRelease, f.call("--request", "landed-concurrent-release", f.creation.Path))
+		requireTest(t, replay.exit == 0 && replay.stdout == first.stdout, "compacted release replay code=%d stdout=%q stderr=%q", replay.exit, replay.stdout, replay.stderr)
+		requireTest(t, runVerb(t, verbRelease, f.call("--request", "changed", f.creation.Path)).exit != 0, "changed request replay was authorized")
+		requireTest(t, runVerb(t, verbRelease, f.call("--request", "landed-concurrent-release", f.root)).exit != 0, "changed path replay was authorized")
 		_, err = assignmentByID(f.root, f.creation.Assignment.ID)
 		requireTest(t, err != nil, "terminal release did not compact assignment")
 	})
@@ -536,7 +523,7 @@ func newOwnedSubmoduleAssignment(t *testing.T, request string) ownedAssignment {
 	home := filepath.Join(root, ".bench-home")
 	creation := mustCreate(t, root, home, "nested-"+request, "nested state")
 	gitRun(t, creation.Path, "-c", "protocol.file.allow=always", "submodule", "update", "--init", "-q")
-	return ownedAssignment{root: root, creation: creation, home: home}
+	return ownedAssignment{repoHome: repoHome{root, home}, creation: creation}
 }
 
 // newOwnedAssignment returns a fresh repository with one owned registration under a
@@ -547,7 +534,7 @@ func newOwnedAssignment(t *testing.T, request string) ownedAssignment {
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
 	creation := mustCreate(t, root, home, "landed-"+request, "landedness")
-	return ownedAssignment{root: root, creation: creation, home: home}
+	return ownedAssignment{repoHome: repoHome{root, home}, creation: creation}
 }
 func newPendingAssignment(t *testing.T, request string) ownedAssignment {
 	t.Helper()
