@@ -731,6 +731,10 @@ The VR46 count per test function has no drop from `ad20f903`, and `TestCleanSetH
 
 The ticket 6 author ran `bench test --package ./internal/worktree` again at `ca795b48`, on the final chunk source of the repair commit `dd018e9a`. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c3-6-worktree-r2`.
 
+## VR-C3 ticket 7 verification rerun
+
+The ticket 7 author ran `bench test --package ./internal/worktree` again at `e1dd94ba`, on the final chunk source of the repair commit `dd018e9a`. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c3-7-worktree-r2`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1583,6 +1587,24 @@ The ticket 6 author ran `bench test --package ./internal/worktree` again at `ca7
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62531\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "6-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c3-7-worktree-r2",
+          "performer": "claude:bench-writer/vr-t7-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4dbbb22b505557068d752ccda30cc86fc1d5ce42",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t7-author-20261001/7-worktree@e1dd94ba",
+            "digest": "sha256:7a6960a8b2052a1caf36b270bbe81e1b77d4fa9e8c1a87c05257d1e142c64a2f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,65127\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "7-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
