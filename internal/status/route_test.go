@@ -3,10 +3,82 @@ package status
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/harnesses"
 )
+
+// stepSeparator joins the steps of a board action that names a sequence rather than one
+// command. The action grammar rejects it, so sequences never become invocable routes.
+const stepSeparator = " / "
+
+// parseAction reads rendered action text back into its typed action. Only tests read
+// action text: production code constructs each action from its definition.
+func parseAction(text string) statusAction {
+	if strings.Contains(text, stepSeparator) {
+		return statusAction{advisory: text}
+	}
+	for id := actionID(1); id < actionCount; id++ {
+		if argument, ok := actionDefinitions[id].match(text); ok {
+			return statusAction{id: id, argument: argument}
+		}
+	}
+	return statusAction{advisory: text}
+}
+
+func (definition actionDefinition) match(text string) (string, bool) {
+	if definition.command == "" && definition.argument != anyPhaseCommand {
+		return "", false
+	}
+	switch definition.argument {
+	case noArgument:
+		if definition.kind == actionPhase {
+			return "", text == definition.command
+		}
+		return "", strings.HasPrefix(text, strings.Fields(definition.command)[0]+" ") &&
+			strings.Join(strings.Fields(text), " ") == definition.command
+	case oneWordArgument:
+		parts := strings.Fields(text)
+		command := strings.Fields(definition.command)
+		if !strings.HasPrefix(text, command[0]+" ") || len(parts) != len(command)+1 {
+			return "", false
+		}
+		for i := range command {
+			if parts[i] != command[i] {
+				return "", false
+			}
+		}
+		return parts[len(parts)-1], true
+	case optionalSpecPath:
+		return matchOptionalPath(text, definition.command, "specs/", "/spec.md")
+	case optionalDecisionPath:
+		return matchOptionalPath(text, definition.command, "decisions/", ".md")
+	case anyPhaseCommand:
+		command, argument, hasArgument := strings.Cut(text, " ")
+		if command == harnessPrefix[HarnessClaude] || !strings.HasPrefix(command, harnessPrefix[HarnessClaude]) ||
+			strings.Contains(strings.TrimPrefix(command, harnessPrefix[HarnessClaude]), "/") {
+			return "", false
+		}
+		if hasArgument && !((strings.HasPrefix(argument, "specs/") && strings.HasSuffix(argument, "/spec.md")) ||
+			(strings.HasPrefix(argument, "decisions/") && strings.HasSuffix(argument, ".md"))) {
+			return "", false
+		}
+		return text, true
+	}
+	return "", false
+}
+
+func matchOptionalPath(text, command, prefix, suffix string) (string, bool) {
+	if text == command {
+		return "", true
+	}
+	argument, ok := strings.CutPrefix(text, command+" ")
+	if !ok || !strings.HasPrefix(argument, prefix) || !strings.HasSuffix(argument, suffix) {
+		return "", false
+	}
+	return argument, true
+}
 
 func testSignal(severity int, name, detail, text string) Signal {
 	action := parseAction(text)
@@ -23,6 +95,7 @@ func TestParseActionInvocable(t *testing.T) {
 	}{
 		{"bench gate --fresh for a whole-tree verdict", false},
 		{"/bench-final-check / push", false},
+		{"/bench-implement-spec specs/a / b/spec.md", false},
 		{"benchmark the loop", false},
 		{"git push", true},
 		{"bench spec retire <slug>", true},
