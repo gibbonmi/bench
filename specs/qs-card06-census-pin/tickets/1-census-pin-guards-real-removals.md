@@ -14,12 +14,17 @@ A removal or a merge of one test turns the pin red. An addition also turns the p
 
 Keep the count itself as it is: every top-level test in the package test files. Make the two failure messages different, so a red names its cause: a count below the pin, or a count above the pin. Change the comment so that it states what the guard proves.
 
+On 2026-10-01, the reviewer chose the exact pin over a raised floor. A floor at the true count goes silent again after the next addition. The cost of the exact pin is a constant bump for each added test. When two sibling landings both add tests, the second landing must merge the constant again.
+
+The below-pin message names every cause of a lower count. A test was removed, merged, renamed off the `Test` prefix, or moved to a different package.
+
 ## Acceptance
 
 - [ ] The pin is 662, and the test requires a count equal to the pin.
 - [ ] A count below the pin and a count above the pin each give their own message.
 - [ ] The comment on the pin states that one removal and one addition each turn the test red.
-- [ ] At the base, a probe that omits `TestPackageClausePin` is silent for `TestPackageTestCountPin`.
-- [ ] After the change, the same probe turns `TestPackageTestCountPin` red, and the probe restores the file.
+- [ ] At the base, a probe that omits `TestPackageClausePin` is silent for `TestPackageTestCountPin`. Observed: the test passed at the base.
+- [ ] After the change, the same probe turns `TestPackageTestCountPin` red, and the probe restores the file. Observed: the test failed with "the package declares 661 top-level tests, below the pin of 662".
+- [ ] After the change, a probe that adds one test turns `TestPackageTestCountPin` red, and the probe restores the file. Observed: the test failed with "the package declares 663 top-level tests, above the pin of 662".
 - [ ] `go vet ./...` passes.
 - [ ] `bench test --changed` passes for the changed packages.
