@@ -18,6 +18,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Changed `/bench-drain` so that Claude Code can start it without a typed command. The drain still lands nothing until the reviewer approves its batch diff. The Codex `$bench-drain` adapter stays explicit-only.
 
+### Release from inside a worktree
+
+- Fixed `bench worktree release` when it runs inside the tree that it releases. The release removed the tree and then exited 1 on the removed directory, and the assignment stayed `cleanup-pending`. The release now runs from the primary checkout, so it completes and exits 0.
+
 ### Session context queries
 
 - Added `bench worktree list --view paths --target <target>`. It gives the identity, path, and state of each selected worktree, one error row for each failed target, and the complete-inventory action. The bare `bench worktree list` output does not change.

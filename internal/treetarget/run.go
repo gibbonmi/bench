@@ -72,12 +72,5 @@ func targetRoot(root, value string) (string, error) {
 	if value != primaryTarget {
 		return worktree.TreeTarget(root, value)
 	}
-	worktrees, err := git.Worktrees(root)
-	if err != nil {
-		return "", err
-	}
-	if len(worktrees) == 0 {
-		return "", errors.New("the repository registers no primary checkout")
-	}
-	return worktrees[0].Path, nil
+	return git.PrimaryCheckout(root)
 }

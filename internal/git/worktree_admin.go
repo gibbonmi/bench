@@ -332,3 +332,17 @@ func Worktrees(root string) ([]Worktree, error) {
 	}
 	return worktrees, nil
 }
+
+// PrimaryCheckout answers the primary checkout's path from any checkout of the
+// repository. Git lists the primary checkout as the first registration, and it outlives
+// every linked worktree.
+func PrimaryCheckout(root string) (string, error) {
+	worktrees, err := Worktrees(root)
+	if err != nil {
+		return "", err
+	}
+	if len(worktrees) == 0 {
+		return "", errors.New("the repository registers no primary checkout")
+	}
+	return worktrees[0].Path, nil
+}
