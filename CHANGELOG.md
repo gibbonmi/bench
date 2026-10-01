@@ -26,6 +26,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Fixed `bench worktree release` when it runs inside the tree that it releases. The release removed the tree and then exited 1 on the removed directory, and the assignment stayed `cleanup-pending`. The release now runs from the primary checkout, so it completes and exits 0.
 
+### Worktree build manifest
+
+- Fixed `bench worktree build` so that it writes the broker manifest beside the wrapper in `bin/`. Before this change, the build wrote the manifest beside `dist/bench`, where neither `bench doctor` nor the landing reads it. The build now uses the same subject form as the landing rebuild.
+
 ### Session context queries
 
 - Added `bench worktree list --view paths --target <target>`. It gives the identity, path, and state of each selected worktree, one error row for each failed target, and the complete-inventory action. The bare `bench worktree list` output does not change.

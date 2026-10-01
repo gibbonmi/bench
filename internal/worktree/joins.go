@@ -63,13 +63,10 @@ type joins struct {
 	// environment, and a fixture that bound that environment would leave the package's
 	// parallel set.
 	kitSourceCheckout func(string) bool
-	// build authors one executable from a worktree's own tree. It is a seam because the
-	// default reaches a build script and a Go toolchain, and a fixture for that pair
-	// would make every output row wait on a real compile.
-	build func(context.Context, string, string) error
 	// buildSubject authors a checkout's own published executable, under the manifest
-	// directory the build owner defaults to. It is a sibling of build, not a second
-	// caller of it, because the two publish different subjects and different manifests.
+	// directory the build owner defaults to, so the manifest lands beside the wrapper. It
+	// is a seam because the default reaches a build script and a Go toolchain, and a
+	// fixture for that pair would make every output row wait on a real compile.
 	buildSubject func(context.Context, string, string) error
 	// mergeReconcile is the merge verb's publication boundary: the checkout catch-up that
 	// runs after the branch ref moved. It is a seam because its failure is the one
@@ -121,7 +118,6 @@ func defaultJoins() joins {
 		resetMove:                moveResetCheckout,
 		resetLayers:              restoreResetLayers,
 		resetEnvelope:            writeResetEnvelope,
-		build:                    runbinary.Build,
 		buildSubject:             runbinary.BuildSubject,
 		now:                      currentTime,
 	}
