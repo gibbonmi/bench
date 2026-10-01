@@ -1,7 +1,7 @@
 # Move the query and create verbs onto the verb runner
 
 Blocked by: 3-migrate-cleanup-verbs.md
-Writes: capture/restructure-backlog.md, internal/worktree/worktree_test.go, internal/worktree/list_actions_test.go, internal/worktree/list_selected_test.go, internal/worktree/path_identifier_test.go, internal/worktree/request_token_test.go, internal/worktree/show_test.go, internal/worktree/identifier_operand_test.go, internal/worktree/exec_test.go, internal/worktree/exec_pwd_test.go, internal/worktree/build_test.go, internal/worktree/merge_from_sha_test.go
+Writes: capture/restructure-backlog.md, internal/worktree/worktree_test.go, internal/worktree/list_actions_test.go, internal/worktree/list_selected_test.go, internal/worktree/path_identifier_test.go, internal/worktree/request_token_test.go, internal/worktree/show_test.go, internal/worktree/identifier_operand_test.go, internal/worktree/exec_test.go, internal/worktree/exec_pwd_test.go, internal/worktree/build_test.go, internal/worktree/merge_from_sha_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: VR21
 
 ## What to build

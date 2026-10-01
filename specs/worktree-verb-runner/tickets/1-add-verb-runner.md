@@ -1,7 +1,7 @@
 # Add the verb runner and move the reset family onto it
 
 Blocked by: none
-Writes: internal/worktree/verb_runner_test.go (new), internal/worktree/verb_fixture_test.go (new), internal/worktree/parallel_census_test.go, internal/worktree/reset_apply_test.go, internal/worktree/reset_fingerprint_test.go, internal/worktree/reset_plan_test.go, internal/worktree/reset_refusal_test.go, internal/worktree/reset_repair_test.go, internal/worktree/reset_restore_refusal_test.go, internal/worktree/reset_restore_test.go
+Writes: internal/worktree/verb_runner_test.go (new), internal/worktree/verb_fixture_test.go (new), internal/worktree/parallel_census_test.go, internal/worktree/reset_apply_test.go, internal/worktree/reset_fingerprint_test.go, internal/worktree/reset_plan_test.go, internal/worktree/reset_refusal_test.go, internal/worktree/reset_repair_test.go, internal/worktree/reset_restore_refusal_test.go, internal/worktree/reset_restore_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: VR1, VR2, VR3, VR4, VR5, VR6, VR7, VR8, VR9, VR10, VR11, VR12, VR13, VR14, VR15, VR16, VR17
 
 ## What to build

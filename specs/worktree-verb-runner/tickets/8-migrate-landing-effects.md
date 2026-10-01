@@ -1,7 +1,7 @@
 # Move the landing effect and resume tests onto the verb runner
 
 Blocked by: 6-name-landing-fixtures.md
-Writes: internal/worktree/land_effects_cleanup_test.go, internal/worktree/land_effects_test.go, internal/worktree/land_empty_sibling_test.go, internal/worktree/land_resume_refusal_test.go, internal/worktree/land_resume_test.go, internal/worktree/land_reauthorization_test.go, internal/worktree/land_census_test.go, internal/worktree/land_census_output_test.go, internal/worktree/land_trace_test.go, internal/worktree/land_journey_test.go
+Writes: internal/worktree/land_effects_cleanup_test.go, internal/worktree/land_effects_test.go, internal/worktree/land_empty_sibling_test.go, internal/worktree/land_resume_refusal_test.go, internal/worktree/land_resume_test.go, internal/worktree/land_reauthorization_test.go, internal/worktree/land_census_test.go, internal/worktree/land_census_output_test.go, internal/worktree/land_trace_test.go, internal/worktree/land_journey_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: VR26
 
 ## What to build

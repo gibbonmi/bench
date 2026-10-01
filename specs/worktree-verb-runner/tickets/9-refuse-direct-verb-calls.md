@@ -1,7 +1,7 @@
 # Refuse a direct verb call outside the verb runner
 
 Blocked by: 7-migrate-landing-composition.md, 8-migrate-landing-effects.md
-Writes: internal/worktree/verb_call_census_test.go (new), internal/worktree/parallel_census_test.go
+Writes: internal/worktree/verb_call_census_test.go (new), internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: VR27, VR28, VR29, VR30, VR31, VR32, VR33, VR34, VR35, VR36, VR37, VR38, VR39, VR40, VR41, VR42, VR43, VR44
 
 ## What to build

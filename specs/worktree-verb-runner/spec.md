@@ -188,8 +188,8 @@ After each chunk, freeze its predecessor and current tips for Standards, Spec, a
 | VR44 | 32 | The census reports no line on the live package tree | planned `TestVerbCallCensusOnTheLiveTree` in internal/worktree/verb_call_census_test.go | A surviving direct verb call on the live tree is reported with its file and line |
 
 Not covered: story 23 — the source rules out a line-count target, so no row grades a line count.
-Not covered: story 33 — the ownership fence holds no production file, so the build cannot change one.
-Not covered: story 34 — the ownership fence holds no path outside `internal/worktree` test files and the review pickup.
+Not covered: story 33 — no ticket plans a production edit, and the bound registry paths sit in the fence for the preflight binding only.
+Not covered: story 34 — no ticket plans an edit outside `internal/worktree` test files.
 
 ### Edge inventory
 
@@ -205,6 +205,11 @@ The hostile-input checklist applies to the readers. The numeric-looking cell cla
 
 ## Ownership fences
 
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
 - `internal/worktree/admin_readers_test.go`
 - `internal/worktree/build_test.go`
 - `internal/worktree/classifier_shape_test.go`
@@ -299,6 +304,7 @@ The hostile-input checklist applies to the readers. The numeric-looking cell cla
 
 Reviewer disposition: pending the coordinator's review round and the reviewer's sign-off.
 The fence is the union of the ticket write lines and the review pickup.
+Build preflight binds five registry paths to the worktree package: the command registry file, its test, the help inventory test, and two conformance registry tests. They are in the fence for that binding only, and no ticket plans an edit to them.
 The operating guide governs execution-plan changes.
 
 ## Ticket graph

@@ -1,7 +1,7 @@
 # Move the merge and reauthorize verbs onto the verb runner
 
 Blocked by: 4-migrate-query-and-create-verbs.md
-Writes: internal/worktree/verb_fixture_test.go (new), internal/worktree/merge_test.go, internal/worktree/merge_caller_root_test.go, internal/worktree/merge_from_sha_test.go, internal/worktree/reset_repair_test.go, internal/worktree/worktree_test.go, internal/worktree/delegated_integration_test.go, internal/worktree/reauthorize_test.go
+Writes: internal/worktree/verb_fixture_test.go (new), internal/worktree/merge_test.go, internal/worktree/merge_caller_root_test.go, internal/worktree/merge_from_sha_test.go, internal/worktree/reset_repair_test.go, internal/worktree/worktree_test.go, internal/worktree/delegated_integration_test.go, internal/worktree/reauthorize_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: VR22, VR23
 
 ## What to build
