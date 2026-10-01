@@ -3,10 +3,12 @@ package adopt
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -43,7 +45,7 @@ func TestAskQuestionsSequencing(t *testing.T) {
 	if err := askQuestions(qs, &facts, reader, &stdout); err != nil {
 		t.Fatalf("askQuestions: %v", err)
 	}
-	if !slicesEqual(order, []string{"first", "second"}) {
+	if !slices.Equal(order, []string{"first", "second"}) {
 		t.Fatalf("question application order = %v, want [first second]", order)
 	}
 	out := stdout.String()
@@ -80,29 +82,45 @@ func TestAskQuestionsEmptySetIsANoop(t *testing.T) {
 	}
 }
 
-func slicesEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
+// runInteractiveSetup runs setup on a real TTY with the given answers and returns its
+// stdout. Setup exits 0 only when every doctor row is green. The gate inputs row grades
+// the process environment against the names the seeded manifest declares. The helper
+// therefore supplies each declared name that the shell lacks, so the exit code grades
+// setup and not the shell that started the test. A nonzero exit names each red doctor
+// row on the first line, then prints both streams of setup.
+func runInteractiveSetup(t *testing.T, answers string) string {
+	t.Helper()
+	var seed struct {
+		Environment []string `json:"environment"`
 	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
+	if err := json.Unmarshal([]byte(scaffoldGateInputs()), &seed); err != nil {
+		t.Fatalf("decode the seeded gate input manifest: %v", err)
+	}
+	for _, name := range seed.Environment {
+		if _, ok := os.LookupEnv(name); !ok {
+			t.Setenv(name, t.TempDir())
 		}
 	}
-	return true
+	var stdout, stderr bytes.Buffer
+	alwaysTTY := func(io.Reader) bool { return true }
+	if code := setup(nil, strings.NewReader(answers), &stdout, &stderr, "1.0.0", alwaysTTY); code != 0 {
+		root, _ := os.Getwd()
+		var red []string
+		for _, row := range doctorRows {
+			if ok, message := row.eval(root); !ok {
+				red = append(red, row.label+": "+message)
+			}
+		}
+		t.Fatalf("setup exit = %d, red doctor rows = %q\nstdout:\n%s\nstderr:\n%s", code, red, stdout.String(), stderr.String())
+	}
+	return stdout.String()
 }
 
 // TestSetupInteractiveSingleConfirm proves an ambiguity-free plan on a real TTY asks
 // exactly one confirm and no questions.
 func TestSetupInteractiveSingleConfirm(t *testing.T) {
 	setupPromptTestRepo(t)
-	var stdout, stderr bytes.Buffer
-	alwaysTTY := func(io.Reader) bool { return true }
-	code := setup(nil, strings.NewReader("y\n"), &stdout, &stderr, "1.0.0", alwaysTTY)
-	if code != 0 {
-		t.Fatalf("setup exit = %d, stderr:\n%s", code, stderr.String())
-	}
-	out := stdout.String()
+	out := runInteractiveSetup(t, "y\n")
 	if got := strings.Count(out, "Proceed with this plan?"); got != 1 {
 		t.Fatalf("confirm prompt printed %d times, want exactly 1:\n%s", got, out)
 	}
@@ -119,16 +137,10 @@ func TestSetupInteractiveResolvesAmbiguityOneAtATime(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"name":"fixture","scripts":{"test":"echo ok"}}`+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	var stdout, stderr bytes.Buffer
-	alwaysTTY := func(io.Reader) bool { return true }
 	// go.mod sorts before package.json in detectGateCandidates, so answer "1" selects
 	// go test ./... - the same command an equivalent --yes ambiguity-free fixture would
 	// have gotten, letting the assertion below pin exactly which candidate won.
-	code := setup(nil, strings.NewReader("1\ny\n"), &stdout, &stderr, "1.0.0", alwaysTTY)
-	if code != 0 {
-		t.Fatalf("setup exit = %d, stderr:\n%s", code, stderr.String())
-	}
-	out := stdout.String()
+	out := runInteractiveSetup(t, "1\ny\n")
 	questionAt := strings.Index(out, "which one should .bench/gate.sh run?")
 	confirmAt := strings.Index(out, "Proceed with this plan?")
 	if questionAt < 0 || confirmAt < 0 || questionAt > confirmAt {
