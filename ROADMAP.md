@@ -88,7 +88,7 @@ joins seam set first.
 
 **FT235 (LOW) — a pool directory's name says what the worktree is for.**
 
-**FT260 (LOW, decision required) — coordinator worktree diff inspection and sibling-worktree patch transfer need scoped native paths.**
+**FT260 (LOW, decision required) — coordinator diff inspection, sibling-worktree patch transfer, and past-commit replay need scoped native paths.**
 
 **FT308 (LOW, decision required) — the cleanup transaction's persistence lock leaves `.git` when its record is gone.**
 
@@ -199,17 +199,13 @@ qualification requirements are met.
 
 **FT261 (MEDIUM, parked pending a repro) — preflight review classifies an in-progress untracked spec folder without blocking ticket slicing.**
 
-**FT327 (MEDIUM, parked pending a repro) — `bench worktree build` keeps the broker manifest current.**
+**FT327 (LOW, parked pending a repro) — each file that `bench doctor --fix` publishes is inside the destination build-output allowance.**
 
 **FT328 (MEDIUM, parked pending a repro) — a sandboxed evidence reader takes its shared lock without store write access.**
-
-**FT329 (LOW, parked pending a repro) — `bench consumers --changed` does not report a changed function as deleted.**
 
 **FT330 (LOW, parked pending a repro) — a `bench gate --checkpoint` refusal names the recovery route of its cause.**
 
 **FT335 (MEDIUM, parked pending a repro) — a `bench worktree merge` grades the composed tree with the target lane from any caller checkout.**
-
-**FT345 (LOW, parked pending a repro) — worktree retirement surfaces agree on the row state and name a route that can succeed.**
 
 **FT355 (MEDIUM, parked pending a repro) — the OTel crash system test reaps its child and removes its own home.**
 
