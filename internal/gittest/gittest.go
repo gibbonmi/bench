@@ -168,7 +168,7 @@ func TopicTrackingRepo(t testing.TB) string {
 // FIFOWorktreeAdmin plants a writerless FIFO gitdir under the real repository's common directory.
 func FIFOWorktreeAdmin(t testing.TB, root, id string) string {
 	t.Helper()
-	commonDir := output(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	commonDir := Output(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
 	worktreeDir := filepath.Join(commonDir, "worktrees", id)
 	if err := os.MkdirAll(worktreeDir, 0o755); err != nil {
 		t.Fatalf("create worktree admin directory: %v", err)
@@ -258,10 +258,12 @@ func initialize(t testing.TB, options ...string) string {
 
 func run(t testing.TB, root string, args ...string) {
 	t.Helper()
-	_ = output(t, root, args...)
+	_ = Output(t, root, args...)
 }
 
-func output(t testing.TB, root string, args ...string) string {
+// Output runs git with args in root and returns its trimmed combined output. It fails
+// the test when git exits non-zero.
+func Output(t testing.TB, root string, args ...string) string {
 	t.Helper()
 	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput()
 	if err != nil {

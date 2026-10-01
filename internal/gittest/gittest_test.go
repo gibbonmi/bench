@@ -63,10 +63,10 @@ func TestKitCopyPreservesTheVisibleWorkingTree(t *testing.T) {
 	if info, err := os.Stat(filepath.Join(copyRoot, ".git")); err != nil || !info.IsDir() {
 		t.Fatalf("copy has no private git directory: %v, %v", info, err)
 	}
-	if got := output(t, copyRoot, "rev-list", "--count", "HEAD"); got != "1" {
+	if got := Output(t, copyRoot, "rev-list", "--count", "HEAD"); got != "1" {
 		t.Fatalf("copy commits = %q, want one", got)
 	}
-	if got := output(t, copyRoot, "status", "--porcelain"); got != "" {
+	if got := Output(t, copyRoot, "status", "--porcelain"); got != "" {
 		t.Fatalf("copy has uncommitted files: %s", got)
 	}
 }
