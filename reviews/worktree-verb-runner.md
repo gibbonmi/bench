@@ -569,6 +569,54 @@ No ticket file declares an output buffer pair for a verb call. The three pairs l
 
 The author ran each check on the source of `b5e755a9`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The two skips are unix socket capability skips. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
 
+## VR-C3 ticket 6 author evidence
+
+Ticket 6 had a fresh `bench-writer` author, `vr-t6-author`, on opus at medium effort, with a cap of 3 attempts. The author started at `a50d414a` on the chunk base `f03e7fb9`. The author committed `a531f85b` on a lane pass in the first attempt, and then committed this record alone. The build preflight on `a531f85b` reported 13 green checks, 2 checks that do not apply, and 0 red checks.
+
+The ticket is a pure migration, so no row has a new test. For each row, the red is the scan output at the start, and the green is an empty scan at `a531f85b`.
+
+- VR31: at `a50d414a` the VR31 command printed 4 lines over the ticket files. The lines were the `runCreate` and `execAtOwnedTarget` declarations and the two inline fingerprint matches. At `a531f85b` it printed no line.
+- VR32: at `a50d414a` the verb form command printed 102 lines over the ticket files. At `a531f85b` it printed no line.
+
+The author reported these choices. The Spec axis grades each one.
+
+- Each migrated call uses `runVerb` with a `repoHome` call, a fixture `call`, or a `verbCall` value. A call with a joins value uses `callWith`. No new builder exists.
+- `requireCreateFromRefusal` takes the verb result in place of the exit code and the two streams.
+- `selectedRows` decoded the list output and read one table, which is what `mustRows` does. The author deleted it, and the five readers call `mustRows` with the new `selectedTable` constant.
+- Seven failure messages named a verb entry in call form, for example `ListCommand(%q)`. The verb form command matched those message texts, so the author changed each one to name the verb, for example `list %q`. No assertion changed.
+- The `runCreate` row in `capture/restructure-backlog.md` now names `requireCreateFromRefusal` as the create section anchor. The author also updated the line count and the other anchors in that row to the lines at `a531f85b`.
+- No check required an edit to the five registry paths, so the diff leaves them unchanged. `childFailure` stays, and the `runMerge` and `mergeFixture` uses stay for ticket 7.
+
+### Ticket 6 probe verdicts
+
+Each probe omitted the `PWD` entry that `execEnv` appends in `exec.go`. Each probe ran the `Exec|PWD` tests, and each restore reads `yes`.
+
+| Source | Verdict | Failed tests |
+|---|---|---|
+| `a50d414a`, before the first edit | bit | `TestExecEnvironmentContainsOneCanonicalPWD`, `TestExecPWDMatchesChildDirectory/absent`, `TestExecPWDMatchesChildDirectory/inherited`, `TestExecPWDMatchesChildDirectory/repeated_overrides` |
+| `a531f85b` | bit | `TestExecEnvironmentContainsOneCanonicalPWD`, `TestExecPWDMatchesChildDirectory/absent`, `TestExecPWDMatchesChildDirectory/inherited`, `TestExecPWDMatchesChildDirectory/repeated_overrides` |
+
+The two failing sets are equal.
+
+### Ticket 6 line counts and VR46 pre-check
+
+From `f03e7fb9` to `a531f85b`, `worktree_test.go` went from 1031 to 985 lines, and `exec_test.go` went from 432 to 421 lines. `list_actions_test.go` went from 395 to 393 lines, so it stays in its budget. `bench structure --growth f03e7fb9` passed.
+
+The author counted the `t.Fatal`, `t.Fatalf`, `t.Error`, `t.Errorf`, `t.FailNow`, `t.Fail`, `requireTest`, and `mustNoError` calls in each top-level test of the package. The count was 2243 in 703 tests at `a50d414a`, and 2241 in 703 tests at `a531f85b`. Two tests lost one call each, and each drop is a must-form replacement.
+
+| Test | Base | Tip | Replacement |
+|---|---|---|---|
+| `TestCleanApplyAcceptsAFingerprintPrefix` | 5 | 4 | `mustFingerprint` replaces the check that the plan carries a fingerprint |
+| `TestCleanDropsTheCensusRecords` | 4 | 3 | `mustFingerprint` replaces the check that the plan carries a fingerprint |
+
+The two deleted helpers lost their calls. Each exit check and each stream check that `execAtOwnedTarget` and `runCreate` returned to a caller stays at that caller.
+
+### Ticket 6 VR47 and verification
+
+No ticket file declares an output buffer pair for a verb call. The buffers left in `exec_test.go` feed `runWorktreeChild`, which is the exec child runner and not a verb form. The buffer in `show_test.go` takes the stderr of a direct `git cat-file`, and the buffer in `worktree_test.go` is the advisory writer of a joins value.
+
+The author ran each check on the source of `a531f85b`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The two skips are unix socket capability skips. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1320,7 +1368,7 @@ The author ran each check on the source of `b5e755a9`, and each passed. `bench t
     {
       "id": "VR-C3",
       "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
-      "tip": "b5e755a9fd3c731b0b81df7b198b36572685d5d4",
+      "tip": "a531f85b72e779a551c28d20d28e932ad02f87bf",
       "plan_digest": "pending",
       "source_digest": "pending",
       "acceptance_rows": [
@@ -1349,6 +1397,24 @@ The author ran each check on the source of `b5e755a9`, and each passed. `bench t
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,49383\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "5-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c3-6-worktree-r1",
+          "performer": "claude:bench-writer/vr-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f7c6830f5ff7842e168993b1026c1ea0f40ebd08",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t6-author-20261001/6-worktree@a531f85b",
+            "digest": "sha256:800597aee235d83931a6c68ad8a4eecf87f515f2ca6b3a1fb23075b8453c9767",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,52046\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "6-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
