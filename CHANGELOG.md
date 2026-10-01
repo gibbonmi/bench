@@ -31,6 +31,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Fixed final-check guidance to restore the durable shim target before candidate worktree release.
 
+### Resume stale-active wording
+
+- Changed the session-start resume so that it does not call an active assignment "orphaned". An active, unlanded assignment that is older than the stale window now shows as `stale-active` in the retained counts and in its own line, which still gives the plan-only `bench worktree clean <path>` command. The `bench worktree list` output and the ledger state do not change.
+
 ### Branch pruning
 
 - Fixed exact branch deletion so the landing prune preserves symbolic-ref targets.

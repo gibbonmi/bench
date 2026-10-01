@@ -36,7 +36,7 @@ const (
 	ReasonMalformed      Reason = "malformed"
 	ReasonUncertain      Reason = "uncertain"
 	ReasonUnexpectedLock Reason = "unexpected-lock"
-	ReasonOrphaned       Reason = "orphaned"
+	ReasonStaleActive    Reason = "stale-active"
 	ReasonDirty          Reason = "dirty"
 	ReasonLanded         Reason = "landed"
 )
@@ -479,7 +479,7 @@ type AutomaticVerdict struct {
 // (an active assignment whose branch cannot be resolved), the live-lease
 // override, and retain-passthrough with a landed-reason swap. It also covers
 // the foreign/unowned refusal, the not-cleanup-pending reasons (with the
-// orphaned-age override), the recovery-metadata-match check, the
+// stale-active age override), the recovery-metadata-match check, the
 // unknown/unmerged landedness checks, and the final preservation refusal. The
 // order and every message are pinned by TestAutomaticDecisionTable
 // and must not change here without that characterization moving first.
@@ -523,7 +523,7 @@ func DecideAutomatic(f AutomaticFacts) AutomaticVerdict {
 				reason = ReasonActive
 			}
 			if reason == ReasonActive && f.OrphanedActive {
-				reason = ReasonOrphaned
+				reason = ReasonStaleActive
 			}
 		}
 		return AutomaticVerdict{Action: ActionRetain, ReasonCode: reason, Reason: "assignment is not cleanup-pending", AssignmentID: assignmentID}

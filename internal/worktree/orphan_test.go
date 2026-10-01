@@ -107,7 +107,7 @@ func TestPlanAutomaticLabelsOrphaned(t *testing.T) {
 	commitInWorktree(t, creation.Path, "orphan.txt", "orphan\n", "orphan")
 	backdate(t, root, creation.Assignment, 8*24*time.Hour)
 	plan, err := PlanAutomatic(root, creation.Path)
-	requireTest(t, err == nil && plan.Action == ActionRetain && plan.ReasonCode == ReasonOrphaned,
+	requireTest(t, err == nil && plan.Action == ActionRetain && plan.ReasonCode == ReasonStaleActive,
 		"PlanAutomatic over an aged clean assignment = action %q reason %q, %v", plan.Action, plan.ReasonCode, err)
 }
 

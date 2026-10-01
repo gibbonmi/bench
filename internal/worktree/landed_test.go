@@ -136,7 +136,7 @@ func TestResumeSummaryKeepsLandedClassificationAboveResidue(t *testing.T) {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	summary := stdout.String()
-	if !strings.Contains(summary, "retained landed=2") || strings.Contains(summary, "ignored=") || strings.Contains(summary, "dirty=") || strings.Contains(summary, "orphan ") {
+	if !strings.Contains(summary, "retained landed=2") || strings.Contains(summary, "ignored=") || strings.Contains(summary, "dirty=") || strings.Contains(summary, "stale-active") {
 		t.Fatalf("summary=%q, want residue-independent landed count", summary)
 	}
 	if _, err := os.Stat(ignored.Path); err != nil {
@@ -164,8 +164,8 @@ func TestResumeSummarySeparatesAgedLandedAndActiveAssignments(t *testing.T) {
 		t.Fatalf("ResumeCleanCommand exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	summary := stdout.String()
-	if !strings.Contains(summary, "retained landed=1") || !strings.Contains(summary, "orphan "+active.Assignment.ID) || strings.Contains(summary, "orphan "+landed.Assignment.ID) {
-		t.Fatalf("summary=%q, want only the non-landed orphan line", summary)
+	if !strings.Contains(summary, "retained landed=1 stale-active=1;") || !strings.Contains(summary, "\nstale-active "+active.Assignment.ID+": ") || strings.Contains(summary, landed.Assignment.ID) || strings.Contains(summary, "orphan") {
+		t.Fatalf("summary=%q, want only the non-landed stale-active line", summary)
 	}
 }
 
