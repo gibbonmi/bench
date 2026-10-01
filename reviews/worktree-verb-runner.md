@@ -163,7 +163,7 @@ A fresh `bench-writer` session, `vr-t1-verify-2`, ran on opus at medium effort, 
 
 This round confirms plan commit `51f0951e` and the verification rerun. The frozen pair is base `0c95c9447c20189f3f2155719ef965bffc339856` and tip `ef2cd35f1052f7003c1f7647539d656be7585821`. The shared evidence is `sha256:a2e41f11506f672a638765f9167e9c3453cbde7d4ffcd22cacfbd62347e03db8`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the delta `d44d28ce..ef2cd35f`. That delta changes no test code. Only the Coverage axis ran a probe, and it left the tree clean.
 
-The raw finding count is 2: Standards 1 and Spec 1, and both name one fix. The round 2 prose of this record routed the amendment to VR-C2, but plan commit `51f0951e` applied it inside VR-C1. The coordinator corrected that prose, and each issuing axis reaffirmed the correction with a pass. The correction is evidence-only, so the consumed allowance stays at 1 of 2 repair cycles.
+The raw finding count is 2: Standards 1 and Spec 1, and both name one fix. The Standards axis also gave three judgment items, which this record keeps as advice. The round 2 prose of this record routed the amendment to VR-C2, but plan commit `51f0951e` applied it inside VR-C1. The coordinator corrected that prose, and each issuing axis reaffirmed the correction with a pass. The correction is evidence-only, so the consumed allowance stays at 1 of 2 repair cycles.
 
 ### Standards, round 3
 
@@ -425,6 +425,43 @@ The author counted the `t.Fatal`, `t.Fatalf`, `t.Error`, and `t.Errorf` calls an
 ### Ticket 4 verification
 
 The author ran each check on the source of `d9f08fdf`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The package excerpt omits its two skip rows, and each skip is a unix socket capability skip. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
+
+## VR-C2 chunk review, round 1
+
+The frozen pair is base `ef2cd35f1052f7003c1f7647539d656be7585821` and tip `80eac02e1f04599f86cbe40b6374592b75fee5c0`. The shared evidence is `sha256:b1dc8ea63c04cb761a949c260828bab28c4a72bd8586a40d0c2822c24b2935be`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, on the conditional review line. Only the Coverage axis ran tests and probes, and it left the tree clean.
+
+The raw finding count is 3: Standards 3, Spec 0, and Coverage 0. R12 is an evidence-only correction to this record, which the coordinator makes in this commit. So 2 repair targets remain, and they take repair cycle 1 of 2 for VR-C2.
+
+The chunk record for VR44 to VR47 follows. All 688 top-level tests pass, and the SKIP set holds the two socket capability subtests. No test function lost a failure call, so no drop needs an account. The side-by-side read of the seven reset files found each base check on exit code, streams, refs, HEAD, status, and file bytes. No reset file holds a buffer pair for a verb call.
+
+### Standards, VR-C2 round 1
+
+Findings: 3. The worst issue is one field name for two directories.
+
+- R10: `internal/worktree/verb_fixture_test.go:20-25` declares `poolFixture.pool`. That field holds the pool parent in `newReclaimPool` and one repository's pool in `poolRootFixture`. The STE rule gives one word to one thing. Split the type, or rename the field for one builder. `auto-fix`. Confidence 7.
+- R11: `internal/worktree/reset_apply_test.go:71,85,99,104,152,271` holds six `verbCall` literals that restate how `ownedAssignment.call` maps the root and the home. `reset_restore_test.go` uses `f.call` and then sets the joins value, so the chunk has two ways to build the same call. `AGENTS.md` asks for one source per fact. `auto-fix`. Confidence 6.
+- R12: this record said that the VR-C1 round 3 Standards axis found one finding, but its excerpt says four findings with one binding. This commit states both counts. `auto-fix`. Confidence 4.
+
+The axis rates the `isRestorePlanOf` predicate and the embedded `ownedAssignment` as correct. The predicate returns a bool, reads no fingerprint, and splits no rows.
+
+### Spec, VR-C2 round 1
+
+Findings: 0. Rows VR23 to VR27 hold at the frozen tip. The VR23 command and the verb form command print no line, and the tuple scan omits all eight builders. The over-budget files stay at their base line counts, and every ticket commit stays inside its `Writes:` line.
+
+### Coverage, VR-C2 round 1
+
+Findings: 0. Four new probes bit. They disabled the recapture check, the off-branch guard, the staged index layer, and the envelope tip check. Each restore reads `yes`.
+
+### Advice, VR-C2 round 1
+
+- About 30 call sites run a reset plan, check its exit code, and read its fingerprint. A later change can let `mustFingerprint` refuse a nonzero exit.
+- `requireResetRefusal` runs a verb and returns its stdout. The Enumerations list does not name it, but it has the shape of a run wrapper.
+- The comment on `newResidueGuardFixture` still says that the builder returns the private home.
+- `reset_repair_test.go` still calls `runMerge`, which ticket 7 removes.
+
+### Repair route, VR-C2
+
+R10 sits on the ticket 4 `Writes:` line, and R11 sits on `reset_apply_test.go`, which tickets 2 and 3 write. A plan commit adds `reset_apply_test.go` to the ticket 4 `Writes:` line. One fresh repair session for ticket 4 then repairs both. After that repair, the ticket 2 and ticket 3 authors rerun their verification at the final chunk source.
 
 ```bench-review-record
 {
@@ -897,9 +934,9 @@ The author ran each check on the source of `d9f08fdf`, and each passed. `bench t
     {
       "id": "VR-C2",
       "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
-      "tip": "d9f08fdf2e2cef9a657ccdadfacd2db61cf88ee4",
-      "plan_digest": "pending",
-      "source_digest": "pending",
+      "tip": "80eac02e1f04599f86cbe40b6374592b75fee5c0",
+      "plan_digest": "sha256:73b4cc4e8ab101063b539f50b4d9a7be9b53608713d8522de0572a3c4269a830",
+      "source_digest": "36e7b63fe9a09b930fd31563be5ea77eadf841f4",
       "acceptance_rows": [
         "VR23",
         "VR24",
@@ -963,7 +1000,72 @@ The author ran each check on the source of `d9f08fdf`, and each passed. `bench t
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "vr-c2-standards-r1",
+          "performer": "claude:bench-reviewer/vr-c2-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36e7b63fe9a09b930fd31563be5ea77eadf841f4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c2-standards@80eac02e",
+            "digest": "sha256:28ca210d82b39720e00adbdfe02aef3c9a602eeb4ebc22c5d0c5d155f4b43737",
+            "excerpt": "Standards: 3 findings. Worst: poolFixture.pool names two different directories; six reset_apply literals restate ownedAssignment.call."
+          },
+          "axis": "Standards",
+          "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "tip": "80eac02e1f04599f86cbe40b6374592b75fee5c0",
+          "finding_ids": [
+            "R10",
+            "R11",
+            "R12"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c2-spec-r1",
+          "performer": "claude:bench-reviewer/vr-c2-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36e7b63fe9a09b930fd31563be5ea77eadf841f4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c2-spec@80eac02e",
+            "digest": "sha256:83c24dd6a0e32b19682e7cc04ce8d6a08df053fd99404e497eb28db70fe9c0a0",
+            "excerpt": "Spec: 0 findings. VR23 to VR27 hold at 80eac02e; the tuple scan omits all eight builders and every ticket stays inside its Writes line."
+          },
+          "axis": "Spec",
+          "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "tip": "80eac02e1f04599f86cbe40b6374592b75fee5c0",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c2-coverage-r1",
+          "performer": "claude:bench-reviewer/vr-c2-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36e7b63fe9a09b930fd31563be5ea77eadf841f4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c2-coverage@80eac02e",
+            "digest": "sha256:ebc6b8a790351c418e660c2c9bc5fa50e6ce7f4f5fb48497c3d48a3b7ab9f06a",
+            "excerpt": "Coverage: 0 findings. Four new probes bit; 688 tests pass, the skip set is the two socket subtests, and no assertion count fell."
+          },
+          "axis": "Coverage",
+          "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "tip": "80eac02e1f04599f86cbe40b6374592b75fee5c0",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
