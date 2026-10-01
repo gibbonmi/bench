@@ -6,24 +6,17 @@ import (
 	"testing"
 )
 
-func resetFingerprint(t *testing.T, root, home, checkpoint, target string) string {
-	t.Helper()
-	code, out, errout := runReset(t, root, home, "--to", checkpoint, target)
-	requireTest(t, code == 0, "fingerprint plan = %d %s %s", code, out, errout)
-	_, rest, found := strings.Cut(out, "fingerprint=")
-	requireTest(t, found, "plan lacks fingerprint: %s", out)
-	value, _, found := strings.Cut(rest, "}")
-	requireTest(t, found && value != "", "invalid fingerprint cell: %s", out)
-	return value
-}
-
 func TestResetFingerprintTracksTheCheckout(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "reset-fingerprint")
 	commitInWorktree(t, creation.Path, "ahead", "ahead\n", "ahead")
-	before := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	before := plan.mustFingerprint(t)
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("dirty\n"), 0o644)
-	after := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	after := plan.mustFingerprint(t)
 	requireTest(t, before != after, "tracked edit did not change fingerprint: %s", after)
 }
 
@@ -31,9 +24,13 @@ func TestResetFingerprintTracksTheContent(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "reset-content")
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("first\n"), 0o644)
-	before := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	before := plan.mustFingerprint(t)
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("second\n"), 0o644)
-	after := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	after := plan.mustFingerprint(t)
 	requireTest(t, before != after, "content edit did not change fingerprint: %s", after)
 }
 
@@ -41,9 +38,13 @@ func TestResetFingerprintIgnoresIgnoredFiles(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "reset-ignored")
 	commitInWorktree(t, creation.Path, ".gitignore", "output\n", "ignore output")
-	before := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	before := plan.mustFingerprint(t)
 	mustWrite(t, filepath.Join(creation.Path, "output"), []byte("build\n"), 0o644)
-	after := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	after := plan.mustFingerprint(t)
 	requireTest(t, before == after, "ignored output changed fingerprint: %s != %s", before, after)
 }
 
@@ -51,9 +52,13 @@ func TestResetFingerprintTracksTheTip(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "reset-tip")
 	commitInWorktree(t, creation.Path, "ahead", "one\n", "ahead")
-	before := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	before := plan.mustFingerprint(t)
 	commitInWorktree(t, creation.Path, "ahead", "two\n", "ahead again")
-	after := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	after := plan.mustFingerprint(t)
 	requireTest(t, before != after, "new commit did not change fingerprint")
 }
 
@@ -61,9 +66,13 @@ func TestResetFingerprintTracksTheRef(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "reset-ref")
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("dirty\n"), 0o644)
-	before := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	before := plan.mustFingerprint(t)
 	gitRun(t, creation.Path, "switch", "--detach", "HEAD")
-	after := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	after := plan.mustFingerprint(t)
 	requireTest(t, before != after, "detach did not change fingerprint")
 }
 
@@ -72,8 +81,12 @@ func TestResetFingerprintTracksTheCheckpoint(t *testing.T) {
 	root, creation, home := newOwnedAssignment(t, "reset-checkpoint")
 	commitInWorktree(t, creation.Path, "ahead", "ahead\n", "ahead")
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("dirty\n"), 0o644)
-	before := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
-	after := resetFingerprint(t, root, home, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Assignment.ID)
+	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	before := plan.mustFingerprint(t)
+	plan = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	after := plan.mustFingerprint(t)
 	requireTest(t, before != after, "checkpoint did not change fingerprint")
 }
 
@@ -84,14 +97,18 @@ func TestResetFingerprintTracksTheIndex(t *testing.T) {
 	gitRun(t, creation.Path, "add", "README.md")
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("working\n"), 0o644)
 	status := gitOutput(t, creation.Path, "status", "--porcelain=v1")
-	before := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	before := plan.mustFingerprint(t)
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("staged two\n"), 0o644)
 	gitRun(t, creation.Path, "add", "README.md")
 	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("working\n"), 0o644)
 	requireTest(t, gitOutput(t, creation.Path, "status", "--porcelain=v1") == status, "fixture changed the status")
-	after := resetFingerprint(t, root, home, creation.Assignment.Start, creation.Assignment.ID)
+	plan = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
+	after := plan.mustFingerprint(t)
 	requireTest(t, before != after, "staged-only edit did not change fingerprint: %s", after)
-	code, out, errout := runReset(t, root, home, "--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", before)
-	requireTest(t, code == 1 && strings.Contains(out, "reset plan is stale") && gitOutput(t, creation.Path, "show", ":README.md") == "staged two",
-		"stale staged apply = %d %s %s", code, out, errout)
+	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", before}})
+	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "reset plan is stale") && gitOutput(t, creation.Path, "show", ":README.md") == "staged two",
+		"stale staged apply = %d %s %s", result.exit, result.stdout, result.stderr)
 }

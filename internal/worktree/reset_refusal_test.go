@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"crypto/sha1"
 	"fmt"
 	"os"
@@ -12,41 +11,29 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-func runReset(t *testing.T, root, home string, args ...string) (int, string, string) {
-	t.Helper()
-	return runResetWith(t, defaultJoins(), root, home, args...)
-}
-
-func runResetWith(t *testing.T, j joins, root, home string, args ...string) (int, string, string) {
-	t.Helper()
-	var stdout, stderr bytes.Buffer
-	code := resetWith(j, root, home, args, &stdout, &stderr)
-	return code, stdout.String(), stderr.String()
-}
-
 func TestResetRefusesNeitherMode(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	mustWrite(t, filepath.Join(root, ".git", intent.Filename), []byte("{"), 0o600)
-	code, out, errout := runReset(t, root, t.TempDir(), "target")
-	requireTest(t, code == 2 && strings.Contains(out+errout, "bench worktree reset"),
-		"missing mode = %d %s %s", code, out, errout)
-	requireTest(t, !strings.Contains(out+errout, "ledger"), "grammar read the ledger: %s %s", out, errout)
+	result := runVerb(t, verbReset, verbCall{root: root, home: t.TempDir(), args: []string{"target"}})
+	requireTest(t, result.exit == 2 && strings.Contains(result.stdout+result.stderr, "bench worktree reset"),
+		"missing mode = %d %s %s", result.exit, result.stdout, result.stderr)
+	requireTest(t, !strings.Contains(result.stdout+result.stderr, "ledger"), "grammar read the ledger: %s %s", result.stdout, result.stderr)
 }
 
 func TestResetRefusesAControlByteCheckpoint(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	mustWrite(t, filepath.Join(root, ".git", intent.Filename), []byte("{"), 0o600)
-	code, out, _ := runReset(t, root, t.TempDir(), "--to", "bad\x1bvalue", "target")
-	requireTest(t, code == 1 && strings.Contains(out, "--to contains control characters"), "control checkpoint = %d %s", code, out)
+	result := runVerb(t, verbReset, verbCall{root: root, home: t.TempDir(), args: []string{"--to", "bad\x1bvalue", "target"}})
+	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "--to contains control characters"), "control checkpoint = %d %s", result.exit, result.stdout)
 }
 
 func requireResetRefusal(t *testing.T, root, home, to, target, detail string) string {
 	t.Helper()
-	code, out, errout := runReset(t, root, home, "--to", to, target)
-	requireTest(t, code == 1 && strings.Contains(out, detail), "refusal wants %q: %d %s %s", detail, code, out, errout)
-	return out
+	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", to, target}})
+	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, detail), "refusal wants %q: %d %s %s", detail, result.exit, result.stdout, result.stderr)
+	return result.stdout
 }
 
 func TestResetRefusesANonCommitCheckpoint(t *testing.T) {
@@ -191,7 +178,7 @@ func TestResetRefusesHiddenIndexFlags(t *testing.T) {
 func TestResetApplyRefusesAFingerprintForANonePlan(t *testing.T) {
 	t.Parallel()
 	root, creation, home := newOwnedAssignment(t, "reset-apply")
-	code, out, _ := runReset(t, root, home, "--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", "fingerprint")
-	requireTest(t, code == 1 && strings.Contains(out, "reset plan is stale") && strings.Contains(out, "wanted=none") && !strings.Contains(out, "reset_plan"),
-		"none-plan apply = %d %s", code, out)
+	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", "fingerprint"}})
+	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "reset plan is stale") && strings.Contains(result.stdout, "wanted=none") && !strings.Contains(result.stdout, "reset_plan"),
+		"none-plan apply = %d %s", result.exit, result.stdout)
 }
