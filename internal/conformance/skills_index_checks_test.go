@@ -221,6 +221,7 @@ var phaseInvocationPolicy = map[string]struct {
 	"bench-debug": {claudeModelInvocable: true, codexImplicit: true},
 
 	"bench":                       {claudeModelInvocable: true},
+	"bench-drain":                 {claudeModelInvocable: true},
 	"bench-final-check":           {claudeModelInvocable: true},
 	"bench-implement-spec":        {claudeModelInvocable: true},
 	"bench-review-implementation": {claudeModelInvocable: true},
@@ -229,7 +230,6 @@ var phaseInvocationPolicy = map[string]struct {
 
 	"bench-assess":     {},
 	"bench-deepen":     {},
-	"bench-drain":      {},
 	"bench-setup-repo": {},
 	"bench-update-kit": {},
 	"bench-what-next":  {},
