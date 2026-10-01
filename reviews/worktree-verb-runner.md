@@ -463,6 +463,32 @@ Findings: 0. Four new probes bit. They disabled the recapture check, the off-bra
 
 R10 sits on the ticket 4 `Writes:` line, and R11 sits on `reset_apply_test.go`, which tickets 2 and 3 write. A plan commit adds `reset_apply_test.go` to the ticket 4 `Writes:` line. One fresh repair session for ticket 4 then repairs both. After that repair, the ticket 2 and ticket 3 authors rerun their verification at the final chunk source.
 
+## VR-C2 repair 1
+
+A fresh `bench-writer` repair session, `vr-t4-repair-1`, did repair cycle 1 of 2 for VR-C2 on opus at medium effort, with a cap of 2 attempts. The session started at `abfca3e2` on the chunk base `ef2cd35f`. It committed `53c499c9` on a lane pass in the first attempt, and then committed this record alone. The build preflight on `53c499c9` reported 13 green checks, 2 checks that do not apply, and 0 red checks.
+
+- R10: `verb_fixture_test.go` now declares two types. `reclaimPoolFixture` holds the pool parent in its `pool` field, and `newReclaimPool` creates that directory. `repoPoolFixture` holds the pool root of one repository in its `poolRoot` field, and `poolRootFixture` computes that path but does not create it. The comment on each type states this. `pool_root_test.go` reads `f.poolRoot` in each place where it read `f.pool`.
+- R11: the six calls in `reset_apply_test.go` that set a joins value now build the call with `f.call` and then set `call.joins`, as `reset_restore_test.go` does. No assertion changed.
+- The comment on `newResidueGuardFixture` now states that the builder returns the repository, the owned registration, and the private home.
+
+### Repair 1 probe verdicts
+
+Each probe ran on the source of `53c499c9`, and each restore reads `yes`.
+
+| Mutation | Verdict | Failed tests |
+|---|---|---|
+| The reset plan check in `reset_apply.go` ignores the fingerprint | bit | `TestResetApplyRefusesAStalePlan`, `TestResetFingerprintTracksTheIndex`, `TestResetRestoreRefusesAStaleIndex`, `TestResetRestoreRefusesAStalePlan` |
+| The drift check in `pool_reclaim.go` is always false | bit | `TestReclaimApplyRefusesAFingerprintThePoolNoLongerMatches` |
+| `TestResetApplyExitsThreeWithoutAnEnvelope` does not set `call.joins` | bit | `TestResetApplyExitsThreeWithoutAnEnvelope` |
+
+The third probe is the repair session's own probe. It shows that the joins value still reaches the verb after the R11 change.
+
+### Repair 1 verification
+
+The session ran each check on the source of `53c499c9`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The two skips are unix socket capability skips. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
+
+`pool_reclaim_test.go` has 546 lines, and `bench structure --growth ef2cd35f` passed. The tuple scan printed 25 lines, and none of them is one of the eight VR-C2 builders. The session counted the `t.Fatal` family calls and the `requireTest` and `mustNoError` calls in each test function of the package at `abfca3e2` and at `53c499c9`. The count was 2232 in 703 functions at each commit, and no function count dropped.
+
 ```bench-review-record
 {
   "version": 2,
@@ -994,6 +1020,24 @@ R10 sits on the ticket 4 `Writes:` line, and R11 sits on `reset_apply_test.go`, 
             "ref": "claude:agent/vr-t4-author-20261001/4-worktree@d9f08fdf",
             "digest": "sha256:152b3e7832dee3346d958f133579e16c04106e00fc47dd07f52220938552966b",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,51513\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c2-4-worktree-r2",
+          "performer": "claude:bench-writer/vr-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b7f16bc7bc9bb2827e92686bc09084c902334231",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t4-repair-1-20261001/4-worktree@53c499c9",
+            "digest": "sha256:df38e02b8a91ac993227b17ec008de9cd2df8336326dcd8d1c26acf0fccc6345",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,49252\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "4-worktree",
           "command": "bench test --package ./internal/worktree",
