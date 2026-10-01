@@ -56,7 +56,7 @@ func buildAttributed(attributed *string, j joins, root string, parsed usage.Resu
 	output := freshness.PublishedExecutable(path)
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
-	if buildErr := j.build(ctx, path, output); buildErr != nil {
+	if buildErr := j.buildSubject(ctx, path, output); buildErr != nil {
 		fmt.Fprintf(stderr, "%s: %v\n", buildVerb, buildErr)
 		return nameWorktree(stderr, path, buildExitCode(buildErr))
 	}

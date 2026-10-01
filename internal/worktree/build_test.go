@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// buildRecorder is the `build` join a row drives instead of a real compile. It records
+// buildRecorder is the `buildSubject` join a row drives instead of a real compile. It records
 // every call and writes body at the output path, so a row can grade the arguments, the
 // artifact, or the failure without a Go toolchain.
 type buildRecorder struct {
@@ -40,7 +41,7 @@ func (r *buildRecorder) join(_ context.Context, worktree, output string) error {
 // buildJoins is the seam set a row drives, with the recorder standing in for the build.
 func buildJoins(recorder *buildRecorder) joins {
 	j := defaultJoins()
-	j.build = recorder.join
+	j.buildSubject = recorder.join
 	return j
 }
 
@@ -48,11 +49,12 @@ func buildJoins(recorder *buildRecorder) joins {
 // to its last argument, which is the output path the verb passes, so a row reads the
 // script's own bytes back out of `dist/bench`. Reading the last argument rather than the
 // second keeps the stub honest about the real script's grammar, which accepts options
-// ahead of the two positionals.
+// ahead of the two positionals. The stub also records every argument, one per line,
+// beside the output, so a row can grade the options the production join passed.
 func plantBuildScript(t *testing.T, worktree, marker string) {
 	t.Helper()
 	mustMkdirAll(t, filepath.Join(worktree, "scripts"), 0o755)
-	body := "#!/usr/bin/env bash\nset -eu\nout=\"${!#}\"\nmkdir -p \"$(dirname \"$out\")\"\nprintf '%s' '" + marker + "' > \"$out\"\n"
+	body := "#!/usr/bin/env bash\nset -eu\nout=\"${!#}\"\nmkdir -p \"$(dirname \"$out\")\"\nprintf '%s\\n' \"$@\" > \"$out.argv\"\nprintf '%s' '" + marker + "' > \"$out\"\n"
 	mustWrite(t, filepath.Join(worktree, "scripts", "go-build.sh"), []byte(body), 0o755)
 }
 
@@ -62,6 +64,14 @@ func builtExecutable(t *testing.T, worktree string) string {
 	data, err := os.ReadFile(filepath.Join(worktree, "dist", "bench"))
 	mustNoError(t, err)
 	return string(data)
+}
+
+// buildScriptArgv returns the arguments the planted stub received, in order.
+func buildScriptArgv(t *testing.T, worktree string) []string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(worktree, "dist", "bench.argv"))
+	mustNoError(t, err)
+	return strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
 }
 
 // relabelAssignment gives one assignment a label the create grammar refuses, so a row can
@@ -113,6 +123,20 @@ func TestBuildRunsTheWorktreeBuildScript(t *testing.T) {
 	code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
 	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
 	requireTest(t, builtExecutable(t, creation.Path) == "script-authored", "dist/bench = %q, want the script's bytes", builtExecutable(t, creation.Path))
+}
+
+// FT327: the verb builds the worktree's own published executable, so it names no manifest
+// directory. The script then publishes the broker manifest beside the wrapper in `bin/`,
+// where the doctor row and the landing read it, and not beside `dist/bench`.
+func TestBuildLeavesTheManifestDirectoryToTheScript(t *testing.T) {
+	t.Parallel()
+	root, creation, _ := newOwnedAssignment(t, "build-manifest-default")
+	plantBuildScript(t, creation.Path, "subject-build")
+	var stdout, stderr bytes.Buffer
+	code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
+	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
+	argv := buildScriptArgv(t, creation.Path)
+	requireTest(t, !slices.Contains(argv, "--manifest-dir"), "the build script received %q, want no --manifest-dir so the manifest lands beside the wrapper", argv)
 }
 
 // WF3: success names the assignment and the absolute executable, so the reader never has
