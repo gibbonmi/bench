@@ -561,7 +561,7 @@ The author counted the `t.Fatal`, `t.Fatalf`, `t.Error`, and `t.Errorf` calls an
 | `TestCleanCommandAcceptsTheAbsolutePathThatPathPrints` | 7 | 6 | `mustFingerprint` replaces the check that the plan carries a fingerprint |
 | `TestCleanSetHostileOperand` | 7 | 6 | `mustNoFingerprint` replaces the check that each fingerprint cell is `none` |
 
-The reader in `mustNoFingerprint` also accepts an empty cell, so the last check is narrower than the base check. The nine deleted helpers lost their calls, and each check moved to the callers or into a must form. Other functions gained calls from the exit and stderr checks that the deleted wrappers made.
+The reader in `mustNoFingerprint` also accepts an empty cell, so the last check is weaker than the base check. The nine deleted helpers lost their calls, and each check moved to the callers or into a must form. Other functions gained calls from the exit and stderr checks that the deleted wrappers made.
 
 ### Ticket 5 VR47 and verification
 
@@ -582,7 +582,7 @@ The author reported these choices. The Spec axis grades each one.
 
 - Each migrated call uses `runVerb` with a `repoHome` call, a fixture `call`, or a `verbCall` value. A call with a joins value uses `callWith`. No new builder exists.
 - `requireCreateFromRefusal` takes the verb result in place of the exit code and the two streams.
-- `selectedRows` decoded the list output and read one table, which is what `mustRows` does. The author deleted it, and the five readers call `mustRows` with the new `selectedTable` constant.
+- `selectedRows` decoded the list output and read one table, which is what `mustRows` does. The author deleted it, and the seven readers call `mustRows` with the new `selectedTable` constant.
 - Seven failure messages named a verb entry in call form, for example `ListCommand(%q)`. The verb form command matched those message texts, so the author changed each one to name the verb, for example `list %q`. No assertion changed.
 - The `runCreate` row in `capture/restructure-backlog.md` now names `requireCreateFromRefusal` as the create section anchor. The author also updated the line count and the other anchors in that row to the lines at `a531f85b`.
 - No check required an edit to the five registry paths, so the diff leaves them unchanged. `childFailure` stays, and the `runMerge` and `mergeFixture` uses stay for ticket 7.
@@ -666,6 +666,55 @@ The author counted the `t.Fatal`, `t.Fatalf`, `t.Error`, `t.Errorf`, `t.FailNow`
 No ticket file declares an output buffer pair for a verb call outside the excepted landing call. In `delegated_integration_test.go`, one buffer pair feeds the `LandCommand` call that ticket 9 moves. The other pair feeds `gate.RunCommand`, which is not a worktree verb. The buffer in `worktree_test.go` is the advisory writer of a joins value.
 
 The author ran each check on the source of `c6252480`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The two skips are unix socket capability skips. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
+
+## VR-C3 chunk review, round 1
+
+The frozen pair is base `f03e7fb9b46e5cdbe0ae55d94f171b209fe27447` and tip `ab9d305b314690959e5f68d3c751ff90169b8f29`. The shared evidence is `sha256:217102f69e8b2a67ce032c8e3fb64c5271c1238b82d142301f75de4a3f560a10`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, on the conditional review line. Only the Coverage axis ran tests and probes, and it left the tree clean.
+
+The raw finding count is 6: Standards 3, Spec 2, and Coverage 1. R15 and R17 are evidence-only corrections to this record, which this commit makes. R16 is a spec text correction, and R14 and R18 need a code repair. So 3 repair targets remain, and they take repair cycle 1 of 2 for VR-C3.
+
+The chunk record for VR44 to VR47 follows. The package run passes with 688 top-level tests, and the SKIP set holds the two socket capability subtests. Five tests lost one failure call each, and the axes read each test side by side with its base form.
+
+The accepted drops under VR46 follow. Four tests replaced a fingerprint check with `mustFingerprint`: `TestCleanExplicitSetPlan`, `TestCleanCommandAcceptsTheAbsolutePathThatPathPrints`, `TestCleanApplyAcceptsAFingerprintPrefix`, and `TestCleanDropsTheCensusRecords`.
+
+Eight checks for no 64-hex text in stdout became `mustNoFingerprint`, which reads only the two fingerprint cells. The spec allows that replacement. Those sites are `clean_set_test.go:122` and `:340`, `clean_discard_test.go:137`, `:157`, and `:169`, `clean_discard_transaction_test.go:148`, `clean_classes_test.go:205`, and `clean_unclaimed_test.go:318`. The shared-value check in `clean_landed_test.go:64-67` no longer asserts 64 hex characters, because `mustFingerprint` reads the cell. The drop in `TestCleanSetHostileOperand` is not accepted; R14 restores it.
+
+### Standards, VR-C3 round 1
+
+Findings: 3. The worst issue is a record that called a weaker check narrower.
+
+- R17: `reviews/worktree-verb-runner.md:564` called the `mustNoFingerprint` check narrower, and line 585 counted five readers where seven exist. This commit corrects both. `auto-fix`. Confidence 7.
+- R18: `verb_fixture_test.go:109` and `list_selected_test.go:94` declare the table names `worktree_cleanup` and `selected`, but `verb_runner_check_test.go` still spells both literals. The repair makes the runner tests read the two constants. The production literals stay, because this spec changes no production file, and the ideas inbox holds that pair. `ask-user` for the production pair; `auto-fix` for the test side. Confidence 5.
+
+The axis found the ticket 5 helpers clean: each reads rows that `mustRows` already decoded, and none runs a verb or splits rendered text.
+
+### Spec, VR-C3 round 1
+
+Findings: 2. The worst issue is a record that logged one looser check where nine exist.
+
+- R15: the ticket 5 record named only one looser no-fingerprint check. This commit logs each accepted drop above. `auto-fix`. Confidence high.
+- R16: `specs/worktree-verb-runner/spec.md:401` and ticket 5 say that `mustFingerprint` replaces the `cleanupRowsField` read in `clean_set_command_test.go`. That read checked that every cell is `none`, so `mustFingerprint` must fail there. The tree uses `mustNoFingerprint`, which the fingerprint rules require. A plan commit corrects the spec text, and the reviewer can veto it. `auto-fix`. Confidence high.
+
+Rows VR28 to VR35 hold. Each review-owned command prints no line, except the one `LandCommand` line that VR35 allows.
+
+### Coverage, VR-C3 round 1
+
+Findings: 1. The worst issue is a weakened refusal test.
+
+- R14: `internal/worktree/clean_set_command_test.go:157`: at the base, every fingerprint cell had to equal `none`. Now `mustNoFingerprint` also accepts an empty cell. A probe set the placeholder constant to the empty string, and no clean test failed. Restore a check that each cell reads `none`. `auto-fix`. Confidence high.
+
+Three new probes bit on the selected list, the show stream route, and the inside-tree release. A probe of the reclaim advertisement stayed silent, and the base has the same gap.
+
+### Advice, VR-C3 round 1
+
+- `runVerb` runs inside goroutines in two concurrency tests. If its `t.Fatalf` fires there, the test can hang.
+- `delegatedJourneyJoins` repeats the tally lane that `mergeFixture` builds.
+- About 40 failure messages name a verb entry, and eight name the verb.
+- The record counted 703 tests in two places, where the pin is 688. That count includes subtests or helpers.
+
+### Repair route, VR-C3
+
+R14 and R18 go to one fresh repair session for ticket 5. A plan commit adds `verb_runner_check_test.go` to the ticket 5 `Writes:` line and corrects the spec text for R16. After the repair, the ticket 6 and ticket 7 authors rerun their verification at the final chunk source.
 
 ```bench-review-record
 {
@@ -1418,9 +1467,9 @@ The author ran each check on the source of `c6252480`, and each passed. `bench t
     {
       "id": "VR-C3",
       "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
-      "tip": "c62524804a6671685a958797d836c89673324e12",
-      "plan_digest": "pending",
-      "source_digest": "pending",
+      "tip": "ab9d305b314690959e5f68d3c751ff90169b8f29",
+      "plan_digest": "sha256:76c2080cabf7a682039d7570abbfba170c11c247f78c80a9f3ca6149334653bc",
+      "source_digest": "9fa1b3df144d6b1bfc4425a4a3e65f769589d816",
       "acceptance_rows": [
         "VR28",
         "VR29",
@@ -1487,7 +1536,76 @@ The author ran each check on the source of `c6252480`, and each passed. `bench t
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "vr-c3-standards-r1",
+          "performer": "claude:bench-reviewer/vr-c3-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9fa1b3df144d6b1bfc4425a4a3e65f769589d816",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c3-standards@ab9d305b",
+            "digest": "sha256:d5223808608a4a64dfb19f84983f00c74f0ee124f0924c045c168172f67c9094",
+            "excerpt": "Standards: 3 findings. Worst: the record called a weaker mustNoFingerprint check narrower; table-name literals have two test-side spellings."
+          },
+          "axis": "Standards",
+          "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "tip": "ab9d305b314690959e5f68d3c751ff90169b8f29",
+          "finding_ids": [
+            "R17",
+            "R18"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c3-spec-r1",
+          "performer": "claude:bench-reviewer/vr-c3-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9fa1b3df144d6b1bfc4425a4a3e65f769589d816",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c3-spec@ab9d305b",
+            "digest": "sha256:32bb37311c25e6d35a6debe95b6143e2af5d270a3c69c93d63dbd8fffd761978",
+            "excerpt": "Spec: 2 findings. Worst: the record logged one looser no-fingerprint check where nine exist; the spec names mustFingerprint for an all-none read."
+          },
+          "axis": "Spec",
+          "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "tip": "ab9d305b314690959e5f68d3c751ff90169b8f29",
+          "finding_ids": [
+            "R15",
+            "R16"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c3-coverage-r1",
+          "performer": "claude:bench-reviewer/vr-c3-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9fa1b3df144d6b1bfc4425a4a3e65f769589d816",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c3-coverage@ab9d305b",
+            "digest": "sha256:f806b309c9e8ff78aece445b89dcf7fe655b1cfc392705045901084735a97b5b",
+            "excerpt": "Coverage: 1 finding. Worst: TestCleanSetHostileOperand no longer pins the none placeholder; a probe that empties it is silent for clean tests."
+          },
+          "axis": "Coverage",
+          "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "tip": "ab9d305b314690959e5f68d3c751ff90169b8f29",
+          "finding_ids": [
+            "R14"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
