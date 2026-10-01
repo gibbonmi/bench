@@ -1,7 +1,7 @@
 # Delete the dead status, registry, and test-repository code
 
 Blocked by: none
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main.go, internal/status/status.go, internal/status/route_test.go, internal/status/status_producible_test.go, internal/testrepo/working_tree.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/main.go, internal/status/status.go, internal/status/route_test.go, internal/status/status_producible_test.go, internal/testrepo/working_tree.go, capture/restructure-backlog.md
 Covers: none
 
 ## What to build
@@ -18,6 +18,8 @@ Delete `IsInvocable`. The survey also named `parseAction`, but it is not dead. T
 
 Delete `TwoHopRelativeSymlink`.
 
+Remove `TestCommandDispositionsAreComplete` and the word "disposition" from the `command_registry_test.go` row in `capture/restructure-backlog.md`. Move `parseAction`, `match`, `matchOptionalPath`, and the step-separator guard from `internal/status/status.go` into `internal/status/route_test.go`, because only status tests call them. Add a `TestParseActionInvocable` case that only the step-separator guard rejects.
+
 This change gives no change to CLI output, help text, exit codes, or status rows.
 
 ## Acceptance
@@ -29,3 +31,6 @@ This change gives no change to CLI output, help text, exit codes, or status rows
 - [ ] The producible-signal test requires each produced action to parse as invocable.
 - [ ] `go vet ./...` and the changed-package tests pass.
 - [ ] The `subcommand-routing`, `axi-query-registry`, and `package-shipped-surface` checks pass.
+- [ ] The `command_registry_test.go` row in `capture/restructure-backlog.md` does not name `TestCommandDispositionsAreComplete` or a disposition assertion.
+- [ ] No production Go file in `internal/status` defines `parseAction`, `match`, `matchOptionalPath`, or the step separator.
+- [ ] `TestParseActionInvocable` fails when the step-separator guard is removed.
