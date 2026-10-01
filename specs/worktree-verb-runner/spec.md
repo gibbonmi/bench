@@ -199,7 +199,7 @@ Ticket 11 owns those rows because it is the last ticket that touches the package
 | VR32 | 17 | The ticket 6 files call no verb form directly | review-owned: the verb form command over the ticket 6 files prints no line | A surviving direct call prints its file and line |
 | VR33 | 18 | No merge run wrapper exists after ticket 7 | review-owned: the VR33 command in Further notes prints no line | A surviving declaration prints its file and line |
 | VR34 | 20 | `mergeFixture` and `reauthorizeFixture` each return one named fixture value that `verb_fixture_test.go` declares | review-owned: the tuple scan omits both builders | A positional builder appears in the scan output |
-| VR35 | 17 | The ticket 7 files call no verb form directly | review-owned: the verb form command over the ticket 7 files prints no line | A surviving direct call prints its file and line |
+| VR35 | 17 | The ticket 7 files call no verb form directly, except the one `LandCommand` call in `delegated_integration_test.go` that ticket 9 moves | review-owned: the verb form command over the ticket 7 files prints only that `LandCommand` line | A surviving direct call prints its file and line |
 | VR36 | 20 | Each landing fixture builder returns one named fixture value that `verb_fixture_test.go` declares | review-owned: the tuple scan omits every landing builder in the Enumerations list | A positional builder appears in the scan output |
 | VR37 | 18 | No landing run wrapper exists after ticket 9 | review-owned: the VR37 command in Further notes prints no line | A surviving declaration prints its file and line |
 | VR38 | 17 | The ticket 9 files call no verb form directly | review-owned: the verb form command over the ticket 9 files prints no line | A surviving direct call prints its file and line |
@@ -244,6 +244,7 @@ The hostile-input checklist applies to the readers. The numeric-looking cell cla
 
 ## Ownership fences
 
+- `capture/restructure-backlog.md`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
@@ -415,12 +416,12 @@ The inline fingerprint matches are ten sites. Each goes to the ticket that write
 The commands run from the repository root. `<files>` is the list of `internal/worktree` test files on that ticket's `Writes:` line.
 
 - VR23: `rg -n '^func (runReset|runResetWith|resetFingerprint|restoreFingerprint)\(' internal/worktree`
-- VR28: `rg -n '^func (runCleanup|runCleanupWith|runDiscard|planAndApply|runResume|runResumeAt|mustResumeClean|mustReclaim|cleanupRowFingerprint|reclaimFingerprint|cleanupRows|cleanupRowFields|cleanupRowValue|cleanupRowsField|rowForTarget|unclaimedVerdicts)\(|setFingerprint|\[0-9a-f\]\{64\}' <files>`
+- VR28: `rg -n '^func (runCleanup|runCleanupWith|runDiscard|planAndApply|runResume|runResumeAt|mustResumeClean|mustReclaim|cleanupRowFingerprint|reclaimFingerprint|cleanupRows|cleanupRowFields|cleanupRowValue|cleanupRowsField|rowForTarget|unclaimedVerdicts)\(|\bsetFingerprint\b|\[0-9a-f\]\{64\}' <files>`
 - VR31: `rg -n '^func (runCreate|execAtOwnedTarget)\(|\[0-9a-f\]\{64\}' <files>`
 - VR33: `rg -n '^func runMerge\(' internal/worktree`
 - VR37: `rg -n '^func landIn\(' internal/worktree`
 - VR39: the verb form command over `<files>`, then `rg -n '\[0-9a-f\]\{64\}' <files>`
-- VR41: `rg -n '^func (runCleanup|runCleanupWith|runDiscard|planAndApply|runReset|runResetWith|runMerge|runCreate|runResume|runResumeAt|landIn|execAtOwnedTarget|mustResumeClean|mustReclaim|resetFingerprint|restoreFingerprint|reclaimFingerprint|cleanupRowFingerprint|cleanupRows|cleanupRowFields|cleanupRowValue|cleanupRowsField|rowForTarget|unclaimedVerdicts)\(|setFingerprint|\[0-9a-f\]\{64\}' internal/worktree --glob '*_test.go' --glob '!verb_runner_test.go' --glob '!verb_runner_check_test.go'`
+- VR41: `rg -n '^func (runCleanup|runCleanupWith|runDiscard|planAndApply|runReset|runResetWith|runMerge|runCreate|runResume|runResumeAt|landIn|execAtOwnedTarget|mustResumeClean|mustReclaim|resetFingerprint|restoreFingerprint|reclaimFingerprint|cleanupRowFingerprint|cleanupRows|cleanupRowFields|cleanupRowValue|cleanupRowsField|rowForTarget|unclaimedVerdicts)\(|\bsetFingerprint\b|\[0-9a-f\]\{64\}' internal/worktree --glob '*_test.go' --glob '!verb_runner_test.go' --glob '!verb_runner_check_test.go'`
 - The verb form command: `rg -n '\b(BuildCommand|ExecCommand|ExecCommandResolving|LandCommand|ResumeLandCommand|ListCommand|MergeCommand|PathCommand|ReclaimCommand|ReauthorizeCommand|ResetCommand|ResumeCleanCommand|ShowCommand|Subshell|CleanCommand|ReleaseCommand|CreateCommand|PoolCommand|LeaseFileCommand|buildWith|landWith|resumeLandWith|mergeWith|reauthorizeWith|resetWith|resumeCleanCommandWith|cleanCommandWith|releaseCommandWith)\(' <files>`. That name list is the census's derived set on the base tree, and the census replaces the command after ticket 11.
 
 A hit inside an expected-output literal that the test compares whole is not a reader. The Coverage axis names each such hit.
@@ -459,7 +460,7 @@ Tickets 1 and 11 change only the `worktreeTestCount` value in `parallel_census_t
 - `worktreeTestCount` has one reader, `TestPackageTestCountPin`. Tickets 1 and 11 raise it.
 - `worktreeSerialCeiling` has one reader, `TestSerialSetStaysBelowTheCeiling`. No ticket changes it.
 - The run wrapper names have readers only in `internal/worktree` test files and in `capture/restructure-backlog.md`, which names `runCreate` as a split anchor. Ticket 6 updates that row.
-- The joins forms have no reader outside `internal/worktree`. The verb entries have production readers in `cmd/bench/worktree_leaves.go`, `cmd/bench/main.go`, `internal/harness/worktree.go`, and `internal/sessioninspect/sessioninspect.go`, and one test reader in `internal/treetarget/run_test.go`. No reader changes, because no production signature changes.
+- The joins forms have no reader outside `internal/worktree`. The verb entries have production readers in `cmd/bench/worktree_leaves.go`, `cmd/bench/main.go`, `cmd/bench/commit_chain.go`, `internal/harness/worktree.go`, and `internal/sessioninspect/sessioninspect.go`, and one test reader in `internal/treetarget/run_test.go`. No reader changes, because no production signature changes.
 - The usage lines that VR1 reads come from `internal/usage/worktree.go`. The `pool`, `lease-file`, and `resume-clean` verbs have no usage constant, so VR2 to VR4 read their expectation from the verb itself. No literal moves into a test.
 - The map's `## Sources` name `parallelCensus` as a drift trigger. This spec adds a census file beside it and does not change `parallelCensus`.
 
@@ -474,7 +475,7 @@ Tickets 1 and 11 change only the `worktreeTestCount` value in `parallel_census_t
   - `internal/worktree/clean_set.go`: `unapplicableFingerprint`
   - `internal/worktree/resume.go`: `ResumeCleanCommand`
   - `internal/toon/toon.go`: `toon.Table`
-- Import edges: `internal/worktree` tests already import `internal/axi/axitest` in `list_selected_test.go` and `path_identifier_test.go`. The package already imports `internal/toon` and `internal/usage`. No new edge.
+- Import edges: `internal/worktree` tests already import `internal/axi/axitest` in `list_selected_test.go`, `list_actions_test.go`, `landed_test.go`, `unlanded_route_test.go`, and `path_identifier_test.go`. The package already imports `internal/toon` and `internal/usage`. No new edge.
 - Source-row clauses and occurrences: the Source trace table quotes each clause; the map is the only occurrence.
 - Promised field labels: `fingerprint` as a table field; `fingerprint=` as a record cell, emitted by `reset.go`. The two pinned refusal messages in Implementation decisions.
 - Changed-function callers: no production function changes. The deleted test helpers' callers are the test files in the fence.
@@ -483,7 +484,7 @@ Tickets 1 and 11 change only the `worktreeTestCount` value in `parallel_census_t
 
 ### Probes run during authoring
 
-- A probe test fed `axitest.DecodeDocument` four shapes. A `reset_plan{...}` record and a `merged{...}` record decode as a string, not an object, so the decode returns an error. A lane line before a record fails with a missing colon. A `cleanup[1]{...}:` table decodes with its `fingerprint` cell. Thus the fingerprint reader needs the record branch, and the rows reader returns an error on record output. The probe file was deleted.
+- A probe test fed `axitest.DecodeDocument` four shapes. A `reset_plan{...}` record and a `merged{...}` record decode as a string, not an object, so the decode returns an error. A lane line before a record fails with a missing colon. A `worktree_cleanup[1]{...}:` table decodes with its `fingerprint` cell. Thus the fingerprint reader needs the record branch, and the rows reader returns an error on record output. The probe file was deleted.
 - The joins value still holds 29 fields, and `parallel_census_test.go` still pins 664 tests and a serial ceiling of 46. No source file of the map changed between the asset commit `8ab52861` and the base `6d0c1e79`.
 
 ### Completion plan
