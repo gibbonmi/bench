@@ -1,7 +1,7 @@
 # Add the verb runner and its readers
 
 Blocked by: none
-Writes: internal/worktree/verb_runner_test.go (new), internal/worktree/verb_runner_check_test.go (new), internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/verb_runner_test.go (new), internal/worktree/verb_runner_check_test.go (new), internal/worktree/parallel_census_test.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_unclaimed_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: VR1, VR2, VR3, VR4, VR5, VR6, VR7, VR8, VR9, VR10, VR11, VR12, VR13, VR14, VR15, VR16, VR17, VR18, VR19, VR20, VR21, VR22, VR59
 
 ## What to build
