@@ -125,7 +125,7 @@ This round confirms repair 1. The frozen pair is base `0c95c9447c20189f3f2155719
 
 The raw finding count is 2: Standards 0, Spec 2, and Coverage 0. Every fold of R1 to R6 holds. Both Spec findings name spec text, not code, so they use no repair cycle. The consumed allowance stays at 1 of 2 repair cycles.
 
-Plan commit `f3b6ad76` closed both Spec findings, but it changed the source past the reviewed tip. A later commit restores the reviewed spec bytes. The VR-C2 enabling plan commit applies the same amendment, and the VR-C2 review covers it.
+Plan commit `f3b6ad76` closed both Spec findings, but it changed the source past the reviewed tip. Commit `b02ef7a3` restored the reviewed spec bytes. Plan commit `51f0951e` then applied the same amendment inside VR-C1, and round 3 reviewed it.
 
 The coordinator made three evidence-only corrections to this record. The repair verification entries named the full tree `bef4351236549fad5b2cef6e5958d23b685aabb8` as their source digest. The source digest excludes this record file, so the entries now name `0dee07c82fe40e1420c5629289bd195d4e8ff5cd`. The plan digest reads the plan at the reviewed tip `d44d28ce`. Each author and repair result digest hashed the whole command output, so each digest now hashes its embedded excerpt, as the record parser requires.
 
@@ -139,8 +139,8 @@ Findings: 0. All five folds hold. The shared fault builder sits in the runner ch
 
 Findings: 2. The worst issue is a coverage map that did not name the two record-branch tests.
 
-- R7: `specs/worktree-verb-runner/spec.md` had no row for the record-branch absent rule and conflict rule. The VR-C2 enabling plan commit adds VR60 and VR61, and ticket 1 covers both. `auto-fix`. Confidence 5.
-- R8: the VR1 row said that every expectation reads its usage constant, but the `show` and `build` rows read the grammar `Cmd` field. The VR-C2 enabling plan commit states that source in VR1, in the ticket, and in the reader sweep. This change is non-behavioral, and the reviewer can veto it. `auto-fix`. Confidence 6.
+- R7: `specs/worktree-verb-runner/spec.md` had no row for the record-branch absent rule and conflict rule. Plan commit `51f0951e` added VR60 and VR61, and ticket 1 covers both. `auto-fix`. Confidence 5.
+- R8: the VR1 row said that every expectation reads its usage constant, but the `show` and `build` rows read the grammar `Cmd` field. Plan commit `51f0951e` stated that source in VR1, in the ticket, and in the reader sweep. This change is non-behavioral, and the reviewer can veto it. `auto-fix`. Confidence 6.
 
 ### Coverage, round 2
 
@@ -159,19 +159,42 @@ A fresh `bench-writer` session, `vr-t1-verify-2`, ran on opus at medium effort, 
 - `1-worktree`: `bench test --package ./internal/worktree` passed. The SKIP set holds the two socket capability subtests.
 - `1-probe`: the swap of `unapplicableFingerprint` to `"probe-placeholder"` bit, with 1 failed test. The restore reads `yes`.
 
+## VR-C1 chunk review, round 3
+
+This round confirms plan commit `51f0951e` and the verification rerun. The frozen pair is base `0c95c9447c20189f3f2155719ef965bffc339856` and tip `ef2cd35f1052f7003c1f7647539d656be7585821`. The shared evidence is `sha256:a2e41f11506f672a638765f9167e9c3453cbde7d4ffcd22cacfbd62347e03db8`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the delta `d44d28ce..ef2cd35f`. That delta changes no test code. Only the Coverage axis ran a probe, and it left the tree clean.
+
+The raw finding count is 2: Standards 1 and Spec 1, and both name one fix. The round 2 prose of this record routed the amendment to VR-C2, but plan commit `51f0951e` applied it inside VR-C1. The coordinator corrected that prose, and each issuing axis reaffirmed the correction with a pass. The correction is evidence-only, so the consumed allowance stays at 1 of 2 repair cycles.
+
+### Standards, round 3
+
+Findings: 1. R9: `reviews/worktree-verb-runner.md:128,142,143` placed the amendment in VR-C2. One source per fact requires one account of where the amendment lives. `auto-fix`. Confidence 8. The axis reaffirmed the correction.
+
+### Spec, round 3
+
+Findings: 1. R7 and R8 are closed: VR60 and VR61 match their tests, and the VR1 wording matches the `show` and `build` rows. R9 is the same record defect as the Standards finding. `auto-fix`. Confidence 7. The axis reaffirmed the correction.
+
+### Coverage, round 3
+
+Findings: 0. VR60 and VR61 name real tests. The round 2 omission of the placeholder rule covers VR60. A swap of the two-fingerprints check bit VR61, and the restore reads `yes`. The chunk record for VR44 to VR46 is unchanged from round 2, because no test code changed.
+
+### Advice, round 3
+
+- The VR1 why-cell in the spec runs to 38 words and says "command name" where the ticket says "`Cmd` field". The VR-C2 enabling plan commit can shorten it.
+- Ticket 1 says "a real no-op `reset` record", and VR60 says "a no-op `reset` plan whose record carries `none`". One term serves both.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/worktree-verb-runner/spec.md",
-  "plan_digest": "sha256:7f4493adf64a9e170b14b594c30d78e85d97387dbc1c661dcb55e917d17f841f",
+  "plan_digest": "sha256:095153eee4b7547b074ceddeb588e1a6a77a4e4663f33dd70ed0b00e55144d39",
   "implementation_session": "",
   "chunks": [
     {
       "id": "VR-C1",
       "base": "0c95c9447c20189f3f2155719ef965bffc339856",
-      "tip": "d44d28ce6ff1964ffc4cb77d969cecdb881356eb",
-      "plan_digest": "sha256:7f4493adf64a9e170b14b594c30d78e85d97387dbc1c661dcb55e917d17f841f",
-      "source_digest": "0dee07c82fe40e1420c5629289bd195d4e8ff5cd",
+      "tip": "ef2cd35f1052f7003c1f7647539d656be7585821",
+      "plan_digest": "sha256:095153eee4b7547b074ceddeb588e1a6a77a4e4663f33dd70ed0b00e55144d39",
+      "source_digest": "9b1948029d85ed2ec2df74290d084ae136196359",
       "acceptance_rows": [
         "VR1",
         "VR2",
@@ -195,7 +218,9 @@ A fresh `bench-writer` session, `vr-t1-verify-2`, ran on opus at medium effort, 
         "VR20",
         "VR21",
         "VR22",
-        "VR59"
+        "VR59",
+        "VR60",
+        "VR61"
       ],
       "verification": [
         {
@@ -507,6 +532,120 @@ A fresh `bench-writer` session, `vr-t1-verify-2`, ran on opus at medium effort, 
           "finding_ids": [],
           "supersedes": [
             "vr-c1-coverage-r1"
+          ]
+        },
+        {
+          "id": "vr-c1-standards-r3",
+          "performer": "claude:bench-reviewer/vr-c1-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9b1948029d85ed2ec2df74290d084ae136196359",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-standards-r3@ef2cd35f",
+            "digest": "sha256:95c91bb50538e1abe32bfb54592c2b749a03c41a964247a833fc627985927a91",
+            "excerpt": "Standards: 4 findings, 1 binding. Worst: the round 2 record placed the VR60 and VR61 amendment in VR-C2, but plan commit 51f0951e put it in VR-C1."
+          },
+          "axis": "Standards",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "finding_ids": [
+            "R9"
+          ],
+          "supersedes": [
+            "vr-c1-standards-r2"
+          ]
+        },
+        {
+          "id": "vr-c1-spec-r3",
+          "performer": "claude:bench-reviewer/vr-c1-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9b1948029d85ed2ec2df74290d084ae136196359",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-spec-r3@ef2cd35f",
+            "digest": "sha256:eaea315b7fdc944a892d3dc17c6e04cd5e46ae1a020e90b61f1b632b81725b74",
+            "excerpt": "Spec: 1 finding. R7 and R8 are closed; the record still routed the amendment to VR-C2."
+          },
+          "axis": "Spec",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "finding_ids": [
+            "R9"
+          ],
+          "supersedes": [
+            "vr-c1-spec-r2"
+          ]
+        },
+        {
+          "id": "vr-c1-coverage-r3",
+          "performer": "claude:bench-reviewer/vr-c1-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9b1948029d85ed2ec2df74290d084ae136196359",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-coverage-r3@ef2cd35f",
+            "digest": "sha256:090d8a9500dcd3c629503251722907e5de457e3be849c12f72ea1c945b43678b",
+            "excerpt": "Coverage: 0 findings. Test code is unchanged since round 2; VR60 and VR61 name real tests, and the VR61 swap probe bit and restored."
+          },
+          "axis": "Coverage",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c1-coverage-r2"
+          ]
+        },
+        {
+          "id": "vr-c1-standards-r3-reaffirm",
+          "performer": "claude:bench-reviewer/vr-c1-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9b1948029d85ed2ec2df74290d084ae136196359",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-standards-r3/reaffirm@ef2cd35f",
+            "digest": "sha256:4d3ca07d628f48a0eff4da8517babfaf98a0ca1bc6df79ddf375e2560cb487b4",
+            "excerpt": "Standards reaffirm: pass. Record lines 128, 142 and 143 now name 51f0951e and VR-C1, which closes the binding finding."
+          },
+          "axis": "Standards",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c1-standards-r3"
+          ]
+        },
+        {
+          "id": "vr-c1-spec-r3-reaffirm",
+          "performer": "claude:bench-reviewer/vr-c1-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9b1948029d85ed2ec2df74290d084ae136196359",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-spec-r3/reaffirm@ef2cd35f",
+            "digest": "sha256:6bb7953d1db89b0279f6df23466c12d8879cab66c031e901da5f9f244447f79c",
+            "excerpt": "Spec reaffirm: pass. Record lines 128, 142 and 143 now match the git log, so the finding is closed and the other verdicts stand."
+          },
+          "axis": "Spec",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c1-spec-r3"
           ]
         }
       ]
