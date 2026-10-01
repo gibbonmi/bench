@@ -12,7 +12,7 @@ at commit `8ab52861`.
 
 Five read-only delegates read the code, one for each field family. The coordinator
 re-opened the load-bearing citations and ran the git probes in the scratchpad. No
-delegate ran a test, so each verdict is a claim until the spec build shows its red.
+delegate ran a test, so each verdict is a claim until the build of the spec shows its red.
 
 Five verdicts are contestable, and ticket 10 decides them: `restoreClean`,
 `creationLockAttempt`, `advanceLandingMarker`, `buildSubject`, and `resetEnvelope`.
