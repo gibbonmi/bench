@@ -3,7 +3,6 @@ package landing
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -55,18 +54,12 @@ func run(root string, args ...string) error {
 	return exec.Command("git", append([]string{"-C", root}, args...)...).Run()
 }
 func indexRun(root, idx string, args ...string) error {
-	c := exec.Command("git", append([]string{"-C", root}, args...)...)
-	c.Env = append(os.Environ(), "GIT_INDEX_FILE="+idx)
-	return c.Run()
+	return benchgit.IndexCommand(root, idx, args...).Run()
 }
 func indexOutputRaw(root, idx string, args ...string) ([]byte, error) {
-	c := exec.Command("git", append([]string{"-C", root}, args...)...)
-	c.Env = append(os.Environ(), "GIT_INDEX_FILE="+idx)
-	return c.Output()
+	return benchgit.IndexCommand(root, idx, args...).Output()
 }
 func indexOutput(root, idx string, args ...string) (string, error) {
-	c := exec.Command("git", append([]string{"-C", root}, args...)...)
-	c.Env = append(os.Environ(), "GIT_INDEX_FILE="+idx)
-	b, err := c.Output()
+	b, err := benchgit.IndexCommand(root, idx, args...).Output()
 	return strings.TrimSpace(string(b)), err
 }
