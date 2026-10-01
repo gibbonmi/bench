@@ -85,7 +85,7 @@ func Begin(root string, sources []Source) (Bundle, error) {
 		sum := sha256.Sum256(identity)
 		m.ID = "d-" + hex.EncodeToString(sum[:6])
 		dir := transactionDir(common)
-		staged, err := os.MkdirTemp(common, directoryName+".tmp-")
+		staged, err := os.MkdirTemp(common, stagingPrefix)
 		if err != nil {
 			return fmt.Errorf("create capture transaction: %w", err)
 		}

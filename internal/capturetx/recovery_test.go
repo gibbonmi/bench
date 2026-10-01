@@ -128,7 +128,7 @@ func requireRefusal(t *testing.T, err error, needle string) {
 func TestCrashBeforePublishOpensNoGeneration(t *testing.T) {
 	f := newFixture(t)
 	f.write(t, f.ideas, "idea one\n")
-	staged := filepath.Join(f.common, directoryName+".tmp-crash")
+	staged := filepath.Join(f.common, stagingPrefix+"crash")
 	if err := os.MkdirAll(staged, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -144,6 +144,28 @@ func TestCrashBeforePublishOpensNoGeneration(t *testing.T) {
 	}
 	if got := f.live(t, f.ideas); got != "" {
 		t.Fatalf("live IDEAS = %q, want Begin to clear it", got)
+	}
+	if _, err := os.Stat(staged); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("stale staged directory: stat = %v, want recovery to remove it", err)
+	}
+}
+
+// A crash can stop the removal that ends Commit or Abort after the manifest is gone
+// and before the blobs are gone.
+func TestCutShortRemovalDoesNotStopBegin(t *testing.T) {
+	f := newFixture(t)
+	opened := f.begin(t)
+	if err := os.Remove(filepath.Join(transactionDir(f.common), manifestName)); err != nil {
+		t.Fatal(err)
+	}
+	f.write(t, f.ideas, "idea two\n")
+	bundle, err := Begin(f.root, []Source{f.ideas})
+	if err != nil || bundle.ID == opened.ID || bundle.State != "sealed" {
+		t.Fatalf("Begin after a cut-short removal = %+v, %v; want a fresh sealed generation", bundle, err)
+	}
+	sealed, _, err := Sources(f.root, []string{f.ideas.Name})
+	if err != nil || string(sealed[f.ideas.Name]) != "idea two\n" {
+		t.Fatalf("Sources = %q, %v; want the fresh sealed text", sealed, err)
 	}
 }
 
