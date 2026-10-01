@@ -415,7 +415,7 @@ The inline fingerprint matches are ten sites. Each goes to the ticket that write
 | `worktree_test.go`: the plan match | 6 | `mustFingerprint` |
 | `land_effects_cleanup_test.go`: the no-cleanup-fingerprint check | 10 | `mustNoFingerprint` |
 
-The commands run from the repository root. `<files>` is the list of `internal/worktree` test files on that ticket's `Writes:` line.
+The commands run from the repository root. `<files>` is the list of `internal/worktree` test files on that ticket's `Writes:` line, without the two runner files.
 
 - VR23: `rg -n '^func (runReset|runResetWith|resetFingerprint|restoreFingerprint)\(' internal/worktree`
 - VR28: `rg -n '^func (runCleanup|runCleanupWith|runDiscard|planAndApply|runResume|runResumeAt|mustResumeClean|mustReclaim|cleanupRowFingerprint|reclaimFingerprint|cleanupRows|cleanupRowFields|cleanupRowValue|cleanupRowsField|rowForTarget|unclaimedVerdicts)\(|\bsetFingerprint\b|\[0-9a-f\]\{64\}' <files>`
