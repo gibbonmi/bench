@@ -20,6 +20,7 @@ Add `internal/harness/worktree_test.go`. Each case calls `WorktreeCommand` and c
 - An event with no required field, a blank name, or a JSON `null` exits 1 with the required-field verdict.
 - A `create` event whose `cwd` is outside a Git repository exits 1.
 - A `remove` event whose repository hint is outside a Git repository exits 1. The hint is `CLAUDE_PROJECT_DIR` when it is set, and `worktree_path` when it is empty.
+- A `remove` event from a session that owns no assignment reaches the release, and the release refuses it with exit 1.
 
 Extend `internal/shellcommand/shellcommand_test.go` with `Parse` cases for an unbalanced input:
 
