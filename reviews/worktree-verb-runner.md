@@ -125,7 +125,7 @@ This round confirms repair 1. The frozen pair is base `0c95c9447c20189f3f2155719
 
 The raw finding count is 2: Standards 0, Spec 2, and Coverage 0. Every fold of R1 to R6 holds. Both Spec findings name spec text, not code, so they use no repair cycle. The consumed allowance stays at 1 of 2 repair cycles.
 
-The coordinator made two evidence-only corrections to this record. The repair verification entries named the full tree `bef4351236549fad5b2cef6e5958d23b685aabb8` as their source digest. The source digest excludes this record file, so the entries now name `0dee07c82fe40e1420c5629289bd195d4e8ff5cd`. The plan digest now reads the plan at `f3b6ad76`, which adds VR60 and VR61.
+The coordinator made three evidence-only corrections to this record. The repair verification entries named the full tree `bef4351236549fad5b2cef6e5958d23b685aabb8` as their source digest. The source digest excludes this record file, so the entries now name `0dee07c82fe40e1420c5629289bd195d4e8ff5cd`. The plan digest now reads the plan at `f3b6ad76`, which adds VR60 and VR61. Each author and repair result digest hashed the whole command output, so each digest now hashes its embedded excerpt, as the record parser requires.
 
 The chunk record for VR44 to VR46 follows. All 688 top-level tests pass, which is the base 664 plus 24 added tests. The SKIP set holds the two socket capability subtests. No existing test lost a failure call. The only edits to existing files are setup lines in `clean_unclaimed_test.go` and the count constant.
 
@@ -202,7 +202,7 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/vr-t1-author-20261001/1-worktree@137fb303",
-            "digest": "sha256:654259c95231dd11208253be28771fef52f30606fa4f246587e037cc4c1161fd",
+            "digest": "sha256:e0a99d19673fa071a4aab6ce31a04e581a6233c21ef1905353526dc0ec9e9c6e",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,51282\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "1-worktree",
@@ -220,7 +220,7 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/vr-t1-author-20261001/1-probe@137fb303",
-            "digest": "sha256:9281fe083e8f7d3d4ed2405a2b9d283816264eb40866402580136ae909ba6122",
+            "digest": "sha256:cb76d16fbf406599002d07b0d92643b9337e8419f0362e61c16114efdfd45de0",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbResultFingerprintTreatsAPlaceholderAsAbsent,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,43"
           },
           "requirement": "1-probe",
@@ -233,7 +233,7 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
             "restore": "pass",
             "native_ref": {
               "ref": "claude:agent/vr-t1-author-20261001/1-probe@137fb303",
-              "digest": "sha256:9281fe083e8f7d3d4ed2405a2b9d283816264eb40866402580136ae909ba6122",
+              "digest": "sha256:cb76d16fbf406599002d07b0d92643b9337e8419f0362e61c16114efdfd45de0",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbResultFingerprintTreatsAPlaceholderAsAbsent,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,43"
             }
           }
@@ -249,7 +249,7 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/vr-t1-author-20261001/vr17-joins-probe@137fb303",
-            "digest": "sha256:e5057e77d067575ac77ddc8c33bd59bc2f2039837e80396a88e8daa674bdac0b",
+            "digest": "sha256:52ab180cc662e1d83145275c16aae2873f295ae08b8395e8fcf063087facffc7",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbRunnerPassesTheJoinsValue,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,60"
           },
           "requirement": "author-probe-VR17-joins",
@@ -262,7 +262,7 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
             "restore": "pass",
             "native_ref": {
               "ref": "claude:agent/vr-t1-author-20261001/vr17-joins-probe@137fb303",
-              "digest": "sha256:e5057e77d067575ac77ddc8c33bd59bc2f2039837e80396a88e8daa674bdac0b",
+              "digest": "sha256:52ab180cc662e1d83145275c16aae2873f295ae08b8395e8fcf063087facffc7",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbRunnerPassesTheJoinsValue,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,60"
             }
           }
@@ -278,7 +278,7 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/vr-t1-repair-1-20261001/1-worktree@3a318142",
-            "digest": "sha256:3b0e5610d71f6cda08db16661fa2df4d23290fc2553212129a31ebe52159e2a7",
+            "digest": "sha256:72cb722cbb113d863e4c1bf0439bc8e8c0c50a0b6739059a5f5af238f7370600",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,50325\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "1-worktree",
@@ -296,7 +296,7 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
           "outcome": "pass",
           "native_ref": {
             "ref": "claude:agent/vr-t1-repair-1-20261001/1-probe@3a318142",
-            "digest": "sha256:282e44d62d85fa731ff381b4097bdaf4ebbd75d3405b5241bb5fecc56af50be0",
+            "digest": "sha256:d4c62cc4f91e4a5a9a0f48e10c988ef86c408c95989af5576fede4b1d6e87bda",
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbResultFingerprintTreatsAPlaceholderAsAbsent,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,36"
           },
           "requirement": "1-probe",
@@ -309,7 +309,7 @@ Findings: 0. Each fold bit under a new probe site. The probes removed the placeh
             "restore": "pass",
             "native_ref": {
               "ref": "claude:agent/vr-t1-repair-1-20261001/1-probe@3a318142",
-              "digest": "sha256:282e44d62d85fa731ff381b4097bdaf4ebbd75d3405b5241bb5fecc56af50be0",
+              "digest": "sha256:d4c62cc4f91e4a5a9a0f48e10c988ef86c408c95989af5576fede4b1d6e87bda",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_runner_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbResultFingerprintTreatsAPlaceholderAsAbsent,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,36"
             }
           }
