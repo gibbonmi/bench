@@ -65,19 +65,6 @@ func baselineRunnerIdentity(identityRoot string) string {
 	return digest
 }
 
-func buildProspectiveSubjectFor(root, identityRoot string) (subject, error) {
-	s, err := buildSubjectForPolicy(root, identityRoot, policyVersion)
-	if err != nil {
-		return subject{}, err
-	}
-	if _, err := os.Lstat(filepath.Join(root, prospectiveGatePath)); err == nil {
-		s.Resolution = Resolution{Kind: ProspectiveGateSh}
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return subject{}, err
-	}
-	return s, nil
-}
-
 func buildProspectiveSubjectForGeneration(root, identityRoot string, generation *treeGeneration) (subject, error) {
 	s, err := buildSubjectForGeneration(root, identityRoot, generation)
 	if err != nil {
