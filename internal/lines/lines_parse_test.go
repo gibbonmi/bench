@@ -212,7 +212,7 @@ func TestRetiredSchemaBindsNothing(t *testing.T) {
 	// against them. The guard keeps its fail-open rim instead of denying on a stale column.
 	for _, model := range []string{"gpt-5.6-sol", "fable"} {
 		exit, stderr := AgentLineVerdict(envelope(model), "claude", src)
-		if exit != 0 || !contains(stderr, "unknown harness key") {
+		if exit != 0 || !strings.Contains(stderr, "unknown harness key") {
 			t.Errorf("AgentLineVerdict(%q) on retired keys = (%d, %q), want fail-open with the unknown-key warning", model, exit, stderr)
 		}
 	}
@@ -228,14 +228,14 @@ func TestUnreadableSourceIsNotAbsent(t *testing.T) {
 		t.Errorf("absent binding = (%q, %d, %q), want unrouted passthrough", model, exit, stderr)
 	}
 	model, exit, stderr := ResolveModelVerdict("codex", "top", true, unreadable)
-	if model != "" || exit != 1 || !contains(stderr, "cannot read the tier binding") {
+	if model != "" || exit != 1 || !strings.Contains(stderr, "cannot read the tier binding") {
 		t.Errorf("unreadable binding = (%q, %d, %q), want a fail-closed read error", model, exit, stderr)
 	}
 
-	if exit, stderr := AgentLineVerdict(envelope("gpt-9"), "claude", absent); exit != 0 || !contains(stderr, "no .bench/lines.env") {
+	if exit, stderr := AgentLineVerdict(envelope("gpt-9"), "claude", absent); exit != 0 || !strings.Contains(stderr, "no .bench/lines.env") {
 		t.Errorf("absent binding guard = (%d, %q), want the unrouted warning", exit, stderr)
 	}
-	if exit, stderr := AgentLineVerdict(envelope("gpt-9"), "claude", unreadable); exit != 0 || !contains(stderr, "unreadable") {
+	if exit, stderr := AgentLineVerdict(envelope("gpt-9"), "claude", unreadable); exit != 0 || !strings.Contains(stderr, "unreadable") {
 		t.Errorf("unreadable binding guard = (%d, %q), want the unreadable warning", exit, stderr)
 	}
 }

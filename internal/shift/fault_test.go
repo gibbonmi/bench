@@ -68,11 +68,11 @@ func runGitOutput(t *testing.T, root string, args ...string) string {
 func requireRetainedWorktree(t *testing.T, root, stdout string) {
 	t.Helper()
 	wt := shiftWorktreePath(t, stdout)
-	if !contains(stdout, "worktree:"+wt) {
+	if !strings.Contains(stdout, "worktree:"+wt) {
 		t.Fatalf("stdout did not name the retained worktree as the recovery pointer:\n%s", stdout)
 	}
 	porcelain := runGitOutput(t, root, "worktree", "list", "--porcelain")
-	if !contains(porcelain, "worktree "+wt) || !contains(porcelain, "locked") {
+	if !strings.Contains(porcelain, "worktree "+wt) || !strings.Contains(porcelain, "locked") {
 		t.Fatalf("worktree was not retained and locked:\n%s", porcelain)
 	}
 	if _, err := os.Stat(filepath.Join(wt, "work.txt")); err != nil {
@@ -197,7 +197,7 @@ func TestLoopTeardownFaultReportsFailed(t *testing.T) {
 		t.Fatalf("Loop returned %d, want 1 (teardown failure is always failed/1): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	}
 	branch := shiftBranchName(t, stdout.String())
-	if !contains(stdout.String(), "teardown failed") || !contains(stdout.String(), branch) {
+	if !strings.Contains(stdout.String(), "teardown failed") || !strings.Contains(stdout.String(), branch) {
 		t.Fatalf("teardown-fault result did not name the branch as safe:\n%s", stdout.String())
 	}
 }
@@ -229,7 +229,7 @@ func TestFinishReportsUpsertFailure(t *testing.T) {
 	if code != 3 {
 		t.Fatalf("Loop returned %d, want 3 (incomplete — the fault must not change the outcome): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	}
-	if !contains(stderr.String(), "could not record shift outcome") || !contains(stderr.String(), "injected upsert failure") {
+	if !strings.Contains(stderr.String(), "could not record shift outcome") || !strings.Contains(stderr.String(), "injected upsert failure") {
 		t.Fatalf("stderr did not warn about the discarded Upsert failure:\n%s", stderr.String())
 	}
 }

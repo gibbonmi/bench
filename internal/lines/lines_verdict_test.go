@@ -1,6 +1,9 @@
 package lines
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestResolveModelVerdict(t *testing.T) {
 	tests := []struct {
@@ -43,7 +46,7 @@ func TestResolveModelVerdict(t *testing.T) {
 				if stderr != "" {
 					t.Errorf("stderr = %q, want empty", stderr)
 				}
-			} else if !contains(stderr, tt.wantContains) {
+			} else if !strings.Contains(stderr, tt.wantContains) {
 				t.Errorf("stderr = %q, want to contain %q", stderr, tt.wantContains)
 			}
 		})
@@ -75,7 +78,7 @@ func TestResolveModelVerdictResolvesEveryCell(t *testing.T) {
 func TestResolveModelVerdictNamesTheBindingPath(t *testing.T) {
 	src := Source{Path: "custom/path.env", Exists: true, Content: []byte(fullBinding)}
 	_, _, stderr := ResolveModelVerdict("opencode", "top", true, src)
-	if !contains(stderr, "in custom/path.env") {
+	if !strings.Contains(stderr, "in custom/path.env") {
 		t.Errorf("stderr = %q, want to name the path", stderr)
 	}
 }
@@ -83,7 +86,7 @@ func TestResolveModelVerdictNamesTheBindingPath(t *testing.T) {
 func TestResolveModelVerdictRejectsMalformedColumn(t *testing.T) {
 	bare := "BENCH_OPENCODE_TOP=gpt-5.6-sol\nBENCH_OPENCODE_MID=gpt-5.6-terra\nBENCH_OPENCODE_CHEAP=gpt-5.6-luna\n"
 	model, exit, stderr := ResolveModelVerdict("opencode", "cheap", true, bound(bare))
-	if model != "" || exit != 1 || !contains(stderr, "is not provider-qualified") {
+	if model != "" || exit != 1 || !strings.Contains(stderr, "is not provider-qualified") {
 		t.Fatalf("ResolveModelVerdict on a bare opencode column = (%q, %d, %q), want a fail-closed grammar error", model, exit, stderr)
 	}
 	provider := "BENCH_OPENCODE_TOP=openai/gpt-5.6-sol\nBENCH_OPENCODE_MID=openrouter/google/gemini-2.5-flash\nBENCH_OPENCODE_CHEAP=openai/gpt-5.6-luna\n"
@@ -121,7 +124,7 @@ func TestCellFault(t *testing.T) {
 		{"codex", "gpt-5", ""},
 	} {
 		got := CellFault(tt.harness, tt.value)
-		if (tt.want == "" && got != "") || (tt.want != "" && !contains(got, tt.want)) {
+		if (tt.want == "" && got != "") || (tt.want != "" && !strings.Contains(got, tt.want)) {
 			t.Errorf("CellFault(%q, %q) = %q, want %q", tt.harness, tt.value, got, tt.want)
 		}
 	}

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -37,7 +38,7 @@ func checkHandoffShape(root string) []string {
 	tracked := trackedPaths(root)
 	// The artifact is graded only while the repo carries it: an untracked handoff is
 	// local scratch, and a copy only drifts once it is something the repo carries.
-	if !contains(tracked, status.HandoffFile) {
+	if !slices.Contains(tracked, status.HandoffFile) {
 		return scanShapeCopies(root, tracked)
 	}
 	body, found := shapeSectionBody(readIfExists(filepath.Join(root, status.HandoffFile)))
@@ -70,16 +71,6 @@ func scanShapeCopies(root string, tracked []string) []string {
 		}
 	}
 	return uniqueSorted(diags)
-}
-
-// contains reports whether list carries exactly value.
-func contains(list []string, value string) bool {
-	for _, item := range list {
-		if item == value {
-			return true
-		}
-	}
-	return false
 }
 
 // shapeSentence is the Shape text's opening sentence with its wrapping collapsed. It
