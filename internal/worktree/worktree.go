@@ -428,7 +428,7 @@ func renderResumeSummary(result ResumeResult) string {
 	}
 	if retained > 0 {
 		summary.WriteString("; retained")
-		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonLanded, ReasonOrphaned, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonDirty, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
+		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonLanded, ReasonStaleActive, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonDirty, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
 			if count := result.Retained[reason]; count > 0 {
 				fmt.Fprintf(&summary, " %s=%d", reason, count)
 			}
@@ -465,11 +465,10 @@ func listCapped(summary *strings.Builder, count int, line func(int) string) {
 	}
 }
 
-// orphanLine renders one abandoned assignment's retirement command. The bare
-// `bench worktree clean` prints a plan and a fingerprint and removes nothing. The line
-// names the apply half rather than reading as one destructive step. It never suggests
-// `--discard-ignored`, whose request-less form orphans the assignment. That remedy would
-// manufacture the next generation of the residue reported here.
+// orphanLine renders one stale-active assignment, which is active and unlanded past the
+// stale window, with its retirement command. The bare `bench worktree clean` only plans,
+// so the line names the apply half. It never suggests `--discard-ignored`, whose
+// request-less form orphans the assignment and so makes the next residue reported here.
 //
 // A path this sink cannot carry verbatim is replaced by a pointer rather than escaped or
 // digested. Quoting alone is not enough: single quotes make a newline literal but still
@@ -477,9 +476,9 @@ func listCapped(summary *strings.Builder, count int, line func(int) string) {
 // not exist, so the reader would paste a command that cannot work.
 func orphanLine(orphan OrphanCandidate) string {
 	if !lineSafe(orphan.Path) {
-		return fmt.Sprintf("orphan %s: worktree path holds control bytes; find its id row in bench worktree list\n", orphan.ID)
+		return fmt.Sprintf("%s %s: worktree path holds control bytes; find its id row in bench worktree list\n", ReasonStaleActive, orphan.ID)
 	}
-	return fmt.Sprintf("orphan %s: bench worktree clean %s (plans only; re-run with --apply <fingerprint> to remove)\n", orphan.ID, sanitize.ShellQuote(orphan.Path))
+	return fmt.Sprintf("%s %s: active and unlanded past the stale window; bench worktree clean %s (plans only; re-run with --apply <fingerprint> to remove)\n", ReasonStaleActive, orphan.ID, sanitize.ShellQuote(orphan.Path))
 }
 
 // lineSafe is the package-local spelling of the shared line-structure predicate. It is

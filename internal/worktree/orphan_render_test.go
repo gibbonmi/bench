@@ -103,7 +103,7 @@ func TestResumeSummaryPreservesLineStructure(t *testing.T) {
 func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
 	t.Parallel()
 	line := summaryLines(summaryFor([]OrphanCandidate{{ID: "a1", Path: "/pool/wt\nforged"}}))[1]
-	requireTest(t, strings.Contains(line, "orphan a1:") && strings.Contains(line, "id row in bench worktree list"),
+	requireTest(t, strings.Contains(line, "stale-active a1:") && strings.Contains(line, "id row in bench worktree list"),
 		"fallback line does not point at the ledger row `bench worktree list` reports: %q", line)
 	requireTest(t, !strings.Contains(line, "by path"),
 		"fallback line sends the reader after a path no route emits: %q", line)

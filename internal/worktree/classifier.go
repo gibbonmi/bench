@@ -153,7 +153,7 @@ const (
 	ReasonMalformed      = lifecyclepolicy.ReasonMalformed
 	ReasonUncertain      = lifecyclepolicy.ReasonUncertain
 	ReasonUnexpectedLock = lifecyclepolicy.ReasonUnexpectedLock
-	ReasonOrphaned       = lifecyclepolicy.ReasonOrphaned
+	ReasonStaleActive    = lifecyclepolicy.ReasonStaleActive
 	ReasonDirty          = lifecyclepolicy.ReasonDirty
 	ReasonLanded         = lifecyclepolicy.ReasonLanded
 )

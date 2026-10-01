@@ -212,11 +212,11 @@ func TestAutomaticDecisionTable(t *testing.T) {
 			o.AssignmentState = ledger.StateActive
 			return AutomaticFacts{Explicit: o}
 		}, ActionRetain, ReasonActive, "assignment is not cleanup-pending", "a1"},
-		{"age/orphaned-active", func() AutomaticFacts {
+		{"age/stale-active", func() AutomaticFacts {
 			o := pendingOutcome()
 			o.AssignmentState = ledger.StateActive
 			return AutomaticFacts{Explicit: o, OrphanedActive: true}
-		}, ActionRetain, ReasonOrphaned, "assignment is not cleanup-pending", "a1"},
+		}, ActionRetain, ReasonStaleActive, "assignment is not cleanup-pending", "a1"},
 		{"age/landed-active", func() AutomaticFacts {
 			o := pendingOutcome()
 			o.AssignmentState = ledger.StateActive
