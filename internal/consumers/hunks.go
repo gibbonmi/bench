@@ -1,6 +1,7 @@
 package consumers
 
 import (
+	"path"
 	"strconv"
 	"strings"
 
@@ -25,6 +26,13 @@ type lineSpan struct {
 type fileHunks struct {
 	BasePath, TipPath string
 	Added, Removed    []lineSpan
+}
+
+// dropsBaseLines reports whether this file can hold a declaration the pair deleted: the
+// base side names the file, and a hunk removed lines from it. A path with no base-side
+// name was added by the pair, so it declares nothing the tip deleted.
+func (fh fileHunks) dropsBaseLines() bool {
+	return fh.BasePath != "" && len(fh.Removed) > 0
 }
 
 // parseHunks reads `git diff -U0` text into per-file line runs. It is a pure function of
@@ -166,13 +174,11 @@ func readHunks(root, base, tip string, paths []string) ([]fileHunks, error) {
 	return parseHunks(string(out)), nil
 }
 
-// readBaseSources reads the base-side bytes of every file the diff removed lines from.
-// A path with no base-side name was added by the pair, so it has nothing to read and can
-// declare nothing the tip deleted.
+// readBaseSources reads the base-side bytes of every file that dropsBaseLines names.
 func readBaseSources(root, base string, hunks []fileHunks) map[string]string {
 	sources := map[string]string{}
 	for _, fh := range hunks {
-		if fh.BasePath == "" || len(fh.Removed) == 0 {
+		if !fh.dropsBaseLines() {
 			continue
 		}
 		out, err := git.Raw("-C", root, "show", base+":"+fh.BasePath)
@@ -180,6 +186,45 @@ func readBaseSources(root, base string, hunks []fileHunks) map[string]string {
 			continue
 		}
 		sources[fh.BasePath] = string(out)
+	}
+	return sources
+}
+
+// readTipSources reads the tip-side bytes of every Go file that sits directly in the
+// directory of a file that dropsBaseLines names. A package is a directory, so these files are the
+// whole set that can still declare a removed name. The listing reads the tip tree rather
+// than the loader's file set, so a file only a build tag selects still counts.
+func readTipSources(root, tip string, hunks []fileHunks) map[string]string {
+	sources := map[string]string{}
+	listed := map[string]bool{}
+	for _, fh := range hunks {
+		if !fh.dropsBaseLines() {
+			continue
+		}
+		dir := path.Dir(fh.BasePath)
+		if listed[dir] {
+			continue
+		}
+		listed[dir] = true
+		args := []string{"--literal-pathspecs", "-C", root, "ls-tree", "-z", tip}
+		if dir != "." {
+			args = append(args, "--", dir+"/")
+		}
+		out, err := git.Raw(args...)
+		if err != nil {
+			continue
+		}
+		for _, entry := range strings.Split(string(out), "\x00") {
+			meta, name, ok := strings.Cut(entry, "\t")
+			if !ok || !strings.HasSuffix(name, ".go") || !strings.Contains(meta, " blob ") {
+				continue
+			}
+			body, err := git.Raw("-C", root, "show", tip+":"+name)
+			if err != nil {
+				continue
+			}
+			sources[name] = string(body)
+		}
 	}
 	return sources
 }

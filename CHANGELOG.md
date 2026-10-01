@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed-declaration blast
+
+- Fixed `bench consumers --changed` so that it does not report a kept declaration as deleted. A body edit in a file that only a build tag selects, such as a `//go:build system` test file, gave a false `blast_deleted` row. The deletion test now reads the declarations of the pair's tip tree, and not only the files that the default build context loads.
+
 ### Focused test help
 
 - Changed `bench test --help` and `bench probe --help` to state that `--package` takes one Go package expression. The value reaches Go as one argument, so a space-separated list fails as one missing directory.
