@@ -90,7 +90,7 @@ The implementation command did not contribute. The ticket told the author to bui
 
 ## VR-C1 repair 1
 
-A fresh `bench-writer` repair session, `vr-t1-repair-1`, ran on opus at medium effort, with a cap of 2 attempts. The session started at `c71d932b` and committed `3a318142` on a lane pass in the first attempt. The lane passed with 15 green checks, 1 check that does not apply, and 0 red checks. The source digest of the repair is `bef4351236549fad5b2cef6e5958d23b685aabb8`. This record is a second commit.
+A fresh `bench-writer` repair session, `vr-t1-repair-1`, ran on opus at medium effort, with a cap of 2 attempts. The session started at `c71d932b` and committed `3a318142` on a lane pass in the first attempt. The lane passed with 15 green checks, 1 check that does not apply, and 0 red checks. The source digest of the repair is `0dee07c82fe40e1420c5629289bd195d4e8ff5cd`, the tree of `3a318142` without this record file. This record is a second commit.
 
 The repair changes only test files. The red and green route for each target follows:
 
@@ -119,19 +119,50 @@ Each probe ran through `bench probe`, and each restore reads `yes`. The first tw
 
 The session ran each check on the source of `3a318142`, and each passed: `bench test --package ./internal/worktree`, the plan probe `1-probe`, `bench test --package ./internal/conformance`, and `bench structure --growth 0c95c944`. `TestPackageTestCountPin` passed at 688 tests, and `TestSerialSetStaysBelowTheCeiling` passed at the ceiling of 46. The two new tests call `t.Parallel()` and bind no environment. The digest of the `1-worktree` result is of the text that the session received, because that output did not spill to a file.
 
+## VR-C1 chunk review, round 2
+
+This round confirms repair 1. The frozen pair is base `0c95c9447c20189f3f2155719ef965bffc339856` and tip `d44d28ce6ff1964ffc4cb77d969cecdb881356eb`. The shared evidence is `sha256:565cf66f6d2860a4079406d195130860fd2993adebbac2089ebf7de385f56926`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the repair delta `179e2eb8..d44d28ce`. Only the Coverage axis ran tests and probes, and it left the tree clean.
+
+The raw finding count is 2: Standards 0, Spec 2, and Coverage 0. Every fold of R1 to R6 holds. Both Spec findings name spec text, not code, so they use no repair cycle. The consumed allowance stays at 1 of 2 repair cycles.
+
+The coordinator made two evidence-only corrections to this record. The repair verification entries named the full tree `bef4351236549fad5b2cef6e5958d23b685aabb8` as their source digest. The source digest excludes this record file, so the entries now name `0dee07c82fe40e1420c5629289bd195d4e8ff5cd`. The plan digest now reads the plan at `f3b6ad76`, which adds VR60 and VR61.
+
+The chunk record for VR44 to VR46 follows. All 688 top-level tests pass, which is the base 664 plus 24 added tests. The SKIP set holds the two socket capability subtests. No existing test lost a failure call. The only edits to existing files are setup lines in `clean_unclaimed_test.go` and the count constant.
+
+### Standards, round 2
+
+Findings: 0. All five folds hold. The shared fault builder sits in the runner check file, because `clean_set_apply_test.go` is at its 400-line budget. The axis rates that placement a judgment call and not a binding defect.
+
+### Spec, round 2
+
+Findings: 2. The worst issue is a coverage map that did not name the two record-branch tests.
+
+- R7: `specs/worktree-verb-runner/spec.md` had no row for the record-branch absent rule and conflict rule. Plan commit `f3b6ad76` adds VR60 and VR61, and ticket 1 covers both. `auto-fix`. Confidence 5.
+- R8: the VR1 row said that every expectation reads its usage constant, but the `show` and `build` rows read the grammar `Cmd` field. Plan commit `f3b6ad76` states that source in VR1, in the ticket, and in the reader sweep. This change is non-behavioral, and the reviewer can veto it. `auto-fix`. Confidence 6.
+
+### Coverage, round 2
+
+Findings: 0. Each fold bit under a new probe site. The probes removed the placeholder rule on the record branch and broke the shared fault builder. They also moved the `show` and `clean` keys to other verbs and cut the record cell at the wrong byte. Each restore reads `yes`.
+
+### Advice, round 2
+
+- A new file can hold the whole unclaimed branch fixture family and free `clean_set_apply_test.go` from its budget.
+- The VR1 `clean` row does not refuse an empty expectation. A check that the rendered refusal is not empty closes that gap.
+- In the conflict test, a second `value` shadows the first one.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/worktree-verb-runner/spec.md",
-  "plan_digest": "sha256:77c5099bae42000b631c569a15e3af6008579e9a60e93b691bf485f6636e9d2f",
+  "plan_digest": "sha256:53cb1a1fe5e8e1c000b919dcde0b788f21556ae3e122fd755105b89e68d88e0e",
   "implementation_session": "",
   "chunks": [
     {
       "id": "VR-C1",
       "base": "0c95c9447c20189f3f2155719ef965bffc339856",
-      "tip": "4479b2fa62bcb334f4b65aedfcd155cde31d66a6",
-      "plan_digest": "sha256:77c5099bae42000b631c569a15e3af6008579e9a60e93b691bf485f6636e9d2f",
-      "source_digest": "db49c9755719fa79a394a329fdd5dedeb5372136",
+      "tip": "d44d28ce6ff1964ffc4cb77d969cecdb881356eb",
+      "plan_digest": "sha256:53cb1a1fe5e8e1c000b919dcde0b788f21556ae3e122fd755105b89e68d88e0e",
+      "source_digest": "0dee07c82fe40e1420c5629289bd195d4e8ff5cd",
       "acceptance_rows": [
         "VR1",
         "VR2",
@@ -155,7 +186,9 @@ The session ran each check on the source of `3a318142`, and each passed: `bench 
         "VR20",
         "VR21",
         "VR22",
-        "VR59"
+        "VR59",
+        "VR60",
+        "VR61"
       ],
       "verification": [
         {
@@ -240,7 +273,7 @@ The session ran each check on the source of `3a318142`, and each passed: `bench 
           "role": "author-verification",
           "model": "opus",
           "effort": "medium",
-          "source_digest": "bef4351236549fad5b2cef6e5958d23b685aabb8",
+          "source_digest": "0dee07c82fe40e1420c5629289bd195d4e8ff5cd",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
@@ -258,7 +291,7 @@ The session ran each check on the source of `3a318142`, and each passed: `bench 
           "role": "author-verification",
           "model": "opus",
           "effort": "medium",
-          "source_digest": "bef4351236549fad5b2cef6e5958d23b685aabb8",
+          "source_digest": "0dee07c82fe40e1420c5629289bd195d4e8ff5cd",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
@@ -352,6 +385,75 @@ The session ran each check on the source of `3a318142`, and each passed: `bench 
             "R6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "vr-c1-standards-r2",
+          "performer": "claude:bench-reviewer/vr-c1-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0dee07c82fe40e1420c5629289bd195d4e8ff5cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-standards-r2@d44d28ce",
+            "digest": "sha256:02c08c774b1445068209559be3c4397268999c530c936632f712774dd155e382",
+            "excerpt": "Standards: 0 findings. All five folds hold; the shared fault builder in the runner check file is a judgment call, not a binding defect."
+          },
+          "axis": "Standards",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "d44d28ce6ff1964ffc4cb77d969cecdb881356eb",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c1-standards-r1"
+          ]
+        },
+        {
+          "id": "vr-c1-spec-r2",
+          "performer": "claude:bench-reviewer/vr-c1-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0dee07c82fe40e1420c5629289bd195d4e8ff5cd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-spec-r2@d44d28ce",
+            "digest": "sha256:333dfc09f314f4275d1726d255de0f5ae78f45ede30466295b171d7182d8a1d5",
+            "excerpt": "Spec: 2 findings on spec text. Folds R2, R5, R6 and the plan commit hold; the R6 tests lacked coverage rows, and VR1 wording names only the usage constant."
+          },
+          "axis": "Spec",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "d44d28ce6ff1964ffc4cb77d969cecdb881356eb",
+          "finding_ids": [
+            "R7",
+            "R8"
+          ],
+          "supersedes": [
+            "vr-c1-spec-r1"
+          ]
+        },
+        {
+          "id": "vr-c1-coverage-r2",
+          "performer": "claude:bench-reviewer/vr-c1-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0dee07c82fe40e1420c5629289bd195d4e8ff5cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-coverage-r2@d44d28ce",
+            "digest": "sha256:a9eacdfca84623ee5f8281963a2cf3e4333538d549aea8f4dabf925f6464fe75",
+            "excerpt": "Coverage: 0 findings. All folds hold, every probe bit and restored, 688 top-level tests pass, and the skip set is the two socket subtests."
+          },
+          "axis": "Coverage",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "d44d28ce6ff1964ffc4cb77d969cecdb881356eb",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c1-coverage-r1"
+          ]
         }
       ]
     }
