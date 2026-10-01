@@ -489,6 +489,10 @@ The session ran each check on the source of `53c499c9`, and each passed. `bench 
 
 `pool_reclaim_test.go` has 546 lines, and `bench structure --growth ef2cd35f` passed. The tuple scan printed 25 lines, and none of them is one of the eight VR-C2 builders. The session counted the `t.Fatal` family calls and the `requireTest` and `mustNoError` calls in each test function of the package at `abfca3e2` and at `53c499c9`. The count was 2232 in 703 functions at each commit, and no function count dropped.
 
+## VR-C2 ticket 2 verification rerun
+
+The ticket 2 author ran `bench test --package ./internal/worktree` again on the final chunk source at `e8a24a1e`, after repair commit `53c499c9`. The run passed with the two unix socket capability skips. The JSON payload holds the result as `vr-c2-2-worktree-r2`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1040,6 +1044,24 @@ The session ran each check on the source of `53c499c9`, and each passed. `bench 
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,49252\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c2-2-worktree-r2",
+          "performer": "claude:bench-writer/vr-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b7f16bc7bc9bb2827e92686bc09084c902334231",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t2-author-20261001/2-worktree@e8a24a1e",
+            "digest": "sha256:b7f0ed0485343c12c4f4ba12a06ce8d998246fb0f26aecce5cec56cbe5b8cfa7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,49388\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "2-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
