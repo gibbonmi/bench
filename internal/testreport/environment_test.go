@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
@@ -106,6 +107,22 @@ func TestTestEnvironmentCarriesTheBenchBuildCache(t *testing.T) {
 	}
 	if len(entries) != 1 || entries[0] != gocache.Env+"="+want {
 		t.Fatalf("cache entries = %#v, want exactly %s=%s", entries, gocache.Env, want)
+	}
+}
+
+// A focused run started through `bench worktree exec` inherits that wrapper's routing.
+// The Go child resolves its own kit, so the child carries none of those names.
+func TestTestEnvironmentStripsWrapperRouting(t *testing.T) {
+	child, err := testEnvironment([]string{"HOME=/home/agent", env.WrapperEnv + "=/wt/bin/bench.sh", "BENCH_KIT=/wt"}, "/selected/bench")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range child {
+		for _, name := range env.WrapperRouting {
+			if strings.HasPrefix(entry, name+"=") {
+				t.Errorf("child carries wrapper routing entry %q", entry)
+			}
+		}
 	}
 }
 

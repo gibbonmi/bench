@@ -7,6 +7,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
@@ -48,11 +49,11 @@ func selectedRunEnvironment(base []string, selection *runbinary.Selection) ([]st
 }
 
 // testEnvironment returns the environment the focused run's Go child carries: the
-// caller's, without the inherited conformance and capability entries, with the selected
-// Bench executable, and with the Bench build cache entry so a focused run warms the
-// archives a gate reads.
+// caller's, without the inherited conformance, capability, and wrapper routing entries,
+// with the selected Bench executable, and with the Bench build cache entry so a focused
+// run warms the archives a gate reads.
 func testEnvironment(base []string, binary string) ([]string, error) {
-	return gocache.Apply(runbinary.WithEnv(withoutConformanceEnvironment(base), binary))
+	return gocache.Apply(runbinary.WithEnv(env.WithoutWrapperRouting(withoutConformanceEnvironment(base)), binary))
 }
 
 func withoutConformanceEnvironment(base []string) []string {
@@ -65,7 +66,6 @@ func withoutConformanceEnvironment(base []string) []string {
 		registry.ConformanceInheritedEnv,
 		registry.ConsumerOnlyEnv,
 		capability.LogEnv,
-		"BENCH_KIT",
 	} {
 		env = capability.WithoutEnvironment(env, name)
 	}

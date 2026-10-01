@@ -14,6 +14,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Changed `bench test --help` and `bench probe --help` to state that `--package` takes one Go package expression. The value reaches Go as one argument, so a space-separated list fails as one missing directory.
 
+### Focused system run environment
+
+- Fixed `bench test` so that its Go child does not inherit the wrapper routing of `bench worktree exec`. Before, `bench test --check system` in a worktree passed `BENCH_WRAPPER` to the suite, and the adoption test graded an old broker manifest in that worktree and failed. The child now drops `BENCH_WRAPPER` and `BENCH_KIT`, as the gate already does.
+
 ### Drain invocation
 
 - Changed `/bench-drain` so that Claude Code can start it without a typed command. The drain still lands nothing until the reviewer approves its batch diff. The Codex `$bench-drain` adapter stays explicit-only.
