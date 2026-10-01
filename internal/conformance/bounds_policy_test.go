@@ -327,6 +327,32 @@ func TestBoundsPolicyRejectsSpecialSources(t *testing.T) {
 	}
 }
 
+// The classified shapes are the ones a two-leg marker wait used: a fixed window passed to an
+// injected sleep, and a fixed window on the right of an injected-clock elapsed compare.
+func TestBoundsPolicyClassifiesInjectedAndElapsedWaits(t *testing.T) {
+	for _, tc := range []struct{ name, body, diagnostic string }{
+		{"injected classified", "sleep(bounds.FixedWindow(10 * time.Millisecond))", ""},
+		{"injected raw", "sleep(10 * time.Millisecond)", "unclassified wait in injected duration function"},
+		{"elapsed classified", "for now().Sub(started) < bounds.FixedWindow(deadline) {\n\t}", ""},
+		{"elapsed raw", "for now().Sub(started) < deadline {\n\t}", "unclassified wait in current-time deadline"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := throwawayRoot{files: map[string]string{
+				"internal/bounds/bounds.go": "package bounds\n",
+				"internal/sample/wait.go": "package sample\n\nimport (\n\t\"time\"\n\n\t\"github.com/gibbonmi/bench/internal/bounds\"\n)\n\n" +
+					"func wait(deadline time.Duration, now func() time.Time, sleep func(time.Duration)) {\n\tstarted := now()\n\t" + tc.body + "\n}\n",
+			}}.build(t)
+			diagnostics := checkBoundCallers(root, filepath.Join(root, "internal", "bounds", "bounds.go"))
+			if tc.diagnostic == "" && len(diagnostics) != 0 {
+				t.Fatalf("classified wait read red: %v", diagnostics)
+			}
+			if tc.diagnostic != "" && !containsDiagnostic(diagnostics, "internal/sample/wait.go has an "+tc.diagnostic) {
+				t.Fatalf("raw wait lacks %q: %v", tc.diagnostic, diagnostics)
+			}
+		})
+	}
+}
+
 func readBoundsSource(path string) (string, error) {
 	file := bounds.ClassifyNoFollow(path)
 	if file.State.Failed() {
