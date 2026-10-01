@@ -5,11 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/iotest"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
@@ -167,6 +170,35 @@ func TestWorktreeCommandRemoveRefusesAWorktreePathOutsideARepository(t *testing.
 	t.Setenv(projectDirEnv, "")
 	event := `{"session_id":"s","worktree_path":"` + t.TempDir() + `"}`
 	assertRefused(t, []string{"remove"}, event, 1, removeRepoVerdict)
+}
+
+// An event that passes validation in a repository with no commit reaches the shared
+// lifecycle, and the lifecycle cannot resolve a start for the worktree.
+// Mutation that turns this red: delete the worktree.Create error return, so create
+// prints an empty path and exits 0.
+func TestWorktreeCommandCreateRefusesACreateError(t *testing.T) {
+	t.Setenv(benchhome.Env, t.TempDir())
+	event := `{"session_id":"s","cwd":"` + gittest.Repo(t) + `","name":"n"}`
+	assertRefused(t, []string{"create"}, event, 1, "bench worktree-hook create: resolve assignment start: ")
+}
+
+// A symlinked worktrees admin directory makes the registration scan refuse, so remove
+// has no registration to release through.
+// Mutation that turns this red: delete the registration guard, so remove indexes an
+// empty registration list.
+func TestWorktreeCommandRemoveRefusesAnUnavailableRegistration(t *testing.T) {
+	isolateRemove(t)
+	root := gittest.Repo(t)
+	if err := os.Symlink(t.TempDir(), filepath.Join(root, ".git", "worktrees")); err != nil {
+		t.Fatal(err)
+	}
+	scan := git.ScanWorktreeAdmin(filepath.Join(root, ".git"))
+	if scan == nil {
+		t.Fatal("registration scan accepted a symlinked worktrees admin directory")
+	}
+	t.Setenv(projectDirEnv, root)
+	event := `{"session_id":"s","worktree_path":"` + root + `"}`
+	assertRefused(t, []string{"remove"}, event, 1, "bench worktree-hook remove: worktree registration unavailable: "+scan.Error())
 }
 
 // A remove event from a session that owns no assignment reaches the release through
