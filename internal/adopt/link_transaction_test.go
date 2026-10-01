@@ -86,8 +86,8 @@ func consumerRepo(t *testing.T) string {
 }
 
 // linkConsumer runs a real Link in root, requires wantCode, and returns the
-// manifest rows the link recorded.
-func linkConsumer(t *testing.T, root string, wantCode int) []manifestRow {
+// manifest rows the link recorded and the link output.
+func linkConsumer(t *testing.T, root string, wantCode int) ([]manifestRow, string) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
 	if code := Link(nil, &stdout, &stderr, "1.0.0"); code != wantCode {
@@ -97,7 +97,29 @@ func linkConsumer(t *testing.T, root string, wantCode int) []manifestRow {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return m.Rows()
+	return m.Rows(), stdout.String() + stderr.String()
+}
+
+// projectCollision is the managed path that plantCollision fills with project bytes
+// before link runs.
+const projectCollision = ".agents/commands/bench-implement-spec.md"
+
+// plantCollision writes project-owned bytes at a managed path, so link meets a
+// project-owned collision there.
+func plantCollision(t *testing.T, root string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Join(root, ".agents", "commands"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFixtureFile(t, filepath.Join(root, projectCollision), "project command\n", 0o644)
+}
+
+// requireCollisionKept fails unless the planted collision still holds the project bytes.
+func requireCollisionKept(t *testing.T, root string) {
+	t.Helper()
+	if got := readFile(t, filepath.Join(root, projectCollision)); got != "project command\n" {
+		t.Fatalf("%s = %q, want the project bytes", projectCollision, got)
+	}
 }
 
 func runUnlink(t *testing.T, args []string, wantCode int) string {
@@ -122,7 +144,7 @@ func TestUnlinkRemovesOnlyCleanManifestAssets(t *testing.T) {
 	root := consumerRepo(t)
 	writeFixtureFile(t, filepath.Join(root, "notes.md"), "project notes\n", 0o644)
 	writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), "# Team rules\n\nKeep this rule.\n", 0o644)
-	rows := linkConsumer(t, root, 0)
+	rows, _ := linkConsumer(t, root, 0)
 	if len(rows) == 0 {
 		t.Fatal("Link recorded no manifest rows")
 	}
@@ -142,16 +164,13 @@ func TestUnlinkRemovesOnlyCleanManifestAssets(t *testing.T) {
 }
 
 // TestUnlinkKeepsModifiedAssetsAndProjectCollisions pins the partial posture: a
-// modified managed asset and a project-owned collision keep their bytes, the clean
-// rows still leave, and the exit and the residuals table report the partial result.
+// modified managed asset keeps its bytes and is reported, and the clean rows still
+// leave. A project-owned collision is not a manifest row, so unlink keeps its bytes
+// without a report.
 func TestUnlinkKeepsModifiedAssetsAndProjectCollisions(t *testing.T) {
 	root := consumerRepo(t)
-	const collision = ".agents/commands/bench-implement-spec.md"
-	if err := os.MkdirAll(filepath.Join(root, ".agents", "commands"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	writeFixtureFile(t, filepath.Join(root, collision), "project command\n", 0o644)
-	rows := linkConsumer(t, root, 3)
+	plantCollision(t, root)
+	rows, _ := linkConsumer(t, root, 3)
 	writeFixtureFile(t, filepath.Join(root, ".bench", "BENCH.md"), "edited by the project\n", 0o644)
 
 	runUnlink(t, []string{"--dry-run"}, 3)
@@ -168,24 +187,63 @@ func TestUnlinkKeepsModifiedAssetsAndProjectCollisions(t *testing.T) {
 	if got := readFile(t, filepath.Join(root, ".bench", "BENCH.md")); got != "edited by the project\n" {
 		t.Fatalf(".bench/BENCH.md = %q, want the edited bytes", got)
 	}
-	if got := readFile(t, filepath.Join(root, collision)); got != "project command\n" {
-		t.Fatalf("%s = %q, want the project bytes", collision, got)
-	}
+	requireCollisionKept(t, root)
 	if _, err := os.Lstat(filepath.Join(root, ".bench", "link-manifest.tsv")); err != nil {
 		t.Fatalf("link manifest after a partial unlink: %v, want it kept", err)
 	}
 	for _, row := range rows {
-		if row.rel != ".bench/BENCH.md" && row.rel != collision {
+		if row.rel != ".bench/BENCH.md" {
 			requireAbsent(t, filepath.Join(root, row.rel))
 		}
 	}
+}
+
+// TestUnlinkDryRunOnACleanRepoWritesNothing pins the clean dry run: it exits 0, and the
+// manifest, the managed hook, AGENTS.md, and every manifest row keep their bytes.
+func TestUnlinkDryRunOnACleanRepoWritesNothing(t *testing.T) {
+	root := consumerRepo(t)
+	writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), "# Team rules\n\nKeep this rule.\n", 0o644)
+	rows, _ := linkConsumer(t, root, 0)
+	paths := []string{".bench/link-manifest.tsv", ".git/hooks/pre-push", "AGENTS.md"}
+	for _, row := range rows {
+		paths = append(paths, row.rel)
+	}
+	before := map[string]string{}
+	for _, rel := range paths {
+		before[rel] = readFile(t, filepath.Join(root, rel))
+	}
+	if !strings.Contains(before["AGENTS.md"], benchStartMarker) {
+		t.Fatalf("AGENTS.md = %q, want the managed block before the dry run", before["AGENTS.md"])
+	}
+
+	runUnlink(t, []string{"--dry-run"}, 0)
+	for _, rel := range paths {
+		if got, err := os.ReadFile(filepath.Join(root, rel)); err != nil || string(got) != before[rel] {
+			t.Fatalf("%s after a dry run: %v, want the bytes unchanged", rel, err)
+		}
+	}
+}
+
+// TestUnlinkCollisionOnlyRepoExitsZero pins the round trip for a repository whose only
+// residual is a project-owned collision. Link reports it and exits 3, but records no
+// manifest row for it, so unlink exits 0, keeps it, and removes the manifest.
+func TestUnlinkCollisionOnlyRepoExitsZero(t *testing.T) {
+	root := consumerRepo(t)
+	plantCollision(t, root)
+	if _, out := linkConsumer(t, root, 3); !strings.Contains(out, projectCollision+",project-owned\n") {
+		t.Fatalf("link output = %q, want the project-owned collision row", out)
+	}
+
+	runUnlink(t, nil, 0)
+	requireCollisionKept(t, root)
+	requireAbsent(t, filepath.Join(root, ".bench", "link-manifest.tsv"))
 }
 
 // TestUnlinkRefusesAManifestRowOutsideTheRepo plants a hand-edited row that escapes
 // the repository and carries the exact fingerprint of the file it names.
 func TestUnlinkRefusesAManifestRowOutsideTheRepo(t *testing.T) {
 	root := consumerRepo(t)
-	rows := linkConsumer(t, root, 0)
+	rows, _ := linkConsumer(t, root, 0)
 	var bench manifestRow
 	for _, row := range rows {
 		if row.rel == ".bench/BENCH.md" {
