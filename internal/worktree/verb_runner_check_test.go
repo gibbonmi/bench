@@ -161,9 +161,9 @@ func TestVerbResultRowsDecodeTheWholeDocument(t *testing.T) {
 	result := runVerb(t, verbList, call)
 	document, err := axitest.DecodeDocument(result.stdout)
 	mustNoError(t, err)
-	want, err := document.Rows("worktrees")
+	want, err := document.Rows(selectedTable)
 	mustNoError(t, err)
-	rows, err := readVerbRows(result.stdout, "worktrees")
+	rows, err := readVerbRows(result.stdout, selectedTable)
 	if err != nil || len(rows) != 2 || !reflect.DeepEqual(rows, want) {
 		t.Fatalf("rows = %#v, %v; want the two decoded rows %#v", rows, err, want)
 	}
@@ -171,9 +171,9 @@ func TestVerbResultRowsDecodeTheWholeDocument(t *testing.T) {
 
 func TestVerbResultRowsRefuseAPartialDocument(t *testing.T) {
 	t.Parallel()
-	table, err := toon.Table("worktrees", []string{"id"}, [][]string{{"one"}})
+	table, err := toon.Table(selectedTable, []string{"id"}, [][]string{{"one"}})
 	mustNoError(t, err)
-	if rows, err := readVerbRows(table+"a line outside the grammar\n", "worktrees"); err == nil {
+	if rows, err := readVerbRows(table+"a line outside the grammar\n", selectedTable); err == nil {
 		t.Fatalf("rows = %#v with no error, want a decode error", rows)
 	}
 }
@@ -181,7 +181,7 @@ func TestVerbResultRowsRefuseAPartialDocument(t *testing.T) {
 func TestVerbResultMustRowsFailsOnAReaderError(t *testing.T) {
 	t.Parallel()
 	recorder := &verbRecorder{}
-	verbResult{stdout: "a line outside the grammar\n"}.mustRows(recorder, "worktrees")
+	verbResult{stdout: "a line outside the grammar\n"}.mustRows(recorder, selectedTable)
 	if len(recorder.failures) != 1 {
 		t.Fatalf("recorder failures = %q, want one", recorder.failures)
 	}
@@ -194,7 +194,7 @@ func TestVerbResultFingerprintReadsTheTableCell(t *testing.T) {
 	if err != nil || len(value) != 64 || !strings.Contains(result.stdout, "--landed --apply "+value) {
 		t.Fatalf("fingerprint = %q, %v; want the set fingerprint that the apply action names in %q", value, err, result.stdout)
 	}
-	for _, row := range result.mustRows(t, "worktree_cleanup") {
+	for _, row := range result.mustRows(t, cleanupTable) {
 		if cell := row.(map[string]any)["fingerprint"]; cell != value {
 			t.Fatalf("row fingerprint = %#v, want %q", cell, value)
 		}
@@ -248,7 +248,7 @@ func TestVerbResultFingerprintRefusesConflictingRecords(t *testing.T) {
 
 func TestVerbResultFingerprintRefusesAnAbsentValue(t *testing.T) {
 	t.Parallel()
-	table, err := toon.Table("worktree_cleanup", []string{"target"}, [][]string{{"one"}})
+	table, err := toon.Table(cleanupTable, []string{"target"}, [][]string{{"one"}})
 	mustNoError(t, err)
 	if value, err := readVerbFingerprint(table); !errors.Is(err, errNoVerbFingerprint) {
 		t.Fatalf("fingerprint = %q, %v; want the no-fingerprint error", value, err)
@@ -257,7 +257,7 @@ func TestVerbResultFingerprintRefusesAnAbsentValue(t *testing.T) {
 
 func TestVerbResultFingerprintRefusesConflictingCells(t *testing.T) {
 	t.Parallel()
-	table, err := toon.Table("worktree_cleanup", []string{"target", "fingerprint"}, [][]string{{"one", "aaaa"}, {"two", "bbbb"}})
+	table, err := toon.Table(cleanupTable, []string{"target", "fingerprint"}, [][]string{{"one", "aaaa"}, {"two", "bbbb"}})
 	mustNoError(t, err)
 	if value, err := readVerbFingerprint(table); err == nil {
 		t.Fatalf("fingerprint = %q with no error, want a conflict error", value)
@@ -276,7 +276,7 @@ func TestVerbResultMustFingerprintFailsOnAReaderError(t *testing.T) {
 func TestVerbResultFingerprintKeepsANumericLookingCell(t *testing.T) {
 	t.Parallel()
 	const numeric = "1.50"
-	table, err := toon.Table("worktree_cleanup", []string{"target", "fingerprint"}, [][]string{{"one", numeric}, {"two", numeric}})
+	table, err := toon.Table(cleanupTable, []string{"target", "fingerprint"}, [][]string{{"one", numeric}, {"two", numeric}})
 	mustNoError(t, err)
 	requireTest(t, strings.Contains(table, `"`+numeric+`"`), "the producer did not quote %q: %q", numeric, table)
 	if value, err := readVerbFingerprint(table); err != nil || value != numeric {
@@ -315,7 +315,7 @@ func TestVerbResultFingerprintTreatsAPlaceholderAsAbsent(t *testing.T) {
 		result verbResult
 		cell   string
 	}{{explicit, unapplicableFingerprint}, {faulted, ""}} {
-		for _, row := range plan.result.mustRows(t, "worktree_cleanup") {
+		for _, row := range plan.result.mustRows(t, cleanupTable) {
 			requireTest(t, row.(map[string]any)["fingerprint"] == plan.cell, "row = %#v, want fingerprint %q", row, plan.cell)
 		}
 		if value, err := readVerbFingerprint(plan.result.stdout); !errors.Is(err, errNoVerbFingerprint) {

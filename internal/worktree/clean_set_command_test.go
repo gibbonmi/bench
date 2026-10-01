@@ -151,10 +151,16 @@ func TestCleanSetHostileOperand(t *testing.T) {
 			if plan.exit != 1 || plan.stderr != "" {
 				t.Fatalf("hostile plan exit=%d stdout=%q stderr=%q, want a reported failure", plan.exit, plan.stdout, plan.stderr)
 			}
-			if rows := plan.mustRows(t, cleanupTable); len(rows) != 2 {
+			rows := plan.mustRows(t, cleanupTable)
+			if len(rows) != 2 {
 				t.Fatalf("hostile plan rows = %#v, want every selection outcome", rows)
 			}
 			plan.mustNoFingerprint(t)
+			for _, row := range textRows(t, rows) {
+				if row["fingerprint"] != "none" {
+					t.Fatalf("hostile plan = %q, want no applicable fingerprint", plan.stdout)
+				}
+			}
 			if strings.Contains(plan.stdout, "bench worktree clean --target") {
 				t.Fatalf("hostile plan = %q, want no replayable action", plan.stdout)
 			}
