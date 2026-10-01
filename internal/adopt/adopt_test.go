@@ -245,14 +245,7 @@ func TestLinkInKitSourceCheckoutRefuses(t *testing.T) {
 // that tests for that marker instead of the kit checkout refuses the second run. A
 // consumer repo relinks as often as it likes, whatever assets the first run left.
 func TestLinkRelinkStaysGreenInAConsumerRepo(t *testing.T) {
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("BENCH_KIT", filepath.Clean(filepath.Join(wd, "..", "..")))
-	t.Chdir(root)
+	root := consumerRepo(t)
 
 	var stdout, stderr bytes.Buffer
 	if code := Link(nil, &stdout, &stderr, "1.0.0"); code != 0 {
