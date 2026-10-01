@@ -1083,30 +1083,27 @@ func TestSerialSetStaysBelowTheCeiling(t *testing.T) {
 	t.Logf("the package holds %d serial tests, at or below the ceiling of %d", len(serialSet(facts)), worktreeSerialCeiling)
 }
 
-// worktreeTestFloor is the package's pinned top-level test count. A new test
-// raises the count; a removal below the pin turns the gate red.
-const worktreeTestFloor = 334
+// worktreeTestCount is the package's exact top-level test count. The live tree
+// cannot supply it, because a removal changes the live count and the expectation
+// together. One removal or merge turns the pin red. One addition also turns the
+// pin red, so the author raises the pin in the same change and it never drifts.
+const worktreeTestCount = 662
 
 // TestPackageTestCountPin proves no test is removed or merged for wall-clock.
-// (Coverage row WF12.)
+// It counts the census walk's facts, one for each top-level test. (Coverage row WF12.)
 func TestPackageTestCountPin(t *testing.T) {
 	t.Parallel()
-	files, _, _, err := parseTestFiles(".")
+	facts, err := censusFacts(".")
 	if err != nil {
-		t.Fatalf("parse the package test files: %v", err)
+		t.Fatalf("census the package: %v", err)
 	}
-	count := 0
-	for _, file := range files {
-		for _, node := range file.Decls {
-			if decl, ok := node.(*ast.FuncDecl); ok && isTopLevelTest(decl) {
-				count++
-			}
-		}
+	switch count := len(facts); {
+	case count < worktreeTestCount:
+		t.Fatalf("the package declares %d top-level tests, below the pin of %d: a test was removed or merged", count, worktreeTestCount)
+	case count > worktreeTestCount:
+		t.Fatalf("the package declares %d top-level tests, above the pin of %d: raise worktreeTestCount to %d in this change", count, worktreeTestCount, count)
 	}
-	if count < worktreeTestFloor {
-		t.Fatalf("the package declares %d top-level tests, below the pin of %d", count, worktreeTestFloor)
-	}
-	t.Logf("the package declares %d top-level tests", count)
+	t.Logf("the package declares %d top-level tests, equal to the pin", len(facts))
 }
 
 // TestPackageClausePin proves every test file stays in package worktree, so no
