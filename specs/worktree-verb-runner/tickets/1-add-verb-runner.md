@@ -31,7 +31,8 @@ Contract for later tickets: the verb keys, the call value's fields, the verb res
 ## Acceptance
 
 - [ ] Each key with a usage grammar returns its own verb's usage refusal. The expectation reads the usage constant, or the grammar's `Cmd` field for `show` and `build`.
-- [ ] The core fingerprint reader returns the no-fingerprint error for a real no-op `reset` record and an error for two records that disagree.
+- [ ] The core fingerprint reader returns the no-fingerprint error for a real no-op `reset` plan whose record carries `none`.
+- [ ] The core fingerprint reader returns an error for two records that disagree.
 - [ ] The `pool` key returns the pool path of its root argument.
 - [ ] The `lease-file` and `resume-clean` keys each match a direct call to their own verb entry.
 - [ ] The verb result equals a direct call's exit code and both streams for the same input.
