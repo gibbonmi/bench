@@ -114,13 +114,13 @@ func worktreeTree(path, admin string) (string, error) {
 		return "", err
 	}
 	defer cleanup()
-	if _, err := gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "read-tree", "HEAD"); err != nil {
+	if _, err := indexInput(path, index, nil, "read-tree", "HEAD"); err != nil {
 		return "", err
 	}
-	if _, err := gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "add", "-A"); err != nil {
+	if _, err := indexInput(path, index, nil, "add", "-A"); err != nil {
 		return "", err
 	}
-	return gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "write-tree")
+	return indexInput(path, index, nil, "write-tree")
 }
 func realIndexTree(path, admin string) (string, error) {
 	realIndex, err := git.AdminPath(path, "index")
@@ -139,7 +139,7 @@ func realIndexTree(path, admin string) (string, error) {
 	if err := os.WriteFile(index, data, 0o600); err != nil {
 		return "", err
 	}
-	return gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "write-tree")
+	return indexInput(path, index, nil, "write-tree")
 }
 func readIndexEntries(path string) ([]indexEntry, bool, error) {
 	raw, err := rawIndexEntries(path)
@@ -185,7 +185,7 @@ func conflictTree(path, admin string, entries []indexEntry, wanted int) (string,
 		return "", err
 	}
 	defer cleanup()
-	if _, err := gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "read-tree", "--empty"); err != nil {
+	if _, err := indexInput(path, index, nil, "read-tree", "--empty"); err != nil {
 		return "", err
 	}
 	var input bytes.Buffer
@@ -195,10 +195,10 @@ func conflictTree(path, admin string, entries []indexEntry, wanted int) (string,
 		}
 		fmt.Fprintf(&input, "%s %s\t%s%c", entry.mode, entry.oid, entry.path, byte(0))
 	}
-	if _, err := gitInput(path, []string{"GIT_INDEX_FILE=" + index}, input.Bytes(), "update-index", "-z", "--index-info"); err != nil {
+	if _, err := indexInput(path, index, input.Bytes(), "update-index", "-z", "--index-info"); err != nil {
 		return "", err
 	}
-	return gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "write-tree")
+	return indexInput(path, index, nil, "write-tree")
 }
 func commitTree(root, tree string, parents []string, message string) (string, error) {
 	args := []string{"commit-tree", tree}
@@ -211,14 +211,28 @@ func commitTree(root, tree string, parents []string, message string) (string, er
 	}
 	return gitInput(root, env, []byte(message), args...)
 }
+
+// gitInput runs `git -C root <args>` with extraEnv appended to the process environment.
 func gitInput(root string, extraEnv []string, input []byte, args ...string) (string, error) {
 	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
 	cmd.Env = append(os.Environ(), extraEnv...)
+	return runInput(cmd, args[0], input)
+}
+
+// indexInput runs `git -C root <args>` against the throwaway index file. git.IndexCommand
+// owns that invocation form.
+func indexInput(root, index string, input []byte, args ...string) (string, error) {
+	return runInput(git.IndexCommand(root, index, args...), args[0], input)
+}
+
+// runInput feeds input to cmd's stdin and returns stdout without trailing newlines. A
+// failure reads as "git <verb>: <stderr>".
+func runInput(cmd *exec.Cmd, verb string, input []byte) (string, error) {
 	cmd.Stdin = bytes.NewReader(input)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("git %s: %s", args[0], strings.TrimSpace(stderr.String()))
+		return "", fmt.Errorf("git %s: %s", verb, strings.TrimSpace(stderr.String()))
 	}
 	return strings.TrimRight(stdout.String(), "\n"), nil
 }
