@@ -182,6 +182,181 @@ Findings: 0. VR60 and VR61 name real tests. The round 2 omission of the placehol
 - The VR1 why-cell in the spec runs to 38 words and says "command name" where the ticket says "`Cmd` field". The VR-C2 enabling plan commit can shorten it.
 - Ticket 1 says "a real no-op `reset` record", and VR60 says "a no-op `reset` plan whose record carries `none`". One term serves both.
 
+## VR-C2 ticket 2 author evidence
+
+Ticket 2 had a fresh `bench-writer` author, `vr-t2-author`, on opus at medium effort, with a cap of 3 attempts. The author started at `371873a6` on the chunk base `ef2cd35f`. The author committed `c56f6107` on a lane pass in the first attempt, and then committed this record alone. The build preflight on `c56f6107` reported 13 green checks, 2 checks that do not apply, and 0 red checks.
+
+The ticket is a pure migration, so no row has a new test. The red for each row is the named regression probe, which bit before and after the change. The static rows read the tree at `c56f6107`.
+
+- VR23: the VR23 command printed no line. The four helpers `runReset`, `runResetWith`, `resetFingerprint`, and `restoreFingerprint` are deleted.
+- VR24: `restoreFixture` returns `restoredAssignment`, which `verb_fixture_test.go` declares. The tuple scan lists `restoreFixture` at the base and omits it at `c56f6107`.
+- VR25: the verb form command over the seven reset files and `verb_fixture_test.go` printed no line.
+- VR47: no reset file declares a `bytes.Buffer`, and no reset file calls a core reader or `checkVerbCall`.
+
+The author reported these deviations and choices. The Spec axis grades each one.
+
+- Each deleted helper checked the plan exit code. Each call site keeps that check as a `requireTest` line before `mustFingerprint`.
+- `restoreFingerprint` also checked the `mode=restore` and `envelope=` cells. The predicate `isRestorePlanOf` holds that check once, and it runs no verb and reads no fingerprint.
+- The `restoredAssignment.call` method builds a call value from the root and the home, and it runs no verb.
+- `newOwnedAssignment` keeps its tuple until ticket 3, so its call sites build each call value inline.
+- The `runMerge` call in `reset_repair_test.go` stays for ticket 7.
+- No check required an edit to the five registry paths, so the diff leaves them unchanged.
+
+### Probe verdicts
+
+Each probe ran through `bench probe` with the same mutation, and each restore reads `yes`. The mutation in `internal/worktree/reset_apply.go` swaps `plan.action == "none" || fingerprint != plan.fingerprint` to `plan.action == "none"`. The run selects `TestReset`. The failing test set is the same before and after the change.
+
+| Source | Verdict | Failed tests |
+|---|---|---|
+| `371873a6`, before the first edit | bit | `TestResetApplyRefusesAStalePlan`, `TestResetFingerprintTracksTheIndex`, `TestResetRestoreRefusesAStaleIndex`, `TestResetRestoreRefusesAStalePlan` |
+| `c56f6107` | bit | `TestResetApplyRefusesAStalePlan`, `TestResetFingerprintTracksTheIndex`, `TestResetRestoreRefusesAStaleIndex`, `TestResetRestoreRefusesAStalePlan` |
+
+### VR46 pre-check
+
+The author counted the calls in each function of the seven reset files at `ef2cd35f` and at `c56f6107`. The count includes `t.Fatal`, `t.Fatalf`, `t.Error`, and `t.Errorf`. Most tests fail through `requireTest` and `mustNoError`, so the author also counted those two helpers.
+
+| Count | `ef2cd35f` | `c56f6107` |
+|---|---|---|
+| Functions that both trees hold | 76 | 76 |
+| Direct `t.Fatal` family calls | 2 | 2 |
+| `requireTest` and `mustNoError` calls | 140 | 187 |
+| `mustFingerprint` calls | 0 | 47 |
+
+No test count fell. The four deleted helpers held 5 `requireTest` calls. The exit and cell checks move to each call site, and `mustFingerprint` replaces the found, non-empty, and non-`none` checks.
+
+### Tuple scan
+
+The scan applies the positional-tuple predicate of the spec to each `_test.go` file of `internal/worktree`. The author ran the program from the scratch area with its own `go.mod`, which holds `module tuplescan` and `go 1.22`.
+
+```go
+// Command tuplescan lists each positional fixture tuple in the _test.go files of one
+// directory. A positional fixture tuple is a function that returns at least two values
+// and no error, where one value is a Creation or a []Creation, or where it returns three
+// or more values. A function that returns exactly a joins value and a probe is excluded.
+package main
+
+import (
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+)
+
+func typeText(fset *token.FileSet, expr ast.Expr) string {
+	switch e := expr.(type) {
+	case *ast.Ident:
+		return e.Name
+	case *ast.ArrayType:
+		if e.Len == nil {
+			return "[]" + typeText(fset, e.Elt)
+		}
+	case *ast.StarExpr:
+		return "*" + typeText(fset, e.X)
+	case *ast.SelectorExpr:
+		return typeText(fset, e.X) + "." + e.Sel.Name
+	case *ast.MapType:
+		return "map[" + typeText(fset, e.Key) + "]" + typeText(fset, e.Value)
+	}
+	return fmt.Sprintf("%T", expr)
+}
+
+func main() {
+	dir := os.Args[1]
+	paths, err := filepath.Glob(filepath.Join(dir, "*_test.go"))
+	if err != nil {
+		panic(err)
+	}
+	sort.Strings(paths)
+	fset := token.NewFileSet()
+	for _, path := range paths {
+		file, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
+		if err != nil {
+			panic(err)
+		}
+		for _, decl := range file.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Type.Results == nil {
+				continue
+			}
+			var types []string
+			for _, field := range fn.Type.Results.List {
+				count := len(field.Names)
+				if count == 0 {
+					count = 1
+				}
+				for i := 0; i < count; i++ {
+					types = append(types, typeText(fset, field.Type))
+				}
+			}
+			if len(types) < 2 {
+				continue
+			}
+			hasError, hasCreation := false, false
+			for _, typ := range types {
+				hasError = hasError || typ == "error"
+				hasCreation = hasCreation || typ == "Creation" || typ == "[]Creation"
+			}
+			if hasError {
+				continue
+			}
+			if len(types) == 2 && (types[0] == "joins" || types[1] == "joins") && !hasCreation {
+				continue
+			}
+			if hasCreation || len(types) >= 3 {
+				fmt.Printf("%s:%d: %s (%s)\n", filepath.Base(path), fset.Position(fn.Pos()).Line, fn.Name.Name, strings.Join(types, ", "))
+			}
+		}
+	}
+}
+```
+
+At `ef2cd35f` the scan printed 35 lines. At `c56f6107` it printed the 32 lines below. The three lines that went are `runReset`, `runResetWith`, and `restoreFixture`. Each remaining fixture builder is in the tuple list of the spec, and each remaining run wrapper goes under VR41.
+
+```text
+clean_branch_test.go:20: unprovableLandedAssignment (string, Creation)
+clean_discard_test.go:67: runDiscard (string, int, map[string][]string)
+clean_discard_test.go:93: planAndApply (string, int, map[string][]string)
+clean_landed_test.go:18: landedSetFixture (string, string, Creation, Creation, Creation)
+clean_landed_test.go:32: runCleanup (string, string, int)
+clean_landed_test.go:38: runCleanupWith (string, string, int)
+clean_set_apply_test.go:26: removableSetFixture (string, string, []Creation, map[string]string)
+clean_set_apply_test.go:236: retainedMemberFixture (string, string, Creation, Creation)
+exec_test.go:253: execAtOwnedTarget (string, string, string, int)
+land_effects_cleanup_test.go:26: foldLandingSibling (Creation, string)
+land_effects_test.go:21: brokerChangingLanding (string, Creation, string, string, string)
+land_effects_test.go:160: brokerDestinationFixture (string, Creation, string, string, string)
+land_fixtures_test.go:29: publicLandingFixture (string, Creation, string, string, string, string)
+land_fixtures_test.go:36: publicLandingFixtureAtHome (string, Creation, string, string, string)
+land_fixtures_test.go:44: specLessLandingFixture (string, Creation, string, string, string, string)
+land_fixtures_test.go:55: foldedLandingFixture (string, Creation, string, string, string, string, string)
+land_fixtures_test.go:69: landingFixtureAtHome (string, Creation, string, string, string)
+land_fixtures_test.go:195: ticketsOnlyLandingFixture (string, Creation, string, string, string, string)
+land_freshness_test.go:134: redProspectiveGateLanding (string, Creation, string, string, string, string)
+land_surface_test.go:14: landSurface (string, Creation, string, string)
+land_surface_test.go:20: landIn (int, string, string)
+live_binary_test.go:21: newResidueGuardFixture (string, Creation, string)
+merge_test.go:23: mergeFixture (joins, string, string, string, []Creation)
+merge_test.go:50: runMerge (int, string, string)
+pool_reclaim_test.go:22: newReclaimPool (string, string, string)
+pool_root_test.go:40: poolRootFixture (string, string, string)
+reauthorize_test.go:264: reauthorizeFixture (string, Creation, string, string, string)
+resume_test.go:526: newOwnedSubmoduleAssignment (string, Creation, string)
+resume_test.go:545: newOwnedAssignment (string, Creation, string)
+resume_test.go:552: newPendingAssignment (string, Creation, string)
+unlanded_route_test.go:16: refusedUnlandedRelease (string, Creation, string, string)
+worktree_test.go:750: runCreate (int, string, string)
+```
+
+### Verification
+
+The author ran each check on the source of `c56f6107`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The package excerpt omits its two skip rows, and each skip is a unix socket capability skip.
+
+`TestPackageTestCountPin` passed with `worktreeTestCount` at 688, and `TestSerialSetStaysBelowTheCeiling` passed at the ceiling of 46. The diff adds no `t.Setenv` call. The author also ran `bench test --package ./internal/conformance` and `bench structure --growth ef2cd35f`, and each passed.
+
 ```bench-review-record
 {
   "version": 2,
@@ -649,6 +824,41 @@ Findings: 0. VR60 and VR61 name real tests. The round 2 omission of the placehol
           ]
         }
       ]
+    },
+    {
+      "id": "VR-C2",
+      "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
+      "tip": "c56f6107c954278484cee53eec9b4d56bbd32d44",
+      "plan_digest": "pending",
+      "source_digest": "pending",
+      "acceptance_rows": [
+        "VR23",
+        "VR24",
+        "VR25",
+        "VR26",
+        "VR27"
+      ],
+      "verification": [
+        {
+          "id": "vr-c2-2-worktree-r1",
+          "performer": "claude:bench-writer/vr-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1c354a766a4d09d2673b5151f806eed82f378a14",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t2-author-20261001/2-worktree@c56f6107",
+            "digest": "sha256:929611328f629f2c705026835eb872158f9c91dc7d0bd0d0cf70ab51d5d15943",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,50660\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "2-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
