@@ -219,6 +219,17 @@ func resolveVerbOperand(root, operand string) string {
 	return operand
 }
 
+// releaseRoot answers the root that a release runs its work from: the primary checkout.
+// A release that runs inside its own tree has that tree as its root, and the removal
+// deletes that root before the release writes its terminal receipt. An unresolvable
+// primary checkout keeps the caller's root, so the release reports its own refusal.
+func releaseRoot(root string) string {
+	if primary, err := git.PrimaryCheckout(root); err == nil {
+		return primary
+	}
+	return root
+}
+
 // expandHomeTarget resolves the portable `~`-prefixed form that every worktree command
 // prints, and owns that grammar for all of them. The second result reports whether the
 // target used the home form at all, so a caller can leave an ordinary path untouched.

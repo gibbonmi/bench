@@ -402,7 +402,7 @@ func releaseCommandWith(j joins, root, home string, args []string, stdout, stder
 	// The record opens after the grammar answers, so a usage refusal records nothing.
 	var assignment string
 	finishSpan := beginVerbSpan(home, root, otelReleaseSeam)
-	exit := releaseAttributed(&assignment, j, root, args, stdout, stderr)
+	exit := releaseAttributed(&assignment, j, releaseRoot(root), args, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit
 }

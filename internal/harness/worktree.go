@@ -86,12 +86,12 @@ func claudeRemove(stdin io.Reader, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "bench worktree-hook remove: repository unavailable: %v\n", err)
 		return 1
 	}
-	registrations, err := git.Worktrees(root)
-	if err != nil || len(registrations) == 0 {
+	primary, err := git.PrimaryCheckout(root)
+	if err != nil {
 		fmt.Fprintf(stderr, "bench worktree-hook remove: worktree registration unavailable: %v\n", err)
 		return 1
 	}
-	return worktree.ReleaseCommand(registrations[0].Path, worktree.Home(), []string{"--request", claudeRequestID(event.SessionID), event.WorktreePath}, io.Discard, stderr)
+	return worktree.ReleaseCommand(primary, worktree.Home(), []string{"--request", claudeRequestID(event.SessionID), event.WorktreePath}, io.Discard, stderr)
 }
 
 func decodeEvent(stdin io.Reader, dst any) error {
