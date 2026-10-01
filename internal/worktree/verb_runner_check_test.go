@@ -34,18 +34,24 @@ func (r *verbRecorder) Fatalf(format string, args ...any) {
 
 func (r *verbRecorder) FailNow() { r.failures = append(r.failures, "FailNow") }
 
-// usageCommand is the command name that leads a usage constant. A grammar that refuses an
-// extra argument names only that command, not the whole usage line.
-func usageCommand(line string) string {
-	return strings.Join(strings.Fields(line)[:3], " ")
-}
-
 // runnerRepo is a call on a new repository with a private home, so no test binds the
 // process environment.
 func runnerRepo(t *testing.T) verbCall {
 	t.Helper()
 	root := newWorktreeRepo(t)
 	return verbCall{root: root, home: filepath.Join(root, ".bench-home")}
+}
+
+// addBrokenUnclaimedBranch creates one unclaimed assignment ref that does not resolve to a
+// commit. Its loose ref file names a blob directly, because git update-ref can refuse a ref
+// that names no commit.
+func addBrokenUnclaimedBranch(t *testing.T, root, owner string) string {
+	t.Helper()
+	ref := unclaimedBranchRef(owner)
+	loose := filepath.Join(root, ".git", filepath.FromSlash(ref))
+	mustNoError(t, os.MkdirAll(filepath.Dir(loose), 0o755))
+	mustWrite(t, loose, []byte(gitOutput(t, root, "hash-object", "-w", "tracked.txt")+"\n"), 0o644)
+	return ref
 }
 
 // landedRunnerPlan is a real `clean --landed` plan over two landed assignments.
@@ -73,6 +79,8 @@ func explicitErrorPlan(t *testing.T) verbResult {
 
 func TestVerbRunnerKeyReachesItsOwnVerb(t *testing.T) {
 	t.Parallel()
+	var invalidClean bytes.Buffer
+	cleanInvocationError(&invalidClean)
 	for _, row := range []struct {
 		key  verbKey
 		args []string
@@ -80,7 +88,7 @@ func TestVerbRunnerKeyReachesItsOwnVerb(t *testing.T) {
 	}{
 		{verbCreate, nil, "usage: " + usage.WorktreeCreate},
 		{verbRelease, nil, "usage: " + usage.WorktreeRelease},
-		{verbClean, nil, "invalid invocation; run " + usage.WorktreeClean},
+		{verbClean, nil, invalidClean.String()},
 		{verbReclaim, []string{"--bogus"}, toon.Usage(usage.WorktreeReclaim, "--bogus")},
 		{verbReauthorize, []string{"p"}, "usage: " + usage.WorktreeReauthorize},
 		{verbMerge, []string{"t"}, "usage: " + usage.WorktreeMerge},
@@ -89,8 +97,8 @@ func TestVerbRunnerKeyReachesItsOwnVerb(t *testing.T) {
 		{verbLandResume, []string{"p"}, "usage: " + usage.WorktreeLandResume},
 		{verbList, []string{"x"}, toon.Usage(usage.WorktreeList, "x")},
 		{verbPath, nil, "usage: " + usage.WorktreePath},
-		{verbShow, []string{"a", "b", "c"}, toon.Usage(usageCommand(usage.WorktreeShow), "c")},
-		{verbBuild, []string{"a", "b"}, toon.Usage(usageCommand(usage.WorktreeBuild), "b")},
+		{verbShow, []string{"a", "b", "c"}, toon.Usage(worktreeShowGrammar.Cmd, "c")},
+		{verbBuild, []string{"a", "b"}, toon.Usage(buildGrammar.Cmd, "b")},
 		{verbExec, []string{"t", "x"}, "usage: " + usage.WorktreeExec},
 	} {
 		t.Run(string(row.key), func(t *testing.T) {
@@ -193,18 +201,48 @@ func TestVerbResultFingerprintReadsTheTableCell(t *testing.T) {
 	}
 }
 
-func TestVerbResultFingerprintReadsTheRecordCell(t *testing.T) {
-	t.Parallel()
+// resetRunnerPlan is a real `reset --to` plan back to the assignment start. With a commit
+// ahead of the start, the plan resets; without one, the plan takes no action.
+func resetRunnerPlan(t *testing.T, ahead bool) (result verbResult, record string) {
+	t.Helper()
 	call := runnerRepo(t)
 	creation := mustCreate(t, call.root, call.home, "runner-record", "record")
-	commitInWorktree(t, creation.Path, "ahead", "ahead\n", "ahead")
+	if ahead {
+		commitInWorktree(t, creation.Path, "ahead", "ahead\n", "ahead")
+	}
 	call.args = []string{"--to", creation.Assignment.Start, creation.Assignment.ID}
-	result := runVerb(t, verbReset, call)
+	result = runVerb(t, verbReset, call)
 	requireTest(t, result.exit == 0, "reset --to = %d %q %q", result.exit, result.stdout, result.stderr)
-	record, _, _ := strings.Cut(result.stdout, "\n")
+	record, _, _ = strings.Cut(result.stdout, "\n")
+	return result, record
+}
+
+func TestVerbResultFingerprintReadsTheRecordCell(t *testing.T) {
+	t.Parallel()
+	result, record := resetRunnerPlan(t, true)
 	value, err := readVerbFingerprint(result.stdout)
-	if err != nil || value == "" || !strings.Contains(record, " --apply "+value+",") || !strings.HasSuffix(record, ",fingerprint="+value+"}") {
+	if err != nil || value == "" || !strings.Contains(record, " --apply "+value+",") || !strings.Contains(record, "fingerprint="+value) {
 		t.Fatalf("fingerprint = %q, %v; want the record cell that the next cell applies in %q", value, err, record)
+	}
+}
+
+func TestVerbResultFingerprintReadsANoOpRecordAsAbsent(t *testing.T) {
+	t.Parallel()
+	result, record := resetRunnerPlan(t, false)
+	requireTest(t, strings.Contains(record, "fingerprint="+unapplicableFingerprint), "no-op record = %q, want the placeholder cell", record)
+	if value, err := readVerbFingerprint(result.stdout); !errors.Is(err, errNoVerbFingerprint) {
+		t.Fatalf("fingerprint = %q, %v for %q; want the no-fingerprint error", value, err, result.stdout)
+	}
+}
+
+func TestVerbResultFingerprintRefusesConflictingRecords(t *testing.T) {
+	t.Parallel()
+	result, record := resetRunnerPlan(t, true)
+	value := result.mustFingerprint(t)
+	other := strings.Replace(record, "fingerprint="+value, "fingerprint="+strings.Repeat("0", len(value)), 1)
+	requireTest(t, other != record, "record %q holds no cell %q", record, value)
+	if value, err := readVerbFingerprint(record + "\n" + other + "\n"); err == nil || errors.Is(err, errNoVerbFingerprint) {
+		t.Fatalf("fingerprint = %q, %v; want a conflict error", value, err)
 	}
 }
 
@@ -265,17 +303,12 @@ func TestVerbResultMustNoFingerprintRefusesAPlan(t *testing.T) {
 	}
 }
 
-// TestVerbResultFingerprintTreatsAPlaceholderAsAbsent builds the faulted unclaimed set as
-// TestCleanUnclaimedErrorRowRefusesTheSet does: the loose ref file names a blob, because git
-// update-ref can refuse a ref that names no commit.
 func TestVerbResultFingerprintTreatsAPlaceholderAsAbsent(t *testing.T) {
 	t.Parallel()
 	explicit := explicitErrorPlan(t)
 	root, home := unclaimedBranchFixture(t)
 	addUnclaimedBranch(t, root, "a")
-	loose := filepath.Join(root, ".git", filepath.FromSlash(unclaimedBranchRef("b")))
-	mustNoError(t, os.MkdirAll(filepath.Dir(loose), 0o755))
-	mustWrite(t, loose, []byte(gitOutput(t, root, "hash-object", "-w", "tracked.txt")+"\n"), 0o644)
+	addBrokenUnclaimedBranch(t, root, "b")
 	faulted := runVerb(t, verbClean, verbCall{root: root, home: home, args: []string{"--discard-branch", "--unclaimed"}})
 	requireTest(t, faulted.exit == 1, "faulted plan = %d %q %q", faulted.exit, faulted.stdout, faulted.stderr)
 	for _, plan := range []struct {

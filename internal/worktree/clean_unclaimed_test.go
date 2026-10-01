@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -309,16 +308,11 @@ func TestCleanUnclaimedPlanNamesApplyOnlyWhenARowRemoves(t *testing.T) {
 	}
 }
 
-// TestCleanUnclaimedErrorRowRefusesTheSet is RI11, RI72, and RI73. The loose ref file names a
-// blob directly, because git update-ref can refuse a ref that names no commit.
+// TestCleanUnclaimedErrorRowRefusesTheSet is RI11, RI72, and RI73.
 func TestCleanUnclaimedErrorRowRefusesTheSet(t *testing.T) {
 	t.Parallel()
 	root, home := unclaimedBranchFixture(t)
-	landed := addUnclaimedBranch(t, root, "a")
-	broken := unclaimedBranchRef("b")
-	loose := filepath.Join(root, ".git", filepath.FromSlash(broken))
-	mustNoError(t, os.MkdirAll(filepath.Dir(loose), 0o755))
-	mustWrite(t, loose, []byte(gitOutput(t, root, "hash-object", "-w", "tracked.txt")+"\n"), 0o644)
+	landed, broken := addUnclaimedBranch(t, root, "a"), addBrokenUnclaimedBranch(t, root, "b")
 
 	plan, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
 	if code != 1 || strings.Contains(plan, "--apply") || setFingerprint.MatchString(plan) {
