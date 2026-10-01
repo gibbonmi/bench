@@ -38,11 +38,9 @@ findings in the owner details.
 ## Quality survey (2026-09-29)
 
 The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure. Its
-2026-09-30 light paths landed card 03, most of cards 06 and 07, and most small cuts. The
-rows below hold the rest. The survey orders the work: close the test gaps first, then
-shrink the worktree joins seam set.
-
-**FT357 (HIGH) — the release identity gate and the remaining hook verdicts have red-capable tests before any survey refactor.**
+2026-09-30 and 2026-10-01 light paths landed cards 03 and 07, most of card 06, and most
+small cuts. The rows below hold the rest. The survey orders the work: shrink the worktree
+joins seam set first.
 
 **FT356 (HIGH) — the worktree joins seam set keeps only the seams that make a failure reproducible.**
 
@@ -55,8 +53,6 @@ shrink the worktree joins seam set.
 **FT364 (MEDIUM, decision required) — the release machinery that no caller reaches is cut or parked.**
 
 **FT358 (MEDIUM) — authored Markdown has one line reader for fences, frontmatter, comments, and sections.**
-
-**FT359 (MEDIUM) — the worktree tests share one verb runner and named fixtures.**
 
 **FT360 (MEDIUM) — `gittest` exports one git runner and one commit identity.**
 
@@ -278,13 +274,11 @@ recommended table is sequencing advice.
 | FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
 | FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
 | FT254 | FT258 | Resolution follows the `MERGE_HEAD` contract. |
-| FT359 | FT356 | The verb runner's fixtures follow the reduced seam set. |
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
 
 ## Recommended sequence
 
-1. Run `/bench-implement-spec` on the FT357 light-path ticket to close the survey's remaining test gaps.
-2. Run `/bench-shape-idea FT356` to shrink the worktree joins seam set.
-3. Run `/bench-implement-spec` on the FT361 light-path ticket so a plain `go test` is red only for a defect.
+1. Run `/bench-shape-idea FT356` to shrink the worktree joins seam set and give its tests one verb runner.
+2. Run `/bench-implement-spec` on the FT361 light-path ticket so a plain `go test` is red only for a defect.
 
 The section order supplies the larger sequence. It does not create new literal dependencies.
