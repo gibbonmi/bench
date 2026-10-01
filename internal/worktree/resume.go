@@ -376,17 +376,10 @@ func applyAutomaticWithTerminal(j joins, root, path string, fault Fault, termina
 	return applyCleanupTransaction(j, root, path, plan.Fingerprint, planner, fault, terminal)
 }
 
-// ConservativeCleanup reconciles the lifecycle debris, then cleans owned worktrees and
-// unclaimed landed branch residue. The reconcile runs first because it is the only thing
-// that can make a ledger an older binary wrote readable again. Every step below reads
-// that ledger.
-func ConservativeCleanup(root string) (ResumeResult, error) {
-	return conservativeCleanupAt(defaultJoins(), root, Home(), currentTime())
-}
-
-// conservativeCleanupAt is ConservativeCleanup with the Bench home and the instant
-// resolved explicitly at the caller's effect boundary; ConservativeCleanup is its
-// boundary form for a caller in another package.
+// conservativeCleanupAt reconciles the lifecycle debris, then cleans owned worktrees and
+// unclaimed landed branch residue. The caller resolves the Bench home and the instant at
+// its effect boundary. The reconcile runs first because it is the only thing that can
+// make a ledger an older binary wrote readable again. Every step below reads that ledger.
 func conservativeCleanupAt(j joins, root, home string, now time.Time) (ResumeResult, error) {
 	registered, err := classifyRegisteredWorktreesAt(root, home)
 	if err != nil {

@@ -18,14 +18,14 @@ func TestResumeLandCommandFollowupFailureExitsIncomplete(t *testing.T) {
 	request := "resume-release-incomplete"
 	root, creation, base, tip, _, home := publicLandingFixture(t, request, "private/output", "dist/")
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
+	if code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
 		t.Fatalf("first incomplete exit = %d, want 3; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	code := LandCommand(root, home, "", args, &stdout, &stderr)
+	code := LandCommand(root, home, args, &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 		t.Fatalf("resume incomplete = (%d, %q, %q), want exit 3", code, stdout.String(), stderr.String())
 	}
@@ -37,7 +37,7 @@ func TestLandCommandIncompleteNextUsesAssignmentPointerForUnsafePath(t *testing.
 	home := filepath.Join(t.TempDir(), "bench\n\x1bhome")
 	root, creation, base, tip, _ := publicLandingFixtureAtHome(t, request, "private/output", "dist/", home)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	wantNext := "next=bench worktree exec " + creation.Assignment.ID + " -- bench worktree land --resume '"
 	unsafe := strings.ContainsRune(stdout.String(), '\x1b') || strings.Count(stdout.String(), "\n") != 1
 	if code != 3 || unsafe || !strings.Contains(stdout.String(), wantNext) || !strings.Contains(stdout.String(), " --spec 'x' .,census=0}") {
@@ -187,14 +187,14 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 		return errors.New("injected reconciliation interruption")
 	}
 	var stdout, stderr bytes.Buffer
-	if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
+	if code := landWith(broken, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
 		t.Fatalf("resume reconciliation = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "HEAD"); got != published {
@@ -218,14 +218,14 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 			}
 
 			var stdout, stderr bytes.Buffer
-			if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+			if code := landWith(broken, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			published := gitOutput(t, root, "rev-parse", "main")
 			stdout.Reset()
 			stderr.Reset()
 			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", specArg, creation.Path}
-			if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
+			if code := landWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
 				t.Fatalf("resume with spec %q = (%d, %q, %q)", specArg, code, stdout.String(), stderr.String())
 			}
 			if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
@@ -245,14 +245,14 @@ func TestResumeLandCommandCompletesAnInterruptedMarker(t *testing.T) {
 		return errors.New("injected marker interruption")
 	}
 	var stdout, stderr bytes.Buffer
-	if code := landWith(broken, root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
+	if code := landWith(broken, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	published := gitOutput(t, root, "rev-parse", "main")
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := landWith(working, root, home, "", args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
+	if code := landWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
 		t.Fatalf("resume marker = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
@@ -281,14 +281,14 @@ func TestResumeLandCommandPreauthenticatesCompletedRequestAndPath(t *testing.T) 
 			request := "resume-preauth-" + tc.name
 			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
+			if code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
 				t.Fatalf("landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			published := gitOutput(t, root, "rev-parse", "main")
 			gitRun(t, root, "update-ref", "-d", "refs/bench/green/main")
 			stdout.Reset()
 			stderr.Reset()
-			if code := LandCommand(root, home, "", tc.args(published, base, tip, request, creation.Path), &stdout, &stderr); code != 1 || !strings.Contains(stdout.String(), "missing-terminal-receipt") || stderr.Len() != 0 {
+			if code := LandCommand(root, home, tc.args(published, base, tip, request, creation.Path), &stdout, &stderr); code != 1 || !strings.Contains(stdout.String(), "missing-terminal-receipt") || stderr.Len() != 0 {
 				t.Fatalf("preauthentication refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
 			if descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", "refs/bench/green/main").Run() == nil {
@@ -307,7 +307,7 @@ func TestResumeLandCommandRepeatsTheCensusCount(t *testing.T) {
 	root, creation, base, tip, _, home := publicLandingFixture(t, request, "private/output", "dist/")
 	recordRawCalls(t, home, root, creation.Path, 2)
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.HasSuffix(stdout.String(), ",census=2}\n") {
+	if code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.HasSuffix(stdout.String(), ",census=2}\n") {
 		t.Fatalf("incomplete landing = (%d, %q, %q), want exit 3 and census=2", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stderr.String(), "census heads{sed=2}\n") {
@@ -320,7 +320,7 @@ func TestResumeLandCommandRepeatsTheCensusCount(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	if code := LandCommand(root, home, "", args, &stdout, &stderr); code != 3 || !strings.HasSuffix(stdout.String(), ",census=2}\n") {
+	if code := LandCommand(root, home, args, &stdout, &stderr); code != 3 || !strings.HasSuffix(stdout.String(), ",census=2}\n") {
 		t.Fatalf("resumed landing = (%d, %q, %q), want exit 3 and census=2 again", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stderr.String(), "census heads{sed=2}\n") {

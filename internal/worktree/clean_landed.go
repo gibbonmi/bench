@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 )
 
 const landedSetFingerprintVersion = "bench-landed-set/v1"
@@ -97,7 +98,7 @@ func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, 
 	if lease == "" {
 		lease = "none"
 	}
-	classifierPlan := CleanupPlan{Target: root, landedTyped: landedness{Kind: landednessProven, Landed: true, ByContent: byContent}}
+	classifierPlan := CleanupPlan{Target: root, landedTyped: lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessProven, Landed: true, ByContent: byContent}}
 	if lease == string(LeaseLive) {
 		classifierPlan.ReasonCode = ReasonLiveLease
 	}
@@ -144,9 +145,9 @@ func planLandedAssignment(j joins, root string, assignment intent.Assignment, op
 }
 
 // retainForLandedPreservation is the landed-set's single site for the preservation
-// refusal. It calls the same automaticPreservationVerdict (eligibility.go) that
-// decideAutomatic's own dirty-refusal branch consults, so the two routes never derive
-// "would removing this strand uncommitted work" differently. Each still projects its own
+// refusal. It calls automaticPreservationVerdict (eligibility.go), which reads the same
+// policy rule that the dirty-refusal branch of lifecyclepolicy.DecideAutomatic consults, so
+// the two routes never derive "would removing this strand uncommitted work" differently. Each still projects its own
 // operator-facing message for its own command surface.
 func retainForLandedPreservation(plan CleanupPlan) CleanupPlan {
 	retain, action, reasonCode, reason := automaticPreservationVerdict(plan, "per-path cleanup is required to preserve work")

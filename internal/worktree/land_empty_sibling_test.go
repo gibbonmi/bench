@@ -31,7 +31,7 @@ func TestLandRetainsSiblingBornAtPublishedTip(t *testing.T) {
 				return release(inner, root, home, args, stdout, stderr)
 			}
 			var stdout, stderr bytes.Buffer
-			code := landWith(j, root, home, "", landArgs(request, base, tip, source.Path), &stdout, &stderr)
+			code := landWith(j, root, home, landArgs(request, base, tip, source.Path), &stdout, &stderr)
 			if resume {
 				if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 					t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())

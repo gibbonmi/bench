@@ -94,18 +94,3 @@ func ignoredWithinBuildOutput(ignored string, declared []string) bool {
 	}
 	return false
 }
-
-func ignoredWithinDeclaredOutputs(inventory IgnoredInventory, declared []string, additional func(string) bool) bool {
-	if inventory.Count == 0 || inventory.Uncertain || inventory.OverLimit || inventory.AtLeast {
-		return false
-	}
-	for _, ignored := range inventory.Paths {
-		if additional(ignored) {
-			continue
-		}
-		if !ignoredWithinBuildOutput(ignored, declared) {
-			return false
-		}
-	}
-	return true
-}

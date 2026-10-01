@@ -22,7 +22,7 @@ func TestLandingPrintsOutputBreakdown(t *testing.T) {
 		}
 	}
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, "", landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stderr.String(), "census output{bench worktree list=2/28978}\n") {
 		t.Fatalf("landing evidence = (%d, %q, %q), want the output breakdown on stderr", code, stdout.String(), stderr.String())
 	}

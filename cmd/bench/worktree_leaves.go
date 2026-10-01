@@ -60,7 +60,7 @@ var worktreeLeaves = []commandLeaf{
 		return worktree.ResetCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
 	{Name: "land", Grammar: usage.WorktreeLand, Root: rootRequired, Bound: boundResponse, Retires: true, Scope: scopeRepository, Run: func(c Command, root string, args []string) int {
-		return worktree.LandCommand(root, worktree.Home(), c.Executable, args, c.Stdout, c.Stderr)
+		return worktree.LandCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
 }
 

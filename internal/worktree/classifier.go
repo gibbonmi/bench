@@ -256,12 +256,12 @@ type CleanupPlan struct {
 	branchRef, branchOID string
 	ignoredSummary       string
 	landed               string
-	// landedTyped carries the same landedness evidence as landed, but as the typed value
-	// decideExplicit produced. A production reader can branch on its kind and proof fields
-	// rather than parse the wire string. landed stays alongside it, since subshell.go's
-	// fingerprint hashes the string as evidence. A hand-built stub (clean_landed.go) may
-	// populate only the typed field when it need not fabricate the string.
-	landedTyped landedness
+	// landedTyped carries the landedness evidence of landed as the typed value that
+	// lifecyclepolicy.DecideExplicit produced. A production reader can branch on its kind
+	// and proof fields rather than parse the wire string. landed stays alongside it, since
+	// subshell.go's fingerprint hashes the string as evidence. A hand-built stub
+	// (clean_landed.go) may populate only the typed field and need not fabricate the string.
+	landedTyped lifecyclepolicy.Landedness
 	// leftover names the present bytes a release-leftover plan hands on rather than
 	// removes. It is empty for every plan that answers for a checkout.
 	leftover string
@@ -301,9 +301,9 @@ func orphaned(a intent.Assignment, now time.Time) bool {
 
 // PlanAutomatic decides the automatic, unattended reading of eligibility. It calls
 // PlanExplicit for its own result, then gathers every automatic-specific fact
-// decideAutomatic needs. A fact stays ungathered where an earlier one already made it
-// inapplicable. It calls decideAutomatic exactly once, then projects the returned
-// verdict onto the plan.
+// lifecyclepolicy.DecideAutomatic needs. A fact stays ungathered where an earlier one
+// already made it inapplicable. It calls lifecyclepolicy.DecideAutomatic exactly once,
+// then projects the returned verdict onto the plan.
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
 	return planAutomaticAt(defaultJoins(), root, path, currentTime())
 }
@@ -312,7 +312,7 @@ func PlanAutomatic(root, path string) (CleanupPlan, error) {
 // caller's effect boundary; PlanAutomatic is its temporary compatibility form.
 func planAutomaticAt(j joins, root, path string, now time.Time) (CleanupPlan, error) {
 	explicitPlan, explicitErr := planExplicitWith(j, root, path, CleanupOptions{})
-	facts := automaticFacts{ExplicitErr: explicitErr, Explicit: explicitOutcome(explicitPlan)}
+	facts := lifecyclepolicy.AutomaticFacts{ExplicitErr: explicitErr, Explicit: explicitOutcome(explicitPlan)}
 
 	var missingBranchAssignment *intent.Assignment
 	if explicitErr != nil {
@@ -334,7 +334,7 @@ func planAutomaticAt(j joins, root, path string, now time.Time) (CleanupPlan, er
 		}
 	}
 
-	verdict := decideAutomatic(facts)
+	verdict := lifecyclepolicy.DecideAutomatic(facts)
 
 	if explicitErr != nil {
 		if missingBranchAssignment != nil {
