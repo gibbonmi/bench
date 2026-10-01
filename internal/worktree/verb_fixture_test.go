@@ -17,12 +17,20 @@ func (f ownedAssignment) call(args ...string) verbCall {
 	return verbCall{root: f.root, home: f.home, args: args}
 }
 
-// poolFixture is a repository, a private home, and the pool directory under that home
-// that the builder prepared.
-type poolFixture struct {
+// reclaimPoolFixture is a repository, a private home, and the pool parent under that
+// home. The pool parent holds one key for each repository, and the builder creates it.
+type reclaimPoolFixture struct {
 	root string
 	home string
 	pool string
+}
+
+// repoPoolFixture is a repository, a private home, and the pool root of that one
+// repository under that home. The builder computes the pool root and does not create it.
+type repoPoolFixture struct {
+	root     string
+	home     string
+	poolRoot string
 }
 
 // restoredAssignment is an owned assignment after one reset preserved its dirty checkout

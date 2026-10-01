@@ -68,7 +68,9 @@ func TestResetApplyExitsThreeWhenTheMoveDidNotLand(t *testing.T) {
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: f.root, home: f.home, joins: &j, args: []string{"--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint}})
+	call := f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint)
+	call.joins = &j
+	result := runVerb(t, verbReset, call)
 	ref := intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"
 	requireTest(t, result.exit == 3 && strings.Contains(result.stdout, "preserved="+ref), "silent move = %d %s %s", result.exit, result.stdout, result.stderr)
 }
@@ -82,7 +84,9 @@ func TestResetApplyExitsThreeOnAMoveFault(t *testing.T) {
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: f.root, home: f.home, joins: &j, args: []string{"--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint}})
+	call := f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint)
+	call.joins = &j
+	result := runVerb(t, verbReset, call)
 	ref := intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"
 	requireTest(t, result.exit == 3 && strings.Contains(result.stdout, "preserved="+ref) && strings.Contains(result.stdout, "next=bench worktree reset --restore "+ref+" "+f.creation.Assignment.ID), "move fault = %d %s %s", result.exit, result.stdout, result.stderr)
 	_, ok := readRecoveryManifest(f.root, ref)
@@ -96,12 +100,16 @@ func TestResetApplyTakesTheCleanupLock(t *testing.T) {
 	j := defaultJoins()
 	var attempts []string
 	j.cleanupLockAttempt = func(target string) { attempts = append(attempts, target) }
-	result := runVerb(t, verbReset, verbCall{root: f.root, home: f.home, joins: &j, args: []string{"--to", f.creation.Assignment.Start, f.creation.Assignment.ID}})
+	call := f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID)
+	call.joins = &j
+	result := runVerb(t, verbReset, call)
 	requireTest(t, result.exit == 0 && len(attempts) == 0, "plan took cleanup lock: %d %s %s %#v", result.exit, result.stdout, result.stderr, attempts)
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result = runVerb(t, verbReset, verbCall{root: f.root, home: f.home, joins: &j, args: []string{"--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint}})
+	call = f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint)
+	call.joins = &j
+	result = runVerb(t, verbReset, call)
 	requireTest(t, result.exit == 0 && len(attempts) == 1 && attempts[0] == f.creation.Path, "apply lock = %d %s %s %#v", result.exit, result.stdout, result.stderr, attempts)
 }
 
@@ -149,7 +157,9 @@ func TestResetApplyRefusesAnUnverifiedEnvelope(t *testing.T) {
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: f.root, home: f.home, joins: &j, args: []string{"--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint}})
+	call := f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint)
+	call.joins = &j
+	result := runVerb(t, verbReset, call)
 	requireTest(t, gitOutput(t, f.creation.Path, "rev-parse", "HEAD") == head && gitOutput(t, f.creation.Path, "status", "--porcelain=v1") == status,
 		"unverified envelope moved the checkout: %d %s %s", result.exit, result.stdout, result.stderr)
 	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "reset envelope failed verification"), "unverified envelope = %d %s %s", result.exit, result.stdout, result.stderr)
@@ -268,7 +278,9 @@ func TestResetApplyExitsThreeWithoutAnEnvelope(t *testing.T) {
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: f.root, home: f.home, joins: &j, args: []string{"--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint}})
+	call := f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint)
+	call.joins = &j
+	result := runVerb(t, verbReset, call)
 	requireTest(t, result.exit == 3 && strings.Contains(result.stdout, "preserved=none") &&
 		strings.Contains(result.stdout, "next=bench worktree reset --to "+f.creation.Assignment.Start+" "+f.creation.Assignment.ID+"}"), "fault without envelope = %d %s %s", result.exit, result.stdout, result.stderr)
 }

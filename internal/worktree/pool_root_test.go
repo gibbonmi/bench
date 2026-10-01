@@ -37,14 +37,14 @@ var poolRootOperations = []poolRootOperation{
 
 // poolRootFixture returns a repository, a private home, and the pool root both
 // operations select for that pair.
-func poolRootFixture(t *testing.T) poolFixture {
+func poolRootFixture(t *testing.T) repoPoolFixture {
 	t.Helper()
 	root, err := canonicalPath(newWorktreeRepo(t))
 	if err != nil {
 		t.Fatalf("canonical root: %v", err)
 	}
 	home := t.TempDir()
-	return poolFixture{root: root, home: home, pool: poolAt(home, root)}
+	return repoPoolFixture{root: root, home: home, poolRoot: poolAt(home, root)}
 }
 
 // failingPoolChmod is the chmodPool join that fails for the pool root alone.
@@ -98,9 +98,9 @@ func TestPoolRootChmodFailureRefuses(t *testing.T) {
 			t.Parallel()
 			f := poolRootFixture(t)
 			j := defaultJoins()
-			j.chmodPool = failingPoolChmod(f.pool)
+			j.chmodPool = failingPoolChmod(f.poolRoot)
 			err := op.run(t, j, f.root, f.home)
-			requirePoolRootRefusal(t, err, poolRootModeUnset, f.root, f.pool, f.pool)
+			requirePoolRootRefusal(t, err, poolRootModeUnset, f.root, f.poolRoot, f.poolRoot)
 			if !strings.Contains(err.Error(), syscall.EPERM.Error()) {
 				t.Fatalf("refusal %q drops the join's failure", err.Error())
 			}
@@ -116,16 +116,16 @@ func TestPoolRootSymlinkRefusesWithoutFollowing(t *testing.T) {
 			f := poolRootFixture(t)
 			target := t.TempDir()
 			mustChmod(t, target, 0o755)
-			if err := os.MkdirAll(filepath.Dir(f.pool), 0o700); err != nil {
+			if err := os.MkdirAll(filepath.Dir(f.poolRoot), 0o700); err != nil {
 				t.Fatalf("mkdir pool parent: %v", err)
 			}
-			if err := os.Symlink(target, f.pool); err != nil {
+			if err := os.Symlink(target, f.poolRoot); err != nil {
 				t.Fatalf("symlink pool root: %v", err)
 			}
 			var chmodded []string
 			j := defaultJoins()
 			j.chmodPool = recordingPoolChmod(&chmodded)
-			requirePoolRootRefusal(t, op.run(t, j, f.root, f.home), poolRootSymlink, f.root, f.pool, target)
+			requirePoolRootRefusal(t, op.run(t, j, f.root, f.home), poolRootSymlink, f.root, f.poolRoot, target)
 			if info, err := os.Stat(target); err != nil || info.Mode().Perm() != 0o755 {
 				t.Fatalf("symlink target mode = %v (%v), want it untouched at 0755", info, err)
 			}
@@ -142,11 +142,11 @@ func TestPoolRootNonDirectoryRefuses(t *testing.T) {
 		t.Run(op.name, func(t *testing.T) {
 			t.Parallel()
 			f := poolRootFixture(t)
-			if err := os.MkdirAll(filepath.Dir(f.pool), 0o700); err != nil {
+			if err := os.MkdirAll(filepath.Dir(f.poolRoot), 0o700); err != nil {
 				t.Fatalf("mkdir pool parent: %v", err)
 			}
-			mustWrite(t, f.pool, []byte("not a directory\n"), 0o644)
-			requirePoolRootRefusal(t, op.run(t, defaultJoins(), f.root, f.home), poolRootNotDirectory, f.root, f.pool, "")
+			mustWrite(t, f.poolRoot, []byte("not a directory\n"), 0o644)
+			requirePoolRootRefusal(t, op.run(t, defaultJoins(), f.root, f.home), poolRootNotDirectory, f.root, f.poolRoot, "")
 		})
 	}
 }
@@ -162,20 +162,20 @@ func TestPoolRootPermissiveIsRetightened(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				t.Parallel()
 				f := poolRootFixture(t)
-				if err := os.MkdirAll(f.pool, 0o700); err != nil {
+				if err := os.MkdirAll(f.poolRoot, 0o700); err != nil {
 					t.Fatalf("mkdir pool: %v", err)
 				}
-				mustChmod(t, f.pool, 0o777)
+				mustChmod(t, f.poolRoot, 0o777)
 				j := defaultJoins()
 				if failing {
-					j.chmodPool = failingPoolChmod(f.pool)
-					requirePoolRootRefusal(t, op.run(t, j, f.root, f.home), poolRootModeUnset, f.root, f.pool, f.pool)
+					j.chmodPool = failingPoolChmod(f.poolRoot)
+					requirePoolRootRefusal(t, op.run(t, j, f.root, f.home), poolRootModeUnset, f.root, f.poolRoot, f.poolRoot)
 					return
 				}
 				if err := op.run(t, j, f.root, f.home); err != nil {
 					t.Fatalf("%s over a permissive pool root: %v", op.name, err)
 				}
-				requirePoolRootMode(t, f.pool)
+				requirePoolRootMode(t, f.poolRoot)
 			})
 		}
 	}
@@ -190,11 +190,11 @@ func TestPoolRootReentryOverTightenedRootSucceeds(t *testing.T) {
 			if err := op.run(t, defaultJoins(), f.root, f.home); err != nil {
 				t.Fatalf("first %s: %v", op.name, err)
 			}
-			before := requirePoolRootMode(t, f.pool)
+			before := requirePoolRootMode(t, f.poolRoot)
 			if err := op.run(t, defaultJoins(), f.root, f.home); err != nil {
 				t.Fatalf("re-entered %s over a tightened pool root: %v", op.name, err)
 			}
-			if after := requirePoolRootMode(t, f.pool); !os.SameFile(before, after) {
+			if after := requirePoolRootMode(t, f.poolRoot); !os.SameFile(before, after) {
 				t.Fatal("re-entry replaced the pool root")
 			}
 		})

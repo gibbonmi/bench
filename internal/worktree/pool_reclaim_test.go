@@ -19,13 +19,13 @@ import (
 // The package's TestMain reds on residue under the shared private home.
 // A test that reached the operator's pool would be caught.
 // The explicit home per test is what keeps it from having to be.
-func newReclaimPool(t *testing.T) poolFixture {
+func newReclaimPool(t *testing.T) reclaimPoolFixture {
 	t.Helper()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
 	pool := poolKeysDirAt(home)
 	mustMkdirAll(t, pool, 0o700)
-	return poolFixture{root: root, home: home, pool: pool}
+	return reclaimPoolFixture{root: root, home: home, pool: pool}
 }
 
 // plantDeadChild writes one pool child whose `.git` pointer names a repository that was

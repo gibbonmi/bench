@@ -16,8 +16,9 @@ import (
 
 // newResidueGuardFixture builds a repository whose dist/ is both ignored and declared as
 // build output, plus one owned assignment holding an empty dist/. This is the exact shape
-// that lets a release reach the residue guard's removal loop. It returns the private
-// home the registration lives under, so the fixture binds no process environment.
+// that lets a release reach the residue guard's removal loop. It returns the repository,
+// the owned registration, and the private home that the registration lives under, so the
+// fixture binds no process environment.
 func newResidueGuardFixture(t *testing.T, request string) ownedAssignment {
 	t.Helper()
 	root := newWorktreeRepo(t)
