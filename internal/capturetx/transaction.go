@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,6 +22,8 @@ const (
 	directoryName = "bench-capture-drain"
 	manifestName  = "manifest.json"
 	lockName      = "bench-capture-drain.lock"
+	// stagingPrefix names each directory that Begin stages before its publish.
+	stagingPrefix = directoryName + ".tmp-"
 )
 
 var lockWait = bounds.VerdictWindow(bounds.CaptureLockTimeout)
@@ -42,10 +45,18 @@ type manifestSource struct {
 	AfterDigest string `json:"after_digest,omitempty"`
 }
 
+// recoverTransaction runs under the lock, so no Begin is staging and no writer is
+// between steps.
 func recoverTransaction(common string) error {
+	if err := removeStaging(common); err != nil {
+		return err
+	}
 	m, err := readManifest(common)
 	if errors.Is(err, os.ErrNotExist) {
-		return nil
+		// Begin publishes a directory that already holds its manifest, and each later
+		// manifest write is a rename. So a directory without a manifest is the removal
+		// that ends Commit or Abort, cut short by a crash.
+		return os.RemoveAll(transactionDir(common))
 	}
 	if err != nil {
 		return err
@@ -152,6 +163,23 @@ func withLock(root string, run func(common string) error) error {
 }
 
 func transactionDir(common string) string { return filepath.Join(common, directoryName) }
+
+// removeStaging removes each staged directory that a crash left before its publish.
+func removeStaging(common string) error {
+	entries, err := os.ReadDir(common)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), stagingPrefix) {
+			continue
+		}
+		if err := os.RemoveAll(filepath.Join(common, entry.Name())); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func readManifest(common string) (manifest, error) {
 	data, err := os.ReadFile(filepath.Join(transactionDir(common), manifestName))
