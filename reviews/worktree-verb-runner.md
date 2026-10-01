@@ -42,6 +42,52 @@ The author ran each VR-C1 verification on the source of `137fb303`, and each pas
 
 `TestPackageTestCountPin` passed at 686 tests, and `TestSerialSetStaysBelowTheCeiling` passed at the ceiling of 46. The author also ran these checks, and each passed: `bench test --package ./internal/conformance` and `bench structure --growth 0c95c944`. The commit chain reported 15 green checks, 1 check that does not apply, and 0 red checks.
 
+### Coordinator verification
+
+The coordinator found a clean tree, and the ticket commit touches only paths on the `Writes:` line. The coordinator ran an independent omission probe at a site that no author probe used. The probe removed the two-fingerprints refusal in `readVerbFingerprint`, and `TestVerbResultFingerprintRefusesConflictingCells` failed. The restore reads `yes`.
+
+## VR-C1 chunk review, round 1
+
+The frozen pair is base `0c95c9447c20189f3f2155719ef965bffc339856` and tip `4479b2fa62bcb334f4b65aedfcd155cde31d66a6`. The coordinator moved the chunk tip from the ticket commit to the record commit, and the source digest stays the same. The shared evidence is `sha256:e3159ba832b81092e567ee0470a52d17f5da030e7694a5fb0fa17e4318cc1ef4`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, on the conditional review line. Only the Coverage axis ran tests and probes, and it left the tree clean.
+
+The raw finding count is 9: Standards 4, Spec 3, and Coverage 2. The Standards literal finding and the Spec literal finding name the same fix. Two findings are `no-op`. So 6 repair targets remain, and they take repair cycle 1 of 2.
+
+The chunk record for VR44 to VR46 follows. The PASS set at the tip is the base set plus the 22 added tests, and all 686 top-level tests pass. The SKIP set holds the two socket capability subtests, and the base has the same two. No existing test changed except the `worktreeTestCount` value, so no assertion fell.
+
+## Standards
+
+Findings: 4. The worst issue is a second copy of the faulted unclaimed fixture.
+
+- R1: `internal/worktree/verb_runner_check_test.go:268-278` copies the five fixture lines and the reason comment of `clean_unclaimed_test.go:312-321`. `AGENTS.md` names a fixture harness pasted N times as duplicated knowledge. Extract one builder beside `addUnclaimedBranch` in `clean_set_apply_test.go`, and let both tests call it. Both files are in the spec fence, so the repair takes a plan commit for the ticket 1 `Writes:` line. `auto-fix`. Confidence 8.
+- R2: `internal/worktree/verb_runner_check_test.go:83` restates the reason text `"invalid invocation; run "` from the producer at `worktree.go:247`. The reader sweep says that no literal moves into a test. The `clean` subtest can render `cleanInvocationError` into a buffer and compare the whole output. `auto-fix`. Confidence 7.
+- R3: `internal/worktree/verb_runner_check_test.go:39`, the `usageCommand` helper, derives the refusal command name a second time from the first three words of the usage constant. The verbs take that name from `worktreeShowGrammar.Cmd` and `buildGrammar.Cmd`. Read those two fields instead. The production duplication between the `Cmd` literals and the usage constants is outside the fence and goes to the ideas inbox. `auto-fix`. Confidence 5.
+- R4: `internal/worktree/verb_runner_check_test.go:206` asserts that the fingerprint is the last record cell, which is a layout fact of `reset.go:67` that the reader contract does not need. Assert that the record holds the cell instead. `auto-fix`. Confidence 4.
+
+## Spec
+
+Findings: 3. The worst issue is a why-clause mutant that the VR9 test does not kill alone.
+
+- `internal/worktree/verb_runner_check_test.go:182`: a reader that takes the first 64-hex run passes VR9, because a real plan has no 64-hex text before the cell. VR14 kills that mutant, so the suite still catches it. `no-op`. Confidence 7.
+- R2: the same literal as the Standards finding R2. `auto-fix`. Confidence 6.
+- R5: `reviews/worktree-verb-runner.md:11-12`: the stage 2 log does not account for VR15. The stage 1 count reads 35, but 22 tests and 14 subtests give 36. Correct the log from the run evidence. This correction is evidence-only. `auto-fix`. Confidence 5.
+
+## Coverage
+
+Findings: 2. The worst issue is the untested record branch of the fingerprint reader.
+
+- R6: `internal/worktree/verb_runner_test.go:192-203`: no test grades the absent rule or the conflict rule on a record line. A no-op `reset` plan writes `fingerprint=none` in its record. A swap that returns the first record cell was silent, and the restore reads `yes`. Add a real no-op `reset` record test that expects the no-fingerprint error, add a conflicting-record case, and raise `worktreeTestCount` for each added test. `auto-fix`. Confidence 8.
+- `internal/worktree/verb_runner_test.go:95-108`: only VR17 grades a `joined:` entry. A swap of the `land` joins form was silent. Tickets 2 to 10 run stubbed joins values through each of these keys, so a wrong form fails those migrated tests. `no-op`. Confidence 6.
+
+### Advice
+
+- The `"usage: "` prefix in the VR1 expectations repeats each grammar's help composition. A test can read the grammar's help field where a grammar variable exists.
+- The length check of 64 in the VR9 test restates the digest width.
+- A shared record encoder in `toon` would give the producer and the reader one source.
+
+### Command contribution
+
+The implementation command did not contribute. The ticket told the author to build the fault as an outside test does, but its `Writes:` line did not hold the owning file. Ticket slicing owns that fix: the first ticket that needs a shared builder names it and writes its owning file.
+
 ```bench-review-record
 {
   "version": 2,
@@ -52,7 +98,7 @@ The author ran each VR-C1 verification on the source of `137fb303`, and each pas
     {
       "id": "VR-C1",
       "base": "0c95c9447c20189f3f2155719ef965bffc339856",
-      "tip": "137fb303135702af0819807d648c228b2ea33312",
+      "tip": "4479b2fa62bcb334f4b65aedfcd155cde31d66a6",
       "plan_digest": "sha256:77c5099bae42000b631c569a15e3af6008579e9a60e93b691bf485f6636e9d2f",
       "source_digest": "db49c9755719fa79a394a329fdd5dedeb5372136",
       "acceptance_rows": [
@@ -158,7 +204,78 @@ The author ran each VR-C1 verification on the source of `137fb303`, and each pas
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "vr-c1-standards-r1",
+          "performer": "claude:bench-reviewer/vr-c1-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "db49c9755719fa79a394a329fdd5dedeb5372136",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-standards@4479b2fa",
+            "digest": "sha256:19f02fddf42f5f19396b117b6a2e9a6b6ef8edf11c1b72e04404a52e97b6b28f",
+            "excerpt": "Standards: 4 findings. Worst: the VR59 test pastes a second copy of the faulted-unclaimed fixture and its comment from clean_unclaimed_test.go."
+          },
+          "axis": "Standards",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "4479b2fa62bcb334f4b65aedfcd155cde31d66a6",
+          "finding_ids": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c1-spec-r1",
+          "performer": "claude:bench-reviewer/vr-c1-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "db49c9755719fa79a394a329fdd5dedeb5372136",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-spec@4479b2fa",
+            "digest": "sha256:6f57a4c2208052b9c43203b4c35da81b90400c0409e5d68580a15592d70382c3",
+            "excerpt": "Spec: 3 findings. Worst: the VR9 first-64-hex mutant survives its own test; VR14 kills it at suite level. All 22 planned tests exist with exact names."
+          },
+          "axis": "Spec",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "4479b2fa62bcb334f4b65aedfcd155cde31d66a6",
+          "finding_ids": [
+            "R2",
+            "R5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c1-coverage-r1",
+          "performer": "claude:bench-reviewer/vr-c1-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "db49c9755719fa79a394a329fdd5dedeb5372136",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c1-coverage@4479b2fa",
+            "digest": "sha256:b054f944c1d41ef4c3d785f4257ce6521b29fb826df474d43a963f49e4013569",
+            "excerpt": "Coverage: 2 findings. Worst: the record branch of readVerbFingerprint has no test for the absent rule or the conflict rule; a swap that returns the first record cell is silent."
+          },
+          "axis": "Coverage",
+          "base": "0c95c9447c20189f3f2155719ef965bffc339856",
+          "tip": "4479b2fa62bcb334f4b65aedfcd155cde31d66a6",
+          "finding_ids": [
+            "R6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
