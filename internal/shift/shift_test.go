@@ -73,7 +73,7 @@ func TestRequireAdapter(t *testing.T) {
 				}
 				return
 			}
-			if err == nil || !contains(err.Error(), tc.wantErr) {
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
 				t.Errorf("requireAdapter(%q) = %v, want error containing %q", tc.agent, err, tc.wantErr)
 			}
 		})
@@ -100,7 +100,7 @@ func TestCommandHelpPrecedesAdapterCheck(t *testing.T) {
 	if code := Command([]string{"ordinary shift"}, &stdout, &stderr); code != 2 {
 		t.Fatalf("Command ordinary shift = %d, want 2", code)
 	}
-	if !contains(stderr.String(), "BENCH_AGENT") {
+	if !strings.Contains(stderr.String(), "BENCH_AGENT") {
 		t.Fatalf("Command ordinary shift stderr = %q, want adapter refusal", stderr.String())
 	}
 }
@@ -169,10 +169,10 @@ func TestLoopRetriesBranchCreationOnCollision(t *testing.T) {
 		t.Fatalf("Loop = %d, want 4 (no-op); stdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
 	}
 	wantBranch := baseBranch + "-2"
-	if !contains(stdout.String(), wantBranch) {
+	if !strings.Contains(stdout.String(), wantBranch) {
 		t.Fatalf("stdout did not name the suffixed branch %s:\n%s", wantBranch, stdout.String())
 	}
-	if contains(stderr.String(), "could not create shift branch") {
+	if strings.Contains(stderr.String(), "could not create shift branch") {
 		t.Fatalf("stderr reported a branch creation failure despite the retry:\n%s", stderr.String())
 	}
 }
@@ -191,10 +191,10 @@ func TestLoopReportsBranchCreationFailureAfterExhaustingRetries(t *testing.T) {
 	if code := Loop("branch collision", &stdout, &stderr); code == 0 {
 		t.Fatalf("Loop returned success despite exhausted collision retries; stdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
 	}
-	if !contains(stderr.String(), "could not create shift branch") {
+	if !strings.Contains(stderr.String(), "could not create shift branch") {
 		t.Fatalf("stderr did not report branch creation failure:\n%s", stderr.String())
 	}
-	if contains(stdout.String(), "shift done") {
+	if strings.Contains(stdout.String(), "shift done") {
 		t.Fatalf("shift reported completion after exhausting branch creation retries:\n%s", stdout.String())
 	}
 	_ = baseBranch
@@ -368,7 +368,7 @@ func TestParseBoundedInt(t *testing.T) {
 				if err == nil {
 					t.Fatalf("parseBoundedInt(%q) = %d, nil, want error", tc.env, got)
 				}
-				if !contains(err.Error(), name) || !contains(err.Error(), "[1,100]") {
+				if !strings.Contains(err.Error(), name) || !strings.Contains(err.Error(), "[1,100]") {
 					t.Errorf("error %q does not name the variable and range", err.Error())
 				}
 				return
@@ -413,7 +413,7 @@ func TestParseWallDuration(t *testing.T) {
 				if err == nil {
 					t.Fatalf("parseWallDuration(%q) = %v, nil, want error", tc.env, got)
 				}
-				if !contains(err.Error(), name) {
+				if !strings.Contains(err.Error(), name) {
 					t.Errorf("error %q does not name the variable", err.Error())
 				}
 				return
@@ -426,13 +426,4 @@ func TestParseWallDuration(t *testing.T) {
 			}
 		})
 	}
-}
-
-func contains(s, sub string) bool {
-	for i := 0; i+len(sub) <= len(s); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
 }

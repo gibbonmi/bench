@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -46,18 +47,6 @@ func stagedPaths(index StagedIndex) []string {
 	return out
 }
 
-func equalStrings(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 // TestReadStagedIndexFramesHostilePaths proves the NUL framing: a space, a newline, a
 // double quote, and a tab in a staged path survive the listing whole.
 func TestReadStagedIndexFramesHostilePaths(t *testing.T) {
@@ -72,7 +61,7 @@ func TestReadStagedIndexFramesHostilePaths(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadStagedIndex: %v", err)
 	}
-	if got := stagedPaths(index); !equalStrings(got, hostilePaths) {
+	if got := stagedPaths(index); !slices.Equal(got, hostilePaths) {
 		t.Fatalf("staged paths = %q, want %q", got, hostilePaths)
 	}
 	if got := len(index.Entries); got != len(hostilePaths) {
@@ -129,7 +118,7 @@ func TestReadStagedIndexStagesEveryEntryOnAnUnbornBranch(t *testing.T) {
 		t.Fatalf("ReadStagedIndex: %v", err)
 	}
 	want := []string{"docs/one.md", "docs/two.md"}
-	if got := stagedPaths(index); !equalStrings(got, want) {
+	if got := stagedPaths(index); !slices.Equal(got, want) {
 		t.Fatalf("staged paths = %q, want %q", got, want)
 	}
 }
@@ -169,7 +158,7 @@ func TestIsWorkTreeTopAcceptsARelativeRoot(t *testing.T) {
 		if err != nil {
 			t.Fatalf(`ReadStagedIndex(".") at the top: %v`, err)
 		}
-		if !equalStrings(stagedPaths(index), []string{"docs/one.md"}) {
+		if !slices.Equal(stagedPaths(index), []string{"docs/one.md"}) {
 			t.Fatalf("staged paths = %q, want the one staged file", stagedPaths(index))
 		}
 	})

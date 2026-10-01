@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -254,7 +255,7 @@ func TestDelegatedIntegrationJourney(t *testing.T) {
 	for _, assignment := range assignments {
 		retained = append(retained, assignment.Label)
 	}
-	if !contains(retained, d.unrelated.Assignment.Label) {
+	if !slices.Contains(retained, d.unrelated.Assignment.Label) {
 		t.Fatalf("retained assignments = %q, want the unrelated assignment kept", retained)
 	}
 	if _, err := os.Stat(filepath.Join(d.unrelated.Path, "unrelated.txt")); err != nil {
@@ -290,7 +291,7 @@ func TestDelegatedReplacementJourney(t *testing.T) {
 	if len(history) != 2 || history[0].Session != failed || history[1].Predecessor != failed || history[1].Trigger != "terminal-failure" {
 		t.Fatalf("assignment history = %#v, want the failed attempt kept under its successor", history)
 	}
-	if participants := d.fixture.Plan.Participants(); !contains(participants, failed) || !contains(participants, successor.Session) {
+	if participants := d.fixture.Plan.Participants(); !slices.Contains(participants, failed) || !slices.Contains(participants, successor.Session) {
 		t.Fatalf("participants = %q, want both attempts accounted for", participants)
 	}
 
@@ -339,13 +340,4 @@ func TestDelegatedReplacementJourney(t *testing.T) {
 	if code, out := d.checkpoint(t, "A"); code != 0 {
 		t.Fatalf("the repaired chunk A checkpoint refused: %d %s", code, out)
 	}
-}
-
-func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
 }

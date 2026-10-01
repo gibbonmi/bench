@@ -1,6 +1,9 @@
 package lines
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestAgentLineVerdict(t *testing.T) {
 	tests := []struct {
@@ -47,7 +50,7 @@ func TestAgentLineVerdict(t *testing.T) {
 				if stderr != "" {
 					t.Errorf("stderr = %q, want empty", stderr)
 				}
-			} else if !contains(stderr, tt.wantContains) {
+			} else if !strings.Contains(stderr, tt.wantContains) {
 				t.Errorf("stderr = %q, want to contain %q", stderr, tt.wantContains)
 			}
 		})
@@ -83,7 +86,7 @@ func TestAgentLineVerdictDenyMessage(t *testing.T) {
 			if stderr != tt.want {
 				t.Errorf("stderr =\n%q\nwant\n%q", stderr, tt.want)
 			}
-			if contains(stderr, tt.absent) {
+			if strings.Contains(stderr, tt.absent) {
 				t.Errorf("stderr names a token from another harness's column (%q): %q", tt.absent, stderr)
 			}
 		})
@@ -102,15 +105,15 @@ func TestAgentLineVerdictMissingModelDenyMessage(t *testing.T) {
 		"bound tier token",
 		"harness claude binds top=fable-5 mid=opus-4-8 cheap=sonnet-5",
 	} {
-		if !contains(stderr, want) {
+		if !strings.Contains(stderr, want) {
 			t.Errorf("stderr = %q, want to contain %q", stderr, want)
 		}
 	}
-	if contains(stderr, "gpt-5.6-sol") {
+	if strings.Contains(stderr, "gpt-5.6-sol") {
 		t.Errorf("missing-model deny names another harness's column: %q", stderr)
 	}
 	// It must not reuse the unbound wording, whose recovery advice is different.
-	if contains(stderr, "is not a bound tier") {
+	if strings.Contains(stderr, "is not a bound tier") {
 		t.Errorf("missing-model deny reused the unbound wording: %q", stderr)
 	}
 }
@@ -166,7 +169,7 @@ func TestAgentLineVerdictForkDenyNeedsARoutedCompleteBinding(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			exit, stderr := AgentLineVerdict(forkEnvelope(`"sonnet-5"`), "claude", tt.src)
 			switch {
-			case tt.wantDeny && (exit != 2 || !contains(stderr, "declared on a fork")):
+			case tt.wantDeny && (exit != 2 || !strings.Contains(stderr, "declared on a fork")):
 				t.Errorf("fork declaring a model = (%d, %q), want the fork deny", exit, stderr)
 			case !tt.wantDeny && (exit != 0 || stderr != inheritanceWarning):
 				t.Errorf("fork declaring a model = (%d, %q), want (0, %q)", exit, stderr, inheritanceWarning)
@@ -213,7 +216,7 @@ func TestSubagentTypeNeverImpersonatesAFork(t *testing.T) {
 				t.Errorf("subagent_type %s with a bound model = (%d, %q), want a silent allow", subagentType, exit, stderr)
 			}
 			exit, stderr := AgentLineVerdict(agentEnvelope(subagentType, ""), "claude", bound(fullBinding))
-			if exit != 2 || !contains(stderr, "missing or empty model field") {
+			if exit != 2 || !strings.Contains(stderr, "missing or empty model field") {
 				t.Errorf("subagent_type %s with no model = (%d, %q), want the routed missing-model deny", subagentType, exit, stderr)
 			}
 		})

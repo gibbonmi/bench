@@ -1,7 +1,5 @@
 package lines
 
-import "strings"
-
 // fullBinding binds codex and claude and leaves opencode unadopted. Its claude cells are
 // deliberately NOT this repo's own (`fable`/`opus`/`sonnet`), so a renderer that hard-codes
 // the kit's live binding fails every message assertion below.
@@ -45,8 +43,4 @@ func agentEnvelope(subagentType, model string) []byte {
 
 func forkEnvelope(model string) []byte {
 	return agentEnvelope(`"fork"`, model)
-}
-
-func contains(s, sub string) bool {
-	return strings.Contains(s, sub)
 }

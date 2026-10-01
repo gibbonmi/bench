@@ -2,6 +2,7 @@ package writeguard
 
 import (
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -20,18 +21,9 @@ func checkerFor(primary string, tracked, ignored []string) Checker {
 			return "", errors.New("not in a git repository")
 		},
 		IsPrimary: func(root string) (bool, error) { return root == primary, nil },
-		IsTracked: func(_, path string) bool { return contains(tracked, path) },
-		IsIgnored: func(_, path string) bool { return contains(ignored, path) },
+		IsTracked: func(_, path string) bool { return slices.Contains(tracked, path) },
+		IsIgnored: func(_, path string) bool { return slices.Contains(ignored, path) },
 	}
-}
-
-func contains(paths []string, want string) bool {
-	for _, path := range paths {
-		if path == want {
-			return true
-		}
-	}
-	return false
 }
 
 func TestClassify(t *testing.T) {
