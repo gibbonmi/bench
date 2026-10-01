@@ -22,18 +22,18 @@ import (
 // prescribed Bench lock reason the policy compares against the recorded one.
 func TestLifecycleOwnershipFactAdapterTranslatesRealBundle(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "fa-ownership")
-	facts := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
+	f := newOwnedAssignment(t, "fa-ownership")
+	facts := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
 	requireTest(t, facts.MarkerPresent && facts.MarkerErr == nil, "ownership facts = %+v, want a validated owner marker", facts)
-	requireTest(t, facts.MatchedAssignment != nil && facts.MatchedAssignment.ID == creation.Assignment.ID,
-		"matched assignment = %+v, want the created assignment %s", facts.MatchedAssignment, creation.Assignment.ID)
-	requireTest(t, facts.RegistrationBranchRef == creation.Assignment.Branch,
-		"registration branch fact %q, want the assignment branch %q", facts.RegistrationBranchRef, creation.Assignment.Branch)
-	requireTest(t, facts.AssignmentLockReason == lockReason(creation.Assignment) && facts.RegistrationLockReason == facts.AssignmentLockReason,
+	requireTest(t, facts.MatchedAssignment != nil && facts.MatchedAssignment.ID == f.creation.Assignment.ID,
+		"matched assignment = %+v, want the created assignment %s", facts.MatchedAssignment, f.creation.Assignment.ID)
+	requireTest(t, facts.RegistrationBranchRef == f.creation.Assignment.Branch,
+		"registration branch fact %q, want the assignment branch %q", facts.RegistrationBranchRef, f.creation.Assignment.Branch)
+	requireTest(t, facts.AssignmentLockReason == lockReason(f.creation.Assignment) && facts.RegistrationLockReason == facts.AssignmentLockReason,
 		"lock-reason facts = %q vs %q, want both to carry the assignment's prescribed reason", facts.RegistrationLockReason, facts.AssignmentLockReason)
 	requireTest(t, facts.RegistrationLocked && !facts.RegistrationDetached, "registration facts = %+v, want locked and attached", facts)
 
-	plan, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{})
+	plan, err := PlanExplicitWithOptions(f.root, f.creation.Path, CleanupOptions{})
 	mustNoError(t, err)
 	requireTest(t, plan.owned && plan.Action == ActionRemove,
 		"owned clean plan = %#v, want the production adapter to reach the same owned removal over these facts", plan)
@@ -44,23 +44,23 @@ func TestLifecycleOwnershipFactAdapterTranslatesRealBundle(t *testing.T) {
 // translate into the exact typed lease facts the policy consumes.
 func TestLifecycleLeaseFactAdapterTranslatesRealLeases(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "fa-lease")
-	lease, err := LeaseFile(creation.Path)
+	f := newOwnedAssignment(t, "fa-lease")
+	lease, err := LeaseFile(f.creation.Path)
 	mustNoError(t, err)
 
-	absent := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
+	absent := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
 	requireTest(t, !absent.LeasePresent && absent.LeaseStatErr == nil, "absent-lease facts = %+v, want no lease evidence", absent)
 
 	mustWrite(t, lease, []byte(fmt.Sprintf("%d 2026-07-15T00:00:00Z\n", os.Getpid())), 0o600)
-	live := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
+	live := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
 	requireTest(t, live.LeasePresent && live.LeaseState == LeaseLive, "live-lease facts = %+v, want a present live lease", live)
 
 	mustWrite(t, lease, []byte(deadPidLine(t)), 0o600)
-	dead := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
+	dead := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
 	requireTest(t, dead.LeasePresent && dead.LeaseState == LeaseDead, "dead-lease facts = %+v, want a present dead lease", dead)
 
 	mustWrite(t, lease, []byte("junk\n"), 0o600)
-	malformed := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
+	malformed := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
 	requireTest(t, malformed.LeasePresent && malformed.LeaseState == LeaseUnknown, "malformed-lease facts = %+v, want an unknown lease", malformed)
 	markProof(t, "lifecycle/adapter/facts")
 }
@@ -71,16 +71,16 @@ func TestLifecycleLeaseFactAdapterTranslatesRealLeases(t *testing.T) {
 // over exactly those facts.
 func TestLifecycleEligibilityFactAdapterTranslatesTrackedState(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "fa-eligibility")
-	clean := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
+	f := newOwnedAssignment(t, "fa-eligibility")
+	clean := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
 	requireTest(t, clean.InitialTracked == "clean" && clean.NestedState == nestedClean && clean.NestedErr == nil,
 		"clean facts = %+v, want clean tracked and nested state", clean)
 
-	mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
-	dirty := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
+	mustWrite(t, filepath.Join(f.creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
+	dirty := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
 	requireTest(t, dirty.InitialTracked == "dirty", "dirty facts = %+v, want tracked=dirty", dirty)
 
-	plan, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{})
+	plan, err := PlanExplicitWithOptions(f.root, f.creation.Path, CleanupOptions{})
 	mustNoError(t, err)
 	requireTest(t, plan.Action == ActionRecoverRemove && plan.Tracked == "dirty",
 		"dirty plan = %#v, want the production adapter to promote these facts to recover-remove", plan)
@@ -92,14 +92,14 @@ func TestLifecycleEligibilityFactAdapterTranslatesTrackedState(t *testing.T) {
 // is not orphaned, and the same record backdated past the window is.
 func TestLifecycleAgeFactAdapterTranslatesLedgerStamp(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "fa-age")
-	young, err := assignmentByID(root, creation.Assignment.ID)
+	f := newOwnedAssignment(t, "fa-age")
+	young, err := assignmentByID(f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, young.CreatedAt != nil, "created assignment carries no creation stamp")
 	requireTest(t, !orphaned(young, currentTime()), "fresh assignment reads orphaned")
 
-	backdate(t, root, creation.Assignment, 8*24*time.Hour)
-	aged, err := assignmentByID(root, creation.Assignment.ID)
+	backdate(t, f.root, f.creation.Assignment, 8*24*time.Hour)
+	aged, err := assignmentByID(f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, orphaned(aged, currentTime()), "backdated assignment does not read orphaned")
 }
@@ -137,14 +137,14 @@ func TestLifecycleIgnoredFactAdapterTranslatesDeclaration(t *testing.T) {
 // and registration shape.
 func TestLifecyclePreservationFactAdapterTranslatesPlanShape(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "fa-preservation")
-	clean, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{})
+	f := newOwnedAssignment(t, "fa-preservation")
+	clean, err := PlanExplicitWithOptions(f.root, f.creation.Path, CleanupOptions{})
 	mustNoError(t, err)
 	requireTest(t, !clean.preserves() && !lifecyclepolicy.Preserves(clean.Action, clean.Tracked, clean.registration.Detached),
 		"clean plan = %#v, want no preservation ahead", clean)
 
-	mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
-	dirty, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{})
+	mustWrite(t, filepath.Join(f.creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
+	dirty, err := PlanExplicitWithOptions(f.root, f.creation.Path, CleanupOptions{})
 	mustNoError(t, err)
 	requireTest(t, dirty.preserves() && lifecyclepolicy.Preserves(dirty.Action, dirty.Tracked, dirty.registration.Detached),
 		"dirty plan = %#v, want a preserving removal ahead", dirty)
@@ -156,16 +156,16 @@ func TestLifecyclePreservationFactAdapterTranslatesPlanShape(t *testing.T) {
 // its exact ref and OID, and a diverged branch is proven unmerged.
 func TestLifecycleActionFactAdapterTranslatesLandedness(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "fa-action")
-	landed := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
-	head := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	f := newOwnedAssignment(t, "fa-action")
+	landed := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
+	head := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	requireTest(t, !landed.HeadDetached && landed.DefaultKnown && landed.LandedOK && landed.LandedErr == nil,
 		"landed facts = %+v, want a proven landed branch", landed)
-	requireTest(t, landed.HeadRef == creation.Assignment.Branch && landed.Head == head,
-		"landed identity facts = %q/%q, want %q/%q", landed.HeadRef, landed.Head, creation.Assignment.Branch, head)
+	requireTest(t, landed.HeadRef == f.creation.Assignment.Branch && landed.Head == head,
+		"landed identity facts = %q/%q, want %q/%q", landed.HeadRef, landed.Head, f.creation.Assignment.Branch, head)
 
-	commitInWorktree(t, creation.Path, "fa-action.txt", "diverge\n", "fa-action diverges")
-	diverged := gatherExplicitFactsForTest(t, root, creation.Path, CleanupOptions{})
+	commitInWorktree(t, f.creation.Path, "fa-action.txt", "diverge\n", "fa-action diverges")
+	diverged := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
 	requireTest(t, diverged.DefaultKnown && !diverged.LandedOK && diverged.LandedErr == nil,
 		"diverged facts = %+v, want proven unmerged", diverged)
 }

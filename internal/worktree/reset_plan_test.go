@@ -12,18 +12,18 @@ import (
 
 func TestResetPlanReportsTheDirtyCheckoutAndWritesNothing(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-plan")
-	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("dirty\n"), 0o644)
-	before, err := git.Raw("-C", creation.Path, "status", "--porcelain=v1", "-z", "--untracked-files=all")
+	f := newOwnedAssignment(t, "reset-plan")
+	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("dirty\n"), 0o644)
+	before, err := git.Raw("-C", f.creation.Path, "status", "--porcelain=v1", "-z", "--untracked-files=all")
 	mustNoError(t, err)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 0, "plan = %d %s %s", result.exit, result.stdout, result.stderr)
-	for _, cell := range []string{"reset_plan{", "worktree=" + creation.Assignment.ID, "mode=reset", "action=reset",
-		"checkpoint=" + creation.Assignment.Start, "head=" + creation.Assignment.Start, "ref=" + creation.Assignment.Branch,
-		"tip=" + creation.Assignment.Start, "tracked=dirty", "lock=ok", "preserve=envelope", "fingerprint="} {
+	for _, cell := range []string{"reset_plan{", "worktree=" + f.creation.Assignment.ID, "mode=reset", "action=reset",
+		"checkpoint=" + f.creation.Assignment.Start, "head=" + f.creation.Assignment.Start, "ref=" + f.creation.Assignment.Branch,
+		"tip=" + f.creation.Assignment.Start, "tracked=dirty", "lock=ok", "preserve=envelope", "fingerprint="} {
 		requireTest(t, strings.Contains(result.stdout, cell), "plan lacks %s: %s", cell, result.stdout)
 	}
-	after, err := git.Raw("-C", creation.Path, "status", "--porcelain=v1", "-z", "--untracked-files=all")
+	after, err := git.Raw("-C", f.creation.Path, "status", "--porcelain=v1", "-z", "--untracked-files=all")
 	mustNoError(t, err)
 	requireTest(t, string(after) == string(before), "plan changed checkout status")
 	requireTest(t, strings.Contains(result.stdout, "next=bench worktree reset --to "), "plan lacks the apply command: %s", result.stdout)
@@ -31,20 +31,20 @@ func TestResetPlanReportsTheDirtyCheckoutAndWritesNothing(t *testing.T) {
 
 func TestResetPlanNamesTheApplyCommand(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-next")
-	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("dirty\n"), 0o644)
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-next")
+	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("dirty\n"), 0o644)
+	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
-	want := "next=bench worktree reset --to " + creation.Assignment.Start + " " + creation.Assignment.ID + " --apply " + fingerprint
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
+	want := "next=bench worktree reset --to " + f.creation.Assignment.Start + " " + f.creation.Assignment.ID + " --apply " + fingerprint
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, want), "apply command = %d %s %s; want %s", result.exit, result.stdout, result.stderr, want)
 }
 
 func TestResetPlanReportsNothingToReset(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-clean")
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-clean")
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "action=none") && strings.Contains(result.stdout, "fingerprint=none"),
 		"clean plan = %d %s %s", result.exit, result.stdout, result.stderr)
 	requireTest(t, strings.Contains(result.stdout, "tracked=clean") && strings.Contains(result.stdout, "preserve=none") &&
@@ -53,15 +53,15 @@ func TestResetPlanReportsNothingToReset(t *testing.T) {
 
 func TestResetPlanListsEveryAffectedPath(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-paths")
-	commitInWorktree(t, creation.Path, ".gitignore", "ignored\n", "ignore output")
-	mustWrite(t, filepath.Join(creation.Path, "staged"), []byte("staged\n"), 0o644)
-	gitRun(t, creation.Path, "add", "staged")
-	mustWrite(t, filepath.Join(creation.Path, "tracked.txt"), []byte("unstaged\n"), 0o644)
-	mustWrite(t, filepath.Join(creation.Path, "untracked"), []byte("new\n"), 0o644)
-	mustWrite(t, filepath.Join(creation.Path, "ignored"), []byte("output\n"), 0o644)
-	gitRun(t, creation.Path, "mv", "README.md", "renamed")
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-paths")
+	commitInWorktree(t, f.creation.Path, ".gitignore", "ignored\n", "ignore output")
+	mustWrite(t, filepath.Join(f.creation.Path, "staged"), []byte("staged\n"), 0o644)
+	gitRun(t, f.creation.Path, "add", "staged")
+	mustWrite(t, filepath.Join(f.creation.Path, "tracked.txt"), []byte("unstaged\n"), 0o644)
+	mustWrite(t, filepath.Join(f.creation.Path, "untracked"), []byte("new\n"), 0o644)
+	mustWrite(t, filepath.Join(f.creation.Path, "ignored"), []byte("output\n"), 0o644)
+	gitRun(t, f.creation.Path, "mv", "README.md", "renamed")
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "reset_paths[4]{path,status}:"), "paths = %d %s %s", result.exit, result.stdout, result.stderr)
 	for _, path := range []string{"staged", "tracked.txt", "untracked", "renamed"} {
 		requireTest(t, strings.Contains(result.stdout, "\n  "+path+","), "missing path %s: %s", path, result.stdout)
@@ -71,9 +71,9 @@ func TestResetPlanListsEveryAffectedPath(t *testing.T) {
 
 func TestResetPlanSanitizesAHostilePath(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-control-path")
-	mustWrite(t, filepath.Join(creation.Path, "bad\x1bname"), []byte("new\n"), 0o644)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-control-path")
+	mustWrite(t, filepath.Join(f.creation.Path, "bad\x1bname"), []byte("new\n"), 0o644)
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "reset_paths[1]") && !strings.ContainsRune(result.stdout, '\x1b'),
 		"hostile path = %d %s %s", result.exit, result.stdout, result.stderr)
 	requireTest(t, strings.Count(result.stdout, "reset_plan{") == 1 && len(strings.Split(strings.TrimSpace(result.stdout), "\n")) == 3,
@@ -82,41 +82,41 @@ func TestResetPlanSanitizesAHostilePath(t *testing.T) {
 
 func TestResetPlanReachesAShiftBranchCheckout(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-shift")
-	gitRun(t, creation.Path, "switch", "-c", "bench/shift-reset-plan")
-	commitInWorktree(t, creation.Path, "shift", "work\n", "shift work")
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-shift")
+	gitRun(t, f.creation.Path, "switch", "-c", "bench/shift-reset-plan")
+	commitInWorktree(t, f.creation.Path, "shift", "work\n", "shift work")
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "ref=refs/heads/bench/shift-reset-plan") &&
 		strings.Contains(result.stdout, "action=reset"), "shift plan = %d %s %s", result.exit, result.stdout, result.stderr)
 }
 
 func TestResetPlanReachesADriftedLock(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-lock")
-	gitRun(t, root, "worktree", "unlock", creation.Path)
-	gitRun(t, root, "worktree", "lock", "--reason", "shift retained", creation.Path)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-lock")
+	gitRun(t, f.root, "worktree", "unlock", f.creation.Path)
+	gitRun(t, f.root, "worktree", "lock", "--reason", "shift retained", f.creation.Path)
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "lock=repair") && strings.Contains(result.stdout, "action=reset") &&
 		strings.Contains(result.stdout, "preserve=none"), "lock plan = %d %s %s", result.exit, result.stdout, result.stderr)
 }
 
 func TestResetResolvesTheCheckpointInTheTarget(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-symbolic")
-	commitInWorktree(t, creation.Path, "ahead", "ahead\n", "ahead")
-	head := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	requireTest(t, gitOutput(t, root, "rev-parse", "HEAD") != head, "fixture root and target share a head")
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", "HEAD", creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-symbolic")
+	commitInWorktree(t, f.creation.Path, "ahead", "ahead\n", "ahead")
+	head := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	requireTest(t, gitOutput(t, f.root, "rev-parse", "HEAD") != head, "fixture root and target share a head")
+	result := runVerb(t, verbReset, f.call("--to", "HEAD", f.creation.Assignment.ID))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "checkpoint="+head) && strings.Contains(result.stdout, "action=none"),
 		"symbolic checkpoint = %d %s %s", result.exit, result.stdout, result.stderr)
 }
 
 func TestResetPlanOpensNoSpan(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-no-span")
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-no-span")
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 0, "plan = %d %s %s", result.exit, result.stdout, result.stderr)
-	_, err := os.Stat(otelrecord.Path(home, root))
+	_, err := os.Stat(otelrecord.Path(f.home, f.root))
 	requireTest(t, os.IsNotExist(err), "plan created a span record: %v", err)
 }
 

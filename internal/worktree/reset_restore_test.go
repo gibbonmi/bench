@@ -11,16 +11,16 @@ import (
 
 func restoreFixture(t *testing.T) restoredAssignment {
 	t.Helper()
-	root, creation, home := newOwnedAssignment(t, "restore")
-	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("staged\n"), 0o644)
-	gitRun(t, creation.Path, "add", "README.md")
-	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("working\n"), 0o644)
-	mustWrite(t, filepath.Join(creation.Path, "untracked"), []byte("untracked\n"), 0o644)
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "restore")
+	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("staged\n"), 0o644)
+	gitRun(t, f.creation.Path, "add", "README.md")
+	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("working\n"), 0o644)
+	mustWrite(t, filepath.Join(f.creation.Path, "untracked"), []byte("untracked\n"), 0o644)
+	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
-	apply := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", plan.mustFingerprint(t)}})
+	apply := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", plan.mustFingerprint(t)))
 	requireTest(t, apply.exit == 0, "fixture reset = %d %s %s", apply.exit, apply.stdout, apply.stderr)
-	return restoredAssignment{root: root, creation: creation, home: home, ref: intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID) + "1"}
+	return restoredAssignment{ownedAssignment: f, ref: intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"}
 }
 
 // isRestorePlanOf reports whether result is a successful restore plan for the envelope
@@ -93,26 +93,26 @@ func TestResetRestoreExitsThreeOnALayerFault(t *testing.T) {
 
 func TestResetRestoreReturnsAnOffBranchCapture(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "restore-off-branch")
-	commitInWorktree(t, creation.Path, "assignment", "assignment\n", "assignment tip")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	gitRun(t, creation.Path, "switch", "-c", "bench/shift-restore", creation.Assignment.Start)
-	commitInWorktree(t, creation.Path, "shift", "shift\n", "shift tip")
-	base := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("shift dirty\n"), 0o644)
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "restore-off-branch")
+	commitInWorktree(t, f.creation.Path, "assignment", "assignment\n", "assignment tip")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	gitRun(t, f.creation.Path, "switch", "-c", "bench/shift-restore", f.creation.Assignment.Start)
+	commitInWorktree(t, f.creation.Path, "shift", "shift\n", "shift tip")
+	base := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("shift dirty\n"), 0o644)
+	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", plan.mustFingerprint(t)}})
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", plan.mustFingerprint(t)))
 	requireTest(t, result.exit == 0, "fixture shift reset = %d %s %s", result.exit, result.stdout, result.stderr)
-	ref := intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID) + "1"
-	plan = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--restore", ref, creation.Assignment.ID}})
+	ref := intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"
+	plan = runVerb(t, verbReset, f.call("--restore", ref, f.creation.Assignment.ID))
 	requireTest(t, isRestorePlanOf(plan, ref), "restore plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
-	result = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--restore", ref, creation.Assignment.ID, "--apply", plan.mustFingerprint(t)}})
-	requireTest(t, result.exit == 0 && gitOutput(t, root, "rev-parse", creation.Assignment.Branch) == tip &&
-		gitOutput(t, creation.Path, "rev-parse", "HEAD") == base && gitOutput(t, creation.Path, "rev-parse", "--abbrev-ref", "HEAD") == "HEAD", "off-branch restore = %d %s %s", result.exit, result.stdout, result.stderr)
-	requireTest(t, strings.Contains(result.stdout, "ref=detached") && strings.Contains(result.stdout, "next=bench worktree reset --to "+tip+" "+creation.Assignment.ID), "restore lacks reattach command: %s", result.stdout)
-	requireTest(t, gitOutput(t, root, "rev-parse", "refs/heads/bench/shift-restore") == base, "restore changed the shift branch")
-	assertRestoreLayers(t, root, creation.Path, ref)
+	result = runVerb(t, verbReset, f.call("--restore", ref, f.creation.Assignment.ID, "--apply", plan.mustFingerprint(t)))
+	requireTest(t, result.exit == 0 && gitOutput(t, f.root, "rev-parse", f.creation.Assignment.Branch) == tip &&
+		gitOutput(t, f.creation.Path, "rev-parse", "HEAD") == base && gitOutput(t, f.creation.Path, "rev-parse", "--abbrev-ref", "HEAD") == "HEAD", "off-branch restore = %d %s %s", result.exit, result.stdout, result.stderr)
+	requireTest(t, strings.Contains(result.stdout, "ref=detached") && strings.Contains(result.stdout, "next=bench worktree reset --to "+tip+" "+f.creation.Assignment.ID), "restore lacks reattach command: %s", result.stdout)
+	requireTest(t, gitOutput(t, f.root, "rev-parse", "refs/heads/bench/shift-restore") == base, "restore changed the shift branch")
+	assertRestoreLayers(t, f.root, f.creation.Path, ref)
 }
 
 func TestResetRestorePreservesTheCurrentStateFirst(t *testing.T) {

@@ -33,21 +33,21 @@ func TestResetApplyReconcilesAnUnfinishedMerge(t *testing.T) {
 
 func TestResetApplyRepairsAShiftBranchCheckout(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-shift-repair")
-	gitRun(t, creation.Path, "switch", "-c", "bench/shift-reset-repair")
-	commitInWorktree(t, creation.Path, "shift", "shift work\n", "shift work")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	gitRun(t, root, "worktree", "unlock", creation.Path)
-	gitRun(t, root, "worktree", "lock", "--reason", "bench shift recovery: iteration failed", creation.Path)
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-shift-repair")
+	gitRun(t, f.creation.Path, "switch", "-c", "bench/shift-reset-repair")
+	commitInWorktree(t, f.creation.Path, "shift", "shift work\n", "shift work")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	gitRun(t, f.root, "worktree", "unlock", f.creation.Path)
+	gitRun(t, f.root, "worktree", "lock", "--reason", "bench shift recovery: iteration failed", f.creation.Path)
+	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", fingerprint}})
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	requireTest(t, result.exit == 0, "shift repair = %d %s %s", result.exit, result.stdout, result.stderr)
-	_, err := resolveAssignment(root, creation.Assignment.ID)
+	_, err := resolveAssignment(f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
-	requireTest(t, gitOutput(t, root, "rev-parse", "refs/heads/bench/shift-reset-repair") == tip &&
-		gitOutput(t, creation.Path, "symbolic-ref", "HEAD") == creation.Assignment.Branch, "shift repair lost the shift branch or left HEAD off assignment")
+	requireTest(t, gitOutput(t, f.root, "rev-parse", "refs/heads/bench/shift-reset-repair") == tip &&
+		gitOutput(t, f.creation.Path, "symbolic-ref", "HEAD") == f.creation.Assignment.Branch, "shift repair lost the shift branch or left HEAD off assignment")
 }
 
 func TestResetApplyKeepsTheTipOfADetachedCheckout(t *testing.T) {
@@ -62,64 +62,64 @@ func TestResetApplyKeepsTheTipOfAShiftBranchCheckout(t *testing.T) {
 
 func checkResetOffBranchTip(t *testing.T, shift bool) {
 	t.Helper()
-	root, creation, home := newOwnedAssignment(t, "reset-off-branch-tip")
-	commitInWorktree(t, creation.Path, "ahead", "ahead\n", "ahead")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	f := newOwnedAssignment(t, "reset-off-branch-tip")
+	commitInWorktree(t, f.creation.Path, "ahead", "ahead\n", "ahead")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	if shift {
-		gitRun(t, creation.Path, "switch", "-c", "bench/shift-reset-tip", creation.Assignment.Start)
+		gitRun(t, f.creation.Path, "switch", "-c", "bench/shift-reset-tip", f.creation.Assignment.Start)
 	} else {
-		gitRun(t, creation.Path, "switch", "--detach", creation.Assignment.Start)
+		gitRun(t, f.creation.Path, "switch", "--detach", f.creation.Assignment.Start)
 	}
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "preserve=envelope"), "detached plan = %d %s %s", result.exit, result.stdout, result.stderr)
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", fingerprint}})
+	result = runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	requireTest(t, result.exit == 0, "detached apply = %d %s %s", result.exit, result.stdout, result.stderr)
-	ref := intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID) + "1"
-	parents := strings.Fields(gitOutput(t, root, "show", "-s", "--format=%P", ref))
+	ref := intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"
+	parents := strings.Fields(gitOutput(t, f.root, "show", "-s", "--format=%P", ref))
 	requireTest(t, strings.Contains(" "+strings.Join(parents, " ")+" ", " "+tip+" "), "root lost detached checkout's tip: %#v", parents)
 }
 
 func TestResetApplyKeepsTheRewoundTipReachable(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-rewind")
-	commitInWorktree(t, creation.Path, "ahead", "ahead\n", "ahead")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-rewind")
+	commitInWorktree(t, f.creation.Path, "ahead", "ahead\n", "ahead")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", fingerprint}})
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	requireTest(t, result.exit == 0, "rewind = %d %s %s", result.exit, result.stdout, result.stderr)
-	manifest, ok := readRecoveryManifest(root, intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID)+"1")
-	requireTest(t, ok && gitOutput(t, root, "rev-parse", creation.Assignment.Branch) == creation.Assignment.Start, "rewind failed or envelope absent")
-	requireTest(t, gitOutput(t, root, "show", "-s", "--format=%P", manifest.Layers["working"]) == tip, "working payload lost previous tip")
+	manifest, ok := readRecoveryManifest(f.root, intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID)+"1")
+	requireTest(t, ok && gitOutput(t, f.root, "rev-parse", f.creation.Assignment.Branch) == f.creation.Assignment.Start, "rewind failed or envelope absent")
+	requireTest(t, gitOutput(t, f.root, "show", "-s", "--format=%P", manifest.Layers["working"]) == tip, "working payload lost previous tip")
 }
 
 func TestResetApplyRestoresTheExactLock(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-exact-lock")
-	gitRun(t, root, "worktree", "unlock", creation.Path)
-	gitRun(t, root, "worktree", "lock", "--reason", "foreign lock", creation.Path)
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-exact-lock")
+	gitRun(t, f.root, "worktree", "unlock", f.creation.Path)
+	gitRun(t, f.root, "worktree", "lock", "--reason", "foreign lock", f.creation.Path)
+	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", fingerprint}})
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "preserved=none"), "lock repair = %d %s %s", result.exit, result.stdout, result.stderr)
-	_, err := resolveAssignment(root, creation.Assignment.ID)
+	_, err := resolveAssignment(f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 }
 
 func TestResetApplyReattachesWithoutAnEnvelope(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "reset-reattach")
-	gitRun(t, creation.Path, "switch", "--detach", "HEAD")
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "reset-reattach")
+	gitRun(t, f.creation.Path, "switch", "--detach", "HEAD")
+	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", fingerprint}})
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "preserved=none") && strings.Contains(result.stdout, "restore=none"), "reattach = %d %s %s", result.exit, result.stdout, result.stderr)
-	requireTest(t, gitOutput(t, creation.Path, "symbolic-ref", "HEAD") == creation.Assignment.Branch &&
-		gitOutput(t, root, "for-each-ref", "--format=%(refname)", intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID)) == "", "pure repair wrote an envelope or stayed detached")
+	requireTest(t, gitOutput(t, f.creation.Path, "symbolic-ref", "HEAD") == f.creation.Assignment.Branch &&
+		gitOutput(t, f.root, "for-each-ref", "--format=%(refname)", intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID)) == "", "pure repair wrote an envelope or stayed detached")
 }

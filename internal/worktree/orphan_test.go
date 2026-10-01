@@ -103,10 +103,10 @@ func backdate(t *testing.T, root string, assignment intent.Assignment, age time.
 
 func TestPlanAutomaticLabelsOrphaned(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "orphan-label")
-	commitInWorktree(t, creation.Path, "orphan.txt", "orphan\n", "orphan")
-	backdate(t, root, creation.Assignment, 8*24*time.Hour)
-	plan, err := PlanAutomatic(root, creation.Path)
+	f := newOwnedAssignment(t, "orphan-label")
+	commitInWorktree(t, f.creation.Path, "orphan.txt", "orphan\n", "orphan")
+	backdate(t, f.root, f.creation.Assignment, 8*24*time.Hour)
+	plan, err := PlanAutomatic(f.root, f.creation.Path)
 	requireTest(t, err == nil && plan.Action == ActionRetain && plan.ReasonCode == ReasonStaleActive,
 		"PlanAutomatic over an aged clean assignment = action %q reason %q, %v", plan.Action, plan.ReasonCode, err)
 }
@@ -133,13 +133,13 @@ func TestPlanAutomaticKeepsEarlierRetainReason(t *testing.T) {
 // path reads the stamp.
 func TestReleaseAndPlanExplicitAcceptUnstampedAssignment(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "unstamped-lock")
-	unstamped := creation.Assignment
+	f := newOwnedAssignment(t, "unstamped-lock")
+	unstamped := f.creation.Assignment
 	unstamped.CreatedAt = nil
-	mustNoError(t, intent.PutAssignment(root, unstamped))
-	plan, err := PlanExplicit(root, creation.Path)
+	mustNoError(t, intent.PutAssignment(f.root, unstamped))
+	plan, err := PlanExplicit(f.root, f.creation.Path)
 	requireTest(t, err == nil && plan.Action == ActionRemove && plan.ReasonCode == "",
 		"PlanExplicit over an unstamped assignment = %#v, %v", plan, err)
-	code := ReleaseCommand(root, home, []string{"--request", "landed-unstamped-lock", creation.Path}, io.Discard, io.Discard)
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-unstamped-lock", f.creation.Path}, io.Discard, io.Discard)
 	requireTest(t, code == 0, "ReleaseCommand over an unstamped assignment exit=%d", code)
 }

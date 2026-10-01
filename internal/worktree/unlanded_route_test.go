@@ -15,15 +15,15 @@ import (
 // whose release refused and left it cleanup-pending. It returns the refusal's stderr.
 func refusedUnlandedRelease(t *testing.T, request string) (string, Creation, string, string) {
 	t.Helper()
-	root, creation, home := newOwnedAssignment(t, request)
-	commitInWorktree(t, creation.Path, "unique.txt", "throwaway\n", "unlanded work")
+	f := newOwnedAssignment(t, request)
+	commitInWorktree(t, f.creation.Path, "unique.txt", "throwaway\n", "unlanded work")
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, home, []string{"--request", "landed-" + request, creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-" + request, f.creation.Path}, &stdout, &stderr)
 	requireTest(t, code == 1 && strings.Contains(stderr.String(), "worktree retained (unmerged)"), "release exit=%d stderr=%q", code, stderr.String())
-	assignment, err := assignmentByID(root, creation.Assignment.ID)
+	assignment, err := assignmentByID(f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, assignment.State == intent.StateCleanupPending, "state = %q, want cleanup-pending", assignment.State)
-	return root, creation, home, stderr.String()
+	return f.root, f.creation, f.home, stderr.String()
 }
 
 // requireDiscardRoute runs the clean the surface named and requires it to plan and apply

@@ -9,10 +9,10 @@ import (
 // tracked path at exit 0, so an agent reads a revision without the worktree path.
 func TestShowPrintsTheBlobAtTheRevision(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "show-blob")
-	commitInWorktree(t, creation.Path, "tracked.txt", "one\ntwo\n", "add tracked")
+	f := newOwnedAssignment(t, "show-blob")
+	commitInWorktree(t, f.creation.Path, "tracked.txt", "one\ntwo\n", "add tracked")
 	var stdout, stderr bytes.Buffer
-	if code := ShowCommand(root, home, []string{creation.Assignment.Label, "HEAD:tracked.txt"}, &stdout, &stderr); code != 0 {
+	if code := ShowCommand(f.root, f.home, []string{f.creation.Assignment.Label, "HEAD:tracked.txt"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("show exited %d, want 0: %s", code, stderr.String())
 	}
 	if stdout.String() != "one\ntwo\n" {
@@ -27,11 +27,11 @@ func TestShowPrintsTheBlobAtTheRevision(t *testing.T) {
 // blob arrives as Git stores it.
 func TestShowPassesNULBytesThrough(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "show-nul")
+	f := newOwnedAssignment(t, "show-nul")
 	blob := "a\x00b\n"
-	commitInWorktree(t, creation.Path, "binary.bin", blob, "add binary")
+	commitInWorktree(t, f.creation.Path, "binary.bin", blob, "add binary")
 	var stdout, stderr bytes.Buffer
-	if code := ShowCommand(root, home, []string{creation.Assignment.Label, "HEAD:binary.bin"}, &stdout, &stderr); code != 0 {
+	if code := ShowCommand(f.root, f.home, []string{f.creation.Assignment.Label, "HEAD:binary.bin"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("show exited %d, want 0: %s", code, stderr.String())
 	}
 	if stdout.String() != blob {
@@ -43,16 +43,16 @@ func TestShowPassesNULBytesThrough(t *testing.T) {
 // and Git's own stderr, so a bad revision names itself rather than a Bench sentence.
 func TestShowPassesGitsOwnFailureThrough(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "show-missing")
-	commitInWorktree(t, creation.Path, "tracked.txt", "one\n", "add tracked")
-	direct := descendant(t, "git", "-C", creation.Path, "cat-file", "blob", "HEAD:no-such-file")
+	f := newOwnedAssignment(t, "show-missing")
+	commitInWorktree(t, f.creation.Path, "tracked.txt", "one\n", "add tracked")
+	direct := descendant(t, "git", "-C", f.creation.Path, "cat-file", "blob", "HEAD:no-such-file")
 	var directErr bytes.Buffer
 	direct.Stderr = &directErr
 	if err := direct.Run(); err == nil {
 		t.Fatal("a direct cat-file of a missing object succeeded")
 	}
 	var stdout, stderr bytes.Buffer
-	if code := ShowCommand(root, home, []string{creation.Assignment.Label, "HEAD:no-such-file"}, &stdout, &stderr); code != 128 {
+	if code := ShowCommand(f.root, f.home, []string{f.creation.Assignment.Label, "HEAD:no-such-file"}, &stdout, &stderr); code != 128 {
 		t.Fatalf("show exited %d, want 128: %s", code, stderr.String())
 	}
 	if stderr.String() != directErr.String() {
@@ -69,14 +69,14 @@ func TestShowPassesGitsOwnFailureThrough(t *testing.T) {
 // instead; the grammar line proves no Git ran.
 func TestShowRefusesAnOperandThatIsNotARevision(t *testing.T) {
 	t.Parallel()
-	root, _, home := newOwnedAssignment(t, "show-operand")
+	f := newOwnedAssignment(t, "show-operand")
 	want := "usage: bench worktree show <target> <rev>:<path>\n"
 	for name, operand := range map[string]string{
 		"no colon":    "tracked.txt",
 		"dash option": "--output=/tmp/x:tracked.txt",
 	} {
 		var stdout, stderr bytes.Buffer
-		if code := ShowCommand(root, home, []string{"no-such-label", operand}, &stdout, &stderr); code != 2 {
+		if code := ShowCommand(f.root, f.home, []string{"no-such-label", operand}, &stdout, &stderr); code != 2 {
 			t.Fatalf("%s operand %q exited %d, want 2: %s", name, operand, code, stderr.String())
 		}
 		if stderr.String() != want {
@@ -109,9 +109,9 @@ func TestShowHelpPrintsTheGrammarLine(t *testing.T) {
 // grammar line. The target is unresolvable, so the grammar line proves no Git ran.
 func TestShowRefusesAControlByteInTheOperand(t *testing.T) {
 	t.Parallel()
-	root, _, home := newOwnedAssignment(t, "show-control")
+	f := newOwnedAssignment(t, "show-control")
 	var stdout, stderr bytes.Buffer
-	if code := ShowCommand(root, home, []string{"no-such-label", "HEAD:a\nb"}, &stdout, &stderr); code != 2 {
+	if code := ShowCommand(f.root, f.home, []string{"no-such-label", "HEAD:a\nb"}, &stdout, &stderr); code != 2 {
 		t.Fatalf("control-byte operand exited %d, want 2: %s", code, stderr.String())
 	}
 	if want := "usage: bench worktree show <target> <rev>:<path>\n"; stderr.String() != want {

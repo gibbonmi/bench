@@ -376,12 +376,12 @@ func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
 // is one route, so the response advertises it once however many rows reach it.
 func TestListCommandNamesOneCleanLandedRowForAMissingTree(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "list-missing-landed")
-	landAssignment(t, root, creation, "landed.txt")
-	if err := os.RemoveAll(creation.Path); err != nil {
+	f := newOwnedAssignment(t, "list-missing-landed")
+	landAssignment(t, f.root, f.creation, "landed.txt")
+	if err := os.RemoveAll(f.creation.Path); err != nil {
 		t.Fatal(err)
 	}
-	out, code := ListCommand(root, Home(), nil)
+	out, code := ListCommand(f.root, Home(), nil)
 	if code != 0 {
 		t.Fatalf("ListCommand = (%d, %q), want exit 0", code, out)
 	}

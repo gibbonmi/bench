@@ -99,20 +99,20 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T) {
 	t.Parallel()
 	request := "landed-release-refusal-paths"
-	root, creation, home := newOwnedAssignment(t, "release-refusal-paths")
-	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residue-*\n"), 0o644)
+	f := newOwnedAssignment(t, "release-refusal-paths")
+	mustWrite(t, filepath.Join(f.root, ".git", "info", "exclude"), []byte("residue-*\n"), 0o644)
 	for i := 0; i < 1003; i++ {
 		name := fmt.Sprintf("residue-%04d", i)
 		if i == 0 {
 			name += " space[*]"
 		}
-		mustWrite(t, filepath.Join(creation.Path, name), []byte("residue\n"), 0o600)
+		mustWrite(t, filepath.Join(f.creation.Path, name), []byte("residue\n"), 0o600)
 	}
 
 	var stdout, stderr bytes.Buffer
-	code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(f.root, f.home, []string{"--request", request, f.creation.Path}, &stdout, &stderr)
 	out := stderr.String()
-	wantNext := "next=bench worktree release --request <request> '" + creation.Path + "'"
+	wantNext := "next=bench worktree release --request <request> '" + f.creation.Path + "'"
 	if code != 1 || stdout.Len() != 0 || !strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):") ||
 		!strings.Contains(out, "paths_total=1003\n") || !strings.Contains(out, "refusal_paths[1000]{path}:") ||
 		!strings.Contains(out, "residue-0000 space[*]") || strings.Contains(out, "residue-1000") || !strings.Contains(out, wantNext) || strings.Contains(out, request) {

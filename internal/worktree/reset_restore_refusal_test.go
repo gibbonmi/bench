@@ -135,18 +135,18 @@ func TestResetRestoreRefusesAnIgnoredCollision(t *testing.T) {
 
 func TestResetRestoreRefusesACollisionWithTheEnvelopeTip(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "restore-tip-collision")
-	commitInWorktree(t, creation.Path, "gen", "generated\n", "track gen on the tip")
-	gitRun(t, creation.Path, "switch", "--detach", creation.Assignment.Start)
-	mustWrite(t, filepath.Join(creation.Path, "README.md"), []byte("dirty\n"), 0o644)
-	plan := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID}})
+	f := newOwnedAssignment(t, "restore-tip-collision")
+	commitInWorktree(t, f.creation.Path, "gen", "generated\n", "track gen on the tip")
+	gitRun(t, f.creation.Path, "switch", "--detach", f.creation.Assignment.Start)
+	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("dirty\n"), 0o644)
+	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
-	result := runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--to", creation.Assignment.Start, creation.Assignment.ID, "--apply", plan.mustFingerprint(t)}})
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", plan.mustFingerprint(t)))
 	requireTest(t, result.exit == 0, "fixture reset = %d %s %s", result.exit, result.stdout, result.stderr)
-	ref := intent.ResetRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID) + "1"
-	commitInWorktree(t, creation.Path, ".gitignore", "gen\n", "ignore gen")
-	mustWrite(t, filepath.Join(creation.Path, "gen"), []byte("ignored now\n"), 0o644)
-	result = runVerb(t, verbReset, verbCall{root: root, home: home, args: []string{"--restore", ref, creation.Assignment.ID}})
+	ref := intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"
+	commitInWorktree(t, f.creation.Path, ".gitignore", "gen\n", "ignore gen")
+	mustWrite(t, filepath.Join(f.creation.Path, "gen"), []byte("ignored now\n"), 0o644)
+	result = runVerb(t, verbReset, f.call("--restore", ref, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "ignored content would be overwritten") && strings.Contains(result.stdout, "refusal_paths[1]{path}:\n  gen\n"),
 		"tip collision = %d %s %s", result.exit, result.stdout, result.stderr)
 }

@@ -42,31 +42,31 @@ func checkExecPWD(t *testing.T, mode string) {
 			name = "with_wrapper"
 		}
 		t.Run(name, func(t *testing.T) {
-			root, creation, home := newOwnedAssignment(t, "pwd-"+mode+"-"+name)
-			dir := creation.Assignment.Worktree
+			f := newOwnedAssignment(t, "pwd-"+mode+"-"+name)
+			dir := f.creation.Assignment.Worktree
 			if wrapper {
 				path := wrapperPathIn(t, dir)
 				requireTest(t, os.WriteFile(path, nil, 0o644) == nil, "write wrapper")
 			}
-			args := []string{creation.Assignment.Label}
+			args := []string{f.creation.Assignment.Label}
 			if mode == "repeated_overrides" {
 				args = append(args, "--env", "PWD=/first/override", "--env", "PWD=/last/override")
 			}
 			args = append(args, "--env", "BENCH_EXEC_PWD_CARRIED=explicit-value")
 			var stdout, stderr bytes.Buffer
-			code := ExecCommand(root, home, append(args, "--", "pwd", "-P"), nil, &stdout, &stderr)
+			code := ExecCommand(f.root, f.home, append(args, "--", "pwd", "-P"), nil, &stdout, &stderr)
 			requireTest(t, code == 0, "pwd exited %d: %s", code, stderr.String())
 			requireTest(t, stdout.String() == dir+"\n", "actual cwd = %q, want %q", stdout.String(), dir)
 			stdout.Reset()
 			stderr.Reset()
-			code = ExecCommand(root, home, append(args, "--", "env"), nil, &stdout, &stderr)
+			code = ExecCommand(f.root, f.home, append(args, "--", "env"), nil, &stdout, &stderr)
 			requireTest(t, code == 0, "env exited %d: %s", code, stderr.String())
 			entries := strings.Split(strings.TrimSuffix(stdout.String(), "\n"), "\n")
 			requireExecPWD(t, entries, dir)
 			for key, want := range map[string]string{
 				"PWD_EXTRA":              "inherited-near-match",
 				"BENCH_EXEC_PWD_CARRIED": "explicit-value",
-				"BENCH_HOME":             home,
+				"BENCH_HOME":             f.home,
 			} {
 				got, present := assignment(stdout.String(), key)
 				requireTest(t, present && got == want, "%s = %q, present %t; want %q", key, got, present, want)

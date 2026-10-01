@@ -96,20 +96,20 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 func TestCleanupDeletesOnlyExactBranchAndSparesSiblingRefs(t *testing.T) {
 	t.Parallel()
 	t.Run("clean assignment compacts and spares sibling", func(t *testing.T) {
-		root, target, home := newOwnedAssignment(t, "terminal-clean")
-		sibling := mustCreate(t, root, home, "terminal-clean-sibling", "sibling")
+		f := newOwnedAssignment(t, "terminal-clean")
+		sibling := mustCreate(t, f.root, f.home, "terminal-clean-sibling", "sibling")
 		siblingRef := "refs/bench/recovery/" + sibling.Assignment.OwnerID + "/" + sibling.Assignment.ID + "/1"
-		gitRun(t, root, "update-ref", siblingRef, target.Assignment.Start)
-		markPending(t, root, target.Assignment)
-		if _, err := ApplyAutomatic(root, target.Path, nil); err != nil {
+		gitRun(t, f.root, "update-ref", siblingRef, f.creation.Assignment.Start)
+		markPending(t, f.root, f.creation.Assignment)
+		if _, err := ApplyAutomatic(f.root, f.creation.Path, nil); err != nil {
 			t.Fatal(err)
 		}
-		if descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", target.Assignment.Branch).Run() == nil {
+		if descendant(t, "git", "-C", f.root, "show-ref", "--verify", "--quiet", f.creation.Assignment.Branch).Run() == nil {
 			t.Fatal("exact cleanup left target branch")
 		}
-		gitRun(t, root, "show-ref", "--verify", "--quiet", sibling.Assignment.Branch)
-		gitRun(t, root, "show-ref", "--verify", "--quiet", siblingRef)
-		assignments, err := intent.Assignments(root)
+		gitRun(t, f.root, "show-ref", "--verify", "--quiet", sibling.Assignment.Branch)
+		gitRun(t, f.root, "show-ref", "--verify", "--quiet", siblingRef)
+		assignments, err := intent.Assignments(f.root)
 		if err != nil || len(assignments) != 1 || assignments[0].ID != sibling.Assignment.ID {
 			t.Fatalf("clean compaction assignments = %#v, %v", assignments, err)
 		}
@@ -268,11 +268,11 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 // component, its own retained clause, and the same recovery command the landing names.
 func TestReleaseUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "release-reauthorize-recovery")
+	f := newOwnedAssignment(t, "release-reauthorize-recovery")
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, home, []string{"--request", "unknown-request", creation.Path}, &stdout, &stderr)
-	wantNext := "bench worktree reauthorize --assignment " + creation.Assignment.ID + " --request <new-request> --base <full-base-commit> --source-tip <full-source-tip-commit> '" + creation.Path + "'"
-	want := "bench worktree release: request token matches no assignment; checkout retained; observed=assignment:" + creation.Assignment.ID + ",next=" + wantNext + "\n"
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "unknown-request", f.creation.Path}, &stdout, &stderr)
+	wantNext := "bench worktree reauthorize --assignment " + f.creation.Assignment.ID + " --request <new-request> --base <full-base-commit> --source-tip <full-source-tip-commit> '" + f.creation.Path + "'"
+	want := "bench worktree release: request token matches no assignment; checkout retained; observed=assignment:" + f.creation.Assignment.ID + ",next=" + wantNext + "\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
 		t.Fatalf("unknown-request release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
 	}
@@ -303,21 +303,21 @@ func removeOutOfBand(t *testing.T, root string, a intent.Assignment, action Clea
 // receipt does not authorize release reconciliation". Replay is idempotent.
 func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "oob-residue")
-	a, err := assignmentByID(root, creation.Assignment.ID)
+	f := newOwnedAssignment(t, "oob-residue")
+	a, err := assignmentByID(f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, len(a.Recovery) == 0, "fixture already holds recovery metadata")
-	removeOutOfBand(t, root, a, ActionRemoved)
+	removeOutOfBand(t, f.root, a, ActionRemoved)
 
-	args := []string{"--request", "landed-oob-residue", creation.Path}
+	args := []string{"--request", "landed-oob-residue", f.creation.Path}
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, home, args, &out, &errb)
+	code := ReleaseCommand(f.root, f.home, args, &out, &errb)
 	requireTest(t, code == 0, "residue release exit=%d stderr=%q", code, errb.String())
-	if _, err := assignmentByID(root, a.ID); err == nil {
+	if _, err := assignmentByID(f.root, a.ID); err == nil {
 		t.Fatal("residue record survived reconcile")
 	}
 	var replay strings.Builder
-	code = ReleaseCommand(root, home, args, &replay, io.Discard)
+	code = ReleaseCommand(f.root, f.home, args, &replay, io.Discard)
 	requireTest(t, code == 0 && replay.String() == out.String(), "replay exit=%d out=%q", code, replay.String())
 }
 
@@ -327,20 +327,20 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 // recovery pointer intact: release never silently discards preserved work.
 func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "oob-preserved")
-	a, err := assignmentByID(root, creation.Assignment.ID)
+	f := newOwnedAssignment(t, "oob-preserved")
+	a, err := assignmentByID(f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	ref := intent.RecoveryRefPrefix(a.OwnerID, a.ID) + "1"
 	a.State, a.Recovery = intent.StateRecovered, []intent.Recovery{{Ref: ref, Root: strings.Repeat("a", 40), Payloads: []string{strings.Repeat("b", 40)}}}
-	mustNoError(t, intent.PutAssignment(root, a))
-	removeOutOfBand(t, root, a, ActionRemoved)
+	mustNoError(t, intent.PutAssignment(f.root, a))
+	removeOutOfBand(t, f.root, a, ActionRemoved)
 
 	var out, errb strings.Builder
-	code := ReleaseCommand(root, home, []string{"--request", "landed-oob-preserved", creation.Path}, &out, &errb)
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-oob-preserved", f.creation.Path}, &out, &errb)
 	requireTest(t, code != 0, "preserved release exit=%d, want non-zero", code)
 	requireTest(t, strings.Contains(errb.String(), "git show "+ref),
 		"preserved verdict does not hand over the ref: %q", errb.String())
-	got, err := assignmentByID(root, a.ID)
+	got, err := assignmentByID(f.root, a.ID)
 	requireTest(t, err == nil && len(got.Recovery) == 1, "preserved record was mutated or deleted: %v", err)
 }
 
@@ -397,24 +397,24 @@ func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 
 func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newPendingAssignment(t, "release-in-flight")
+	f := newPendingAssignment(t, "release-in-flight")
 	stop := errors.New("crash after removal")
-	_, err := ApplyAutomatic(root, creation.Path, func(step LifecycleStep) error {
+	_, err := ApplyAutomatic(f.root, f.creation.Path, func(step LifecycleStep) error {
 		if step == StepRemoval {
 			return stop
 		}
 		return nil
 	})
 	requireTest(t, errors.Is(err, stop), "automatic interruption = %v", err)
-	args := []string{"--request", "landed-release-in-flight", creation.Path}
+	args := []string{"--request", "landed-release-in-flight", f.creation.Path}
 	var first, firstErr strings.Builder
-	code := ReleaseCommand(root, home, args, &first, &firstErr)
+	code := ReleaseCommand(f.root, f.home, args, &first, &firstErr)
 	requireTest(t, code == 0 && firstErr.String() == "", "in-flight release code=%d stderr=%q", code, firstErr.String())
 	var replay strings.Builder
-	code = ReleaseCommand(root, home, args, &replay, io.Discard)
+	code = ReleaseCommand(f.root, f.home, args, &replay, io.Discard)
 	requireTest(t, code == 0 && replay.String() == first.String(), "in-flight replay code=%d stdout=%q", code, replay.String())
-	requireTest(t, ReleaseCommand(root, home, []string{"--request", "changed", creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
-	requireTest(t, ReleaseCommand(root, home, []string{"--request", args[1], root}, io.Discard, io.Discard) != 0, "changed path authorized")
+	requireTest(t, ReleaseCommand(f.root, f.home, []string{"--request", "changed", f.creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
+	requireTest(t, ReleaseCommand(f.root, f.home, []string{"--request", args[1], f.root}, io.Discard, io.Discard) != 0, "changed path authorized")
 }
 func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 	t.Parallel()
@@ -548,11 +548,11 @@ func TestPoolCommandExplicitRoot(t *testing.T) {
 // and keeps the checkout.
 func TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "release-owner-marker")
-	rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
+	f := newOwnedAssignment(t, "release-owner-marker")
+	rewriteMarkerOwner(t, f.creation.Path, strings.Repeat("a", 32))
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, home, []string{"--request", "landed-release-owner-marker", creation.Path}, &stdout, &stderr)
-	want := "bench worktree release: owner marker does not match assignment " + creation.Assignment.ID + "; checkout retained\n"
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-release-owner-marker", f.creation.Path}, &stdout, &stderr)
+	want := "bench worktree release: owner marker does not match assignment " + f.creation.Assignment.ID + "; checkout retained\n"
 	if code != 1 || stdout.String() != "" || stderr.String() != want {
 		t.Fatalf("owner-marker release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
 	}
@@ -562,32 +562,32 @@ func TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout(t *testing.T) {
 // its records leave with it; a kept file shows a stale row on every later board.
 func TestReleaseDropsTheCensusRecords(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "census-release")
-	recordRawCalls(t, home, root, creation.Path, 2)
-	survivor := seedHandoffSections(t, root, creation.Assignment)
+	f := newOwnedAssignment(t, "census-release")
+	recordRawCalls(t, f.home, f.root, f.creation.Path, 2)
+	survivor := seedHandoffSections(t, f.root, f.creation.Assignment)
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, home, []string{"--request", "landed-census-release", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-census-release", f.creation.Path}, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
-	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); !os.IsNotExist(err) {
+	if _, err := os.Stat(censusRecordPath(f.home, f.root, f.creation.Assignment.ID)); !os.IsNotExist(err) {
 		t.Fatalf("the release kept the census record: %v", err)
 	}
-	requireHandoffSections(t, root, handoffdoc.MainKey, survivor)
+	requireHandoffSections(t, f.root, handoffdoc.MainKey, survivor)
 }
 
 // TestRetirementLeavesMainInTheDocument is HS20. The last assignment section leaves with
 // its retirement, and the document still carries main without a later `bench handoff`.
 func TestRetirementLeavesMainInTheDocument(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "handoff-last-section")
-	seedOneHandoffSection(t, root, creation.Assignment.Request)
+	f := newOwnedAssignment(t, "handoff-last-section")
+	seedOneHandoffSection(t, f.root, f.creation.Assignment.Request)
 	var stdout, stderr strings.Builder
-	code := ReleaseCommand(root, home, []string{"--request", "landed-handoff-last-section", creation.Path}, &stdout, &stderr)
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-handoff-last-section", f.creation.Path}, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
-	requireHandoffSections(t, root, handoffdoc.MainKey)
+	requireHandoffSections(t, f.root, handoffdoc.MainKey)
 }
 
 // TestRetirementPrintsTheSectionRemovalError is HS30. A document the parser refuses
@@ -595,9 +595,9 @@ func TestRetirementLeavesMainInTheDocument(t *testing.T) {
 // The verdict is the retirement's own, because the removal is advisory.
 func TestRetirementPrintsTheSectionRemovalError(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "handoff-unparseable")
-	seedOneHandoffSection(t, root, creation.Assignment.Request)
-	path := handoffDocumentPath(root)
+	f := newOwnedAssignment(t, "handoff-unparseable")
+	seedOneHandoffSection(t, f.root, f.creation.Assignment.Request)
+	path := handoffDocumentPath(f.root)
 	seeded, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read seeded handoff document: %v", err)
@@ -616,7 +616,7 @@ func TestRetirementPrintsTheSectionRemovalError(t *testing.T) {
 	var advisory bytes.Buffer
 	j.liveBinaryWarnings = &advisory
 	var stdout, stderr strings.Builder
-	code := releaseCommandWith(j, root, home, []string{"--request", "landed-handoff-unparseable", creation.Path}, &stdout, &stderr)
+	code := releaseCommandWith(j, f.root, f.home, []string{"--request", "landed-handoff-unparseable", f.creation.Path}, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
@@ -632,11 +632,11 @@ func TestRetirementPrintsTheSectionRemovalError(t *testing.T) {
 // the one retirement path, so neither leaves a stale record file behind.
 func TestCleanDropsTheCensusRecords(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "census-clean")
-	recordRawCalls(t, home, root, creation.Path, 2)
-	survivor := seedHandoffSections(t, root, creation.Assignment)
+	f := newOwnedAssignment(t, "census-clean")
+	recordRawCalls(t, f.home, f.root, f.creation.Path, 2)
+	survivor := seedHandoffSections(t, f.root, f.creation.Assignment)
 	var planned, stderr bytes.Buffer
-	if code := CleanCommand(root, home, []string{creation.Path}, &planned, &stderr); code != 0 {
+	if code := CleanCommand(f.root, f.home, []string{f.creation.Path}, &planned, &stderr); code != 0 {
 		t.Fatalf("clean plan = (%d, %q, %q)", code, planned.String(), stderr.String())
 	}
 	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(planned.String())
@@ -644,13 +644,13 @@ func TestCleanDropsTheCensusRecords(t *testing.T) {
 		t.Fatalf("clean plan carried no fingerprint: %s", planned.String())
 	}
 	var applied bytes.Buffer
-	if code := CleanCommand(root, home, []string{creation.Path, "--apply", fingerprint}, &applied, &stderr); code != 0 || !strings.Contains(applied.String(), ",removed,") {
+	if code := CleanCommand(f.root, f.home, []string{f.creation.Path, "--apply", fingerprint}, &applied, &stderr); code != 0 || !strings.Contains(applied.String(), ",removed,") {
 		t.Fatalf("clean apply = (%d, %q, %q)", code, applied.String(), stderr.String())
 	}
-	if _, err := os.Stat(censusRecordPath(home, root, creation.Assignment.ID)); !os.IsNotExist(err) {
+	if _, err := os.Stat(censusRecordPath(f.home, f.root, f.creation.Assignment.ID)); !os.IsNotExist(err) {
 		t.Fatalf("the clean kept the census record: %v", err)
 	}
-	requireHandoffSections(t, root, handoffdoc.MainKey, survivor)
+	requireHandoffSections(t, f.root, handoffdoc.MainKey, survivor)
 }
 
 // seedOneHandoffSection writes one section under key into the document the retirement

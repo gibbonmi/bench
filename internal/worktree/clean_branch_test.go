@@ -19,17 +19,17 @@ import (
 // a warning rather than a failure. This is the exact case the operator override exists for.
 func unprovableLandedAssignment(t *testing.T, request string) (string, Creation) {
 	t.Helper()
-	root, creation, _ := newOwnedAssignment(t, request)
-	commitInWorktree(t, creation.Path, "one.txt", "one\n", "one")
-	if err := os.Chmod(filepath.Join(creation.Path, "tracked.txt"), 0o755); err != nil {
+	f := newOwnedAssignment(t, request)
+	commitInWorktree(t, f.creation.Path, "one.txt", "one\n", "one")
+	if err := os.Chmod(filepath.Join(f.creation.Path, "tracked.txt"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-q", "-a", "-m", "make tracked executable")
-	short := strings.TrimPrefix(creation.Assignment.Branch, "refs/heads/")
-	gitRun(t, root, "cherry-pick", "--no-commit", creation.Assignment.Start+".."+short)
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "squashed")
-	markPending(t, root, creation.Assignment)
-	return root, creation
+	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-q", "-a", "-m", "make tracked executable")
+	short := strings.TrimPrefix(f.creation.Assignment.Branch, "refs/heads/")
+	gitRun(t, f.root, "cherry-pick", "--no-commit", f.creation.Assignment.Start+".."+short)
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "squashed")
+	markPending(t, f.root, f.creation.Assignment)
+	return f.root, f.creation
 }
 
 func branchExists(t testing.TB, root, ref string) bool {

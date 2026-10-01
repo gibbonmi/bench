@@ -14,19 +14,19 @@ import (
 
 func TestReleaseDeadLeaseRemovesAndCompacts(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "dead-lease-release")
-	lease, err := LeaseFile(creation.Path)
+	f := newOwnedAssignment(t, "dead-lease-release")
+	lease, err := LeaseFile(f.creation.Path)
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte(deadPidLine(t)), 0o600)
 
 	var stdout bytes.Buffer
-	code := ReleaseCommand(root, home, []string{"--request", "landed-dead-lease-release", creation.Path}, &stdout, io.Discard)
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-dead-lease-release", f.creation.Path}, &stdout, io.Discard)
 	requireTest(t, code == 0, "dead-lease release exit=%d stdout=%q", code, stdout.String())
-	_, statErr := os.Stat(creation.Path)
+	_, statErr := os.Stat(f.creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "dead-lease worktree remains: %v", statErr)
-	_, err = assignmentByID(root, creation.Assignment.ID)
+	_, err = assignmentByID(f.root, f.creation.Assignment.ID)
 	requireTest(t, err != nil, "dead-lease assignment was not compacted")
-	ledger, err := intent.Read(root)
+	ledger, err := intent.Read(f.root)
 	requireTest(t, err == nil && len(ledger.CleanupReceipts) == 2, "dead-lease receipts=%#v error=%v", ledger.CleanupReceipts, err)
 }
 
@@ -200,16 +200,16 @@ func TestRepositoryDeclaresDistBuildOutput(t *testing.T) {
 
 func TestReleaseLiveLeaseRetains(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "live-lease-release")
-	lease, err := LeaseFile(creation.Path)
+	f := newOwnedAssignment(t, "live-lease-release")
+	lease, err := LeaseFile(f.creation.Path)
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte(fmt.Sprintf("%d 2026-07-15T00:00:00Z\n", os.Getpid())), 0o600)
 
 	var stderr bytes.Buffer
-	code := ReleaseCommand(root, home, []string{"--request", "landed-live-lease-release", creation.Path}, io.Discard, &stderr)
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-live-lease-release", f.creation.Path}, io.Discard, &stderr)
 	requireTest(t, code == 1, "live-lease release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (live-lease)"), "live-lease reason missing: %q", stderr.String())
-	_, statErr := os.Stat(creation.Path)
+	_, statErr := os.Stat(f.creation.Path)
 	requireTest(t, statErr == nil, "live-lease worktree removed: %v", statErr)
 }
 
@@ -231,16 +231,16 @@ func TestReleaseDirectoryLeaseRetainsAsUncertain(t *testing.T) {
 
 func assertReleaseLeaseRetainedAsUncertain(t *testing.T, request string, makeLease func(string)) {
 	t.Helper()
-	root, creation, home := newOwnedAssignment(t, request)
-	lease, err := LeaseFile(creation.Path)
+	f := newOwnedAssignment(t, request)
+	lease, err := LeaseFile(f.creation.Path)
 	mustNoError(t, err)
 	makeLease(lease)
 
 	var stderr bytes.Buffer
-	code := ReleaseCommand(root, home, []string{"--request", "landed-" + request, creation.Path}, io.Discard, &stderr)
+	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-" + request, f.creation.Path}, io.Discard, &stderr)
 	requireTest(t, code == 1, "malformed-lease release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (uncertain)") && strings.Contains(stderr.String(), "lease state is unknown"),
 		"malformed-lease reason missing: %q", stderr.String())
-	_, statErr := os.Stat(creation.Path)
+	_, statErr := os.Stat(f.creation.Path)
 	requireTest(t, statErr == nil, "malformed-lease worktree removed: %v", statErr)
 }

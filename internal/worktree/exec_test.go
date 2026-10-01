@@ -252,10 +252,10 @@ func TestExecChildTakesTheExactPathFromAnAwkwardWorktreeName(t *testing.T) {
 // the refusal stream, and the exit code.
 func execAtOwnedTarget(t *testing.T, request string, args ...string) (string, string, string, int) {
 	t.Helper()
-	root, creation, home := newOwnedAssignment(t, request)
+	f := newOwnedAssignment(t, request)
 	var stdout, stderr bytes.Buffer
-	code := ExecCommand(root, home, append([]string{creation.Assignment.Label}, args...), nil, &stdout, &stderr)
-	return home, stdout.String(), stderr.String(), code
+	code := ExecCommand(f.root, f.home, append([]string{f.creation.Assignment.Label}, args...), nil, &stdout, &stderr)
+	return f.home, stdout.String(), stderr.String(), code
 }
 
 // TestExecHelpCarriesStdinAndTheExitRule covers X3 and X6. The help is three lines: the

@@ -496,13 +496,13 @@ func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 // A wrong owner id and a detached HEAD fail together, and the marker is the earlier
 // component, so the branch sentence must not win.
 func TestTargetVerbNamesTheOwnerMarkerBeforeTheBranch(t *testing.T) {
-	root, creation, home := newOwnedAssignment(t, "marker-before-branch")
-	rewriteMarkerOwner(t, creation.Path, strings.Repeat("a", 32))
-	gitRun(t, creation.Path, "checkout", "--detach")
-	chdir(t, root)
+	f := newOwnedAssignment(t, "marker-before-branch")
+	rewriteMarkerOwner(t, f.creation.Path, strings.Repeat("a", 32))
+	gitRun(t, f.creation.Path, "checkout", "--detach")
+	chdir(t, f.root)
 	var stdout, stderr bytes.Buffer
-	code := PathCommand(root, home, []string{creation.Assignment.Label}, &stdout, &stderr)
-	want := "bench worktree path: owner marker does not match assignment " + creation.Assignment.ID + "\nnext=" + nextList + "\n"
+	code := PathCommand(f.root, f.home, []string{f.creation.Assignment.Label}, &stdout, &stderr)
+	want := "bench worktree path: owner marker does not match assignment " + f.creation.Assignment.ID + "\nnext=" + nextList + "\n"
 	if code != 1 || stderr.String() != want {
 		t.Fatalf("double-fault path = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
 	}

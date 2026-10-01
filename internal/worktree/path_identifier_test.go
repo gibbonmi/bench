@@ -66,9 +66,9 @@ func TestListActiveRowsUseTargetSlot(t *testing.T) {
 // fills the slot rather than the label, because ids are unique and labels can collide.
 // It is the only address an agent has for a worktree it did not create.
 func TestListPathActionRunsAsAdvertised(t *testing.T) {
-	root, creation, home := newOwnedAssignment(t, "advertised")
-	chdir(t, root)
-	listed, code := ListCommand(root, home, nil)
+	f := newOwnedAssignment(t, "advertised")
+	chdir(t, f.root)
+	listed, code := ListCommand(f.root, f.home, nil)
 	if code != 0 {
 		t.Fatalf("list code=%d out=%q", code, listed)
 	}
@@ -89,11 +89,11 @@ func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	}
 	row, _ := rows[0].(map[string]any)
 	id, _ := row["id"].(string)
-	if id != creation.Assignment.ID {
-		t.Fatalf("id cell = %q, want the assignment id %q", id, creation.Assignment.ID)
+	if id != f.creation.Assignment.ID {
+		t.Fatalf("id cell = %q, want the assignment id %q", id, f.creation.Assignment.ID)
 	}
 	var stdout, stderr bytes.Buffer
-	if code := PathCommand(root, home, []string{id}, &stdout, &stderr); code != 0 {
+	if code := PathCommand(f.root, f.home, []string{id}, &stdout, &stderr); code != 0 {
 		t.Fatalf("id cell %q exited %d: %s", id, code, stderr.String())
 	}
 }
@@ -104,10 +104,10 @@ func TestListPathActionRunsAsAdvertised(t *testing.T) {
 // suggested command is the one the caller can run.
 func TestPathNotesTheFileToolRouteOnStderr(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "filetools")
-	target := creation.Assignment.Label
+	f := newOwnedAssignment(t, "filetools")
+	target := f.creation.Assignment.Label
 	var stdout, stderr bytes.Buffer
-	if code := PathCommand(root, home, []string{target}, &stdout, &stderr); code != 0 {
+	if code := PathCommand(f.root, f.home, []string{target}, &stdout, &stderr); code != 0 {
 		t.Fatalf("path exited %d: %s", code, stderr.String())
 	}
 	printed := strings.TrimSuffix(stdout.String(), "\n")
@@ -124,10 +124,10 @@ func TestPathNotesTheFileToolRouteOnStderr(t *testing.T) {
 // replace it.
 func TestPathResolvesTheLabelAndTheIdAlike(t *testing.T) {
 	t.Parallel()
-	root, creation, home := newOwnedAssignment(t, "both")
-	for _, target := range []string{creation.Assignment.ID, creation.Assignment.Label} {
+	f := newOwnedAssignment(t, "both")
+	for _, target := range []string{f.creation.Assignment.ID, f.creation.Assignment.Label} {
 		var byTarget, stderr bytes.Buffer
-		if code := PathCommand(root, home, []string{target}, &byTarget, &stderr); code != 0 {
+		if code := PathCommand(f.root, f.home, []string{target}, &byTarget, &stderr); code != 0 {
 			t.Fatalf("target %q exited %d: %s", target, code, stderr.String())
 		}
 		if byTarget.Len() == 0 {
