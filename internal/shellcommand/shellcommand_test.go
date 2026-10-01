@@ -32,6 +32,54 @@ func TestParseFoldsQuotedOperators(t *testing.T) {
 	}
 }
 
+// An unbalanced quote or a trailing backslash stops the lexer. Parse then splits on
+// whitespace and newlines, so a guard still sees each later command as its own simple
+// command and does not read it as quoted data.
+func TestParseKeepsLaterCommandsVisibleAfterAnUnbalancedInput(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		command string
+		want    Stream
+	}{
+		{
+			name:    "unterminated single quote",
+			command: "echo 'oops && git push --force",
+			want: Stream{
+				Tokens: []Token{
+					{Word, "echo"}, {Word, "'oops"}, {ControlOperator, "&&"},
+					{Word, "git"}, {Word, "push"}, {Word, "--force"},
+				},
+				Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 6}},
+			},
+		},
+		{
+			name:    "unterminated double quote across a newline",
+			command: "echo \"oops\ngit push",
+			want: Stream{
+				Tokens:   []Token{{Word, "echo"}, {Word, "\"oops"}, {ControlOperator, ";"}, {Word, "git"}, {Word, "push"}},
+				Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 5}},
+			},
+		},
+		{
+			name:    "trailing backslash",
+			command: "git status | git push origin\\",
+			want: Stream{
+				Tokens: []Token{
+					{Word, "git"}, {Word, "status"}, {ControlOperator, "|"},
+					{Word, "git"}, {Word, "push"}, {Word, "origin\\"},
+				},
+				Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 6}},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := Parse(tc.command); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Parse(%q) = %#v, want %#v", tc.command, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestProjectCommandWordsDropsRedirectionsAndDescriptors(t *testing.T) {
 	stream := Parse("2>/dev/null env -u X bench help")
 	if got, want := ProjectCommandWords(stream.Tokens), []string{"env", "-u", "X", "bench", "help"}; !reflect.DeepEqual(got, want) {
