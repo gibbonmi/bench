@@ -515,6 +515,60 @@ The chunk record for VR44 to VR46 follows. The package run at the tip passes, an
 - Six sites build a call and then set the joins value. A method on the fixture can collapse that pattern.
 - Several reclaim tests pass the parent of the pool where they mean the home.
 
+## VR-C3 ticket 5 author evidence
+
+Ticket 5 had a fresh `bench-writer` author, `vr-t5-author`, on opus at medium effort, with a cap of 3 attempts. The author started at `393ed757` on the chunk base `f03e7fb9`. The author committed `b5e755a9` on a lane pass in the first attempt, and then committed this record alone. The build preflight on `b5e755a9` reported 13 green checks, 2 checks that do not apply, and 0 red checks.
+
+The ticket is a pure migration, so no row has a new test. For each row, the red is the scan output at the base, and the green is an empty scan at `b5e755a9`. Both regression probes bit before and after the change, with equal failing sets.
+
+- VR28: at `393ed757` the VR28 command printed 36 lines over the ticket files. At `b5e755a9` it printed no line.
+- VR29: at `393ed757` the tuple scan printed 25 lines, and the four cleanup builders were among them. At `b5e755a9` it printed 17 lines, and none of them is one of the four builders.
+- VR30: at `393ed757` the verb form command printed 59 lines over the ticket files. At `b5e755a9` it printed no line.
+
+The author reported these choices. The Spec axis grades each one.
+
+- `landedSetFixture` returns `landedSet`, and `removableSetFixture` returns `removableSet`. `retainedMemberFixture` returns `retainedMemberSet`, and `refusedUnlandedRelease` returns `refusedRelease`. `verb_fixture_test.go` declares the four types.
+- `verb_fixture_test.go` declares `repoHome`, which is a root and a home. Its method `call` builds a verb call, and its method `callWith` also sets the joins value. `ownedAssignment`, `reclaimPoolFixture`, and the four new types embed `repoHome`, so one method builds each call.
+- `verb_fixture_test.go` also declares `cleanupTable`, `textRow`, `textRows`, and `textRowsBy`. They read the rows that `mustRows` decoded as text cells. They run no verb and parse no rendered text.
+- `requireRowFor` fails a test when no decoded row names a target. `requireCleanupColumns` holds the column check of the deleted `unclaimedVerdicts`. `reclaimApplyHead` is the one source of the reclaim apply command.
+- Each site that read `reclaimFingerprint` now reads `mustFingerprint`. It also keeps the check that the plan prints the apply command with that fingerprint.
+- Each former `mustReclaim` and `runDiscard` call keeps its empty stderr check at the call site. Each former `runResume` call keeps its exit check and its `chdir`.
+- `TestRetiringVerbSpillsToPrimary` writes the release streams to the response owner after the release returns. The spill starts before the release, so a spill in the retired scope still fails the test.
+- No check required an edit to the five registry paths, so the diff leaves them unchanged.
+
+### Ticket 5 probe verdicts
+
+Each probe ran on the named source, and each restore reads `yes`.
+
+| Mutation | Source | Verdict | Failed tests |
+|---|---|---|---|
+| The set apply in `clean_set.go` skips its fingerprint match | `393ed757`, before the first edit | bit | `TestCleanSetPreexistingDrift/explicit`, `TestCleanSetSpentPlan`, `TestCleanSetStaleReplanAction/explicit` |
+| The set apply in `clean_set.go` skips its fingerprint match | `b5e755a9` | bit | `TestCleanSetPreexistingDrift/explicit`, `TestCleanSetSpentPlan`, `TestCleanSetStaleReplanAction/explicit` |
+| The receipt checkpoint check in `resume.go` is always false | `393ed757`, before the first edit | bit | `TestResumeSupersedesPlannedReceiptOverAbsentTarget/present_target` |
+| The receipt checkpoint check in `resume.go` is always false | `b5e755a9` | bit | `TestResumeSupersedesPlannedReceiptOverAbsentTarget/present_target` |
+
+The first probe ran the `Clean` tests, and the second probe ran the `Resume|Clean` tests.
+
+### Ticket 5 line counts and VR46 pre-check
+
+From `f03e7fb9` to `b5e755a9`, `resume_test.go` went from 598 to 585 lines. `pool_reclaim_test.go` went from 546 to 533 lines, and `lifecycle_test.go` went from 436 to 433 lines. `clean_discard_test.go` has 396 lines and `clean_set_apply_test.go` has 399 lines, so both stay in their budget. `verb_fixture_test.go` grew from 41 to 126 lines. `bench structure --growth f03e7fb9` passed.
+
+The author counted the `t.Fatal`, `t.Fatalf`, `t.Error`, and `t.Errorf` calls and the `requireTest` and `mustNoError` calls in each function of each package test file. The count was 2534 in 1031 functions at `393ed757`, and 2541 in 1032 functions at `b5e755a9`. Three test functions lost one call each, and each drop is a must-form replacement.
+
+| Test | Base | Tip | Replacement |
+|---|---|---|---|
+| `TestCleanExplicitSetPlan` | 9 | 8 | `mustFingerprint` replaces the check that two 64-hex runs agree |
+| `TestCleanCommandAcceptsTheAbsolutePathThatPathPrints` | 7 | 6 | `mustFingerprint` replaces the check that the plan carries a fingerprint |
+| `TestCleanSetHostileOperand` | 7 | 6 | `mustNoFingerprint` replaces the check that each fingerprint cell is `none` |
+
+The reader in `mustNoFingerprint` also accepts an empty cell, so the last check is narrower than the base check. The nine deleted helpers lost their calls, and each check moved to the callers or into a must form. Other functions gained calls from the exit and stderr checks that the deleted wrappers made.
+
+### Ticket 5 VR47 and verification
+
+No ticket file declares an output buffer pair for a verb call. The three pairs left in `subshell_test.go` feed `subshellAt`, which the spec does not handle.
+
+The author ran each check on the source of `b5e755a9`, and each passed. `bench test --package ./internal/worktree` passed, and the JSON payload holds the result. The two skips are unix socket capability skips. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1262,6 +1316,44 @@ The chunk record for VR44 to VR46 follows. The package run at the tip passes, an
           ]
         }
       ]
+    },
+    {
+      "id": "VR-C3",
+      "base": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+      "tip": "b5e755a9fd3c731b0b81df7b198b36572685d5d4",
+      "plan_digest": "pending",
+      "source_digest": "pending",
+      "acceptance_rows": [
+        "VR28",
+        "VR29",
+        "VR30",
+        "VR31",
+        "VR32",
+        "VR33",
+        "VR34",
+        "VR35"
+      ],
+      "verification": [
+        {
+          "id": "vr-c3-5-worktree-r1",
+          "performer": "claude:bench-writer/vr-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a32bf83de855b97f131505b44f6ef435412620c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t5-author-20261001/5-worktree@b5e755a9",
+            "digest": "sha256:2943eec08cd65a785b9db8e7fb953327f75411af5701fdab7b00b48ebee3ac9d",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,49383\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "5-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
