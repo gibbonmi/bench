@@ -114,9 +114,8 @@ func TestCreateFromRefusesASiblingTipSha(t *testing.T) {
 	siblingTip := gitOutput(t, sibling.Path, "rev-parse", "HEAD")
 	before := assignmentCount(t, root)
 
-	code, stdout, stderr := runCreate(t, root, home,
-		"--request", "create-from-sha", "--label", "dependent", "--from", siblingTip)
-	requireCreateFromRefusal(t, code, stdout, stderr,
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+		"--request", "create-from-sha", "--label", "dependent", "--from", siblingTip)),
 		"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
 	if after := assignmentCount(t, root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)

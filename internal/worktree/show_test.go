@@ -11,15 +11,15 @@ func TestShowPrintsTheBlobAtTheRevision(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "show-blob")
 	commitInWorktree(t, f.creation.Path, "tracked.txt", "one\ntwo\n", "add tracked")
-	var stdout, stderr bytes.Buffer
-	if code := ShowCommand(f.root, f.home, []string{f.creation.Assignment.Label, "HEAD:tracked.txt"}, &stdout, &stderr); code != 0 {
-		t.Fatalf("show exited %d, want 0: %s", code, stderr.String())
+	r := runVerb(t, verbShow, f.call(f.creation.Assignment.Label, "HEAD:tracked.txt"))
+	if r.exit != 0 {
+		t.Fatalf("show exited %d, want 0: %s", r.exit, r.stderr)
 	}
-	if stdout.String() != "one\ntwo\n" {
-		t.Fatalf("show printed %q, want the committed bytes", stdout.String())
+	if r.stdout != "one\ntwo\n" {
+		t.Fatalf("show printed %q, want the committed bytes", r.stdout)
 	}
-	if stderr.String() != "" {
-		t.Fatalf("show wrote %q to stderr, want nothing", stderr.String())
+	if r.stderr != "" {
+		t.Fatalf("show wrote %q to stderr, want nothing", r.stderr)
 	}
 }
 
@@ -30,12 +30,12 @@ func TestShowPassesNULBytesThrough(t *testing.T) {
 	f := newOwnedAssignment(t, "show-nul")
 	blob := "a\x00b\n"
 	commitInWorktree(t, f.creation.Path, "binary.bin", blob, "add binary")
-	var stdout, stderr bytes.Buffer
-	if code := ShowCommand(f.root, f.home, []string{f.creation.Assignment.Label, "HEAD:binary.bin"}, &stdout, &stderr); code != 0 {
-		t.Fatalf("show exited %d, want 0: %s", code, stderr.String())
+	r := runVerb(t, verbShow, f.call(f.creation.Assignment.Label, "HEAD:binary.bin"))
+	if r.exit != 0 {
+		t.Fatalf("show exited %d, want 0: %s", r.exit, r.stderr)
 	}
-	if stdout.String() != blob {
-		t.Fatalf("show printed %q, want %q", stdout.String(), blob)
+	if r.stdout != blob {
+		t.Fatalf("show printed %q, want %q", r.stdout, blob)
 	}
 }
 
@@ -51,15 +51,15 @@ func TestShowPassesGitsOwnFailureThrough(t *testing.T) {
 	if err := direct.Run(); err == nil {
 		t.Fatal("a direct cat-file of a missing object succeeded")
 	}
-	var stdout, stderr bytes.Buffer
-	if code := ShowCommand(f.root, f.home, []string{f.creation.Assignment.Label, "HEAD:no-such-file"}, &stdout, &stderr); code != 128 {
-		t.Fatalf("show exited %d, want 128: %s", code, stderr.String())
+	r := runVerb(t, verbShow, f.call(f.creation.Assignment.Label, "HEAD:no-such-file"))
+	if r.exit != 128 {
+		t.Fatalf("show exited %d, want 128: %s", r.exit, r.stderr)
 	}
-	if stderr.String() != directErr.String() {
-		t.Fatalf("show stderr = %q, want Git's own %q", stderr.String(), directErr.String())
+	if r.stderr != directErr.String() {
+		t.Fatalf("show stderr = %q, want Git's own %q", r.stderr, directErr.String())
 	}
-	if stdout.String() != "" {
-		t.Fatalf("show printed %q on a missing object, want nothing", stdout.String())
+	if r.stdout != "" {
+		t.Fatalf("show printed %q on a missing object, want nothing", r.stdout)
 	}
 }
 
@@ -75,15 +75,15 @@ func TestShowRefusesAnOperandThatIsNotARevision(t *testing.T) {
 		"no colon":    "tracked.txt",
 		"dash option": "--output=/tmp/x:tracked.txt",
 	} {
-		var stdout, stderr bytes.Buffer
-		if code := ShowCommand(f.root, f.home, []string{"no-such-label", operand}, &stdout, &stderr); code != 2 {
-			t.Fatalf("%s operand %q exited %d, want 2: %s", name, operand, code, stderr.String())
+		r := runVerb(t, verbShow, f.call("no-such-label", operand))
+		if r.exit != 2 {
+			t.Fatalf("%s operand %q exited %d, want 2: %s", name, operand, r.exit, r.stderr)
 		}
-		if stderr.String() != want {
-			t.Fatalf("%s operand %q printed %q, want %q", name, operand, stderr.String(), want)
+		if r.stderr != want {
+			t.Fatalf("%s operand %q printed %q, want %q", name, operand, r.stderr, want)
 		}
-		if stdout.String() != "" {
-			t.Fatalf("%s operand %q printed %q on stdout, want nothing", name, operand, stdout.String())
+		if r.stdout != "" {
+			t.Fatalf("%s operand %q printed %q on stdout, want nothing", name, operand, r.stdout)
 		}
 	}
 }
@@ -92,15 +92,15 @@ func TestShowRefusesAnOperandThatIsNotARevision(t *testing.T) {
 // and not an operand, so it answers with the grammar line at exit 0.
 func TestShowHelpPrintsTheGrammarLine(t *testing.T) {
 	t.Parallel()
-	var stdout, stderr bytes.Buffer
-	if code := ShowCommand(t.TempDir(), t.TempDir(), []string{"--help"}, &stdout, &stderr); code != 0 {
-		t.Fatalf("help exited %d, want 0: %s", code, stderr.String())
+	r := runVerb(t, verbShow, repoHome{t.TempDir(), t.TempDir()}.call("--help"))
+	if r.exit != 0 {
+		t.Fatalf("help exited %d, want 0: %s", r.exit, r.stderr)
 	}
-	if want := "usage: bench worktree show <target> <rev>:<path>\n"; stderr.String() != want {
-		t.Fatalf("help printed %q, want %q", stderr.String(), want)
+	if want := "usage: bench worktree show <target> <rev>:<path>\n"; r.stderr != want {
+		t.Fatalf("help printed %q, want %q", r.stderr, want)
 	}
-	if stdout.String() != "" {
-		t.Fatalf("help printed %q on stdout, want nothing", stdout.String())
+	if r.stdout != "" {
+		t.Fatalf("help printed %q on stdout, want nothing", r.stdout)
 	}
 }
 
@@ -110,14 +110,14 @@ func TestShowHelpPrintsTheGrammarLine(t *testing.T) {
 func TestShowRefusesAControlByteInTheOperand(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "show-control")
-	var stdout, stderr bytes.Buffer
-	if code := ShowCommand(f.root, f.home, []string{"no-such-label", "HEAD:a\nb"}, &stdout, &stderr); code != 2 {
-		t.Fatalf("control-byte operand exited %d, want 2: %s", code, stderr.String())
+	r := runVerb(t, verbShow, f.call("no-such-label", "HEAD:a\nb"))
+	if r.exit != 2 {
+		t.Fatalf("control-byte operand exited %d, want 2: %s", r.exit, r.stderr)
 	}
-	if want := "usage: bench worktree show <target> <rev>:<path>\n"; stderr.String() != want {
-		t.Fatalf("control-byte operand printed %q, want %q", stderr.String(), want)
+	if want := "usage: bench worktree show <target> <rev>:<path>\n"; r.stderr != want {
+		t.Fatalf("control-byte operand printed %q, want %q", r.stderr, want)
 	}
-	if stdout.String() != "" {
-		t.Fatalf("control-byte operand printed %q on stdout, want nothing", stdout.String())
+	if r.stdout != "" {
+		t.Fatalf("control-byte operand printed %q on stdout, want nothing", r.stdout)
 	}
 }

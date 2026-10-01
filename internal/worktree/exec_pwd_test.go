@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -53,25 +52,22 @@ func checkExecPWD(t *testing.T, mode string) {
 				args = append(args, "--env", "PWD=/first/override", "--env", "PWD=/last/override")
 			}
 			args = append(args, "--env", "BENCH_EXEC_PWD_CARRIED=explicit-value")
-			var stdout, stderr bytes.Buffer
-			code := ExecCommand(f.root, f.home, append(args, "--", "pwd", "-P"), nil, &stdout, &stderr)
-			requireTest(t, code == 0, "pwd exited %d: %s", code, stderr.String())
-			requireTest(t, stdout.String() == dir+"\n", "actual cwd = %q, want %q", stdout.String(), dir)
-			stdout.Reset()
-			stderr.Reset()
-			code = ExecCommand(f.root, f.home, append(args, "--", "env"), nil, &stdout, &stderr)
-			requireTest(t, code == 0, "env exited %d: %s", code, stderr.String())
-			entries := strings.Split(strings.TrimSuffix(stdout.String(), "\n"), "\n")
+			pwd := runVerb(t, verbExec, f.call(append(args, "--", "pwd", "-P")...))
+			requireTest(t, pwd.exit == 0, "pwd exited %d: %s", pwd.exit, pwd.stderr)
+			requireTest(t, pwd.stdout == dir+"\n", "actual cwd = %q, want %q", pwd.stdout, dir)
+			env := runVerb(t, verbExec, f.call(append(args, "--", "env")...))
+			requireTest(t, env.exit == 0, "env exited %d: %s", env.exit, env.stderr)
+			entries := strings.Split(strings.TrimSuffix(env.stdout, "\n"), "\n")
 			requireExecPWD(t, entries, dir)
 			for key, want := range map[string]string{
 				"PWD_EXTRA":              "inherited-near-match",
 				"BENCH_EXEC_PWD_CARRIED": "explicit-value",
 				"BENCH_HOME":             f.home,
 			} {
-				got, present := assignment(stdout.String(), key)
+				got, present := assignment(env.stdout, key)
 				requireTest(t, present && got == want, "%s = %q, present %t; want %q", key, got, present, want)
 			}
-			marker, present := assignment(stdout.String(), "BENCH_WRAPPER")
+			marker, present := assignment(env.stdout, "BENCH_WRAPPER")
 			requireTest(t, present == wrapper, "wrapper present = %t, want %t", present, wrapper)
 			if wrapper {
 				requireTest(t, marker == filepath.Join(dir, "bin", "bench.sh"), "wrapper = %q", marker)

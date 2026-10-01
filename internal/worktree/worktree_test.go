@@ -8,10 +8,8 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
-	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -124,12 +122,11 @@ func TestCreateCommandPrintsNextHint(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
-	var stdout, stderr bytes.Buffer
-	code := CreateCommand(root, home, []string{"--request", "next-hint", "--label", "next hint label"}, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("CreateCommand exit = %d, stderr = %q", code, stderr.String())
+	created := runVerb(t, verbCreate, repoHome{root, home}.call("--request", "next-hint", "--label", "next hint label"))
+	if created.exit != 0 {
+		t.Fatalf("CreateCommand exit = %d, stderr = %q", created.exit, created.stderr)
 	}
-	got := stdout.String()
+	got := created.stdout
 	if !strings.Contains(got, "next[2]:\n") {
 		t.Fatalf("CreateCommand output missing next[2] header: %q", got)
 	}
@@ -158,10 +155,9 @@ func TestCreateCommandAnswersHelpSpellings(t *testing.T) {
 		{"help"},
 		{"--request", "x", "--help"},
 	} {
-		var stdout, stderr bytes.Buffer
-		code := CreateCommand("", Home(), args, &stdout, &stderr)
-		if code != 0 || stdout.String() != want || stderr.Len() != 0 {
-			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want (0, %q, empty)", args, code, stdout.String(), stderr.String(), want)
+		r := runVerb(t, verbCreate, verbCall{home: Home(), args: args})
+		if r.exit != 0 || r.stdout != want || r.stderr != "" {
+			t.Fatalf("create %q = (%d, %q, %q), want (0, %q, empty)", args, r.exit, r.stdout, r.stderr, want)
 		}
 	}
 }
@@ -180,10 +176,9 @@ func TestReleaseCommandHelpAndInvalidArguments(t *testing.T) {
 		{name: "invalid", args: []string{"invalid"}, wantCode: 2, wantStderr: want},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var stdout, stderr bytes.Buffer
-			code := ReleaseCommand("", Home(), tc.args, &stdout, &stderr)
-			if code != tc.wantCode || stdout.String() != tc.wantStdout || stderr.String() != tc.wantStderr {
-				t.Fatalf("ReleaseCommand(%q) = (%d, %q, %q), want (%d, %q, %q)", tc.args, code, stdout.String(), stderr.String(), tc.wantCode, tc.wantStdout, tc.wantStderr)
+			r := runVerb(t, verbRelease, verbCall{home: Home(), args: tc.args})
+			if r.exit != tc.wantCode || r.stdout != tc.wantStdout || r.stderr != tc.wantStderr {
+				t.Fatalf("release %q = (%d, %q, %q), want (%d, %q, %q)", tc.args, r.exit, r.stdout, r.stderr, tc.wantCode, tc.wantStdout, tc.wantStderr)
 			}
 		})
 	}
@@ -194,11 +189,10 @@ func TestReleaseCommandHelpAndInvalidArguments(t *testing.T) {
 // --refresh alongside --help prints only the help line, not a worktree_refresh table.
 func TestCreateCommandHelpPerformsNoRefresh(t *testing.T) {
 	t.Parallel()
-	var stdout, stderr bytes.Buffer
-	code := CreateCommand("", Home(), []string{"--request", "x", "--refresh", "--help"}, &stdout, &stderr)
+	r := runVerb(t, verbCreate, verbCall{home: Home(), args: []string{"--request", "x", "--refresh", "--help"}})
 	want := "usage: " + usage.WorktreeCreate + "\n"
-	if code != 0 || stdout.String() != want || stderr.Len() != 0 {
-		t.Fatalf("CreateCommand with --refresh --help = (%d, %q, %q), want (0, %q, empty)", code, stdout.String(), stderr.String(), want)
+	if r.exit != 0 || r.stdout != want || r.stderr != "" {
+		t.Fatalf("CreateCommand with --refresh --help = (%d, %q, %q), want (0, %q, empty)", r.exit, r.stdout, r.stderr, want)
 	}
 }
 
@@ -210,9 +204,8 @@ func TestCreateCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 		{"--request", "r"},
 		{"--label", "l"},
 	} {
-		var stdout, stderr bytes.Buffer
-		if code := CreateCommand("", Home(), args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != createGrammar.Help+"\n" {
-			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want (2, empty, %q)", args, code, stdout.String(), stderr.String(), createGrammar.Help+"\n")
+		if r := runVerb(t, verbCreate, verbCall{home: Home(), args: args}); r.exit != 2 || r.stdout != "" || r.stderr != createGrammar.Help+"\n" {
+			t.Fatalf("create %q = (%d, %q, %q), want (2, empty, %q)", args, r.exit, r.stdout, r.stderr, createGrammar.Help+"\n")
 		}
 	}
 }
@@ -225,9 +218,8 @@ func TestCreateCommandRejectsEmptyFlagValues(t *testing.T) {
 		{"--request", "", "--label", "l"},
 		{"--request", "r", "--label", ""},
 	} {
-		var stdout, stderr bytes.Buffer
-		if code := CreateCommand("", Home(), args, &stdout, &stderr); code != 2 || stdout.Len() != 0 {
-			t.Fatalf("CreateCommand(%q) = (%d, %q, %q), want exit 2 with empty stdout", args, code, stdout.String(), stderr.String())
+		if r := runVerb(t, verbCreate, verbCall{home: Home(), args: args}); r.exit != 2 || r.stdout != "" {
+			t.Fatalf("create %q = (%d, %q, %q), want exit 2 with empty stdout", args, r.exit, r.stdout, r.stderr)
 		}
 	}
 }
@@ -249,19 +241,17 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 	mustWrite(t, residual, []byte("build output\n"), 0o600)
 	requirePlanAction(t, root, creation.Path, ActionRetain)
 
-	args := []string{"--request", "retain-verdict", creation.Path}
-	var out, errb strings.Builder
-	code := ReleaseCommand(root, home, args, &out, &errb)
-	msg := errb.String()
-	requireTest(t, code != 0, "retained release exit = %d, want non-zero", code)
+	call := repoHome{root, home}.call("--request", "retain-verdict", creation.Path)
+	retained := runVerb(t, verbRelease, call)
+	msg := retained.stderr
+	requireTest(t, retained.exit != 0, "retained release exit = %d, want non-zero", retained.exit)
 	requireTest(t, !strings.Contains(msg, "terminal receipt missing"), "masking error still present: %q", msg)
 	requireTest(t, strings.Contains(msg, "retained") && strings.Contains(msg, "bench worktree release"),
 		"retained verdict is not actionable: %q", msg)
 
 	mustNoError(t, os.Remove(residual))
-	var out2 strings.Builder
-	code = ReleaseCommand(root, home, args, &out2, io.Discard)
-	requireTest(t, code == 0, "recovery release exit = %d, want 0; out=%q", code, out2.String())
+	recovered := runVerb(t, verbRelease, call)
+	requireTest(t, recovered.exit == 0, "recovery release exit = %d, want 0; out=%q", recovered.exit, recovered.stdout)
 }
 
 // TestReleaseUnknownRequestNamesReauthorizeRecovery is LR19: release names the request
@@ -269,12 +259,11 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 func TestReleaseUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "release-reauthorize-recovery")
-	var stdout, stderr strings.Builder
-	code := ReleaseCommand(f.root, f.home, []string{"--request", "unknown-request", f.creation.Path}, &stdout, &stderr)
+	r := runVerb(t, verbRelease, f.call("--request", "unknown-request", f.creation.Path))
 	wantNext := "bench worktree reauthorize --assignment " + f.creation.Assignment.ID + " --request <new-request> --base <full-base-commit> --source-tip <full-source-tip-commit> '" + f.creation.Path + "'"
 	want := "bench worktree release: request token matches no assignment; checkout retained; observed=assignment:" + f.creation.Assignment.ID + ",next=" + wantNext + "\n"
-	if code != 1 || stdout.String() != "" || stderr.String() != want {
-		t.Fatalf("unknown-request release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
+	if r.exit != 1 || r.stdout != "" || r.stderr != want {
+		t.Fatalf("unknown-request release = (%d, %q, %q), want exit 1 and stderr %q", r.exit, r.stdout, r.stderr, want)
 	}
 }
 
@@ -309,16 +298,14 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 	requireTest(t, len(a.Recovery) == 0, "fixture already holds recovery metadata")
 	removeOutOfBand(t, f.root, a, ActionRemoved)
 
-	args := []string{"--request", "landed-oob-residue", f.creation.Path}
-	var out, errb strings.Builder
-	code := ReleaseCommand(f.root, f.home, args, &out, &errb)
-	requireTest(t, code == 0, "residue release exit=%d stderr=%q", code, errb.String())
+	call := f.call("--request", "landed-oob-residue", f.creation.Path)
+	first := runVerb(t, verbRelease, call)
+	requireTest(t, first.exit == 0, "residue release exit=%d stderr=%q", first.exit, first.stderr)
 	if _, err := assignmentByID(f.root, a.ID); err == nil {
 		t.Fatal("residue record survived reconcile")
 	}
-	var replay strings.Builder
-	code = ReleaseCommand(f.root, f.home, args, &replay, io.Discard)
-	requireTest(t, code == 0 && replay.String() == out.String(), "replay exit=%d out=%q", code, replay.String())
+	replay := runVerb(t, verbRelease, call)
+	requireTest(t, replay.exit == 0 && replay.stdout == first.stdout, "replay exit=%d out=%q", replay.exit, replay.stdout)
 }
 
 // TestReleaseNamesRecoveryForPreservedOrphan pins FT93(b), preserved path. Here
@@ -335,11 +322,10 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	mustNoError(t, intent.PutAssignment(f.root, a))
 	removeOutOfBand(t, f.root, a, ActionRemoved)
 
-	var out, errb strings.Builder
-	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-oob-preserved", f.creation.Path}, &out, &errb)
-	requireTest(t, code != 0, "preserved release exit=%d, want non-zero", code)
-	requireTest(t, strings.Contains(errb.String(), "git show "+ref),
-		"preserved verdict does not hand over the ref: %q", errb.String())
+	r := runVerb(t, verbRelease, f.call("--request", "landed-oob-preserved", f.creation.Path))
+	requireTest(t, r.exit != 0, "preserved release exit=%d, want non-zero", r.exit)
+	requireTest(t, strings.Contains(r.stderr, "git show "+ref),
+		"preserved verdict does not hand over the ref: %q", r.stderr)
 	got, err := assignmentByID(f.root, a.ID)
 	requireTest(t, err == nil && len(got.Recovery) == 1, "preserved record was mutated or deleted: %v", err)
 }
@@ -406,15 +392,13 @@ func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
 		return nil
 	})
 	requireTest(t, errors.Is(err, stop), "automatic interruption = %v", err)
-	args := []string{"--request", "landed-release-in-flight", f.creation.Path}
-	var first, firstErr strings.Builder
-	code := ReleaseCommand(f.root, f.home, args, &first, &firstErr)
-	requireTest(t, code == 0 && firstErr.String() == "", "in-flight release code=%d stderr=%q", code, firstErr.String())
-	var replay strings.Builder
-	code = ReleaseCommand(f.root, f.home, args, &replay, io.Discard)
-	requireTest(t, code == 0 && replay.String() == first.String(), "in-flight replay code=%d stdout=%q", code, replay.String())
-	requireTest(t, ReleaseCommand(f.root, f.home, []string{"--request", "changed", f.creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
-	requireTest(t, ReleaseCommand(f.root, f.home, []string{"--request", args[1], f.root}, io.Discard, io.Discard) != 0, "changed path authorized")
+	call := f.call("--request", "landed-release-in-flight", f.creation.Path)
+	first := runVerb(t, verbRelease, call)
+	requireTest(t, first.exit == 0 && first.stderr == "", "in-flight release code=%d stderr=%q", first.exit, first.stderr)
+	replay := runVerb(t, verbRelease, call)
+	requireTest(t, replay.exit == 0 && replay.stdout == first.stdout, "in-flight replay code=%d stdout=%q", replay.exit, replay.stdout)
+	requireTest(t, runVerb(t, verbRelease, f.call("--request", "changed", f.creation.Path)).exit != 0, "changed request authorized")
+	requireTest(t, runVerb(t, verbRelease, f.call("--request", call.args[1], f.root)).exit != 0, "changed path authorized")
 }
 func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 	t.Parallel()
@@ -502,12 +486,12 @@ func TestLeaseFile(t *testing.T) {
 
 func TestLeaseFileCommandMissingArg(t *testing.T) {
 	t.Parallel()
-	out, code := LeaseFileCommand(nil)
-	if code != 2 {
-		t.Errorf("exit = %d, want 2", code)
+	r := runVerb(t, verbLeaseFile, verbCall{})
+	if r.exit != 2 {
+		t.Errorf("exit = %d, want 2", r.exit)
 	}
-	if !strings.HasPrefix(out, "usage:") {
-		t.Errorf("out = %q, want usage line", out)
+	if !strings.HasPrefix(r.stdout, "usage:") {
+		t.Errorf("out = %q, want usage line", r.stdout)
 	}
 }
 
@@ -519,9 +503,8 @@ func TestCreateCommandWritesBelowTheExplicitHome(t *testing.T) {
 	root := newWorktreeRepo(t)
 	bound, explicit := t.TempDir(), t.TempDir()
 	bindEnv(t, homeEnv, bound)
-	var stdout, stderr bytes.Buffer
-	code := CreateCommand(root, explicit, []string{"--request", "wf15-explicit-home", "--label", "explicit home"}, &stdout, &stderr)
-	requireTest(t, code == 0, "create exit = %d, stderr %q", code, stderr.String())
+	r := runVerb(t, verbCreate, repoHome{root, explicit}.call("--request", "wf15-explicit-home", "--label", "explicit home"))
+	requireTest(t, r.exit == 0, "create exit = %d, stderr %q", r.exit, r.stderr)
 	canonical, err := canonicalPath(root)
 	requireTest(t, err == nil, "canonical root: %v", err)
 	entries, err := os.ReadDir(poolAt(explicit, canonical))
@@ -533,13 +516,13 @@ func TestCreateCommandWritesBelowTheExplicitHome(t *testing.T) {
 func TestPoolCommandExplicitRoot(t *testing.T) {
 	home := t.TempDir()
 	bindEnv(t, "BENCH_HOME", home)
-	out, code := PoolCommand(home, []string{"/home/mgibs/workspace/bench"})
-	if code != 0 {
-		t.Errorf("exit = %d, want 0", code)
+	r := runVerb(t, verbPool, verbCall{home: home, args: []string{"/home/mgibs/workspace/bench"}})
+	if r.exit != 0 {
+		t.Errorf("exit = %d, want 0", r.exit)
 	}
 	want := filepath.Join(home, "worktrees", "bench-2826441890") + "\n"
-	if out != want {
-		t.Errorf("out = %q, want %q", out, want)
+	if r.stdout != want {
+		t.Errorf("out = %q, want %q", r.stdout, want)
 	}
 }
 
@@ -550,11 +533,10 @@ func TestReleaseNamesTheOwnerMarkerAndRetainsTheCheckout(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "release-owner-marker")
 	rewriteMarkerOwner(t, f.creation.Path, strings.Repeat("a", 32))
-	var stdout, stderr strings.Builder
-	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-release-owner-marker", f.creation.Path}, &stdout, &stderr)
+	r := runVerb(t, verbRelease, f.call("--request", "landed-release-owner-marker", f.creation.Path))
 	want := "bench worktree release: owner marker does not match assignment " + f.creation.Assignment.ID + "; checkout retained\n"
-	if code != 1 || stdout.String() != "" || stderr.String() != want {
-		t.Fatalf("owner-marker release = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
+	if r.exit != 1 || r.stdout != "" || r.stderr != want {
+		t.Fatalf("owner-marker release = (%d, %q, %q), want exit 1 and stderr %q", r.exit, r.stdout, r.stderr, want)
 	}
 }
 
@@ -565,10 +547,8 @@ func TestReleaseDropsTheCensusRecords(t *testing.T) {
 	f := newOwnedAssignment(t, "census-release")
 	recordRawCalls(t, f.home, f.root, f.creation.Path, 2)
 	survivor := seedHandoffSections(t, f.root, f.creation.Assignment)
-	var stdout, stderr strings.Builder
-	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-census-release", f.creation.Path}, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	if r := runVerb(t, verbRelease, f.call("--request", "landed-census-release", f.creation.Path)); r.exit != 0 {
+		t.Fatalf("release = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if _, err := os.Stat(censusRecordPath(f.home, f.root, f.creation.Assignment.ID)); !os.IsNotExist(err) {
 		t.Fatalf("the release kept the census record: %v", err)
@@ -582,10 +562,8 @@ func TestRetirementLeavesMainInTheDocument(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "handoff-last-section")
 	seedOneHandoffSection(t, f.root, f.creation.Assignment.Request)
-	var stdout, stderr strings.Builder
-	code := ReleaseCommand(f.root, f.home, []string{"--request", "landed-handoff-last-section", f.creation.Path}, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	if r := runVerb(t, verbRelease, f.call("--request", "landed-handoff-last-section", f.creation.Path)); r.exit != 0 {
+		t.Fatalf("release = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	requireHandoffSections(t, f.root, handoffdoc.MainKey)
 }
@@ -615,13 +593,12 @@ func TestRetirementPrintsTheSectionRemovalError(t *testing.T) {
 	j := defaultJoins()
 	var advisory bytes.Buffer
 	j.liveBinaryWarnings = &advisory
-	var stdout, stderr strings.Builder
-	code := releaseCommandWith(j, f.root, f.home, []string{"--request", "landed-handoff-unparseable", f.creation.Path}, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("release = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbRelease, f.callWith(j, "--request", "landed-handoff-unparseable", f.creation.Path))
+	if r.exit != 0 {
+		t.Fatalf("release = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
-	if !strings.Contains(stdout.String(), string(ActionRemoved)) {
-		t.Fatalf("release verdict = %q, want %s", stdout.String(), ActionRemoved)
+	if !strings.Contains(r.stdout, string(ActionRemoved)) {
+		t.Fatalf("release verdict = %q, want %s", r.stdout, ActionRemoved)
 	}
 	if want := fmt.Sprintf("%s:%d:", path, refused); !strings.Contains(advisory.String(), want) {
 		t.Fatalf("advisory = %q, want the file and line %q", advisory.String(), want)
@@ -635,17 +612,12 @@ func TestCleanDropsTheCensusRecords(t *testing.T) {
 	f := newOwnedAssignment(t, "census-clean")
 	recordRawCalls(t, f.home, f.root, f.creation.Path, 2)
 	survivor := seedHandoffSections(t, f.root, f.creation.Assignment)
-	var planned, stderr bytes.Buffer
-	if code := CleanCommand(f.root, f.home, []string{f.creation.Path}, &planned, &stderr); code != 0 {
-		t.Fatalf("clean plan = (%d, %q, %q)", code, planned.String(), stderr.String())
+	planned := runVerb(t, verbClean, f.call(f.creation.Path))
+	if planned.exit != 0 {
+		t.Fatalf("clean plan = (%d, %q, %q)", planned.exit, planned.stdout, planned.stderr)
 	}
-	fingerprint := regexp.MustCompile(`[0-9a-f]{64}`).FindString(planned.String())
-	if fingerprint == "" {
-		t.Fatalf("clean plan carried no fingerprint: %s", planned.String())
-	}
-	var applied bytes.Buffer
-	if code := CleanCommand(f.root, f.home, []string{f.creation.Path, "--apply", fingerprint}, &applied, &stderr); code != 0 || !strings.Contains(applied.String(), ",removed,") {
-		t.Fatalf("clean apply = (%d, %q, %q)", code, applied.String(), stderr.String())
+	if applied := runVerb(t, verbClean, f.call(f.creation.Path, "--apply", planned.mustFingerprint(t))); applied.exit != 0 || !strings.Contains(applied.stdout, ",removed,") {
+		t.Fatalf("clean apply = (%d, %q, %q)", applied.exit, applied.stdout, applied.stderr)
 	}
 	if _, err := os.Stat(censusRecordPath(f.home, f.root, f.creation.Assignment.ID)); !os.IsNotExist(err) {
 		t.Fatalf("the clean kept the census record: %v", err)
@@ -745,25 +717,16 @@ func requireOneCallSite(t *testing.T, needle, owner string) {
 // turns them red instead of following the change.
 const createFromGrammar = "usage: bench worktree create [--refresh] --request <opaque-id> --label <work-item> [--from <target>]"
 
-// runCreate drives CreateCommand against a fixture repository and returns the exit code
-// with both streams.
-func runCreate(t *testing.T, root, home string, args ...string) (int, string, string) {
-	t.Helper()
-	var stdout, stderr bytes.Buffer
-	code := CreateCommand(root, home, args, &stdout, &stderr)
-	return code, stdout.String(), stderr.String()
-}
-
 // requireCreateFromRefusal pins the surface every `--from` refusal shares: exit 1, an empty
 // stdout, and the shared target printer's two stderr lines.
-func requireCreateFromRefusal(t *testing.T, code int, stdout, stderr string, fragments ...string) {
+func requireCreateFromRefusal(t *testing.T, r verbResult, fragments ...string) {
 	t.Helper()
-	if code != 1 || stdout != "" {
-		t.Fatalf("create --from = (%d, %q, %q), want (1, empty stdout, a refusal)", code, stdout, stderr)
+	if r.exit != 1 || r.stdout != "" {
+		t.Fatalf("create --from = (%d, %q, %q), want (1, empty stdout, a refusal)", r.exit, r.stdout, r.stderr)
 	}
 	for _, fragment := range fragments {
-		if !strings.Contains(stderr, fragment) {
-			t.Fatalf("create --from stderr = %q, want it to hold %q", stderr, fragment)
+		if !strings.Contains(r.stderr, fragment) {
+			t.Fatalf("create --from stderr = %q, want it to hold %q", r.stderr, fragment)
 		}
 	}
 }
@@ -801,10 +764,10 @@ func TestCreateFromStartsAtTheSiblingTip(t *testing.T) {
 	tip := gitOutput(t, sibling.Path, "rev-parse", "HEAD")
 
 	const request = "create-from-tip"
-	code, stdout, stderr := runCreate(t, root, home,
-		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
-	if code != 0 {
-		t.Fatalf("create --from = (%d, %q, %q), want 0", code, stdout, stderr)
+	r := runVerb(t, verbCreate, repoHome{root, home}.call(
+		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label))
+	if r.exit != 0 {
+		t.Fatalf("create --from = (%d, %q, %q), want 0", r.exit, r.stdout, r.stderr)
 	}
 	record, ok, err := intent.FindAssignmentForRequest(root, request)
 	mustNoError(t, err)
@@ -837,20 +800,19 @@ func TestCreateFromReplayReturnsTheRecord(t *testing.T) {
 	commitInWorktree(t, sibling.Path, "sibling.txt", "sibling\n", "sibling work")
 
 	const request = "create-from-replay"
-	code, first, stderr := runCreate(t, root, home,
-		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
-	if code != 0 {
-		t.Fatalf("create --from = (%d, %q, %q), want 0", code, first, stderr)
+	call := repoHome{root, home}.call("--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
+	first := runVerb(t, verbCreate, call)
+	if first.exit != 0 {
+		t.Fatalf("create --from = (%d, %q, %q), want 0", first.exit, first.stdout, first.stderr)
 	}
 	mustWrite(t, filepath.Join(sibling.Path, "sibling.txt"), []byte("uncommitted\n"), 0o644)
 
-	code, second, stderr := runCreate(t, root, home,
-		"--request", request, "--label", "dependent", "--from", sibling.Assignment.Label)
-	if code != 0 {
-		t.Fatalf("create --from replay = (%d, %q, %q), want 0", code, second, stderr)
+	second := runVerb(t, verbCreate, call)
+	if second.exit != 0 {
+		t.Fatalf("create --from replay = (%d, %q, %q), want 0", second.exit, second.stdout, second.stderr)
 	}
-	if second != first {
-		t.Errorf("replay stdout = %q, want the first run's %q", second, first)
+	if second.stdout != first.stdout {
+		t.Errorf("replay stdout = %q, want the first run's %q", second.stdout, first.stdout)
 	}
 	assignments, err := intent.Assignments(root)
 	mustNoError(t, err)
@@ -873,9 +835,8 @@ func TestCreateFromRefusesAnUnknownSibling(t *testing.T) {
 	_, root, home, _, _ := mergeFixture(t, "delegate")
 	before := assignmentCount(t, root)
 
-	code, stdout, stderr := runCreate(t, root, home,
-		"--request", "create-from-unknown", "--label", "dependent", "--from", "no-such-label")
-	requireCreateFromRefusal(t, code, stdout, stderr,
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+		"--request", "create-from-unknown", "--label", "dependent", "--from", "no-such-label")),
 		"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
 	if after := assignmentCount(t, root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
@@ -892,17 +853,15 @@ func TestCreateFromRefusesADirtyOrDetachedSibling(t *testing.T) {
 	before := assignmentCount(t, root)
 	mustWrite(t, filepath.Join(sibling.Path, "sibling.txt"), []byte("uncommitted\n"), 0o644)
 
-	code, stdout, stderr := runCreate(t, root, home,
-		"--request", "create-from-dirty", "--label", "dependent", "--from", sibling.Assignment.Label)
-	requireCreateFromRefusal(t, code, stdout, stderr,
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+		"--request", "create-from-dirty", "--label", "dependent", "--from", sibling.Assignment.Label)),
 		"bench worktree create: sibling checkout is not clean\n",
 		"next=bench worktree exec "+sibling.Assignment.ID+" -- bench commit\n")
 
 	gitRun(t, sibling.Path, "checkout", "-q", "--", "sibling.txt")
 	gitRun(t, sibling.Path, "checkout", "-q", "--detach", "HEAD")
-	code, stdout, stderr = runCreate(t, root, home,
-		"--request", "create-from-detached", "--label", "dependent", "--from", sibling.Assignment.Label)
-	requireCreateFromRefusal(t, code, stdout, stderr,
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+		"--request", "create-from-detached", "--label", "dependent", "--from", sibling.Assignment.Label)),
 		"bench worktree create: sibling is not on its assignment branch\n", "next=bench worktree list\n")
 	if after := assignmentCount(t, root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusals", after, before)
@@ -918,11 +877,11 @@ func TestCreateFromWithRefreshRefusesBeforeTheRefresh(t *testing.T) {
 	sibling := created[0]
 	before := assignmentCount(t, root)
 
-	code, stdout, stderr := runCreate(t, root, home, "--request", "create-from-refresh",
-		"--label", "dependent", "--refresh", "--from", sibling.Assignment.Label)
+	r := runVerb(t, verbCreate, repoHome{root, home}.call("--request", "create-from-refresh",
+		"--label", "dependent", "--refresh", "--from", sibling.Assignment.Label))
 	want := toon.Usage(createGrammar.Cmd, "--from with --refresh") + "\n"
-	if code != 2 || stdout != "" || stderr != want {
-		t.Fatalf("create --refresh --from = (%d, %q, %q), want (2, empty, %q)", code, stdout, stderr, want)
+	if r.exit != 2 || r.stdout != "" || r.stderr != want {
+		t.Fatalf("create --refresh --from = (%d, %q, %q), want (2, empty, %q)", r.exit, r.stdout, r.stderr, want)
 	}
 	if after := assignmentCount(t, root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
@@ -936,9 +895,8 @@ func TestCreateFromRefusesAnAmbiguousPrefix(t *testing.T) {
 	_, root, home, _, created := mergeFixture(t, "delegate-alpha", "delegate-beta")
 	before := assignmentCount(t, root)
 
-	code, stdout, stderr := runCreate(t, root, home,
-		"--request", "create-from-ambiguous", "--label", "dependent", "--from", "delegate-")
-	requireCreateFromRefusal(t, code, stdout, stderr,
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+		"--request", "create-from-ambiguous", "--label", "dependent", "--from", "delegate-")),
 		"bench worktree create: target is ambiguous: ",
 		created[0].Assignment.ID, created[1].Assignment.ID, "next=bench worktree list\n")
 	if after := assignmentCount(t, root); after != before {
@@ -957,9 +915,8 @@ func TestCreateFromRefusesControlBytes(t *testing.T) {
 	malformed := []byte("{ this is not a ledger\n")
 	mustWrite(t, address, malformed, 0o600)
 
-	code, stdout, stderr := runCreate(t, root, home,
-		"--request", "create-from-control", "--label", "dependent", "--from", "a\x01b")
-	requireCreateFromRefusal(t, code, stdout, stderr,
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+		"--request", "create-from-control", "--label", "dependent", "--from", "a\x01b")),
 		"bench worktree create: --from contains control characters\n", "next=bench worktree list\n")
 	after, err := os.ReadFile(address)
 	mustNoError(t, err)
@@ -979,9 +936,8 @@ func TestCreateFromRefusesARetiredSibling(t *testing.T) {
 	mustNoError(t, intent.PutAssignment(root, retired))
 	before := assignmentCount(t, root)
 
-	code, stdout, stderr := runCreate(t, root, home,
-		"--request", "create-from-retired", "--label", "dependent", "--from", sibling.Assignment.Label)
-	requireCreateFromRefusal(t, code, stdout, stderr,
+	requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call(
+		"--request", "create-from-retired", "--label", "dependent", "--from", sibling.Assignment.Label)),
 		"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
 	if after := assignmentCount(t, root); after != before {
 		t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)
@@ -1003,9 +959,8 @@ func TestCreateFromRefusesAFailedSiblingIdentityComponent(t *testing.T) {
 			fixture := identityComponentFixtureFor(t, component)
 			fixture.mutate(t, root, sibling)
 
-			code, stdout, stderr := runCreate(t, root, home, "--request", "create-from-"+component,
-				"--label", "dependent", "--from", sibling.Assignment.Label)
-			requireCreateFromRefusal(t, code, stdout, stderr,
+			requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call("--request", "create-from-"+component,
+				"--label", "dependent", "--from", sibling.Assignment.Label)),
 				"bench worktree create: "+identityComponentDetail(t, fixture, sibling)+"\n",
 				"next=bench worktree list\n")
 			if after := assignmentCount(t, root); after != before {
@@ -1020,9 +975,8 @@ func TestCreateFromRefusesAFailedSiblingIdentityComponent(t *testing.T) {
 		before := assignmentCount(t, root)
 		identityComponentFixtureFor(t, componentAssignmentState).mutate(t, root, sibling)
 
-		code, stdout, stderr := runCreate(t, root, home, "--request", "create-from-state",
-			"--label", "dependent", "--from", sibling.Assignment.Label)
-		requireCreateFromRefusal(t, code, stdout, stderr,
+		requireCreateFromRefusal(t, runVerb(t, verbCreate, repoHome{root, home}.call("--request", "create-from-state",
+			"--label", "dependent", "--from", sibling.Assignment.Label)),
 			"bench worktree create: --from names no active assignment\n", "next=bench worktree list\n")
 		if after := assignmentCount(t, root); after != before {
 			t.Fatalf("ledger holds %d records, want the %d it held before the refusal", after, before)

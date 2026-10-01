@@ -92,8 +92,8 @@ func TestSelectedWorktreesPreserveDefault(t *testing.T) {
 					mustNoError(t, intent.PutAssignment(root, a))
 				}
 			}
-			out, code := ListCommand(root, "", nil)
-			got := worktreeListResponse{Stdout: out, Exit: code}
+			r := runVerb(t, verbList, verbCall{root: root})
+			got := worktreeListResponse{Stdout: r.stdout, Exit: r.exit}
 			if want := captured.render(t, a); !reflect.DeepEqual(got, want) {
 				t.Fatalf("bare output = %#v, want stored pre-change baseline %#v", got, want)
 			}
@@ -101,14 +101,8 @@ func TestSelectedWorktreesPreserveDefault(t *testing.T) {
 	}
 }
 
-func selectedRows(t *testing.T, out string) []any {
-	t.Helper()
-	document, err := axitest.DecodeDocument(out)
-	mustNoError(t, err)
-	rows, err := document.Rows("worktrees")
-	mustNoError(t, err)
-	return rows
-}
+// selectedTable is the table block that the selected list renders its rows in.
+const selectedTable = "worktrees"
 
 func TestSelectedWorktreeFacts(t *testing.T) {
 	t.Parallel()
@@ -119,11 +113,11 @@ func TestSelectedWorktreeFacts(t *testing.T) {
 		args = append(args, "--target", a.ID)
 		want = append(want, map[string]any{"target": a.ID, "id": a.ID, "path": a.Worktree, "state": string(a.State), "error": ""})
 	}
-	out, code := ListCommand(root, "", args)
-	if code != 0 {
-		t.Fatalf("selected facts exit=%d output=%q", code, out)
+	r := runVerb(t, verbList, verbCall{root: root, args: args})
+	if r.exit != 0 {
+		t.Fatalf("selected facts exit=%d output=%q", r.exit, r.stdout)
 	}
-	if got := selectedRows(t, out); !reflect.DeepEqual(got, want) {
+	if got := r.mustRows(t, selectedTable); !reflect.DeepEqual(got, want) {
 		t.Fatalf("selected facts=%#v, want %#v", got, want)
 	}
 }
@@ -133,11 +127,11 @@ func TestSelectedWorktreePartialFailure(t *testing.T) {
 	root, assignments := selectedFixture(t)
 	assignments[1].Label = assignments[0].Label
 	mustNoError(t, intent.PutAssignment(root, assignments[1]))
-	out, code := ListCommand(root, "", []string{"--view", "paths", "--target", "absent", "--target", assignments[2].ID, "--target", assignments[0].Label})
-	if code != 1 {
-		t.Fatalf("partial failure exit=%d output=%q", code, out)
+	r := runVerb(t, verbList, verbCall{root: root, args: []string{"--view", "paths", "--target", "absent", "--target", assignments[2].ID, "--target", assignments[0].Label}})
+	if r.exit != 1 {
+		t.Fatalf("partial failure exit=%d output=%q", r.exit, r.stdout)
 	}
-	rows := selectedRows(t, out)
+	rows := r.mustRows(t, selectedTable)
 	if len(rows) != 3 {
 		t.Fatalf("partial results=%#v, want all three operands", rows)
 	}
@@ -166,11 +160,11 @@ func TestSelectedWorktreeAliases(t *testing.T) {
 	for _, target := range []string{first.Worktree, "missing", first.Label, first.ID, first.ID[:8], "missing", last.Label} {
 		args = append(args, "--target", target)
 	}
-	out, code := ListCommand(root, "", args)
-	if code != 1 {
-		t.Fatalf("alias selection exit=%d output=%q", code, out)
+	r := runVerb(t, verbList, verbCall{root: root, args: args})
+	if r.exit != 1 {
+		t.Fatalf("alias selection exit=%d output=%q", r.exit, r.stdout)
 	}
-	rows := selectedRows(t, out)
+	rows := r.mustRows(t, selectedTable)
 	if len(rows) != 3 {
 		t.Fatalf("alias results=%#v, want two identities and one distinct failure", rows)
 	}
@@ -190,11 +184,11 @@ func TestSelectedWorktreeHostileTarget(t *testing.T) {
 	root, assignments := selectedFixture(t)
 	for _, target := range []string{"bad\x1btarget", "tab\ttarget", "line\ntarget", "return\rtarget", "nul\x00target", "--unknown", "$(touch sentinel)", "a space"} {
 		t.Run(target, func(t *testing.T) {
-			out, code := ListCommand(root, "", []string{"--view", "paths", "--target", target, "--target", assignments[0].Label})
-			if code != 1 {
-				t.Fatalf("hostile target exit=%d output=%q", code, out)
+			r := runVerb(t, verbList, verbCall{root: root, args: []string{"--view", "paths", "--target", target, "--target", assignments[0].Label}})
+			if r.exit != 1 {
+				t.Fatalf("hostile target exit=%d output=%q", r.exit, r.stdout)
 			}
-			rows := selectedRows(t, out)
+			rows := r.mustRows(t, selectedTable)
 			if len(rows) != 2 {
 				t.Fatalf("hostile results=%#v", rows)
 			}
@@ -214,11 +208,11 @@ func TestSelectedWorktreeHostileTarget(t *testing.T) {
 	for _, target := range []string{assignments[0].Label, "bad\x1btarget", "bad\x1btarget", "line\ntarget", assignments[1].ID, "last\rtarget"} {
 		args = append(args, "--target", target)
 	}
-	out, code := ListCommand(root, "", args)
-	if code != 1 {
-		t.Fatalf("position matrix exit=%d output=%q", code, out)
+	r := runVerb(t, verbList, verbCall{root: root, args: args})
+	if r.exit != 1 {
+		t.Fatalf("position matrix exit=%d output=%q", r.exit, r.stdout)
 	}
-	rows := selectedRows(t, out)
+	rows := r.mustRows(t, selectedTable)
 	wantTargets := []string{assignments[0].Label, sanitize.TargetPointer(2), sanitize.TargetPointer(4), assignments[1].ID, sanitize.TargetPointer(6)}
 	refused := map[int]bool{1: true, 2: true, 4: true}
 	if len(rows) != len(wantTargets) {
@@ -258,42 +252,42 @@ func TestSelectedWorktreeGrammar(t *testing.T) {
 		{[]string{"--view", "paths", "--target", "one", "--view", "paths"}, toon.Usage(usage.WorktreeList, "--view")},
 		{[]string{"--view", "paths", "--target", "one", "--"}, selectedHelp},
 	} {
-		out, code := ListCommand("", "", tc.args)
-		if code != 2 || out != tc.want+"\n" {
-			t.Errorf("grammar %q = (%d,%q), want (2,%q) before repository lookup", tc.args, code, out, tc.want+"\n")
+		r := runVerb(t, verbList, verbCall{args: tc.args})
+		if r.exit != 2 || r.stdout != tc.want+"\n" {
+			t.Errorf("grammar %q = (%d,%q), want (2,%q) before repository lookup", tc.args, r.exit, r.stdout, tc.want+"\n")
 		}
 	}
 	for _, help := range []string{"--help", "-h", "help"} {
-		out, code := ListCommand("", "", []string{help})
-		if code != 0 || out != worktreeListGrammar.Help+"\n" {
-			t.Errorf("bare help %q = (%d,%q)", help, code, out)
+		r := runVerb(t, verbList, verbCall{args: []string{help}})
+		if r.exit != 0 || r.stdout != worktreeListGrammar.Help+"\n" {
+			t.Errorf("bare help %q = (%d,%q)", help, r.exit, r.stdout)
 		}
 	}
-	out, code := ListCommand("", "", []string{"--view", "paths", "--help"})
-	if code != 0 || out != selectedWorktreeGrammar.Help+"\n" {
-		t.Fatalf("selected help=(%d,%q)", code, out)
+	r := runVerb(t, verbList, verbCall{args: []string{"--view", "paths", "--help"}})
+	if r.exit != 0 || r.stdout != selectedWorktreeGrammar.Help+"\n" {
+		t.Fatalf("selected help=(%d,%q)", r.exit, r.stdout)
 	}
 }
 
 func TestSelectedWorktreesExcludeOldOutput(t *testing.T) {
 	t.Parallel()
 	root, assignments := selectedFixture(t)
-	out, code := ListCommand(root, "", []string{"--view", "paths", "--target", assignments[0].ID})
-	if code != 0 {
-		t.Fatalf("selected output=(%d,%q)", code, out)
+	r := runVerb(t, verbList, verbCall{root: root, args: []string{"--view", "paths", "--target", assignments[0].ID}})
+	if r.exit != 0 {
+		t.Fatalf("selected output=(%d,%q)", r.exit, r.stdout)
 	}
-	document, err := axitest.DecodeDocument(out)
+	document, err := axitest.DecodeDocument(r.stdout)
 	mustNoError(t, err)
-	if !reflect.DeepEqual(document.Blocks, []string{"worktrees", "help"}) {
+	if !reflect.DeepEqual(document.Blocks, []string{selectedTable, "help"}) {
 		t.Fatalf("selected blocks=%q", document.Blocks)
 	}
-	rows := selectedRows(t, out)
+	rows := r.mustRows(t, selectedTable)
 	if len(rows) != 1 || len(rows[0].(map[string]any)) != 5 {
 		t.Fatalf("selected projection=%#v", rows)
 	}
 	for _, a := range assignments[1:] {
-		if strings.Contains(out, a.ID) || strings.Contains(out, a.Worktree) {
-			t.Fatalf("unrequested worktree survives: %q", out)
+		if strings.Contains(r.stdout, a.ID) || strings.Contains(r.stdout, a.Worktree) {
+			t.Fatalf("unrequested worktree survives: %q", r.stdout)
 		}
 	}
 }
@@ -302,8 +296,8 @@ func TestSelectedWorktreeDetailRoute(t *testing.T) {
 	t.Parallel()
 	root, assignments := selectedFixture(t)
 	for _, target := range []string{assignments[0].ID, "absent"} {
-		out, _ := ListCommand(root, "", []string{"--view", "paths", "--target", target})
-		document, err := axitest.DecodeDocument(out)
+		r := runVerb(t, verbList, verbCall{root: root, args: []string{"--view", "paths", "--target", target}})
+		document, err := axitest.DecodeDocument(r.stdout)
 		mustNoError(t, err)
 		actions, err := document.HelpActions()
 		mustNoError(t, err)
@@ -324,18 +318,18 @@ func TestSelectedWorktreeHostilePath(t *testing.T) {
 			bad, good := assignments[0], assignments[1]
 			bad.Worktree += tc.suffix
 			mustNoError(t, intent.PutAssignment(root, bad))
-			out, code := ListCommand(root, "", []string{"--view", "paths", "--target", bad.Label, "--target", good.ID, "--target", bad.ID, "--target", bad.Label})
+			r := runVerb(t, verbList, verbCall{root: root, args: []string{"--view", "paths", "--target", bad.Label, "--target", good.ID, "--target", bad.ID, "--target", bad.Label}})
 			wantCode := 1
 			first := map[string]any{"target": bad.Label, "id": "", "path": "", "state": "", "error": selectedPathUnrepresentable}
 			if tc.permitted {
 				wantCode = 0
 				first = map[string]any{"target": bad.Label, "id": bad.ID, "path": bad.Worktree, "state": string(bad.State), "error": ""}
 			}
-			if code != wantCode {
-				t.Fatalf("stored path exit=%d output=%q, want exit %d", code, out, wantCode)
+			if r.exit != wantCode {
+				t.Fatalf("stored path exit=%d output=%q, want exit %d", r.exit, r.stdout, wantCode)
 			}
 			want := []any{first, map[string]any{"target": good.ID, "id": good.ID, "path": good.Worktree, "state": string(good.State), "error": ""}}
-			if rows := selectedRows(t, out); !reflect.DeepEqual(rows, want) {
+			if rows := r.mustRows(t, selectedTable); !reflect.DeepEqual(rows, want) {
 				t.Fatalf("stored path results=%#v, want %#v", rows, want)
 			}
 		})

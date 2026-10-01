@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 
@@ -17,12 +16,12 @@ func TestListPrintsThePersistedRequestToken(t *testing.T) {
 		t.Fatal("create persisted no request token")
 	}
 	chdir(t, f.root)
-	out, code := ListCommand(f.root, f.home, nil)
-	if code != 0 {
-		t.Fatalf("list code=%d out=%q", code, out)
+	listed := runVerb(t, verbList, f.call())
+	if listed.exit != 0 {
+		t.Fatalf("list code=%d out=%q", listed.exit, listed.stdout)
 	}
-	if !strings.Contains(out, "request") || !strings.Contains(out, f.creation.Assignment.RequestToken) {
-		t.Fatalf("list omitted the request token %q:\n%s", f.creation.Assignment.RequestToken, out)
+	if !strings.Contains(listed.stdout, "request") || !strings.Contains(listed.stdout, f.creation.Assignment.RequestToken) {
+		t.Fatalf("list omitted the request token %q:\n%s", f.creation.Assignment.RequestToken, listed.stdout)
 	}
 }
 
@@ -34,15 +33,14 @@ func TestListToleratesAPreTokenRecord(t *testing.T) {
 	stripped.RequestToken = ""
 	mustNoError(t, intent.PutAssignment(f.root, stripped))
 	chdir(t, f.root)
-	var stdout, stderr bytes.Buffer
-	if code := PathCommand(f.root, f.home, []string{f.creation.Assignment.ID}, &stdout, &stderr); code != 0 {
-		t.Fatalf("pre-token record no longer resolves: %s", stderr.String())
+	if path := runVerb(t, verbPath, f.call(f.creation.Assignment.ID)); path.exit != 0 {
+		t.Fatalf("pre-token record no longer resolves: %s", path.stderr)
 	}
-	out, code := ListCommand(f.root, f.home, nil)
-	if code != 0 || !strings.Contains(out, f.creation.Assignment.ID) {
-		t.Fatalf("list dropped the pre-token record (code=%d):\n%s", code, out)
+	listed := runVerb(t, verbList, f.call())
+	if listed.exit != 0 || !strings.Contains(listed.stdout, f.creation.Assignment.ID) {
+		t.Fatalf("list dropped the pre-token record (code=%d):\n%s", listed.exit, listed.stdout)
 	}
-	if !strings.Contains(out, f.creation.Assignment.Label+",\"\",") {
-		t.Fatalf("pre-token row does not show an empty request cell:\n%s", out)
+	if !strings.Contains(listed.stdout, f.creation.Assignment.Label+",\"\",") {
+		t.Fatalf("pre-token row does not show an empty request cell:\n%s", listed.stdout)
 	}
 }

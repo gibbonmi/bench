@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -23,9 +22,10 @@ func TestListActiveRowsUseTargetSlot(t *testing.T) {
 		// A commit keeps the assignment unlanded, so the list adds no batch-clean row.
 		commitInWorktree(t, creation.Path, name+".txt", name+"\n", name)
 	}
-	out, code := ListCommand(root, home, nil)
-	if code != 0 {
-		t.Fatalf("ListCommand = (%d, %q), want exit 0", code, out)
+	listed := runVerb(t, verbList, repoHome{root, home}.call())
+	out := listed.stdout
+	if listed.exit != 0 {
+		t.Fatalf("ListCommand = (%d, %q), want exit 0", listed.exit, out)
 	}
 	document, err := axitest.DecodeDocument(out)
 	if err != nil {
@@ -68,9 +68,10 @@ func TestListActiveRowsUseTargetSlot(t *testing.T) {
 func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	f := newOwnedAssignment(t, "advertised")
 	chdir(t, f.root)
-	listed, code := ListCommand(f.root, f.home, nil)
-	if code != 0 {
-		t.Fatalf("list code=%d out=%q", code, listed)
+	r := runVerb(t, verbList, f.call())
+	listed := r.stdout
+	if r.exit != 0 {
+		t.Fatalf("list code=%d out=%q", r.exit, listed)
 	}
 	document, err := axitest.DecodeDocument(listed)
 	if err != nil {
@@ -92,9 +93,8 @@ func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	if id != f.creation.Assignment.ID {
 		t.Fatalf("id cell = %q, want the assignment id %q", id, f.creation.Assignment.ID)
 	}
-	var stdout, stderr bytes.Buffer
-	if code := PathCommand(f.root, f.home, []string{id}, &stdout, &stderr); code != 0 {
-		t.Fatalf("id cell %q exited %d: %s", id, code, stderr.String())
+	if path := runVerb(t, verbPath, f.call(id)); path.exit != 0 {
+		t.Fatalf("id cell %q exited %d: %s", id, path.exit, path.stderr)
 	}
 }
 
@@ -106,17 +106,17 @@ func TestPathNotesTheFileToolRouteOnStderr(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "filetools")
 	target := f.creation.Assignment.Label
-	var stdout, stderr bytes.Buffer
-	if code := PathCommand(f.root, f.home, []string{target}, &stdout, &stderr); code != 0 {
-		t.Fatalf("path exited %d: %s", code, stderr.String())
+	r := runVerb(t, verbPath, f.call(target))
+	if r.exit != 0 {
+		t.Fatalf("path exited %d: %s", r.exit, r.stderr)
 	}
-	printed := strings.TrimSuffix(stdout.String(), "\n")
+	printed := strings.TrimSuffix(r.stdout, "\n")
 	if strings.Contains(printed, "\n") || !filepath.IsAbs(printed) {
-		t.Fatalf("stdout = %q, want one absolute path line alone", stdout.String())
+		t.Fatalf("stdout = %q, want one absolute path line alone", r.stdout)
 	}
 	want := "note: the path serves the file tools; run a shell step through bench worktree exec " + target + " -- <command>\n"
-	if stderr.String() != want {
-		t.Fatalf("stderr = %q, want %q", stderr.String(), want)
+	if r.stderr != want {
+		t.Fatalf("stderr = %q, want %q", r.stderr, want)
 	}
 }
 
@@ -126,11 +126,11 @@ func TestPathResolvesTheLabelAndTheIdAlike(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "both")
 	for _, target := range []string{f.creation.Assignment.ID, f.creation.Assignment.Label} {
-		var byTarget, stderr bytes.Buffer
-		if code := PathCommand(f.root, f.home, []string{target}, &byTarget, &stderr); code != 0 {
-			t.Fatalf("target %q exited %d: %s", target, code, stderr.String())
+		byTarget := runVerb(t, verbPath, f.call(target))
+		if byTarget.exit != 0 {
+			t.Fatalf("target %q exited %d: %s", target, byTarget.exit, byTarget.stderr)
 		}
-		if byTarget.Len() == 0 {
+		if byTarget.stdout == "" {
 			t.Fatalf("target %q resolved to no path", target)
 		}
 	}
