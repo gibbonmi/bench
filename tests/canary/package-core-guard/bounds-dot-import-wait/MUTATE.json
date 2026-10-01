@@ -1,12 +1,12 @@
 [
   {
-    "path": "internal/contract/marker_wait.go",
+    "path": "internal/chargeevidence/store.go",
     "old": "\t\"os\"\n",
     "new": "\t\"os\"\n\t. \"context\"\n"
   },
   {
-    "path": "internal/contract/marker_wait.go",
-    "old": "func waitForMarker(",
-    "new": "func unclassifiedWait() {\n\tctx, cancel := WithTimeout(Background(), time.Duration(17))\n\tdefer cancel()\n\t_ = ctx\n}\n\nfunc waitForMarker("
+    "path": "internal/chargeevidence/store.go",
+    "old": "func OpenStore(",
+    "new": "func unclassifiedWait() {\n\tctx, cancel := WithTimeout(Background(), time.Duration(17))\n\tdefer cancel()\n\t_ = ctx\n}\n\nfunc OpenStore("
   }
 ]

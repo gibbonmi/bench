@@ -1,7 +1,7 @@
 [
   {
-    "path": "internal/contract/marker_wait.go",
-    "old": "sleep(bounds.FixedWindow(10 * time.Millisecond))",
-    "new": "sleep(10 * time.Millisecond)"
+    "path": "internal/chargeevidence/store.go",
+    "old": "func OpenStore(",
+    "new": "func unclassifiedInjectedWait(sleep func(time.Duration)) {\n\tsleep(10 * time.Millisecond)\n}\n\nfunc OpenStore("
   }
 ]
