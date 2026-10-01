@@ -98,10 +98,6 @@ func (s prospectiveTreeSource) blob(object string) ([]byte, error) {
 	return benchgit.Raw("-C", s.root, "cat-file", "blob", object)
 }
 
-func captureWorkingTree(root string) (*treeGeneration, error) {
-	return captureTreeGeneration(workingTreeSource{root: root})
-}
-
 func captureProspectiveTree(root, tree string) (*treeGeneration, error) {
 	return captureTreeGeneration(prospectiveTreeSource{root: root, treeID: tree})
 }

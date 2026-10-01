@@ -172,38 +172,6 @@ func gateEnv() ([]string, error) {
 	return gocache.Apply(base)
 }
 
-// Run executes a selected gate from root and streams its output. The caller selects a
-// non-None resolution and owns the no-gate result. Run does not record evidence.
-func Run(root string, res Resolution, stdout, stderr io.Writer) int {
-	childEnv, err := gateEnv()
-	if err != nil {
-		fmt.Fprintf(stderr, "gate environment unavailable: %v\n", err)
-		return 1
-	}
-	return runResolved(context.Background(), root, res, childEnv, stdout, stderr, false).Code
-}
-
-// RunContext executes a selected gate and streams its output. If ctx ends, RunContext
-// stops the gate process group before it returns. RunContext does not record evidence.
-func RunContext(ctx context.Context, root string, res Resolution, stdout, stderr io.Writer) int {
-	childEnv, err := gateEnv()
-	if err != nil {
-		fmt.Fprintf(stderr, "gate environment unavailable: %v\n", err)
-		return 1
-	}
-	result := runResolved(ctx, root, res, childEnv, stdout, stderr, true)
-	if result.StartErr != nil {
-		return 1
-	}
-	return result.Code
-}
-
-// RunAndRecord selects and executes root's gate, then records its completed verdict.
-// It returns 3 and writes no evidence when no gate is selected.
-func RunAndRecord(root string, stdout, stderr io.Writer) int {
-	return Execute(context.Background(), root, stdout, stderr).ActionExit
-}
-
 // RunAndRecordContext selects and executes root's gate with cancellation. If ctx ends,
 // it stops the gate and records no incomplete verdict.
 func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Writer) int {
@@ -267,19 +235,6 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 	finishLog(result)
 	finishSpan(result)
 	return result
-}
-
-// ExecuteReusingFreshGreen returns reusable exact green evidence before it acquires the
-// execution lock. Otherwise it executes root's gate and records the completed verdict.
-// The reuse decision uses the same subject snapshot that an execution accepts. If ctx
-// ends during execution, no incomplete verdict becomes evidence.
-func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	if plan, err := checkpointEvaluation(ctx, newGateEvaluation(root)).acceptPre(); err == nil {
-		if reuse := reusableEvidence(root, plan, time.Now()); reuse.ReusableGreen {
-			return reusedGreenResult(stdout, reuse)
-		}
-	}
-	return execute(ctx, root, stdout, stderr)
 }
 
 // reusedGreenResult is the one place a reused verdict is announced and shaped into a
