@@ -106,7 +106,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 
 func testGrammar() usage.Grammar {
 	withInventory := grammar
-	withInventory.Help = grammar.Help + "\n" + namedCheckInventory()
+	withInventory.Help = grammar.Help + "\nnotes:\n  " + PackageExpressionNote + "\n" + namedCheckInventory()
 	return withInventory
 }
 
