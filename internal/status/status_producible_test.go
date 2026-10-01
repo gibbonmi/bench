@@ -392,7 +392,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 					}
 					continue
 				}
-				if !produced.invocable() || !IsInvocable(produced.Action) {
+				if !produced.invocable() || !parseAction(produced.Action).invocable() {
 					t.Errorf("%s board action %q is not typed and parser-invocable", produced.Name, produced.Action)
 				}
 			}

@@ -262,11 +262,6 @@ func (id actionID) kind() actionKind {
 	return actionDefinitions[id].kind
 }
 
-// IsInvocable reports whether action is one command accepted by the status action grammar.
-func IsInvocable(text string) bool {
-	return parseAction(text).invocable()
-}
-
 // Signal is one ambient-board row exposed as structured data — the severity sort key
 // plus the signal/detail/action triple. Action remains the rendered string contract while
 // actionID carries the producer's definition into routing. It is the shared

@@ -16,7 +16,7 @@ func testSignal(severity int, name, detail, text string) Signal {
 	return newSignal(severity, name, detail, action)
 }
 
-func TestIsInvocable(t *testing.T) {
+func TestParseActionInvocable(t *testing.T) {
 	cases := []struct {
 		action string
 		want   bool
@@ -32,8 +32,8 @@ func TestIsInvocable(t *testing.T) {
 		{"/bench-write-spec decisions/my * map.md", true},
 	}
 	for _, tc := range cases {
-		if got := IsInvocable(tc.action); got != tc.want {
-			t.Errorf("IsInvocable(%q) = %v, want %v", tc.action, got, tc.want)
+		if got := parseAction(tc.action).invocable(); got != tc.want {
+			t.Errorf("parseAction(%q).invocable() = %v, want %v", tc.action, got, tc.want)
 		}
 	}
 }

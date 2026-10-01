@@ -17,19 +17,6 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
-type processAttachment string
-
-const (
-	attachmentDirect processAttachment = "direct"
-	attachmentSystem processAttachment = "system"
-	attachmentShip   processAttachment = "ship"
-)
-
-type commandDisposition struct {
-	Name       string
-	Attachment processAttachment
-}
-
 type commandHandler func(Command, []string) int
 
 func outputCommand(fn func([]string) (string, int)) commandHandler {
@@ -119,12 +106,11 @@ const (
 )
 
 type commandDefinition struct {
-	Name       string
-	Attachment processAttachment
-	AXI        commandAXIDisposition
-	Inventory  commandInventory
-	Bound      boundDisposition
-	Scope      treeScope
+	Name      string
+	AXI       commandAXIDisposition
+	Inventory commandInventory
+	Bound     boundDisposition
+	Scope     treeScope
 	// Leaves is the family table of a command whose first argument names a leaf. Each
 	// leaf declares its own bound disposition on its row. The dispatcher and the bound
 	// both read this one table, so no family runs a leaf that the bound does not see.
@@ -381,17 +367,6 @@ func renderCommandHelp() string {
 		lines = append(lines, row.text)
 	}
 	return strings.Join(lines, "\n") + "\n"
-}
-
-func commandDispositions() []commandDisposition {
-	var dispositions []commandDisposition
-	for _, definition := range commandRegistry {
-		if definition.Attachment == "" {
-			continue
-		}
-		dispositions = append(dispositions, commandDisposition{Name: definition.Name, Attachment: definition.Attachment})
-	}
-	return dispositions
 }
 
 type emptyReader struct{}

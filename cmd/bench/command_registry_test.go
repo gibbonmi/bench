@@ -35,29 +35,6 @@ func TestCommandRunsVersionInProcess(t *testing.T) {
 	}
 }
 
-func TestCommandDispositionsAreComplete(t *testing.T) {
-	want := map[processAttachment][]string{
-		attachmentDirect: {"check-agent-line", "commit", "gate-go", "gate-prose", "guard-bench-follow-on", "guard-file-write", "guard-git", "resume-clean", "session-inspect", "shift", "spec", "version", "worktree"},
-		attachmentSystem: {"canary", "doctor", "freshness-check", "freshness-publish", "gate", "gate-phases", "gate-run", "init", "link", "setup", "stop-verdict", "unlink", "upgrade", "worktree-hook"},
-		attachmentShip:   {"prep-release", "release", "release-preflight"},
-	}
-	got := map[processAttachment][]string{}
-	seen := map[string]bool{}
-	for _, disposition := range commandDispositions() {
-		if seen[disposition.Name] {
-			t.Fatalf("command disposition repeats %q", disposition.Name)
-		}
-		seen[disposition.Name] = true
-		got[disposition.Attachment] = append(got[disposition.Attachment], disposition.Name)
-	}
-	for attachment := range got {
-		sort.Strings(got[attachment])
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("command dispositions = %#v, want %#v", got, want)
-	}
-}
-
 func TestCommandRegistryAXIDispositionsAreComplete(t *testing.T) {
 	_ = axiRegistryMemberNames(t)
 }
