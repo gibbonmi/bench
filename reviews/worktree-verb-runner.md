@@ -163,11 +163,13 @@ A fresh `bench-writer` session, `vr-t1-verify-2`, ran on opus at medium effort, 
 
 This round confirms plan commit `51f0951e` and the verification rerun. The frozen pair is base `0c95c9447c20189f3f2155719ef965bffc339856` and tip `ef2cd35f1052f7003c1f7647539d656be7585821`. The shared evidence is `sha256:a2e41f11506f672a638765f9167e9c3453cbde7d4ffcd22cacfbd62347e03db8`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the delta `d44d28ce..ef2cd35f`. That delta changes no test code. Only the Coverage axis ran a probe, and it left the tree clean.
 
-The raw finding count is 2: Standards 1 and Spec 1, and both name one fix. The Standards axis also gave three judgment items, which this record keeps as advice. The round 2 prose of this record routed the amendment to VR-C2, but plan commit `51f0951e` applied it inside VR-C1. The coordinator corrected that prose, and each issuing axis reaffirmed the correction with a pass. The correction is evidence-only, so the consumed allowance stays at 1 of 2 repair cycles.
+The raw finding count is 5: Standards 4 and Spec 1. One Standards finding and the Spec finding name one binding fix, R9. Of the three Standards judgment items, the coordinator fixed one tense error in place, and the advice list below keeps the other two.
+
+The round 2 prose of this record routed the amendment to VR-C2, but plan commit `51f0951e` applied it inside VR-C1. The coordinator corrected that prose, and each issuing axis reaffirmed the correction with a pass. The correction is evidence-only, so the consumed allowance stays at 1 of 2 repair cycles.
 
 ### Standards, round 3
 
-Findings: 1. R9: `reviews/worktree-verb-runner.md:128,142,143` placed the amendment in VR-C2. One source per fact requires one account of where the amendment lives. `auto-fix`. Confidence 8. The axis reaffirmed the correction.
+Binding findings: 1. R9: `reviews/worktree-verb-runner.md:128,142,143` placed the amendment in VR-C2. One source per fact requires one account of where the amendment lives. `auto-fix`. Confidence 8. The axis reaffirmed the correction.
 
 ### Spec, round 3
 
@@ -497,11 +499,27 @@ The ticket 2 author ran `bench test --package ./internal/worktree` again on the 
 
 The ticket 3 author ran `bench test --package ./internal/worktree` again on the final chunk source at `35f6f1fd`, after repair commit `53c499c9`. The run passed with the two unix socket capability skips. The JSON payload holds the result as `vr-c2-3-worktree-r2`.
 
+## VR-C2 chunk review, round 2
+
+This round confirms repair 1 of VR-C2. The frozen pair is base `ef2cd35f1052f7003c1f7647539d656be7585821` and tip `f03e7fb9b46e5cdbe0ae55d94f171b209fe27447`. The shared evidence is `sha256:99f35c57a149ab5971deb83e0328f3b0709df8889832aa12e198d85534e4bfc9`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the repair delta `80eac02e..f03e7fb9`. Only the Coverage axis ran tests and probes, and it left the tree clean.
+
+The raw finding count is 2: Standards 1 and Coverage 1. R10 and R11 hold. The Standards axis found that the R12 correction still disagreed with the advice list. The coordinator corrected that prose, and the issuing axis reaffirmed the correction with a pass. The consumed allowance stays at 1 of 2 repair cycles.
+
+The Coverage axis found a weak lock check that the chunk base already had. The spec asks this migration to keep assertions, not to strengthen them. So this record keeps that item as advice, and the learnings inbox holds it.
+
+The chunk record for VR44 to VR46 follows. The package run at the tip passes, and the SKIP set holds the two socket capability subtests. No test function in the repair delta lost a failure call. Each ticket reran its verification at the final source `b7f16bc7bc9bb2827e92686bc09084c902334231`. The VR-C2 plan commits added author assignments and wording only. So the payload maps each chunk ID of the VR-C1 plan to the same ID in the current plan.
+
+### Advice, VR-C2 round 2
+
+- The lock check in `reset_apply_test.go` near line 104 passes without its joins value. A positive check that the plan run reached the recorder would close that gap.
+- Six sites build a call and then set the joins value. A method on the fixture can collapse that pattern.
+- Several reclaim tests pass the parent of the pool where they mean the home.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/worktree-verb-runner/spec.md",
-  "plan_digest": "sha256:095153eee4b7547b074ceddeb588e1a6a77a4e4663f33dd70ed0b00e55144d39",
+  "plan_digest": "sha256:fc14637963d16b0fca7a4058f4eac565d31a02cb563e2fcdc1331d0547ba5c47",
   "implementation_session": "",
   "chunks": [
     {
@@ -968,9 +986,9 @@ The ticket 3 author ran `bench test --package ./internal/worktree` again on the 
     {
       "id": "VR-C2",
       "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
-      "tip": "80eac02e1f04599f86cbe40b6374592b75fee5c0",
-      "plan_digest": "sha256:73b4cc4e8ab101063b539f50b4d9a7be9b53608713d8522de0572a3c4269a830",
-      "source_digest": "36e7b63fe9a09b930fd31563be5ea77eadf841f4",
+      "tip": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+      "plan_digest": "sha256:fc14637963d16b0fca7a4058f4eac565d31a02cb563e2fcdc1331d0547ba5c47",
+      "source_digest": "b7f16bc7bc9bb2827e92686bc09084c902334231",
       "acceptance_rows": [
         "VR23",
         "VR24",
@@ -1152,6 +1170,96 @@ The ticket 3 author ran `bench test --package ./internal/worktree` again on the 
           "tip": "80eac02e1f04599f86cbe40b6374592b75fee5c0",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "vr-c2-standards-r2",
+          "performer": "claude:bench-reviewer/vr-c2-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7f16bc7bc9bb2827e92686bc09084c902334231",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c2-standards-r2@f03e7fb9",
+            "digest": "sha256:18c557db4cda967014bddddd0c5a3dc920e1cd3eac9256e41458fb5346557844",
+            "excerpt": "Standards: 1 finding. R10 and R11 hold; the R12 record prose still disagreed with its advice list."
+          },
+          "axis": "Standards",
+          "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "tip": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "finding_ids": [
+            "R13"
+          ],
+          "supersedes": [
+            "vr-c2-standards-r1"
+          ]
+        },
+        {
+          "id": "vr-c2-spec-r2",
+          "performer": "claude:bench-reviewer/vr-c2-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7f16bc7bc9bb2827e92686bc09084c902334231",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c2-spec-r2@f03e7fb9",
+            "digest": "sha256:27cce7e4f1cce26ecfc264fb2054f5c6f6a9fbff8b3472ea1633799b88312eb2",
+            "excerpt": "Spec: 0 findings. The plan commit, the repair commit, and the three rerun entries match the tree and the plan."
+          },
+          "axis": "Spec",
+          "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "tip": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c2-spec-r1"
+          ]
+        },
+        {
+          "id": "vr-c2-coverage-r2",
+          "performer": "claude:bench-reviewer/vr-c2-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7f16bc7bc9bb2827e92686bc09084c902334231",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c2-coverage-r2@f03e7fb9",
+            "digest": "sha256:403db01666cb3b0747caac3e8555aed881c7d8465cd552f61a530c4f98a1b98d",
+            "excerpt": "Coverage: R10 and R11 hold, no assertion dropped, and the package passes. One weak lock check predates the chunk and stays advice."
+          },
+          "axis": "Coverage",
+          "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "tip": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c2-coverage-r1"
+          ]
+        },
+        {
+          "id": "vr-c2-standards-r2-reaffirm",
+          "performer": "claude:bench-reviewer/vr-c2-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7f16bc7bc9bb2827e92686bc09084c902334231",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c2-standards-r2/reaffirm@f03e7fb9",
+            "digest": "sha256:beb074339f5316bc580174d1fdf2a3d42054a929d2c7032c4f261de423e1dd9b",
+            "excerpt": "Standards reaffirm: pass. Line 166 now gives 4 Standards findings with 1 binding, which matches the excerpt."
+          },
+          "axis": "Standards",
+          "base": "ef2cd35f1052f7003c1f7647539d656be7585821",
+          "tip": "f03e7fb9b46e5cdbe0ae55d94f171b209fe27447",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c2-standards-r2"
+          ]
         }
       ]
     }
@@ -1162,6 +1270,29 @@ The ticket 3 author ran `bench test --package ./internal/worktree` again on the 
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:095153eee4b7547b074ceddeb588e1a6a77a4e4663f33dd70ed0b00e55144d39",
+      "to": "sha256:fc14637963d16b0fca7a4058f4eac565d31a02cb563e2fcdc1331d0547ba5c47",
+      "chunk_ids": {
+        "VR-C1": [
+          "VR-C1"
+        ],
+        "VR-C2": [
+          "VR-C2"
+        ],
+        "VR-C3": [
+          "VR-C3"
+        ],
+        "VR-C4": [
+          "VR-C4"
+        ],
+        "VR-C5": [
+          "VR-C5"
+        ]
+      }
+    }
+  ]
 }
 ```
