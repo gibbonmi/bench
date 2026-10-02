@@ -1083,6 +1083,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sr-c5-r2-standards",
+          "performer": "claude:bench-reviewer/sr-c5-r2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "70eff00c9479d016b8985280467b6e97e19d14eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c5-r2-standards-20261002@e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+            "digest": "sha256:b24d13aaaa93e2149a6f5b242a8de599bf0b41095296f54f7c631c46753c8110",
+            "excerpt": "Standards axis, SR-C5 confirming round, repair delta 564f4d46..e3c45d46: pass, 0 findings.\nS1: confirmed. reauthorize_test.go:181 takes the admin directory from git.AdminDir (internal/git/worktree_admin.go:204); no other admin-path derivation in the delta.\nS3: confirmed. The comments at lifecycle.go:462, live_binary.go:19, and live_binary_test.go:35-36 name only the ambient warnings writer.\nC1 expectation: confirmed. worktree_test.go:462 takes the expected reason from lifecyclepolicy.DecideExplicit, the policy package, not the planner under test. The ignored-inventory branch (lifecyclepolicy.go:372-373) overrides the nested-state branch (:361-362). lifecyclepolicy_test.go:75 pins the reason text separately.\nblocking findings: none.\nAdvice: the test comment at worktree_test.go:443-444 depends on the policy's branch order.\n"
+          },
+          "axis": "Standards",
+          "base": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+          "tip": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c5-r1-standards"
+          ]
+        },
+        {
+          "id": "sr-c5-r2-spec",
+          "performer": "claude:bench-reviewer/sr-c5-r2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "70eff00c9479d016b8985280467b6e97e19d14eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c5-r2-spec-20261002@e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+            "digest": "sha256:c38b388510dc05def8f0f386a50ef2c3344817ccbeaf173515257eae2bda9959",
+            "excerpt": "Spec axis, SR-C5 confirming round, repair delta 564f4d46..e3c45d46: pass, 0 findings.\nP1: confirmed. spec.md:409, the WS51 catch clause states the relock failure and the changed refusal line; behavior and seam cells unchanged.\nP2: confirmed. spec.md:404, the WS46 catch clause states the emptied stat branch and the lost ignored-inventory reason; behavior and seam cells unchanged.\nC1: confirmed. internal/worktree/worktree_test.go:445 keeps the name; :463 requires ActionRetain, ReasonUncertain, and plan.Reason == statFault from lifecyclepolicy.DecideExplicit.\nS1: confirmed. internal/worktree/reauthorize_test.go:181 uses git.AdminDir; the mode 0500 fault and each assertion are unchanged.\nScope: confirmed. lifecycle.go:459-462 and live_binary.go:19-21 change comments only.\nWS46, WS51: closed.\nblocking findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+          "tip": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c5-r1-spec"
+          ]
+        },
+        {
+          "id": "sr-c5-r2-coverage",
+          "performer": "claude:bench-reviewer/sr-c5-r2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "70eff00c9479d016b8985280467b6e97e19d14eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c5-r2-coverage-20261002@e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+            "digest": "sha256:81685ef0ea4314e8028fa91ebf39bbcc17b130b348626d38df3a63cb921f2b9b",
+            "excerpt": "Coverage axis, SR-C5 confirming round, repair delta 564f4d46..e3c45d46: pass, 0 findings.\nS1: confirmed. Probe B: internal/worktree/reauthorize_test.go, swap `mustNoError(t, os.Chmod(admin, 0o500))` to mode 0o755; run ^TestReauthorizeCommandRollsBackLockRefreshAndCASLoss$. Verdict bit, unlock_failure failed at reauthorize_test.go:219, restored yes. A first form of the swap did not match and was invalid, restored untouched.\nC1: the axis's own probe did not confirm it. Probe A: internal/worktree/clean.go:342, swap `inventory.Uncertain = true` to false with the return of statErr kept. Verdict silent, restored yes. The returned statErr alone drives the retain verdict, so this mutation does not reach the repaired property. The charge named that mutation; the coordinator chose it badly.\nblocking findings: none proven.\nAdvice: the inventory.Uncertain mark at clean.go:342 has no test; whether it is redundant with the returned error is unknown.\nFinal git status: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+          "tip": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c5-r1-coverage"
+          ]
         }
       ]
     }
@@ -1449,3 +1515,13 @@ Two fresh opus / high repair sessions ran in series, one for each affected ticke
 - P1 and P2: the plan commit `29f075b5` amended the catch clauses of WS51 and WS46.
 
 The coordinator ran one independent probe on each repair, and each returned `bit` with `restored=yes`. The first made the stat branch return no error in `clean.go`. The second pointed `git.AdminDir` at the repository root in the reauthorize test.
+
+## SR-C5 confirming round
+
+Three fresh opus / high sessions read the repair delta `564f4d46..e3c45d46`. The Standards axis and the Spec axis confirmed each fold, and the Spec axis closed WS46 and WS51. No axis reported a blocking finding.
+
+The Coverage axis confirmed S1 with a probe that returned `bit`. Its probe for C1 turned the uncertain mark of the stat branch to false and kept the returned error, and it was `silent`. That mutation does not reach the repaired property, because the returned error drives the retain. The coordinator named that mutation in the charge, and it was a poor choice. The repair session's probe and the coordinator's probe both returned `bit` on the stat branch, so C1 stays closed. SR-C5 has no open finding, and 1 of 2 repair cycles is used.
+
+### Advice
+
+- The uncertain mark of the stat branch in `clean.go` has no test of its own.
