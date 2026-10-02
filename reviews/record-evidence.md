@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-evidence/spec.md",
-  "plan_digest": "sha256:9b6b7a71fbee6d2f178c476a50167713993c895672704c6fe5e69e661e5162fc",
+  "plan_digest": "sha256:cf1b64e12862cd3f545c262d70b46e9e18d82289178876dd888abe5e460419f0",
   "implementation_session": "",
   "chunks": [
     {
@@ -523,9 +523,9 @@
     {
       "id": "RE-C3",
       "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
-      "tip": "5ebdb8698daf69a5495ae5af55fdbbbf65153157",
-      "plan_digest": "sha256:9b6b7a71fbee6d2f178c476a50167713993c895672704c6fe5e69e661e5162fc",
-      "source_digest": "088294cba485bb6e2dbdd0d9bf31dc733184c0c6",
+      "tip": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+      "plan_digest": "sha256:cf1b64e12862cd3f545c262d70b46e9e18d82289178876dd888abe5e460419f0",
+      "source_digest": "c512b393d3e4e68dcb4aa82cc723410ce996a08c",
       "acceptance_rows": [
         "RE36",
         "RE42",
@@ -907,6 +907,21 @@
     {
       "from": "sha256:65a0e39bc546d38bb95ed196055e6063d414717242cced129f8748e5db8f5849",
       "to": "sha256:9b6b7a71fbee6d2f178c476a50167713993c895672704c6fe5e69e661e5162fc",
+      "chunk_ids": {
+        "RE-C1": [
+          "RE-C1"
+        ],
+        "RE-C2": [
+          "RE-C2"
+        ],
+        "RE-C3": [
+          "RE-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9b6b7a71fbee6d2f178c476a50167713993c895672704c6fe5e69e661e5162fc",
+      "to": "sha256:cf1b64e12862cd3f545c262d70b46e9e18d82289178876dd888abe5e460419f0",
       "chunk_ids": {
         "RE-C1": [
           "RE-C1"
@@ -1432,3 +1447,11 @@ S3 goes to a fresh ticket 3 repair session in the second repair cycle of RE-C3. 
 - The flag mask in `admits` has no guard above 64 flags. The largest form has 14 flags.
 - The RE70 case for both lists also passes `--source`.
 - For the C3 mutation, the record parser refuses the write before the `supersedes` assertion runs.
+
+## RE-C3 repair 2
+
+The plan commit `f4ad758a` assigned the fresh repair session `claude:bench-writer/re-t3-repair-2` on opus at medium effort. Its commit `ac18ccca` closes S3. The form layout is now the only source of optionality: `grammar()` sets `Required` for each flag that every admitted set holds. The `occurs` field now states only whether a flag repeats. `command.go` holds 400 lines, which is its budget. RE-C3 has now used 2 of its 2 repair cycles.
+
+The repair probe made `[ ]` groups required, and `bench probe` returned `bit` on 33 tests with `restored=yes`. The coordinator probe inverted the derived `Required` bit, and `bench probe` returned `bit` on 44 tests with `restored=yes`.
+
+The orchestrator re-froze RE-C3 with `bench record chunk`, with base `48ab8bdf` and tip `ac18ccca`. A fifth identity amendment moves the record plan digest to the plan at that tip.
