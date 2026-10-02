@@ -21,21 +21,19 @@ import (
 const command = "bench record"
 
 // flag is one flag of a form and the placeholder that its usage line shows. An empty
-// placeholder declares a flag without a value. A single-line flag refuses a value that
-// holds a control character, and occurs says whether Parse requires the flag and whether
-// it may repeat.
+// placeholder declares a flag without a value, a single-line flag refuses a value that
+// holds a control character, and occurs says only whether the flag may repeat.
 type flag struct {
 	name, placeholder string
 	singleLine        bool
 	occurs            occurrence
 }
 
-// occurrence is how often a flag appears in one call.
+// occurrence is how often a flag may appear in one call.
 type occurrence int
 
 const (
-	required occurrence = iota
-	optional
+	once occurrence = iota
 	repeated
 )
 
@@ -43,8 +41,8 @@ const (
 // derive from this one declaration, so the help cannot advertise another grammar. The
 // layout orders the usage terms: each term is a declared flag name or one of the
 // grouping marks ( ) [ ] |, and an empty layout lists the flags in order. A repeated
-// flag shows as [<flag>]... in the usage line. The layout is also the rule for which
-// flags a call names together: admits reads the same groups that the usage line shows.
+// flag shows as [<flag>]... in the usage line. The layout is the one source for which
+// flags a call names together and which flags Parse requires: admits reads its groups.
 // valid holds the grammar rules that close a value set, and a nil valid has none.
 type form struct {
 	name, description string
@@ -59,20 +57,20 @@ var probeFlags = []string{"--probe-outcome", "--probe-exit-code", "--probe-resto
 
 var forms = []form{
 	{name: "chunk", description: "write one chunk's frozen pair, digests, and acceptance rows into reviews/<slug>.md",
-		flags: []flag{{"--chunk", "<id>", true, required}, {"--base", "<commit>", false, required}, {"--tip", "<commit>", false, required}}, run: chunk},
+		flags: []flag{{"--chunk", "<id>", true, once}, {"--base", "<commit>", false, once}, {"--tip", "<commit>", false, once}}, run: chunk},
 	{name: "verification", description: "append one planned verification result with its computed digests",
-		flags: []flag{{"--chunk", "<id>", true, optional}, {"--source", "<commit>", false, optional}, {"--final", "", false, optional},
-			{"--requirement", "<id>", true, required}, {"--id", "<id>", true, required}, {"--performer", "<session>", true, required},
-			{"--model", "<model>", true, required}, {"--effort", "<effort>", true, required}, {"--exit-code", "<n>", false, required},
-			{"--ref", "<ref>", true, required}, {"--excerpt", "<file>", true, required}, {probeFlags[0], "<verdict>", true, optional},
-			{probeFlags[1], "<n>", false, optional}, {probeFlags[2], "pass|fail", false, optional}},
+		flags: []flag{{"--chunk", "<id>", true, once}, {"--source", "<commit>", false, once}, {"--final", "", false, once},
+			{"--requirement", "<id>", true, once}, {"--id", "<id>", true, once}, {"--performer", "<session>", true, once},
+			{"--model", "<model>", true, once}, {"--effort", "<effort>", true, once}, {"--exit-code", "<n>", false, once},
+			{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {probeFlags[0], "<verdict>", true, once},
+			{probeFlags[1], "<n>", false, once}, {probeFlags[2], "pass|fail", false, once}},
 		layout: []string{"(", "--chunk", "[", "--source", "]", "|", "--final", "--source", ")", "--requirement", "--id", "--performer",
 			"--model", "--effort", "--exit-code", "--ref", "--excerpt", "[", probeFlags[0], probeFlags[1], probeFlags[2], "]"},
 		valid: verificationValid, run: verification},
 	{name: "review", description: "append one independent review result to a recorded chunk",
-		flags: []flag{{"--chunk", "<id>", true, required}, {"--axis", strings.Join(reviewrecord.Axes(), "|"), false, required}, {"--id", "<id>", true, required},
-			{"--performer", "<session>", true, required}, {"--model", "<model>", true, required}, {"--effort", "<effort>", true, required},
-			{"--ref", "<ref>", true, required}, {"--excerpt", "<file>", true, required}, {"--finding", "<id>", true, repeated}},
+		flags: []flag{{"--chunk", "<id>", true, once}, {"--axis", strings.Join(reviewrecord.Axes(), "|"), false, once}, {"--id", "<id>", true, once},
+			{"--performer", "<session>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
+			{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {"--finding", "<id>", true, repeated}},
 		valid: reviewValid, run: review},
 }
 
@@ -154,8 +152,7 @@ func (f form) admits(terms []string, i int) ([]uint64, int) {
 	return append(alternatives, sequence...), i
 }
 
-// together reports whether the flags present in values form a set that the layout of f
-// admits.
+// together reports whether the layout of f admits the set of flags present in values.
 func (f form) together(values map[string]string) bool {
 	var present uint64
 	for i, flag := range f.flags {
@@ -177,8 +174,13 @@ func (fl flag) usage() string {
 
 func (f form) grammar() usage.Grammar {
 	g := usage.Grammar{Cmd: command + " " + f.name, Help: "usage: " + command + f.suffix(), MinArgs: 1, MaxArgs: 1}
-	for _, flag := range f.flags {
-		g.Flags = append(g.Flags, usage.Flag{Name: flag.name, HasValue: flag.placeholder != "", NoEmptyValue: flag.placeholder != "", Required: flag.occurs == required, Repeatable: flag.occurs == repeated})
+	sets, _ := f.admits(f.terms(), 0)
+	always := ^uint64(0)
+	for _, set := range sets {
+		always &= set
+	}
+	for i, flag := range f.flags {
+		g.Flags = append(g.Flags, usage.Flag{Name: flag.name, HasValue: flag.placeholder != "", NoEmptyValue: flag.placeholder != "", Required: always&(1<<i) != 0, Repeatable: flag.occurs == repeated})
 	}
 	return g
 }
