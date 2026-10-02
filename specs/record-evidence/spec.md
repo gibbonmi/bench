@@ -280,6 +280,7 @@ A grammar error exits 2 with the usage line of the form. These are grammar error
 - one or two of the three probe flags without the third
 - an `--exit-code` or a `--probe-exit-code` that is not a base-10 integer
 - an `--axis` outside `Standards`, `Spec`, and `Coverage`
+- a `--probe-restore` outside `pass` and `fail`
 - a `--map` value with no `=`, an empty side, or a key that an earlier `--map` names
 
 A content refusal exits 1. An unreadable excerpt prints the `toon.RecordError`
@@ -472,7 +473,7 @@ private excerpt reader of ticket 3 inside RE-C3.
 | RE67 | 46 | A chunk result prints `verification[1]{list,chunk,id,requirement,role,outcome,source_digest,excerpt_digest}:` with the list `chunk` | planned TestRecordVerificationReportsTheChunkList in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | The verb prints nothing for this form until the ticket adds it. |
 | RE68 | 46 | A `--final` result prints the list `completion` and an empty `chunk` cell | planned TestRecordFinalVerificationReportsTheCompletionList in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A fixed list cell prints `chunk`. |
 | RE69 | 11 | After the chunk form, one verification result for each planned requirement of chunk `1`, and three fixture review results, the committed record passes `reviewrecord.Check` for chunk `1` | planned TestRecordedVerificationPassesTheCheckpoint in internal/reviewrecord/recordcmd, through `Command` and then `reviewrecord.Check` | The checkpoint is an independent reader, so a wrong derived field reds it. |
-| RE70 | 45 | Each of `--chunk 1 --final`, no list flag, `--final` without `--source`, one probe flag alone, and `--exit-code x` exits 2 with a line that starts `usage: bench record verification` | planned TestRecordVerificationGrammarRefusals in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A parser that accepts a partial form writes an incomplete entry. |
+| RE70 | 45 | Each of `--chunk 1 --final`, no list flag, `--final` without `--source`, one probe flag alone, `--exit-code x`, and `--probe-restore maybe` exits 2 with a line that starts `usage: bench record verification` | planned TestRecordVerificationGrammarRefusals in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A parser that accepts a partial form writes an incomplete entry. |
 | RE71 | 44 | `bench help` prints the verification row that Further notes quotes | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`), extended in place | The golden expectation lacks the row until the ticket adds it. |
 | RE72 | 21 | A review entry's `base`, `tip`, and `source_digest` equal those of the chunk entry | planned TestRecordReviewCopiesTheChunkPair in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that resolves `HEAD` names a later tip, and the checkpoint calls the result stale. |
 | RE73 | 22 | The first Standards result has an empty `supersedes` list | planned TestRecordReviewFirstResultSupersedesNothing in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that names the last result of any axis names an earlier axis, and `Parse` refuses it. |
