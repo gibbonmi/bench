@@ -880,6 +880,10 @@ The R21 probe on `land_refusal.go` bit with 49 failed tests before and after the
 
 At `c03908e7`, `bench test --package ./internal/worktree` passed with the two socket capability skips. The VR46 count per test function is the same at `5960701e` and `c03908e7`, and the total stays at 2254. `identity_component_test.go` has 500 lines, and `land_journey_test.go` has 427 lines. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. `bench structure --growth 7fa02b429a66aa71b4303e483b82e074622c80bd` passed. The JSON payload holds the package result as `vr-c4-8-worktree-r3`.
 
+## VR-C4 ticket 9 second verification rerun
+
+The VR-C4 repair landed after the first rerun, so the ticket 9 author ran the package tests again on the final chunk source at `8de7c2b3ec95d331375014a03e724f651c5370ff`. `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds this result as `vr-c4-9-worktree-r3`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2113,6 +2117,24 @@ At `c03908e7`, `bench test --package ./internal/worktree` passed with the two so
             "ref": "claude:agent/vr-t9-author-20261001/9-worktree@4d3162a7",
             "digest": "sha256:53f58063fe2742c13dee114c3bc452f0fb757cec99b8c680c565b3a3706bbf6f",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62095\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "9-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c4-9-worktree-r3",
+          "performer": "claude:bench-writer/vr-t9-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e262977b665cccc76f93fc770af264a901d1e5d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t9-author-20261001/9-worktree@8de7c2b3",
+            "digest": "sha256:c6b0e2809bf6091772e3f0114274d8f5fe1ec97b9507928c02244e842f4a572a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,70926\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "9-worktree",
           "command": "bench test --package ./internal/worktree",
