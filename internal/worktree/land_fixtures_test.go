@@ -25,7 +25,7 @@ func landingGateFixture(t *testing.T, environment ...string) *testrepo.GateFixtu
 
 // publicLandingFixture mints one private Bench home and carries it in the value, so the
 // fixture binds no process environment and the test it serves stays parallel-eligible. The
-// value's call runs a verb at that home. processHomeCall and interruptLandingAtMarker land
+// value's call builds a verb call at that home. processHomeCall and interruptLandingAtMarker land
 // at the process home instead.
 func publicLandingFixture(t *testing.T, request, ignored, declaration string) landingFixture {
 	t.Helper()
