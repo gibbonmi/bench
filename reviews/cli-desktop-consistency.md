@@ -7,9 +7,17 @@ Repair cycle 1 of 2 completed its author verification and confirmation.
 
 Repair cycle 2 completed author verification in the user-selected session.
 
-Both permitted repair cycles are consumed.
+The two initial repair cycles are consumed.
 All three final axes returned positive terminal results.
-The C1 checkpoint remains pending.
+The quiet C1 checkpoint failed its checkout guard after every test phase passed.
+
+The reviewer approved one additional C1 repair cycle on 2026-10-02.
+Cycle 3 identifies and stops writes to the live build artifacts during verification.
+It retains all checks, pass criteria, and the original author session.
+It requires focused verification, current native review, and a quiet C1 checkpoint.
+The new cycle has not made a source repair.
+
+C2 and C3 remain blocked until the checkpoint passes.
 The complete specification remains unqualified until its live requirements pass.
 
 ## Standards
