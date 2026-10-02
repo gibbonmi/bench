@@ -1100,6 +1100,42 @@
           "requirement": "6-budgets",
           "command": "bench test --check guidance-prose-budgets",
           "exit_code": 0
+        },
+        {
+          "id": "re-c4-v2-t5-reviewrecord",
+          "performer": "claude:bench-writer/re-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t5-repair-1-20261002/verify-5-reviewrecord",
+            "digest": "sha256:bced9654107795c5de875b4ff2908db956826e8b0c63fa904f88f1d2a2491c9d",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1616\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,5249\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "5-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c4-v2-t5-cmd",
+          "performer": "claude:bench-writer/re-t5-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t5-repair-1-20261002/verify-5-cmd",
+            "digest": "sha256:4cffcdd1c0edeee96b96a564a1de5c63caf86cfd52cda83f056f31cd47fcbec9",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13302\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "5-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -2009,3 +2045,23 @@ The plan commit `a0aa7812` assigned the fresh repair session `claude:bench-write
 RE-C4 has used 1 of its 2 repair cycles. The repair probes bit RE114 and RE115 with `restored=yes`. The coordinator probe mapped each chunk to its own digest in the new loop, and `bench probe` returned `bit` on RE114 with `restored=yes`.
 
 The orchestrator re-froze RE-C4 at tip `586bfa17`. `bench record amendment` first moved the plan digest to `05e594f8`, and then `bench record chunk` updated the RE-C4 entry with 23 acceptance rows.
+
+## RE-C4 ticket 5 repair verification
+
+The repair session `claude:bench-writer/re-t5-repair-1` ran the two planned checks at `172c7055` on opus at medium effort. Both passed with exit 0, and `bench record verification` wrote each result to the RE-C4 entry:
+
+- `re-c4-v2-t5-reviewrecord` (`5-reviewrecord`): the `./internal/reviewrecord/...` packages passed in 1.6 s and 5.2 s.
+- `re-c4-v2-t5-cmd` (`5-cmd`): the `./cmd/bench` package passed in 13.3 s.
+
+The repair evidence for commit `586bfa17` is as follows:
+
+| Finding | Change | Red route |
+|---|---|---|
+| C2 / RE114 | After the append, `RecordAmendment` runs `mappedIDs` from each recorded chunk to the new digest. A chain that does not resolve refuses with exit 1, and the record bytes do not change. `TestRecordAmendmentRefusesAnUnresolvableChain` grades it. | Before the fix, the amendments from A to B and from B to A exited 0. The amendment at D also exited 0, and it wrote a second amendment from A. |
+| C1 / RE115 | `TestRecordAmendmentRefusesAControlCharacter` grades the step 3 refusal on `--map`. The production check was already present. | The test passed before the fix, so a probe supplied the red. With the single-line bit of `--map` set to false, the form exited 1 but did not name `--map`. |
+
+Both repair probes returned `bit` with `restored=yes`. The first probe removed the new `mappedIDs` call, and RE114 failed. The second probe set the `--map` single-line bit to false, and RE115 failed.
+
+After the repair, `coverage.go` has 258 lines and `command.go` has 399 lines. `command.go` did not grow.
+
+The duplicated-facts sweep found no defect. `mappedIDs` stays the one source for chain resolution. The new tests use the existing `amendArgs`, `replan`, and `refuseArgs` helpers. The one changed comment states the current refusal, and no comment holds a red record. The repair used 1 of its 2 attempts.
