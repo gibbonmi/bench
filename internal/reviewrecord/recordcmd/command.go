@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -116,7 +116,7 @@ func Command(root string, args []string) (string, int) {
 		return usage.PrimaryCheckoutRefusal() + "\n", 1
 	}
 	for _, flag := range f.flags {
-		if flag.singleLine && strings.IndexFunc(parsed.Flags[flag.name], unicode.IsControl) >= 0 {
+		if flag.singleLine && !sanitize.LineSafe(parsed.Flags[flag.name]) {
 			return f.refuse(flag.name + " holds a control character")
 		}
 	}

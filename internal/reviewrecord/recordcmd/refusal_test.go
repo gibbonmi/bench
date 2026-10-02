@@ -130,6 +130,35 @@ func TestRecordRefusesAnInvalidRecord(t *testing.T) {
 	})
 }
 
+func TestRecordRefusesARenderedRecordOverTheBound(t *testing.T) {
+	f := linked(t, 2)
+	base, tip := advance(f, "chunk 1")
+	record(t, f, "1", base, tip)
+	path := recordFile(t, f)
+	document := string(bytesOf(t, path)) + "\n"
+	padded := document + strings.Repeat("p", int(bounds.ControlRecordLimit)-len(document)-1) + "\n"
+	if err := os.WriteFile(path, []byte(padded), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	read(t, f)
+	base, tip = advance(f, "chunk 2")
+	out, code := recordcmd.Command(f.Root, chunkArgs(t, "2", base, tip))
+	if code != 1 {
+		t.Fatalf("chunk form over the bound = exit %d, output %q; want exit 1", code, out)
+	}
+	if got := string(bytesOf(t, path)); got != padded {
+		t.Fatalf("refusal changed the record")
+	}
+}
+
+func TestRecordChunkRefusesAControlCharacter(t *testing.T) {
+	f := linked(t, 1)
+	out, code := recordcmd.Command(f.Root, chunkArgs(t, "1\x1b", f.Tip(), "no-such-rev"))
+	if code != 1 || !strings.Contains(out, "--chunk") || strings.Contains(out, "no-such-rev") || strings.Contains(out, "\x1b") {
+		t.Fatalf("control character in --chunk = exit %d, output %q; want exit 1 naming --chunk and no revision refusal", code, out)
+	}
+}
+
 func TestRecordRefusesThePrimaryCheckout(t *testing.T) {
 	f, primary := recordtest.NewLinked(t, 1, recordtest.Delegate)
 	out, code := recordcmd.Command(primary, chunkArgs(t, "1", f.Tip(), f.Tip()))

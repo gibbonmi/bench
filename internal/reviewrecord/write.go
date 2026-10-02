@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -44,8 +45,9 @@ func Render(document []byte, record Record) ([]byte, error) {
 }
 
 // write is the one write transaction on the record of spec under root. It reads the
-// record through the reader, applies change, renders the document, and parses the
-// rendered bytes again. Only then does it replace the file through a temporary file in
+// record through the reader, applies change, renders the document, and grades the
+// rendered bytes as the reader grades a file: the bounded classification, then the
+// parse. Only then does it replace the file through a temporary file in
 // the same directory. A nil create refuses an absent record; otherwise create supplies
 // the record that an absent file starts from. A refusal at any step leaves the record
 // bytes unchanged and leaves no temporary file.
@@ -71,6 +73,9 @@ func write(root, spec string, create func() (Record, error), change func(*Record
 	rendered, err := Render(data, record)
 	if err != nil {
 		return err
+	}
+	if c := bounds.ClassifyBytes(bounds.Read(bytes.NewReader(rendered), bounds.ControlRecordLimit)); c.State != bounds.StateParsed {
+		return fmt.Errorf("invalid record %q: %s %s", path, c.State, c.Reason)
 	}
 	if _, err := parseRecord(rendered, spec); err != nil {
 		return err
