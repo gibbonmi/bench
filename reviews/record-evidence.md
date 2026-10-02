@@ -272,7 +272,62 @@
         "RE105",
         "RE106"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "re-c2-v-reviewrecord",
+          "performer": "claude:bench-writer/re-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0fa91f6aaaa602460b5a707256004373bd936892",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-author-20261002/verify-2-reviewrecord",
+            "digest": "sha256:43529b8bc492762f2b4d095fe2bce1858f83ec7486338159d8869d7c30a3d0aa",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1613\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,1314\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c2-v-cmd",
+          "performer": "claude:bench-writer/re-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0fa91f6aaaa602460b5a707256004373bd936892",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-author-20261002/verify-2-cmd",
+            "digest": "sha256:09c5964fb55dc55fc358fa14709f625913987e167eada453669b8c356f486c05",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13084\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c2-v-conformance",
+          "performer": "claude:bench-writer/re-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0fa91f6aaaa602460b5a707256004373bd936892",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-author-20261002/verify-2-conformance",
+            "digest": "sha256:63dc9935c6310261a24f195011318b2b4df41880854cfd399607242ba5b0a5bb",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,35474\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/JANYB4/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket2429873957/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/JANYB4/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket2420658603/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\""
+          },
+          "requirement": "2-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        }
+      ],
       "reviews": []
     }
   ],
@@ -410,3 +465,60 @@ The plan commit `6079c896` assigned ticket 2. The ticket 2 author stopped on a f
 The record amendment from the RE-C1 plan digest to the RE-C2 plan digest maps RE-C1 to itself. The orchestrator wrote it by hand, because ticket 5 adds `bench record amendment`.
 
 The coordinator probe swapped the version 2 plan rule of the chunk change in `write.go`. `bench probe` returned `bit` on RE17 with `restored=yes`.
+
+## RE-C2 ticket 2 author evidence
+
+The author is `claude:bench-writer/re-t2-author` on opus at medium effort. The author used 1 of 4 attempts. The ticket commit is `bf3ddc94`.
+
+Before the implementation, a compile-only stub `Command` returned exit 0 with no output, and `HelpRows` returned no rows. All 30 tests in `recordcmd` failed on assertions against the stub. In the table below, "stub" names that red. Each probe ran through `bench probe` and returned `restored=yes`.
+
+| Row | Test | Red route |
+|---|---|---|
+| RE11 | `TestRecordChunkWritesFullCommitIDs` | stub |
+| RE12 | `TestRecordChunkSourceDigestExcludesTheRecord` | stub. Probe: swap the source digest for the tip tree ID. Verdict `bit`. |
+| RE13 | `TestRecordChunkPlanDigestReadsThePlan` | stub |
+| RE14 | `TestRecordChunkCopiesAcceptanceRows` | stub |
+| RE15 | `TestRecordChunkCreatesAVersionTwoRecord` | stub |
+| RE16 | `TestRecordChunkCreatesInAnEmptyDirectory` | stub. Probe: swap `os.MkdirAll` for `os.Mkdir`. Verdict `bit`. |
+| RE17 | `TestRecordChunkRefusesAVersionOnePlan` | stub |
+| RE18 | `TestRecordChunkAppendsAfterTheRecordedChunk` | stub |
+| RE19 | `TestRecordChunkUpdateKeepsResults` | stub. Probe: replace the whole recorded entry. Verdict `bit`. |
+| RE20 | `TestRecordChunkRepeatIsByteIdentical` | stub. The RE19 probe also failed this test. |
+| RE21 | `TestRecordChunkRefusesAnUnplannedChunk` | stub |
+| RE22 | `TestRecordChunkRefusesAnUnknownRevision` | stub |
+| RE23 | `TestRecordChunkReportsCreated` | stub. Probe: rename the `source_digest` field. Verdict `bit`. |
+| RE24 | `TestRecordChunkReportsAdded` | stub. Probe: swap the action `added` for `created`. Verdict `bit`. |
+| RE25 | `TestRecordChunkReportsUpdated` | stub. The RE23 probe also failed this test. |
+| RE26 | `TestRecordKeepsTheProseAroundTheFence` | stub |
+| RE27 | `TestRecordChangesOnlyTheRecordPath` | stub |
+| RE28 | `TestRecordRefusesADanglingRecordLink` | stub. Probe: read the record with `os.ReadFile`. Verdict `bit`. |
+| RE29 | `TestRecordRefusesALiveRecordLink` | stub |
+| RE30 | `TestRecordRefusesASpecialRecordFile` | stub |
+| RE31 | `TestRecordRefusesAnEmptyRecordFile` | stub |
+| RE32 | `TestRecordRefusesAnUnterminatedFence` | stub |
+| RE33 | `TestRecordRefusesAnInvalidRecord` | stub |
+| RE34 | `TestRecordRefusesThePrimaryCheckout` | stub |
+| RE35 | `TestRecordPrimaryRefusalComesFirst` | stub |
+| RE106 | `TestRecordFailedTemporaryWriteChangesNothing` | stub. Probe: write the record in place. Verdict `bit` on this test only. |
+| RE37 | `TestRecordRefusesOutsideARepository` | stub |
+| RE38 | `TestRecordGrammarRefusals` | stub |
+| RE39 | `TestRecordHelpPrintsEachForm` | stub |
+| RE105 | `TestRecordHelpSpellings` | stub |
+| RE40 | `TestRecordRouteAnswersItsUsage` | Before the registry row existed, the dispatcher exited 2. |
+| RE41 | `TestHelpInventoryIsComplete` | The golden row came before the registry row. |
+
+The `os.ReadFile` probe did not fail RE29. The parser refused the bytes outside the tree, so that probe is not the writer that the RE29 row names.
+
+A probe omitted the second parse of the rendered bytes in the write transaction. The verdict was `silent`. No ticket 2 row reaches a valid record that renders invalid. RE66 in ticket 3 is the row that grades this omission.
+
+The fence of ticket 2 did not hold `internal/conformance/help_inventory_single_source_test.go`. Its projection allowlist refused the `record` help rows. The plan commit `4ad69dd9` added the path, and the allowlist now names `recordHelpRows`. The refusal of `TestRootConformance` before that edit is the red. After that edit, `TestRootConformance` refused a duration literal in the FIFO test. The test now waits `bounds.TestDeadline(0)`, and that refusal is its red.
+
+The duplicated-facts sweep made one projection, `formHelpRows`, for the preflight and record help rows. The help spellings come from `usage.Parse`. The usage line, the grammar, and the help row of a form come from one declaration. Each independent test expectation has a recorded red: the TOON field list, the golden row, and the usage prefix. The comment sweep found no comment that holds a red record or a test result.
+
+Focused checks at commit `f712f8ad`:
+
+- `bench test --package ./internal/reviewrecord/...` passed in 2927 ms.
+- `bench test --package ./cmd/bench` passed in 13084 ms.
+- `bench test --package ./internal/conformance` passed in 35474 ms. It skipped 3 tests that the author did not write. These tests need a unix socket or a character device, which this filesystem cannot create.
+
+At commit `bf3ddc94`, these checks passed: `TestRootConformance`, `skip-ownership`, `subcommand-routing`, `axi-query-registry`, and `package-core-guard`. `bench structure` reported no issue in the changed paths. `cmd/bench/main.go` has 444 lines, and `cmd/bench/command_registry_test.go` did not change.
