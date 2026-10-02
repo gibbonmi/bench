@@ -163,6 +163,72 @@
           "tip": "2af46532eb386bc7e4eae65cc504e79e8243e5d7",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "re-c1-r2-standards",
+          "performer": "claude:bench-reviewer/re-c1-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "f9f850d71e25d2db0ecc3c4d49a3452fbecea0d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c1-r2-standards-20261002@6d7f3969e9061e8022630706c4430f64a7248312",
+            "digest": "sha256:a5dbc0647affba241ef5d866d5711e69ec9490fa5be68eff11084c62178847a0",
+            "excerpt": "Standards confirming round, RE-C1, repair delta 2af46532..6d7f3969: pass, no finding IDs.\nS1 closed: source_test.go:72-73 keeps only the reason for the external package; craft-comments:49.\nAdvice: the round 1 S1 line cite (246) is wrong; the actual line is 72."
+          },
+          "axis": "Standards",
+          "base": "11aeb8e316c82b08c3e77be6391309a9ffd0fb9b",
+          "tip": "6d7f3969e9061e8022630706c4430f64a7248312",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c1-r1-standards"
+          ]
+        },
+        {
+          "id": "re-c1-r2-spec",
+          "performer": "claude:bench-reviewer/re-c1-r2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "f9f850d71e25d2db0ecc3c4d49a3452fbecea0d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c1-r2-spec-20261002@6d7f3969e9061e8022630706c4430f64a7248312",
+            "digest": "sha256:0abb81f1bd262f7943422f532a500f16d38479ba9b0bf041a7533368ac50cae2",
+            "excerpt": "Spec axis RE-C1 confirming round, delta 2af46532..6d7f3969: pass, no finding IDs.\nS1 is closed by a comment-only edit, and RE103's body is unchanged.\nThe plan adds re-t1-repair-1 (opus/medium, user-directed) and leaves chunks, tickets and commands unchanged."
+          },
+          "axis": "Spec",
+          "base": "11aeb8e316c82b08c3e77be6391309a9ffd0fb9b",
+          "tip": "6d7f3969e9061e8022630706c4430f64a7248312",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c1-r1-spec"
+          ]
+        },
+        {
+          "id": "re-c1-r2-coverage",
+          "performer": "claude:bench-reviewer/re-c1-r2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "f9f850d71e25d2db0ecc3c4d49a3452fbecea0d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c1-r2-coverage-20261002@6d7f3969e9061e8022630706c4430f64a7248312",
+            "digest": "sha256:bbba085b35e7dae4d6590228541242a5aaee42018839959da9011e61cd33c21a",
+            "excerpt": "RE-C1 round 2 Coverage: pass.\nS1 fold confirmed; RE103 still bites (probe bit, restored=yes).\nFindings: none."
+          },
+          "axis": "Coverage",
+          "base": "11aeb8e316c82b08c3e77be6391309a9ffd0fb9b",
+          "tip": "6d7f3969e9061e8022630706c4430f64a7248312",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c1-r1-coverage"
+          ]
         }
       ]
     }
@@ -223,7 +289,7 @@ Three fresh fable / high sessions reviewed the frozen pair `11aeb8e3..2af46532`.
 
 Finding count: 1. Worst issue: S1.
 
-- S1, auto-fix, confidence 6. The doc comment on `TestFixtureSaveRendersThroughRender` in `internal/reviewrecord/source_test.go` line 246 keeps the RE103 red record. The `craft-comments` skill states that the spec owns the red record. Remove that sentence and keep the reason for the external test package.
+- S1, auto-fix, confidence 6. The doc comment on `TestFixtureSaveRendersThroughRender` in `internal/reviewrecord/source_test.go` line 72 keeps the RE103 red record. The `craft-comments` skill states that the spec owns the red record. Remove that sentence and keep the reason for the external test package.
 
 ### Spec
 
@@ -259,3 +325,24 @@ The repair session `claude:bench-writer/re-t1-repair-1` ran the two verification
 - `bench test --package ./internal/preflight` passed in 18056 ms.
 
 No check failed, and no check skipped a test.
+
+## RE-C1 chunk review, round 2
+
+Three fresh fable / high sessions ran the confirming round on the repair delta `2af46532..6d7f3969`. Each axis bound the review evidence `sha256:5c762237` with `--check-current`. Each axis passed with no finding, so the raw finding count is 0. S1 is closed. RE-C1 used 1 of its 2 repair cycles.
+
+### Standards, round 2
+
+Finding count: 0. Worst issue: none. The axis found no duplicated knowledge in the repair delta.
+
+### Spec, round 2
+
+Finding count: 0. Worst issue: none. The plan change adds only the repair assignment, and each RE-C1 row still holds.
+
+### Coverage, round 2
+
+Finding count: 0. Worst issue: none. A probe swapped the `Render` call in `Save` for `json.MarshalIndent`. The verdict was `bit` on RE103, with `restored=yes`.
+
+### Advice, round 2
+
+- The round 1 S1 text named line 246, and the comment was at line 72. This record now names line 72. The correction is evidence-only.
+- The repair range also holds the record commits that add this file.
