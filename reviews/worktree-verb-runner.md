@@ -825,6 +825,10 @@ Before the first edit, the probe on `land_refusal.go` with the census-cell swap 
 
 `land_journey_test.go` has 431 lines at `7fa02b42` and 427 lines at the ticket commit. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. The JSON payload holds the package result as `vr-c4-10-worktree-r1`.
 
+## VR-C4 ticket 8 verification rerun
+
+The ticket 8 author ran `bench test --package ./internal/worktree` again at `88ded2e3`, on the final chunk source after tickets 9 and 10. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c4-8-worktree-r2`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2024,6 +2028,24 @@ Before the first edit, the probe on `land_refusal.go` with the census-cell swap 
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62649\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "10-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c4-8-worktree-r2",
+          "performer": "claude:bench-writer/vr-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb74f2d148868cfa3030708303666e38d2319c3a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t8-author-20261001/8-worktree@88ded2e3",
+            "digest": "sha256:fcd31505832128c6f99140166934e150f87f469be87bae04e81bb73c24eeb2e3",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63671\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "8-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
