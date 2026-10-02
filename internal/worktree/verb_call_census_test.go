@@ -69,7 +69,8 @@ func hasArgsParam(params *ast.FieldList) bool {
 
 // addRunnerPrivateNames adds each top-level function of a runner file whose last
 // result is an error. Such a function is a core reader or the call check, and a
-// test outside the runner files reaches it only through a must form.
+// test outside the runner files reaches it only through a runner function that
+// fails the test on that error.
 func addRunnerPrivateNames(file *ast.File, names map[string]bool) {
 	for _, node := range file.Decls {
 		decl, ok := node.(*ast.FuncDecl)
@@ -141,7 +142,7 @@ func verbCallCensus(dir string) ([]string, error) {
 }
 
 // specName names the declaration a package-level spec makes, the first name of a
-// grouped value spec standing for the group.
+// value spec with several names standing for all of them.
 func specName(spec ast.Spec) string {
 	switch spec := spec.(type) {
 	case *ast.ValueSpec:
@@ -265,7 +266,8 @@ var verbTable = []any{RunCommand, runWith}
 }
 
 // TestVerbCallCensusAllowsTheRunnerFiles proves each runner file can name every verb
-// form and every runner-private function.
+// form and every runner-private function. Both runner files hold the same text: the
+// census only parses, so the duplicate declaration does no harm.
 func TestVerbCallCensusAllowsTheRunnerFiles(t *testing.T) {
 	t.Parallel()
 	runnerFile := `package worktree
@@ -280,7 +282,7 @@ var runnerTable = []any{RunCommand, checkVerbCall}
 	reports := verbCensusOf(t, map[string]string{
 		"verbs.go":                  syntheticVerbSource,
 		"verb_runner_test.go":       runnerFile,
-		"verb_runner_check_test.go": strings.Replace(runnerFile, "checkVerbCall", "checkRunner", 2),
+		"verb_runner_check_test.go": runnerFile,
 	})
 	wantVerbReports(t, reports)
 }

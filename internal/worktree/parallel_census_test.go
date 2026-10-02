@@ -54,7 +54,7 @@ func parseTestFiles(dir string) ([]*ast.File, *token.FileSet, []string, error) {
 }
 
 // parseSourceFiles parses every regular non-test .go file in dir. The census
-// reads these files for their package-level variable declarations only.
+// reads these files for their package-level declarations only.
 func parseSourceFiles(dir string) ([]*ast.File, error) {
 	files, _, _, err := parseGoFiles(dir, func(name string) bool {
 		return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
