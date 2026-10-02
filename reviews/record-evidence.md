@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/record-evidence/spec.md",
-  "plan_digest": "sha256:eedace2d50c0412d6dbe225f07c12e8c17ebf3575c1e5f6f19a53dee8a558012",
+  "plan_digest": "sha256:91c7c928f595b8551cae347d20bbf32ab50668ff972c6c398aa619324e16d192",
   "implementation_session": "",
   "chunks": [
     {
       "id": "RE-C1",
       "base": "11aeb8e316c82b08c3e77be6391309a9ffd0fb9b",
-      "tip": "2af46532eb386bc7e4eae65cc504e79e8243e5d7",
-      "plan_digest": "sha256:eedace2d50c0412d6dbe225f07c12e8c17ebf3575c1e5f6f19a53dee8a558012",
-      "source_digest": "688d9e5eb06e01776f1b3a2ff14d7c96781c707e",
+      "tip": "6d7f3969e9061e8022630706c4430f64a7248312",
+      "plan_digest": "sha256:91c7c928f595b8551cae347d20bbf32ab50668ff972c6c398aa619324e16d192",
+      "source_digest": "f9f850d71e25d2db0ecc3c4d49a3452fbecea0d8",
       "acceptance_rows": [
         "RE1",
         "RE2",
@@ -208,3 +208,9 @@ Finding count: 0. Worst issue: none. The axis ran five probes through `bench pro
 ### Command contribution
 
 The Standards axis suggests that the author charge restate the `craft-comments` rule: a red record stays in the spec and not in a code comment. The Spec and Coverage axes found no contribution.
+
+## RE-C1 repair 1
+
+The plan commit `155c28c5` assigned the fresh repair session `claude:bench-writer/re-t1-repair-1` on opus at medium effort. The repair commit `6d7f3969` removes the red-record sentence from the comment on `TestFixtureSaveRendersThroughRender`. The diff changes comment lines only. RE-C1 has used 1 of its 2 repair cycles.
+
+The orchestrator re-froze RE-C1 with base `11aeb8e3` and tip `6d7f3969`. The chunk entry now holds the source digest and the plan digest of that tip, and the earlier results stay in the record.
