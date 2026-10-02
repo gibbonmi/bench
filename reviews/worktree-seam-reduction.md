@@ -230,7 +230,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sr-c2-r1-standards",
+          "performer": "claude:bench-reviewer/sr-c2-r1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b46d93c63bb58354d46a8869edec68fe5fb1e180",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c2-r1-standards-20261002@f620ccd6e416501f2d4cf504d5090f3cb5104c80",
+            "digest": "sha256:ff08fa9bc125b1568d49305197d8ff0e8cb0fa3a1c70e21e2c032a864c2f9bf0",
+            "excerpt": "## Standards\nS1. craft-comments \"describe the current state of the code\". internal/worktree/verb_runner_test.go:163, the checkVerbCall doc comment, says the refusal holds because a test must not trust a value the verb ignores. The check refuses only a verb with no joins form. No joins form reads a.kit at this tip, and merge, reset, reauthorize, and build never read a.now, so a kit or clock value for a joins-form verb passes and is ignored. Fix: state what the check enforces and drop the guarantee. Disposition auto-fix, confidence 7.\nS2. The same rule. internal/worktree/effects.go:32-33, the newAmbient comment, says the home and the stderr writer come from the verb entry's own parameters. resume.go:76, :79, and :368 pass newAmbient(Home(), os.Stderr). Fix: describe what the constructor takes from its caller. Disposition auto-fix, confidence 5.\ncount: 2\nworst: S1.\nAdvice: the ambient type comment at effects.go:22-24 ends \"so nothing below the entry reads the process\", which tickets 3, 7, and 11 make true; examine it again at SR-C6. The verbCall doc comment repeats the dispatch rule of runVerb and callAmbient.\nAuthor claims verified: newAmbient is the one constructor; discardCall replaces discardJoins; requalifyUnrecordedRow has no joins parameter; j.now and j.home are gone.\n"
+          },
+          "axis": "Standards",
+          "base": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+          "tip": "f620ccd6e416501f2d4cf504d5090f3cb5104c80",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c2-r1-spec",
+          "performer": "claude:bench-reviewer/sr-c2-r1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b46d93c63bb58354d46a8869edec68fe5fb1e180",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c2-r1-spec-20261002@f620ccd6e416501f2d4cf504d5090f3cb5104c80",
+            "digest": "sha256:733b4f499ea002c11d283fde77aa314851a8b96e279107b7bc24e943bcccab87",
+            "excerpt": "## Spec\nBind: the --check-current call ran from the primary checkout and exited 1 (base not an ancestor). The axis read each file at f620ccd6 through git show.\nP1. Spec line 455: \"A path with a space: the resume-clean fixtures use `auto clean` and `auto dirty` paths. WS12 reuses that fixture shape.\" internal/worktree/resume_clean_ambient_test.go:18 builds newPendingAssignment, whose pool path holds no space, so the stated edge is not exercised. Fix: reuse the space-path fixture, or amend the edge line. Disposition auto-fix, confidence 5.\nRows WS9 to WS16: closed.\nThe other predicates hold: 9 joins-form entries call newAmbient once; now and home left the joins value; executeCleanup drops records under a.home (lifecycle.go:447); ListCommand takes no joins home; the runner and checkVerbCall match spec lines 166 to 172; worktreeTestCount went from 699 to 701; the commit touches only internal/worktree; no over-budget file grew.\ncount: 1\nworst: P1.\nAdvice: ticket 11's ApplyAutomatic item is already met; two resume_test.go helpers still build newAmbient(Home(), os.Stderr); checkVerbCall with an unknown key and a kit value reports the kit refusal first.\n"
+          },
+          "axis": "Spec",
+          "base": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+          "tip": "f620ccd6e416501f2d4cf504d5090f3cb5104c80",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c2-r1-coverage",
+          "performer": "claude:bench-reviewer/sr-c2-r1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b46d93c63bb58354d46a8869edec68fe5fb1e180",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c2-r1-coverage-20261002@f620ccd6e416501f2d4cf504d5090f3cb5104c80",
+            "digest": "sha256:d90a24cdec111c4e4efdc07e8a7dd6811229d1a59ba5a5327a0772bee8d98c98",
+            "excerpt": "## Coverage\nC1. State: resume-clean over a registered, active, unlanded checkout whose age is 8 days by the clock value. The per-checkout plan at internal/worktree/resume.go:414 can read currentTime() and WS13 stays green; the checkout then counts as retained active=1, not stale-active=1 (worktree.go:429). TestResumeCleanJudgesTheClockValue asserts only the clean line of the orphan sweep. The test should also assert the retained stale-active=1 cell (story 11). Disposition auto-fix, confidence 7.\nC2 (classified as optional advice by the coordinator, see the pickup): a landing resumed under an explicit home that reaches its release step. No test drops the census record under the explicit home through land --resume. The code is correct today. The axis gave ask-user, confidence 5.\nProbes, each --package ./internal/worktree, each restored yes: (1) clean_discard.go plan instant to currentTime(), bit; (2) ownership.go release-resume replan instant to currentTime(), silent; (3) land.go release ambient to newAmbient(Home(), stderr), bit; (4) land_resume.go the same swap, silent; (5) resume.go planAutomaticAt instant to currentTime(), silent.\ncount: 2\nworst: C1.\nAdvice: the release-resume replan instant has no behavioral test; no production code reads a.kit or a.warnings at this tip; checkVerbCall is tested only for the path key.\nFinal git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+          "tip": "f620ccd6e416501f2d4cf504d5090f3cb5104c80",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -301,3 +369,33 @@ The coordinator probe omitted `Selective: true` in `LaneForCommitAtKit`. It retu
 ## SR-C1 confirming round
 
 Three fresh opus / high sessions read the repair delta `0d7b4066..37e3f72f`. Each axis confirmed its folds and reported no blocking finding. The Coverage axis ran one swap probe on the `kitDirAt` fallback, and it returned `bit` with `restored=yes`. An earlier Coverage session stalled with no output, and the coordinator stopped it. SR-C1 has no open finding, and 1 of 2 repair cycles is used.
+
+## SR-C2 chunk review, round 1
+
+Three fresh opus / high sessions reviewed the frozen pair `37e3f72f..f620ccd6`. The coordinator probe omitted `home: home` in `newAmbient`, and it returned `bit` with 3 failed tests and `restored=yes`. The raw finding count is 4, and the repair-target count is 4. The repair allowance of SR-C2 is 2 cycles, and 0 cycles are used.
+
+### Standards
+
+Count: 2. Worst: S1.
+
+- S1 (`auto-fix`, confidence 7): the `checkVerbCall` doc comment at `internal/worktree/verb_runner_test.go` line 163 states a guarantee that the check does not give. The check refuses only a verb with no joins form. The rule is the current-state rule of `craft-comments`.
+- S2 (`auto-fix`, confidence 5): the `newAmbient` comment at `internal/worktree/effects.go` lines 32 to 33 says that the home comes from the verb entry's parameters. Three callers in `resume.go` pass `Home()`.
+
+### Spec
+
+Count: 1. Worst: P1. The axis closed the rows WS9 to WS16.
+
+- P1 (`auto-fix`, confidence 5): the edge inventory says that WS12 reuses the space-path fixture shape. The test in `internal/worktree/resume_clean_ambient_test.go` builds a path with no space.
+
+### Coverage
+
+Count: 1. Worst: C1.
+
+- C1 (`auto-fix`, confidence 7): `TestResumeCleanJudgesTheClockValue` asserts only the clean line of the orphan sweep. A probe that swaps the instant of `planAutomaticAt` in `resume.go` for `currentTime()` stayed silent. Story 11 requires one instant for each plan. The repair makes the test assert the retained `stale-active=1` cell.
+
+### Advice
+
+- The Coverage axis named a second item with `ask-user`: no test drops the census record under an explicit home through `land --resume`. The code is correct at this tip, and no approved row names that path. The coordinator holds it as optional advice under the bounded repair policy, for reviewer veto. The live census of SR-C6 refuses a `Home()` read below an entry.
+- The release-resume replan instant in `ownership.go` has no behavioral test. The live census of SR-C6 refuses that read.
+- The ambient type comment in `effects.go` says that nothing below the entry reads the process. The tickets 3, 7, and 11 make that true, so SR-C6 examines it again.
+- The item `ApplyAutomatic` of ticket 11 is already met at this tip.
