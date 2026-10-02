@@ -66,8 +66,11 @@ func TestRecordReviewSupersedesTheSameAxis(t *testing.T) {
 	review(t, f, "Standards", "standards-1", "R1")
 	review(t, f, "Spec", "spec-1")
 	review(t, f, "Standards", "standards-2")
-	if got := reviewed(t, f, "standards-2").Supersedes; !reflect.DeepEqual(got, []string{"standards-1"}) {
-		t.Fatalf("supersedes = %q, want [standards-1]", got)
+	review(t, f, "Standards", "standards-3")
+	for id, want := range map[string]string{"standards-2": "standards-1", "standards-3": "standards-2"} {
+		if got := reviewed(t, f, id).Supersedes; !reflect.DeepEqual(got, []string{want}) {
+			t.Fatalf("%s supersedes = %q, want [%s]", id, got, want)
+		}
 	}
 }
 
