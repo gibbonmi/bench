@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-evidence/spec.md",
-  "plan_digest": "sha256:91c7c928f595b8551cae347d20bbf32ab50668ff972c6c398aa619324e16d192",
+  "plan_digest": "sha256:833ccd1de096637009430bda209d327b710beca8fea9eaf774250694705d73fc",
   "implementation_session": "",
   "chunks": [
     {
@@ -231,6 +231,49 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RE-C2",
+      "base": "6d7f3969e9061e8022630706c4430f64a7248312",
+      "tip": "bf3ddc94aa2108fc225d1c946167ea150ae6041c",
+      "plan_digest": "sha256:833ccd1de096637009430bda209d327b710beca8fea9eaf774250694705d73fc",
+      "source_digest": "0fa91f6aaaa602460b5a707256004373bd936892",
+      "acceptance_rows": [
+        "RE11",
+        "RE12",
+        "RE13",
+        "RE14",
+        "RE15",
+        "RE16",
+        "RE17",
+        "RE18",
+        "RE19",
+        "RE20",
+        "RE21",
+        "RE22",
+        "RE23",
+        "RE24",
+        "RE25",
+        "RE26",
+        "RE27",
+        "RE28",
+        "RE29",
+        "RE30",
+        "RE31",
+        "RE32",
+        "RE33",
+        "RE34",
+        "RE35",
+        "RE37",
+        "RE38",
+        "RE39",
+        "RE40",
+        "RE41",
+        "RE105",
+        "RE106"
+      ],
+      "verification": [],
+      "reviews": []
     }
   ],
   "completion": {
@@ -239,7 +282,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:91c7c928f595b8551cae347d20bbf32ab50668ff972c6c398aa619324e16d192",
+      "to": "sha256:833ccd1de096637009430bda209d327b710beca8fea9eaf774250694705d73fc",
+      "chunk_ids": {
+        "RE-C1": [
+          "RE-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
@@ -346,3 +400,13 @@ Finding count: 0. Worst issue: none. A probe swapped the `Render` call in `Save`
 
 - The round 1 S1 text named line 246, and the comment was at line 72. This record now names line 72. The correction is evidence-only.
 - The repair range also holds the record commits that add this file.
+
+## RE-C2 freeze
+
+The orchestrator froze RE-C2 after ticket 2, with base `6d7f3969` and tip `bf3ddc94`. The worktree build of `bench record chunk` wrote the chunk entry, and an independent script gave the same source and plan digests.
+
+The plan commit `6079c896` assigned ticket 2. The ticket 2 author stopped on a fence gap: the help-row projection allowlist in `internal/conformance/help_inventory_single_source_test.go`. The plan commit `4ad69dd9` added that path to the ticket 2 `Writes:` line and to the spec fences. The orchestrator could not regenerate the charge evidence, because the uncommitted delta of the author made the tree dirty. The author received the one changed path in its follow-up charge.
+
+The record amendment from the RE-C1 plan digest to the RE-C2 plan digest maps RE-C1 to itself. The orchestrator wrote it by hand, because ticket 5 adds `bench record amendment`.
+
+The coordinator probe swapped the version 2 plan rule of the chunk change in `write.go`. `bench probe` returned `bit` on RE17 with `restored=yes`.
