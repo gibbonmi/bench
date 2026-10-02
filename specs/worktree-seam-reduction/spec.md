@@ -6,6 +6,8 @@ Roadmap: FT356
 
 Decision source: `specs/worktree-seam-reduction/decisions/worktree-seams.md` (ready compiled map, the second of its two specs).
 
+Verification log: 2 iteration(s) to accept — round 1 folded blockers B1 (exact pin), B2 (`createAttributed` read), and B3 (multi-kind reads), with A1 to A13. Round 2 folded N1 (self-derived expectations), N2 (WS84 red), and N3 (failed-probe wording).
+
 ## Problem
 
 The worktree package injects 29 fields through its joins value. Most fields replace a
@@ -132,7 +134,10 @@ The reviewed exclusions:
 `KitDir` call it. `gate.LaneForCommitAtKit(root, kit)` and
 `gate.KitSourceCheckoutAtKit(root, kit)` take the kit value. An empty kit makes the lane
 form fall back to the graded root. An empty kit makes the kit-source form fall back to
-the parent of the running executable, as `KitDir` does today. Neither form reaches
+the parent of the running executable, as `KitDir` does today.
+
+That fallback does not call
+`KitDir`. Neither form reaches
 `KitValue`, so the census in ticket 9 can tell a kit form from a kit read.
 
 `LaneForCommit` and `KitSourceCheckout` stay as wrappers that pass `KitValue()`, so
@@ -236,7 +241,8 @@ in one of three messages:
 
 `<name>` is the reference as the source spells it. The third message applies when an
 unexported declaration calls an entry whose own body reads. One census formatter renders
-each message, and each census test derives its expected report through that formatter.
+each message. A census test calls that formatter with literal file, line, declaration,
+and name inputs, never with the census's own findings.
 
 `ClaimRecordedLease` reads the clock and passes the instant to `claimRecordedLease`.
 `CreateCommand` reads the instant and passes it to `createAttributed`, with no net line
@@ -250,8 +256,11 @@ A set below the ceiling is refused with
 `the package holds <n> serial tests, below the ceiling of <c>: lower worktreeSerialCeiling to <n> in this change`.
 The two resume-clean tests drop their `BENCH_HOME` bind, so the count is at most 44. The
 ticket moves `serialSet` and `serialCeilingBreach` out of `parallel_census_test.go`, so
-that over-budget file does not grow. The refusal comes from `serialCeilingBreach`, and its
-tests derive the expected text through that function.
+that over-budget file does not grow.
+
+A pure renderer, `belowCeilingRefusal(n, c)`, holds
+the refusal text, and `serialCeilingBreach` calls it. The test asserts a non-empty breach
+that equals the renderer's output for a count of 1 and a ceiling of 2.
 
 `worktreeTestCount` is exact. Each ticket that adds a top-level worktree test raises the
 pin in its own commit: tickets 2, 9, 10, and 11.
@@ -414,7 +423,7 @@ records the probe command and its red in its verification note.
 | WS67 | 40 | A synthetic unexported call to an exported gate function that calls `KitValue` draws the formatter's below-entry report. | planned TestSingleReadCensusRefusesAKitWrapperCall in internal/worktree | A census that ignores the gate directory passes the wrapper call. |
 | WS68 | 6, 41, 42, 43 | The census over the live package reports nothing. | planned TestSingleReadCensusOnTheLiveTree in internal/worktree | A read left in `claimRecordedLease`, `createAttributed`, `subshellAt`, `releaseAssignment`, or `defaultJoins` draws a report. |
 | WS69 | 13, 44 | The live serial set equals `worktreeSerialCeiling`, and the ceiling is below 46. | `internal/worktree/parallel_census_test.go` (`TestSerialSetStaysBelowTheCeiling`) | A ceiling left at 46 after the resume-clean tests leave the serial set draws the below-ceiling refusal. |
-| WS70 | 44 | A synthetic serial set of one under a ceiling of two draws the below-ceiling refusal that `serialCeilingBreach` renders. | planned TestCensusRefusesASerialSetBelowTheCeiling in internal/worktree | A one-sided ceiling check passes the smaller set. |
+| WS70 | 44 | A synthetic serial set of one under a ceiling of two draws a non-empty breach equal to `belowCeilingRefusal(1, 2)`. | planned TestCensusRefusesASerialSetBelowTheCeiling in internal/worktree | A one-sided ceiling check returns an empty breach, which differs from the renderer's text. |
 | WS71 | 45 | Each `toon.Table` or `toon.TableTyped` call in the package's non-test source names its table with an identifier. | planned TestTableNamesAreProductionConstants in internal/worktree | A literal `"worktree_cleanup"` left in `classifier.go` draws a report. |
 | WS72 | 46 | A synthetic test literal that equals a table name in a `mustRows` block argument draws a report with its file and line. | planned TestTableNameLiteralCensusReportsABlockArgument in internal/worktree | A census that skips block arguments passes the literal. |
 | WS73 | 46 | A synthetic test literal that begins with `worktree_cleanup[` draws a report. | planned TestTableNameLiteralCensusReportsARenderedHeader in internal/worktree | A census that matches only whole literals passes the header text. |
@@ -428,7 +437,7 @@ records the probe command and its red in its verification note.
 | WS81 | 30, 31 | A failed probe keeps its field with one recorded learning, and a test that cannot convert stops the build with its name. | review-owned | A review of the ticket verification notes and `capture/learnings.md` finds a silent field loss or a silent skip. |
 | WS82 | 40 | A synthetic unexported call to an exported gate function that reaches `KitValue` through another gate function draws the formatter's below-entry report. | planned TestSingleReadCensusRefusesAnIndirectKitRead in internal/worktree | A census that reads only direct `KitValue` calls passes a wrapper such as `KitRoot`. |
 | WS83 | 11 | The census over the live package reports no clock read in a replan closure. | planned TestSingleReadCensusOnTheLiveTree in internal/worktree | The function-literal read of `currentTime` at the replan in `applyAutomaticWithTerminal` draws a report. |
-| WS84 | 24 | The running-binary check fails safe with no warning writer in the joins value when the resolution is unknown. | `internal/worktree/live_binary_test.go` (`TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown`) | A guard that still reads a joins writer does not compile once the field leaves. |
+| WS84 | 24 | The running-binary check fails safe with no warning writer in the joins value when the resolution is unknown. | `internal/worktree/live_binary_test.go` (`TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown`) | An `isRunningBinary` that answers false for an unresolvable or unstattable running binary fails the test. |
 | WS85 | 24 | The running-binary check resolves a symbolic link with no warning writer in the joins value. | `internal/worktree/live_binary_test.go` (`TestIsRunningBinaryResolvesThroughASymlink`) | A guard that compares unresolved paths misses the live binary. |
 | WS86 | 36 | A synthetic entry that calls the ambient constructor and then `currentTime` draws the formatter's second-read report for `time.Now`. | planned TestSingleReadCensusCountsEachKindOfAConstructor in internal/worktree | A census that counts the constructor as one kind passes the second clock read. |
 
@@ -689,5 +698,6 @@ Each addition below is not in a decision answer. The reviewer can veto each one.
 - The removal of the dead `planLandedExplicitWithOptions` declaration.
 - The ignore-rule drift fixture for `TestResetApplyExitsThreeWhenTheMoveDidNotLand`.
 - The census entry and ambient value glossary terms in `CONTEXT.md`.
-- The rule that the `AtKit` forms reach no `KitValue` read.
+- The rule that the `AtKit` forms reach no `KitValue` read, and that the empty-kit fallback does not call `KitDir`.
+- The pure `belowCeilingRefusal` renderer, so that the ceiling test expectation does not come from the function under test.
 - The spec-stage edit of the `ROADMAP.md` recommended sequence, which repoints its first step to this spec.

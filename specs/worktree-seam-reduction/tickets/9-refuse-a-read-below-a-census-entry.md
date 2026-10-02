@@ -20,8 +20,11 @@ reference counts as one read of each kind that its name reaches, so the ambient
 constructor and a later `currentTime` read `time.Now` twice. The census
 accepts a read only in an entry's own body, outside each function literal and loop body.
 It accepts only the first read of each kind there. It reports each other read with one of the
-three messages in the spec's Implementation decisions. One census formatter renders each
-message, and each census test derives its expected report through that formatter.
+three messages in the spec's Implementation decisions.
+
+One census formatter renders each
+message. A census test calls that formatter with literal file, line, declaration, and
+name inputs, never with the census's own findings.
 
 Lift each read that the live census reports. `ClaimRecordedLease` reads the clock and
 passes the instant down. `CreateCommand` reads the instant and passes it to
@@ -32,6 +35,9 @@ once and calls `releaseCommandWith` in place of `ReleaseCommand`.
 Lower `worktreeSerialCeiling` to the live serial count, and make the ceiling check refuse
 a set below the ceiling with
 `the package holds <n> serial tests, below the ceiling of <c>: lower worktreeSerialCeiling to <n> in this change`.
+Put the refusal text in a pure renderer, `belowCeilingRefusal(n, c)`, which
+`serialCeilingBreach` calls. The test asserts a non-empty breach that equals the
+renderer's output for a count of 1 and a ceiling of 2.
 Move `serialSet` and `serialCeilingBreach` into the new file, so that
 `parallel_census_test.go` does not grow. Keep `TestSerialSetStaysBelowTheCeiling` in
 `parallel_census_test.go`. Raise `worktreeTestCount` by the number of new top-level tests

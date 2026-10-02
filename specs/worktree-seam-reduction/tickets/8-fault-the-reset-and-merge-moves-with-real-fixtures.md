@@ -38,4 +38,4 @@ the decision list and the recorded probe learnings.
 - [ ] A stale `HEAD.lock` makes a reset apply exit 3, with the envelope when the checkout is attached and with `preserved=none` when it is detached.
 - [ ] A move that keeps an ignore-rule drift file makes the reset apply exit 3 and names the preserved ref.
 - [ ] A stale `index.lock` makes the merge exit 3 and leaves a merge that the reset apply reconciles, or the learning entry records the failed probe.
-- [ ] The joins value declares the 15 named fields and each field whose probe stayed green, and no other field.
+- [ ] The joins value declares the 15 named fields and each field whose probe failed, and no other field.

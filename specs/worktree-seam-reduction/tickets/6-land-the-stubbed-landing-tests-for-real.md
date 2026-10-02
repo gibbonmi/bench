@@ -17,8 +17,8 @@ place of the recorded arguments. If ticket 4 recorded a failed marker probe, eac
 this ticket keeps its `advanceLandingMarker` stub and converts its other stubs.
 
 Remove `advanceLandingMarker`, `reconcileLanding`, `authorizeLandingSource`, and
-`pruneLandedBranches` from the joins value. Keep each field whose probe stayed green in
-ticket 4 or ticket 5. The landing then calls the real functions directly.
+`pruneLandedBranches` from the joins value. Keep each field whose probe failed in ticket 4
+or ticket 5. The landing then calls the real functions directly.
 
 Each converted test keeps its name.
 
