@@ -1020,11 +1020,23 @@ Verification on `6db974f1`: `bench test --package ./internal/worktree` passed wi
 
 `verb_call_census_test.go` has 369 lines. `bench structure --growth f3e0cb4e38788e791a0654dcbaced969a9cb1d45` passed. `bench preflight build worktree-verb-runner` reported 13 green checks and 0 red checks. The JSON payload holds the results as `vr-c5-11-worktree-r2` and `vr-c5-11-probe-r2`.
 
+## VR-C5 chunk review, round 2
+
+This round confirms VR-C5 repair 1 and plan commit `99185fab`. The frozen pair is base `f3e0cb4e38788e791a0654dcbaced969a9cb1d45` and tip `3e50200886fd6f32d03c7cca47912953c01eb458`. The shared evidence is `sha256:f8203a0447b6b109abbd364c551d175e85ce3b618f4888c35d92a3f9817403d3`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the repair delta `c246ab47..3e502008`. Each axis charge stated the advice classification of the bounded repair policy.
+
+The raw finding count is 0. R27, R28, R29, and R31 hold, and the Won't-handle line for R32 matches the census code. Two new probes each exempted only one runner file, and each went red. The package run passes with the two socket skips, and no test function lost a failure call. The consumed allowance stays at 1 of 2 repair cycles.
+
+The VR-C5 plan commits added an assignment and text only. So the payload maps each VR-C4 plan chunk ID to the same ID in the current plan.
+
+### Advice, VR-C5 round 2
+
+- The `parseSourceFiles` comment says "the census", and two censuses now call it.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/worktree-verb-runner/spec.md",
-  "plan_digest": "sha256:750064a4c231f36f24097238a38dfdb089cf76023cc19379e8c99dc5142991c0",
+  "plan_digest": "sha256:8d6d7e692f39b994a6c42b57301fb1665279f61bf40f6aaa88b6a232acd69888",
   "implementation_session": "",
   "chunks": [
     {
@@ -2575,9 +2587,9 @@ Verification on `6db974f1`: `bench test --package ./internal/worktree` passed wi
     {
       "id": "VR-C5",
       "base": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
-      "tip": "c246ab4757aaa12ecb2b2958bdfa1076ebd3f9ac",
-      "plan_digest": "sha256:9b00241e002f10a21665d6b76b54fae973f13f2e181df1bed009aae8c3f33a4e",
-      "source_digest": "cff2c674683c2ae4315f44c312dd2130d90ceac6",
+      "tip": "3e50200886fd6f32d03c7cca47912953c01eb458",
+      "plan_digest": "sha256:8d6d7e692f39b994a6c42b57301fb1665279f61bf40f6aaa88b6a232acd69888",
+      "source_digest": "ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c",
       "acceptance_rows": [
         "VR40",
         "VR41",
@@ -2764,6 +2776,72 @@ Verification on `6db974f1`: `bench test --package ./internal/worktree` passed wi
             "R32"
           ],
           "supersedes": []
+        },
+        {
+          "id": "vr-c5-standards-r2",
+          "performer": "claude:bench-reviewer/vr-c5-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c5-standards-r2@3e502008",
+            "digest": "sha256:28d50032acc9c657d08196e8720902501ed30f371db893662453531db29c4a3e",
+            "excerpt": "Standards: 0 findings. R27, R28, R29 and R31 hold, and the Won't-handle line matches the census code."
+          },
+          "axis": "Standards",
+          "base": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+          "tip": "3e50200886fd6f32d03c7cca47912953c01eb458",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c5-standards-r1"
+          ]
+        },
+        {
+          "id": "vr-c5-spec-r2",
+          "performer": "claude:bench-reviewer/vr-c5-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c5-spec-r2@3e502008",
+            "digest": "sha256:a6e3424c9b8919320c419e2d4082dc0a8ed218689e611bcf56fa40409b95e3db",
+            "excerpt": "Spec: 0 findings. The plan commit, the repair, R30, and the payload hold; VR48 to VR58 still hold by reading."
+          },
+          "axis": "Spec",
+          "base": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+          "tip": "3e50200886fd6f32d03c7cca47912953c01eb458",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c5-spec-r1"
+          ]
+        },
+        {
+          "id": "vr-c5-coverage-r2",
+          "performer": "claude:bench-reviewer/vr-c5-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c5-coverage-r2@3e502008",
+            "digest": "sha256:45b91bd5d15ee887aa1d126554356f572d3c72a48bb43c6226f7c57fa8762b09",
+            "excerpt": "Coverage: 0 findings. Each one-file exemption probe went red; the package passes and no failure call was lost."
+          },
+          "axis": "Coverage",
+          "base": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+          "tip": "3e50200886fd6f32d03c7cca47912953c01eb458",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c5-coverage-r1"
+          ]
         }
       ]
     }
@@ -2821,6 +2899,27 @@ Verification on `6db974f1`: `bench test --package ./internal/worktree` passed wi
     {
       "from": "sha256:dedfa63fd559b5ec09dc6e3227dc0085296ed59f9a64718abf049429445a5e63",
       "to": "sha256:750064a4c231f36f24097238a38dfdb089cf76023cc19379e8c99dc5142991c0",
+      "chunk_ids": {
+        "VR-C1": [
+          "VR-C1"
+        ],
+        "VR-C2": [
+          "VR-C2"
+        ],
+        "VR-C3": [
+          "VR-C3"
+        ],
+        "VR-C4": [
+          "VR-C4"
+        ],
+        "VR-C5": [
+          "VR-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:750064a4c231f36f24097238a38dfdb089cf76023cc19379e8c99dc5142991c0",
+      "to": "sha256:8d6d7e692f39b994a6c42b57301fb1665279f61bf40f6aaa88b6a232acd69888",
       "chunk_ids": {
         "VR-C1": [
           "VR-C1"
