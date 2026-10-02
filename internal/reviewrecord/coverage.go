@@ -3,7 +3,9 @@ package reviewrecord
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"reflect"
+	"slices"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
@@ -179,6 +181,69 @@ func mappedIDs(record Record, from, to, id string) ([]string, error) {
 		from, ids = change.To, next
 	}
 	return ids, nil
+}
+
+// RecordAmendment records the change from the record plan digest to the plan digest at
+// source, a full commit ID, and moves the record plan digest to the new digest. The keys
+// are the recorded chunk IDs under the old digest: mappedIDs maps each recorded chunk
+// through the earlier amendments, so the checkpoint and the amendment read one rule. A
+// key maps to itself unless changes names it, and every target must be a chunk of the new
+// plan. Every recorded chunk must then map through the amended chain to the new digest,
+// or the write refuses. The answer is the amendment as written.
+func RecordAmendment(root, spec, source string, changes map[string][]string) (Amendment, error) {
+	_, plan, err := atSource(root, spec, source)
+	if err != nil {
+		return Amendment{}, err
+	}
+	var entry Amendment
+	err = write(root, spec, nil, func(record *Record) error {
+		if record.PlanDigest == plan.Digest {
+			return fmt.Errorf("the plan at %s is unchanged from the record plan digest %s", source, plan.Digest)
+		}
+		keys := []string{}
+		for _, chunk := range record.Chunks {
+			ids, err := mappedIDs(*record, chunk.PlanDigest, record.PlanDigest, chunk.ID)
+			if err != nil {
+				return fmt.Errorf("chunk %s: %w", chunk.ID, err)
+			}
+			for _, id := range ids {
+				if !contains(keys, id) {
+					keys = append(keys, id)
+				}
+			}
+		}
+		for _, old := range slices.Sorted(maps.Keys(changes)) {
+			if !contains(keys, old) {
+				return fmt.Errorf("chunk %s is not a recorded chunk under the plan digest %s, so no map can name it", old, record.PlanDigest)
+			}
+		}
+		entry = Amendment{From: record.PlanDigest, To: plan.Digest, ChunkIDs: map[string][]string{}}
+		for _, key := range keys {
+			targets, mapped := changes[key]
+			if !mapped {
+				targets = []string{key}
+			}
+			for _, id := range targets {
+				if findChunk(plan, id) != nil {
+					continue
+				}
+				if !mapped {
+					return fmt.Errorf("recorded chunk %s is not a chunk of the plan at %s; map it to its new chunks", key, source)
+				}
+				return fmt.Errorf("map target chunk %s is not a chunk of the plan at %s", id, source)
+			}
+			entry.ChunkIDs[key] = append([]string{}, targets...)
+		}
+		record.Amendments = append(record.Amendments, entry)
+		record.PlanDigest = plan.Digest
+		for _, chunk := range record.Chunks {
+			if _, err := mappedIDs(*record, chunk.PlanDigest, record.PlanDigest, chunk.ID); err != nil {
+				return fmt.Errorf("chunk %s: %w", chunk.ID, err)
+			}
+		}
+		return nil
+	})
+	return entry, err
 }
 
 func sameSet(a, b []string) bool {

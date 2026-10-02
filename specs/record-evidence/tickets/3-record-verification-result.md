@@ -1,7 +1,7 @@
 # 3. Append a verification result with `bench record verification`
 
 Blocked by: 2-record-chunk-entry.md
-Writes: internal/reviewrecord/write.go (new), internal/reviewrecord/recordcmd/ (new), cmd/bench/help_inventory_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/reviewrecord/parse.go, internal/reviewrecord/write.go (new), internal/reviewrecord/recordcmd/ (new), cmd/bench/help_inventory_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: RE36, RE42, RE43, RE44, RE45, RE46, RE47, RE48, RE49, RE50, RE51, RE52, RE53, RE54, RE55, RE56, RE57, RE58, RE59, RE60, RE61, RE62, RE63, RE64, RE65, RE66, RE67, RE68, RE69, RE70, RE71, RE104, RE107, RE108
 
 ## What to build

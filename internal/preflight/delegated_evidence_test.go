@@ -1,7 +1,6 @@
 package preflight
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 
@@ -12,11 +11,11 @@ import (
 // recordFence renders the bench-review-record section the prepared evidence metadata reads.
 func recordFence(t *testing.T, record reviewrecord.Record) string {
 	t.Helper()
-	data, err := json.Marshal(record)
+	data, err := reviewrecord.Render(nil, record)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return "# Review outcomes\n\n```bench-review-record\n" + string(data) + "\n```\n"
+	return string(data)
 }
 
 // The prepared review metadata describes both valid record versions, and it keeps naming

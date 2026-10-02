@@ -56,7 +56,13 @@ func readFile(root, relative string) ([]byte, error) {
 			return nil, fmt.Errorf("invalid nonregular or symlink path %q", relative)
 		}
 	}
-	c := bounds.ClassifyNoFollow(path)
+	return graded(relative, bounds.ClassifyNoFollow(path))
+}
+
+// graded is the reader's bound rule for the record at relative: only a parsed
+// classification yields bytes. The reader grades the file, and the write transaction
+// grades the rendered document, through this one rule and its one message.
+func graded(relative string, c bounds.Classified) ([]byte, error) {
 	if c.State != bounds.StateParsed {
 		return nil, fmt.Errorf("invalid record %q: %s %s", relative, c.State, c.Reason)
 	}
@@ -87,8 +93,10 @@ func ReadTree(root, tree, spec string) (Record, error) {
 	return parseRecord(data, spec)
 }
 
+const recordFence = "bench-review-record"
+
 func parseRecord(data []byte, spec string) (Record, error) {
-	payload, err := fenced(data, "bench-review-record")
+	payload, err := fenced(data, recordFence)
 	if err != nil {
 		return Record{}, err
 	}

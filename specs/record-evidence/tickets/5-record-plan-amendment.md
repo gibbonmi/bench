@@ -2,7 +2,7 @@
 
 Blocked by: 4-record-review-result.md
 Writes: internal/reviewrecord/coverage.go, internal/reviewrecord/write.go (new), internal/reviewrecord/recordcmd/ (new), cmd/bench/help_inventory_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: RE84, RE85, RE86, RE87, RE88, RE89, RE90, RE91, RE92, RE93, RE94, RE95, RE96, RE97
+Covers: RE84, RE85, RE86, RE87, RE88, RE89, RE90, RE91, RE92, RE93, RE94, RE95, RE96, RE97, RE114, RE115
 
 ## What to build
 

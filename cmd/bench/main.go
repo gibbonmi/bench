@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/assessment"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/consumers"
@@ -68,9 +67,7 @@ func main() {
 }
 
 var commandRegistry = []commandDefinition{
-	{Name: "assessment", AXI: axiApprovedChildren("list", "show", "compare"), Inventory: publicInventory(helpRow{Order: 20, Suffix: " list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>", Description: "store and inspect local workflow cost and quality"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(func(args []string) (string, int) {
-		return assessment.Command(assessment.Store{Home: worktree.Home(), Root: boundaryRoot()}, args)
-	})},
+	{Name: "assessment", AXI: axiApprovedChildren("list", "show", "compare"), Inventory: publicInventory(helpRow{Order: 20, Suffix: " list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>", Description: "store and inspect local workflow cost and quality"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(assessmentCommand)},
 	{Name: "anchors", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 15, Suffix: " <file|dir>", Description: "anchors pinning a repo-relative file as TOON (kind, section, needle, line); a directory grades each anchored file below it"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(anchorsCommand)},
 	{Name: "learnings", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 16, Description: "open journal entries as a TOON table (date, title)"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(learnings.Command)},
 	{Name: "maps", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 17, Description: "unresolved decision-map tickets as TOON (map, ticket, type, state)"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(maps.Command)},
@@ -130,6 +127,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "session-inspect", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "shift", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 38, Suffix: " [--refresh] \"<objective>\"", Gap: 1, Description: "gated loop in a pooled worktree; commit on green"}), Bound: boundResponse, Scope: scopeRepository, Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "commit", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 39, Suffix: commit.HelpRowSuffix, Description: commit.LaneClause + ", then commit named paths on a pass"}), Bound: boundResponse, Scope: scopeTree, Run: commitChainCommand},
+	{Name: "record", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(recordHelpRows(40)...), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(recordCommand)},
 	{Name: "spec", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 41, Suffix: " retire <slug>", Description: "delete a merged spec + its review pickup (validated)"}, helpRow{Order: 42, Suffix: " history <slug>", Description: "retire/delete commits for a spec, newest first (TOON)"}, helpRow{Order: 42, Suffix: strings.TrimPrefix(spec.SelectedHistoryUsage, "bench spec"), Description: "selected histories with complete counts and recovery commands"}), Bound: boundResponse, Scope: scopeTree, Run: retireListingCommand(spec.Command)},
 	{Name: "gate-go", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateGoCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "gate-prose", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateProseCommand(args, c.Stdout, c.Stderr) }},

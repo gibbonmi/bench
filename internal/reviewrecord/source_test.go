@@ -69,6 +69,22 @@ func TestReviewRecordSource(t *testing.T) {
 	}
 }
 
+// TestFixtureSaveRendersThroughRender lives in the external test package,
+// because an internal test cannot import recordtest.
+func TestFixtureSaveRendersThroughRender(t *testing.T) {
+	f := recordtest.New(t, 1)
+	f.AddChunk()
+	f.Record.Chunks[0].Reviews[0].NativeRef = recordtest.Native("fmt & vet")
+	f.Save()
+	data, err := os.ReadFile(filepath.Join(f.Root, "reviews/example.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), `"excerpt": "fmt & vet"`) {
+		t.Fatalf("Save escaped the excerpt:\n%s", data)
+	}
+}
+
 func TestReviewRecordTerminal(t *testing.T) {
 	f := recordtest.New(t, 1)
 	f.AddChunk()
