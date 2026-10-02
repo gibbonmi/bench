@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-evidence/spec.md",
-  "plan_digest": "sha256:cf1b64e12862cd3f545c262d70b46e9e18d82289178876dd888abe5e460419f0",
+  "plan_digest": "sha256:6da27cb1c0194a8005dc9542c541d45e586960ab47bd197753ed8945bafcd2ed",
   "implementation_session": "",
   "chunks": [
     {
@@ -996,6 +996,38 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RE-C4",
+      "base": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+      "tip": "7112b8e1ad5507271309c3de823c62fca98ae9bd",
+      "plan_digest": "sha256:6da27cb1c0194a8005dc9542c541d45e586960ab47bd197753ed8945bafcd2ed",
+      "source_digest": "e21432cef18591052ae5a7ee666ea170fb891451",
+      "acceptance_rows": [
+        "RE84",
+        "RE85",
+        "RE86",
+        "RE87",
+        "RE88",
+        "RE89",
+        "RE90",
+        "RE91",
+        "RE92",
+        "RE93",
+        "RE94",
+        "RE95",
+        "RE96",
+        "RE97",
+        "RE98",
+        "RE99",
+        "RE100",
+        "RE101",
+        "RE109",
+        "RE110",
+        "RE111"
+      ],
+      "verification": [],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1060,6 +1092,21 @@
     {
       "from": "sha256:9b6b7a71fbee6d2f178c476a50167713993c895672704c6fe5e69e661e5162fc",
       "to": "sha256:cf1b64e12862cd3f545c262d70b46e9e18d82289178876dd888abe5e460419f0",
+      "chunk_ids": {
+        "RE-C1": [
+          "RE-C1"
+        ],
+        "RE-C2": [
+          "RE-C2"
+        ],
+        "RE-C3": [
+          "RE-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:cf1b64e12862cd3f545c262d70b46e9e18d82289178876dd888abe5e460419f0",
+      "to": "sha256:6da27cb1c0194a8005dc9542c541d45e586960ab47bd197753ed8945bafcd2ed",
       "chunk_ids": {
         "RE-C1": [
           "RE-C1"
@@ -1645,3 +1692,15 @@ Finding count: 0. Worst issue: none. A probe that disabled `together` bit RE70. 
 - `Required` and `together` enforce one derived fact twice, from the one source `admits`. `Required` can go with no change in behavior.
 - `grammar()` is built twice in `Command`.
 - `occurrence` has two values and can be a boolean.
+
+## RE-C4 freeze
+
+The orchestrator froze RE-C4 after ticket 6, with base `ac18ccca` and tip `7112b8e1`. The worktree build of `bench record amendment` first wrote the identity amendment from `cf1b64e1` to `6da27cb1` for three chunks. Then `bench record chunk` wrote the RE-C4 entry with 21 acceptance rows.
+
+The plan commit `55433c68` assigned ticket 5 on opus at medium effort. The plan commit `34346e84` assigned ticket 6 on opus at high effort, under the leverage override of `craft-line` for guidance prose.
+
+The ticket 5 author asked whether an amendment can follow a chunk entry that names the new plan. The spec names the recorded chunks under `from` as the amendment keys. Thus the orchestrator kept the spec and runs the amendment form before the chunk form. The ticket 5 author also ran two edits through `python3` on the pool path, outside `bench worktree exec`. The lane graded the committed result.
+
+The ticket 6 author ran `bench worktree build`, which left `dist/` and `bin/bench-broker.manifest` in the worktree. The orchestrator removed both ignored artifacts before the gate.
+
+The coordinator probe of ticket 5 made the target check of the amendment accept every chunk. `bench probe` returned `bit` on RE90 and RE92 with `restored=yes`. The coordinator probe of ticket 6 moved the new step 6 anchor to step 5. `bench probe` returned `bit` on `TestRootConformance` with `restored=yes`.
