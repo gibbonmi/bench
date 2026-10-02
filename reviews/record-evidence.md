@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-evidence/spec.md",
-  "plan_digest": "sha256:65a0e39bc546d38bb95ed196055e6063d414717242cced129f8748e5db8f5849",
+  "plan_digest": "sha256:9b6b7a71fbee6d2f178c476a50167713993c895672704c6fe5e69e661e5162fc",
   "implementation_session": "",
   "chunks": [
     {
@@ -523,9 +523,9 @@
     {
       "id": "RE-C3",
       "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
-      "tip": "2883afc94987a9b6f42a763ad280c3023faec39b",
-      "plan_digest": "sha256:65a0e39bc546d38bb95ed196055e6063d414717242cced129f8748e5db8f5849",
-      "source_digest": "a4d74c2be12e01dcaec7a6bb89f722d14b6ae9f0",
+      "tip": "5ebdb8698daf69a5495ae5af55fdbbbf65153157",
+      "plan_digest": "sha256:9b6b7a71fbee6d2f178c476a50167713993c895672704c6fe5e69e661e5162fc",
+      "source_digest": "088294cba485bb6e2dbdd0d9bf31dc733184c0c6",
       "acceptance_rows": [
         "RE36",
         "RE42",
@@ -752,6 +752,21 @@
     {
       "from": "sha256:1a04adf1320736ccc5828fb4481be56d68c1bb6f4c67716229345b2f5c792cdd",
       "to": "sha256:65a0e39bc546d38bb95ed196055e6063d414717242cced129f8748e5db8f5849",
+      "chunk_ids": {
+        "RE-C1": [
+          "RE-C1"
+        ],
+        "RE-C2": [
+          "RE-C2"
+        ],
+        "RE-C3": [
+          "RE-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:65a0e39bc546d38bb95ed196055e6063d414717242cced129f8748e5db8f5849",
+      "to": "sha256:9b6b7a71fbee6d2f178c476a50167713993c895672704c6fe5e69e661e5162fc",
       "chunk_ids": {
         "RE-C1": [
           "RE-C1"
@@ -1182,3 +1197,17 @@ Finding count: 4. Worst issue: C1. Each finding comes from a probe that returned
 ### Command contribution
 
 The Standards axis suggests a charge rule: an author sends a one-source fix outside its fence to the orchestrator before the ticket commit. The Coverage axis suggests that the author probe each member of an enumerated rule, not the whole rule at once. The Spec axis found no contribution.
+
+## RE-C3 repair 1
+
+The plan commit `6bec7a70` assigned the fresh repair session `claude:bench-writer/re-t3-repair-1` on opus at medium effort. It added `parse.go` to the ticket 3 `Writes:` line and amended rows RE36, RE65, RE70, and RE74. The repair commit `b6262762` closes S1, S2, C1, C2, and C4:
+
+- The verification layout is now the one source of the cross-flag rule, through `form.admits` and `form.together`.
+- `evidenceIDs` in `parse.go` is the one evidence walker for `Parse` and the writer.
+- New cases grade the probe-count clause, the step 3 check on `--requirement` and `--probe-outcome`, and a duplicate ID in the completion list.
+
+The plan commit `92eee80e` assigned the fresh repair session `claude:bench-writer/re-t4-repair-1`. Its commit `5ebdb869` closes C3 with a third Standards result in the RE74 test. Both repairs are one repair cycle, so RE-C3 has used 1 of its 2 repair cycles.
+
+Each silent probe of the Coverage axis now bites, with `restored=yes`. The coordinator probe made `together` accept any flag set. `bench probe` returned `bit` on RE70 with `restored=yes`.
+
+The orchestrator re-froze RE-C3 with `bench record chunk`, with base `48ab8bdf` and tip `5ebdb869`. A fourth identity amendment moves the record plan digest to the plan at that tip.
