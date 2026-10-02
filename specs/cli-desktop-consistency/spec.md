@@ -228,6 +228,27 @@ Existing precedents and the enforcement-reader census are in [seam evidence](ass
 The same-owner transaction tests expose persistence failures.
 The real system-test process owner exposes wrapper, hook, and linked-repository integration.
 
+### Doctor-route mutation
+
+The probe owner excludes system checks from its automatic targets.
+Its documented manual route preserves the same mutation and system assertion.
+This procedure implements the `doctor-route-probe` requirement.
+The author performs each step separately and retains its result.
+
+1. Copy `cmd/bench/main.go` to a unique private backup path outside the repository.
+2. Verify that the backup exists and matches the source bytes and mode.
+3. Replace the unique `Run: adoptCommand("doctor")` with `Run: adoptCommand("setup")` in the source file.
+4. Run `bench test --check system` and retain the terminal result.
+5. Restore the preserved bytes and mode, even if the test fails unexpectedly.
+6. Verify that the restored source matches the backup.
+7. Run `bench test --check system` and require a green result.
+
+The mutated run must compile and fail TestCompatibilityMissingPath for the doctor route.
+Another failure does not prove this requirement.
+The author records the mutation outcome, failing test, exit code, and verified restoration.
+The preserved copy remains available until restoration succeeds.
+This procedure changes no production requirement or system-test obligation.
+
 ### Seam diagram
 
 ```text
@@ -488,10 +509,10 @@ Each author uses the approved model and effort.
 The initial implementation has no numeric iteration cap.
 The bounded repair policy still limits each chunk to two post-review repair cycles.
 
-Ticket 1 verifies the doctor route with the named swap probe below.
+Ticket 1 verifies the doctor route with the Doctor-route mutation procedure.
 The system check must reject that swap through TestCompatibilityMissingPath.
 After the probe restores the source, the system check must pass.
 
 ```bench-completion-plan
-{"version":2,"chunks":[{"id":"C1","tickets":["1-diagnose-interface.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility","ticket":"1-diagnose-interface.md"},{"id":"adopt","command":"bench test --package ./internal/adopt","ticket":"1-diagnose-interface.md"},{"id":"system","command":"bench test --check system","ticket":"1-diagnose-interface.md"},{"id":"doctor-route-probe","command":"bench probe cmd/bench/main.go --swap 'Run: adoptCommand(\"doctor\")' --with 'Run: adoptCommand(\"setup\")' --check system","probe":"swap","ticket":"1-diagnose-interface.md"}]},{"id":"C2","tickets":["2-repair-managed-integration.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt","ticket":"2-repair-managed-integration.md"},{"id":"system","command":"bench test --check system","ticket":"2-repair-managed-integration.md"}]},{"id":"C3","tickets":["3-check-and-qualify-sessions.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility","ticket":"3-check-and-qualify-sessions.md"},{"id":"adopt","command":"bench test --package ./internal/adopt","ticket":"3-check-and-qualify-sessions.md"},{"id":"system","command":"bench test --check system","ticket":"3-check-and-qualify-sessions.md"},{"id":"live-qualification","command":"review assets/qualification.md against the source-bound live acceptance rows","ticket":"3-check-and-qualify-sessions.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/cli-desktop-consistency/spec.md"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review actual CLI and desktop transcripts against every live acceptance row"}],"execution":{"mode":"delegate","run_id":"cli-desktop-consistency-20261002","orchestrator_session":"codex:01a0fce1-456e-7052-a8c0-8af9731da06c:/root","author_limit":1,"assignments":{"1-diagnose-interface.md":[{"session":"/root/ticket1","assignment":"f7123d5b2ad592acc6e5a239c1f1f389","model":"gpt-5.6-sol","effort":"high","source":"558524a3cd4ba865ba269d29fff6d6eeb6344939","native_ref":"codex-collaboration:/root/ticket1"}],"2-repair-managed-integration.md":[],"3-check-and-qualify-sessions.md":[]}}}
+{"version":2,"chunks":[{"id":"C1","tickets":["1-diagnose-interface.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility","ticket":"1-diagnose-interface.md"},{"id":"adopt","command":"bench test --package ./internal/adopt","ticket":"1-diagnose-interface.md"},{"id":"system","command":"bench test --check system","ticket":"1-diagnose-interface.md"},{"id":"doctor-route-probe","command":"doctor-route-system-swap: follow the Doctor-route mutation procedure","probe":"swap","ticket":"1-diagnose-interface.md"}]},{"id":"C2","tickets":["2-repair-managed-integration.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt","ticket":"2-repair-managed-integration.md"},{"id":"system","command":"bench test --check system","ticket":"2-repair-managed-integration.md"}]},{"id":"C3","tickets":["3-check-and-qualify-sessions.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility","ticket":"3-check-and-qualify-sessions.md"},{"id":"adopt","command":"bench test --package ./internal/adopt","ticket":"3-check-and-qualify-sessions.md"},{"id":"system","command":"bench test --check system","ticket":"3-check-and-qualify-sessions.md"},{"id":"live-qualification","command":"review assets/qualification.md against the source-bound live acceptance rows","ticket":"3-check-and-qualify-sessions.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/cli-desktop-consistency/spec.md"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review actual CLI and desktop transcripts against every live acceptance row"}],"execution":{"mode":"delegate","run_id":"cli-desktop-consistency-20261002","orchestrator_session":"codex:01a0fce1-456e-7052-a8c0-8af9731da06c:/root","author_limit":1,"assignments":{"1-diagnose-interface.md":[{"session":"/root/ticket1","assignment":"f7123d5b2ad592acc6e5a239c1f1f389","model":"gpt-5.6-sol","effort":"high","source":"558524a3cd4ba865ba269d29fff6d6eeb6344939","native_ref":"codex-collaboration:/root/ticket1"}],"2-repair-managed-integration.md":[],"3-check-and-qualify-sessions.md":[]}}}
 ```
