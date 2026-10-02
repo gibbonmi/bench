@@ -15,7 +15,7 @@ findings in the owner details.
 
 ## Delivery queue
 
-**FT318 (HIGH, decision required) — the review record has a native writer.**
+**FT370 (HIGH) — a comment-only correction takes the evidence-only path.**
 
 **FT290 (MEDIUM) — `bench test` projects a check's fixture family, a widened-set explanation, and a check inventory.**
 
@@ -96,6 +96,8 @@ joins seam set first.
 
 **FT353 (HIGH, decision required) — each unique unrecorded `bench/assign` ref has an owner, a deadline, and one sanctioned adopt-and-land route.**
 
+**FT371 (LOW, decision required) — a research probe runs the git behavior it studies in a scratch repository.**
+
 ## Planning, ownership, and review integrity
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
@@ -107,6 +109,8 @@ joins seam set first.
 **FT369 (MEDIUM) — the delegate charge and the slicing checks close the 2026-09-30 batch's fence and venue gaps.**
 
 **FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
+
+**FT318 (MEDIUM) — `bench record` writes the completion entry, and a record refusal names its `bench record` repair.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -209,6 +213,8 @@ qualification requirements are met.
 
 **FT355 (MEDIUM, parked pending a repro) — the OTel crash system test reaps its child and removes its own home.**
 
+**FT372 (MEDIUM, parked pending a repro) — the local-capture landing tests isolate their handoff state.**
+
 
 ## Release and bank reassessment gate
 
@@ -271,10 +277,12 @@ recommended table is sequencing advice.
 | FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
 | FT254 | FT258 | Resolution follows the `MERGE_HEAD` contract. |
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
+| FT318 | FT317 | The completion form records the decided value of a capability-blocked row. |
 
 ## Recommended sequence
 
-1. Run `/bench-shape-idea FT356` to shrink the worktree joins seam set and give its tests one verb runner.
-2. Run `/bench-implement-spec` on the FT361 light-path ticket so a plain `go test` is red only for a defect.
+1. Run `/bench-write-spec FT356` from `decisions/worktree-seams.md` to shrink the worktree joins seam set.
+2. Run `/bench-write-spec FT370` so a comment-only correction takes the evidence-only path.
+3. Run `/bench-implement-spec` on the FT361 light-path ticket so a plain `go test` is red only for a defect.
 
 The section order supplies the larger sequence. It does not create new literal dependencies.
