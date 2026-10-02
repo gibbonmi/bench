@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:093c4c248fecf5d15de0dcdc6d9e9ee4aea44a81e018d3c55eb8da878b87648a",
+  "plan_digest": "sha256:5966053e1bab7c73f53115a6306765d64ec89aa2a31199ba1b01916cf295d73e",
   "implementation_session": "",
   "chunks": [
     {
@@ -387,9 +387,9 @@
     {
       "id": "SR-C3",
       "base": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
-      "tip": "c87a0c3f7953210e3d22c356e948e9e15c302be0",
-      "plan_digest": "sha256:093c4c248fecf5d15de0dcdc6d9e9ee4aea44a81e018d3c55eb8da878b87648a",
-      "source_digest": "e4719dd4ab867d4c42f3895a6da8f5a0389c709e",
+      "tip": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+      "plan_digest": "sha256:5966053e1bab7c73f53115a6306765d64ec89aa2a31199ba1b01916cf295d73e",
+      "source_digest": "10868402ca906886b2bab1c1cfd2a26b5e6e5cac",
       "acceptance_rows": [
         "WS17",
         "WS18",
@@ -415,6 +415,24 @@
             "ref": "claude:agent/sr-t3-author-20261002@1ab5800b8fb669b26a247d8f585bf21e946863a9",
             "digest": "sha256:14202756bb46a1dda9fd07be5fbd0cc659f5cd31597a1c514f45a9f32ac9b7f3",
             "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,c87a0c3f7953210e3d22c356e948e9e15c302be0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,58564\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "3-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c3-3-worktree-repair1",
+          "performer": "claude:bench-writer/sr-t3-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "10868402ca906886b2bab1c1cfd2a26b5e6e5cac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t3-repair1-20261002@021180277772df06c294bf7e9dba19af786fb963",
+            "digest": "sha256:208ce763f480d30eb937a45fc19da4d2e701d4f52a87bab3483b64b05f11c5fb",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,c63781f2dae7823e7508e70b04d2ca2cdb76634d,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,59481\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
           },
           "requirement": "3-worktree",
           "command": "bench test --package ./internal/worktree",
@@ -538,6 +556,21 @@
           "SR-C2"
         ]
       }
+    },
+    {
+      "from": "sha256:093c4c248fecf5d15de0dcdc6d9e9ee4aea44a81e018d3c55eb8da878b87648a",
+      "to": "sha256:5966053e1bab7c73f53115a6306765d64ec89aa2a31199ba1b01916cf295d73e",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ],
+        "SR-C3": [
+          "SR-C3"
+        ]
+      }
     }
   ]
 }
@@ -657,3 +690,11 @@ Count: 0. The axis ran 5 probes: 2 returned `bit`, and 3 returned `silent` on co
 - A `mergeOwner` that reads the process kit passes WS17 to WS23, because the test run binds `BENCH_KIT` apart from each target. The census of SR-C6 reports that read.
 - A malformed target manifest at merge has no test, and a target with no declared lane has no test. Both gaps are older than this chunk.
 - `merge_caller_root_test.go` now holds the shared lane fixture, so its name does not describe its content.
+
+## SR-C3 repair cycle 1
+
+One fresh opus / high repair session, `claude:bench-writer/sr-t3-repair1`, repaired the one target of S1 and P1 in commit `c63781f2`. The session used 1 of 2 attempts and 1 lane pass. The repair allowance of SR-C3 is 2 cycles, and 1 cycle is used.
+
+The WS22 test now commits a failing lane on the primary checkout. Only a merge that resolves its lane at the caller root reads that lane. The comment states that mechanism. The named swap probe in `merge.go` was `silent` before the repair and `bit` after it. A second probe moved the authorize root in `internal/landing/merge.go`, and it returned `bit`, so the grading-root catch still holds.
+
+The coordinator ran the named swap probe on the repaired tree. It returned `bit` with 1 failed test and `restored=yes`. That probe repeats the site of the repair session, so the confirming Coverage axis runs another mutation.
