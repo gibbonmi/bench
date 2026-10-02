@@ -18,11 +18,25 @@ const (
 	CodexDesktop Interface = "codex-desktop"
 )
 
+func interfaces() []Interface {
+	return []Interface{CodexCLI, CodexDesktop}
+}
+
+// InterfaceOperand renders the accepted interface vocabulary for command usage.
+func InterfaceOperand() string {
+	names := []string{}
+	for _, selected := range interfaces() {
+		names = append(names, string(selected))
+	}
+	return "<" + strings.Join(names, "|") + ">"
+}
+
 // ParseInterface accepts the complete compatibility interface vocabulary.
 func ParseInterface(value string) (Interface, bool) {
-	switch Interface(value) {
-	case CodexCLI, CodexDesktop:
-		return Interface(value), true
+	for _, selected := range interfaces() {
+		if string(selected) == value {
+			return selected, true
+		}
 	}
 	return "", false
 }
@@ -50,12 +64,17 @@ type FileFact struct {
 	Source string
 	State  bounds.FileState
 	Reason string
+	digest string
 }
 
 // ReadFile classifies one compatibility input without opening a special file.
 func ReadFile(path, source string) FileFact {
 	classified := bounds.Classify(path, bounds.ControlRecordLimit)
-	return FileFact{Path: path, Source: source, State: classified.State, Reason: classified.Reason}
+	fact := FileFact{Path: path, Source: source, State: classified.State, Reason: classified.Reason}
+	if classified.State == bounds.StateParsed || classified.State == bounds.StateEmpty {
+		fact.digest = fmt.Sprintf("%x", sha256.Sum256(classified.Data))
+	}
+	return fact
 }
 
 // Asset is one required repository asset and its supported restoration action.
@@ -116,14 +135,28 @@ type Report struct {
 
 // Fingerprint identifies the compatibility observation context.
 func Fingerprint(context Context) string {
-	hash := sha256.New()
-	for _, value := range []string{
+	return fingerprint(
 		string(context.Interface), context.Repository.Value, context.Repository.Source,
 		context.Environment.Value, context.Environment.Source,
 		context.ConfigurationHome.Value, context.ConfigurationHome.Source,
 		context.ActiveRuntime.Value, context.ActiveRuntime.Source,
 		context.PolicyProvenance.Value, context.PolicyProvenance.Source,
-	} {
+	)
+}
+
+// PolicyProvenance identifies inspected policy files without retaining their contents.
+func PolicyProvenance(files ...FileFact) Fact {
+	values, sources := []string{}, []string{}
+	for _, file := range files {
+		values = append(values, file.Path, string(file.State), file.digest)
+		sources = append(sources, file.Source+": "+file.Path+" ("+string(file.State)+")")
+	}
+	return Fact{Value: fingerprint(values...), Source: strings.Join(sources, "; ")}
+}
+
+func fingerprint(values ...string) string {
+	hash := sha256.New()
+	for _, value := range values {
 		fmt.Fprintf(hash, "%d:%s\n", len(value), value)
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil))

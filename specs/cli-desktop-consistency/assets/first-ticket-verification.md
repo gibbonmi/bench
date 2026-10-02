@@ -82,3 +82,5 @@ The complete restored evidence command package passed with no skips in 39242 mil
 
 The same gate reported changes to three ignored build artifacts.
 Their writer remains under investigation; that gate is not accepted as green.
+
+The current repair evidence is in [repair cycle 1](repair-cycle-1.md).

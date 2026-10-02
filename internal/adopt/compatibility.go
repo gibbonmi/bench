@@ -18,7 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-const compatibilityDoctorUsage = "usage: bench doctor --compat <codex-cli|codex-desktop>"
+var compatibilityDoctorUsage = "usage: bench doctor --compat " + compatibility.InterfaceOperand()
 
 var (
 	doctorGrammar = usage.Grammar{
@@ -33,6 +33,12 @@ var (
 		MaxArgs: 1,
 	}
 )
+
+// DoctorHelpSuffix derives the public help suffix from the accepted doctor grammars.
+func DoctorHelpSuffix() string {
+	const prefix = "usage: bench doctor"
+	return strings.TrimPrefix(doctorGrammar.Help, prefix) + " |" + strings.TrimPrefix(compatibilityGrammar.Help, prefix)
+}
 
 func Doctor(args []string, stdout, stderr io.Writer, version string) int {
 	if len(args) > 0 && args[0] == "--compat" {
@@ -115,7 +121,7 @@ func collectCompatibility(selected compatibility.Interface) compatibility.Input 
 	}
 	hook := compatibility.ReadFile(filepath.Join(root, ".codex", "hooks.json"), "repository hook declaration")
 	input.HookDeclared = hook.State == "parsed"
-	input.Context.PolicyProvenance = compatibility.Fact{Value: string(hook.State), Source: hook.Path}
+	input.Context.PolicyProvenance = compatibility.PolicyProvenance(input.Configuration, hook)
 	wrapper, _ := linkDestination("bin/bench.sh")
 	if gate.KitSourceCheckout(root) {
 		wrapper = "bin/bench.sh"
@@ -132,7 +138,10 @@ func configurationHome(selected compatibility.Interface) compatibility.Fact {
 	if selected == compatibility.CodexDesktop {
 		return compatibility.Fact{Source: "CODEX_HOME unavailable for selected desktop interface"}
 	}
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return compatibility.Fact{Source: "HOME default unavailable"}
+	}
 	return compatibility.Fact{Value: filepath.Join(home, ".codex"), Source: "HOME default"}
 }
 

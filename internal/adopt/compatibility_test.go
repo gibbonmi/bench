@@ -196,3 +196,14 @@ func TestCompatibilityCanonicalAssetsWithoutManifest(t *testing.T) {
 		t.Fatalf("canonical asset census missing hook=%v binary=%v", foundHook, foundBinary)
 	}
 }
+
+func TestCompatibilityMissingConfigurationHome(t *testing.T) {
+	t.Setenv("CODEX_HOME", "")
+	t.Setenv("HOME", "")
+	for _, selected := range []compatibility.Interface{compatibility.CodexCLI, compatibility.CodexDesktop} {
+		got := configurationHome(selected)
+		if got.Value != "" || got.Source == "" {
+			t.Errorf("%s missing home = %#v, want unknown with provenance", selected, got)
+		}
+	}
+}

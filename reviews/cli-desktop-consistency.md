@@ -2,7 +2,9 @@
 
 C1 has five findings and five repair targets.
 Repair cycle 1 of 2 is authorized in the user-selected session.
-No repair cycle has completed yet.
+Repair cycle 1 has completed its author verification.
+One repair cycle remains.
+Independent confirmation is pending for all five findings.
 The source stays unqualified until current reviews and its checkpoint pass.
 
 ## Standards

@@ -8,6 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	toonlib "github.com/toon-format/toon-go"
+
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -35,7 +38,18 @@ func TestCompatibilityPaths(t *testing.T) {
 	}
 }
 
+type compatibilitySession struct {
+	repo, wrapper, working string
+	homes                  [2]string
+	overrides              []string
+}
+
 func runCompatibilityDoctor(t *testing.T) (processResult, string, string) {
+	fixture := newCompatibilitySession(t)
+	return fixture.run(t, "codex-cli"), fixture.repo, fixture.wrapper
+}
+
+func newCompatibilitySession(t *testing.T) compatibilitySession {
 	t.Helper()
 	repo := owner.repos[0]
 	if result := owner.runSelected(repo, "link", "copy"); result.code != 0 {
@@ -46,24 +60,139 @@ func runCompatibilityDoctor(t *testing.T) (processResult, string, string) {
 		t.Fatal(err)
 	}
 	home := t.TempDir()
-	configHome := filepath.Join(home, "configuration home [desktop]*")
-	if err := os.MkdirAll(configHome, 0o755); err != nil {
-		t.Fatal(err)
+	fixture := compatibilitySession{
+		repo: repo, working: working, wrapper: filepath.Join(repo, ".bench", "bin", "bench.sh"),
+		homes: [2]string{filepath.Join(home, "cli home [personal]*"), filepath.Join(home, "desktop home [personal]*")},
+		overrides: []string{
+			"BENCH_HOME=" + filepath.Join(home, ".bench"), "BENCH_KIT=" + owner.kit,
+			"BENCH_RUN_BINARY=" + owner.selected.path, "HOME=" + home,
+			"PATH=" + privateToolPath(t, "git", "bash", "uname", "dirname", "basename", "readlink", "tr"),
+		},
 	}
-	if err := os.WriteFile(filepath.Join(configHome, "config.toml"), []byte("model = \"personal\"\n"), 0o600); err != nil {
-		t.Fatal(err)
+	for _, configHome := range fixture.homes {
+		if err := os.MkdirAll(configHome, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(configHome, "config.toml"), []byte("model = \"personal\"\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
 	}
-	wrapper := filepath.Join(repo, ".bench", "bin", "bench.sh")
-	overrides := []string{
-		"BENCH_HOME=" + filepath.Join(home, ".bench"),
-		"BENCH_KIT=" + owner.kit,
-		"BENCH_RUN_BINARY=" + owner.selected.path,
-		"CODEX_HOME=" + configHome,
-		"HOME=" + home,
-		"PATH=" + privateToolPath(t, "git", "bash", "uname", "dirname", "basename", "readlink", "tr"),
+	return fixture
+}
+
+func (fixture compatibilitySession) run(t *testing.T, selected string) processResult {
+	t.Helper()
+	home := fixture.homes[0]
+	if selected == "codex-desktop" {
+		home = fixture.homes[1]
 	}
+	overrides := append(append([]string{}, fixture.overrides...), "CODEX_HOME="+home)
 	if err := owner.observeSelected(); err != nil {
 		t.Fatal(err)
 	}
-	return owner.runAt(working, overrides, "bash", wrapper, "doctor", "--compat", "codex-cli"), repo, wrapper
+	return owner.runAt(fixture.working, overrides, "bash", fixture.wrapper, "doctor", "--compat", selected)
+}
+
+func compatibilityContext(t *testing.T, result processResult) map[string]string {
+	t.Helper()
+	if result.code != 1 || result.stderr != "" {
+		t.Fatalf("compatibility result = %#v", result)
+	}
+	output := result.stdout
+	if spill, ok := responseboundtest.Find(output); ok {
+		output = readSpillFile(t, spill.Path)
+	}
+	decoded, err := toonlib.DecodeString(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, ok := decoded.(map[string]any)
+	if !ok {
+		t.Fatalf("compatibility document = %T", decoded)
+	}
+	rows, ok := document["context"].([]any)
+	if !ok {
+		t.Fatalf("compatibility context = %T", document["context"])
+	}
+	values := map[string]string{}
+	for _, row := range rows {
+		cells, ok := row.(map[string]any)
+		if !ok {
+			t.Fatalf("compatibility row = %T", row)
+		}
+		field, fieldOK := cells["field"].(string)
+		value, valueOK := cells["value"].(string)
+		if !fieldOK || !valueOK {
+			t.Fatalf("compatibility row = %#v", cells)
+		}
+		values[field] = value
+	}
+	return values
+}
+
+func TestCompatibilityCollectorInterfaces(t *testing.T) {
+	fixture := newCompatibilitySession(t)
+	for _, selected := range []string{"codex-cli", "codex-desktop"} {
+		t.Run(selected, func(t *testing.T) {
+			context := compatibilityContext(t, fixture.run(t, selected))
+			if context["interface"] != selected {
+				t.Fatalf("selected interface = %q, want %q", context["interface"], selected)
+			}
+		})
+	}
+}
+
+func TestCompatibilityCollectorReadOnly(t *testing.T) {
+	fixture := newCompatibilitySession(t)
+	before := map[string][]byte{}
+	for _, home := range fixture.homes {
+		path := filepath.Join(home, "config.toml")
+		var err error
+		before[path], err = os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, selected := range []string{"codex-cli", "codex-desktop"} {
+		t.Run(selected, func(t *testing.T) {
+			compatibilityContext(t, fixture.run(t, selected))
+			for path, want := range before {
+				got, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if string(got) != string(want) {
+					t.Errorf("inspection changed configuration %s", path)
+				}
+			}
+		})
+	}
+}
+
+func TestCompatibilityCollectorPolicyFingerprint(t *testing.T) {
+	fixture := newCompatibilitySession(t)
+	hookPath := filepath.Join(fixture.repo, ".codex", "hooks.json")
+	original, err := os.ReadFile(hookPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.WriteFile(hookPath, original, 0o644); err != nil {
+			t.Error(err)
+		}
+	})
+	previous := compatibilityContext(t, fixture.run(t, "codex-cli"))["compatibility-fingerprint"]
+	for _, policy := range []struct{ path, body string }{
+		{hookPath, `{"hooks":{"SessionStart":[]}}`},
+		{filepath.Join(fixture.homes[0], "config.toml"), "approval_policy = \"untrusted\"\n"},
+	} {
+		if err := os.WriteFile(policy.path, []byte(policy.body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		current := compatibilityContext(t, fixture.run(t, "codex-cli"))["compatibility-fingerprint"]
+		if current == "" || current == previous {
+			t.Errorf("policy change at %s retained fingerprint %q", policy.path, current)
+		}
+		previous = current
+	}
 }

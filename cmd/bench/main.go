@@ -1,5 +1,4 @@
-// Command bench is the compiled core of the Bench kit. The shell CLI routes every
-// compiled subcommand through the production registry below.
+// Command bench routes compiled subcommands through the production registry.
 package main
 
 import (
@@ -11,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/consumers"
@@ -139,7 +139,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "setup", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 0, Suffix: " [--plan|--yes]", Description: "inspect, preview, and converge the current repository"}), Bound: boundExempt(boundReasonTerminal), Scope: scopeTree, Run: adoptCommand("setup")},
 	{Name: "link", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 1, Suffix: " [copy|symlink]", Description: "safely wire the kit into this repo for every harness"}), Bound: boundResponse, Scope: scopeTree, Run: adoptCommand("link")},
 	{Name: "init", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 2, Description: "scaffold .bench/gate.sh in the current repo"}), Bound: boundResponse, Scope: scopeTree, Run: adoptCommand("init")},
-	{Name: "doctor", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 24, Suffix: " [--fix] | --compat <codex-cli|codex-desktop>", Description: "report shim health or inspect one Codex interface"}), Bound: boundResponse, Scope: scopeRepository, Run: adoptCommand("doctor")},
+	{Name: "doctor", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 24, Suffix: adopt.DoctorHelpSuffix(), Description: "report shim health or inspect one Codex interface"}), Bound: boundResponse, Scope: scopeRepository, Run: adoptCommand("doctor")},
 	{Name: "unlink", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 3, Suffix: " [--dry-run]", Description: "remove the per-repo Bench footprint the manifest records"}), Bound: boundResponse, Scope: scopeTree, Run: adoptCommand("unlink")},
 	{Name: "upgrade", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 4, Suffix: " [--check] [--force]", Description: "plan and apply a relink onto the installed kit version"}), Bound: boundResponse, Scope: scopeTree, Run: adoptCommand("upgrade")},
 	{Name: "worktree-hook", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return harness.WorktreeCommand(args, c.Stdin, c.Stdout, c.Stderr) }},
