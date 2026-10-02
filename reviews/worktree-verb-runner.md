@@ -888,6 +888,19 @@ The VR-C4 repair landed after the first rerun, so the ticket 9 author ran the pa
 
 The VR-C4 repair landed after ticket 10, so the ticket 10 author ran the package tests again on the final chunk source at `1bf5404dfffea87254fb0e20b5591a948c1be9ad`. `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds this result as `vr-c4-10-worktree-r2`.
 
+## VR-C4 chunk review, round 2
+
+This round confirms repair 1 of VR-C4. The frozen pair is base `7fa02b429a66aa71b4303e483b82e074622c80bd` and tip `5e78316970d6bca2c9e26fd40a721c8c7b611971`. The shared evidence is `sha256:82333a626d8f29b071758b13b37a20de67fafa2cb8d033ff820a0214d0237822`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the repair delta `7b8477d7..5e783169`. Only the Coverage axis ran tests and probes, and it left the tree clean.
+
+The raw finding count is 3: Standards 2, Spec 1, and Coverage 0. R21, R22, R23, and R24 hold. The Standards and Spec axes found the same record defect, R26.
+
+- R25: the comment at `land_fixtures_test.go:28` says that the value's call runs a verb at the fixture home. The `call` method builds a call and runs no verb. The comment must state the current code. `auto-fix`. Confidence 7.
+- R26: the repair record filed `vr-c4-8-worktree-r3` in the VR-C4 review list instead of the verification list. The record parser refuses that entry, and ticket 8 then has no current verification. This commit moves the entry to the verification list. `auto-fix`. Confidence high.
+
+R25 changes a code comment, so it takes repair cycle 2 of 2 for VR-C4. That is the last cycle that the bounded repair policy allows for this chunk.
+
+The Coverage axis found no gap. Two probes of the unsafe-path refusal bit the three R21 tests, so each landing still uses the fixture home. No assertion count fell, and all 688 top-level tests pass.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2161,6 +2174,24 @@ The VR-C4 repair landed after ticket 10, so the ticket 10 author ran the package
           "requirement": "10-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
+        },
+        {
+          "id": "vr-c4-8-worktree-r3",
+          "performer": "claude:bench-writer/vr-t8-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e262977b665cccc76f93fc770af264a901d1e5d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t8-repair-1-20261001/8-worktree@c03908e7",
+            "digest": "sha256:1015348fc29cbffdee0640efa99d9ba54028b66dbab2c6dcc7fc50bf597f2ae5",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62147\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "8-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -2230,22 +2261,75 @@ The VR-C4 repair landed after ticket 10, so the ticket 10 author ran the package
           "supersedes": []
         },
         {
-          "id": "vr-c4-8-worktree-r3",
-          "performer": "claude:bench-writer/vr-t8-repair-1",
-          "role": "author-verification",
+          "id": "vr-c4-standards-r2",
+          "performer": "claude:bench-reviewer/vr-c4-standards-r2",
+          "role": "independent-review",
           "model": "opus",
-          "effort": "medium",
+          "effort": "high",
+          "source_digest": "e262977b665cccc76f93fc770af264a901d1e5d9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c4-standards-r2@5e783169",
+            "digest": "sha256:792e953c471aa20436b7c92412d2ce5c478644fc11c79be220b9ea55ab86d66b",
+            "excerpt": "Standards: 2 findings. R21 to R24 hold; the fixture comment says call runs a verb, and the ticket 8 rerun entry sits in the review list."
+          },
+          "axis": "Standards",
+          "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "tip": "5e78316970d6bca2c9e26fd40a721c8c7b611971",
+          "finding_ids": [
+            "R25",
+            "R26"
+          ],
+          "supersedes": [
+            "vr-c4-standards-r1"
+          ]
+        },
+        {
+          "id": "vr-c4-spec-r2",
+          "performer": "claude:bench-reviewer/vr-c4-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e262977b665cccc76f93fc770af264a901d1e5d9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c4-spec-r2@5e783169",
+            "digest": "sha256:7fd87d1a9ae5a920a07da7f1448434cb9f3d7b33a6f2eac13b215ebd1e1a98b3",
+            "excerpt": "Spec: 1 finding. The plan and repair commits hold; vr-c4-8-worktree-r3 sits in the review list, so the record cannot decode."
+          },
+          "axis": "Spec",
+          "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "tip": "5e78316970d6bca2c9e26fd40a721c8c7b611971",
+          "finding_ids": [
+            "R26"
+          ],
+          "supersedes": [
+            "vr-c4-spec-r1"
+          ]
+        },
+        {
+          "id": "vr-c4-coverage-r2",
+          "performer": "claude:bench-reviewer/vr-c4-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
           "source_digest": "e262977b665cccc76f93fc770af264a901d1e5d9",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
-            "ref": "claude:agent/vr-t8-repair-1-20261001/8-worktree@c03908e7",
-            "digest": "sha256:1015348fc29cbffdee0640efa99d9ba54028b66dbab2c6dcc7fc50bf597f2ae5",
-            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62147\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+            "ref": "claude:agent/vr-c4-coverage-r2@5e783169",
+            "digest": "sha256:537a15c6dfe9d10cd070f42b3c483efd07a762bc4dc6684260cdc2e6e0f4dd0f",
+            "excerpt": "Coverage: 0 findings. Two unsafe-path probes bit the R21 tests; no assertion count fell and 688 tests pass."
           },
-          "requirement": "8-worktree",
-          "command": "bench test --package ./internal/worktree",
-          "exit_code": 0
+          "axis": "Coverage",
+          "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "tip": "5e78316970d6bca2c9e26fd40a721c8c7b611971",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c4-coverage-r1"
+          ]
         }
       ]
     }
