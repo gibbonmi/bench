@@ -135,6 +135,23 @@ func TestRecordAmendmentRefusesAMapToAnUnplannedChunk(t *testing.T) {
 	refuseArgs(t, f, "chunk 9 ", amendArgs(t, "1=9"))
 }
 
+func TestRecordAmendmentRefusesAnUnresolvableChain(t *testing.T) {
+	f := recorded(t, 1)
+	original := f.Plan.FinalVerification[0].Command
+	replan(f, "go test -count=1 ./...")
+	amend(t, f)
+	replan(f, original)
+	amend(t, f)
+	replan(f, "go test -count=2 ./...")
+	refuseArgs(t, f, "ambiguous", amendArgs(t))
+}
+
+func TestRecordAmendmentRefusesAControlCharacter(t *testing.T) {
+	f := recorded(t, 1)
+	replan(f, "go test -count=1 ./...")
+	refuseArgs(t, f, "--map", amendArgs(t, "1=1\x1b"))
+}
+
 func TestRecordAmendmentNeedsARecord(t *testing.T) {
 	f := linked(t, 1)
 	replan(f, "go test -count=1 ./...")

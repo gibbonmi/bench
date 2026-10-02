@@ -188,7 +188,8 @@ func mappedIDs(record Record, from, to, id string) ([]string, error) {
 // are the recorded chunk IDs under the old digest: mappedIDs maps each recorded chunk
 // through the earlier amendments, so the checkpoint and the amendment read one rule. A
 // key maps to itself unless changes names it, and every target must be a chunk of the new
-// plan. The answer is the amendment as written.
+// plan. Every recorded chunk must then map through the amended chain to the new digest,
+// or the write refuses. The answer is the amendment as written.
 func RecordAmendment(root, spec, source string, changes map[string][]string) (Amendment, error) {
 	_, plan, err := atSource(root, spec, source)
 	if err != nil {
@@ -235,6 +236,11 @@ func RecordAmendment(root, spec, source string, changes map[string][]string) (Am
 		}
 		record.Amendments = append(record.Amendments, entry)
 		record.PlanDigest = plan.Digest
+		for _, chunk := range record.Chunks {
+			if _, err := mappedIDs(*record, chunk.PlanDigest, record.PlanDigest, chunk.ID); err != nil {
+				return fmt.Errorf("chunk %s: %w", chunk.ID, err)
+			}
+		}
 		return nil
 	})
 	return entry, err
