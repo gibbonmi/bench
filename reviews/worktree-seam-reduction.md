@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:95ef920682e0f9d2435c9039e08c695a98cb84672588ce022c2fca8739207909",
+  "plan_digest": "sha256:b38e9b91d8eb294528ff65bd357a932729a154a078d2b43a567a1ccd8c1af5b1",
   "implementation_session": "",
   "chunks": [
     {
@@ -848,9 +848,9 @@
     {
       "id": "SR-C5",
       "base": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
-      "tip": "564f4d46cc32fb52362fd6fae155650eff6a2386",
-      "plan_digest": "sha256:51ad7a6d49d9463fef52cfbc1b030ac044f788edc040912f5c21ed88095c1db8",
-      "source_digest": "6e6196b191ad82fc088945c0c007df503bc5ce99",
+      "tip": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+      "plan_digest": "sha256:b38e9b91d8eb294528ff65bd357a932729a154a078d2b43a567a1ccd8c1af5b1",
+      "source_digest": "70eff00c9479d016b8985280467b6e97e19d14eb",
       "acceptance_rows": [
         "WS46",
         "WS47",
@@ -936,6 +936,78 @@
             "ref": "claude:agent/sr-b1-author-20261002@eeeaa7594e1fdbe79e378d85975bddd34bdfb93c",
             "digest": "sha256:8ddfa2879d6b575fc26e505de55ef4b16f96173b9222cd9ad5b7aaf3e7f80af3",
             "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,ab0977716fc64b07043af152d7e7fc79fa6137d6,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,54739\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,capability: fifo: unix sockets unavailable\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,capability: fifo: unix sockets unavailable\n"
+          },
+          "requirement": "10-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c5-7-worktree-repair1",
+          "performer": "claude:bench-writer/sr-t7-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "70eff00c9479d016b8985280467b6e97e19d14eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t7-repair1-20261002@f2b6ae7919a94ae0a55388a74afa8794573143f4",
+            "digest": "sha256:3564f22f22c8a6880b86d6e2d64816a06bd72508ec55ac2e1bbedbbfdd5bc199",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,e3c45d466cc083e0bd091e0ab9228e57ad94d8ff,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,55247\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix ... (265 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix ... (279 bytes)\"\n"
+          },
+          "requirement": "7-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c5-8-worktree-repair1",
+          "performer": "claude:bench-writer/sr-t8-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "70eff00c9479d016b8985280467b6e97e19d14eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t8-repair1-20261002@f2b6ae7919a94ae0a55388a74afa8794573143f4",
+            "digest": "sha256:672226ded948e91da301c3d23384f3b36a656c3f75771be6ddc19b548aab8d52",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,e3c45d466cc083e0bd091e0ab9228e57ad94d8ff,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,55014\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "8-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c5-9-worktree-r2",
+          "performer": "claude:bench-writer/sr-b1-author/t9",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "70eff00c9479d016b8985280467b6e97e19d14eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-b1-author-20261002@eeeaa7594e1fdbe79e378d85975bddd34bdfb93c",
+            "digest": "sha256:64d4584f02747bc15e4a3497661f44899bf7ad8b52854dbf806911caff9b1885",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,e3c45d466cc083e0bd091e0ab9228e57ad94d8ff,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,54803\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,clean_landed_hostile_test.go:98: unix sockets unavailable\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,capability: fifo: unix sockets unavailable\n"
+          },
+          "requirement": "9-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c5-10-worktree-r2",
+          "performer": "claude:bench-writer/sr-b1-author/t10",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "70eff00c9479d016b8985280467b6e97e19d14eb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-b1-author-20261002@eeeaa7594e1fdbe79e378d85975bddd34bdfb93c",
+            "digest": "sha256:64d4584f02747bc15e4a3497661f44899bf7ad8b52854dbf806911caff9b1885",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,e3c45d466cc083e0bd091e0ab9228e57ad94d8ff,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,54803\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,clean_landed_hostile_test.go:98: unix sockets unavailable\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,capability: fifo: unix sockets unavailable\n"
           },
           "requirement": "10-worktree",
           "command": "bench test --package ./internal/worktree",
@@ -1128,6 +1200,27 @@
         ],
         "SR-C4": [
           "SR-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:95ef920682e0f9d2435c9039e08c695a98cb84672588ce022c2fca8739207909",
+      "to": "sha256:b38e9b91d8eb294528ff65bd357a932729a154a078d2b43a567a1ccd8c1af5b1",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ],
+        "SR-C3": [
+          "SR-C3"
+        ],
+        "SR-C4": [
+          "SR-C4"
+        ],
+        "SR-C5": [
+          "SR-C5"
         ]
       }
     }
@@ -1346,3 +1439,13 @@ Count: 1. Worst: C1.
 - `inventoryIgnored` keeps an unused joins parameter, and `mergeSet.joins` is dead state. The tickets 11 and 14 hold those files.
 - No row pins where the clean verb and the land verb send their warnings.
 - A warning that moves after the removal stays green. This was true before the change.
+
+## SR-C5 repair cycle 1
+
+Two fresh opus / high repair sessions ran in series, one for each affected ticket. Each session used 1 of 2 attempts and 1 lane pass. The repair allowance of SR-C5 is 2 cycles, and 1 cycle is used.
+
+- Ticket 7, `claude:bench-writer/sr-t7-repair1`, commit `f1d4ccaa`. C1: the WS46 test now also requires the ignored-inventory reason, which it takes from `lifecyclepolicy.DecideExplicit`. The named swap probe in `clean.go` was `silent` before the repair and `bit` after it. S3: each of the three comments now says only that the code writes to the ambient warnings writer.
+- Ticket 8, `claude:bench-writer/sr-t8-repair1`, commit `e3c45d46`. S1: the unlock-failure case takes the admin directory from `git.AdminDir`. A swap of the mode `0o500` for `0o700` returned `bit`.
+- P1 and P2: the plan commit `29f075b5` amended the catch clauses of WS51 and WS46.
+
+The coordinator ran one independent probe on each repair, and each returned `bit` with `restored=yes`. The first made the stat branch return no error in `clean.go`. The second pointed `git.AdminDir` at the repository root in the reauthorize test.
