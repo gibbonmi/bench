@@ -5,14 +5,58 @@
 C1 passed checkpoint 20261002T210556.743855582Z-3008930.
 C2 source 589ab085cd5dbf4e691c79fa3f6f696acb7e886b passed its commit lane and build preflight.
 All five required C2 author results are recorded below against that source.
-The final sealed system suite passed in 88274 milliseconds with no skips.
-The source tree is clean before record preparation.
+Three independent native axes reviewed the clean source through record commit 54ece5c17b26dcc5de840fb06317846a155cf67c.
+The C2 completion checkpoint remains pending.
 
-C2 native review and its completion checkpoint remain pending.
+The initial reviews retain five findings across four repair targets.
 C2 has consumed zero post-review repair cycles.
-Its initial implementation included one preservation hardening pass.
-The original approved author session retains implementation and repairs.
+The first cycle will address all four targets in the original approved author session.
+The allowance is two cycles, and the initial preservation hardening pass remains separate.
 C3 remains unimplemented and requires actual CLI and desktop qualification.
+
+## Standards
+
+Count: one retained finding. Worst issue: S2.
+
+S2 is auto-fix, with confidence 9.
+DATA_HANDLING.md repeats executable namespace, mode, lock, and fault-grammar facts.
+The cited owners are compatibility.go:243, transaction/journal.go:25-30, transaction/lock.go:24-30,55-60, and transaction.go:96-101 under internal/adopt.
+AGENTS.md:34-48 requires one source per fact.
+The repair will reference these owners instead of copying their values.
+
+The issuing axis refuted S1 as no-op, with confidence 10.
+The approved C3 ticket owns the required typed CHANGELOG entry before final adoption.
+The initial S1 occurrence and its clarification remain in the native excerpt.
+
+## Spec
+
+Count: one finding. Worst issue: SP-C2-1.
+
+SP-C2-1 is auto-fix, with confidence 9.
+The spec requires undo to match the repair postimage identity at spec.md:159 and CD32.
+The journal drops the in-memory identity, and undo compares only content, kind, and mode.
+The cited sources are transaction/image.go:14,55-66, journal.go:15,71, and transaction.go:180,204 under internal/adopt.
+A replacement inode with identical bytes and mode must remain untouched.
+
+## Coverage
+
+Count: three findings. Worst issue: C2-COV-1.
+C2-COV-1 is auto-fix, with confidence 10.
+CD35 requires the final identity check after temporary-file preparation and immediately before publication.
+The current check precedes that preparation at transaction.go:123-132 and image.go:78-123 under internal/adopt/transaction.
+The issuing axis excludes atomic compare-and-rename against non-cooperating writers from this target.
+
+C2-COV-2 is auto-fix, with confidence 10.
+It folds with SP-C2-1 into one retained-identity repair target.
+Its test must replace a postimage with a different inode that has the same bytes and mode.
+
+C2-COV-3 is auto-fix, with confidence 9.
+CD36 requires every unresolved restore target to be reported.
+The first validation loop returns on its first failure at internal/adopt/transaction/transaction.go:171-192.
+A multiple-target refusal test must prove complete reporting before any restore.
+
+No axis retained optional advice or required an implementation-command change.
+The native excerpts retain each axis's read scope and current source binding.
 
 ## Earlier C1 records
 
@@ -1267,7 +1311,76 @@ No review requested a Bench command change.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-standards-initial",
+          "performer": "/root/c2_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:/root/c2_standards",
+            "digest": "sha256:107051b3d909f334938208e5ba0e9e53416990b545968f426879e67f4d51bf32",
+            "excerpt": "Standards, gpt-5.6-sol/high, one iteration.\nBinding: 3c3c1a012be244795f9a1a2841b6b351686231c9..54ece5c17b26dcc5de840fb06317846a155cf67c. Current=true, dirty=false, delivery unverified.\nRead scope: evidence index and s1-s8, s43, s44 as applicable; complete spec and C2 ticket; one frozen diff; AGENTS, BENCH, profile, review/delegation/comment/synthesis disciplines; untouched consumers first; production source, verification record, CHANGELOG.\nS1 — auto-fix, confidence 10: public fix/undo syntax (compatibility.go:26-40,227-289) has no typed CHANGELOG entry required by craft-synthesis:73-75. CHANGELOG is in the spec fence but outside C2 Writes.\nS2 — auto-fix, confidence 9: DATA_HANDLING.md:173-196 independently re-authors executable namespace/mode/lock/fault-grammar facts owned by compatibility.go:243, transaction/journal.go:25-30, transaction/lock.go:24-30,55-60, transaction.go:96-101. AGENTS.md:34-48 prohibits duplicated knowledge, including enforcement and advertisement.\nRaw findings: 2. Worst: S2. Optional advice: none. No tests or probes ran. No command change necessary.\nClaim: claimed, confidence 9.\n\nIssuing-axis clarification: The approved C3 ownership and timing refute S1 at the C2 checkpoint. craft-synthesis requires a typed CHANGELOG entry for user-visible behavior, but it does not require that entry in the same implementation chunk. The build has not reached final adoption or landing, and the approved later ticket owns CHANGELOG.md. I found no rule requiring the entry before C3.\nDisposition for S1: no-op / refuted, confidence 10. Retain the CHANGELOG entry as a mandatory C3/final-reconciliation obligation.\nRevised Standards result: 1 raw finding and 1 repair target; S2 remains the sole finding and worst issue. Claim: status=claimed, confidence=10.\n"
+          },
+          "axis": "Standards",
+          "base": "3c3c1a012be244795f9a1a2841b6b351686231c9",
+          "tip": "589ab085cd5dbf4e691c79fa3f6f696acb7e886b",
+          "finding_ids": [
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec-initial",
+          "performer": "/root/c2_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:/root/c2_spec",
+            "digest": "sha256:197f8f8824aceee1dc2de3eaea2c16613a2e1a6472ecb830430bd59bb04ae205",
+            "excerpt": "Spec, gpt-5.6-sol/high, one iteration.\nBinding: 3c3c1a012be244795f9a1a2841b6b351686231c9..54ece5c17b26dcc5de840fb06317846a155cf67c. Current=true, clean, delivery unverified.\nRaw findings: 1. Worst: SP-C2-1.\nSP-C2-1 — auto-fix, confidence 9. Undo accepts a replaced destination when its bytes and mode match the repair postimage. Spec: \"Undo restores only destinations whose current identity still matches that repair's postimage\" (spec.md:159); CD32 (spec.md:309). The retained record omits image.identity (journal.go:15,71). Undo uses same, which compares kind, mode, link and digest (image.go:55; transaction.go:180,204).\nRead scope: full spec, compiled map and all 12 decisions, C2 ticket, metadata, C2 coverage rows, untouched consumers first, targeted consumer code, one complete frozen diff.\nNo tests or probes ran. Optional advice: none. No command change necessary.\nClaim: claimed, confidence 9.\n"
+          },
+          "axis": "Spec",
+          "base": "3c3c1a012be244795f9a1a2841b6b351686231c9",
+          "tip": "589ab085cd5dbf4e691c79fa3f6f696acb7e886b",
+          "finding_ids": [
+            "SP-C2-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage-initial",
+          "performer": "/root/c2_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:/root/c2_coverage",
+            "digest": "sha256:7213d058ef3fab695a486020ca5daa995546fe721e0958662b64664de342b5c8",
+            "excerpt": "Coverage, gpt-5.6-sol/high, one iteration.\nBinding: 3c3c1a012be244795f9a1a2841b6b351686231c9..54ece5c17b26dcc5de840fb06317846a155cf67c. Current=true; executable source 589ab085cd5dbf4e691c79fa3f6f696acb7e886b; delivery unverified.\nRaw findings: 3. Worst: C2-COV-1.\nC2-COV-1 — auto-fix, confidence 10. CD35 requires the identity recheck immediately before publication. Apply checks at transaction.go:123-132 before publish stages and syncs the temporary replacement (image.go:78-123).\nIssuing-axis clarification: COV-1 requires a final identity recheck after replacement staging and immediately before the real rename. It does not require atomic compare-and-rename against non-cooperating writers. My original callback example was too broad when phrased as mutation after every possible pre-call check. The concrete test state should mutate after initial inspection and temp preparation but before the final adjacent recheck.\nC2-COV-2 — auto-fix, confidence 10. CD32: replace a repaired destination with a different inode containing the exact postimage bytes and mode, then invoke fresh-process undo. Persisted image omits file identity; same compares only kind, mode, link and digest (image.go:55-66; transaction.go:171-218), so undo overwrites the replacement.\nC2-COV-3 — auto-fix, confidence 9. CD36: two destinations become special files. The first undo validation returns on its first failure (transaction.go:171-192), so only the first unresolved target is reported.\nRead scope: supplement, metadata, trusted consumers and coverage, full spec and C2 ticket, hostile checklist/dispositions, review disciplines, frozen diff, mapped tests, transaction owner, public repair and untouched production consumers.\nNo checks, tests or probes ran. Optional advice: none. No command change necessary.\nClaims: coverage-axis-complete claimed 10; C2-COV-1 claimed 10; C2-COV-2 claimed 10; C2-COV-3 claimed 9.\n"
+          },
+          "axis": "Coverage",
+          "base": "3c3c1a012be244795f9a1a2841b6b351686231c9",
+          "tip": "589ab085cd5dbf4e691c79fa3f6f696acb7e886b",
+          "finding_ids": [
+            "C2-COV-1",
+            "C2-COV-2",
+            "C2-COV-3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
