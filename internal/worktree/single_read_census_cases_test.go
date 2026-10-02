@@ -1,8 +1,9 @@
 package worktree
 
-// This file holds the synthetic cases of the single-read census. Each case plants an
+// This file holds the cases of the single-read census. A wantReadCensus case plants an
 // effects file, a gate file, and one reader file, and compares the reports with the
-// census formatter's output for literal inputs.
+// census formatter's output for literal inputs. The empty read set case plants no
+// effects file, and the live tree case reads this package.
 
 import (
 	"path/filepath"
@@ -95,10 +96,14 @@ func TestSingleReadCensusRefusesAReadInALoopBody(t *testing.T) {
 	}
 }
 
+// TestSingleReadCensusRefusesASecondRead also proves a kind renders as its package's own
+// name and the function name, not as the import path or the import alias.
 func TestSingleReadCensusRefusesASecondRead(t *testing.T) {
 	t.Parallel()
 	wantReadCensus(t, syntheticEffectsFile, "func Run() {\n\t_ = currentTime()\n\t_ = currentTime()\n}\n",
 		singleReadReport("reader.go", 5, "Run", readSecondTime, "", "time.Now"))
+	wantReadCensus(t, syntheticEffectsFile, "import kit \"github.com/gibbonmi/bench/internal/gate\"\n\nfunc Run() {\n\t_ = kit.KitDir()\n\t_ = kit.KitRoot()\n}\n",
+		singleReadReport("reader.go", 7, "Run", readSecondTime, "", "gate.KitValue"))
 }
 
 // TestSingleReadCensusRefusesAHelperCallToAReadingEntry proves a helper call to a

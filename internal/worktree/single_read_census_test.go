@@ -48,13 +48,31 @@ func singleReadReport(file string, line int, declaration string, finding readFin
 	return fmt.Sprintf("%s reads %s below a census entry", where, name)
 }
 
-// qualifiedName spells expr as package.Name and keys it as path.Name when expr selects
-// from a package that imports maps to its path. Both are empty otherwise. A kind is
-// keyed by its import path, so an import alias cannot hide a read.
+// kindKey keys a kind by its import path, so an import alias cannot hide a read.
+func kindKey(importPath, name string) string {
+	return importPath + "." + name
+}
+
+// splitKind splits a kindKey key into its import path and its name. The import path is
+// empty for a bare name.
+func splitKind(key string) (importPath, name string) {
+	dot := strings.LastIndex(key, ".")
+	return key[:max(dot, 0)], key[dot+1:]
+}
+
+// kindName renders a kindKey key as package.Name. The package name is the last element
+// of the import path, and not an import alias, because the kind is the function read.
+func kindName(key string) string {
+	importPath, name := splitKind(key)
+	return path.Base(importPath) + "." + name
+}
+
+// qualifiedName spells expr as package.Name and keys it with kindKey when expr selects
+// from a package that imports maps to its path. Both are empty otherwise.
 func qualifiedName(expr ast.Expr, imports map[string]string) (spelled, key string) {
 	if selector, ok := expr.(*ast.SelectorExpr); ok {
 		if pkg, ok := selector.X.(*ast.Ident); ok && imports[pkg.Name] != "" {
-			return pkg.Name + "." + selector.Sel.Name, imports[pkg.Name] + "." + selector.Sel.Name
+			return pkg.Name + "." + selector.Sel.Name, kindKey(imports[pkg.Name], selector.Sel.Name)
 		}
 	}
 	return "", ""
@@ -119,13 +137,13 @@ func readSet(dir, gateDir string) (map[string][]string, error) {
 	}
 	gate := topLevelFuncs(gateFiles)
 	for _, kind := range slices.Collect(maps.Keys(reads)) {
-		dot := strings.LastIndex(kind, ".")
-		if dot < 0 || gate[kind[dot+1:]] == nil || path.Base(kind[:dot]) != gateFiles[0].Name.Name {
+		importPath, read := splitKind(kind)
+		if importPath == "" || gate[read] == nil || path.Base(importPath) != gateFiles[0].Name.Name {
 			continue
 		}
 		for name := range gate {
-			if ast.IsExported(name) && reachedFuncs(name, gate, map[string]bool{})[kind[dot+1:]] {
-				reads[kind[:dot]+"."+name] = append(reads[kind[:dot]+"."+name], kind)
+			if key := kindKey(importPath, name); ast.IsExported(name) && reachedFuncs(name, gate, map[string]bool{})[read] {
+				reads[key] = append(reads[key], kind)
 			}
 		}
 	}
@@ -258,7 +276,7 @@ func singleReadCensus(dir, gateDir string) ([]string, error) {
 			switch {
 			case ref.entry && !decl.entry:
 				for _, kind := range entryKinds[ref.name] {
-					report(readThroughEntry, ref.name, kind)
+					report(readThroughEntry, ref.name, kindName(kind))
 				}
 			case ref.entry:
 				// The called entry's reads are its own, so an entry may call it.
@@ -267,7 +285,7 @@ func singleReadCensus(dir, gateDir string) ([]string, error) {
 			default:
 				for _, kind := range ref.kinds {
 					if seen[kind] {
-						report(readSecondTime, "", kind)
+						report(readSecondTime, "", kindName(kind))
 					}
 					seen[kind] = true
 				}
