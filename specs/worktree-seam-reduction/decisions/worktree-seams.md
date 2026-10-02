@@ -35,7 +35,7 @@ A top-tier consultation decided tickets 10 and 11 at the reviewer's direction.
 The reviewer keeps the veto over both.
 
 A map-owned asset stays in the map's assets folder,
-decisions/worktree-seams/assets/.
+specs/worktree-seam-reduction/decisions/worktree-seams/assets/.
 
 ## Decisions so far
 
@@ -83,7 +83,7 @@ decisions/worktree-seams/assets/.
 - Path: `internal/worktree/effects.go`
   Supports: tickets #4 and #11: `Home` and `currentTime` are the home and clock reads that source files call directly.
   Drift: a change to `Home` or `currentTime`.
-- Path: `decisions/worktree-seams/assets/seam-classification.md`
+- Path: `specs/worktree-seam-reduction/decisions/worktree-seams/assets/seam-classification.md`
   Supports: tickets #9 and #10: the verdict, the test sites, and the fixture for each field, with the git probe results.
   Drift: any drift that the asset's own header names.
 - Path: `internal/gate/kit_source.go`
