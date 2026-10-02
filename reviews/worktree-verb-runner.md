@@ -909,6 +909,10 @@ The fresh repair session `claude:bench-writer/vr-t8-repair-2` ran on opus at med
 
 At `c9731327`, `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds the package result as `vr-c4-8-worktree-r4`.
 
+## VR-C4 ticket 9 third verification rerun
+
+The second VR-C4 repair landed after the second rerun. The ticket 9 author then ran the package tests again on the final chunk source at `9fe5302ad05c1d5ed6d1ba3eb6e0aaf2a7e5127f`. `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds this result as `vr-c4-9-worktree-r4`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2216,6 +2220,24 @@ At `c9731327`, `bench test --package ./internal/worktree` passed with the two so
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,65790\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "8-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c4-9-worktree-r4",
+          "performer": "claude:bench-writer/vr-t9-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9021fa9752d6386c960a1708ecab66ac3cba43c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t9-author-20261001/9-worktree@9fe5302a",
+            "digest": "sha256:e66870738d1bda23c303374647f1896d96b2c02c83caaaf73cba6fccb846056f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63895\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "9-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
