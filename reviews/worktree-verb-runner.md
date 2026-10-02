@@ -925,6 +925,49 @@ The raw finding count is 0. R25 and R26 hold, and the payload decodes with each 
 
 The chunk record for VR44 to VR47 is unchanged from round 2. The package run at the tip passes, and the SKIP set holds the two socket capability subtests. The VR-C4 plan commits added assignments only. So the payload maps each VR-C3 plan chunk ID to the same ID in the current plan.
 
+## VR-C5 ticket 11 author evidence
+
+The fresh author session `claude:bench-writer/vr-t11-author` ran on opus at medium effort, from base `9e6afbf5884a79ed16d7bf26cff57b9b239460d8`. The chunk base is `f3e0cb4e38788e791a0654dcbaced969a9cb1d45`. The ticket commit is `988feb4990d8c27988e90c594d9ffb3772689d39`. It adds `verb_call_census_test.go` with 367 lines and 11 top-level tests. It also sets `worktreeTestCount` to 699 at `parallel_census_test.go:1090`, and that file stays at 1125 lines. The ticket changes no production file.
+
+The census reads the parse helpers of `parallel_census_test.go` and its `calleeName` function. The runner file set is at `verb_call_census_test.go:20`. The `"args"` literal occurs one time, at `verb_call_census_test.go:62`.
+
+Red-to-green route for each row:
+
+| Row | Test | Red | Green |
+|---|---|---|---|
+| VR48 | `TestVerbCallCensusReportsAnEntryCall` | Stub census, no report | Census at `988feb49` |
+| VR49 | `TestVerbCallCensusReportsAJoinsFormCall` | Stub census, no report | Census at `988feb49` |
+| VR50 | `TestVerbCallCensusReportsAnEntryUsedAsAValue` | Stub census, no report | Census at `988feb49` |
+| VR51 | `TestVerbCallCensusReportsACallInsideASubtest` | Stub census, no report | Census at `988feb49` |
+| VR52 | `TestVerbCallCensusReportsAPackageLevelReference` | Stub census, no report | Census at `988feb49` |
+| VR53 | `TestVerbCallCensusAllowsTheRunnerFiles` | Probe that empties the runner file set: bit | Census at `988feb49` |
+| VR54 | `TestVerbCallCensusDerivesEntriesFromTheSignature` | Stub census, no report; the plan probe `11-probe` also bit | Census at `988feb49` |
+| VR55 | `TestVerbCallCensusIgnoresAnExportedHelper` | Probe that treats every exported function as an entry: bit, with the report for `ExportedHelper` | Census at `988feb49` |
+| VR56 | `TestVerbCallCensusDerivesTheJoinsForm` | Stub census, no report | Census at `988feb49` |
+| VR57 | `TestVerbCallCensusReportsACoreReaderCall` | Stub census, no report | Census at `988feb49` |
+| VR58 | `TestVerbCallCensusOnTheLiveTree` | Probe that empties the runner file set: bit, with 29 reports from the runner files | Census at `988feb49` |
+
+Probes on the census file:
+
+| Probe | Mutation | Tests run | Verdict | Restored |
+|---|---|---|---|---|
+| Plan probe `11-probe` | Swap `"args"` with `"argv"` | `TestVerbCallCensusDerivesEntriesFromTheSignature` | bit, 1 failure | yes |
+| Runner exemption | Swap the runner file set with an empty set | VR53 and VR58 tests | bit, 2 failures | yes |
+| Signature predicate | Remove the args parameter condition | `TestVerbCallCensusIgnoresAnExportedHelper` | bit, 1 failure | yes |
+| Self-probe | Omit the joins form registration | `TestVerbCallCensusDerivesTheJoinsForm` | bit, 1 failure | yes |
+
+Two earlier self-probe attempts omitted a call whose variable then had no use. Each attempt did not compile, so the probe reported `invalid` and restored the file. These attempts are not evidence.
+
+Package end state at `988feb49`:
+
+- VR40: the tuple scan program prints no line.
+- VR41: the VR41 command prints no line, and `rg` exits 1.
+- VR42 and VR43: `TestPackageTestCountPin` and `TestSerialSetStaysBelowTheCeiling` pass in the package run.
+- VR44 and VR45: `go test -list` lists 664 top-level tests at the spec base `0c95c944` and 699 at the tip. No base name is absent at the tip. The 35 added names are the 24 tests of `verb_runner_check_test.go` and the 11 tests of `verb_call_census_test.go`. The package run at the tip passes, and its SKIP set holds the two socket subtests.
+- VR46 and VR47: the earlier chunk reviews logged both rows. This ticket adds no migration.
+
+Verification on `988feb49`: `bench test --package ./internal/worktree` passed with the two socket capability skips. `bench structure --growth f3e0cb4e38788e791a0654dcbaced969a9cb1d45` passed. `bench test --package ./internal/conformance` passed with three capability skips. `bench preflight build worktree-verb-runner` reported 13 green checks and 0 red checks. The JSON payload holds the results as `vr-c5-11-worktree-r1` and `vr-c5-11-probe-r1`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2476,6 +2519,84 @@ The chunk record for VR44 to VR47 is unchanged from round 2. The package run at 
           ]
         }
       ]
+    },
+    {
+      "id": "VR-C5",
+      "base": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+      "tip": "988feb4990d8c27988e90c594d9ffb3772689d39",
+      "plan_digest": "pending",
+      "source_digest": "pending",
+      "acceptance_rows": [
+        "VR40",
+        "VR41",
+        "VR42",
+        "VR43",
+        "VR44",
+        "VR45",
+        "VR46",
+        "VR47",
+        "VR48",
+        "VR49",
+        "VR50",
+        "VR51",
+        "VR52",
+        "VR53",
+        "VR54",
+        "VR55",
+        "VR56",
+        "VR57",
+        "VR58"
+      ],
+      "verification": [
+        {
+          "id": "vr-c5-11-worktree-r1",
+          "performer": "claude:bench-writer/vr-t11-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "cff2c674683c2ae4315f44c312dd2130d90ceac6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t11-author-20261001/11-worktree@988feb49",
+            "digest": "sha256:2cf22a9e083d42edd511766de44f1cfa06b4bc42d4e17820005e3798570f476a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62862\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "11-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c5-11-probe-r1",
+          "performer": "claude:bench-writer/vr-t11-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "cff2c674683c2ae4315f44c312dd2130d90ceac6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t11-author-20261001/11-probe@988feb49",
+            "digest": "sha256:bd1f805c29d11794c4979fd95219a0252bb0ac71bfc4595cd6dfe976e35b8241",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_call_census_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbCallCensusDerivesEntriesFromTheSignature,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5"
+          },
+          "requirement": "11-probe",
+          "command": "bench probe internal/worktree/verb_call_census_test.go --swap '\"args\"' --with '\"argv\"' --package ./internal/worktree --run TestVerbCallCensusDerivesEntriesFromTheSignature",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/vr-t11-author-20261001/11-probe@988feb49",
+              "digest": "sha256:bd1f805c29d11794c4979fd95219a0252bb0ac71bfc4595cd6dfe976e35b8241",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_call_census_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbCallCensusDerivesEntriesFromTheSignature,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
