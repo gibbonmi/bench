@@ -1136,6 +1136,42 @@
           "requirement": "5-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "re-c4-v2-t6-anchors",
+          "performer": "claude:bench-writer/re-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t6-author-20261002/verify-6-anchors-2",
+            "digest": "sha256:2d4bb961a0f95a9074ec911967957188e6b8392574fbebed16cb8d3c3cabff6e",
+            "excerpt": "tree[1]{target,head,dirty}:\n  record-evidence-build,9f00bd92aba53cac840e3cc759735e3abd777f2e,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,999\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "6-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c4-v2-t6-budgets",
+          "performer": "claude:bench-writer/re-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t6-author-20261002/verify-6-budgets-2",
+            "digest": "sha256:089b677d841929e4dd667c659953e795fa9cce28a15d52d47d6fa090d9286352",
+            "excerpt": "tree[1]{target,head,dirty}:\n  record-evidence-build,9f00bd92aba53cac840e3cc759735e3abd777f2e,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "6-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -2065,3 +2101,12 @@ Both repair probes returned `bit` with `restored=yes`. The first probe removed t
 After the repair, `coverage.go` has 258 lines and `command.go` has 399 lines. `command.go` did not grow.
 
 The duplicated-facts sweep found no defect. `mappedIDs` stays the one source for chain resolution. The new tests use the existing `amendArgs`, `replan`, and `refuseArgs` helpers. The one changed comment states the current refusal, and no comment holds a red record. The repair used 1 of its 2 attempts.
+
+## RE-C4 ticket 6 verification at the repair source
+
+The author session `claude:bench-writer/re-t6-author` ran the two planned checks again at `9f00bd92` on opus at high effort. The re-frozen RE-C4 entry names tip `586bfa17`, so the earlier ticket 6 entries name an old source. Both checks passed with exit 0, and `bench record verification` wrote each result to the RE-C4 entry:
+
+- `re-c4-v2-t6-anchors` (`6-anchors`): the `./internal/anchors` package passed in 1.0 s.
+- `re-c4-v2-t6-budgets` (`6-budgets`): `bench test --check guidance-prose-budgets` passed in less than 1 s.
+
+No check skipped a test.
