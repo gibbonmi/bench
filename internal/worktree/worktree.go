@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func textDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
@@ -615,14 +616,14 @@ func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) i
 	// opens once the repository is known: a grammar answer creates nothing to record.
 	var assignment string
 	finishSpan := beginVerbSpan(home, root, otelCreateSeam)
-	exit := createAttributed(&assignment, parsed, root, home, args, stdout, stderr)
+	exit := createAttributed(&assignment, parsed, root, home, currentTime(), args, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit
 }
 
-// createAttributed is the create verb's own work, with the assignment the record names
-// written to assignment once the creation resolves it.
-func createAttributed(assignment *string, parsed usage.Result, root, home string, args []string, stdout, stderr io.Writer) int {
+// createAttributed is the create verb's own work at the entry's instant, with the
+// assignment the record names written to assignment once the creation resolves it.
+func createAttributed(assignment *string, parsed usage.Result, root, home string, now time.Time, args []string, stdout, stderr io.Writer) int {
 	from := parsed.Flags["--from"]
 	// The two flags name two starts, so the pair refuses before the refresh runs: a fetch
 	// that moved the default branch would already have taken effect by the refusal.
@@ -651,10 +652,9 @@ func createAttributed(assignment *string, parsed usage.Result, root, home string
 		}
 	}
 	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
-	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime(), resolveStart)
-	if err == nil {
-		*assignment = creation.Assignment.ID
-	}
+	creation, err := createAt(defaultJoins(), root, home, request, label, nil, now, resolveStart)
+	// A failed creation returns the zero Creation, so its empty ID leaves the record unnamed.
+	*assignment = creation.Assignment.ID
 	if err != nil {
 		if fromErr != nil {
 			return printTargetRefusal(stderr, createGrammar.Cmd, err)

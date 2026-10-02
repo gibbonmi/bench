@@ -39,14 +39,14 @@ func ClaimRecordedLease(wt, recorded string) bool {
 	if err != nil {
 		return false
 	}
-	return claimRecordedLease(defaultJoins(), lease, recorded)
+	return claimRecordedLease(defaultJoins(), lease, recorded, currentTime())
 }
 
-// claimRecordedLease is ClaimRecordedLease on a lease path with the seam set given.
-// The recorded line is the one accepted judgment, so a lease another writer holds, or
-// one that changes in the takeover gap, concedes.
-func claimRecordedLease(j joins, lease, recorded string) bool {
-	return claimAt(j, lease, currentTime(), func(content []byte, _, _ time.Time) bool {
+// claimRecordedLease is ClaimRecordedLease on a lease path with the seam set and the
+// instant given. The recorded line is the one accepted judgment, so a lease another
+// writer holds, or one that changes in the takeover gap, concedes.
+func claimRecordedLease(j joins, lease, recorded string, now time.Time) bool {
+	return claimAt(j, lease, now, func(content []byte, _, _ time.Time) bool {
 		return string(content) == recorded+leaseEnd
 	})
 }
