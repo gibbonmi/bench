@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-evidence/spec.md",
-  "plan_digest": "sha256:1a04adf1320736ccc5828fb4481be56d68c1bb6f4c67716229345b2f5c792cdd",
+  "plan_digest": "sha256:65a0e39bc546d38bb95ed196055e6063d414717242cced129f8748e5db8f5849",
   "implementation_session": "",
   "chunks": [
     {
@@ -519,6 +519,63 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RE-C3",
+      "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+      "tip": "2883afc94987a9b6f42a763ad280c3023faec39b",
+      "plan_digest": "sha256:65a0e39bc546d38bb95ed196055e6063d414717242cced129f8748e5db8f5849",
+      "source_digest": "a4d74c2be12e01dcaec7a6bb89f722d14b6ae9f0",
+      "acceptance_rows": [
+        "RE36",
+        "RE42",
+        "RE43",
+        "RE44",
+        "RE45",
+        "RE46",
+        "RE47",
+        "RE48",
+        "RE49",
+        "RE50",
+        "RE51",
+        "RE52",
+        "RE53",
+        "RE54",
+        "RE55",
+        "RE56",
+        "RE57",
+        "RE58",
+        "RE59",
+        "RE60",
+        "RE61",
+        "RE62",
+        "RE63",
+        "RE64",
+        "RE65",
+        "RE66",
+        "RE67",
+        "RE68",
+        "RE69",
+        "RE70",
+        "RE71",
+        "RE104",
+        "RE107",
+        "RE108",
+        "RE72",
+        "RE73",
+        "RE74",
+        "RE75",
+        "RE76",
+        "RE77",
+        "RE78",
+        "RE79",
+        "RE80",
+        "RE81",
+        "RE82",
+        "RE83"
+      ],
+      "verification": [],
+      "reviews": []
     }
   ],
   "completion": {
@@ -547,6 +604,21 @@
         ],
         "RE-C2": [
           "RE-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1a04adf1320736ccc5828fb4481be56d68c1bb6f4c67716229345b2f5c792cdd",
+      "to": "sha256:65a0e39bc546d38bb95ed196055e6063d414717242cced129f8748e5db8f5849",
+      "chunk_ids": {
+        "RE-C1": [
+          "RE-C1"
+        ],
+        "RE-C2": [
+          "RE-C2"
+        ],
+        "RE-C3": [
+          "RE-C3"
         ]
       }
     }
@@ -812,3 +884,11 @@ Finding count: 0. Worst issue: none. Three probes bit, at the flag table, the bo
 - `safeRelative` in `files.go` tests control runes directly. That code is older than this build.
 - Refusal step 7 of the spec names the parser message, and an oversized render refuses with the bound message of the reader.
 - The import-edge list of the proof checklist does not name the edge from `recordcmd` to `internal/sanitize`.
+
+## RE-C3 freeze
+
+The orchestrator froze RE-C3 after ticket 4, with base `48ab8bdf` and tip `2883afc9`. The worktree build of `bench record chunk` wrote the chunk entry with 46 acceptance rows. A third identity amendment moves the record plan digest to the plan at that tip.
+
+The plan commit `efdab11c` assigned ticket 3, and the plan commit `7ea683fd` assigned ticket 4. The ticket 3 author asked whether `--probe-restore` refuses a value outside `pass` and `fail`. A fable / high consultation, by reviewer delegation, chose the `--axis` convention: exit 2 with the usage line. The plan commit `bfee95a2` added that case to the grammar-error list and to RE70. The ticket 3 author fixed it at `85a9c3cb`, before the chunk review. The reviewer can veto this call.
+
+The coordinator probe of ticket 3 fixed the verification role in `write.go`. `bench probe` returned `bit` on RE48 with `restored=yes`. The coordinator probe of ticket 4 broke the value split of the shared `chosen` helper in `command.go`. `bench probe` returned `bit` on 38 tests with `restored=yes`.
