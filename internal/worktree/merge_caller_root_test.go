@@ -32,11 +32,13 @@ func commitLaneManifest(t *testing.T, dir string, check gate.Phase) {
 	commitInWorktree(t, dir, ".bench/phases.json", string(body), "declare the lane")
 }
 
-// FT335: a merge run from the primary checkout grades the prose the sibling brings in
-// from the composed tree. The lane resolves against the target worktree, so its prose
-// check names the target as its file root, as the built-in lane anchors `gate-prose`.
-// An authority rooted at the caller's checkout leaves that anchor unmoved, and the check
-// reads the incoming Markdown from the target checkout, where the merge has not put it.
+// A merge run from the primary checkout grades the prose that the sibling brings in from
+// the composed tree. The target's manifest declares a prose check that names the target
+// as its file root, as the built-in lane anchors `gate-prose`. The primary declares a
+// failing lane after the assignments exist, so a merge that resolves its lane at the
+// caller root and not from the target exits red. An authority rooted at the caller root
+// leaves the prose anchor unmoved, and the check then reads the incoming Markdown from the
+// target checkout, where the merge has not put it.
 func TestMergeGradesIncomingProseFromTheComposedTreeWhateverTheCallerRoot(t *testing.T) {
 	t.Parallel()
 	f := mergeFixture(t, "integration", "sibling")
@@ -49,6 +51,7 @@ func TestMergeGradesIncomingProseFromTheComposedTreeWhateverTheCallerRoot(t *tes
 	if f.root == target.Path {
 		t.Fatal("the fixture runs the merge from the target, so the caller root never differs")
 	}
+	commitLaneManifest(t, f.root, gate.Phase{Name: "caller", Argv: []string{"sh", "-c", "echo caller-root lane; exit 1"}})
 
 	r := runVerb(t, verbMerge, f.merge("--from", sibling.Assignment.Label, target.Assignment.ID))
 	if r.exit != 0 {
