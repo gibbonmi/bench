@@ -3,7 +3,6 @@ package worktree
 
 import (
 	"bytes"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -176,17 +175,14 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 	t.Parallel()
 	request := "resume-reconcile"
 	f := publicLandingFixture(t, request, "", "")
-	working := defaultJoins()
-	broken := working
-	broken.reconcileLanding = func(joins, string, string, string, string) error {
-		return errors.New("injected reconciliation interruption")
-	}
-	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:reconcile") {
+	repair := blockLandingReconcile(t, f.root)
+	if r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:reconcile") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	published := gitOutput(t, f.root, "rev-parse", "main")
+	repair()
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
-	if r := runVerb(t, verbLand, f.callWith(working, args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
+	if r := runVerb(t, verbLand, f.call(args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
 		t.Fatalf("resume reconciliation = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "HEAD"); got != published {

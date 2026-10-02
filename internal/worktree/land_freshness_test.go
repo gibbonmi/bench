@@ -6,7 +6,6 @@ package worktree
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -227,34 +226,31 @@ func TestLandCommandRemovesEveryTemporaryProspectiveArtifact(t *testing.T) {
 // it. Each one's failure resumes to a released landing that composes and publishes
 // nothing a second time.
 func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *testing.T) {
-	// Each stage breaks its own seam in a copy of the caller's value. The resume then
-	// runs under the untouched value, so it faces a working stage exactly as a retry does.
+	// The marker and reconcile faults are real destination states. The release fault breaks
+	// its seam in a copy of the value that counts the publications. The resume runs under
+	// the counting value after the repair, so it faces a working stage exactly as a retry
+	// does.
 	t.Parallel()
+	noRepair := func() {}
 	for _, tc := range []struct {
-		name   string
-		break_ func(joins) joins
+		name  string
+		fault func(t *testing.T, request string, j joins) (f landingFixture, broken joins, repair func())
 	}{
-		{name: "marker", break_: func(j joins) joins {
-			j.advanceLandingMarker = func(context.Context, string, string, string, string) error {
-				return errors.New("injected marker interruption")
-			}
-			return j
+		{name: "marker", fault: func(t *testing.T, request string, j joins) (landingFixture, joins, func()) {
+			return markerLandingFixture(t, request, true), j, noRepair
 		}},
-		{name: "reconcile", break_: func(j joins) joins {
-			j.reconcileLanding = func(joins, string, string, string, string) error {
-				return errors.New("injected reconciliation interruption")
-			}
-			return j
+		{name: "reconcile", fault: func(t *testing.T, request string, j joins) (landingFixture, joins, func()) {
+			f := publicLandingFixture(t, request, "", "")
+			return f, j, blockLandingReconcile(t, f.root)
 		}},
-		{name: "release", break_: func(j joins) joins {
+		{name: "release", fault: func(t *testing.T, request string, j joins) (landingFixture, joins, func()) {
 			j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
-			return j
+			return publicLandingFixture(t, request, "", ""), j, noRepair
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			request := "land-owner-resume-" + tc.name
-			f := publicLandingFixture(t, request, "", "")
 			publications := 0
 			working := defaultJoins()
 			oldLand := working.landReviewed
@@ -262,13 +258,14 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 				publications++
 				return oldLand(ctx, request)
 			}
-			broken := tc.break_(working)
+			f, broken, repair := tc.fault(t, request, working)
 
 			r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...))
 			if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:"+tc.name) {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}
 			published := gitOutput(t, f.root, "rev-parse", "main")
+			repair()
 
 			args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 			r = runVerb(t, verbLand, f.callWith(working, args...))

@@ -116,6 +116,15 @@ func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, hom
 	return landingFixture{ownedAssignment: ownedAssignment{repoHome: repoHome{root, home}, creation: creation}, base: base, tip: tip, tally: tally}
 }
 
+// blockLandingReconcile plants a nested repository in the destination at root, so the
+// real residue guard fails the landing's reconcile step after the publication. The
+// returned repair removes that repository, so a resume then reconciles.
+func blockLandingReconcile(t *testing.T, root string) (repair func()) {
+	t.Helper()
+	nested := resetEmbedded(t, root)
+	return func() { mustRemove(t, nested) }
+}
+
 // cannedGreenShape is what a bounded green run prints: the phase table, the skip count,
 // and the verdict. A landing fixture prints these bytes itself, so the journey grades the
 // relay rather than the engine that would have produced them.
