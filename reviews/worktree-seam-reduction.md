@@ -1699,6 +1699,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sr-c7-r2-standards",
+          "performer": "claude:bench-reviewer/sr-c7-r2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "262ff627c94594a33ae3b378f33106dc8cd714a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c7-r2-standards-20261002@c8b68ec1e1fd8de6106442f497ba4c2c80c07751",
+            "digest": "sha256:4a9ee51f09c0eb0a8b77081276605c3edd5547aeff6f4b09390b4f0808b9f3e5",
+            "excerpt": "Standards axis, SR-C7 confirming round, repair delta c3c2aed5..c8b68ec1: pass, 0 findings.\nS1: confirmed. reset_plan_test.go:51 reads resetPathsTable in an absence check of the same shape.\nS2: confirmed. land_identity_test.go:94 (line 90 before the repair) reads refusalPathsTable.\nSweep: none of the 11 table names in list.go:19-31 remains as a code literal; the 16 \"worktrees\" matches are filepath.Join path segments; land_surface_test.go:213 holds the name in failure prose only.\nThe six mustViaJoins calls (land_identity_test.go:39, 54, 70, 88, 135, 167) use the one helper; the loop at verb_result_route_test.go:19-25 passes one source per fact; the comments pass.\ncount: 0\nAdvice: the mustViaJoins message at verb_runner_test.go:288 says \"took the public entry\", which is wrong for the kit-only joins-form case. The route test header restates the helper's doc rationale.\n"
+          },
+          "axis": "Standards",
+          "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "tip": "c8b68ec1e1fd8de6106442f497ba4c2c80c07751",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c7-r1-standards"
+          ]
+        },
+        {
+          "id": "sr-c7-r2-spec",
+          "performer": "claude:bench-reviewer/sr-c7-r2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "262ff627c94594a33ae3b378f33106dc8cd714a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c7-r2-spec-20261002@c8b68ec1e1fd8de6106442f497ba4c2c80c07751",
+            "digest": "sha256:318b19d2c97ce882db325b657502d8b2495b2f75f38e919d9b1db2b6718a249b",
+            "excerpt": "Spec axis, SR-C7 confirming round, repair delta c3c2aed5..c8b68ec1: pass, 0 findings.\nP1: confirmed. spec.md:274-276 and :637 and ticket 14 lines 13-14 say that selectedTable becomes listTable; list.go:20 declares it; no selectedTable remains.\nP2, S1, S2: confirmed. reset_plan_test.go:51 reads resetPathsTable; land_identity_test.go:94 reads refusalPathsTable (list.go:26-27). The census scope stays a veto item.\nP3: confirmed. The sr-c7-15-worktree-r1 excerpt holds probe commands 1 to 13 with verdicts.\nC1: confirmed. Six tests call requireIdentityRefusalState (composed != 0 at line 104) and each calls mustViaJoins (lines 39, 54, 70, 88, 135, 167). The ticket says six; the round 1 record text said four.\nC2: confirmed. verb_result_route_test.go:13-24 pins a kit-only run with a mustViaJoins failure, which matches spec lines 283-284.\nSweep: every not-called check on a joins stub has mustViaJoins before it (reset_apply_test.go:116; land_effects_test.go:205, :227, :356; land_flags_test.go:180, :278; the six identity tests). clean_landed_hostile_test.go:201 checks a PATH wrapper on a public-entry run, out of scope.\ncount: 0\nAdvice: correct \"four\" to \"six\" in the C1 record. The WS75 row still reads \"planned\" and does not name the kit-only case.\n"
+          },
+          "axis": "Spec",
+          "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "tip": "c8b68ec1e1fd8de6106442f497ba4c2c80c07751",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c7-r1-spec"
+          ]
+        },
+        {
+          "id": "sr-c7-r2-coverage",
+          "performer": "claude:bench-reviewer/sr-c7-r2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "262ff627c94594a33ae3b378f33106dc8cd714a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c7-r2-coverage-20261002@c8b68ec1e1fd8de6106442f497ba4c2c80c07751",
+            "digest": "sha256:34c83047d157d54b59f322a4b83731638ddea84f9018c9f34ab125f0081e62fd",
+            "excerpt": "Coverage axis, SR-C7 confirming round, repair delta c3c2aed5..c8b68ec1: pass, 0 findings.\nC1: closed. Six forbidLandingComposition() stub sites in land_identity_test.go, each with a mustViaJoins guard (lines 39, 54, 70, 88, 135, 167).\nC2: closed. verb_result_route_test.go:13-15 adds the kit-only run and line 19 requires a mustViaJoins failure for it.\nC3: closed. The two absence checks read refusalPathsTable (land_identity_test.go:91) and resetPathsTable (reset_plan_test.go:51).\nProbe (a): verb_result_route_test.go, the kit-only run given a joins value, --run TestVerbResultReportsTheJoinsRoute: bit, restored yes.\nProbe (b): land_identity_test.go, one mustViaJoins call omitted together with its joins value: silent, restored yes; expected, because the call is the guard.\ncount: 0\nFinal git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "tip": "c8b68ec1e1fd8de6106442f497ba4c2c80c07751",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c7-r1-coverage"
+          ]
         }
       ]
     }
@@ -2289,7 +2355,7 @@ Count: 3. Worst: P1. The axis closed WS71 to WS80.
 
 Count: 3. Worst: C1.
 
-- C1 (`ask-user` from the axis, confidence 9, ticket 15): the four identity-refusal tests in `land_identity_test.go` assert that the `landReviewed` stub was not called. None calls `mustViaJoins`. The spec's joins route section covers each such test, and the ticket named six. The coordinator treats this as an in-scope fence expansion, not a shortfall, because the spec text already requires it. The repair adds the four calls and their probes.
+- C1 (`ask-user` from the axis, confidence 9, ticket 15): the identity-refusal tests in `land_identity_test.go` assert that the `landReviewed` stub was not called. None calls `mustViaJoins`. The axis counted four; the repair found six. The spec's joins route section covers each such test, and the ticket named six. The coordinator treats this as an in-scope fence expansion, not a shortfall, because the spec text already requires it. The repair adds the four calls and their probes.
 - C2 (`auto-fix`, confidence 7, ticket 15): a run with only a kit or a clock value takes `defaultJoins()`. No case pins `viaJoins` false for it. The repair adds the case to the WS75 test.
 - C3 (`ask-user` from the axis, confidence 5, ticket 14): the same two literals as S1, S2, and P2.
 
@@ -2300,3 +2366,23 @@ Count: 3. Worst: C1.
 - WS71 says identifier where the spec section says package constant.
 - `cmd/bench` tests still spell `worktrees`; the constant is unexported.
 - The ticket 15 verification run was at the pre-commit tree; the repair re-records at the final source.
+
+## SR-C7 repair and confirming round
+
+Two fresh opus / high repair sessions folded the five targets. The ticket 14 repair `8aacea21` replaced the two absence-check literals with the production constants, and its probe and the coordinator's probe bit. The ticket 15 repair `722151f8` added `mustViaJoins` to the six identity-refusal tests and a kit-only case to the WS75 test. Its seven probes were silent before the repair and bit after it, and the coordinator's probe bit. The ticket text now names six identity-refusal tests (`c8b68ec1`). Repair cycle 1 of 2 is used.
+
+Three fresh opus / high sessions then read the repair delta `c3c2aed5..c8b68ec1`. Each axis confirmed each fold. The Standards sweep found no table-name literal left in a test assertion. The Spec sweep found a `mustViaJoins` call before every not-called check on a joins stub. The Coverage probe that gave the kit-only run a joins value bit.
+
+The ticket 15 verification entry holds all thirteen probe commands. SR-C7 has no open finding.
+
+### Veto items
+
+- P1: the `selectedTable` constant became `listTable`; the spec and the ticket now say so.
+- P2: the census does not report a whole-name absence check; the two live cases are fixed.
+- The in-scope fence expansion of tickets 14 and 15 to `land_identity_test.go`.
+
+### Advice
+
+- The `mustViaJoins` message says "took the public entry", which is wrong for the kit-only joins-form case.
+- The WS75 row still reads "planned" and does not name the kit-only case.
+- The constants block in `list.go` names every table; a dedicated file would read better.
