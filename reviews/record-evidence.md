@@ -646,6 +646,42 @@
           "requirement": "4-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "re-c3-v2-t3-reviewrecord",
+          "performer": "claude:bench-writer/re-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "088294cba485bb6e2dbdd0d9bf31dc733184c0c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t3-repair-1-20261002/verify-3-reviewrecord",
+            "digest": "sha256:a7b57c9cefaf8503e8f9b3d9887e49bfde1a3f5b2509afdfb094520822d0791b",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1634\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,3977\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "3-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c3-v2-t3-cmd",
+          "performer": "claude:bench-writer/re-t3-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "088294cba485bb6e2dbdd0d9bf31dc733184c0c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t3-repair-1-20261002/verify-3-cmd",
+            "digest": "sha256:cefaa6e336505e9850ba3df01c6d3de894066208c0dc05f1be4592f8c7eb65f4",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13047\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "3-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -1211,3 +1247,37 @@ The plan commit `92eee80e` assigned the fresh repair session `claude:bench-write
 Each silent probe of the Coverage axis now bites, with `restored=yes`. The coordinator probe made `together` accept any flag set. `bench probe` returned `bit` on RE70 with `restored=yes`.
 
 The orchestrator re-froze RE-C3 with `bench record chunk`, with base `48ab8bdf` and tip `5ebdb869`. A fourth identity amendment moves the record plan digest to the plan at that tip.
+
+## RE-C3 ticket 3 repair verification
+
+The repair session `claude:bench-writer/re-t3-repair-1` ran on opus at medium effort. It used 1 of 2 attempts. The repair commit is `b6262762`, and the commit lane passed.
+
+| Finding | Change | Red route | Status |
+|---|---|---|---|
+| S1 | `form.admits` reads the layout groups. A `( )` group admits one alternative. A `[ ]` group and a repeated flag also admit no flag. `form.together` compares the present flags with those sets. `verificationValid` now closes only the value sets. Each grammar refusal still exits 2. | The probes below. | closed |
+| S2 | `evidenceIDs` in `parse.go` is the one walk of the evidence lists. `Parse` grades the IDs through it before the chunk loop, and `unclaimed` reads it. | The walker probe below. | closed |
+| C1 | `TestRecordVerificationGrammarRefusals` has the case "two probe flags", without `--probe-outcome`. | Before the fix, the probe-count swap made the case exit 1. | closed |
+| C2 | `TestRecordRefusesAControlCharacterInAFlag` also covers `--requirement` and `--probe-outcome`. | Before the fix, a probe that turned off the single-line check of each flag returned `bit`. | closed |
+| C4 | `TestRecordFinalVerificationRefusesADuplicateID` reuses an ID from the completion list. | Before the fix, a probe that dropped the completion list from `unclaimed` returned `bit`. The refusal did not name the ID. | closed |
+
+Each probe after the fix ran through `bench probe`, returned `bit`, and returned `restored=yes`:
+
+- Split the probe group into three `[ ]` groups. The "two probe flags" case failed.
+- Make each `( )` group also admit no flag. The "no list" case failed.
+- Turn off the single-line check of `--requirement`. The refusal did not name the flag.
+- Turn off the single-line check of `--probe-outcome`. The call exited 0.
+- Drop the completion list from `evidenceIDs`. The C4 test failed with exit 0.
+- Make `evidenceIDs` return no ID. Four tests failed: the `Parse` test `TestReviewRecordTerminal/duplicate_id`, the two verification duplicate-ID tests, and `TestRecordReviewRefusesADuplicateID`.
+
+`Parse` keeps each message byte for byte. The ID check now runs before the chunk checks, so a record with more than one defect can report a different first error.
+
+After the repair, `write.go` held 334 lines and `command.go` held 398 lines. The line limit is 400.
+
+The duplicated-facts sweep removed the all-or-none probe rule from two comments, because the layout owns that rule. The `chunk.Reviews` loop in `record.go` serves another purpose, and that file is outside the fence. The comment sweep found that each added or changed comment states the current code.
+
+Fresh focused checks at `aa9a6f74`:
+
+- `bench test --package ./internal/reviewrecord/...` passed in 5.6 s of package time. The verb recorded `re-c3-v2-t3-reviewrecord`.
+- `bench test --package ./cmd/bench` passed in 13.0 s of package time. The verb recorded `re-c3-v2-t3-cmd`.
+
+No check skipped a test.
