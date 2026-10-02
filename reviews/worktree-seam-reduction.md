@@ -1801,6 +1801,72 @@
           "supersedes": [
             "sr-c7-r1-coverage"
           ]
+        },
+        {
+          "id": "sr-c7-r3-standards",
+          "performer": "claude:bench-reviewer/sr-c7-r3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b794121eb206cd6de446aa3aa715f18c4a1249f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c7-r3-standards-20261002@b344c7af6eeb7125279b2067618dcf48adf8a067",
+            "digest": "sha256:479514c583c43e227cd9cc1313eb0878ff6131232299aa16e8b349a274b40068",
+            "excerpt": "Standards axis, SR-C7 round 3, delta c8b68ec1..b344c7af (spec-only): pass, 0 findings.\nCode delta: empty under internal/ and cmd/; the other commits in range are record commits.\nCitations: all 30 cells (spec.md:361-446) resolve at the current tree; they name 6 files and 29 distinct tests (WS68 and WS83 share TestSingleReadCensusOnTheLiveTree); each func exists at its cited path; the form matches WS76 to WS80.\ncount: 0\n"
+          },
+          "axis": "Standards",
+          "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "tip": "b344c7af6eeb7125279b2067618dcf48adf8a067",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c7-r2-standards"
+          ]
+        },
+        {
+          "id": "sr-c7-r3-spec",
+          "performer": "claude:bench-reviewer/sr-c7-r3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b794121eb206cd6de446aa3aa715f18c4a1249f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c7-r3-spec-20261002@b344c7af6eeb7125279b2067618dcf48adf8a067",
+            "digest": "sha256:ed6b60496af156d099c84da197ddc9e6a48ac84367c93407331928bd5f1ce0ec",
+            "excerpt": "Spec axis, SR-C7 round 3, delta c8b68ec1..b344c7af (spec-only): pass, 0 findings.\nCode delta: git diff --stat c8b68ec1 b344c7af -- internal/ cmd/ is empty; the three other commits in range are record commits.\nRows: 30 seam cells changed (WS1-6, 8, 12-13, 57-68, 70-75, 82-83, 86); each replaces \"planned\" with the path in the planned package and keeps the test name byte-identical; no behavior or failure-mode cell changed.\nbench coverage --check: ok, 86 rows; WS45 and WS81 uncited by design.\ncount: 0\n"
+          },
+          "axis": "Spec",
+          "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "tip": "b344c7af6eeb7125279b2067618dcf48adf8a067",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c7-r2-spec"
+          ]
+        },
+        {
+          "id": "sr-c7-r3-coverage",
+          "performer": "claude:bench-reviewer/sr-c7-r3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b794121eb206cd6de446aa3aa715f18c4a1249f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c7-r3-coverage-20261002@b344c7af6eeb7125279b2067618dcf48adf8a067",
+            "digest": "sha256:048a45f48e6cb9e574b4e206bdc82adbfd8047ddba135018a0781f24c70f5538",
+            "excerpt": "Coverage axis, SR-C7 round 3, delta c8b68ec1..b344c7af (spec-only): pass, 0 findings.\nCode delta: empty under internal/ and cmd/.\nRun 1: bench test --package ./internal/gate --run on the 7 cited gate tests: pass, 0 failures, 0 skips; each declared in kit_value_test.go.\nRun 2: bench test --package ./internal/worktree --run on the 22 cited worktree tests: pass, 0 failures, 0 skips; each declared in its cited file.\ncount: 0\nFinal git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "tip": "b344c7af6eeb7125279b2067618dcf48adf8a067",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c7-r2-coverage"
+          ]
         }
       ]
     }
@@ -2449,3 +2515,9 @@ The ticket 15 verification entry holds all thirteen probe commands. SR-C7 has no
 - The `mustViaJoins` message says "took the public entry", which is wrong for the kit-only joins-form case.
 - The WS75 row still reads "planned" and does not name the kit-only case.
 - The constants block in `list.go` names every table; a dedicated file would read better.
+
+## SR-C7 round 3, the coverage map reconciliation
+
+The final reconciliation cited the landed test file in each of the 30 coverage rows that read "planned". That spec-only commit `b344c7af` moved the chunk source after the confirming round, so the checkpoint required a review that covers it. The two repair sessions re-recorded their verification at the new source.
+
+Three fresh opus / high sessions read the delta. Each citation resolves to a declared test, each test name is unchanged, and no other cell changed. The 29 distinct cited tests run green. SR-C7 has no open finding, and the coverage check reports 86 valid rows with WS45 and WS81 review-owned.
