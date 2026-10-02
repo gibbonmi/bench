@@ -788,6 +788,74 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "re-c3-r2-standards",
+          "performer": "claude:bench-reviewer/re-c3-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "088294cba485bb6e2dbdd0d9bf31dc733184c0c6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re-c3-r2-standards-20261002@5ebdb8698daf69a5495ae5af55fdbbbf65153157",
+            "digest": "sha256:1b6919d3ed9334d6d3fcaab1592d95052116cdfd56a9181273c6e1ad763eb2af",
+            "excerpt": "Standards, RE-C3 round 2: fail. The S1 and S2 folds are closed.\nFinding S3 (auto-fix, confidence 5): flag optionality is declared in both occurs and the layout.\n"
+          },
+          "axis": "Standards",
+          "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "tip": "5ebdb8698daf69a5495ae5af55fdbbbf65153157",
+          "finding_ids": [
+            "S3"
+          ],
+          "supersedes": [
+            "re-c3-r1-standards"
+          ]
+        },
+        {
+          "id": "re-c3-r2-spec",
+          "performer": "claude:bench-reviewer/re-c3-r2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "088294cba485bb6e2dbdd0d9bf31dc733184c0c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c3-r2-spec-20261002@5ebdb8698daf69a5495ae5af55fdbbbf65153157",
+            "digest": "sha256:32a8e292c298d980f03289c0eae8c8c5ec82e27775188ed2854c86dcdb16f8c5",
+            "excerpt": "RE-C3 round 2 Spec: pass\nFolds S1, S2, RE36, RE65, RE70, RE74 confirmed\nFindings: none\n"
+          },
+          "axis": "Spec",
+          "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "tip": "5ebdb8698daf69a5495ae5af55fdbbbf65153157",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c3-r1-spec"
+          ]
+        },
+        {
+          "id": "re-c3-r2-coverage",
+          "performer": "claude:bench-reviewer/re-c3-r2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "088294cba485bb6e2dbdd0d9bf31dc733184c0c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c3-r2-coverage-20261002@5ebdb8698daf69a5495ae5af55fdbbbf65153157",
+            "digest": "sha256:d9f2e8b3aac15ddd3538f0f04b1fddad2349fbbd3012e3c06571c6ce82f6f422",
+            "excerpt": "RE-C3 round 2 Coverage: pass, no findings.\nC1 to C4 confirmed by six probes at new sites, plus the review-grammar probe of form.admits. All bit with restored=yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "tip": "5ebdb8698daf69a5495ae5af55fdbbbf65153157",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c3-r1-coverage"
+          ]
         }
       ]
     }
@@ -1336,3 +1404,31 @@ Fresh focused checks at `ef3518f2`:
 - `bench test --package ./cmd/bench` passed in 13.0 s of package time. The verb recorded `re-c3-v2-t4-cmd`.
 
 No check skipped a test.
+
+## RE-C3 chunk review, round 2
+
+Three fresh fable / high sessions ran the confirming round on the repair delta `2883afc9..5ebdb869`. Each axis bound the review evidence `sha256:c0d8f222` with `--check-current`. `bench record review` wrote the three results and derived each `supersedes` link. S1, S2, and C1 to C4 are closed. The raw finding count is 1, and the repair-target count is 1.
+
+### Standards, round 2
+
+Finding count: 1. Worst issue: S3.
+
+- S3, auto-fix, confidence 5. In `recordcmd/command.go`, the `occurs` field and the layout both declare whether a flag is optional, and both are enforced. `usage.Parse` reads `occurs`, and `admits` reads the layout marks. AGENTS.md requires one source for each fact. Take the optional status from one source, and keep `command.go` within its 400-line budget.
+
+### Spec, round 2
+
+Finding count: 0. Worst issue: none. Each grammar refusal still exits 2, `Parse` keeps its messages, and the amended rows hold.
+
+### Coverage, round 2
+
+Finding count: 0. Worst issue: none. Seven probes at new sites bit, and each returned `restored=yes`.
+
+### Repair routing, round 2
+
+S3 goes to a fresh ticket 3 repair session in the second repair cycle of RE-C3. That cycle is the last one that the bounded repair policy allows for this chunk.
+
+### Advice, round 2
+
+- The flag mask in `admits` has no guard above 64 flags. The largest form has 14 flags.
+- The RE70 case for both lists also passes `--source`.
+- For the C3 mutation, the record parser refuses the write before the `supersedes` assertion runs.
