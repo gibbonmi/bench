@@ -10,18 +10,14 @@ Independent CLI and desktop chats provide consistent Bench behavior through one 
 
 `CONTEXT.md` defines harness interface, execution environment, and required capability.
 The confirmed decisions below are current reviewer choices.
-The remaining tickets require observed compatibility evidence.
+The evidence reports record a failed compatibility probe and the remaining qualification gaps.
 The invoking authoring session records and validates this map.
 
 Consult craft-domain, craft-grill, and craft-synthesis during shaping.
 Research uses craft-research; compatibility probes use prototype.
 A map-owned asset stays in `decisions/cli-desktop-consistency/assets/`.
 
-The remaining evidence tickets follow this order:
-
-- [Installed compatibility proof (#10)](cli-desktop-consistency/tickets/10.md).
-- [Supported integration routes (#11)](cli-desktop-consistency/tickets/11.md).
-- [Evidence-backed guarantees (#12)](cli-desktop-consistency/tickets/12.md).
+The remaining frontier is [Evidence-backed guarantees (#12)](cli-desktop-consistency/tickets/12.md).
 
 ## Decisions so far
 
@@ -34,6 +30,9 @@ The remaining evidence tickets follow this order:
 - [Capability failure (#7)](cli-desktop-consistency/tickets/7.md): block affected work.
 - [Repair authority (#8)](cli-desktop-consistency/tickets/8.md): supported repair routes.
 - [Delivery scope (#9)](cli-desktop-consistency/tickets/9.md): one compatibility outcome.
+
+- [Installed compatibility proof (#10)](cli-desktop-consistency/tickets/10.md): negative command result.
+- [Supported integration routes (#11)](cli-desktop-consistency/tickets/11.md): supported routes and explicit limits.
 
 ## Not yet specified
 
@@ -48,3 +47,9 @@ The remaining evidence tickets follow this order:
 
 ## Sources
 
+- Path: `decisions/cli-desktop-consistency/assets/installed-compatibility-probe.md`
+  Supports: Tickets #10 through #12; actual command results and unqualified workflow classes.
+  Drift: Runtime, configuration, or workspace changes require affected probes again.
+- Path: `decisions/cli-desktop-consistency/assets/supported-integration-routes.md`
+  Supports: Tickets #11 and #12; supported integration routes and recovery limits.
+  Drift: Bench integration, upstream documentation, or installed environment changes require a source check.
