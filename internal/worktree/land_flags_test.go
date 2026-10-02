@@ -106,36 +106,29 @@ func TestLandCommandAcceptsDashPathOnlyAfterTerminator(t *testing.T) {
 func TestLandCommandPostCASTerminalTable(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
-		name, step string
-		setup      func(*joins)
+		name  string
+		fault func(*testing.T, string) (landingFixture, joins)
 	}{
-		{"marker", "marker", func(j *joins) {
-			j.advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("marker fault") }
+		{"marker", func(t *testing.T, request string) (landingFixture, joins) {
+			return markerLandingFixture(t, request, true), defaultJoins()
 		}},
-		{"reconcile", "reconcile", func(j *joins) {
-			j.reconcileLanding = func(joins, string, string, string, string) error { return errors.New("reconcile fault") }
+		{"reconcile", func(t *testing.T, request string) (landingFixture, joins) {
+			f := publicLandingFixture(t, request, "", "")
+			blockLandingReconcile(t, f.root)
+			return f, defaultJoins()
 		}},
-		{"release", "release", func(j *joins) {
+		{"release", func(t *testing.T, request string) (landingFixture, joins) {
+			j := defaultJoins()
 			j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
+			return publicLandingFixture(t, request, "", ""), j
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			root := newWorktreeRepo(t)
-			home := filepath.Join(t.TempDir(), "bench-home")
-			creation := mustCreate(t, root, home, "landed-land-terminal-"+tc.name, "landing terminal")
-			mustWrite(t, filepath.Join(root, ".gitignore"), []byte(".bench-home/\n"), 0o644)
-			gitRun(t, root, "add", ".gitignore")
-			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore fixture pool")
-			gitRun(t, creation.Path, "rebase", "main")
-			stageLandSpec(t, root, creation.Path)
-			base := gitOutput(t, root, "rev-parse", "HEAD")
-			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-			j := stubLandJoins(base, tip)
-			tc.setup(&j)
-			r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, "--request", "landed-land-terminal-"+tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path))
-			if r.exit != 3 || !strings.Contains(r.stdout, "landed{") || !strings.Contains(r.stdout, "worktree=incomplete:"+tc.step) {
+			request := "landed-land-terminal-" + tc.name
+			f, j := tc.fault(t, request)
+			r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+			if r.exit != 3 || !strings.Contains(r.stdout, "landed{") || !strings.Contains(r.stdout, "worktree=incomplete:"+tc.name) {
 				t.Fatalf("land = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}
 		})
@@ -144,19 +137,14 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 
 func TestLandCommandReleaseDiagnosticCannotForgeTerminalLines(t *testing.T) {
 	t.Parallel()
-	root := newWorktreeRepo(t)
-	home := filepath.Join(t.TempDir(), "bench-home")
-	creation := mustCreate(t, root, home, "landed-hostile-release", "hostile release")
-	stageLandSpec(t, root, creation.Path)
-	base := gitOutput(t, root, "rev-parse", "HEAD")
-	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	j := stubLandJoins(base, tip)
+	request := "landed-hostile-release"
+	f := publicLandingFixture(t, request, "", "")
+	j := defaultJoins()
 	j.releaseLandingAssignment = func(_ joins, _ ambient, _ string, _ []string, _ io.Writer, stderr io.Writer) int {
 		fmt.Fprint(stderr, "unsafe\nlanded{forged=true}\x1b[31m\n")
 		return 1
 	}
-	r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, "--request", "landed-hostile-release", "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path))
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
 	if r.exit != 3 || strings.Count(r.stdout, "landed{") != 1 || strings.Contains(r.stderr, "\nlanded{") || strings.ContainsRune(r.stderr, '\x1b') || !strings.Contains(r.stderr, `unsafe\nlanded{forged=true}\u001b[31m`) {
 		t.Fatalf("hostile release result = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
@@ -224,50 +212,35 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
-		name           string
-		seedMarker     bool
-		moveAtAdvance  bool
-		wantIncomplete bool
+		name    string
+		fixture func(*testing.T, string) landingFixture
+		moved   bool
 	}{
-		{name: "absent"},
-		{name: "present", seedMarker: true},
-		{name: "concurrently-moved", seedMarker: true, moveAtAdvance: true, wantIncomplete: true},
+		{name: "absent", fixture: func(t *testing.T, request string) landingFixture { return publicLandingFixture(t, request, "", "") }},
+		{name: "present", fixture: func(t *testing.T, request string) landingFixture {
+			f := publicLandingFixture(t, request, "", "")
+			gitRun(t, f.root, "update-ref", markerRef, f.base)
+			return f
+		}},
+		// The gate deletes the marker after the landing read it, so the marker swap after
+		// the publication finds the marker moved.
+		{name: "concurrently-moved", fixture: func(t *testing.T, request string) landingFixture { return markerLandingFixture(t, request, true) }, moved: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			root := newWorktreeRepo(t)
-			home := filepath.Join(t.TempDir(), "bench-home")
-			creation := mustCreate(t, root, home, "landed-marker-"+tc.name, "marker order")
-			stageLandSpec(t, root, creation.Path)
-			base := gitOutput(t, root, "rev-parse", "HEAD")
-			commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-			if tc.seedMarker {
-				gitRun(t, root, "update-ref", "refs/bench/green/main", base)
+			request := "landed-marker-" + tc.name
+			f := tc.fixture(t, request)
+			args := landArgs(request, f.base, f.tip, f.creation.Path)
+			if tc.moved {
+				interruptLandingAtMarker(t, f, args...)
+				return
 			}
-			j := stubLandJoins(base, tip)
-			j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 0 }
-			published := strings.Repeat("a", 40)
-			j.advanceLandingMarker = func(_ context.Context, gotRoot, branch, destination, expected string) error {
-				wantExpected := ""
-				if tc.seedMarker {
-					wantExpected = base
-				}
-				if gotRoot != root || branch != "main" || destination != published || expected != wantExpected {
-					t.Fatalf("advance marker = (%q, %q, %q, %q), want (%q, main, %q, %q)", gotRoot, branch, destination, expected, root, published, wantExpected)
-				}
-				if tc.moveAtAdvance {
-					return errors.New("marker compare-and-swap refused")
-				}
-				return nil
-			}
-			r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, "--request", "landed-marker-"+tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path))
-			if tc.wantIncomplete {
-				if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
-					t.Fatalf("moved marker result = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-				}
-			} else if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
+			r := runVerb(t, verbLand, f.call(args...))
+			if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
 				t.Fatalf("marker result = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
+			}
+			if published, got := gitOutput(t, f.root, "rev-parse", "main"), gitOutput(t, f.root, "rev-parse", markerRef); got != published {
+				t.Fatalf("project-green = %s, want the published commit %s", got, published)
 			}
 		})
 	}

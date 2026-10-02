@@ -5,11 +5,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/gibbonmi/bench/internal/diff"
-	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
-	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -24,15 +21,7 @@ import (
 // The default then reads the caller's joins rather than a captured copy.
 type joins struct {
 	landReviewed             func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error)
-	advanceLandingMarker     func(context.Context, string, string, string, string) error
-	reconcileLanding         func(joins, string, string, string, string) error
 	releaseLandingAssignment func(joins, ambient, string, []string, io.Writer, io.Writer) int
-	// pruneLandedBranches retires every unclaimed assignment branch the landed
-	// default branch already carries. It runs at the landing because that is the
-	// one moment the proof is cheap and certain: a later commit can move or delete
-	// the files a folded sibling touched, and the content proof then fails forever.
-	pruneLandedBranches    func(string) (int, error)
-	authorizeLandingSource func(string, string, string) (diff.SourceRange, error)
 	// cleanupBoundary is the deterministic transaction fault seam. A nil value carries no
 	// fault, exactly as hit reads it, so it is also the default.
 	cleanupBoundary      Fault
@@ -73,11 +62,7 @@ func defaultJoins() joins {
 		landReviewed: func(ctx context.Context, request landing.ReviewedRequest) (landing.ReviewedResult, error) {
 			return landing.New().LandReviewed(ctx, request)
 		},
-		advanceLandingMarker:     authorization.AdvanceMarker,
-		reconcileLanding:         reconcileLandingDestination,
 		releaseLandingAssignment: releaseCommandWith,
-		pruneLandedBranches:      intent.PruneUnclaimedLandedBranches,
-		authorizeLandingSource:   preflight.AuthorizeReviewedSource,
 		cleanupLockAttempt:       func(string) {},
 		creationLockAttempt:      func(string) {},
 		claimTakeoverGap:         func(string) {},

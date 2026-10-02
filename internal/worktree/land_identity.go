@@ -249,7 +249,7 @@ func landingSourceRange(j joins, worktree, slug, base, head string) (diff.Source
 		return resolved, detail, nil
 	}
 	detail := landingRefusalFaceByName(faceSourceNotFenced).detail
-	resolved, err := j.authorizeLandingSource(worktree, slug, base)
+	resolved, err := preflight.AuthorizeReviewedSource(worktree, slug, base)
 	if err != nil {
 		// The unfenced paths arrive typed, so they print as the refusal's own path table
 		// rather than inside the sentence. The assembler holds the caller's flags, so it

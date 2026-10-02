@@ -2,7 +2,6 @@
 package worktree
 
 import (
-	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -10,9 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
-	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -184,23 +181,6 @@ func stageLandSpec(t *testing.T, root, source string) {
 	gitRun(t, root, "add", "specs/x/spec.md")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "stage spec")
 	gitRun(t, source, "rebase", "main")
-}
-
-// stubLandJoins returns a seam set whose landing publishes a fixed result and whose
-// post-publication steps succeed. The caller replaces the one field its own case is
-// about and passes the value to the verb runner through callWith, so each test holds
-// every stub it makes.
-func stubLandJoins(base, tip string) joins {
-	j := defaultJoins()
-	j.landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
-		return landing.ReviewedResult{SourceBase: base, SourceTip: tip, DestinationBase: base, Commit: strings.Repeat("a", 40), Tree: strings.Repeat("b", 40)}, nil
-	}
-	j.advanceLandingMarker = func(context.Context, string, string, string, string) error { return nil }
-	j.reconcileLanding = func(joins, string, string, string, string) error { return nil }
-	j.authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
-		return diff.SourceRange{Base: base, Tip: tip}, nil
-	}
-	return j
 }
 
 // ticketsOnlyLandingFixture is the spec-less landing fixture with a tickets-only

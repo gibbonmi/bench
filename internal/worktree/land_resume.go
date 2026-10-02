@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
@@ -77,16 +78,16 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 	}
 	switch landingpolicy.ResumeMarker(resumeMarkerFacts(root, destination, published, marker)) {
 	case landingpolicy.MarkerAdvance:
-		if err := j.advanceLandingMarker(context.Background(), root, branch, published, marker); err != nil {
+		if err := authorization.AdvanceMarker(context.Background(), root, branch, published, marker); err != nil {
 			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker", records)
 		}
 	case landingpolicy.MarkerRefuse:
 		return landRefusalError(stdout, landingFaceRefusal(faceResumeMarker, "", rerun, nil))
 	}
-	if err := j.reconcileLanding(j, root, destination, published, destinationBase); err != nil {
+	if err := reconcileLandingDestination(j, root, destination, published, destinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile", records)
 	}
-	if _, err := j.pruneLandedBranches(root); err != nil {
+	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "prune", records)
 	}
 	// A released assignment still owns its effects, so the terminal path runs them rather
