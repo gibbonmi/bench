@@ -572,6 +572,7 @@ Tests that swap a package variable: none. The verb takes its root as a parameter
 - `cmd/bench/help_inventory_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/help_inventory_single_source_test.go`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 - `.agents/commands/bench-review-implementation.md`
 - `.agents/commands/bench-implement-spec.md`
