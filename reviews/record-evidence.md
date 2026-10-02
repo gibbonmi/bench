@@ -451,6 +451,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "re-c2-r2-standards",
+          "performer": "claude:bench-reviewer/re-c2-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "52926b7bdd603363e2b5cd136fa2e13ff3a590d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c2-r2-standards-20261002@48ab8bdf97703c211893959bfd265dbb51b2a068",
+            "digest": "sha256:2f0e940ead4c1609ad7a08af94f0e5c88f8d9bc7a82e792864b7a25fb6977b4a",
+            "excerpt": "Standards, RE-C2 round 2: pass. S1 closed and T1 closed, with no new finding IDs.\nAdvice only: `decode` and `safeRelative` existed before the repair and still repeat the bound check and the control-rune check."
+          },
+          "axis": "Standards",
+          "base": "6d7f3969e9061e8022630706c4430f64a7248312",
+          "tip": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "re-c2-r2-spec",
+          "performer": "claude:bench-reviewer/re-c2-r2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "52926b7bdd603363e2b5cd136fa2e13ff3a590d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c2-r2-spec-20261002@48ab8bdf97703c211893959bfd265dbb51b2a068",
+            "digest": "sha256:a465a64f13ad0c5db78385665828c6254bba9482fa2268a281b25fd3c13132d0",
+            "excerpt": "RE-C2 round 2 Spec: approve; P3 and C1 folds confirmed.\nFindings: none. Advice: wording of step 7, proof-checklist import edge."
+          },
+          "axis": "Spec",
+          "base": "6d7f3969e9061e8022630706c4430f64a7248312",
+          "tip": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "re-c2-r2-coverage",
+          "performer": "claude:bench-reviewer/re-c2-r2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "52926b7bdd603363e2b5cd136fa2e13ff3a590d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c2-r2-coverage-20261002@48ab8bdf97703c211893959bfd265dbb51b2a068",
+            "digest": "sha256:b2c4b61f24561b9e8dc570b878d8a1a7598d8285a546a6a9f1ddad2e30db5bfb",
+            "excerpt": "RE-C2 round 2, Coverage: folds C1 and C2 are confirmed. Findings: none.\nProbes bit at command.go:37 (flag table), write.go:77 (bound constant) and files.go:59 (reader grade), and each returned restored=yes."
+          },
+          "axis": "Coverage",
+          "base": "6d7f3969e9061e8022630706c4430f64a7248312",
+          "tip": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c2-r1-coverage"
+          ]
         }
       ]
     }
@@ -723,3 +789,26 @@ The repair session `claude:bench-writer/re-t2-repair-1` ran the three ticket 2 c
 | `2-conformance` | `bench test --package ./internal/conformance` | pass, exit 0 | 36995 ms |
 
 The conformance run skipped three tests for capability reasons: two socket tests and one character-device test. These skips are not in the ticket 2 delta.
+
+## RE-C2 chunk review, round 2
+
+Three fresh fable / high sessions ran the confirming round on the repair delta `bf3ddc94..48ab8bdf`. Each axis bound the review evidence `sha256:e58e9e1a` with `--check-current`. Each axis passed with no finding. S1, P3, C1, and C2 are closed. RE-C2 used 1 of its 2 repair cycles and its one hardening cycle.
+
+### Standards, round 2
+
+Finding count: 0. Worst issue: none. `graded` is the one source of the record bound rule and its message.
+
+### Spec, round 2
+
+Finding count: 0. Worst issue: none. RE112 and RE113 agree with the chunk table and the ticket 2 `Covers:` line, and `readFile` keeps its answers.
+
+### Coverage, round 2
+
+Finding count: 0. Worst issue: none. Three probes bit, at the flag table, the bound constant, and the reader grade. Each probe returned `restored=yes`.
+
+### Advice, round 2
+
+- `decode` in `parse.go` keeps its own copy of the parsed-state check with another message. That code is older than this build.
+- `safeRelative` in `files.go` tests control runes directly. That code is older than this build.
+- Refusal step 7 of the spec names the parser message, and an oversized render refuses with the bound message of the reader.
+- The import-edge list of the proof checklist does not name the edge from `recordcmd` to `internal/sanitize`.
