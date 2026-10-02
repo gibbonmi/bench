@@ -48,7 +48,7 @@ type form struct {
 	name, description string
 	flags             []flag
 	layout            []string
-	valid             func(f form, values map[string]string) bool
+	valid             func(f form, parsed usage.Result) bool
 	run               func(f form, root, spec string, parsed usage.Result) (string, int)
 }
 
@@ -72,6 +72,8 @@ var forms = []form{
 			{"--performer", "<session>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
 			{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {"--finding", "<id>", true, repeated}},
 		valid: reviewValid, run: review},
+	{name: "amendment", description: "record the plan-digest change at a source commit",
+		flags: []flag{{"--source", "<commit>", false, once}, {"--map", "<old>=<new>[,<new>...]", true, repeated}}, valid: amendmentValid, run: amendment},
 }
 
 // terms is the layout of f, or its flags in order when the layout is empty.
@@ -236,7 +238,7 @@ func Command(root string, args []string) (string, int) {
 	if line != "" {
 		return line + "\n", code
 	}
-	if !f.together(parsed.Flags) || f.valid != nil && !f.valid(f, parsed.Flags) {
+	if !f.together(parsed.Flags) || f.valid != nil && !f.valid(f, parsed) {
 		return f.grammar().Help + "\n", 2
 	}
 	if root == "" {
@@ -287,8 +289,13 @@ func chunk(f form, root, spec string, parsed usage.Result) (string, int) {
 	if err != nil {
 		return f.refuse(err.Error())
 	}
-	table, err := toon.Table("chunk", []string{"id", "action", "base", "tip", "source_digest", "plan_digest", "rows"},
-		[][]string{{entry.ID, action, entry.Base, entry.Tip, entry.SourceDigest, entry.PlanDigest, strconv.Itoa(len(entry.AcceptanceRows))}})
+	return row("chunk", []string{"id", "action", "base", "tip", "source_digest", "plan_digest", "rows"},
+		[]string{entry.ID, action, entry.Base, entry.Tip, entry.SourceDigest, entry.PlanDigest, strconv.Itoa(len(entry.AcceptanceRows))})
+}
+
+// row prints the one output table of a form: its name, its header, and its one row.
+func row(name string, header, cells []string) (string, int) {
+	table, err := toon.Table(name, header, [][]string{cells})
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
@@ -309,11 +316,11 @@ func chosen(f form, values map[string]string, name string) bool {
 
 // verificationValid closes the value sets of the verification form. Command calls it
 // only for a set of flags that the layout admits.
-func verificationValid(f form, values map[string]string) bool {
-	_, exitCode := integer(values, "--exit-code")
-	_, probe := values[probeFlags[0]]
-	_, probeExitCode := integer(values, probeFlags[1])
-	return exitCode && (!probe || probeExitCode && chosen(f, values, probeFlags[2]))
+func verificationValid(f form, parsed usage.Result) bool {
+	_, exitCode := integer(parsed.Flags, "--exit-code")
+	_, probe := parsed.Flags[probeFlags[0]]
+	_, probeExitCode := integer(parsed.Flags, probeFlags[1])
+	return exitCode && (!probe || probeExitCode && chosen(f, parsed.Flags, probeFlags[2]))
 }
 
 // native reads the --excerpt file as exact bytes and pairs them with --ref. The read
@@ -366,17 +373,13 @@ func verification(f form, root, spec string, parsed usage.Result) (string, int) 
 	if call.Chunk == "" {
 		list = "completion"
 	}
-	table, err := toon.Table("verification", []string{"list", "chunk", "id", "requirement", "role", "outcome", "source_digest", "excerpt_digest"},
-		[][]string{{list, call.Chunk, entry.ID, entry.Requirement, entry.Role, entry.Outcome, entry.SourceDigest, entry.NativeRef.Digest}})
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	return table, 0
+	return row("verification", []string{"list", "chunk", "id", "requirement", "role", "outcome", "source_digest", "excerpt_digest"},
+		[]string{list, call.Chunk, entry.ID, entry.Requirement, entry.Role, entry.Outcome, entry.SourceDigest, entry.NativeRef.Digest})
 }
 
 // reviewValid closes the --axis value set.
-func reviewValid(f form, values map[string]string) bool {
-	return chosen(f, values, "--axis")
+func reviewValid(f form, parsed usage.Result) bool {
+	return chosen(f, parsed.Flags, "--axis")
 }
 
 func review(f form, root, spec string, parsed usage.Result) (string, int) {
@@ -391,10 +394,6 @@ func review(f form, root, spec string, parsed usage.Result) (string, int) {
 	if err != nil {
 		return f.refuse(cause(err))
 	}
-	table, err := toon.Table("review", []string{"chunk", "id", "axis", "outcome", "supersedes", "source_digest", "excerpt_digest"},
-		[][]string{{call.Chunk, entry.ID, entry.Axis, entry.Outcome, strings.Join(entry.Supersedes, ","), entry.SourceDigest, entry.NativeRef.Digest}})
-	if err != nil {
-		return toon.RenderError(err) + "\n", 1
-	}
-	return table, 0
+	return row("review", []string{"chunk", "id", "axis", "outcome", "supersedes", "source_digest", "excerpt_digest"},
+		[]string{call.Chunk, entry.ID, entry.Axis, entry.Outcome, strings.Join(entry.Supersedes, ","), entry.SourceDigest, entry.NativeRef.Digest})
 }
