@@ -917,11 +917,19 @@ The second VR-C4 repair landed after the second rerun. The ticket 9 author then 
 
 VR-C4 repair 2 landed after the first rerun, so the ticket 10 author ran the package tests again on the final chunk source at `0d16bca145b1af54fe7541fcf667a63996bcefa5`. `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds this result as `vr-c4-10-worktree-r3`.
 
+## VR-C4 chunk review, round 3
+
+This round confirms VR-C4 repair 2 and the record correction R26. The frozen pair is base `7fa02b429a66aa71b4303e483b82e074622c80bd` and tip `f3e0cb4e38788e791a0654dcbaced969a9cb1d45`. The shared evidence is `sha256:63fc83b2953f17c61caf84bbdfcaa816b61f041c9312f47d0ebf96216ce15838`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, and each read the delta `5e783169..f3e0cb4e`. That delta changes one comment line and no executable line.
+
+The raw finding count is 0. R25 and R26 hold, and the payload decodes with each ticket's latest verification at the final source. The consumed allowance is 2 of 2 repair cycles, and no blocker remains.
+
+The chunk record for VR44 to VR47 is unchanged from round 2. The package run at the tip passes, and the SKIP set holds the two socket capability subtests. The VR-C4 plan commits added assignments only. So the payload maps each VR-C3 plan chunk ID to the same ID in the current plan.
+
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/worktree-verb-runner/spec.md",
-  "plan_digest": "sha256:dedfa63fd559b5ec09dc6e3227dc0085296ed59f9a64718abf049429445a5e63",
+  "plan_digest": "sha256:750064a4c231f36f24097238a38dfdb089cf76023cc19379e8c99dc5142991c0",
   "implementation_session": "",
   "chunks": [
     {
@@ -2055,9 +2063,9 @@ VR-C4 repair 2 landed after the first rerun, so the ticket 10 author ran the pac
     {
       "id": "VR-C4",
       "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
-      "tip": "7b8477d727f83273800fa5e64a28bafca4eeb814",
-      "plan_digest": "sha256:7711cbb98050f6a05c3db0a4fe213e57895c371a55de13ee7654a9588fee599d",
-      "source_digest": "bb74f2d148868cfa3030708303666e38d2319c3a",
+      "tip": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+      "plan_digest": "sha256:750064a4c231f36f24097238a38dfdb089cf76023cc19379e8c99dc5142991c0",
+      "source_digest": "9021fa9752d6386c960a1708ecab66ac3cba43c2",
       "acceptance_rows": [
         "VR36",
         "VR37",
@@ -2400,6 +2408,72 @@ VR-C4 repair 2 landed after the first rerun, so the ticket 10 author ran the pac
           "supersedes": [
             "vr-c4-coverage-r1"
           ]
+        },
+        {
+          "id": "vr-c4-standards-r3",
+          "performer": "claude:bench-reviewer/vr-c4-standards-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9021fa9752d6386c960a1708ecab66ac3cba43c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c4-standards-r3@f3e0cb4e",
+            "digest": "sha256:786c0813e58a2dc2363ae593b0babc94d169311c82880f8c4c58152859cc246e",
+            "excerpt": "Standards: 0 findings. R25 and R26 hold; the comment matches repoHome.call, and no author entry sits in the review list."
+          },
+          "axis": "Standards",
+          "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "tip": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c4-standards-r2"
+          ]
+        },
+        {
+          "id": "vr-c4-spec-r3",
+          "performer": "claude:bench-reviewer/vr-c4-spec-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9021fa9752d6386c960a1708ecab66ac3cba43c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c4-spec-r3@f3e0cb4e",
+            "digest": "sha256:66f0f0dd14440cff55ef9b8bf4754427412161119ee4e033e74c4b1a0db7765e",
+            "excerpt": "Spec: 0 findings. The plan commit, the one-line repair, and the payload hold; each ticket's latest verification names the final source."
+          },
+          "axis": "Spec",
+          "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "tip": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c4-spec-r2"
+          ]
+        },
+        {
+          "id": "vr-c4-coverage-r3",
+          "performer": "claude:bench-reviewer/vr-c4-coverage-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9021fa9752d6386c960a1708ecab66ac3cba43c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c4-coverage-r3@f3e0cb4e",
+            "digest": "sha256:e6e5f3602d0d44ba1152483e2efe7458f24c7c83b6a8b2e3c5a5b86657222359",
+            "excerpt": "Coverage: 0 findings. The delta changes one comment line; the package passes with the two socket skips."
+          },
+          "axis": "Coverage",
+          "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "tip": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+          "finding_ids": [],
+          "supersedes": [
+            "vr-c4-coverage-r2"
+          ]
         }
       ]
     }
@@ -2436,6 +2510,27 @@ VR-C4 repair 2 landed after the first rerun, so the ticket 10 author ran the pac
     {
       "from": "sha256:fc14637963d16b0fca7a4058f4eac565d31a02cb563e2fcdc1331d0547ba5c47",
       "to": "sha256:dedfa63fd559b5ec09dc6e3227dc0085296ed59f9a64718abf049429445a5e63",
+      "chunk_ids": {
+        "VR-C1": [
+          "VR-C1"
+        ],
+        "VR-C2": [
+          "VR-C2"
+        ],
+        "VR-C3": [
+          "VR-C3"
+        ],
+        "VR-C4": [
+          "VR-C4"
+        ],
+        "VR-C5": [
+          "VR-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:dedfa63fd559b5ec09dc6e3227dc0085296ed59f9a64718abf049429445a5e63",
+      "to": "sha256:750064a4c231f36f24097238a38dfdb089cf76023cc19379e8c99dc5142991c0",
       "chunk_ids": {
         "VR-C1": [
           "VR-C1"
