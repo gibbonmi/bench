@@ -1,5 +1,21 @@
 # CLI and desktop consistency review
 
+## Current C2 state
+
+C1 passed checkpoint 20261002T210556.743855582Z-3008930.
+C2 source 589ab085cd5dbf4e691c79fa3f6f696acb7e886b passed its commit lane and build preflight.
+All five required C2 author results are recorded below against that source.
+The final sealed system suite passed in 88274 milliseconds with no skips.
+The source tree is clean before record preparation.
+
+C2 native review and its completion checkpoint remain pending.
+C2 has consumed zero post-review repair cycles.
+Its initial implementation included one preservation hardening pass.
+The original approved author session retains implementation and repairs.
+C3 remains unimplemented and requires actual CLI and desktop qualification.
+
+## Earlier C1 records
+
 C1 cycle 4 removed the two comment lines cited by ST-R3-1.
 All required author checks passed, including both restored mutation probes.
 All three current native axes returned zero findings.
@@ -162,7 +178,7 @@ No review requested a Bench command change.
 {
   "version": 1,
   "spec": "specs/cli-desktop-consistency/spec.md",
-  "plan_digest": "sha256:92164d6555f5d833562ef5f1dd31f964a7295dc51e1c7bddaae4d744b3714953",
+  "plan_digest": "sha256:3b1422b2ea101981f177cc5e161e80174a5c513954b575b471c1d639fc8ab80e",
   "implementation_session": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
   "chunks": [
     {
@@ -1131,6 +1147,127 @@ No review requested a Bench command change.
           ]
         }
       ]
+    },
+    {
+      "id": "C2",
+      "base": "3c3c1a012be244795f9a1a2841b6b351686231c9",
+      "tip": "589ab085cd5dbf4e691c79fa3f6f696acb7e886b",
+      "plan_digest": "sha256:3b1422b2ea101981f177cc5e161e80174a5c513954b575b471c1d639fc8ab80e",
+      "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+      "acceptance_rows": [
+        "CD18",
+        "CD19",
+        "CD20",
+        "CD21",
+        "CD22",
+        "CD23",
+        "CD24",
+        "CD25",
+        "CD26",
+        "CD27",
+        "CD28",
+        "CD29",
+        "CD30",
+        "CD31",
+        "CD32",
+        "CD33",
+        "CD34",
+        "CD35",
+        "CD36"
+      ],
+      "verification": [
+        {
+          "id": "c2-compatibility-author",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:18dd27f8299658adfc001194793b1275c50733c08e298f9199b41bd787381efb",
+            "excerpt": "The native author ran bench test --package ./internal/compatibility/.... The compatibility package passed in 4 milliseconds, and the shared fixture package had no tests. No failures or skips occurred. The committed C2 source retains those exact package bytes.\n"
+          },
+          "requirement": "compatibility",
+          "command": "bench test --package ./internal/compatibility",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-adopt-author",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:4acb404f24752d661e71ebd5e550ca30056293f4f7f12aef89b1062d4f7c4356",
+            "excerpt": "The native author ran bench test --package ./internal/adopt/... against the final implementation. The adoption package passed in 57894 milliseconds with no failures or skips. This includes the final canonical shim-identity correction. The source commit adds no later executable change.\n"
+          },
+          "requirement": "adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-repair-author",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:fb0c4d7f6f55b1e5458045466cbe95bbcc034220dfa8a46e586cbc01afa08866",
+            "excerpt": "The native author ran bench test --package ./internal/adopt/... against the final implementation. The public repair package passed in 47680 milliseconds with no failures or skips. The final kit alias regression first failed in 36 milliseconds and passed in the corrected kit suite in 936 milliseconds. The undo-loop omission probe compiled and failed TestCompatibilityUndo in 1759 milliseconds, restored source bytes, and passed the restored test in 1667 milliseconds. The source commit adds no later executable change.\n"
+          },
+          "requirement": "repair",
+          "command": "bench test --package ./internal/adopt/repairtest",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-transaction-author",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:d2d07ca3b8c5825bb6463846a7b0673959726ccb800027bc2aaa4730aba59ae4",
+            "excerpt": "The native author ran bench test --package ./internal/adopt/... against the final implementation. The transaction package passed in 664 milliseconds with no failures or skips. The source commit adds no later executable change.\n"
+          },
+          "requirement": "transaction",
+          "command": "bench test --package ./internal/adopt/transaction",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-system-author",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:b7607cbb6eeba7b5916349ea08d80c4059a0e5dcee921bc6abaadee0797e4a3c",
+            "excerpt": "The native author ran bench test --check system at clean committed source 589ab085cd5dbf4e691c79fa3f6f696acb7e886b. The sealed system suite passed in 88274 milliseconds with no failures or skips. It includes real setup, all competing writer routes, aliased destinations, disjoint writer progress, and fresh-process undo after an abrupt multi-target repair interruption.\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1180,6 +1317,15 @@ No review requested a Bench command change.
     {
       "from": "sha256:dbfc1f8f42b09be4477252e42e43e2863aa70e349a01fa374a9ce1a52716db9f",
       "to": "sha256:92164d6555f5d833562ef5f1dd31f964a7295dc51e1c7bddaae4d744b3714953",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:92164d6555f5d833562ef5f1dd31f964a7295dc51e1c7bddaae4d744b3714953",
+      "to": "sha256:3b1422b2ea101981f177cc5e161e80174a5c513954b575b471c1d639fc8ab80e",
       "chunk_ids": {
         "C1": [
           "C1"
