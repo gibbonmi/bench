@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -59,18 +58,32 @@ func TestResetApplyRecordsOneVerbSpan(t *testing.T) {
 	requireTest(t, len(spans) == 1 && spans[0].Seam == "worktree.reset" && spans[0].Attributes[otelrecord.AttrSubjectID] == f.creation.Assignment.ID, "reset spans = %#v", spans)
 }
 
+// plantIgnoreRuleDrift commits a rule that ignores build/ after the assignment start and
+// writes build/output under it. The start's rules do not ignore that file, so a reset to the
+// start keeps it and the checkout is not clean after the move.
+func plantIgnoreRuleDrift(t *testing.T, path string) {
+	t.Helper()
+	commitInWorktree(t, path, ".gitignore", "build/\n", "ignore the build directory")
+	mustMkdirAll(t, filepath.Join(path, "build"), 0o755)
+	mustWrite(t, filepath.Join(path, "build/output"), []byte("build output\n"), 0o644)
+}
+
+// plantStaleHeadLock leaves a HEAD.lock in the checkout's administration directory, as a
+// Git process that stops before it releases the lock does. The reset move then cannot
+// attach the branch.
+func plantStaleHeadLock(t *testing.T, path string) {
+	t.Helper()
+	mustWrite(t, mustAdminPath(t, path, "HEAD.lock"), nil, 0o644)
+}
+
 func TestResetApplyExitsThreeWhenTheMoveDidNotLand(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "reset-silent-move")
-	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("dirty\n"), 0o644)
-	j := defaultJoins()
-	j.resetMove = func(string, string, string) error { return nil }
+	plantIgnoreRuleDrift(t, f.creation.Path)
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	call := f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint)
-	call.joins = &j
-	result := runVerb(t, verbReset, call)
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	ref := intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"
 	requireTest(t, result.exit == 3 && strings.Contains(result.stdout, "preserved="+ref), "silent move = %d %s %s", result.exit, result.stdout, result.stderr)
 }
@@ -79,14 +92,11 @@ func TestResetApplyExitsThreeOnAMoveFault(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "reset-move-fault")
 	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("dirty\n"), 0o644)
-	j := defaultJoins()
-	j.resetMove = func(string, string, string) error { return errors.New("move failed") }
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	call := f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint)
-	call.joins = &j
-	result := runVerb(t, verbReset, call)
+	plantStaleHeadLock(t, f.creation.Path)
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	ref := intent.ResetRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID) + "1"
 	requireTest(t, result.exit == 3 && strings.Contains(result.stdout, "preserved="+ref) && strings.Contains(result.stdout, "next=bench worktree reset --restore "+ref+" "+f.creation.Assignment.ID), "move fault = %d %s %s", result.exit, result.stdout, result.stderr)
 	_, ok := readRecoveryManifest(f.root, ref)
@@ -244,9 +254,7 @@ func TestResetRefusesAnIgnoredCollision(t *testing.T) {
 func TestResetApplyKeepsIgnoredBytesAcrossAnIgnoreRuleChange(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "reset-ignore-drift")
-	commitInWorktree(t, f.creation.Path, ".gitignore", "build/\n", "ignore the build directory")
-	mustMkdirAll(t, filepath.Join(f.creation.Path, "build"), 0o755)
-	mustWrite(t, filepath.Join(f.creation.Path, "build/output"), []byte("build output\n"), 0o644)
+	plantIgnoreRuleDrift(t, f.creation.Path)
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
@@ -273,14 +281,11 @@ func TestResetApplyExitsThreeWithoutAnEnvelope(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "reset-fault-no-envelope")
 	gitRun(t, f.creation.Path, "switch", "--detach", "HEAD")
-	j := defaultJoins()
-	j.resetMove = func(string, string, string) error { return errors.New("move failed") }
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	call := f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint)
-	call.joins = &j
-	result := runVerb(t, verbReset, call)
+	plantStaleHeadLock(t, f.creation.Path)
+	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	requireTest(t, result.exit == 3 && strings.Contains(result.stdout, "preserved=none") &&
 		strings.Contains(result.stdout, "next=bench worktree reset --to "+f.creation.Assignment.Start+" "+f.creation.Assignment.ID+"}"), "fault without envelope = %d %s %s", result.exit, result.stdout, result.stderr)
 }

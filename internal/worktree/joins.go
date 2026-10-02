@@ -43,10 +43,8 @@ type joins struct {
 	// runs after the branch ref moved. It is a seam because its failure is the one
 	// outcome that reads apart from a refusal, and no fixture can make a bare reset fail.
 	mergeReconcile func(string, string) error
-	// resetMove attaches the assignment branch and replaces the checkout at the checkpoint.
-	resetMove     func(string, string, string) error
-	resetLayers   func(string, recoveryManifest) error
-	resetEnvelope func(string, resetPlan) (intent.Recovery, error)
+	resetLayers    func(string, recoveryManifest) error
+	resetEnvelope  func(string, resetPlan) (intent.Recovery, error)
 }
 
 // defaultJoins names the real function behind every seam. It is the one place a default
@@ -66,7 +64,6 @@ func defaultJoins() joins {
 		resolveRunningBinary:     os.Executable,
 		reauthorizeLock:          lockWorktree,
 		mergeReconcile:           reconcileMergeCheckout,
-		resetMove:                moveResetCheckout,
 		resetLayers:              restoreResetLayers,
 		resetEnvelope:            writeResetEnvelope,
 		buildSubject:             runbinary.BuildSubject,
