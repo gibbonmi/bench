@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:f16cc9cb766f3c75b004517d02033ea11e7831e516954910beca41fbcdbe298d",
+  "plan_digest": "sha256:04d1f52fa7224e0708fedd02e7c1118f8404219f710c1aea080eb347e589fc9f",
   "implementation_session": "",
   "chunks": [
     {
@@ -197,9 +197,9 @@
     {
       "id": "SR-C2",
       "base": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
-      "tip": "f620ccd6e416501f2d4cf504d5090f3cb5104c80",
-      "plan_digest": "sha256:f16cc9cb766f3c75b004517d02033ea11e7831e516954910beca41fbcdbe298d",
-      "source_digest": "b46d93c63bb58354d46a8869edec68fe5fb1e180",
+      "tip": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+      "plan_digest": "sha256:04d1f52fa7224e0708fedd02e7c1118f8404219f710c1aea080eb347e589fc9f",
+      "source_digest": "995f6f325872860920aebf1e60aaee419f87a7cb",
       "acceptance_rows": [
         "WS9",
         "WS10",
@@ -224,6 +224,24 @@
             "ref": "claude:agent/sr-t2-author-20261002@3ecdaffff22967433363e9495c8807f14e2f85ea",
             "digest": "sha256:b3be7a9e9dbb0eb6edc3bf2baa842efe38557f107ba93a8cabed79d58d2cdedb",
             "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,f620ccd6e416501f2d4cf504d5090f3cb5104c80,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,56225\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable: listen unix ... (280 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix ... (279 bytes)\"\n"
+          },
+          "requirement": "2-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c2-2-worktree-repair1",
+          "performer": "claude:bench-writer/sr-t2-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "995f6f325872860920aebf1e60aaee419f87a7cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t2-repair1-20261002@d68dd224133551cdf60152916b9f86842c5ab911",
+            "digest": "sha256:b54fa6ab9c0451340a3e0d484d417c88dab23efbd67ab4b668ce382b0bbf0df2",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,1fde1ac102e6b169c46bc40ae03510b29469d1fd,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,57473\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
           },
           "requirement": "2-worktree",
           "command": "bench test --package ./internal/worktree",
@@ -326,6 +344,18 @@
           "SR-C1"
         ]
       }
+    },
+    {
+      "from": "sha256:f16cc9cb766f3c75b004517d02033ea11e7831e516954910beca41fbcdbe298d",
+      "to": "sha256:04d1f52fa7224e0708fedd02e7c1118f8404219f710c1aea080eb347e589fc9f",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ]
+      }
     }
   ]
 }
@@ -399,3 +429,13 @@ Count: 1. Worst: C1.
 - The release-resume replan instant in `ownership.go` has no behavioral test. The live census of SR-C6 refuses that read.
 - The ambient type comment in `effects.go` says that nothing below the entry reads the process. The tickets 3, 7, and 11 make that true, so SR-C6 examines it again.
 - The item `ApplyAutomatic` of ticket 11 is already met at this tip.
+
+## SR-C2 repair cycle 1
+
+One fresh opus / high repair session, `claude:bench-writer/sr-t2-repair1`, repaired S1, S2, P1, and C1 in commit `1fde1ac1`. The session used 1 of 2 attempts and 1 lane pass. The repair allowance of SR-C2 is 2 cycles, and 1 cycle is used.
+
+- S1 and S2: the two comments now state what the code does. No code changed.
+- P1: the WS12 test puts the home at a sibling path with a space. A guard fails the test when the checkout path holds no space.
+- C1: the WS13 test also requires the `retained stale-active=1` cell. The named swap probe in `resume.go` was `silent` before the repair and `bit` after it.
+
+The coordinator probe swapped the home argument of `census.Drop` in `lifecycle.go`. It returned `bit` with 1 failed test and `restored=yes`. An omission of that line did not compile, so that probe was `invalid`.
