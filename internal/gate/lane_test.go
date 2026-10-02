@@ -205,12 +205,7 @@ func TestLaneForCommitMarksOnlyTheKitLaneSelective(t *testing.T) {
 		t.Fatalf("kit lane = %+v, want a selective lane", built)
 	}
 
-	project := t.TempDir()
-	writeLaneFile(t, filepath.Join(project, ".bench", "phases.json"), `{
-	  "phases": [{"name": "build", "argv": ["go", "build", "./..."]}],
-	  "lane": [{"name": "fmt", "argv": ["make", "fmt"]}]
-	}`)
-	declared, err := LaneForCommit(project)
+	declared, err := LaneForCommit(manifestLaneRoot(t))
 	if err != nil {
 		t.Fatal(err)
 	}

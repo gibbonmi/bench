@@ -85,9 +85,11 @@ func TestKitSourceCheckoutAtKitRefusesAnotherDirectory(t *testing.T) {
 }
 
 // TestKitSourceCheckoutAtKitFallsBackToTheExecutableParent pins the kit-source fallback.
-// A temporary root is not the executable's parent, so a fallback to the root answers true.
+// A temporary root is not the executable's parent. The root is also the working directory,
+// so a fallback to the root or to the working directory answers true.
 func TestKitSourceCheckoutAtKitFallsBackToTheExecutableParent(t *testing.T) {
 	root := t.TempDir()
+	t.Chdir(root)
 
 	if KitSourceCheckoutAtKit(root, "") {
 		t.Fatalf("KitSourceCheckoutAtKit(%q, \"\") = true, want false", root)
