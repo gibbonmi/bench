@@ -3,13 +3,16 @@
 package systemtest
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
 	toonlib "github.com/toon-format/toon-go"
 
+	"github.com/gibbonmi/bench/internal/compatibility"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -40,13 +43,13 @@ func TestCompatibilityPaths(t *testing.T) {
 
 type compatibilitySession struct {
 	repo, wrapper, working string
-	homes                  [2]string
+	homes                  map[compatibility.Interface]string
 	overrides              []string
 }
 
 func runCompatibilityDoctor(t *testing.T) (processResult, string, string) {
 	fixture := newCompatibilitySession(t)
-	return fixture.run(t, "codex-cli"), fixture.repo, fixture.wrapper
+	return fixture.run(t, compatibility.CodexCLI), fixture.repo, fixture.wrapper
 }
 
 func newCompatibilitySession(t *testing.T) compatibilitySession {
@@ -62,14 +65,19 @@ func newCompatibilitySession(t *testing.T) compatibilitySession {
 	home := t.TempDir()
 	fixture := compatibilitySession{
 		repo: repo, working: working, wrapper: filepath.Join(repo, ".bench", "bin", "bench.sh"),
-		homes: [2]string{filepath.Join(home, "cli home [personal]*"), filepath.Join(home, "desktop home [personal]*")},
+		homes: map[compatibility.Interface]string{},
 		overrides: []string{
 			"BENCH_HOME=" + filepath.Join(home, ".bench"), "BENCH_KIT=" + owner.kit,
 			"BENCH_RUN_BINARY=" + owner.selected.path, "HOME=" + home,
 			"PATH=" + privateToolPath(t, "git", "bash", "uname", "dirname", "basename", "readlink", "tr"),
 		},
 	}
-	for _, configHome := range fixture.homes {
+	for _, selected := range compatibility.Interfaces() {
+		configHome := filepath.Join(home, string(selected)+" home [personal]*")
+		if selected == compatibility.CodexCLI {
+			configHome = filepath.Join(home, ".codex")
+		}
+		fixture.homes[selected] = configHome
 		if err := os.MkdirAll(configHome, 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -77,20 +85,34 @@ func newCompatibilitySession(t *testing.T) compatibilitySession {
 			t.Fatal(err)
 		}
 	}
+	for _, configHome := range fixture.homes {
+		nested := filepath.Join(configHome, "personal", "nested")
+		if err := os.MkdirAll(nested, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(nested, "sentinel"), []byte("preserve personal state\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	return fixture
 }
 
-func (fixture compatibilitySession) run(t *testing.T, selected string) processResult {
+func (fixture compatibilitySession) run(t *testing.T, selected compatibility.Interface) processResult {
 	t.Helper()
-	home := fixture.homes[0]
-	if selected == "codex-desktop" {
-		home = fixture.homes[1]
+	return fixture.runWithHome(t, selected, fixture.homes[selected])
+}
+
+func (fixture compatibilitySession) runWithHome(t *testing.T, selected compatibility.Interface, home string) processResult {
+	t.Helper()
+	homeOverride := "CODEX_HOME"
+	if home != "" {
+		homeOverride += "=" + home
 	}
-	overrides := append(append([]string{}, fixture.overrides...), "CODEX_HOME="+home)
+	overrides := append(append([]string{}, fixture.overrides...), homeOverride)
 	if err := owner.observeSelected(); err != nil {
 		t.Fatal(err)
 	}
-	return owner.runAt(fixture.working, overrides, "bash", fixture.wrapper, "doctor", "--compat", selected)
+	return owner.runAt(fixture.working, overrides, "bash", fixture.wrapper, "doctor", "--compat", string(selected))
 }
 
 func compatibilityContext(t *testing.T, result processResult) map[string]string {
@@ -132,10 +154,10 @@ func compatibilityContext(t *testing.T, result processResult) map[string]string 
 
 func TestCompatibilityCollectorInterfaces(t *testing.T) {
 	fixture := newCompatibilitySession(t)
-	for _, selected := range []string{"codex-cli", "codex-desktop"} {
-		t.Run(selected, func(t *testing.T) {
+	for _, selected := range compatibility.Interfaces() {
+		t.Run(string(selected), func(t *testing.T) {
 			context := compatibilityContext(t, fixture.run(t, selected))
-			if context["interface"] != selected {
+			if context["interface"] != string(selected) {
 				t.Fatalf("selected interface = %q, want %q", context["interface"], selected)
 			}
 		})
@@ -144,29 +166,70 @@ func TestCompatibilityCollectorInterfaces(t *testing.T) {
 
 func TestCompatibilityCollectorReadOnly(t *testing.T) {
 	fixture := newCompatibilitySession(t)
-	before := map[string][]byte{}
+	before := map[string]map[string]compatibilityHomeEntry{}
 	for _, home := range fixture.homes {
-		path := filepath.Join(home, "config.toml")
-		var err error
-		before[path], err = os.ReadFile(path)
-		if err != nil {
-			t.Fatal(err)
-		}
+		before[home] = snapshotCompatibilityHome(t, home)
 	}
-	for _, selected := range []string{"codex-cli", "codex-desktop"} {
-		t.Run(selected, func(t *testing.T) {
-			compatibilityContext(t, fixture.run(t, selected))
-			for path, want := range before {
-				got, err := os.ReadFile(path)
-				if err != nil {
-					t.Fatal(err)
-				}
-				if string(got) != string(want) {
-					t.Errorf("inspection changed configuration %s", path)
+	type homeCase struct {
+		name     string
+		selected compatibility.Interface
+		home     string
+	}
+	cases := []homeCase{}
+	for _, selected := range compatibility.Interfaces() {
+		cases = append(cases, homeCase{string(selected), selected, fixture.homes[selected]})
+	}
+	cases = append(cases, homeCase{"CLI HOME fallback", compatibility.CodexCLI, ""})
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			context := compatibilityContext(t, fixture.runWithHome(t, test.selected, test.home))
+			if context["configuration-home"] != fixture.homes[test.selected] {
+				t.Errorf("selected home = %q, want %q", context["configuration-home"], fixture.homes[test.selected])
+			}
+			for home, want := range before {
+				if got := snapshotCompatibilityHome(t, home); !reflect.DeepEqual(got, want) {
+					t.Errorf("inspection changed configuration home %s: got %#v, want %#v", home, got, want)
 				}
 			}
 		})
 	}
+}
+
+type compatibilityHomeEntry struct {
+	mode    os.FileMode
+	content string
+}
+
+func snapshotCompatibilityHome(t *testing.T, home string) map[string]compatibilityHomeEntry {
+	t.Helper()
+	entries := map[string]compatibilityHomeEntry{}
+	err := filepath.WalkDir(home, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(home, path)
+		if err != nil {
+			return err
+		}
+		var content string
+		switch {
+		case info.Mode().IsRegular():
+			data, readErr := os.ReadFile(path)
+			content, err = string(data), readErr
+		case info.Mode()&os.ModeSymlink != 0:
+			content, err = os.Readlink(path)
+		}
+		entries[rel] = compatibilityHomeEntry{info.Mode(), content}
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return entries
 }
 
 func TestCompatibilityCollectorPolicyFingerprint(t *testing.T) {
@@ -181,15 +244,15 @@ func TestCompatibilityCollectorPolicyFingerprint(t *testing.T) {
 			t.Error(err)
 		}
 	})
-	previous := compatibilityContext(t, fixture.run(t, "codex-cli"))["compatibility-fingerprint"]
+	previous := compatibilityContext(t, fixture.run(t, compatibility.CodexCLI))["compatibility-fingerprint"]
 	for _, policy := range []struct{ path, body string }{
 		{hookPath, `{"hooks":{"SessionStart":[]}}`},
-		{filepath.Join(fixture.homes[0], "config.toml"), "approval_policy = \"untrusted\"\n"},
+		{filepath.Join(fixture.homes[compatibility.CodexCLI], "config.toml"), "approval_policy = \"untrusted\"\n"},
 	} {
 		if err := os.WriteFile(policy.path, []byte(policy.body), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		current := compatibilityContext(t, fixture.run(t, "codex-cli"))["compatibility-fingerprint"]
+		current := compatibilityContext(t, fixture.run(t, compatibility.CodexCLI))["compatibility-fingerprint"]
 		if current == "" || current == previous {
 			t.Errorf("policy change at %s retained fingerprint %q", policy.path, current)
 		}

@@ -84,3 +84,5 @@ The same gate reported changes to three ignored build artifacts.
 Their writer remains under investigation; that gate is not accepted as green.
 
 The current repair evidence is in [repair cycle 1](repair-cycle-1.md).
+
+The final C1 repair evidence is in [repair cycle 2](repair-cycle-2.md).

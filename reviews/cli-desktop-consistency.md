@@ -3,8 +3,10 @@
 C1 confirmation has two findings and two repair targets.
 The first review had five findings and five repair targets.
 Repair cycle 1 of 2 completed its author verification and confirmation.
-Repair cycle 2 is authorized in the user-selected session.
-One repair cycle remains before that work starts.
+Repair cycle 2 completed author verification in the user-selected session.
+
+Both permitted repair cycles are consumed.
+Final independent confirmation remains pending.
 The source stays unqualified until current reviews and its checkpoint pass.
 
 ## Standards

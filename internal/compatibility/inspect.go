@@ -18,14 +18,15 @@ const (
 	CodexDesktop Interface = "codex-desktop"
 )
 
-func interfaces() []Interface {
+// Interfaces returns the complete compatibility interface inventory.
+func Interfaces() []Interface {
 	return []Interface{CodexCLI, CodexDesktop}
 }
 
 // InterfaceOperand renders the accepted interface vocabulary for command usage.
 func InterfaceOperand() string {
 	names := []string{}
-	for _, selected := range interfaces() {
+	for _, selected := range Interfaces() {
 		names = append(names, string(selected))
 	}
 	return "<" + strings.Join(names, "|") + ">"
@@ -33,7 +34,7 @@ func InterfaceOperand() string {
 
 // ParseInterface accepts the complete compatibility interface vocabulary.
 func ParseInterface(value string) (Interface, bool) {
-	for _, selected := range interfaces() {
+	for _, selected := range Interfaces() {
 		if string(selected) == value {
 			return selected, true
 		}
