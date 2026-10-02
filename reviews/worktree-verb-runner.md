@@ -901,6 +901,14 @@ R25 changes a code comment, so it takes repair cycle 2 of 2 for VR-C4. That is t
 
 The Coverage axis found no gap. Two probes of the unsafe-path refusal bit the three R21 tests, so each landing still uses the fixture home. No assertion count fell, and all 688 top-level tests pass.
 
+## VR-C4 repair 2
+
+The fresh repair session `claude:bench-writer/vr-t8-repair-2` ran on opus at medium effort, from base `0a18e505c39e2d375e58f6e1647de0c509484ed4`. The repair commit is `c9731327369b23652c24d1d3b78b046f5695385c`. It changes one comment line and no executable line.
+
+- R25: the comment at `land_fixtures_test.go:28` states that the value's call builds a verb call at the fixture home.
+
+At `c9731327`, `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds the package result as `vr-c4-8-worktree-r4`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2188,6 +2196,24 @@ The Coverage axis found no gap. Two probes of the unsafe-path refusal bit the th
             "ref": "claude:agent/vr-t8-repair-1-20261001/8-worktree@c03908e7",
             "digest": "sha256:1015348fc29cbffdee0640efa99d9ba54028b66dbab2c6dcc7fc50bf597f2ae5",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62147\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "8-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c4-8-worktree-r4",
+          "performer": "claude:bench-writer/vr-t8-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9021fa9752d6386c960a1708ecab66ac3cba43c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t8-repair-2-20261001/8-worktree@c9731327",
+            "digest": "sha256:33661c15e21319e2fa3829057e4e95580ab976335e94baaacc601c3446ab7201",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,65790\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "8-worktree",
           "command": "bench test --package ./internal/worktree",
