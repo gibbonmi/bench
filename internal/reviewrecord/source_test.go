@@ -70,8 +70,7 @@ func TestReviewRecordSource(t *testing.T) {
 }
 
 // TestFixtureSaveRendersThroughRender lives in the external test package,
-// because an internal test cannot import recordtest. A Save that keeps its own
-// json.MarshalIndent writes the Unicode escape for "&".
+// because an internal test cannot import recordtest.
 func TestFixtureSaveRendersThroughRender(t *testing.T) {
 	f := recordtest.New(t, 1)
 	f.AddChunk()
