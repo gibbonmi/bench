@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:0b9891d636d2808e586350a2af91a6124c2065c3da69f18e1eacf203da259754",
+  "plan_digest": "sha256:8b073a854f8d00b38288305179836a86ed32fcf1276acb648a66e317c1e1a105",
   "implementation_session": "",
   "chunks": [
     {
@@ -2008,6 +2008,33 @@
     {
       "from": "sha256:68136d4968b5827354ecb7f32914c79e099f0d35097e1b8a7e0c2f930495044b",
       "to": "sha256:0b9891d636d2808e586350a2af91a6124c2065c3da69f18e1eacf203da259754",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ],
+        "SR-C3": [
+          "SR-C3"
+        ],
+        "SR-C4": [
+          "SR-C4"
+        ],
+        "SR-C5": [
+          "SR-C5"
+        ],
+        "SR-C6": [
+          "SR-C6"
+        ],
+        "SR-C7": [
+          "SR-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0b9891d636d2808e586350a2af91a6124c2065c3da69f18e1eacf203da259754",
+      "to": "sha256:8b073a854f8d00b38288305179836a86ed32fcf1276acb648a66e317c1e1a105",
       "chunk_ids": {
         "SR-C1": [
           "SR-C1"
