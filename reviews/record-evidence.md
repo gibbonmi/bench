@@ -328,7 +328,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "re-c2-r1-standards",
+          "performer": "claude:bench-reviewer/re-c2-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "0fa91f6aaaa602460b5a707256004373bd936892",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re-c2-r1-standards-20261002@bf3ddc94aa2108fc225d1c946167ea150ae6041c",
+            "digest": "sha256:e3fb4b8f30ed668470828f5029c7f48e608f24f65110b729f4dfbc758ecbb86a",
+            "excerpt": "Standards RE-C2, pair 6d7f3969..bf3ddc94: fail, 1 finding (S1).\nS1: recordcmd/command.go:119 writes its own control-rune check instead of using sanitize.LineSafe (one source per fact; compose an existing seam); auto-fix.\nOne help source (forms -> HelpRows -> formHelpRows), one write transaction, and one refusal path confirmed. The independent TOON field list has its recorded red.\nAdvice: HelpRow is declared in two packages; the spec-path layout is rebuilt by hand at command.go:123; the usage-line shape differs from preflight; the fixture body is repeated at fixture.go:62."
+          },
+          "axis": "Standards",
+          "base": "6d7f3969e9061e8022630706c4430f64a7248312",
+          "tip": "bf3ddc94aa2108fc225d1c946167ea150ae6041c",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "re-c2-r1-spec",
+          "performer": "claude:bench-reviewer/re-c2-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "0fa91f6aaaa602460b5a707256004373bd936892",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re-c2-r1-spec-20261002@bf3ddc94aa2108fc225d1c946167ea150ae6041c",
+            "digest": "sha256:9a28e5e2fb185d6871eeea75ca056eaf66001cf0055bf31b9705938c5910d840",
+            "excerpt": "Spec axis, RE-C2, frozen pair 6d7f3969..bf3ddc94: approve with one finding.\nAll 32 RE-C2 rows hold, and registry, output, refusal order and budgets match the spec.\nF1 (P3, auto-fix, confidence 5): write.go:964 re-parses the rendered bytes without the reader's whole-document bound, so a document over ControlRecordLimit can be written that Read then refuses.\nThe plan expansion (help-projection allowlist) is in scope."
+          },
+          "axis": "Spec",
+          "base": "6d7f3969e9061e8022630706c4430f64a7248312",
+          "tip": "bf3ddc94aa2108fc225d1c946167ea150ae6041c",
+          "finding_ids": [
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "re-c2-r1-coverage",
+          "performer": "claude:bench-reviewer/re-c2-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "0fa91f6aaaa602460b5a707256004373bd936892",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re-c2-r1-coverage-20261002@bf3ddc94aa2108fc225d1c946167ea150ae6041c",
+            "digest": "sha256:10b12412c3760fc86f1528638468dcc81d872bcf0e59d68d17dca5da556511ca",
+            "excerpt": "Coverage RE-C2 round 1: fail, findings C1 and C2.\nC1: the step 3 control-character refusal on `--chunk` is untested, and the probe was silent.\nC2: the rendered-bytes check bounds the payload, not the whole document, so a write can leave a record over 2 MiB that `Read` refuses. Trace evidence only.\nAdvice: the temp-file cleanup after `CreateTemp` is untested (probe silent, no feasible input); the unknown-form echo is raw.\nBoth probes returned restored=yes."
+          },
+          "axis": "Coverage",
+          "base": "6d7f3969e9061e8022630706c4430f64a7248312",
+          "tip": "bf3ddc94aa2108fc225d1c946167ea150ae6041c",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -522,3 +590,46 @@ Focused checks at commit `f712f8ad`:
 - `bench test --package ./internal/conformance` passed in 35474 ms. It skipped 3 tests that the author did not write. These tests need a unix socket or a character device, which this filesystem cannot create.
 
 At commit `bf3ddc94`, these checks passed: `TestRootConformance`, `skip-ownership`, `subcommand-routing`, `axi-query-registry`, and `package-core-guard`. `bench structure` reported no issue in the changed paths. `cmd/bench/main.go` has 444 lines, and `cmd/bench/command_registry_test.go` did not change.
+
+## RE-C2 chunk review, round 1
+
+Three fresh fable / high sessions reviewed the frozen pair `6d7f3969..bf3ddc94`. Each axis bound the review evidence `sha256:7eccb1a7` with `--check-current`. The raw finding count is 4. P3 and C2 name the same fix, so the repair-target count is 3. The repair allowance of RE-C2 is 2 cycles, and 0 cycles are used.
+
+### Standards
+
+Finding count: 1. Worst issue: S1.
+
+- S1, auto-fix, confidence 5. The single-line flag check in `internal/reviewrecord/recordcmd/command.go` line 119 writes its own control-rune test. `sanitize.LineSafe` already owns that predicate. AGENTS.md makes duplicated knowledge a defect, and invariant 4 says to compose an existing seam.
+
+### Spec
+
+Finding count: 1. Worst issue: P3. Each of the 32 RE-C2 rows holds.
+
+- P3, auto-fix, confidence 5. The transaction parses the rendered payload, but it does not grade the whole rendered document against the bound of the reader. A chunk form can then write a record that `Read` refuses. The spec says that the transaction parses the rendered bytes through the same reader path. Refusal step 7 refuses a rendered record that fails the reader.
+
+### Coverage
+
+Finding count: 2. Worst issue: C2.
+
+- C1, auto-fix, confidence 6. No test grades refusal step 3 for `--chunk`. A probe that turned off the check for `--chunk` returned `silent`. The repair adds this test as the one hardening cycle of RE-C2.
+- C2, auto-fix, confidence 6. This is the same defect as P3, from a trace of a record near 2 MiB.
+
+### Repair targets
+
+- T1 closes P3 and C2. Grade the rendered document through the bound of the reader before the rename, and add a red-capable test.
+- T2 closes S1. Compose `sanitize.LineSafe` in the single-line flag check.
+- T3 closes C1. Add a chunk-form test that sends a control byte in `--chunk` with an unknown `--tip` and expects a refusal that names `--chunk`.
+
+### Advice
+
+- `HelpRow` has a declaration in `recordcmd` and in `evidencecmd`, and `formHelpRows` bridges them.
+- `command.go` builds the spec path by hand, and `reviewrecord.Slug` grades it.
+- The usage-line shape differs from the preflight verb.
+- `NewLinked` repeats the default fixture body.
+- The temporary-file cleanup after `CreateTemp` has no feasible test input.
+- An unknown form name echoes raw through the shared `toon.Usage` helper.
+- An empty `reviews/` directory stays after a failed first write.
+
+### Command contribution
+
+The Spec axis suggests that the write-spec registry sweep bind the help-row projection allowlist to any new projected help row. `bench learning` holds that entry. The Coverage axis suggests that the author run one probe for each single-line flag of each form. The Standards axis found no contribution.
