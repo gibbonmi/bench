@@ -17,7 +17,7 @@ import (
 )
 
 var resetGrammar = usage.Grammar{
-	Cmd: "bench worktree reset", Help: "usage: " + usage.WorktreeReset,
+	Cmd: usage.CommandName(usage.WorktreeReset), Help: "usage: " + usage.WorktreeReset,
 	MinArgs: 1, MaxArgs: 1,
 	Flags: []usage.Flag{
 		{Name: "--to", HasValue: true, NoEmptyValue: true},

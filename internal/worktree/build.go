@@ -71,7 +71,7 @@ func buildAttributed(attributed *string, j joins, root string, parsed usage.Resu
 }
 
 // buildVerb is the name every refusal this verb prints carries.
-const buildVerb = "bench worktree build"
+var buildVerb = usage.CommandName(usage.WorktreeBuild)
 
 var buildGrammar = usage.Grammar{
 	Cmd:     buildVerb,

@@ -77,6 +77,28 @@ func EmptyFlagValue(flag string) string {
 	return flag + " " + EmptyOperand
 }
 
+// CommandName returns the leading command words of a usage line: every word up to the
+// first operand, flag, or group token. A grammar's Cmd reads its name from the usage
+// constant through it, so the usage line stays the one source of the command name.
+func CommandName(line string) string {
+	words := strings.Fields(line)
+	for i, word := range words {
+		if !commandWord(word) {
+			return strings.Join(words[:i], " ")
+		}
+	}
+	return strings.Join(words, " ")
+}
+
+func commandWord(word string) bool {
+	for _, r := range word {
+		if (r < 'a' || r > 'z') && r != '-' {
+			return false
+		}
+	}
+	return word[0] != '-'
+}
+
 // Parse applies g's grammar to args and returns exactly one of three
 // outcomes: a populated Result with an empty line and code 0 on a successful
 // parse; a help outcome (zero Result, g.Help as the line, code 0) when --help
