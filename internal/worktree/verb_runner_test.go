@@ -160,9 +160,9 @@ func callAmbient(call verbCall, stderr io.Writer) ambient {
 	return a
 }
 
-// checkVerbCall refuses a kit value and a clock value for a verb without a joins form,
-// because only a joins form receives the ambient value, and a test must not trust a value
-// the verb ignores.
+// checkVerbCall refuses a kit value or a clock value for a verb key without a joins form,
+// because only a joins form receives the ambient value. It does not check that a joins
+// form reads either value.
 func checkVerbCall(key verbKey, call verbCall) error {
 	if verbForms[key].joined != nil {
 		return nil

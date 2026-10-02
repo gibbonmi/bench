@@ -29,8 +29,8 @@ type ambient struct {
 	warnings io.Writer
 }
 
-// newAmbient reads the kit value and the clock once. The home and the stderr writer come
-// from the verb entry's own parameters.
+// newAmbient reads the kit value and the clock once. The caller supplies the home and the
+// warnings writer.
 func newAmbient(home string, stderr io.Writer) ambient {
 	return ambient{home: home, kit: gate.KitValue(), now: currentTime(), warnings: stderr}
 }
