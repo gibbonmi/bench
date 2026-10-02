@@ -280,7 +280,7 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `/bench-write-spec FT356` from `decisions/worktree-seams.md` to shrink the worktree joins seam set.
+1. Run `/bench-implement-spec specs/worktree-seam-reduction/spec.md` to shrink the worktree joins seam set.
 2. Run `/bench-write-spec FT370` so a comment-only correction takes the evidence-only path.
 3. Run `/bench-implement-spec` on the FT361 light-path ticket so a plain `go test` is red only for a defect.
 

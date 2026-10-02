@@ -63,6 +63,14 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **verb result** — the value the verb runner returns: the exit code, the rows read
   through `axitest`, and the fingerprint. Not "output tuple", not "captured
   buffers" — verb result.
+- **census entry** — an exported function of the worktree package. It may read the
+  Bench home, the kit root, and the clock once each in its own body. Each verb entry
+  is a census entry. Not "boundary function", not "public API" — census entry.
+- **ambient value** — the one value that a verb entry builds from its own reads of
+  the kit root and the clock. It also carries the Bench home and the stderr writer that
+  the entry receives. The verb passes it down, so nothing below the entry reads the
+  process. Not "context", not "env",
+  not "config" — ambient value.
 - **fresh test run** — one Go test run with successful test-result reuse disabled
   while the ordinary build and module caches remain available. For this kit, the
   whole-tree form is `go test -count=1 ./...`. Not "cold test" or "clean-cache
