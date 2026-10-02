@@ -38,13 +38,9 @@ type joins struct {
 	// directory the build owner defaults to, so the manifest lands beside the wrapper. It
 	// is a seam because the default reaches a build script and a Go toolchain, and a
 	// fixture for that pair would make every output row wait on a real compile.
-	buildSubject func(context.Context, string, string) error
-	// mergeReconcile is the merge verb's publication boundary: the checkout catch-up that
-	// runs after the branch ref moved. It is a seam because its failure is the one
-	// outcome that reads apart from a refusal, and no fixture can make a bare reset fail.
-	mergeReconcile func(string, string) error
-	resetLayers    func(string, recoveryManifest) error
-	resetEnvelope  func(string, resetPlan) (intent.Recovery, error)
+	buildSubject  func(context.Context, string, string) error
+	resetLayers   func(string, recoveryManifest) error
+	resetEnvelope func(string, resetPlan) (intent.Recovery, error)
 }
 
 // defaultJoins names the real function behind every seam. It is the one place a default
@@ -63,7 +59,6 @@ func defaultJoins() joins {
 		chmodPool:                os.Chmod,
 		resolveRunningBinary:     os.Executable,
 		reauthorizeLock:          lockWorktree,
-		mergeReconcile:           reconcileMergeCheckout,
 		resetLayers:              restoreResetLayers,
 		resetEnvelope:            writeResetEnvelope,
 		buildSubject:             runbinary.BuildSubject,

@@ -735,9 +735,9 @@ func TestMergeExitsThreeWhenTheReconcileFails(t *testing.T) {
 	f := mergeFixture(t, "integration")
 	target := f.created[0]
 	commitInWorktree(t, target.Path, "target.txt", "target\n", "target work")
+	commitIndexLockLane(t, target.Path)
 	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
 	incoming := commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
-	f.joins.mergeReconcile = func(string, string) error { return errors.New("reset refused") }
 
 	r := runVerb(t, verbMerge, f.merge("--from", incoming, target.Assignment.ID))
 	if r.exit != 3 {

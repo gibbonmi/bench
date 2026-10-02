@@ -45,9 +45,10 @@ func MergeCommand(root, home string, args []string, stdout, stderr io.Writer) in
 	return mergeWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// mergeWith is MergeCommand with the seam set and the ambient value resolved explicitly at
-// the caller's boundary.
-func mergeWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
+// mergeWith is MergeCommand with the ambient value resolved explicitly at the caller's
+// boundary. It takes the seam set first, as each internal verb form does, but the merge
+// reads no seam.
+func mergeWith(_ joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(mergeGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -57,14 +58,14 @@ func mergeWith(j joins, a ambient, root string, args []string, stdout, stderr io
 	// nothing. The target resolves inside the span.
 	var assignment string
 	finishSpan := beginVerbSpan(a.home, root, otelMergeSeam)
-	exit := mergeAttributed(&assignment, j, a, root, parsed, stdout, stderr)
+	exit := mergeAttributed(&assignment, a, root, parsed, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit
 }
 
 // mergeAttributed is the merge verb's own work, with the target assignment written to
 // assignment once the target resolves.
-func mergeAttributed(assignment *string, j joins, a ambient, root string, parsed usage.Result, stdout, stderr io.Writer) int {
+func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Result, stdout, stderr io.Writer) int {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return landRefusal(stdout, "assignment ledger is unreadable")
@@ -126,7 +127,7 @@ func mergeAttributed(assignment *string, j joins, a ambient, root string, parsed
 	// A `current` target changed nothing, so there is nothing for the checkout to catch
 	// up with; only a published tip needs the reconcile.
 	if result.Kind != landing.MergeKindCurrent {
-		if err := j.mergeReconcile(target.Worktree, result.Tip); err != nil {
+		if err := reconcileMergeCheckout(target.Worktree, result.Tip); err != nil {
 			fmt.Fprintln(stdout, record+",next="+sanitize.Controls(mergeReconcileNext(target, result.Tip))+"}")
 			return 3
 		}

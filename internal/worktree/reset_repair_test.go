@@ -1,26 +1,40 @@
 package worktree
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
+
+// commitIndexLockLane commits a lane at the merge target that leaves a stale index.lock in
+// the target's administration directory. The lane passes, so the merge publishes, and the
+// reconcile after the publication cannot take the index lock. It returns the lock path.
+func commitIndexLockLane(t *testing.T, path string) string {
+	t.Helper()
+	lock := mustAdminPath(t, path, "index.lock")
+	commitLaneManifest(t, path, gate.Phase{Name: "unit", Argv: []string{"sh", "-c", ": > " + sanitize.ShellQuote(lock)}})
+	return lock
+}
 
 func TestResetApplyReconcilesAnUnfinishedMerge(t *testing.T) {
 	t.Parallel()
 	f := mergeFixture(t, "reset-merge")
 	creation := f.created[0]
 	commitInWorktree(t, creation.Path, "target.txt", "target\n", "target work")
+	lock := commitIndexLockLane(t, creation.Path)
 	incoming := commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
-	f.joins.mergeReconcile = func(string, string) error { return errors.New("reconcile fault") }
 	merged := runVerb(t, verbMerge, f.merge("--from", incoming, creation.Assignment.ID))
 	requireTest(t, merged.exit == 3, "fixture merge = %d %s %s", merged.exit, merged.stdout, merged.stderr)
 	tip := gitOutput(t, f.root, "rev-parse", creation.Assignment.Branch)
 	requireTest(t, gitOutput(t, creation.Path, "status", "--porcelain=v1") != "", "fixture merge was reconciled")
+	// The operator removes the stale lock before the repair, because the reset needs the
+	// index lock too.
+	mustRemove(t, lock)
 	plan := runVerb(t, verbReset, f.call("--to", tip, creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
