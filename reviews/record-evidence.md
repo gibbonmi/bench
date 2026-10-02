@@ -574,7 +574,44 @@
         "RE82",
         "RE83"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "re-c3-v-t3-reviewrecord",
+          "performer": "claude:bench-writer/re-t3-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a4d74c2be12e01dcaec7a6bb89f722d14b6ae9f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t3-author-20261002/verify-3-reviewrecord",
+            "digest": "sha256:bb626cd27f48413b08fe7fa10e5a8adbe97e36d2678c655c14dba5b16d2878af",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1623\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,3944\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "3-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c3-v-t3-cmd",
+          "performer": "claude:bench-writer/re-t3-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a4d74c2be12e01dcaec7a6bb89f722d14b6ae9f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t3-author-20261002/verify-3-cmd",
+            "digest": "sha256:e4bd1fc6621ec81db695436652d8404daaa10340b92004f4d56805587c8df753",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13630\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "3-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        }
+      ],
       "reviews": []
     }
   ],
@@ -892,3 +929,66 @@ The orchestrator froze RE-C3 after ticket 4, with base `48ab8bdf` and tip `2883a
 The plan commit `efdab11c` assigned ticket 3, and the plan commit `7ea683fd` assigned ticket 4. The ticket 3 author asked whether `--probe-restore` refuses a value outside `pass` and `fail`. A fable / high consultation, by reviewer delegation, chose the `--axis` convention: exit 2 with the usage line. The plan commit `bfee95a2` added that case to the grammar-error list and to RE70. The ticket 3 author fixed it at `85a9c3cb`, before the chunk review. The reviewer can veto this call.
 
 The coordinator probe of ticket 3 fixed the verification role in `write.go`. `bench probe` returned `bit` on RE48 with `restored=yes`. The coordinator probe of ticket 4 broke the value split of the shared `chosen` helper in `command.go`. `bench probe` returned `bit` on 38 tests with `restored=yes`.
+
+## RE-C3 ticket 3 author evidence
+
+The author is `claude:bench-writer/re-t3-author` on opus at medium effort. The author used 1 of 4 attempts. The ticket commit is `85ee4229`, and the `--probe-restore` fix is `85a9c3cb`.
+
+The author wrote the 33 new `recordcmd` tests before the first production edit. Each test compiled and failed on behavior: the verb answered exit 2 with `usage: bench record (unknown argument: verification)`. The "Pre-edit" route below names that red. Each probe below ran through `bench probe` with a swap and returned `restored=yes`.
+
+| Row | Test | Red route | Status |
+|---|---|---|---|
+| RE36 | `TestRecordRefusesAControlCharacterInAFlag` | Pre-edit. Four probes turn off the single-line check of `--performer`, `--model`, `--effort`, and `--id`, one flag for each probe. Each probe returned `bit`. | verified |
+| RE42 | `TestRecordVerificationLandsInTheChunkList` | Pre-edit. Probe: swap the chunk list target for the completion list. | verified |
+| RE43 | `TestRecordFinalVerificationLandsInTheCompletionList` | Pre-edit. Probe: swap the completion list for the list of the first chunk. | verified |
+| RE44 | `TestRecordVerificationDefaultsToTheChunkTip` | Pre-edit. Probe: make `HEAD` the default source. | verified |
+| RE45 | `TestRecordVerificationCopiesThePlannedCommand` | Pre-edit. Probe: write the requirement ID as the command. | verified |
+| RE46 | `TestRecordVerificationRefusesAnUnplannedRequirement` | Pre-edit. | verified |
+| RE47 | `TestRecordVerificationWritesTheAuthorRole` | Pre-edit. | verified |
+| RE48 | `TestRecordFinalVerificationWritesTheIntegrationRole` | Pre-edit. Probe: give the role rule a fixed chunk scope. | verified |
+| RE49 | `TestRecordVerificationRefusesAnUndispatchedTicket` | Pre-edit. | verified |
+| RE50 | `TestRecordVerificationPassesOnExitZero` | Pre-edit. | verified |
+| RE51 | `TestRecordVerificationFailsOnNonzeroExit` | Pre-edit. Probe: make the outcome always `pass`. | verified |
+| RE52 | `TestRecordVerificationWritesThePlannedProbe` | Pre-edit. Probe: change the probe mutation away from the plan. | verified |
+| RE53 | `TestRecordVerificationRequiresThePlannedProbe` | Pre-edit. Probe: turn off the missing-probe check. | verified |
+| RE54 | `TestRecordVerificationRefusesAnUnplannedProbe` | Pre-edit. Probe: turn off the unplanned-probe check. The first probe was `silent`. The second probe returned `bit`. | verified |
+| RE55 | `TestRecordVerificationNamesTheChunkForm` | Pre-edit. Probe: remove the `bench record chunk` hint. | verified |
+| RE56 | `TestRecordFinalVerificationNeedsARecord` | Pre-edit. Probe: the same as RE55. | verified |
+| RE57 | `TestRecordVerificationEmbedsTheExcerptBytes` | Pre-edit. | verified |
+| RE58 | `TestRecordVerificationDigestsTheExcerpt` | Pre-edit. Probe: make the digest hash the path. | verified |
+| RE59 | `TestRecordRefusesAnAbsentExcerpt` | Pre-edit. | verified |
+| RE60 | `TestRecordRefusesALinkedExcerpt` | Pre-edit. Probe: swap `bounds.ClassifyNoFollow` for `bounds.Classify`, which follows the link. | verified |
+| RE61 | `TestRecordRefusesASpecialExcerpt` | Pre-edit. | verified |
+| RE62 | `TestRecordRefusesAnEmptyExcerpt` | Pre-edit. | verified |
+| RE63 | `TestRecordRefusesAMalformedExcerpt` | Pre-edit. | verified |
+| RE104 | `TestRecordRefusesAnOversizedExcerpt` | Pre-edit. | verified |
+| RE64 | `TestRecordReadsAnExcerptPathWithGlobCharacters` | Pre-edit. | verified |
+| RE65 | `TestRecordVerificationRefusesADuplicateID` | Pre-edit. Probe: turn off the duplicate-ID check. | verified |
+| RE66 | `TestRecordRefusalLeavesNoTemporaryFile` | Pre-edit. Probe: turn off the parse of the rendered bytes. | verified |
+| RE67 | `TestRecordVerificationReportsTheChunkList` | Pre-edit. | verified |
+| RE68 | `TestRecordFinalVerificationReportsTheCompletionList` | Pre-edit. Probe: make the `list` cell always `chunk`. | verified |
+| RE69 | `TestRecordedVerificationPassesTheCheckpoint` | Pre-edit. Probe: the same as RE45. `reviewrecord.Check` refused the record. | verified |
+| RE70 | `TestRecordVerificationGrammarRefusals` | Pre-edit. Probe: turn off the rules that span flags. The `--probe-restore maybe` case failed with exit 0 before the fix at `85a9c3cb`. | verified |
+| RE71 | `TestHelpInventoryIsComplete` | Probe: change the description of the verification form. | verified |
+| RE107 | `TestRecordVerificationRefusesAStaleSource` | Pre-edit. Probe: turn off the stale-source check. | verified |
+| RE108 | `TestRecordFinalVerificationDigestsTheNamedSource` | Pre-edit. | verified |
+
+The central probes swap the chunk list target for the completion list (RE42) and make the excerpt digest hash the path (RE58). Each returned `bit`.
+
+The first RE54 probe was `silent`. `Parse` refuses a probe with an empty mutation, so the test passed without the form rule. The author changed the test so that the refusal must name `--probe-outcome` and `additional`. The probe then returned `bit`.
+
+The `--probe-restore` fix takes the allowed values from the `pass|fail` placeholder of the flag in the `forms` declaration. Thus the usage line and the check use one source.
+
+The duplicated-facts sweep moved the tree, digest, and plan read of `RecordChunk` into one helper, `atSource`, which both forms use. The usage line, the grammar, and the help row come from the one `forms` declaration. The tests derive the expected row through `toon.Table`. One duplicate stays: `holdsID` in `write.go` walks the evidence IDs a second time, beside the ID walk of `Parse`. One shared walk needs an edit to `parse.go`, which is outside the ticket fence. The comment sweep cut two comments that stated what the code does.
+
+Focused checks at the RE-C3 tip `2ece3fbe`:
+
+- `bench test --package ./internal/reviewrecord/...` passed in 5.5 s of wall time.
+- `bench test --package ./cmd/bench` passed in 16.2 s of wall time.
+
+Earlier runs at `85a9c3cb`:
+
+- `TestRootConformance` passed in 7.7 s of wall time.
+- `bench test --check skip-ownership` passed in 1.8 s of wall time.
+
+At `85ee4229`, `subcommand-routing` passed in 1.8 s and `axi-query-registry` passed in 2.0 s. At the same commit, `bench structure` reported no issue in `internal/reviewrecord`, and `write.go` held 295 lines. No check skipped a test.
