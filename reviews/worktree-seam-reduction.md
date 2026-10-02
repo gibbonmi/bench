@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:1d8500038cf36fe08f8b2042b1f418051249af4775371bf697d6bd43ef9399d4",
+  "plan_digest": "sha256:343888b346f2bdcdd37822526226f9963254fc1ff0fbbff1b2cb063297225775",
   "implementation_session": "",
   "chunks": [
     {
@@ -1155,9 +1155,9 @@
     {
       "id": "SR-C6",
       "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
-      "tip": "54d3beac9497c0efb213650f73b663f7b0086e9c",
-      "plan_digest": "sha256:1d8500038cf36fe08f8b2042b1f418051249af4775371bf697d6bd43ef9399d4",
-      "source_digest": "95006ba609e5ce4b6a72a5a35edcc751c302b042",
+      "tip": "650a614f22a95cdbeb8608436531fd2522025e84",
+      "plan_digest": "sha256:343888b346f2bdcdd37822526226f9963254fc1ff0fbbff1b2cb063297225775",
+      "source_digest": "4aabcdaca67157dc1d1546ff7373df234ae9ea8f",
       "acceptance_rows": [
         "WS68",
         "WS83",
@@ -1245,6 +1245,24 @@
             "ref": "claude:agent/sr-t12-repair1-20261002@5535b1c94a5f1cca5f82b55347b6d399369a7f28",
             "digest": "sha256:290ff52b358080f652a37036a1d452490d27228a0d46ac33b5a98b95fd3c2083",
             "excerpt": "bench test --package ./internal/worktree (post-commit, repair 54d3beac9497c0efb213650f73b663f7b0086e9c)\ntree[1]{target,head,dirty}:\n  sr-integration,54d3beac9497c0efb213650f73b663f7b0086e9c,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,54894\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,capability: fifo: unix sockets unavailable\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,capability: fifo: unix sockets unavailable\nprobes (single_read_census_test.go, --package ./internal/worktree --run TestSingleReadCensus):\nC1 three-clause Cond/Post/Body walks swapped to nested: before silent; after bit (3 subtests); restored yes\nC2 kind keyed by source spelling: before invalid (substring-miss); after bit; restored yes\nP1 method-entry selector branch disabled: after bit; restored yes\nP1 function-only entryKinds index restored: after bit; restored yes\nC4 effectsFile renamed (run TestSingleReadCensus|TestEffect after): before silent; after bit (2 tests); restored yes\nC4 empty read set check disabled: after bit; restored yes\n"
+          },
+          "requirement": "12-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c6-12-worktree-r2",
+          "performer": "claude:bench-writer/sr-t12-repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4aabcdaca67157dc1d1546ff7373df234ae9ea8f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t12-repair2-20261002@4978908f17d11fb633dc5ce3d273a1c238bed647",
+            "digest": "sha256:db7c6d2adea2bd2fe0f09eaa5aef1280427678f33edb45a4c7174442b54a3427",
+            "excerpt": "$ bench worktree exec \"sr-integration\" -- bench test --package ./internal/worktree\ntree[1]{target,head,dirty}:\n  sr-integration,650a614f22a95cdbeb8608436531fd2522025e84,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,68447\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"unix sockets unavailable\"\nprobe: single_read_census_test.go swap kindName short form to the full import path, --package ./internal/worktree --run 'TestSingleReadCensus' -> bit, failed_tests=1 (TestSingleReadCensusRefusesASecondRead), restored=yes\n"
           },
           "requirement": "12-worktree",
           "command": "bench test --package ./internal/worktree",
@@ -1535,6 +1553,30 @@
     {
       "from": "sha256:b38e9b91d8eb294528ff65bd357a932729a154a078d2b43a567a1ccd8c1af5b1",
       "to": "sha256:1d8500038cf36fe08f8b2042b1f418051249af4775371bf697d6bd43ef9399d4",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ],
+        "SR-C3": [
+          "SR-C3"
+        ],
+        "SR-C4": [
+          "SR-C4"
+        ],
+        "SR-C5": [
+          "SR-C5"
+        ],
+        "SR-C6": [
+          "SR-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1d8500038cf36fe08f8b2042b1f418051249af4775371bf697d6bd43ef9399d4",
+      "to": "sha256:343888b346f2bdcdd37822526226f9963254fc1ff0fbbff1b2cb063297225775",
       "chunk_ids": {
         "SR-C1": [
           "SR-C1"
