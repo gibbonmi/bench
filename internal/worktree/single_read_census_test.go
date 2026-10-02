@@ -11,15 +11,20 @@ import (
 	"go/ast"
 	"go/token"
 	"maps"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
-	"testing"
 )
 
 // effectsFile is the effect boundary. The census reads it for the read set only.
 const effectsFile = "effects.go"
+
+// isSourceFile reports whether name is a non-test .go file.
+func isSourceFile(name string) bool {
+	return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
+}
 
 // readFinding selects one of the three census messages.
 type readFinding int
@@ -43,15 +48,16 @@ func singleReadReport(file string, line int, declaration string, finding readFin
 	return fmt.Sprintf("%s reads %s below a census entry", where, name)
 }
 
-// qualifiedName spells expr as package.Name when expr selects from a package that
-// imports names, and is empty otherwise.
-func qualifiedName(expr ast.Expr, imports map[string]bool) string {
+// qualifiedName spells expr as package.Name and keys it as path.Name when expr selects
+// from a package that imports maps to its path. Both are empty otherwise. A kind is
+// keyed by its import path, so an import alias cannot hide a read.
+func qualifiedName(expr ast.Expr, imports map[string]string) (spelled, key string) {
 	if selector, ok := expr.(*ast.SelectorExpr); ok {
-		if pkg, ok := selector.X.(*ast.Ident); ok && imports[pkg.Name] {
-			return pkg.Name + "." + selector.Sel.Name
+		if pkg, ok := selector.X.(*ast.Ident); ok && imports[pkg.Name] != "" {
+			return pkg.Name + "." + selector.Sel.Name, imports[pkg.Name] + "." + selector.Sel.Name
 		}
 	}
-	return ""
+	return "", ""
 }
 
 // topLevelFuncs indexes each function that files declare by name. A method is not
@@ -80,7 +86,8 @@ func reachedFuncs(name string, funcs map[string]*ast.FuncDecl, reached map[strin
 }
 
 // readSet maps each read-set name to the sorted kinds that it reaches. A gate function
-// takes the qualifier that effects.go spells for the gate package.
+// takes the import path of the gate package, whose last element is the package name. An
+// empty read set is an error, because a census with no read to grade passes vacuously.
 func readSet(dir, gateDir string) (map[string][]string, error) {
 	files, _, _, err := parseGoFiles(dir, func(name string) bool { return name == effectsFile })
 	if err != nil {
@@ -94,7 +101,7 @@ func readSet(dir, gateDir string) (map[string][]string, error) {
 			for reached := range reachedFuncs(name, effects, map[string]bool{}) {
 				ast.Inspect(effects[reached].Body, func(node ast.Node) bool {
 					if call, ok := node.(*ast.CallExpr); ok {
-						if kind := qualifiedName(call.Fun, imports); kind != "" {
+						if _, kind := qualifiedName(call.Fun, imports); kind != "" {
 							reads[name], reads[kind] = append(reads[name], kind), []string{kind}
 						}
 					}
@@ -103,16 +110,22 @@ func readSet(dir, gateDir string) (map[string][]string, error) {
 			}
 		}
 	}
+	if len(reads) == 0 {
+		return nil, fmt.Errorf("the read set is empty: %s in %s declares no function", effectsFile, dir)
+	}
 	gateFiles, err := parseSourceFiles(gateDir)
 	if err != nil {
 		return nil, err
 	}
 	gate := topLevelFuncs(gateFiles)
 	for _, kind := range slices.Collect(maps.Keys(reads)) {
-		pkg, target, _ := strings.Cut(kind, ".")
+		dot := strings.LastIndex(kind, ".")
+		if dot < 0 || gate[kind[dot+1:]] == nil || path.Base(kind[:dot]) != gateFiles[0].Name.Name {
+			continue
+		}
 		for name := range gate {
-			if gate[target] != nil && gateFiles[0].Name.Name == pkg && ast.IsExported(name) && reachedFuncs(name, gate, map[string]bool{})[target] {
-				reads[pkg+"."+name] = append(reads[pkg+"."+name], kind)
+			if ast.IsExported(name) && reachedFuncs(name, gate, map[string]bool{})[kind[dot+1:]] {
+				reads[kind[:dot]+"."+name] = append(reads[kind[:dot]+"."+name], kind)
 			}
 		}
 	}
@@ -134,9 +147,10 @@ type readRef struct {
 }
 
 // declRefs returns each reference in root to a read-set name or to an entry, in source
-// order. A selector names a package only when the file imports it. A field, and a
-// struct literal key, named like a read is not the read.
-func declRefs(root ast.Node, imports map[string]bool, reads map[string][]string, funcs map[string]*ast.FuncDecl) []readRef {
+// order. A selector names a package only when the file imports it, and otherwise it
+// names an entry by its selected name, as a method call does. A field, and a struct
+// literal key, named like a read is not the read.
+func declRefs(root ast.Node, imports map[string]string, reads map[string][]string, entries map[string]bool) []readRef {
 	var refs []readRef
 	var walk func(ast.Node, bool)
 	walk = func(root ast.Node, nested bool) {
@@ -144,7 +158,7 @@ func declRefs(root ast.Node, imports map[string]bool, reads map[string][]string,
 			return
 		}
 		ast.Inspect(root, func(node ast.Node) bool {
-			name := ""
+			name, key := "", ""
 			switch node := node.(type) {
 			case *ast.FuncLit:
 				walk(node.Body, true)
@@ -165,14 +179,17 @@ func declRefs(root ast.Node, imports map[string]bool, reads map[string][]string,
 					return false
 				}
 			case *ast.SelectorExpr:
-				if name = qualifiedName(node, imports); name == "" {
+				if name, key = qualifiedName(node, imports); name == "" {
 					walk(node.X, nested)
+					if entries[node.Sel.Name] {
+						refs = append(refs, readRef{pos: node.Sel.Pos(), name: node.Sel.Name, entry: true, nested: nested})
+					}
 					return false
 				}
 			case *ast.Ident:
-				name = node.Name
+				name, key = node.Name, node.Name
 			}
-			if kinds, read := reads[name]; read || funcs[name] != nil && ast.IsExported(name) {
+			if kinds, read := reads[key]; read || entries[key] {
 				refs = append(refs, readRef{pos: node.Pos(), name: name, kinds: kinds, entry: !read, nested: nested})
 			}
 			return name == ""
@@ -191,13 +208,18 @@ func singleReadCensus(dir, gateDir string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	files, fset, _, err := parseGoFiles(dir, func(name string) bool {
-		return name != effectsFile && !strings.HasSuffix(name, "_test.go") && strings.HasSuffix(name, ".go")
-	})
+	files, fset, _, err := parseGoFiles(dir, func(name string) bool { return name != effectsFile && isSourceFile(name) })
 	if err != nil {
 		return nil, err
 	}
-	funcs := topLevelFuncs(files)
+	entries := map[string]bool{}
+	for _, file := range files {
+		for _, node := range file.Decls {
+			if decl, ok := node.(*ast.FuncDecl); ok && decl.Name.IsExported() {
+				entries[decl.Name.Name] = true
+			}
+		}
+	}
 	type graded struct {
 		name  string
 		entry bool
@@ -209,18 +231,16 @@ func singleReadCensus(dir, gateDir string) ([]string, error) {
 		imports := fileImportNames(file)
 		for _, node := range file.Decls {
 			if decl, ok := node.(*ast.FuncDecl); ok && decl.Body != nil {
-				refs := declRefs(decl.Body, imports, reads, funcs)
+				refs := declRefs(decl.Body, imports, reads, entries)
 				decls = append(decls, graded{decl.Name.Name, decl.Name.IsExported(), refs})
 				for _, ref := range refs {
-					if decl.Recv == nil {
-						entryKinds[decl.Name.Name] = append(entryKinds[decl.Name.Name], ref.kinds...)
-					}
+					entryKinds[decl.Name.Name] = append(entryKinds[decl.Name.Name], ref.kinds...)
 				}
 			} else if decl, ok := node.(*ast.GenDecl); ok {
 				for _, spec := range decl.Specs {
 					if value, ok := spec.(*ast.ValueSpec); ok {
 						for _, expr := range value.Values {
-							decls = append(decls, graded{specName(spec), false, declRefs(expr, imports, reads, funcs)})
+							decls = append(decls, graded{specName(spec), false, declRefs(expr, imports, reads, entries)})
 						}
 					}
 				}
@@ -257,142 +277,4 @@ func singleReadCensus(dir, gateDir string) ([]string, error) {
 	// An entry that reads one kind twice yields one helper-call report for that kind.
 	sort.Strings(reports)
 	return slices.Compact(reports), nil
-}
-
-// syntheticEffectsFile mirrors effects.go: currentTime reads the clock, newAmbient the
-// kit and the clock, and Home the Bench home. Its os import serves an added read.
-const syntheticEffectsFile = `package worktree
-
-import (
-	"os"
-	"time"
-	"github.com/gibbonmi/bench/internal/benchhome"
-	"github.com/gibbonmi/bench/internal/gate"
-)
-
-func currentTime() time.Time { return time.Now() }
-func newAmbient(home string) ambient { return ambient{kit: gate.KitValue(), now: currentTime()} }
-func Home() string { return benchhome.Dir() }
-`
-
-// syntheticGateFile is the gate directory of a synthetic package. KitDir calls
-// KitValue, KitRoot reaches it through kitRoot, and LaneForCommitAtKit reaches no read.
-const syntheticGateFile = `package gate
-
-import "os"
-
-func KitValue() string { return os.Getenv("BENCH_KIT") }
-func KitDir() string { return KitValue() }
-func KitRoot() string { return kitRoot() }
-func kitRoot() string { return KitValue() }
-func LaneForCommitAtKit(root, kit string) string { return kit }
-`
-
-// wantReadCensus runs the census over effects, syntheticGateFile, and a reader.go whose
-// source begins on line 3, after the package clause. The reports must equal want.
-func wantReadCensus(t *testing.T, effects, source string, want ...string) {
-	t.Helper()
-	dir := plantTestFiles(t, map[string]string{effectsFile: effects, "reader.go": "package worktree\n\n" + source})
-	reports, err := singleReadCensus(dir, plantTestFiles(t, map[string]string{"gate.go": syntheticGateFile}))
-	if err != nil {
-		t.Fatalf("single-read census: %v", err)
-	}
-	if !slices.Equal(reports, want) {
-		t.Fatalf("single-read census = %q, want exactly %q", reports, want)
-	}
-}
-
-func TestSingleReadCensusAcceptsOneReadInAnEntry(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "func Run(paths []string) {\n\tnow := currentTime()\n\tfor range paths {\n\t\t_ = now\n\t}\n\t_ = func() { _ = now }\n}\n")
-}
-
-func TestSingleReadCensusRefusesAReadInAnUnexportedFunction(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "func stamp() { _ = currentTime() }\n",
-		singleReadReport("reader.go", 3, "stamp", readBelowEntry, "currentTime", ""))
-}
-
-// TestSingleReadCensusRefusesAReadInAFunctionLiteral proves a literal is no shelter.
-func TestSingleReadCensusRefusesAReadInAFunctionLiteral(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "func Run() {\n\tstamp := func() { _ = currentTime() }\n\tstamp()\n}\n",
-		singleReadReport("reader.go", 4, "Run", readBelowEntry, "currentTime", ""))
-}
-
-func TestSingleReadCensusRefusesAReadInALoopBody(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "func Run(paths []string) {\n\tfor range paths {\n\t\t_ = Home()\n\t}\n}\n",
-		singleReadReport("reader.go", 5, "Run", readBelowEntry, "Home", ""))
-}
-
-func TestSingleReadCensusRefusesASecondRead(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "func Run() {\n\t_ = currentTime()\n\t_ = currentTime()\n}\n",
-		singleReadReport("reader.go", 5, "Run", readSecondTime, "", "time.Now"))
-}
-
-func TestSingleReadCensusRefusesAHelperCallToAReadingEntry(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "func Run() { _ = currentTime() }\n\nfunc helper() {\n\tRun()\n}\n",
-		singleReadReport("reader.go", 6, "helper", readThroughEntry, "Run", "time.Now"))
-}
-
-// TestSingleReadCensusRefusesAFunctionValue proves a reference that is not a call reads.
-func TestSingleReadCensusRefusesAFunctionValue(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "func clocks() { _ = []any{currentTime} }\n",
-		singleReadReport("reader.go", 3, "clocks", readBelowEntry, "currentTime", ""))
-}
-
-func TestSingleReadCensusRefusesAPackageLevelRead(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "var defaultHome = Home()\n",
-		singleReadReport("reader.go", 3, "defaultHome", readBelowEntry, "Home", ""))
-}
-
-func TestSingleReadCensusDerivesTheReadSetFromEffects(t *testing.T) {
-	t.Parallel()
-	effects := syntheticEffectsFile + "func shellPath() string { return os.Getenv(\"SHELL\") }\n"
-	wantReadCensus(t, effects, "func launch() { _ = shellPath() }\n",
-		singleReadReport("reader.go", 3, "launch", readBelowEntry, "shellPath", ""))
-}
-
-func TestSingleReadCensusRefusesAQualifiedRead(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "import \"github.com/gibbonmi/bench/internal/benchhome\"\n\nfunc poolHome() string { return benchhome.Dir() }\n",
-		singleReadReport("reader.go", 5, "poolHome", readBelowEntry, "benchhome.Dir", ""))
-}
-
-// TestSingleReadCensusRefusesAKitWrapperCall proves an exported gate function that
-// calls the kit read is a read, and a gate form that takes the kit value is not.
-func TestSingleReadCensusRefusesAKitWrapperCall(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "import \"github.com/gibbonmi/bench/internal/gate\"\n\nfunc kitDir(root, kit string) string {\n\t_ = gate.LaneForCommitAtKit(root, kit)\n\treturn gate.KitDir()\n}\n",
-		singleReadReport("reader.go", 7, "kitDir", readBelowEntry, "gate.KitDir", ""))
-}
-
-func TestSingleReadCensusRefusesAnIndirectKitRead(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "import \"github.com/gibbonmi/bench/internal/gate\"\n\nfunc kitRoot() string { return gate.KitRoot() }\n",
-		singleReadReport("reader.go", 5, "kitRoot", readBelowEntry, "gate.KitRoot", ""))
-}
-
-// TestSingleReadCensusCountsEachKindOfAConstructor proves newAmbient reads time.Now too.
-func TestSingleReadCensusCountsEachKindOfAConstructor(t *testing.T) {
-	t.Parallel()
-	wantReadCensus(t, syntheticEffectsFile, "func Run(home string) {\n\ta := newAmbient(home)\n\t_, _ = a, currentTime()\n}\n",
-		singleReadReport("reader.go", 5, "Run", readSecondTime, "", "time.Now"))
-}
-
-// TestSingleReadCensusOnTheLiveTree proves each read in the package sits at an entry.
-func TestSingleReadCensusOnTheLiveTree(t *testing.T) {
-	t.Parallel()
-	reports, err := singleReadCensus(".", filepath.Join("..", "gate"))
-	if err != nil {
-		t.Fatalf("single-read census the package: %v", err)
-	}
-	if len(reports) != 0 {
-		t.Fatalf("the single-read census reports %d reads:\n%s", len(reports), strings.Join(reports, "\n"))
-	}
 }

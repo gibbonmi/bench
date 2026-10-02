@@ -43,7 +43,7 @@ type testFileFunc struct {
 	decl    *ast.FuncDecl
 	file    string
 	line    int
-	imports map[string]bool
+	imports map[string]string
 }
 
 // parseTestFiles parses every regular _test.go file in dir. A special file, for
@@ -53,12 +53,9 @@ func parseTestFiles(dir string) ([]*ast.File, *token.FileSet, []string, error) {
 	return parseGoFiles(dir, func(name string) bool { return strings.HasSuffix(name, "_test.go") })
 }
 
-// parseSourceFiles parses every regular non-test .go file in dir. The census
-// reads these files for their package-level declarations only.
+// parseSourceFiles parses every regular file in dir that isSourceFile accepts.
 func parseSourceFiles(dir string) ([]*ast.File, error) {
-	files, _, _, err := parseGoFiles(dir, func(name string) bool {
-		return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
-	})
+	files, _, _, err := parseGoFiles(dir, isSourceFile)
 	return files, err
 }
 
@@ -232,12 +229,12 @@ func assignedPackageVar(decl *ast.FuncDecl, vars map[string]bool) string {
 	return found
 }
 
-// fileImportNames returns the package names file imports. The name is the
-// explicit alias when the import declares one, and the last element of the
-// import path otherwise. A blank or a dot import names no package, so the
-// census skips it.
-func fileImportNames(file *ast.File) map[string]bool {
-	names := map[string]bool{}
+// fileImportNames maps each package name file imports to its import path. The
+// name is the explicit alias when the import declares one, and the last element
+// of the import path otherwise. A blank or a dot import names no package, so
+// the census skips it.
+func fileImportNames(file *ast.File) map[string]string {
+	names := map[string]string{}
 	for _, spec := range file.Imports {
 		path, err := strconv.Unquote(spec.Path.Value)
 		if err != nil {
@@ -250,7 +247,7 @@ func fileImportNames(file *ast.File) map[string]bool {
 		if name == "" || name == "_" || name == "." {
 			continue
 		}
-		names[name] = true
+		names[name] = path
 	}
 	return names
 }
@@ -260,12 +257,12 @@ func fileImportNames(file *ast.File) map[string]bool {
 // writes none. Such a write reaches past the test process, so it is a serial
 // edge in the class of bindEnv, not a refusal. The census skips a := shadow of
 // the package name because it declares a local instead of writing the import.
-func assignedImportedVar(decl *ast.FuncDecl, imports map[string]bool) string {
+func assignedImportedVar(decl *ast.FuncDecl, imports map[string]string) string {
 	found := ""
 	ast.Inspect(decl.Body, func(node ast.Node) bool {
 		for _, target := range writeTargets(node) {
 			root, sel := assignRoot(target)
-			if sel != "" && imports[root] {
+			if sel != "" && imports[root] != "" {
 				found = "assigns " + root + "." + sel
 			}
 		}
@@ -1061,7 +1058,7 @@ func TestSerialSetStaysBelowTheCeiling(t *testing.T) {
 // cannot supply it, because a removal changes the live count and the expectation
 // together. One removal or merge turns the pin red. One addition also turns the
 // pin red, so the author raises the pin in the same change and it never drifts.
-const worktreeTestCount = 716
+const worktreeTestCount = 717
 
 // TestPackageTestCountPin proves no test is removed or merged for wall-clock.
 // It counts the census walk's facts, one for each top-level test. (Coverage row WF12.)
