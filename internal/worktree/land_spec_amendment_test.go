@@ -35,23 +35,23 @@ func TestLandCommandPublicLandsAnInRangeSpecAmendment(t *testing.T) {
 	t.Parallel()
 	binary := testRunBinary(t)
 	request := "public-land-spec-amendment"
-	root, creation, base, _, tally, _ := publicLandingFixture(t, request, "", "")
-	amended := landingSpecAmendment(t, creation.Path)
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	f := publicLandingFixture(t, request, "", "")
+	amended := landingSpecAmendment(t, f.creation.Path)
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
-	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land the amended source", creation.Path)
-	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", f.base, "--source-tip", tip, "--spec", "x", "-m", "land the amended source", f.creation.Path)
+	cmd.Dir, cmd.Stdout, cmd.Stderr = f.root, &stdout, &stderr
 	if code := exitCode(cmd.Run()); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 		t.Fatalf("amended landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
-	requirePublishedSpec(t, root, published, amended)
-	parents := strings.Fields(gitOutput(t, root, "rev-list", "--parents", "-n", "1", published))
-	if len(parents) != 3 || parents[1] != base || parents[2] != tip {
-		t.Fatalf("published parents = %q, want destination %s and source %s", parents, base, tip)
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	requirePublishedSpec(t, f.root, published, amended)
+	parents := strings.Fields(gitOutput(t, f.root, "rev-list", "--parents", "-n", "1", published))
+	if len(parents) != 3 || parents[1] != f.base || parents[2] != tip {
+		t.Fatalf("published parents = %q, want destination %s and source %s", parents, f.base, tip)
 	}
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v", got, err)
 	}
 }
@@ -60,33 +60,33 @@ func TestResumeLandCommandPublicCompletesAnAmendedSourceLanding(t *testing.T) {
 	t.Parallel()
 	binary := testRunBinary(t)
 	request := "public-resume-spec-amendment"
-	root, creation, base, _, tally, _ := publicLandingFixture(t, request, "private/output", "dist/")
-	amended := landingSpecAmendment(t, creation.Path)
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	f := publicLandingFixture(t, request, "private/output", "dist/")
+	amended := landingSpecAmendment(t, f.creation.Path)
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	land := func(args ...string) (int, string, string) {
 		var stdout, stderr bytes.Buffer
 		cmd := descendant(t, binary, append([]string{"worktree", "land"}, args...)...)
-		cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+		cmd.Dir, cmd.Stdout, cmd.Stderr = f.root, &stdout, &stderr
 		return exitCode(cmd.Run()), stdout.String(), stderr.String()
 	}
-	code, stdout, stderr := land("--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land the amended source", creation.Path)
+	code, stdout, stderr := land("--request", request, "--base", f.base, "--source-tip", tip, "--spec", "x", "-m", "land the amended source", f.creation.Path)
 	if code != 3 || !strings.Contains(stdout, "worktree=incomplete:release") {
 		t.Fatalf("interrupted amended landing = (%d, %q, %q)", code, stdout, stderr)
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
-	requirePublishedSpec(t, root, published, amended)
-	if err := os.Remove(filepath.Join(creation.Path, "private", "output")); err != nil {
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	requirePublishedSpec(t, f.root, published, amended)
+	if err := os.Remove(filepath.Join(f.creation.Path, "private", "output")); err != nil {
 		t.Fatal(err)
 	}
 
-	code, stdout, stderr = land("--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path)
+	code, stdout, stderr = land("--resume", published, "--request", request, "--base", f.base, "--source-tip", tip, "--spec", "x", f.creation.Path)
 	if code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") || stderr != "" {
 		t.Fatalf("amended resume = (%d, %q, %q)", code, stdout, stderr)
 	}
-	if got := gitOutput(t, root, "rev-parse", "main"); got != published {
+	if got := gitOutput(t, f.root, "rev-parse", "main"); got != published {
 		t.Fatalf("resume republished: main=%s, want %s", got, published)
 	}
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("resume reran the gate: tally=%q error=%v", got, err)
 	}
 }

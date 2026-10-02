@@ -133,44 +133,44 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			root, creation, _ := newOwnedAssignment(t, "recovery-"+tc.name)
-			tc.setup(t, creation.Path)
-			markPending(t, root, creation.Assignment)
-			indexPath := mustAdminPath(t, creation.Path, "index")
+			f := newOwnedAssignment(t, "recovery-"+tc.name)
+			tc.setup(t, f.creation.Path)
+			markPending(t, f.root, f.creation.Assignment)
+			indexPath := mustAdminPath(t, f.creation.Path, "index")
 			indexBefore, err := os.ReadFile(indexPath)
 			if err != nil {
 				t.Fatal(err)
 			}
-			branchBefore := gitOutput(t, root, "rev-parse", creation.Assignment.Branch)
+			branchBefore := gitOutput(t, f.root, "rev-parse", f.creation.Assignment.Branch)
 			// Preservation belongs to the explicit path-addressed clean. The automatic planner
 			// an unattended resume or release drives retains a checkout it could only remove
 			// by preserving first. So the layer capture runs through the surface that still
 			// reaches it.
 			j := defaultJoins()
-			plan, err := PlanExplicit(root, creation.Path)
+			plan, err := PlanExplicit(f.root, f.creation.Path)
 			if err != nil {
 				t.Fatal(err)
 			}
 			stop := errors.New("stop after recovery metadata")
 			j.cleanupBoundary = failLifecycleStep(StepRecoveryMetadata, stop)
-			_, err = applyExplicitWith(j, root, creation.Path, plan.Fingerprint, CleanupOptions{})
+			_, err = applyExplicitWith(j, f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
 			if !errors.Is(err, stop) {
 				t.Fatalf("ApplyExplicit error = %v, want recovery-metadata fault", err)
 			}
-			assignments, readErr := intent.Assignments(root)
+			assignments, readErr := intent.Assignments(f.root)
 			if readErr != nil || len(assignments) != 1 || len(assignments[0].Recovery) != 1 {
 				t.Fatalf("recovery metadata = %#v, %v", assignments, readErr)
 			}
-			if descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", assignments[0].Recovery[0].Ref).Run() == nil {
+			if descendant(t, "git", "-C", f.root, "show-ref", "--verify", "--quiet", assignments[0].Recovery[0].Ref).Run() == nil {
 				t.Fatal("recovery ref exists before its metadata checkpoint replays")
 			}
 			stop = errors.New("stop after durable recovery ref")
-			replayPlan, err := PlanExplicit(root, creation.Path)
+			replayPlan, err := PlanExplicit(f.root, f.creation.Path)
 			if err != nil {
 				t.Fatal(err)
 			}
 			j.cleanupBoundary = failLifecycleStep(StepRecoveryRef, stop)
-			_, err = applyExplicitWith(j, root, creation.Path, replayPlan.Fingerprint, CleanupOptions{})
+			_, err = applyExplicitWith(j, f.root, f.creation.Path, replayPlan.Fingerprint, CleanupOptions{})
 			if !errors.Is(err, stop) {
 				t.Fatalf("ApplyExplicit replay error = %v, want recovery-ref fault", err)
 			}
@@ -181,18 +181,18 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 			if !bytes.Equal(indexBefore, indexAfter) {
 				t.Fatal("recovery changed the real index")
 			}
-			if after := gitOutput(t, root, "rev-parse", creation.Assignment.Branch); after != branchBefore {
+			if after := gitOutput(t, f.root, "rev-parse", f.creation.Assignment.Branch); after != branchBefore {
 				t.Fatalf("assignment branch moved from %s to %s", branchBefore, after)
 			}
-			assignments, err = intent.Assignments(root)
+			assignments, err = intent.Assignments(f.root)
 			if err != nil || len(assignments) != 1 || len(assignments[0].Recovery) != 1 {
 				t.Fatalf("recovery assignment = %#v, %v", assignments, err)
 			}
 			recovery := assignments[0].Recovery[0]
-			if got := gitOutput(t, root, "rev-parse", recovery.Ref); got != recovery.Root {
+			if got := gitOutput(t, f.root, "rev-parse", recovery.Ref); got != recovery.Root {
 				t.Fatalf("recovery ref = %s, want root %s", got, recovery.Root)
 			}
-			manifestRaw := gitOutput(t, root, "show", recovery.Root+":manifest.json")
+			manifestRaw := gitOutput(t, f.root, "show", recovery.Root+":manifest.json")
 			var manifest struct {
 				Layers map[string]string `json:"layers"`
 			}
@@ -205,11 +205,11 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 				}
 			}
 			for _, payload := range recovery.Payloads {
-				gitRun(t, root, "merge-base", "--is-ancestor", payload, recovery.Root)
+				gitRun(t, f.root, "merge-base", "--is-ancestor", payload, recovery.Root)
 			}
-			tc.check(t, root, manifest.Layers)
-			registration := gitOutput(t, root, "worktree", "list", "--porcelain")
-			if !strings.Contains(registration, "worktree "+creation.Path) || !strings.Contains(registration, "locked "+lockReason(assignments[0])) {
+			tc.check(t, f.root, manifest.Layers)
+			registration := gitOutput(t, f.root, "worktree", "list", "--porcelain")
+			if !strings.Contains(registration, "worktree "+f.creation.Path) || !strings.Contains(registration, "locked "+lockReason(assignments[0])) {
 				t.Fatal("recovery-ref fault did not leave a locked attributable checkout")
 			}
 		})

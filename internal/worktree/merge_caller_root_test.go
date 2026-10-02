@@ -15,22 +15,22 @@ import (
 // reads the incoming Markdown from the target checkout, where the merge has not put it.
 func TestMergeGradesIncomingProseFromTheComposedTreeWhateverTheCallerRoot(t *testing.T) {
 	t.Parallel()
-	j, root, home, _, created := mergeFixture(t, "integration", "sibling")
-	target, sibling := created[0], created[1]
+	f := mergeFixture(t, "integration", "sibling")
+	target, sibling := f.created[0], f.created[1]
 	commitInWorktree(t, target.Path, "target-only.md", "target prose\n", "target prose")
 	commitInWorktree(t, sibling.Path, "sibling-only.md", "sibling prose\n", "sibling prose")
-	j.mergeLane = func(anchor string) (*gate.Lane, error) {
+	f.joins.mergeLane = func(anchor string) (*gate.Lane, error) {
 		return &gate.Lane{Checks: []gate.Phase{{Name: "prose", Argv: []string{"sh", "-c",
 			`anchor=$1; shift; for path; do test -f "$anchor/$path" || { echo "unreadable $path"; exit 1; }; done`,
 			"prose", anchor, gate.LaneNamedMarkdownToken}}}}, nil
 	}
-	if root == target.Path {
+	if f.root == target.Path {
 		t.Fatal("the fixture runs the merge from the target, so the caller root never differs")
 	}
 
-	code, stdout, stderr := runMerge(t, j, root, home, "--from", sibling.Assignment.Label, target.Assignment.ID)
-	if code != 0 {
-		t.Fatalf("merge exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	r := runVerb(t, verbMerge, f.merge("--from", sibling.Assignment.Label, target.Assignment.ID))
+	if r.exit != 0 {
+		t.Fatalf("merge exit = %d, want 0; stdout=%q stderr=%q", r.exit, r.stdout, r.stderr)
 	}
-	mergedRecord(t, stdout)
+	mergedRecord(t, r.stdout)
 }

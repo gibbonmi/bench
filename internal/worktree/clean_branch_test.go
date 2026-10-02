@@ -17,19 +17,19 @@ import (
 // composed commit shares no patch-id with either original. Reverse-apply also refuses the
 // mode change on a surviving entry, because git apply reports a preimage mode mismatch as
 // a warning rather than a failure. This is the exact case the operator override exists for.
-func unprovableLandedAssignment(t *testing.T, request string) (string, Creation) {
+func unprovableLandedAssignment(t *testing.T, request string) ownedAssignment {
 	t.Helper()
-	root, creation, _ := newOwnedAssignment(t, request)
-	commitInWorktree(t, creation.Path, "one.txt", "one\n", "one")
-	if err := os.Chmod(filepath.Join(creation.Path, "tracked.txt"), 0o755); err != nil {
+	f := newOwnedAssignment(t, request)
+	commitInWorktree(t, f.creation.Path, "one.txt", "one\n", "one")
+	if err := os.Chmod(filepath.Join(f.creation.Path, "tracked.txt"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-q", "-a", "-m", "make tracked executable")
-	short := strings.TrimPrefix(creation.Assignment.Branch, "refs/heads/")
-	gitRun(t, root, "cherry-pick", "--no-commit", creation.Assignment.Start+".."+short)
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "squashed")
-	markPending(t, root, creation.Assignment)
-	return root, creation
+	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-q", "-a", "-m", "make tracked executable")
+	short := strings.TrimPrefix(f.creation.Assignment.Branch, "refs/heads/")
+	gitRun(t, f.root, "cherry-pick", "--no-commit", f.creation.Assignment.Start+".."+short)
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "squashed")
+	markPending(t, f.root, f.creation.Assignment)
+	return f
 }
 
 func branchExists(t testing.TB, root, ref string) bool {
@@ -52,38 +52,38 @@ func renderedPlan(t *testing.T, plan CleanupPlan) string {
 // [RW1]
 func TestDiscardBranchRetiresTheBranchAndLeavesNoRecoveryRef(t *testing.T) {
 	t.Parallel()
-	root, creation := unprovableLandedAssignment(t, "rw1")
+	f := unprovableLandedAssignment(t, "rw1")
 	options := CleanupOptions{DiscardBranch: true}
-	plan, err := PlanExplicitWithOptions(root, creation.Path, options)
+	plan, err := PlanExplicitWithOptions(f.root, f.creation.Path, options)
 	mustNoError(t, err)
 	requireTest(t, plan.Action == ActionRemove, "plan action = %q, want remove", plan.Action)
 	requireTest(t, plan.deleteBranch, "plan did not authorize branch deletion under the override")
-	requireTest(t, plan.branchRef == creation.Assignment.Branch, "plan branch ref = %q, want %q", plan.branchRef, creation.Assignment.Branch)
+	requireTest(t, plan.branchRef == f.creation.Assignment.Branch, "plan branch ref = %q, want %q", plan.branchRef, f.creation.Assignment.Branch)
 	requireTest(t, plan.Recovery == "none", "plan recovery = %q, want none", plan.Recovery)
 
-	applied, err := ApplyExplicitWithOptions(root, creation.Path, plan.Fingerprint, options)
+	applied, err := ApplyExplicitWithOptions(f.root, f.creation.Path, plan.Fingerprint, options)
 	mustNoError(t, err)
 	requireTest(t, applied.Action == ActionRemoved, "applied action = %q, want removed", applied.Action)
-	_, statErr := os.Lstat(creation.Path)
+	_, statErr := os.Lstat(f.creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "checkout survived the apply: %v", statErr)
-	requireTest(t, !branchExists(t, root, creation.Assignment.Branch), "assignment branch %s survived the apply", creation.Assignment.Branch)
-	refs := recoveryRefs(t, root, creation.Assignment)
+	requireTest(t, !branchExists(t, f.root, f.creation.Assignment.Branch), "assignment branch %s survived the apply", f.creation.Assignment.Branch)
+	refs := recoveryRefs(t, f.root, f.creation.Assignment)
 	requireTest(t, refs == "", "apply left recovery refs behind: %q", refs)
 }
 
 // [RW2]
 func TestDiscardBranchPlanNamesTheBranchBeforeAnyRemoval(t *testing.T) {
 	t.Parallel()
-	root, creation := unprovableLandedAssignment(t, "rw2")
-	plan, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{DiscardBranch: true})
+	f := unprovableLandedAssignment(t, "rw2")
+	plan, err := PlanExplicitWithOptions(f.root, f.creation.Path, CleanupOptions{DiscardBranch: true})
 	mustNoError(t, err)
 	output := renderedPlan(t, plan)
-	requireTest(t, strings.Contains(output, "discards branch "+creation.Assignment.Branch), "plan output does not name the branch: %q", output)
+	requireTest(t, strings.Contains(output, "discards branch "+f.creation.Assignment.Branch), "plan output does not name the branch: %q", output)
 	requireTest(t, strings.Contains(output, ",none,"), "plan output does not name the recovery ref: %q", output)
 
-	_, statErr := os.Lstat(creation.Path)
+	_, statErr := os.Lstat(f.creation.Path)
 	requireTest(t, statErr == nil, "planning removed the checkout: %v", statErr)
-	requireTest(t, branchExists(t, root, creation.Assignment.Branch), "planning deleted the branch")
+	requireTest(t, branchExists(t, f.root, f.creation.Assignment.Branch), "planning deleted the branch")
 }
 
 // [RW3] The override is an argument to the explicit path only. This is the regression
@@ -91,8 +91,8 @@ func TestDiscardBranchPlanNamesTheBranchBeforeAnyRemoval(t *testing.T) {
 func TestDiscardBranchLeavesTheDerivedClassificationUnchanged(t *testing.T) {
 	t.Parallel()
 	t.Run("automatic path retains an unproven branch and authorizes no deletion", func(t *testing.T) {
-		root, creation := unprovableLandedAssignment(t, "rw3-automatic")
-		plan, err := PlanAutomatic(root, creation.Path)
+		f := unprovableLandedAssignment(t, "rw3-automatic")
+		plan, err := PlanAutomatic(f.root, f.creation.Path)
 		mustNoError(t, err)
 		requireTest(t, plan.Action == ActionRetain, "automatic action = %q, want retain", plan.Action)
 		requireTest(t, plan.ReasonCode == ReasonUnmerged, "automatic reason = %q, want unmerged", plan.ReasonCode)
@@ -100,18 +100,18 @@ func TestDiscardBranchLeavesTheDerivedClassificationUnchanged(t *testing.T) {
 		requireTest(t, plan.branchRef == "", "automatic plan named a deletable branch: %q", plan.branchRef)
 	})
 	t.Run("explicit path without the override removes only the checkout", func(t *testing.T) {
-		root, creation := unprovableLandedAssignment(t, "rw3-explicit")
-		plan, err := PlanExplicit(root, creation.Path)
+		f := unprovableLandedAssignment(t, "rw3-explicit")
+		plan, err := PlanExplicit(f.root, f.creation.Path)
 		mustNoError(t, err)
 		requireTest(t, plan.Action == ActionRemove, "explicit action = %q, want remove", plan.Action)
 		requireTest(t, !plan.deleteBranch && plan.branchRef == "", "explicit plan authorized branch deletion: %t %q", plan.deleteBranch, plan.branchRef)
 		output := renderedPlan(t, plan)
 		requireTest(t, strings.HasSuffix(output, ",apply with exact fingerprint\n"), "explicit plan detail changed: %q", output)
 
-		applied, err := ApplyExplicit(root, creation.Path, plan.Fingerprint)
+		applied, err := ApplyExplicit(f.root, f.creation.Path, plan.Fingerprint)
 		mustNoError(t, err)
 		requireTest(t, applied.Action == ActionRemoved, "explicit applied action = %q, want removed", applied.Action)
-		requireTest(t, branchExists(t, root, creation.Assignment.Branch), "cleanup without the override deleted branch %s", creation.Assignment.Branch)
+		requireTest(t, branchExists(t, f.root, f.creation.Assignment.Branch), "cleanup without the override deleted branch %s", f.creation.Assignment.Branch)
 	})
 }
 
@@ -120,15 +120,15 @@ func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 	t.Parallel()
 	options := CleanupOptions{DiscardBranch: true}
 	t.Run("primary checkout", func(t *testing.T) {
-		root, _ := unprovableLandedAssignment(t, "rw4-primary")
-		plan, err := PlanExplicitWithOptions(root, root, options)
+		f := unprovableLandedAssignment(t, "rw4-primary")
+		plan, err := PlanExplicitWithOptions(f.root, f.root, options)
 		mustNoError(t, err)
 		requireTest(t, plan.Action == ActionRetain, "primary action = %q, want retain", plan.Action)
 		requireTest(t, plan.Reason == "primary checkout is never removable", "primary reason = %q", plan.Reason)
-		applied, err := ApplyExplicitWithOptions(root, root, plan.Fingerprint, options)
+		applied, err := ApplyExplicitWithOptions(f.root, f.root, plan.Fingerprint, options)
 		mustNoError(t, err)
 		requireTest(t, applied.Action == ActionRetain, "apply acted on the primary checkout: %q", applied.Action)
-		requireTest(t, branchExists(t, root, "refs/heads/main"), "apply deleted the default branch")
+		requireTest(t, branchExists(t, f.root, "refs/heads/main"), "apply deleted the default branch")
 	})
 	t.Run("path outside any registration", func(t *testing.T) {
 		root := newWorktreeRepo(t)
@@ -161,18 +161,18 @@ func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 		requireTest(t, statErr == nil, "apply removed a foreign worktree: %v", statErr)
 	})
 	t.Run("assignment identity mismatch", func(t *testing.T) {
-		root, creation := unprovableLandedAssignment(t, "rw4-identity")
-		gitRun(t, creation.Path, "switch", "-q", "-c", "drifted-identity")
-		plan, err := PlanExplicitWithOptions(root, creation.Path, options)
+		f := unprovableLandedAssignment(t, "rw4-identity")
+		gitRun(t, f.creation.Path, "switch", "-q", "-c", "drifted-identity")
+		plan, err := PlanExplicitWithOptions(f.root, f.creation.Path, options)
 		mustNoError(t, err)
 		requireTest(t, plan.Action == ActionRetain, "mismatch action = %q, want retain", plan.Action)
 		requireTest(t, plan.Reason == "assignment does not match current branch", "mismatch reason = %q", plan.Reason)
-		applied, err := ApplyExplicitWithOptions(root, creation.Path, plan.Fingerprint, options)
+		applied, err := ApplyExplicitWithOptions(f.root, f.creation.Path, plan.Fingerprint, options)
 		mustNoError(t, err)
 		requireTest(t, applied.Action == ActionRetain, "apply acted on a mismatched assignment: %q", applied.Action)
-		requireTest(t, branchExists(t, root, creation.Assignment.Branch), "apply deleted the assignment branch behind an identity refusal")
-		requireTest(t, branchExists(t, root, "refs/heads/drifted-identity"), "apply deleted the checked-out branch behind an identity refusal")
-		_, statErr := os.Lstat(creation.Path)
+		requireTest(t, branchExists(t, f.root, f.creation.Assignment.Branch), "apply deleted the assignment branch behind an identity refusal")
+		requireTest(t, branchExists(t, f.root, "refs/heads/drifted-identity"), "apply deleted the checked-out branch behind an identity refusal")
+		_, statErr := os.Lstat(f.creation.Path)
 		requireTest(t, statErr == nil, "apply removed a mismatched checkout: %v", statErr)
 	})
 }
@@ -200,25 +200,25 @@ func TestDiscardBranchLeavesADetachedHeadUnaffected(t *testing.T) {
 // options, so it still retains.
 func TestDiscardBranchRemovesAShiftCheckout(t *testing.T) {
 	t.Parallel()
-	root, creation := unprovableLandedAssignment(t, "rw5-shift")
+	f := unprovableLandedAssignment(t, "rw5-shift")
 	shift := strings.TrimPrefix(intent.ShiftBranchPrefix(), "refs/heads/") + "20260101-000000"
 	shiftRef := "refs/heads/" + shift
-	gitRun(t, creation.Path, "switch", "-q", "-c", shift)
+	gitRun(t, f.creation.Path, "switch", "-q", "-c", shift)
 
-	automatic, err := PlanAutomatic(root, creation.Path)
+	automatic, err := PlanAutomatic(f.root, f.creation.Path)
 	mustNoError(t, err)
 	requireTest(t, automatic.Action == ActionRetain, "automatic action = %q, want retain", automatic.Action)
 
 	options := CleanupOptions{DiscardBranch: true}
-	plan, err := PlanExplicitWithOptions(root, creation.Path, options)
+	plan, err := PlanExplicitWithOptions(f.root, f.creation.Path, options)
 	mustNoError(t, err)
 	requireTest(t, plan.Action.Removes(), "plan action = %q, want a removal", plan.Action)
 	requireTest(t, plan.deleteBranch && plan.branchRef == shiftRef, "plan branch = %t/%q, want %q", plan.deleteBranch, plan.branchRef, shiftRef)
 
-	applied, err := ApplyExplicitWithOptions(root, creation.Path, plan.Fingerprint, options)
+	applied, err := ApplyExplicitWithOptions(f.root, f.creation.Path, plan.Fingerprint, options)
 	mustNoError(t, err)
 	requireTest(t, applied.Action == ActionRemoved, "applied action = %q, want removed", applied.Action)
-	_, statErr := os.Lstat(creation.Path)
+	_, statErr := os.Lstat(f.creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "checkout survived the apply: %v", statErr)
-	requireTest(t, !branchExists(t, root, shiftRef), "shift branch %s survived the apply", shiftRef)
+	requireTest(t, !branchExists(t, f.root, shiftRef), "shift branch %s survived the apply", shiftRef)
 }

@@ -73,14 +73,14 @@ func TestSourceMergePendingIsFalseWhenUndecided(t *testing.T) {
 // owned registration before the fail-git-dir stub goes on PATH, so creation
 // itself still reaches the real git. (Coverage row GR35.)
 func TestOwnershipRefusalTextsUseTheGlossaryTerm(t *testing.T) {
-	root, creation, _ := newOwnedAssignment(t, "admin-glossary")
-	journeyStubGit(t, root, "fail-git-dir", filepath.Join(t.TempDir(), "argv"))
+	f := newOwnedAssignment(t, "admin-glossary")
+	journeyStubGit(t, f.root, "fail-git-dir", filepath.Join(t.TempDir(), "argv"))
 
 	want := "checkout administration directory"
-	if _, err := validateOwnerMarker(root, creation.Path); err == nil || !strings.Contains(err.Error(), want) {
+	if _, err := validateOwnerMarker(f.root, f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
 		t.Fatalf("validateOwnerMarker error = %v, want it to hold %q", err, want)
 	}
-	if _, err := markerPath(creation.Path); err == nil || !strings.Contains(err.Error(), want) {
+	if _, err := markerPath(f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
 		t.Fatalf("markerPath error = %v, want it to hold %q", err, want)
 	}
 }
@@ -102,7 +102,7 @@ func mustAdminPath(t testing.TB, path, name string) string {
 // linked worktree. (Coverage row GR18.)
 func TestLeaseFileMatchesIndependentRevParse(t *testing.T) {
 	t.Parallel()
-	_, creation, _ := newOwnedAssignment(t, "lease-file-matches")
+	creation := newOwnedAssignment(t, "lease-file-matches").creation
 
 	want := gitOutput(t, creation.Path, "rev-parse", "--path-format=absolute", "--git-path", git.BenchLeaseFilename)
 
@@ -120,10 +120,10 @@ func TestLeaseFileMatchesIndependentRevParse(t *testing.T) {
 // the worktree root. The fail-git-path stub refuses every file query.
 // (Coverage rows GR24, GR25.)
 func TestLeaseFileRefusesUnresolvedAnswer(t *testing.T) {
-	root, creation, _ := newOwnedAssignment(t, "lease-file-unresolved")
-	journeyStubGit(t, root, "fail-git-path", filepath.Join(t.TempDir(), "argv"))
+	f := newOwnedAssignment(t, "lease-file-unresolved")
+	journeyStubGit(t, f.root, "fail-git-path", filepath.Join(t.TempDir(), "argv"))
 
-	_, err := LeaseFile(creation.Path)
+	_, err := LeaseFile(f.creation.Path)
 	var resolution *git.ResolutionError
 	if !errors.As(err, &resolution) {
 		t.Fatalf("LeaseFile under the fail-git-path stub = %v, want a *git.ResolutionError", err)

@@ -1,5 +1,6 @@
-// The explicit discard of one unrecorded branch. Each fixture drives cleanCommandWith over a
-// real repository under a fixed clock, reads the rendered rows, and reads the refs back.
+// The explicit discard of one unrecorded branch. Each fixture drives the clean verb's joins
+// form over a real repository under a fixed clock, reads the decoded rows, and reads the refs
+// back.
 package worktree
 
 import (
@@ -62,38 +63,12 @@ func discardedRefs(t *testing.T, root string) string {
 	return gitOutput(t, root, "for-each-ref", "--format=%(refname) %(objectname)", intent.DiscardedRefNamespace)
 }
 
-// runDiscard runs one clean call and returns its output, its exit code, and the cells of each
-// rendered row by target.
-func runDiscard(t *testing.T, j joins, root, home string, args ...string) (string, int, map[string][]string) {
-	t.Helper()
-	stdout, stderr, code := runCleanupWith(t, j, root, home, args...)
-	if stderr != "" {
-		t.Fatalf("clean %q stderr=%q stdout=%q, want no stderr", args, stderr, stdout)
-	}
-	rows := map[string][]string{}
-	for _, row := range cleanupRows(stdout) {
-		fields := cleanupRowFields(row)
-		for i := range fields {
-			fields[i] = cleanupRowValue(fields[i])
-		}
-		rows[fields[0]] = fields
-	}
-	return stdout, code, rows
-}
-
 // rowAction is the action cell of the row that names target, or empty when no row does.
-func rowAction(rows map[string][]string, target string) string {
+func rowAction(rows map[string]textRow, target string) string {
 	if row := rows[target]; len(row) == len(cleanupFields) {
-		return row[1]
+		return row["action"]
 	}
 	return ""
-}
-
-// planAndApply plans args under j, applies the plan's fingerprint, and returns the apply.
-func planAndApply(t *testing.T, j joins, root, home string, args ...string) (string, int, map[string][]string) {
-	t.Helper()
-	plan, _, _ := runDiscard(t, discardJoins(), root, home, args...)
-	return runDiscard(t, j, root, home, append(args, "--apply", cleanupRowFingerprint(t, plan))...)
 }
 
 // TestDiscardTargetResolvesAnUnrecordedBranch is RI29, RI30, and RI33: each operand form plans
@@ -122,14 +97,15 @@ func TestDiscardTargetResolvesAnUnrecordedBranch(t *testing.T) {
 			for _, operand := range tc.operands(ref) {
 				args = append(args, "--target", operand)
 			}
-			plan, code, rows := runDiscard(t, discardJoins(), root, home, args...)
+			plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), args...))
+			rows := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")
 			row := rows[ref]
-			if code != 0 || len(rows) != 1 || len(row) != len(cleanupFields) || row[1] != string(ActionDiscardRemove) ||
-				row[4] != intent.DiscardedRef(discardDay, ref) || !strings.HasPrefix(row[6], classField+string(classUnique)) {
-				t.Fatalf("plan exit=%d stdout=%q, want one unique row for %s with its discarded ref", code, plan, ref)
+			if plan.exit != 0 || plan.stderr != "" || len(rows) != 1 || len(row) != len(cleanupFields) || row["action"] != string(ActionDiscardRemove) ||
+				row["recovery"] != intent.DiscardedRef(discardDay, ref) || !strings.HasPrefix(row["detail"], classField+string(classUnique)) {
+				t.Fatalf("plan exit=%d stdout=%q stderr=%q, want one unique row for %s with its discarded ref", plan.exit, plan.stdout, plan.stderr, ref)
 			}
-			if !strings.Contains(plan, "--apply "+cleanupRowFingerprint(t, plan)) {
-				t.Fatalf("plan = %q, want the apply action", plan)
+			if !strings.Contains(plan.stdout, "--apply "+plan.mustFingerprint(t)) {
+				t.Fatalf("plan = %q, want the apply action", plan.stdout)
 			}
 		})
 	}
@@ -152,11 +128,13 @@ func TestDiscardTargetRefusesAnAmbiguousOrForeignOperand(t *testing.T) {
 		{"RI32 a foreign branch", "archive/x", func(detail string) bool { return detail == "relative path targets are unsupported" }},
 		{"an id that matches nothing", strings.Repeat("0", 32), func(detail string) bool { return detail == errTargetUnassigned.Error() }},
 	} {
-		plan, code, rows := runDiscard(t, discardJoins(), root, home, "--discard-branch", "--target", tc.operand)
+		plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), "--discard-branch", "--target", tc.operand))
+		rows := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")
 		row := rows[tc.operand]
-		if code != 1 || len(rows) != 1 || len(row) != len(cleanupFields) || row[1] != string(ActionError) || !tc.detail(row[6]) || setFingerprint.MatchString(plan) {
-			t.Fatalf("%s: plan exit=%d stdout=%q, want one error row and no fingerprint", tc.name, code, plan)
+		if plan.exit != 1 || plan.stderr != "" || len(rows) != 1 || len(row) != len(cleanupFields) || row["action"] != string(ActionError) || !tc.detail(row["detail"]) {
+			t.Fatalf("%s: plan exit=%d stdout=%q stderr=%q, want one error row and no fingerprint", tc.name, plan.exit, plan.stdout, plan.stderr)
 		}
+		plan.mustNoFingerprint(t)
 	}
 }
 
@@ -172,10 +150,11 @@ func TestDiscardTargetPrefixReadsTheCandidateSet(t *testing.T) {
 		checkout := filepath.Join(t.TempDir(), "checked-out-shift")
 		gitRun(t, root, "branch", short)
 		gitRun(t, root, "worktree", "add", "-q", checkout, short)
-		plan, code, rows := runDiscard(t, discardJoins(), root, home, "--discard-branch", "--target", short)
-		if row := rows[short]; code != 1 || len(row) != len(cleanupFields) || row[1] != string(ActionError) || !strings.Contains(row[6], "checked-out-shift") || setFingerprint.MatchString(plan) {
-			t.Fatalf("plan exit=%d stdout=%q, want an error row naming the checkout and no fingerprint", code, plan)
+		plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), "--discard-branch", "--target", short))
+		if row := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")[short]; plan.exit != 1 || plan.stderr != "" || len(row) != len(cleanupFields) || row["action"] != string(ActionError) || !strings.Contains(row["detail"], "checked-out-shift") {
+			t.Fatalf("plan exit=%d stdout=%q stderr=%q, want an error row naming the checkout and no fingerprint", plan.exit, plan.stdout, plan.stderr)
 		}
+		plan.mustNoFingerprint(t)
 	})
 	t.Run("RI75 the default branch", func(t *testing.T) {
 		t.Parallel()
@@ -183,10 +162,11 @@ func TestDiscardTargetPrefixReadsTheCandidateSet(t *testing.T) {
 		short := strings.TrimPrefix(intent.AssignmentBranchRef(strings.Repeat("d", 32), strings.Repeat("e", 32)), "refs/heads/")
 		gitRun(t, root, "branch", "-m", short)
 		gitRun(t, root, "checkout", "--detach", "-q")
-		plan, code, rows := runDiscard(t, discardJoins(), root, home, "--discard-branch", "--target", short)
-		if row := rows[short]; code != 1 || len(row) != len(cleanupFields) || row[1] != string(ActionError) || !strings.Contains(row[6], "refs/heads/"+short) || setFingerprint.MatchString(plan) {
-			t.Fatalf("plan exit=%d stdout=%q, want an error row naming the branch and no fingerprint", code, plan)
+		plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), "--discard-branch", "--target", short))
+		if row := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")[short]; plan.exit != 1 || plan.stderr != "" || len(row) != len(cleanupFields) || row["action"] != string(ActionError) || !strings.Contains(row["detail"], "refs/heads/"+short) {
+			t.Fatalf("plan exit=%d stdout=%q stderr=%q, want an error row naming the branch and no fingerprint", plan.exit, plan.stdout, plan.stderr)
 		}
+		plan.mustNoFingerprint(t)
 	})
 	for _, tc := range []struct {
 		name     string
@@ -204,9 +184,10 @@ func TestDiscardTargetPrefixReadsTheCandidateSet(t *testing.T) {
 			t.Parallel()
 			root, home := unclaimedBranchFixture(t, "a")
 			recorded := mustCreate(t, root, home, "discard-recorded", tc.label)
-			plan, _, rows := runDiscard(t, discardJoins(), root, home, tc.operands(recorded)...)
-			if row := rows[recorded.Path]; len(rows) != 1 || len(row) != len(cleanupFields) || strings.Contains(row[6], classField) {
-				t.Fatalf("plan = %q, want one row through the record of %s and no class", plan, recorded.Path)
+			plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), tc.operands(recorded)...))
+			rows := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")
+			if row := rows[recorded.Path]; plan.stderr != "" || len(rows) != 1 || len(row) != len(cleanupFields) || strings.Contains(row["detail"], classField) {
+				t.Fatalf("plan = %q stderr=%q, want one row through the record of %s and no class", plan.stdout, plan.stderr, recorded.Path)
 			}
 		})
 	}
@@ -218,13 +199,13 @@ func TestDiscardTargetWithoutTheFlagRetains(t *testing.T) {
 	t.Parallel()
 	root, home := unclaimedBranchFixture(t)
 	ref, tip := uniqueBranch(t, root, "a")
-	plan, code, rows := runDiscard(t, discardJoins(), root, home, "--target", branchSegment(ref))
-	if row := rows[ref]; code != 0 || len(row) != len(cleanupFields) || row[1] != string(ActionRetain) || row[4] != "none" || !strings.Contains(row[6], "--discard-branch") {
-		t.Fatalf("plan exit=%d stdout=%q, want a retained row that names --discard-branch", code, plan)
+	plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), "--target", branchSegment(ref)))
+	if row := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")[ref]; plan.exit != 0 || plan.stderr != "" || len(row) != len(cleanupFields) || row["action"] != string(ActionRetain) || row["recovery"] != "none" || !strings.Contains(row["detail"], "--discard-branch") {
+		t.Fatalf("plan exit=%d stdout=%q stderr=%q, want a retained row that names --discard-branch", plan.exit, plan.stdout, plan.stderr)
 	}
-	applied, code, _ := planAndApply(t, discardJoins(), root, home, "--target", branchSegment(ref))
-	if code != 0 || strings.Contains(applied, ",removed,") || refTip(root, ref) != tip || discardedRefs(t, root) != "" {
-		t.Fatalf("apply exit=%d stdout=%q, want the branch kept and no discarded ref", code, applied)
+	applied := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), "--target", branchSegment(ref), "--apply", plan.mustFingerprint(t)))
+	if applied.exit != 0 || applied.stderr != "" || strings.Contains(applied.stdout, ",removed,") || refTip(root, ref) != tip || discardedRefs(t, root) != "" {
+		t.Fatalf("apply exit=%d stdout=%q stderr=%q, want the branch kept and no discarded ref", applied.exit, applied.stdout, applied.stderr)
 	}
 }
 
@@ -241,12 +222,14 @@ func TestDiscardTargetWritesTheDiscardedRefFirst(t *testing.T) {
 		beforeDelete = refTip(root, discarded) + " " + refTip(root, ref)
 		return nil
 	})
-	applied, code, rows := planAndApply(t, j, root, home, "--discard-branch", "--target", branchSegment(ref))
+	args := []string{"--discard-branch", "--target", branchSegment(ref)}
+	plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), args...))
+	applied := runVerb(t, verbClean, repoHome{root, home}.callWith(j, append(args, "--apply", plan.mustFingerprint(t))...))
 	if beforeDelete != tip+" "+tip {
 		t.Fatalf("before the delete the discarded ref and the branch read %q, want both at %s", beforeDelete, tip)
 	}
-	if row := rows[ref]; code != 0 || len(row) != len(cleanupFields) || row[1] != string(ActionRemoved) || row[4] != discarded {
-		t.Fatalf("apply exit=%d stdout=%q, want a removed row whose recovery is %s", code, applied, discarded)
+	if row := textRowsBy(t, applied.mustRows(t, cleanupTable), "target")[ref]; plan.stderr != "" || applied.exit != 0 || applied.stderr != "" || len(row) != len(cleanupFields) || row["action"] != string(ActionRemoved) || row["recovery"] != discarded {
+		t.Fatalf("apply exit=%d stdout=%q stderr=%q, want a removed row whose recovery is %s", applied.exit, applied.stdout, plan.stderr+applied.stderr, discarded)
 	}
 	if refTip(root, discarded) != tip || refTip(root, ref) != "" {
 		t.Fatalf("after the apply %s reads %q and %s reads %q", discarded, refTip(root, discarded), ref, refTip(root, ref))
@@ -268,9 +251,11 @@ func TestDiscardTargetFaultWindows(t *testing.T) {
 		t.Parallel()
 		root, home := unclaimedBranchFixture(t)
 		ref, tip := uniqueBranch(t, root, "a")
-		applied, code, _ := planAndApply(t, fault(StepDiscardedRefWrite), root, home, "--discard-branch", "--target", branchSegment(ref))
-		if code != 1 || refTip(root, ref) != tip || discardedRefs(t, root) != "" {
-			t.Fatalf("apply exit=%d stdout=%q discarded=%q, want the branch kept and no discarded ref", code, applied, discardedRefs(t, root))
+		args := []string{"--discard-branch", "--target", branchSegment(ref)}
+		plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), args...))
+		applied := runVerb(t, verbClean, repoHome{root, home}.callWith(fault(StepDiscardedRefWrite), append(args, "--apply", plan.mustFingerprint(t))...))
+		if plan.stderr != "" || applied.stderr != "" || applied.exit != 1 || refTip(root, ref) != tip || discardedRefs(t, root) != "" {
+			t.Fatalf("apply exit=%d stdout=%q stderr=%q discarded=%q, want the branch kept and no discarded ref", applied.exit, applied.stdout, plan.stderr+applied.stderr, discardedRefs(t, root))
 		}
 	})
 	t.Run("RI37 a fault after the write", func(t *testing.T) {
@@ -278,13 +263,17 @@ func TestDiscardTargetFaultWindows(t *testing.T) {
 		root, home := unclaimedBranchFixture(t)
 		ref, tip := uniqueBranch(t, root, "a")
 		discarded := intent.DiscardedRef(discardDay, ref)
-		applied, code, _ := planAndApply(t, fault(StepDiscardedBranchDelete), root, home, "--discard-branch", "--target", branchSegment(ref))
-		if code != 1 || refTip(root, ref) != tip || refTip(root, discarded) != tip {
-			t.Fatalf("apply exit=%d stdout=%q, want the branch and the discarded ref both at %s", code, applied, tip)
+		args := []string{"--discard-branch", "--target", branchSegment(ref)}
+		plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), args...))
+		applied := runVerb(t, verbClean, repoHome{root, home}.callWith(fault(StepDiscardedBranchDelete), append(args, "--apply", plan.mustFingerprint(t))...))
+		if plan.stderr != "" || applied.stderr != "" || applied.exit != 1 || refTip(root, ref) != tip || refTip(root, discarded) != tip {
+			t.Fatalf("apply exit=%d stdout=%q stderr=%q, want the branch and the discarded ref both at %s", applied.exit, applied.stdout, plan.stderr+applied.stderr, tip)
 		}
-		retried, code, rows := planAndApply(t, discardJoins(), root, home, "--discard-branch", "--target", branchSegment(ref))
-		if code != 0 || rowAction(rows, ref) != string(ActionRemoved) || refTip(root, ref) != "" || refTip(root, discarded) != tip {
-			t.Fatalf("retry exit=%d stdout=%q, want the branch removed and the discarded ref at %s", code, retried, tip)
+		replan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), args...))
+		retried := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), append(args, "--apply", replan.mustFingerprint(t))...))
+		rows := textRowsBy(t, retried.mustRows(t, cleanupTable), "target")
+		if replan.stderr != "" || retried.stderr != "" || retried.exit != 0 || rowAction(rows, ref) != string(ActionRemoved) || refTip(root, ref) != "" || refTip(root, discarded) != tip {
+			t.Fatalf("retry exit=%d stdout=%q stderr=%q, want the branch removed and the discarded ref at %s", retried.exit, retried.stdout, replan.stderr+retried.stderr, tip)
 		}
 	})
 	t.Run("RI67 a branch moved after the write", func(t *testing.T) {
@@ -297,9 +286,12 @@ func TestDiscardTargetFaultWindows(t *testing.T) {
 			moved = commitOnBranch(t, root, ref, "moved.txt", "moved\n")
 			return nil
 		})
-		applied, code, rows := planAndApply(t, j, root, home, "--discard-branch", "--target", branchSegment(ref))
-		if code != 1 || rowAction(rows, ref) != string(ActionError) || moved == "" || refTip(root, ref) != moved || refTip(root, intent.DiscardedRef(discardDay, ref)) != tip {
-			t.Fatalf("apply exit=%d stdout=%q, want an error row, the moved branch kept, and the discarded ref at %s", code, applied, tip)
+		args := []string{"--discard-branch", "--target", branchSegment(ref)}
+		plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), args...))
+		applied := runVerb(t, verbClean, repoHome{root, home}.callWith(j, append(args, "--apply", plan.mustFingerprint(t))...))
+		rows := textRowsBy(t, applied.mustRows(t, cleanupTable), "target")
+		if plan.stderr != "" || applied.stderr != "" || applied.exit != 1 || rowAction(rows, ref) != string(ActionError) || moved == "" || refTip(root, ref) != moved || refTip(root, intent.DiscardedRef(discardDay, ref)) != tip {
+			t.Fatalf("apply exit=%d stdout=%q stderr=%q, want an error row, the moved branch kept, and the discarded ref at %s", applied.exit, applied.stdout, plan.stderr+applied.stderr, tip)
 		}
 	})
 }
@@ -313,9 +305,12 @@ func TestDiscardTargetRefusesAConflictingDiscardedRef(t *testing.T) {
 	discarded := intent.DiscardedRef(discardDay, ref)
 	planted := gitOutput(t, root, "rev-parse", "main")
 	gitRun(t, root, "update-ref", discarded, planted)
-	applied, code, rows := planAndApply(t, discardJoins(), root, home, "--discard-branch", "--target", branchSegment(ref))
-	if code != 1 || rowAction(rows, ref) != string(ActionError) || refTip(root, ref) != tip || refTip(root, discarded) != planted {
-		t.Fatalf("apply exit=%d stdout=%q, want a refusal that keeps the branch and the planted ref", code, applied)
+	args := []string{"--discard-branch", "--target", branchSegment(ref)}
+	plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), args...))
+	applied := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), append(args, "--apply", plan.mustFingerprint(t))...))
+	rows := textRowsBy(t, applied.mustRows(t, cleanupTable), "target")
+	if plan.stderr != "" || applied.stderr != "" || applied.exit != 1 || rowAction(rows, ref) != string(ActionError) || refTip(root, ref) != tip || refTip(root, discarded) != planted {
+		t.Fatalf("apply exit=%d stdout=%q stderr=%q, want a refusal that keeps the branch and the planted ref", applied.exit, applied.stdout, plan.stderr+applied.stderr)
 	}
 }
 
@@ -343,11 +338,11 @@ func TestDiscardTargetStaleClassWritesNothing(t *testing.T) {
 			root, home := unclaimedBranchFixture(t)
 			ref, tip := uniqueBranch(t, root, "a")
 			args := append(tc.flags, "--target", branchSegment(ref))
-			plan, _, _ := runDiscard(t, discardJoins(), root, home, args...)
+			plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), args...))
 			tc.mutate(t, root, home, ref)
-			applied, code, _ := runDiscard(t, discardJoins(), root, home, append(args, "--apply", cleanupRowFingerprint(t, plan))...)
-			if code != 1 || !strings.Contains(applied, errStaleFingerprint.Error()) || refTip(root, ref) != tip || discardedRefs(t, root) != "" {
-				t.Fatalf("apply exit=%d stdout=%q discarded=%q, want a stale refusal that writes nothing", code, applied, discardedRefs(t, root))
+			applied := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), append(args, "--apply", plan.mustFingerprint(t))...))
+			if plan.stderr != "" || applied.stderr != "" || applied.exit != 1 || !strings.Contains(applied.stdout, errStaleFingerprint.Error()) || refTip(root, ref) != tip || discardedRefs(t, root) != "" {
+				t.Fatalf("apply exit=%d stdout=%q stderr=%q discarded=%q, want a stale refusal that writes nothing", applied.exit, applied.stdout, plan.stderr+applied.stderr, discardedRefs(t, root))
 			}
 		})
 	}
@@ -371,9 +366,12 @@ func TestDiscardTargetLandedAndSubsumedWriteNoRef(t *testing.T) {
 			t.Parallel()
 			root, home := unclaimedBranchFixture(t)
 			ref := tc.plant(t, root, home)
-			applied, code, rows := planAndApply(t, discardJoins(), root, home, "--discard-branch", "--target", branchSegment(ref))
-			if row := rows[ref]; code != 0 || len(row) != len(cleanupFields) || row[1] != string(ActionRemoved) || row[4] != "none" || refTip(root, ref) != "" || discardedRefs(t, root) != "" {
-				t.Fatalf("apply exit=%d stdout=%q, want the branch removed with recovery none and no discarded ref", code, applied)
+			args := []string{"--discard-branch", "--target", branchSegment(ref)}
+			plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), args...))
+			applied := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), append(args, "--apply", plan.mustFingerprint(t))...))
+			row := textRowsBy(t, applied.mustRows(t, cleanupTable), "target")[ref]
+			if plan.stderr != "" || applied.stderr != "" || applied.exit != 0 || len(row) != len(cleanupFields) || row["action"] != string(ActionRemoved) || row["recovery"] != "none" || refTip(root, ref) != "" || discardedRefs(t, root) != "" {
+				t.Fatalf("apply exit=%d stdout=%q stderr=%q, want the branch removed with recovery none and no discarded ref", applied.exit, applied.stdout, plan.stderr+applied.stderr)
 			}
 		})
 	}
@@ -385,13 +383,14 @@ func TestDiscardTargetRoutesAUniqueShiftRow(t *testing.T) {
 	t.Parallel()
 	root, home := unclaimedBranchFixture(t)
 	ref, _ := uniqueShiftBranch(t, root)
-	plan, _, rows := runDiscard(t, discardJoins(), root, home, "--discard-branch", "--unclaimed")
+	plan := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), "--discard-branch", "--unclaimed"))
 	route := "bench worktree clean --discard-branch --target " + strings.TrimPrefix(ref, "refs/heads/")
-	if row := rows[ref]; len(row) != len(cleanupFields) || !strings.HasSuffix(row[6], "; "+route) {
-		t.Fatalf("unclaimed plan = %q, want the unique shift row to end with %q", plan, route)
+	if row := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")[ref]; plan.stderr != "" || len(row) != len(cleanupFields) || !strings.HasSuffix(row["detail"], "; "+route) {
+		t.Fatalf("unclaimed plan = %q stderr=%q, want the unique shift row to end with %q", plan.stdout, plan.stderr, route)
 	}
-	routed, code, routedRows := runDiscard(t, discardJoins(), root, home, strings.Fields(strings.TrimPrefix(route, "bench worktree clean "))...)
-	if code != 0 || len(routedRows) != 1 || routedRows[ref] == nil {
-		t.Fatalf("routed plan exit=%d stdout=%q, want one row for %s", code, routed, ref)
+	routed := runVerb(t, verbClean, repoHome{root, home}.callWith(discardJoins(), strings.Fields(strings.TrimPrefix(route, "bench worktree clean "))...))
+	routedRows := textRowsBy(t, routed.mustRows(t, cleanupTable), "target")
+	if routed.exit != 0 || routed.stderr != "" || len(routedRows) != 1 || routedRows[ref] == nil {
+		t.Fatalf("routed plan exit=%d stdout=%q stderr=%q, want one row for %s", routed.exit, routed.stdout, routed.stderr, ref)
 	}
 }

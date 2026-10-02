@@ -4,7 +4,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"os"
@@ -33,46 +32,43 @@ func forbidLandingComposition() (joins, *int) {
 func TestLandCommandInvalidatesAChangedRequestBeforeComposition(t *testing.T) {
 	t.Parallel()
 	request := "land-identity-request"
-	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
+	f := publicLandingFixture(t, request, "", "")
 	j, composed := forbidLandingComposition()
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs("land-identity-request-changed", base, tip, creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
-		t.Fatalf("changed request = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs("land-identity-request-changed", f.base, f.tip, f.creation.Path)...))
+	if r.exit != 1 || !strings.HasPrefix(r.stdout, "refused{") {
+		t.Fatalf("changed request = (%d, %q, %q), want a refusal", r.exit, r.stdout, r.stderr)
 	}
-	requireIdentityRefusalState(t, root, creation.Path, tally, *composed)
+	requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, *composed)
 }
 
 // TestLandCommandInvalidatesAChangedReviewBaseBeforeComposition is SOL06.
 func TestLandCommandInvalidatesAChangedReviewBaseBeforeComposition(t *testing.T) {
 	t.Parallel()
 	request := "land-identity-base"
-	root, creation, _, tip, tally, home := publicLandingFixture(t, request, "", "")
+	f := publicLandingFixture(t, request, "", "")
 	j, composed := forbidLandingComposition()
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, tip, tip, creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
-		t.Fatalf("changed review base = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.tip, f.tip, f.creation.Path)...))
+	if r.exit != 1 || !strings.HasPrefix(r.stdout, "refused{") {
+		t.Fatalf("changed review base = (%d, %q, %q), want a refusal", r.exit, r.stdout, r.stderr)
 	}
-	requireIdentityRefusalState(t, root, creation.Path, tally, *composed)
+	requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, *composed)
 }
 
 // TestLandCommandInvalidatesAChangedSourceTipBeforeComposition is SOL07.
 func TestLandCommandInvalidatesAChangedSourceTipBeforeComposition(t *testing.T) {
 	t.Parallel()
 	request := "land-identity-tip"
-	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
-	commitInWorktree(t, creation.Path, "moved.txt", "moved\n", "tip moved after review")
+	f := publicLandingFixture(t, request, "", "")
+	commitInWorktree(t, f.creation.Path, "moved.txt", "moved\n", "tip moved after review")
 	j, composed := forbidLandingComposition()
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.Contains(stdout.String(), "source tip mismatch") {
-		t.Fatalf("changed source tip = (%d, %q, %q), want a tip-mismatch refusal", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 1 || !strings.Contains(r.stdout, "source tip mismatch") {
+		t.Fatalf("changed source tip = (%d, %q, %q), want a tip-mismatch refusal", r.exit, r.stdout, r.stderr)
 	}
-	requireIdentityRefusalState(t, root, creation.Path, tally, *composed)
+	requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, *composed)
 }
 
 // TestLandCommandInvalidatesAChangedSourceFingerprintBeforeTheGate is SOL08. A
@@ -81,21 +77,20 @@ func TestLandCommandInvalidatesAChangedSourceTipBeforeComposition(t *testing.T) 
 func TestLandCommandInvalidatesAChangedSourceFingerprintBeforeTheGate(t *testing.T) {
 	t.Parallel()
 	request := "land-identity-fingerprint"
-	root, creation, base, tip, tally, home := publicLandingFixture(t, request, "", "")
-	mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o600)
+	f := publicLandingFixture(t, request, "", "")
+	mustWrite(t, filepath.Join(f.creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o600)
 	j, composed := forbidLandingComposition()
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
 	// The sentence and the repair read from the registry, so each keeps one source. The
 	// hostile-source surface stays bounded: the refusal carries a route and no path table,
 	// so no source-authored path name reaches the operator's terminal.
 	face := landingRefusalFaceByName(faceSourceNotClean)
-	if code != 1 || !strings.Contains(stdout.String(), face.detail) || !strings.Contains(stdout.String(), "next="+face.route("")) ||
-		strings.Contains(stdout.String(), "refusal_paths") || strings.Contains(stdout.String(), "dirty.txt") {
-		t.Fatalf("changed source fingerprint = (%d, %q, %q), want a routed not-clean refusal with no path table", code, stdout.String(), stderr.String())
+	if r.exit != 1 || !strings.Contains(r.stdout, face.detail) || !strings.Contains(r.stdout, "next="+face.route("")) ||
+		strings.Contains(r.stdout, "refusal_paths") || strings.Contains(r.stdout, "dirty.txt") {
+		t.Fatalf("changed source fingerprint = (%d, %q, %q), want a routed not-clean refusal with no path table", r.exit, r.stdout, r.stderr)
 	}
-	requireIdentityRefusalState(t, root, creation.Path, tally, *composed)
+	requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, *composed)
 }
 
 // requireIdentityRefusalState pins what every identity refusal leaves behind: no
@@ -126,22 +121,21 @@ func requireIdentityRefusalState(t *testing.T, root, path, tally string, compose
 func TestLandCommandRefusesAReviewBaseThatIsNotAnAncestorOfTheDestination(t *testing.T) {
 	t.Parallel()
 	request := "land-identity-not-ancestor"
-	root, creation, destination, fold, tip, tally, home := foldedLandingFixture(t, request)
-	if git.OK("-C", root, "merge-base", "--is-ancestor", fold, destination) {
-		t.Fatalf("premise failed: the fold commit %q must not already be on the destination %q", fold, destination)
+	f := foldedLandingFixture(t, request)
+	if git.OK("-C", f.root, "merge-base", "--is-ancestor", f.fold, f.base) {
+		t.Fatalf("premise failed: the fold commit %q must not already be on the destination %q", f.fold, f.base)
 	}
 	j, composed := forbidLandingComposition()
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, specLessLandArgs(request, fold, tip, creation.Path), &stdout, &stderr)
+	r := runVerb(t, verbLand, f.callWith(j, specLessLandArgs(request, f.fold, f.tip, f.creation.Path)...))
 	// The expectation is spelled out here rather than read from landingBaseNotAncestorDetail,
 	// so a mutation of that constant turns this test red instead of passing silently.
 	const wantDetail = "review base is not an ancestor of the landing destination: --base takes the landing base, the default-branch tip the source folded, not the fold commit the review read"
-	want := "detail=" + wantDetail + ",observed=" + fold + ",wanted=" + destination
-	if code != 1 || !strings.Contains(stdout.String(), want) {
-		t.Fatalf("non-ancestor base = (%d, %q, %q), want a refusal carrying %q", code, stdout.String(), stderr.String(), want)
+	want := "detail=" + wantDetail + ",observed=" + f.fold + ",wanted=" + f.base
+	if r.exit != 1 || !strings.Contains(r.stdout, want) {
+		t.Fatalf("non-ancestor base = (%d, %q, %q), want a refusal carrying %q", r.exit, r.stdout, r.stderr, want)
 	}
-	requireIdentityRefusalState(t, root, creation.Path, tally, *composed)
+	requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, *composed)
 }
 
 // TestLandCommandRefusesAReviewBaseBehindTheRecordedStart is the SOL06 mutation guard
@@ -154,21 +148,20 @@ func TestLandCommandRefusesAReviewBaseThatIsNotAnAncestorOfTheDestination(t *tes
 func TestLandCommandRefusesAReviewBaseBehindTheRecordedStart(t *testing.T) {
 	t.Parallel()
 	request := "land-identity-recorded-start"
-	root, creation, base, tip, tally, home := specLessLandingFixture(t, request)
-	earlier := gitOutput(t, root, "rev-parse", base+"~1")
-	if earlier == base {
-		t.Fatalf("fixture has no earlier ancestor than the recorded start %q", base)
+	f := specLessLandingFixture(t, request)
+	earlier := gitOutput(t, f.root, "rev-parse", f.base+"~1")
+	if earlier == f.base {
+		t.Fatalf("fixture has no earlier ancestor than the recorded start %q", f.base)
 	}
-	if !git.OK("-C", root, "merge-base", "--is-ancestor", earlier, base) {
+	if !git.OK("-C", f.root, "merge-base", "--is-ancestor", earlier, f.base) {
 		t.Fatalf("premise failed: %q is not an ancestor of the destination", earlier)
 	}
 	j, composed := forbidLandingComposition()
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, specLessLandArgs(request, earlier, tip, creation.Path), &stdout, &stderr)
-	want := "detail=" + reviewedRangeDetail + ",observed=" + earlier + ",wanted=" + base
-	if code != 1 || !strings.Contains(stdout.String(), want) {
-		t.Fatalf("earlier ancestor base = (%d, %q, %q), want a refusal carrying %q", code, stdout.String(), stderr.String(), want)
+	r := runVerb(t, verbLand, f.callWith(j, specLessLandArgs(request, earlier, f.tip, f.creation.Path)...))
+	want := "detail=" + reviewedRangeDetail + ",observed=" + earlier + ",wanted=" + f.base
+	if r.exit != 1 || !strings.Contains(r.stdout, want) {
+		t.Fatalf("earlier ancestor base = (%d, %q, %q), want a refusal carrying %q", r.exit, r.stdout, r.stderr, want)
 	}
-	requireIdentityRefusalState(t, root, creation.Path, tally, *composed)
+	requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, *composed)
 }

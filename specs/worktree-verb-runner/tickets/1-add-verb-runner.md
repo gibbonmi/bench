@@ -1,8 +1,8 @@
 # Add the verb runner and its readers
 
 Blocked by: none
-Writes: internal/worktree/verb_runner_test.go (new), internal/worktree/verb_runner_check_test.go (new), internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: VR1, VR2, VR3, VR4, VR5, VR6, VR7, VR8, VR9, VR10, VR11, VR12, VR13, VR14, VR15, VR16, VR17, VR18, VR19, VR20, VR21, VR22, VR59
+Writes: internal/worktree/verb_runner_test.go (new), internal/worktree/verb_runner_check_test.go (new), internal/worktree/parallel_census_test.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_unclaimed_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Covers: VR1, VR2, VR3, VR4, VR5, VR6, VR7, VR8, VR9, VR10, VR11, VR12, VR13, VR14, VR15, VR16, VR17, VR18, VR19, VR20, VR21, VR22, VR59, VR60, VR61
 
 ## What to build
 
@@ -16,7 +16,7 @@ The verb result carries the exit code, stdout, stderr, and the exec assignment. 
 
 The core rows reader, `readVerbRows`, decodes stdout through `axitest.DecodeDocument` and returns the rows of one table block, or an error. The core fingerprint reader, `readVerbFingerprint`, returns the agreed `fingerprint` cell of a decoded table, or else the `fingerprint=` cell of the one record line. It returns an error when no value or two different values exist.
 
-When the agreed value is empty or equals the package constant `unapplicableFingerprint`, it returns the no-fingerprint error. This rule covers the table cell and the record cell. A failed explicit set writes the constant, a faulted unclaimed set writes an empty value, and a no-op reset plan writes a literal `none`. Compare with the constant; do not restate its text.
+When the agreed value is empty or equals the package constant `unapplicableFingerprint`, it returns the no-fingerprint error. This rule covers the table cell and the record cell. A failed explicit set writes the constant, a faulted unclaimed set writes an empty value, and a no-op reset plan writes a literal `none`. Compare with the constant; do not restate its text. Name `unapplicableFingerprint` exactly once in `verb_runner_test.go`, comments included, because the plan's named probe swaps that one name.
 
 Keep both reader names, because no test local in the package uses them.
 
@@ -30,7 +30,9 @@ Contract for later tickets: the verb keys, the call value's fields, the verb res
 
 ## Acceptance
 
-- [ ] Each key with a usage grammar returns its own verb's usage refusal, with the expectation read from the usage constant.
+- [ ] Each key with a usage grammar returns its own verb's usage refusal. The expectation reads the usage constant, or the grammar's `Cmd` field for `show` and `build`.
+- [ ] The core fingerprint reader returns the no-fingerprint error for a real no-op `reset` plan whose record carries `none`.
+- [ ] The core fingerprint reader returns an error for two records that disagree.
 - [ ] The `pool` key returns the pool path of its root argument.
 - [ ] The `lease-file` and `resume-clean` keys each match a direct call to their own verb entry.
 - [ ] The verb result equals a direct call's exit code and both streams for the same input.

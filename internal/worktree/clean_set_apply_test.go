@@ -23,7 +23,7 @@ import (
 // selection plans a removal, so a fault or a drift on one member is always a fault or a
 // drift the set reaches with earlier members already removable. It also returns each
 // member's landed file by identity, so no caller re-spells the naming scheme it chose.
-func removableSetFixture(t *testing.T, count int) (string, string, []Creation, map[string]string) {
+func removableSetFixture(t *testing.T, count int) removableSet {
 	t.Helper()
 	root := newWorktreeRepo(t)
 	home := filepath.Join(root, ".bench-home")
@@ -36,7 +36,7 @@ func removableSetFixture(t *testing.T, count int) (string, string, []Creation, m
 		creations = append(creations, creation)
 		files[creation.Assignment.ID] = filepath.Join(creation.Path, name)
 	}
-	return root, home, creations, files
+	return removableSet{repoHome: repoHome{root, home}, creations: creations, files: files}
 }
 
 // explicitIdentities names every member of creations by its canonical identity.
@@ -95,28 +95,28 @@ func TestCleanSetPreexistingDrift(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			root, home, creations, files := removableSetFixture(t, 2)
-			selectors := tc.selectors(creations)
-			plan, planErr, planCode := runCleanup(t, root, home, selectors...)
-			if planCode != 0 || planErr != "" {
-				t.Fatalf("plan = (%d, %q, %q), want one applicable plan", planCode, plan, planErr)
+			f := removableSetFixture(t, 2)
+			selectors := tc.selectors(f.creations)
+			plan := runVerb(t, verbClean, f.call(selectors...))
+			if plan.exit != 0 || plan.stderr != "" {
+				t.Fatalf("plan = (%d, %q, %q), want one applicable plan", plan.exit, plan.stdout, plan.stderr)
 			}
-			later := creations[0]
-			if creations[0].Assignment.ID < creations[1].Assignment.ID {
-				later = creations[1]
+			later := f.creations[0]
+			if f.creations[0].Assignment.ID < f.creations[1].Assignment.ID {
+				later = f.creations[1]
 			}
-			driftTracked(t, files, later.Assignment.ID)
-			before := repositoryState(t, root)
+			driftTracked(t, f.files, later.Assignment.ID)
+			before := repositoryState(t, f.root)
 
-			stdout, stderr, code := runCleanup(t, root, home, append(selectors, "--apply", cleanupRowFingerprint(t, plan))...)
-			if code != 1 || stderr != "" || !strings.Contains(stdout, errStaleFingerprint.Error()) {
-				t.Fatalf("drifted apply = (%d, %q, %q), want a stale refusal", code, stdout, stderr)
+			applied := runVerb(t, verbClean, f.call(append(selectors, "--apply", plan.mustFingerprint(t))...))
+			if applied.exit != 1 || applied.stderr != "" || !strings.Contains(applied.stdout, errStaleFingerprint.Error()) {
+				t.Fatalf("drifted apply = (%d, %q, %q), want a stale refusal", applied.exit, applied.stdout, applied.stderr)
 			}
-			if strings.Contains(stdout, ",removed,") {
-				t.Fatalf("drifted apply = %q, want no completed removal", stdout)
+			if strings.Contains(applied.stdout, ",removed,") {
+				t.Fatalf("drifted apply = %q, want no completed removal", applied.stdout)
 			}
-			requireMembersPresent(t, creations)
-			if after := repositoryState(t, root); after != before {
+			requireMembersPresent(t, f.creations)
+			if after := repositoryState(t, f.root); after != before {
 				t.Fatalf("drifted apply changed the repository: %q -> %q", before, after)
 			}
 		})
@@ -131,36 +131,36 @@ func TestCleanSetPreflightAllRows(t *testing.T) {
 	t.Parallel()
 	t.Run("explicit", func(t *testing.T) {
 		t.Parallel()
-		root, _, creations, files := removableSetFixture(t, 2)
+		f := removableSetFixture(t, 2)
 		j := defaultJoins()
-		set := planExplicitSet(j, root, explicitIdentities(creations), CleanupOptions{})
+		set := planExplicitSet(j, f.root, explicitIdentities(f.creations), CleanupOptions{})
 		if set.fingerprint == "" || len(set.rows) != 2 {
 			t.Fatalf("explicit set = %#v, want two applicable members", set)
 		}
-		driftTracked(t, files, set.rows[1].assignment.ID)
+		driftTracked(t, f.files, set.rows[1].assignment.ID)
 
-		plans, err := applyExplicitSet(j, root, set, CleanupOptions{})
+		plans, err := applyExplicitSet(j, f.root, set, CleanupOptions{})
 		if !errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want a stale refusal before the first transaction", err)
 		}
-		requireMembersPresent(t, creations)
+		requireMembersPresent(t, f.creations)
 		requireAllNotAttempted(t, plans)
 	})
 	t.Run("landed", func(t *testing.T) {
 		t.Parallel()
-		root, _, creations, files := removableSetFixture(t, 2)
+		f := removableSetFixture(t, 2)
 		j := defaultJoins()
-		set, planErr := planLandedSet(j, root, CleanupOptions{}, "")
+		set, planErr := planLandedSet(j, f.root, CleanupOptions{}, "")
 		if planErr != nil || len(set.rows) != 2 {
 			t.Fatalf("landed set = %#v, %v; want two applicable members", set, planErr)
 		}
-		driftTracked(t, files, set.rows[1].assignment.ID)
+		driftTracked(t, f.files, set.rows[1].assignment.ID)
 
-		plans, err := applyLandedSet(j, root, set, CleanupOptions{}, "")
+		plans, err := applyLandedSet(j, f.root, set, CleanupOptions{}, "")
 		if !errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want a stale refusal before the first transaction", err)
 		}
-		requireMembersPresent(t, creations)
+		requireMembersPresent(t, f.creations)
 		requireAllNotAttempted(t, plans)
 	})
 }
@@ -185,21 +185,21 @@ func requireAllNotAttempted(t *testing.T, plans []CleanupPlan) {
 // member's removal stays completed.
 func TestCleanSetLateDrift(t *testing.T) {
 	t.Parallel()
-	root, _, creations, files := removableSetFixture(t, 2)
+	f := removableSetFixture(t, 2)
 	j := defaultJoins()
-	set := planExplicitSet(j, root, explicitIdentities(creations), CleanupOptions{})
+	set := planExplicitSet(j, f.root, explicitIdentities(f.creations), CleanupOptions{})
 	if set.fingerprint == "" || len(set.rows) != 2 {
 		t.Fatalf("explicit set = %#v, want two applicable members", set)
 	}
-	settled, drifted := memberByID(t, creations, set.rows[0].assignment.ID), memberByID(t, creations, set.rows[1].assignment.ID)
+	settled, drifted := memberByID(t, f.creations, set.rows[0].assignment.ID), memberByID(t, f.creations, set.rows[1].assignment.ID)
 	mutated := false
 	j.cleanupBoundary = atSecondHit(StepApplyLocked, func() error {
 		mutated = true
-		driftTracked(t, files, drifted.Assignment.ID)
+		driftTracked(t, f.files, drifted.Assignment.ID)
 		return nil
 	})
 
-	plans, err := applyExplicitSet(j, root, set, CleanupOptions{})
+	plans, err := applyExplicitSet(j, f.root, set, CleanupOptions{})
 	if !errors.Is(err, errStaleFingerprint) || !mutated {
 		t.Fatalf("apply = (%v, mutated=%t), want the under-lock recheck to refuse the raced member", err, mutated)
 	}
@@ -233,13 +233,13 @@ func memberByID(t *testing.T, creations []Creation, assignment string) Creation 
 // landed member whose ignored residue the plan retains without `--discard-ignored`. It is
 // the selection shape that proves what an apply does to a member it will not touch, and it
 // leaves one member resolvable after the removable one is gone.
-func retainedMemberFixture(t *testing.T) (string, string, Creation, Creation) {
+func retainedMemberFixture(t *testing.T) retainedMemberSet {
 	t.Helper()
 	root, home := ignoringRepo(t)
 	removable := landedMember(t, root, home, "set-retained-removable", "removable.txt")
 	retained := landedMember(t, root, home, "set-retained-residue", "retained.txt")
 	mustWrite(t, filepath.Join(retained.Path, "ignored-one.txt"), []byte("residue\n"), 0o644)
-	return root, home, removable, retained
+	return retainedMemberSet{repoHome: repoHome{root, home}, removable: removable, retained: retained}
 }
 
 // ignoringRepo is a repository whose .gitignore names the residue these fixtures drop, so a
@@ -268,40 +268,39 @@ func landedMember(t *testing.T, root, home, request, file string) Creation {
 // spent digest and therefore a refusal with a live source.
 func TestCleanSetSpentPlan(t *testing.T) {
 	t.Parallel()
-	root, home, removable, retained := retainedMemberFixture(t)
-	both := []string{"--target", removable.Assignment.ID, "--target", retained.Assignment.ID}
-	plan, planErr, planCode := runCleanup(t, root, home, both...)
-	if planCode != 0 || planErr != "" {
-		t.Fatalf("plan = (%d, %q, %q), want one applicable plan", planCode, plan, planErr)
+	f := retainedMemberFixture(t)
+	both := []string{"--target", f.removable.Assignment.ID, "--target", f.retained.Assignment.ID}
+	plan := runVerb(t, verbClean, f.call(both...))
+	if plan.exit != 0 || plan.stderr != "" {
+		t.Fatalf("plan = (%d, %q, %q), want one applicable plan", plan.exit, plan.stdout, plan.stderr)
 	}
-	digest := cleanupRowFingerprint(t, plan)
-	applied, applyErr, applyCode := runCleanup(t, root, home, append(both, "--apply", digest)...)
-	if applyCode != 0 || applyErr != "" || strings.Count(applied, ",removed,") != 1 {
-		t.Fatalf("apply = (%d, %q, %q), want exactly one removal", applyCode, applied, applyErr)
+	digest := plan.mustFingerprint(t)
+	applied := runVerb(t, verbClean, f.call(append(both, "--apply", digest)...))
+	if applied.exit != 0 || applied.stderr != "" || strings.Count(applied.stdout, ",removed,") != 1 {
+		t.Fatalf("apply = (%d, %q, %q), want exactly one removal", applied.exit, applied.stdout, applied.stderr)
 	}
-	spent := repositoryState(t, root)
+	spent := repositoryState(t, f.root)
 
-	replay, replayErr, replayCode := runCleanup(t, root, home, append(both, "--apply", digest)...)
-	if replayCode != 1 || replayErr != "" {
-		t.Fatalf("replay = (%d, %q, %q), want a refusal", replayCode, replay, replayErr)
+	replay := runVerb(t, verbClean, f.call(append(both, "--apply", digest)...))
+	if replay.exit != 1 || replay.stderr != "" {
+		t.Fatalf("replay = (%d, %q, %q), want a refusal", replay.exit, replay.stdout, replay.stderr)
 	}
-	if strings.Contains(replay, ",removed,") {
-		t.Fatalf("replay = %q, want no repeated completion claim", replay)
+	if strings.Contains(replay.stdout, ",removed,") {
+		t.Fatalf("replay = %q, want no repeated completion claim", replay.stdout)
 	}
 
 	// The surviving member still resolves, so this replay reaches the digest comparison with
 	// an applicable plan of its own. The spent digest names a set of two, and this selection
 	// is a set of one, so the refusal here rests on the comparison rather than on a target
 	// that has ceased to exist.
-	narrowed := []string{"--target", retained.Assignment.ID, "--apply", digest}
-	stale, staleErr, staleCode := runCleanup(t, root, home, narrowed...)
-	if staleCode != 1 || staleErr != "" || !strings.Contains(stale, errStaleFingerprint.Error()) {
-		t.Fatalf("narrowed replay = (%d, %q, %q), want a stale refusal", staleCode, stale, staleErr)
+	stale := runVerb(t, verbClean, f.call("--target", f.retained.Assignment.ID, "--apply", digest))
+	if stale.exit != 1 || stale.stderr != "" || !strings.Contains(stale.stdout, errStaleFingerprint.Error()) {
+		t.Fatalf("narrowed replay = (%d, %q, %q), want a stale refusal", stale.exit, stale.stdout, stale.stderr)
 	}
-	if _, statErr := os.Stat(retained.Path); statErr != nil {
-		t.Fatalf("narrowed replay removed the retained member %s: %v", retained.Path, statErr)
+	if _, statErr := os.Stat(f.retained.Path); statErr != nil {
+		t.Fatalf("narrowed replay removed the retained member %s: %v", f.retained.Path, statErr)
 	}
-	if after := repositoryState(t, root); after != spent {
+	if after := repositoryState(t, f.root); after != spent {
 		t.Fatalf("replays changed the repository: %q -> %q", spent, after)
 	}
 }

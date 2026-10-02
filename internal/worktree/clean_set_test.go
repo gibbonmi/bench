@@ -2,9 +2,9 @@ package worktree
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,90 +14,39 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-var setFingerprint = regexp.MustCompile(`[0-9a-f]{64}`)
-
-// cleanupRows returns the rendered worktree_cleanup rows alone. A cleanup response can
-// carry an ignored preview and a help block after the table, and both indent their own
-// rows the same way, so the reader tracks which table it is inside.
-func cleanupRows(output string) []string {
-	var rows []string
-	inTable := false
-	for _, line := range strings.Split(output, "\n") {
-		switch {
-		case strings.HasPrefix(line, "worktree_cleanup["):
-			inTable = true
-		case line == "":
-		case strings.HasPrefix(line, "  "):
-			if inTable {
-				rows = append(rows, strings.TrimPrefix(line, "  "))
-			}
-		default:
-			inTable = false
-		}
-	}
-	return rows
-}
-
-// cleanupRowFields splits one rendered row. Every fixture path and detail below is
-// comma-free, so the split addresses the same fields the table header names.
-func cleanupRowFields(row string) []string { return strings.Split(row, ",") }
-
-// cleanupRowValue reads one rendered field. The encoder quotes a scalar that could read as a
-// number, such as a digest that starts with a zero and a digit, so every reader takes the
-// quotes off here rather than deriving that rule a second time.
-func cleanupRowValue(field string) string { return strings.Trim(field, `"`) }
-
-func cleanupRowsField(t *testing.T, output string, index int) []string {
-	t.Helper()
-	rows := cleanupRows(output)
-	values := make([]string, 0, len(rows))
-	for _, row := range rows {
-		fields := cleanupRowFields(row)
-		if index >= len(fields) {
-			t.Fatalf("row %q has no field %d", row, index)
-		}
-		values = append(values, fields[index])
-	}
-	return values
-}
-
 func TestCleanExplicitSetPlan(t *testing.T) {
 	t.Parallel()
-	root, home, first, second, _ := landedSetFixture(t)
-	stdout, stderr, code := runCleanup(t, root, home, "--target", first.Assignment.ID, "--target", second.Assignment.ID)
-	if code != 0 || stderr != "" {
-		t.Fatalf("set plan exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	f := landedSetFixture(t)
+	plan := runVerb(t, verbClean, f.call("--target", f.first.Assignment.ID, "--target", f.second.Assignment.ID))
+	if plan.exit != 0 || plan.stderr != "" {
+		t.Fatalf("set plan exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
-	rows := cleanupRows(stdout)
-	if len(rows) != 2 {
+	if rows := plan.mustRows(t, cleanupTable); len(rows) != 2 {
 		t.Fatalf("set plan rows = %#v, want one row per selected target", rows)
 	}
-	shared := setFingerprint.FindAllString(stdout, -1)
-	if len(shared) < 2 || shared[0] != shared[1] {
-		t.Fatalf("set plan = %q, want one shared set fingerprint", stdout)
+	shared := plan.mustFingerprint(t)
+	if !strings.Contains(plan.stdout, "bench worktree clean --target ") || !strings.Contains(plan.stdout, "--apply "+shared) {
+		t.Fatalf("set plan = %q, want the whole-set apply action", plan.stdout)
 	}
-	if !strings.Contains(stdout, "bench worktree clean --target ") || !strings.Contains(stdout, "--apply "+shared[0]) {
-		t.Fatalf("set plan = %q, want the whole-set apply action", stdout)
-	}
-	for _, creation := range []Creation{first, second} {
+	for _, creation := range []Creation{f.first, f.second} {
 		if _, err := os.Stat(creation.Path); err != nil {
 			t.Fatalf("bare set plan removed %s: %v", creation.Path, err)
 		}
 	}
 
-	narrow, narrowErr, narrowCode := runCleanup(t, root, home, "--target", first.Assignment.ID)
-	if narrowCode != 0 || narrowErr != "" {
-		t.Fatalf("narrow plan exit=%d stdout=%q stderr=%q", narrowCode, narrow, narrowErr)
+	narrow := runVerb(t, verbClean, f.call("--target", f.first.Assignment.ID))
+	if narrow.exit != 0 || narrow.stderr != "" {
+		t.Fatalf("narrow plan exit=%d stdout=%q stderr=%q", narrow.exit, narrow.stdout, narrow.stderr)
 	}
-	if setFingerprint.FindString(narrow) == shared[0] {
-		t.Fatalf("set fingerprint did not bind complete membership: pair=%q one=%q", stdout, narrow)
+	if narrow.mustFingerprint(t) == shared {
+		t.Fatalf("set fingerprint did not bind complete membership: pair=%q one=%q", plan.stdout, narrow.stdout)
 	}
 
-	applied, applyErr, applyCode := runCleanup(t, root, home, "--target", first.Assignment.ID, "--target", second.Assignment.ID, "--apply", shared[0])
-	if applyCode != 0 || applyErr != "" || strings.Count(applied, ",removed,") != 2 {
-		t.Fatalf("set apply = (%d, %q, %q), want two removals", applyCode, applied, applyErr)
+	applied := runVerb(t, verbClean, f.call("--target", f.first.Assignment.ID, "--target", f.second.Assignment.ID, "--apply", shared))
+	if applied.exit != 0 || applied.stderr != "" || strings.Count(applied.stdout, ",removed,") != 2 {
+		t.Fatalf("set apply = (%d, %q, %q), want two removals", applied.exit, applied.stdout, applied.stderr)
 	}
-	for _, creation := range []Creation{first, second} {
+	for _, creation := range []Creation{f.first, f.second} {
 		if _, err := os.Lstat(creation.Path); !os.IsNotExist(err) {
 			t.Fatalf("set apply left %s: %v", creation.Path, err)
 		}
@@ -106,36 +55,36 @@ func TestCleanExplicitSetPlan(t *testing.T) {
 
 func TestCleanExplicitSetAliases(t *testing.T) {
 	t.Parallel()
-	root, home, first, second, _ := landedSetFixture(t)
+	f := landedSetFixture(t)
 	aliases := []string{
-		"--target", first.Assignment.ID, "--target", first.Path, "--target", first.Assignment.Label,
-		"--target", second.Assignment.Label, "--target", second.Assignment.ID,
+		"--target", f.first.Assignment.ID, "--target", f.first.Path, "--target", f.first.Assignment.Label,
+		"--target", f.second.Assignment.Label, "--target", f.second.Assignment.ID,
 	}
-	stdout, stderr, code := runCleanup(t, root, home, aliases...)
-	if code != 0 || stderr != "" {
-		t.Fatalf("alias plan exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+	plan := runVerb(t, verbClean, f.call(aliases...))
+	if plan.exit != 0 || plan.stderr != "" {
+		t.Fatalf("alias plan exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
-	rows := cleanupRows(stdout)
+	rows := textRows(t, plan.mustRows(t, cleanupTable))
 	if len(rows) != 2 {
 		t.Fatalf("alias plan rows = %#v, want one row per cleanup identity", rows)
 	}
-	lower, higher := first, second
+	lower, higher := f.first, f.second
 	if higher.Assignment.ID < lower.Assignment.ID {
-		lower, higher = second, first
+		lower, higher = f.second, f.first
 	}
-	if targets := cleanupRowsField(t, stdout, 0); targets[0] != lower.Path || targets[1] != higher.Path {
-		t.Fatalf("alias plan targets = %#v, want canonical identity order", targets)
+	if rows[0]["target"] != lower.Path || rows[1]["target"] != higher.Path {
+		t.Fatalf("alias plan targets = %q, %q, want canonical identity order", rows[0]["target"], rows[1]["target"])
 	}
-	canonical, _, canonicalCode := runCleanup(t, root, home, "--target", first.Assignment.ID, "--target", second.Assignment.ID)
-	if canonicalCode != 0 || setFingerprint.FindString(stdout) != setFingerprint.FindString(canonical) {
-		t.Fatalf("alias plan = %q and canonical plan = %q, want one identity-ordered fingerprint", stdout, canonical)
+	canonical := runVerb(t, verbClean, f.call("--target", f.first.Assignment.ID, "--target", f.second.Assignment.ID))
+	if canonical.exit != 0 || plan.mustFingerprint(t) != canonical.mustFingerprint(t) {
+		t.Fatalf("alias plan = %q and canonical plan = %q, want one identity-ordered fingerprint", plan.stdout, canonical.stdout)
 	}
 
-	applied, applyErr, applyCode := runCleanup(t, root, home, append(aliases, "--apply", setFingerprint.FindString(stdout))...)
-	if applyCode != 0 || applyErr != "" || strings.Count(applied, ",removed,") != 2 || len(cleanupRows(applied)) != 2 {
-		t.Fatalf("alias apply = (%d, %q, %q), want one removal per identity", applyCode, applied, applyErr)
+	applied := runVerb(t, verbClean, f.call(append(aliases, "--apply", plan.mustFingerprint(t))...))
+	if applied.exit != 0 || applied.stderr != "" || strings.Count(applied.stdout, ",removed,") != 2 || len(applied.mustRows(t, cleanupTable)) != 2 {
+		t.Fatalf("alias apply = (%d, %q, %q), want one removal per identity", applied.exit, applied.stdout, applied.stderr)
 	}
-	for _, creation := range []Creation{first, second} {
+	for _, creation := range []Creation{f.first, f.second} {
 		if _, err := os.Lstat(creation.Path); !os.IsNotExist(err) {
 			t.Fatalf("alias apply left %s: %v", creation.Path, err)
 		}
@@ -158,26 +107,27 @@ func TestCleanExplicitSetSelectionFailure(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			root, home, first, second, _ := landedSetFixture(t)
-			failing := tc.target(t, root, home)
-			stdout, stderr, code := runCleanup(t, root, home, "--target", first.Assignment.ID, "--target", failing)
-			if code != 1 || stderr != "" {
-				t.Fatalf("failed selection exit=%d stdout=%q stderr=%q", code, stdout, stderr)
+			f := landedSetFixture(t)
+			failing := tc.target(t, f.root, f.home)
+			plan := runVerb(t, verbClean, f.call("--target", f.first.Assignment.ID, "--target", failing))
+			if plan.exit != 1 || plan.stderr != "" {
+				t.Fatalf("failed selection exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 			}
-			if rows := cleanupRows(stdout); len(rows) != 2 {
+			if rows := plan.mustRows(t, cleanupTable); len(rows) != 2 {
 				t.Fatalf("failed selection rows = %#v, want every selection outcome", rows)
 			}
-			if !strings.Contains(stdout, tc.detail) || !strings.Contains(stdout, ",error,") {
-				t.Fatalf("failed selection = %q, want the reported failure", stdout)
+			if !strings.Contains(plan.stdout, tc.detail) || !strings.Contains(plan.stdout, ",error,") {
+				t.Fatalf("failed selection = %q, want the reported failure", plan.stdout)
 			}
-			if setFingerprint.MatchString(stdout) || strings.Contains(stdout, "bench worktree clean --target") {
-				t.Fatalf("failed selection = %q, want no applicable fingerprint and no apply action", stdout)
+			plan.mustNoFingerprint(t)
+			if strings.Contains(plan.stdout, "bench worktree clean --target") {
+				t.Fatalf("failed selection = %q, want no applicable fingerprint and no apply action", plan.stdout)
 			}
-			_, applyStderr, applyCode := runCleanup(t, root, home, "--target", first.Assignment.ID, "--target", failing, "--apply", strings.Repeat("a", 64))
-			if applyCode != 1 || applyStderr != "" {
-				t.Fatalf("failed selection apply exit=%d stderr=%q, want a refusal", applyCode, applyStderr)
+			applied := runVerb(t, verbClean, f.call("--target", f.first.Assignment.ID, "--target", failing, "--apply", strings.Repeat("a", 64)))
+			if applied.exit != 1 || applied.stderr != "" {
+				t.Fatalf("failed selection apply exit=%d stderr=%q, want a refusal", applied.exit, applied.stderr)
 			}
-			for _, creation := range []Creation{first, second} {
+			for _, creation := range []Creation{f.first, f.second} {
 				if _, err := os.Stat(creation.Path); err != nil {
 					t.Fatalf("failed selection removed %s: %v", creation.Path, err)
 				}
@@ -188,52 +138,55 @@ func TestCleanExplicitSetSelectionFailure(t *testing.T) {
 
 func TestCleanSetRetainsAuthority(t *testing.T) {
 	t.Parallel()
-	root, home, first, _, dirty := landedSetFixture(t)
-	active := mustCreate(t, root, home, "set-authority-active", "active label")
+	f := landedSetFixture(t)
+	active := mustCreate(t, f.root, f.home, "set-authority-active", "active label")
 	commitInWorktree(t, active.Path, "active.txt", "active\n", "active work")
 	lease, err := LeaseFile(active.Path)
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte(strconv.Itoa(os.Getpid())+" 2026-07-15T00:00:00Z\n"), 0o600)
-	members := []Creation{first, dirty, active}
+	members := []Creation{f.first, f.dirty, active}
 
 	// Every explicit target keeps the verdict the single-target form reaches for it, so a
 	// set selection cannot widen what the command is allowed to remove.
 	verdicts := make([]string, 0, len(members))
 	for _, member := range members {
-		single, singleErr, singleCode := runCleanup(t, root, home, member.Path)
-		if singleCode != 0 || singleErr != "" {
-			t.Fatalf("single-target plan for %s exit=%d stdout=%q stderr=%q", member.Path, singleCode, single, singleErr)
+		single := runVerb(t, verbClean, f.call(member.Path))
+		if single.exit != 0 || single.stderr != "" {
+			t.Fatalf("single-target plan for %s exit=%d stdout=%q stderr=%q", member.Path, single.exit, single.stdout, single.stderr)
 		}
-		set, setErr, setCode := runCleanup(t, root, home, "--target", member.Assignment.ID)
-		if setCode != 0 || setErr != "" {
-			t.Fatalf("set plan for %s exit=%d stdout=%q stderr=%q", member.Path, setCode, set, setErr)
+		set := runVerb(t, verbClean, f.call("--target", member.Assignment.ID))
+		if set.exit != 0 || set.stderr != "" {
+			t.Fatalf("set plan for %s exit=%d stdout=%q stderr=%q", member.Path, set.exit, set.stdout, set.stderr)
 		}
-		singleRow, setRow := cleanupRowFields(cleanupRows(single)[0]), cleanupRowFields(cleanupRows(set)[0])
-		singleRow[5], setRow[5] = "fingerprint", "fingerprint"
-		if strings.Join(singleRow, ",") != strings.Join(setRow, ",") {
+		singleRow, setRow := textRows(t, single.mustRows(t, cleanupTable))[0], textRows(t, set.mustRows(t, cleanupTable))[0]
+		singleRow["fingerprint"], setRow["fingerprint"] = "fingerprint", "fingerprint"
+		if !maps.Equal(singleRow, setRow) {
 			t.Fatalf("set row = %q, want the single-target verdict %q", setRow, singleRow)
 		}
-		verdicts = append(verdicts, setRow[1])
+		verdicts = append(verdicts, setRow["action"])
 	}
 	if verdicts[2] != string(ActionRetain) {
 		t.Fatalf("a live-leased target planned %q, want the existing refusal", verdicts[2])
 	}
 
-	args := []string{"--target", first.Assignment.ID, "--target", dirty.Assignment.ID, "--target", active.Assignment.ID}
-	stdout, stderr, code := runCleanup(t, root, home, args...)
-	if code != 0 || stderr != "" {
-		t.Fatalf("mixed set plan = (%d, %q, %q), want one applicable plan", code, stdout, stderr)
+	args := []string{"--target", f.first.Assignment.ID, "--target", f.dirty.Assignment.ID, "--target", active.Assignment.ID}
+	plan := runVerb(t, verbClean, f.call(args...))
+	if plan.exit != 0 || plan.stderr != "" {
+		t.Fatalf("mixed set plan = (%d, %q, %q), want one applicable plan", plan.exit, plan.stdout, plan.stderr)
 	}
 	sorted := append([]string(nil), verdicts...)
 	sort.Strings(sorted)
-	planned := cleanupRowsField(t, stdout, 1)
+	var planned []string
+	for _, row := range textRows(t, plan.mustRows(t, cleanupTable)) {
+		planned = append(planned, row["action"])
+	}
 	sort.Strings(planned)
 	if strings.Join(planned, ",") != strings.Join(sorted, ",") {
 		t.Fatalf("mixed set verdicts = %#v, want each target's own verdict %#v", planned, sorted)
 	}
-	_, applyErr, applyCode := runCleanup(t, root, home, append(args, "--apply", setFingerprint.FindString(stdout))...)
-	if applyCode != 0 || applyErr != "" {
-		t.Fatalf("mixed set apply = (%d, %q), want success", applyCode, applyErr)
+	applied := runVerb(t, verbClean, f.call(append(args, "--apply", plan.mustFingerprint(t))...))
+	if applied.exit != 0 || applied.stderr != "" {
+		t.Fatalf("mixed set apply = (%d, %q), want success", applied.exit, applied.stderr)
 	}
 	if _, statErr := os.Stat(active.Path); statErr != nil {
 		t.Fatalf("set apply removed the live-leased target %s: %v", active.Path, statErr)
@@ -244,12 +197,11 @@ func TestCleanSetRetainsAuthority(t *testing.T) {
 // rendered verdict, and the durable state each fixture checkout, branch, and assignment
 // record is left in. The verdicts sort, because a set orders its rows by an assignment
 // identity the fixture draws at random.
-func cleanupEffects(t *testing.T, root string, creations []Creation, stdout, stderr string, code int) string {
+func cleanupEffects(t *testing.T, root string, creations []Creation, result verbResult) string {
 	t.Helper()
 	verdicts := make([]string, 0, len(creations))
-	for _, row := range cleanupRows(stdout) {
-		fields := cleanupRowFields(row)
-		verdicts = append(verdicts, fields[1]+"/"+fields[2])
+	for _, row := range textRows(t, result.mustRows(t, cleanupTable)) {
+		verdicts = append(verdicts, row["action"]+"/"+row["tracked"])
 	}
 	sort.Strings(verdicts)
 	trees := make([]string, 0, len(creations))
@@ -263,7 +215,7 @@ func cleanupEffects(t *testing.T, root string, creations []Creation, stdout, std
 	assignments, err := intent.Assignments(root)
 	mustNoError(t, err)
 	return fmt.Sprintf("exit=%d stderr=%t; rows=%s; trees=%s; assignments=%d",
-		code, stderr == "", strings.Join(verdicts, ","), strings.Join(trees, ","), len(assignments))
+		result.exit, result.stderr == "", strings.Join(verdicts, ","), strings.Join(trees, ","), len(assignments))
 }
 
 // TestCleanSetCompatibility is the differential that holds every existing cleanup form to
@@ -274,71 +226,70 @@ func TestCleanSetCompatibility(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name string
-		run  func(*testing.T, string, string, []Creation) (string, string, int)
+		run  func(*testing.T, landedSet) verbResult
 		want string
 	}{
 		{
 			name: "single target plan",
-			run: func(t *testing.T, root, home string, c []Creation) (string, string, int) {
-				return runCleanup(t, root, home, c[0].Path)
+			run: func(t *testing.T, f landedSet) verbResult {
+				return runVerb(t, verbClean, f.call(f.first.Path))
 			},
 			want: "exit=0 stderr=true; rows=remove/clean; trees=present/true,present/true,present/true; assignments=3",
 		},
 		{
 			name: "single target apply",
-			run: func(t *testing.T, root, home string, c []Creation) (string, string, int) {
-				plan, _, _ := runCleanup(t, root, home, c[0].Path)
-				return runCleanup(t, root, home, c[0].Path, "--apply", cleanupRowFingerprint(t, plan))
+			run: func(t *testing.T, f landedSet) verbResult {
+				plan := runVerb(t, verbClean, f.call(f.first.Path))
+				return runVerb(t, verbClean, f.call(f.first.Path, "--apply", plan.mustFingerprint(t)))
 			},
 			want: "exit=0 stderr=true; rows=removed/clean; trees=absent/false,present/true,present/true; assignments=2",
 		},
 		{
 			name: "landed plan",
-			run: func(t *testing.T, root, home string, _ []Creation) (string, string, int) {
-				return runCleanup(t, root, home, "--landed")
+			run: func(t *testing.T, f landedSet) verbResult {
+				return runVerb(t, verbClean, f.call("--landed"))
 			},
 			want: "exit=0 stderr=true; rows=remove/clean,remove/clean,retain/dirty; trees=present/true,present/true,present/true; assignments=3",
 		},
 		{
 			name: "landed apply",
-			run: func(t *testing.T, root, home string, _ []Creation) (string, string, int) {
-				plan, _, _ := runCleanup(t, root, home, "--landed")
-				return runCleanup(t, root, home, "--landed", "--apply", cleanupRowFingerprint(t, plan))
+			run: func(t *testing.T, f landedSet) verbResult {
+				plan := runVerb(t, verbClean, f.call("--landed"))
+				return runVerb(t, verbClean, f.call("--landed", "--apply", plan.mustFingerprint(t)))
 			},
 			want: "exit=0 stderr=true; rows=removed/clean,removed/clean,retain/dirty; trees=absent/false,absent/false,present/true; assignments=1",
 		},
 		{
 			name: "unclaimed plan",
-			run: func(t *testing.T, root, home string, _ []Creation) (string, string, int) {
-				return runCleanup(t, root, home, "--discard-branch", "--unclaimed")
+			run: func(t *testing.T, f landedSet) verbResult {
+				return runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed"))
 			},
 			want: "exit=0 stderr=true; rows=discard-remove/unclaimed; trees=present/true,present/true,present/true; assignments=3",
 		},
 		{
 			name: "unclaimed apply",
-			run: func(t *testing.T, root, home string, _ []Creation) (string, string, int) {
-				plan, _, _ := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-				return runCleanup(t, root, home, "--discard-branch", "--unclaimed", "--apply", cleanupRowFingerprint(t, plan))
+			run: func(t *testing.T, f landedSet) verbResult {
+				plan := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed"))
+				return runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed", "--apply", plan.mustFingerprint(t)))
 			},
 			want: "exit=0 stderr=true; rows=removed/unclaimed; trees=present/true,present/true,present/true; assignments=3",
 		},
 		{
 			name: "dirty single target apply",
-			run: func(t *testing.T, root, home string, c []Creation) (string, string, int) {
-				plan, _, _ := runCleanup(t, root, home, c[2].Path)
-				return runCleanup(t, root, home, c[2].Path, "--apply", cleanupRowFingerprint(t, plan))
+			run: func(t *testing.T, f landedSet) verbResult {
+				plan := runVerb(t, verbClean, f.call(f.dirty.Path))
+				return runVerb(t, verbClean, f.call(f.dirty.Path, "--apply", plan.mustFingerprint(t)))
 			},
 			want: "exit=0 stderr=true; rows=removed/dirty; trees=present/true,present/true,absent/false; assignments=3",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			root, home, first, second, dirty := landedSetFixture(t)
+			f := landedSetFixture(t)
 			orphan := intent.AssignmentBranchRef(strings.Repeat("c", 32), strings.Repeat("d", 32))
-			gitRun(t, root, "branch", strings.TrimPrefix(orphan, "refs/heads/"))
-			creations := []Creation{first, second, dirty}
-			stdout, stderr, code := tc.run(t, root, home, creations)
-			if got := cleanupEffects(t, root, creations, stdout, stderr, code); got != tc.want {
+			gitRun(t, f.root, "branch", strings.TrimPrefix(orphan, "refs/heads/"))
+			creations := []Creation{f.first, f.second, f.dirty}
+			if got := cleanupEffects(t, f.root, creations, tc.run(t, f)); got != tc.want {
 				t.Fatalf("%s effects = %q, want the captured baseline %q", tc.name, got, tc.want)
 			}
 		})
@@ -356,7 +307,7 @@ func TestCleanSetPresentEmptyInventory(t *testing.T) {
 	if _, statErr := os.Stat(ledger); statErr != nil {
 		t.Fatalf("present-empty fixture has no ledger at %q: %v", ledger, statErr)
 	}
-	requireEmptyInventoryOutcome(t, root, home, creation)
+	requireEmptyInventoryOutcome(t, repoHome{root, home}, creation)
 }
 
 func TestCleanSetAbsentInventory(t *testing.T) {
@@ -368,27 +319,28 @@ func TestCleanSetAbsentInventory(t *testing.T) {
 	if _, statErr := os.Lstat(ledger); !os.IsNotExist(statErr) {
 		t.Fatalf("absent fixture already holds a ledger at %q: %v", ledger, statErr)
 	}
-	requireEmptyInventoryOutcome(t, root, home, Creation{Assignment: intent.Assignment{ID: strings.Repeat("e", 32)}})
+	requireEmptyInventoryOutcome(t, repoHome{root, home}, Creation{Assignment: intent.Assignment{ID: strings.Repeat("e", 32)}})
 }
 
 // requireEmptyInventoryOutcome holds both empty landed inventories to the same answer: the
 // selector reports an empty plan, an explicit target reports its own failed selection, and
 // neither mutates the repository.
-func requireEmptyInventoryOutcome(t *testing.T, root, home string, absent Creation) {
+func requireEmptyInventoryOutcome(t *testing.T, f repoHome, absent Creation) {
 	t.Helper()
-	before, err := git.Output("-C", root, "rev-parse", "HEAD")
+	before, err := git.Output("-C", f.root, "rev-parse", "HEAD")
 	mustNoError(t, err)
-	stdout, stderr, code := runCleanup(t, root, home, "--landed")
-	if code != 0 || stderr != "" || !strings.HasPrefix(stdout, "worktree_cleanup[0]") || len(cleanupRows(stdout)) != 0 {
-		t.Fatalf("landed plan = (%d, %q, %q), want an empty plan", code, stdout, stderr)
+	landed := runVerb(t, verbClean, f.call("--landed"))
+	if landed.exit != 0 || landed.stderr != "" || !strings.HasPrefix(landed.stdout, "worktree_cleanup[0]") || len(landed.mustRows(t, cleanupTable)) != 0 {
+		t.Fatalf("landed plan = (%d, %q, %q), want an empty plan", landed.exit, landed.stdout, landed.stderr)
 	}
-	targeted, targetedErr, targetedCode := runCleanup(t, root, home, "--target", absent.Assignment.ID)
-	if targetedCode != 1 || targetedErr != "" || len(cleanupRows(targeted)) != 1 || setFingerprint.MatchString(targeted) {
-		t.Fatalf("explicit plan = (%d, %q, %q), want one unapplicable selection outcome", targetedCode, targeted, targetedErr)
+	targeted := runVerb(t, verbClean, f.call("--target", absent.Assignment.ID))
+	if targeted.exit != 1 || targeted.stderr != "" || len(targeted.mustRows(t, cleanupTable)) != 1 {
+		t.Fatalf("explicit plan = (%d, %q, %q), want one unapplicable selection outcome", targeted.exit, targeted.stdout, targeted.stderr)
 	}
-	assignments, err := intent.Assignments(root)
+	targeted.mustNoFingerprint(t)
+	assignments, err := intent.Assignments(f.root)
 	mustNoError(t, err)
-	after, err := git.Output("-C", root, "rev-parse", "HEAD")
+	after, err := git.Output("-C", f.root, "rev-parse", "HEAD")
 	mustNoError(t, err)
 	if len(assignments) != 0 || after != before {
 		t.Fatalf("empty inventory mutated the repository: assignments=%#v head %q -> %q", assignments, before, after)

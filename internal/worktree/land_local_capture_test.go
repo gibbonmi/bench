@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"os"
@@ -39,19 +38,18 @@ func writeLocalCapture(t *testing.T, root string) {
 func TestLandCommandAllowsLocalCaptureInDestinationAndReleases(t *testing.T) {
 	t.Parallel()
 	request := "local-capture-land"
-	root, creation, _, _, _, home := specLessLandingFixture(t, request)
-	base, _ := addLocalCaptureIgnore(t, root, "")
-	gitRun(t, creation.Path, "rebase", "main")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	writeLocalCapture(t, root)
+	f := specLessLandingFixture(t, request)
+	base, _ := addLocalCaptureIgnore(t, f.root, "")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	writeLocalCapture(t, f.root)
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("land with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+		t.Fatalf("land with local capture = (%d, %q, %q), want released", r.exit, r.stdout, r.stderr)
 	}
 	for _, rel := range localCapturePaths {
-		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(rel))); err != nil {
+		if _, err := os.Stat(filepath.Join(f.root, filepath.FromSlash(rel))); err != nil {
 			t.Fatalf("local capture %q was not preserved: %v", rel, err)
 		}
 	}
@@ -60,25 +58,24 @@ func TestLandCommandAllowsLocalCaptureInDestinationAndReleases(t *testing.T) {
 func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	t.Parallel()
 	request := "local-capture-resume"
-	root, creation, _, _, _, home := specLessLandingFixture(t, request)
-	base, _ := addLocalCaptureIgnore(t, root, "")
-	gitRun(t, creation.Path, "rebase", "main")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	writeLocalCapture(t, root)
+	f := specLessLandingFixture(t, request)
+	base, _ := addLocalCaptureIgnore(t, f.root, "")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	writeLocalCapture(t, f.root)
 
 	working := defaultJoins()
 	broken := working
 	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("interrupt") }
-	var stdout, stderr bytes.Buffer
-	if code := landWith(broken, root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 {
-		t.Fatalf("interrupted land = (%d, %q, %q), want incomplete", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(broken, specLessLandArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 3 {
+		t.Fatalf("interrupted land = (%d, %q, %q), want incomplete", r.exit, r.stdout, r.stderr)
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
-	stdout.Reset()
-	stderr.Reset()
-	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, creation.Path}
-	if code := landWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("resume with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, f.creation.Path}
+	r = runVerb(t, verbLand, f.callWith(working, args...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+		t.Fatalf("resume with local capture = (%d, %q, %q), want released", r.exit, r.stdout, r.stderr)
 	}
 }
 
@@ -87,19 +84,18 @@ func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 func TestLandCommandKeepsUndeclaredIgnoredFileInDestination(t *testing.T) {
 	t.Parallel()
 	request := "local-capture-foreign"
-	root, creation, _, _, _, home := specLessLandingFixture(t, request)
-	base, _ := addLocalCaptureIgnore(t, root, "foreign.tmp")
-	gitRun(t, creation.Path, "rebase", "main")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	writeLocalCapture(t, root)
-	mustWrite(t, filepath.Join(root, "foreign.tmp"), []byte("foreign\n"), 0o600)
+	f := specLessLandingFixture(t, request)
+	base, _ := addLocalCaptureIgnore(t, f.root, "foreign.tmp")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	writeLocalCapture(t, f.root)
+	mustWrite(t, filepath.Join(f.root, "foreign.tmp"), []byte("foreign\n"), 0o600)
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("land with an undeclared ignored file = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+		t.Fatalf("land with an undeclared ignored file = (%d, %q, %q), want released", r.exit, r.stdout, r.stderr)
 	}
-	if got, err := os.ReadFile(filepath.Join(root, "foreign.tmp")); err != nil || string(got) != "foreign\n" {
+	if got, err := os.ReadFile(filepath.Join(f.root, "foreign.tmp")); err != nil || string(got) != "foreign\n" {
 		t.Fatalf("undeclared ignored file after the landing = %q, %v, want its bytes kept", got, err)
 	}
 }

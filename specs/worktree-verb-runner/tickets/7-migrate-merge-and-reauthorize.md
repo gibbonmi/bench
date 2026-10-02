@@ -16,6 +16,6 @@ Move every `merge` and `reauthorize` verb call in the listed files onto the verb
 
 - [ ] The VR33 command prints no line.
 - [ ] The tuple scan omits `mergeFixture` and `reauthorizeFixture`.
-- [ ] The verb form command over the listed files prints no line.
+- [ ] The verb form command over the listed files prints only the `LandCommand` line in `delegated_integration_test.go`, which ticket 9 moves.
 - [ ] `merge_test.go` and `worktree_test.go` stay at or below their base line counts.
 - [ ] `TestPackageTestCountPin` passes with no change to `worktreeTestCount`, and the serial ceiling holds.

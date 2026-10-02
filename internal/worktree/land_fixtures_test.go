@@ -23,17 +23,16 @@ func landingGateFixture(t *testing.T, environment ...string) *testrepo.GateFixtu
 	return testrepo.NewGateFixture(t.TempDir(), environment...)
 }
 
-// publicLandingFixture mints one private Bench home and returns it last. The caller
-// hands that home to every verb it runs, so the fixture binds no process environment
-// and the test it serves stays parallel-eligible.
-func publicLandingFixture(t *testing.T, request, ignored, declaration string) (string, Creation, string, string, string, string) {
+// publicLandingFixture mints one private Bench home and carries it in the value, so the
+// fixture binds no process environment and the test it serves stays parallel-eligible. The
+// value's call builds a verb call at that home. processHomeCall and interruptLandingAtMarker land
+// at the process home instead.
+func publicLandingFixture(t *testing.T, request, ignored, declaration string) landingFixture {
 	t.Helper()
-	home := filepath.Join(t.TempDir(), "bench-home")
-	root, creation, base, tip, tally := publicLandingFixtureAtHome(t, request, ignored, declaration, home)
-	return root, creation, base, tip, tally, home
+	return publicLandingFixtureAtHome(t, request, ignored, declaration, filepath.Join(t.TempDir(), "bench-home"))
 }
 
-func publicLandingFixtureAtHome(t *testing.T, request, ignored, declaration, home string) (string, Creation, string, string, string) {
+func publicLandingFixtureAtHome(t *testing.T, request, ignored, declaration, home string) landingFixture {
 	t.Helper()
 	return landingFixtureAtHome(t, request, ignored, declaration, home, true)
 }
@@ -41,32 +40,28 @@ func publicLandingFixtureAtHome(t *testing.T, request, ignored, declaration, hom
 // specLessLandingFixture is the public landing fixture whose gate grades the landed
 // source alone. A spec-less landing publishes no transition, so a gate that demanded
 // `Status: implemented` would refuse every spec-less composition for the wrong reason.
-func specLessLandingFixture(t *testing.T, request string) (string, Creation, string, string, string, string) {
+func specLessLandingFixture(t *testing.T, request string) landingFixture {
 	t.Helper()
-	home := filepath.Join(t.TempDir(), "bench-home")
-	root, creation, base, tip, tally := landingFixtureAtHome(t, request, "", "", home, false)
-	return root, creation, base, tip, tally, home
+	return landingFixtureAtHome(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), false)
 }
 
-// foldedLandingFixture is the spec-less landing fixture after the destination advanced
-// and the source folded that advance, with one more source commit on top of the fold. It
-// returns the destination tip, the fold commit a review reads as its frozen base, and the
-// source tip that follows the fold — the pair `--base` is easy to confuse.
-func foldedLandingFixture(t *testing.T, request string) (string, Creation, string, string, string, string, string) {
+// foldedLandingFixture builds a foldedLanding from the spec-less landing fixture.
+func foldedLandingFixture(t *testing.T, request string) foldedLanding {
 	t.Helper()
-	root, creation, _, _, tally, home := specLessLandingFixture(t, request)
-	mustWrite(t, filepath.Join(root, "advance.txt"), []byte("destination advance\n"), 0o644)
-	gitRun(t, root, "add", "advance.txt")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination advance")
-	destination := gitOutput(t, root, "rev-parse", "HEAD")
-	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
-		"merge", "-q", "--no-ff", "-m", "fold the destination", destination)
-	fold := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes after the fold\n", "work after the fold")
-	return root, creation, destination, fold, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally, home
+	f := specLessLandingFixture(t, request)
+	mustWrite(t, filepath.Join(f.root, "advance.txt"), []byte("destination advance\n"), 0o644)
+	gitRun(t, f.root, "add", "advance.txt")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination advance")
+	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
+	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
+		"merge", "-q", "--no-ff", "-m", "fold the destination", f.base)
+	fold := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	commitInWorktree(t, f.creation.Path, "owned.txt", "reviewed bytes after the fold\n", "work after the fold")
+	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	return foldedLanding{landingFixture: f, fold: fold}
 }
 
-func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home string, gradeSpec bool) (string, Creation, string, string, string) {
+func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home string, gradeSpec bool) landingFixture {
 	t.Helper()
 	gateSpec, prospectiveSpec := "", ""
 	f := landingGateFixture(t)
@@ -106,7 +101,7 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 		mustMkdirAll(t, filepath.Dir(filepath.Join(creation.Path, filepath.FromSlash(ignored))), 0o755)
 		mustWrite(t, filepath.Join(creation.Path, filepath.FromSlash(ignored)), []byte("residue\n"), 0o600)
 	}
-	return root, creation, base, tip, tally
+	return landingFixture{ownedAssignment: ownedAssignment{repoHome: repoHome{root, home}, creation: creation}, base: base, tip: tip, tally: tally}
 }
 
 // cannedGreenShape is what a bounded green run prints: the phase table, the skip count,
@@ -172,10 +167,8 @@ func stageLandSpec(t *testing.T, root, source string) {
 
 // stubLandJoins returns a seam set whose landing publishes a fixed result and whose
 // post-publication steps succeed. The caller replaces the one field its own case is
-// about and hands the value to landWith, so it holds every stub itself.
-// stubLandJoins returns a seam set whose landing publishes a fixed result and whose
-// post-publication steps succeed. The caller replaces the one field its own case is
-// about and hands the value to landWith, so each test holds every stub it makes.
+// about and passes the value to the verb runner through callWith, so each test holds
+// every stub it makes.
 func stubLandJoins(base, tip string) joins {
 	j := defaultJoins()
 	j.landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
@@ -192,17 +185,18 @@ func stubLandJoins(base, tip string) joins {
 // ticketsOnlyLandingFixture is the spec-less landing fixture with a tickets-only
 // `specs/t/` folder committed at the review base and carried into the source. A
 // light-path change has exactly this shape: tickets, no spec.md.
-func ticketsOnlyLandingFixture(t *testing.T, request string) (string, Creation, string, string, string, string) {
+func ticketsOnlyLandingFixture(t *testing.T, request string) landingFixture {
 	t.Helper()
-	root, creation, _, _, tally, home := specLessLandingFixture(t, request)
-	mustMkdirAll(t, filepath.Join(root, "specs", "t", "tickets"), 0o755)
-	mustWrite(t, filepath.Join(root, "specs", "t", "tickets", "one.md"), []byte("Light path ticket.\n"), 0o644)
-	gitRun(t, root, "add", "specs/t")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "tickets-only folder")
-	base := gitOutput(t, root, "rev-parse", "HEAD")
-	gitRun(t, root, "update-ref", "refs/bench/green/main", base)
-	gitRun(t, creation.Path, "rebase", "main")
-	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally, home
+	f := specLessLandingFixture(t, request)
+	mustMkdirAll(t, filepath.Join(f.root, "specs", "t", "tickets"), 0o755)
+	mustWrite(t, filepath.Join(f.root, "specs", "t", "tickets", "one.md"), []byte("Light path ticket.\n"), 0o644)
+	gitRun(t, f.root, "add", "specs/t")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "tickets-only folder")
+	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
+	gitRun(t, f.root, "update-ref", "refs/bench/green/main", f.base)
+	gitRun(t, f.creation.Path, "rebase", "main")
+	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	return f
 }
 
 func ticketsOnlyLandArgs(request, base, tip, slug, path string) []string {

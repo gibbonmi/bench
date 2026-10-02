@@ -107,9 +107,9 @@ func delegatedJourneyJoins(t *testing.T) joins {
 // existing merge owner. It returns the target's new tip.
 func (d *delegatedJourney) fold(t *testing.T, target Creation, from string) string {
 	t.Helper()
-	code, stdout, stderr := runMerge(t, d.joins, d.root, d.home, "--from", from, target.Assignment.ID)
-	if code != 0 {
-		t.Fatalf("fold %s into %s = %d; stdout=%q stderr=%q", from, target.Assignment.Label, code, stdout, stderr)
+	r := runVerb(t, verbMerge, repoHome{d.root, d.home}.callWith(d.joins, "--from", from, target.Assignment.ID))
+	if r.exit != 0 {
+		t.Fatalf("fold %s into %s = %d; stdout=%q stderr=%q", from, target.Assignment.Label, r.exit, r.stdout, r.stderr)
 	}
 	return gitOutput(t, d.root, "rev-parse", target.Assignment.Branch)
 }
@@ -235,10 +235,9 @@ func TestDelegatedIntegrationJourney(t *testing.T) {
 	}
 
 	tip := gitOutput(t, d.root, "rev-parse", d.integration.Assignment.Branch)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(d.root, d.home, landArgs("delegated-integration", d.base, tip, d.integration.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released") {
-		t.Fatalf("delegated landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, repoHome{d.root, d.home}.call(landArgs("delegated-integration", d.base, tip, d.integration.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
+		t.Fatalf("delegated landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	published := gitOutput(t, d.root, "rev-parse", "main")
 	if got := gitOutput(t, d.root, "show", published+":"+delegatedJourneySpec); !strings.Contains(got, "Status: implemented") {
