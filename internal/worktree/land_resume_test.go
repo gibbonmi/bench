@@ -188,6 +188,15 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 	if got := gitOutput(t, f.root, "rev-parse", "HEAD"); got != published {
 		t.Fatalf("destination checkout = %s, want %s", got, published)
 	}
+	// The publication moves only the ref, so HEAD alone cannot tell a reconciled checkout
+	// from one whose index and files still hold the old base.
+	if got := gitOutput(t, f.root, "status", "--porcelain=v1", "--untracked-files=all"); got != "" {
+		t.Fatalf("destination checkout is not reconciled: status=%q", got)
+	}
+	landed, err := os.ReadFile(filepath.Join(f.root, "owned.txt"))
+	if want := gitOutput(t, f.root, "show", published+":owned.txt"); err != nil || strings.TrimSpace(string(landed)) != want {
+		t.Fatalf("destination owned.txt = %q, error=%v; want the published %q", landed, err, want)
+	}
 	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("resume reran gate: tally=%q error=%v", got, err)
 	}
