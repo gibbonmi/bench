@@ -829,6 +829,10 @@ Before the first edit, the probe on `land_refusal.go` with the census-cell swap 
 
 The ticket 8 author ran `bench test --package ./internal/worktree` again at `88ded2e3`, on the final chunk source after tickets 9 and 10. The package passed with the two socket capability skips. The JSON payload holds the result as `vr-c4-8-worktree-r2`.
 
+## VR-C4 ticket 9 verification rerun
+
+Ticket 10 landed after ticket 9, so the ticket 9 author ran the package tests again on the final chunk source at `4d3162a7d2bbf364ffd1837aee9c7dbef8d940b0`. `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds this result as `vr-c4-9-worktree-r2`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2046,6 +2050,24 @@ The ticket 8 author ran `bench test --package ./internal/worktree` again at `88d
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63671\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "8-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c4-9-worktree-r2",
+          "performer": "claude:bench-writer/vr-t9-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb74f2d148868cfa3030708303666e38d2319c3a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t9-author-20261001/9-worktree@4d3162a7",
+            "digest": "sha256:53f58063fe2742c13dee114c3bc452f0fb757cec99b8c680c565b3a3706bbf6f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62095\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "9-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
