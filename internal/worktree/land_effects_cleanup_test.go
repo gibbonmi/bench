@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -79,20 +78,20 @@ func TestLandCleansTheFoldedSibling(t *testing.T) {
 	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
 	j, _ := refreshJoins(nil)
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "complete")) {
-		t.Fatalf("folded-sibling landing = (%d, %q, %q), want a complete cleanup at exit 0", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, folded.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("not-applicable", "complete")) {
+		t.Fatalf("folded-sibling landing = (%d, %q, %q), want a complete cleanup at exit 0", r.exit, r.stdout, r.stderr)
 	}
 	requireAbsent(t, folded.sibling.Path, "sibling worktree")
 	if assignmentActive(t, f.root, folded.sibling.Assignment.ID) {
 		t.Fatalf("sibling assignment %q is still active", folded.sibling.Assignment.ID)
 	}
-	if strings.Contains(stdout.String(), "--apply") || regexp.MustCompile(`[0-9a-f]{64}`).MatchString(stdout.String()) {
-		t.Fatalf("landing stdout = %q, want no cleanup fingerprint and no apply action", stdout.String())
+	r.mustNoFingerprint(t)
+	if strings.Contains(r.stdout, "--apply") {
+		t.Fatalf("landing stdout = %q, want no apply action", r.stdout)
 	}
-	if !strings.Contains(stderr.String(), "landing cleanup{assignment="+folded.sibling.Assignment.ID+",action=remove,") {
-		t.Fatalf("landing stderr = %q, want the sibling's plan row", stderr.String())
+	if !strings.Contains(r.stderr, "landing cleanup{assignment="+folded.sibling.Assignment.ID+",action=remove,") {
+		t.Fatalf("landing stderr = %q, want the sibling's plan row", r.stderr)
 	}
 }
 
@@ -110,18 +109,17 @@ func TestLandLeavesAPriorLandedAssignment(t *testing.T) {
 	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
 	j, _ := refreshJoins(nil)
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, f.root, f.home, landArgs(request, base, folded.tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "complete")) {
-		t.Fatalf("narrowed landing = (%d, %q, %q), want a complete cleanup at exit 0", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, base, folded.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("not-applicable", "complete")) {
+		t.Fatalf("narrowed landing = (%d, %q, %q), want a complete cleanup at exit 0", r.exit, r.stdout, r.stderr)
 	}
 	requireAbsent(t, folded.sibling.Path, "sibling worktree")
 	requirePresent(t, prior.Path, "prior-landed worktree")
 	if !assignmentActive(t, f.root, prior.Assignment.ID) {
 		t.Fatalf("prior-landed assignment %q was retired", prior.Assignment.ID)
 	}
-	if strings.Contains(stderr.String(), prior.Assignment.ID) {
-		t.Fatalf("landing stderr = %q, want no plan row for the prior-landed assignment", stderr.String())
+	if strings.Contains(r.stderr, prior.Assignment.ID) {
+		t.Fatalf("landing stderr = %q, want no plan row for the prior-landed assignment", r.stderr)
 	}
 }
 
@@ -137,15 +135,14 @@ func TestLandRetainsAnUnprovenSibling(t *testing.T) {
 	mustWrite(t, filepath.Join(folded.sibling.Path, siblingReviewPath), []byte("uncommitted review\n"), 0o644)
 	j, _ := refreshJoins(nil)
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "complete")) {
-		t.Fatalf("retaining landing = (%d, %q, %q), want a complete cleanup at exit 0", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, folded.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("not-applicable", "complete")) {
+		t.Fatalf("retaining landing = (%d, %q, %q), want a complete cleanup at exit 0", r.exit, r.stdout, r.stderr)
 	}
 	requirePresent(t, folded.sibling.Path, "retained sibling worktree")
 	want := "landing cleanup{assignment=" + folded.sibling.Assignment.ID + ",action=retain,reason=dirty,target=" + folded.sibling.Path + "}\n"
-	if !strings.Contains(stderr.String(), want) {
-		t.Fatalf("landing stderr = %q, want the retained row %q", stderr.String(), want)
+	if !strings.Contains(r.stderr, want) {
+		t.Fatalf("landing stderr = %q, want the retained row %q", r.stderr, want)
 	}
 
 	t.Run("hostile path", func(t *testing.T) {
@@ -186,13 +183,12 @@ func TestLandReportsAFailedCleanup(t *testing.T) {
 		return nil
 	}
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
-	if code != 3 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "failed")) {
-		t.Fatalf("faulted cleanup = (%d, %q, %q), want exit 3 with a failed cleanup", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, folded.tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, wantEffects("not-applicable", "failed")) {
+		t.Fatalf("faulted cleanup = (%d, %q, %q), want exit 3 with a failed cleanup", r.exit, r.stdout, r.stderr)
 	}
-	if !strings.Contains(stdout.String(), "worktree=incomplete:cleanup,next=bench worktree land --resume ") {
-		t.Fatalf("faulted cleanup record = %q, want an incomplete:cleanup cell with a resume", stdout.String())
+	if !strings.Contains(r.stdout, "worktree=incomplete:cleanup,next=bench worktree land --resume ") {
+		t.Fatalf("faulted cleanup record = %q, want an incomplete:cleanup cell with a resume", r.stdout)
 	}
 	requirePresent(t, folded.sibling.Path, "sibling worktree")
 }
@@ -217,43 +213,40 @@ func TestResumeLandCompletesTheUnfinishedEffects(t *testing.T) {
 	interrupted := failing
 	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 
-	var stdout, stderr bytes.Buffer
-	if code := landWith(interrupted, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, folded.tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	published := gitOutput(t, f.root, "rev-parse", "main")
 	args := resumeLandArgs(published, request, f.base, folded.tip, f.creation.Path)
 
-	stdout.Reset()
-	stderr.Reset()
-	if code := resumeLandWith(failing, f.root, f.home, args, &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
-		t.Fatalf("failed-refresh resume = (%d, %q, %q), want a pending cleanup at exit 3", code, stdout.String(), stderr.String())
+	r = runVerb(t, verbLandResume, f.callWith(failing, args...))
+	if r.exit != 3 || !strings.Contains(r.stdout, wantEffects("failed")) {
+		t.Fatalf("failed-refresh resume = (%d, %q, %q), want a pending cleanup at exit 3", r.exit, r.stdout, r.stderr)
 	}
 	requirePresent(t, folded.sibling.Path, "sibling worktree")
 	if *failingCalls != 1 {
 		t.Fatalf("failed-refresh resume build calls = %d, want exactly one", *failingCalls)
 	}
 
-	stdout.Reset()
-	stderr.Reset()
-	if code := resumeLandWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete", "complete")) {
-		t.Fatalf("repairing resume = (%d, %q, %q), want both effects complete", code, stdout.String(), stderr.String())
+	r = runVerb(t, verbLandResume, f.callWith(working, args...))
+	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete", "complete")) {
+		t.Fatalf("repairing resume = (%d, %q, %q), want both effects complete", r.exit, r.stdout, r.stderr)
 	}
 	requireAbsent(t, folded.sibling.Path, "sibling worktree")
 	if *workingCalls != 1 {
 		t.Fatalf("repairing resume build calls = %d, want exactly one", *workingCalls)
 	}
 
-	stdout.Reset()
-	stderr.Reset()
-	if code := resumeLandWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete", "complete")) {
-		t.Fatalf("second resume = (%d, %q, %q), want both effects left alone", code, stdout.String(), stderr.String())
+	r = runVerb(t, verbLandResume, f.callWith(working, args...))
+	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete", "complete")) {
+		t.Fatalf("second resume = (%d, %q, %q), want both effects left alone", r.exit, r.stdout, r.stderr)
 	}
 	if *workingCalls != 1 {
 		t.Fatalf("second resume build calls = %d, want no second build", *workingCalls)
 	}
-	if strings.Contains(stderr.String(), "landing cleanup{") {
-		t.Fatalf("second resume stderr = %q, want an empty narrowed set", stderr.String())
+	if strings.Contains(r.stderr, "landing cleanup{") {
+		t.Fatalf("second resume stderr = %q, want an empty narrowed set", r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "main"); got != published {
 		t.Fatalf("resume republished: main = %s, want %s", got, published)
@@ -273,18 +266,15 @@ func TestResumeLandRunsTheEffectsAfterRelease(t *testing.T) {
 		return publishVerifyingBroker(t, root, executable)
 	})
 
-	var stdout, stderr bytes.Buffer
-	if code := landWith(failing, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
-		t.Fatalf("failed-refresh landing = (%d, %q, %q), want a pending cleanup at exit 3", code, stdout.String(), stderr.String())
+	if r := runVerb(t, verbLand, f.callWith(failing, landArgs(request, f.base, folded.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, wantEffects("failed")) {
+		t.Fatalf("failed-refresh landing = (%d, %q, %q), want a pending cleanup at exit 3", r.exit, r.stdout, r.stderr)
 	}
 	requirePresent(t, folded.sibling.Path, "sibling worktree")
 	published := gitOutput(t, f.root, "rev-parse", "main")
 
-	stdout.Reset()
-	stderr.Reset()
-	code := resumeLandWith(working, f.root, f.home, resumeLandArgs(published, request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), wantEffects("complete", "complete")) {
-		t.Fatalf("released resume = (%d, %q, %q), want both effects complete", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLandResume, f.callWith(working, resumeLandArgs(published, request, f.base, folded.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete", "complete")) {
+		t.Fatalf("released resume = (%d, %q, %q), want both effects complete", r.exit, r.stdout, r.stderr)
 	}
 	requireAbsent(t, folded.sibling.Path, "sibling worktree")
 	if *workingCalls != 1 {

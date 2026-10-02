@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"path/filepath"
@@ -30,23 +29,20 @@ func TestLandRetainsSiblingBornAtPublishedTip(t *testing.T) {
 				}
 				return release(inner, root, home, args, stdout, stderr)
 			}
-			var stdout, stderr bytes.Buffer
-			code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
+			r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
 			if resume {
-				if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
-					t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+				if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
+					t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 				}
 				published := gitOutput(t, f.root, "rev-parse", "main")
 				j.releaseLandingAssignment = release
-				stdout.Reset()
-				stderr.Reset()
-				code = resumeLandWith(j, f.root, f.home, resumeLandArgs(published, request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
+				r = runVerb(t, verbLandResume, f.callWith(j, resumeLandArgs(published, request, f.base, f.tip, f.creation.Path)...))
 				if got := gitOutput(t, f.root, "rev-parse", "main"); got != published {
 					t.Fatalf("resume republished: %s", got)
 				}
 			}
-			if code != 0 {
-				t.Fatalf("landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+			if r.exit != 0 {
+				t.Fatalf("landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}
 			requirePresent(t, sibling.Path, "new sibling worktree")
 			if !assignmentActive(t, f.root, sibling.Assignment.ID) {

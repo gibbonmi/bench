@@ -193,11 +193,10 @@ func TestLandCommandRetainsJustInTimeTrackedDestinationEdit(t *testing.T) {
 	victim := filepath.Join(f.root, "victim.txt")
 	injectLandingResetEdit(t, f.root, victim)
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
+	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	published := gitOutput(t, f.root, "rev-parse", "main")
-	if code != 3 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
-		t.Fatalf("last-moment tracked edit landing = (%d, %q, %q), want published incomplete reconciliation", code, stdout.String(), stderr.String())
+	if r.exit != 3 || !strings.Contains(r.stdout, "published_commit="+published+",") || !strings.Contains(r.stdout, "worktree=incomplete:reconcile") {
+		t.Fatalf("last-moment tracked edit landing = (%d, %q, %q), want published incomplete reconciliation", r.exit, r.stdout, r.stderr)
 	}
 	if got, err := os.ReadFile(victim); err != nil || string(got) != "caller bytes\n" {
 		t.Fatalf("last-moment tracked edit = %q, %v, want caller bytes", got, err)
@@ -232,11 +231,10 @@ func TestLandCommandRetainsJustInTimeOverlappingDestinationEdit(t *testing.T) {
 	victim := filepath.Join(f.root, "victim.txt")
 	injectLandingResetEdit(t, f.root, victim)
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, base, tip, f.creation.Path), &stdout, &stderr)
+	r := runVerb(t, verbLand, f.call(landArgs(request, base, tip, f.creation.Path)...))
 	published := gitOutput(t, f.root, "rev-parse", "main")
-	if code != 3 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.Contains(stdout.String(), "worktree=incomplete:reconcile") {
-		t.Fatalf("last-moment overlapping edit landing = (%d, %q, %q), want published incomplete reconciliation", code, stdout.String(), stderr.String())
+	if r.exit != 3 || !strings.Contains(r.stdout, "published_commit="+published+",") || !strings.Contains(r.stdout, "worktree=incomplete:reconcile") {
+		t.Fatalf("last-moment overlapping edit landing = (%d, %q, %q), want published incomplete reconciliation", r.exit, r.stdout, r.stderr)
 	}
 	if got, err := os.ReadFile(victim); err != nil || string(got) != "caller bytes\n" {
 		t.Fatalf("last-moment overlapping edit = %q, %v, want caller bytes", got, err)
@@ -264,17 +262,16 @@ func TestLandCommandPublishedReleaseFailureExitsIncomplete(t *testing.T) {
 	t.Parallel()
 	request := "published-release-incomplete"
 	f := publicLandingFixture(t, request, "private/output", "dist/")
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 3 {
-		t.Fatalf("published release exit = %d, want 3; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 3 {
+		t.Fatalf("published release exit = %d, want 3; stdout=%q stderr=%q", r.exit, r.stdout, r.stderr)
 	}
 	published := gitOutput(t, f.root, "rev-parse", "main")
 	tree := gitOutput(t, f.root, "rev-parse", published+"^{tree}")
 	wantNext := "bench worktree land --resume '" + published + "' --request <request> --base '" + f.base + "' --source-tip '" + f.tip + "' --spec 'x' '" + f.creation.Path + "'"
 	want := "landed{source_base=" + f.base + ",source_tip=" + f.tip + ",destination_base=" + f.base + ",published_commit=" + published + ",tree=" + tree + ",worktree=incomplete:release,next=" + wantNext + ",census=0}\n"
-	if stdout.String() != want || strings.Contains(stdout.String(), request) {
-		t.Fatalf("published release stdout = %q, want %q without caller token", stdout.String(), want)
+	if r.stdout != want || strings.Contains(r.stdout, request) {
+		t.Fatalf("published release stdout = %q, want %q without caller token", r.stdout, want)
 	}
 }
 
@@ -412,16 +409,15 @@ func TestLandRelaysTheBoundedGreenShapeBeforeTheLandedRecord(t *testing.T) {
 	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, base, tip, f.creation.Path), &stdout, &stderr)
+	r := runVerb(t, verbLand, f.call(landArgs(request, base, tip, f.creation.Path)...))
 
-	if code != 0 {
-		t.Fatalf("land exit = %d, want 0; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	if r.exit != 0 {
+		t.Fatalf("land exit = %d, want 0; stdout=%q stderr=%q", r.exit, r.stdout, r.stderr)
 	}
-	if !strings.HasPrefix(stdout.String(), cannedGreenShape) {
-		t.Fatalf("stdout = %q, want it to open with the gate's bytes unchanged %q", stdout.String(), cannedGreenShape)
+	if !strings.HasPrefix(r.stdout, cannedGreenShape) {
+		t.Fatalf("stdout = %q, want it to open with the gate's bytes unchanged %q", r.stdout, cannedGreenShape)
 	}
-	if rest := strings.TrimPrefix(stdout.String(), cannedGreenShape); !strings.HasPrefix(rest, wantEffects("not-applicable")+"landed{") {
+	if rest := strings.TrimPrefix(r.stdout, cannedGreenShape); !strings.HasPrefix(rest, wantEffects("not-applicable")+"landed{") {
 		t.Errorf("stdout after the shape = %q, want the effects table and then the landed record", rest)
 	}
 }

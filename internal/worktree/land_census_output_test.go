@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 	"time"
@@ -21,12 +20,11 @@ func TestLandingPrintsOutputBreakdown(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stderr.String(), "census output{bench worktree list=2/28978}\n") {
-		t.Fatalf("landing evidence = (%d, %q, %q), want the output breakdown on stderr", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stderr, "census output{bench worktree list=2/28978}\n") {
+		t.Fatalf("landing evidence = (%d, %q, %q), want the output breakdown on stderr", r.exit, r.stdout, r.stderr)
 	}
-	if !strings.HasSuffix(stdout.String(), ",census=0}\n") {
-		t.Fatalf("landed record = %q, want the raw-call count unchanged by output records", stdout.String())
+	if !strings.HasSuffix(r.stdout, ",census=0}\n") {
+		t.Fatalf("landed record = %q, want the raw-call count unchanged by output records", r.stdout)
 	}
 }

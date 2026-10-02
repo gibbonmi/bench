@@ -3,7 +3,6 @@
 package worktree
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/otelrecord"
@@ -21,9 +20,8 @@ func TestLandRecordsOneTraceForThePhases(t *testing.T) {
 	request := "land-one-trace"
 	f := specLessLandingFixture(t, request)
 
-	var stdout, stderr bytes.Buffer
-	if code := LandCommand(f.root, f.home, specLessLandArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 0 {
-		t.Fatalf("land = %d, want 0: %q %q", code, stdout.String(), stderr.String())
+	if r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 0 {
+		t.Fatalf("land = %d, want 0: %q %q", r.exit, r.stdout, r.stderr)
 	}
 
 	landing, ok := otelrecord.NewestLanding(f.home, f.root)

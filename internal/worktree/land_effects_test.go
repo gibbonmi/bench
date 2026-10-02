@@ -4,7 +4,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"os"
@@ -73,12 +72,11 @@ func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
 	request := "land-owner-broker-change"
 	f := brokerChangingLanding(t, request)
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(kitCheckoutJoins(true), f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:refresh") {
-		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(kitCheckoutJoins(true), landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:refresh") {
+		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
 	}
-	notice := brokerNoticeLine(t, stderr.String())
+	notice := brokerNoticeLine(t, r.stderr)
 	if !strings.Contains(notice, freshness.RebuildAction(f.root)) {
 		t.Fatalf("kit-checkout landing named no rebuild: %q", notice)
 	}
@@ -95,12 +93,11 @@ func TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout(t *testing.T) 
 	request := "land-owner-broker-change-installed"
 	f := brokerChangingLanding(t, request)
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(kitCheckoutJoins(false), f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:refresh") {
-		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(kitCheckoutJoins(false), landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:refresh") {
+		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
 	}
-	notice := brokerNoticeLine(t, stderr.String())
+	notice := brokerNoticeLine(t, r.stderr)
 	if !strings.Contains(notice, "bench repair") {
 		t.Fatalf("installed-kit landing named no install step: %q", notice)
 	}
@@ -209,10 +206,9 @@ func TestLandSkipsTheRefreshWithoutBuildInputs(t *testing.T) {
 	f := publicLandingFixture(t, request, "", "")
 	j, calls := refreshJoins(nil)
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable")) {
-		t.Fatalf("landing without build inputs = (%d, %q, %q), want a not-applicable refresh", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("not-applicable")) {
+		t.Fatalf("landing without build inputs = (%d, %q, %q), want a not-applicable refresh", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 0 {
 		t.Fatalf("refresh build calls = %d, want none", *calls)
@@ -231,10 +227,9 @@ func TestLandSkipsAFreshBroker(t *testing.T) {
 	}
 	j, calls := refreshJoins(nil)
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
-		t.Fatalf("landing with a fresh broker = (%d, %q, %q), want a complete refresh", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete")) {
+		t.Fatalf("landing with a fresh broker = (%d, %q, %q), want a complete refresh", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 0 {
 		t.Fatalf("refresh build calls = %d, want none", *calls)
@@ -252,10 +247,9 @@ func TestLandRefreshesTheBrokerAfterPublication(t *testing.T) {
 		return publishVerifyingBroker(t, root, executable)
 	})
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
-		t.Fatalf("landing with a stale broker = (%d, %q, %q), want a complete refresh at exit 0", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete")) {
+		t.Fatalf("landing with a stale broker = (%d, %q, %q), want a complete refresh at exit 0", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 1 {
 		t.Fatalf("refresh build calls = %d, want exactly one", *calls)
@@ -274,17 +268,16 @@ func TestLandReportsAFailedRefresh(t *testing.T) {
 	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
 	j, calls := refreshJoins(nil)
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
-	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed", "pending")) {
-		t.Fatalf("failed refresh = (%d, %q, %q), want exit 3 with a failed refresh", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, folded.tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, wantEffects("failed", "pending")) {
+		t.Fatalf("failed refresh = (%d, %q, %q), want exit 3 with a failed refresh", r.exit, r.stdout, r.stderr)
 	}
 	requirePresent(t, folded.sibling.Path, "sibling worktree")
-	if strings.Contains(stderr.String(), "landing cleanup{") {
-		t.Fatalf("failed refresh stderr = %q, want no cleanup plan row", stderr.String())
+	if strings.Contains(r.stderr, "landing cleanup{") {
+		t.Fatalf("failed refresh stderr = %q, want no cleanup plan row", r.stderr)
 	}
-	if !strings.Contains(stdout.String(), "worktree=incomplete:refresh,next=bench worktree land --resume ") {
-		t.Fatalf("failed refresh record = %q, want an incomplete:refresh cell with a resume", stdout.String())
+	if !strings.Contains(r.stdout, "worktree=incomplete:refresh,next=bench worktree land --resume ") {
+		t.Fatalf("failed refresh record = %q, want an incomplete:refresh cell with a resume", r.stdout)
 	}
 	if *calls != 1 {
 		t.Fatalf("refresh build calls = %d, want exactly one", *calls)
@@ -314,10 +307,9 @@ func TestLandRefreshReadsTheSeal(t *testing.T) {
 		return nil
 	})
 
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
-		t.Fatalf("unsealed refresh = (%d, %q, %q), want exit 3 with a failed refresh", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, wantEffects("failed")) {
+		t.Fatalf("unsealed refresh = (%d, %q, %q), want exit 3 with a failed refresh", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 1 {
 		t.Fatalf("refresh build calls = %d, want exactly one", *calls)
@@ -333,13 +325,13 @@ func TestLandEffectsRowPrecedesTheLandedRecord(t *testing.T) {
 	f := publicLandingFixture(t, request, "", "")
 	j, _ := refreshJoins(nil)
 
-	var stdout, stderr bytes.Buffer
-	if code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 0 {
-		t.Fatalf("landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 0 {
+		t.Fatalf("landing = (%d, %q, %q), want a released landing", r.exit, r.stdout, r.stderr)
 	}
-	lines := strings.Split(strings.TrimSuffix(stdout.String(), "\n"), "\n")
+	lines := strings.Split(strings.TrimSuffix(r.stdout, "\n"), "\n")
 	if len(lines) < 4 {
-		t.Fatalf("landing stdout = %q, want the effects table before the landed record", stdout.String())
+		t.Fatalf("landing stdout = %q, want the effects table before the landed record", r.stdout)
 	}
 	tail := strings.Join(lines[len(lines)-4:], "\n") + "\n"
 	if !strings.HasPrefix(tail, wantEffects("not-applicable")) {
@@ -363,9 +355,8 @@ func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 	interrupted := working
 	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 
-	var stdout, stderr bytes.Buffer
-	if code := landWith(interrupted, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	if r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 0 {
 		t.Fatalf("interrupted landing refresh calls = %d, want none", *calls)
@@ -373,19 +364,15 @@ func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 	published := gitOutput(t, f.root, "rev-parse", "main")
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 
-	stdout.Reset()
-	stderr.Reset()
-	if code := resumeLandWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
-		t.Fatalf("first resume = (%d, %q, %q), want a completed refresh", code, stdout.String(), stderr.String())
+	if r := runVerb(t, verbLandResume, f.callWith(working, args...)); r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete")) {
+		t.Fatalf("first resume = (%d, %q, %q), want a completed refresh", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 1 {
 		t.Fatalf("first resume refresh calls = %d, want exactly one", *calls)
 	}
 
-	stdout.Reset()
-	stderr.Reset()
-	if code := resumeLandWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
-		t.Fatalf("second resume = (%d, %q, %q), want the refresh left alone", code, stdout.String(), stderr.String())
+	if r := runVerb(t, verbLandResume, f.callWith(working, args...)); r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete")) {
+		t.Fatalf("second resume = (%d, %q, %q), want the refresh left alone", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 1 {
 		t.Fatalf("second resume refresh calls = %d, want no second build", *calls)
