@@ -32,7 +32,6 @@ type joins struct {
 	restoreClean         func(string)
 	chmodPool            func(string, os.FileMode) error
 	resolveRunningBinary func() (string, error)
-	reauthorizeUnlock    func(string, string) error
 	reauthorizeLock      func(string, string, string) error
 	reauthorizeBeforeCAS func(*intent.Assignment)
 	// buildSubject authors a checkout's own published executable, under the manifest
@@ -65,7 +64,6 @@ func defaultJoins() joins {
 		restoreClean:             restoreCleanCheckout,
 		chmodPool:                os.Chmod,
 		resolveRunningBinary:     os.Executable,
-		reauthorizeUnlock:        unlockWorktree,
 		reauthorizeLock:          lockWorktree,
 		mergeReconcile:           reconcileMergeCheckout,
 		resetMove:                moveResetCheckout,
