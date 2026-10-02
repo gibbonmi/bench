@@ -1100,7 +1100,71 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "re-c4-r1-standards",
+          "performer": "claude:bench-reviewer/re-c4-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "e21432cef18591052ae5a7ee666ea170fb891451",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c4-r1-standards-20261002@7112b8e1ad5507271309c3de823c62fca98ae9bd",
+            "digest": "sha256:4edb973574ce82b83879b56d748f2eb3924e1470d72332dd21b7e4c4b9286358",
+            "excerpt": "Standards RE-C4 (ac18ccca..7112b8e1): pass, 0 findings.\nMapping rule has one owner (mappedIDs); test helpers extended; row helper removes three copies.\nAnchor and help duplication covered by recorded reds (six rule-removal probes; RE97 line 147).\nAdvice only: --map syntax in placeholder and parser; repeated test literal; \"there\" in implement-spec Land paragraph (spec-fixed).\n"
+          },
+          "axis": "Standards",
+          "base": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+          "tip": "7112b8e1ad5507271309c3de823c62fca98ae9bd",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "re-c4-r1-spec",
+          "performer": "claude:bench-reviewer/re-c4-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "e21432cef18591052ae5a7ee666ea170fb891451",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c4-r1-spec-20261002@7112b8e1ad5507271309c3de823c62fca98ae9bd",
+            "digest": "sha256:c0684f0c4c0c6116cdee78b708b6bc3f70c326b9afd13a7f3158493b366ad4b1",
+            "excerpt": "Spec axis RE-C4 at ac18ccca..7112b8e1: pass, no finding IDs.\nAll 21 RE-C4 rows held (RE84-RE101, RE109-RE111); the implement phase counts 80 lines.\nStep 6 and the two Land sentences match \"The guidance\" word for word; help row exact.\nThe spec admits the amendment-before-chunk order at the freeze; decision 1 does not conflict.\nAdvice: the wrong order cannot be recovered with the verb, and the refusal points to the wrong repair.\n"
+          },
+          "axis": "Spec",
+          "base": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+          "tip": "7112b8e1ad5507271309c3de823c62fca98ae9bd",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "re-c4-r1-coverage",
+          "performer": "claude:bench-reviewer/re-c4-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "e21432cef18591052ae5a7ee666ea170fb891451",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re-c4-r1-coverage-20261002@7112b8e1ad5507271309c3de823c62fca98ae9bd",
+            "digest": "sha256:15dc4550c5eb9c657ed6a9732e5137fca91ee63350cd1e2e85598c9ea28141a8",
+            "excerpt": "Coverage RE-C4 r1: fail, 2 findings (C1, C2).\nC1 auto-fix: no test covers --map in refusal step 3; the probe that cleared its single-line bit was silent.\nC2 ask-user: after a plan revert (A->B->A->D) the verb writes an ambiguous amendment chain, and the next amendment and the checkpoint refuse it as \"invalid ambiguous plan amendment\" (observed by probe).\nAnchors: authors' probes already bite through TestRootConformance; RE101 count of 80 corroborated.\n"
+          },
+          "axis": "Coverage",
+          "base": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+          "tip": "7112b8e1ad5507271309c3de823c62fca98ae9bd",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1872,3 +1936,45 @@ Fresh checks at `84c2682a`:
 - `bench test --check guidance-prose-budgets` passed in less than 1 s. The verb recorded `re-c4-v-t6-budgets`.
 
 No fresh check skipped a test.
+
+## RE-C4 chunk review, round 1
+
+Three fresh fable / high sessions reviewed the frozen pair `ac18ccca..7112b8e1`. Each axis bound the review evidence `sha256:f64f3e21` with `--check-current`. `bench record review` wrote the three results. The raw finding count is 2, and the repair-target count is 2. The repair allowance of RE-C4 is 2 cycles, and 0 cycles are used.
+
+### Standards
+
+Finding count: 0. Worst issue: none. `mappedIDs` stays the one owner of the mapping rule, and the anchor needles have recorded reds.
+
+### Spec
+
+Finding count: 0. Worst issue: none. Each of the 21 RE-C4 rows holds. The guidance text matches the spec word for word, and the implement phase holds 80 lines. The spec admits the order in which the amendment form runs before the chunk form at a freeze.
+
+### Coverage
+
+Finding count: 2. Worst issue: C2.
+
+- C1, auto-fix, confidence 6. No test grades refusal step 3 on `--map`. A probe that turned off its single-line check returned `silent`. The repair adds row RE115, the one hardening cycle of RE-C4.
+- C2, confidence 5. After a plan returns to an earlier digest, the verb writes an amendment chain that the next amendment and the checkpoint refuse as ambiguous. A probe observed it. The axis asked for a decision.
+
+### Decision on C2
+
+A fable / high consultation decided C2 by reviewer delegation. C2 is a concrete correctness defect, because the verb writes evidence that the checkpoint refuses. The fix runs `mappedIDs` from each recorded chunk to the new digest over the amended record, before the write. A chain that does not resolve refuses at step 6 with exit 1. That keeps one source of the mapping rule. Row RE114 grades it, and one spec sentence states it.
+
+After a revert, the record takes no later amendment. A change of the checkpoint rule to allow that is a Won't-handle candidate for the reviewer.
+
+### Repair routing
+
+The ticket 5 repair takes C1 and C2 in repair cycle 1 of RE-C4.
+
+### Advice
+
+- The `--map` syntax lives in the placeholder and in the parser.
+- `amendment_test.go` repeats one command literal seven times.
+- In the Land paragraph of the implement phase, the word "there" can read as the chunk source. The spec fixes that text.
+- A chunk form that runs before the amendment form leaves a record that only a hand edit repairs. The refusal names the wrong repair.
+- The Land paragraph does not say that each later chunk needs an amendment before its chunk entry.
+- `--map 1=1a,1a` writes a duplicate target, and a `--map` cell with spaces is not trimmed.
+
+### Command contribution
+
+The Coverage axis suggests that a ticket that adds a form probe each refusal-step membership of that form. The Spec axis suggests a Land sentence that orders the amendment before the chunk entry. That needs a spec decision.
