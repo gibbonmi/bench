@@ -22,7 +22,7 @@ import (
 )
 
 var landGrammar = usage.Grammar{
-	Cmd:     "bench worktree land",
+	Cmd:     usage.CommandName(usage.WorktreeLand),
 	Help:    "usage: " + usage.WorktreeLand,
 	MinArgs: 1,
 	MaxArgs: 1,
@@ -37,7 +37,7 @@ var landGrammar = usage.Grammar{
 }
 
 var resumeLandGrammar = usage.Grammar{
-	Cmd:     "bench worktree land",
+	Cmd:     usage.CommandName(usage.WorktreeLandResume),
 	Help:    "usage: " + usage.WorktreeLandResume,
 	MinArgs: 1,
 	MaxArgs: 1,

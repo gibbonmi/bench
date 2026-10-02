@@ -21,7 +21,7 @@ import (
 )
 
 var worktreeExecGrammar = usage.Grammar{
-	Cmd: "bench worktree exec",
+	Cmd: usage.CommandName(usage.WorktreeExec),
 	// The help carries the stdin form and the exit-2 rule because neither reads off the
 	// grammar line. A child inherits this process's stdin, so a heredoc is the shape an
 	// agent reaches for; and the child's own exit 2 looks like a grammar refusal until
@@ -103,7 +103,7 @@ func AssignmentActive(root, id string) bool {
 func execAttributed(assignment *string, parsed usage.Result, root, home string, values []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	selected, err := resolveAssignment(root, parsed.Positionals[0])
 	if err != nil {
-		return printTargetRefusal(stderr, "bench worktree exec", err)
+		return printTargetRefusal(stderr, worktreeExecGrammar.Cmd, err)
 	}
 	*assignment = selected.ID
 	return runWorktreeChild(parsed.Positionals[1:], selected.Worktree, home, values, stdin, stdout, stderr)

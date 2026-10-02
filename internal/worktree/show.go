@@ -28,7 +28,7 @@ func ShowCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 	}
 	path, err := resolveWorktree(root, parsed.Positionals[0])
 	if err != nil {
-		return printTargetRefusal(stderr, "bench worktree show", err)
+		return printTargetRefusal(stderr, worktreeShowGrammar.Cmd, err)
 	}
 	return runShowChild(path, parsed.Positionals[1], stdout, stderr)
 }
@@ -37,7 +37,7 @@ func ShowCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 // as the literal value Git would receive rather than as a flag. The sole `--help`
 // spelling still answers with the grammar line.
 var worktreeShowGrammar = usage.Grammar{
-	Cmd:                                 "bench worktree show",
+	Cmd:                                 usage.CommandName(usage.WorktreeShow),
 	Help:                                "usage: " + usage.WorktreeShow,
 	MinArgs:                             2,
 	MaxArgs:                             2,

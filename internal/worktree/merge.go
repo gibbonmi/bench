@@ -20,7 +20,7 @@ import (
 )
 
 var mergeGrammar = usage.Grammar{
-	Cmd:     "bench worktree merge",
+	Cmd:     usage.CommandName(usage.WorktreeMerge),
 	Help:    "usage: " + usage.WorktreeMerge,
 	MinArgs: 1,
 	MaxArgs: 1,
