@@ -8,24 +8,23 @@ Covers: WS75, WS76, WS77, WS78, WS79, WS80
 
 Chunk: SR-C7.
 
-Add a `joined` field to the verb result. The verb runner sets it when the run took the
-internal form with the call's joins value. Add a `mustJoined` form that fails the test
-when the field is false. Put the new runner test in a new test file, because
+Add a `viaJoins` field to the verb result. The verb runner sets it when the run took the
+internal form with the call's joins value. Add a `mustViaJoins` form that fails the
+test when the field is false. The name stays apart from the `joined` field of `verbForm`. Put the new runner test in a new test file, because
 `verb_runner_check_test.go` is near its line budget.
 
-Make each test that asserts that a joins stub was not called also call `mustJoined` on
-that run. The tests are `TestResetApplyTakesTheCleanupLock`,
+Make each test that asserts that a joins stub was not called also call `mustViaJoins`
+on that run. The tests are `TestResetApplyTakesTheCleanupLock`,
 `TestLandSkipsTheRefreshWithoutBuildInputs`, `TestLandSkipsAFreshBroker`,
 `TestResumeReadsEffectStateFromTheTree`, `TestLandCommandHostileSourceInputsRefuseBoundedly`,
 and `TestLandCommandRefusesDestinationAndSourceStateBeforeGate`.
 
 For each named test, run `bench probe` that drops the joins value from the not-called run.
 Record each probe command and its red in the verification note. Raise
-`worktreeTestCount` for each new top-level test in this spec that an earlier ticket did
-not count.
+`worktreeTestCount` by the number of new top-level tests in this commit.
 
 ## Acceptance
 
-- [ ] A joins-form run sets `joined`, and a public-entry run leaves it false.
+- [ ] A joins-form run sets `viaJoins`, and a public-entry run leaves it false.
 - [ ] Each named not-called test turns red when its not-called run drops the joins value.
-- [ ] The package declares exactly `worktreeTestCount` top-level tests, and no test from before this spec is missing.
+- [ ] The package declares exactly `worktreeTestCount` top-level tests at this commit.

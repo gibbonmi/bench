@@ -2,7 +2,7 @@
 
 Blocked by: 6-land-the-stubbed-landing-tests-for-real.md
 Writes: internal/worktree/joins.go, internal/worktree/effects.go, internal/worktree/clean.go, internal/worktree/clean_landed.go, internal/worktree/live_binary.go, internal/worktree/lifecycle.go, internal/worktree/worktree_test.go, internal/worktree/live_binary_test.go, internal/worktree/clean_landed_hostile_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: WS46, WS47, WS48, WS49, WS50
+Covers: WS46, WS47, WS48, WS49, WS50, WS84, WS85
 
 ## What to build
 
@@ -17,12 +17,15 @@ special-path test grades the real planner's shape reason.
 
 The ignored-stat test depends on a probe. Plant an ignored file in a directory without
 search permission, then run `bench probe` on `clean.go` with the stat error branch
-omitted. If the test turns red, remove `ignoredLstat`. If the probe stays green, keep the
-field and its test unchanged, and record one `bench learning` entry. Under the root user,
+omitted. If the test turns red, remove `ignoredLstat`. A probe fails when it stays green, or when the fixture cannot make the converted test pass. After a
+failed probe, keep the field and its test unchanged, and record one `bench learning` entry. Under the root user,
 the test calls `capability.Capability` with `capability.Privilege`.
 
 Each converted test keeps its name. `worktree_test.go` and `lifecycle.go` are over their
 line budgets, so the change does not grow them.
+
+For a field without a probe, a fixture that cannot make its test pass stops the build.
+The build names that test, per decision 3.
 
 ## Acceptance
 

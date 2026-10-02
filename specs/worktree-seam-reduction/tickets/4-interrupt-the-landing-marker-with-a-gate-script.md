@@ -18,9 +18,10 @@ First run the probe. Convert `TestResumeLandCommandCompletesAnInterruptedMarker`
 the test turns red, convert the other marker tests in this ticket. Record the probe
 command and its red in the verification note.
 
-If the probe stays green, keep `advanceLandingMarker` and its tests unchanged. Record one
-`bench learning` entry that names the field and the probe, and stop this ticket's
-conversion without a build stop.
+A probe fails when it stays green, or when the fixture cannot make the converted test pass. After a failed
+probe, keep `advanceLandingMarker` and its tests unchanged. Record one `bench learning`
+entry that names the field and the probe, and end this ticket's conversion without a build
+stop.
 
 Each converted test keeps its name. `identity_component_test.go` is over its line budget,
 so the conversion does not grow it. The field itself leaves in ticket 6, because
@@ -31,4 +32,4 @@ so the conversion does not grow it. The field itself leaves in ticket 6, because
 - [ ] The marker probe turns `TestResumeLandCommandCompletesAnInterruptedMarker` red, and the verification note records it.
 - [ ] Each of the eight marker tests interrupts a real landing with the gate-script fixture and passes.
 - [ ] No marker test in this ticket sets `advanceLandingMarker`.
-- [ ] If the probe stays green, the learning entry exists and the eight tests are unchanged.
+- [ ] If the probe failed, the learning entry exists and the eight tests are unchanged.

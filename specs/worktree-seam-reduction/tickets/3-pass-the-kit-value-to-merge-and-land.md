@@ -23,6 +23,9 @@ notice, and it names another directory for the repair route.
 Each converted test keeps its name. `merge_test.go` is over its line budget, so the
 conversion does not grow it.
 
+For a field without a probe, a fixture that cannot make its test pass stops the build.
+The build names that test, per decision 3.
+
 ## Acceptance
 
 - [ ] A merge with a manifest tally lane and a kit apart from the target appends one byte to the tally.

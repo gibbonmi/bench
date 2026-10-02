@@ -10,16 +10,20 @@ Chunk: SR-C4.
 
 Convert the reconcile test to a nested repository in the destination, which fails the
 real residue guard. Convert the post-publication freshness test to the marker fixture of
-ticket 4 and the nested-repository fixture. Convert the two release-refusal tests to the
+ticket 4 and the nested-repository fixture. If ticket 4 recorded a failed marker probe,
+the freshness test keeps its `advanceLandingMarker` stub and converts its other stubs. Convert the two release-refusal tests to the
 public landing fixture, so that the real source authority supplies the fences.
 
 The prune test depends on a probe. Plant a stale `refs/heads/<name>.lock` for a landed
 sibling, then run `bench probe` on `land.go` with the prune error branch omitted. If the
-test turns red, keep the conversion. If the probe stays green, keep
+test turns red, keep the conversion. A probe fails when it stays green, or when the fixture cannot make the converted test pass. After a failed probe, keep
 `pruneLandedBranches` and its test unchanged, and record one `bench learning` entry.
 
 Each converted test keeps its name. Record each probe command and its red in the
 verification note.
+
+For a field without a probe, a fixture that cannot make its test pass stops the build.
+The build names that test, per decision 3.
 
 ## Acceptance
 

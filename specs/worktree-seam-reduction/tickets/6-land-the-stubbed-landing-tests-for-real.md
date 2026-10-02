@@ -13,13 +13,17 @@ Convert each user of `stubLandJoins` to a real landing with a shell gate, then d
 `land_reauthorization_test.go`. `TestLandCommandPostCASTerminalTable` faults the marker
 with the fixture of ticket 4 and the reconcile with the fixture of ticket 5.
 `TestLandCommandProjectGreenOrderTable` asserts the real marker ref after the landing, in
-place of the recorded arguments.
+place of the recorded arguments. If ticket 4 recorded a failed marker probe, each test in
+this ticket keeps its `advanceLandingMarker` stub and converts its other stubs.
 
 Remove `advanceLandingMarker`, `reconcileLanding`, `authorizeLandingSource`, and
 `pruneLandedBranches` from the joins value. Keep each field whose probe stayed green in
 ticket 4 or ticket 5. The landing then calls the real functions directly.
 
 Each converted test keeps its name.
+
+For a field without a probe, a fixture that cannot make its test pass stops the build.
+The build names that test, per decision 3.
 
 ## Acceptance
 

@@ -30,7 +30,8 @@ value or a clock value for a verb key without an internal form, with
 Move the discard tests from `discardJoins` to the call's clock value. Drop the
 `BENCH_HOME` bind from the two resume-clean tests in `resume_test.go`, and pass the home
 through the verb runner. Add the resume-clean home test and the clock-value test in a new
-test file, because `resume_test.go` is over its line budget.
+test file, because `resume_test.go` is over its line budget. Raise `worktreeTestCount` by
+the number of new top-level tests in this commit.
 
 ## Acceptance
 

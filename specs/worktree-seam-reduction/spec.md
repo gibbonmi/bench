@@ -132,7 +132,8 @@ The reviewed exclusions:
 `KitDir` call it. `gate.LaneForCommitAtKit(root, kit)` and
 `gate.KitSourceCheckoutAtKit(root, kit)` take the kit value. An empty kit makes the lane
 form fall back to the graded root. An empty kit makes the kit-source form fall back to
-the parent of the running executable, as `KitDir` does today.
+the parent of the running executable, as `KitDir` does today. Neither form reaches
+`KitValue`, so the census in ticket 9 can tell a kit form from a kit read.
 
 `LaneForCommit` and `KitSourceCheckout` stay as wrappers that pass `KitValue()`, so
 `internal/commit`, `internal/adopt`, and `cmd/bench` do not change. The new forms live in `kit_source.go`,
@@ -165,7 +166,7 @@ or a clock value for a verb key without an internal form. Its messages are
 
 ### The converted fields
 
-| field | real fixture | test sites | probe |
+| field | real fixture | field sites | probe |
 | --- | --- | --- | --- |
 | `mergeLane` | a committed phase manifest lane and a kit value apart from the target | 7 | no |
 | `kitSourceCheckout` | a kit value that names the destination, or another directory | 2 | no |
@@ -178,22 +179,30 @@ or a clock value for a verb key without an internal form. Its messages are
 | `planLandedExplicit` | the real planner and its shape reason | 1 | no |
 | `reauthorizeUnlock` | an admin directory at mode 0500 | 1 | no |
 | `mergeReconcile` | a stale `index.lock` in the target checkout | 2 | yes |
-| `resetMove` | a stale `HEAD.lock` in the admin directory | 3 | no |
+| `resetMove` | a stale `HEAD.lock` in the admin directory, and the ignore-rule drift for the move that does not land | 3 | no |
 
-The test-site counts come from the classification asset, and the build re-derives them
-from the tree. A probe is a `bench probe` run that omits the field's error branch in the
-production file and turns the converted test red. If a probe stays green, the field stays
-in the joins value with its tests unchanged. The build then records one `bench learning`
-entry for reviewer veto and does not stop.
+A field site is one assignment of the field, as the classification asset counts it. A
+helper site can serve several tests: `stubbedLiveBinaryJoins` sets `liveBinaryWarnings`
+once, and four live-binary tests call it. The build re-derives each count from the tree.
+
+A probe is a `bench probe` run that omits the field's error branch in the production file
+and turns the converted test red. A probe fails when it stays green, or when the fixture
+cannot make the converted test pass. After a failed probe, the field stays in the joins
+value with its tests unchanged. The build records one `bench learning` entry for reviewer
+veto and does not stop.
+
+A field without a probe has no such fallback. If a real fixture cannot make one of its
+converted tests pass, the build stops and names the test, per decision 3.
 
 `stubLandJoins` returns a fake commit, so each of its users moves to a real landing with a
 shell gate. Its marker stub, its reconcile stub, and its source-authority stub leave with
 it. The dead `planLandedExplicitWithOptions` declaration leaves with `planLandedExplicit`.
 
-A test that cannot convert stops the build and names the test, per decision 3. The build
-predicts one such risk. `TestResetApplyExitsThreeWhenTheMoveDidNotLand` stubs a move that
-succeeds without a move. The real move runs `git reset --hard`, which fires no
-`post-checkout` hook, so the build may find no fixture for it.
+`TestResetApplyExitsThreeWhenTheMoveDidNotLand` stubs a move that exits 0 and leaves the
+checkout apart from the checkpoint. The ignore-rule drift is the real fixture. The move
+keeps an ignored file that the checkpoint's rules do not ignore, so the post-move check
+exits 3. `TestResetApplyKeepsIgnoredBytesAcrossAnIgnoreRuleChange` uses the same drift,
+and decision 3 accepts that near duplicate.
 
 The permission fixtures follow the precedent in `classifier_shape_test.go`. Under the root
 user, each such test calls `capability.Capability` with `capability.Privilege`.
@@ -205,12 +214,17 @@ reference to a read-set name. The census derives the read set from three sources
 
 - each function that `effects.go` declares;
 - each package-qualified function that an `effects.go` body calls;
-- each exported gate function `X` whose name plus `AtKit` names another exported gate function.
+- each exported gate function whose body reaches `KitValue` through calls inside the gate package.
 
-A read's kind is the package-qualified call that the census reaches from it. A
-`gate.LaneForCommit` reference reads the kind `gate.KitValue`. The census parses the
-non-test files of the package directory and skips `effects.go`. It parses the gate
-directory for the third source only.
+A kind is one package-qualified call that the census reaches from a read-set name. One
+reference counts as one read of each kind that its name reaches. The ambient constructor
+reaches `time.Now` and `gate.KitValue`, so the constructor and a later `currentTime` read
+`time.Now` twice. A `gate.LaneForCommit` reference reads the kind `gate.KitValue`.
+
+The census parses the non-test files of the package directory and skips `effects.go`. It
+parses the gate directory for the third source only, and it follows gate calls by bare
+identifier. The census counts only an entry's own reads, and it does not follow a call
+from one entry to another. The package holds no such call.
 
 The census accepts a read only in an entry's own body, outside each function literal and
 loop body. It accepts only the first read of each kind there. It reports each other read
@@ -221,10 +235,12 @@ in one of three messages:
 - `<file>:<line>: <declaration> calls <Entry>, which reads <kind>`
 
 `<name>` is the reference as the source spells it. The third message applies when an
-unexported declaration calls an entry whose own body reads.
+unexported declaration calls an entry whose own body reads. One census formatter renders
+each message, and each census test derives its expected report through that formatter.
 
 `ClaimRecordedLease` reads the clock and passes the instant to `claimRecordedLease`.
-`ApplyAutomatic` reads the clock once. `Subshell` reads the clock once and calls
+`CreateCommand` reads the instant and passes it to `createAttributed`, with no net line
+growth in `worktree.go`. `ApplyAutomatic` reads the clock once. `Subshell` reads the clock once and calls
 `releaseCommandWith` in place of `ReleaseCommand`.
 
 ### The serial ceiling
@@ -234,22 +250,27 @@ A set below the ceiling is refused with
 `the package holds <n> serial tests, below the ceiling of <c>: lower worktreeSerialCeiling to <n> in this change`.
 The two resume-clean tests drop their `BENCH_HOME` bind, so the count is at most 44. The
 ticket moves `serialSet` and `serialCeilingBreach` out of `parallel_census_test.go`, so
-that over-budget file does not grow.
+that over-budget file does not grow. The refusal comes from `serialCeilingBreach`, and its
+tests derive the expected text through that function.
+
+`worktreeTestCount` is exact. Each ticket that adds a top-level worktree test raises the
+pin in its own commit: tickets 2, 9, 10, and 11.
 
 ### The table names
 
 Each `toon.Table` and `toon.TableTyped` call in the package's non-test source names its
-table with a package constant. The test-only `cleanupTable` constant moves to production.
+table with a package constant. The test-only `cleanupTable` and `selectedTable` constants
+move to production.
 A test census reports a test string literal that equals a table name and is the block
 argument of `mustRows`, `readVerbRows`, `Rows`, `toon.Table`, or `toon.TableTyped`. It also
 reports a test string literal that begins with a table name and `[`.
 
 ### The joins route
 
-The verb result carries a `joined` field. The verb runner sets it when the run took the
-internal form with the call's joins value. A `mustJoined` form fails the test when the
+The verb result carries a `viaJoins` field. The verb runner sets it when the run took the
+internal form with the call's joins value. A `mustViaJoins` form fails the test when the
 field is false. Each test that asserts that a joins stub was not called also calls
-`mustJoined` on that run.
+`mustViaJoins` on that run. The name stays apart from the `joined` field of `verbForm`.
 
 ### The line budgets
 
@@ -271,8 +292,8 @@ budget at the decision commit:
 | SR-C2 / `2-carry-an-ambient-value-below-each-verb-entry.md` | Each verb entry passes one ambient value down, and the verb runner passes a kit value and a clock value. | WS9, WS10, WS11, WS12, WS13, WS14, WS15, WS16 | `bench test --package ./internal/worktree` | yes |
 | SR-C3 / `3-pass-the-kit-value-to-merge-and-land.md` | The merge and land verbs read the kit at their entries, and the two kit fields leave the joins value. | WS17, WS18, WS19, WS20, WS21, WS22, WS23, WS24, WS25 | `bench test --package ./internal/worktree` | no |
 | SR-C4 / `4-interrupt-the-landing-marker-with-a-gate-script.md`, `5-fault-the-landing-follow-on-steps-with-real-fixtures.md`, `6-land-the-stubbed-landing-tests-for-real.md` | The landing tests fault real landings, and the four landing fields leave the joins value. | WS26, WS27, WS28, WS29, WS30, WS31, WS32, WS33, WS34, WS35, WS36, WS37, WS38, WS39, WS40, WS41, WS42, WS43, WS44 | `bench test --package ./internal/worktree` | yes |
-| SR-C5 / `7-fault-the-cleanup-reads-with-real-fixtures.md`, `8-fault-the-reset-and-merge-moves-with-real-fixtures.md` | The cleanup, reset, merge-reconcile, and reauthorize tests use real fixtures, and their six fields leave the joins value. | WS46, WS47, WS48, WS49, WS50, WS51, WS45, WS52, WS53, WS54, WS55, WS56, WS81 | `bench test --package ./internal/worktree` | no |
-| SR-C6 / `9-refuse-a-read-below-a-census-entry.md` | The census refuses every read below a census entry, and the serial ceiling is exact. | WS57, WS58, WS59, WS60, WS61, WS62, WS63, WS64, WS65, WS66, WS67, WS68, WS69, WS70 | `bench test --package ./internal/worktree` | yes |
+| SR-C5 / `7-fault-the-cleanup-reads-with-real-fixtures.md`, `8-fault-the-reset-and-merge-moves-with-real-fixtures.md` | The cleanup, reset, merge-reconcile, and reauthorize tests use real fixtures, and their six fields leave the joins value. | WS46, WS47, WS48, WS49, WS50, WS84, WS85, WS51, WS45, WS52, WS53, WS54, WS55, WS56, WS81 | `bench test --package ./internal/worktree` | no |
+| SR-C6 / `9-refuse-a-read-below-a-census-entry.md` | The census refuses every read below a census entry, and the serial ceiling is exact. | WS57, WS58, WS59, WS60, WS61, WS62, WS63, WS64, WS65, WS66, WS67, WS68, WS69, WS70, WS82, WS83, WS86 | `bench test --package ./internal/worktree` | yes |
 | SR-C7 / `10-name-each-table-in-production.md`, `11-require-the-joins-route-of-a-not-called-stub.md` | The tests read the table names from production, and each not-called assertion proves its route. | WS71, WS72, WS73, WS74, WS75, WS76, WS77, WS78, WS79, WS80 | `bench test --package ./internal/worktree` | no |
 
 SR-C1 and SR-C2 each create a seam that later tickets consume, so each is its own chunk.
@@ -325,7 +346,7 @@ records the probe command and its red in its verification note.
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
 | WS1 | 1 | The gate non-test source holds one `os.Getenv` or `os.LookupEnv` call with the argument `"BENCH_KIT"`, inside `KitValue`. | planned TestKitValueIsTheOneBenchKitRead in internal/gate | A second inline read in `kitRoot` or `KitDir` makes the count two. |
-| WS2 | 2 | `LaneForCommitAtKit(root, kit)` with a kit apart from the root returns the lane that the root's phase manifest declares. | planned TestLaneForCommitAtKitReadsTheRootManifest in internal/gate | A form that reads the process kit under an unset `BENCH_KIT` falls back to the root and returns the selective lane. |
+| WS2 | 2 | `LaneForCommitAtKit(root, kit)` with a kit apart from the root returns a lane whose `Kit` equals the kit argument and whose `Selective` is false. | planned TestLaneForCommitAtKitReadsTheRootManifest in internal/gate | A form that reads the process kit returns the `Kit` that `BENCH_KIT` names, which the gate's phases set to the source root. |
 | WS3 | 5 | `LaneForCommitAtKit(root, "")` returns a selective lane for a root that declares a manifest lane. | planned TestLaneForCommitAtKitFallsBackToTheRoot in internal/gate | A fallback to the executable's parent returns the root's manifest lane, which is not selective. |
 | WS4 | 3 | `KitSourceCheckoutAtKit(root, kit)` is true when the kit names the root through a symbolic link. | planned TestKitSourceCheckoutAtKitMatchesAnotherSpelling in internal/gate | A form that ignores its kit argument compares the root with the executable's parent and returns false. |
 | WS5 | 3 | `KitSourceCheckoutAtKit(root, kit)` is false when the kit names another directory. | planned TestKitSourceCheckoutAtKitRefusesAnotherDirectory in internal/gate | A form that answers true for each non-empty kit fails the false expectation. |
@@ -377,34 +398,39 @@ records the probe command and its red in its verification note.
 | WS51 | 26 | A reauthorize whose admin directory denies writes rolls back and leaves the retained state unchanged. | `internal/worktree/reauthorize_test.go` (`TestReauthorizeCommandRollsBackLockRefreshAndCASLoss`) | The probe that omits the unlock error branch in `reauthorize.go` changes the retained state. |
 | WS52 | 27 | A merge whose target holds a stale `index.lock` exits 3 after the branch moves. | `internal/worktree/merge_test.go` (`TestMergeExitsThreeWhenTheReconcileFails`) | The probe that omits the reconcile error branch in `merge.go` exits 0. |
 | WS53 | 27 | A reset apply reconciles the merge that a stale `index.lock` left unfinished. | `internal/worktree/reset_repair_test.go` (`TestResetApplyReconcilesAnUnfinishedMerge`) | A fixture that leaves no unfinished merge gives the reset nothing to reconcile, and the probe shows it. |
-| WS54 | 28 | A reset apply whose admin directory holds a stale `HEAD.lock` exits 3 and preserves the envelope. | `internal/worktree/reset_apply_test.go` (`TestResetApplyExitsThreeOnAMoveFault`) | The probe that omits the move error branch in `reset_apply.go` exits 0. |
-| WS55 | 28 | A detached reset apply with a stale `HEAD.lock` exits 3 with `preserved=none`. | `internal/worktree/reset_apply_test.go` (`TestResetApplyExitsThreeWithoutAnEnvelope`) | The same move probe exits 0. |
-| WS56 | 28 | A reset apply whose move does not land exits 3 and names the preserved ref. | `internal/worktree/reset_apply_test.go` (`TestResetApplyExitsThreeWhenTheMoveDidNotLand`) | A verb that trusts the move's exit code without a check exits 0. |
+| WS54 | 28 | A reset apply whose admin directory holds a stale `HEAD.lock` exits 3 and preserves the envelope. | `internal/worktree/reset_apply_test.go` (`TestResetApplyExitsThreeOnAMoveFault`) | Without the `HEAD.lock` plant the apply exits 0, so the plant is what turns the exit to 3. |
+| WS55 | 28 | A detached reset apply with a stale `HEAD.lock` exits 3 with `preserved=none`. | `internal/worktree/reset_apply_test.go` (`TestResetApplyExitsThreeWithoutAnEnvelope`) | Without the `HEAD.lock` plant the apply exits 0. |
+| WS56 | 28 | A reset apply whose move keeps an ignore-rule drift file exits 3 and names the preserved ref. | `internal/worktree/reset_apply_test.go` (`TestResetApplyExitsThreeWhenTheMoveDidNotLand`) | The probe that omits the post-move check in `reset_apply.go` exits 0. |
 | WS57 | 33 | A synthetic entry that reads `currentTime` once outside each loop and literal draws no report. | planned TestSingleReadCensusAcceptsOneReadInAnEntry in internal/worktree | A census that refuses each read reports the entry. |
-| WS58 | 34 | A synthetic unexported function that reads `currentTime` draws `reads currentTime below a census entry`. | planned TestSingleReadCensusRefusesAReadInAnUnexportedFunction in internal/worktree | A census that checks only entries passes the helper. |
-| WS59 | 35 | A synthetic entry whose function literal reads `currentTime` draws the below-entry report. | planned TestSingleReadCensusRefusesAReadInAFunctionLiteral in internal/worktree | A census that walks each literal as the entry's body accepts the read. |
-| WS60 | 35 | A synthetic entry whose loop body reads `Home` draws the below-entry report. | planned TestSingleReadCensusRefusesAReadInALoopBody in internal/worktree | A census that counts syntactic reads only accepts the loop read. |
-| WS61 | 36 | A synthetic entry that reads `currentTime` twice draws `reads time.Now a second time`. | planned TestSingleReadCensusRefusesASecondRead in internal/worktree | A census that counts nothing passes the second read. |
-| WS62 | 37 | A synthetic unexported function that calls a reading entry draws `calls <Entry>, which reads time.Now`. | planned TestSingleReadCensusRefusesAHelperCallToAReadingEntry in internal/worktree | A census that inspects only direct reads passes the call. |
-| WS63 | 38 | A synthetic composite literal that holds the value `currentTime` in an unexported function draws the below-entry report. | planned TestSingleReadCensusRefusesAFunctionValue in internal/worktree | A census that matches only calls passes the value. |
-| WS64 | 39 | A synthetic package-level variable that reads `Home()` draws the below-entry report with the variable's name. | planned TestSingleReadCensusRefusesAPackageLevelRead in internal/worktree | A census that walks only function bodies passes the variable. |
+| WS58 | 34 | A synthetic unexported function that reads `currentTime` draws the one below-entry report that the census formatter renders for it. | planned TestSingleReadCensusRefusesAReadInAnUnexportedFunction in internal/worktree | A census that checks only entries passes the helper. |
+| WS59 | 35 | A synthetic entry whose function literal reads `currentTime` draws the formatter's below-entry report. | planned TestSingleReadCensusRefusesAReadInAFunctionLiteral in internal/worktree | A census that walks each literal as the entry's body accepts the read. |
+| WS60 | 35 | A synthetic entry whose loop body reads `Home` draws the formatter's below-entry report. | planned TestSingleReadCensusRefusesAReadInALoopBody in internal/worktree | A census that counts syntactic reads only accepts the loop read. |
+| WS61 | 36 | A synthetic entry that reads `currentTime` twice draws the formatter's second-read report for `time.Now`. | planned TestSingleReadCensusRefusesASecondRead in internal/worktree | A census that counts nothing passes the second read. |
+| WS62 | 37 | A synthetic unexported function that calls a reading entry draws the formatter's helper-call report for `time.Now`. | planned TestSingleReadCensusRefusesAHelperCallToAReadingEntry in internal/worktree | A census that inspects only direct reads passes the call. |
+| WS63 | 38 | A synthetic composite literal that holds the value `currentTime` in an unexported function draws the formatter's below-entry report. | planned TestSingleReadCensusRefusesAFunctionValue in internal/worktree | A census that matches only calls passes the value. |
+| WS64 | 39 | A synthetic package-level variable that reads `Home()` draws the formatter's below-entry report with the variable's name. | planned TestSingleReadCensusRefusesAPackageLevelRead in internal/worktree | A census that walks only function bodies passes the variable. |
 | WS65 | 40 | A function that the synthetic `effects.go` adds is a read with no census edit. | planned TestSingleReadCensusDerivesTheReadSetFromEffects in internal/worktree | A census with a fixed name list passes the new read. |
 | WS66 | 40 | A synthetic unexported call to `benchhome.Dir` outside `effects.go` draws the below-entry report. | planned TestSingleReadCensusRefusesAQualifiedRead in internal/worktree | A census that reads only the `effects.go` names passes the qualified call. |
-| WS67 | 40 | A synthetic unexported call to a gate function with an `AtKit` form draws the below-entry report. | planned TestSingleReadCensusRefusesAKitWrapperCall in internal/worktree | A census that ignores the gate directory passes the wrapper call. |
-| WS68 | 6, 41, 42, 43 | The census over the live package reports nothing. | planned TestSingleReadCensusOnTheLiveTree in internal/worktree | A read left in `claimRecordedLease`, `subshellAt`, `releaseAssignment`, or `defaultJoins` draws a report. |
+| WS67 | 40 | A synthetic unexported call to an exported gate function that calls `KitValue` draws the formatter's below-entry report. | planned TestSingleReadCensusRefusesAKitWrapperCall in internal/worktree | A census that ignores the gate directory passes the wrapper call. |
+| WS68 | 6, 41, 42, 43 | The census over the live package reports nothing. | planned TestSingleReadCensusOnTheLiveTree in internal/worktree | A read left in `claimRecordedLease`, `createAttributed`, `subshellAt`, `releaseAssignment`, or `defaultJoins` draws a report. |
 | WS69 | 13, 44 | The live serial set equals `worktreeSerialCeiling`, and the ceiling is below 46. | `internal/worktree/parallel_census_test.go` (`TestSerialSetStaysBelowTheCeiling`) | A ceiling left at 46 after the resume-clean tests leave the serial set draws the below-ceiling refusal. |
-| WS70 | 44 | A synthetic serial set of one under a ceiling of two draws the below-ceiling refusal. | planned TestCensusRefusesASerialSetBelowTheCeiling in internal/worktree | A one-sided ceiling check passes the smaller set. |
+| WS70 | 44 | A synthetic serial set of one under a ceiling of two draws the below-ceiling refusal that `serialCeilingBreach` renders. | planned TestCensusRefusesASerialSetBelowTheCeiling in internal/worktree | A one-sided ceiling check passes the smaller set. |
 | WS71 | 45 | Each `toon.Table` or `toon.TableTyped` call in the package's non-test source names its table with an identifier. | planned TestTableNamesAreProductionConstants in internal/worktree | A literal `"worktree_cleanup"` left in `classifier.go` draws a report. |
 | WS72 | 46 | A synthetic test literal that equals a table name in a `mustRows` block argument draws a report with its file and line. | planned TestTableNameLiteralCensusReportsABlockArgument in internal/worktree | A census that skips block arguments passes the literal. |
 | WS73 | 46 | A synthetic test literal that begins with `worktree_cleanup[` draws a report. | planned TestTableNameLiteralCensusReportsARenderedHeader in internal/worktree | A census that matches only whole literals passes the header text. |
 | WS74 | 46 | The table-name census over the live test files reports nothing. | planned TestTableNameLiteralCensusOnTheLiveTree in internal/worktree | A table-name literal left in a test file draws a report. |
-| WS75 | 47 | A joins-form run sets the verb result's `joined` field, and a public-entry run leaves it false. | planned TestVerbResultReportsTheJoinsRoute in internal/worktree | A runner that never sets the field fails the joins-form half. |
+| WS75 | 47 | A joins-form run sets the verb result's `viaJoins` field, and a public-entry run leaves it false. | planned TestVerbResultReportsTheJoinsRoute in internal/worktree | A runner that never sets the field fails the joins-form half. |
 | WS76 | 48 | The reset cleanup-lock test requires the joins route on its plan run. | `internal/worktree/reset_apply_test.go` (`TestResetApplyTakesTheCleanupLock`) | The probe that drops the joins value from the plan call turns the test red. |
 | WS77 | 48 | Each refresh test that asserts no build call requires the joins route. | `internal/worktree/land_effects_test.go` (`TestLandSkipsTheRefreshWithoutBuildInputs`) | The probe that drops the joins value from the landing call turns the test red. |
 | WS78 | 48 | The resume refresh test requires the joins route on its interrupted landing. | `internal/worktree/land_effects_test.go` (`TestResumeReadsEffectStateFromTheTree`) | The probe that drops the joins value from the interrupted call turns the test red. |
 | WS79 | 48 | Each pre-gate refusal test that asserts no landing call requires the joins route. | `internal/worktree/land_flags_test.go` (`TestLandCommandRefusesDestinationAndSourceStateBeforeGate`) | The probe that drops the joins value from the landing call turns the test red. |
-| WS80 | 29 | The package declares at least the pinned count of top-level tests. | `internal/worktree/parallel_census_test.go` (`TestPackageTestCountPin`) | A conversion that deletes or merges a test drops the count below the pin. |
+| WS80 | 29 | The package declares exactly the pinned count of top-level tests. | `internal/worktree/parallel_census_test.go` (`TestPackageTestCountPin`) | A conversion that deletes or merges a test drops the count below the pin. |
 | WS81 | 30, 31 | A failed probe keeps its field with one recorded learning, and a test that cannot convert stops the build with its name. | review-owned | A review of the ticket verification notes and `capture/learnings.md` finds a silent field loss or a silent skip. |
+| WS82 | 40 | A synthetic unexported call to an exported gate function that reaches `KitValue` through another gate function draws the formatter's below-entry report. | planned TestSingleReadCensusRefusesAnIndirectKitRead in internal/worktree | A census that reads only direct `KitValue` calls passes a wrapper such as `KitRoot`. |
+| WS83 | 11 | The census over the live package reports no clock read in a replan closure. | planned TestSingleReadCensusOnTheLiveTree in internal/worktree | The function-literal read of `currentTime` at the replan in `applyAutomaticWithTerminal` draws a report. |
+| WS84 | 24 | The running-binary check fails safe with no warning writer in the joins value when the resolution is unknown. | `internal/worktree/live_binary_test.go` (`TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown`) | A guard that still reads a joins writer does not compile once the field leaves. |
+| WS85 | 24 | The running-binary check resolves a symbolic link with no warning writer in the joins value. | `internal/worktree/live_binary_test.go` (`TestIsRunningBinaryResolvesThroughASymlink`) | A guard that compares unresolved paths misses the live binary. |
+| WS86 | 36 | A synthetic entry that calls the ambient constructor and then `currentTime` draws the formatter's second-read report for `time.Now`. | planned TestSingleReadCensusCountsEachKindOfAConstructor in internal/worktree | A census that counts the constructor as one kind passes the second clock read. |
 
 Not covered: story 49 — the positional fixture tuple census is priced under Out of scope.
 Not covered: story 50 — the lock-hook fold is priced under Out of scope.
@@ -424,9 +450,8 @@ The canonical edge classes at the census seam and the fixture seam:
 
 **Won't handle** lines:
 
-- An entry that calls a second reading entry in its own body — the decision counts an entry's own reads, and `ApplyExplicit` keeps that shape.
 - Two `effects.go` functions that call one qualified function for two values — `subshellShell` is the only `os.Getenv` caller, and WS65 reds a new name.
-- A worktree call to a gate kit reader without an `AtKit` form — the package calls no such reader, and WS67 reds the two wrappers.
+- A clock read in another package, such as `beginVerbSpan` timing — the rule covers one package, and each entry keeps its span.
 - A read through reflection or through a method value of another package — the census parses one package's syntax, and WS68 grades every spelled read.
 - A test that runs while another process holds a ref lock in the fixture repository — each fixture owns its temporary repository.
 
@@ -553,8 +578,8 @@ field removal, so its live census grades the final source.
 | --- | --- |
 | Ticket 2: a field stays for a fixture-proof fault or a real compile or gate run | WS45 |
 | Ticket 3: a converted test keeps its name, and the count pin holds | WS80 |
-| Ticket 3: a test that cannot convert stops the build and names the test | WS56, WS81 |
-| Ticket 4: the census refuses a read below a verb entry | WS57 to WS68 |
+| Ticket 3: a test that cannot convert stops the build and names the test | WS81 |
+| Ticket 4: the census refuses a read below a verb entry | WS57 to WS68, WS82, WS83, WS86 |
 | Ticket 4: the serial ceiling drops to the new serial count | WS69, WS70 |
 | Ticket 10: the 15 kept fields | WS45 |
 | Ticket 10: `advanceLandingMarker` goes through a gate-script fixture | WS26 to WS33, WS42, WS44 |
@@ -568,7 +593,7 @@ field removal, so its live census grades the final source.
 | Ticket 11: one gate reader reads `BENCH_KIT`, and `kitRoot` and `KitDir` use it | WS1, WS8 |
 | Ticket 11: kit-taking lane and kit-source forms, each with its own fallback | WS2 to WS6 |
 | Ticket 11: the present functions stay as wrappers | WS7, WS8 |
-| Ticket 11: the three latent defects get fixed | WS12, WS68 |
+| Ticket 11: the three latent defects get fixed | WS12, WS68, WS83 |
 | Ticket 11: one row runs resume-clean under a non-default home | WS12 |
 | `roadmap/FT356.md`: a production constant names each table | WS71 to WS74 |
 | `roadmap/FT356.md`: a not-called assertion proves reachability | WS75 to WS79 |
@@ -584,8 +609,8 @@ Readers of each fact that the spec changes:
 - The `home` field: `executeCleanup` in `lifecycle.go` reads it, and `land.go`, `land_resume.go`, and `worktree.go` set it.
 - The `checkVerbCall` messages: `verb_runner_test.go` lines 149 and 152 and `verb_runner_check_test.go` lines 367 and 375. No other file holds the text.
 - `worktreeSerialCeiling`: `parallel_census_test.go` alone. `roadmap/FT356.md` names the number 46 in prose.
-- The `cleanupTable` constant: `verb_fixture_test.go` declares it, and `verb_runner_check_test.go` reads it.
-- Test literals of table names: 36 lines in 16 test files begin with a table name and `[`. The build re-derives the list with the census.
+- The `cleanupTable` constant: `verb_fixture_test.go` declares it, and `verb_runner_check_test.go` reads it. The `selectedTable` constant: `list_selected_test.go` declares it, and `verb_runner_check_test.go` reads it.
+- Test literals of table names: 36 lines in 16 test files hold a table name and `[`. Four block-argument literals sit in `path_identifier_test.go`, `orphan_render_test.go`, and `build_test.go`. The census re-derives the list.
 - `gate.LaneForCommit`: `internal/commit/commit.go` and `joins.go`. `gate.KitSourceCheckout`: `cmd/bench/command_registry.go`, `internal/adopt/doctor.go`, `internal/adopt/link.go`, `internal/adopt/doctor_rows.go`, and `joins.go`. `gate.KitDir`: `cmd/bench/command_registry.go` and four files in `internal/adopt`. `gate.KitRoot`: `internal/coverage/citations.go`. These callers keep their calls.
 - The census entries that other packages call: `Create`, `Acquire`, `PlanAutomatic`, `ClaimRecordedLease`, `ClassifyRegisteredWorktrees`, and `Pool`. Their signatures do not change.
 - The verb call census reads `defaultJoins()` as the first argument of a joins form. Each internal form keeps that first argument.
@@ -637,7 +662,8 @@ fence holds five gate files for ticket 1.
 
 The binding registry binds the worktree package to five files. Three are in `cmd/bench`,
 and two are conformance registry tests. Build preflight requires each worktree ticket to name them. No ticket plans an edit
-there, because no verb grammar changes. The spec authoring commit adds the census entry
+there, because no verb grammar changes. Each chunk review confirms that the five files
+stay unchanged. The spec authoring commit adds the census entry
 and ambient value terms to the glossary, so no ticket writes `CONTEXT.md`.
 
 ### Completion plan
@@ -655,11 +681,13 @@ Each addition below is not in a decision answer. The reviewer can veto each one.
 - The verb runner rule: a call with any kit, clock, or joins value runs the internal form.
 - The `checkVerbCall` refusal for a verb without an internal form, which keeps the names of the two refusal tests.
 - The census refusals for a read in a function literal, a loop body, a function value, and a package-level declaration.
-- The census read set from the gate's `AtKit` naming, which catches a hidden kit read through a wrapper.
+- The census read set from each exported gate function that reaches `KitValue`, which catches a hidden kit read through a wrapper.
 - The exact census messages and the below-ceiling refusal message.
 - The exact serial ceiling check, which refuses a set below the ceiling.
-- The `joined` verb result field and the `mustJoined` form, as the reachability proof for a not-called assertion.
+- The `viaJoins` verb result field and the `mustViaJoins` form, as the reachability proof for a not-called assertion.
 - The test census for table-name literals, as the enforcement of the one-source table names.
 - The removal of the dead `planLandedExplicitWithOptions` declaration.
-- The predicted stop for `TestResetApplyExitsThreeWhenTheMoveDidNotLand`.
+- The ignore-rule drift fixture for `TestResetApplyExitsThreeWhenTheMoveDidNotLand`.
+- The census entry and ambient value glossary terms in `CONTEXT.md`.
+- The rule that the `AtKit` forms reach no `KitValue` read.
 - The spec-stage edit of the `ROADMAP.md` recommended sequence, which repoints its first step to this spec.
