@@ -1233,7 +1233,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sr-c6-r1-standards",
+          "performer": "claude:bench-reviewer/sr-c6-r1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ec07051543af362963b10f10f1642547663891",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c6-r1-standards-20261002@20aefd5cb9146433fb8be2a956b6ed2a1db8b87a",
+            "digest": "sha256:4d9f96e1a6abfffbced895dd08671a7c8349017684362ad8835decc0b74fdd72",
+            "excerpt": "## Standards\nS1. AGENTS.md \"one source per fact\". single_read_census_test.go:195 re-derives the non-test .go predicate that parseSourceFiles owns at parallel_census_test.go:60. No isSourceFile exists at this tip. Both files are in ticket 12's Writes line. Ticket 12, auto-fix, confidence 6.\nS2. AGENTS.md \"one source per fact\". effectsFile (single_read_census_test.go:22) and the literal \"effects.go\" in effect_census_test.go:31 and :44 both name the effect boundary; a rename that updates one file leaves the read set empty and the live census passes with nothing graded. effect_census_test.go is outside ticket 12's fence. Ticket 12, auto-fix, confidence 5.\ncount: 2\nworst: S1.\nAdvice: createAttributed relies on createAt returning a zero Creation on each of 17 error returns; a doc line in createAt would warn at the producer. gateFiles[0] is not a defect: the loop never runs with no gate file. The directCallees and calleeName docs say \"test-file functions\" and are out of date. The breach == \"\" check adds nothing. The serial_ceiling_test.go header says the file owns the ceiling check, but the constant and the live test are in parallel_census_test.go.\n"
+          },
+          "axis": "Standards",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "20aefd5cb9146433fb8be2a956b6ed2a1db8b87a",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c6-r1-spec",
+          "performer": "claude:bench-reviewer/sr-c6-r1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ec07051543af362963b10f10f1642547663891",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c6-r1-spec-20261002@20aefd5cb9146433fb8be2a956b6ed2a1db8b87a",
+            "digest": "sha256:a69a06d37b221b540553d9a4a93d27e02af00caa8ee73bbc41b20a4eb34e4b07",
+            "excerpt": "## Spec\nP1. Spec line 219: \"A census entry is a function or a method declaration whose name is exported.\" Spec lines 244-245: the third message applies when an unexported declaration calls an entry whose own body reads. single_read_census_test.go:63 (topLevelFuncs drops methods), :215 (entryKinds records only functions), :167-171 (a non-qualifier selector never visits Sel). An exported method is accepted as an entry, but an unexported caller of a reading exported method draws no report. No exported method of the live package reads, so the gap is latent. Ticket 12, auto-fix, confidence 7.\nRows closed: WS57 to WS70, WS82, WS83, WS86. WS62 is met for function entries only (P1).\nOther predicates hold: the three messages and the refusal text match the spec; the ceiling is 44; parallel_census_test.go shrank; worktreeTestCount 701 to 716; worktree.go net 0; the five registry files untouched; each commit inside its Writes line; the four lifts hold.\ncount: 1\nworst: P1.\nAdvice: createAttributed relies on createAt's zero Creation on error. An effects function that reaches no package-qualified call has no kind.\n"
+          },
+          "axis": "Spec",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "20aefd5cb9146433fb8be2a956b6ed2a1db8b87a",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c6-r1-coverage",
+          "performer": "claude:bench-reviewer/sr-c6-r1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ec07051543af362963b10f10f1642547663891",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c6-r1-coverage-20261002@20aefd5cb9146433fb8be2a956b6ed2a1db8b87a",
+            "digest": "sha256:b60da14705a7debc8eac2804a02f698cec471c5b7adb56e96d498810644072a0",
+            "excerpt": "## Coverage\nC1. A read in the body, condition, or post statement of a three-clause for inside an entry is not pinned (single_read_census_test.go:152-157); WS60 and WS57 use for range only. Probe 1 walked the three clauses with nested=false and stayed silent. Story 35. Ticket 12, auto-fix, confidence 8.\nC2. An aliased import of a read package (import bh \".../benchhome\"; bh.Dir()) evades the census, because kinds are keyed by the qualifier that effects.go spells (:97-98) and the gate check compares the effects.go spelling (:114). Probe 3: the census returned []. Stories 34 and 40. Ticket 12, auto-fix, confidence 8.\nC3. An unexported helper that calls a reading exported method draws no report (:63, :215, :168-170). Probe 4: the census returned []. Latent in the live package. Ticket 12; the axis gave ask-user, confidence 7; the coordinator routes it as a repair with P1.\nC4. With effects.go absent or renamed, readSet returns an empty set with no error, so the live census passes and grades nothing. Probe 2: the constant renamed, every test silent. Ticket 12; the axis gave ask-user, confidence 6; the coordinator routes it as a hardening repair for veto.\nSettled: gateFiles[0] cannot panic; the entry-to-entry pass is a decided edge (probe 5 silent on the live tree).\nProbes, each --package ./internal/worktree, each restored yes: (1) three-clause for walks with nested, silent; (2) effectsFile renamed, silent; (3) aliased import in the WS66 fixture, bit through a missing expected report; (4) exported method entry in the WS62 fixture, bit through a missing expected report; (5) the entry-to-entry case widened, silent.\ncount: 4\nworst: C2.\nAdvice: os.Environ at exec.go:202 and clean.go:218 is not a read under the spec's definition; a Won't-handle line would decide it. Nothing pins the decided entry-to-entry pass.\nFinal git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "20aefd5cb9146433fb8be2a956b6ed2a1db8b87a",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1608,3 +1679,36 @@ The Coverage axis confirmed S1 with a probe that returned `bit`. Its probe for C
 ### Advice
 
 - The uncertain mark of the stat branch in `clean.go` has no test of its own.
+
+## SR-C6 chunk review, round 1
+
+Three fresh opus / high sessions reviewed the frozen pair `e3c45d46..20aefd5c`, which holds the tickets 11 to 13 through a merge commit. The arm B delegate of these tickets also had one fable / high review in the line comparison. The blind review named two of the items below. The raw finding count is 7, and the repair-target count is 6. The repair allowance of SR-C6 is 2 cycles, and 0 cycles are used.
+
+### Standards
+
+Count: 2. Worst: S1.
+
+- S1 (`auto-fix`, confidence 6, ticket 12): `internal/worktree/single_read_census_test.go` line 195 derives the non-test source predicate a second time. `parseSourceFiles` in `parallel_census_test.go` owns it. The rule is the `AGENTS.md` code standard, one source per fact.
+- S2 (`auto-fix`, confidence 5, ticket 12): the census names `effects.go` through its own constant, and `effect_census_test.go` names it as a literal. A rename that updates one file leaves the live census with nothing to grade. The repair needs `effect_census_test.go`, which the plan commit adds to the fence of ticket 12.
+
+### Spec
+
+Count: 1. Worst: P1. The axis closed the 17 rows, and WS62 is met for function entries only.
+
+- P1 (`auto-fix`, confidence 7, ticket 12): the spec says that a census entry is "a function or a method declaration whose name is exported". The census indexes only functions for the third message, so an unexported helper that calls a reading exported method draws no report. No live method reads today. The Coverage axis found the same gap as C3.
+
+### Coverage
+
+Count: 4. Worst: C2.
+
+- C1 (`auto-fix`, confidence 8, ticket 12): a read in the body, the condition, or the post statement of a three-clause `for` is not pinned. Story 35 covers each loop body.
+- C2 (`auto-fix`, confidence 8, ticket 12): an aliased import of a read package evades the census for every kind. The kinds are keyed by the qualifier that `effects.go` spells. Stories 34 and 40.
+- C3 (`ask-user` from the axis, confidence 7, ticket 12): the same gap as P1. The coordinator routes it as a repair with P1, for reviewer veto.
+- C4 (`ask-user` from the axis, confidence 6, ticket 12): with `effects.go` absent or renamed, the read set is empty with no error. The live census then passes with nothing graded. The spec does not decide this edge. The coordinator routes it as the one hardening repair of this chunk, for reviewer veto.
+
+### Advice
+
+- `createAttributed` relies on `createAt` returning a zero `Creation` on each of its 17 error returns, and the invariant is stated at the consumer.
+- `os.Environ` in `exec.go` and `clean.go` is not a read under the spec's definition; a Won't-handle line would decide it.
+- The `directCallees` and `calleeName` doc comments say "test-file functions", which is out of date.
+- `gateFiles[0]` cannot panic: the loop never runs with no gate file.
