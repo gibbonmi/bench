@@ -125,6 +125,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sr-c1-r2-standards",
+          "performer": "claude:bench-reviewer/sr-c1-r2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fefdc8ecd0a7d5876ca46611dcb71ca1538f7390",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c1-r2-standards-20261002@37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+            "digest": "sha256:1d4e9b5946b0ee3a777d4742454dc928e0bcdf21e00fc4a2a181ba91808d1057",
+            "excerpt": "Standards axis, SR-C1 confirming round, repair delta 0d7b4066..37e3f72f: pass, 0 findings.\nS1: confirmed. internal/gate/lane_test.go:208 calls LaneForCommit(manifestLaneRoot(t)). The manifest literal exists in one place, manifestLaneRoot at internal/gate/kit_value_test.go:99-105.\nThe changed comment at internal/gate/kit_value_test.go:86-87 meets bench-craft-comments.\nblocking findings: none.\n"
+          },
+          "axis": "Standards",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c1-r1-standards"
+          ]
+        },
+        {
+          "id": "sr-c1-r2-spec",
+          "performer": "claude:bench-reviewer/sr-c1-r2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fefdc8ecd0a7d5876ca46611dcb71ca1538f7390",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c1-r2-spec-20261002@37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+            "digest": "sha256:e086005dd4dc1d8fc05e085f82bf5b6a3c9d3c4070efb584fd3cd7267a4cc78c",
+            "excerpt": "Spec axis, SR-C1 confirming round, repair delta 0d7b4066..37e3f72f: pass, 0 findings.\nC1 confirmed: the WS6 test keeps its name, adds t.Chdir(root), and still fails if KitSourceCheckoutAtKit(root, \"\") is true (spec.md:364).\nS1 confirmed: internal/gate/lane_test.go:208 replaces the inline manifest with LaneForCommit(manifestLaneRoot(t)); the assertions are unchanged. The axis did not read the manifest body of manifestLaneRoot within its budget.\nScope confirmed: no production code changed; ticket 1's Writes line holds internal/gate/lane_test.go.\nblocking findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c1-r1-spec"
+          ]
+        },
+        {
+          "id": "sr-c1-r2-coverage",
+          "performer": "claude:bench-reviewer/sr-c1-r2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fefdc8ecd0a7d5876ca46611dcb71ca1538f7390",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c1-r2-coverage-20261002@37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+            "digest": "sha256:8396dfa309b40ebe7e795aabf6e4097bc4fdcb6b5431e008eaf396452d5b0ef3",
+            "excerpt": "Coverage axis, SR-C1 confirming round, repair delta 0d7b4066..37e3f72f: pass, 0 findings.\nC1: confirmed. internal/gate/kit_value_test.go adds t.Chdir(root) to the WS6 test.\nProbe: bench probe internal/gate/kit_source.go --swap 'filepath.Join(filepath.Dir(exe), \"..\")' --with 'filepath.Join(\".\", exe[:0])' --package ./internal/gate --run TestKitSourceCheckoutAtKitFallsBackToTheExecutableParent. Verdict bit, 1 failed test (kit_value_test.go:95), restored yes. The first swap in the charge did not compile and returned invalid, restored yes.\nblocking findings: none.\nFinal git status: empty.\nAn earlier session for this axis stalled with no output and the coordinator stopped it; that transport is incomplete.\n"
+          },
+          "axis": "Coverage",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c1-r1-coverage"
+          ]
         }
       ]
     }
@@ -184,3 +250,7 @@ One fresh opus / high repair session, `claude:bench-writer/sr-t1-repair1`, repai
 - C1: the WS6 test makes the root the working directory. The named swap probe at `kit_source.go` line 31 was `silent` before the repair and `bit` after it.
 
 The coordinator probe omitted `Selective: true` in `LaneForCommitAtKit`. It returned `bit` with 1 failed test and `restored=yes`.
+
+## SR-C1 confirming round
+
+Three fresh opus / high sessions read the repair delta `0d7b4066..37e3f72f`. Each axis confirmed its folds and reported no blocking finding. The Coverage axis ran one swap probe on the `kitDirAt` fallback, and it returned `bit` with `restored=yes`. An earlier Coverage session stalled with no output, and the coordinator stopped it. SR-C1 has no open finding, and 1 of 2 repair cycles is used.
