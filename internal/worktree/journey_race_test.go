@@ -34,7 +34,7 @@ func TestParallelJourneysShareTheHarnessSafely(t *testing.T) {
 				if err := create.Run(); err != nil {
 					t.Fatalf("worktree create exit=%d stdout=%q stderr=%q", exitCode(err), stdout.String(), stderr.String())
 				}
-				if !strings.Contains(stdout.String(), "worktree_create[1]") || !strings.Contains(stdout.String(), ",active") {
+				if !strings.Contains(stdout.String(), createTable+"[1]") || !strings.Contains(stdout.String(), ",active") {
 					t.Fatalf("worktree create stdout = %q, want one active creation receipt", stdout.String())
 				}
 			})

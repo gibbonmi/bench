@@ -142,9 +142,6 @@ type foldedSibling struct {
 	tip     string
 }
 
-// cleanupTable is the table block that the clean verb renders its rows in.
-const cleanupTable = "worktree_cleanup"
-
 // textRow is one decoded table row: each field and its text cell.
 type textRow map[string]string
 

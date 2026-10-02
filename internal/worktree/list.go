@@ -13,6 +13,23 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
+// These constants name each table block that the package renders, so a test reads the
+// name that its renderer passes to toon.Table or toon.TableTyped. Both list views render
+// listTable.
+const (
+	listTable                 = "worktrees"
+	createTable               = "worktree_create"
+	releaseTable              = "worktree_release"
+	buildTable                = "worktree_build"
+	cleanupTable              = "worktree_cleanup"
+	ignoredPathsTable         = "ignored_paths"
+	refusalPathsTable         = "refusal_paths"
+	resetPathsTable           = "reset_paths"
+	poolReclaimTable          = "pool_reclaim"
+	poolReclaimAppliedTable   = "pool_reclaim_applied"
+	poolReclaimAggregateTable = "pool_reclaim_aggregate"
+)
+
 var worktreeListFields = []string{"id", "label", "request", "state", "source", "tree", "lease", "landed", "ignored"}
 
 var worktreeListGrammar = usage.Grammar{Cmd: usage.WorktreeList, Help: "usage: " + usage.WorktreeList, HelpOnlyWhenSole: true, UnquotedEmptyPositional: true}
@@ -90,7 +107,7 @@ func ListCommand(root, _ string, args []string) (string, int) {
 			break
 		}
 	}
-	out, err := toon.TableTyped("worktrees", worktreeListFields, values)
+	out, err := toon.TableTyped(listTable, worktreeListFields, values)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}

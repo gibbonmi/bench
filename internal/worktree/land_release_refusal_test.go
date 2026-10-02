@@ -23,7 +23,7 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	// The route reads from the registry, so the face's repair keeps one source. The
 	// caller's own re-run rides behind it and this row does not pin it.
 	wantNext := "next=" + landingRefusalFaceByName(faceDestinationNotClean).route("")
-	if r.exit != 1 || !strings.Contains(r.stdout, wantNext) || !strings.Contains(r.stdout, "paths_total=1") || !strings.Contains(r.stdout, "refusal_paths[1]{path}:") || !strings.Contains(r.stdout, "tracked.txt") || len(r.stderr) != 0 {
+	if r.exit != 1 || !strings.Contains(r.stdout, wantNext) || !strings.Contains(r.stdout, "paths_total=1") || !strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:") || !strings.Contains(r.stdout, "tracked.txt") || len(r.stderr) != 0 {
 		t.Fatalf("destination refusal = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 }
@@ -43,7 +43,7 @@ func TestLandCommandRefusalListsCollidingPaths(t *testing.T) {
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceDestinationCollision).detail)
 	if r.exit != 1 || !printed || !strings.HasPrefix(next, landingRefusalFaceByName(faceDestinationCollision).route("")) ||
-		!strings.Contains(r.stdout, "refusal_paths[1]{path}:\n  owned.txt\n") || strings.Contains(r.stdout, ".env") ||
+		!strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:\n  owned.txt\n") || strings.Contains(r.stdout, ".env") ||
 		strings.Contains(r.stdout, "notes.txt") || len(r.stderr) != 0 {
 		t.Fatalf("collision refusal = (%d, %q, %q), want owned.txt alone", r.exit, r.stdout, r.stderr)
 	}
@@ -62,7 +62,7 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	unsafe := strings.ContainsFunc(r.stdout, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
 	wantPathRow := `  "bad\\n\\u001b,comma"` + "\n"
-	if r.exit != 1 || unsafe || !strings.Contains(r.stdout, "refused{") || !strings.Contains(r.stdout, "refusal_paths[1]{path}:\n"+wantPathRow) || strings.Count(r.stdout, "\n") != 4 || len(r.stderr) != 0 {
+	if r.exit != 1 || unsafe || !strings.Contains(r.stdout, "refused{") || !strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:\n"+wantPathRow) || strings.Count(r.stdout, "\n") != 4 || len(r.stderr) != 0 {
 		t.Fatalf("control refusal = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 }
@@ -84,11 +84,11 @@ func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T
 	out := r.stderr
 	wantNext := "next=bench worktree release --request <request> '" + f.creation.Path + "'"
 	if r.exit != 1 || len(r.stdout) != 0 || !strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):") ||
-		!strings.Contains(out, "paths_total=1003\n") || !strings.Contains(out, "refusal_paths[1000]{path}:") ||
+		!strings.Contains(out, "paths_total=1003\n") || !strings.Contains(out, refusalPathsTable+"[1000]{path}:") ||
 		!strings.Contains(out, "residue-0000 space[*]") || strings.Contains(out, "residue-1000") || !strings.Contains(out, wantNext) || strings.Contains(out, request) {
 		t.Fatalf("release refusal: code=%d stdout=%q prefix=%t total=%t table=%t hostile=%t bounded=%t next=%t", r.exit, r.stdout,
 			strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):"), strings.Contains(out, "paths_total=1003\n"),
-			strings.Contains(out, "refusal_paths[1000]{path}:"), strings.Contains(out, "residue-0000 space[*]"), !strings.Contains(out, "residue-1000"), strings.Contains(out, wantNext))
+			strings.Contains(out, refusalPathsTable+"[1000]{path}:"), strings.Contains(out, "residue-0000 space[*]"), !strings.Contains(out, "residue-1000"), strings.Contains(out, wantNext))
 	}
 }
 

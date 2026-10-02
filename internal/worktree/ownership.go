@@ -509,7 +509,7 @@ func recoveryPendingError(a intent.Assignment) error {
 	return fmt.Errorf("worktree removed out of band; its work is preserved until the next session start sweeps it: git show %s", ref)
 }
 func renderRelease(stdout io.Writer, assignment intent.Assignment, action string) int {
-	out, err := toon.Table("worktree_release", []string{"path", "assignment", "state", "action"}, [][]string{{assignment.Worktree, assignment.ID, string(assignment.State), action}})
+	out, err := toon.Table(releaseTable, []string{"path", "assignment", "state", "action"}, [][]string{{assignment.Worktree, assignment.ID, string(assignment.State), action}})
 	if err != nil {
 		return 1
 	}

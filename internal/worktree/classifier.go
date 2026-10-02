@@ -57,7 +57,7 @@ func (r refusal) table() string {
 	for _, path := range r.paths[:shown] {
 		rows = append(rows, []string{sanitize.Controls(path)})
 	}
-	out, err := toon.Table("refusal_paths", []string{"path"}, rows)
+	out, err := toon.Table(refusalPathsTable, []string{"path"}, rows)
 	if err != nil {
 		return ""
 	}
@@ -75,7 +75,7 @@ func renderCleanups(stdout io.Writer, plans []CleanupPlan) error {
 	for _, plan := range plans {
 		rows = append(rows, cleanupRow(plan))
 	}
-	out, err := toon.Table("worktree_cleanup", cleanupFields, rows)
+	out, err := toon.Table(cleanupTable, cleanupFields, rows)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func renderIgnoredPreview(stdout io.Writer, plan CleanupPlan) error {
 	for _, path := range plan.Ignored.Paths[:plan.Ignored.Shown] {
 		rows = append(rows, []string{path})
 	}
-	preview, err := toon.Table("ignored_paths", []string{"path"}, rows)
+	preview, err := toon.Table(ignoredPathsTable, []string{"path"}, rows)
 	if err != nil {
 		return err
 	}

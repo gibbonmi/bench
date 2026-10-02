@@ -209,7 +209,7 @@ func TestLandCommandFenceRefusalNamesThePath(t *testing.T) {
 	commitInWorktree(t, f.creation.Path, "stray.txt", "stray\n", "out of fence")
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	r := runVerb(t, verbLand, f.processHomeCall(landArgs(request, f.base, tip, f.creation.Path)...))
-	if r.exit != 1 || !strings.Contains(r.stdout, "paths_total=1") || !strings.Contains(r.stdout, "refusal_paths[1]{path}:\n  stray.txt\n") {
+	if r.exit != 1 || !strings.Contains(r.stdout, "paths_total=1") || !strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:\n  stray.txt\n") {
 		t.Fatalf("fence refusal = (%d, %q, %q), want the unfenced path in a refusal_paths row", r.exit, r.stdout, r.stderr)
 	}
 }

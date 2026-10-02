@@ -71,7 +71,7 @@ func TestCleanLandedTabPathRendersOneRow(t *testing.T) {
 	landAssignment(t, root, creation, "tab.txt")
 
 	plan := runVerb(t, verbClean, repoHome{root, home}.call("--landed"))
-	if plan.exit != 0 || plan.stderr != "" || !strings.HasPrefix(plan.stdout, "worktree_cleanup[1]") || strings.ContainsRune(plan.stdout, '\t') || !strings.Contains(plan.stdout, `\t`) {
+	if plan.exit != 0 || plan.stderr != "" || !strings.HasPrefix(plan.stdout, cleanupTable+"[1]") || strings.ContainsRune(plan.stdout, '\t') || !strings.Contains(plan.stdout, `\t`) {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
 }

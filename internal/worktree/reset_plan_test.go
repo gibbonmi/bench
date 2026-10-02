@@ -62,7 +62,7 @@ func TestResetPlanListsEveryAffectedPath(t *testing.T) {
 	mustWrite(t, filepath.Join(f.creation.Path, "ignored"), []byte("output\n"), 0o644)
 	gitRun(t, f.creation.Path, "mv", "README.md", "renamed")
 	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
-	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "reset_paths[4]{path,status}:"), "paths = %d %s %s", result.exit, result.stdout, result.stderr)
+	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, resetPathsTable+"[4]{path,status}:"), "paths = %d %s %s", result.exit, result.stdout, result.stderr)
 	for _, path := range []string{"staged", "tracked.txt", "untracked", "renamed"} {
 		requireTest(t, strings.Contains(result.stdout, "\n  "+path+","), "missing path %s: %s", path, result.stdout)
 	}
@@ -74,7 +74,7 @@ func TestResetPlanSanitizesAHostilePath(t *testing.T) {
 	f := newOwnedAssignment(t, "reset-control-path")
 	mustWrite(t, filepath.Join(f.creation.Path, "bad\x1bname"), []byte("new\n"), 0o644)
 	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
-	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "reset_paths[1]") && !strings.ContainsRune(result.stdout, '\x1b'),
+	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, resetPathsTable+"[1]") && !strings.ContainsRune(result.stdout, '\x1b'),
 		"hostile path = %d %s %s", result.exit, result.stdout, result.stderr)
 	requireTest(t, strings.Count(result.stdout, "reset_plan{") == 1 && len(strings.Split(strings.TrimSpace(result.stdout), "\n")) == 3,
 		"hostile path split the plan: %q", result.stdout)

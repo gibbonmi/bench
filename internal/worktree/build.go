@@ -60,7 +60,7 @@ func buildAttributed(attributed *string, j joins, root string, parsed usage.Resu
 		fmt.Fprintf(stderr, "%s: %v\n", buildVerb, buildErr)
 		return nameWorktree(stderr, path, buildExitCode(buildErr))
 	}
-	table, err := toon.Table("worktree_build", []string{"worktree", "executable"}, [][]string{{assignment.ID, output}})
+	table, err := toon.Table(buildTable, []string{"worktree", "executable"}, [][]string{{assignment.ID, output}})
 	if err != nil {
 		fmt.Fprintln(stderr, toon.RenderError(err))
 		return 1

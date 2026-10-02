@@ -662,7 +662,7 @@ func createAttributed(assignment *string, parsed usage.Result, root, home string
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1
 	}
-	out, err := toon.Table("worktree_create", []string{"path", "assignment", "state"}, [][]string{{creation.Path, creation.Assignment.ID, string(creation.Assignment.State)}})
+	out, err := toon.Table(createTable, []string{"path", "assignment", "state"}, [][]string{{creation.Path, creation.Assignment.ID, string(creation.Assignment.State)}})
 	if err != nil {
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1

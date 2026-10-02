@@ -149,7 +149,7 @@ func resumeReclaimableCount(t *testing.T, summary string) int {
 // target count, not against a second call of the predicate from the test.
 func planReclaimableCount(t *testing.T, plan verbResult) int {
 	t.Helper()
-	rows := plan.mustRows(t, "pool_reclaim_aggregate")
+	rows := plan.mustRows(t, poolReclaimAggregateTable)
 	requireTest(t, len(rows) == 1, "plan carries %d aggregate rows, want one: %q", len(rows), plan.stdout)
 	fields, ok := rows[0].(map[string]any)
 	requireTest(t, ok, "aggregate row decoded as %T, want an object: %q", rows[0], plan.stdout)

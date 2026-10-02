@@ -73,7 +73,7 @@ func resetWith(j joins, a ambient, root string, args []string, stdout, stderr io
 		}
 	}
 	if len(rows) > 0 {
-		table, err := toon.Table("reset_paths", []string{"path", "status"}, rows)
+		table, err := toon.Table(resetPathsTable, []string{"path", "status"}, rows)
 		if err != nil {
 			return landRefusalError(stdout, err)
 		}

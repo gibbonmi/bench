@@ -97,7 +97,7 @@ func unquoteCell(field string) string {
 // reclaimRows returns the plan table's raw data rows.
 func reclaimRows(t *testing.T, out string) []string {
 	t.Helper()
-	return reclaimTableRows(t, out, "pool_reclaim[")
+	return reclaimTableRows(t, out, poolReclaimTable+"[")
 }
 
 // reclaimTableRows returns the raw data rows indented under the named table header. Every
@@ -170,10 +170,10 @@ func TestReclaimCommandPlansOnlyTheProvablyDeadKeys(t *testing.T) {
 	for key, want := range map[string]string{"dead-key": poolVerdictReclaim, "empty-key": poolVerdictReclaim, "live-key": poolVerdictRetain} {
 		requireTest(t, verdicts[key][0] == want, "key %s verdict = %q, want %q", key, verdicts[key][0], want)
 	}
-	requireTest(t, strings.Contains(out.stdout, "pool_reclaim_aggregate[1]{keys,reclaimable,retained,fingerprint}:"), "plan printed no aggregate header: %q", out.stdout)
+	requireTest(t, strings.Contains(out.stdout, poolReclaimAggregateTable+"[1]{keys,reclaimable,retained,fingerprint}:"), "plan printed no aggregate header: %q", out.stdout)
 	fingerprint := out.mustFingerprint(t)
 	requireTest(t, strings.Contains(out.stdout, reclaimApplyHead+fingerprint), "plan printed no apply invocation: %q", out.stdout)
-	requireReclaimAggregate(t, out.stdout, "pool_reclaim_aggregate[", "3", "2", "1", fingerprint)
+	requireReclaimAggregate(t, out.stdout, poolReclaimAggregateTable+"[", "3", "2", "1", fingerprint)
 }
 
 // [PL2][SH1][SH2][SH3] A retained key the operator expected to be reclaimed has to say
@@ -246,14 +246,14 @@ func TestReclaimCommandAnswersAnEmptyPoolWithZeroRows(t *testing.T) {
 	t.Run("empty pool", func(t *testing.T) {
 		f := newReclaimPool(t)
 		out := runVerb(t, verbReclaim, f.call())
-		requireTest(t, out.stderr == "" && out.exit == 0 && strings.Contains(out.stdout, "pool_reclaim[0]{key,verdict,reason}:"),
+		requireTest(t, out.stderr == "" && out.exit == 0 && strings.Contains(out.stdout, poolReclaimTable+"[0]{key,verdict,reason}:"),
 			"empty pool reclaim code=%d out=%q stderr=%q", out.exit, out.stdout, out.stderr)
 	})
 	t.Run("absent pool directory", func(t *testing.T) {
 		f := newReclaimPool(t)
 		mustRemove(t, f.pool)
 		out := runVerb(t, verbReclaim, f.call())
-		requireTest(t, out.stderr == "" && out.exit == 0 && strings.Contains(out.stdout, "pool_reclaim[0]{key,verdict,reason}:"),
+		requireTest(t, out.stderr == "" && out.exit == 0 && strings.Contains(out.stdout, poolReclaimTable+"[0]{key,verdict,reason}:"),
 			"absent pool reclaim code=%d out=%q stderr=%q", out.exit, out.stdout, out.stderr)
 	})
 }
@@ -325,8 +325,8 @@ func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
 	for key, want := range map[string]string{"dead-key": poolVerdictRemoved, "empty-key": poolVerdictRemoved, "live-key": poolVerdictRetained} {
 		requireTest(t, verdicts[key][0] == want, "key %s verdict = %q, want %q (%s)", key, verdicts[key][0], want, verdicts[key][1])
 	}
-	requireTest(t, strings.Contains(out.stdout, "pool_reclaim_applied[1]{keys,removed,retained,fingerprint}:"), "apply printed no applied aggregate header: %q", out.stdout)
-	requireReclaimAggregate(t, out.stdout, "pool_reclaim_applied[", "3", "2", "1", fingerprint)
+	requireTest(t, strings.Contains(out.stdout, poolReclaimAppliedTable+"[1]{keys,removed,retained,fingerprint}:"), "apply printed no applied aggregate header: %q", out.stdout)
+	requireReclaimAggregate(t, out.stdout, poolReclaimAppliedTable+"[", "3", "2", "1", fingerprint)
 	for _, key := range []string{"dead-key", "empty-key"} {
 		target := filepath.Join(f.pool, key)
 		requireTest(t, filepath.Dir(target) == f.pool, "removed %s whose parent is not the pool", target)
@@ -347,15 +347,15 @@ func TestReclaimAggregateReadsAFingerprintInEitherSpelling(t *testing.T) {
 	digits := strings.Repeat("0123456789", 6) + "0123"
 	hex := strings.Repeat("0123456789abcdef", 4)
 	for name, out := range map[string]string{
-		"quoted":   "pool_reclaim_applied[1]{keys,removed,retained,fingerprint}:\n  3,2,1,\"" + digits + "\"\n",
-		"unquoted": "pool_reclaim_applied[1]{keys,removed,retained,fingerprint}:\n  3,2,1," + hex + "\n",
+		"quoted":   poolReclaimAppliedTable + "[1]{keys,removed,retained,fingerprint}:\n  3,2,1,\"" + digits + "\"\n",
+		"unquoted": poolReclaimAppliedTable + "[1]{keys,removed,retained,fingerprint}:\n  3,2,1," + hex + "\n",
 	} {
 		fingerprint := hex
 		if name == "quoted" {
 			fingerprint = digits
 		}
 		t.Run(name, func(t *testing.T) {
-			requireReclaimAggregate(t, out, "pool_reclaim_applied[", "3", "2", "1", fingerprint)
+			requireReclaimAggregate(t, out, poolReclaimAppliedTable+"[", "3", "2", "1", fingerprint)
 		})
 	}
 }
@@ -428,7 +428,7 @@ func TestReclaimApplyOverNothingToReclaimIsASuccessfulNoOp(t *testing.T) {
 
 	out := runVerb(t, verbReclaim, f.call("--apply", plan.fingerprint))
 	requireTest(t, out.stderr == "" && out.exit == 0, "no-op apply code=%d out=%q stderr=%q", out.exit, out.stdout, out.stderr)
-	requireReclaimAggregate(t, out.stdout, "pool_reclaim_applied[", "1", "0", "1", plan.fingerprint)
+	requireReclaimAggregate(t, out.stdout, poolReclaimAppliedTable+"[", "1", "0", "1", plan.fingerprint)
 	requireTest(t, poolListing(t, f.pool) == before, "a no-op apply changed the pool:\nbefore\n%s\nafter\n%s", before, poolListing(t, f.pool))
 }
 
