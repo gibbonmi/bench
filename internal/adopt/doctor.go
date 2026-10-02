@@ -12,7 +12,6 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/sanitize"
-	"github.com/gibbonmi/bench/internal/usage"
 )
 
 const shimMarkerID = "bench-shim v1"
@@ -171,28 +170,6 @@ func shimTargetFromFile(path string) string {
 		return ""
 	}
 	return ShimTarget(string(content))
-}
-
-var doctorGrammar = usage.Grammar{
-	Cmd:   "bench doctor",
-	Help:  "usage: bench doctor [--fix]",
-	Flags: []usage.Flag{{Name: "--fix"}},
-}
-
-func Doctor(args []string, stdout, stderr io.Writer, version string) int {
-	parsed, line, code := usage.Parse(doctorGrammar, args)
-	if line != "" {
-		if code == 0 {
-			fmt.Fprintln(stdout, line)
-		} else {
-			fmt.Fprintln(stderr, line)
-		}
-		return code
-	}
-	if _, fix := parsed.Flags["--fix"]; fix {
-		return doctorFix(stdout, stderr, version)
-	}
-	return doctorReport(stdout, version)
 }
 
 func doctorReport(stdout io.Writer, version string) int {
