@@ -913,6 +913,10 @@ At `c9731327`, `bench test --package ./internal/worktree` passed with the two so
 
 The second VR-C4 repair landed after the second rerun. The ticket 9 author then ran the package tests again on the final chunk source at `9fe5302ad05c1d5ed6d1ba3eb6e0aaf2a7e5127f`. `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds this result as `vr-c4-9-worktree-r4`.
 
+## VR-C4 ticket 10 second verification rerun
+
+VR-C4 repair 2 landed after the first rerun, so the ticket 10 author ran the package tests again on the final chunk source at `0d16bca145b1af54fe7541fcf667a63996bcefa5`. `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds this result as `vr-c4-10-worktree-r3`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2238,6 +2242,24 @@ The second VR-C4 repair landed after the second rerun. The ticket 9 author then 
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,63895\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "9-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c4-10-worktree-r3",
+          "performer": "claude:bench-writer/vr-t10-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9021fa9752d6386c960a1708ecab66ac3cba43c2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t10-author-20261001/10-worktree@0d16bca1",
+            "digest": "sha256:8f6636de6402391526da8a416a474341cf0a0d53dfe884e769d4f5d89b09c60e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,64718\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "10-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
