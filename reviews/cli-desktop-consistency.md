@@ -1,17 +1,25 @@
 # CLI and desktop consistency review
 
-C1 confirmation has two findings and two repair targets.
+Final C1 confirmation has zero findings and zero repair targets.
+The first confirmation had two findings and two repair targets.
 The first review had five findings and five repair targets.
 Repair cycle 1 of 2 completed its author verification and confirmation.
+
 Repair cycle 2 completed author verification in the user-selected session.
 
 Both permitted repair cycles are consumed.
-Final independent confirmation remains pending.
-The source stays unqualified until current reviews and its checkpoint pass.
+All three final axes returned positive terminal results.
+The C1 checkpoint remains pending.
+The complete specification remains unqualified until its live requirements pass.
 
 ## Standards
 
-Current finding count: 1.
+Final finding count: 0.
+Final confirmation closed STD-C1-02 and retained STD-C1-01 as closed.
+The issuing axis corrected its repair-evidence citation to lines 36-39.
+Its source, findings, observations, confidence, and verdict did not change.
+
+First confirmation finding count: 1.
 The full confirmation closed STD-C1-01.
 STD-C1-02: auto-fix, confidence 9.
 Make the system fixture consume one interface vocabulary.
@@ -33,7 +41,10 @@ The current finding is supported; the partial read is not a complete Standards p
 
 ## Spec
 
-Current finding count: 0.
+Final finding count: 0.
+Final confirmation found no requirement mismatch in repair cycle 2.
+
+First confirmation finding count: 0.
 Confirmation closed both Spec findings.
 The Spec axis found no remaining requirement mismatch in the repair delta.
 
@@ -51,7 +62,11 @@ Sources: CD03, internal/adopt/compatibility.go:135.
 
 ## Coverage
 
-Current finding count: 1.
+Final finding count: 0.
+Final confirmation closed COV-C1-02 and retained COV-C1-01 as closed.
+The final native result records the independent bypass attempt and its refutation.
+
+First confirmation finding count: 1.
 Confirmation closed COV-C1-01.
 COV-C1-02 remains: auto-fix, confidence 10.
 Exercise the real CLI collector with CODEX_HOME absent and HOME set.
@@ -549,6 +564,72 @@ No review requested a Bench command change.
           ],
           "supersedes": [
             "c1-coverage-r1"
+          ]
+        },
+        {
+          "id": "c1-standards-final",
+          "performer": "codex-collaboration:/root/c1_standards_final",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c1_standards_final",
+            "digest": "sha256:9a1f24262e482b4043af73f32c0914967ad0690ce03856bdde7d39c76b49390a",
+            "excerpt": "Standards positive terminal: zero findings/repair targets, worst none, confidence10.\nEvidence sha256:2cb151977237a7c600e307de3225415818245e2e941664b9130e28eddd830ff1; current pair6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69..ffd9d7d493859923ecd58fcc00104de75dde607a; repair56a00c90eab935ef8167af1fa3ed299081b70549..ffd9d7d493859923ecd58fcc00104de75dde607a.\nRead trusted metadata, all279consumers/all64coverage rows, single saved repair diff, whole approved spec, AGENTS/BENCH/profile, applicable review/CLI/comments/synthesis/boundedpolicy/Claim schema. Targeted interface owner,collector/fallback,environment merger,systemfixture,registry,root-help.\nSTD-C1-01 remains closed: Interfaces supplies production inventory, InterfaceOperand/ParseInterface consume it (inspect.go:21-42), doctor usage derives operand (adopt compatibility:21-40).\nSTD-C1-02 closed: system fixture consumes canonical Interfaces and typed interface keys/values (system compatibility:44-115,155-195). Sweep found no second fixture inventory.\nRoot-help literal help_inventory_test.go:111 is necessary independent omission oracle under AGENTS:42-48; omission red recorded assets/repair-cycle-2.md:36-39. Issuing axis reread the actual file and corrected its initially mistaken 443-446 citation, reaffirming identical frozen source, observations, confidence, finding set and disposition. This is evidence-only correction, not a new review round.\nInterfaces public comment satisfies timeless public-symbol rules.\nCOV-C1-02 repair shape present: bare CODEX_HOME removal in owner_environment_test.go:17-40, production HOME/.codex in collector:134-145; actual fallback assertion system compatibility:182-188; recursive path/mode/filebytes/link comparisons167-232 match CD01/03/05 spec:278,280,282.\nBoth cycles consumed. No substantive Standards concern or optional advice. No command change needed. Claim status=claimed confidence10.\n"
+          },
+          "axis": "Standards",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "7e333f194064cefd23f2df6e42eccaa975908449",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-standards-confirm1"
+          ]
+        },
+        {
+          "id": "c1-spec-final",
+          "performer": "codex-collaboration:/root/c1_spec_final",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c1_spec_final",
+            "digest": "sha256:e49e8b2c88716f70dd0c25886cc95bfdc4b612b55af762c225fcb9ad147b014e",
+            "excerpt": "Spec confirmation: positive terminal result, zero findings, confidence10.\nBinding fullchunk6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69..ffd9d7d493859923ecd58fcc00104de75dde607a; repair56a00c90eab935ef8167af1fa3ed299081b70549..ffd9d7d493859923ecd58fcc00104de75dde607a; evidence sha256:2cb151977237a7c600e307de3225415818245e2e941664b9130e28eddd830ff1. Preflight current=true dirty=false.\nRead rules, complete spec, trusted metadata1/consumers45/coverage46, relevant untouched adopt.Doctor/commandRegistry consumers first, single repair diff, actual source/tests, repair-cycle2 and review record. No edits/tests/probes/commits/stash/poolpath calls or consumer recollection.\nSTD-C1-02 closes: inspect.go:13-43 inventory owns constants/enumeration/operand/parser; systemtest/compatibility_test.go:44-115,155-165,173-182 uses canonical inventory and typed constants. Root-help literal is independent omission oracle (help_inventory_test.go:62-65,111), mutation red demonstrated repair-cycle-2.md:36-39.\nCOV-C1-02 closes: bare CODEX_HOME actually removed by environment owner (system compatibility:105-115,182-187; owner_environment:17-40; owner_test:164-178). Recursive both-home snapshots compare relative paths/modes/filebytes/symlink targets after each actual invocation (system compatibility:167-232). Cache write and wrong fallback mutations both failed (repair-cycle-2:22-29).\nCD01 explicit identity (spec:278), CD03 distinct activehome (spec:280; collector:99-106,134-145; tests inspect:56-68/adopt:200-208), CD05 readonly (spec:90,282) satisfied by targeted repair.\nC2/C3 future. Normal desktop unqualified consistently with spec:17,225 and repair-cycle2:57-59. Both cycles consumed; no concrete blocker remains on this axis. Optional advice none. Command contribution none warranted. Claim status=claimed confidence10.\n"
+          },
+          "axis": "Spec",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "7e333f194064cefd23f2df6e42eccaa975908449",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec-confirm1"
+          ]
+        },
+        {
+          "id": "c1-coverage-final",
+          "performer": "codex-collaboration:/root/c1_coverage_final",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c1_coverage_final",
+            "digest": "sha256:7d50570118103073f94ca32909b190a141f4ce8aaae5b82b6ec974ea60d20a73",
+            "excerpt": "Coverage positive terminal: zero findings, worst none, confidence10.\nCurrent clean binding: evidence sha256:2cb151977237a7c600e307de3225415818245e2e941664b9130e28eddd830ff1; fullchunk6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69..ffd9d7d493859923ecd58fcc00104de75dde607a; repair56a00c90eab935ef8167af1fa3ed299081b70549..ffd9d7d493859923ecd58fcc00104de75dde607a. Delivery unverified.\nRead trusted export/index/metadata1/coverage46/consumers45 complete untouched set before relevant touched sites; whole537line spec, profilehostileinputs, one repairdiff, actualcollector/owner/systemfixture/envmerger, C1ticket, repair2, firstverification, sourceboundrecords.\nCOV-C1-01 remains closed: sealed wrapper invokes every Interfaces member and checks selected identity (system compatibility:155; collector:93).\nCOV-C1-02 closed: bare CODEX_HOME is removed, production uses HOME/.codex (system:105,182; owner_environment:21; collector:134). Every explicit/fallback invocation recursively compares both complete homes including paths/modes/filebytes/links (system:167-233).\nSTD-C1-02 closed: canonical vocabulary drives fixturehomes/execution/cases (inspect:21; system:75,155,179). Exact help literal remains omission oracle (help_inventory:111), recorded red repair-cycle2:36.\nRecorded desktopcache/wrongCLIhome mutations failed namedsubtests and restoredsuitepassed (repair-cycle2:20-48); reviewer did not execute checks.\nIndependent bypass: selected desktop or CLI fallback cachewrite cannot preserve positives because immediate recursive comparisons follow each invocation. Invented unrelated BENCH_HOME write adds a producer/destination absent from C1collector/CD05repair boundary, so it is not a repair-delta finding.\nFuture C2/C3 ungraded. Optional advice none. Command contribution none. No tests/probes/edits/commits/stash/consumerrecollection/poolpath calls. Claim status=claimed confidence10.\n"
+          },
+          "axis": "Coverage",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "7e333f194064cefd23f2df6e42eccaa975908449",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-coverage-confirm1"
           ]
         }
       ]
