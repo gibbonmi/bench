@@ -718,6 +718,42 @@
           "requirement": "4-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "re-c3-v3-t3-reviewrecord",
+          "performer": "claude:bench-writer/re-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c512b393d3e4e68dcb4aa82cc723410ce996a08c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t3-repair-2-20261002/verify-3-reviewrecord",
+            "digest": "sha256:2bb5222c823f832a2e93bee49925d5ebfc9d19dd1d7f56582af1068b6cc65e79",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1624\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,3939\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "3-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c3-v3-t3-cmd",
+          "performer": "claude:bench-writer/re-t3-repair-2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c512b393d3e4e68dcb4aa82cc723410ce996a08c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t3-repair-2-20261002/verify-3-cmd",
+            "digest": "sha256:22836ce3daeb0779c68629f00662940f986caacc5c854e355221781953ba5c23",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13032\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "3-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -1455,3 +1491,24 @@ The plan commit `f4ad758a` assigned the fresh repair session `claude:bench-write
 The repair probe made `[ ]` groups required, and `bench probe` returned `bit` on 33 tests with `restored=yes`. The coordinator probe inverted the derived `Required` bit, and `bench probe` returned `bit` on 44 tests with `restored=yes`.
 
 The orchestrator re-froze RE-C3 with `bench record chunk`, with base `48ab8bdf` and tip `ac18ccca`. A fifth identity amendment moves the record plan digest to the plan at that tip.
+
+## RE-C3 ticket 3 repair 2 verification
+
+The repair session `claude:bench-writer/re-t3-repair-2` ran on opus at medium effort. It used 1 of 2 attempts. The repair commit is `ac18ccca`, and the commit lane passed.
+
+| Finding | Change | Red route | Status |
+|---|---|---|---|
+| S3 | `grammar()` sets `Required` for each flag that every set from `admits` holds. The `occurrence` values are `once` and `repeated`, so `occurs` states only whether a flag repeats. The form comment states that the layout is the one source of optionality. | The probe below. | closed |
+
+The probe ran through `bench probe` on `command.go`. It changed the `[ ]` test in `admits` so that a `[ ]` group admitted no empty set. The probe returned `bit` on 33 tests with `restored=yes`. Each failed test exited 2 with the verification usage line. The help golden did not change.
+
+After the repair, `command.go` held 400 lines. The line limit is 400.
+
+The duplicated-facts sweep found one source for each fact. The layout holds optionality, and `occurs` holds repetition. The comment sweep found that each changed comment states the current code.
+
+Fresh focused checks at `0c7bf58c`:
+
+- `bench test --package ./internal/reviewrecord/...` passed in 5.6 s of package time. The verb recorded `re-c3-v3-t3-reviewrecord`.
+- `bench test --package ./cmd/bench` passed in 13.0 s of package time. The verb recorded `re-c3-v3-t3-cmd`.
+
+No check skipped a test.
