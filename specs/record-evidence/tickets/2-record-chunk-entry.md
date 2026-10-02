@@ -2,7 +2,7 @@
 
 Blocked by: 1-render-record-fence.md
 Writes: internal/reviewrecord/write.go (new), internal/reviewrecord/recordcmd/ (new), internal/reviewrecord/recordtest/fixture.go, cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/help_inventory_single_source_test.go, tests/canary/package-core-guard/unrouted-subcommand
-Covers: RE11, RE12, RE13, RE14, RE15, RE16, RE17, RE18, RE19, RE20, RE21, RE22, RE23, RE24, RE25, RE26, RE27, RE28, RE29, RE30, RE31, RE32, RE33, RE34, RE35, RE37, RE38, RE39, RE40, RE41, RE105, RE106
+Covers: RE11, RE12, RE13, RE14, RE15, RE16, RE17, RE18, RE19, RE20, RE21, RE22, RE23, RE24, RE25, RE26, RE27, RE28, RE29, RE30, RE31, RE32, RE33, RE34, RE35, RE37, RE38, RE39, RE40, RE41, RE105, RE106, RE112, RE113
 
 ## What to build
 
