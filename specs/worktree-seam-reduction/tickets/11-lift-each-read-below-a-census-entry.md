@@ -1,7 +1,7 @@
 # 11. Lift each read below a census entry
 
 Blocked by: 10-fault-the-merge-reconcile-with-a-stale-index-lock.md
-Writes: internal/worktree/snapshot.go, internal/worktree/subshell.go, internal/worktree/resume.go, internal/worktree/ownership.go, internal/worktree/worktree.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/snapshot.go, internal/worktree/subshell.go, internal/worktree/snapshot_test.go, internal/worktree/subshell_test.go, internal/worktree/resume.go, internal/worktree/ownership.go, internal/worktree/worktree.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: WS68, WS83
 
 ## What to build
