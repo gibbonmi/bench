@@ -1151,6 +1151,89 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SR-C6",
+      "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+      "tip": "20aefd5cb9146433fb8be2a956b6ed2a1db8b87a",
+      "plan_digest": "sha256:b38e9b91d8eb294528ff65bd357a932729a154a078d2b43a567a1ccd8c1af5b1",
+      "source_digest": "b9ec07051543af362963b10f10f1642547663891",
+      "acceptance_rows": [
+        "WS68",
+        "WS83",
+        "WS57",
+        "WS58",
+        "WS59",
+        "WS60",
+        "WS61",
+        "WS62",
+        "WS63",
+        "WS64",
+        "WS65",
+        "WS66",
+        "WS67",
+        "WS82",
+        "WS86",
+        "WS69",
+        "WS70"
+      ],
+      "verification": [
+        {
+          "id": "sr-c6-11-worktree",
+          "performer": "claude:bench-writer/sr-b2-author/t11",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ec07051543af362963b10f10f1642547663891",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-b2-author-20261002@564f4d46cc32fb52362fd6fae155650eff6a2386",
+            "digest": "sha256:2db8e5608a79129ec419237666ec9f0e58dd7f9a28299aab454ceb3e5cea543c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,20aefd5cb9146433fb8be2a956b6ed2a1db8b87a,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,86311\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "11-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c6-12-worktree",
+          "performer": "claude:bench-writer/sr-b2-author/t12",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ec07051543af362963b10f10f1642547663891",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-b2-author-20261002@564f4d46cc32fb52362fd6fae155650eff6a2386",
+            "digest": "sha256:2db8e5608a79129ec419237666ec9f0e58dd7f9a28299aab454ceb3e5cea543c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,20aefd5cb9146433fb8be2a956b6ed2a1db8b87a,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,86311\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "12-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c6-13-worktree",
+          "performer": "claude:bench-writer/sr-b2-author/t13",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9ec07051543af362963b10f10f1642547663891",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-b2-author-20261002@564f4d46cc32fb52362fd6fae155650eff6a2386",
+            "digest": "sha256:2db8e5608a79129ec419237666ec9f0e58dd7f9a28299aab454ceb3e5cea543c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,20aefd5cb9146433fb8be2a956b6ed2a1db8b87a,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,86311\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "13-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
