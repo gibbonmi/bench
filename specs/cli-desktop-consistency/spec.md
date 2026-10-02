@@ -275,23 +275,23 @@ real hook tests   deadline tests                    review-owned evidence
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| CD01 | 2 | The compatibility report names the explicitly selected CLI or desktop interface | planned TestCompatibilityInterface in internal/adopt/compatibility_test.go | Swapping the selected interface changes the expected context |
-| CD02 | 2 | An unknown active runtime remains unknown when a launcher version is available | planned TestCompatibilityRuntimeProvenance in internal/compatibility/inspect_test.go | A PATH launcher cannot supply the active server identity |
-| CD03 | 3 | The report names the active configuration home without assuming the other interface shares it | planned TestCompatibilityHomes in internal/compatibility/inspect_test.go | Different Linux and mounted Windows homes must remain distinct |
-| CD04 | 3 | An unreadable effective setting reports unknown with its source | planned TestCompatibilityUnknownConfig in internal/compatibility/inspect_test.go | Dropping a failed source would fabricate agreement |
-| CD05 | 4 | Diagnostics leave both user configuration homes byte-identical | planned TestCompatibilityReadOnly in internal/adopt/compatibility_test.go | Independent before-and-after snapshots catch silent synchronization |
-| CD06 | 5 | An absent required repository asset reports its exact restoration action | planned TestCompatibilityMissingAsset in internal/adopt/compatibility_test.go | Omitting one required asset must produce a failed check |
-| CD07 | 6 | An absent global Bench command reports the existing by-path route | planned TestCompatibilityMissingPath in internal/systemtest/compatibility_test.go | A fixture without global Bench must still reach the local wrapper |
-| CD08 | 7 | A declared hook remains unverified until its live behavior is observed | planned TestCompatibilityDeclaredHook in internal/compatibility/inspect_test.go | A configuration file alone cannot produce a live pass |
-| CD09 | 8 | An invalid interface operand exits 2 before configuration reads | planned TestCompatibilityGrammar in internal/adopt/compatibility_test.go | A read sentinel catches validation after inspection |
-| CD10 | 8 | Special files and dangling configuration links return a bounded diagnostic | planned TestCompatibilityFileKinds in internal/compatibility/inspect_test.go | FIFO and dangling-link fixtures cannot become empty successful inputs |
-| CD11 | 8 | An empty required configuration file receives a distinct result from an absent file | planned TestCompatibilityAbsentEmpty in internal/compatibility/inspect_test.go | Both fixture shapes must retain their different evidence states |
-| CD12 | 8 | A path containing spaces and glob characters reaches the intended repository | planned TestCompatibilityPaths in internal/systemtest/compatibility_test.go | Decoy paths expose splitting or glob expansion |
-| CD13 | 29 | A changed relevant context produces a different compatibility fingerprint | planned TestCompatibilityFingerprint in internal/compatibility/inspect_test.go | One-field mutations invalidate the previous observation context |
-| CD14 | 29 | A personal model preference alone does not create a Bench configuration conflict | planned TestCompatibilityPersonalSettings in internal/compatibility/inspect_test.go | Two permitted preferences must not require synchronization |
-| CD15 | 2 | The inspection result never labels the whole active chat qualified | planned TestCompatibilityInspectionBoundary in internal/adopt/compatibility_test.go | Successful local checks still require live tool evidence |
-| CD16 | 8 | Control-bearing report fields cannot inject a terminal control sequence | planned TestCompatibilityOutput in internal/compatibility/inspect_test.go | The output seam must refuse unsafe cells through the existing renderer |
-| CD17 | 26 | Legacy doctor invocations retain their prior exit and output behavior | planned TestCompatibilityLegacyDoctor in internal/adopt/compatibility_test.go | A differential fixture compares legacy modes before and after integration |
+| CD01 | 2 | The compatibility report names the explicitly selected CLI or desktop interface | `internal/adopt/compatibility_test.go` (`TestCompatibilityInterface`) | Swapping the selected interface changes the expected context |
+| CD02 | 2 | An unknown active runtime remains unknown when a launcher version is available | `internal/compatibility/inspect_test.go` (`TestCompatibilityRuntimeProvenance`) | A PATH launcher cannot supply the active server identity |
+| CD03 | 3 | The report names the active configuration home without assuming the other interface shares it | `internal/compatibility/inspect_test.go` (`TestCompatibilityHomes`) | Different Linux and mounted Windows homes must remain distinct |
+| CD04 | 3 | An unreadable effective setting reports unknown with its source | `internal/compatibility/inspect_test.go` (`TestCompatibilityUnknownConfig`) | Dropping a failed source would fabricate agreement |
+| CD05 | 4 | Diagnostics leave both user configuration homes byte-identical | `internal/adopt/compatibility_test.go` (`TestCompatibilityReadOnly`) | Independent before-and-after snapshots catch silent synchronization |
+| CD06 | 5 | An absent required repository asset reports its exact restoration action | `internal/adopt/compatibility_test.go` (`TestCompatibilityMissingAsset`) | Omitting one required asset must produce a failed check |
+| CD07 | 6 | An absent global Bench command reports the existing by-path route | `internal/systemtest/compatibility_test.go` (`TestCompatibilityMissingPath`) | A fixture without global Bench must still reach the local wrapper |
+| CD08 | 7 | A declared hook remains unverified until its live behavior is observed | `internal/compatibility/inspect_test.go` (`TestCompatibilityDeclaredHook`) | A configuration file alone cannot produce a live pass |
+| CD09 | 8 | An invalid interface operand exits 2 before configuration reads | `internal/adopt/compatibility_test.go` (`TestCompatibilityGrammar`) | A read sentinel catches validation after inspection |
+| CD10 | 8 | Special files and dangling configuration links return a bounded diagnostic | `internal/compatibility/inspect_test.go` (`TestCompatibilityFileKinds`) | FIFO and dangling-link fixtures cannot become empty successful inputs |
+| CD11 | 8 | An empty required configuration file receives a distinct result from an absent file | `internal/compatibility/inspect_test.go` (`TestCompatibilityAbsentEmpty`) | Both fixture shapes must retain their different evidence states |
+| CD12 | 8 | A path containing spaces and glob characters reaches the intended repository | `internal/systemtest/compatibility_test.go` (`TestCompatibilityPaths`) | Decoy paths expose splitting or glob expansion |
+| CD13 | 29 | A changed relevant context produces a different compatibility fingerprint | `internal/compatibility/inspect_test.go` (`TestCompatibilityFingerprint`) | One-field mutations invalidate the previous observation context |
+| CD14 | 29 | A personal model preference alone does not create a Bench configuration conflict | `internal/compatibility/inspect_test.go` (`TestCompatibilityPersonalSettings`) | Two permitted preferences must not require synchronization |
+| CD15 | 2 | The inspection result never labels the whole active chat qualified | `internal/adopt/compatibility_test.go` (`TestCompatibilityInspectionBoundary`) | Successful local checks still require live tool evidence |
+| CD16 | 8 | Control-bearing report fields cannot inject a terminal control sequence | `internal/compatibility/inspect_test.go` (`TestCompatibilityOutput`) | The output seam must refuse unsafe cells through the existing renderer |
+| CD17 | 26 | Legacy doctor invocations retain their prior exit and output behavior | `internal/adopt/compatibility_test.go` (`TestCompatibilityLegacyDoctor`) | A differential fixture compares legacy modes before and after integration |
 | CD18 | 1 | One setup installs the shared Bench integration without copying either user configuration home | planned TestCompatibilitySetup in internal/systemtest/compatibility_test.go | Fresh linked-repository fixtures keep unrelated home sentinels intact |
 | CD19 | 9 | The compatibility repair restores an unmodified managed asset from the canonical payload | planned TestCompatibilityManagedRepair in internal/adopt/compatibility_repair_test.go | Removing one managed hook must become a working installed hook |
 | CD20 | 9 | A second identical repair leaves all managed destination bytes and modes unchanged | planned TestCompatibilityRepairIdempotence in internal/adopt/compatibility_repair_test.go | Tracked repeated application exposes self-induced drift |
@@ -497,8 +497,9 @@ The reviewer approved these engineering choices with the seams and fences.
 
 Review round: one independent reviewer sign-off round, with at most two author correction passes.
 The reviewer approved this specification, its ticket graph, the implementation line, and the ownership fences on 2026-10-02.
-Ticket 1 has preserved, uncommitted implementation work.
-No implementation chunk has received review.
+Ticket 1 has completed author verification.
+Independent review and its checkpoint remain pending.
+Its behavioral evidence is in [first-ticket verification](assets/first-ticket-verification.md).
 
 ### Author transfer
 
@@ -525,6 +526,11 @@ Ticket 1 verifies the doctor route with the Doctor-route mutation procedure.
 The system check must reject that swap through TestCompatibilityMissingPath.
 After the probe restores the source, the system check must pass.
 
+The reviewer approved the inherited predecessor-base assertion repair on 2026-10-02.
+C1 uses the shared TOON encoder for the expected revision row.
+The assertion still rejects the wrong base and an earlier chunk in the diff.
+The evidence command package and a wrong-base mutation verify this repair.
+
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"C1","tickets":["1-diagnose-interface.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"doctor-route-probe","command":"doctor-route-system-swap: follow the Doctor-route mutation procedure","probe":"swap"}]},{"id":"C2","tickets":["2-repair-managed-integration.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"}]},{"id":"C3","tickets":["3-check-and-qualify-sessions.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review assets/qualification.md against the source-bound live acceptance rows"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/cli-desktop-consistency/spec.md"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review actual CLI and desktop transcripts against every live acceptance row"}]}
+{"version":1,"chunks":[{"id":"C1","tickets":["1-diagnose-interface.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"doctor-route-probe","command":"doctor-route-system-swap: follow the Doctor-route mutation procedure","probe":"swap"},{"id":"evidence-command","command":"bench test --package ./internal/preflight/evidencecmd"}]},{"id":"C2","tickets":["2-repair-managed-integration.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"}]},{"id":"C3","tickets":["3-check-and-qualify-sessions.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review assets/qualification.md against the source-bound live acceptance rows"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/cli-desktop-consistency/spec.md"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review actual CLI and desktop transcripts against every live acceptance row"}]}
 ```
