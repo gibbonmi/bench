@@ -85,9 +85,9 @@ No review requested a Bench command change.
     {
       "id": "C1",
       "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
-      "tip": "51e6851df49f4bf6175c0925b09c3d68748e79ef",
+      "tip": "7e333f194064cefd23f2df6e42eccaa975908449",
       "plan_digest": "sha256:088394145d38657fce2c8fe4b1c1f995daf2613993625c7922a93b1636ea30f4",
-      "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
+      "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
       "acceptance_rows": [
         "CD01",
         "CD02",
@@ -305,6 +305,107 @@ No review requested a Bench command change.
             "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
             "digest": "sha256:478e5684babd09fedbb482a68ab4c008430bbb6206ff284012014fa84757f6d0",
             "excerpt": "Native author result after repair cycle1: bench test --package ./internal/preflight/evidencecmd passed in20201ms with no failures or skips. The approved predecessor-base assertion uses the shared TOON encoder and the earlier observed wrong-base probe remains recorded.\n"
+          },
+          "requirement": "evidence-command",
+          "command": "bench test --package ./internal/preflight/evidencecmd",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-compatibility-repair2",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c1-repair2-compatibility",
+            "digest": "sha256:b715b17528b53d6b3beed1236558f75daa12758a53fa632f9f31af5235f2f14f",
+            "excerpt": "Native author result: bench test --package ./internal/compatibility passed, exit0, 4ms, no skips.\n"
+          },
+          "requirement": "compatibility",
+          "command": "bench test --package ./internal/compatibility",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-adopt-repair2",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c1-repair2-adopt",
+            "digest": "sha256:2e03c7894fabf4ac22a7a23e8f4b05b2e6c0aa1143783fbf1e0c922af52d515c",
+            "excerpt": "Native author result: bench test --package ./internal/adopt passed, exit0, 24120ms, no skips.\n"
+          },
+          "requirement": "adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-system-repair2",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c1-repair2-system",
+            "digest": "sha256:c5e000d0571b92113ab78bcf9f596044c4c73924420440f2467438d099f40874",
+            "excerpt": "Native author result: restored bench test --check system passed, exit0, 68105ms, no skips. Earlier home/cache mutation failed both TestCompatibilityCollectorReadOnly/CLI_HOME_fallback and /codex-desktop; collector bytes and mode restored.\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-doctor-route-probe-repair2",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c1-repair2-doctor-route-probe",
+            "digest": "sha256:a940cd1ac14cfbf20b0060f95689a8bb3f30b601fff3e42c80b551f3ed9df771",
+            "excerpt": "Native author result: doctor-to-setup swap compiled and failed TestCompatibilityMissingPath, system exit1, 76212ms. Original dispatcher bytes/mode restored and verified; final system passed exit0, 68105ms.\n"
+          },
+          "requirement": "doctor-route-probe",
+          "command": "doctor-route-system-swap: follow the Doctor-route mutation procedure",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "native:c1-repair2-doctor-route-probe",
+              "digest": "sha256:a940cd1ac14cfbf20b0060f95689a8bb3f30b601fff3e42c80b551f3ed9df771",
+              "excerpt": "Native author result: doctor-to-setup swap compiled and failed TestCompatibilityMissingPath, system exit1, 76212ms. Original dispatcher bytes/mode restored and verified; final system passed exit0, 68105ms.\n"
+            }
+          }
+        },
+        {
+          "id": "c1-evidence-command-repair2",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c1-repair2-evidence-command",
+            "digest": "sha256:115d3f37d38fe6baee1ed697da9eeeda55fe567152fd970024236fa884b9738c",
+            "excerpt": "Native author result: bench test --package ./internal/preflight/evidencecmd passed, exit0, 19440ms, no skips.\n"
           },
           "requirement": "evidence-command",
           "command": "bench test --package ./internal/preflight/evidencecmd",
