@@ -754,6 +754,42 @@
           "requirement": "3-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "re-c3-v3-t4-reviewrecord",
+          "performer": "claude:bench-writer/re-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c512b393d3e4e68dcb4aa82cc723410ce996a08c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t4-repair-1-20261002/verify-4-reviewrecord-2",
+            "digest": "sha256:2e3c838845eb2133a8d6e104d85ce848a84f6e101ba7dae7adddf1e57bdb5a25",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1682\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,4076\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "4-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c3-v3-t4-cmd",
+          "performer": "claude:bench-writer/re-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c512b393d3e4e68dcb4aa82cc723410ce996a08c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t4-repair-1-20261002/verify-4-cmd-2",
+            "digest": "sha256:1f757ec9826b399f808cdee2b2c5cc2b78699df6ec7cdc9e5ae437b0413929d8",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,12670\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "4-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -1510,5 +1546,14 @@ Fresh focused checks at `0c7bf58c`:
 
 - `bench test --package ./internal/reviewrecord/...` passed in 5.6 s of package time. The verb recorded `re-c3-v3-t3-reviewrecord`.
 - `bench test --package ./cmd/bench` passed in 13.0 s of package time. The verb recorded `re-c3-v3-t3-cmd`.
+
+No check skipped a test.
+
+## RE-C3 ticket 4 verification at the repair 2 source
+
+The repair 2 freeze moved the RE-C3 source digest to `c512b393`. The repair session `claude:bench-writer/re-t4-repair-1` ran the ticket 4 checks again on opus at medium effort. The checks ran fresh at `b671b614`:
+
+- `bench test --package ./internal/reviewrecord/...` passed in 5.8 s of package time. The verb recorded `re-c3-v3-t4-reviewrecord`.
+- `bench test --package ./cmd/bench` passed in 12.7 s of package time. The verb recorded `re-c3-v3-t4-cmd`.
 
 No check skipped a test.
