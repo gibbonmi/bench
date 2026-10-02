@@ -655,7 +655,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sr-c4-r1-standards",
+          "performer": "claude:bench-reviewer/sr-c4-r1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2bcf4bf747e8f9ec945ae6c9ab358c9e20b9077f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c4-r1-standards-20261002@a2ec1cc86f72fd1161557d74154a39c9ce72e654",
+            "digest": "sha256:e9e2d3a6dc8f9c59bda8e7fcfe6be517ad90858b2fd11be6f8b33774c4878e60",
+            "excerpt": "## Standards\nS1. AGENTS.md \"one source per fact\" (\"a fixture harness pasted N times\"). The fault-to-step table appears twice: internal/worktree/land_flags_test.go:111-124 (ticket 6) and internal/worktree/land_freshness_test.go:239-249 (ticket 5). Both map marker, reconcile, and release to the same three compositions, run landArgs, and assert exit 3 and worktree=incomplete:<name>. The fault primitives have one source each; the step-to-fault registry does not. One shared table in land_fixtures_test.go could feed both tests. The axis gave ask-user, confidence 5, because the fix spans the Writes lines of tickets 5 and 6.\nS2 (classified as optional advice by the coordinator, a smell-baseline judgment call): landingSourceRange(j joins, ...) at internal/worktree/land_identity.go:242 no longer reads j, and landingSource at :164 only passes it on. land_facts_test.go:184 builds defaultJoins() only to fill it. The axis gave auto-fix, confidence 7.\ncount: 2\nworst: S1.\nAdvice: no stale comment names a removed field. The reason of the prune call lives only in a test comment. The concurrently-moved row of land_flags_test.go:227 runs the same fixture and assertion as the marker row. land_resume_test.go:222 uses the literal refs/bench/green/main beside the markerRef constant.\n"
+          },
+          "axis": "Standards",
+          "base": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+          "tip": "a2ec1cc86f72fd1161557d74154a39c9ce72e654",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c4-r1-spec",
+          "performer": "claude:bench-reviewer/sr-c4-r1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2bcf4bf747e8f9ec945ae6c9ab358c9e20b9077f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c4-r1-spec-20261002@a2ec1cc86f72fd1161557d74154a39c9ce72e654",
+            "digest": "sha256:9278998057f541ce93102a59dae096cce503eec172dfc143547835a953a60aa0",
+            "excerpt": "## Spec\nP1. Spec: \"The probe is a build obligation, and the ticket records the probe command and its red in its verification note.\" Ticket 5 line 22: \"Record each probe command and its red in the verification note.\" The prune probe (WS36) and the reconcile probe (WS34) have no command and no red in a tracked artifact: the commit message of 2c83701a has no probe paragraph, and the SR-C4 record holds only the package test excerpts. Ticket 4 recorded its probe in the 8ffc347a message. Ticket 5, auto-fix: run the two probes against a2ec1cc8 and record their reds in the review record. Confidence 8.\nP2. WS41 why-clause: \"A landing that keeps the abbreviated base refuses the reviewed source.\" preflight.AuthorizeReviewedSource (internal/preflight/gather.go:175-190) returns facts.SourceBase from the base it was given, so a kept base does not refuse; the landing exits 0 and prints the abbreviated source_base. The test still grades the row's behavior through the printed full source_base (internal/worktree/land_reauthorization_test.go:174). Only the catch clause is stale; a non-behavioral contradiction. Ticket 6, auto-fix: amend the clause in a plan commit. Confidence 6.\nRows closed: WS26 to WS35, WS37 to WS40, WS42 to WS44. WS36: the test and fixture are correct; the probe red is unrecorded (P1). WS41: the behavior is graded; the catch clause is stale (P2).\nPredicates hold: joins.go declares 21 fields and none of the four landing fields; no stubLandJoins; the marker fixture is a gate line that deletes refs/bench/green/main; the reconcile fixture is a nested repository; both release-refusal tests use publicLandingFixture; WS44 asserts the real marker ref; WS35 asserts main == published and publications == 1; no func Test line changed; no over-budget file grew; cmd and internal/conformance are unchanged; each ticket stays inside its Writes line.\ncount: 2\nworst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+          "tip": "a2ec1cc86f72fd1161557d74154a39c9ce72e654",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c4-r1-coverage",
+          "performer": "claude:bench-reviewer/sr-c4-r1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2bcf4bf747e8f9ec945ae6c9ab358c9e20b9077f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c4-r1-coverage-20261002@a2ec1cc86f72fd1161557d74154a39c9ce72e654",
+            "digest": "sha256:ebd6be31d978a47eda8f4889ed55a166d572e3f78ef62228a60e4da427e5e662",
+            "excerpt": "## Coverage\nC1. State: a resume that skips the reconcile call at internal/worktree/land_resume.go:87. The WS34 test TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout stays green; its only check of the checkout is rev-parse HEAD == published (internal/worktree/land_resume_test.go:188), which the ref swap alone satisfies. Only reset --merge updates the destination's index and working tree (land_identity.go:326). Expected break: the test is red when the resume does not reconcile. The test should assert a reconciled destination, for example a clean git status and the landed file at the root. Ticket 5, auto-fix, confidence 7.\nProbes, each --package ./internal/worktree, each restored yes: (1) land_resume.go prune call to 0, error(nil), silent; (2) land_resume.go reconcile call to error(nil), silent (C1); (3) land.go prune call to 0, error(nil), invalid; (4) land.go prune call skipped, bit; (5) lock write omitted in the prune test, invalid; (6) lock file moved to a temporary directory, bit.\nChecks that hold: each of the eight marker tests fails when the fixture does not interrupt; WS35 fails on a second publication; the marker fixture writes only in its own temporary repository.\ncount: 1\nworst: C1.\nAdvice: a resume that skips its prune is not caught, and no row requires a prune resume. No fixture reaches the resume reconcile error branch at land_resume.go:87-89. The concurrently-moved case of WS44 deletes the marker and does not move it.\nFinal git status: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+          "tip": "a2ec1cc86f72fd1161557d74154a39c9ce72e654",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -868,3 +936,34 @@ The coordinator ran the named swap probe on the repaired tree. It returned `bit`
 ## SR-C3 confirming round
 
 Three fresh opus / high sessions read the repair delta `c87a0c3f..c63781f2`. Each axis confirmed its fold and reported no blocking finding, and the Spec axis closed WS22. The Coverage axis moved `target.Worktree` to the caller root at a third site in `merge.go`, and the probe returned `bit` with `restored=yes`. SR-C3 has no open finding, and 1 of 2 repair cycles is used.
+
+## SR-C4 chunk review, round 1
+
+Three fresh opus / high sessions reviewed the frozen pair `c63781f2..a2ec1cc8`, which holds the tickets 4, 5, and 6. The coordinator ran one independent probe after each ticket, and each probe returned `bit` with `restored=yes`. The raw finding count is 4, and the repair-target count is 4. The repair allowance of SR-C4 is 2 cycles, and 0 cycles are used.
+
+### Standards
+
+Count: 1. Worst: S1.
+
+- S1 (`ask-user` from the axis, confidence 5, ticket 6): the table that maps each post-publication step to its fault exists twice. One copy is in `internal/worktree/land_flags_test.go` lines 111 to 124. The other copy is in `internal/worktree/land_freshness_test.go` lines 239 to 249. The rule is the `AGENTS.md` code standard, one source per fact. The coordinator routes it as a repair for reviewer veto: one shared table in `land_fixtures_test.go` feeds both tests.
+
+### Spec
+
+Count: 2. Worst: P1. The axis closed 17 rows.
+
+- P1 (`auto-fix`, confidence 8, ticket 5): no tracked artifact holds the command and the red of the reconcile probe and the prune probe. The spec says that the ticket records each probe command and its red.
+- P2 (`auto-fix`, confidence 6, ticket 6): the catch clause of WS41 says that a kept abbreviated base refuses the reviewed source. The landing exits 0 and prints the abbreviated base, and the test catches that. This is a non-behavioral contradiction, so a plan commit amends the clause.
+
+### Coverage
+
+Count: 1. Worst: C1.
+
+- C1 (`auto-fix`, confidence 7, ticket 5): the WS34 test asserts only that HEAD equals the published commit. A probe that skips the reconcile call at `internal/worktree/land_resume.go` line 87 stayed silent. The repair makes the test assert a reconciled destination.
+
+### Advice
+
+- `landingSourceRange` and `landingSource` in `land_identity.go` keep a joins parameter that nothing reads. The Standards axis named it S2 with `auto-fix`. It is a smell-baseline judgment call, and its repair needs `land_facts_test.go`, which no ticket holds. The coordinator holds it as optional advice for reviewer veto.
+- A resume that skips its prune is not caught, and no row requires a prune resume.
+- No fixture reaches the resume reconcile error branch in `land_resume.go`.
+- `land_resume_test.go` line 222 spells the marker ref as a literal beside the `markerRef` constant.
+- The reason of the prune call at the landing lives only in a test comment.
