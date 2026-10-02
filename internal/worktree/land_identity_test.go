@@ -87,7 +87,7 @@ func TestLandCommandInvalidatesAChangedSourceFingerprintBeforeTheGate(t *testing
 	// so no source-authored path name reaches the operator's terminal.
 	face := landingRefusalFaceByName(faceSourceNotClean)
 	if r.exit != 1 || !strings.Contains(r.stdout, face.detail) || !strings.Contains(r.stdout, "next="+face.route("")) ||
-		strings.Contains(r.stdout, "refusal_paths") || strings.Contains(r.stdout, "dirty.txt") {
+		strings.Contains(r.stdout, refusalPathsTable) || strings.Contains(r.stdout, "dirty.txt") {
 		t.Fatalf("changed source fingerprint = (%d, %q, %q), want a routed not-clean refusal with no path table", r.exit, r.stdout, r.stderr)
 	}
 	requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, *composed)

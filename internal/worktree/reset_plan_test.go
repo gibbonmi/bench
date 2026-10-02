@@ -48,7 +48,7 @@ func TestResetPlanReportsNothingToReset(t *testing.T) {
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "action=none") && strings.Contains(result.stdout, "fingerprint=none"),
 		"clean plan = %d %s %s", result.exit, result.stdout, result.stderr)
 	requireTest(t, strings.Contains(result.stdout, "tracked=clean") && strings.Contains(result.stdout, "preserve=none") &&
-		!strings.Contains(result.stdout, "next=") && !strings.Contains(result.stdout, "reset_paths"), "idle plan = %s", result.stdout)
+		!strings.Contains(result.stdout, "next=") && !strings.Contains(result.stdout, resetPathsTable), "idle plan = %s", result.stdout)
 }
 
 func TestResetPlanListsEveryAffectedPath(t *testing.T) {
