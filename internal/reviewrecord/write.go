@@ -74,8 +74,8 @@ func write(root, spec string, create func() (Record, error), change func(*Record
 	if err != nil {
 		return err
 	}
-	if c := bounds.ClassifyBytes(bounds.Read(bytes.NewReader(rendered), bounds.ControlRecordLimit)); c.State != bounds.StateParsed {
-		return fmt.Errorf("invalid record %q: %s %s", path, c.State, c.Reason)
+	if _, err := graded(path, bounds.ClassifyBytes(bounds.Read(bytes.NewReader(rendered), bounds.ControlRecordLimit))); err != nil {
+		return err
 	}
 	if _, err := parseRecord(rendered, spec); err != nil {
 		return err
