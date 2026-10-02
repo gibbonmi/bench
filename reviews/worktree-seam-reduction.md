@@ -1511,6 +1511,28 @@
           "supersedes": [
             "sr-c6-r2-spec"
           ]
+        },
+        {
+          "id": "sr-c6-r3b-coverage",
+          "performer": "claude:bench-reviewer/sr-c6-r3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4aabcdaca67157dc1d1546ff7373df234ae9ea8f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c6-r3-coverage-20261002@650a614f22a95cdbeb8608436531fd2522025e84",
+            "digest": "sha256:7a4f9cba86cbe9c4695bd887c30ade907d244e9e344b3f0372d44435092c9bab",
+            "excerpt": "Coverage axis, SR-C6 second confirming round, repair delta 54d3beac..650a614f: pass, 0 findings.\nP3: confirmed. single_read_census_cases_test.go:105 pins gate.KitValue through a kit alias, the short form; :148, :156, :162 pin the readThroughEntry rendering with full-path imports. No round 2 input is unpinned.\nProbe: single_read_census_test.go, swap `return key[:max(dot, 0)], key[dot+1:]` with `return key[:max(dot, 0)], key`, --run TestSingleReadCensus: bit (6 tests), restored yes. The second-read test failed on its older case first (wantReadCensus is fatal), so the earlier kindName probe isolates the new case.\nThe evidence bind reported the record commits past 50c5f148; git diff 650a614f HEAD -- internal/ is empty.\ncount: 0\nFinal git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c6-r3-coverage"
+          ]
         }
       ]
     }
@@ -1990,11 +2012,12 @@ S3 and P3 go to one fresh repair session for ticket 12, which is repair cycle 2 
 
 ## SR-C6 repair 2 and second confirming round
 
-The ticket 12 repair `650a614f` folded S3 and P3, with one delegate probe and one coordinator probe that bit. The coordinator probe compared the gate package against the full import path, and four census tests went red. Two fresh opus / high sessions then read the repair delta `54d3beac..650a614f` on the Standards axis and the Spec axis, and each confirmed both folds. The coordinator graded the Coverage axis from the two probes, because the delta is test-only; the record names the coordinator session. The amended loop sentence agrees with the census. SR-C6 has no open finding, and 2 of 2 repair cycles are used.
+The ticket 12 repair `650a614f` folded S3 and P3, with one delegate probe and one coordinator probe that bit. The coordinator probe compared the gate package against the full import path, and four census tests went red. Two fresh opus / high sessions then read the repair delta `54d3beac..650a614f` on the Standards axis and the Spec axis, and each confirmed both folds. The coordinator first graded the Coverage axis itself from the two probes, and the checkpoint gate refused that entry as not independent. A fresh opus / high Coverage session then ran one probe of its own on `splitKind`, which bit, and confirmed P3.
+
+The amended loop sentence agrees with the census. SR-C6 has no open finding, and 2 of 2 repair cycles are used.
 
 ### Veto items
 
 - P2: the spec sentence that counts a loop condition and post statement as the loop body.
 - N1: a dot import of a read package goes unreported; no Won't-handle line decides it.
 - C3 and C4 widened the census beyond the rows as written: method entries, and an error on an empty read set.
-- The coordinator-graded Coverage axis of this round.
