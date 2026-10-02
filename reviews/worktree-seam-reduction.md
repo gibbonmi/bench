@@ -1876,7 +1876,98 @@
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:session-018nyJAsDqW5oX9xoqL3vvFk",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b794121eb206cd6de446aa3aa715f18c4a1249f9",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/018nyJAsDqW5oX9xoqL3vvFk@f0b7e5ace729517633cba4b022246c22d8fa21a7",
+          "digest": "sha256:1063aa89bcfb3f2b223afbb19cd96d5b95a81a927a5058b2681fcd313587ee0e",
+          "excerpt": "Final verification coverage at f0b7e5ac: bench coverage --check specs/worktree-seam-reduction/spec.md\nok: coverage map valid — 86 row(s)\nuncited: 2 row(s) with no seam-cell citation — WS45, WS81 (review-owned by design)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/worktree-seam-reduction/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-gate",
+        "performer": "claude:session-018nyJAsDqW5oX9xoqL3vvFk",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b794121eb206cd6de446aa3aa715f18c4a1249f9",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/018nyJAsDqW5oX9xoqL3vvFk@f0b7e5ace729517633cba4b022246c22d8fa21a7",
+          "digest": "sha256:a11d10740bd95b994c63771a562fd942887cda2248173eb2aab89723c5a6e185",
+          "excerpt": "Final verification gate at f0b7e5ac: bench test --package ./internal/gate\npackages: github.com/gibbonmi/bench/internal/gate,pass,17799\nfailures[0]\nskips[0]\n"
+        },
+        "requirement": "gate",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-worktree",
+        "performer": "claude:session-018nyJAsDqW5oX9xoqL3vvFk",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b794121eb206cd6de446aa3aa715f18c4a1249f9",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/018nyJAsDqW5oX9xoqL3vvFk@f0b7e5ace729517633cba4b022246c22d8fa21a7",
+          "digest": "sha256:e6352161a459506d83e80d9571bce3d9adcb48ae6eeca0215053b72bf6c2c4ec",
+          "excerpt": "Final verification worktree at f0b7e5ac: bench test --package ./internal/worktree\npackages: github.com/gibbonmi/bench/internal/worktree,pass,78837\nfailures[0]\nskips[2]: the two /socket subtests, unix sockets unavailable in this environment\n"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "final-commit",
+        "performer": "claude:session-018nyJAsDqW5oX9xoqL3vvFk",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b794121eb206cd6de446aa3aa715f18c4a1249f9",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/018nyJAsDqW5oX9xoqL3vvFk@f0b7e5ace729517633cba4b022246c22d8fa21a7",
+          "digest": "sha256:3b2fb77468a64d00d1ecc254ba66e1d401cab2bb195f3a0bb3eef327d7680e51",
+          "excerpt": "Final verification commit at f0b7e5ac: bench test --package ./internal/commit\npackages: github.com/gibbonmi/bench/internal/commit,pass,6822\nfailures[0]\nskips[0]\n"
+        },
+        "requirement": "commit",
+        "command": "bench test --package ./internal/commit",
+        "exit_code": 0
+      },
+      {
+        "id": "final-adopt",
+        "performer": "claude:session-018nyJAsDqW5oX9xoqL3vvFk",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b794121eb206cd6de446aa3aa715f18c4a1249f9",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/018nyJAsDqW5oX9xoqL3vvFk@f0b7e5ace729517633cba4b022246c22d8fa21a7",
+          "digest": "sha256:bcc68fb446c75264e11d4769da2cd69ad2a253d1d2cda9c19f3959d5036c9188",
+          "excerpt": "Final verification adopt at f0b7e5ac: bench test --package ./internal/adopt\npackages: github.com/gibbonmi/bench/internal/adopt,pass,45918\nfailures[0]\nskips[0]\n"
+        },
+        "requirement": "adopt",
+        "command": "bench test --package ./internal/adopt",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -2521,3 +2612,7 @@ The ticket 15 verification entry holds all thirteen probe commands. SR-C7 has no
 The final reconciliation cited the landed test file in each of the 30 coverage rows that read "planned". That spec-only commit `b344c7af` moved the chunk source after the confirming round, so the checkpoint required a review that covers it. The two repair sessions re-recorded their verification at the new source.
 
 Three fresh opus / high sessions read the delta. Each citation resolves to a declared test, each test name is unchanged, and no other cell changed. The 29 distinct cited tests run green. SR-C7 has no open finding, and the coverage check reports 86 valid rows with WS45 and WS81 review-owned.
+
+## Final reconciliation
+
+The seven chunk checkpoints are green. The coverage map cites a landed test in each of its 84 test-owned rows, and WS45 and WS81 stay review-owned. The five final verification commands pass at `f0b7e5ac`: the coverage check, and the `gate`, `worktree`, `commit`, and `adopt` packages. The two socket subtests skip in this environment. The orchestrator ran and recorded them.
