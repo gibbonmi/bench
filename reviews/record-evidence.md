@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-evidence/spec.md",
-  "plan_digest": "sha256:833ccd1de096637009430bda209d327b710beca8fea9eaf774250694705d73fc",
+  "plan_digest": "sha256:1a04adf1320736ccc5828fb4481be56d68c1bb6f4c67716229345b2f5c792cdd",
   "implementation_session": "",
   "chunks": [
     {
@@ -235,9 +235,9 @@
     {
       "id": "RE-C2",
       "base": "6d7f3969e9061e8022630706c4430f64a7248312",
-      "tip": "bf3ddc94aa2108fc225d1c946167ea150ae6041c",
-      "plan_digest": "sha256:833ccd1de096637009430bda209d327b710beca8fea9eaf774250694705d73fc",
-      "source_digest": "0fa91f6aaaa602460b5a707256004373bd936892",
+      "tip": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+      "plan_digest": "sha256:1a04adf1320736ccc5828fb4481be56d68c1bb6f4c67716229345b2f5c792cdd",
+      "source_digest": "52926b7bdd603363e2b5cd136fa2e13ff3a590d8",
       "acceptance_rows": [
         "RE11",
         "RE12",
@@ -270,7 +270,9 @@
         "RE40",
         "RE41",
         "RE105",
-        "RE106"
+        "RE106",
+        "RE112",
+        "RE113"
       ],
       "verification": [
         {
@@ -413,6 +415,18 @@
       "chunk_ids": {
         "RE-C1": [
           "RE-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:833ccd1de096637009430bda209d327b710beca8fea9eaf774250694705d73fc",
+      "to": "sha256:1a04adf1320736ccc5828fb4481be56d68c1bb6f4c67716229345b2f5c792cdd",
+      "chunk_ids": {
+        "RE-C1": [
+          "RE-C1"
+        ],
+        "RE-C2": [
+          "RE-C2"
         ]
       }
     }
@@ -633,3 +647,13 @@ Finding count: 2. Worst issue: C2.
 ### Command contribution
 
 The Spec axis suggests that the write-spec registry sweep bind the help-row projection allowlist to any new projected help row. `bench learning` holds that entry. The Coverage axis suggests that the author run one probe for each single-line flag of each form. The Standards axis found no contribution.
+
+## RE-C2 repair 1
+
+The plan commit `66551a3a` assigned the fresh repair session `claude:bench-writer/re-t2-repair-1` on opus at medium effort. It also added the rows RE112 and RE113 to the coverage map, the RE-C2 chunk row, and the ticket 2 `Covers:` line. RE113 is the one hardening cycle of RE-C2.
+
+The repair commit `42a1a5b7` closes T1, T2, and T3. Its own sweep found that the new bound check copied the state test and the message of the reader. The plan commit `b2585cd8` added `internal/reviewrecord/files.go` to the ticket 2 `Writes:` line. The commit `48ab8bdf` then moved that rule into one helper, `graded`, that the reader and the writer both call. Both commits are inside repair cycle 1, so RE-C2 has used 1 of its 2 repair cycles.
+
+The repair probes bit RE112 and RE113 with `restored=yes`. The coordinator probe made `graded` accept every state. `bench probe` returned `bit` on RE112 with `restored=yes`.
+
+The orchestrator re-froze RE-C2 with `bench record chunk`, with base `6d7f3969` and tip `48ab8bdf`. The chunk now holds 34 acceptance rows. A second identity amendment moves the record plan digest to the plan at that tip.
