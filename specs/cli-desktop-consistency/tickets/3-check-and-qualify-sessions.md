@@ -8,6 +8,7 @@ Covers: CD37, CD38, CD39, CD40, CD41, CD42, CD43, CD44, CD45, CD46, CD47, CD48, 
 
 Wire the shared diagnostic owner into startup and resume guidance.
 Use C2's repair outcome without converting it into a live capability pass.
+C2 retains public repair coverage in its repairtest child package and recovery faults in its transaction child package.
 Ship the static recovery route through the current agreement, reference guide, and README.
 Complete the actual-interface qualification and record its evidence beside this spec.
 

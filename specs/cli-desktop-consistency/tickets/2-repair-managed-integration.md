@@ -22,6 +22,14 @@ Update the existing doctor registry entry and assertion families without growth.
 Put new behavior and fixtures in focused files within this ticket's ownership fence.
 If an extraction needs another path, request an in-scope fence amendment before that edit.
 
+## Test placement
+
+Public repair tests use the doctor entrypoint from the repairtest child package.
+Transaction fault tests use the transaction child package, which owns publication and recovery.
+The existing system-test file retains the real process owner for interruption and concurrency checks.
+These placements preserve the acceptance rows without increasing the existing oversized directories.
+No structure budget or behavioral guarantee changes.
+
 ## Acceptance
 
 - [ ] One setup installs the shared Bench integration without copying either user configuration home.
