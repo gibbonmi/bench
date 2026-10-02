@@ -1321,6 +1321,76 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sr-c6-r2-standards",
+          "performer": "claude:bench-reviewer/sr-c6-r2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "95006ba609e5ce4b6a72a5a35edcc751c302b042",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c6-r2-standards-20261002@54d3beac9497c0efb213650f73b663f7b0086e9c",
+            "digest": "sha256:0b06031cb15eee44ffcc02efd799e36247a4e15d4912f4c406dda5a4df5c76dd",
+            "excerpt": "Standards axis, SR-C6 confirming round, repair delta 20aefd5c..54d3beac: fail, 1 finding.\nS1: confirmed. isSourceFile at single_read_census_test.go:25 is the one source; callers at single_read_census_test.go:211, parallel_census_test.go:58, effect_census_test.go:28. Two copies outside the delta (worktree_test.go:693, identity_component_test.go:384) were present at the chunk base.\nS2: confirmed. effectsFile at single_read_census_test.go:22 is the only \"effects.go\" literal; effect_census_test.go:31 and :44 read it.\nS3 (auto-fix, confidence 6, ticket 12): bench-craft-comments, \"never leave it describing the code that was\". single_read_census_cases_test.go:3-5 says each case plants an effects file, a gate file, and one reader file; the empty-read-set test plants no effects file and the live-tree test plants nothing.\ncount: 1\nworst: S3.\nAdvice: the path.Name key format is built in two places (:57, :128) and parsed in one (:122-123). Kind names print the full import path. The header at single_read_census_test.go:7 says \"loop body\" while the census also nests the condition and post statement.\n"
+          },
+          "axis": "Standards",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "54d3beac9497c0efb213650f73b663f7b0086e9c",
+          "finding_ids": [
+            "S3"
+          ],
+          "supersedes": [
+            "sr-c6-r1-standards"
+          ]
+        },
+        {
+          "id": "sr-c6-r2-spec",
+          "performer": "claude:bench-reviewer/sr-c6-r2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "95006ba609e5ce4b6a72a5a35edcc751c302b042",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c6-r2-spec-20261002@54d3beac9497c0efb213650f73b663f7b0086e9c",
+            "digest": "sha256:5425715aac8f5d1a3c43f204da5ace1cc59a6eb61af1001bb72c557cbe3a9e14",
+            "excerpt": "Spec axis, SR-C6 confirming round, repair delta 20aefd5c..54d3beac: fail, 1 finding and 1 spec amendment.\nP1/C3: confirmed. single_read_census_test.go:215-221 indexes an exported method as an entry; :184-186 and :259-262 draw the third message; the case is at single_read_census_cases_test.go:222-223 with literal inputs.\nC1: confirmed. :166-171 nests the condition, post statement, and body; the init read is accepted and spec line 236 covers it.\nC2: confirmed. :54-58 and :121-129 key reads by import path; <name> keeps the source spelling (spec line 244).\nC4: confirmed as a veto item. :113-115 refuses an empty read set; worktreeTestCount is 717.\nMessages unchanged (:40-49, spec lines 240-242). WS57 to WS68 keep their planned names. The live-tree test is green by reading.\nP3 (auto-fix, confidence 6, ticket 12): spec lines 228-229 name the kind gate.KitValue; the second-read and helper-call messages now render github.com/gibbonmi/bench/internal/gate.KitValue (:57, :261, :270). No row pins the short form. The coordinator routes it as a repair: key by path, render the short form.\nP2 (spec amendment, confidence 5): spec line 236 says \"outside each function literal and loop body\", and the census also refuses a first read in a loop condition or post statement. The coordinator amends the spec text in the plan commit for veto.\ncount: 1\nworst: P3.\nAdvice: name-only keying draws a false helper-call report for a same-named field selector; not seen in the live tree.\n"
+          },
+          "axis": "Spec",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "54d3beac9497c0efb213650f73b663f7b0086e9c",
+          "finding_ids": [
+            "P3"
+          ],
+          "supersedes": [
+            "sr-c6-r1-spec"
+          ]
+        },
+        {
+          "id": "sr-c6-r2-coverage",
+          "performer": "claude:bench-reviewer/sr-c6-r2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "95006ba609e5ce4b6a72a5a35edcc751c302b042",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c6-r2-coverage-20261002@54d3beac9497c0efb213650f73b663f7b0086e9c",
+            "digest": "sha256:8623dea9ccc5be78f24c5da5bfd8d9c5a2b5440a2ccdbadfbcbd128fdad79388",
+            "excerpt": "Coverage axis, SR-C6 confirming round, repair delta 20aefd5c..54d3beac: pass, 0 blocking findings.\nC1: confirmed. single_read_census_cases_test.go:194-207 pins init (no report), condition, post, and body; the walk is at single_read_census_test.go:166-171.\nC2: confirmed. cases_test.go:139-145 pins the reader alias bh.Dir and the effects-file alias kit.\nC3/P1: confirmed. cases_test.go:111-112 pins a helper call to r.Run() with one report.\nC4: confirmed. TestSingleReadCensusRefusesAnEmptyReadSet at cases_test.go:171-178; the check is at single_read_census_test.go:113-115.\nProbe 1: single_read_census_test.go, swap \"ok && decl.Name.IsExported() {\" with \"ok && decl.Recv == nil && decl.Name.IsExported() {\", bit (helper-call test), restored yes.\nProbe 2: parallel_census_test.go, swap \"names[name] = path\" with \"names[name] = name\", bit (qualified-read test), restored yes.\nN1 (ask-user, confidence 4): a dot import of a read package goes unreported; no Won't-handle line decides it; no dot import exists in internal/ or cmd/. The coordinator holds it as a reviewer veto item, not a repair target.\nAdvice: entries are keyed by bare name, so a same-named non-reading method draws a report (never a miss). The \"declares no function\" text also fires when effects.go declares functions that do not read.\nFinal git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "54d3beac9497c0efb213650f73b663f7b0086e9c",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c6-r1-coverage"
+          ]
         }
       ]
     }
@@ -1754,3 +1824,22 @@ Count: 4. Worst: C2.
 - `os.Environ` in `exec.go` and `clean.go` is not a read under the spec's definition; a Won't-handle line would decide it.
 - The `directCallees` and `calleeName` doc comments say "test-file functions", which is out of date.
 - `gateFiles[0]` cannot panic: the loop never runs with no gate file.
+
+## SR-C6 repair 1 and confirming round
+
+The ticket 12 repair `54d3beac` folded all six round 1 targets, with six delegate probes and one coordinator probe that bit. The coordinator probe omitted the import alias branch in `fileImportNames`, and the WS66 alias case went red. Three fresh opus / high sessions then read the repair delta `20aefd5c..54d3beac`. Each axis confirmed each fold, and the Coverage axis ran two probes that bit. Repair cycle 1 of 2 is used.
+
+The confirming round found two small items in the repair delta and two spec-text items.
+
+- S3 (`auto-fix`, confidence 6, ticket 12): the header of `single_read_census_cases_test.go` says that each case plants an effects file, a gate file, and a reader file. Two tests plant less. The rule is the comments skill.
+- P3 (`auto-fix`, confidence 6, ticket 12): the spec names the kind `gate.KitValue`. The messages now render the full import path, because the repair keyed the kinds by path. The repair keeps the path key and renders the short form.
+- P2 (spec amendment, confidence 5): the spec said that the census accepts a read "outside each function literal and loop body". The census also refuses a read in a loop condition or post statement. The plan commit adds one sentence that counts both as the loop body. This is a reviewer veto item.
+- N1 (`ask-user`, confidence 4): a dot import of a read package goes unreported, and no Won't-handle line decides it. The live tree has no dot import. The coordinator holds it for the reviewer, not for a repair.
+
+S3 and P3 go to one fresh repair session for ticket 12, which is repair cycle 2 of 2.
+
+### Advice
+
+- The `path.Name` key format is built in two places and parsed in one; a small kind struct would give it one owner.
+- Name-only keying draws a false helper-call report for a same-named field selector; that is a report, never a miss.
+- The source-file predicate has two copies outside the delta, in `worktree_test.go` and `identity_component_test.go`, present at the chunk base.
