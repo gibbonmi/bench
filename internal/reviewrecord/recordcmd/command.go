@@ -43,8 +43,9 @@ const (
 // derive from this one declaration, so the help cannot advertise another grammar. The
 // layout orders the usage terms: each term is a declared flag name or one of the
 // grouping marks ( ) [ ] |, and an empty layout lists the flags in order. A repeated
-// flag shows as [<flag>]... in the usage line. valid holds the grammar rules that span
-// flags or close a value set, and a nil valid has none.
+// flag shows as [<flag>]... in the usage line. The layout is also the rule for which
+// flags a call names together: admits reads the same groups that the usage line shows.
+// valid holds the grammar rules that close a value set, and a nil valid has none.
 type form struct {
 	name, description string
 	flags             []flag
@@ -53,7 +54,7 @@ type form struct {
 	run               func(f form, root, spec string, parsed usage.Result) (string, int)
 }
 
-// probeFlags are the three flags of a planned probe, which a call names all or none of.
+// probeFlags are the three flags of a planned probe.
 var probeFlags = []string{"--probe-outcome", "--probe-exit-code", "--probe-restore"}
 
 var forms = []form{
@@ -75,16 +76,21 @@ var forms = []form{
 		valid: reviewValid, run: review},
 }
 
-// suffix is the form's grammar after `bench record`.
-func (f form) suffix() string {
+// terms is the layout of f, or its flags in order when the layout is empty.
+func (f form) terms() []string {
 	layout := f.layout
 	if layout == nil {
 		for _, flag := range f.flags {
 			layout = append(layout, flag.name)
 		}
 	}
+	return layout
+}
+
+// suffix is the form's grammar after `bench record`.
+func (f form) suffix() string {
 	terms := []string{"", f.name, "<slug>"}
-	for _, term := range layout {
+	for _, term := range f.terms() {
 		if strings.HasPrefix(term, "--") {
 			term = f.flag(term).usage()
 		}
@@ -93,15 +99,72 @@ func (f form) suffix() string {
 	return strings.NewReplacer("( ", "(", "[ ", "[", " )", ")", " ]", "]").Replace(strings.Join(terms, " "))
 }
 
-// flag returns the flag of f named name. A layout that names an undeclared flag is a
-// defect in the declaration, so it panics on the first help render.
+// index returns the position of the flag of f named name. A layout that names an
+// undeclared flag is a defect in the declaration, so it panics on the first help render.
+func (f form) index(name string) int {
+	i := slices.IndexFunc(f.flags, func(fl flag) bool { return fl.name == name })
+	if i < 0 {
+		panic("bench record " + f.name + " layout names the undeclared flag " + name)
+	}
+	return i
+}
+
+// flag returns the flag of f named name.
 func (f form) flag(name string) flag {
-	for _, flag := range f.flags {
-		if flag.name == name {
-			return flag
+	return f.flags[f.index(name)]
+}
+
+// admits reads the layout terms from index i to the close of the current group. It
+// returns each flag set that the terms admit, one bit for each flag of f, and the index
+// after the close. A sequence takes one set from each term and a ( ) group takes one
+// alternative. A [ ] group and a repeated flag, shown as [<flag>]..., also admit no flag,
+// so an optional group admits all of its flags or none.
+func (f form) admits(terms []string, i int) ([]uint64, int) {
+	alternatives, sequence := []uint64{}, []uint64{0}
+	for i < len(terms) {
+		term := terms[i]
+		i++
+		var sets []uint64
+		switch term {
+		case ")", "]":
+			return append(alternatives, sequence...), i
+		case "|":
+			alternatives, sequence = append(alternatives, sequence...), []uint64{0}
+			continue
+		case "(", "[":
+			sets, i = f.admits(terms, i)
+			if term == "[" {
+				sets = append(sets, 0)
+			}
+		default:
+			index := f.index(term)
+			sets = []uint64{1 << index}
+			if f.flags[index].occurs == repeated {
+				sets = append(sets, 0)
+			}
+		}
+		product := []uint64{}
+		for _, prefix := range sequence {
+			for _, set := range sets {
+				product = append(product, prefix|set)
+			}
+		}
+		sequence = product
+	}
+	return append(alternatives, sequence...), i
+}
+
+// together reports whether the flags present in values form a set that the layout of f
+// admits.
+func (f form) together(values map[string]string) bool {
+	var present uint64
+	for i, flag := range f.flags {
+		if _, ok := values[flag.name]; ok {
+			present |= 1 << i
 		}
 	}
-	panic("bench record " + f.name + " layout names the undeclared flag " + name)
+	sets, _ := f.admits(f.terms(), 0)
+	return slices.Contains(sets, present)
 }
 
 func (fl flag) usage() string {
@@ -171,7 +234,7 @@ func Command(root string, args []string) (string, int) {
 	if line != "" {
 		return line + "\n", code
 	}
-	if f.valid != nil && !f.valid(f, parsed.Flags) {
+	if !f.together(parsed.Flags) || f.valid != nil && !f.valid(f, parsed.Flags) {
 		return f.grammar().Help + "\n", 2
 	}
 	if root == "" {
@@ -242,21 +305,13 @@ func chosen(f form, values map[string]string, name string) bool {
 	return slices.Contains(strings.Split(f.flag(name).placeholder, "|"), values[name])
 }
 
-// verificationValid holds the verification grammar rules that span flags or close a
-// value set.
+// verificationValid closes the value sets of the verification form. Command calls it
+// only for a set of flags that the layout admits.
 func verificationValid(f form, values map[string]string) bool {
-	present := func(name string) bool { _, ok := values[name]; return ok }
-	probes := 0
-	for _, name := range probeFlags {
-		if present(name) {
-			probes++
-		}
-	}
 	_, exitCode := integer(values, "--exit-code")
+	_, probe := values[probeFlags[0]]
 	_, probeExitCode := integer(values, probeFlags[1])
-	restore := chosen(f, values, probeFlags[2])
-	return present("--chunk") != present("--final") && (present("--source") || !present("--final")) &&
-		(probes == 0 || probes == len(probeFlags) && probeExitCode && restore) && exitCode
+	return exitCode && (!probe || probeExitCode && chosen(f, values, probeFlags[2]))
 }
 
 // native reads the --excerpt file as exact bytes and pairs them with --ref. The read

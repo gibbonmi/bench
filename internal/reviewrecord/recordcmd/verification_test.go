@@ -302,6 +302,12 @@ func TestRecordVerificationRefusesADuplicateID(t *testing.T) {
 	refuseVerify(t, f, "additional-1", map[string]string{"--id": "additional-1"})
 }
 
+func TestRecordFinalVerificationRefusesADuplicateID(t *testing.T) {
+	f := recorded(t, 1)
+	verify(t, f, final(f.Tip()))
+	refuseVerify(t, f, "acceptance-1", final(f.Tip()))
+}
+
 func TestRecordRefusalLeavesNoTemporaryFile(t *testing.T) {
 	f := recorded(t, 1)
 	refuseVerify(t, f, "native result", map[string]string{"--ref": "fixture:../outside"})
@@ -372,6 +378,7 @@ func TestRecordVerificationGrammarRefusals(t *testing.T) {
 		"no list":              {"--chunk": drop},
 		"final without source": {"--chunk": drop, "--final": ""},
 		"one probe flag":       {"--probe-exit-code": drop, "--probe-restore": drop},
+		"two probe flags":      {"--probe-outcome": drop},
 		"non-integer exit":     {"--exit-code": "x"},
 		"restore outside":      {"--probe-restore": "maybe"},
 	} {
@@ -384,7 +391,7 @@ func TestRecordVerificationGrammarRefusals(t *testing.T) {
 
 func TestRecordRefusesAControlCharacterInAFlag(t *testing.T) {
 	f := recorded(t, 1)
-	for _, name := range []string{"--performer", "--model", "--effort", "--id"} {
+	for _, name := range []string{"--performer", "--model", "--effort", "--id", "--requirement", "--probe-outcome"} {
 		out := refuseVerify(t, f, name, map[string]string{name: "value\x1b"})
 		if strings.Contains(out, "\x1b") {
 			t.Errorf("%s refusal = %q, want no control character", name, out)

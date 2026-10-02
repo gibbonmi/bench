@@ -327,18 +327,7 @@ func RecordReview(root, spec string, call ReviewCall) (Review, error) {
 // unclaimed refuses an ID that a verification or review result of record already has,
 // and the refusal names that ID.
 func unclaimed(record Record, id string) error {
-	results := append([]Verification{}, record.Completion.Verification...)
-	ids := []string{}
-	for _, chunk := range record.Chunks {
-		results = append(results, chunk.Verification...)
-		for _, review := range chunk.Reviews {
-			ids = append(ids, review.ID)
-		}
-	}
-	for _, result := range results {
-		ids = append(ids, result.ID)
-	}
-	if slices.Contains(ids, id) {
+	if slices.Contains(evidenceIDs(record), id) {
 		return fmt.Errorf("evidence ID %s is already in the record", id)
 	}
 	return nil

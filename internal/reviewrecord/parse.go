@@ -53,6 +53,12 @@ func Parse(data []byte) (Record, error) {
 		return record, errors.New("invalid implementation session; version 1 names one and version 2 defers to its plan")
 	}
 	ids := map[string]bool{}
+	for _, id := range evidenceIDs(record) {
+		if id == "" || ids[id] {
+			return record, errors.New("invalid duplicate or empty evidence id")
+		}
+		ids[id] = true
+	}
 	chunks := map[string]bool{}
 	for _, chunk := range record.Chunks {
 		if chunk.ID == "" || chunks[chunk.ID] {
@@ -62,12 +68,12 @@ func Parse(data []byte) (Record, error) {
 		if !objectID.MatchString(chunk.Base) || !objectID.MatchString(chunk.Tip) || !objectID.MatchString(chunk.SourceDigest) || chunk.PlanDigest == "" {
 			return record, fmt.Errorf("chunk %s: invalid frozen source identity", chunk.ID)
 		}
-		if err := validateVerification(chunk.Verification, ids); err != nil {
+		if err := validateVerification(chunk.Verification); err != nil {
 			return record, err
 		}
 		previous := map[string]string{}
 		for _, review := range chunk.Reviews {
-			if err := validateEvidence(review.Evidence, ids); err != nil {
+			if err := validateEvidence(review.Evidence); err != nil {
 				return record, err
 			}
 			if !contains(Axes(), review.Axis) || review.Role != "independent-review" || (record.Version == 1 && review.Performer == record.ImplementationSession) {
@@ -92,15 +98,15 @@ func Parse(data []byte) (Record, error) {
 	if record.Completion.State != "" && record.Completion.State != "pending" && (!objectID.MatchString(record.Completion.SourceDigest) || record.Completion.Performer == "") {
 		return record, errors.New("missing terminal completion source or performer")
 	}
-	if err := validateVerification(record.Completion.Verification, ids); err != nil {
+	if err := validateVerification(record.Completion.Verification); err != nil {
 		return record, err
 	}
 	return record, nil
 }
 
-func validateVerification(items []Verification, ids map[string]bool) error {
+func validateVerification(items []Verification) error {
 	for _, item := range items {
-		if err := validateEvidence(item.Evidence, ids); err != nil {
+		if err := validateEvidence(item.Evidence); err != nil {
 			return err
 		}
 		// Both verification roles parse here. checkVerification grades which
@@ -123,11 +129,26 @@ func validateVerification(items []Verification, ids map[string]bool) error {
 	return nil
 }
 
-func validateEvidence(item Evidence, ids map[string]bool) error {
-	if item.ID == "" || ids[item.ID] {
-		return errors.New("invalid duplicate or empty evidence id")
+// evidenceIDs returns the evidence ID of each verification and review result of record,
+// from the lists of each chunk and then from the completion list. It is the one walk of
+// the evidence lists for the ID rule.
+func evidenceIDs(record Record) []string {
+	ids := []string{}
+	for _, chunk := range record.Chunks {
+		for _, result := range chunk.Verification {
+			ids = append(ids, result.ID)
+		}
+		for _, review := range chunk.Reviews {
+			ids = append(ids, review.ID)
+		}
 	}
-	ids[item.ID] = true
+	for _, result := range record.Completion.Verification {
+		ids = append(ids, result.ID)
+	}
+	return ids
+}
+
+func validateEvidence(item Evidence) error {
 	if !occurrenceState(item.State) {
 		return fmt.Errorf("%s: invalid occurrence state %q", item.ID, item.State)
 	}
