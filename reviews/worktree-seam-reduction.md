@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:04d1f52fa7224e0708fedd02e7c1118f8404219f710c1aea080eb347e589fc9f",
+  "plan_digest": "sha256:093c4c248fecf5d15de0dcdc6d9e9ee4aea44a81e018d3c55eb8da878b87648a",
   "implementation_session": "",
   "chunks": [
     {
@@ -383,6 +383,45 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SR-C3",
+      "base": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+      "tip": "c87a0c3f7953210e3d22c356e948e9e15c302be0",
+      "plan_digest": "sha256:093c4c248fecf5d15de0dcdc6d9e9ee4aea44a81e018d3c55eb8da878b87648a",
+      "source_digest": "e4719dd4ab867d4c42f3895a6da8f5a0389c709e",
+      "acceptance_rows": [
+        "WS17",
+        "WS18",
+        "WS19",
+        "WS20",
+        "WS21",
+        "WS22",
+        "WS23",
+        "WS24",
+        "WS25"
+      ],
+      "verification": [
+        {
+          "id": "sr-c3-3-worktree",
+          "performer": "claude:bench-writer/sr-t3-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e4719dd4ab867d4c42f3895a6da8f5a0389c709e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t3-author-20261002@1ab5800b8fb669b26a247d8f585bf21e946863a9",
+            "digest": "sha256:14202756bb46a1dda9fd07be5fbd0cc659f5cd31597a1c514f45a9f32ac9b7f3",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,c87a0c3f7953210e3d22c356e948e9e15c302be0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,58564\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "3-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -414,6 +453,18 @@
     {
       "from": "sha256:f16cc9cb766f3c75b004517d02033ea11e7831e516954910beca41fbcdbe298d",
       "to": "sha256:04d1f52fa7224e0708fedd02e7c1118f8404219f710c1aea080eb347e589fc9f",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:04d1f52fa7224e0708fedd02e7c1118f8404219f710c1aea080eb347e589fc9f",
+      "to": "sha256:093c4c248fecf5d15de0dcdc6d9e9ee4aea44a81e018d3c55eb8da878b87648a",
       "chunk_ids": {
         "SR-C1": [
           "SR-C1"
