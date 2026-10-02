@@ -610,6 +610,42 @@
           "requirement": "3-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "re-c3-v-t4-reviewrecord",
+          "performer": "claude:bench-writer/re-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a4d74c2be12e01dcaec7a6bb89f722d14b6ae9f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t4-author-20261002/verify-4-reviewrecord",
+            "digest": "sha256:2facb86cca6cdd855d9b76d07842e2ea2cca07249b58b6418cc38d2940185c11",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1619\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,3890\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "4-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c3-v-t4-cmd",
+          "performer": "claude:bench-writer/re-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a4d74c2be12e01dcaec7a6bb89f722d14b6ae9f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t4-author-20261002/verify-4-cmd",
+            "digest": "sha256:56486947bd320e44a2a853e3dacd36bf096a9b499f4e9fe75d0621183864a301",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13050\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "4-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": []
@@ -992,3 +1028,47 @@ Earlier runs at `85a9c3cb`:
 - `bench test --check skip-ownership` passed in 1.8 s of wall time.
 
 At `85ee4229`, `subcommand-routing` passed in 1.8 s and `axi-query-registry` passed in 2.0 s. At the same commit, `bench structure` reported no issue in `internal/reviewrecord`, and `write.go` held 295 lines. No check skipped a test.
+
+## RE-C3 ticket 4 author evidence
+
+The author is `claude:bench-writer/re-t4-author` on opus at medium effort. The author used 1 of 3 attempts. The ticket commit is `2883afc9`.
+
+The author wrote the 13 new `recordcmd` review tests and the help golden row before the first production edit. Each test compiled and failed on behavior: the verb answered exit 2 with `usage: bench record (unknown argument: review)`. The help golden failed at `help_inventory_test.go:146`. The "Pre-edit" route below names that red. Each probe below ran through `bench probe` with a swap, returned `bit`, and returned `restored=yes`.
+
+| Row | Test | Red route | Status |
+|---|---|---|---|
+| RE72 | `TestRecordReviewCopiesTheChunkPair` | Pre-edit. Probe: take the tip from the resolved `HEAD`. Probe: take the source digest from the `HEAD` tree. | verified |
+| RE73 | `TestRecordReviewFirstResultSupersedesNothing` | Pre-edit. Probe: supersede the last result of any axis. | verified |
+| RE74 | `TestRecordReviewSupersedesTheSameAxis` | Pre-edit. Probe: the same as RE73. `Parse` refused the Spec result. | verified |
+| RE75 | `TestRecordReviewWithoutFindingsPasses` | Pre-edit. Probe: make the outcome always `fail`. | verified |
+| RE76 | `TestRecordReviewWithFindingsFails` | Pre-edit. Probe: sort the finding IDs. The test also writes the order `R2`, `R1`. | verified |
+| RE77 | `TestRecordReviewLandsInTheReviewList` | Pre-edit. Probe: write the role `author-verification`. | verified |
+| RE78 | `TestRecordReviewNamesTheChunkForm` | Pre-edit. Probe: make a new chunk in place of the entry lookup. | verified |
+| RE79 | `TestRecordReviewRefusesTheImplementationSession` | Pre-edit. | verified |
+| RE80 | `TestRecordReviewReportsItsRow` | Pre-edit. Probe: make the `supersedes` cell empty. | verified |
+| RE81 | `TestRecordedChunkPassesTheCheckpoint` | Pre-edit. Probe: copy the chunk tip as the review base. `reviewrecord.Check` refused the record as a stale Standards result. | verified |
+| RE82 | `TestRecordReviewGrammarRefusals` | Pre-edit. Probe: make `reviewValid` always true. | verified |
+| RE83 | `TestHelpInventoryIsComplete` | Pre-edit. | verified |
+
+The central probes supersede the last result of any axis (RE73, RE74) and take the review tip from the resolved `HEAD` (RE72). Each returned `bit`.
+
+`TestRecordReviewRefusesAControlCharacterInAFlag` is a test outside the coverage map. Eight probes turn off the single-line check of `--chunk`, `--id`, `--performer`, `--model`, `--effort`, `--ref`, `--excerpt`, and `--finding`, one flag for each probe. A ninth probe checks only the last value of a repeated flag. Each of the nine probes returned `bit`. `TestRecordReviewRefusesADuplicateID` also bites on the duplicate-ID rule.
+
+The ticket adds four shared parts:
+
+- `entryOf` in `write.go` finds the entry of a recorded chunk. The verification form and the review form use it.
+- `unclaimed` in `write.go` replaces `holdsID`. It returns the duplicate-ID refusal, so the two forms use one message.
+- `chosen` in `command.go` reads the allowed values of a flag from its placeholder. The `--axis` placeholder comes from `reviewrecord.Axes`, so the usage line and the check use one source. `--probe-restore` uses the same helper.
+- The `occurs` field of a flag is `required`, `optional`, or `repeated`. A repeated flag shows as `[--finding <id>]...` in the usage line, and the control-character rule checks each of its values.
+
+The duplicated-facts sweep found one duplicate that stays. The literals `independent-review` and `completed` also occur in `record.go` and `parse.go`, which is the current style of the schema. One constant needs an edit to `parse.go`, which is outside the ticket fence. The `unclaimed` walk also stays beside the ID walk of `Parse`, as the ticket 3 section states. The comment sweep found no comment that holds a red record or a test result.
+
+Focused checks at `2883afc9`, before the commit:
+
+- `bench test --package ./internal/reviewrecord/...` passed in 5.5 s of package time.
+- `bench test --package ./cmd/bench` passed in 14.8 s of package time.
+- `TestRootConformance` passed in 6.2 s of package time.
+- `skip-ownership`, `subcommand-routing`, and `axi-query-registry` each passed in less than 0.1 s of package time.
+- `bench structure` reported no issue in a file that the ticket changed. `write.go` holds 345 lines. The commit lane passed its structure growth check.
+
+At the RE-C3 tip `f8bd61fb`, `bench test --package ./internal/reviewrecord/...` passed in 5.5 s, and `bench test --package ./cmd/bench` passed in 13.1 s. No check skipped a test. The verb recorded `re-c3-v-t4-reviewrecord` and `re-c3-v-t4-cmd` from these two runs.
