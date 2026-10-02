@@ -6,7 +6,7 @@ Roadmap: FT356
 
 Decision source: `specs/worktree-seam-reduction/decisions/worktree-seams.md` (ready compiled map, the second of its two specs).
 
-Verification log: 2 iteration(s) to accept — round 1 folded blockers B1 (exact pin), B2 (`createAttributed` read), and B3 (multi-kind reads), with A1 to A13. Round 2 folded N1 (self-derived expectations), N2 (WS84 red), and N3 (failed-probe wording).
+Verification log: 2 iteration(s) to accept — round 1 folded blockers B1 (exact pin), B2 (`createAttributed` read), and B3 (multi-kind reads), with A1 to A13. Round 2 folded N1 (self-derived expectations), N2 (WS84 red), and N3 (failed-probe wording). The reviewer re-sliced 8 and 9 at sign-off.
 
 ## Problem
 
@@ -47,6 +47,8 @@ reports whether the run took the joins route, and each not-called assertion read
 Line: opus / high.
 Implementation-line reason: SR-C2 is the hardest chunk, because the ambient value changes the signature of every internal verb form and of the retirement path. The decision source fixes the field list and the census edge, but four fixtures depend on unprobed git behavior. The package tests and the two censuses cover each row cheaply.
 Harder chunks: SR-C2, SR-C4, SR-C6.
+
+Line comparison: the reviewer directed a three-arm comparison on the SR-C5 and SR-C6 tickets. Arm one runs opus / high on the pre-slice tickets 8 and 9 at commit `9c9e9b69`. Arm two runs opus / high on the sliced tickets. Arm three runs sonnet / high with one fresh author per sliced ticket. Fable / high reviews the finish of each delegate.
 
 The gate kit reader:
 
@@ -138,7 +140,7 @@ the parent of the running executable, as `KitDir` does today.
 
 That fallback does not call
 `KitDir`. Neither form reaches
-`KitValue`, so the census in ticket 9 can tell a kit form from a kit read.
+`KitValue`, so the census in ticket 12 can tell a kit form from a kit read.
 
 `LaneForCommit` and `KitSourceCheckout` stay as wrappers that pass `KitValue()`, so
 `internal/commit`, `internal/adopt`, and `cmd/bench` do not change. The new forms live in `kit_source.go`,
@@ -263,7 +265,7 @@ the refusal text, and `serialCeilingBreach` calls it. The test asserts a non-emp
 that equals the renderer's output for a count of 1 and a ceiling of 2.
 
 `worktreeTestCount` is exact. Each ticket that adds a top-level worktree test raises the
-pin in its own commit: tickets 2, 9, 10, and 11.
+pin in its own commit: tickets 2, 12, 13, 14, and 15.
 
 ### The table names
 
@@ -301,9 +303,9 @@ budget at the decision commit:
 | SR-C2 / `2-carry-an-ambient-value-below-each-verb-entry.md` | Each verb entry passes one ambient value down, and the verb runner passes a kit value and a clock value. | WS9, WS10, WS11, WS12, WS13, WS14, WS15, WS16 | `bench test --package ./internal/worktree` | yes |
 | SR-C3 / `3-pass-the-kit-value-to-merge-and-land.md` | The merge and land verbs read the kit at their entries, and the two kit fields leave the joins value. | WS17, WS18, WS19, WS20, WS21, WS22, WS23, WS24, WS25 | `bench test --package ./internal/worktree` | no |
 | SR-C4 / `4-interrupt-the-landing-marker-with-a-gate-script.md`, `5-fault-the-landing-follow-on-steps-with-real-fixtures.md`, `6-land-the-stubbed-landing-tests-for-real.md` | The landing tests fault real landings, and the four landing fields leave the joins value. | WS26, WS27, WS28, WS29, WS30, WS31, WS32, WS33, WS34, WS35, WS36, WS37, WS38, WS39, WS40, WS41, WS42, WS43, WS44 | `bench test --package ./internal/worktree` | yes |
-| SR-C5 / `7-fault-the-cleanup-reads-with-real-fixtures.md`, `8-fault-the-reset-and-merge-moves-with-real-fixtures.md` | The cleanup, reset, merge-reconcile, and reauthorize tests use real fixtures, and their six fields leave the joins value. | WS46, WS47, WS48, WS49, WS50, WS84, WS85, WS51, WS45, WS52, WS53, WS54, WS55, WS56, WS81 | `bench test --package ./internal/worktree` | no |
-| SR-C6 / `9-refuse-a-read-below-a-census-entry.md` | The census refuses every read below a census entry, and the serial ceiling is exact. | WS57, WS58, WS59, WS60, WS61, WS62, WS63, WS64, WS65, WS66, WS67, WS68, WS69, WS70, WS82, WS83, WS86 | `bench test --package ./internal/worktree` | yes |
-| SR-C7 / `10-name-each-table-in-production.md`, `11-require-the-joins-route-of-a-not-called-stub.md` | The tests read the table names from production, and each not-called assertion proves its route. | WS71, WS72, WS73, WS74, WS75, WS76, WS77, WS78, WS79, WS80 | `bench test --package ./internal/worktree` | no |
+| SR-C5 / `7-fault-the-cleanup-reads-with-real-fixtures.md`, `8-fault-the-reauthorize-unlock-with-a-denied-admin-directory.md`, `9-fault-the-reset-move-with-real-fixtures.md`, `10-fault-the-merge-reconcile-with-a-stale-index-lock.md` | The cleanup, reset, merge-reconcile, and reauthorize tests use real fixtures, and their six fields leave the joins value. | WS46, WS47, WS48, WS49, WS50, WS84, WS85, WS51, WS45, WS52, WS53, WS54, WS55, WS56, WS81 | `bench test --package ./internal/worktree` | no |
+| SR-C6 / `11-lift-each-read-below-a-census-entry.md`, `12-refuse-a-read-below-a-census-entry.md`, `13-make-the-serial-ceiling-exact.md` | Each read sits at a census entry, the census refuses every read below one, and the serial ceiling is exact. | WS57, WS58, WS59, WS60, WS61, WS62, WS63, WS64, WS65, WS66, WS67, WS68, WS69, WS70, WS82, WS83, WS86 | `bench test --package ./internal/worktree` | yes |
+| SR-C7 / `14-name-each-table-in-production.md`, `15-require-the-joins-route-of-a-not-called-stub.md` | The tests read the table names from production, and each not-called assertion proves its route. | WS71, WS72, WS73, WS74, WS75, WS76, WS77, WS78, WS79, WS80 | `bench test --package ./internal/worktree` | no |
 
 SR-C1 and SR-C2 each create a seam that later tickets consume, so each is its own chunk.
 Each review closes before a consumer ticket starts. Every ticket writes the worktree
@@ -540,6 +542,7 @@ literals and parses no rendered text.
 - `internal/worktree/reset_repair_test.go`
 - `internal/worktree/reset_restore_refusal_test.go`
 - `internal/worktree/resume.go`
+- `internal/worktree/serial_ceiling_test.go`
 - `internal/worktree/single_read_census_test.go`
 - `internal/worktree/snapshot.go`
 - `internal/worktree/snapshot_test.go`
@@ -564,14 +567,19 @@ literals and parses no rendered text.
 | `5-fault-the-landing-follow-on-steps-with-real-fixtures.md` | `4-interrupt-the-landing-marker-with-a-gate-script.md` | SR-C4 |
 | `6-land-the-stubbed-landing-tests-for-real.md` | `5-fault-the-landing-follow-on-steps-with-real-fixtures.md` | SR-C4 |
 | `7-fault-the-cleanup-reads-with-real-fixtures.md` | `6-land-the-stubbed-landing-tests-for-real.md` | SR-C5 |
-| `8-fault-the-reset-and-merge-moves-with-real-fixtures.md` | `7-fault-the-cleanup-reads-with-real-fixtures.md` | SR-C5 |
-| `9-refuse-a-read-below-a-census-entry.md` | `8-fault-the-reset-and-merge-moves-with-real-fixtures.md` | SR-C6 |
-| `10-name-each-table-in-production.md` | `9-refuse-a-read-below-a-census-entry.md` | SR-C7 |
-| `11-require-the-joins-route-of-a-not-called-stub.md` | `10-name-each-table-in-production.md` | SR-C7 |
+| `8-fault-the-reauthorize-unlock-with-a-denied-admin-directory.md` | `7-fault-the-cleanup-reads-with-real-fixtures.md` | SR-C5 |
+| `9-fault-the-reset-move-with-real-fixtures.md` | `8-fault-the-reauthorize-unlock-with-a-denied-admin-directory.md` | SR-C5 |
+| `10-fault-the-merge-reconcile-with-a-stale-index-lock.md` | `9-fault-the-reset-move-with-real-fixtures.md` | SR-C5 |
+| `11-lift-each-read-below-a-census-entry.md` | `10-fault-the-merge-reconcile-with-a-stale-index-lock.md` | SR-C6 |
+| `12-refuse-a-read-below-a-census-entry.md` | `11-lift-each-read-below-a-census-entry.md` | SR-C6 |
+| `13-make-the-serial-ceiling-exact.md` | `12-refuse-a-read-below-a-census-entry.md` | SR-C6 |
+| `14-name-each-table-in-production.md` | `13-make-the-serial-ceiling-exact.md` | SR-C7 |
+| `15-require-the-joins-route-of-a-not-called-stub.md` | `14-name-each-table-in-production.md` | SR-C7 |
 
 Each ticket writes `joins.go` or a shared test file, so the graph is a chain. Ticket 2
-consumes the kit reader of ticket 1 in the ambient constructor. Ticket 9 lands after every
-field removal, so its live census grades the final source.
+consumes the kit reader of ticket 1 in the ambient constructor. Ticket 11 lifts the reads
+after every field removal. Ticket 12 then adds the census, so its live census grades the
+final source. Ticket 13 changes only the serial ceiling, apart from the census logic.
 
 ## Out of scope
 
@@ -678,7 +686,7 @@ and ambient value terms to the glossary, so no ticket writes `CONTEXT.md`.
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"SR-C1","tickets":["1-read-the-kit-value-once-in-gate.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"SR-C2","tickets":["2-carry-an-ambient-value-below-each-verb-entry.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C3","tickets":["3-pass-the-kit-value-to-merge-and-land.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C4","tickets":["4-interrupt-the-landing-marker-with-a-gate-script.md","5-fault-the-landing-follow-on-steps-with-real-fixtures.md","6-land-the-stubbed-landing-tests-for-real.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C5","tickets":["7-fault-the-cleanup-reads-with-real-fixtures.md","8-fault-the-reset-and-merge-moves-with-real-fixtures.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C6","tickets":["9-refuse-a-read-below-a-census-entry.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C7","tickets":["10-name-each-table-in-production.md","11-require-the-joins-route-of-a-not-called-stub.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/worktree-seam-reduction/spec.md"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"commit","command":"bench test --package ./internal/commit"},{"id":"adopt","command":"bench test --package ./internal/adopt"}]}
+{"version":1,"chunks":[{"id":"SR-C1","tickets":["1-read-the-kit-value-once-in-gate.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"SR-C2","tickets":["2-carry-an-ambient-value-below-each-verb-entry.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C3","tickets":["3-pass-the-kit-value-to-merge-and-land.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C4","tickets":["4-interrupt-the-landing-marker-with-a-gate-script.md","5-fault-the-landing-follow-on-steps-with-real-fixtures.md","6-land-the-stubbed-landing-tests-for-real.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C5","tickets":["7-fault-the-cleanup-reads-with-real-fixtures.md","8-fault-the-reauthorize-unlock-with-a-denied-admin-directory.md","9-fault-the-reset-move-with-real-fixtures.md","10-fault-the-merge-reconcile-with-a-stale-index-lock.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C6","tickets":["11-lift-each-read-below-a-census-entry.md","12-refuse-a-read-below-a-census-entry.md","13-make-the-serial-ceiling-exact.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"SR-C7","tickets":["14-name-each-table-in-production.md","15-require-the-joins-route-of-a-not-called-stub.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/worktree-seam-reduction/spec.md"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"commit","command":"bench test --package ./internal/commit"},{"id":"adopt","command":"bench test --package ./internal/adopt"}]}
 ```
 
 ### Flagged additions
