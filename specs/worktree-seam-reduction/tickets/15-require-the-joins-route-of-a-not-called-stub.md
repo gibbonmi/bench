@@ -17,7 +17,7 @@ Make each test that asserts that a joins stub was not called also call `mustViaJ
 on that run. The tests are `TestResetApplyTakesTheCleanupLock`,
 `TestLandSkipsTheRefreshWithoutBuildInputs`, `TestLandSkipsAFreshBroker`,
 `TestResumeReadsEffectStateFromTheTree`, `TestLandCommandHostileSourceInputsRefuseBoundedly`,
-`TestLandCommandRefusesDestinationAndSourceStateBeforeGate`, and the four identity-refusal tests in
+`TestLandCommandRefusesDestinationAndSourceStateBeforeGate`, and the six identity-refusal tests in
 `land_identity_test.go`.
 
 For each named test, run `bench probe` that drops the joins value from the not-called run.
