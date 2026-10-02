@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:b38e9b91d8eb294528ff65bd357a932729a154a078d2b43a567a1ccd8c1af5b1",
+  "plan_digest": "sha256:1d8500038cf36fe08f8b2042b1f418051249af4775371bf697d6bd43ef9399d4",
   "implementation_session": "",
   "chunks": [
     {
@@ -1155,9 +1155,9 @@
     {
       "id": "SR-C6",
       "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
-      "tip": "20aefd5cb9146433fb8be2a956b6ed2a1db8b87a",
-      "plan_digest": "sha256:b38e9b91d8eb294528ff65bd357a932729a154a078d2b43a567a1ccd8c1af5b1",
-      "source_digest": "b9ec07051543af362963b10f10f1642547663891",
+      "tip": "54d3beac9497c0efb213650f73b663f7b0086e9c",
+      "plan_digest": "sha256:1d8500038cf36fe08f8b2042b1f418051249af4775371bf697d6bd43ef9399d4",
+      "source_digest": "95006ba609e5ce4b6a72a5a35edcc751c302b042",
       "acceptance_rows": [
         "WS68",
         "WS83",
@@ -1229,6 +1229,24 @@
             "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,20aefd5cb9146433fb8be2a956b6ed2a1db8b87a,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,86311\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
           },
           "requirement": "13-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c6-12-worktree-r1",
+          "performer": "claude:bench-writer/sr-t12-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "95006ba609e5ce4b6a72a5a35edcc751c302b042",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t12-repair1-20261002@5535b1c94a5f1cca5f82b55347b6d399369a7f28",
+            "digest": "sha256:290ff52b358080f652a37036a1d452490d27228a0d46ac33b5a98b95fd3c2083",
+            "excerpt": "bench test --package ./internal/worktree (post-commit, repair 54d3beac9497c0efb213650f73b663f7b0086e9c)\ntree[1]{target,head,dirty}:\n  sr-integration,54d3beac9497c0efb213650f73b663f7b0086e9c,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,54894\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,capability: fifo: unix sockets unavailable\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,capability: fifo: unix sockets unavailable\nprobes (single_read_census_test.go, --package ./internal/worktree --run TestSingleReadCensus):\nC1 three-clause Cond/Post/Body walks swapped to nested: before silent; after bit (3 subtests); restored yes\nC2 kind keyed by source spelling: before invalid (substring-miss); after bit; restored yes\nP1 method-entry selector branch disabled: after bit; restored yes\nP1 function-only entryKinds index restored: after bit; restored yes\nC4 effectsFile renamed (run TestSingleReadCensus|TestEffect after): before silent; after bit (2 tests); restored yes\nC4 empty read set check disabled: after bit; restored yes\n"
+          },
+          "requirement": "12-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
@@ -1441,6 +1459,30 @@
         ],
         "SR-C5": [
           "SR-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b38e9b91d8eb294528ff65bd357a932729a154a078d2b43a567a1ccd8c1af5b1",
+      "to": "sha256:1d8500038cf36fe08f8b2042b1f418051249af4775371bf697d6bd43ef9399d4",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ],
+        "SR-C3": [
+          "SR-C3"
+        ],
+        "SR-C4": [
+          "SR-C4"
+        ],
+        "SR-C5": [
+          "SR-C5"
+        ],
+        "SR-C6": [
+          "SR-C6"
         ]
       }
     }
