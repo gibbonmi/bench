@@ -1572,6 +1572,24 @@
           "requirement": "15-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
+        },
+        {
+          "id": "sr-c7-14-worktree",
+          "performer": "claude:bench-writer/sr-t14-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b18681abbbe5d5169165223ed5944e32337834f4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t14-author-20261002@eb3e195481f87ffd17865ac608b0c9251619ba11",
+            "digest": "sha256:1ea8f1a5e679b243d57bc8c790fd8f90d4ff3715d1d74b5e83b861d311ae8697",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,2ab74e4a49ce47dd4e9bad31fc6622a0092d652b,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,65765\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\nWS71 probe: classifier.go swap toon.Table(cleanupTable, ...) -> toon.Table(\"worktree_cleanup\", ...), verdict bit, failed 1, restored yes\nWS72 probe: table_name_census_test.go omit blockArgs[call.Args[index]] = true, verdict bit, failed 5, restored yes\nWS73 probe: table_name_census_test.go swap strings.HasPrefix(text, name+\"[\") -> text == name, verdict bit, failed 7, restored yes\nWS74 probe: clean_set_test.go swap cleanupTable+\"[0]\" -> \"worktree_cleanup[0]\", verdict bit, failed 1, restored yes\n"
+          },
+          "requirement": "14-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
         }
       ],
       "reviews": []
