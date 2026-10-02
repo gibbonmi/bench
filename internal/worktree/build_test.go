@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"os"
@@ -103,12 +102,11 @@ func pathWithoutGo(t *testing.T) string {
 // `dist/bench`, so no caller has to name either path.
 func TestBuildCallsTheJoinWithTheWorktreeAndOutput(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "build-join-arguments")
+	f := newOwnedAssignment(t, "build-join-arguments")
 	recorder := &buildRecorder{}
-	var stdout, stderr bytes.Buffer
-	code := buildWith(buildJoins(recorder), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
-	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
-	want := [2]string{creation.Assignment.Worktree, filepath.Join(creation.Assignment.Worktree, "dist", "bench")}
+	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(buildJoins(recorder), f.creation.Assignment.Label))
+	requireTest(t, r.exit == 0, "build exit = %d, stderr %q", r.exit, r.stderr)
+	want := [2]string{f.creation.Assignment.Worktree, filepath.Join(f.creation.Assignment.Worktree, "dist", "bench")}
 	requireTest(t, len(recorder.calls) == 1, "build join calls = %d, want 1", len(recorder.calls))
 	requireTest(t, recorder.calls[0] == want, "build join call = %v, want %v", recorder.calls[0], want)
 }
@@ -117,12 +115,11 @@ func TestBuildCallsTheJoinWithTheWorktreeAndOutput(t *testing.T) {
 // its seal come from the sanctioned producer rather than from a bare `go build`.
 func TestBuildRunsTheWorktreeBuildScript(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "build-runs-script")
-	plantBuildScript(t, creation.Path, "script-authored")
-	var stdout, stderr bytes.Buffer
-	code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
-	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
-	requireTest(t, builtExecutable(t, creation.Path) == "script-authored", "dist/bench = %q, want the script's bytes", builtExecutable(t, creation.Path))
+	f := newOwnedAssignment(t, "build-runs-script")
+	plantBuildScript(t, f.creation.Path, "script-authored")
+	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(defaultJoins(), f.creation.Assignment.Label))
+	requireTest(t, r.exit == 0, "build exit = %d, stderr %q", r.exit, r.stderr)
+	requireTest(t, builtExecutable(t, f.creation.Path) == "script-authored", "dist/bench = %q, want the script's bytes", builtExecutable(t, f.creation.Path))
 }
 
 // FT327: the verb builds the worktree's own published executable, so it names no manifest
@@ -130,12 +127,11 @@ func TestBuildRunsTheWorktreeBuildScript(t *testing.T) {
 // where the doctor row and the landing read it, and not beside `dist/bench`.
 func TestBuildLeavesTheManifestDirectoryToTheScript(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "build-manifest-default")
-	plantBuildScript(t, creation.Path, "subject-build")
-	var stdout, stderr bytes.Buffer
-	code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
-	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
-	argv := buildScriptArgv(t, creation.Path)
+	f := newOwnedAssignment(t, "build-manifest-default")
+	plantBuildScript(t, f.creation.Path, "subject-build")
+	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(defaultJoins(), f.creation.Assignment.Label))
+	requireTest(t, r.exit == 0, "build exit = %d, stderr %q", r.exit, r.stderr)
+	argv := buildScriptArgv(t, f.creation.Path)
 	requireTest(t, !slices.Contains(argv, "--manifest-dir"), "the build script received %q, want no --manifest-dir so the manifest lands beside the wrapper", argv)
 }
 
@@ -143,13 +139,12 @@ func TestBuildLeavesTheManifestDirectoryToTheScript(t *testing.T) {
 // to derive either from the target they typed.
 func TestBuildPrintsTheTable(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "build-prints-table")
-	var stdout, stderr bytes.Buffer
-	code := buildWith(buildJoins(&buildRecorder{}), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
-	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
-	want, err := toon.Table("worktree_build", []string{"worktree", "executable"}, [][]string{{creation.Assignment.ID, filepath.Join(creation.Assignment.Worktree, "dist", "bench")}})
+	f := newOwnedAssignment(t, "build-prints-table")
+	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(buildJoins(&buildRecorder{}), f.creation.Assignment.Label))
+	requireTest(t, r.exit == 0, "build exit = %d, stderr %q", r.exit, r.stderr)
+	want, err := toon.Table("worktree_build", []string{"worktree", "executable"}, [][]string{{f.creation.Assignment.ID, filepath.Join(f.creation.Assignment.Worktree, "dist", "bench")}})
 	mustNoError(t, err)
-	requireTest(t, strings.HasPrefix(stdout.String(), want), "build printed %q, want the table %q", stdout.String(), want)
+	requireTest(t, strings.HasPrefix(r.stdout, want), "build printed %q, want the table %q", r.stdout, want)
 }
 
 // WF4: the next line is paste-safe for every label. A line-safe label is shell-quoted, and
@@ -166,13 +161,12 @@ func TestBuildNamesTheExecFormForTheLabel(t *testing.T) {
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			t.Parallel()
-			root, creation, _ := newOwnedAssignment(t, "build-next-"+strings.ReplaceAll(row.name, " ", "-"))
-			assignment := relabelAssignment(t, root, creation.Assignment, row.label)
-			var stdout, stderr bytes.Buffer
-			code := buildWith(buildJoins(&buildRecorder{}), root, Home(), []string{assignment.ID}, &stdout, &stderr)
-			requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
+			f := newOwnedAssignment(t, "build-next-"+strings.ReplaceAll(row.name, " ", "-"))
+			assignment := relabelAssignment(t, f.root, f.creation.Assignment, row.label)
+			r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(buildJoins(&buildRecorder{}), assignment.ID))
+			requireTest(t, r.exit == 0, "build exit = %d, stderr %q", r.exit, r.stderr)
 			want := "next[1]:\n  bench worktree exec " + row.address(assignment) + " -- ./dist/bench <verb>\n"
-			requireTest(t, strings.HasSuffix(stdout.String(), want), "build printed %q, want it to end with %q", stdout.String(), want)
+			requireTest(t, strings.HasSuffix(r.stdout, want), "build printed %q, want it to end with %q", r.stdout, want)
 		})
 	}
 }
@@ -181,68 +175,61 @@ func TestBuildNamesTheExecFormForTheLabel(t *testing.T) {
 // the reader never needs a raw path lookup to act on the failure.
 func TestBuildFailureNamesTheWorktree(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "build-failure-names")
+	f := newOwnedAssignment(t, "build-failure-names")
 	recorder := &buildRecorder{result: errors.New("build script exited 1")}
-	var stdout, stderr bytes.Buffer
-	code := buildWith(buildJoins(recorder), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
-	requireTest(t, code == 1, "build exit = %d, want 1", code)
-	want := "bench worktree build: build script exited 1\nworktree: " + creation.Assignment.Worktree + "\n"
-	requireTest(t, stderr.String() == want, "build printed %q, want %q", stderr.String(), want)
+	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(buildJoins(recorder), f.creation.Assignment.Label))
+	requireTest(t, r.exit == 1, "build exit = %d, want 1", r.exit)
+	want := "bench worktree build: build script exited 1\nworktree: " + f.creation.Assignment.Worktree + "\n"
+	requireTest(t, r.stderr == want, "build printed %q, want %q", r.stderr, want)
 }
 
 // WF6: an absent Go toolchain is refused by the builder's own sentence, so the refusal
 // names the tool rather than an exec failure the reader has to decode.
 func TestBuildRefusesWithoutGoOnPath(t *testing.T) {
-	root, creation, _ := newOwnedAssignment(t, "build-without-go")
-	plantBuildScript(t, creation.Path, "never-runs")
+	f := newOwnedAssignment(t, "build-without-go")
+	plantBuildScript(t, f.creation.Path, "never-runs")
 	bindEnv(t, "PATH", pathWithoutGo(t))
-	var stdout, stderr bytes.Buffer
-	code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
-	requireTest(t, code == 1, "build exit = %d, want 1", code)
-	requireTest(t, strings.Contains(stderr.String(), "Go is absent from PATH"), "build printed %q, want the builder's Go sentence", stderr.String())
-	requireTest(t, strings.HasSuffix(stderr.String(), "worktree: "+creation.Assignment.Worktree+"\n"), "build printed %q, want it to end with the worktree line", stderr.String())
+	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(defaultJoins(), f.creation.Assignment.Label))
+	requireTest(t, r.exit == 1, "build exit = %d, want 1", r.exit)
+	requireTest(t, strings.Contains(r.stderr, "Go is absent from PATH"), "build printed %q, want the builder's Go sentence", r.stderr)
+	requireTest(t, strings.HasSuffix(r.stderr, "worktree: "+f.creation.Assignment.Worktree+"\n"), "build printed %q, want it to end with the worktree line", r.stderr)
 }
 
 // WF7: an interrupted build exits 130 and still leaves the tree's path, so a signal reads
 // apart from a broken build.
 func TestBuildCancelExitsOneHundredThirty(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "build-cancelled")
+	f := newOwnedAssignment(t, "build-cancelled")
 	recorder := &buildRecorder{result: context.Canceled}
-	var stdout, stderr bytes.Buffer
-	code := buildWith(buildJoins(recorder), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
-	requireTest(t, code == 130, "build exit = %d, want 130", code)
-	requireTest(t, strings.HasSuffix(stderr.String(), "worktree: "+creation.Assignment.Worktree+"\n"), "build printed %q, want it to end with the worktree line", stderr.String())
+	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(buildJoins(recorder), f.creation.Assignment.Label))
+	requireTest(t, r.exit == 130, "build exit = %d, want 130", r.exit)
+	requireTest(t, strings.HasSuffix(r.stderr, "worktree: "+f.creation.Assignment.Worktree+"\n"), "build printed %q, want it to end with the worktree line", r.stderr)
 }
 
 // WF9: a rebuild replaces the executable in place, so an edit-and-rebuild loop needs no
 // clean step between the two runs.
 func TestBuildReplacesAPriorExecutable(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "build-replaces-prior")
-	var stdout, stderr bytes.Buffer
+	f := newOwnedAssignment(t, "build-replaces-prior")
 	for _, marker := range []string{"first-build", "second-build"} {
-		plantBuildScript(t, creation.Path, marker)
-		stdout.Reset()
-		stderr.Reset()
-		code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
-		requireTest(t, code == 0, "build for %s exit = %d, stderr %q", marker, code, stderr.String())
+		plantBuildScript(t, f.creation.Path, marker)
+		r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(defaultJoins(), f.creation.Assignment.Label))
+		requireTest(t, r.exit == 0, "build for %s exit = %d, stderr %q", marker, r.exit, r.stderr)
 	}
-	requireTest(t, builtExecutable(t, creation.Path) == "second-build", "dist/bench = %q, want the second build's bytes", builtExecutable(t, creation.Path))
+	requireTest(t, builtExecutable(t, f.creation.Path) == "second-build", "dist/bench = %q, want the second build's bytes", builtExecutable(t, f.creation.Path))
 }
 
 // WF11: the build leaves residue under `dist/` alone, so the landing's residue rule stays
 // green after a worktree has been built.
 func TestBuildWritesOnlyUnderDist(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "build-writes-under-dist")
-	plantBuildScript(t, creation.Path, "declared-output")
-	gitRun(t, creation.Path, "add", "scripts/go-build.sh")
-	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "add the build script")
-	var stdout, stderr bytes.Buffer
-	code := buildWith(defaultJoins(), root, Home(), []string{creation.Assignment.Label}, &stdout, &stderr)
-	requireTest(t, code == 0, "build exit = %d, stderr %q", code, stderr.String())
-	listing, err := descendant(t, "git", "-C", creation.Path, "status", "--porcelain", "--untracked-files=all").Output()
+	f := newOwnedAssignment(t, "build-writes-under-dist")
+	plantBuildScript(t, f.creation.Path, "declared-output")
+	gitRun(t, f.creation.Path, "add", "scripts/go-build.sh")
+	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "add the build script")
+	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(defaultJoins(), f.creation.Assignment.Label))
+	requireTest(t, r.exit == 0, "build exit = %d, stderr %q", r.exit, r.stderr)
+	listing, err := descendant(t, "git", "-C", f.creation.Path, "status", "--porcelain", "--untracked-files=all").Output()
 	mustNoError(t, err)
 	untracked := untrackedPaths(string(listing))
 	requireTest(t, len(untracked) > 0, "git reported no untracked path, so the row grades nothing")

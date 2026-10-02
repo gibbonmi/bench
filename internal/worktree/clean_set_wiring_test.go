@@ -21,16 +21,16 @@ func TestCleanSetApplyTimeStaleWiring(t *testing.T) {
 	t.Parallel()
 	t.Run("landed apply-time drift", func(t *testing.T) {
 		t.Parallel()
-		root, home, first, second, _ := landedSetFixture(t)
-		plan, planErr, planCode := runCleanup(t, root, home, "--landed")
-		if planCode != 0 || planErr != "" {
-			t.Fatalf("plan = (%d, %q, %q), want one applicable plan", planCode, plan, planErr)
+		f := landedSetFixture(t)
+		plan := runVerb(t, verbClean, f.call("--landed"))
+		if plan.exit != 0 || plan.stderr != "" {
+			t.Fatalf("plan = (%d, %q, %q), want one applicable plan", plan.exit, plan.stdout, plan.stderr)
 		}
 		// The set removes in canonical identity order and the fixture's third member retains,
 		// so the later of these two identities is the member the apply reaches second.
-		drifted := first
-		if second.Assignment.ID > first.Assignment.ID {
-			drifted = second
+		drifted := f.first
+		if f.second.Assignment.ID > f.first.Assignment.ID {
+			drifted = f.second
 		}
 		// The drift lands after the first member's terminal receipt, so the command's entry
 		// check passes and the refusal comes from inside the apply.
@@ -44,14 +44,14 @@ func TestCleanSetApplyTimeStaleWiring(t *testing.T) {
 			return nil
 		}
 
-		digest := cleanupRowFingerprint(t, plan)
-		stdout, stderr, code := runCleanupWith(t, j, root, home, "--landed", "--apply", digest)
-		if code != 1 || stderr != "" || !mutated {
-			t.Fatalf("landed apply = (%d, %q, %q) mutated=%t, want an apply-time refusal", code, stdout, stderr, mutated)
+		digest := plan.mustFingerprint(t)
+		stale := runVerb(t, verbClean, f.callWith(j, "--landed", "--apply", digest))
+		if stale.exit != 1 || stale.stderr != "" || !mutated {
+			t.Fatalf("landed apply = (%d, %q, %q) mutated=%t, want an apply-time refusal", stale.exit, stale.stdout, stale.stderr, mutated)
 		}
-		requireStaleRefusalRow(t, stdout, "unknown", "unknown", digest)
-		if !strings.Contains(stdout, "bench worktree clean --landed") {
-			t.Fatalf("landed apply = %q, want the selector-preserving re-plan command", stdout)
+		requireStaleRefusalRow(t, stale, "unknown", "unknown", digest)
+		if !strings.Contains(stale.stdout, "bench worktree clean --landed") {
+			t.Fatalf("landed apply = %q, want the selector-preserving re-plan command", stale.stdout)
 		}
 	})
 	// Both unclaimed routes read the branch namespace twice, once for the caller's plan and
@@ -85,13 +85,13 @@ func TestCleanSetApplyTimeStaleWiring(t *testing.T) {
 				return nil
 			}
 
-			stdout, stderr, code := runCleanupWith(t, j, root, home, tc.apply(set.fingerprint)...)
-			if code != 1 || stderr != "" || !raced {
-				t.Fatalf("%s = (%d, %q, %q) raced=%t, want an apply-time refusal", tc.name, code, stdout, stderr, raced)
+			stale := runVerb(t, verbClean, repoHome{root, home}.callWith(j, tc.apply(set.fingerprint)...))
+			if stale.exit != 1 || stale.stderr != "" || !raced {
+				t.Fatalf("%s = (%d, %q, %q) raced=%t, want an apply-time refusal", tc.name, stale.exit, stale.stdout, stale.stderr, raced)
 			}
-			requireStaleRefusalRow(t, stdout, "unclaimed", "none", set.fingerprint)
-			if !strings.Contains(stdout, "bench worktree clean --discard-branch --unclaimed") {
-				t.Fatalf("%s = %q, want the selector-preserving re-plan command", tc.name, stdout)
+			requireStaleRefusalRow(t, stale, "unclaimed", "none", set.fingerprint)
+			if !strings.Contains(stale.stdout, "bench worktree clean --discard-branch --unclaimed") {
+				t.Fatalf("%s = %q, want the selector-preserving re-plan command", tc.name, stale.stdout)
 			}
 			for _, row := range set.rows {
 				if !git.OK("-C", root, "show-ref", "--verify", "--quiet", row.ref) {

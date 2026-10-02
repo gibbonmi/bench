@@ -42,25 +42,20 @@ func recordedBranch(t *testing.T, root, home string, state intent.AssignmentStat
 	return ref, recorded.Assignment.Branch
 }
 
-// unclaimedVerdicts reads an unclaimed plan into one "<action> <detail head>" cell per
-// target. The head is the detail before its first semicolon: the class and the holder.
-func unclaimedVerdicts(t *testing.T, output string) map[string]string {
+// requireCleanupColumns fails t when a decoded row does not carry every cleanup column.
+func requireCleanupColumns(t *testing.T, rows map[string]textRow) {
 	t.Helper()
-	verdicts := map[string]string{}
-	for _, row := range cleanupRows(output) {
-		fields := cleanupRowFields(row)
-		if len(fields) != len(cleanupFields) {
+	for _, row := range rows {
+		if len(row) != len(cleanupFields) {
 			t.Fatalf("row %q does not carry the %d cleanup columns", row, len(cleanupFields))
 		}
-		head, _, _ := strings.Cut(cleanupRowValue(fields[6]), ";")
-		verdicts[cleanupRowValue(fields[0])] = fields[1] + " " + head
 	}
-	return verdicts
 }
 
 // TestClassifyUnclaimedRefsOverTheEdgeInventory is the class table over the ref shapes of
 // the edge inventory. Its class and holder spellings are independent expectations pinned
-// for RI13 and RI14.
+// for RI13 and RI14. Each row reads as "<action> <detail head>", where the head is the
+// detail before its first semicolon: the class and the holder.
 func TestClassifyUnclaimedRefsOverTheEdgeInventory(t *testing.T) {
 	t.Parallel()
 	const landed, unique = "discard-remove class=landed", "retain class=unique"
@@ -162,9 +157,16 @@ func TestClassifyUnclaimedRefsOverTheEdgeInventory(t *testing.T) {
 			t.Parallel()
 			root, home := unclaimedBranchFixture(t)
 			want := tc.setup(t, root, home)
-			plan, stderr, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-			if got := unclaimedVerdicts(t, plan); code != 0 || stderr != "" || !reflect.DeepEqual(got, want) {
-				t.Fatalf("plan exit=%d stderr=%q verdicts=%q, want %q\n%s", code, stderr, got, want, plan)
+			plan := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed"))
+			got := map[string]string{}
+			rows := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")
+			requireCleanupColumns(t, rows)
+			for target, row := range rows {
+				head, _, _ := strings.Cut(row["detail"], ";")
+				got[target] = row["action"] + " " + head
+			}
+			if plan.exit != 0 || plan.stderr != "" || !reflect.DeepEqual(got, want) {
+				t.Fatalf("plan exit=%d stderr=%q verdicts=%q, want %q\n%s", plan.exit, plan.stderr, got, want, plan.stdout)
 			}
 		})
 	}
@@ -185,22 +187,26 @@ func TestCleanUnclaimedSymrefFailsClosed(t *testing.T) {
 					target = addUnclaimedBranch(t, root, "a")
 					commitOnBranch(t, root, target, "unique.txt", "unique\n")
 				}
-				plan, _, _ := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-				fingerprint := cleanupRowFingerprint(t, plan)
+				f := repoHome{root, home}
+				fingerprint := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed")).mustFingerprint(t)
 				gitRun(t, root, "symbolic-ref", symref, target)
 				identities := func() string {
 					return gitOutput(t, root, "for-each-ref", "--format=%(refname) %(objectname) %(symref)")
 				}
 				refs := identities()
-				plan, _, code := runCleanup(t, root, home, "--discard-branch", "--unclaimed")
-				row := unclaimedVerdicts(t, plan)[symref]
-				if code != 1 || strings.Contains(plan, "--apply") || setFingerprint.MatchString(plan) || !strings.HasPrefix(row, string(ActionError)+" "+symref) || !strings.Contains(row, "symref") {
-					t.Fatalf("plan exit=%d row=%q stdout=%q, want exit 1, an error row naming the symref, no fingerprint, and no apply action", code, row, plan)
+				plan := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed"))
+				rows := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")
+				requireCleanupColumns(t, rows)
+				row := rows[symref]
+				head, _, _ := strings.Cut(row["detail"], ";")
+				if plan.exit != 1 || strings.Contains(plan.stdout, "--apply") || row["action"] != string(ActionError) || !strings.HasPrefix(head, symref) || !strings.Contains(head, "symref") {
+					t.Fatalf("plan exit=%d row=%q stdout=%q, want exit 1, an error row naming the symref, no fingerprint, and no apply action", plan.exit, row, plan.stdout)
 				}
+				plan.mustNoFingerprint(t)
 				for _, apply := range [][]string{{"--apply", fingerprint}, {"--apply-current"}} {
-					output, _, code := runCleanup(t, root, home, append([]string{"--discard-branch", "--unclaimed"}, apply...)...)
-					if code != 1 || strings.Contains(output, ",removed,") || identities() != refs {
-						t.Fatalf("%s exit=%d stdout=%q, want a refusal that changes no ref", apply[0], code, output)
+					applied := runVerb(t, verbClean, f.call(append([]string{"--discard-branch", "--unclaimed"}, apply...)...))
+					if applied.exit != 1 || strings.Contains(applied.stdout, ",removed,") || identities() != refs {
+						t.Fatalf("%s exit=%d stdout=%q, want a refusal that changes no ref", apply[0], applied.exit, applied.stdout)
 					}
 				}
 			})

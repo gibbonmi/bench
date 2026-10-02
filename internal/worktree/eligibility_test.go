@@ -42,13 +42,13 @@ func TestExplicitEligibilityAllowsRuntimeIgnoredResidue(t *testing.T) {
 func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
 	t.Parallel()
 	t.Run("clean-remove", func(t *testing.T) {
-		root, creation, _ := newOwnedAssignment(t, "ev1-clean-remove")
-		assertVerdictMatchesPlan(t, root, creation.Path, CleanupOptions{})
+		f := newOwnedAssignment(t, "ev1-clean-remove")
+		assertVerdictMatchesPlan(t, f.root, f.creation.Path, CleanupOptions{})
 	})
 	t.Run("dirty-recover-remove", func(t *testing.T) {
-		root, creation, _ := newOwnedAssignment(t, "ev1-dirty-recover-remove")
-		mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
-		assertVerdictMatchesPlan(t, root, creation.Path, CleanupOptions{})
+		f := newOwnedAssignment(t, "ev1-dirty-recover-remove")
+		mustWrite(t, filepath.Join(f.creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
+		assertVerdictMatchesPlan(t, f.root, f.creation.Path, CleanupOptions{})
 	})
 }
 

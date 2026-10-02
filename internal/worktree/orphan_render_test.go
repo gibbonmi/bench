@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -145,24 +144,18 @@ func resumeReclaimableCount(t *testing.T, summary string) int {
 	return count
 }
 
-// planReclaimableCount reads the reclaimable column out of the plan's aggregate row.
+// planReclaimableCount reads the reclaimable column out of the plan's decoded aggregate row.
 // The comparison is against what `bench worktree reclaim` actually advertises as its
 // target count, not against a second call of the predicate from the test.
-func planReclaimableCount(t *testing.T, out string) int {
+func planReclaimableCount(t *testing.T, plan verbResult) int {
 	t.Helper()
-	match := regexp.MustCompile(`(?m)^\s+\d+,(\d+),\d+,"?[0-9a-f]{64}"?$`).FindStringSubmatch(out)
-	requireTest(t, match != nil, "plan carries no aggregate row: %q", out)
-	count, err := strconv.Atoi(match[1])
+	rows := plan.mustRows(t, "pool_reclaim_aggregate")
+	requireTest(t, len(rows) == 1, "plan carries %d aggregate rows, want one: %q", len(rows), plan.stdout)
+	fields, ok := rows[0].(map[string]any)
+	requireTest(t, ok, "aggregate row decoded as %T, want an object: %q", rows[0], plan.stdout)
+	count, err := strconv.Atoi(fmt.Sprint(fields["reclaimable"]))
 	mustNoError(t, err)
 	return count
-}
-
-func mustResumeClean(t *testing.T, root, home string) (string, int) {
-	t.Helper()
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	requireTest(t, code == 0, "resume-clean code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
-	return stdout.String(), code
 }
 
 // plantHostilePool fills a pool with the shapes the predicate must separate, plus the
@@ -199,29 +192,31 @@ func TestResumeSummaryNamesTheReclaimCommandOnlyWhenKeysAreReclaimable(t *testin
 func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 	t.Parallel()
 	t.Run("hostile pool", func(t *testing.T) {
-		pool, root, home := newReclaimPool(t)
-		plantHostilePool(t, pool, root)
+		f := newReclaimPool(t)
+		plantHostilePool(t, f.pool, f.root)
 
-		summary, _ := mustResumeClean(t, root, home)
-		plan, code := mustReclaim(t, root, home)
-		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
+		resumed := runVerb(t, verbResumeClean, f.call())
+		requireTest(t, resumed.exit == 0, "resume-clean code=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
+		plan := runVerb(t, verbReclaim, f.call())
+		requireTest(t, plan.exit == 0 && plan.stderr == "", "reclaim code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 		want := planReclaimableCount(t, plan)
-		requireTest(t, want == 3, "the hostile pool plans %d reclaimable keys, want the two dead and the empty one: %q", want, plan)
-		requireTest(t, resumeReclaimableCount(t, summary) == want,
-			"resume reported %d reclaimable keys, the plan targets %d:\n%s\n%s", resumeReclaimableCount(t, summary), want, summary, plan)
+		requireTest(t, want == 3, "the hostile pool plans %d reclaimable keys, want the two dead and the empty one: %q", want, plan.stdout)
+		requireTest(t, resumeReclaimableCount(t, resumed.stdout) == want,
+			"resume reported %d reclaimable keys, the plan targets %d:\n%s\n%s", resumeReclaimableCount(t, resumed.stdout), want, resumed.stdout, plan.stdout)
 	})
 	t.Run("clean pool", func(t *testing.T) {
-		pool, root, home := newReclaimPool(t)
-		plantLiveChild(t, pool, "live-key", "wt")
-		mustMkdirAll(t, filepath.Join(pool, filepath.Base(Pool(canonicalRoot(root)))), 0o700)
+		f := newReclaimPool(t)
+		plantLiveChild(t, f.pool, "live-key", "wt")
+		mustMkdirAll(t, filepath.Join(f.pool, filepath.Base(Pool(canonicalRoot(f.root)))), 0o700)
 
-		summary, _ := mustResumeClean(t, root, home)
-		plan, code := mustReclaim(t, root, home)
-		requireTest(t, code == 0, "reclaim code=%d out=%q", code, plan)
+		resumed := runVerb(t, verbResumeClean, f.call())
+		requireTest(t, resumed.exit == 0, "resume-clean code=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
+		plan := runVerb(t, verbReclaim, f.call())
+		requireTest(t, plan.exit == 0 && plan.stderr == "", "reclaim code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 		want := planReclaimableCount(t, plan)
-		requireTest(t, want == 0, "the clean pool plans %d reclaimable keys, want none: %q", want, plan)
-		requireTest(t, resumeReclaimableCount(t, summary) == want,
-			"resume reported %d reclaimable keys over a clean pool:\n%s", resumeReclaimableCount(t, summary), summary)
+		requireTest(t, want == 0, "the clean pool plans %d reclaimable keys, want none: %q", want, plan.stdout)
+		requireTest(t, resumeReclaimableCount(t, resumed.stdout) == want,
+			"resume reported %d reclaimable keys over a clean pool:\n%s", resumeReclaimableCount(t, resumed.stdout), resumed.stdout)
 	})
 }
 
@@ -231,14 +226,15 @@ func TestResumeReclaimableCountEqualsWhatTheVerbWouldTarget(t *testing.T) {
 // just counted as reclaimable.
 func TestResumeCleanRemovesNoPoolKey(t *testing.T) {
 	t.Parallel()
-	pool, root, home := newReclaimPool(t)
-	plantHostilePool(t, pool, root)
-	before := poolListing(t, pool)
+	f := newReclaimPool(t)
+	plantHostilePool(t, f.pool, f.root)
+	before := poolListing(t, f.pool)
 
-	summary, _ := mustResumeClean(t, root, home)
-	requireTest(t, resumeReclaimableCount(t, summary) > 0, "the fixture pool reported nothing reclaimable:\n%s", summary)
-	requireTest(t, poolListing(t, pool) == before,
-		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, pool))
+	resumed := runVerb(t, verbResumeClean, f.call())
+	requireTest(t, resumed.exit == 0, "resume-clean code=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
+	requireTest(t, resumeReclaimableCount(t, resumed.stdout) > 0, "the fixture pool reported nothing reclaimable:\n%s", resumed.stdout)
+	requireTest(t, poolListing(t, f.pool) == before,
+		"the pool changed across a resume:\nbefore\n%s\nafter\n%s", before, poolListing(t, f.pool))
 }
 
 // [P4] A resume that cannot read the pool still succeeds at its own work.

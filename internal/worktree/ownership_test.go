@@ -228,7 +228,7 @@ func TestActualSIGINTAfterUnlockRestoresExactLockAndReplays(t *testing.T) {
 		requireTest(t, errors.Is(err, ErrCleanupInterrupted), "cleanup error = %v, want distinct interruption", err)
 		return
 	}
-	root, creation, _ := newPendingAssignment(t, "actual-sigint")
+	f := newPendingAssignment(t, "actual-sigint")
 	shimDir := t.TempDir()
 	realGit, err := exec.LookPath("git")
 	mustNoError(t, err)
@@ -245,12 +245,12 @@ exec "$REAL_GIT" "$@"
 `
 	mustWrite(t, filepath.Join(shimDir, "git"), []byte(shim), 0o755)
 	cmd := descendant(t, os.Args[0], "-test.run=^TestActualSIGINTAfterUnlockRestoresExactLockAndReplays$")
-	cmd.Env = append(os.Environ(), "BENCH_SIGINT_HELPER=1", "BENCH_SIGINT_ROOT="+root, "BENCH_SIGINT_PATH="+creation.Path, "REAL_GIT="+realGit, "PATH="+shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	cmd.Env = append(os.Environ(), "BENCH_SIGINT_HELPER=1", "BENCH_SIGINT_ROOT="+f.root, "BENCH_SIGINT_PATH="+f.creation.Path, "REAL_GIT="+realGit, "PATH="+shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	out, err := cmd.CombinedOutput()
 	requireTest(t, err == nil, "SIGINT helper: %v\n%s", err, out)
-	err = validateCreationBundle(root, creation.Assignment)
+	err = validateCreationBundle(f.root, f.creation.Assignment)
 	requireTest(t, err == nil, "SIGINT residual is not exact-locked: %v", err)
-	replay, err := ApplyAutomatic(root, creation.Path, nil)
+	replay, err := ApplyAutomatic(f.root, f.creation.Path, nil)
 	requireTest(t, err == nil && replay.Action == ActionRemoved, "SIGINT replay = %#v, %v", replay, err)
 }
 func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
@@ -315,46 +315,46 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 		{"after-branch-removal", StepBranch, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root, creation, _ := newOwnedAssignment(t, "fault-"+tc.name)
-			markPending(t, root, creation.Assignment)
+			f := newOwnedAssignment(t, "fault-"+tc.name)
+			markPending(t, f.root, f.creation.Assignment)
 			fault := errors.New("fault " + tc.name)
-			_, err := ApplyAutomatic(root, creation.Path, failLifecycleStep(tc.step, fault))
+			_, err := ApplyAutomatic(f.root, f.creation.Path, failLifecycleStep(tc.step, fault))
 			requireTest(t, errors.Is(err, fault), "ApplyAutomatic error = %v, want %v", err, fault)
-			_, statErr := os.Stat(creation.Path)
+			_, statErr := os.Stat(f.creation.Path)
 			requireTest(t, (statErr == nil) == tc.wantExists, "checkout existence = %v, want %v", statErr == nil, tc.wantExists)
-			branchExists := descendant(t, "git", "-C", root, "show-ref", "--verify", "--quiet", creation.Assignment.Branch).Run() == nil
+			branchExists := descendant(t, "git", "-C", f.root, "show-ref", "--verify", "--quiet", f.creation.Assignment.Branch).Run() == nil
 			requireTest(t, branchExists == tc.wantBranch, "assignment branch existence = %v, want %v", branchExists, tc.wantBranch)
-			assignments, readErr := intent.Assignments(root)
+			assignments, readErr := intent.Assignments(f.root)
 			requireTest(t, readErr == nil && len(assignments) == 1 && assignments[0].State == intent.StateCleanupPending,
 				"fault assignment = %#v, %v", assignments, readErr)
 			if tc.wantExists {
-				registration := gitOutput(t, root, "worktree", "list", "--porcelain")
+				registration := gitOutput(t, f.root, "worktree", "list", "--porcelain")
 				requireTest(t, strings.Contains(registration, "locked "+lockReason(assignments[0])), "surviving checkout is not re-locked:\n%s", registration)
 			}
 		})
 	}
 	for _, step := range []LifecycleStep{StepReceipt, StepRecoveryRef, StepUnlock, StepRemoval, StepBranch} {
 		t.Run("explicit-retry-"+string(step), func(t *testing.T) {
-			root, creation, _ := newOwnedAssignment(t, "explicit-retry-"+string(step))
+			f := newOwnedAssignment(t, "explicit-retry-"+string(step))
 			if step != StepRecoveryRef {
-				markPending(t, root, creation.Assignment)
+				markPending(t, f.root, f.creation.Assignment)
 			}
-			mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("recover once\n"), 0o644)
-			plan, err := PlanExplicit(root, creation.Path)
+			mustWrite(t, filepath.Join(f.creation.Path, "dirty.txt"), []byte("recover once\n"), 0o644)
+			plan, err := PlanExplicit(f.root, f.creation.Path)
 			mustNoError(t, err)
 			fault := errors.New("interrupt at " + string(step))
 			faulted := defaultJoins()
 			faulted.cleanupBoundary = failLifecycleStep(step, fault)
-			_, err = applyExplicitWith(faulted, root, creation.Path, plan.Fingerprint, CleanupOptions{})
+			_, err = applyExplicitWith(faulted, f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
 			requireTest(t, errors.Is(err, fault), "first apply error = %v, want %v", err, fault)
 			if step == StepRecoveryRef {
-				registration := gitOutput(t, root, "worktree", "list", "--porcelain")
-				requireTest(t, strings.Contains(registration, "worktree "+creation.Path) && strings.Contains(registration, "locked "+lockReason(creation.Assignment)),
+				registration := gitOutput(t, f.root, "worktree", "list", "--porcelain")
+				requireTest(t, strings.Contains(registration, "worktree "+f.creation.Path) && strings.Contains(registration, "locked "+lockReason(f.creation.Assignment)),
 					"recovery-ref failure lost exact locked checkout:\n%s", registration)
 			}
-			replay, err := ApplyExplicit(root, creation.Path, plan.Fingerprint)
+			replay, err := ApplyExplicit(f.root, f.creation.Path, plan.Fingerprint)
 			requireTest(t, err == nil && replay.Action == ActionRemoved, "interrupted retry = %#v, %v", replay, err)
-			refs := strings.Fields(gitOutput(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"))
+			refs := strings.Fields(gitOutput(t, f.root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"))
 			requireTest(t, len(refs) == 1, "interrupted retry refs = %#v", refs)
 		})
 	}

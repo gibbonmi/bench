@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"path/filepath"
@@ -19,7 +18,7 @@ func TestLandRetainsSiblingBornAtPublishedTip(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			request := "land-newborn-" + name
-			root, source, base, tip, _, home := publicLandingFixture(t, request, "", "")
+			f := publicLandingFixture(t, request, "", "")
 			j, _ := refreshJoins(nil)
 			release := j.releaseLandingAssignment
 			var sibling Creation
@@ -30,32 +29,29 @@ func TestLandRetainsSiblingBornAtPublishedTip(t *testing.T) {
 				}
 				return release(inner, root, home, args, stdout, stderr)
 			}
-			var stdout, stderr bytes.Buffer
-			code := landWith(j, root, home, landArgs(request, base, tip, source.Path), &stdout, &stderr)
+			r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
 			if resume {
-				if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
-					t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+				if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
+					t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 				}
-				published := gitOutput(t, root, "rev-parse", "main")
+				published := gitOutput(t, f.root, "rev-parse", "main")
 				j.releaseLandingAssignment = release
-				stdout.Reset()
-				stderr.Reset()
-				code = resumeLandWith(j, root, home, resumeLandArgs(published, request, base, tip, source.Path), &stdout, &stderr)
-				if got := gitOutput(t, root, "rev-parse", "main"); got != published {
+				r = runVerb(t, verbLandResume, f.callWith(j, resumeLandArgs(published, request, f.base, f.tip, f.creation.Path)...))
+				if got := gitOutput(t, f.root, "rev-parse", "main"); got != published {
 					t.Fatalf("resume republished: %s", got)
 				}
 			}
-			if code != 0 {
-				t.Fatalf("landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+			if r.exit != 0 {
+				t.Fatalf("landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}
 			requirePresent(t, sibling.Path, "new sibling worktree")
-			if !assignmentActive(t, root, sibling.Assignment.ID) {
+			if !assignmentActive(t, f.root, sibling.Assignment.ID) {
 				t.Fatal("new sibling assignment was retired")
 			}
-			if got := gitOutput(t, root, "rev-parse", sibling.Assignment.Branch); got != sibling.Assignment.Start {
+			if got := gitOutput(t, f.root, "rev-parse", sibling.Assignment.Branch); got != sibling.Assignment.Start {
 				t.Fatalf("new sibling tip = %q, want its start %q", got, sibling.Assignment.Start)
 			}
-			row, selected := selectLandedCleanupRow(j, root, sibling.Assignment, "main", "none", CleanupOptions{}, "")
+			row, selected := selectLandedCleanupRow(j, f.root, sibling.Assignment, "main", "none", CleanupOptions{}, "")
 			if !selected || !row.plan.Action.Removes() {
 				t.Fatalf("explicit cleanup changed: selected=%t, plan=%#v", selected, row.plan)
 			}

@@ -69,20 +69,6 @@ func refsUnder(t *testing.T, root string, namespaces ...string) string {
 	return gitOutput(t, root, args...)
 }
 
-func runResume(t *testing.T, root, home string) string {
-	t.Helper()
-	chdir(t, root)
-	return runResumeAt(t, root, home)
-}
-
-func runResumeAt(t *testing.T, root, home string) string {
-	t.Helper()
-	var stdout, stderr bytes.Buffer
-	code := ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
-	return stdout.String()
-}
-
 func TestResumeReconcileKeepsAnActiveAssignmentsResetRefs(t *testing.T) {
 	t.Parallel()
 	home, root := t.TempDir(), newWorktreeRepo(t)
@@ -90,9 +76,10 @@ func TestResumeReconcileKeepsAnActiveAssignmentsResetRefs(t *testing.T) {
 	ref := "refs/bench/reset/" + pool.Assignment.OwnerID + "/" + pool.Assignment.ID + "/1"
 	gitRun(t, root, "update-ref", ref, "HEAD")
 	want := refsUnder(t, root, ref)
-	out := runResumeAt(t, root, home)
+	out := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	requireTest(t, out.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", out.exit, out.stdout, out.stderr)
 	requireTest(t, refsUnder(t, root, ref) == want, "active assignment reset ref was swept")
-	requireTest(t, strings.Contains(out, "swept refs 0;"), "active reset ref entered swept count: %s", out)
+	requireTest(t, strings.Contains(out.stdout, "swept refs 0;"), "active reset ref entered swept count: %s", out.stdout)
 }
 
 func TestResumeReconcileSweepsOrphanedResetRefs(t *testing.T) {
@@ -105,9 +92,10 @@ func TestResumeReconcileSweepsOrphanedResetRefs(t *testing.T) {
 	} {
 		gitRun(t, root, "update-ref", "refs/bench/reset/"+pair[0]+"/"+pair[1]+"/1", "HEAD")
 	}
-	out := runResumeAt(t, root, home)
+	out := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	requireTest(t, out.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", out.exit, out.stdout, out.stderr)
 	requireTest(t, refsUnder(t, root, "refs/bench/reset/") == "", "orphaned reset refs survived")
-	requireTest(t, strings.Contains(out, "swept refs 2;"), "orphaned reset refs missing from swept count: %s", out)
+	requireTest(t, strings.Contains(out.stdout, "swept refs 2;"), "orphaned reset refs missing from swept count: %s", out.stdout)
 }
 
 func TestResumeReconcileKeepsResetRefsOverAnUnreadableLedger(t *testing.T) {
@@ -127,9 +115,8 @@ func TestResumeReconcileKeepsResetRefsOverAnUnreadableLedger(t *testing.T) {
 			case "unreadable":
 				mustWrite(t, path, []byte("{}"), 0o000)
 			}
-			var stdout, stderr bytes.Buffer
-			ResumeCleanCommand(root, home, nil, &stdout, &stderr)
-			requireTest(t, refsUnder(t, root, ref) == want, "reset ref was swept over %s ledger: %s %s", state, &stdout, &stderr)
+			out := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+			requireTest(t, refsUnder(t, root, ref) == want, "reset ref was swept over %s ledger: %s %s", state, out.stdout, out.stderr)
 		})
 	}
 }
@@ -203,10 +190,11 @@ func TestResumeReconcileKeepsResetRefsForEveryRecordedState(t *testing.T) {
 			ref := intent.ResetRefPrefix(a.OwnerID, a.ID) + "1"
 			gitRun(t, root, "update-ref", ref, head)
 			gitRun(t, root, "update-ref", recoveryRef, head)
-			out := runResumeAt(t, root, home)
+			out := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+			requireTest(t, out.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", out.exit, out.stdout, out.stderr)
 			requireTest(t, gitOutput(t, root, "rev-parse", ref) == head, "recorded %s reset ref was swept", state)
 			requireTest(t, refsUnder(t, root, recoveryRef) == "", "recovery ref survived its whole-namespace sweep")
-			requireTest(t, strings.Contains(out, "swept refs 1;"), "reset/recovery count = %s", out)
+			requireTest(t, strings.Contains(out.stdout, "swept refs 1;"), "reset/recovery count = %s", out.stdout)
 		})
 	}
 }
@@ -234,12 +222,11 @@ func TestResumeReconcileRefusesAResetRefMovedAfterListing(t *testing.T) {
 	ref := intent.ResetRefPrefix(strings.Repeat("a", 32), strings.Repeat("b", 32)) + "1"
 	gitRun(t, root, "update-ref", ref, "HEAD")
 	j, moved := movedRefJoins(t, root, ref)
-	var stdout, stderr bytes.Buffer
-	code := resumeCleanCommandWith(j, root, home, nil, &stdout, &stderr)
-	requireTest(t, code == 1 && strings.Contains(stderr.String(), "delete lifecycle ref "+ref),
-		"moved reset ref did not refuse: code=%d stdout=%s stderr=%s", code, &stdout, &stderr)
+	out := runVerb(t, verbResumeClean, repoHome{root, home}.callWith(j))
+	requireTest(t, out.exit == 1 && strings.Contains(out.stderr, "delete lifecycle ref "+ref),
+		"moved reset ref did not refuse: code=%d stdout=%s stderr=%s", out.exit, out.stdout, out.stderr)
 	requireTest(t, gitOutput(t, root, "rev-parse", ref) == moved, "reconcile deleted the moved reset ref")
-	requireTest(t, strings.Contains(stdout.String(), "swept refs 0;"), "failed delete entered swept count: %s", &stdout)
+	requireTest(t, strings.Contains(out.stdout, "swept refs 0;"), "failed delete entered swept count: %s", out.stdout)
 }
 
 // TestResumeReconcileSparesGreenVerdictRefs is the RM10 guard. The sweep empties the two
@@ -253,7 +240,9 @@ func TestResumeReconcileSparesGreenVerdictRefs(t *testing.T) {
 	diagnostic := "refs/bench/diagnostic/probe"
 	gitRun(t, root, "update-ref", diagnostic, "HEAD")
 
-	runResume(t, root, home)
+	chdir(t, root)
+	out := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	requireTest(t, out.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", out.exit, out.stdout, out.stderr)
 
 	remaining := refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/")
 	requireTest(t, remaining == "", "lifecycle refs survived the reconcile: %q", remaining)
@@ -270,15 +259,19 @@ func TestResumeReconcileIsIdempotent(t *testing.T) {
 	root := newWorktreeRepo(t)
 	seedLifecycleDebris(t, root)
 
-	requireTest(t, strings.Contains(runResume(t, root, home), "swept refs 2"), "settling reconcile did not report the sweep")
+	chdir(t, root)
+	settling := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	requireTest(t, settling.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", settling.exit, settling.stdout, settling.stderr)
+	requireTest(t, strings.Contains(settling.stdout, "swept refs 2"), "settling reconcile did not report the sweep")
 	before := refsUnder(t, root, "refs/bench/")
 	ledgerPath := filepath.Join(root, ".git", intent.Filename)
 	ledgerBefore, _ := os.ReadFile(ledgerPath)
 
-	second := runResume(t, root, home)
-	third := runResume(t, root, home)
+	second := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	third := runVerb(t, verbResumeClean, repoHome{root, home}.call())
 	ledgerAfter, _ := os.ReadFile(ledgerPath)
-	requireTest(t, second == third, "settled reconciles disagree:\nsecond=%q\nthird=%q", second, third)
+	requireTest(t, second.exit == 0 && third.exit == 0, "settled reconcile exits = %d, %d\nstderr=%s%s", second.exit, third.exit, second.stderr, third.stderr)
+	requireTest(t, second.stdout == third.stdout, "settled reconciles disagree:\nsecond=%q\nthird=%q", second.stdout, third.stdout)
 	requireTest(t, refsUnder(t, root, "refs/bench/") == before, "a settled reconcile churned refs")
 	requireTest(t, bytes.Equal(ledgerBefore, ledgerAfter), "a settled reconcile rewrote the ledger")
 }
@@ -294,7 +287,9 @@ func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 	green := seedLifecycleDebris(t, root)
 	seedLegacyAssignments(t, root)
 
-	first := runResume(t, root, home)
+	chdir(t, root)
+	first := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	requireTest(t, first.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", first.exit, first.stdout, first.stderr)
 
 	surviving, err := intent.Assignments(root)
 	requireTest(t, err == nil, "ledger unreadable after purge: %v", err)
@@ -304,14 +299,15 @@ func TestResumeReconcilePurgesLegacyAssignments(t *testing.T) {
 	requireTest(t, refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/") == "", "reconcile left lifecycle refs")
 	requireTest(t, gitOutput(t, root, "rev-parse", "refs/bench/green/main") == green, "reconcile moved the gate's green verdict ref")
 
-	requireTest(t, strings.Contains(first, "swept refs 2") && strings.Contains(first, "reconciled 2"),
-		"settling reconcile did not report what it removed: %q", first)
+	requireTest(t, strings.Contains(first.stdout, "swept refs 2") && strings.Contains(first.stdout, "reconciled 2"),
+		"settling reconcile did not report what it removed: %q", first.stdout)
 	ledgerPath := filepath.Join(root, ".git", intent.Filename)
 	ledgerBefore, _ := os.ReadFile(ledgerPath)
-	second := runResume(t, root, home)
-	third := runResume(t, root, home)
+	second := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	third := runVerb(t, verbResumeClean, repoHome{root, home}.call())
 	ledgerAfter, _ := os.ReadFile(ledgerPath)
-	requireTest(t, second == third, "settled reconciles disagree:\nsecond=%q\nthird=%q", second, third)
+	requireTest(t, second.exit == 0 && third.exit == 0, "settled reconcile exits = %d, %d\nstderr=%s%s", second.exit, third.exit, second.stderr, third.stderr)
+	requireTest(t, second.stdout == third.stdout, "settled reconciles disagree:\nsecond=%q\nthird=%q", second.stdout, third.stdout)
 	requireTest(t, bytes.Equal(ledgerBefore, ledgerAfter), "a settled reconcile rewrote the ledger")
 }
 
@@ -338,13 +334,13 @@ func TestResumeReconcileConvergesAfterInterruption(t *testing.T) {
 		return nil
 	}
 	chdir(t, root)
-	var stdout, stderr bytes.Buffer
-	code := resumeCleanCommandWith(j, root, home, nil, &stdout, &stderr)
-	requireTest(t, code != 0, "interrupted reconcile exit=%d stdout=%s", code, stdout.String())
+	interruptedRun := runVerb(t, verbResumeClean, repoHome{root, home}.callWith(j))
+	requireTest(t, interruptedRun.exit != 0, "interrupted reconcile exit=%d stdout=%s", interruptedRun.exit, interruptedRun.stdout)
 	partial := refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/")
 	requireTest(t, partial != "" && len(strings.Split(partial, "\n")) < 4, "interruption left %q, want a partial namespace", partial)
 
-	runResume(t, root, home)
+	reentry := runVerb(t, verbResumeClean, repoHome{root, home}.call())
+	requireTest(t, reentry.exit == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", reentry.exit, reentry.stdout, reentry.stderr)
 
 	requireTest(t, refsUnder(t, root, "refs/bench/specbuild/", "refs/bench/recovery/") == "", "re-entry did not finish the sweep")
 	surviving, err := intent.Assignments(root)

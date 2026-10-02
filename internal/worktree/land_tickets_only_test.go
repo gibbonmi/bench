@@ -2,7 +2,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -17,23 +16,22 @@ import (
 func TestLandCommandTicketsOnlySpecClosesTheFolder(t *testing.T) {
 	t.Parallel()
 	request := "tickets-only-close"
-	root, creation, base, tip, tally, home := ticketsOnlyLandingFixture(t, request)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
-	published := gitOutput(t, root, "rev-parse", "main")
-	if code != 0 || !strings.Contains(stdout.String(), "published_commit="+published+",") || !strings.HasSuffix(stdout.String(), "worktree=released,census=0}\n") {
-		t.Fatalf("tickets-only close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
+	f := ticketsOnlyLandingFixture(t, request)
+	r := runVerb(t, verbLand, f.call(ticketsOnlyLandArgs(request, f.base, f.tip, "t", f.creation.Path)...))
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	if r.exit != 0 || !strings.Contains(r.stdout, "published_commit="+published+",") || !strings.HasSuffix(r.stdout, "worktree=released,census=0}\n") {
+		t.Fatalf("tickets-only close = (%d, %q, %q), want exit 0 and a released landing", r.exit, r.stdout, r.stderr)
 	}
-	if descendant(t, "git", "-C", root, "cat-file", "-e", published+":specs/t").Run() == nil {
+	if descendant(t, "git", "-C", f.root, "cat-file", "-e", published+":specs/t").Run() == nil {
 		t.Fatalf("published tree still carries specs/t")
 	}
-	if _, err := os.Stat(filepath.Join(root, "specs", "t")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(f.root, "specs", "t")); !os.IsNotExist(err) {
 		t.Fatalf("destination checkout still carries specs/t: %v", err)
 	}
-	if got := gitOutput(t, root, "show", published+":specs/x/spec.md"); strings.Contains(got, "Status: implemented") {
+	if got := gitOutput(t, f.root, "show", published+":specs/x/spec.md"); strings.Contains(got, "Status: implemented") {
 		t.Fatalf("tickets-only close transitioned a spec: %q", got)
 	}
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v", got, err)
 	}
 }
@@ -43,17 +41,16 @@ func TestLandCommandTicketsOnlySpecClosesTheFolder(t *testing.T) {
 func TestLandCommandTicketsOnlySpecLandsWhenTheDestinationAlreadyRemovedTheFolder(t *testing.T) {
 	t.Parallel()
 	request := "tickets-only-already-removed"
-	root, creation, base, tip, _, home := ticketsOnlyLandingFixture(t, request)
-	gitRun(t, root, "rm", "-r", "-q", "specs/t")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination closed the folder")
-	gitRun(t, root, "update-ref", "refs/bench/green/main", gitOutput(t, root, "rev-parse", "HEAD"))
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr)
-	published := gitOutput(t, root, "rev-parse", "main")
-	if code != 0 || !strings.HasSuffix(stdout.String(), "worktree=released,census=0}\n") {
-		t.Fatalf("already-removed close = (%d, %q, %q), want exit 0 and a released landing", code, stdout.String(), stderr.String())
+	f := ticketsOnlyLandingFixture(t, request)
+	gitRun(t, f.root, "rm", "-r", "-q", "specs/t")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination closed the folder")
+	gitRun(t, f.root, "update-ref", "refs/bench/green/main", gitOutput(t, f.root, "rev-parse", "HEAD"))
+	r := runVerb(t, verbLand, f.call(ticketsOnlyLandArgs(request, f.base, f.tip, "t", f.creation.Path)...))
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	if r.exit != 0 || !strings.HasSuffix(r.stdout, "worktree=released,census=0}\n") {
+		t.Fatalf("already-removed close = (%d, %q, %q), want exit 0 and a released landing", r.exit, r.stdout, r.stderr)
 	}
-	if descendant(t, "git", "-C", root, "cat-file", "-e", published+":specs/t").Run() == nil {
+	if descendant(t, "git", "-C", f.root, "cat-file", "-e", published+":specs/t").Run() == nil {
 		t.Fatalf("published tree still carries specs/t")
 	}
 }
@@ -64,23 +61,22 @@ func TestLandCommandTicketsOnlySpecLandsWhenTheDestinationAlreadyRemovedTheFolde
 func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
 	t.Parallel()
 	request := "tickets-only-absent"
-	root, creation, base, tip, tally, home := ticketsOnlyLandingFixture(t, request)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, ticketsOnlyLandArgs(request, base, tip, "absent", creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.Contains(stdout.String(), "reviewed source range or ownership fence is invalid: spec not found: no spec resolved for absent") {
-		t.Fatalf("absent spec folder = (%d, %q, %q), want the unreadable staged-spec refusal", code, stdout.String(), stderr.String())
+	f := ticketsOnlyLandingFixture(t, request)
+	r := runVerb(t, verbLand, f.call(ticketsOnlyLandArgs(request, f.base, f.tip, "absent", f.creation.Path)...))
+	if r.exit != 1 || !strings.Contains(r.stdout, "reviewed source range or ownership fence is invalid: spec not found: no spec resolved for absent") {
+		t.Fatalf("absent spec folder = (%d, %q, %q), want the unreadable staged-spec refusal", r.exit, r.stdout, r.stderr)
 	}
-	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+	if _, err := os.Stat(f.tally); !os.IsNotExist(err) {
 		t.Fatalf("unreadable-spec refusal ran the gate: %v", err)
 	}
 	// LRS3: the fence face routes its wrapped cause too, so the operator reads the
 	// face's own repair with the caller's own re-run behind it.
-	rerun := "bench worktree land --request '" + request + "' --base '" + base +
-		"' --source-tip '" + tip + "' --spec 'absent' -m <message> '" + creation.Path + "'"
-	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceSourceNotFenced).detail)
+	rerun := "bench worktree land --request '" + request + "' --base '" + f.base +
+		"' --source-tip '" + f.tip + "' --spec 'absent' -m <message> '" + f.creation.Path + "'"
+	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceSourceNotFenced).detail)
 	repair := landingRefusalFaceByName(faceSourceNotFenced).route(rerun)
 	if !printed || next != repair {
-		t.Fatalf("absent spec folder next = %q (printed=%t) in %q, want %q", next, printed, stdout.String(), repair)
+		t.Fatalf("absent spec folder next = %q (printed=%t) in %q, want %q", next, printed, r.stdout, repair)
 	}
 }
 
@@ -89,27 +85,26 @@ func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
 func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.T) {
 	t.Parallel()
 	request := "tickets-only-resume"
-	root, creation, base, tip, tally, home := ticketsOnlyLandingFixture(t, request)
+	f := ticketsOnlyLandingFixture(t, request)
 	working := defaultJoins()
 	broken := working
 	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	var stdout, stderr bytes.Buffer
-	if code := landWith(broken, root, home, ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
-		t.Fatalf("interrupted tickets-only landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(broken, ticketsOnlyLandArgs(request, f.base, f.tip, "t", f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
+		t.Fatalf("interrupted tickets-only landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
-	stdout.Reset()
-	stderr.Reset()
-	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "t", creation.Path}
-	if code := landWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
-		t.Fatalf("tickets-only resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "t", f.creation.Path}
+	r = runVerb(t, verbLand, f.callWith(working, args...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
+		t.Fatalf("tickets-only resume = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
-	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/main"); got != published {
+	if got := gitOutput(t, f.root, "rev-parse", "refs/bench/green/main"); got != published {
 		t.Fatalf("project-green = %s, want %s", got, published)
 	}
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("tickets-only resume reran the gate: tally=%q error=%v", got, err)
 	}
 }
@@ -121,25 +116,24 @@ func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.
 func TestResumeLandCommandTicketsOnlyCloseSurvivesTheConsumedCheckout(t *testing.T) {
 	t.Parallel()
 	request := "tickets-only-resume-released"
-	root, creation, base, tip, tally, home := ticketsOnlyLandingFixture(t, request)
+	f := ticketsOnlyLandingFixture(t, request)
 	working := defaultJoins()
 	broken := working
 	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
-	var stdout, stderr bytes.Buffer
-	if code := landWith(broken, root, home, ticketsOnlyLandArgs(request, base, tip, "t", creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
-		t.Fatalf("interrupted release = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(broken, ticketsOnlyLandArgs(request, f.base, f.tip, "t", f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
+		t.Fatalf("interrupted release = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
-	if _, err := os.Stat(filepath.Join(root, "specs", "t")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(f.root, "specs", "t")); !os.IsNotExist(err) {
 		t.Fatalf("destination checkout still carries specs/t after the reconcile: %v", err)
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
-	stdout.Reset()
-	stderr.Reset()
-	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "t", creation.Path}
-	if code := landWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
-		t.Fatalf("resume after a consumed checkout = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "t", f.creation.Path}
+	r = runVerb(t, verbLand, f.callWith(working, args...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
+		t.Fatalf("resume after a consumed checkout = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("resume reran the gate: tally=%q error=%v", got, err)
 	}
 }

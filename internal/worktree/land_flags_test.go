@@ -2,7 +2,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -28,9 +27,9 @@ func TestLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
 		{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "would-be-path", "-m", "m"},
 		{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "would-be-path"},
 	} {
-		var stdout, stderr bytes.Buffer
-		if code := LandCommand("", Home(), args, &stdout, &stderr); code != 2 {
-			t.Fatalf("LandCommand(%q) = %d, stdout=%q stderr=%q", args, code, stdout.String(), stderr.String())
+		r := runVerb(t, verbLand, verbCall{home: Home(), args: args})
+		if r.exit != 2 {
+			t.Fatalf("land(%q) = %d, stdout=%q stderr=%q", args, r.exit, r.stdout, r.stderr)
 		}
 	}
 }
@@ -51,17 +50,17 @@ func TestLandCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 		{"resume source tip", []string{"--resume", "p", "--request", "r", "--base", "b", "--spec", "x", "path"}, resumeLandGrammar.Help},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var stdout, stderr bytes.Buffer
-			if code := LandCommand("", Home(), tc.args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != tc.help+"\n" {
-				t.Fatalf("LandCommand(%q) = (%d, %q, %q), want (2, empty, %q)", tc.args, code, stdout.String(), stderr.String(), tc.help+"\n")
+			r := runVerb(t, verbLand, verbCall{home: Home(), args: tc.args})
+			if r.exit != 2 || len(r.stdout) != 0 || r.stderr != tc.help+"\n" {
+				t.Fatalf("land(%q) = (%d, %q, %q), want (2, empty, %q)", tc.args, r.exit, r.stdout, r.stderr, tc.help+"\n")
 			}
 		})
 	}
 
-	var stdout, stderr bytes.Buffer
 	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "path"}
-	if code := ResumeLandCommand("", Home(), args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.String() != resumeLandGrammar.Help+"\n" {
-		t.Fatalf("ResumeLandCommand(%q) = (%d, %q, %q), want (2, empty, %q)", args, code, stdout.String(), stderr.String(), resumeLandGrammar.Help+"\n")
+	r := runVerb(t, verbLandResume, verbCall{home: Home(), args: args})
+	if r.exit != 2 || len(r.stdout) != 0 || r.stderr != resumeLandGrammar.Help+"\n" {
+		t.Fatalf("land-resume(%q) = (%d, %q, %q), want (2, empty, %q)", args, r.exit, r.stdout, r.stderr, resumeLandGrammar.Help+"\n")
 	}
 }
 
@@ -74,33 +73,33 @@ func TestResumeLandCommandNeverTreatsFlagValuesAsSourcePath(t *testing.T) {
 		{"--resume", "p", "--request", "r", "--base", "b", "--source-tip", "would-be-path", "--spec", "x"},
 		{"--resume", "p", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "would-be-path"},
 	} {
-		var stdout, stderr bytes.Buffer
-		if code := LandCommand("", Home(), args, &stdout, &stderr); code != 2 {
-			t.Fatalf("LandCommand(%q) = %d, stdout=%q stderr=%q", args, code, stdout.String(), stderr.String())
+		r := runVerb(t, verbLand, verbCall{home: Home(), args: args})
+		if r.exit != 2 {
+			t.Fatalf("land(%q) = %d, stdout=%q stderr=%q", args, r.exit, r.stdout, r.stderr)
 		}
 	}
 	args := []string{"--resume", "p", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "--", "-path"}
-	var stdout, stderr bytes.Buffer
-	if code := LandCommand("", Home(), args, &stdout, &stderr); code == 2 {
-		t.Fatalf("LandCommand(%q) rejected parsed resume path: stdout=%q stderr=%q", args, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, verbCall{home: Home(), args: args})
+	if r.exit == 2 {
+		t.Fatalf("land(%q) rejected parsed resume path: stdout=%q stderr=%q", args, r.stdout, r.stderr)
 	}
 }
 
 func TestLandCommandDoesNotTreatMessageValueAsResumeFlag(t *testing.T) {
 	t.Parallel()
 	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "--resume", "path"}
-	var stdout, stderr bytes.Buffer
-	if code := LandCommand("", Home(), args, &stdout, &stderr); code == 2 {
-		t.Fatalf("LandCommand(%q) selected resume grammar: stdout=%q stderr=%q", args, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, verbCall{home: Home(), args: args})
+	if r.exit == 2 {
+		t.Fatalf("land(%q) selected resume grammar: stdout=%q stderr=%q", args, r.stdout, r.stderr)
 	}
 }
 
 func TestLandCommandAcceptsDashPathOnlyAfterTerminator(t *testing.T) {
 	t.Parallel()
 	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "m", "--", "-path"}
-	var stdout, stderr bytes.Buffer
-	if code := LandCommand("", Home(), args, &stdout, &stderr); code == 2 {
-		t.Fatalf("LandCommand(%q) rejected parsed path: stdout=%q stderr=%q", args, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, verbCall{home: Home(), args: args})
+	if r.exit == 2 {
+		t.Fatalf("land(%q) rejected parsed path: stdout=%q stderr=%q", args, r.stdout, r.stderr)
 	}
 }
 
@@ -135,10 +134,9 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 			j := stubLandJoins(base, tip)
 			tc.setup(&j)
-			var stdout, stderr bytes.Buffer
-			code := landWith(j, root, home, []string{"--request", "landed-land-terminal-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
-			if code != 3 || !strings.Contains(stdout.String(), "landed{") || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.step) {
-				t.Fatalf("LandCommand = (%d, %q, %q)", code, stdout.String(), stderr.String())
+			r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, "--request", "landed-land-terminal-"+tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path))
+			if r.exit != 3 || !strings.Contains(r.stdout, "landed{") || !strings.Contains(r.stdout, "worktree=incomplete:"+tc.step) {
+				t.Fatalf("land = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}
 		})
 	}
@@ -158,10 +156,9 @@ func TestLandCommandReleaseDiagnosticCannotForgeTerminalLines(t *testing.T) {
 		fmt.Fprint(stderr, "unsafe\nlanded{forged=true}\x1b[31m\n")
 		return 1
 	}
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, []string{"--request", "landed-hostile-release", "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
-	if code != 3 || strings.Count(stdout.String(), "landed{") != 1 || strings.Contains(stderr.String(), "\nlanded{") || strings.ContainsRune(stderr.String(), '\x1b') || !strings.Contains(stderr.String(), `unsafe\nlanded{forged=true}\u001b[31m`) {
-		t.Fatalf("hostile release result = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, "--request", "landed-hostile-release", "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path))
+	if r.exit != 3 || strings.Count(r.stdout, "landed{") != 1 || strings.Contains(r.stderr, "\nlanded{") || strings.ContainsRune(r.stderr, '\x1b') || !strings.Contains(r.stderr, `unsafe\nlanded{forged=true}\u001b[31m`) {
+		t.Fatalf("hostile release result = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 }
 
@@ -209,9 +206,8 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 			}
 			done := make(chan outcome, 1)
 			go func() {
-				var stdout, stderr bytes.Buffer
-				code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-				done <- outcome{code: code, stdout: stdout.String(), err: stderr.String()}
+				r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, landArgs(request, base, tip, creation.Path)...))
+				done <- outcome{code: r.exit, stdout: r.stdout, err: r.stderr}
 			}()
 			select {
 			case got := <-done:
@@ -265,14 +261,13 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 				}
 				return nil
 			}
-			var stdout, stderr bytes.Buffer
-			code := landWith(j, root, home, []string{"--request", "landed-marker-" + tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path}, &stdout, &stderr)
+			r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, "--request", "landed-marker-"+tc.name, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", creation.Path))
 			if tc.wantIncomplete {
-				if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
-					t.Fatalf("moved marker result = (%d, %q, %q)", code, stdout.String(), stderr.String())
+				if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
+					t.Fatalf("moved marker result = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 				}
-			} else if code != 0 || !strings.Contains(stdout.String(), "worktree=released") {
-				t.Fatalf("marker result = (%d, %q, %q)", code, stdout.String(), stderr.String())
+			} else if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
+				t.Fatalf("marker result = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}
 		})
 	}
@@ -327,9 +322,9 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 			if tc.args != nil {
 				args = tc.args(base, tip, creation)
 			}
-			var stdout, stderr bytes.Buffer
-			if code := landWith(j, root, home, args, &stdout, &stderr); code != 1 || calls != 0 || !strings.HasPrefix(stdout.String(), "refused{detail=") || stderr.Len() != 0 {
-				t.Fatalf("pre-gate refusal = (%d, calls=%d, stdout=%q, stderr=%q)", code, calls, stdout.String(), stderr.String())
+			r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, args...))
+			if r.exit != 1 || calls != 0 || !strings.HasPrefix(r.stdout, "refused{detail=") || len(r.stderr) != 0 {
+				t.Fatalf("pre-gate refusal = (%d, calls=%d, stdout=%q, stderr=%q)", r.exit, calls, r.stdout, r.stderr)
 			}
 		})
 	}

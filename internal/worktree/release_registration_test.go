@@ -29,15 +29,15 @@ func decayToHusk(t *testing.T, path string) {
 // the only window a live repository has for one.
 func TestReleaseRegistrationSkipsUnrelatedSpecialControlRecords(t *testing.T) {
 	t.Parallel()
-	root, creation, _ := newOwnedAssignment(t, "husk-special-record")
-	decayToHusk(t, creation.Path)
-	common := gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	f := newOwnedAssignment(t, "husk-special-record")
+	decayToHusk(t, f.creation.Path)
+	common := gitOutput(t, f.root, "rev-parse", "--path-format=absolute", "--git-common-dir")
 	stranger := filepath.Join(filepath.Clean(common), "worktrees", "stranger")
 	mustMkdirAll(t, stranger, 0o700)
 	mustNoError(t, syscall.Mkfifo(filepath.Join(stranger, "gitdir"), 0o600))
 
 	done := make(chan error, 1)
-	go func() { done <- releaseRegistration(root, creation.Path) }()
+	go func() { done <- releaseRegistration(f.root, f.creation.Path) }()
 	select {
 	case releaseErr := <-done:
 		mustNoError(t, releaseErr)
@@ -49,7 +49,7 @@ func TestReleaseRegistrationSkipsUnrelatedSpecialControlRecords(t *testing.T) {
 		"the release disturbed the unrelated administration entry: %v, %v", info, statErr)
 	// Retiring the planted record before asking git anything: it blocks on this FIFO too.
 	mustRemove(t, stranger)
-	registrations := gitOutput(t, root, "worktree", "list", "--porcelain")
-	requireTest(t, !strings.Contains(registrations, "worktree "+creation.Path),
+	registrations := gitOutput(t, f.root, "worktree", "list", "--porcelain")
+	requireTest(t, !strings.Contains(registrations, "worktree "+f.creation.Path),
 		"registration survived the release:\n%s", registrations)
 }

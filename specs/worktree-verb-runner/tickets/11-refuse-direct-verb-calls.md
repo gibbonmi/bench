@@ -8,6 +8,8 @@ Covers: VR40, VR41, VR42, VR43, VR44, VR45, VR46, VR47, VR48, VR49, VR50, VR51, 
 
 Add `verb_call_census_test.go`. It reuses the parse helpers of `parallel_census_test.go` and adds the verb call census. A verb entry is an exported function of a non-test file with a parameter named `args` of type `[]string`. A joins form is a function that a verb entry's body calls with `defaultJoins()` as its first argument. A runner-private function is a top-level function of a runner file whose last result is an `error`.
 
+The census compares a parameter name with the string literal `"args"`. Write that literal exactly once in `verb_call_census_test.go`, comments included, because the plan's named probe swaps it.
+
 The runner files are exactly `verb_runner_test.go` and `verb_runner_check_test.go`. The census reports each identifier that names a verb entry, a joins form, or a runner-private function in any other test file. It walks function bodies, closures, and package-level declarations. Each report names the file, the line, the enclosing declaration, and the reported name, and the reports come back sorted. The synthetic tests plant file sets with `plantTestFiles`. One live-tree test runs the census over the package and expects no report.
 
 Raise `worktreeTestCount` by the tests this ticket adds. This ticket is the last one that touches the package, so it carries the package-wide end state. That state is the tuple scan, the VR41 command, the count pin, the serial ceiling, and the final differential run.

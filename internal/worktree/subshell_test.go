@@ -2,7 +2,6 @@ package worktree
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -116,9 +115,8 @@ func TestSubshellSignalsLeaveAReclaimableLease(t *testing.T) {
 			requireTest(t, err == nil && ProbeLease(lease) == LeaseDead, "signalled subshell lease = %q, %v; want a dead reclaimable lease", lease, err)
 			plan, err := PlanExplicit(root, assignments[0].Worktree)
 			requireTest(t, err == nil && plan.Action == ActionRemove, "signalled subshell plan = %#v, %v; want reclaimable removal", plan, err)
-			var stderr bytes.Buffer
-			code := ReleaseCommand(root, home, []string{"--request", assignments[0].RequestToken, assignments[0].Worktree}, io.Discard, &stderr)
-			requireTest(t, code == 0, "release reclaimable signal state = %d, stderr %q", code, stderr.String())
+			release := runVerb(t, verbRelease, repoHome{root, home}.call("--request", assignments[0].RequestToken, assignments[0].Worktree))
+			requireTest(t, release.exit == 0, "release reclaimable signal state = %d, stderr %q", release.exit, release.stderr)
 		})
 	}
 }
