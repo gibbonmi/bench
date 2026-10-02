@@ -1,13 +1,23 @@
 # CLI and desktop consistency review
 
-C1 has five findings and five repair targets.
-Repair cycle 1 of 2 is authorized in the user-selected session.
-Repair cycle 1 has completed its author verification.
-One repair cycle remains.
-Independent confirmation is pending for all five findings.
+C1 confirmation has two findings and two repair targets.
+The first review had five findings and five repair targets.
+Repair cycle 1 of 2 completed its author verification and confirmation.
+Repair cycle 2 is authorized in the user-selected session.
+One repair cycle remains before that work starts.
 The source stays unqualified until current reviews and its checkpoint pass.
 
 ## Standards
+
+Current finding count: 1.
+The full confirmation closed STD-C1-01.
+STD-C1-02: auto-fix, confidence 9.
+Make the system fixture consume one interface vocabulary.
+Sources: AGENTS.md:35-48 and internal/systemtest/compatibility_test.go:49,86,135,156,184,192.
+The confirmation read the complete frozen diff, spec, and profile.
+The earlier partial-read limitation is closed.
+
+First review:
 
 Finding count: 1.
 The worst issue is duplicated interface vocabulary.
@@ -21,6 +31,12 @@ The current finding is supported; the partial read is not a complete Standards p
 
 ## Spec
 
+Current finding count: 0.
+Confirmation closed both Spec findings.
+The Spec axis found no remaining requirement mismatch in the repair delta.
+
+First review:
+
 Finding count: 2.
 The worst issue is unchanged fingerprints after a policy change.
 C1-SPEC-01: auto-fix, confidence 10.
@@ -32,6 +48,16 @@ Keep the configuration home unknown when its lookup fails.
 Sources: CD03, internal/adopt/compatibility.go:135.
 
 ## Coverage
+
+Current finding count: 1.
+Confirmation closed COV-C1-01.
+COV-C1-02 remains: auto-fix, confidence 10.
+Exercise the real CLI collector with CODEX_HOME absent and HOME set.
+Compare complete home inventories to detect added or changed cache files.
+Sources: spec.md:90 and internal/systemtest/compatibility_test.go:83-93,145-169.
+The Spec pass does not override this independent Coverage finding.
+
+First review:
 
 Finding count: 2.
 The worst issue is an untested production configuration write.
@@ -351,6 +377,76 @@ No review requested a Bench command change.
             "COV-C1-02"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1-standards-confirm1",
+          "performer": "codex-collaboration:/root/c1_standards_confirm",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:c1_standards_confirm",
+            "digest": "sha256:c67257b110fdf053fc43f03a54fb30e0ad89242fd24963a1df2cdc573eff9e2a",
+            "excerpt": "Standards confirmation: one current finding.\nSTD-C1-01 repaired: internal/compatibility/inspect.go:16-41 owns interface values/enumeration/operand/parser; internal/adopt/compatibility.go:21,29-41,78-80 derives usage and parsing; cmd/bench/main.go:142 derives root help. Exact root-help expectation cmd/bench/help_inventory_test.go:63,111 has demonstrated omission red in assets/repair-cycle-1.md:56-57.\nSTD-C1-02: held, auto-fix, confidence 9. AGENTS.md:35-48 requires fixture harnesses single-sourced. internal/systemtest/compatibility_test.go repeats CLI default at49, desktop routing at86, two-member loops at135/156, CLI policy calls184/192. An interface rename/addition can omit or misroute a process path. Consume canonical enumeration or one fixture table; retain root-help as independent omission oracle. Unit tests use constants, and help exception does not cover repeated system fixture routing. No automated check run; semantic mandatory standard.\nNo other Standards finding survived. Full frozen diff4435lines, whole spec537lines, whole profile674lines, AGENTS/BENCH/craft-review/finding discipline/bounded repair/delegate/Claim schema/synthesis/CLI/comments read. Trusted s1,s44 all279consumerrows,s45 all64coverage rows; untouched consumers first. Targeted compatibility/adopt/legacy/cmd/system/help/records/evidence read.\nBinding current=true, clean: evidence sha256:ba0f51e4c0dec746697b3076c372a975b37263c863cd86e97395831cf79dcb88; assignment f7123d5b2ad592acc6e5a239c1f1f389; base6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69; tip8eca522fa925d2a6307cfb22144529abcac597c6. Delivery unverified; canonical export used, no cursors.\nFuture C2/C3 ungraded. No edits/tests/probes/commits/stash/poolpath calls. Optional advice none; command contribution none requested. Claim status=claimed confidence=9.\n"
+          },
+          "axis": "Standards",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "51e6851df49f4bf6175c0925b09c3d68748e79ef",
+          "finding_ids": [
+            "STD-C1-02"
+          ],
+          "supersedes": [
+            "c1-standards-r1"
+          ]
+        },
+        {
+          "id": "c1-spec-confirm1",
+          "performer": "codex-collaboration:/root/c1_spec_confirm",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c1_spec_confirm",
+            "digest": "sha256:1dc3eff14586384efd27f6aca176c9040c3b678790f600faedbdd5eb78a1ab8e",
+            "excerpt": "Spec confirmation: positive terminal result, zero findings, confidence10.\nCurrent binding true, clean, head8eca522fa925d2a6307cfb22144529abcac597c6; evidence sha256:ba0f51e4c0dec746697b3076c372a975b37263c863cd86e97395831cf79dcb88; assignmentf7123d5b2ad592acc6e5a239c1f1f389. Frozen chunk6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69..8eca522fa925d2a6307cfb22144529abcac597c6; confirmation delta c219a98fcd227a7eab852e4e8bc42597039707d9..8eca522fa925d2a6307cfb22144529abcac597c6.\nRead own metadata/source-1, consumers/source-44, coverage/source-45; complete spec,ticket1,CD01..17,repair/prior verification/review/plan; single saved delta; untouched legacy dispatch/test/help consumers first; compatibility/adopt/system tests and bounds/grammar/TOON/spill/process helpers.\nConfirmed STD-C1-01 production interface owner (inspect.go:21,adopt/compatibility.go:21,main.go:142); C1-SPEC-01 content-backed policy fingerprint (spec:290,inspect.go:71,147,collector:103,systemtest:172,repair evidence:33); C1-SPEC-02 missing home unknown (spec:280,collector:134,adopt test:200,evidence:28); COV-C1-01 actual wrapper identities (spec:278,systemtest:52,133,evidence:45); COV-C1-02 actual collector config comparisons (spec:282,systemtest:145,evidence:47). This axis judged the existing comparison sufficient; independent Coverage retains the broader home-inventory gap.\nPlan amendment preserves C1 and updates CD01,03,05,13 seams. Future C2/C3 not graded.\nNo tests/probes/edits/commits/recollection. No optional advice. No implementation-command change warranted. Claim status=claimed confidence10.\n"
+          },
+          "axis": "Spec",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "51e6851df49f4bf6175c0925b09c3d68748e79ef",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec-r1"
+          ]
+        },
+        {
+          "id": "c1-coverage-confirm1",
+          "performer": "codex-collaboration:/root/c1_coverage_confirm",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:c1_coverage_confirm",
+            "digest": "sha256:54d89967dc371101622664c9c1fb1c3348d830d4b63097b648b19ecb95e7b599",
+            "excerpt": "Coverage confirmation: one fold confirmed; one finding remains.\nBinding: full chunk 6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69..8eca522fa925d2a6307cfb22144529abcac597c6; repair delta c219a98fcd227a7eab852e4e8bc42597039707d9..8eca522fa925d2a6307cfb22144529abcac597c6; evidence sha256:ba0f51e4c0dec746697b3076c372a975b37263c863cd86e97395831cf79dcb88. Current binding true; clean.\nRead scope: whole spec, profile hostile-input checklist, full confirmation delta, producer/collector/tests, repair evidence, trusted s1/s7/s22/s44/s45, 279-row consumer inventory.\nCOV-C1-01 confirmed: TestCompatibilityCollectorInterfaces invokes the sealed binary via the repository wrapper for both identities (internal/systemtest/compatibility_test.go:83-143). Actual collector carries selected identity (internal/adopt/compatibility.go:93-100).\nCOV-C1-02 remains held: auto-fix, confidence 10. With CODEX_HOME absent and HOME set, the CLI selects HOME/.codex (internal/adopt/compatibility.go:134-145); every sealed fixture instead sets CODEX_HOME (internal/systemtest/compatibility_test.go:83-93). Missing-home unit test calls only configurationHome with both variables empty (internal/adopt/compatibility_test.go:200-208). Independent bypass: create or alter a sibling health-cache file while config.toml stays unchanged. TestCompatibilityCollectorReadOnly snapshots only config.toml (internal/systemtest/compatibility_test.go:145-169), so it misses this violation of spec.md:90. Add real CLI fallback invocation and recursive before/after inventories of both fixture homes.\nPolicy fingerprint test exercises both hook and selected-config changes. Vocabulary probe does not close surviving write bypass.\nOne repair cycle consumed; one remains. Future C2/C3 ungraded. No implementation command, test, probe, edit, or commit contributed.\nClaim: status=claimed, confidence=10.\n"
+          },
+          "axis": "Coverage",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "51e6851df49f4bf6175c0925b09c3d68748e79ef",
+          "finding_ids": [
+            "COV-C1-02"
+          ],
+          "supersedes": [
+            "c1-coverage-r1"
+          ]
         }
       ]
     }
