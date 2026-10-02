@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: `specs/cli-desktop-consistency/decisions/cli-desktop-consistency.md` (ready compiled map).
 
-Verification log: 0 iteration(s) to accept — independent reviewer sign-off is pending.
+Verification log: 1 iteration(s) to accept — the reviewer approved the specification and ticket graph on 2026-10-02.
 
 ## Problem
 
@@ -435,7 +435,7 @@ Won't handle: authentication against a malicious same-user process — existing 
 - `tests/canary/workflow-guidance-anchors/structured-phase-progress-anchor`
 - `tests/canary/workflow-guidance-anchors/ticket-light-path-anchor`
 
-Reviewer disposition: proposed for approval with the ticket graph.
+Reviewer disposition: approved with the ticket graph on 2026-10-02.
 The fence is the union of ticket writes outside the spec and capture folders.
 The review pickup is `reviews/cli-desktop-consistency.md`.
 The implementation must request an in-scope plan expansion before editing any missing closure path.
@@ -472,11 +472,11 @@ The same artifact records source validity, reader sweeps, execution roots, and t
 Flagged additions: the diagnostic mode, context fingerprint, repair journal, and guarded undo implement the approved checks and reversibility.
 They add no new supported environment or repair authority.
 The shared writer exclusion is necessary to preserve the approved concurrent-use contract.
-The reviewer approves these engineering choices with the seams and fences.
+The reviewer approved these engineering choices with the seams and fences.
 
 Review round: one independent reviewer sign-off round, with at most two author correction passes.
-The current artifact has not received that sign-off.
-No implementation is authorized by specification authorship alone.
+The reviewer approved this specification, its ticket graph, the implementation line, and the ownership fences on 2026-10-02.
+Implementation remains unstarted.
 
 ## Completion plan
 

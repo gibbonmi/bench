@@ -173,5 +173,5 @@ The first author check found planned tests represented as existing declarations.
 The corrected map keeps future evidence explicitly planned.
 No implementation tests were created to make specification checks pass.
 
-Before sign-off, the specification must pass prose, coverage, the complete ticket preflight, and each derived ownership-closure proposal.
-The final approval table presents the implementation line, seams, coverage, fences, exclusions, and the complete ticket graph.
+Prose, coverage, the complete ticket preflight, and each derived ownership-closure proposal passed before sign-off.
+The reviewer approved the implementation line, seams, coverage, fences, exclusions, and complete ticket graph on 2026-10-02.
