@@ -65,7 +65,70 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "re-c1-r1-standards",
+          "performer": "claude:bench-reviewer/re-c1-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "688d9e5eb06e01776f1b3a2ff14d7c96781c707e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re-c1-r1-standards-20261002@2af46532eb386bc7e4eae65cc504e79e8243e5d7",
+            "digest": "sha256:53e8418a8e135e39231ca577b2bbcf3c27fccb8a55dd41aa378a95a6f24530cc",
+            "excerpt": "Standards axis, RE-C1, pair 11aeb8e3..2af46532: fail, 1 finding (S1).\nS1: source_test.go:246 keeps the RE103 red record in a code comment (craft-comments: the spec owns the red record); auto-fix.\nOne fence scanner (locate), one encoder (Render), and one fence-name constant (RE8: one hit) confirmed; the hand-built malformed fences are exempt by spec rule.\nAdvice: the write.go:11 forward reference to \"the write transaction\", the parallel record builder and render harness in record_test.go, and the open-line grammar derived in two places."
+          },
+          "axis": "Standards",
+          "base": "11aeb8e316c82b08c3e77be6391309a9ffd0fb9b",
+          "tip": "2af46532eb386bc7e4eae65cc504e79e8243e5d7",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "re-c1-r1-spec",
+          "performer": "claude:bench-reviewer/re-c1-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "688d9e5eb06e01776f1b3a2ff14d7c96781c707e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c1-r1-spec-20261002@2af46532eb386bc7e4eae65cc504e79e8243e5d7",
+            "digest": "sha256:0cac302f58027364f7198d93c583c10795cc47f872173eb3d02557d7ffe9842c",
+            "excerpt": "Spec axis RE-C1 at 11aeb8e3..2af46532: pass, no finding IDs.\nRE1-RE10, RE102 and RE103 hold. The RE7 search has no hit. The RE8 search has one hit, the constant at files.go:90.\n`Render` uses the one `locate` scanner in parse.go, with two-space indent, no HTML escape and no validation. `Save` and `recordFence` render through it.\nThe version 2 plan matches the spec's chunk table.\nAdvice only: rename the package constant `recordFence` to avoid sharing a name with the preflight helper."
+          },
+          "axis": "Spec",
+          "base": "11aeb8e316c82b08c3e77be6391309a9ffd0fb9b",
+          "tip": "2af46532eb386bc7e4eae65cc504e79e8243e5d7",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "re-c1-r1-coverage",
+          "performer": "claude:bench-reviewer/re-c1-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "688d9e5eb06e01776f1b3a2ff14d7c96781c707e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c1-r1-coverage-20261002@2af46532eb386bc7e4eae65cc504e79e8243e5d7",
+            "digest": "sha256:4828f29b5b501ad80ed931d702adda4991882af0e4d60cb4f66475f130aa87ef",
+            "excerpt": "Coverage RE-C1 (fable/high): pass, no finding IDs.\nProbes: plan fence beside the record fence, inline name, trailing-space opener, unterminated-newline closer, and fence-like lines plus U+2028 in the excerpt all round-trip (silent, restored=yes).\nTwo mutations survive with no correctness defect (advice only): the conditional newline at write.go:26 and the exact-match closer at parse.go:250.\nCRLF and empty files are closed by Won't handle and RE31."
+          },
+          "axis": "Coverage",
+          "base": "11aeb8e316c82b08c3e77be6391309a9ffd0fb9b",
+          "tip": "2af46532eb386bc7e4eae65cc504e79e8243e5d7",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -115,3 +178,33 @@ Focused checks at the chunk tip:
 - `bench structure` reported no issue in `internal/reviewrecord`. The lane check of structure growth passed.
 
 No check skipped a test.
+
+## RE-C1 chunk review, round 1
+
+Three fresh fable / high sessions reviewed the frozen pair `11aeb8e3..2af46532`. Each axis bound the review evidence `sha256:6223b5b6` with `--check-current`. The raw finding count is 1, and the repair-target count is 1. The repair allowance of RE-C1 is 2 cycles, and 0 cycles are used.
+
+### Standards
+
+Finding count: 1. Worst issue: S1.
+
+- S1, auto-fix, confidence 6. The doc comment on `TestFixtureSaveRendersThroughRender` in `internal/reviewrecord/source_test.go` line 246 keeps the RE103 red record. The `craft-comments` skill states that the spec owns the red record. Remove that sentence and keep the reason for the external test package.
+
+### Spec
+
+Finding count: 0. Worst issue: none. Each RE-C1 row holds, and the version 2 plan agrees with the chunk table of the spec.
+
+### Coverage
+
+Finding count: 0. Worst issue: none. The axis ran five probes through `bench probe`, and each probe returned `restored=yes`.
+
+### Advice
+
+- The `Render` doc comment in `write.go` names a write transaction that ticket 2 adds.
+- The `renderRecord` and `render` helpers in `record_test.go` are parallel to the `recordtest` fixture, because an internal test cannot import `recordtest`.
+- The opening line of a fence comes from the same constants in `parse.go` and `write.go`. A small helper can make it one source.
+- The constant `recordFence` has the same name as the preflight test helper.
+- No test covers a document with no fence that ends in a newline. No test pins the exact match of the closing line. The code is correct for both edges.
+
+### Command contribution
+
+The Standards axis suggests that the author charge restate the `craft-comments` rule: a red record stays in the spec and not in a code comment. The Spec and Coverage axes found no contribution.
