@@ -1237,6 +1237,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "re-c4-r2-standards",
+          "performer": "claude:bench-reviewer/re-c4-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c4-r2-standards-20261002@586bfa17f9daa6ed4056d9ec7df09d0ec252b7c9",
+            "digest": "sha256:efbfadb22f6909c52847e1f6d4359e76c6219dc1aade5857b091b569366153b0",
+            "excerpt": "Standards, RE-C4 round 2 (repair delta 7112b8e1..586bfa17): pass, no finding IDs.\nC1 and C2 are confirmed folded. mappedIDs is still the one source of the mapping rule.\nAdvice: the chunk-walk loop in RecordAmendment is repeated before and after the append.\n"
+          },
+          "axis": "Standards",
+          "base": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+          "tip": "586bfa17f9daa6ed4056d9ec7df09d0ec252b7c9",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c4-r1-standards"
+          ]
+        },
+        {
+          "id": "re-c4-r2-spec",
+          "performer": "claude:bench-reviewer/re-c4-r2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c4-r2-spec-20261002@586bfa17f9daa6ed4056d9ec7df09d0ec252b7c9",
+            "digest": "sha256:519f6c18bff851c5fcefaa07b318f71f1653e024f0d25e71713776bdf0d7adc0",
+            "excerpt": "Spec RE-C4 r2: pass. Findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+          "tip": "586bfa17f9daa6ed4056d9ec7df09d0ec252b7c9",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c4-r1-spec"
+          ]
+        },
+        {
+          "id": "re-c4-r2-coverage",
+          "performer": "claude:bench-reviewer/re-c4-r2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c4-r2-coverage-20261002@586bfa17f9daa6ed4056d9ec7df09d0ec252b7c9",
+            "digest": "sha256:5a816e16a2fbb47841e972f68c69e54539711093a33ee3f321fb3eb65e9fa61a",
+            "excerpt": "RE-C4 round 2 Coverage: pass. C1 and C2 are confirmed. No finding IDs. One advice item covers the one-chunk RE114 fixture.\n"
+          },
+          "axis": "Coverage",
+          "base": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+          "tip": "586bfa17f9daa6ed4056d9ec7df09d0ec252b7c9",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c4-r1-coverage"
+          ]
         }
       ]
     }
@@ -2110,3 +2176,25 @@ The author session `claude:bench-writer/re-t6-author` ran the two planned checks
 - `re-c4-v2-t6-budgets` (`6-budgets`): `bench test --check guidance-prose-budgets` passed in less than 1 s.
 
 No check skipped a test.
+
+## RE-C4 chunk review, round 2
+
+Three fresh fable / high sessions ran the confirming round on the repair delta `7112b8e1..586bfa17`. Each axis bound the review evidence `sha256:7558e0ae` with `--check-current`. `bench record review` wrote the three results. Each axis passed with no finding, and C1 and C2 are closed. RE-C4 used 1 of its 2 repair cycles and its one hardening cycle.
+
+### Standards, round 2
+
+Finding count: 0. Worst issue: none. `mappedIDs` stays the one source of the mapping rule.
+
+### Spec, round 2
+
+Finding count: 0. Worst issue: none. RE114 and RE115 hold, and the new spec sentence matches the code.
+
+### Coverage, round 2
+
+Finding count: 0. Worst issue: none. The round 1 revert sequence now refuses. Probes at new sites bit on RE114 and RE115 with `restored=yes`.
+
+### Advice, round 2
+
+- The chunk walk in `RecordAmendment` runs before and after the append. A small helper can share it.
+- The RE114 fixture holds one chunk, so no test breaks the chain on a second chunk. The production loop handles that case.
+- The step 6 examples of the spec can name an ambiguous chain.
