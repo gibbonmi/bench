@@ -1644,6 +1644,24 @@
           "requirement": "15-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
+        },
+        {
+          "id": "sr-c7-14-worktree-r2",
+          "performer": "claude:bench-writer/sr-t14-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b794121eb206cd6de446aa3aa715f18c4a1249f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t14-repair1-20261002@9ece0fde9ec56bb0dbdaf3183eb97eb7f99dc04a",
+            "digest": "sha256:e2a18f9381195904e27f2441286e959454ba8e671d9e840f7c78c6a43c54bfdd",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,fae91cb400d6d799c11de5e4951ead0ec9e4e7a4,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62727\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,unix sockets unavailable\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,unix sockets unavailable\nprobe: bench probe internal/worktree/reset_plan_test.go --swap '!strings.Contains(result.stdout, resetPathsTable)' --with 'strings.Contains(result.stdout, resetPathsTable)' --package ./internal/worktree --run '^TestResetPlanReportsNothingToReset$'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/reset_plan_test.go,swap,failed,1,yes\n"
+          },
+          "requirement": "14-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
         }
       ],
       "reviews": [
