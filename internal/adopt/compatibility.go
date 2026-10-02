@@ -9,7 +9,12 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/adopt/transaction"
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/canonicalpath"
+	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/toon"
 
 	"github.com/gibbonmi/bench/internal/compatibility"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -18,7 +23,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-var compatibilityDoctorUsage = "usage: bench doctor --compat " + compatibility.InterfaceOperand()
+var compatibilityDoctorUsage = "usage: bench doctor --compat " + compatibility.InterfaceOperand() + " [--fix | --undo <repair-id>]"
 
 var (
 	doctorGrammar = usage.Grammar{
@@ -31,6 +36,7 @@ var (
 		Help:    compatibilityDoctorUsage,
 		MinArgs: 1,
 		MaxArgs: 1,
+		Flags:   []usage.Flag{{Name: "--fix"}, {Name: "--undo", HasValue: true, NoEmptyValue: true}},
 	}
 )
 
@@ -42,7 +48,7 @@ func DoctorHelpSuffix() string {
 
 func Doctor(args []string, stdout, stderr io.Writer, version string) int {
 	if len(args) > 0 && args[0] == "--compat" {
-		return compatibilityDoctor(args[1:], stdout, stderr, collectCompatibility)
+		return runCompatibilityDoctor(args[1:], stdout, stderr, collectCompatibility, version)
 	}
 	return legacyDoctor(args, stdout, stderr, version)
 }
@@ -65,7 +71,7 @@ func legacyDoctor(args []string, stdout, stderr io.Writer, version string) int {
 
 type compatibilityCollector func(compatibility.Interface) compatibility.Input
 
-func compatibilityDoctor(args []string, stdout, stderr io.Writer, collect compatibilityCollector) int {
+func runCompatibilityDoctor(args []string, stdout, stderr io.Writer, collect compatibilityCollector, version string) int {
 	parsed, line, code := usage.Parse(compatibilityGrammar, args)
 	if line != "" {
 		if code == 0 {
@@ -80,6 +86,22 @@ func compatibilityDoctor(args []string, stdout, stderr io.Writer, collect compat
 		fmt.Fprintln(stderr, compatibilityDoctorUsage)
 		return 2
 	}
+	_, fix := parsed.Flags["--fix"]
+	undo, hasUndo := parsed.Flags["--undo"]
+	if fix && hasUndo {
+		fmt.Fprintln(stderr, compatibilityDoctorUsage)
+		return 2
+	}
+	mutationCode := 0
+	if fix || hasUndo {
+		guidance, err := compatibility.RenderRecovery()
+		if err != nil {
+			fmt.Fprintln(stderr, "compatibility recovery output refused")
+			return 1
+		}
+		fmt.Fprint(stdout, guidance)
+		mutationCode = mutateCompatibility(selected, undo, stdout, stderr, version)
+	}
 	report := compatibility.Inspect(collect(selected))
 	output, err := report.Render()
 	if err != nil {
@@ -87,6 +109,9 @@ func compatibilityDoctor(args []string, stdout, stderr io.Writer, collect compat
 		return 1
 	}
 	fmt.Fprint(stdout, output)
+	if mutationCode != 0 {
+		return 1
+	}
 	return report.ExitCode()
 }
 
@@ -188,4 +213,78 @@ func compatibilityAssets(root string) []compatibility.Asset {
 func globalBenchAvailable() bool {
 	_, err := exec.LookPath("bench")
 	return err == nil
+}
+
+type repairRun struct {
+	staging string
+	shim    string
+	pending []transaction.Change
+	spans   map[string]*transaction.Span
+	store   transaction.Store
+	id      string
+}
+
+func mutateCompatibility(selected compatibility.Interface, undo string, stdout, stderr io.Writer, version string) int {
+	root, err := git.Root()
+	if err != nil {
+		fmt.Fprintln(stderr, toon.NotInRepo())
+		return 1
+	}
+	home := benchhome.Dir()
+	if !filepath.IsAbs(home) {
+		fmt.Fprintln(stderr, "compatibility repair requires an absolute resolved Bench home")
+		return 1
+	}
+	home, err = canonicalpath.Resolve(home)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	namespace := filepath.Join(home, "compatibility-repairs")
+	if err := transaction.EnsurePrivateDirectory(namespace); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	repair := repairRun{store: transaction.Store{Directory: filepath.Join(namespace, poolkey.Key(root))}}
+	code := 0
+	state := "unchanged"
+	if undo != "" {
+		repair.id = undo
+		err = repair.store.Undo(undo)
+		state = "undone"
+	} else if gate.KitSourceCheckout(root) {
+		code = doctorFixRun(io.Discard, stderr, version, &repair)
+		if repair.id != "" {
+			state = "applied"
+		}
+	} else {
+		kit := gate.KitDir()
+		plan, planErr := buildLinkPlan(kit)
+		if planErr != nil {
+			fmt.Fprintln(stderr, planErr)
+			return 1
+		}
+		code, _ = transactionalRepair(root, kit, "copy", version, plan, stdout, stderr, &repair)
+		if repair.id != "" {
+			state = "applied"
+		}
+	}
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		code = 1
+	}
+	if code != 0 {
+		state = "incomplete"
+	}
+	action := "retest through normal tools in the selected interface"
+	if repair.id != "" {
+		action = "bench doctor --compat " + string(selected) + " --undo " + repair.id + "; then " + action
+	}
+	block, renderErr := toon.Table("repair", []string{"id", "state", "action"}, [][]string{{repair.id, state, action}})
+	if renderErr != nil {
+		fmt.Fprintln(stderr, "compatibility repair output refused")
+		return 1
+	}
+	fmt.Fprint(stdout, block)
+	return code
 }

@@ -30,6 +30,8 @@ const prePushBranchToken = "__BENCH_DEFAULT_BRANCH__"
 // and benign template evolution.
 const PrePushMarker = "bench:managed-pre-push"
 
+const prePushMode os.FileMode = 0o755
+
 // PrePushState classifies a repo's pre-push hook against the bench-managed template.
 type PrePushState int
 
@@ -225,7 +227,7 @@ func protectedBranch(root string) string {
 	return fallbackProtectedBranch
 }
 
-func installGitHook(root string, stderr io.Writer) error {
+func installGitHook(root string, stderr io.Writer, guard *adoptionGuard) error {
 	hooks, err := hooksDir(root)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
@@ -240,7 +242,19 @@ func installGitHook(root string, stderr io.Writer) error {
 		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
 		return fmt.Errorf("foreign pre-push")
 	}
-	return os.WriteFile(prepush, []byte(renderPrePush(root)), 0o755)
+	mode := prePushMode
+	if info, err := os.Stat(prepush); err == nil {
+		mode = info.Mode().Perm()
+		if mode&0o111 == 0 {
+			mode |= 0o111
+		}
+	}
+	stage, _, err := stageBeside(prepush, []byte(renderPrePush(root)), mode)
+	if err != nil {
+		return err
+	}
+	defer os.Remove(stage)
+	return publishObserved(prepush, stage, guard)
 }
 
 func populateOriginHead(root string) {
@@ -252,4 +266,41 @@ func populateOriginHead(root string) {
 
 func gitOK(args ...string) bool {
 	return exec.Command("git", args...).Run() == nil
+}
+
+// removeManagedHook removes the pre-push hook only when it carries the managed marker. It
+// resolves the effective hooks directory the same way link does, honoring core.hooksPath.
+// A hook without the marker is a foreign hook, left in place; its presence is not a
+// refusal because it was never Bench's. The hook is bespoke, not a manifest row.
+func removeManagedHook(root string, dryRun bool, p *unlinkPlan) (string, error) {
+	hooks, err := hooksDir(root)
+	if err != nil {
+		return "", err
+	}
+	path := filepath.Join(hooks, "pre-push")
+	if isSpecialFile(path) {
+		return "", nil
+	}
+	content, err := os.ReadFile(path)
+	if err != nil || !strings.Contains(string(content), PrePushMarker) {
+		return "", nil
+	}
+	if !dryRun {
+		p.changes = append(p.changes, stagedChange{rel: "pre-push", dest: path})
+	}
+	return "pre-push hook (managed - removed)", nil
+}
+
+func validateRepairHook(health PrePushHealth) error {
+	if health.State != PrePushManaged {
+		return nil
+	}
+	info, err := os.Lstat(health.Path)
+	if err != nil {
+		return err
+	}
+	if health.Currency != PrePushCurrent || info.Mode() != prePushMode {
+		return fmt.Errorf("modified-managed pre-push: %s", health.Path)
+	}
+	return nil
 }

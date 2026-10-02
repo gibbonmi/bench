@@ -161,7 +161,7 @@ func ShimTarget(content string) string {
 
 func shimHasMarker(path string) bool {
 	content, err := os.ReadFile(path)
-	return err == nil && strings.Contains(string(content), shimMarkerID)
+	return err == nil && managedShimContent(string(content))
 }
 
 func shimTargetFromFile(path string) string {
@@ -227,11 +227,8 @@ func doctorReport(stdout io.Writer, version string) int {
 	return rc
 }
 
-// reportPrePush renders the pre-push backstop row inside a git worktree and returns whether it
-// is red. Git does not clone hooks, so a fresh clone drops the backstop until doctor runs. A
-// stale managed hook is repaired by bench doctor --fix; an absent, foreign, or diverted hook
-// points to bench link, except in the kit source checkout, where bench doctor --fix installs
-// it. A red row makes doctor exit 1 even when the shim is healthy.
+// reportPrePush reports whether the effective hook requires repair.
+// Kit checkouts use doctor for absent hooks; consumer repositories use link.
 func reportPrePush(stdout io.Writer) bool {
 	root, err := git.Root()
 	if err != nil {
@@ -283,8 +280,25 @@ func printSkewWarning(stdout io.Writer, version string) {
 }
 
 func doctorFix(stdout, stderr io.Writer, version string) int {
+	return doctorFixRun(stdout, stderr, version, nil)
+}
+
+func doctorFixRun(stdout, stderr io.Writer, version string, repair *repairRun) (code int) {
 	env := currentDoctorEnv()
 	dir, create := SelectDoctorDir(env)
+	guard, err := lockDoctor(dir)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	defer guard.Close()
+	if repair != nil {
+		if err := beginDoctorRepair(guard, repair, dir); err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		defer func() { code = finishDoctorRepair(guard, code, stderr) }()
+	}
 	if create {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			fmt.Fprintf(stderr, "  error: could not create %s\n", dir)
@@ -301,56 +315,39 @@ func doctorFix(stdout, stderr io.Writer, version string) int {
 			if string(existing) == content {
 				fmt.Fprintf(stdout, "  ok: shim already current at %s (no change)\n", targetPath)
 				doctorPathNotice(stdout, env, dir)
-				if publishBrokerManifest(stdout, stderr, version) != 0 {
+				if publishBrokerManifest(stdout, stderr, version, guard) != 0 {
 					return 1
 				}
-				return repairStalePrePush(stdout, stderr)
+				return repairPrePush(stdout, stderr, guard)
 			}
 		} else {
 			fmt.Fprintf(stderr, "  refusing: %s exists and is not a bench shim (no marker); left unchanged\n", targetPath)
 			return 1
 		}
 	}
-	tmp, err := os.CreateTemp(dir, ".bench-shim.")
+	stage, _, err := stageBeside(targetPath, []byte(content), shimMode)
 	if err != nil {
 		fmt.Fprintf(stderr, "  error: cannot write in %s\n", dir)
 		return 1
 	}
-	tmpName := tmp.Name()
-	if _, err := tmp.WriteString(content); err != nil {
-		_ = tmp.Close()
-		_ = os.Remove(tmpName)
-		fmt.Fprintf(stderr, "  error: cannot write in %s\n", dir)
-		return 1
-	}
-	if err := tmp.Close(); err != nil {
-		_ = os.Remove(tmpName)
-		fmt.Fprintf(stderr, "  error: cannot write in %s\n", dir)
-		return 1
-	}
-	if err := os.Chmod(tmpName, 0o755); err != nil {
-		_ = os.Remove(tmpName)
-		fmt.Fprintf(stderr, "  error: cannot write in %s\n", dir)
-		return 1
-	}
-	if err := os.Rename(tmpName, targetPath); err != nil {
-		_ = os.Remove(tmpName)
-		fmt.Fprintf(stderr, "  error: cannot write in %s\n", dir)
+	defer os.Remove(stage)
+	if err := publishObserved(targetPath, stage, guard); err != nil {
+		fmt.Fprintln(stderr, err)
 		return 1
 	}
 	fmt.Fprintf(stdout, "  wrote shim %s (exec -> %s)\n", targetPath, target)
 	doctorPathNotice(stdout, env, dir)
-	if publishBrokerManifest(stdout, stderr, version) != 0 {
+	if publishBrokerManifest(stdout, stderr, version, guard) != 0 {
 		return 1
 	}
-	return repairStalePrePush(stdout, stderr)
+	return repairPrePush(stdout, stderr, guard)
 }
 
 // publishBrokerManifest publishes the promotion-broker manifest as part of the fix,
 // so the install and repair owner ships the broker and its binding together. The
 // wrapper's `worktree land` route trusts only this binding.
-func publishBrokerManifest(stdout, stderr io.Writer, version string) int {
-	path, broker, err := WriteBrokerManifest(version)
+func publishBrokerManifest(stdout, stderr io.Writer, version string, guard *adoptionGuard) int {
+	path, broker, err := writeBrokerManifest(version, guard)
 	if err != nil {
 		fmt.Fprintf(stderr, "  error: %v\n", err)
 		return 1
@@ -359,7 +356,9 @@ func publishBrokerManifest(stdout, stderr io.Writer, version string) int {
 	return 0
 }
 
-func repairStalePrePush(stdout, stderr io.Writer) int {
+func repairStalePrePush(stdout, stderr io.Writer) int { return repairPrePush(stdout, stderr, nil) }
+
+func repairPrePush(stdout, stderr io.Writer, guard *adoptionGuard) int {
 	root, err := git.Root()
 	if err != nil {
 		return 0
@@ -368,18 +367,29 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "%s: %v\n", root, err)
 		return 1
 	}
+	if guard == nil {
+		hooks, _ := hooksDir(root)
+		guard, err = lockObserved([]string{filepath.Join(hooks, "pre-push")})
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		defer guard.Close()
+	}
 	health := InspectPrePush(root)
+	if guard.repair != nil {
+		if err := validateRepairHook(health); err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+	}
 	switch health.State {
 	case PrePushManaged:
 		if health.Currency == PrePushCurrent {
 			fmt.Fprintf(stdout, "  ok: pre-push already current at %s (no change)\n", health.Path)
 			return 0
 		}
-		if err := installGitHook(root, stderr); err != nil {
-			return 1
-		}
-		if err := restorePrePushExecuteMode(health.Path); err != nil {
-			fmt.Fprintf(stderr, "  error: cannot restore executable mode on pre-push at %s\n", health.Path)
+		if err := installGitHook(root, stderr, guard); err != nil {
 			return 1
 		}
 		if InspectPrePush(root).Currency != PrePushCurrent {
@@ -396,26 +406,12 @@ func repairStalePrePush(stdout, stderr io.Writer) int {
 		if !gate.KitSourceCheckout(root) {
 			return 0
 		}
-		if err := installGitHook(root, stderr); err != nil {
+		if err := installGitHook(root, stderr, guard); err != nil {
 			return 1
 		}
 		fmt.Fprintf(stdout, "  installed pre-push at %s\n", health.Path)
 	}
 	return 0
-}
-
-// restorePrePushExecuteMode adds execute bits to a hook already present when the repair rewrote
-// it. Writing over a file leaves its mode untouched, and git skips a pre-push it can't execute.
-// The other permission bits stay the operator's.
-func restorePrePushExecuteMode(path string) error {
-	if isExecutable(path) {
-		return nil
-	}
-	info, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-	return os.Chmod(path, info.Mode().Perm()|0o111)
 }
 
 func resolvedWrapper() string {

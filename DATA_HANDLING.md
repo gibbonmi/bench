@@ -170,6 +170,31 @@ An objective is capped at 200 runes. It is rejected at intake — before any led
 entry, scratch file, or commit — if it is over-long or carries a control byte.
 So unbounded or control-bearing text cannot flow into durable state.
 
+## Adoption recovery
+
+Compatibility repair retains records below
+`<Bench home>/compatibility-repairs/<repository key>/<repair id>/`.
+Directories have mode 0700, and files have mode 0600.
+Records contain managed preimages, destination identities, modes, and restoration metadata.
+A managed block records only its replaced fragment, without surrounding project text.
+Credentials, raw environment values, personal configuration homes, and chat content are excluded.
+The operator removes these local records only after their recovery purpose ends.
+
+Ordinary adoption uses a private temporary recovery directory and removes it after success.
+A failed publication retains available recovery data and reports its directory and repair identifier.
+A directory-sync failure prevents a successful completion claim.
+
+Adoption writers share destination locks in `/tmp/bench-adoption-locks-<uid>/`.
+The directory has mode 0700, and each lock file has mode 0600.
+Lock names contain destination-path digests and no file content.
+Lock files remain after release so waiting processes share one lock identity.
+The namespace is independent of each chat's Bench home and temporary-directory setting.
+
+`BENCH_LINK_FAULT` is an explicit adoption test input.
+A positive integer or `last` injects a publication failure.
+`interrupt:<positive integer>` exits the repair process before that destination's publication, without normal cleanup.
+This fault tests recovery by a fresh process after earlier destinations changed.
+
 ## Log and terminal output
 
 Every terminal render of operator-influenced text goes through the single

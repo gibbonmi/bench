@@ -3,7 +3,8 @@
 package systemtest
 
 import (
-	"io/fs"
+	"github.com/gibbonmi/bench/internal/adopt/transaction"
+	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -115,15 +116,21 @@ func (fixture compatibilitySession) runWithHome(t *testing.T, selected compatibi
 	return owner.runAt(fixture.working, overrides, "bash", fixture.wrapper, "doctor", "--compat", string(selected))
 }
 
+func compatibilityOutput(t *testing.T, result processResult) string {
+	t.Helper()
+	output := result.stdout
+	if spill, ok := responseboundtest.Find(output); ok {
+		output = readSpillFile(t, spill.Path)
+	}
+	return output
+}
+
 func compatibilityContext(t *testing.T, result processResult) map[string]string {
 	t.Helper()
 	if result.code != 1 || result.stderr != "" {
 		t.Fatalf("compatibility result = %#v", result)
 	}
-	output := result.stdout
-	if spill, ok := responseboundtest.Find(output); ok {
-		output = readSpillFile(t, spill.Path)
-	}
+	output := compatibilityOutput(t, result)
 	decoded, err := toonlib.DecodeString(output)
 	if err != nil {
 		t.Fatal(err)
@@ -166,9 +173,9 @@ func TestCompatibilityCollectorInterfaces(t *testing.T) {
 
 func TestCompatibilityCollectorReadOnly(t *testing.T) {
 	fixture := newCompatibilitySession(t)
-	before := map[string]map[string]compatibilityHomeEntry{}
+	before := map[string]map[string]compatibilitytest.HomeEntry{}
 	for _, home := range fixture.homes {
-		before[home] = snapshotCompatibilityHome(t, home)
+		before[home] = compatibilitytest.SnapshotHome(t, home)
 	}
 	type homeCase struct {
 		name     string
@@ -187,49 +194,12 @@ func TestCompatibilityCollectorReadOnly(t *testing.T) {
 				t.Errorf("selected home = %q, want %q", context["configuration-home"], fixture.homes[test.selected])
 			}
 			for home, want := range before {
-				if got := snapshotCompatibilityHome(t, home); !reflect.DeepEqual(got, want) {
+				if got := compatibilitytest.SnapshotHome(t, home); !reflect.DeepEqual(got, want) {
 					t.Errorf("inspection changed configuration home %s: got %#v, want %#v", home, got, want)
 				}
 			}
 		})
 	}
-}
-
-type compatibilityHomeEntry struct {
-	mode    os.FileMode
-	content string
-}
-
-func snapshotCompatibilityHome(t *testing.T, home string) map[string]compatibilityHomeEntry {
-	t.Helper()
-	entries := map[string]compatibilityHomeEntry{}
-	err := filepath.WalkDir(home, func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		info, err := entry.Info()
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(home, path)
-		if err != nil {
-			return err
-		}
-		var content string
-		switch {
-		case info.Mode().IsRegular():
-			data, readErr := os.ReadFile(path)
-			content, err = string(data), readErr
-		case info.Mode()&os.ModeSymlink != 0:
-			content, err = os.Readlink(path)
-		}
-		entries[rel] = compatibilityHomeEntry{info.Mode(), content}
-		return err
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return entries
 }
 
 func TestCompatibilityCollectorPolicyFingerprint(t *testing.T) {
@@ -257,5 +227,159 @@ func TestCompatibilityCollectorPolicyFingerprint(t *testing.T) {
 			t.Errorf("policy change at %s retained fingerprint %q", policy.path, current)
 		}
 		previous = current
+	}
+}
+
+func TestCompatibilitySetup(t *testing.T) {
+	fixture := newCompatibilitySession(t)
+	before := map[string]map[string]compatibilitytest.HomeEntry{}
+	for _, home := range fixture.homes {
+		before[home] = compatibilitytest.SnapshotHome(t, home)
+	}
+	hook := filepath.Join(fixture.repo, ".codex", "hooks.json")
+	data, err := os.ReadFile(hook)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.WriteFile(hook, data, 0o644); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := os.Remove(hook); err != nil {
+		t.Fatal(err)
+	}
+	result := owner.runAt(fixture.repo, fixture.overrides, owner.selected.path, "setup", "--yes")
+	for home, want := range before {
+		if got := compatibilitytest.SnapshotHome(t, home); !reflect.DeepEqual(got, want) {
+			t.Errorf("setup changed personal home %s", home)
+		}
+	}
+	installed, err := os.ReadFile(hook)
+	if err != nil || string(installed) != string(data) {
+		t.Fatalf("setup failed to install shared integration: %v, %#v", err, result)
+	}
+	output := compatibilityOutput(t, result)
+	if !strings.Contains(output, "interface qualification remains pending") {
+		t.Fatalf("setup omitted pending qualification: %#v", result)
+	}
+}
+
+func TestCompatibilityInterruptedRepair(t *testing.T) {
+	fixture := newCompatibilitySession(t)
+	paths := []string{".bench/BENCH.md", ".bench/BENCH-reference.md", ".codex/hooks.json"}
+	for _, rel := range paths {
+		path := filepath.Join(fixture.repo, rel)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			if err := os.WriteFile(path, data, 0o644); err != nil {
+				t.Error(err)
+			}
+		})
+		if err := os.Remove(path); err != nil {
+			t.Fatal(err)
+		}
+	}
+	overrides := append(append([]string{}, fixture.overrides...), "BENCH_LINK_FAULT=interrupt:3")
+	result := owner.runAt(fixture.repo, overrides, owner.selected.path, "doctor", "--compat", "codex-cli", "--fix")
+	if result.code != 97 {
+		t.Fatalf("repair did not interrupt at publication: %#v", result)
+	}
+	touched := 0
+	for _, rel := range paths {
+		if _, err := os.Stat(filepath.Join(fixture.repo, rel)); err == nil {
+			touched++
+		}
+	}
+	if touched != 2 {
+		t.Fatalf("interruption did not leave two published targets: %d", touched)
+	}
+	home := filepath.Dir(fixture.homes[compatibility.CodexCLI])
+	records, err := filepath.Glob(filepath.Join(home, ".bench", "compatibility-repairs", "*", "*", "record.json"))
+	if err != nil || len(records) != 1 {
+		t.Fatalf("interrupted recovery records: %v, %v", records, err)
+	}
+	id := filepath.Base(filepath.Dir(records[0]))
+	result = owner.runAt(fixture.repo, fixture.overrides, owner.selected.path, "doctor", "--compat", "codex-cli", "--undo", id)
+	if result.code != 1 || result.stderr != "" {
+		t.Fatalf("fresh-process recovery failed: %#v", result)
+	}
+	for _, rel := range paths {
+		if _, err := os.Lstat(filepath.Join(fixture.repo, rel)); !os.IsNotExist(err) {
+			t.Errorf("fresh-process undo did not restore absence: %s: %v", rel, err)
+		}
+	}
+}
+
+func TestCompatibilityConcurrentWriters(t *testing.T) {
+	fixture := newCompatibilitySession(t)
+	hook := filepath.Join(fixture.repo, ".git", "hooks", "pre-push")
+	if err := os.Remove(hook); err != nil {
+		t.Fatal(err)
+	}
+	fixed := owner.runAt(fixture.repo, fixture.overrides, owner.selected.path, "doctor", "--compat", "codex-cli", "--fix")
+	if fixed.code != 1 || fixed.stderr != "" {
+		t.Fatalf("repair fixture: %#v", fixed)
+	}
+	home := filepath.Dir(fixture.homes[compatibility.CodexCLI])
+	records, err := filepath.Glob(filepath.Join(home, ".bench", "compatibility-repairs", "*", "*", "record.json"))
+	if err != nil || len(records) != 1 {
+		t.Fatalf("repair fixture records: %v, %v", records, err)
+	}
+	id := filepath.Base(filepath.Dir(records[0]))
+	alias := filepath.Join(t.TempDir(), "shared-hooks")
+	if err := os.Symlink(filepath.Dir(hook), alias); err != nil {
+		t.Fatal(err)
+	}
+	other := owner.repos[1]
+	compatibilitytest.RemovePreserving(t, filepath.Join(other, ".bench", "gate.sh"))
+	systemGitOutput(t, other, "config", "core.hooksPath", alias)
+	t.Cleanup(func() { systemGitOutput(t, other, "config", "--unset", "core.hooksPath") })
+	if result := owner.runSelected(other, "link", "copy"); result.code != 0 {
+		t.Fatalf("second repo fixture: %#v", result)
+	}
+	for _, repo := range []string{fixture.repo, other} {
+		manifest := filepath.Join(repo, ".bench", "link-manifest.tsv")
+		data, err := os.ReadFile(manifest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			if err := os.WriteFile(manifest, data, 0o644); err != nil {
+				t.Error(err)
+			}
+		})
+		_, body, _ := strings.Cut(string(data), "\n")
+		if err := os.WriteFile(manifest, []byte("#kit\t0.0.0\n"+body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	lease, err := transaction.Lock([]string{hook})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lease.Close()
+	before := compatibilitytest.SnapshotHome(t, filepath.Dir(hook))
+	for _, repo := range []string{fixture.repo, other} {
+		for _, args := range [][]string{{"setup", "--yes"}, {"link", "copy"}, {"upgrade"}, {"unlink"}, {"doctor", "--fix"}, {"doctor", "--compat", "codex-cli", "--fix"}} {
+			overrides := append(append([]string{}, fixture.overrides...), "BENCH_HOME="+t.TempDir(), "BENCH_WRAPPER="+fixture.wrapper)
+			result := owner.runAt(repo, overrides, owner.selected.path, args...)
+			if result.code == 0 || !strings.Contains(compatibilityOutput(t, result)+result.stderr, "competing writer") {
+				t.Errorf("writer bypassed shared exclusion: %s %v: code=%d stderr=%q stdout=%q", repo, args, result.code, result.stderr, result.stdout)
+			}
+		}
+	}
+	result := owner.runAt(fixture.repo, fixture.overrides, owner.selected.path, "doctor", "--compat", "codex-cli", "--undo", id)
+	if result.code != 1 || !strings.Contains(compatibilityOutput(t, result)+result.stderr, "competing writer") {
+		t.Errorf("undo bypassed shared exclusion: %#v", result)
+	}
+	if after := compatibilitytest.SnapshotHome(t, filepath.Dir(hook)); !reflect.DeepEqual(before, after) {
+		t.Error("competing writer changed the shared hook")
+	}
+	if result := owner.runSelected(owner.repos[2], "link", "copy"); result.code != 0 {
+		t.Errorf("disjoint writer was blocked: %#v", result)
 	}
 }

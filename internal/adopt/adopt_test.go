@@ -158,8 +158,8 @@ func TestPromoteAllRollsBackOnDestinationSyncFailure(t *testing.T) {
 	t.Cleanup(func() { syncDirectory = oldSync })
 
 	err := promoteAll(root, []stagedChange{
-		{rel: "existing", stage: oldStage, backup: filepath.Join(stage, "existing.backup")},
-		{rel: "fresh", stage: freshStage, backup: filepath.Join(stage, "fresh.backup")},
+		{rel: "existing", stage: oldStage},
+		{rel: "fresh", stage: freshStage},
 	})
 	if err == nil {
 		t.Fatal("promoteAll succeeded despite destination sync failure")

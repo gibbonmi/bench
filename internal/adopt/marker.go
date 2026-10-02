@@ -2,6 +2,10 @@ package adopt
 
 import (
 	"errors"
+	"fmt"
+	"github.com/gibbonmi/bench/internal/adopt/transaction"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -207,4 +211,101 @@ func claudeHasImports(content string) bool {
 		}
 	}
 	return true
+}
+
+// stripAgentsForUnlink removes the fenced Bench block from AGENTS.md while preserving the
+// user's surrounding prose. When stripping leaves the file whitespace-only, the case
+// where link created it with no user content, the file is removed, mirroring link's
+// create-if-absent symmetry. A malformed managed block is left in place and counted as a
+// refusal, so the manifest survives for a manual fix. AGENTS.md is bespoke, not a
+// manifest row.
+func stripAgentsForUnlink(root string, dryRun bool, p *unlinkPlan) string {
+	path := filepath.Join(root, "AGENTS.md")
+	if isSpecialFile(path) {
+		p.refused = append(p.refused, "AGENTS.md")
+		return "kept AGENTS.md (not a regular file)"
+	}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	stripped, serr := StripAgentsBlock(string(content))
+	if serr != nil {
+		p.refused = append(p.refused, "AGENTS.md")
+		return "kept AGENTS.md (its managed block could not be parsed)"
+	}
+	if stripped == string(content) {
+		return ""
+	}
+	if strings.TrimSpace(stripped) == "" {
+		if !dryRun {
+			p.changes = append(p.changes, stagedChange{rel: "AGENTS.md"})
+		}
+		return "AGENTS.md (removed - no user prose remained)"
+	}
+	if !dryRun {
+		info, err := os.Stat(path)
+		if err != nil {
+			p.refused = append(p.refused, "AGENTS.md")
+			return "kept AGENTS.md (mode unavailable)"
+		}
+		stage, err := stageBytes(p.stage, "agents", []byte(stripped), info.Mode().Perm())
+		if err != nil {
+			p.refused = append(p.refused, "AGENTS.md")
+			return "kept AGENTS.md (staging failed)"
+		}
+		p.changes = append(p.changes, stagedChange{rel: "AGENTS.md", stage: stage})
+	}
+	return "AGENTS.md (managed block stripped, prose kept)"
+}
+
+func stagedRepairAgents(stage, root string, repair *repairRun) (string, error) {
+	if repair == nil {
+		return stagedAgents(stage, root)
+	}
+	path := filepath.Join(root, "AGENTS.md")
+	content, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return stagedAgents(stage, root)
+	}
+	if err != nil {
+		return "", err
+	}
+	if err := validateAgentsContent(string(content)); err != nil {
+		return "", err
+	}
+	scan := scanMarkers(string(content))
+	if len(scan.starts) > 0 {
+		lines := strings.SplitAfter(string(content), "\n")
+		start, end := 0, 0
+		for i, line := range lines {
+			if i < scan.starts[0]-1 {
+				start += len(line)
+			}
+			if i < scan.ends[0] {
+				end += len(line)
+			}
+		}
+		if strings.TrimSuffix(string(content[start:end]), "\n") != strings.TrimSuffix(BenchAgentsBlock(), "\n") {
+			return "", fmt.Errorf("conflict: AGENTS.md has a modified managed block")
+		}
+		return "", nil
+	}
+	next, err := RewriteAgentsBlock(string(content))
+	if err != nil {
+		return "", err
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return "", err
+	}
+	result, err := stageBytes(stage, "agents", []byte(next), info.Mode().Perm())
+	if err != nil {
+		return "", err
+	}
+	if repair.spans == nil {
+		repair.spans = map[string]*transaction.Span{}
+	}
+	repair.spans[path] = &transaction.Span{Offset: len(content), AfterLength: len(next) - len(content)}
+	return result, nil
 }

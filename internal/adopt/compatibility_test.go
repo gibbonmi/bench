@@ -207,3 +207,7 @@ func TestCompatibilityMissingConfigurationHome(t *testing.T) {
 		}
 	}
 }
+
+func compatibilityDoctor(args []string, stdout, stderr io.Writer, collect compatibilityCollector) int {
+	return runCompatibilityDoctor(args, stdout, stderr, collect, "1.0.0")
+}

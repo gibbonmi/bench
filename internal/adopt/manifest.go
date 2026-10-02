@@ -2,14 +2,20 @@ package adopt
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
+
+const manifestMode os.FileMode = 0o644
 
 type Manifest struct {
 	KitVersion string
@@ -72,7 +78,7 @@ func writeManifest(path, version string, rows []manifestRow) error {
 		return err
 	}
 	tmp := path + ".tmp"
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, manifestMode)
 	if err != nil {
 		return err
 	}
@@ -128,4 +134,21 @@ func fingerprintPath(path string) (string, error) {
 func hashBytes(b []byte) string {
 	sum := sha256.Sum256(b)
 	return hex.EncodeToString(sum[:])
+}
+
+func validateRepairManifest(path string, manifest Manifest) error {
+	file := bounds.ClassifyNoFollow(path)
+	if file.State == bounds.StateAbsent {
+		return nil
+	}
+	info, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+	rows := manifest.Rows()
+	sort.Slice(rows, func(i, j int) bool { return rows[i].rel < rows[j].rel })
+	if file.State != bounds.StateParsed || info.Mode() != manifestMode || !bytes.Equal(file.Data, manifestBytes(manifest.KitVersion, rows)) {
+		return fmt.Errorf("modified-managed: ownership manifest must retain its canonical bytes and mode: %s", path)
+	}
+	return nil
 }
