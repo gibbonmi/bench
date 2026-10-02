@@ -36,6 +36,7 @@ func TestLandCommandInvalidatesAChangedRequestBeforeComposition(t *testing.T) {
 	j, composed := forbidLandingComposition()
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs("land-identity-request-changed", f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	if r.exit != 1 || !strings.HasPrefix(r.stdout, "refused{") {
 		t.Fatalf("changed request = (%d, %q, %q), want a refusal", r.exit, r.stdout, r.stderr)
 	}
@@ -50,6 +51,7 @@ func TestLandCommandInvalidatesAChangedReviewBaseBeforeComposition(t *testing.T)
 	j, composed := forbidLandingComposition()
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.tip, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	if r.exit != 1 || !strings.HasPrefix(r.stdout, "refused{") {
 		t.Fatalf("changed review base = (%d, %q, %q), want a refusal", r.exit, r.stdout, r.stderr)
 	}
@@ -65,6 +67,7 @@ func TestLandCommandInvalidatesAChangedSourceTipBeforeComposition(t *testing.T) 
 	j, composed := forbidLandingComposition()
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	if r.exit != 1 || !strings.Contains(r.stdout, "source tip mismatch") {
 		t.Fatalf("changed source tip = (%d, %q, %q), want a tip-mismatch refusal", r.exit, r.stdout, r.stderr)
 	}
@@ -82,6 +85,7 @@ func TestLandCommandInvalidatesAChangedSourceFingerprintBeforeTheGate(t *testing
 	j, composed := forbidLandingComposition()
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	// The sentence and the repair read from the registry, so each keeps one source. The
 	// hostile-source surface stays bounded: the refusal carries a route and no path table,
 	// so no source-authored path name reaches the operator's terminal.
@@ -128,6 +132,7 @@ func TestLandCommandRefusesAReviewBaseThatIsNotAnAncestorOfTheDestination(t *tes
 	j, composed := forbidLandingComposition()
 
 	r := runVerb(t, verbLand, f.callWith(j, specLessLandArgs(request, f.fold, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	// The expectation is spelled out here rather than read from landingBaseNotAncestorDetail,
 	// so a mutation of that constant turns this test red instead of passing silently.
 	const wantDetail = "review base is not an ancestor of the landing destination: --base takes the landing base, the default-branch tip the source folded, not the fold commit the review read"
@@ -159,6 +164,7 @@ func TestLandCommandRefusesAReviewBaseBehindTheRecordedStart(t *testing.T) {
 	j, composed := forbidLandingComposition()
 
 	r := runVerb(t, verbLand, f.callWith(j, specLessLandArgs(request, earlier, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	want := "detail=" + reviewedRangeDetail + ",observed=" + earlier + ",wanted=" + f.base
 	if r.exit != 1 || !strings.Contains(r.stdout, want) {
 		t.Fatalf("earlier ancestor base = (%d, %q, %q), want a refusal carrying %q", r.exit, r.stdout, r.stderr, want)
