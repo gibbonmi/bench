@@ -51,15 +51,15 @@ No review requested a Bench command change.
 {
   "version": 1,
   "spec": "specs/cli-desktop-consistency/spec.md",
-  "plan_digest": "sha256:8a7ffa8720bf9e2ab3de0c7c3392ee62bdc9e868652deb7adcf02b80bb07fe85",
+  "plan_digest": "sha256:088394145d38657fce2c8fe4b1c1f995daf2613993625c7922a93b1636ea30f4",
   "implementation_session": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
   "chunks": [
     {
       "id": "C1",
       "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
-      "tip": "1217c75334b173c8a2d039b876039555738beda1",
-      "plan_digest": "sha256:8a7ffa8720bf9e2ab3de0c7c3392ee62bdc9e868652deb7adcf02b80bb07fe85",
-      "source_digest": "422d7577bfc454c113673a6232d4151a881fbf71",
+      "tip": "51e6851df49f4bf6175c0925b09c3d68748e79ef",
+      "plan_digest": "sha256:088394145d38657fce2c8fe4b1c1f995daf2613993625c7922a93b1636ea30f4",
+      "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
       "acceptance_rows": [
         "CD01",
         "CD02",
@@ -180,6 +180,107 @@ No review requested a Bench command change.
           "requirement": "evidence-command",
           "command": "bench test --package ./internal/preflight/evidencecmd",
           "exit_code": 0
+        },
+        {
+          "id": "c1-compatibility-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:7e8204315b18544c2491c4c98256a88ac1f81203e8c4096c061e5b3fd53121ee",
+            "excerpt": "Native author result after repair cycle1: bench test --package ./internal/compatibility passed in4ms with no failures or skips. The repaired package bytes are unchanged at51e6851d. Policy-file identity and compatibility context share one framing encoder.\n"
+          },
+          "requirement": "compatibility",
+          "command": "bench test --package ./internal/compatibility",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-adopt-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:85d94f1d9cf9dae65e03b01dbc7ecf4bbf6be44ff9e11958f5f6c6a19d38c1bd",
+            "excerpt": "Native author result after repair cycle1: bench test --package ./internal/adopt passed in20764ms with no failures or skips. Before repair TestCompatibilityMissingConfigurationHome failed in3ms because missing HOME became .codex. The focused compatibility family passed in21ms after correction.\n"
+          },
+          "requirement": "adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-system-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:274acadfef29f0dfebe075d24527a5d27753093126d4d6e8b98ffbefb957cfc7",
+            "excerpt": "Native author result after repair cycle1: the final bench test --check system passed in67102ms with no failures or skips after both manual source restorations. It exercises real CLI/desktop identity, both configuration homes unchanged, and policy changes through the selected executable.\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-doctor-route-probe-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:03cb0b993da6e2f97d7a33f721d20ada2e7e44b51fd8c2d2f474bb9b5c4bf8d1",
+            "excerpt": "Native author result after repair cycle1: exactly Run: adoptCommand(\"doctor\") was replaced by Run: adoptCommand(\"setup\"). The sealed system suite exited1 in71105ms. TestCompatibilityMissingPath failed with code2 instead of1 and setup usage, plus other compatibility and wrapper-reload failures. Exact registry bytes and mode were restored; SHA256 df42cb91f526209d9f1f6512e0b362b63a72e63742af06f9014703d633e563cf. The restored system suite exited0 in67102ms with no skips.\n"
+          },
+          "requirement": "doctor-route-probe",
+          "command": "doctor-route-system-swap: follow the Doctor-route mutation procedure",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+              "digest": "sha256:03cb0b993da6e2f97d7a33f721d20ada2e7e44b51fd8c2d2f474bb9b5c4bf8d1",
+              "excerpt": "Native author result after repair cycle1: exactly Run: adoptCommand(\"doctor\") was replaced by Run: adoptCommand(\"setup\"). The sealed system suite exited1 in71105ms. TestCompatibilityMissingPath failed with code2 instead of1 and setup usage, plus other compatibility and wrapper-reload failures. Exact registry bytes and mode were restored; SHA256 df42cb91f526209d9f1f6512e0b362b63a72e63742af06f9014703d633e563cf. The restored system suite exited0 in67102ms with no skips.\n"
+            }
+          }
+        },
+        {
+          "id": "c1-evidence-command-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "f4cc0130bd36c3a62dfc52b20094585520555204",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+            "digest": "sha256:478e5684babd09fedbb482a68ab4c008430bbb6206ff284012014fa84757f6d0",
+            "excerpt": "Native author result after repair cycle1: bench test --package ./internal/preflight/evidencecmd passed in20201ms with no failures or skips. The approved predecessor-base assertion uses the shared TOON encoder and the earlier observed wrong-base probe remains recorded.\n"
+          },
+          "requirement": "evidence-command",
+          "command": "bench test --package ./internal/preflight/evidencecmd",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -260,6 +361,17 @@ No review requested a Bench command change.
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:8a7ffa8720bf9e2ab3de0c7c3392ee62bdc9e868652deb7adcf02b80bb07fe85",
+      "to": "sha256:088394145d38657fce2c8fe4b1c1f995daf2613993625c7922a93b1636ea30f4",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    }
+  ]
 }
 ```
