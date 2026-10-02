@@ -776,6 +776,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sr-c4-r2-standards",
+          "performer": "claude:bench-reviewer/sr-c4-r2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "83bb7a0c0d809a9479d66358ca5883801286560f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c4-r2-standards-20261002@2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+            "digest": "sha256:e24304c86351c8fb80f2e743099b674a156969bdea267a6e648eeadb466f3ae2",
+            "excerpt": "Standards axis, SR-C4 confirming round, repair delta a2ec1cc8..2dce1179: pass, 0 findings.\nS1: confirmed. The step-to-fault table has one source, postPublicationFaults at internal/worktree/land_fixtures_test.go:30. land_flags_test.go:108 and land_freshness_test.go:228 loop over it, and neither file holds an inline copy.\nThe ticket 5 assertions (land_resume_test.go:191-199) read the expected bytes from git show published:owned.txt, so they copy no fixture content. The new comments describe the current behavior.\nblocking findings: none.\nAdvice: the owned.txt path is a literal at about 50 sites in the package; a fixture constant would give it one source in a separate change.\n"
+          },
+          "axis": "Standards",
+          "base": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+          "tip": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c4-r1-standards"
+          ]
+        },
+        {
+          "id": "sr-c4-r2-spec",
+          "performer": "claude:bench-reviewer/sr-c4-r2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "83bb7a0c0d809a9479d66358ca5883801286560f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c4-r2-spec-20261002@2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+            "digest": "sha256:f8dfe2a46c5529d68c533341ca3fbd085f65c73577b8fbb16dd2dd8870df1fe5",
+            "excerpt": "Spec axis, SR-C4 confirming round, repair delta a2ec1cc8..2dce1179: pass, 0 findings.\nP1: confirmed. The Probes section of the d51459bc commit message holds both probe commands, each bit with restored=yes; the review record repeats both.\nP2: confirmed. Plan commit 6d68dfa3 changes only the WS41 catch clause (spec.md:399); the behavior text is unchanged.\nC1: confirmed. internal/worktree/land_resume_test.go:188-199 keeps the test name and the HEAD check, and adds a clean status check and a landed-file check.\nS1: confirmed. Both tests range over postPublicationFaults (land_fixtures_test.go:30-42); names, subtests, and assertions are unchanged.\nScope: confirmed. The delta under internal/ touches four test files only.\nWS34, WS35, WS36, WS41, WS42: closed.\nblocking findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+          "tip": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c4-r1-spec"
+          ]
+        },
+        {
+          "id": "sr-c4-r2-coverage",
+          "performer": "claude:bench-reviewer/sr-c4-r2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "83bb7a0c0d809a9479d66358ca5883801286560f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c4-r2-coverage-20261002@2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+            "digest": "sha256:931adfe89d48cea4100c209a1ec0d52f5ca3cfe58ecc080746082d650f4e462c",
+            "excerpt": "Coverage axis, SR-C4 confirming round, repair delta a2ec1cc8..2dce1179: pass, 0 findings.\nC1: confirmed. S1: confirmed.\nProbe A: internal/worktree/land_identity.go, swap \"reset\", \"--merge\", destination for \"reset\", \"--soft\", destination; run ^TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout$. Verdict bit, 1 failed at land_resume_test.go:194 (not reconciled), restored yes.\nProbe B: internal/worktree/land_fixtures_test.go, swap `return f, j, blockLandingReconcile(t, f.root)` for `return f, j, func() {}`; run the two table consumers. Verdict bit, 2 failed: TestLandCommandPostCASTerminalTable/reconcile and TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing/reconcile, restored yes.\nblocking findings: none.\nFinal git status: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+          "tip": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c4-r1-coverage"
+          ]
         }
       ]
     }
@@ -1054,3 +1120,9 @@ The ticket 5 probe record, for WS34 and WS36:
 - `bench probe internal/worktree/land.go --omit 'return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "prune", records)' --package ./internal/worktree --run '^TestLandCommandReportsIncompletePrune$'` returned `bit`.
 
 The coordinator ran two independent probes, and each returned `bit` with `restored=yes`. The first replaced the `reset --merge` call in `land_identity.go`, and the WS34 test failed. The second omitted the release return in `land.go`, and the release subtest of each consumer of the shared table failed.
+
+## SR-C4 confirming round
+
+Three fresh opus / high sessions read the repair delta `a2ec1cc8..2dce1179`. Each axis confirmed its folds and reported no blocking finding. The Spec axis closed WS34, WS35, WS36, WS41, and WS42. The Coverage axis ran two probes, and each returned `bit` with `restored=yes`. The first made the reconcile a soft reset in `land_identity.go`, and the second removed the reconcile fault from the shared table.
+
+SR-C4 has no open finding, and 1 of 2 repair cycles is used.
