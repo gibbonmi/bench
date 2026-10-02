@@ -526,6 +526,7 @@ literals and parses no rendered text.
 - `internal/worktree/live_binary_test.go`
 - `internal/worktree/merge.go`
 - `internal/worktree/merge_caller_root_test.go`
+- `internal/worktree/merge_from_sha_test.go`
 - `internal/worktree/merge_test.go`
 - `internal/worktree/orphan_render_test.go`
 - `internal/worktree/ownership.go`
