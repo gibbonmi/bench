@@ -928,6 +928,72 @@
           "supersedes": [
             "re-c3-r1-coverage"
           ]
+        },
+        {
+          "id": "re-c3-r3-standards",
+          "performer": "claude:bench-reviewer/re-c3-r3-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "c512b393d3e4e68dcb4aa82cc723410ce996a08c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c3-r3-standards-20261002@ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+            "digest": "sha256:2e1d1acab238161b95ac956a5600e768515d6f4c391e6e0bb9bc876bba3a32bc",
+            "excerpt": "Standards, RE-C3 round 3: pass. The S3 fold is closed: the layout is the one source of flag optionality, and occurs states only repetition.\nFinding IDs: none.\n"
+          },
+          "axis": "Standards",
+          "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "tip": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c3-r2-standards"
+          ]
+        },
+        {
+          "id": "re-c3-r3-spec",
+          "performer": "claude:bench-reviewer/re-c3-r3-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "c512b393d3e4e68dcb4aa82cc723410ce996a08c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c3-r3-spec-20261002@ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+            "digest": "sha256:57b6672e55adf9ecebd1120f86f806c8eda34a60143a9a53b37895531e96f8c7",
+            "excerpt": "RE-C3 r3 Spec: confirmed, no findings.\nThe Required sets after the repair match the sets before it for chunk, verification and review, and the usage lines and help rows stay byte-identical.\n"
+          },
+          "axis": "Spec",
+          "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "tip": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c3-r2-spec"
+          ]
+        },
+        {
+          "id": "re-c3-r3-coverage",
+          "performer": "claude:bench-reviewer/re-c3-r3-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "c512b393d3e4e68dcb4aa82cc723410ce996a08c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c3-r3-coverage-20261002@ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+            "digest": "sha256:630a2d87b36b6e77125bf74c2763f7b84c79e2cd66ad6c9ce4bb1aba316afd6e",
+            "excerpt": "Coverage RE-C3 r3: fold confirmed, findings none.\nP1 silent (Required is redundant with together, same help and exit 2), P2 bit.\n"
+          },
+          "axis": "Coverage",
+          "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "tip": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
+          "finding_ids": [],
+          "supersedes": [
+            "re-c3-r2-coverage"
+          ]
         }
       ]
     }
@@ -1557,3 +1623,25 @@ The repair 2 freeze moved the RE-C3 source digest to `c512b393`. The repair sess
 - `bench test --package ./cmd/bench` passed in 12.7 s of package time. The verb recorded `re-c3-v3-t4-cmd`.
 
 No check skipped a test.
+
+## RE-C3 chunk review, round 3
+
+Three fresh fable / high sessions ran the confirming round on the repair 2 delta `5ebdb869..ac18ccca`. Each axis bound the review evidence `sha256:f8914565` with `--check-current`. `bench record review` wrote the three results. Each axis passed with no finding, and S3 is closed. RE-C3 used 2 of its 2 repair cycles and its one hardening cycle.
+
+### Standards, round 3
+
+Finding count: 0. Worst issue: none. The layout is the one source of flag optionality.
+
+### Spec, round 3
+
+Finding count: 0. Worst issue: none. The required sets, the usage lines, and the help rows did not change.
+
+### Coverage, round 3
+
+Finding count: 0. Worst issue: none. A probe that disabled `together` bit RE70. A probe that set `Required` to false was silent, because `together` refuses the same calls with the same usage line and exit 2.
+
+### Advice, round 3
+
+- `Required` and `together` enforce one derived fact twice, from the one source `admits`. `Required` can go with no change in behavior.
+- `grammar()` is built twice in `Command`.
+- `occurrence` has two values and can be a boolean.
