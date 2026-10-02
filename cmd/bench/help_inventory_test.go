@@ -130,6 +130,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
   bench commit [--in <label|primary>] -m <msg> [--preflight-build <slug>] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
   bench record [--in <label|primary>] chunk <slug> --chunk <id> --base <commit> --tip <commit>  write one chunk's frozen pair, digests, and acceptance rows into reviews/<slug>.md
+  bench record [--in <label|primary>] verification <slug> (--chunk <id> [--source <commit>] | --final --source <commit>) --requirement <id> --id <id> --performer <session> --model <model> --effort <effort> --exit-code <n> --ref <ref> --excerpt <file> [--probe-outcome <verdict> --probe-exit-code <n> --probe-restore pass|fail]  append one planned verification result with its computed digests
   bench spec [--in <label|primary>] retire <slug>  delete a merged spec + its review pickup (validated)
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
