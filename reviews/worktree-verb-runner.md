@@ -785,6 +785,26 @@ Before the first edit, the probe on `land_refusal.go` bit with 49 failed tests. 
 
 `identity_component_test.go` has 509 lines at `7fa02b42` and at the ticket commit. `land_journey_test.go` has 431 lines at both commits. The VR46 count per test function has no drop from `0be56dc1`, and the total stays at 2254. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. The JSON payload holds the package result as `vr-c4-8-worktree-r1`.
 
+## VR-C4 ticket 9 author evidence
+
+The fresh ticket author `claude:bench-writer/vr-t9-author` ran on opus at medium effort, from tip `0340b8a9665153990fe45dc8080dc816773e64b3`. The ticket commit is `f99fccf88605b113bc9cf3d6fbe5057263e5c063`, and it changes no production file. It writes the 14 `internal/worktree` test files on the ticket's `Writes:` line and no `cmd/bench` or `internal/conformance` file.
+
+Each `land`, `land-resume`, `release`, `reauthorize`, and `path` call in the 14 files now runs through `runVerb`, with 85 `runVerb` calls in total. `landIn` is deleted. Each stubbed landing passes its joins value through `callWith`, so each stub still runs. The `LandCommand` call that ticket 7 left in `delegated_integration_test.go` now runs through the runner.
+
+`interruptLandingAtMarker` at `identity_component_test.go:179` keeps its signature and runs its landing through the runner. `landingFaceResume` at `identity_component_test.go:300` now takes the landing fixture and returns the verb result, so it declares no output buffer pair. Both stay scenario helpers.
+
+`landIn` landed at the process home from `Home()`, not at the fixture home. The new value method `processHomeCall` at `land_surface_test.go:20` keeps that home in one place. It builds a call and runs no verb. The usage tests that had an empty root use `verbCall{home: Home(), args: ...}`, which is the form that earlier tickets use.
+
+Failure messages that named `LandCommand` or `ResumeLandCommand` now name the `land` verb or the `land-resume` verb. No assertion changed. One `runVerb` call runs in a goroutine in `TestLandCommandHostileSourceInputsRefuseBoundedly`, where the base called `landWith`. The runner fails the test only on a call that it refuses, for example a call with a kit value. That call has no such value.
+
+The VR37 command prints no line. The verb form command over the 14 files prints no line. The VR46 count per test function has no drop from `0340b8a9` to the ticket commit, and the total stays at 2254. Over the 14 files, the count stays at 237. The only changed function entries are the deleted `landIn` and the new `processHomeCall`, and each has a count of 0.
+
+Before the first edit, the probe on `land_refusal.go` bit with 49 failed tests. On the ticket commit, the same probe bit with 49 failed tests. The two sorted name sets are equal.
+
+`bench test --package ./internal/worktree` passed on the ticket commit with the two socket capability skips. `bench preflight build worktree-verb-runner` was green with 13 green checks and 0 red checks. `bench structure --growth 7fa02b429a66aa71b4303e483b82e074622c80bd` was ok.
+
+`identity_component_test.go` has 509 lines at `7fa02b42` and 500 lines at the ticket commit. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. The JSON payload holds the package result as `vr-c4-9-worktree-r1`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1923,7 +1943,7 @@ Before the first edit, the probe on `land_refusal.go` bit with 49 failed tests. 
     {
       "id": "VR-C4",
       "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
-      "tip": "c4c4c4375ef5529ba8ce7256e7f5139d4a4c092b",
+      "tip": "f99fccf88605b113bc9cf3d6fbe5057263e5c063",
       "plan_digest": "pending",
       "source_digest": "pending",
       "acceptance_rows": [
@@ -1948,6 +1968,24 @@ Before the first edit, the probe on `land_refusal.go` bit with 49 failed tests. 
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,66823\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "8-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c4-9-worktree-r1",
+          "performer": "claude:bench-writer/vr-t9-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c0f3fb90a3ebe6f55ae9fd0cdcd288c5d31d8f41",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t9-author-20261001/9-worktree@f99fccf8",
+            "digest": "sha256:ce777e515cd008e8e6217b77d0772e3dd724464292af1d71be4bb5cb928ee003",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,64314\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "9-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
