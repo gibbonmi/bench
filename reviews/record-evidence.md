@@ -682,6 +682,42 @@
           "requirement": "3-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "re-c3-v2-t4-reviewrecord",
+          "performer": "claude:bench-writer/re-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "088294cba485bb6e2dbdd0d9bf31dc733184c0c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t4-repair-1-20261002/verify-4-reviewrecord",
+            "digest": "sha256:cd1f7c667f1f1b93c6c95844a1df6a8607d9cd5ec8a43e6be61ccfbf3fc6afcd",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1628\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,4097\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "4-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c3-v2-t4-cmd",
+          "performer": "claude:bench-writer/re-t4-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "088294cba485bb6e2dbdd0d9bf31dc733184c0c6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t4-repair-1-20261002/verify-4-cmd",
+            "digest": "sha256:f6a6d2783c8e06823502a60e0ec823b8127afcf579592537faf7b54698e5a5b6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13002\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "4-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -1279,5 +1315,24 @@ Fresh focused checks at `aa9a6f74`:
 
 - `bench test --package ./internal/reviewrecord/...` passed in 5.6 s of package time. The verb recorded `re-c3-v2-t3-reviewrecord`.
 - `bench test --package ./cmd/bench` passed in 13.0 s of package time. The verb recorded `re-c3-v2-t3-cmd`.
+
+No check skipped a test.
+
+## RE-C3 ticket 4 repair verification
+
+The repair session `claude:bench-writer/re-t4-repair-1` ran on opus at medium effort. It used 1 of 2 attempts. The repair commit is `5ebdb869`, and the commit lane passed.
+
+| Finding | Change | Red route | Status |
+|---|---|---|---|
+| C3 | `TestRecordReviewSupersedesTheSameAxis` writes a third Standards result. It checks that `standards-2` supersedes only `standards-1` and that `standards-3` supersedes only `standards-2`. The test uses the existing `review` and `reviewed` helpers. | The probe below. | closed |
+
+The new case passed against the code before the probe. The probe ran through `bench probe` on `internal/reviewrecord/write.go`. It added a `break` after the first same-axis match in the supersession loop. The probe returned `bit` with `restored=yes`. The record validator refused the write of `standards-3` as an invalid supersession, so `TestRecordReviewSupersedesTheSameAxis` failed.
+
+The duplicated-facts sweep found no new copy of a fact, because one map holds both supersession pairs. The comment sweep found no added comment.
+
+Fresh focused checks at `ef3518f2`:
+
+- `bench test --package ./internal/reviewrecord/...` passed in 5.7 s of package time. The verb recorded `re-c3-v2-t4-reviewrecord`.
+- `bench test --package ./cmd/bench` passed in 13.0 s of package time. The verb recorded `re-c3-v2-t4-cmd`.
 
 No check skipped a test.
