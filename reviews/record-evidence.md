@@ -63,6 +63,42 @@
           "requirement": "1-preflight",
           "command": "bench test --package ./internal/preflight",
           "exit_code": 0
+        },
+        {
+          "id": "re-c1-v2-reviewrecord",
+          "performer": "claude:bench-writer/re-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f9f850d71e25d2db0ecc3c4d49a3452fbecea0d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t1-repair-1-20261002/verify-1-reviewrecord",
+            "digest": "sha256:51a07bc7cafc63a2a37cbc894795c24afdca90ab3bce333c66ae2476519b601e",
+            "excerpt": "packages[2]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1541\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c1-v2-preflight",
+          "performer": "claude:bench-writer/re-t1-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f9f850d71e25d2db0ecc3c4d49a3452fbecea0d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t1-repair-1-20261002/verify-1-preflight",
+            "digest": "sha256:6bf20f60103de04b25a5e738b9763024cb2d99ffce0d5e21bc38002be92c2ca2",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,18056\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "1-preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -214,3 +250,12 @@ The Standards axis suggests that the author charge restate the `craft-comments` 
 The plan commit `155c28c5` assigned the fresh repair session `claude:bench-writer/re-t1-repair-1` on opus at medium effort. The repair commit `6d7f3969` removes the red-record sentence from the comment on `TestFixtureSaveRendersThroughRender`. The diff changes comment lines only. RE-C1 has used 1 of its 2 repair cycles.
 
 The orchestrator re-froze RE-C1 with base `11aeb8e3` and tip `6d7f3969`. The chunk entry now holds the source digest and the plan digest of that tip, and the earlier results stay in the record.
+
+## RE-C1 repair 1 verification
+
+The repair session `claude:bench-writer/re-t1-repair-1` ran the two verification commands of ticket 1 at commit `2bcc9d21`. The source digest of that run is `f9f850d7`.
+
+- `bench test --package ./internal/reviewrecord/...` passed in 1541 ms.
+- `bench test --package ./internal/preflight` passed in 18056 ms.
+
+No check failed, and no check skipped a test.
