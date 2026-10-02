@@ -1308,11 +1308,236 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+    "performer": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN",
+    "reconciliation": {
+      "RE1": "covered",
+      "RE2": "covered",
+      "RE3": "covered",
+      "RE4": "covered",
+      "RE5": "covered",
+      "RE6": "covered",
+      "RE7": "covered",
+      "RE8": "covered",
+      "RE9": "covered",
+      "RE10": "covered",
+      "RE102": "covered",
+      "RE103": "covered",
+      "RE11": "covered",
+      "RE12": "covered",
+      "RE13": "covered",
+      "RE14": "covered",
+      "RE15": "covered",
+      "RE16": "covered",
+      "RE17": "covered",
+      "RE18": "covered",
+      "RE19": "covered",
+      "RE20": "covered",
+      "RE21": "covered",
+      "RE22": "covered",
+      "RE23": "covered",
+      "RE24": "covered",
+      "RE25": "covered",
+      "RE26": "covered",
+      "RE27": "covered",
+      "RE28": "covered",
+      "RE29": "covered",
+      "RE30": "covered",
+      "RE31": "covered",
+      "RE32": "covered",
+      "RE33": "covered",
+      "RE34": "covered",
+      "RE35": "covered",
+      "RE37": "covered",
+      "RE38": "covered",
+      "RE39": "covered",
+      "RE40": "covered",
+      "RE41": "covered",
+      "RE105": "covered",
+      "RE106": "covered",
+      "RE112": "covered",
+      "RE113": "covered",
+      "RE36": "covered",
+      "RE42": "covered",
+      "RE43": "covered",
+      "RE44": "covered",
+      "RE45": "covered",
+      "RE46": "covered",
+      "RE47": "covered",
+      "RE48": "covered",
+      "RE49": "covered",
+      "RE50": "covered",
+      "RE51": "covered",
+      "RE52": "covered",
+      "RE53": "covered",
+      "RE54": "covered",
+      "RE55": "covered",
+      "RE56": "covered",
+      "RE57": "covered",
+      "RE58": "covered",
+      "RE59": "covered",
+      "RE60": "covered",
+      "RE61": "covered",
+      "RE62": "covered",
+      "RE63": "covered",
+      "RE64": "covered",
+      "RE65": "covered",
+      "RE66": "covered",
+      "RE67": "covered",
+      "RE68": "covered",
+      "RE69": "covered",
+      "RE70": "covered",
+      "RE71": "covered",
+      "RE104": "covered",
+      "RE107": "covered",
+      "RE108": "covered",
+      "RE72": "covered",
+      "RE73": "covered",
+      "RE74": "covered",
+      "RE75": "covered",
+      "RE76": "covered",
+      "RE77": "covered",
+      "RE78": "covered",
+      "RE79": "covered",
+      "RE80": "covered",
+      "RE81": "covered",
+      "RE82": "covered",
+      "RE83": "covered",
+      "RE84": "covered",
+      "RE85": "covered",
+      "RE86": "covered",
+      "RE87": "covered",
+      "RE88": "covered",
+      "RE89": "covered",
+      "RE90": "covered",
+      "RE91": "covered",
+      "RE92": "covered",
+      "RE93": "covered",
+      "RE94": "covered",
+      "RE95": "covered",
+      "RE96": "covered",
+      "RE97": "covered",
+      "RE114": "covered",
+      "RE115": "covered",
+      "RE98": "covered",
+      "RE99": "covered",
+      "RE100": "covered",
+      "RE101": "covered",
+      "RE109": "covered",
+      "RE110": "covered",
+      "RE111": "covered"
+    },
+    "verification": [
+      {
+        "id": "re-final-coverage",
+        "performer": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN/final-coverage",
+          "digest": "sha256:9c42a3c671f84535a6302ca783a969b3faf19016e771f4763d0b6b237bded088",
+          "excerpt": "ok: coverage map valid — 115 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/record-evidence/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "re-final-reviewrecord",
+        "performer": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN/final-reviewrecord",
+          "digest": "sha256:81d9a591c1613b5a15b553d5df4428a24e02be314a3796bfd07c5bebbae2ec35",
+          "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1641\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,5269\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "reviewrecord",
+        "command": "bench test --package ./internal/reviewrecord/...",
+        "exit_code": 0
+      },
+      {
+        "id": "re-final-preflight",
+        "performer": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN/final-preflight",
+          "digest": "sha256:e7c4367c1af1543abde323def39b0ee699f68a8dbbb451054371826b4edef1ff",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,18531\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "preflight",
+        "command": "bench test --package ./internal/preflight",
+        "exit_code": 0
+      },
+      {
+        "id": "re-final-cmd",
+        "performer": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN/final-cmd",
+          "digest": "sha256:6b2ccef90c011090b3baa037e8f9ae1fb1633fd721ae8e8b5a91eaca0c2269ee",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13354\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "cmd",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "re-final-anchors",
+        "performer": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN/final-anchors",
+          "digest": "sha256:76aac95f132aa3a32fd0097aa2c0b7d7d2cc88bfe7aee4431776d240fdd0b821",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1013\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "anchors",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "re-final-conformance",
+        "performer": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session-01NnBRZkBQy8A8gFwuoP1CJN/final-conformance",
+          "digest": "sha256:9b4a362b4e6a623a27d1855be1406349f6da554c5b38341a101ff8fdb7e3b95d",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,36245\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}: capability skips (fifo socket x2, privilege character device x1)\n"
+        },
+        "requirement": "conformance",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -2198,3 +2423,19 @@ Finding count: 0. Worst issue: none. The round 1 revert sequence now refuses. Pr
 - The chunk walk in `RecordAmendment` runs before and after the append. A small helper can share it.
 - The RE114 fixture holds one chunk, so no test breaks the chain on a second chunk. The production loop handles that case.
 - The step 6 examples of the spec can name an ambiguous chain.
+
+## Final reconciliation
+
+The orchestrator `claude:session-01NnBRZkBQy8A8gFwuoP1CJN` reconciled the build at the final source `6ef0d2ad`. Its source digest is `d31273aa`, the digest of the RE-C4 tip `586bfa17`, because only record commits follow that tip. Each chunk checkpoint is green: RE-C1 at `8daf6a4d`, RE-C2 at `1b98f38c`, RE-C3 at `91f4bfaf`, and RE-C4 at `6ef0d2ad`.
+
+The orchestrator ran the six final requirements at `6ef0d2ad`, and `bench record verification --final` wrote each result. `bench coverage --check` reports a valid map of 115 rows. Each package passed. The conformance package skipped three capability tests, for a unix socket and a character device.
+
+Each acceptance row of the four chunks maps to `covered` in the completion entry, 115 rows in all. A chunk review proved each row: the Spec axis held every row, and the Coverage axis probed the edges. Stories 49, 50, and 51 stay out of scope, as the spec states.
+
+The integrated behavior: `bench record` writes the chunk, verification, review, and amendment entries. From RE-C2 on, this build recorded its own chunk entries, review results, verification results, and amendments with a scratch build of the verb. The checkpoint accepted each verb-written entry. The completion entry stays hand-written, because the verb has no completion form.
+
+### Decisions for the reviewer
+
+- A fable / high consultation, by reviewer delegation, made a `--probe-restore` value outside `pass` and `fail` a grammar error at exit 2. RE70 grades it.
+- A fable / high consultation, by reviewer delegation, made an unresolvable amendment chain a step 6 refusal. RE114 grades it. After a plan revert, the record takes no later amendment. A change of the checkpoint rule to allow that is a Won't-handle candidate.
+- The orchestrator runs `bench record amendment` before `bench record chunk` at each freeze after the first chunk. The Land paragraph does not state that order, and a reviewer decision can add it.
