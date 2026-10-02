@@ -198,6 +198,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,
   OpenCode, …). The kit is harness-agnostic by design.
+- **harness interface** — the user-facing entry point to a harness, such as Codex CLI or the desktop app. Not "execution environment" or "chat" — harness interface.
+- **execution environment** — the operating-system context in which a harness runs a command or a tool. Not "harness interface" or "worktree" — execution environment.
+- **required capability** — a tool or integration behavior that a specific Bench operation needs to execute its approved contract. Not "available tool" or "optional feature" — required capability.
 - **environment closure** — the harness process carries the toolchain effects
   implied by its inherited initialization state. Not "loaded environment" or
   "working PATH" — both names hide partial propagation.
