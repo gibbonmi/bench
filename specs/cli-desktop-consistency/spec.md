@@ -382,6 +382,7 @@ Won't handle: authentication against a malicious same-user process — existing 
 - `internal/conformance/entry_point_parity_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/preflight/evidencecmd/evidence_file_reconstruction_test.go`
+- `internal/runbinary/runbinary_test.go`
 - `internal/sessioninspect`
 - `internal/systemtest/compatibility_test.go`
 - `tests/canary/data-handling-derivation/undocumented-passlist-var`
@@ -532,6 +533,12 @@ C1 uses the shared TOON encoder for the expected revision row.
 The assertion still rejects the wrong base and an earlier chunk in the diff.
 The evidence command package and a wrong-base mutation verify this repair.
 
+The reviewer extended C1 by one repair cycle for unexpected live artifact writes.
+The package check uses the installed Node runtime that satisfies the declared floor.
+The manifest-preservation test uses the existing private kit-copy fixture.
+Its byte and absence assertions remain unchanged.
+The manifest-directory swap must make that same test fail.
+
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"C1","tickets":["1-diagnose-interface.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"doctor-route-probe","command":"doctor-route-system-swap: follow the Doctor-route mutation procedure","probe":"swap"},{"id":"evidence-command","command":"bench test --package ./internal/preflight/evidencecmd"}]},{"id":"C2","tickets":["2-repair-managed-integration.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"}]},{"id":"C3","tickets":["3-check-and-qualify-sessions.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review assets/qualification.md against the source-bound live acceptance rows"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/cli-desktop-consistency/spec.md"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review actual CLI and desktop transcripts against every live acceptance row"}]}
+{"version":1,"chunks":[{"id":"C1","tickets":["1-diagnose-interface.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"doctor-route-probe","command":"doctor-route-system-swap: follow the Doctor-route mutation procedure","probe":"swap"},{"id":"evidence-command","command":"bench test --package ./internal/preflight/evidencecmd"},{"id":"run-binary","command":"bench test --package ./internal/runbinary"},{"id":"manifest-directory-probe","command":"bench probe internal/runbinary/runbinary.go --swap 'return runBuildScript(ctx, sourceRoot, output, filepath.Dir(output))' --with 'return runBuildScript(ctx, sourceRoot, output, \"\")' --package ./internal/runbinary --run '^TestBuildLeavesTheWrapperManifestUntouched$'","probe":"swap"}]},{"id":"C2","tickets":["2-repair-managed-integration.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"}]},{"id":"C3","tickets":["3-check-and-qualify-sessions.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review assets/qualification.md against the source-bound live acceptance rows"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/cli-desktop-consistency/spec.md"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review actual CLI and desktop transcripts against every live acceptance row"}]}
 ```

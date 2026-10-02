@@ -1,7 +1,7 @@
 # Diagnose the selected interface
 
 Blocked by: none
-Writes: internal/preflight/evidencecmd/evidence_file_reconstruction_test.go, CONTEXT.md, internal/compatibility (new), internal/adopt/doctor.go, internal/adopt/compatibility.go (new), internal/adopt/compatibility_test.go (new), cmd/bench/main.go, cmd/bench/help_inventory_test.go, internal/systemtest/compatibility_test.go (new), tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary, tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/anchors/registry_data.go, internal/anchors/registry_decision_maps.go, internal/anchors/registry_decision_maps_test.go
+Writes: internal/runbinary/runbinary_test.go, internal/preflight/evidencecmd/evidence_file_reconstruction_test.go, CONTEXT.md, internal/compatibility (new), internal/adopt/doctor.go, internal/adopt/compatibility.go (new), internal/adopt/compatibility_test.go (new), cmd/bench/main.go, cmd/bench/help_inventory_test.go, internal/systemtest/compatibility_test.go (new), tests/canary/docs-currency-token-diet/signal-vocabulary-drift, tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary, tests/canary/workflow-guidance-anchors/context-coverage-map-term, tests/canary/workflow-guidance-anchors/context-coverage-row-parts, tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary, tests/canary/workflow-guidance-anchors/context-decision-map-term, tests/canary/workflow-guidance-anchors/context-reader-sweep-term, tests/canary/workflow-guidance-anchors/context-ticket-vocabulary, tests/canary/package-core-guard/unrouted-subcommand, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/anchors/registry_data.go, internal/anchors/registry_decision_maps.go, internal/anchors/registry_decision_maps_test.go
 Covers: CD01, CD02, CD03, CD04, CD05, CD06, CD07, CD08, CD09, CD10, CD11, CD12, CD13, CD14, CD15, CD16, CD17
 
 ## What to build
@@ -47,3 +47,8 @@ If an extraction needs another path, request an in-scope fence amendment before 
 Use the shared TOON encoder for the inherited predecessor-base assertion.
 Keep its exact revision, changed-file, and earlier-chunk exclusion checks.
 Verify the correction with the evidence command package and a wrong-base mutation.
+
+Isolate the inherited manifest-preservation test with the existing private kit-copy fixture.
+Preserve its byte and absence assertions.
+Verify the test with a swap that directs a private build manifest into the fixture wrapper directory.
+Use a Node runtime that satisfies the declared floor during all verification.

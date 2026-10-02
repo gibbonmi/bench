@@ -26,9 +26,11 @@ With their directory prepended to PATH, package-core-guard passed in 2246 ms wit
 All three artifact hashes, modes, sizes, and modification times remained unchanged.
 The older npm run passed its assertions but rewrote all three artifacts.
 
-No implementation source changed during cycle 3.
-The three native reviews remain current for source digest d975b261a0e973bbe28dc88f44a7f74a94e89169.
-The C1 checkpoint must use the recovered toolchain and remains pending.
+The corrected-toolchain checkpoint preserved the binary and seal but found one remaining manifest write.
+The manifest-preservation test unconditionally rewrites the live manifest during cleanup.
+The isolated test reproduced that timestamp change in 7316 ms with no skips.
+Cycle 3 also moves this test to the existing private kit-copy fixture.
+Its current verification and all three review axes must cover that repair delta.
 
 C2 and C3 remain blocked until the checkpoint passes.
 The complete specification remains unqualified until its live requirements pass.
