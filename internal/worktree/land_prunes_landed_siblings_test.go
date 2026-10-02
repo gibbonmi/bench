@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"errors"
 	"strings"
 	"testing"
@@ -35,10 +34,9 @@ func TestLandCommandPrunesSquashFoldedSiblingBranch(t *testing.T) {
 	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "merge: sibling into the integration source")
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, specLessLandArgs(request, f.base, tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("land = (%d, %q, %q), want 0", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, tip, f.creation.Path)...))
+	if r.exit != 0 {
+		t.Fatalf("land = (%d, %q, %q), want 0", r.exit, r.stdout, r.stderr)
 	}
 	unclaimed, err := CountUnclaimedRefs(f.root)
 	mustNoError(t, err)
@@ -55,9 +53,8 @@ func TestLandCommandReportsIncompletePrune(t *testing.T) {
 	f := specLessLandingFixture(t, request)
 	broken := defaultJoins()
 	broken.pruneLandedBranches = func(string) (int, error) { return 0, errors.New("prune refused") }
-	var stdout, stderr bytes.Buffer
-	code := landWith(broken, f.root, f.home, specLessLandArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:prune") {
-		t.Fatalf("interrupted prune = (%d, %q, %q), want exit 3 and incomplete:prune", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(broken, specLessLandArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:prune") {
+		t.Fatalf("interrupted prune = (%d, %q, %q), want exit 3 and incomplete:prune", r.exit, r.stdout, r.stderr)
 	}
 }

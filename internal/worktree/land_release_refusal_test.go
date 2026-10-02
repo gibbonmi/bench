@@ -2,7 +2,6 @@
 package worktree
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,13 +21,12 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	base := gitOutput(t, root, "rev-parse", "HEAD")
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
 	mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path), &stdout, &stderr)
+	r := runVerb(t, verbLand, repoHome{root, home}.call(landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path)...))
 	// The route reads from the registry, so the face's repair keeps one source. The
 	// caller's own re-run rides behind it and this row does not pin it.
 	wantNext := "next=" + landingRefusalFaceByName(faceDestinationNotClean).route("")
-	if code != 1 || !strings.Contains(stdout.String(), wantNext) || !strings.Contains(stdout.String(), "paths_total=1") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:") || !strings.Contains(stdout.String(), "tracked.txt") || stderr.Len() != 0 {
-		t.Fatalf("destination refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	if r.exit != 1 || !strings.Contains(r.stdout, wantNext) || !strings.Contains(r.stdout, "paths_total=1") || !strings.Contains(r.stdout, "refusal_paths[1]{path}:") || !strings.Contains(r.stdout, "tracked.txt") || len(r.stderr) != 0 {
+		t.Fatalf("destination refusal = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 }
 
@@ -54,13 +52,12 @@ func TestLandCommandRefusalListsCollidingPaths(t *testing.T) {
 	j.authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
 		return diff.SourceRange{Base: base, Tip: tip}, nil
 	}
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs("refusal-collision", base, tip, creation.Path), &stdout, &stderr)
-	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceDestinationCollision).detail)
-	if code != 1 || !printed || !strings.HasPrefix(next, landingRefusalFaceByName(faceDestinationCollision).route("")) ||
-		!strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n  owned.txt\n") || strings.Contains(stdout.String(), ".env") ||
-		strings.Contains(stdout.String(), "notes.txt") || stderr.Len() != 0 {
-		t.Fatalf("collision refusal = (%d, %q, %q), want owned.txt alone", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, landArgs("refusal-collision", base, tip, creation.Path)...))
+	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceDestinationCollision).detail)
+	if r.exit != 1 || !printed || !strings.HasPrefix(next, landingRefusalFaceByName(faceDestinationCollision).route("")) ||
+		!strings.Contains(r.stdout, "refusal_paths[1]{path}:\n  owned.txt\n") || strings.Contains(r.stdout, ".env") ||
+		strings.Contains(r.stdout, "notes.txt") || len(r.stderr) != 0 {
+		t.Fatalf("collision refusal = (%d, %q, %q), want owned.txt alone", r.exit, r.stdout, r.stderr)
 	}
 	if got, err := os.ReadFile(filepath.Join(root, "owned.txt")); err != nil || string(got) != "operator bytes\n" {
 		t.Fatalf("refused landing changed the operator's file: %q, %v", got, err)
@@ -87,12 +84,11 @@ func TestLandCommandRefusalKeepsControlBearingPathInOneTableRow(t *testing.T) {
 	j.authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
 		return diff.SourceRange{Base: base, Tip: tip}, nil
 	}
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs("refusal-controls", base, tip, creation.Path), &stdout, &stderr)
-	unsafe := strings.ContainsFunc(stdout.String(), func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
+	r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, landArgs("refusal-controls", base, tip, creation.Path)...))
+	unsafe := strings.ContainsFunc(r.stdout, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
 	wantPathRow := `  "bad\\n\\u001b,comma"` + "\n"
-	if code != 1 || unsafe || !strings.Contains(stdout.String(), "refused{") || !strings.Contains(stdout.String(), "refusal_paths[1]{path}:\n"+wantPathRow) || strings.Count(stdout.String(), "\n") != 4 || stderr.Len() != 0 {
-		t.Fatalf("control refusal = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	if r.exit != 1 || unsafe || !strings.Contains(r.stdout, "refused{") || !strings.Contains(r.stdout, "refusal_paths[1]{path}:\n"+wantPathRow) || strings.Count(r.stdout, "\n") != 4 || len(r.stderr) != 0 {
+		t.Fatalf("control refusal = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 }
 
@@ -109,14 +105,13 @@ func TestReleaseCommandRefusalListsBoundedIgnoredPathsWithTrueTotal(t *testing.T
 		mustWrite(t, filepath.Join(f.creation.Path, name), []byte("residue\n"), 0o600)
 	}
 
-	var stdout, stderr bytes.Buffer
-	code := ReleaseCommand(f.root, f.home, []string{"--request", request, f.creation.Path}, &stdout, &stderr)
-	out := stderr.String()
+	r := runVerb(t, verbRelease, f.call("--request", request, f.creation.Path))
+	out := r.stderr
 	wantNext := "next=bench worktree release --request <request> '" + f.creation.Path + "'"
-	if code != 1 || stdout.Len() != 0 || !strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):") ||
+	if r.exit != 1 || len(r.stdout) != 0 || !strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):") ||
 		!strings.Contains(out, "paths_total=1003\n") || !strings.Contains(out, "refusal_paths[1000]{path}:") ||
 		!strings.Contains(out, "residue-0000 space[*]") || strings.Contains(out, "residue-1000") || !strings.Contains(out, wantNext) || strings.Contains(out, request) {
-		t.Fatalf("release refusal: code=%d stdout=%q prefix=%t total=%t table=%t hostile=%t bounded=%t next=%t", code, stdout.String(),
+		t.Fatalf("release refusal: code=%d stdout=%q prefix=%t total=%t table=%t hostile=%t bounded=%t next=%t", r.exit, r.stdout,
 			strings.HasPrefix(out, "bench worktree release: worktree retained (ignored):"), strings.Contains(out, "paths_total=1003\n"),
 			strings.Contains(out, "refusal_paths[1000]{path}:"), strings.Contains(out, "residue-0000 space[*]"), !strings.Contains(out, "residue-1000"), strings.Contains(out, wantNext))
 	}
@@ -136,12 +131,11 @@ func TestReleaseCommandRefusalPointsThroughAssignmentForControlBearingPath(t *te
 			creation := mustCreate(t, root, home, tc.request, "unsafe release pointer")
 			wantNext := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree release --request <request> ."
 
-			var stdout, stderr bytes.Buffer
-			code := ReleaseCommand(root, home, []string{"--request", tc.request, creation.Path}, &stdout, &stderr)
-			out := stderr.String()
+			r := runVerb(t, verbRelease, repoHome{root, home}.call("--request", tc.request, creation.Path))
+			out := r.stderr
 			unsafe := strings.ContainsFunc(out, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
-			if code != 1 || stdout.Len() != 0 || unsafe || strings.Count(out, "\n") != 1 || !strings.Contains(out, "; next="+wantNext+"\n") || strings.Contains(out, tc.request) {
-				t.Fatalf("release pointer: code=%d stdout=%q safe=%t one-line=%t next=%t stderr=%q", code, stdout.String(), !unsafe,
+			if r.exit != 1 || len(r.stdout) != 0 || unsafe || strings.Count(out, "\n") != 1 || !strings.Contains(out, "; next="+wantNext+"\n") || strings.Contains(out, tc.request) {
+				t.Fatalf("release pointer: code=%d stdout=%q safe=%t one-line=%t next=%t stderr=%q", r.exit, r.stdout, !unsafe,
 					strings.Count(out, "\n") == 1, strings.Contains(out, "; next="+wantNext+"\n"), out)
 			}
 		})
@@ -156,13 +150,12 @@ func TestReleaseCommandRefusalHidesControlBearingRequestForSafePath(t *testing.T
 	creation := mustCreate(t, root, home, request, "safe release pointer")
 	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residue\n"), 0o644)
 	mustWrite(t, filepath.Join(creation.Path, "residue"), []byte("retained\n"), 0o600)
-	var stdout, stderr bytes.Buffer
-	code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, &stdout, &stderr)
-	out := stderr.String()
+	r := runVerb(t, verbRelease, repoHome{root, home}.call("--request", request, creation.Path))
+	out := r.stderr
 	wantNext := "next=bench worktree release --request <request> '" + creation.Path + "'"
 	unsafe := strings.ContainsFunc(out, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
-	if code != 1 || stdout.Len() != 0 || unsafe || !strings.Contains(out, wantNext) || strings.Contains(out, request) {
-		t.Fatalf("safe-path release refusal = (%d, %q, %q), want stderr recovery %q without caller token or controls", code, stdout.String(), out, wantNext)
+	if r.exit != 1 || len(r.stdout) != 0 || unsafe || !strings.Contains(out, wantNext) || strings.Contains(out, request) {
+		t.Fatalf("safe-path release refusal = (%d, %q, %q), want stderr recovery %q without caller token or controls", r.exit, r.stdout, out, wantNext)
 	}
 }
 

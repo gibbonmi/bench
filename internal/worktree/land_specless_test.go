@@ -2,7 +2,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"os"
@@ -19,13 +18,12 @@ func TestLandCommandSpecLessLandsPublishesAndReleases(t *testing.T) {
 	request := "spec-less-land"
 	f := specLessLandingFixture(t, request)
 	specsBefore := gitOutput(t, f.creation.Path, "rev-parse", f.tip+":specs")
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, specLessLandArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, f.tip, f.creation.Path)...))
 	published := gitOutput(t, f.root, "rev-parse", "main")
 	tree := gitOutput(t, f.root, "rev-parse", published+"^{tree}")
 	want := wantEffects("not-applicable") + "landed{source_base=" + f.base + ",source_tip=" + f.tip + ",destination_base=" + f.base + ",published_commit=" + published + ",tree=" + tree + ",worktree=released,census=0}\n"
-	if code != 0 || stdout.String() != want {
-		t.Fatalf("spec-less land = (%d, %q, %q), want (0, %q)", code, stdout.String(), stderr.String(), want)
+	if r.exit != 0 || r.stdout != want {
+		t.Fatalf("spec-less land = (%d, %q, %q), want (0, %q)", r.exit, r.stdout, r.stderr, want)
 	}
 	parents := strings.Fields(gitOutput(t, f.root, "rev-list", "--parents", "-n", "1", published))
 	if len(parents) != 3 || parents[1] != f.base || parents[2] != f.tip {
@@ -61,10 +59,9 @@ func TestLandCommandSpecLessGateRefusalPublishesNothing(t *testing.T) {
 	gitRun(t, f.creation.Path, "rebase", "main")
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, specLessLandArgs(request, base, tip, f.creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{detail=prospective authorization refused") {
-		t.Fatalf("spec-less gate refusal = (%d, %q, %q), want exit 1 and an authorization refusal", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 1 || !strings.HasPrefix(r.stdout, "refused{detail=prospective authorization refused") {
+		t.Fatalf("spec-less gate refusal = (%d, %q, %q), want exit 1 and an authorization refusal", r.exit, r.stdout, r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "main"); got != base {
 		t.Fatalf("gate refusal published main=%s, want %s", got, base)
@@ -79,14 +76,13 @@ func TestLandCommandSpecLessRefusesSourceTipMismatch(t *testing.T) {
 	t.Parallel()
 	request := "spec-less-tip-mismatch"
 	f := specLessLandingFixture(t, request)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, specLessLandArgs(request, f.base, f.base, f.creation.Path), &stdout, &stderr)
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, f.base, f.creation.Path)...))
 	// The route re-points the caller's own command at the tip the worktree holds, and a
 	// spec-less landing re-runs spec-less.
 	want := "refused{detail=worktree source tip mismatch,observed=" + f.base + ",wanted=" + f.tip +
 		",next=" + landingRerun(request, f.base, f.tip, "", f.creation.Path, f.creation.Assignment.ID) + "}\n"
-	if code != 1 || stdout.String() != want || stderr.Len() != 0 {
-		t.Fatalf("spec-less tip mismatch = (%d, %q, %q), want (1, %q, empty)", code, stdout.String(), stderr.String(), want)
+	if r.exit != 1 || r.stdout != want || len(r.stderr) != 0 {
+		t.Fatalf("spec-less tip mismatch = (%d, %q, %q), want (1, %q, empty)", r.exit, r.stdout, r.stderr, want)
 	}
 	if _, err := os.Stat(f.tally); !os.IsNotExist(err) {
 		t.Fatalf("identity refusal ran the gate: %v", err)
@@ -100,10 +96,9 @@ func TestLandCommandSpecLessRefusesNonAncestorBaseBeforeTheGate(t *testing.T) {
 	f := specLessLandingFixture(t, request)
 	commitInWorktree(t, f.root, "destination-only", "destination\n", "destination movement")
 	unrelated := gitOutput(t, f.root, "rev-parse", "HEAD")
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, specLessLandArgs(request, unrelated, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.Contains(stdout.String(), "reviewed source range is invalid") || !strings.Contains(stdout.String(), "not an ancestor") {
-		t.Fatalf("spec-less non-ancestor base = (%d, %q, %q), want an invalid-range refusal", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, unrelated, f.tip, f.creation.Path)...))
+	if r.exit != 1 || !strings.Contains(r.stdout, "reviewed source range is invalid") || !strings.Contains(r.stdout, "not an ancestor") {
+		t.Fatalf("spec-less non-ancestor base = (%d, %q, %q), want an invalid-range refusal", r.exit, r.stdout, r.stderr)
 	}
 	if _, err := os.Stat(f.tally); !os.IsNotExist(err) {
 		t.Fatalf("range refusal ran the gate: %v", err)
@@ -115,10 +110,9 @@ func TestLandCommandSpecLessLandedSourceBaseIsTheResolvedBase(t *testing.T) {
 	t.Parallel()
 	request := "spec-less-resolved-base"
 	f := specLessLandingFixture(t, request)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, specLessLandArgs(request, f.base[:12], f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "landed{source_base="+f.base+",") || strings.Contains(stdout.String(), f.base[:12]+",") {
-		t.Fatalf("abbreviated spec-less base = (%d, %q, %q), want the resolved base in the record", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base[:12], f.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "landed{source_base="+f.base+",") || strings.Contains(r.stdout, f.base[:12]+",") {
+		t.Fatalf("abbreviated spec-less base = (%d, %q, %q), want the resolved base in the record", r.exit, r.stdout, r.stderr)
 	}
 }
 
@@ -132,19 +126,18 @@ func TestResumeLandCommandSpecLessCompletesAnInterruptedLanding(t *testing.T) {
 	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	var stdout, stderr bytes.Buffer
-	if code := landWith(broken, f.root, f.home, specLessLandArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
-		t.Fatalf("interrupted spec-less landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(broken, specLessLandArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
+		t.Fatalf("interrupted spec-less landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
-	if strings.Contains(stdout.String(), "--spec") {
-		t.Fatalf("spec-less resume instruction named a spec: %q", stdout.String())
+	if strings.Contains(r.stdout, "--spec") {
+		t.Fatalf("spec-less resume instruction named a spec: %q", r.stdout)
 	}
 	published := gitOutput(t, f.root, "rev-parse", "main")
-	stdout.Reset()
-	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, f.creation.Path}
-	if code := landWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
-		t.Fatalf("spec-less resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r = runVerb(t, verbLand, f.callWith(working, args...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
+		t.Fatalf("spec-less resume = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "refs/bench/green/main"); got != published {
 		t.Fatalf("project-green = %s, want %s", got, published)
@@ -165,16 +158,15 @@ func TestResumeLandCommandWithoutSpecCompletesASpecBackedLanding(t *testing.T) {
 	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	var stdout, stderr bytes.Buffer
-	if code := landWith(broken, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:marker") {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	published := gitOutput(t, f.root, "rev-parse", "main")
-	stdout.Reset()
-	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, f.creation.Path}
-	if code := landWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") || stderr.Len() != 0 {
-		t.Fatalf("spec-less resume of a spec landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	r = runVerb(t, verbLand, f.callWith(working, args...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
+		t.Fatalf("spec-less resume of a spec landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "main"); got != published {
 		t.Fatalf("resume republished: main=%s, want %s", got, published)
@@ -198,10 +190,9 @@ func TestLandCommandRefusesAnEmptySpecValue(t *testing.T) {
 		{"resume", []string{"--resume", "p", "--request", "r", "--base", "b", "--source-tip", "s", "--spec", "", "path"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var stdout, stderr bytes.Buffer
-			code := LandCommand("", Home(), tc.args, &stdout, &stderr)
-			if code != 2 || stdout.Len() != 0 || !strings.Contains(stderr.String(), `--spec ""`) {
-				t.Fatalf("empty --spec = (%d, %q, %q), want (2, empty, a usage line naming the empty value)", code, stdout.String(), stderr.String())
+			r := runVerb(t, verbLand, verbCall{home: Home(), args: tc.args})
+			if r.exit != 2 || len(r.stdout) != 0 || !strings.Contains(r.stderr, `--spec ""`) {
+				t.Fatalf("empty --spec = (%d, %q, %q), want (2, empty, a usage line naming the empty value)", r.exit, r.stdout, r.stderr)
 			}
 		})
 	}

@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"os"
@@ -45,10 +44,9 @@ func TestLandCommandAllowsLocalCaptureInDestinationAndReleases(t *testing.T) {
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	writeLocalCapture(t, f.root)
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, specLessLandArgs(request, base, tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("land with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+		t.Fatalf("land with local capture = (%d, %q, %q), want released", r.exit, r.stdout, r.stderr)
 	}
 	for _, rel := range localCapturePaths {
 		if _, err := os.Stat(filepath.Join(f.root, filepath.FromSlash(rel))); err != nil {
@@ -69,16 +67,15 @@ func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	working := defaultJoins()
 	broken := working
 	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("interrupt") }
-	var stdout, stderr bytes.Buffer
-	if code := landWith(broken, f.root, f.home, specLessLandArgs(request, base, tip, f.creation.Path), &stdout, &stderr); code != 3 {
-		t.Fatalf("interrupted land = (%d, %q, %q), want incomplete", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.callWith(broken, specLessLandArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 3 {
+		t.Fatalf("interrupted land = (%d, %q, %q), want incomplete", r.exit, r.stdout, r.stderr)
 	}
 	published := gitOutput(t, f.root, "rev-parse", "main")
-	stdout.Reset()
-	stderr.Reset()
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, f.creation.Path}
-	if code := landWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("resume with local capture = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
+	r = runVerb(t, verbLand, f.callWith(working, args...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+		t.Fatalf("resume with local capture = (%d, %q, %q), want released", r.exit, r.stdout, r.stderr)
 	}
 }
 
@@ -94,10 +91,9 @@ func TestLandCommandKeepsUndeclaredIgnoredFileInDestination(t *testing.T) {
 	writeLocalCapture(t, f.root)
 	mustWrite(t, filepath.Join(f.root, "foreign.tmp"), []byte("foreign\n"), 0o600)
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, specLessLandArgs(request, base, tip, f.creation.Path), &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-		t.Fatalf("land with an undeclared ignored file = (%d, %q, %q), want released", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+		t.Fatalf("land with an undeclared ignored file = (%d, %q, %q), want released", r.exit, r.stdout, r.stderr)
 	}
 	if got, err := os.ReadFile(filepath.Join(f.root, "foreign.tmp")); err != nil || string(got) != "foreign\n" {
 		t.Fatalf("undeclared ignored file after the landing = %q, %v, want its bytes kept", got, err)

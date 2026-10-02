@@ -36,17 +36,16 @@ func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testin
 	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, base, tip, f.creation.Path), &stdout, &stderr)
-	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
-		t.Fatalf("stable-owner landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(landArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, wantEffects("failed")) {
+		t.Fatalf("stable-owner landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
 	}
 	published := gitOutput(t, f.root, "rev-parse", "main")
 	if got := strings.TrimSpace(fixtureFileText(t, marker)); got != published {
 		t.Fatalf("candidate build entry observed branch %q, want the published commit %q", got, published)
 	}
-	if strings.Contains(stderr.String(), "rebuilt") {
-		t.Fatalf("landing rebuilt an executable: %q", stderr.String())
+	if strings.Contains(r.stderr, "rebuilt") {
+		t.Fatalf("landing rebuilt an executable: %q", r.stderr)
 	}
 	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v, want one prospective run", got, err)
@@ -70,16 +69,15 @@ func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
 	ownerPid := os.Getpid()
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, base, tip, f.creation.Path), &stdout, &stderr)
-	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
-		t.Fatalf("single-owner landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(landArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 3 || !strings.Contains(r.stdout, wantEffects("failed")) {
+		t.Fatalf("single-owner landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
 	}
 	if os.Getpid() != ownerPid {
 		t.Fatalf("owner process identity changed: %d -> %d", ownerPid, os.Getpid())
 	}
-	if strings.Contains(stderr.String(), "rebuilt") {
-		t.Fatalf("owner re-executed through a rebuild: %q", stderr.String())
+	if strings.Contains(r.stderr, "rebuilt") {
+		t.Fatalf("owner re-executed through a rebuild: %q", r.stderr)
 	}
 	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v, want exactly one gate under one owner", got, err)
@@ -172,10 +170,9 @@ func TestLandCommandLeavesTheDestinationUnchangedAfterARedProspectiveGate(t *tes
 	f := redProspectiveGateLanding(t, request)
 	marker := projectGreenMarker(t, f.root)
 
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
-	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
-		t.Fatalf("red prospective gate = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+	if r.exit != 1 || !strings.HasPrefix(r.stdout, "refused{") {
+		t.Fatalf("red prospective gate = (%d, %q, %q), want a refusal", r.exit, r.stdout, r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "main"); got != f.base {
 		t.Fatalf("red gate published: main = %s, want %s", got, f.base)
@@ -214,9 +211,9 @@ func TestLandCommandRemovesEveryTemporaryProspectiveArtifact(t *testing.T) {
 			private := t.TempDir()
 			bindEnv(t, "TMPDIR", private)
 
-			var stdout, stderr bytes.Buffer
-			if code := LandCommand(f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != tc.want {
-				t.Fatalf("landing exit = %d, want %d; stdout=%q stderr=%q", code, tc.want, stdout.String(), stderr.String())
+			r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+			if r.exit != tc.want {
+				t.Fatalf("landing exit = %d, want %d; stdout=%q stderr=%q", r.exit, tc.want, r.stdout, r.stderr)
 			}
 			if residue := temporaryProspectiveArtifacts(t, private); len(residue) != 0 {
 				t.Fatalf("landing left temporary prospective artifacts %v", residue)
@@ -267,17 +264,16 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 			}
 			broken := tc.break_(working)
 
-			var stdout, stderr bytes.Buffer
-			if code := landWith(broken, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.name) {
-				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+			r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...))
+			if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:"+tc.name) {
+				t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}
 			published := gitOutput(t, f.root, "rev-parse", "main")
 
-			stdout.Reset()
-			stderr.Reset()
 			args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
-			if code := landWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
-				t.Fatalf("resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
+			r = runVerb(t, verbLand, f.callWith(working, args...))
+			if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+				t.Fatalf("resume = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}
 			if got := gitOutput(t, f.root, "rev-parse", "main"); got != published {
 				t.Fatalf("resume republished: main = %s, want %s", got, published)
@@ -308,9 +304,9 @@ func TestLandCommandCarriesTheBaselineScheduleRootIntoTheProspectiveGate(t *test
 	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
-	var stdout, stderr bytes.Buffer
-	if code := LandCommand(f.root, f.home, landArgs(request, base, tip, f.creation.Path), &stdout, &stderr); code != 0 {
-		t.Fatalf("landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(landArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 0 {
+		t.Fatalf("landing = (%d, %q, %q), want a released landing", r.exit, r.stdout, r.stderr)
 	}
 	got := strings.TrimSpace(fixtureFileText(t, recorded))
 	if got == "" {

@@ -4,7 +4,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -146,11 +145,10 @@ func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
 			request := "land-component-" + fixture.component
 			f := publicLandingFixture(t, request, "", "")
 			fixture.mutate(t, f.root, f.creation)
-			var stdout, stderr bytes.Buffer
-			code := LandCommand(f.root, f.home, landArgs(fixture.request(request), f.base, f.tip, f.creation.Path), &stdout, &stderr)
+			r := runVerb(t, verbLand, f.call(landArgs(fixture.request(request), f.base, f.tip, f.creation.Path)...))
 			want := "refused{" + fixture.want(f.creation, f.base, f.tip) + "}\n"
-			if code != 1 || stdout.String() != want {
-				t.Fatalf("%s landing = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
+			if r.exit != 1 || r.stdout != want {
+				t.Fatalf("%s landing = (%d, %q, %q), want exit 1 and %q", fixture.component, r.exit, r.stdout, r.stderr, want)
 			}
 		})
 	}
@@ -166,12 +164,11 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 			f := publicLandingFixture(t, request, "", "")
 			published := interruptLandingAtMarker(t, f.root, f.creation, request, f.base, f.tip)
 			fixture.mutate(t, f.root, f.creation)
-			var stdout, stderr bytes.Buffer
 			args := []string{"--resume", published, "--request", fixture.request(request), "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
-			code := LandCommand(f.root, f.home, args, &stdout, &stderr)
+			r := runVerb(t, verbLand, f.call(args...))
 			want := "refused{" + fixture.want(f.creation, f.base, f.tip) + "}\n"
-			if code != 1 || stdout.String() != want {
-				t.Fatalf("%s resume = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
+			if r.exit != 1 || r.stdout != want {
+				t.Fatalf("%s resume = (%d, %q, %q), want exit 1 and %q", fixture.component, r.exit, r.stdout, r.stderr, want)
 			}
 		})
 	}
@@ -185,10 +182,9 @@ func interruptLandingAtMarker(t *testing.T, root string, creation Creation, requ
 	j.advanceLandingMarker = func(context.Context, string, string, string, string) error {
 		return errors.New("injected marker interruption")
 	}
-	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, Home(), landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	if code != 3 {
-		t.Fatalf("interrupted landing = (%d, %q, %q), want exit 3", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, repoHome{root, Home()}.callWith(j, landArgs(request, base, tip, creation.Path)...))
+	if r.exit != 3 {
+		t.Fatalf("interrupted landing = (%d, %q, %q), want exit 3", r.exit, r.stdout, r.stderr)
 	}
 	return gitOutput(t, root, "rev-parse", "main")
 }
@@ -301,21 +297,19 @@ func landingRefusalFixtures() []landingRefusalFixture {
 
 // landingFaceResume drives a resume fixture. It interrupts a landing at the release step,
 // applies the fixture's mutation to the published destination, and resumes.
-func landingFaceResume(t *testing.T, fixture landingRefusalFixture, root, home, base string, creation Creation, stdout, stderr *bytes.Buffer) int {
+func landingFaceResume(t *testing.T, fixture landingRefusalFixture, f landingFixture) verbResult {
 	t.Helper()
 	request := "landing-face-" + fixture.face
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	broken := defaultJoins()
 	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
-	if code := landWith(broken, root, home, landArgs(request, base, tip, creation.Path), stdout, stderr); code != 3 {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
+	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, tip, f.creation.Path)...)); r.exit != 3 {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
-	fixture.mutate(t, root, creation)
-	stdout.Reset()
-	stderr.Reset()
-	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-	return landWith(defaultJoins(), root, home, args, stdout, stderr)
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	fixture.mutate(t, f.root, f.creation)
+	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", tip, "--spec", "x", f.creation.Path}
+	return runVerb(t, verbLand, f.callWith(defaultJoins(), args...))
 }
 
 // landingFaceNext reads the next= value out of the refused record whose detail names the
@@ -362,10 +356,9 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 			t.Parallel()
 			request := "landing-face-" + fixture.face
 			f := publicLandingFixture(t, request, "", "")
-			var stdout, stderr bytes.Buffer
-			code := 0
+			var r verbResult
 			if landingRefusalFaceByName(fixture.face).stage == stageResume {
-				code = landingFaceResume(t, fixture, f.root, f.home, f.base, f.creation, &stdout, &stderr)
+				r = landingFaceResume(t, fixture, f)
 			} else {
 				fixture.mutate(t, f.root, f.creation)
 				// A mutation may add a source commit, so the pinned tip is read after it. An
@@ -374,11 +367,11 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 				if fixture.tip != nil {
 					tip = fixture.tip(t, f.creation)
 				}
-				code = LandCommand(f.root, f.home, landArgs(request, f.base, tip, f.creation.Path), &stdout, &stderr)
+				r = runVerb(t, verbLand, f.call(landArgs(request, f.base, tip, f.creation.Path)...))
 			}
-			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(fixture.face).detail)
-			if code != 1 || !printed || next == "" {
-				t.Fatalf("face %s = (%d, %q, %q), want exit 1 and a non-empty next= field", fixture.face, code, stdout.String(), stderr.String())
+			next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(fixture.face).detail)
+			if r.exit != 1 || !printed || next == "" {
+				t.Fatalf("face %s = (%d, %q, %q), want exit 1 and a non-empty next= field", fixture.face, r.exit, r.stdout, r.stderr)
 			}
 		})
 	}
@@ -484,11 +477,10 @@ func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 	registration := identityComponentFixtureFor(t, componentRegistration)
 	registration.mutate(t, f.root, f.creation)
 	identityComponentFixtureFor(t, componentLock).mutate(t, f.root, f.creation)
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
+	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	want := "refused{" + registration.want(f.creation, f.base, f.tip) + "}\n"
-	if code != 1 || stdout.String() != want {
-		t.Fatalf("double-fault landing = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
+	if r.exit != 1 || r.stdout != want {
+		t.Fatalf("double-fault landing = (%d, %q, %q), want exit 1 and %q", r.exit, r.stdout, r.stderr, want)
 	}
 }
 
@@ -500,10 +492,9 @@ func TestTargetVerbNamesTheOwnerMarkerBeforeTheBranch(t *testing.T) {
 	rewriteMarkerOwner(t, f.creation.Path, strings.Repeat("a", 32))
 	gitRun(t, f.creation.Path, "checkout", "--detach")
 	chdir(t, f.root)
-	var stdout, stderr bytes.Buffer
-	code := PathCommand(f.root, f.home, []string{f.creation.Assignment.Label}, &stdout, &stderr)
+	r := runVerb(t, verbPath, f.call(f.creation.Assignment.Label))
 	want := "bench worktree path: owner marker does not match assignment " + f.creation.Assignment.ID + "\nnext=" + nextList + "\n"
-	if code != 1 || stderr.String() != want {
-		t.Fatalf("double-fault path = (%d, %q, %q), want exit 1 and stderr %q", code, stdout.String(), stderr.String(), want)
+	if r.exit != 1 || r.stderr != want {
+		t.Fatalf("double-fault path = (%d, %q, %q), want exit 1 and stderr %q", r.exit, r.stdout, r.stderr, want)
 	}
 }

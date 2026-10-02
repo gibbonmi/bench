@@ -1,8 +1,6 @@
 package worktree
 
 import (
-	"bytes"
-	"io"
 	"strings"
 	"testing"
 )
@@ -15,17 +13,15 @@ import (
 func TestLandAndReauthorizeResolveIdentifierOperands(t *testing.T) {
 	f := newOwnedAssignment(t, "operand-land")
 	chdir(t, f.root)
-	var stdout bytes.Buffer
-	code := LandCommand(f.root, f.home, []string{"--request", "wrong-token", "--base", f.creation.Assignment.Start, "--source-tip", f.creation.Assignment.Start, "-m", "land", f.creation.Assignment.Label}, &stdout, io.Discard)
-	if code == 0 {
+	landed := runVerb(t, verbLand, f.call("--request", "wrong-token", "--base", f.creation.Assignment.Start, "--source-tip", f.creation.Assignment.Start, "-m", "land", f.creation.Assignment.Label))
+	if landed.exit == 0 {
 		t.Fatal("a mismatched request landed")
 	}
-	if !strings.Contains(stdout.String(), f.creation.Assignment.ID) {
-		t.Fatalf("land refusal does not address the resolved assignment:\n%s", stdout.String())
+	if !strings.Contains(landed.stdout, f.creation.Assignment.ID) {
+		t.Fatalf("land refusal does not address the resolved assignment:\n%s", landed.stdout)
 	}
-	var stderr bytes.Buffer
-	code = ReauthorizeCommand(f.root, f.home, []string{"--assignment", f.creation.Assignment.ID, "--request", "rotated-token", "--base", f.creation.Assignment.Start, "--source-tip", "HEAD", f.creation.Assignment.ID[:10]}, io.Discard, &stderr)
-	if code != 0 {
-		t.Fatalf("reauthorize via an id prefix exited %d: %s", code, stderr.String())
+	reauthorized := runVerb(t, verbReauthorize, f.call("--assignment", f.creation.Assignment.ID, "--request", "rotated-token", "--base", f.creation.Assignment.Start, "--source-tip", "HEAD", f.creation.Assignment.ID[:10]))
+	if reauthorized.exit != 0 {
+		t.Fatalf("reauthorize via an id prefix exited %d: %s", reauthorized.exit, reauthorized.stderr)
 	}
 }

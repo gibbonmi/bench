@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -22,14 +21,13 @@ func TestLandFenceRefusalNamesTheFoldedDefaultBase(t *testing.T) {
 	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
 		"merge", "-q", "--no-ff", "-m", "fold the destination", destination)
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
-	var stdout, stderr bytes.Buffer
-	code := LandCommand(f.root, f.home, landArgs(request, f.base, tip, f.creation.Path), &stdout, &stderr)
-	next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(faceSourceNotFenced).detail)
-	if code != 1 || !printed {
-		t.Fatalf("folded-base landing = (%d, %q, %q), want the fence refusal", code, stdout.String(), stderr.String())
+	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, tip, f.creation.Path)...))
+	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceSourceNotFenced).detail)
+	if r.exit != 1 || !printed {
+		t.Fatalf("folded-base landing = (%d, %q, %q), want the fence refusal", r.exit, r.stdout, r.stderr)
 	}
-	if !strings.Contains(stdout.String(), "wanted="+destination) {
-		t.Fatalf("fence refusal = %q, want wanted=%s, the folded merge base", stdout.String(), destination)
+	if !strings.Contains(r.stdout, "wanted="+destination) {
+		t.Fatalf("fence refusal = %q, want wanted=%s, the folded merge base", r.stdout, destination)
 	}
 	if !strings.Contains(next, landingBaseFlag(destination)) || strings.Contains(next, landingBaseFlag(f.base)) {
 		t.Fatalf("fence route = %q, want --base re-pointed from %s to %s", next, f.base, destination)
