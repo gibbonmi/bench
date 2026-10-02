@@ -15,6 +15,13 @@ The current command must remain useful while repair and automatic lifecycle inte
 Use the system-test owner's existing process construction with `BENCH_KIT`.
 Do not infer live qualification from a successful command or from a declared configuration file.
 
+## Headroom
+
+Keep existing oversized files at or below their current line counts.
+Update the existing doctor registry entry and assertion families without growth.
+Put new behavior and fixtures in focused files within this ticket's ownership fence.
+If an extraction needs another path, request an in-scope fence amendment before that edit.
+
 ## Acceptance
 
 - [ ] The compatibility report names the explicitly selected CLI or desktop interface.

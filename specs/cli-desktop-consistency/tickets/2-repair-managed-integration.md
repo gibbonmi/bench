@@ -15,6 +15,13 @@ Preserve the complete adoption package invariant at this package's final ticket.
 Every competing adoption writer must honor the chosen shared-destination exclusion.
 Use `BENCH_KIT` for the system-tagged interruption and concurrency tests.
 
+## Headroom
+
+Keep existing oversized files at or below their current line counts.
+Update the existing doctor registry entry and assertion families without growth.
+Put new behavior and fixtures in focused files within this ticket's ownership fence.
+If an extraction needs another path, request an in-scope fence amendment before that edit.
+
 ## Acceptance
 
 - [ ] One setup installs the shared Bench integration without copying either user configuration home.

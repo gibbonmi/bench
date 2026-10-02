@@ -16,6 +16,13 @@ Use `BENCH_KIT` for real hook and consumer-payload tests.
 Do not accept a simulated desktop, an escalated shell, or a newly spawned sandbox as actual-interface qualification.
 If the required desktop path still fails, report a material acceptance shortfall and retain the implementation source.
 
+## Headroom
+
+Keep existing oversized files at or below their current line counts.
+Update the existing doctor registry entry and assertion families without growth.
+Put new behavior and fixtures in focused files within this ticket's ownership fence.
+If an extraction needs another path, request an in-scope fence amendment before that edit.
+
 ## Acceptance
 
 - [ ] SessionStart emits the compatibility check obligation before dependent work.
