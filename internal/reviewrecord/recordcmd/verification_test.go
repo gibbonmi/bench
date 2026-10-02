@@ -15,7 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// drop removes a flag from the verification argv that verifyArgs builds.
+// drop removes a flag from the argv that formArgs builds.
 const drop = "\x00drop"
 
 // excerptFile writes data to a new file and returns its path.
@@ -29,13 +29,19 @@ func excerptFile(t *testing.T, name, data string) string {
 }
 
 // verifyArgs is the verification argv for requirement tests of chunk 1 with its planned
-// probe. Each edit replaces a flag value, an empty value names a flag without a value,
-// and drop removes the flag.
+// probe.
 func verifyArgs(t *testing.T, edits ...map[string]string) []string {
 	t.Helper()
-	flags := map[string]string{"--chunk": "1", "--requirement": "tests", "--id": "tests-1", "--performer": recordtest.Author("1.md"),
+	return formArgs(t, "verification", map[string]string{"--chunk": "1", "--requirement": "tests", "--id": "tests-1", "--performer": recordtest.Author("1.md"),
 		"--model": "unknown", "--effort": "unknown", "--exit-code": "0", "--ref": "fixture:terminal-result", "--excerpt": excerptFile(t, "excerpt.txt", "ok\n"),
-		"--probe-outcome": "bit", "--probe-exit-code": "1", "--probe-restore": "pass"}
+		"--probe-outcome": "bit", "--probe-exit-code": "1", "--probe-restore": "pass"}, edits...)
+}
+
+// formArgs is the argv of form for the fixture slug with the flags of flags. Each edit
+// replaces a flag value, an empty value names a flag without a value, and drop removes
+// the flag.
+func formArgs(t *testing.T, form string, flags map[string]string, edits ...map[string]string) []string {
+	t.Helper()
 	for _, edit := range edits {
 		for name, value := range edit {
 			flags[name] = value
@@ -49,7 +55,7 @@ func verifyArgs(t *testing.T, edits ...map[string]string) []string {
 		names = append(names, name)
 	}
 	sort.Strings(names)
-	args := []string{"verification", slug(t)}
+	args := []string{form, slug(t)}
 	for _, name := range names {
 		args = append(args, name)
 		if flags[name] != "" {
@@ -80,9 +86,15 @@ func recorded(t *testing.T, count int) *recordtest.Fixture {
 // verify runs the verification form and requires exit 0.
 func verify(t *testing.T, f *recordtest.Fixture, edits ...map[string]string) string {
 	t.Helper()
-	out, code := recordcmd.Command(f.Root, verifyArgs(t, edits...))
+	return succeed(t, f, verifyArgs(t, edits...))
+}
+
+// succeed runs args over the record of f and requires exit 0.
+func succeed(t *testing.T, f *recordtest.Fixture, args []string) string {
+	t.Helper()
+	out, code := recordcmd.Command(f.Root, args)
 	if code != 0 {
-		t.Fatalf("verification = exit %d, output %q; want exit 0", code, out)
+		t.Fatalf("%s = exit %d, output %q; want exit 0", args[0], code, out)
 	}
 	return out
 }
@@ -91,11 +103,18 @@ func verify(t *testing.T, f *recordtest.Fixture, edits ...map[string]string) str
 // output that holds want, and unchanged record bytes.
 func refuseVerify(t *testing.T, f *recordtest.Fixture, want string, edits ...map[string]string) string {
 	t.Helper()
+	return refuseArgs(t, f, want, verifyArgs(t, edits...))
+}
+
+// refuseArgs runs args over the record of f and requires exit 1, an output that holds
+// want, and unchanged record bytes.
+func refuseArgs(t *testing.T, f *recordtest.Fixture, want string, args []string) string {
+	t.Helper()
 	path := recordFile(t, f)
 	before := bytesOf(t, path)
-	out, code := recordcmd.Command(f.Root, verifyArgs(t, edits...))
+	out, code := recordcmd.Command(f.Root, args)
 	if code != 1 || !strings.Contains(out, want) {
-		t.Fatalf("verification = exit %d, output %q; want exit 1 naming %q", code, out, want)
+		t.Fatalf("%s = exit %d, output %q; want exit 1 naming %q", args[0], code, out, want)
 	}
 	if after := bytesOf(t, path); !bytes.Equal(before, after) {
 		t.Fatalf("refusal changed the record")

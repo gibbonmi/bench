@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -205,14 +206,10 @@ func RecordVerification(root, spec string, call VerificationCall) (Verification,
 	err := write(root, spec, nil, func(record *Record) error {
 		list, source := &record.Completion.Verification, call.Source
 		var chunk *Chunk
+		var err error
 		if call.Chunk != "" {
-			for i := range record.Chunks {
-				if record.Chunks[i].ID == call.Chunk {
-					chunk = &record.Chunks[i]
-				}
-			}
-			if chunk == nil {
-				return fmt.Errorf("chunk %s has no entry: %w", call.Chunk, ErrNoChunkEntry)
+			if chunk, err = entryOf(record, call.Chunk); err != nil {
+				return err
 			}
 			list = &chunk.Verification
 			if source == "" {
@@ -255,8 +252,8 @@ func RecordVerification(root, spec string, call VerificationCall) (Verification,
 		if requirement.Probe != "" && call.Probe == nil {
 			return fmt.Errorf("requirement %s plans the probe %q: %w", requirement.ID, requirement.Probe, ErrProbe)
 		}
-		if holdsID(*record, call.Evidence.ID) {
-			return fmt.Errorf("evidence ID %s is already in the record", call.Evidence.ID)
+		if err := unclaimed(*record, call.Evidence.ID); err != nil {
+			return err
 		}
 		exitCode, outcome := call.ExitCode, "fail"
 		if exitCode == 0 {
@@ -275,21 +272,74 @@ func RecordVerification(root, spec string, call VerificationCall) (Verification,
 	return entry, err
 }
 
-// holdsID reports whether any verification or review result of record has the ID id.
-func holdsID(record Record, id string) bool {
+// entryOf returns the entry of chunk id in record. A chunk without an entry needs the
+// chunk form first.
+func entryOf(record *Record, id string) (*Chunk, error) {
+	for i := range record.Chunks {
+		if record.Chunks[i].ID == id {
+			return &record.Chunks[i], nil
+		}
+	}
+	return nil, fmt.Errorf("chunk %s has no entry: %w", id, ErrNoChunkEntry)
+}
+
+// ReviewCall is the caller's part of one completed independent review result. Chunk
+// names the recorded chunk, Axis names the review axis, and Findings holds the finding
+// IDs in the order of the call. Evidence supplies the ID, the performer, the model, the
+// effort, and the native result.
+type ReviewCall struct {
+	Chunk, Axis string
+	Findings    []string
+	Evidence    Evidence
+}
+
+// RecordReview appends one completed independent review result to the review list of a
+// recorded chunk. The chunk entry supplies the base, the tip, and the source digest, and
+// the result supersedes the last result of the same axis in that chunk. The answer is the
+// entry as written.
+func RecordReview(root, spec string, call ReviewCall) (Review, error) {
+	var entry Review
+	err := write(root, spec, nil, func(record *Record) error {
+		chunk, err := entryOf(record, call.Chunk)
+		if err != nil {
+			return err
+		}
+		if err := unclaimed(*record, call.Evidence.ID); err != nil {
+			return err
+		}
+		supersedes := []string{}
+		for _, prior := range chunk.Reviews {
+			if prior.Axis == call.Axis {
+				supersedes = []string{prior.ID}
+			}
+		}
+		entry = Review{Evidence: call.Evidence, Axis: call.Axis, Base: chunk.Base, Tip: chunk.Tip, FindingIDs: append([]string{}, call.Findings...), Supersedes: supersedes}
+		entry.Role, entry.SourceDigest, entry.State, entry.Outcome = "independent-review", chunk.SourceDigest, "completed", "pass"
+		if len(call.Findings) != 0 {
+			entry.Outcome = "fail"
+		}
+		chunk.Reviews = append(chunk.Reviews, entry)
+		return nil
+	})
+	return entry, err
+}
+
+// unclaimed refuses an ID that a verification or review result of record already has,
+// and the refusal names that ID.
+func unclaimed(record Record, id string) error {
 	results := append([]Verification{}, record.Completion.Verification...)
+	ids := []string{}
 	for _, chunk := range record.Chunks {
 		results = append(results, chunk.Verification...)
 		for _, review := range chunk.Reviews {
-			if review.ID == id {
-				return true
-			}
+			ids = append(ids, review.ID)
 		}
 	}
 	for _, result := range results {
-		if result.ID == id {
-			return true
-		}
+		ids = append(ids, result.ID)
 	}
-	return false
+	if slices.Contains(ids, id) {
+		return fmt.Errorf("evidence ID %s is already in the record", id)
+	}
+	return nil
 }

@@ -22,23 +22,35 @@ const command = "bench record"
 
 // flag is one flag of a form and the placeholder that its usage line shows. An empty
 // placeholder declares a flag without a value. A single-line flag refuses a value that
-// holds a control character, and an optional flag is one that Parse does not require.
+// holds a control character, and occurs says whether Parse requires the flag and whether
+// it may repeat.
 type flag struct {
-	name, placeholder    string
-	singleLine, optional bool
+	name, placeholder string
+	singleLine        bool
+	occurs            occurrence
 }
+
+// occurrence is how often a flag appears in one call.
+type occurrence int
+
+const (
+	required occurrence = iota
+	optional
+	repeated
+)
 
 // form is one `bench record` form. Its usage line, its grammar, and its help row all
 // derive from this one declaration, so the help cannot advertise another grammar. The
 // layout orders the usage terms: each term is a declared flag name or one of the
-// grouping marks ( ) [ ] |, and an empty layout lists the flags in order. valid holds
-// the grammar rules that span flags, and a nil valid has none.
+// grouping marks ( ) [ ] |, and an empty layout lists the flags in order. A repeated
+// flag shows as [<flag>]... in the usage line. valid holds the grammar rules that span
+// flags or close a value set, and a nil valid has none.
 type form struct {
 	name, description string
 	flags             []flag
 	layout            []string
 	valid             func(f form, values map[string]string) bool
-	run               func(f form, root, spec string, values map[string]string) (string, int)
+	run               func(f form, root, spec string, parsed usage.Result) (string, int)
 }
 
 // probeFlags are the three flags of a planned probe, which a call names all or none of.
@@ -46,16 +58,21 @@ var probeFlags = []string{"--probe-outcome", "--probe-exit-code", "--probe-resto
 
 var forms = []form{
 	{name: "chunk", description: "write one chunk's frozen pair, digests, and acceptance rows into reviews/<slug>.md",
-		flags: []flag{{"--chunk", "<id>", true, false}, {"--base", "<commit>", false, false}, {"--tip", "<commit>", false, false}}, run: chunk},
+		flags: []flag{{"--chunk", "<id>", true, required}, {"--base", "<commit>", false, required}, {"--tip", "<commit>", false, required}}, run: chunk},
 	{name: "verification", description: "append one planned verification result with its computed digests",
-		flags: []flag{{"--chunk", "<id>", true, true}, {"--source", "<commit>", false, true}, {"--final", "", false, true},
-			{"--requirement", "<id>", true, false}, {"--id", "<id>", true, false}, {"--performer", "<session>", true, false},
-			{"--model", "<model>", true, false}, {"--effort", "<effort>", true, false}, {"--exit-code", "<n>", false, false},
-			{"--ref", "<ref>", true, false}, {"--excerpt", "<file>", true, false}, {probeFlags[0], "<verdict>", true, true},
-			{probeFlags[1], "<n>", false, true}, {probeFlags[2], "pass|fail", false, true}},
+		flags: []flag{{"--chunk", "<id>", true, optional}, {"--source", "<commit>", false, optional}, {"--final", "", false, optional},
+			{"--requirement", "<id>", true, required}, {"--id", "<id>", true, required}, {"--performer", "<session>", true, required},
+			{"--model", "<model>", true, required}, {"--effort", "<effort>", true, required}, {"--exit-code", "<n>", false, required},
+			{"--ref", "<ref>", true, required}, {"--excerpt", "<file>", true, required}, {probeFlags[0], "<verdict>", true, optional},
+			{probeFlags[1], "<n>", false, optional}, {probeFlags[2], "pass|fail", false, optional}},
 		layout: []string{"(", "--chunk", "[", "--source", "]", "|", "--final", "--source", ")", "--requirement", "--id", "--performer",
 			"--model", "--effort", "--exit-code", "--ref", "--excerpt", "[", probeFlags[0], probeFlags[1], probeFlags[2], "]"},
 		valid: verificationValid, run: verification},
+	{name: "review", description: "append one independent review result to a recorded chunk",
+		flags: []flag{{"--chunk", "<id>", true, required}, {"--axis", strings.Join(reviewrecord.Axes(), "|"), false, required}, {"--id", "<id>", true, required},
+			{"--performer", "<session>", true, required}, {"--model", "<model>", true, required}, {"--effort", "<effort>", true, required},
+			{"--ref", "<ref>", true, required}, {"--excerpt", "<file>", true, required}, {"--finding", "<id>", true, repeated}},
+		valid: reviewValid, run: review},
 }
 
 // suffix is the form's grammar after `bench record`.
@@ -88,13 +105,17 @@ func (f form) flag(name string) flag {
 }
 
 func (fl flag) usage() string {
-	return strings.TrimSpace(fl.name + " " + fl.placeholder)
+	term := strings.TrimSpace(fl.name + " " + fl.placeholder)
+	if fl.occurs == repeated {
+		term = "[" + term + "]..."
+	}
+	return term
 }
 
 func (f form) grammar() usage.Grammar {
 	g := usage.Grammar{Cmd: command + " " + f.name, Help: "usage: " + command + f.suffix(), MinArgs: 1, MaxArgs: 1}
 	for _, flag := range f.flags {
-		g.Flags = append(g.Flags, usage.Flag{Name: flag.name, HasValue: flag.placeholder != "", NoEmptyValue: flag.placeholder != "", Required: !flag.optional})
+		g.Flags = append(g.Flags, usage.Flag{Name: flag.name, HasValue: flag.placeholder != "", NoEmptyValue: flag.placeholder != "", Required: flag.occurs == required, Repeatable: flag.occurs == repeated})
 	}
 	return g
 }
@@ -164,15 +185,17 @@ func Command(root string, args []string) (string, int) {
 		return usage.PrimaryCheckoutRefusal() + "\n", 1
 	}
 	for _, flag := range f.flags {
-		if flag.singleLine && !sanitize.LineSafe(parsed.Flags[flag.name]) {
-			return f.refuse(flag.name + " holds a control character")
+		for _, value := range append([]string{parsed.Flags[flag.name]}, parsed.Repeated[flag.name]...) {
+			if flag.singleLine && !sanitize.LineSafe(value) {
+				return f.refuse(flag.name + " holds a control character")
+			}
 		}
 	}
 	spec := "specs/" + parsed.Positionals[0] + "/spec.md"
 	if _, err := reviewrecord.Slug(spec); err != nil {
 		return f.refuse(err.Error())
 	}
-	return f.run(f, root, spec, parsed.Flags)
+	return f.run(f, root, spec, parsed)
 }
 
 // commit resolves the revision of one flag to its full commit ID.
@@ -185,7 +208,8 @@ func commit(f form, root string, values map[string]string, name string) (string,
 	return id, "", 0
 }
 
-func chunk(f form, root, spec string, values map[string]string) (string, int) {
+func chunk(f form, root, spec string, parsed usage.Result) (string, int) {
+	values := parsed.Flags
 	base, out, code := commit(f, root, values, "--base")
 	if out != "" {
 		return out, code
@@ -212,8 +236,14 @@ func integer(values map[string]string, name string) (int, bool) {
 	return n, err == nil
 }
 
+// chosen reports whether the value of flag name is one of the alternatives of its
+// placeholder, so the usage line and the check read one value set.
+func chosen(f form, values map[string]string, name string) bool {
+	return slices.Contains(strings.Split(f.flag(name).placeholder, "|"), values[name])
+}
+
 // verificationValid holds the verification grammar rules that span flags or close a
-// value set. The restore values are the alternatives of the --probe-restore placeholder.
+// value set.
 func verificationValid(f form, values map[string]string) bool {
 	present := func(name string) bool { _, ok := values[name]; return ok }
 	probes := 0
@@ -224,7 +254,7 @@ func verificationValid(f form, values map[string]string) bool {
 	}
 	_, exitCode := integer(values, "--exit-code")
 	_, probeExitCode := integer(values, probeFlags[1])
-	restore := slices.Contains(strings.Split(f.flag(probeFlags[2]).placeholder, "|"), values[probeFlags[2]])
+	restore := chosen(f, values, probeFlags[2])
 	return present("--chunk") != present("--final") && (present("--source") || !present("--final")) &&
 		(probes == 0 || probes == len(probeFlags) && probeExitCode && restore) && exitCode
 }
@@ -253,7 +283,8 @@ func cause(err error) string {
 	return err.Error()
 }
 
-func verification(f form, root, spec string, values map[string]string) (string, int) {
+func verification(f form, root, spec string, parsed usage.Result) (string, int) {
+	values := parsed.Flags
 	ref, out, code := native(values)
 	if out != "" {
 		return out, code
@@ -280,6 +311,31 @@ func verification(f form, root, spec string, values map[string]string) (string, 
 	}
 	table, err := toon.Table("verification", []string{"list", "chunk", "id", "requirement", "role", "outcome", "source_digest", "excerpt_digest"},
 		[][]string{{list, call.Chunk, entry.ID, entry.Requirement, entry.Role, entry.Outcome, entry.SourceDigest, entry.NativeRef.Digest}})
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return table, 0
+}
+
+// reviewValid closes the --axis value set.
+func reviewValid(f form, values map[string]string) bool {
+	return chosen(f, values, "--axis")
+}
+
+func review(f form, root, spec string, parsed usage.Result) (string, int) {
+	values := parsed.Flags
+	ref, out, code := native(values)
+	if out != "" {
+		return out, code
+	}
+	call := reviewrecord.ReviewCall{Chunk: values["--chunk"], Axis: values["--axis"], Findings: parsed.Repeated["--finding"],
+		Evidence: reviewrecord.Evidence{ID: values["--id"], Performer: values["--performer"], Model: values["--model"], Effort: values["--effort"], NativeRef: ref}}
+	entry, err := reviewrecord.RecordReview(root, spec, call)
+	if err != nil {
+		return f.refuse(cause(err))
+	}
+	table, err := toon.Table("review", []string{"chunk", "id", "axis", "outcome", "supersedes", "source_digest", "excerpt_digest"},
+		[][]string{{call.Chunk, entry.ID, entry.Axis, entry.Outcome, strings.Join(entry.Supersedes, ","), entry.SourceDigest, entry.NativeRef.Digest}})
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
