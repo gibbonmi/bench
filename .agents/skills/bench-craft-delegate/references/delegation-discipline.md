@@ -92,7 +92,7 @@ Repair context: <fold targets and author context, each read by the coordinator b
 - A test that guards on a root privilege routes through the capability seam, never through a bare `t.Skip`.
 - A repair fence is the affected ticket's `Writes:` line. Only `.bench/BENCH.md`'s plan-expansion policy widens it.
 - A repair based on a frozen sibling uses an integration assignment from `main`. The integration assignment merges the sibling before the landing.
-- Every author charge and every repair charge requires two results before the ticket commit. The first is a duplicated-facts sweep of the delegate's own delta. The sweep gives one source to each fact, such as a helper, a fixture harness, a derived count, or an expectation copied from the implementation. The sweep also examines each comment that the delta adds or changes against `craft-comments`. Each such comment states the current code and repeats no fact that another source owns. The second is one recorded red for each independent test expectation.
+- Every author charge and every repair charge requires two results before the ticket commit. The first is a duplicated-facts sweep of the delegate's own delta. The sweep gives one source to each fact, such as a helper, a fixture harness, a derived count, or an expectation copied from the implementation. The second is one recorded red for each independent test expectation.
 
 ## Delegated author transfer
 
