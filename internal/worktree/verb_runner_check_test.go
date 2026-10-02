@@ -363,16 +363,16 @@ func TestVerbRunnerReturnsTheExecAssignment(t *testing.T) {
 
 func TestVerbCallRefusesAKitValue(t *testing.T) {
 	t.Parallel()
-	err := checkVerbCall(verbCall{kit: t.TempDir()})
-	if want := "verb runner: a kit value waits for the seam reduction spec"; err == nil || err.Error() != want {
+	err := checkVerbCall(verbPath, verbCall{kit: t.TempDir()})
+	if want := "verb runner: the path verb takes no kit value"; err == nil || err.Error() != want {
 		t.Fatalf("checkVerbCall = %v, want %q", err, want)
 	}
 }
 
 func TestVerbCallRefusesAClockValue(t *testing.T) {
 	t.Parallel()
-	err := checkVerbCall(verbCall{clock: time.Now})
-	if want := "verb runner: a clock value waits for the seam reduction spec"; err == nil || err.Error() != want {
+	err := checkVerbCall(verbPath, verbCall{clock: time.Now})
+	if want := "verb runner: the path verb takes no clock value"; err == nil || err.Error() != want {
 		t.Fatalf("checkVerbCall = %v, want %q", err, want)
 	}
 }

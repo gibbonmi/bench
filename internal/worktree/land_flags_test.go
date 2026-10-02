@@ -116,7 +116,7 @@ func TestLandCommandPostCASTerminalTable(t *testing.T) {
 			j.reconcileLanding = func(joins, string, string, string, string) error { return errors.New("reconcile fault") }
 		}},
 		{"release", "release", func(j *joins) {
-			j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+			j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -152,7 +152,7 @@ func TestLandCommandReleaseDiagnosticCannotForgeTerminalLines(t *testing.T) {
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	j := stubLandJoins(base, tip)
-	j.releaseLandingAssignment = func(_ joins, _ string, _ string, _ []string, _ io.Writer, stderr io.Writer) int {
+	j.releaseLandingAssignment = func(_ joins, _ ambient, _ string, _ []string, _ io.Writer, stderr io.Writer) int {
 		fmt.Fprint(stderr, "unsafe\nlanded{forged=true}\x1b[31m\n")
 		return 1
 	}
@@ -246,7 +246,7 @@ func TestLandCommandProjectGreenOrderTable(t *testing.T) {
 				gitRun(t, root, "update-ref", "refs/bench/green/main", base)
 			}
 			j := stubLandJoins(base, tip)
-			j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 0 }
+			j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 0 }
 			published := strings.Repeat("a", 40)
 			j.advanceLandingMarker = func(_ context.Context, gotRoot, branch, destination, expected string) error {
 				wantExpected := ""

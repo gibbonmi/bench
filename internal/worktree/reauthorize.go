@@ -42,12 +42,12 @@ func lockWorktree(root, path, reason string) error {
 
 // ReauthorizeCommand replaces a retained assignment request after exact identity proofs.
 func ReauthorizeCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return reauthorizeWith(defaultJoins(), root, home, args, stdout, stderr)
+	return reauthorizeWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// reauthorizeWith is ReauthorizeCommand with the seam set resolved explicitly at the
-// caller's boundary.
-func reauthorizeWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+// reauthorizeWith is ReauthorizeCommand with the seam set and the ambient value resolved
+// explicitly at the caller's boundary.
+func reauthorizeWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(reauthorizeGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -55,7 +55,7 @@ func reauthorizeWith(j joins, root, home string, args []string, stdout, stderr i
 	}
 	// The record opens after the grammar answers. The assignment the caller named is the
 	// subject, because a refusal inside the swap still acted on that named assignment.
-	finishSpan := beginVerbSpan(home, root, otelReauthorizeSeam)
+	finishSpan := beginVerbSpan(a.home, root, otelReauthorizeSeam)
 	exit := reauthorizeParsed(j, root, parsed, stdout, stderr)
 	finishSpan(exit, parsed.Flags["--assignment"])
 	return exit

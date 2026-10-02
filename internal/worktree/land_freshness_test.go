@@ -247,7 +247,7 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 			return j
 		}},
 		{name: "release", break_: func(j joins) joins {
-			j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+			j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 			return j
 		}},
 	} {

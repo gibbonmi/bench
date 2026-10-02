@@ -110,7 +110,7 @@ func TestLandCommandAuthenticatesDigestShapedRequestToken(t *testing.T) {
 	request := strings.Repeat("a", 64)
 	f := publicLandingFixture(t, request, "", "")
 	j := stubLandJoins(f.base, f.tip)
-	j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 0 }
+	j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 0 }
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
 	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
@@ -167,7 +167,7 @@ func TestLandCommandExpandsAbbreviatedSourceTip(t *testing.T) {
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	j := stubLandJoins(base, tip)
-	j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 0 }
+	j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 0 }
 	for _, abbreviated := range []string{tip[:4], tip[:12], tip[:39], strings.ToUpper(tip[:12])} {
 		r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, landArgs(request, base, abbreviated, creation.Path)...))
 		if r.exit != 0 || !strings.Contains(r.stdout, "source_tip="+tip+",") || !strings.Contains(r.stdout, "worktree=released,census=0}") {
@@ -187,7 +187,7 @@ func TestLandCommandExpandsAbbreviatedBase(t *testing.T) {
 	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	j := stubLandJoins(base, tip)
-	j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 0 }
+	j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 0 }
 	authorized := ""
 	j.authorizeLandingSource = func(_, _ string, reviewBase string) (diff.SourceRange, error) {
 		authorized = reviewBase

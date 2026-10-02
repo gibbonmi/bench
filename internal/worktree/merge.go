@@ -41,12 +41,12 @@ func reconcileMergeCheckout(path, tip string) error {
 // commit is a commit in the default branch's history or a sibling assignment's branch
 // tip; no other object reaches the lane.
 func MergeCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return mergeWith(defaultJoins(), root, home, args, stdout, stderr)
+	return mergeWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// mergeWith is MergeCommand with the seam set resolved explicitly at the caller's
-// boundary.
-func mergeWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+// mergeWith is MergeCommand with the seam set and the ambient value resolved explicitly at
+// the caller's boundary.
+func mergeWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(mergeGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -55,7 +55,7 @@ func mergeWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 	// The record opens after the grammar answers, so a usage refusal composes and records
 	// nothing. The target resolves inside the span.
 	var assignment string
-	finishSpan := beginVerbSpan(home, root, otelMergeSeam)
+	finishSpan := beginVerbSpan(a.home, root, otelMergeSeam)
 	exit := mergeAttributed(&assignment, j, root, parsed, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit

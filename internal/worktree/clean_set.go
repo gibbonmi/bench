@@ -132,7 +132,7 @@ type explicitCleanupSet struct {
 // plans each recorded member through the same explicit planner the single-target form calls.
 // It takes the states a release takes, as the path form does. One unresolved or ambiguous
 // operand makes the whole selection unapplicable.
-func planExplicitSet(j joins, root string, targets []string, options CleanupOptions) explicitCleanupSet {
+func planExplicitSet(j joins, a ambient, root string, targets []string, options CleanupOptions) explicitCleanupSet {
 	set := explicitCleanupSet{}
 	selected := make(map[string]bool, len(targets))
 	candidates := discardCandidates{root: root}
@@ -151,7 +151,7 @@ func planExplicitSet(j joins, root string, targets []string, options CleanupOpti
 		}
 		selected[key] = true
 		if resolved.branch != nil {
-			row, planErr := planUnrecordedRow(*resolved.branch, j.now(), options)
+			row, planErr := planUnrecordedRow(*resolved.branch, a.now, options)
 			if planErr != nil {
 				set.failures = append(set.failures, selectionFailurePlan(target, planErr))
 				continue
@@ -322,10 +322,10 @@ func requalifyExplicitRow(j joins, root string, planned explicitCleanupRow, opti
 // transaction, which gives that transaction the digest the repository answers to now. The
 // first member that cannot finish stops the set, and every member the set never started
 // reports its own unstarted outcome.
-func applyExplicitSet(j joins, root string, set explicitCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
+func applyExplicitSet(j joins, a ambient, root string, set explicitCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
 	members := set.plans()
 	plans := make([]CleanupPlan, 0, len(members))
-	if offender, err := preflightExplicitSet(j, root, set, options); err != nil {
+	if offender, err := preflightExplicitSet(j, a, root, set, options); err != nil {
 		return preflightOutcomes(plans, members, offender, err), err
 	}
 	for i, planned := range set.rows {
@@ -343,20 +343,20 @@ func applyExplicitSet(j joins, root string, set explicitCleanupSet, options Clea
 			plans = append(plans, requalifiedOutcome(planned.plan, current.plan, err))
 			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), err
 		}
-		applied, applyErr := applyExplicitWith(j, root, current.plan.Target, current.targetFingerprint, options)
+		applied, applyErr := applyExplicitWith(j, a, root, current.plan.Target, current.targetFingerprint, options)
 		if applyErr != nil {
 			plans = append(plans, faultedPlan(current.plan, applied, applyErr))
 			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), applyErr
 		}
 		plans = append(plans, applied)
 	}
-	return applyUnrecordedRows(j, root, set, options, plans)
+	return applyUnrecordedRows(j, a, root, set, options, plans)
 }
 
 // cleanExplicitSet is the explicit-target selection mode. A bare call plans the complete
 // set, and an apply call validates the whole selection before the first transaction runs.
-func cleanExplicitSet(j joins, root string, selection cleanSelection, stdout, stderr io.Writer) int {
-	set := planExplicitSet(j, root, selection.targets, selection.options)
+func cleanExplicitSet(j joins, a ambient, root string, selection cleanSelection, stdout, stderr io.Writer) int {
+	set := planExplicitSet(j, a, root, selection.targets, selection.options)
 	if selection.fingerprint == "" {
 		if err := renderExplicitSet(stdout, set, selection.options); err != nil {
 			fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
@@ -378,7 +378,7 @@ func cleanExplicitSet(j joins, root string, selection cleanSelection, stdout, st
 		_ = renderStaleSet(stdout, selection.fingerprint, set.plans(), replan)
 		return 1
 	}
-	plans, applyErr := applyExplicitSet(j, root, set, selection.options)
+	plans, applyErr := applyExplicitSet(j, a, root, set, selection.options)
 	if err := applyOutcomes(stdout, plans, staleRows(selection.fingerprint, plans), applyErr, replan); err != nil {
 		fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
 		return 1

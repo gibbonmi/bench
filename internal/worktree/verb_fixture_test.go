@@ -5,7 +5,10 @@ package worktree
 // no verb, so the verb runner stays the one way to run a verb. The text row reader takes
 // the rows that mustRows already decoded, so it parses no rendered text.
 
-import "testing"
+import (
+	"io"
+	"testing"
+)
 
 // repoHome is a repository and the private home that its registrations live under.
 type repoHome struct {
@@ -24,6 +27,12 @@ func (f repoHome) callWith(j joins, args ...string) verbCall {
 	call := f.call(args...)
 	call.joins = &j
 	return call
+}
+
+// ambient builds the ambient value at the fixture's home for a test that calls a function
+// below a verb entry. The warnings writer discards, because no such test reads it.
+func (f repoHome) ambient() ambient {
+	return newAmbient(f.home, io.Discard)
 }
 
 // ownedAssignment is a repository, its one owned registration, and the private home

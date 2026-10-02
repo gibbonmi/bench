@@ -249,7 +249,7 @@ func TestResumeReportsAnUnreadablePoolRatherThanZero(t *testing.T) {
 	mustNoError(t, os.Chmod(pool, 0o000))
 	t.Cleanup(func() { _ = os.Chmod(pool, 0o700) })
 
-	result, err := conservativeCleanupAt(defaultJoins(), root, home, currentTime())
+	result, err := conservativeCleanupAt(defaultJoins(), repoHome{root, home}.ambient(), root)
 	requireTest(t, err == nil, "resume failed over an unreadable pool: %v", err)
 	requireTest(t, result.PoolUnreadable != nil, "an unreadable pool reported no failure")
 	requireTest(t, result.ReclaimableKeys == 0, "an unreadable pool reported %d keys", result.ReclaimableKeys)

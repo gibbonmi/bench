@@ -302,7 +302,7 @@ func landingFaceResume(t *testing.T, fixture landingRefusalFixture, f landingFix
 	request := "landing-face-" + fixture.face
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	broken := defaultJoins()
-	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, tip, f.creation.Path)...)); r.exit != 3 {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}

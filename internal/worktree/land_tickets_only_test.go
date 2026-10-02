@@ -119,7 +119,7 @@ func TestResumeLandCommandTicketsOnlyCloseSurvivesTheConsumedCheckout(t *testing
 	f := ticketsOnlyLandingFixture(t, request)
 	working := defaultJoins()
 	broken := working
-	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 	r := runVerb(t, verbLand, f.callWith(broken, ticketsOnlyLandArgs(request, f.base, f.tip, "t", f.creation.Path)...))
 	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
 		t.Fatalf("interrupted release = (%d, %q, %q)", r.exit, r.stdout, r.stderr)

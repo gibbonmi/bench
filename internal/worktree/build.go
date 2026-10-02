@@ -20,14 +20,14 @@ import (
 // tree's sanctioned build script, which writes the executable and its seal, so the verb
 // authors no artifact of its own.
 func BuildCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return buildWith(defaultJoins(), root, home, args, stdout, stderr)
+	return buildWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// buildWith is BuildCommand with the seam set resolved at the caller's boundary. It is
-// also the verb's record boundary. The record opens after the grammar answers, and the
-// verb resolves its target inside the span, so a target refusal records the verb with
-// no subject.
-func buildWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+// buildWith is BuildCommand with the seam set and the ambient value resolved at the
+// caller's boundary. It is also the verb's record boundary. The record opens after the
+// grammar answers, and the verb resolves its target inside the span, so a target refusal
+// records the verb with no subject.
+func buildWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(buildGrammar, args)
 	if line != "" {
 		if code == 0 {
@@ -38,7 +38,7 @@ func buildWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 		return code
 	}
 	var assignment string
-	finishSpan := beginVerbSpan(home, root, otelBuildSeam)
+	finishSpan := beginVerbSpan(a.home, root, otelBuildSeam)
 	exit := buildAttributed(&assignment, j, root, parsed, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit

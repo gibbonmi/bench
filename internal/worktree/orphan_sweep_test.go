@@ -38,7 +38,7 @@ func newSweepRepo(t *testing.T) (string, string) {
 
 func mustSweep(t *testing.T, root, home string) ResumeResult {
 	t.Helper()
-	result, err := conservativeCleanupAt(defaultJoins(), root, home, currentTime())
+	result, err := conservativeCleanupAt(defaultJoins(), repoHome{root, home}.ambient(), root)
 	mustNoError(t, err)
 	return result
 }

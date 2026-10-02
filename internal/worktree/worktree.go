@@ -252,13 +252,12 @@ func cleanInvocationError(stdout io.Writer) int {
 // mutation unless args supply a matching apply fingerprint or --apply-current for an
 // eligible unclaimed set. It returns 2 for invalid grammar and 1 for a refused plan.
 func CleanCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return cleanCommandWith(defaultJoins(), root, home, args, stdout, stderr)
+	return cleanCommandWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// cleanCommandWith is CleanCommand with the seam set resolved explicitly at the caller's
-// boundary.
-func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
-	j.home = home
+// cleanCommandWith is CleanCommand with the seam set and the ambient value resolved
+// explicitly at the caller's boundary.
+func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 1 && args[0] == "--help" {
 		fmt.Fprintln(stdout, "usage: "+usage.WorktreeClean)
 		return 0
@@ -324,7 +323,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		if fingerprint != "" {
-			plans, applyErr := applyLandedSet(j, root, set, options, "")
+			plans, applyErr := applyLandedSet(j, a, root, set, options, "")
 			if renderErr := applyOutcomes(stdout, plans, staleRows(fingerprint, plans), applyErr, landedReplan(options)); renderErr != nil {
 				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
 				return 1
@@ -341,11 +340,11 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 		return 0
 	}
 	if len(selection.targets) > 0 {
-		return cleanExplicitSet(j, root, selection, stdout, stderr)
+		return cleanExplicitSet(j, a, root, selection, stdout, stderr)
 	}
 	plan, err := planExplicitWith(j, root, target, options)
 	if err == nil && fingerprint != "" {
-		plan, err = applyExplicitWith(j, root, target, fingerprint, options)
+		plan, err = applyExplicitWith(j, a, root, target, fingerprint, options)
 	}
 	if errors.Is(err, errStaleFingerprint) {
 		_ = renderCleanup(stdout, plan)
@@ -384,13 +383,12 @@ func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupR
 // assignment selected by its request token and path. It returns 2 before lifecycle
 // mutation when the required --request grammar is invalid.
 func ReleaseCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return releaseCommandWith(defaultJoins(), root, home, args, stdout, stderr)
+	return releaseCommandWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// releaseCommandWith is ReleaseCommand with the seam set resolved explicitly at the
-// caller's boundary.
-func releaseCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
-	j.home = home
+// releaseCommandWith is ReleaseCommand with the seam set and the ambient value resolved
+// explicitly at the caller's boundary.
+func releaseCommandWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 1 && args[0] == "--help" {
 		fmt.Fprintln(stdout, "usage: "+usage.WorktreeRelease)
 		return 0
@@ -401,16 +399,16 @@ func releaseCommandWith(j joins, root, home string, args []string, stdout, stder
 	}
 	// The record opens after the grammar answers, so a usage refusal records nothing.
 	var assignment string
-	finishSpan := beginVerbSpan(home, root, otelReleaseSeam)
-	exit := releaseAttributed(&assignment, j, releaseRoot(root), args, stdout, stderr)
+	finishSpan := beginVerbSpan(a.home, root, otelReleaseSeam)
+	exit := releaseAttributed(&assignment, j, a, releaseRoot(root), args, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit
 }
 
 // releaseAttributed is the release verb's own work, with the released assignment written
 // to assignment as the receipt names it.
-func releaseAttributed(assignment *string, j joins, root string, args []string, stdout, stderr io.Writer) int {
-	receipt, err := releaseAssignment(j, root, args[1], resolveVerbOperand(root, args[2]))
+func releaseAttributed(assignment *string, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
+	receipt, err := releaseAssignment(j, a, root, args[1], resolveVerbOperand(root, args[2]))
 	if err == nil {
 		*assignment = receipt.Tracked
 		return finishReleaseReceipt(root, stdout, receipt)

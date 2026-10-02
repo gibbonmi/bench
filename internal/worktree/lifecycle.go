@@ -434,7 +434,7 @@ func releaseRegistration(root, target string) error {
 // all reach one removal. The section key is read before retireCheckout runs, because the
 // retirement mutates the record the key comes from. A document without that section stays
 // as it is, and a document the removal cannot rewrite is announced rather than discarded.
-func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
+func executeCleanup(j joins, a ambient, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
 	var request string
 	if plan.assignment != nil {
 		request = plan.assignment.Request
@@ -444,8 +444,8 @@ func executeCleanup(j joins, root string, plan CleanupPlan, checkpoint func(stri
 		return plan, err
 	}
 	if id, ok := poolkey.SplitAssignmentSegment(filepath.Base(plan.Target)); ok {
-		_ = census.Drop(j.home, root, id)
-		_ = responsebound.Drop(j.home, root, id)
+		_ = census.Drop(a.home, root, id)
+		_ = responsebound.Drop(a.home, root, id)
 	}
 	if path := handoffDocumentPath(root); request != "" && fileExists(path) {
 		if err := handoffdoc.RemoveSection(path, request); err != nil {

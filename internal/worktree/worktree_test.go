@@ -366,8 +366,7 @@ func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 	mustNoError(t, err)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", ag.Worktree) // active, tree gone, unregistered
 
-	result, err := conservativeCleanupAt(defaultJoins(), root, home, currentTime())
-	mustNoError(t, err)
+	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 2, "Reconciled=%d, want 2", result.Reconciled)
 	for _, dropped := range []string{ra.ID, pa.ID} {
 		if _, err := assignmentByID(root, dropped); err == nil {

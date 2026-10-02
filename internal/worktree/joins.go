@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"os"
-	"time"
 
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -28,7 +27,7 @@ type joins struct {
 	landReviewed             func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error)
 	advanceLandingMarker     func(context.Context, string, string, string, string) error
 	reconcileLanding         func(joins, string, string, string, string) error
-	releaseLandingAssignment func(joins, string, string, []string, io.Writer, io.Writer) int
+	releaseLandingAssignment func(joins, ambient, string, []string, io.Writer, io.Writer) int
 	// pruneLandedBranches retires every unclaimed assignment branch the landed
 	// default branch already carries. It runs at the landing because that is the
 	// one moment the proof is cheap and certain: a later commit can move or delete
@@ -76,15 +75,6 @@ type joins struct {
 	resetMove     func(string, string, string) error
 	resetLayers   func(string, recoveryManifest) error
 	resetEnvelope func(string, resetPlan) (intent.Recovery, error)
-	// now is the clock the explicit discard dates its discarded ref by. It is a seam so a
-	// test fixes the day that the planned ref and the fingerprint name.
-	now func() time.Time
-	// home is the Bench home the verb's own boundary resolved. The retirement path
-	// needs it to drop the retired assignment's census records, and it travels in the
-	// seam set because every verb that retires an assignment already carries the set
-	// down to that path. The default names the operator's home, so an in-package entry
-	// point that resolves no home of its own still drops the right records.
-	home string
 }
 
 // defaultJoins names the real function behind every seam. It is the one place a default
@@ -109,7 +99,6 @@ func defaultJoins() joins {
 		resolveRunningBinary:     os.Executable,
 		liveBinaryWarnings:       os.Stderr,
 		planLandedExplicit:       planExplicitWith,
-		home:                     Home(),
 		reauthorizeUnlock:        unlockWorktree,
 		reauthorizeLock:          lockWorktree,
 		mergeLane:                gate.LaneForCommit,
@@ -119,6 +108,5 @@ func defaultJoins() joins {
 		resetLayers:              restoreResetLayers,
 		resetEnvelope:            writeResetEnvelope,
 		buildSubject:             runbinary.BuildSubject,
-		now:                      currentTime,
 	}
 }

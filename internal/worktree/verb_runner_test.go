@@ -40,9 +40,10 @@ const (
 	verbLeaseFile   verbKey = "lease-file"
 )
 
-// verbCall is the input of one verb run. A nil joins value runs the verb entry; a joins
-// value runs the verb's joins form with that value unchanged. The kit and the clock
-// fields keep the runner's signature stable until the verbs can take either value.
+// verbCall is the input of one verb run. A call with no joins value, no kit value, and no
+// clock value runs the verb entry. Any other call runs the verb's joins form, with the
+// joins value unchanged or defaultJoins() when the call holds none. The kit value and the
+// clock value replace the reads of the ambient value that the joins form receives.
 type verbCall struct {
 	root  string
 	home  string
@@ -63,10 +64,10 @@ type verbResult struct {
 }
 
 // verbEntry runs a verb's public entry, and joinsForm runs the internal form that takes
-// the seam set.
+// the seam set and the ambient value.
 type (
 	verbEntry func(call verbCall, stdout, stderr io.Writer) (int, string)
-	joinsForm func(j joins, root, home string, args []string, stdout, stderr io.Writer) int
+	joinsForm func(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int
 )
 
 // verbForm is one key's verb entry and, for a verb that has one, its joins form.
@@ -118,7 +119,7 @@ var verbForms = map[verbKey]verbForm{
 // joins form.
 func runVerb(t testing.TB, key verbKey, call verbCall) verbResult {
 	t.Helper()
-	if err := checkVerbCall(call); err != nil {
+	if err := checkVerbCall(key, call); err != nil {
 		t.Fatalf("%v", err)
 		return verbResult{}
 	}
@@ -129,27 +130,48 @@ func runVerb(t testing.TB, key verbKey, call verbCall) verbResult {
 	}
 	var stdout, stderr bytes.Buffer
 	var result verbResult
-	if call.joins != nil {
+	if call.joins == nil && call.kit == "" && call.clock == nil {
+		result.exit, result.assignment = form.entry(call, &stdout, &stderr)
+	} else {
 		if form.joined == nil {
 			t.Fatalf("verb runner: the %s verb has no joins form", key)
 			return verbResult{}
 		}
-		result.exit = form.joined(*call.joins, call.root, call.home, call.args, &stdout, &stderr)
-	} else {
-		result.exit, result.assignment = form.entry(call, &stdout, &stderr)
+		j := defaultJoins()
+		if call.joins != nil {
+			j = *call.joins
+		}
+		result.exit = form.joined(j, callAmbient(call, &stderr), call.root, call.args, &stdout, &stderr)
 	}
 	result.stdout, result.stderr = stdout.String(), stderr.String()
 	return result
 }
 
-// checkVerbCall refuses a kit value and a clock value, because no verb takes either yet
-// and a test must not trust a value the verb ignores.
-func checkVerbCall(call verbCall) error {
+// callAmbient builds the ambient value with the constructor that each verb entry calls.
+// The call's kit value and clock value replace the constructor's reads.
+func callAmbient(call verbCall, stderr io.Writer) ambient {
+	a := newAmbient(call.home, stderr)
 	if call.kit != "" {
-		return errors.New("verb runner: a kit value waits for the seam reduction spec")
+		a.kit = call.kit
 	}
 	if call.clock != nil {
-		return errors.New("verb runner: a clock value waits for the seam reduction spec")
+		a.now = call.clock()
+	}
+	return a
+}
+
+// checkVerbCall refuses a kit value and a clock value for a verb without a joins form,
+// because only a joins form receives the ambient value, and a test must not trust a value
+// the verb ignores.
+func checkVerbCall(key verbKey, call verbCall) error {
+	if verbForms[key].joined != nil {
+		return nil
+	}
+	if call.kit != "" {
+		return fmt.Errorf("verb runner: the %s verb takes no kit value", key)
+	}
+	if call.clock != nil {
+		return fmt.Errorf("verb runner: the %s verb takes no clock value", key)
 	}
 	return nil
 }

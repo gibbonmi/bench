@@ -133,13 +133,13 @@ func TestCleanSetPreflightAllRows(t *testing.T) {
 		t.Parallel()
 		f := removableSetFixture(t, 2)
 		j := defaultJoins()
-		set := planExplicitSet(j, f.root, explicitIdentities(f.creations), CleanupOptions{})
+		set := planExplicitSet(j, f.ambient(), f.root, explicitIdentities(f.creations), CleanupOptions{})
 		if set.fingerprint == "" || len(set.rows) != 2 {
 			t.Fatalf("explicit set = %#v, want two applicable members", set)
 		}
 		driftTracked(t, f.files, set.rows[1].assignment.ID)
 
-		plans, err := applyExplicitSet(j, f.root, set, CleanupOptions{})
+		plans, err := applyExplicitSet(j, f.ambient(), f.root, set, CleanupOptions{})
 		if !errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want a stale refusal before the first transaction", err)
 		}
@@ -156,7 +156,7 @@ func TestCleanSetPreflightAllRows(t *testing.T) {
 		}
 		driftTracked(t, f.files, set.rows[1].assignment.ID)
 
-		plans, err := applyLandedSet(j, f.root, set, CleanupOptions{}, "")
+		plans, err := applyLandedSet(j, f.ambient(), f.root, set, CleanupOptions{}, "")
 		if !errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want a stale refusal before the first transaction", err)
 		}
@@ -187,7 +187,7 @@ func TestCleanSetLateDrift(t *testing.T) {
 	t.Parallel()
 	f := removableSetFixture(t, 2)
 	j := defaultJoins()
-	set := planExplicitSet(j, f.root, explicitIdentities(f.creations), CleanupOptions{})
+	set := planExplicitSet(j, f.ambient(), f.root, explicitIdentities(f.creations), CleanupOptions{})
 	if set.fingerprint == "" || len(set.rows) != 2 {
 		t.Fatalf("explicit set = %#v, want two applicable members", set)
 	}
@@ -199,7 +199,7 @@ func TestCleanSetLateDrift(t *testing.T) {
 		return nil
 	})
 
-	plans, err := applyExplicitSet(j, f.root, set, CleanupOptions{})
+	plans, err := applyExplicitSet(j, f.ambient(), f.root, set, CleanupOptions{})
 	if !errors.Is(err, errStaleFingerprint) || !mutated {
 		t.Fatalf("apply = (%v, mutated=%t), want the under-lock recheck to refuse the raced member", err, mutated)
 	}

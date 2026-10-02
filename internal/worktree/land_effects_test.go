@@ -353,7 +353,7 @@ func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 		return publishVerifyingBroker(t, root, executable)
 	})
 	interrupted := working
-	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	interrupted.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 
 	if r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)

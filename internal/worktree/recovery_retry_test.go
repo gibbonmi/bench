@@ -26,7 +26,7 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 			stop := errors.New("stop before recovery ref creation")
 			faulted := defaultJoins()
 			faulted.cleanupBoundary = failLifecycleStep(StepRecoveryMetadata, stop)
-			_, err = applyExplicitWith(faulted, f.root, f.creation.Path, first.Fingerprint, CleanupOptions{})
+			_, err = applyExplicitWith(faulted, f.ambient(), f.root, f.creation.Path, first.Fingerprint, CleanupOptions{})
 			requireTest(t, errors.Is(err, stop), "first apply error = %v, want %v", err, stop)
 
 			pending, err := assignmentByID(f.root, f.creation.Assignment.ID)
@@ -48,7 +48,7 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 			if afterRemoval {
 				stop = errors.New("stop after worktree removal")
 				faulted.cleanupBoundary = failLifecycleStep(StepRemoval, stop)
-				_, err = applyExplicitWith(faulted, f.root, f.creation.Path, retry.Fingerprint, CleanupOptions{})
+				_, err = applyExplicitWith(faulted, f.ambient(), f.root, f.creation.Path, retry.Fingerprint, CleanupOptions{})
 				requireTest(t, errors.Is(err, stop), "removal interruption = %v, want %v", err, stop)
 				interrupted, readErr := assignmentByID(f.root, f.creation.Assignment.ID)
 				requireTest(t, readErr == nil && interrupted.State == intent.StateCleanupPending && len(interrupted.Recovery) == 1,
