@@ -202,6 +202,7 @@ func TestLandSkipsTheRefreshWithoutBuildInputs(t *testing.T) {
 	j, calls := refreshJoins(nil)
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("not-applicable")) {
 		t.Fatalf("landing without build inputs = (%d, %q, %q), want a not-applicable refresh", r.exit, r.stdout, r.stderr)
 	}
@@ -223,6 +224,7 @@ func TestLandSkipsAFreshBroker(t *testing.T) {
 	j, calls := refreshJoins(nil)
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete")) {
 		t.Fatalf("landing with a fresh broker = (%d, %q, %q), want a complete refresh", r.exit, r.stdout, r.stderr)
 	}
@@ -350,7 +352,9 @@ func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 	interrupted := working
 	interrupted.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 
-	if r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
+	r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 0 {

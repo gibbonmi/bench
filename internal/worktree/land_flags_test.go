@@ -171,19 +171,15 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 				calls++
 				return landing.ReviewedResult{}, errors.New("unexpected landing")
 			}
-			type outcome struct {
-				code        int
-				stdout, err string
-			}
-			done := make(chan outcome, 1)
+			done := make(chan verbResult, 1)
 			go func() {
-				r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, landArgs(request, base, tip, creation.Path)...))
-				done <- outcome{code: r.exit, stdout: r.stdout, err: r.stderr}
+				done <- runVerb(t, verbLand, repoHome{root, home}.callWith(j, landArgs(request, base, tip, creation.Path)...))
 			}()
 			select {
 			case got := <-done:
-				if got.code != 1 || calls != 0 || !strings.HasPrefix(got.stdout, "refused{detail=") || strings.Count(got.stdout, "\n") != 1 || strings.Contains(got.stdout, "\nlanded{") || strings.ContainsRune(got.stdout, '\x1b') || got.err != "" {
-					t.Fatalf("hostile refusal = (%d, calls=%d, stdout=%q, stderr=%q)", got.code, calls, got.stdout, got.err)
+				got.mustViaJoins(t)
+				if got.exit != 1 || calls != 0 || !strings.HasPrefix(got.stdout, "refused{detail=") || strings.Count(got.stdout, "\n") != 1 || strings.Contains(got.stdout, "\nlanded{") || strings.ContainsRune(got.stdout, '\x1b') || got.stderr != "" {
+					t.Fatalf("hostile refusal = (%d, calls=%d, stdout=%q, stderr=%q)", got.exit, calls, got.stdout, got.stderr)
 				}
 			case <-time.After(bounds.TestDeadline(0)):
 				t.Fatal("hostile source refusal blocked")
@@ -279,6 +275,7 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 				args = tc.args(base, tip, creation)
 			}
 			r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, args...))
+			r.mustViaJoins(t)
 			if r.exit != 1 || calls != 0 || !strings.HasPrefix(r.stdout, "refused{detail=") || len(r.stderr) != 0 {
 				t.Fatalf("pre-gate refusal = (%d, calls=%d, stdout=%q, stderr=%q)", r.exit, calls, r.stdout, r.stderr)
 			}

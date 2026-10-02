@@ -113,6 +113,7 @@ func TestResetApplyTakesTheCleanupLock(t *testing.T) {
 	call := f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID)
 	call.joins = &j
 	result := runVerb(t, verbReset, call)
+	result.mustViaJoins(t)
 	requireTest(t, result.exit == 0 && len(attempts) == 0, "plan took cleanup lock: %d %s %s %#v", result.exit, result.stdout, result.stderr, attempts)
 	plan := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID))
 	requireTest(t, plan.exit == 0, "fingerprint plan = %d %s %s", plan.exit, plan.stdout, plan.stderr)

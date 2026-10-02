@@ -55,12 +55,14 @@ type verbCall struct {
 }
 
 // verbResult is the output of one verb run. A verb that returns its output as a string
-// fills stdout and leaves stderr empty. Only the exec verb fills assignment.
+// fills stdout and leaves stderr empty. Only the exec verb fills assignment. viaJoins is
+// true only when the run took the joins form with the call's own joins value.
 type verbResult struct {
 	exit       int
 	stdout     string
 	stderr     string
 	assignment string
+	viaJoins   bool
 }
 
 // verbEntry runs a verb's public entry, and joinsForm runs the internal form that takes
@@ -139,7 +141,7 @@ func runVerb(t testing.TB, key verbKey, call verbCall) verbResult {
 		}
 		j := defaultJoins()
 		if call.joins != nil {
-			j = *call.joins
+			j, result.viaJoins = *call.joins, true
 		}
 		result.exit = form.joined(j, callAmbient(call, &stderr), call.root, call.args, &stdout, &stderr)
 	}
@@ -275,4 +277,14 @@ func (r verbResult) mustNoFingerprint(t testing.TB) {
 		return
 	}
 	t.Fatalf("verb result fingerprint = %q, %v; want no fingerprint\nstdout:\n%s", value, err, r.stdout)
+}
+
+// mustViaJoins fails t unless the run took the joins form with the call's joins value. A
+// test that asserts a joins stub was not called uses it to prove that the run could reach
+// the stub.
+func (r verbResult) mustViaJoins(t testing.TB) {
+	t.Helper()
+	if !r.viaJoins {
+		t.Fatalf("verb result took the public entry, want the joins form with the call's joins value\nstdout:\n%s\nstderr:\n%s", r.stdout, r.stderr)
+	}
 }
