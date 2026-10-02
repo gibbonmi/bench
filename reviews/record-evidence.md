@@ -328,6 +328,60 @@
           "requirement": "2-conformance",
           "command": "bench test --package ./internal/conformance",
           "exit_code": 0
+        },
+        {
+          "id": "re-c2-v2-reviewrecord",
+          "performer": "claude:bench-writer/re-t2-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "52926b7bdd603363e2b5cd136fa2e13ff3a590d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-1-20261002/verify-2-reviewrecord",
+            "digest": "sha256:6aeedb2eed9a301cc1af029ac4b14142af8c422aeaf149f853abf7f6f94d7dbf",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1621\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,1433\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c2-v2-cmd",
+          "performer": "claude:bench-writer/re-t2-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "52926b7bdd603363e2b5cd136fa2e13ff3a590d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-1-20261002/verify-2-cmd",
+            "digest": "sha256:799963ba903ba967d43939a3ac809ea9daae8403bbb6c8eab954fc0da5ba0748",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,12807\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:"
+          },
+          "requirement": "2-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c2-v2-conformance",
+          "performer": "claude:bench-writer/re-t2-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "52926b7bdd603363e2b5cd136fa2e13ff3a590d8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t2-repair-1-20261002/verify-2-conformance",
+            "digest": "sha256:2f5d8ce7c3de0356cd25aee3080a64a74affa43c01f359702b8694f2f1ae29b6",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,36995\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/D2BAGZ/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket1559422179/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/D2BAGZ/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket3509778556/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\""
+          },
+          "requirement": "2-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -657,3 +711,15 @@ The repair commit `42a1a5b7` closes T1, T2, and T3. Its own sweep found that the
 The repair probes bit RE112 and RE113 with `restored=yes`. The coordinator probe made `graded` accept every state. `bench probe` returned `bit` on RE112 with `restored=yes`.
 
 The orchestrator re-froze RE-C2 with `bench record chunk`, with base `6d7f3969` and tip `48ab8bdf`. The chunk now holds 34 acceptance rows. A second identity amendment moves the record plan digest to the plan at that tip.
+
+## RE-C2 repair 1 verification
+
+The repair session `claude:bench-writer/re-t2-repair-1` ran the three ticket 2 checks again at `663a5b85`. The source digest is `52926b7b`. The entries `re-c2-v2-reviewrecord`, `re-c2-v2-cmd`, and `re-c2-v2-conformance` record these runs. The earlier entries stay in the record.
+
+| Requirement | Command | Result | Wall time |
+|---|---|---|---|
+| `2-reviewrecord` | `bench test --package ./internal/reviewrecord/...` | pass, exit 0 | 1621 ms and 1433 ms |
+| `2-cmd` | `bench test --package ./cmd/bench` | pass, exit 0 | 12807 ms |
+| `2-conformance` | `bench test --package ./internal/conformance` | pass, exit 0 | 36995 ms |
+
+The conformance run skipped three tests for capability reasons: two socket tests and one character-device test. These skips are not in the ticket 2 delta.
