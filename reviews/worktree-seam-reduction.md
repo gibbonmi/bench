@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:909699cd78b9c5c2fc464daae1bfef4d6fcb70aebf74afc38ed4d48385d8d976",
+  "plan_digest": "sha256:f16cc9cb766f3c75b004517d02033ea11e7831e516954910beca41fbcdbe298d",
   "implementation_session": "",
   "chunks": [
     {
@@ -193,6 +193,44 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SR-C2",
+      "base": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+      "tip": "f620ccd6e416501f2d4cf504d5090f3cb5104c80",
+      "plan_digest": "sha256:f16cc9cb766f3c75b004517d02033ea11e7831e516954910beca41fbcdbe298d",
+      "source_digest": "b46d93c63bb58354d46a8869edec68fe5fb1e180",
+      "acceptance_rows": [
+        "WS9",
+        "WS10",
+        "WS11",
+        "WS12",
+        "WS13",
+        "WS14",
+        "WS15",
+        "WS16"
+      ],
+      "verification": [
+        {
+          "id": "sr-c2-2-worktree",
+          "performer": "claude:bench-writer/sr-t2-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b46d93c63bb58354d46a8869edec68fe5fb1e180",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t2-author-20261002@3ecdaffff22967433363e9495c8807f14e2f85ea",
+            "digest": "sha256:b3be7a9e9dbb0eb6edc3bf2baa842efe38557f107ba93a8cabed79d58d2cdedb",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,f620ccd6e416501f2d4cf504d5090f3cb5104c80,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,56225\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable: listen unix ... (280 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix ... (279 bytes)\"\n"
+          },
+          "requirement": "2-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -206,6 +244,15 @@
     {
       "from": "sha256:c9feebcde5a12aebbaeb53a8476ca2a1b81cd3483ee036c1544f4df7b7b01e8f",
       "to": "sha256:909699cd78b9c5c2fc464daae1bfef4d6fcb70aebf74afc38ed4d48385d8d976",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:909699cd78b9c5c2fc464daae1bfef4d6fcb70aebf74afc38ed4d48385d8d976",
+      "to": "sha256:f16cc9cb766f3c75b004517d02033ea11e7831e516954910beca41fbcdbe298d",
       "chunk_ids": {
         "SR-C1": [
           "SR-C1"
