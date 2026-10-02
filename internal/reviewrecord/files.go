@@ -87,8 +87,10 @@ func ReadTree(root, tree, spec string) (Record, error) {
 	return parseRecord(data, spec)
 }
 
+const recordFence = "bench-review-record"
+
 func parseRecord(data []byte, spec string) (Record, error) {
-	payload, err := fenced(data, "bench-review-record")
+	payload, err := fenced(data, recordFence)
 	if err != nil {
 		return Record{}, err
 	}

@@ -214,25 +214,49 @@ func uniqueJSON(d *json.Decoder) error {
 }
 
 func fenced(data []byte, name string) ([]byte, error) {
-	var payload []string
+	span, err := locate(data, name)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.TrimSuffix(data[span.start:span.end], []byte("\n")), nil
+}
+
+// fenceSpan holds the byte offsets of the payload lines of one fence. start is
+// the first byte after the opening line, and end is the first byte of the
+// closing line, so the span keeps the newline of its last payload line.
+type fenceSpan struct{ start, end int }
+
+// fenceMarker opens a fence when the fence name follows it, and it closes the
+// fence on a line of its own.
+const fenceMarker = "```"
+
+// locate is the one fence scanner. fenced reads the payload through it, and
+// Render replaces the span that it reports, so a reader and a writer cannot
+// disagree about where a fence starts or ends.
+func locate(data []byte, name string) (fenceSpan, error) {
+	var span fenceSpan
 	active, found := false, false
-	for _, line := range strings.Split(string(data), "\n") {
-		if line == "```"+name {
-			if active || found {
-				return nil, fmt.Errorf("invalid duplicate %s fence", name)
-			}
-			active, found = true, true
-		} else if active && line == "```" {
-			active = false
-		} else if active {
-			payload = append(payload, line)
+	for offset := 0; offset <= len(data); {
+		length := bytes.IndexByte(data[offset:], '\n')
+		if length < 0 {
+			length = len(data) - offset
 		}
+		line, next := string(data[offset:offset+length]), offset+length+1
+		if line == fenceMarker+name {
+			if active || found {
+				return span, fmt.Errorf("invalid duplicate %s fence", name)
+			}
+			active, found, span.start = true, true, next
+		} else if active && line == fenceMarker {
+			active, span.end = false, offset
+		}
+		offset = next
 	}
 	if active {
-		return nil, fmt.Errorf("invalid unterminated %s fence", name)
+		return span, fmt.Errorf("invalid unterminated %s fence", name)
 	}
 	if !found {
-		return nil, missingFence{name}
+		return span, missingFence{name}
 	}
-	return []byte(strings.Join(payload, "\n")), nil
+	return span, nil
 }

@@ -320,7 +320,7 @@ func (f *Fixture) Complete() {
 
 func (f *Fixture) Save() {
 	f.T.Helper()
-	data, err := json.MarshalIndent(f.Record, "", "  ")
+	data, err := rr.Render(nil, f.Record)
 	if err != nil {
 		f.T.Fatal(err)
 	}
@@ -328,5 +328,5 @@ func (f *Fixture) Save() {
 	if err != nil {
 		f.T.Fatal(err)
 	}
-	f.Write(path, "# Review outcomes\n\n```bench-review-record\n"+string(data)+"\n```\n")
+	f.Write(path, string(data))
 }
