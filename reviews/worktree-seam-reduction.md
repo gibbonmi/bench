@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:91896c9524239efaed06535c7aaa1a3a9dccbf36b8e1c70a6e5c218d0e702106",
+  "plan_digest": "sha256:0b9891d636d2808e586350a2af91a6124c2065c3da69f18e1eacf203da259754",
   "implementation_session": "",
   "chunks": [
     {
@@ -1539,9 +1539,9 @@
     {
       "id": "SR-C7",
       "base": "650a614f22a95cdbeb8608436531fd2522025e84",
-      "tip": "c3c2aed5743a397826aaa3ed53f30fccabc907d2",
-      "plan_digest": "sha256:91896c9524239efaed06535c7aaa1a3a9dccbf36b8e1c70a6e5c218d0e702106",
-      "source_digest": "b18681abbbe5d5169165223ed5944e32337834f4",
+      "tip": "c8b68ec1e1fd8de6106442f497ba4c2c80c07751",
+      "plan_digest": "sha256:0b9891d636d2808e586350a2af91a6124c2065c3da69f18e1eacf203da259754",
+      "source_digest": "262ff627c94594a33ae3b378f33106dc8cd714a1",
       "acceptance_rows": [
         "WS71",
         "WS72",
@@ -1588,6 +1588,24 @@
             "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,2ab74e4a49ce47dd4e9bad31fc6622a0092d652b,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,65765\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\nWS71 probe: classifier.go swap toon.Table(cleanupTable, ...) -> toon.Table(\"worktree_cleanup\", ...), verdict bit, failed 1, restored yes\nWS72 probe: table_name_census_test.go omit blockArgs[call.Args[index]] = true, verdict bit, failed 5, restored yes\nWS73 probe: table_name_census_test.go swap strings.HasPrefix(text, name+\"[\") -> text == name, verdict bit, failed 7, restored yes\nWS74 probe: clean_set_test.go swap cleanupTable+\"[0]\" -> \"worktree_cleanup[0]\", verdict bit, failed 1, restored yes\n"
           },
           "requirement": "14-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c7-15-worktree-r1",
+          "performer": "claude:bench-writer/sr-t15-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "262ff627c94594a33ae3b378f33106dc8cd714a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t15-repair1-20261002@9ece0fde9ec56bb0dbdaf3183eb97eb7f99dc04a",
+            "digest": "sha256:d84fab340496b8b34a6be33ec80080f5097dc1b63faf36f49168545f8389b14f",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,c8b68ec1e1fd8de6106442f497ba4c2c80c07751,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,76732\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n\nProbes of the first author (each: verdict bit, restored yes):\n1. bench probe internal/worktree/reset_apply_test.go --swap $'call.joins = &j\\n\\tresult := runVerb(t, verbReset, call)\\n\\tresult.mustViaJoins(t)' --with $'result := runVerb(t, verbReset, call)\\n\\tresult.mustViaJoins(t)' --package ./internal/worktree --run '^TestResetApplyTakesTheCleanupLock$' -> bit, failed_tests 1, restored yes\n2. bench probe internal/worktree/land_effects_test.go --swap $'f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))\\n\\tr.mustViaJoins(t)\\n\\tif r.exit != 0 || !strings.Contains(r.stdout, wantEffects(\"not-applicable\"))' --with $'f.call(landArgs(request, f.base, f.tip, f.creation.Path)...)); _ = j\\n\\tr.mustViaJoins(t)\\n\\tif r.exit != 0 || !strings.Contains(r.stdout, wantEffects(\"not-applicable\"))' --package ./internal/worktree --run '^TestLandSkipsTheRefreshWithoutBuildInputs$' -> bit, failed_tests 1, restored yes\n3. bench probe internal/worktree/land_effects_test.go --swap $'f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))\\n\\tr.mustViaJoins(t)\\n\\tif r.exit != 0 || !strings.Contains(r.stdout, wantEffects(\"complete\"))' --with $'f.call(landArgs(request, f.base, f.tip, f.creation.Path)...)); _ = j\\n\\tr.mustViaJoins(t)\\n\\tif r.exit != 0 || !strings.Contains(r.stdout, wantEffects(\"complete\"))' --package ./internal/worktree --run '^TestLandSkipsAFreshBroker$' -> bit, failed_tests 1, restored yes\n4. bench probe internal/worktree/land_effects_test.go --swap 'f.callWith(interrupted, landArgs(request, f.base, f.tip, f.creation.Path)...))' --with 'f.call(landArgs(request, f.base, f.tip, f.creation.Path)...)); _ = interrupted' --package ./internal/worktree --run '^TestResumeReadsEffectStateFromTheTree$' -> bit, failed_tests 1, restored yes\n5. bench probe internal/worktree/land_flags_test.go --swap 'repoHome{root, home}.callWith(j, landArgs(request, base, tip, creation.Path)...))' --with 'repoHome{root, home}.call(landArgs(request, base, tip, creation.Path)...)); _ = j' --package ./internal/worktree --run '^TestLandCommandHostileSourceInputsRefuseBoundedly$' -> bit, failed_tests 2, restored yes\n6. bench probe internal/worktree/land_flags_test.go --swap 'repoHome{root, home}.callWith(j, args...))' --with 'repoHome{root, home}.call(args...)); _ = j' --package ./internal/worktree --run '^TestLandCommandRefusesDestinationAndSourceStateBeforeGate$' -> bit, failed_tests 7, restored yes\n\nProbes of the repair (commit 722151f8; before = base 8aacea21, after = repair tree; restored yes on every run):\n7. bench probe internal/worktree/verb_runner_test.go --swap 'j := defaultJoins()' --with 'j := defaultJoins(); result.viaJoins = true' --package ./internal/worktree --run '^TestVerbResultReportsTheJoinsRoute$' -> before silent, after bit (failed_tests 1)\n8. bench probe internal/worktree/land_identity_test.go --swap 'r := runVerb(t, verbLand, f.callWith(j, landArgs(\"land-identity-request-changed\", f.base, f.tip, f.creation.Path)...))' --with '_ = j; r := runVerb(t, verbLand, f.call(landArgs(\"land-identity-request-changed\", f.base, f.tip, f.creation.Path)...))' --package ./internal/worktree --run '^TestLandCommandInvalidatesAChangedRequestBeforeComposition$' -> before silent, after bit (failed_tests 1)\n9. bench probe internal/worktree/land_identity_test.go --swap 'r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.tip, f.tip, f.creation.Path)...))' --with '_ = j; r := runVerb(t, verbLand, f.call(landArgs(request, f.tip, f.tip, f.creation.Path)...))' --package ./internal/worktree --run '^TestLandCommandInvalidatesAChangedReviewBaseBeforeComposition$' -> before silent, after bit (failed_tests 1)\n10. bench probe internal/worktree/land_identity_test.go --swap $'\"tip moved after review\")\\n\\tj, composed := forbidLandingComposition()\\n\\n\\tr := runVerb(t, verbLand, f.callWith(j, ' --with $'\"tip moved after review\")\\n\\t_, composed := forbidLandingComposition()\\n\\n\\tr := runVerb(t, verbLand, f.call(' --package ./internal/worktree --run '^TestLandCommandInvalidatesAChangedSourceTipBeforeComposition$' -> before silent, after bit (failed_tests 1)\n11. bench probe internal/worktree/land_identity_test.go --swap $'0o600)\\n\\tj, composed := forbidLandingComposition()\\n\\n\\tr := runVerb(t, verbLand, f.callWith(j, ' --with $'0o600)\\n\\t_, composed := forbidLandingComposition()\\n\\n\\tr := runVerb(t, verbLand, f.call(' --package ./internal/worktree --run '^TestLandCommandInvalidatesAChangedSourceFingerprintBeforeTheGate$' -> before silent, after bit (failed_tests 1)\n12. bench probe internal/worktree/land_identity_test.go --swap 'r := runVerb(t, verbLand, f.callWith(j, specLessLandArgs(request, f.fold, f.tip, f.creation.Path)...))' --with '_ = j; r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.fold, f.tip, f.creation.Path)...))' --package ./internal/worktree --run '^TestLandCommandRefusesAReviewBaseThatIsNotAnAncestorOfTheDestination$' -> before silent, after bit (failed_tests 1)\n13. bench probe internal/worktree/land_identity_test.go --swap 'r := runVerb(t, verbLand, f.callWith(j, specLessLandArgs(request, earlier, f.tip, f.creation.Path)...))' --with '_ = j; r := runVerb(t, verbLand, f.call(specLessLandArgs(request, earlier, f.tip, f.creation.Path)...))' --package ./internal/worktree --run '^TestLandCommandRefusesAReviewBaseBehindTheRecordedStart$' -> before silent, after bit (failed_tests 1)\n"
+          },
+          "requirement": "15-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
@@ -1873,6 +1891,60 @@
         ],
         "SR-C6": [
           "SR-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:91896c9524239efaed06535c7aaa1a3a9dccbf36b8e1c70a6e5c218d0e702106",
+      "to": "sha256:68136d4968b5827354ecb7f32914c79e099f0d35097e1b8a7e0c2f930495044b",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ],
+        "SR-C3": [
+          "SR-C3"
+        ],
+        "SR-C4": [
+          "SR-C4"
+        ],
+        "SR-C5": [
+          "SR-C5"
+        ],
+        "SR-C6": [
+          "SR-C6"
+        ],
+        "SR-C7": [
+          "SR-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:68136d4968b5827354ecb7f32914c79e099f0d35097e1b8a7e0c2f930495044b",
+      "to": "sha256:0b9891d636d2808e586350a2af91a6124c2065c3da69f18e1eacf203da259754",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ],
+        "SR-C3": [
+          "SR-C3"
+        ],
+        "SR-C4": [
+          "SR-C4"
+        ],
+        "SR-C5": [
+          "SR-C5"
+        ],
+        "SR-C6": [
+          "SR-C6"
+        ],
+        "SR-C7": [
+          "SR-C7"
         ]
       }
     }
