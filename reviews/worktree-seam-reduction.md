@@ -503,6 +503,72 @@
           "tip": "c87a0c3f7953210e3d22c356e948e9e15c302be0",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "sr-c3-r2-standards",
+          "performer": "claude:bench-reviewer/sr-c3-r2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "10868402ca906886b2bab1c1cfd2a26b5e6e5cac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c3-r2-standards-20261002@c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+            "digest": "sha256:383608e4ff4d93e4ddcbfb99d207f3c9c0455adb64e325ea3849b34c71bfa353",
+            "excerpt": "Standards axis, SR-C3 confirming round, repair delta c87a0c3f..c63781f2: pass, 0 findings.\nS1: confirmed. internal/worktree/merge_caller_root_test.go:35-41 states the current mechanism: the primary declares a failing lane, so a merge that resolves its lane at the caller root exits red, and the prose check reads the composed tree. The history tag is gone.\nThe failing lane at merge_caller_root_test.go:54 calls the existing commitLaneManifest (line 32). The delta adds no second manifest writer.\nblocking findings: none.\n"
+          },
+          "axis": "Standards",
+          "base": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+          "tip": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c3-r1-standards"
+          ]
+        },
+        {
+          "id": "sr-c3-r2-spec",
+          "performer": "claude:bench-reviewer/sr-c3-r2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "10868402ca906886b2bab1c1cfd2a26b5e6e5cac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c3-r2-spec-20261002@c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+            "digest": "sha256:2f83065e3b017a906f5e17e50f4567f88fa3ac8a11dd71dbf49963b59e348091",
+            "excerpt": "Spec axis, SR-C3 confirming round, repair delta c87a0c3f..c63781f2: pass, 0 findings.\nP1: confirmed. The test name and its assertions are unchanged (internal/worktree/merge_caller_root_test.go:57-58). The new line commits a failing caller lane on f.root after the assignments exist (merge_caller_root_test.go:54).\nScope: confirmed. Under internal/, the delta touches only internal/worktree/merge_caller_root_test.go.\nWS22: closed. A lane anchored at the caller root runs the exit 1 lane and turns the exit assertion red (spec.md:380). The axis ran no test.\nblocking findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+          "tip": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c3-r1-spec"
+          ]
+        },
+        {
+          "id": "sr-c3-r2-coverage",
+          "performer": "claude:bench-reviewer/sr-c3-r2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "10868402ca906886b2bab1c1cfd2a26b5e6e5cac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c3-r2-coverage-20261002@c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+            "digest": "sha256:679e592fa2e3049540892bda9ee028b5cd344717fd02e5e14d8fe1c3841ee5e6",
+            "excerpt": "Coverage axis, SR-C3 confirming round, repair delta c87a0c3f..c63781f2: pass, 0 findings.\nWS22 catch: confirmed. The delta adds commitLaneManifest(t, f.root, ...) with a failing lane at the caller root.\nProbe: bench probe internal/worktree/merge.go --swap 'fingerprint, err := landing.CheckoutFingerprint(target.Worktree)' --with 'fingerprint, err := landing.CheckoutFingerprint(target.Worktree); target.Worktree = root' --package ./internal/worktree --run TestMergeGradesIncomingProseFromTheComposedTreeWhateverTheCallerRoot. Verdict bit, restored yes. The test fails at merge_caller_root_test.go:58 because the caller-root lane ran. This rebind also moves request.Worktree to the root.\nblocking findings: none.\nFinal git status: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+          "tip": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c3-r1-coverage"
+          ]
         }
       ]
     }
@@ -698,3 +764,7 @@ One fresh opus / high repair session, `claude:bench-writer/sr-t3-repair1`, repai
 The WS22 test now commits a failing lane on the primary checkout. Only a merge that resolves its lane at the caller root reads that lane. The comment states that mechanism. The named swap probe in `merge.go` was `silent` before the repair and `bit` after it. A second probe moved the authorize root in `internal/landing/merge.go`, and it returned `bit`, so the grading-root catch still holds.
 
 The coordinator ran the named swap probe on the repaired tree. It returned `bit` with 1 failed test and `restored=yes`. That probe repeats the site of the repair session, so the confirming Coverage axis runs another mutation.
+
+## SR-C3 confirming round
+
+Three fresh opus / high sessions read the repair delta `c87a0c3f..c63781f2`. Each axis confirmed its fold and reported no blocking finding, and the Spec axis closed WS22. The Coverage axis moved `target.Worktree` to the caller root at a third site in `merge.go`, and the probe returned `bit` with `restored=yes`. SR-C3 has no open finding, and 1 of 2 repair cycles is used.
