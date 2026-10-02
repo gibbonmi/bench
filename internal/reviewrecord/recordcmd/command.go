@@ -6,6 +6,7 @@ package recordcmd
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -36,7 +37,7 @@ type form struct {
 	name, description string
 	flags             []flag
 	layout            []string
-	valid             func(values map[string]string) bool
+	valid             func(f form, values map[string]string) bool
 	run               func(f form, root, spec string, values map[string]string) (string, int)
 }
 
@@ -149,7 +150,7 @@ func Command(root string, args []string) (string, int) {
 	if line != "" {
 		return line + "\n", code
 	}
-	if f.valid != nil && !f.valid(parsed.Flags) {
+	if f.valid != nil && !f.valid(f, parsed.Flags) {
 		return f.grammar().Help + "\n", 2
 	}
 	if root == "" {
@@ -211,8 +212,9 @@ func integer(values map[string]string, name string) (int, bool) {
 	return n, err == nil
 }
 
-// verificationValid holds the verification grammar rules that span flags.
-func verificationValid(values map[string]string) bool {
+// verificationValid holds the verification grammar rules that span flags or close a
+// value set. The restore values are the alternatives of the --probe-restore placeholder.
+func verificationValid(f form, values map[string]string) bool {
 	present := func(name string) bool { _, ok := values[name]; return ok }
 	probes := 0
 	for _, name := range probeFlags {
@@ -222,8 +224,9 @@ func verificationValid(values map[string]string) bool {
 	}
 	_, exitCode := integer(values, "--exit-code")
 	_, probeExitCode := integer(values, probeFlags[1])
+	restore := slices.Contains(strings.Split(f.flag(probeFlags[2]).placeholder, "|"), values[probeFlags[2]])
 	return present("--chunk") != present("--final") && (present("--source") || !present("--final")) &&
-		(probes == 0 || probes == len(probeFlags) && probeExitCode) && exitCode
+		(probes == 0 || probes == len(probeFlags) && probeExitCode && restore) && exitCode
 }
 
 // native reads the --excerpt file as exact bytes and pairs them with --ref. The read

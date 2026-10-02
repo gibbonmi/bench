@@ -354,6 +354,7 @@ func TestRecordVerificationGrammarRefusals(t *testing.T) {
 		"final without source": {"--chunk": drop, "--final": ""},
 		"one probe flag":       {"--probe-exit-code": drop, "--probe-restore": drop},
 		"non-integer exit":     {"--exit-code": "x"},
+		"restore outside":      {"--probe-restore": "maybe"},
 	} {
 		out, code := recordcmd.Command(f.Root, verifyArgs(t, edit))
 		if code != 2 || !strings.HasPrefix(out, "usage: bench record verification") {
