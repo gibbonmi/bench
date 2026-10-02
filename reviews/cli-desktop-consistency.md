@@ -36,8 +36,11 @@ Cycle 3 also moves this test to the existing private kit-copy fixture.
 Its current verification passed, including both planned mutations and verified restoration.
 The detailed results are in specs/cli-desktop-consistency/assets/repair-cycle-3.md.
 All three current native axes completed against the committed repair.
-The two initial cycles and the one reviewer-approved extension are consumed.
-ST-R3-1 remains open, so further repair and the checkpoint await a reviewer decision.
+
+The two initial cycles and the first reviewer-approved extension are consumed.
+The reviewer approved one additional cycle for ST-R3-1 on 2026-10-02.
+Cycle 4 removes the duplicated comment, refreshes required evidence, and runs the C1 checkpoint.
+The original author session retains the repair, and all checks remain required.
 
 C2 and C3 remain blocked until the checkpoint passes.
 The complete specification remains unqualified until its live requirements pass.
