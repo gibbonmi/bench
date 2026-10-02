@@ -149,6 +149,7 @@ Bench reports conflicts and never synchronizes credentials, personal preferences
 
 Compatibility repair uses canonical Bench payload provenance to select eligible destinations.
 Only missing or unchanged Bench-managed assets qualify for automatic replacement.
+When a check finds an eligible repair, the agent invokes the compatibility fix before repeating the affected checks.
 Modified managed files and foreign files remain unchanged with a conflict action.
 The kit source checkout uses its existing doctor repair route and never links consumer copies over source files.
 
@@ -335,13 +336,15 @@ Won't handle: authentication against a malicious same-user process — existing 
 
 ## Ownership fences
 
-- `CONTEXT.md`
 - `.bench/BENCH-reference.md`
 - `.bench/BENCH.md`
 - `.bench/hooks/session-start.sh`
 - `CHANGELOG.md`
+- `CONTEXT.md`
 - `DATA_HANDLING.md`
 - `README.md`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/main.go`
 - `internal/adopt`
@@ -349,11 +352,88 @@ Won't handle: authentication against a malicious same-user process — existing 
 - `internal/adopt/compatibility_test.go`
 - `internal/adopt/doctor.go`
 - `internal/anchors`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_decision_maps.go`
+- `internal/anchors/registry_decision_maps_test.go`
 - `internal/compatibility`
+- `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/entry_point_parity_bite_test.go`
 - `internal/conformance/entry_point_parity_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
 - `internal/sessioninspect`
 - `internal/systemtest/compatibility_test.go`
+- `tests/canary/data-handling-derivation/undocumented-passlist-var`
+- `tests/canary/docs-currency-token-diet/benchref-imported`
+- `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
+- `tests/canary/docs-currency-token-diet/benchref-section-duplicated`
+- `tests/canary/docs-currency-token-diet/dogfood-referent-shipped`
+- `tests/canary/docs-currency-token-diet/missing-cli-inventory`
+- `tests/canary/docs-currency-token-diet/readme-command-first`
+- `tests/canary/docs-currency-token-diet/signal-vocabulary-drift`
+- `tests/canary/docs-currency-token-diet/stale-cli-doc-reference`
+- `tests/canary/load-validity-metadata/readme-shared-rule-drift`
+- `tests/canary/load-validity-metadata/shared-rule-drift`
+- `tests/canary/package-core-guard/unrouted-subcommand`
+- `tests/canary/skills-index-command-adapters/adapter-inert-invocation-key`
+- `tests/canary/skills-index-command-adapters/command-invocation-disabled-against-policy`
+- `tests/canary/skills-index-command-adapters/dangling-index`
+- `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
+- `tests/canary/skills-index-command-adapters/missing-index-field`
+- `tests/canary/skills-index-command-adapters/stale-index-wording`
+- `tests/canary/skills-index-command-adapters/unindexed-skill`
+- `tests/canary/workflow-guidance-anchors/agents-handoff-section-rule`
+- `tests/canary/workflow-guidance-anchors/capture-sink-anchor`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
+- `tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary`
+- `tests/canary/workflow-guidance-anchors/context-coverage-map-term`
+- `tests/canary/workflow-guidance-anchors/context-coverage-row-parts`
+- `tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary`
+- `tests/canary/workflow-guidance-anchors/context-decision-map-term`
+- `tests/canary/workflow-guidance-anchors/context-reader-sweep-term`
+- `tests/canary/workflow-guidance-anchors/context-ticket-vocabulary`
+- `tests/canary/workflow-guidance-anchors/core-absent-bench-operational-layer`
+- `tests/canary/workflow-guidance-anchors/core-absent-category-context`
+- `tests/canary/workflow-guidance-anchors/core-absent-category-oracle`
+- `tests/canary/workflow-guidance-anchors/core-absent-category-setup`
+- `tests/canary/workflow-guidance-anchors/core-absent-category-work`
+- `tests/canary/workflow-guidance-anchors/core-absent-gate-authority`
+- `tests/canary/workflow-guidance-anchors/core-absent-kit-only-ship`
+- `tests/canary/workflow-guidance-anchors/core-absent-no-path-fallback`
+- `tests/canary/workflow-guidance-anchors/core-absent-retained-integration-source`
+- `tests/canary/workflow-guidance-anchors/core-absent-retro-capture-owner`
+- `tests/canary/workflow-guidance-anchors/core-absent-retro-drain-owner`
+- `tests/canary/workflow-guidance-anchors/core-absent-skills-guidance`
+- `tests/canary/workflow-guidance-anchors/core-absent-upgrade-route`
+- `tests/canary/workflow-guidance-anchors/core-cli-bounded-complete-response`
+- `tests/canary/workflow-guidance-anchors/core-cli-call-pair`
+- `tests/canary/workflow-guidance-anchors/core-progressive-loading-term`
+- `tests/canary/workflow-guidance-anchors/delegated-chunk-tip-review`
+- `tests/canary/workflow-guidance-anchors/delegated-green-predecessor`
+- `tests/canary/workflow-guidance-anchors/delegated-opt-in-entry`
+- `tests/canary/workflow-guidance-anchors/delegated-pending-predecessor-stop`
+- `tests/canary/workflow-guidance-anchors/delegated-prerequisite-checkpoint`
+- `tests/canary/workflow-guidance-anchors/delegated-repair-ownership`
+- `tests/canary/workflow-guidance-anchors/fix-dont-park-section-relocated`
+- `tests/canary/workflow-guidance-anchors/light-path-inline`
+- `tests/canary/workflow-guidance-anchors/readme-shaping-skip`
+- `tests/canary/workflow-guidance-anchors/reference-agent-push-rule`
+- `tests/canary/workflow-guidance-anchors/reference-bench-operational-layer`
+- `tests/canary/workflow-guidance-anchors/reference-category-context`
+- `tests/canary/workflow-guidance-anchors/reference-category-oracle`
+- `tests/canary/workflow-guidance-anchors/reference-category-setup`
+- `tests/canary/workflow-guidance-anchors/reference-category-work`
+- `tests/canary/workflow-guidance-anchors/reference-gate-authority`
+- `tests/canary/workflow-guidance-anchors/reference-kit-only-ship`
+- `tests/canary/workflow-guidance-anchors/reference-no-path-fallback`
+- `tests/canary/workflow-guidance-anchors/reference-progressive-loading-term`
+- `tests/canary/workflow-guidance-anchors/reference-refusal-route-shape`
+- `tests/canary/workflow-guidance-anchors/reference-retro-capture-owner`
+- `tests/canary/workflow-guidance-anchors/reference-retro-drain-owner`
+- `tests/canary/workflow-guidance-anchors/reference-skills-guidance`
+- `tests/canary/workflow-guidance-anchors/reference-upgrade-route`
+- `tests/canary/workflow-guidance-anchors/structured-phase-progress-anchor`
+- `tests/canary/workflow-guidance-anchors/ticket-light-path-anchor`
 
 Reviewer disposition: proposed for approval with the ticket graph.
 The fence is the union of ticket writes outside the spec and capture folders.

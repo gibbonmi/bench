@@ -48,3 +48,14 @@ The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dol
 - Attribute upstream inventory omissions separately from author defects.
 - Keep model identity, usage, costs, and unscored claims explicit when evidence is unavailable.
 - Change routing only after comparable evidence or explicit user direction.
+
+## Pending specification evidence
+
+On 2026-10-02, the invoking session authored the staged CLI and desktop consistency spec under the user's explicit authorship choice.
+The declared authoring line was Astra / high; provider usage, cost, and comparative latency are unknown.
+The draft defines 64 acceptance rows across three serial tickets.
+Mechanical author checks found planned-test citation and ownership-closure defects, which the author corrected before sign-off.
+Independent reviewer sign-off and implementation qualification remain pending.
+
+The proposed implementation line is Sol / high, with repair and live qualification identified as the harder chunks.
+This specification supplies no new implementation performance evidence and does not change the routing table.

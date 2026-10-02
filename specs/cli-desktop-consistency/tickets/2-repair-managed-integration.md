@@ -1,7 +1,7 @@
 # Repair managed integration reversibly
 
 Blocked by: 1-diagnose-interface.md
-Writes: internal/adopt, cmd/bench/main.go, cmd/bench/help_inventory_test.go, internal/systemtest/compatibility_test.go (new), DATA_HANDLING.md
+Writes: internal/adopt, cmd/bench/main.go, cmd/bench/help_inventory_test.go, internal/systemtest/compatibility_test.go (new), DATA_HANDLING.md, tests/canary/package-core-guard/unrouted-subcommand, tests/canary/data-handling-derivation/undocumented-passlist-var, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: CD18, CD19, CD20, CD21, CD22, CD23, CD24, CD25, CD26, CD27, CD28, CD29, CD30, CD31, CD32, CD33, CD34, CD35, CD36
 
 ## What to build
