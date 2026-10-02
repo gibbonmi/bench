@@ -19,18 +19,18 @@ import (
 func TestLandRecordsOneTraceForThePhases(t *testing.T) {
 	t.Parallel()
 	request := "land-one-trace"
-	root, creation, base, tip, _, home := specLessLandingFixture(t, request)
+	f := specLessLandingFixture(t, request)
 
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, specLessLandArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
+	if code := LandCommand(f.root, f.home, specLessLandArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 0 {
 		t.Fatalf("land = %d, want 0: %q %q", code, stdout.String(), stderr.String())
 	}
 
-	landing, ok := otelrecord.NewestLanding(home, root)
+	landing, ok := otelrecord.NewestLanding(f.home, f.root)
 	if !ok {
 		t.Fatal("the landing's record names no completed landing")
 	}
-	spans, err := otelrecord.ReadSpans(home, root)
+	spans, err := otelrecord.ReadSpans(f.home, f.root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestLandRecordsOneTraceForThePhases(t *testing.T) {
 	for _, span := range spans {
 		if span.Seam == otelrecord.SeamLanding && span.TraceID == landing.TraceID {
 			found = true
-			if span.Attributes[otelrecord.AttrAssignmentID] != creation.Assignment.ID {
+			if span.Attributes[otelrecord.AttrAssignmentID] != f.creation.Assignment.ID {
 				t.Fatalf("landing lost resolved assignment: %+v", span)
 			}
 		}
@@ -46,7 +46,7 @@ func TestLandRecordsOneTraceForThePhases(t *testing.T) {
 	if !found {
 		t.Fatal("landing span missing")
 	}
-	authorized, err := otelrecord.ReadSpans(privateBenchHome, root)
+	authorized, err := otelrecord.ReadSpans(privateBenchHome, f.root)
 	if err != nil {
 		t.Fatalf("read the authorization's record: %v", err)
 	}

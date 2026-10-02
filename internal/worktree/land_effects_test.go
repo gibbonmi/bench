@@ -18,25 +18,26 @@ import (
 // brokerChangingLanding is the landing fixture whose reviewed diff changes the promotion
 // broker's own build inputs. Both install-step rows read the same notice, so they compose
 // the same destination rather than each building one.
-func brokerChangingLanding(t *testing.T, request string) (root string, creation Creation, base, tip, home string) {
+func brokerChangingLanding(t *testing.T, request string) landingFixture {
 	t.Helper()
-	root, creation, _, _, _, home = publicLandingFixture(t, request, "", "")
-	writeGoMainFixture(t, root)
-	mustWrite(t, filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest)), []byte(freshness.BuildInputLine("build_script", "scripts/go-build.sh")), 0o644)
-	spec := filepath.Join(root, "specs", "x", "spec.md")
+	f := publicLandingFixture(t, request, "", "")
+	writeGoMainFixture(t, f.root)
+	mustWrite(t, filepath.Join(f.root, filepath.FromSlash(freshness.BuildInputsManifest)), []byte(freshness.BuildInputLine("build_script", "scripts/go-build.sh")), 0o644)
+	spec := filepath.Join(f.root, "specs", "x", "spec.md")
 	body, err := os.ReadFile(spec)
 	if err != nil {
 		t.Fatal(err)
 	}
 	mustWrite(t, spec, withFenceEntry(body, "scripts/go-build.sh"), 0o644)
-	gitRun(t, root, "add", ".")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
-	gitRun(t, creation.Path, "rebase", "main")
-	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
-	base = gitOutput(t, root, "rev-parse", "HEAD")
-	commitInWorktree(t, creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
-	refreshLandingEvidence(t, creation.Path, base)
-	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), home
+	gitRun(t, f.root, "add", ".")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
+	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
+	commitInWorktree(t, f.creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
+	refreshLandingEvidence(t, f.creation.Path, f.base)
+	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	return f
 }
 
 // writeGoMainFixture writes the resolvable Go main package and build script a broker
@@ -70,15 +71,15 @@ func kitCheckoutJoins(kit bool) joins {
 func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-broker-change"
-	root, creation, base, tip, home := brokerChangingLanding(t, request)
+	f := brokerChangingLanding(t, request)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(kitCheckoutJoins(true), root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(kitCheckoutJoins(true), f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:refresh") {
 		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
 	notice := brokerNoticeLine(t, stderr.String())
-	if !strings.Contains(notice, freshness.RebuildAction(root)) {
+	if !strings.Contains(notice, freshness.RebuildAction(f.root)) {
 		t.Fatalf("kit-checkout landing named no rebuild: %q", notice)
 	}
 	if !strings.Contains(notice, "bench doctor --fix") {
@@ -92,10 +93,10 @@ func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
 func TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-broker-change-installed"
-	root, creation, base, tip, home := brokerChangingLanding(t, request)
+	f := brokerChangingLanding(t, request)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(kitCheckoutJoins(false), root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(kitCheckoutJoins(false), f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:refresh") {
 		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
@@ -103,7 +104,7 @@ func TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout(t *testing.T) 
 	if !strings.Contains(notice, "bench repair") {
 		t.Fatalf("installed-kit landing named no install step: %q", notice)
 	}
-	if strings.Contains(notice, freshness.RebuildAction(root)) {
+	if strings.Contains(notice, freshness.RebuildAction(f.root)) {
 		t.Fatalf("installed-kit landing named the source-tree rebuild: %q", notice)
 	}
 }
@@ -157,20 +158,21 @@ func wantEffects(refresh string, cleanup ...string) string {
 // brokerDestinationFixture is the public landing fixture whose destination declares Bench
 // build inputs and ignores the directory its published executable lands in. The source
 // worktree's own ignored residue is removed, so the release settles and the effects run.
-func brokerDestinationFixture(t *testing.T, request string) (root string, creation Creation, base, tip, home string) {
+func brokerDestinationFixture(t *testing.T, request string) landingFixture {
 	t.Helper()
-	root, creation, _, _, _, home = publicLandingFixture(t, request, "dist/bench", "dist/")
-	if err := os.Remove(filepath.Join(creation.Path, "dist", "bench")); err != nil {
+	f := publicLandingFixture(t, request, "dist/bench", "dist/")
+	if err := os.Remove(filepath.Join(f.creation.Path, "dist", "bench")); err != nil {
 		t.Fatal(err)
 	}
-	writeGoMainFixture(t, root)
-	gitRun(t, root, "add", ".")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker sources")
-	commitLandingBuildInputs(t, root)
-	base = gitOutput(t, root, "rev-parse", "HEAD")
-	gitRun(t, creation.Path, "rebase", "main")
-	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
-	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), home
+	writeGoMainFixture(t, f.root)
+	gitRun(t, f.root, "add", ".")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker sources")
+	commitLandingBuildInputs(t, f.root)
+	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
+	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	return f
 }
 
 // refreshJoins is the landing seam set whose refresh build is install, beside the count
@@ -204,11 +206,11 @@ func publishVerifyingBroker(t *testing.T, root, executable string) error {
 func TestLandSkipsTheRefreshWithoutBuildInputs(t *testing.T) {
 	t.Parallel()
 	request := "land-refresh-no-inputs"
-	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+	f := publicLandingFixture(t, request, "", "")
 	j, calls := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable")) {
 		t.Fatalf("landing without build inputs = (%d, %q, %q), want a not-applicable refresh", code, stdout.String(), stderr.String())
 	}
@@ -223,14 +225,14 @@ func TestLandSkipsTheRefreshWithoutBuildInputs(t *testing.T) {
 func TestLandSkipsAFreshBroker(t *testing.T) {
 	t.Parallel()
 	request := "land-refresh-already-fresh"
-	root, creation, base, tip, home := brokerDestinationFixture(t, request)
-	if err := publishVerifyingBroker(t, root, freshness.PublishedExecutable(root)); err != nil {
+	f := brokerDestinationFixture(t, request)
+	if err := publishVerifyingBroker(t, f.root, freshness.PublishedExecutable(f.root)); err != nil {
 		t.Fatal(err)
 	}
 	j, calls := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
 		t.Fatalf("landing with a fresh broker = (%d, %q, %q), want a complete refresh", code, stdout.String(), stderr.String())
 	}
@@ -245,13 +247,13 @@ func TestLandSkipsAFreshBroker(t *testing.T) {
 func TestLandRefreshesTheBrokerAfterPublication(t *testing.T) {
 	t.Parallel()
 	request := "land-refresh-after-publication"
-	root, creation, base, tip, home := brokerDestinationFixture(t, request)
+	f := brokerDestinationFixture(t, request)
 	j, calls := refreshJoins(func(root, executable string) error {
 		return publishVerifyingBroker(t, root, executable)
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
 		t.Fatalf("landing with a stale broker = (%d, %q, %q), want a complete refresh at exit 0", code, stdout.String(), stderr.String())
 	}
@@ -268,16 +270,16 @@ func TestLandRefreshesTheBrokerAfterPublication(t *testing.T) {
 func TestLandReportsAFailedRefresh(t *testing.T) {
 	t.Parallel()
 	request := "land-refresh-failed"
-	root, creation, base, _, home := brokerDestinationFixture(t, request)
-	sibling, tip := foldLandingSibling(t, root, home, request+"-sibling", creation)
+	f := brokerDestinationFixture(t, request)
+	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
 	j, calls := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed", "pending")) {
 		t.Fatalf("failed refresh = (%d, %q, %q), want exit 3 with a failed refresh", code, stdout.String(), stderr.String())
 	}
-	requirePresent(t, sibling.Path, "sibling worktree")
+	requirePresent(t, folded.sibling.Path, "sibling worktree")
 	if strings.Contains(stderr.String(), "landing cleanup{") {
 		t.Fatalf("failed refresh stderr = %q, want no cleanup plan row", stderr.String())
 	}
@@ -287,14 +289,14 @@ func TestLandReportsAFailedRefresh(t *testing.T) {
 	if *calls != 1 {
 		t.Fatalf("refresh build calls = %d, want exactly one", *calls)
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
-	if published == base {
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	if published == f.base {
 		t.Fatal("the failed refresh unpublished the landing")
 	}
-	if got := projectGreenMarker(t, root); got != published {
+	if got := projectGreenMarker(t, f.root); got != published {
 		t.Fatalf("project-green marker = %q, want the published commit %q", got, published)
 	}
-	if got := gitOutput(t, root, "rev-parse", "HEAD"); got != published {
+	if got := gitOutput(t, f.root, "rev-parse", "HEAD"); got != published {
 		t.Fatalf("destination checkout = %q, want the published commit %q", got, published)
 	}
 }
@@ -305,7 +307,7 @@ func TestLandReportsAFailedRefresh(t *testing.T) {
 func TestLandRefreshReadsTheSeal(t *testing.T) {
 	t.Parallel()
 	request := "land-refresh-unsealed"
-	root, creation, base, tip, home := brokerDestinationFixture(t, request)
+	f := brokerDestinationFixture(t, request)
 	j, calls := refreshJoins(func(_, executable string) error {
 		mustMkdirAll(t, filepath.Dir(executable), 0o755)
 		mustWrite(t, executable, []byte("#!/bin/sh\nexit 0\n"), 0o755)
@@ -313,7 +315,7 @@ func TestLandRefreshReadsTheSeal(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("unsealed refresh = (%d, %q, %q), want exit 3 with a failed refresh", code, stdout.String(), stderr.String())
 	}
@@ -328,11 +330,11 @@ func TestLandRefreshReadsTheSeal(t *testing.T) {
 func TestLandEffectsRowPrecedesTheLandedRecord(t *testing.T) {
 	t.Parallel()
 	request := "land-effects-row-order"
-	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+	f := publicLandingFixture(t, request, "", "")
 	j, _ := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	if code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
+	if code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 0 {
 		t.Fatalf("landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	lines := strings.Split(strings.TrimSuffix(stdout.String(), "\n"), "\n")
@@ -354,7 +356,7 @@ func TestLandEffectsRowPrecedesTheLandedRecord(t *testing.T) {
 func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 	t.Parallel()
 	request := "land-refresh-resume-from-tree"
-	root, creation, base, tip, home := brokerDestinationFixture(t, request)
+	f := brokerDestinationFixture(t, request)
 	working, calls := refreshJoins(func(root, executable string) error {
 		return publishVerifyingBroker(t, root, executable)
 	})
@@ -362,18 +364,18 @@ func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 
 	var stdout, stderr bytes.Buffer
-	if code := landWith(interrupted, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
+	if code := landWith(interrupted, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
 	if *calls != 0 {
 		t.Fatalf("interrupted landing refresh calls = %d, want none", *calls)
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
-	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 
 	stdout.Reset()
 	stderr.Reset()
-	if code := resumeLandWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
+	if code := resumeLandWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
 		t.Fatalf("first resume = (%d, %q, %q), want a completed refresh", code, stdout.String(), stderr.String())
 	}
 	if *calls != 1 {
@@ -382,13 +384,13 @@ func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 
 	stdout.Reset()
 	stderr.Reset()
-	if code := resumeLandWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
+	if code := resumeLandWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete")) {
 		t.Fatalf("second resume = (%d, %q, %q), want the refresh left alone", code, stdout.String(), stderr.String())
 	}
 	if *calls != 1 {
 		t.Fatalf("second resume refresh calls = %d, want no second build", *calls)
 	}
-	if got := gitOutput(t, root, "rev-parse", "main"); got != published {
+	if got := gitOutput(t, f.root, "rev-parse", "main"); got != published {
 		t.Fatalf("resume republished: main = %s, want %s", got, published)
 	}
 }

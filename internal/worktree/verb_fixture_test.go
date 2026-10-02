@@ -105,6 +105,27 @@ type refusedRelease struct {
 	stderr string
 }
 
+// landingFixture is an owned assignment that a landing publishes: the landing base, the
+// reviewed source tip, and the file that the fixture's gate scripts append to on each run.
+type landingFixture struct {
+	ownedAssignment
+	base, tip, tally string
+}
+
+// foldedLanding is a landing fixture whose source folded a destination advance. Its base is
+// the advanced destination tip, and fold is the fold commit that a review reads as its base.
+type foldedLanding struct {
+	landingFixture
+	fold string
+}
+
+// foldedSibling is a sibling assignment that a landing source folded, and the source tip
+// after that fold.
+type foldedSibling struct {
+	sibling Creation
+	tip     string
+}
+
 // cleanupTable is the table block that the clean verb renders its rows in.
 const cleanupTable = "worktree_cleanup"
 

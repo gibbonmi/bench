@@ -25,30 +25,30 @@ import (
 func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-no-candidate-code"
-	root, creation, _, _, tally, home := publicLandingFixture(t, request, "", "")
+	f := publicLandingFixture(t, request, "", "")
 	marker := filepath.Join(t.TempDir(), "candidate-ran")
-	commitLandingBuildInputs(t, root)
-	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\ngit rev-parse main > "+marker+"\nexit 1\n"), 0o755)
-	gitRun(t, root, "add", "scripts/go-build.sh")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "candidate build entry")
-	base := gitOutput(t, root, "rev-parse", "HEAD")
-	gitRun(t, creation.Path, "rebase", "main")
-	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	commitLandingBuildInputs(t, f.root)
+	mustWrite(t, filepath.Join(f.root, "scripts", "go-build.sh"), []byte("#!/bin/sh\ngit rev-parse main > "+marker+"\nexit 1\n"), 0o755)
+	gitRun(t, f.root, "add", "scripts/go-build.sh")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "candidate build entry")
+	base := gitOutput(t, f.root, "rev-parse", "HEAD")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(f.root, f.home, landArgs(request, base, tip, f.creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("stable-owner landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
+	published := gitOutput(t, f.root, "rev-parse", "main")
 	if got := strings.TrimSpace(fixtureFileText(t, marker)); got != published {
 		t.Fatalf("candidate build entry observed branch %q, want the published commit %q", got, published)
 	}
 	if strings.Contains(stderr.String(), "rebuilt") {
 		t.Fatalf("landing rebuilt an executable: %q", stderr.String())
 	}
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v, want one prospective run", got, err)
 	}
 }
@@ -62,16 +62,16 @@ func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testin
 func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-single-process"
-	root, creation, _, _, tally, home := publicLandingFixture(t, request, "", "")
-	commitLandingBuildInputs(t, root)
-	base := gitOutput(t, root, "rev-parse", "HEAD")
-	gitRun(t, creation.Path, "rebase", "main")
-	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	f := publicLandingFixture(t, request, "", "")
+	commitLandingBuildInputs(t, f.root)
+	base := gitOutput(t, f.root, "rev-parse", "HEAD")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
 	ownerPid := os.Getpid()
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(f.root, f.home, landArgs(request, base, tip, f.creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("single-owner landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
 	}
@@ -81,10 +81,10 @@ func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.
 	if strings.Contains(stderr.String(), "rebuilt") {
 		t.Fatalf("owner re-executed through a rebuild: %q", stderr.String())
 	}
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v, want exactly one gate under one owner", got, err)
 	}
-	if _, err := os.Stat(creation.Path); !os.IsNotExist(err) {
+	if _, err := os.Stat(f.creation.Path); !os.IsNotExist(err) {
 		t.Fatalf("release did not complete under the owner process: %v", err)
 	}
 }
@@ -99,20 +99,20 @@ func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 	t.Parallel()
 	binary := testRunBinary(t)
 	request := "land-owner-forged-primary"
-	root, creation, _, _, tally, _ := publicLandingFixture(t, request, "dist/bench", "dist/")
-	commitLandingBuildInputs(t, root)
-	base := gitOutput(t, root, "rev-parse", "HEAD")
-	gitRun(t, creation.Path, "rebase", "main")
-	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	f := publicLandingFixture(t, request, "dist/bench", "dist/")
+	commitLandingBuildInputs(t, f.root)
+	base := gitOutput(t, f.root, "rev-parse", "HEAD")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	marker := filepath.Join(t.TempDir(), "forged-ran")
-	mustMkdirAll(t, filepath.Join(root, "dist"), 0o755)
-	mustWrite(t, filepath.Join(root, "dist", "bench"), []byte("#!/bin/sh\nprintf ran > "+marker+"\n"), 0o755)
-	mustWrite(t, filepath.Join(root, "dist", "bench.seal"), []byte(`{"schema":1,"sources":"`+strings.Repeat("a", 64)+`","executable":"`+strings.Repeat("b", 64)+`"}`), 0o644)
+	mustMkdirAll(t, filepath.Join(f.root, "dist"), 0o755)
+	mustWrite(t, filepath.Join(f.root, "dist", "bench"), []byte("#!/bin/sh\nprintf ran > "+marker+"\n"), 0o755)
+	mustWrite(t, filepath.Join(f.root, "dist", "bench.seal"), []byte(`{"schema":1,"sources":"`+strings.Repeat("a", 64)+`","executable":"`+strings.Repeat("b", 64)+`"}`), 0o644)
 
 	var stdout, stderr bytes.Buffer
-	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", creation.Path)
-	cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+	cmd := descendant(t, binary, "worktree", "land", "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land reviewed source", f.creation.Path)
+	cmd.Dir, cmd.Stdout, cmd.Stderr = f.root, &stdout, &stderr
 	code := exitCode(cmd.Run())
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("forged-primary landing = (%d, %q, %q), want a failed refresh", code, stdout.String(), stderr.String())
@@ -120,10 +120,10 @@ func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
 		t.Fatalf("forged primary executable ran during promotion: %v", err)
 	}
-	if got := gitOutput(t, root, "rev-parse", "main"); got == base {
+	if got := gitOutput(t, f.root, "rev-parse", "main"); got == base {
 		t.Fatal("landing published nothing")
 	}
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v, want one prospective run", got, err)
 	}
 }
@@ -131,16 +131,17 @@ func TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal(t *testing.T) {
 // redProspectiveGateLanding is the public landing fixture whose composed prospective
 // tree carries a red gate. The refusal it produces is the gate's own verdict, so every
 // landing proof ahead of publication has already passed.
-func redProspectiveGateLanding(t *testing.T, request string) (root string, creation Creation, base, tip, tally, home string) {
+func redProspectiveGateLanding(t *testing.T, request string) landingFixture {
 	t.Helper()
-	root, creation, _, _, tally, home = publicLandingFixture(t, request, "", "")
-	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nprintf g >> '"+tally+"'\nexit 1\n"), 0o755)
-	gitRun(t, root, "add", ".bench/gate-prospective.sh")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "red prospective gate")
-	base = gitOutput(t, root, "rev-parse", "HEAD")
-	gitRun(t, creation.Path, "rebase", "main")
-	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
-	return root, creation, base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), tally, home
+	f := publicLandingFixture(t, request, "", "")
+	mustWrite(t, filepath.Join(f.root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nprintf g >> '"+f.tally+"'\nexit 1\n"), 0o755)
+	gitRun(t, f.root, "add", ".bench/gate-prospective.sh")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "red prospective gate")
+	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
+	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	return f
 }
 
 // temporaryProspectiveArtifacts lists the private prospective bundles and gate
@@ -168,24 +169,24 @@ func temporaryProspectiveArtifacts(t *testing.T, dir string) []string {
 func TestLandCommandLeavesTheDestinationUnchangedAfterARedProspectiveGate(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-red-gate"
-	root, creation, base, tip, tally, home := redProspectiveGateLanding(t, request)
-	marker := projectGreenMarker(t, root)
+	f := redProspectiveGateLanding(t, request)
+	marker := projectGreenMarker(t, f.root)
 
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := LandCommand(f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
 	if code != 1 || !strings.HasPrefix(stdout.String(), "refused{") {
 		t.Fatalf("red prospective gate = (%d, %q, %q), want a refusal", code, stdout.String(), stderr.String())
 	}
-	if got := gitOutput(t, root, "rev-parse", "main"); got != base {
-		t.Fatalf("red gate published: main = %s, want %s", got, base)
+	if got := gitOutput(t, f.root, "rev-parse", "main"); got != f.base {
+		t.Fatalf("red gate published: main = %s, want %s", got, f.base)
 	}
-	if got := projectGreenMarker(t, root); got != marker {
+	if got := projectGreenMarker(t, f.root); got != marker {
 		t.Fatalf("red gate advanced the project-green marker: %q, want %q", got, marker)
 	}
-	if _, err := os.Stat(creation.Path); err != nil {
+	if _, err := os.Stat(f.creation.Path); err != nil {
 		t.Fatalf("red gate released the reviewed source: %v", err)
 	}
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v, want one prospective run", got, err)
 	}
 }
@@ -204,18 +205,17 @@ func TestLandCommandRemovesEveryTemporaryProspectiveArtifact(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request := "land-owner-residue-" + tc.name
-			var root, base, tip, home string
-			var creation Creation
+			var f landingFixture
 			if tc.red {
-				root, creation, base, tip, _, home = redProspectiveGateLanding(t, request)
+				f = redProspectiveGateLanding(t, request)
 			} else {
-				root, creation, base, tip, _, home = publicLandingFixture(t, request, "", "")
+				f = publicLandingFixture(t, request, "", "")
 			}
 			private := t.TempDir()
 			bindEnv(t, "TMPDIR", private)
 
 			var stdout, stderr bytes.Buffer
-			if code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != tc.want {
+			if code := LandCommand(f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != tc.want {
 				t.Fatalf("landing exit = %d, want %d; stdout=%q stderr=%q", code, tc.want, stdout.String(), stderr.String())
 			}
 			if residue := temporaryProspectiveArtifacts(t, private); len(residue) != 0 {
@@ -257,7 +257,7 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			request := "land-owner-resume-" + tc.name
-			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+			f := publicLandingFixture(t, request, "", "")
 			publications := 0
 			working := defaultJoins()
 			oldLand := working.landReviewed
@@ -268,18 +268,18 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 			broken := tc.break_(working)
 
 			var stdout, stderr bytes.Buffer
-			if code := landWith(broken, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.name) {
+			if code := landWith(broken, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:"+tc.name) {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
-			published := gitOutput(t, root, "rev-parse", "main")
+			published := gitOutput(t, f.root, "rev-parse", "main")
 
 			stdout.Reset()
 			stderr.Reset()
-			args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			if code := landWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
+			args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
+			if code := landWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), "worktree=released,census=0}") {
 				t.Fatalf("resume = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
-			if got := gitOutput(t, root, "rev-parse", "main"); got != published {
+			if got := gitOutput(t, f.root, "rev-parse", "main"); got != published {
 				t.Fatalf("resume republished: main = %s, want %s", got, published)
 			}
 			if publications != 1 {
@@ -297,27 +297,27 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 func TestLandCommandCarriesTheBaselineScheduleRootIntoTheProspectiveGate(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-baseline-transport"
-	root, creation, _, _, tally, home := publicLandingFixture(t, request, "", "")
+	f := publicLandingFixture(t, request, "", "")
 	recorded := filepath.Join(t.TempDir(), "baseline")
-	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"),
-		[]byte("#!/bin/sh\nset -eu\nprintf '%s' \"${BENCH_GATE_BASELINE:-}\" > "+recorded+"\nprintf g >> '"+tally+"'\n"), 0o755)
-	gitRun(t, root, "add", ".bench/gate-prospective.sh")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "record the baseline schedule root")
-	base := gitOutput(t, root, "rev-parse", "HEAD")
-	gitRun(t, creation.Path, "rebase", "main")
-	refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	mustWrite(t, filepath.Join(f.root, ".bench", "gate-prospective.sh"),
+		[]byte("#!/bin/sh\nset -eu\nprintf '%s' \"${BENCH_GATE_BASELINE:-}\" > "+recorded+"\nprintf g >> '"+f.tally+"'\n"), 0o755)
+	gitRun(t, f.root, "add", ".bench/gate-prospective.sh")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "record the baseline schedule root")
+	base := gitOutput(t, f.root, "rev-parse", "HEAD")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
-	if code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 0 {
+	if code := LandCommand(f.root, f.home, landArgs(request, base, tip, f.creation.Path), &stdout, &stderr); code != 0 {
 		t.Fatalf("landing = (%d, %q, %q), want a released landing", code, stdout.String(), stderr.String())
 	}
 	got := strings.TrimSpace(fixtureFileText(t, recorded))
 	if got == "" {
 		t.Fatal("the landing owner handed the prospective gate no baseline schedule root")
 	}
-	if !sameDirectoryAs(t, got, root) {
-		t.Fatalf("baseline schedule root = %q, want the landing destination %q", got, root)
+	if !sameDirectoryAs(t, got, f.root) {
+		t.Fatalf("baseline schedule root = %q, want the landing destination %q", got, f.root)
 	}
 }
 

@@ -203,11 +203,11 @@ func TestLandingSourceFactAdapterTranslatesRealWorktree(t *testing.T) {
 func TestLandingReleaseFactAdapterTranslatesReleaseExit(t *testing.T) {
 	t.Parallel()
 	request := "release-fact-adapter"
-	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+	f := publicLandingFixture(t, request, "", "")
 	j := defaultJoins()
 	j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
 	want := landingpolicy.Terminal(landingpolicy.TerminalFacts{FailedStep: "release", Active: true})
 	if code != want.ExitCode || !strings.Contains(stdout.String(), "worktree="+want.WorktreeState+",next=") {
 		t.Fatalf("release-failure landing = (%d, %q), want exit %d and state %q", code, stdout.String(), want.ExitCode, want.WorktreeState)

@@ -29,25 +29,25 @@ func TestLandSuppliesTheDeclaredBenchHomeItself(t *testing.T) {
 			userHome := t.TempDir()
 			home := filepath.Join(userHome, ".bench")
 			request := "land-bench-home-" + tc.name
-			root, creation, _, _, tally := landingFixtureAtHome(t, request, "", "", home, false)
+			fixture := landingFixtureAtHome(t, request, "", "", home, false)
 			declared := []string{benchhome.Env}
 			if tc.extra != "" {
 				declared = append(declared, tc.extra)
 			}
 			f := landingGateFixture(t, declared...)
-			seen := tally + ".bench-home"
-			check := "printf '%s' \"${BENCH_HOME-unset}\" > '" + seen + "'\n[ -f owned.txt ]\nprintf g >> '" + tally + "'\n"
-			f.MustWrite(t, root, "set -eu\n"+check, "set -eu\nruntime=$1\n"+check)
-			gitRun(t, root, "add", ".bench/gate.sh", ".bench/gate-prospective.sh", ".bench/gate-inputs.json")
-			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the bench home")
-			base := gitOutput(t, root, "rev-parse", "HEAD")
-			gitRun(t, creation.Path, "rebase", "main")
-			refreshLandingEvidence(t, creation.Path, base)
-			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+			seen := fixture.tally + ".bench-home"
+			check := "printf '%s' \"${BENCH_HOME-unset}\" > '" + seen + "'\n[ -f owned.txt ]\nprintf g >> '" + fixture.tally + "'\n"
+			f.MustWrite(t, fixture.root, "set -eu\n"+check, "set -eu\nruntime=$1\n"+check)
+			gitRun(t, fixture.root, "add", ".bench/gate.sh", ".bench/gate-prospective.sh", ".bench/gate-inputs.json")
+			gitRun(t, fixture.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the bench home")
+			base := gitOutput(t, fixture.root, "rev-parse", "HEAD")
+			gitRun(t, fixture.creation.Path, "rebase", "main")
+			refreshLandingEvidence(t, fixture.creation.Path, base)
+			tip := gitOutput(t, fixture.creation.Path, "rev-parse", "HEAD")
 
 			var stdout, stderr bytes.Buffer
-			cmd := descendant(t, binary, append([]string{"worktree", "land"}, specLessLandArgs(request, base, tip, creation.Path)...)...)
-			cmd.Dir, cmd.Stdout, cmd.Stderr = root, &stdout, &stderr
+			cmd := descendant(t, binary, append([]string{"worktree", "land"}, specLessLandArgs(request, base, tip, fixture.creation.Path)...)...)
+			cmd.Dir, cmd.Stdout, cmd.Stderr = fixture.root, &stdout, &stderr
 			environment := os.Environ()
 			for _, name := range append(declared, "HOME") {
 				environment = capability.WithoutEnvironment(environment, name)
@@ -63,7 +63,7 @@ func TestLandSuppliesTheDeclaredBenchHomeItself(t *testing.T) {
 			if code != 0 || !strings.Contains(stdout.String(), "worktree=released") {
 				t.Fatalf("land without an exported BENCH_HOME = (%d, %q, %q)", code, stdout.String(), stderr.String())
 			}
-			if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
+			if got, err := os.ReadFile(fixture.tally); err != nil || string(got) != "g" {
 				t.Fatalf("gate tally = %q, %v", got, err)
 			}
 			if got, err := os.ReadFile(seen); err != nil || string(got) != home {

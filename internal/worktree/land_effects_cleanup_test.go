@@ -23,7 +23,7 @@ const siblingReviewPath = "reviews/sibling.md"
 //
 // The sibling writes its own review file, which the landing fixture's own spec declares in its
 // ownership fence, so the folded range still authorizes.
-func foldLandingSibling(t *testing.T, root, home, request string, source Creation) (Creation, string) {
+func foldLandingSibling(t *testing.T, root, home, request string, source Creation) foldedSibling {
 	t.Helper()
 	sibling := mustCreate(t, root, home, request, "folded sibling")
 	mustMkdirAll(t, filepath.Join(sibling.Path, "reviews"), 0o755)
@@ -31,7 +31,7 @@ func foldLandingSibling(t *testing.T, root, home, request string, source Creatio
 	gitRun(t, source.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
 		"merge", "-q", "--no-ff", "-m", "fold the sibling", strings.TrimPrefix(sibling.Assignment.Branch, "refs/heads/"))
 	refreshLandingEvidence(t, source.Path, gitOutput(t, root, "merge-base", "main", source.Assignment.Branch))
-	return sibling, gitOutput(t, source.Path, "rev-parse", "HEAD")
+	return foldedSibling{sibling: sibling, tip: gitOutput(t, source.Path, "rev-parse", "HEAD")}
 }
 
 // assignmentActive reports whether root still records assignment as an active one. The
@@ -75,23 +75,23 @@ func requirePresent(t *testing.T, path, what string) {
 func TestLandCleansTheFoldedSibling(t *testing.T) {
 	t.Parallel()
 	request := "land-cleanup-folded-sibling"
-	root, creation, base, _, _, home := publicLandingFixture(t, request, "", "")
-	sibling, tip := foldLandingSibling(t, root, home, request+"-sibling", creation)
+	f := publicLandingFixture(t, request, "", "")
+	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
 	j, _ := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "complete")) {
 		t.Fatalf("folded-sibling landing = (%d, %q, %q), want a complete cleanup at exit 0", code, stdout.String(), stderr.String())
 	}
-	requireAbsent(t, sibling.Path, "sibling worktree")
-	if assignmentActive(t, root, sibling.Assignment.ID) {
-		t.Fatalf("sibling assignment %q is still active", sibling.Assignment.ID)
+	requireAbsent(t, folded.sibling.Path, "sibling worktree")
+	if assignmentActive(t, f.root, folded.sibling.Assignment.ID) {
+		t.Fatalf("sibling assignment %q is still active", folded.sibling.Assignment.ID)
 	}
 	if strings.Contains(stdout.String(), "--apply") || regexp.MustCompile(`[0-9a-f]{64}`).MatchString(stdout.String()) {
 		t.Fatalf("landing stdout = %q, want no cleanup fingerprint and no apply action", stdout.String())
 	}
-	if !strings.Contains(stderr.String(), "landing cleanup{assignment="+sibling.Assignment.ID+",action=remove,") {
+	if !strings.Contains(stderr.String(), "landing cleanup{assignment="+folded.sibling.Assignment.ID+",action=remove,") {
 		t.Fatalf("landing stderr = %q, want the sibling's plan row", stderr.String())
 	}
 }
@@ -102,22 +102,22 @@ func TestLandCleansTheFoldedSibling(t *testing.T) {
 func TestLandLeavesAPriorLandedAssignment(t *testing.T) {
 	t.Parallel()
 	request := "land-cleanup-prior-landed"
-	root, creation, _, _, _, home := publicLandingFixture(t, request, "", "")
-	prior := mustCreate(t, root, home, request+"-prior", "prior landing")
-	landAssignment(t, root, prior, "prior.txt")
-	gitRun(t, creation.Path, "rebase", "main")
-	base := gitOutput(t, root, "rev-parse", "HEAD")
-	sibling, tip := foldLandingSibling(t, root, home, request+"-sibling", creation)
+	f := publicLandingFixture(t, request, "", "")
+	prior := mustCreate(t, f.root, f.home, request+"-prior", "prior landing")
+	landAssignment(t, f.root, prior, "prior.txt")
+	gitRun(t, f.creation.Path, "rebase", "main")
+	base := gitOutput(t, f.root, "rev-parse", "HEAD")
+	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
 	j, _ := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, base, folded.tip, f.creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "complete")) {
 		t.Fatalf("narrowed landing = (%d, %q, %q), want a complete cleanup at exit 0", code, stdout.String(), stderr.String())
 	}
-	requireAbsent(t, sibling.Path, "sibling worktree")
+	requireAbsent(t, folded.sibling.Path, "sibling worktree")
 	requirePresent(t, prior.Path, "prior-landed worktree")
-	if !assignmentActive(t, root, prior.Assignment.ID) {
+	if !assignmentActive(t, f.root, prior.Assignment.ID) {
 		t.Fatalf("prior-landed assignment %q was retired", prior.Assignment.ID)
 	}
 	if strings.Contains(stderr.String(), prior.Assignment.ID) {
@@ -132,31 +132,31 @@ func TestLandLeavesAPriorLandedAssignment(t *testing.T) {
 func TestLandRetainsAnUnprovenSibling(t *testing.T) {
 	t.Parallel()
 	request := "land-cleanup-unproven-sibling"
-	root, creation, base, _, _, home := publicLandingFixture(t, request, "", "")
-	sibling, tip := foldLandingSibling(t, root, home, request+"-sibling", creation)
-	mustWrite(t, filepath.Join(sibling.Path, siblingReviewPath), []byte("uncommitted review\n"), 0o644)
+	f := publicLandingFixture(t, request, "", "")
+	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
+	mustWrite(t, filepath.Join(folded.sibling.Path, siblingReviewPath), []byte("uncommitted review\n"), 0o644)
 	j, _ := refreshJoins(nil)
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "complete")) {
 		t.Fatalf("retaining landing = (%d, %q, %q), want a complete cleanup at exit 0", code, stdout.String(), stderr.String())
 	}
-	requirePresent(t, sibling.Path, "retained sibling worktree")
-	want := "landing cleanup{assignment=" + sibling.Assignment.ID + ",action=retain,reason=dirty,target=" + sibling.Path + "}\n"
+	requirePresent(t, folded.sibling.Path, "retained sibling worktree")
+	want := "landing cleanup{assignment=" + folded.sibling.Assignment.ID + ",action=retain,reason=dirty,target=" + folded.sibling.Path + "}\n"
 	if !strings.Contains(stderr.String(), want) {
 		t.Fatalf("landing stderr = %q, want the retained row %q", stderr.String(), want)
 	}
 
 	t.Run("hostile path", func(t *testing.T) {
-		hostile := sibling
-		hostile.Assignment.Worktree = sibling.Path + "\nforged"
+		hostile := folded.sibling
+		hostile.Assignment.Worktree = folded.sibling.Path + "\nforged"
 		var rows bytes.Buffer
 		printLandedCleanupRows(&rows, landedCleanupSet{rows: []landedCleanupRow{{
 			assignment: hostile.Assignment,
 			plan:       CleanupPlan{Action: ActionRetain, ReasonCode: ReasonDirty},
 		}}})
-		pointer := "landing cleanup{assignment=" + sibling.Assignment.ID + ",action=retain,reason=dirty,target=assignment/" + sibling.Assignment.ID + "}\n"
+		pointer := "landing cleanup{assignment=" + folded.sibling.Assignment.ID + ",action=retain,reason=dirty,target=assignment/" + folded.sibling.Assignment.ID + "}\n"
 		if rows.String() != pointer {
 			t.Fatalf("hostile-path row = %q, want the assignment pointer %q", rows.String(), pointer)
 		}
@@ -169,8 +169,8 @@ func TestLandRetainsAnUnprovenSibling(t *testing.T) {
 func TestLandReportsAFailedCleanup(t *testing.T) {
 	t.Parallel()
 	request := "land-cleanup-apply-fault"
-	root, creation, base, _, _, home := publicLandingFixture(t, request, "", "")
-	sibling, tip := foldLandingSibling(t, root, home, request+"-sibling", creation)
+	f := publicLandingFixture(t, request, "", "")
+	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
 	j, _ := refreshJoins(nil)
 	// The release step runs its own cleanup transaction first, so the fault is bound to
 	// the lock the cleanup effect's own row takes.
@@ -187,14 +187,14 @@ func TestLandReportsAFailedCleanup(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	code := landWith(j, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+	code := landWith(j, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
 	if code != 3 || !strings.Contains(stdout.String(), wantEffects("not-applicable", "failed")) {
 		t.Fatalf("faulted cleanup = (%d, %q, %q), want exit 3 with a failed cleanup", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "worktree=incomplete:cleanup,next=bench worktree land --resume ") {
 		t.Fatalf("faulted cleanup record = %q, want an incomplete:cleanup cell with a resume", stdout.String())
 	}
-	requirePresent(t, sibling.Path, "sibling worktree")
+	requirePresent(t, folded.sibling.Path, "sibling worktree")
 }
 
 // resumeLandArgs is the resume grammar's own argument list for a published landing.
@@ -208,8 +208,8 @@ func resumeLandArgs(published, request, base, tip, path string) []string {
 func TestResumeLandCompletesTheUnfinishedEffects(t *testing.T) {
 	t.Parallel()
 	request := "land-cleanup-resume-unfinished"
-	root, creation, base, _, home := brokerDestinationFixture(t, request)
-	sibling, tip := foldLandingSibling(t, root, home, request+"-sibling", creation)
+	f := brokerDestinationFixture(t, request)
+	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
 	failing, failingCalls := refreshJoins(nil)
 	working, workingCalls := refreshJoins(func(root, executable string) error {
 		return publishVerifyingBroker(t, root, executable)
@@ -218,35 +218,35 @@ func TestResumeLandCompletesTheUnfinishedEffects(t *testing.T) {
 	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
 
 	var stdout, stderr bytes.Buffer
-	if code := landWith(interrupted, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
+	if code := landWith(interrupted, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), "worktree=incomplete:release") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", code, stdout.String(), stderr.String())
 	}
-	published := gitOutput(t, root, "rev-parse", "main")
-	args := resumeLandArgs(published, request, base, tip, creation.Path)
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	args := resumeLandArgs(published, request, f.base, folded.tip, f.creation.Path)
 
 	stdout.Reset()
 	stderr.Reset()
-	if code := resumeLandWith(failing, root, home, args, &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
+	if code := resumeLandWith(failing, f.root, f.home, args, &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("failed-refresh resume = (%d, %q, %q), want a pending cleanup at exit 3", code, stdout.String(), stderr.String())
 	}
-	requirePresent(t, sibling.Path, "sibling worktree")
+	requirePresent(t, folded.sibling.Path, "sibling worktree")
 	if *failingCalls != 1 {
 		t.Fatalf("failed-refresh resume build calls = %d, want exactly one", *failingCalls)
 	}
 
 	stdout.Reset()
 	stderr.Reset()
-	if code := resumeLandWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete", "complete")) {
+	if code := resumeLandWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete", "complete")) {
 		t.Fatalf("repairing resume = (%d, %q, %q), want both effects complete", code, stdout.String(), stderr.String())
 	}
-	requireAbsent(t, sibling.Path, "sibling worktree")
+	requireAbsent(t, folded.sibling.Path, "sibling worktree")
 	if *workingCalls != 1 {
 		t.Fatalf("repairing resume build calls = %d, want exactly one", *workingCalls)
 	}
 
 	stdout.Reset()
 	stderr.Reset()
-	if code := resumeLandWith(working, root, home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete", "complete")) {
+	if code := resumeLandWith(working, f.root, f.home, args, &stdout, &stderr); code != 0 || !strings.Contains(stdout.String(), wantEffects("complete", "complete")) {
 		t.Fatalf("second resume = (%d, %q, %q), want both effects left alone", code, stdout.String(), stderr.String())
 	}
 	if *workingCalls != 1 {
@@ -255,7 +255,7 @@ func TestResumeLandCompletesTheUnfinishedEffects(t *testing.T) {
 	if strings.Contains(stderr.String(), "landing cleanup{") {
 		t.Fatalf("second resume stderr = %q, want an empty narrowed set", stderr.String())
 	}
-	if got := gitOutput(t, root, "rev-parse", "main"); got != published {
+	if got := gitOutput(t, f.root, "rev-parse", "main"); got != published {
 		t.Fatalf("resume republished: main = %s, want %s", got, published)
 	}
 }
@@ -266,27 +266,27 @@ func TestResumeLandCompletesTheUnfinishedEffects(t *testing.T) {
 func TestResumeLandRunsTheEffectsAfterRelease(t *testing.T) {
 	t.Parallel()
 	request := "land-cleanup-resume-released"
-	root, creation, base, _, home := brokerDestinationFixture(t, request)
-	sibling, tip := foldLandingSibling(t, root, home, request+"-sibling", creation)
+	f := brokerDestinationFixture(t, request)
+	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
 	failing, _ := refreshJoins(nil)
 	working, workingCalls := refreshJoins(func(root, executable string) error {
 		return publishVerifyingBroker(t, root, executable)
 	})
 
 	var stdout, stderr bytes.Buffer
-	if code := landWith(failing, root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
+	if code := landWith(failing, f.root, f.home, landArgs(request, f.base, folded.tip, f.creation.Path), &stdout, &stderr); code != 3 || !strings.Contains(stdout.String(), wantEffects("failed")) {
 		t.Fatalf("failed-refresh landing = (%d, %q, %q), want a pending cleanup at exit 3", code, stdout.String(), stderr.String())
 	}
-	requirePresent(t, sibling.Path, "sibling worktree")
-	published := gitOutput(t, root, "rev-parse", "main")
+	requirePresent(t, folded.sibling.Path, "sibling worktree")
+	published := gitOutput(t, f.root, "rev-parse", "main")
 
 	stdout.Reset()
 	stderr.Reset()
-	code := resumeLandWith(working, root, home, resumeLandArgs(published, request, base, tip, creation.Path), &stdout, &stderr)
+	code := resumeLandWith(working, f.root, f.home, resumeLandArgs(published, request, f.base, folded.tip, f.creation.Path), &stdout, &stderr)
 	if code != 0 || !strings.Contains(stdout.String(), wantEffects("complete", "complete")) {
 		t.Fatalf("released resume = (%d, %q, %q), want both effects complete", code, stdout.String(), stderr.String())
 	}
-	requireAbsent(t, sibling.Path, "sibling worktree")
+	requireAbsent(t, folded.sibling.Path, "sibling worktree")
 	if *workingCalls != 1 {
 		t.Fatalf("released resume build calls = %d, want exactly one", *workingCalls)
 	}

@@ -144,11 +144,11 @@ func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
 	for _, fixture := range identityComponentFixtures() {
 		t.Run(fixture.component, func(t *testing.T) {
 			request := "land-component-" + fixture.component
-			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
-			fixture.mutate(t, root, creation)
+			f := publicLandingFixture(t, request, "", "")
+			fixture.mutate(t, f.root, f.creation)
 			var stdout, stderr bytes.Buffer
-			code := LandCommand(root, home, landArgs(fixture.request(request), base, tip, creation.Path), &stdout, &stderr)
-			want := "refused{" + fixture.want(creation, base, tip) + "}\n"
+			code := LandCommand(f.root, f.home, landArgs(fixture.request(request), f.base, f.tip, f.creation.Path), &stdout, &stderr)
+			want := "refused{" + fixture.want(f.creation, f.base, f.tip) + "}\n"
 			if code != 1 || stdout.String() != want {
 				t.Fatalf("%s landing = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
 			}
@@ -163,13 +163,13 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 	for _, fixture := range identityComponentFixtures() {
 		t.Run(fixture.component, func(t *testing.T) {
 			request := "resume-component-" + fixture.component
-			root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
-			published := interruptLandingAtMarker(t, root, creation, request, base, tip)
-			fixture.mutate(t, root, creation)
+			f := publicLandingFixture(t, request, "", "")
+			published := interruptLandingAtMarker(t, f.root, f.creation, request, f.base, f.tip)
+			fixture.mutate(t, f.root, f.creation)
 			var stdout, stderr bytes.Buffer
-			args := []string{"--resume", published, "--request", fixture.request(request), "--base", base, "--source-tip", tip, "--spec", "x", creation.Path}
-			code := LandCommand(root, home, args, &stdout, &stderr)
-			want := "refused{" + fixture.want(creation, base, tip) + "}\n"
+			args := []string{"--resume", published, "--request", fixture.request(request), "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
+			code := LandCommand(f.root, f.home, args, &stdout, &stderr)
+			want := "refused{" + fixture.want(f.creation, f.base, f.tip) + "}\n"
 			if code != 1 || stdout.String() != want {
 				t.Fatalf("%s resume = (%d, %q, %q), want exit 1 and %q", fixture.component, code, stdout.String(), stderr.String(), want)
 			}
@@ -361,20 +361,20 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 		t.Run(fixture.face, func(t *testing.T) {
 			t.Parallel()
 			request := "landing-face-" + fixture.face
-			root, creation, base, _, _, home := publicLandingFixture(t, request, "", "")
+			f := publicLandingFixture(t, request, "", "")
 			var stdout, stderr bytes.Buffer
 			code := 0
 			if landingRefusalFaceByName(fixture.face).stage == stageResume {
-				code = landingFaceResume(t, fixture, root, home, base, creation, &stdout, &stderr)
+				code = landingFaceResume(t, fixture, f.root, f.home, f.base, f.creation, &stdout, &stderr)
 			} else {
-				fixture.mutate(t, root, creation)
+				fixture.mutate(t, f.root, f.creation)
 				// A mutation may add a source commit, so the pinned tip is read after it. An
 				// unmoved source reads back the same commit the fixture created.
-				tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+				tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 				if fixture.tip != nil {
-					tip = fixture.tip(t, creation)
+					tip = fixture.tip(t, f.creation)
 				}
-				code = LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
+				code = LandCommand(f.root, f.home, landArgs(request, f.base, tip, f.creation.Path), &stdout, &stderr)
 			}
 			next, printed := landingFaceNext(stdout.String(), landingRefusalFaceByName(fixture.face).detail)
 			if code != 1 || !printed || next == "" {
@@ -480,13 +480,13 @@ func identityComponentFixtureFor(t *testing.T, component string) identityCompone
 func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 	t.Parallel()
 	request := "land-component-registration-and-lock"
-	root, creation, base, tip, _, home := publicLandingFixture(t, request, "", "")
+	f := publicLandingFixture(t, request, "", "")
 	registration := identityComponentFixtureFor(t, componentRegistration)
-	registration.mutate(t, root, creation)
-	identityComponentFixtureFor(t, componentLock).mutate(t, root, creation)
+	registration.mutate(t, f.root, f.creation)
+	identityComponentFixtureFor(t, componentLock).mutate(t, f.root, f.creation)
 	var stdout, stderr bytes.Buffer
-	code := LandCommand(root, home, landArgs(request, base, tip, creation.Path), &stdout, &stderr)
-	want := "refused{" + registration.want(creation, base, tip) + "}\n"
+	code := LandCommand(f.root, f.home, landArgs(request, f.base, f.tip, f.creation.Path), &stdout, &stderr)
+	want := "refused{" + registration.want(f.creation, f.base, f.tip) + "}\n"
 	if code != 1 || stdout.String() != want {
 		t.Fatalf("double-fault landing = (%d, %q, %q), want exit 1 and %q", code, stdout.String(), stderr.String(), want)
 	}
