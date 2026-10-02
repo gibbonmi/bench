@@ -771,6 +771,20 @@ The chunk record for VR44 to VR47 is unchanged from round 2, because no test cod
 - Ticket 9 owns `identity_component_test.go`, which is not a `land_*` file. The VR-C4 review reads it under VR38.
 - This record mixes a word scale and a number scale for confidence.
 
+## VR-C4 ticket 8 author evidence
+
+The fresh ticket author `claude:bench-writer/vr-t8-author` ran on opus at medium effort, from tip `0be56dc1c3a528eddd9c4c76a4f603ae140b4a0f`. The ticket commit is `c4c4c4375ef5529ba8ce7256e7f5139d4a4c092b`, and it changes no production file.
+
+Each of the eleven landing builders now returns one named value. `verb_fixture_test.go` declares the three value types. `landingFixture` at line 110 embeds `ownedAssignment` and adds the landing base, the source tip, and the gate tally. `foldedLanding` at line 117 adds the fold commit, and its base is the destination tip. `foldedSibling` at line 124 holds the folded sibling and the new source tip.
+
+The rewrite moved no verb call and changed no assertion or test name. A Go AST rewrite renamed each tuple local to a field read, and the author edited the eleven builder bodies and one conditional by hand. The tuple scan prints one line, `land_surface_test.go:19: landIn (int, string, string)`, which is a run wrapper under VR41.
+
+Before the first edit, the probe on `land_refusal.go` bit with 49 failed tests. On the ticket commit, the same probe bit with 49 failed tests. The two sorted name sets are equal.
+
+`bench test --package ./internal/worktree` passed on the ticket commit with the two socket capability skips. `bench preflight build worktree-verb-runner` was green with 13 green checks and 0 red checks. `bench structure --growth 7fa02b429a66aa71b4303e483b82e074622c80bd` was ok.
+
+`identity_component_test.go` has 509 lines at `7fa02b42` and at the ticket commit. `land_journey_test.go` has 431 lines at both commits. The VR46 count per test function has no drop from `0be56dc1`, and the total stays at 2254. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. The JSON payload holds the package result as `vr-c4-8-worktree-r1`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1905,6 +1919,40 @@ The chunk record for VR44 to VR47 is unchanged from round 2, because no test cod
           ]
         }
       ]
+    },
+    {
+      "id": "VR-C4",
+      "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+      "tip": "c4c4c4375ef5529ba8ce7256e7f5139d4a4c092b",
+      "plan_digest": "pending",
+      "source_digest": "pending",
+      "acceptance_rows": [
+        "VR36",
+        "VR37",
+        "VR38",
+        "VR39"
+      ],
+      "verification": [
+        {
+          "id": "vr-c4-8-worktree-r1",
+          "performer": "claude:bench-writer/vr-t8-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ae173d5e3605491ef79fb49dda336a56a07eb1c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t8-author-20261001/8-worktree@c4c4c437",
+            "digest": "sha256:714788583fc505f9740625f6083240d8feb41e1eff902aaafc0e5d6061a5d61f",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,66823\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "8-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
