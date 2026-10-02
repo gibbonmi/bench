@@ -968,6 +968,45 @@ Package end state at `988feb49`:
 
 Verification on `988feb49`: `bench test --package ./internal/worktree` passed with the two socket capability skips. `bench structure --growth f3e0cb4e38788e791a0654dcbaced969a9cb1d45` passed. `bench test --package ./internal/conformance` passed with three capability skips. `bench preflight build worktree-verb-runner` reported 13 green checks and 0 red checks. The JSON payload holds the results as `vr-c5-11-worktree-r1` and `vr-c5-11-probe-r1`.
 
+## VR-C5 chunk review, round 1
+
+The frozen pair is base `f3e0cb4e38788e791a0654dcbaced969a9cb1d45` and tip `c246ab4757aaa12ecb2b2958bdfa1076ebd3f9ac`. The shared evidence is `sha256:cac188624c2498604557fbade8b31627d1e335fa77abdbc1049d2ee0bc78e689`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, on the conditional review line. Only the Coverage axis ran tests and probes, and it left the tree clean.
+
+The raw finding count is 6: Standards 3, Spec 2, and Coverage 1. R30 is an evidence-only correction to this record, which this commit makes. The reviewer decided R32. R27, R28, R29, and R31 need comment and fixture repairs, and they take repair cycle 1 of 2 for VR-C5.
+
+The VR44 and VR45 differential follows. The chunk base `f3e0cb4e` passed the whole-project gate at the VR-C4 checkpoint. There, every top-level test passed, and the SKIP set held the two socket capability subtests. At the tip, `go test -list` names 699 tests: the 688 base names and the 11 census tests. The tip run passes with the same two socket skips. So the PASS set is the base set plus the 11 added tests, and the SKIP set is unchanged.
+
+VR46 and VR47 hold, because the chunk migrates no test.
+
+### Standards, VR-C5 round 1
+
+Findings: 3. The worst issue is a comment that is false against the runner.
+
+- R27: `verb_call_census_test.go:71-72` says that a test reaches the call check only through a must form. `runVerb` calls `checkVerbCall`. `auto-fix`. Confidence 8.
+- R28: `verb_call_census_test.go:143-144` calls a multi-name value spec a grouped spec, which `parallel_census_test.go` uses for the parenthesized form. `auto-fix`. Confidence 6.
+- R29: `verb_call_census_test.go:283` renames a name in the planted runner file with a magic count and no reason. The rename changes no outcome. `auto-fix`. Confidence 5.
+
+### Spec, VR-C5 round 1
+
+Findings: 2. Every row VR40 to VR58 holds by reading, and the end-state commands print no line.
+
+- R30: the author record compared test names against the spec base only. This commit adds the PASS and SKIP comparison against the chunk base above. `auto-fix`. Confidence medium.
+- R31: the `parseSourceFiles` comment at `parallel_census_test.go:56-57` says that the census reads only package-level variable declarations. The verb call census now reads function declarations through it. A plan commit lets ticket 11 correct that one comment without line growth. `auto-fix`. Confidence high.
+
+### Coverage, VR-C5 round 1
+
+Findings: 1.
+
+- R32: the census misses a call that an external `package worktree_test` file writes as `worktree.RunCommand`. A probe that planted that shape went red against the expected report. No such file exists, so the live tree has no escape. The reviewer decided that this shape is a Won't-handle, and a plan commit adds it to the spec. `ask-user`, decided. Confidence medium.
+
+The axis read every other call shape and found each one caught. A planted direct `ListCommand` call in `landed_test.go` turned the live-tree census red.
+
+### Advice, VR-C5 round 1
+
+- An entry that builds its joins value inside its body, as `ListCommand` does, has no derived joins form.
+- The census skips a symbolic link to a test file, which `go test` still compiles.
+- Reports sort as text, so line 14 sorts before line 7.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2523,9 +2562,9 @@ Verification on `988feb49`: `bench test --package ./internal/worktree` passed wi
     {
       "id": "VR-C5",
       "base": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
-      "tip": "988feb4990d8c27988e90c594d9ffb3772689d39",
-      "plan_digest": "pending",
-      "source_digest": "pending",
+      "tip": "c246ab4757aaa12ecb2b2958bdfa1076ebd3f9ac",
+      "plan_digest": "sha256:9b00241e002f10a21665d6b76b54fae973f13f2e181df1bed009aae8c3f33a4e",
+      "source_digest": "cff2c674683c2ae4315f44c312dd2130d90ceac6",
       "acceptance_rows": [
         "VR40",
         "VR41",
@@ -2596,7 +2635,77 @@ Verification on `988feb49`: `bench test --package ./internal/worktree` passed wi
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "vr-c5-standards-r1",
+          "performer": "claude:bench-reviewer/vr-c5-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cff2c674683c2ae4315f44c312dd2130d90ceac6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c5-standards@c246ab47",
+            "digest": "sha256:ef04ec69f509f39781f92f6daa051a7798441fb9c4f12591d94762f9f95429c8",
+            "excerpt": "Standards: 3 findings. Worst: a census comment says the call check runs only through a must form; runVerb calls it."
+          },
+          "axis": "Standards",
+          "base": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+          "tip": "c246ab4757aaa12ecb2b2958bdfa1076ebd3f9ac",
+          "finding_ids": [
+            "R27",
+            "R28",
+            "R29"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c5-spec-r1",
+          "performer": "claude:bench-reviewer/vr-c5-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cff2c674683c2ae4315f44c312dd2130d90ceac6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c5-spec@c246ab47",
+            "digest": "sha256:500c360556cd1119ea00d4291bf3edf1d727f4b6ae803ac74019c405f2a26a9e",
+            "excerpt": "Spec: 2 findings. VR40 to VR58 hold; the record lacks the chunk-base PASS and SKIP comparison, and the parseSourceFiles comment is stale."
+          },
+          "axis": "Spec",
+          "base": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+          "tip": "c246ab4757aaa12ecb2b2958bdfa1076ebd3f9ac",
+          "finding_ids": [
+            "R30",
+            "R31"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c5-coverage-r1",
+          "performer": "claude:bench-reviewer/vr-c5-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cff2c674683c2ae4315f44c312dd2130d90ceac6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c5-coverage@c246ab47",
+            "digest": "sha256:436fdfa33b78c14b042dc11a938d5d0359c72a1d8903d7089d33b6da75849009",
+            "excerpt": "Coverage: 1 finding. The census misses worktree.RunCommand in an external worktree_test package file; none exists today."
+          },
+          "axis": "Coverage",
+          "base": "f3e0cb4e38788e791a0654dcbaced969a9cb1d45",
+          "tip": "c246ab4757aaa12ecb2b2958bdfa1076ebd3f9ac",
+          "finding_ids": [
+            "R32"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
