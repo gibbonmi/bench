@@ -1,6 +1,7 @@
 # CLI and desktop consistency review
 
-Final C1 confirmation has zero findings and zero repair targets.
+The prior C1 confirmation has zero findings and zero repair targets.
+Cycle 3 completed author verification and awaits current confirmation.
 The first confirmation had two findings and two repair targets.
 The first review had five findings and five repair targets.
 Repair cycle 1 of 2 completed its author verification and confirmation.
@@ -29,8 +30,11 @@ The older npm run passed its assertions but rewrote all three artifacts.
 The corrected-toolchain checkpoint preserved the binary and seal but found one remaining manifest write.
 The manifest-preservation test unconditionally rewrites the live manifest during cleanup.
 The isolated test reproduced that timestamp change in 7316 ms with no skips.
+
 Cycle 3 also moves this test to the existing private kit-copy fixture.
-Its current verification and all three review axes must cover that repair delta.
+Its current verification passed, including both planned mutations and verified restoration.
+The detailed results are in specs/cli-desktop-consistency/assets/repair-cycle-3.md.
+All three review axes must cover this repair delta before its checkpoint.
 
 C2 and C3 remain blocked until the checkpoint passes.
 The complete specification remains unqualified until its live requirements pass.

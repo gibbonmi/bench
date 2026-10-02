@@ -502,6 +502,7 @@ The reviewer approved this specification, its ticket graph, the implementation l
 Ticket 1 has completed author verification.
 Independent review and its checkpoint remain pending.
 Its behavioral evidence is in [first-ticket verification](assets/first-ticket-verification.md).
+The additional artifact repair is recorded in [cycle 3 evidence](assets/repair-cycle-3.md).
 
 ### Author transfer
 

@@ -16,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/gocache"
 )
 
@@ -324,46 +325,38 @@ func TestBuildEnvironmentRefusesWithoutAnAbsoluteHome(t *testing.T) {
 	}
 }
 
-// TestBuildLeavesTheWrapperManifestUntouched grades the one build the gate loop runs on
-// every pass. That build publishes a throwaway executable under a private temporary root,
-// and the executable is deleted the moment the selection closes. A wrapper manifest
-// written by it would therefore bind a path that no longer exists, and the next landing
-// would refuse at exit 127 with nothing wrong in the tree. Only the build that publishes
-// the checkout's own dist/bench may write beside the wrapper.
+// TestBuildLeavesTheWrapperManifestUntouched keeps a private executable's manifest
+// out of the wrapper directory, where it would outlive that executable.
 func TestBuildLeavesTheWrapperManifestUntouched(t *testing.T) {
 	kit, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatal(err)
 	}
-	manifest := filepath.Join(kit, "bin", brokermanifest.Name)
-	before, beforeErr := os.ReadFile(manifest)
-	if beforeErr != nil && !os.IsNotExist(beforeErr) {
-		t.Fatal(beforeErr)
-	}
-	t.Cleanup(func() {
-		if os.IsNotExist(beforeErr) {
-			_ = os.Remove(manifest)
-			return
-		}
-		if err := os.WriteFile(manifest, before, 0o644); err != nil {
-			t.Error(err)
-		}
-	})
-
-	output := filepath.Join(t.TempDir(), "bench")
-	if err := Build(context.Background(), kit, output); err != nil {
-		t.Fatalf("private build: %v", err)
-	}
-
-	after, afterErr := os.ReadFile(manifest)
-	if os.IsNotExist(beforeErr) {
-		if !os.IsNotExist(afterErr) {
-			t.Fatalf("private build published %s", manifest)
-		}
-		return
-	}
-	if afterErr != nil || !bytes.Equal(after, before) {
-		t.Fatalf("private build changed %s: %v", manifest, afterErr)
+	for _, state := range []string{"absent", "present"} {
+		t.Run(state, func(t *testing.T) {
+			root := gittest.KitCopy(t, kit)
+			manifest := filepath.Join(root, "bin", brokermanifest.Name)
+			before := []byte("original wrapper manifest\n")
+			if state == "present" {
+				if err := os.WriteFile(manifest, before, 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			output := filepath.Join(t.TempDir(), "bench")
+			if err := Build(context.Background(), root, output); err != nil {
+				t.Fatalf("private build: %v", err)
+			}
+			after, afterErr := os.ReadFile(manifest)
+			if state == "absent" {
+				if !os.IsNotExist(afterErr) {
+					t.Fatalf("private build published %s", manifest)
+				}
+				return
+			}
+			if afterErr != nil || !bytes.Equal(after, before) {
+				t.Fatalf("private build changed %s: %v", manifest, afterErr)
+			}
+		})
 	}
 }
 
