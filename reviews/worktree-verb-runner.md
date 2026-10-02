@@ -1032,6 +1032,12 @@ The VR-C5 plan commits added an assignment and text only. So the payload maps ea
 
 - The `parseSourceFiles` comment says "the census", and two censuses now call it.
 
+## Final reconciliation
+
+The orchestrator reconciled every planned acceptance row at the final source `ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c`, the tree of `80b0f440` without this record file. Each of the 61 rows from the ticket `Covers:` lines is covered. Named tests cover the planned rows, and the chunk reviews above cover the review-owned rows. All five chunk checkpoints passed. The orchestrator ran both final verifications on that source. `bench coverage --check` reports a valid map of 61 rows, and `bench test --package ./internal/worktree` passes with the two socket capability skips.
+
+The integrated behavior holds. Every worktree verb in the package tests runs through the verb runner, and the live-tree census reports no direct call. The count pin reads 699, and the serial ceiling stays at 46. No production file changed.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2847,11 +2853,110 @@ The VR-C5 plan commits added an assignment and text only. So the payload maps ea
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c",
+    "performer": "claude:session-8e50287c-d1de-4951-ba3d-d6632e597e5d",
+    "reconciliation": {
+      "VR1": "covered",
+      "VR2": "covered",
+      "VR3": "covered",
+      "VR4": "covered",
+      "VR5": "covered",
+      "VR6": "covered",
+      "VR7": "covered",
+      "VR8": "covered",
+      "VR9": "covered",
+      "VR10": "covered",
+      "VR11": "covered",
+      "VR12": "covered",
+      "VR13": "covered",
+      "VR14": "covered",
+      "VR15": "covered",
+      "VR16": "covered",
+      "VR17": "covered",
+      "VR18": "covered",
+      "VR19": "covered",
+      "VR20": "covered",
+      "VR21": "covered",
+      "VR22": "covered",
+      "VR23": "covered",
+      "VR24": "covered",
+      "VR25": "covered",
+      "VR26": "covered",
+      "VR27": "covered",
+      "VR28": "covered",
+      "VR29": "covered",
+      "VR30": "covered",
+      "VR31": "covered",
+      "VR32": "covered",
+      "VR33": "covered",
+      "VR34": "covered",
+      "VR35": "covered",
+      "VR36": "covered",
+      "VR37": "covered",
+      "VR38": "covered",
+      "VR39": "covered",
+      "VR40": "covered",
+      "VR41": "covered",
+      "VR42": "covered",
+      "VR43": "covered",
+      "VR44": "covered",
+      "VR45": "covered",
+      "VR46": "covered",
+      "VR47": "covered",
+      "VR48": "covered",
+      "VR49": "covered",
+      "VR50": "covered",
+      "VR51": "covered",
+      "VR52": "covered",
+      "VR53": "covered",
+      "VR54": "covered",
+      "VR55": "covered",
+      "VR56": "covered",
+      "VR57": "covered",
+      "VR58": "covered",
+      "VR59": "covered",
+      "VR60": "covered",
+      "VR61": "covered"
+    },
+    "verification": [
+      {
+        "id": "completion-coverage-r1",
+        "performer": "claude:session-8e50287c-d1de-4951-ba3d-d6632e597e5d",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/8e50287c/coverage@80b0f440",
+          "digest": "sha256:d7c12b6fda70b28ab475129dc748212d13afa7068939c6a3badf4f8e5faeee42",
+          "excerpt": "ok: coverage map valid — 61 row(s)"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/worktree-verb-runner/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "completion-worktree-r1",
+        "performer": "claude:session-8e50287c-d1de-4951-ba3d-d6632e597e5d",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:session/8e50287c/worktree@80b0f440",
+          "digest": "sha256:1d4577cf5a89e0a8cec519d04773df0647cd3b7863ad5e47c1ba73e6ec17fe6e",
+          "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,64486\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
