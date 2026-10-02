@@ -39,8 +39,7 @@ findings in the owner details.
 
 The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure. Its
 2026-09-30 and 2026-10-01 light paths landed cards 03 and 07, most of card 06, and most
-small cuts. The rows below hold the rest. The survey orders the work: shrink the worktree
-joins seam set first.
+small cuts. The rows below hold the rest.
 
 **FT356 (HIGH) — the worktree joins seam set keeps only the seams that make a failure reproducible.**
 
@@ -281,8 +280,8 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `/bench-write-spec FT370` so a comment-only correction takes the evidence-only path.
-2. Run `/bench-write-spec FT356` from `decisions/worktree-seams.md` to shrink the worktree joins seam set.
+1. Run `/bench-write-spec FT356` from `decisions/worktree-seams.md` to shrink the worktree joins seam set.
+2. Run `/bench-write-spec FT370` so a comment-only correction takes the evidence-only path.
 3. Run `/bench-implement-spec` on the FT361 light-path ticket so a plain `go test` is red only for a defect.
 
 The section order supplies the larger sequence. It does not create new literal dependencies.
