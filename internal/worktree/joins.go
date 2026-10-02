@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/gibbonmi/bench/internal/diff"
-	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
@@ -52,16 +51,6 @@ type joins struct {
 	reauthorizeUnlock    func(string, string) error
 	reauthorizeLock      func(string, string, string) error
 	reauthorizeBeforeCAS func(*intent.Assignment)
-	// mergeLane resolves the fast lane the merge's composed tree is graded under. It is a
-	// seam because the resolution reads the kit root out of the process environment, and a
-	// fixture that bound that environment would leave the package's parallel set.
-	mergeLane func(string) (*gate.Lane, error)
-	// kitSourceCheckout reports whether the landing destination is the kit's own source
-	// tree, which decides the install step the broker notice names. It is a seam for the
-	// same reason mergeLane is: the predicate reads the kit root out of the process
-	// environment, and a fixture that bound that environment would leave the package's
-	// parallel set.
-	kitSourceCheckout func(string) bool
 	// buildSubject authors a checkout's own published executable, under the manifest
 	// directory the build owner defaults to, so the manifest lands beside the wrapper. It
 	// is a seam because the default reaches a build script and a Go toolchain, and a
@@ -101,8 +90,6 @@ func defaultJoins() joins {
 		planLandedExplicit:       planExplicitWith,
 		reauthorizeUnlock:        unlockWorktree,
 		reauthorizeLock:          lockWorktree,
-		mergeLane:                gate.LaneForCommit,
-		kitSourceCheckout:        gate.KitSourceCheckout,
 		mergeReconcile:           reconcileMergeCheckout,
 		resetMove:                moveResetCheckout,
 		resetLayers:              restoreResetLayers,

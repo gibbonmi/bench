@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
@@ -192,7 +193,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
 	printCensusHeads(stderr, a.home, root, assignment.ID)
-	if notice := brokerChangeNotice(j.kitSourceCheckout, root, assignment.Worktree, source.base, source.tip); notice != "" {
+	if notice := brokerChangeNotice(a.kit, root, assignment.Worktree, source.base, source.tip); notice != "" {
 		fmt.Fprintln(stderr, notice)
 	}
 	result, err := j.landReviewed(ctx, landing.ReviewedRequest{
@@ -263,7 +264,7 @@ func hasResumeFlag(args []string) bool {
 // installs the new one. An unresolvable input set reports nothing; the landing itself
 // stays under the installed owner either way. The install step it names is the
 // destination's own route, so the printed command runs where the operator stands.
-func brokerChangeNotice(kitCheckout func(string) bool, root, worktree, base, tip string) string {
+func brokerChangeNotice(kit, root, worktree, base, tip string) string {
 	if !freshness.DeclaresBuildInputs(worktree) {
 		return ""
 	}
@@ -281,18 +282,19 @@ func brokerChangeNotice(kitCheckout func(string) bool, root, worktree, base, tip
 	}
 	for _, input := range inputs {
 		if _, ok := changed[input]; ok {
-			return "landing changes the promotion broker source; the installed broker keeps authority until " + brokerInstallStep(kitCheckout, root) + " publishes the new broker"
+			return "landing changes the promotion broker source; the installed broker keeps authority until " + brokerInstallStep(kit, root) + " publishes the new broker"
 		}
 	}
 	return ""
 }
 
-// brokerInstallStep names the route that installs the changed broker at root. The kit's
-// own source checkout carries no pin manifest, so 'bench repair' refuses there; its route
-// is the stamped rebuild and 'bench doctor --fix'. The sentence comes from the one
-// rebuild owner, never from a second copy of the command here.
-func brokerInstallStep(kitCheckout func(string) bool, root string) string {
-	if kitCheckout(root) {
+// brokerInstallStep names the route that installs the changed broker at root, where kit is
+// the kit value that the verb entry read. The kit's own source checkout carries no pin
+// manifest, so 'bench repair' refuses there; its route is the stamped rebuild and 'bench
+// doctor --fix'. The sentence comes from the one rebuild owner, never from a second copy
+// of the command here.
+func brokerInstallStep(kit, root string) string {
+	if gate.KitSourceCheckoutAtKit(root, kit) {
 		return freshness.RebuildAction(root) + " with 'bench doctor --fix'"
 	}
 	return "'bench repair' or the release install"

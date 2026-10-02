@@ -15,7 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
-	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
@@ -52,7 +51,7 @@ func delegatedJourneyChunks(plan *rr.Plan) {
 // belongs to no chunk of the run, so the landing must leave it alone.
 type delegatedJourney struct {
 	root, home, base string
-	joins            joins
+	merges           mergeSet
 	integration      Creation
 	authors          map[string]Creation
 	unrelated        Creation
@@ -74,8 +73,8 @@ func delegatedJourneyFixture(t *testing.T) *delegatedJourney {
 	gitRun(t, root, "add", ".bench")
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the journey gate")
 
-	j := delegatedJourneyJoins(t)
-	journey := &delegatedJourney{root: root, home: home, joins: j, authors: map[string]Creation{}}
+	// The merge set commits its lane before the base, so the reviewed range holds no lane.
+	journey := &delegatedJourney{root: root, home: home, merges: mergeSetAt(t, root, home), authors: map[string]Creation{}}
 	journey.base = gitOutput(t, root, "rev-parse", "HEAD")
 	journey.integration = mustCreate(t, root, home, "delegated-integration", "integration")
 	for _, ticket := range []string{"1.md", "2.md", "3.md", "4.md"} {
@@ -89,25 +88,11 @@ func delegatedJourneyFixture(t *testing.T) *delegatedJourney {
 	return journey
 }
 
-// delegatedJourneyJoins gives the merge verb a declared lane that costs nothing.
-// The lane arrives through the seam, so this journey binds no process environment.
-func delegatedJourneyJoins(t *testing.T) joins {
-	t.Helper()
-	tally := filepath.Join(t.TempDir(), "lane-tally")
-	j := defaultJoins()
-	j.mergeLane = func(string) (*gate.Lane, error) {
-		return &gate.Lane{Checks: []gate.Phase{
-			{Name: "unit", Argv: []string{"sh", "-c", "printf g >> " + sanitize.ShellQuote(tally)}},
-		}}, nil
-	}
-	return j
-}
-
 // fold carries one committed contribution into the target assignment through the
 // existing merge owner. It returns the target's new tip.
 func (d *delegatedJourney) fold(t *testing.T, target Creation, from string) string {
 	t.Helper()
-	r := runVerb(t, verbMerge, repoHome{d.root, d.home}.callWith(d.joins, "--from", from, target.Assignment.ID))
+	r := runVerb(t, verbMerge, d.merges.merge("--from", from, target.Assignment.ID))
 	if r.exit != 0 {
 		t.Fatalf("fold %s into %s = %d; stdout=%q stderr=%q", from, target.Assignment.Label, r.exit, r.stdout, r.stderr)
 	}

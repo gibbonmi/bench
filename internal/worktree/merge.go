@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -56,14 +57,14 @@ func mergeWith(j joins, a ambient, root string, args []string, stdout, stderr io
 	// nothing. The target resolves inside the span.
 	var assignment string
 	finishSpan := beginVerbSpan(a.home, root, otelMergeSeam)
-	exit := mergeAttributed(&assignment, j, root, parsed, stdout, stderr)
+	exit := mergeAttributed(&assignment, j, a, root, parsed, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit
 }
 
 // mergeAttributed is the merge verb's own work, with the target assignment written to
 // assignment once the target resolves.
-func mergeAttributed(assignment *string, j joins, root string, parsed usage.Result, stdout, stderr io.Writer) int {
+func mergeAttributed(assignment *string, j joins, a ambient, root string, parsed usage.Result, stdout, stderr io.Writer) int {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return landRefusal(stdout, "assignment ledger is unreadable")
@@ -86,7 +87,7 @@ func mergeAttributed(assignment *string, j joins, root string, parsed usage.Resu
 	if err != nil {
 		return landRefusal(stdout, "merge target checkout fingerprint is unreadable")
 	}
-	owner, err := mergeOwner(j, target.Worktree, previous)
+	owner, err := mergeOwner(a.kit, target.Worktree, previous)
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
@@ -379,10 +380,10 @@ func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned
 }
 
 // mergeOwner resolves the authority the composed tree is graded under, the way
-// `bench commit` resolves it, but for the target worktree. A root with no declared lane
-// keeps the whole-project gate.
-func mergeOwner(j joins, target, previous string) (landing.Owner, error) {
-	lane, err := j.mergeLane(target)
+// `bench commit` resolves it, but for the target worktree and under the kit that the verb
+// entry read. A root with no declared lane keeps the whole-project gate.
+func mergeOwner(kit, target, previous string) (landing.Owner, error) {
+	lane, err := gate.LaneForCommitAtKit(target, kit)
 	if err != nil {
 		return landing.Owner{}, err
 	}

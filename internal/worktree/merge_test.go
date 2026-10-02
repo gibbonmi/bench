@@ -14,22 +14,13 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
-// mergeFixture is one repository plus one owned assignment per label, and the seam set
-// whose declared fast lane appends to a tally file. The tally is the lane record the
-// idempotence row reads: a lane that ran leaves a byte behind, one that did not leaves
-// no file at all. The lane arrives through the seam rather than the process environment,
-// so every row below stays parallel-eligible.
+// mergeFixture is one repository plus one owned assignment per label. The merge set
+// commits its tally lane before the first assignment, so each assignment inherits it.
 func mergeFixture(t *testing.T, labels ...string) mergeSet {
 	t.Helper()
-	home, tally := filepath.Join(t.TempDir(), "bench-home"), filepath.Join(t.TempDir(), "lane-tally")
-	f := mergeSet{repoHome: repoHome{root: newWorktreeRepo(t), home: home}, joins: defaultJoins(), tally: tally}
+	f := mergeSetAt(t, newWorktreeRepo(t), filepath.Join(t.TempDir(), "bench-home"))
 	for _, label := range labels {
 		f.created = append(f.created, mustCreate(t, f.root, f.home, "merge-"+label, label))
-	}
-	f.joins.mergeLane = func(string) (*gate.Lane, error) {
-		return &gate.Lane{Checks: []gate.Phase{
-			{Name: "unit", Argv: []string{"sh", "-c", "printf g >> " + sanitize.ShellQuote(tally)}},
-		}}, nil
 	}
 	return f
 }
@@ -587,12 +578,6 @@ func TestMergeRefusesAnOffBranchFromCommit(t *testing.T) {
 
 // --- the publication boundary ---
 
-// mergeLaneOf replaces the fixture's lane with the checks one row needs, so a row
-// controls the outcome the boundary reacts to without a second fixture.
-func mergeLaneOf(checks ...gate.Phase) func(string) (*gate.Lane, error) {
-	return func(string) (*gate.Lane, error) { return &gate.Lane{Checks: checks}, nil }
-}
-
 // requireMergeLaneRefusal pins the surface a lane fail leaves: exit 1, the lane's own
 // fail line naming the check, and the refusal record after it.
 func requireMergeLaneRefusal(t *testing.T, r verbResult, check string) {
@@ -616,9 +601,9 @@ func TestMergeRefusesAFailingLaneCheck(t *testing.T) {
 	f := mergeFixture(t, "integration")
 	target := f.created[0]
 	commitInWorktree(t, target.Path, "target.txt", "target\n", "target work")
+	commitLaneManifest(t, target.Path, gate.Phase{Name: "unit", Argv: []string{"sh", "-c", "echo the lane says no; exit 1"}})
 	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
 	incoming := commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
-	f.joins.mergeLane = mergeLaneOf(gate.Phase{Name: "unit", Argv: []string{"sh", "-c", "echo the lane says no; exit 1"}})
 
 	r := runVerb(t, verbMerge, f.merge("--from", incoming, target.Assignment.ID))
 	requireMergeLaneRefusal(t, r, "unit")
@@ -698,11 +683,13 @@ func TestMergeRefusesAFastForwardTheLaneFails(t *testing.T) {
 	t.Parallel()
 	f := mergeFixture(t, "delegate")
 	target := f.created[0]
+	// The check reads the graded tree's own checkout, so it passes on the previous tip
+	// and fails on the incoming one. The default branch takes the lane commit, so the
+	// target still sits behind the incoming commit.
+	commitLaneManifest(t, target.Path, gate.Phase{Name: "unit", Argv: []string{"sh", "-c", "test ! -f incoming.txt"}})
+	gitRun(t, f.root, "merge", "-q", "--ff-only", target.Assignment.Branch)
 	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
 	incoming := commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
-	// The check reads the graded tree's own checkout, so it passes on the previous tip
-	// and fails on the incoming one.
-	f.joins.mergeLane = mergeLaneOf(gate.Phase{Name: "unit", Argv: []string{"sh", "-c", "test ! -f incoming.txt"}})
 
 	r := runVerb(t, verbMerge, f.merge("--from", incoming, target.Assignment.ID))
 	requireMergeLaneRefusal(t, r, "unit")
@@ -719,11 +706,11 @@ func TestMergeRefusesACheckoutEditedDuringTheLane(t *testing.T) {
 	f := mergeFixture(t, "integration")
 	target := f.created[0]
 	commitInWorktree(t, target.Path, "target.txt", "target\n", "target work")
+	fresh := filepath.Join(target.Path, "fresh.txt")
+	commitLaneManifest(t, target.Path, gate.Phase{Name: "unit", Argv: []string{"sh", "-c",
+		"printf 'fresh\\n' > " + sanitize.ShellQuote(fresh)}})
 	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
 	incoming := commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
-	fresh := filepath.Join(target.Path, "fresh.txt")
-	f.joins.mergeLane = mergeLaneOf(gate.Phase{Name: "unit", Argv: []string{"sh", "-c",
-		"printf 'fresh\\n' > " + sanitize.ShellQuote(fresh)}})
 
 	r := runVerb(t, verbMerge, f.merge("--from", incoming, target.Assignment.ID))
 	// The lane ran and passed, so its own line precedes the refusal record on stdout.
@@ -791,7 +778,7 @@ func TestMergeResolvesTheProsePlaceholderToTheIncomingMarkdown(t *testing.T) {
 	commitInWorktree(t, target.Path, "target-only.md", "target prose\n", "target prose")
 	incoming := commitOnDefault(t, f.root, "incoming-only.md", "incoming prose\n")
 	argv := filepath.Join(t.TempDir(), "prose-argv")
-	f.joins.mergeLane = mergeLaneOf(gate.Phase{Name: "prose", Argv: []string{"sh", "-c",
+	commitLaneManifest(t, target.Path, gate.Phase{Name: "prose", Argv: []string{"sh", "-c",
 		`for path in "$@"; do printf '%s\n' "$path"; done > ` + sanitize.ShellQuote(argv),
 		"prose", gate.LaneNamedMarkdownToken}})
 
