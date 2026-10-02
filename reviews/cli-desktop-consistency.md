@@ -15,7 +15,20 @@ The reviewer approved one additional C1 repair cycle on 2026-10-02.
 Cycle 3 identifies and stops writes to the live build artifacts during verification.
 It retains all checks, pass criteria, and the original author session.
 It requires focused verification, current native review, and a quiet C1 checkpoint.
-The new cycle has not made a source repair.
+
+Cycle 3 resolved the package-check writer through process-local toolchain selection.
+The desktop shell selected Node 18.19.1 and npm 9.2.0, below the declared Node 24 floor.
+Its installed directory packer runs prepare without checking ignoreScripts.
+The process trace linked that lifecycle to the live artifact build.
+
+The installed Node 25.8.1 and npm 11.11.0 satisfy the declared runtime floor.
+With their directory prepended to PATH, package-core-guard passed in 2246 ms with no skips.
+All three artifact hashes, modes, sizes, and modification times remained unchanged.
+The older npm run passed its assertions but rewrote all three artifacts.
+
+No implementation source changed during cycle 3.
+The three native reviews remain current for source digest d975b261a0e973bbe28dc88f44a7f74a94e89169.
+The C1 checkpoint must use the recovered toolchain and remains pending.
 
 C2 and C3 remain blocked until the checkpoint passes.
 The complete specification remains unqualified until its live requirements pass.
