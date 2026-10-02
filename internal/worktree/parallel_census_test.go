@@ -451,32 +451,6 @@ func parallelCensus(dir string) ([]string, error) {
 	return reports, nil
 }
 
-// serialSet returns one line for every serial test in facts, sorted, with the
-// reason the census classified it serial.
-func serialSet(facts []testFact) []string {
-	var serial []string
-	for _, fact := range facts {
-		if fact.serialReason == "" {
-			continue
-		}
-		serial = append(serial, fmt.Sprintf("%s:%d: %s (%s)", fact.file, fact.line, fact.name, fact.serialReason))
-	}
-	sort.Strings(serial)
-	return serial
-}
-
-// serialCeilingBreach returns the refusal for a serial set above ceiling, and is
-// empty when the set fits. The refusal lists the whole set with each reason, so
-// the reader sees which test is new.
-func serialCeilingBreach(facts []testFact, ceiling int) string {
-	serial := serialSet(facts)
-	if len(serial) <= ceiling {
-		return ""
-	}
-	return fmt.Sprintf("the package holds %d serial tests, above the ceiling of %d:\n%s",
-		len(serial), ceiling, strings.Join(serial, "\n"))
-}
-
 // --- census unit tests over synthetic file sets ---
 
 // plantTestFiles writes one synthetic file set into a temporary directory and
@@ -1065,11 +1039,11 @@ func TestParallelCensusOnTheLiveTree(t *testing.T) {
 // bind the caller environment because the child's inherited environment is what
 // they grade. The stub tests bind PATH because the child under test reads it.
 // The operand tests change the working directory because a relative or a
-// prefixed operand is what they grade. A fixture that falls back to a process
-// bind instead of the home it owns raises the count above this ceiling.
-const worktreeSerialCeiling = 46
+// prefixed operand is what they grade. The pin is exact, so a fixture that binds
+// the process instead of its own home, or a test that leaves the set, turns it red.
+const worktreeSerialCeiling = 44
 
-// TestSerialSetStaysBelowTheCeiling proves no new test joins the serial set.
+// TestSerialSetStaysBelowTheCeiling proves the serial set equals the ceiling.
 // (Coverage row WF18.)
 func TestSerialSetStaysBelowTheCeiling(t *testing.T) {
 	t.Parallel()
@@ -1080,14 +1054,14 @@ func TestSerialSetStaysBelowTheCeiling(t *testing.T) {
 	if breach := serialCeilingBreach(facts, worktreeSerialCeiling); breach != "" {
 		t.Fatal(breach)
 	}
-	t.Logf("the package holds %d serial tests, at or below the ceiling of %d", len(serialSet(facts)), worktreeSerialCeiling)
+	t.Logf("the package holds %d serial tests, equal to the ceiling of %d", len(serialSet(facts)), worktreeSerialCeiling)
 }
 
 // worktreeTestCount is the package's exact top-level test count. The live tree
 // cannot supply it, because a removal changes the live count and the expectation
 // together. One removal or merge turns the pin red. One addition also turns the
 // pin red, so the author raises the pin in the same change and it never drifts.
-const worktreeTestCount = 715
+const worktreeTestCount = 716
 
 // TestPackageTestCountPin proves no test is removed or merged for wall-clock.
 // It counts the census walk's facts, one for each top-level test. (Coverage row WF12.)
