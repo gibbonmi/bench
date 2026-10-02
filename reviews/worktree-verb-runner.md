@@ -1007,6 +1007,19 @@ The axis read every other call shape and found each one caught. A planted direct
 - The census skips a symbolic link to a test file, which `go test` still compiles.
 - Reports sort as text, so line 14 sorts before line 7.
 
+## VR-C5 repair 1
+
+The repair session `claude:bench-writer/vr-t11-repair-1` ran on opus at medium effort and made commit `6db974f1`. It repairs R27, R28, R29, and R31 with comment and fixture changes only.
+
+- R27: the `addRunnerPrivateNames` comment now says that a test reaches a runner-private function only through a runner function that fails the test on that error.
+- R28: the `specName` comment now says "a value spec with several names". The word "grouped" keeps its one meaning, the parenthesized form.
+- R29: both planted runner files hold the same text. The census only parses, so the duplicate declaration does no harm, and the test comment gives this reason. The test still asserts that the census reports nothing in either runner file.
+- R31: the `parseSourceFiles` comment now says "package-level declarations". The file stays at 1125 lines.
+
+Verification on `6db974f1`: `bench test --package ./internal/worktree` passed with the two socket capability skips. The plan probe that swaps `"args"` bit `TestVerbCallCensusDerivesEntriesFromTheSignature`. A probe that empties the runner-file exemption map bit `TestVerbCallCensusAllowsTheRunnerFiles`.
+
+`verb_call_census_test.go` has 369 lines. `bench structure --growth f3e0cb4e38788e791a0654dcbaced969a9cb1d45` passed. `bench preflight build worktree-verb-runner` reported 13 green checks and 0 red checks. The JSON payload holds the results as `vr-c5-11-worktree-r2` and `vr-c5-11-probe-r2`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2631,6 +2644,53 @@ The axis read every other call shape and found each one caught. A planted direct
               "ref": "claude:agent/vr-t11-author-20261001/11-probe@988feb49",
               "digest": "sha256:bd1f805c29d11794c4979fd95219a0252bb0ac71bfc4595cd6dfe976e35b8241",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_call_census_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbCallCensusDerivesEntriesFromTheSignature,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5"
+            }
+          }
+        },
+        {
+          "id": "vr-c5-11-worktree-r2",
+          "performer": "claude:bench-writer/vr-t11-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t11-repair-1-20261001/11-worktree@6db974f1",
+            "digest": "sha256:2e3c1638c2cbddbec05ec184d6e1e510e35ba4e81bc1fc0a3eee5e57a7ba2192",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62043\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "11-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c5-11-probe-r2",
+          "performer": "claude:bench-writer/vr-t11-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce6dd2cad6ea1c038ab8c6b5f53cd193bdc5467c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t11-repair-1-20261001/11-probe@6db974f1",
+            "digest": "sha256:3ce1abb94ffbb890874438f7af5f3c1353e80a7fb9ad04641459bf11949d26b2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_call_census_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbCallCensusDerivesEntriesFromTheSignature,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,4"
+          },
+          "requirement": "11-probe",
+          "command": "bench probe internal/worktree/verb_call_census_test.go --swap '\"args\"' --with '\"argv\"' --package ./internal/worktree --run TestVerbCallCensusDerivesEntriesFromTheSignature",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:agent/vr-t11-repair-1-20261001/11-probe@6db974f1",
+              "digest": "sha256:3ce1abb94ffbb890874438f7af5f3c1353e80a7fb9ad04641459bf11949d26b2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/verb_call_census_test.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestVerbCallCensusDerivesEntriesFromTheSignature,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,4"
             }
           }
         }
