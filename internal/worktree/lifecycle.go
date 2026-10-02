@@ -459,8 +459,7 @@ func executeCleanup(j joins, a ambient, root string, plan CleanupPlan, checkpoin
 // advisory, so the verdict stays as the retirement decided it, but a silent discard
 // leaves a dead section pinned in a document nobody was told about. The error text
 // carries the file and the line for a parse refusal, so the reader can repair the
-// document by hand. It prints on the ambient warnings writer, the verb's own stderr,
-// where the live-binary guard also announces a non-fatal removal fact.
+// document by hand. It prints on the ambient warnings writer.
 func warnSectionKept(a ambient, request string, err error) {
 	fmt.Fprintf(a.warnings,
 		"bench: the retirement kept the handoff section for request %s: %v\n", request, err)

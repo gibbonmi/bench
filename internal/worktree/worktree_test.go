@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"os"
 	"path/filepath"
 	"strings"
@@ -439,9 +440,8 @@ func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 	}
 }
 
-// TestIgnoredInventoryStatRaceRetains lists an ignored file that the planner cannot stat:
-// its directory grants read but no search, so Git lists the name and the real os.Lstat
-// fails. Root bypasses that mode, so the fixture cannot fail the stat under root.
+// TestIgnoredInventoryStatRaceRetains denies search on an ignored file's directory, so Git lists
+// the name and os.Lstat fails. The nested-state read fails too; only the reason names the stat fault.
 func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 	t.Parallel()
 	if os.Geteuid() == 0 {
@@ -459,9 +459,9 @@ func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chmod(locked, 0o700) })
 	mustNoError(t, os.Chmod(locked, 0o600))
 	plan, err := PlanExplicitWithOptions(root, target, CleanupOptions{DiscardIgnored: true})
-	if err != nil || plan.Action != ActionRetain || plan.ReasonCode != ReasonUncertain {
-		t.Fatalf("stat-race plan = %#v, %v", plan, err)
-	}
+	statFault := lifecyclepolicy.DecideExplicit(lifecyclepolicy.ExplicitFacts{IgnoredErr: os.ErrPermission}).Reason
+	requireTest(t, err == nil && plan.Action == ActionRetain && plan.ReasonCode == ReasonUncertain && plan.Reason == statFault,
+		"stat-race plan = %#v, %v; want the reason %q", plan, err, statFault)
 	mustNoError(t, os.Chmod(locked, 0o700))
 	if _, err := os.Lstat(ignored); err != nil {
 		t.Fatalf("stat-race plan mutated ignored file: %v", err)

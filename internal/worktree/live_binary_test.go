@@ -32,8 +32,8 @@ func newResidueGuardFixture(t *testing.T, request string) ownedAssignment {
 }
 
 // stubbedLiveBinaryJoins returns a seam set whose running-binary resolution answers with
-// running. Each test holds its own value, so no two tests share a stub point. The residue
-// guard warns on the verb's own stderr, so a test reads the warning from the verb result.
+// running. Each test holds its own value, so no two tests share a stub point. The stub
+// leaves the ambient warnings writer alone, so the residue guard still writes there.
 func stubbedLiveBinaryJoins(running string) joins {
 	j := defaultJoins()
 	j.resolveRunningBinary = func() (string, error) { return running, nil }

@@ -16,9 +16,9 @@ import (
 
 // warnBeforeRemovingLiveBinary tells the caller that removing candidate out of root
 // disables the binary answering bench, and names the command that rebuilds it. It stays
-// silent for any other candidate. The warning goes to the ambient warnings writer, which
-// is the verb's own stderr. The guard runs below every command's writer, so the warning
-// must land while the removal is proposed, not in a plan the caller reads afterward.
+// silent for any other candidate. The warning goes to the ambient warnings writer. The
+// guard runs below every command's writer, so the warning must land while the removal is
+// proposed, not in a plan the caller reads afterward.
 func warnBeforeRemovingLiveBinary(j joins, a ambient, root, candidate string) {
 	if !isRunningBinary(j, candidate) {
 		return
