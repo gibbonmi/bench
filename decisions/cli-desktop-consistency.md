@@ -1,6 +1,6 @@
 # Consistent Bench behavior in CLI and desktop
 
-Status: shaping
+Status: ready
 
 ## Destination
 
@@ -17,7 +17,9 @@ Consult craft-domain, craft-grill, and craft-synthesis during shaping.
 Research uses craft-research; compatibility probes use prototype.
 A map-owned asset stays in `decisions/cli-desktop-consistency/assets/`.
 
-The remaining frontier is [Evidence-backed guarantees (#12)](cli-desktop-consistency/tickets/12.md).
+The reviewer confirms the complete shaped outcome.
+All decision tickets are resolved.
+The evidence gaps remain required qualification work for the specification.
 
 ## Decisions so far
 
@@ -33,6 +35,8 @@ The remaining frontier is [Evidence-backed guarantees (#12)](cli-desktop-consist
 
 - [Installed compatibility proof (#10)](cli-desktop-consistency/tickets/10.md): negative command result.
 - [Supported integration routes (#11)](cli-desktop-consistency/tickets/11.md): supported routes and explicit limits.
+
+- [Evidence-backed guarantees (#12)](cli-desktop-consistency/tickets/12.md): capability evidence and verified recovery.
 
 ## Not yet specified
 
