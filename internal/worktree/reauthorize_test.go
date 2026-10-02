@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -177,7 +178,8 @@ func TestReauthorizeCommandRollsBackLockRefreshAndCASLoss(t *testing.T) {
 				if os.Geteuid() == 0 {
 					capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny writes to fail the unlock")
 				}
-				admin := filepath.Dir(mustAdminPath(t, f.creation.Path, "index"))
+				admin, err := git.AdminDir(f.creation.Path)
+				mustNoError(t, err)
 				t.Cleanup(func() { _ = os.Chmod(admin, 0o700) })
 				mustNoError(t, os.Chmod(admin, 0o500))
 				return j
