@@ -648,7 +648,76 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "re-c3-r1-standards",
+          "performer": "claude:bench-reviewer/re-c3-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "a4d74c2be12e01dcaec7a6bb89f722d14b6ae9f0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re-c3-r1-standards-20261002@2883afc94987a9b6f42a763ad280c3023faec39b",
+            "digest": "sha256:9ef066d6a574629e32f9e586b60c0bdb52d753b2aa9df25fa26c781609bd3749",
+            "excerpt": "Standards RE-C3 (48ab8bdf..2883afc9): fail, 2 findings.\nS1: the verification layout and verificationValid write the cross-flag grammar twice (enforcement vs advertisement); the form comment overclaims one source.\nS2: unclaimed repeats Parse's evidence-list walk; a shared walker needs a parse.go Writes expansion.\nAdvice: review literals and supersession mirror Parse; the list cell is derived twice; the restore set has no reviewrecord owner.\n"
+          },
+          "axis": "Standards",
+          "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "tip": "2883afc94987a9b6f42a763ad280c3023faec39b",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "re-c3-r1-spec",
+          "performer": "claude:bench-reviewer/re-c3-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "a4d74c2be12e01dcaec7a6bb89f722d14b6ae9f0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-c3-r1-spec-20261002@2883afc94987a9b6f42a763ad280c3023faec39b",
+            "digest": "sha256:25b00ad8d664e347dc84d06d9e6037710e33711e7f125c4fe6caba99ffbbb047",
+            "excerpt": "Spec axis RE-C3 at 48ab8bdf..2883afc9: pass, no finding IDs.\nAll 46 RE-C3 rows held (RE36, RE42-RE71, RE104, RE107, RE108, RE72-RE83).\nThe help rows match Further notes exactly, and the --id check runs before the render.\nThe RE70 amendment stays inside the approved grammar --probe-restore pass|fail and story 45.\nAdvice: the order of refusal steps 4 and 5 cannot be met when the chunk tip is the source, so add a spec note.\n"
+          },
+          "axis": "Spec",
+          "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "tip": "2883afc94987a9b6f42a763ad280c3023faec39b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "re-c3-r1-coverage",
+          "performer": "claude:bench-reviewer/re-c3-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "a4d74c2be12e01dcaec7a6bb89f722d14b6ae9f0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/re-c3-r1-coverage-20261002@2883afc94987a9b6f42a763ad280c3023faec39b",
+            "digest": "sha256:7a786823da3193451c32f05aedcf253f93d4b8154b9dfe14132b6e5ab86e569c",
+            "excerpt": "Coverage RE-C3 round 1: fail, 4 findings (C1-C4), all auto-fix.\nC1: RE70 does not cover the probe-count clause (command.go:259).\nC2: no test covers the single-line check on --requirement and --probe-outcome (command.go:64,66).\nC3: no test covers the last same-axis result supersession rule (write.go:313).\nC4: no test covers a duplicate ID in the completion list (write.go:330). All 6 probes stayed silent, each with restored=yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "48ab8bdf97703c211893959bfd265dbb51b2a068",
+          "tip": "2883afc94987a9b6f42a763ad280c3023faec39b",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1072,3 +1141,44 @@ Focused checks at `2883afc9`, before the commit:
 - `bench structure` reported no issue in a file that the ticket changed. `write.go` holds 345 lines. The commit lane passed its structure growth check.
 
 At the RE-C3 tip `f8bd61fb`, `bench test --package ./internal/reviewrecord/...` passed in 5.5 s, and `bench test --package ./cmd/bench` passed in 13.1 s. No check skipped a test. The verb recorded `re-c3-v-t4-reviewrecord` and `re-c3-v-t4-cmd` from these two runs.
+
+## RE-C3 chunk review, round 1
+
+Three fresh fable / high sessions reviewed the frozen pair `48ab8bdf..2883afc9`. Each axis bound the review evidence `sha256:9fadd943` with `--check-current`. `bench record review` wrote the three results. The raw finding count is 6, and the repair-target count is 6. The repair allowance of RE-C3 is 2 cycles, and 0 cycles are used. C1 to C4 are the one hardening cycle of RE-C3.
+
+### Standards
+
+Finding count: 2. Worst issue: S1.
+
+- S1, auto-fix, confidence 5. The verification `layout` in `recordcmd/command.go` and `verificationValid` write the cross-flag grammar twice. AGENTS.md names an enforcement and its advertisement as one fact. Derive the rule from the layout groups, so the usage line and the check have one source.
+- S2, auto-fix, confidence 5. `unclaimed` in `write.go` repeats the evidence-list walk of `Parse`. One walker in `parse.go` serves both. The repair plan adds `parse.go` to the ticket 3 `Writes:` line.
+
+### Spec
+
+Finding count: 0. Worst issue: none. Each of the 46 RE-C3 rows holds. The RE70 amendment stays inside the approved grammar and story 45.
+
+### Coverage
+
+Finding count: 4. Worst issue: C1. Each finding comes from a probe that returned `silent` with `restored=yes`.
+
+- C1, auto-fix, confidence 7. No RE70 case grades the probe-count clause. Two probe flags without `--probe-outcome` pass the grammar under the mutation.
+- C2, auto-fix, confidence 6. No test grades refusal step 3 on `--requirement` or `--probe-outcome`.
+- C3, auto-fix, confidence 6. No test has two earlier results on one axis, so the rule "the last result of the same axis" is not proven.
+- C4, auto-fix, confidence 6. No test reuses an ID from the completion list.
+
+### Repair routing
+
+- The ticket 3 repair takes S1, S2, C1, C2, and C4, because ticket 3 owns the verification form and the ID walk.
+- The ticket 4 repair takes C3, because ticket 4 owns the review form. It starts after the ticket 3 repair commits, because both repairs write `write.go` and `command.go`.
+
+### Advice
+
+- The review literals and the supersession rule in `write.go` mirror `Parse`.
+- The `list` cell is derived twice. `RecordVerification` can return the list.
+- The values `pass` and `fail` of `--probe-restore` have no owner in `reviewrecord`.
+- Refusal steps 4 and 5 run in another order when a chunk entry supplies the source. A spec note can state that order.
+- `--finding R1 --finding R1` writes the ID twice, and no rule forbids that.
+
+### Command contribution
+
+The Standards axis suggests a charge rule: an author sends a one-source fix outside its fence to the orchestrator before the ticket commit. The Coverage axis suggests that the author probe each member of an enumerated rule, not the whole rule at once. The Spec axis found no contribution.
