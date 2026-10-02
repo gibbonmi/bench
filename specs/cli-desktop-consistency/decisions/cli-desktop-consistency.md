@@ -15,7 +15,7 @@ The invoking authoring session records and validates this map.
 
 Consult craft-domain, craft-grill, and craft-synthesis during shaping.
 Research uses craft-research; compatibility probes use prototype.
-A map-owned asset stays in `decisions/cli-desktop-consistency/assets/`.
+A map-owned asset stays in `specs/cli-desktop-consistency/decisions/cli-desktop-consistency/assets/`.
 
 The reviewer confirms the complete shaped outcome.
 All decision tickets are resolved.
@@ -51,9 +51,9 @@ The evidence gaps remain required qualification work for the specification.
 
 ## Sources
 
-- Path: `decisions/cli-desktop-consistency/assets/installed-compatibility-probe.md`
+- Path: `specs/cli-desktop-consistency/decisions/cli-desktop-consistency/assets/installed-compatibility-probe.md`
   Supports: Tickets #10 through #12; actual command results and unqualified workflow classes.
   Drift: Runtime, configuration, or workspace changes require affected probes again.
-- Path: `decisions/cli-desktop-consistency/assets/supported-integration-routes.md`
+- Path: `specs/cli-desktop-consistency/decisions/cli-desktop-consistency/assets/supported-integration-routes.md`
   Supports: Tickets #11 and #12; supported integration routes and recovery limits.
   Drift: Bench integration, upstream documentation, or installed environment changes require a source check.
