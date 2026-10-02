@@ -1,7 +1,8 @@
 # CLI and desktop consistency review
 
-The prior C1 confirmation has zero findings and zero repair targets.
-Cycle 3 completed author verification and awaits current confirmation.
+C1 cycle 3 has one Standards finding and one repair target.
+Spec and Coverage returned zero findings.
+All required author checks passed; the current checkpoint has not run.
 The first confirmation had two findings and two repair targets.
 The first review had five findings and five repair targets.
 Repair cycle 1 of 2 completed its author verification and confirmation.
@@ -34,12 +35,22 @@ The isolated test reproduced that timestamp change in 7316 ms with no skips.
 Cycle 3 also moves this test to the existing private kit-copy fixture.
 Its current verification passed, including both planned mutations and verified restoration.
 The detailed results are in specs/cli-desktop-consistency/assets/repair-cycle-3.md.
-All three review axes must cover this repair delta before its checkpoint.
+All three current native axes completed against the committed repair.
+The two initial cycles and the one reviewer-approved extension are consumed.
+ST-R3-1 remains open, so further repair and the checkpoint await a reviewer decision.
 
 C2 and C3 remain blocked until the checkpoint passes.
 The complete specification remains unqualified until its live requirements pass.
 
 ## Standards
+
+Cycle 3 finding count: 1.
+The worst issue is duplicated contract prose.
+ST-R3-1: auto-fix, confidence 9.
+Remove the two-line test comment that repeats the build owner's manifest-lifetime rule.
+Sources: AGENTS.md:35-48, craft-comments, internal/runbinary/runbinary_test.go:328-329, scripts/go-build.sh:18-22.
+The coordinator verified both citations and the unchanged review source.
+
 
 Final finding count: 0.
 Final confirmation closed STD-C1-02 and retained STD-C1-01 as closed.
@@ -68,6 +79,11 @@ The current finding is supported; the partial read is not a complete Standards p
 
 ## Spec
 
+Cycle 3 finding count: 0.
+Worst issue: none.
+The fixture and runtime selection meet the amended C1 requirements.
+
+
 Final finding count: 0.
 Final confirmation found no requirement mismatch in repair cycle 2.
 
@@ -88,6 +104,11 @@ Keep the configuration home unknown when its lookup fails.
 Sources: CD03, internal/adopt/compatibility.go:135.
 
 ## Coverage
+
+Cycle 3 finding count: 0.
+Worst issue: none.
+The independent bypass attempt found no surviving fixture or production gap.
+
 
 Final finding count: 0.
 Final confirmation closed COV-C1-02 and retained COV-C1-01 as closed.
@@ -805,6 +826,74 @@ No review requested a Bench command change.
           "finding_ids": [],
           "supersedes": [
             "c1-coverage-confirm1"
+          ]
+        },
+        {
+          "id": "c1-standards-repair3",
+          "performer": "codex-collaboration:/root/c1_standards_repair3",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "codex-collaboration:/root/c1_standards_repair3",
+            "digest": "sha256:5ef42ce9a57366e4df2aecb33d84a683f64296c47deb868c2d940ae9c7a1c682",
+            "excerpt": "Standards\nStatus: claimed, confidence 9/10. Current evidence binding verified at ffd9d7d493859923ecd58fcc00104de75dde607a..0bcf0db69fdc5a13cc102869936653a16051c419.\nRaw findings: 1. Worst issue: duplicated contract prose.\nST-R3-1 — auto-fix. AGENTS.md requires one source per fact, while craft-comments says to keep a contract in code or its canonical document, not both. The repaired comment at internal/runbinary/runbinary_test.go:328-329 repeats the private-manifest lifetime contract already owned by scripts/go-build.sh:18-22. The test name and assertions identify the graded behavior. Remove the repaired comment. This finding is confined to the repair delta.\nThe implementation command did not contribute; no command change is necessary. No optional advice.\nRead scope included the required standards, whole specification, ticket 1, repair and author records, supplied evidence sources, gittest.KitCopy, the repaired test, runbinary owner, npm prepare writer, and build script. No tests, probes, writes, stash operations, or commits were run.\n"
+          },
+          "axis": "Standards",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "4ac3cdc94567ed8dc515f84b3cf1c8a4e94bd2fe",
+          "finding_ids": [
+            "ST-R3-1"
+          ],
+          "supersedes": [
+            "c1-standards-final"
+          ]
+        },
+        {
+          "id": "c1-spec-repair3",
+          "performer": "codex-collaboration:/root/c1_spec_repair3",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex-collaboration:/root/c1_spec_repair3",
+            "digest": "sha256:f1e426076bd999d4f6262556b1f0a18261f22981f22184a713157e283efc6f86",
+            "excerpt": "Spec confirmation: claimed, confidence 10.\nCurrent evidence binding is clean and current at 0bcf0db69fdc5a13cc102869936653a16051c419; delivery remains unverified.\nFindings: 0. Worst issue: none. Disposition: no-op.\nThe repair satisfies the added C1 requirements: TestBuildLeavesTheWrapperManifestUntouched uses gittest.KitCopy for independent absent and present states; it preserves the absence and byte-equality assertions. Production Build still directs private manifests beside the temporary output, while the recorded swap directs them into the fixture wrapper directory and makes both cases fail. The evidence supports the npm 9 lifecycle writer, Node 25/npm 11 PATH recovery, and removal of the live-manifest cleanup writer. No production behavior changed. C1 coverage remains realized. C2 and C3 remain planned or review-owned and explicitly pending. Prior findings remain closed; no historical concern was reopened.\nNo optional advice or command contribution. No tests, probes, edits, stash, or commits were performed.\n"
+          },
+          "axis": "Spec",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "4ac3cdc94567ed8dc515f84b3cf1c8a4e94bd2fe",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec-final"
+          ]
+        },
+        {
+          "id": "c1-coverage-repair3",
+          "performer": "codex-collaboration:/root/c1_coverage_repair3",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex-collaboration:/root/c1_coverage_repair3",
+            "digest": "sha256:4cfa6da1b3135fefda2292d816f080d8e1810ed188f7a37bfaa5f057a00a79b8",
+            "excerpt": "Coverage terminal — status: claimed; confidence 10/10. Binding verified current=true, clean at 0bcf0db69fdc5a13cc102869936653a16051c419 for evidence sha256:710d810bd4837a55f54439eb82cb89cb2c806c5cd3e348fbdc87768eebbc685e; delivery remains unverified, so I do not label the claim verified.\nFindings: 0. Worst issue: none. Repair targets: 0. Dispositions: none (no-op 0, auto-fix 0, ask-user 0). Optional advice: none.\nIndependent derivation: producer family is Build(sourceRoot, output) -> canonicalBuild -> runBuildScript with manifestDir=Dir(output), then freshness-publish; authorized runtime writes are the private output executable/seal/manifest and Bench-owned build cache, plus the test's private KitCopy fixture manifest for the present state. The original kit checkout is outside that set. The delta replaces live-kit cleanup with gittest.KitCopy for both absent/present states; KitCopy materializes a distinct temp repository, and its own test asserts copyRoot != source root and excludes ignored bin/bench-broker.manifest. Byte/absence assertions remain.\nIndependent analytical bypass attempted: substitute the live kit for KitCopy, save/remove/rewrite the live manifest, then restore bytes/mode/mtime so end snapshots and both assertions pass. This is a compound mutation of the test harness itself, not a surviving production/fixture bypass: it deletes the explicit approved fixture call, while gittest separately authenticates root separation. The production-site manifest-directory swap remains the relevant behavioral mutation and failed both subtests. No missing C1 test retained.\nRead scope: complete approved spec (545 lines), ticket 1, profile hostile-input checklist, repair-cycle-3, review author record; metadata source-1, consumers source-47 (untouched rows first), coverage source-48; single repair diff ffd9d7d493859923ecd58fcc00104de75dde607a..0bcf0db69fdc5a13cc102869936653a16051c419; runbinary test/production, go-build publisher, freshness/brokermanifest writer, gittest/testrepo fixtures. Full C1 base 6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69 used only as closed context. No tests, probes, edits, stash, or commits.\n"
+          },
+          "axis": "Coverage",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "4ac3cdc94567ed8dc515f84b3cf1c8a4e94bd2fe",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-coverage-final"
           ]
         }
       ]
