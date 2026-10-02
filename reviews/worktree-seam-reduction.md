@@ -1409,6 +1409,72 @@
           "supersedes": [
             "sr-c6-r1-coverage"
           ]
+        },
+        {
+          "id": "sr-c6-r3-coverage",
+          "performer": "claude:session-018nyJAsDqW5oX9xoqL3vvFk",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4aabcdaca67157dc1d1546ff7373df234ae9ea8f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:session/018nyJAsDqW5oX9xoqL3vvFk@650a614f22a95cdbeb8608436531fd2522025e84",
+            "digest": "sha256:3c4e050d5c05a26dcfebc880cb43a16a0a06199363d33a5735444413fd0e1b1a",
+            "excerpt": "Coverage, SR-C6 second confirming round, repair delta 54d3beac..650a614f (two test files): pass, 0 findings.\nThe delta adds one case to TestSingleReadCensusRefusesASecondRead (an aliased kit reader whose message pins gate.KitValue in the short form) and changes a header comment.\nRepair probe (delegate): single_read_census_test.go, swap `return path.Base(importPath) + \".\" + name` with `return importPath + \".\" + name`, --run TestSingleReadCensus: bit (1 test), restored yes.\nCoordinator probe: single_read_census_test.go, swap `path.Base(importPath) != gateFiles[0].Name.Name` with `importPath != gateFiles[0].Name.Name`, --run TestSingleReadCensus: bit (4 tests: kit wrapper, qualified read, second read, indirect kit read), restored yes.\nThe round 2 inputs stay pinned; no new input family enters with this delta. N1 (dot import) stays a veto item.\nFinal git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c6-r2-coverage"
+          ]
+        },
+        {
+          "id": "sr-c6-r3-standards",
+          "performer": "claude:bench-reviewer/sr-c6-r3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4aabcdaca67157dc1d1546ff7373df234ae9ea8f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c6-r3-standards-20261002@650a614f22a95cdbeb8608436531fd2522025e84",
+            "digest": "sha256:2f89cb79231e149961f94d468b639075943ca461752c46d24c0c7905bbe4517b",
+            "excerpt": "Standards axis, SR-C6 second confirming round, repair delta 54d3beac..650a614f: pass, 0 findings.\nS3: confirmed. The header at single_read_census_cases_test.go:3-6 holds for every test; the empty read set test (:177) plants no effects file and the live tree test (:187) reads this package, as the header says.\nP3: confirmed. kindKey (single_read_census_test.go:52) is the only builder and splitKind (:58) the only parser of the key; kindName (:65-67) renders path.Base(importPath)+\".\"+name at :279 and :288; the join at :75 builds the spelled alias form, not the key.\nThe new comments meet the comments skill.\ncount: 0\nAdvice: the earlier key-format advice is resolved.\n"
+          },
+          "axis": "Standards",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c6-r2-standards"
+          ]
+        },
+        {
+          "id": "sr-c6-r3-spec",
+          "performer": "claude:bench-reviewer/sr-c6-r3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4aabcdaca67157dc1d1546ff7373df234ae9ea8f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c6-r3-spec-20261002@650a614f22a95cdbeb8608436531fd2522025e84",
+            "digest": "sha256:693456d94bca5a3ae7c56b49d9afb49685b8e60b237958415f713cc1a762f845",
+            "excerpt": "Spec axis, SR-C6 second confirming round, repair delta 54d3beac..650a614f: pass, 0 findings.\nP3: confirmed (confidence 8). kindName renders path.Base(importPath) + \".\" + name (single_read_census_test.go:55-60), used at :279 and :288; only kindKey keeps the path. The three templates are unchanged (:44, :46, :48). The new case in TestSingleReadCensusRefusesASecondRead uses the alias kit and expects the literal gate.KitValue at line 7 (cases_test.go:27-28 in the diff); the name is unchanged. The <name> source spelling is kept (:200, :211, :284).\nLoop sentence (spec 236-238): agrees with the census; condition, post statement, and body are nested, the init and range expression are not (:184-192).\ncount: 0\nAdvice: a /vN import path would render vN.Name; the live tree has none.\n"
+          },
+          "axis": "Spec",
+          "base": "e3c45d466cc083e0bd091e0ab9228e57ad94d8ff",
+          "tip": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c6-r2-spec"
+          ]
         }
       ]
     }
@@ -1885,3 +1951,14 @@ S3 and P3 go to one fresh repair session for ticket 12, which is repair cycle 2 
 - The `path.Name` key format is built in two places and parsed in one; a small kind struct would give it one owner.
 - Name-only keying draws a false helper-call report for a same-named field selector; that is a report, never a miss.
 - The source-file predicate has two copies outside the delta, in `worktree_test.go` and `identity_component_test.go`, present at the chunk base.
+
+## SR-C6 repair 2 and second confirming round
+
+The ticket 12 repair `650a614f` folded S3 and P3, with one delegate probe and one coordinator probe that bit. The coordinator probe compared the gate package against the full import path, and four census tests went red. Two fresh opus / high sessions then read the repair delta `54d3beac..650a614f` on the Standards axis and the Spec axis, and each confirmed both folds. The coordinator graded the Coverage axis from the two probes, because the delta is test-only; the record names the coordinator session. The amended loop sentence agrees with the census. SR-C6 has no open finding, and 2 of 2 repair cycles are used.
+
+### Veto items
+
+- P2: the spec sentence that counts a loop condition and post statement as the loop body.
+- N1: a dot import of a read package goes unreported; no Won't-handle line decides it.
+- C3 and C4 widened the census beyond the rows as written: method entries, and an error on an empty read set.
+- The coordinator-graded Coverage axis of this round.
