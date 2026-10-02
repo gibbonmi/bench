@@ -232,8 +232,10 @@ A grammar error exits 2 with the usage line of the form. These are grammar error
 - an `--axis` outside `Standards`, `Spec`, and `Coverage`
 - a `--map` value with no `=`, an empty side, or a key that an earlier `--map` names
 
-A content refusal exits 1 and prints `error: bench record <form> refused — <cause>`.
-The checks run in this order, and the first refusal wins:
+A content refusal exits 1. An unreadable excerpt prints the `toon.RecordError`
+line, and each other content refusal after step 2 prints
+`error: bench record <form> refused — <cause>`. The checks run in this order,
+and the first refusal wins:
 
 1. An empty root prints the `toon.NotInRepo` line.
 2. The primary checkout prints the `usage.PrimaryCheckoutRefusal` line.
@@ -271,8 +273,9 @@ command lives in the new package `internal/reviewrecord/recordcmd`.
 
 ### The guidance
 
-Ticket 6 replaces lines 209 and 210 and line 213 of step 6 in
-`.agents/commands/bench-review-implementation.md`. The new step 6 text reads:
+Ticket 6 replaces lines 208 to 214 of step 6 in
+`.agents/commands/bench-review-implementation.md`. No anchor names a sentence on
+those lines. The new step 6 text reads:
 
     Retain every terminal return in one fenced `bench-review-record` JSON payload.
     The `internal/reviewrecord` types own the schema. Write each record entry with `bench record`, not with hand-built JSON.
@@ -285,7 +288,8 @@ Ticket 6 replaces lines 209 and 210 and line 213 of step 6 in
     Keep author verification separate from independent review.
 
 Ticket 6 inserts one sentence after the first sentence of the Land paragraph in
-`.agents/commands/bench-implement-spec.md`, on the same physical line:
+`.agents/commands/bench-implement-spec.md`, on the same physical line 56. No
+anchor names a sentence on that line. The new sentence reads:
 
     An author writes each verification entry with `bench record verification`.
 
@@ -309,7 +313,7 @@ tickets 3, 4, and 5 consume, so RE-C2 is its own chunk too.
 - Ticket 2 adds `recordtest.NewLinked`. It prepares a `recordtest` fixture in a linked worktree of a new repository, so the verb sees a worktree and the primary checkout stays testable.
 - `Render` has its own tests in `internal/reviewrecord/record_test.go`, because the fixtures and the verb both call it.
 - A test derives each expected TOON row through `toon.Table`, because a digest that starts with `0` and a digit renders quoted.
-- The package tests run in the gate's `test` phase, so that phase observes each row. The anchor rows run in the root conformance test of the same phase.
+- The package tests run in the gate's `test` phase, so that phase observes each row. The anchor rows run in the `internal/anchors` package tests, and RE101 runs in the root conformance test, both in the same phase.
 
 ### Seam diagram
 
@@ -363,7 +367,7 @@ tickets 3, 4, and 5 consume, so RE-C2 is its own chunk too.
 | RE37 | 45 | With an empty root the chunk form exits 1 with the `toon.NotInRepo` text | planned TestRecordRefusesOutsideARepository in internal/reviewrecord/recordcmd, through `Command` | A verb that resolves the record path first reports a file error. |
 | RE38 | 45 | Each of `bench record`, `bench record nosuch`, `bench record chunk` with no operand, and `bench record chunk example` with no `--tip` exits 2 with a line that starts `usage: bench record` | planned TestRecordGrammarRefusals in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A parser that ignores a missing flag runs a partial form. |
 | RE39 | 44 | `bench record --help` exits 0 and prints the usage line of each implemented form from `recordcmd.HelpRows` | planned TestRecordHelpPrintsEachForm in internal/reviewrecord/recordcmd, through `Command` | A help text kept apart from the form grammars omits a form. |
-| RE40 | 44 | The real dispatcher answers `bench record --help` with the `recordcmd` usage text at exit 0 | planned TestRecordRouteAnswersItsUsage in cmd/bench, through `Command.Run` | A registry row wired to another handler prints other text. |
+| RE40 | 44 | The real dispatcher answers `bench record --help` with the `recordcmd` usage text at exit 0 | planned TestRecordRouteAnswersItsUsage in cmd/bench/help_inventory_test.go, through `Command.Run` | A registry row wired to another handler prints other text. |
 | RE41 | 44 | `bench help` prints the chunk row that Further notes quotes | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`), extended in place | The independent golden expectation lacks the row until the ticket adds it. |
 | RE42 | 11 | A verification result for chunk `1` adds one entry to the chunk's `verification` list and none to its `reviews` list | planned TestRecordVerificationLandsInTheChunkList in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that appends to the review list repeats the worktree-verb-runner error. |
 | RE43 | 12 | `--final --requirement acceptance` adds one entry to `completion.verification` | planned TestRecordFinalVerificationLandsInTheCompletionList in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that needs a chunk refuses the final form. |
@@ -574,7 +578,7 @@ search is `rg -n -F '"bench-review-record"' --glob '*.go' --glob '!*_test.go'`.
 
 ### Proof checklist
 
-- Cited symbols: each symbol resolves in the tree at `0c95c944`.
+- Cited symbols: each symbol resolves in the tree at `0c95c944`. The merge of `main` at `9c5d0981` changed only one craft-delegate reference file.
   - In `internal/reviewrecord`: `Read`, `ReadTree`, `Parse`, `ReadPlan`, `SourceDigest`, `Digest`, `RecordPath`, `Slug`, `Axes`, `Check`, `CheckSource`, `ErrMissing`, and the private `fenced`, `readFile`, `parseRecord`, `verifier`, `findChunk`, and `mappedIDs`.
   - In `internal/reviewrecord/recordtest`: `Fixture`, `Save`, `New`, `NewDelegated`, `Attach`, `Prepare`, `Delegate`, and `Native`.
   - In other packages: `bounds.ClassifyNoFollow`, `bounds.ControlRecordLimit`, `toon.RecordError`, `toon.Errorf`, `toon.NotInRepo`, `toon.Table`, `usage.Parse`, `usage.PrimaryCheckoutRefusal`, `git.IsPrimaryCheckout`, `git.ResolveCommit`, and `evidencecmd.HelpRows`.
