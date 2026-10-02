@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:343888b346f2bdcdd37822526226f9963254fc1ff0fbbff1b2cb063297225775",
+  "plan_digest": "sha256:91896c9524239efaed06535c7aaa1a3a9dccbf36b8e1c70a6e5c218d0e702106",
   "implementation_session": "",
   "chunks": [
     {
@@ -1535,6 +1535,46 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SR-C7",
+      "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+      "tip": "c3c2aed5743a397826aaa3ed53f30fccabc907d2",
+      "plan_digest": "sha256:91896c9524239efaed06535c7aaa1a3a9dccbf36b8e1c70a6e5c218d0e702106",
+      "source_digest": "b18681abbbe5d5169165223ed5944e32337834f4",
+      "acceptance_rows": [
+        "WS71",
+        "WS72",
+        "WS73",
+        "WS74",
+        "WS75",
+        "WS76",
+        "WS77",
+        "WS78",
+        "WS79",
+        "WS80"
+      ],
+      "verification": [
+        {
+          "id": "sr-c7-15-worktree",
+          "performer": "claude:bench-writer/sr-t15-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b18681abbbe5d5169165223ed5944e32337834f4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t15-author-20261002@6805b853fd146b010bd15a9f4dccf2ca0543d3f9",
+            "digest": "sha256:b773bb27415a0a5261a7a0d58dc9f5ac5ce032dd70408de48eb828f39b8ddb28",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,6805b853fd146b010bd15a9f4dccf2ca0543d3f9,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,61945\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\nprobe TestResetApplyTakesTheCleanupLock: bit,internal/worktree/reset_apply_test.go,swap,failed,1,yes\nprobe TestLandSkipsTheRefreshWithoutBuildInputs: bit,internal/worktree/land_effects_test.go,swap,failed,1,yes\nprobe TestLandSkipsAFreshBroker: bit,internal/worktree/land_effects_test.go,swap,failed,1,yes\nprobe TestResumeReadsEffectStateFromTheTree: bit,internal/worktree/land_effects_test.go,swap,failed,1,yes\nprobe TestLandCommandHostileSourceInputsRefuseBoundedly: bit,internal/worktree/land_flags_test.go,swap,failed,2,yes\nprobe TestLandCommandRefusesDestinationAndSourceStateBeforeGate: bit,internal/worktree/land_flags_test.go,swap,failed,7,yes\n"
+          },
+          "requirement": "15-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1701,6 +1741,30 @@
     {
       "from": "sha256:1d8500038cf36fe08f8b2042b1f418051249af4775371bf697d6bd43ef9399d4",
       "to": "sha256:343888b346f2bdcdd37822526226f9963254fc1ff0fbbff1b2cb063297225775",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ],
+        "SR-C3": [
+          "SR-C3"
+        ],
+        "SR-C4": [
+          "SR-C4"
+        ],
+        "SR-C5": [
+          "SR-C5"
+        ],
+        "SR-C6": [
+          "SR-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:343888b346f2bdcdd37822526226f9963254fc1ff0fbbff1b2cb063297225775",
+      "to": "sha256:91896c9524239efaed06535c7aaa1a3a9dccbf36b8e1c70a6e5c218d0e702106",
       "chunk_ids": {
         "SR-C1": [
           "SR-C1"
