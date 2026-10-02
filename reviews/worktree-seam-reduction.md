@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:6c3f896e4bfa4fb38f3bcac916e8642dce7a9e5ec94f22141824ff9808b1f11f",
+  "plan_digest": "sha256:15fb204e2a60c83b2c9201e17b8dba0b28dde95b6ed9189e731bd1ceb2d7d710",
   "implementation_session": "",
   "chunks": [
     {
@@ -575,9 +575,9 @@
     {
       "id": "SR-C4",
       "base": "c63781f2dae7823e7508e70b04d2ca2cdb76634d",
-      "tip": "a2ec1cc86f72fd1161557d74154a39c9ce72e654",
-      "plan_digest": "sha256:6c3f896e4bfa4fb38f3bcac916e8642dce7a9e5ec94f22141824ff9808b1f11f",
-      "source_digest": "2bcf4bf747e8f9ec945ae6c9ab358c9e20b9077f",
+      "tip": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+      "plan_digest": "sha256:15fb204e2a60c83b2c9201e17b8dba0b28dde95b6ed9189e731bd1ceb2d7d710",
+      "source_digest": "83bb7a0c0d809a9479d66358ca5883801286560f",
       "acceptance_rows": [
         "WS26",
         "WS27",
@@ -649,6 +649,60 @@
             "ref": "claude:agent/sr-t6-author-20261002@2c83701a25ec00d47e6d19dafbb58fe44f2d9fa8",
             "digest": "sha256:63cddc628c02adeb0b25ccdf734584fa8c41902718b833aa5e895889d68bb2be",
             "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,a2ec1cc86f72fd1161557d74154a39c9ce72e654,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,64198\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "6-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c4-4-worktree-r2",
+          "performer": "claude:bench-writer/sr-t4-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "83bb7a0c0d809a9479d66358ca5883801286560f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t4-author-20261002@2af88a0b14516dee1019fba94abadc7c85dbd083",
+            "digest": "sha256:b40f215cb4c05c46adefc3b1960e963f2dd7d09a7570e6d06307b161ede16348",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,2dce1179a24ef0bb1934e1e9733b9874cb6e7632,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62842\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "4-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c4-5-worktree-repair1",
+          "performer": "claude:bench-writer/sr-t5-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "83bb7a0c0d809a9479d66358ca5883801286560f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t5-repair1-20261002@a14627c15a3abdb527eaee9cae4e79218ee0671e",
+            "digest": "sha256:394a1b5deb69efa2f9614c511a610a8e6d95cab3b5284caf37510b3d8a32e0b4",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,2dce1179a24ef0bb1934e1e9733b9874cb6e7632,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,65552\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "5-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c4-6-worktree-repair1",
+          "performer": "claude:bench-writer/sr-t6-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "83bb7a0c0d809a9479d66358ca5883801286560f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t6-repair1-20261002@a14627c15a3abdb527eaee9cae4e79218ee0671e",
+            "digest": "sha256:b3512b44d2f0843f28cb785b005f49789b619d7ed06b2cc1d12e95cf9b5e6751",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,2dce1179a24ef0bb1934e1e9733b9874cb6e7632,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62088\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
           },
           "requirement": "6-worktree",
           "command": "bench test --package ./internal/worktree",
@@ -803,6 +857,24 @@
         ],
         "SR-C3": [
           "SR-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6c3f896e4bfa4fb38f3bcac916e8642dce7a9e5ec94f22141824ff9808b1f11f",
+      "to": "sha256:15fb204e2a60c83b2c9201e17b8dba0b28dde95b6ed9189e731bd1ceb2d7d710",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ],
+        "SR-C2": [
+          "SR-C2"
+        ],
+        "SR-C3": [
+          "SR-C3"
+        ],
+        "SR-C4": [
+          "SR-C4"
         ]
       }
     }
@@ -967,3 +1039,18 @@ Count: 1. Worst: C1.
 - No fixture reaches the resume reconcile error branch in `land_resume.go`.
 - `land_resume_test.go` line 222 spells the marker ref as a literal beside the `markerRef` constant.
 - The reason of the prune call at the landing lives only in a test comment.
+
+## SR-C4 repair cycle 1
+
+Two fresh opus / high repair sessions ran in series, one for each affected ticket. Each session used 1 of 2 attempts and 1 lane pass. The repair allowance of SR-C4 is 2 cycles, and 1 cycle is used.
+
+- Ticket 5, `claude:bench-writer/sr-t5-repair1`, commit `d51459bc`. C1: the WS34 test now requires a clean destination status and the landed file from the published commit. The named swap probe in `land_resume.go` was `silent` before the repair and `bit` after it. P1: the commit message holds the reconcile probe and the prune probe, and each returned `bit` with `restored=yes`.
+- Ticket 6, `claude:bench-writer/sr-t6-repair1`, commit `2dce1179`. S1: `land_fixtures_test.go` holds one table, `postPublicationFaults`, and both tests read it. Each test name, each subtest name, and each assertion is unchanged.
+- P2: the plan commit `6d68dfa3` amended the catch clause of WS41.
+
+The ticket 5 probe record, for WS34 and WS36:
+
+- `bench probe internal/worktree/land.go --omit 'return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)' --package ./internal/worktree --run '^TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout$'` returned `bit`.
+- `bench probe internal/worktree/land.go --omit 'return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "prune", records)' --package ./internal/worktree --run '^TestLandCommandReportsIncompletePrune$'` returned `bit`.
+
+The coordinator ran two independent probes, and each returned `bit` with `restored=yes`. The first replaced the `reset --merge` call in `land_identity.go`, and the WS34 test failed. The second omitted the release return in `land.go`, and the release subtest of each consumer of the shared table failed.
