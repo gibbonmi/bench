@@ -809,7 +809,7 @@ Before the first edit, the probe on `land_refusal.go` bit with 49 failed tests. 
 
 The fresh ticket author `claude:bench-writer/vr-t10-author` ran on opus at medium effort, from tip `c042a8c8f57f245cd92da6f556da856f98960d41`. The ticket commit is `a8bc9310615e1fcef72c376ffcb0b2987a069f11`, and it changes no production file. It writes the 10 `internal/worktree` test files on the ticket's `Writes:` line and no `cmd/bench` or `internal/conformance` file.
 
-Each `land` and `land-resume` call in the 10 files now runs through `runVerb`. Each stubbed landing passes its joins value through `callWith`, so each effect stub still runs. A landing outside the root and the home of a landing fixture uses `repoHome{root, home}`. No test in these files lands at the process home, so no test uses `processHomeCall`. `resumeLandArgs` stays at `land_effects_cleanup_test.go:197`.
+Each `land` and `land-resume` call in the 10 files now runs through `runVerb`. Each stubbed landing passes its joins value through `callWith`, so each effect stub still runs. A landing on a root that no landing fixture owns uses `repoHome{root, home}`. Three sites also used it for the fixture's own root and home, and VR-C4 repair 1 replaces them with `f.call`. No test in these files lands at the process home, so no test uses `processHomeCall`. `resumeLandArgs` stays at `land_effects_cleanup_test.go:197`.
 
 No verb call in the 10 files declares an output buffer pair. The buffer pairs that stay in `land_journey_test.go` collect the output of a built `bench` child process, and no verb entry runs there.
 
@@ -832,6 +832,41 @@ The ticket 8 author ran `bench test --package ./internal/worktree` again at `88d
 ## VR-C4 ticket 9 verification rerun
 
 Ticket 10 landed after ticket 9, so the ticket 9 author ran the package tests again on the final chunk source at `4d3162a7d2bbf364ffd1837aee9c7dbef8d940b0`. `bench test --package ./internal/worktree` passed with the two socket capability skips. The JSON payload holds this result as `vr-c4-9-worktree-r2`.
+
+## VR-C4 chunk review, round 1
+
+The frozen pair is base `7fa02b429a66aa71b4303e483b82e074622c80bd` and tip `7b8477d727f83273800fa5e64a28bafca4eeb814`. The shared evidence is `sha256:f246a96122e745dae79ba4913f1b896c6d02d7bc8c0331c568aa21ef541e8a5c`. Each axis ran in a fresh `bench-reviewer` session on opus at high effort, on the conditional review line. Only the Coverage axis ran tests and probes, and it left the tree clean.
+
+The raw finding count is 4: Standards 4, Spec 0, and Coverage 0. R22 is an evidence-only correction to this record, which this commit makes. R21, R23, and R24 need code and comment repairs, and they take repair cycle 1 of 2 for VR-C4.
+
+The chunk record for VR44 to VR47 follows. All 688 top-level tests pass, and the SKIP set holds the two socket capability subtests. No test function lost a failure call. The one accepted drop under VR46 is `TestLandCleansTheFoldedSibling` in `land_effects_cleanup_test.go`. Its check for any 64-hex text became `mustNoFingerprint`, which is weaker, and its `--apply` check stays.
+
+### Standards, VR-C4 round 1
+
+Findings: 4. The worst issue is a second spelling of the fixture call.
+
+- R21: `land_reauthorization_test.go:67` and `:76` and `land_resume_test.go:36` build `repoHome{f.root, home}.call`, where `home` equals `f.home`. Each site restates `f.call`. `AGENTS.md` asks for one source per fact. `auto-fix`. Confidence 8.
+- R22: this record said that only a landing outside the fixture root and home uses `repoHome`, which the R21 sites contradict. This commit corrects the record. `auto-fix`. Confidence 8.
+- R23: the comment at `land_fixtures_test.go:26-28` says that the caller hands the fixture home to every verb. `processHomeCall` and `interruptLandingAtMarker` land at the process home. The comment must state the current code. `auto-fix`. Confidence 6.
+- R24: `land_fixtures_test.go:47-50` and `verb_fixture_test.go:115-116` state the same fact about `base` and `fold`, and `foldLandingSibling` repeats the `foldedSibling` comment. One comment owns each fact. The stale, duplicated `stubLandJoins` comment at `land_fixtures_test.go:170-175` joins this target. `auto-fix`. Confidence 5.
+
+### Spec, VR-C4 round 1
+
+Findings: 0. VR36 to VR39 hold at the frozen tip, and every ticket contract holds. The package-wide preview of the VR41 command and the verb form command prints no line, so no direct verb call remains for ticket 11.
+
+### Coverage, VR-C4 round 1
+
+Findings: 0. Four new probes bit, on the release adapter, the refresh effect, the land-resume label, and the cleanup effect. Each joins stub still reaches its verb.
+
+### Advice, VR-C4 round 1
+
+- Ten tests spell the `--resume` argument list that `resumeLandArgs` builds. That copy predates this chunk.
+- A closure that drives the built executable appears five times. That copy predates this chunk.
+- Failure messages use two styles for the verb name.
+
+### Repair route, VR-C4
+
+Every R21, R23, and R24 path is on the ticket 8 `Writes:` line. One fresh repair session for ticket 8 repairs all three. After that repair, the ticket 9 and ticket 10 authors rerun their verification at the final chunk source.
 
 ```bench-review-record
 {
@@ -1971,9 +2006,9 @@ Ticket 10 landed after ticket 9, so the ticket 9 author ran the package tests ag
     {
       "id": "VR-C4",
       "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
-      "tip": "a8bc9310615e1fcef72c376ffcb0b2987a069f11",
-      "plan_digest": "pending",
-      "source_digest": "pending",
+      "tip": "7b8477d727f83273800fa5e64a28bafca4eeb814",
+      "plan_digest": "sha256:7711cbb98050f6a05c3db0a4fe213e57895c371a55de13ee7654a9588fee599d",
+      "source_digest": "bb74f2d148868cfa3030708303666e38d2319c3a",
       "acceptance_rows": [
         "VR36",
         "VR37",
@@ -2072,7 +2107,73 @@ Ticket 10 landed after ticket 9, so the ticket 9 author ran the package tests ag
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "vr-c4-standards-r1",
+          "performer": "claude:bench-reviewer/vr-c4-standards-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb74f2d148868cfa3030708303666e38d2319c3a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/vr-c4-standards@7b8477d7",
+            "digest": "sha256:362b49b093815820597eed7536458a881969247877ac74dc33eb557153319cba",
+            "excerpt": "Standards: 4 findings. Worst: three repoHome{f.root, home}.call sites restate f.call; two fixture comments are stale or duplicated."
+          },
+          "axis": "Standards",
+          "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "tip": "7b8477d727f83273800fa5e64a28bafca4eeb814",
+          "finding_ids": [
+            "R21",
+            "R22",
+            "R23",
+            "R24"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c4-spec-r1",
+          "performer": "claude:bench-reviewer/vr-c4-spec-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb74f2d148868cfa3030708303666e38d2319c3a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c4-spec@7b8477d7",
+            "digest": "sha256:058fa62ef03bac6fba4c152b08d2aa0c635ae5022952417d7c76e18dc5359d93",
+            "excerpt": "Spec: 0 findings. VR36 to VR39 and every ticket contract hold; the package-wide preview leaves no direct verb call for ticket 11."
+          },
+          "axis": "Spec",
+          "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "tip": "7b8477d727f83273800fa5e64a28bafca4eeb814",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "vr-c4-coverage-r1",
+          "performer": "claude:bench-reviewer/vr-c4-coverage-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bb74f2d148868cfa3030708303666e38d2319c3a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-c4-coverage@7b8477d7",
+            "digest": "sha256:a4390f40268f0fa73519611d81450da3808eea9b71f0802b63781d032b6a2363",
+            "excerpt": "Coverage: 0 findings. Four new joins and resume probes bit; 688 tests pass and the one VR46 drop is the accepted folded-sibling check."
+          },
+          "axis": "Coverage",
+          "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
+          "tip": "7b8477d727f83273800fa5e64a28bafca4eeb814",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
