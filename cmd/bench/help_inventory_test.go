@@ -6,6 +6,7 @@ import (
 	"github.com/gibbonmi/bench/internal/assessment"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"os"
 	"path/filepath"
 	"strings"
@@ -128,6 +129,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
   bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
   bench commit [--in <label|primary>] -m <msg> [--preflight-build <slug>] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
+  bench record [--in <label|primary>] chunk <slug> --chunk <id> --base <commit> --tip <commit>  write one chunk's frozen pair, digests, and acceptance rows into reviews/<slug>.md
   bench spec [--in <label|primary>] retire <slug>  delete a merged spec + its review pickup (validated)
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
@@ -200,6 +202,14 @@ func TestEvidenceHelpInventory(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestRecordRouteAnswersItsUsage(t *testing.T) {
+	want, _ := recordcmd.Command("", []string{"--help"})
+	var stdout bytes.Buffer
+	if code := (Command{Stdout: &stdout}).Run([]string{"record", "--help"}); code != 0 || want == "" || stdout.String() != want {
+		t.Fatalf("record --help = exit %d, stdout %q; want exit 0 and the recordcmd usage %q", code, stdout.String(), want)
+	}
 }
 
 func TestRepairPilotRoute(t *testing.T) {

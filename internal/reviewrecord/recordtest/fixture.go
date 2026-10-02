@@ -48,6 +48,20 @@ func NewDelegated(t testing.TB, count int) *Fixture {
 	return AttachDelegated(t, gittest.RepoOnBranch(t, "main"), count)
 }
 
+// NewLinked prepares a fixture in a linked worktree of a new repository, so a write verb
+// sees a worktree. It also returns the root of the primary checkout, which stays testable.
+func NewLinked(t testing.TB, count int, options ...Option) (*Fixture, string) {
+	t.Helper()
+	primary := gittest.RepoOnBranch(t, "main")
+	linked := filepath.Join(t.TempDir(), "linked")
+	for _, args := range [][]string{{"commit", "-qm", "initial", "--allow-empty"}, {"worktree", "add", "-q", "-b", "fixture", linked}} {
+		if _, err := benchgit.Output(append([]string{"-C", primary}, args...)...); err != nil {
+			t.Fatalf("git %v: %v", args, err)
+		}
+	}
+	return Prepare(t, linked, count, Spec, "# Example\n\nStatus: staged\n\n", options...), primary
+}
+
 // WritePlan writes the fixture's current plan back into its spec without
 // committing it. An amendment that must land inside the next chunk's own delta
 // stages the plan here, so the chunk's base keeps its predecessor's source.

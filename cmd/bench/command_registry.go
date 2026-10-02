@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/assessment"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/repairpilot"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -67,14 +69,25 @@ func publicInventory(rows ...helpRow) commandInventory {
 
 var internalInventory = commandInventory{Visibility: inventoryInternal}
 
-// preflightHelpRows projects the preflight operation registry into root help rows at one
-// order, so root help and preflight help advertise the same implemented forms.
-func preflightHelpRows(order int) []helpRow {
+// formHelpRows projects the form registry of one verb into root help rows at one order,
+// so root help and the verb's own help advertise the same implemented forms.
+func formHelpRows[R ~struct{ Suffix, Description string }](order int, forms []R) []helpRow {
 	var rows []helpRow
-	for _, row := range evidencecmd.HelpRows() {
+	for _, form := range forms {
+		row := struct{ Suffix, Description string }(form)
 		rows = append(rows, helpRow{Order: order, Suffix: row.Suffix, Description: row.Description})
 	}
 	return rows
+}
+
+func preflightHelpRows(order int) []helpRow { return formHelpRows(order, evidencecmd.HelpRows()) }
+
+func recordHelpRows(order int) []helpRow { return formHelpRows(order, recordcmd.HelpRows()) }
+
+func recordCommand(args []string) (string, int) { return recordcmd.Command(boundaryRoot(), args) }
+
+func assessmentCommand(args []string) (string, int) {
+	return assessment.Command(assessment.Store{Home: worktree.Home(), Root: boundaryRoot()}, args)
 }
 
 type commandAXIDisposition struct {

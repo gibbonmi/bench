@@ -34,6 +34,7 @@ var subcommandRouting = map[string]routingEntry{
 	"models":       routed("internal/models"),
 	"outline":      routed("internal/outline"),
 	"preflight":    routed("internal/preflight"),
+	"record":       routed("internal/reviewrecord/recordcmd"),
 	"repair-pilot": routed("internal/repairpilot"),
 	// prep-release takes a flat argv with no subcommand tree. It is routed, not exempt
 	// like the release commands beside it in the dispatch switch.
