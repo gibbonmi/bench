@@ -105,28 +105,11 @@ func TestLandCommandAcceptsDashPathOnlyAfterTerminator(t *testing.T) {
 
 func TestLandCommandPostCASTerminalTable(t *testing.T) {
 	t.Parallel()
-	for _, tc := range []struct {
-		name  string
-		fault func(*testing.T, string) (landingFixture, joins)
-	}{
-		{"marker", func(t *testing.T, request string) (landingFixture, joins) {
-			return markerLandingFixture(t, request, true), defaultJoins()
-		}},
-		{"reconcile", func(t *testing.T, request string) (landingFixture, joins) {
-			f := publicLandingFixture(t, request, "", "")
-			blockLandingReconcile(t, f.root)
-			return f, defaultJoins()
-		}},
-		{"release", func(t *testing.T, request string) (landingFixture, joins) {
-			j := defaultJoins()
-			j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
-			return publicLandingFixture(t, request, "", ""), j
-		}},
-	} {
+	for _, tc := range postPublicationFaults {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			request := "landed-land-terminal-" + tc.name
-			f, j := tc.fault(t, request)
+			f, j, _ := tc.build(t, request, defaultJoins())
 			r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
 			if r.exit != 3 || !strings.Contains(r.stdout, "landed{") || !strings.Contains(r.stdout, "worktree=incomplete:"+tc.name) {
 				t.Fatalf("land = (%d, %q, %q)", r.exit, r.stdout, r.stderr)

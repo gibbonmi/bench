@@ -3,6 +3,7 @@ package worktree
 
 import (
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -120,6 +121,33 @@ func blockLandingReconcile(t *testing.T, root string) (repair func()) {
 	t.Helper()
 	nested := resetEmbedded(t, root)
 	return func() { mustRemove(t, nested) }
+}
+
+// postPublicationFault is one landing step that runs after the publication, with the
+// fixture composition that makes that step fail. name is the step name that the
+// interrupted landing reports in its worktree cell. build receives the joins that the
+// landing would run under. It returns the fixture, the joins for the interrupted
+// landing, and the repair that lets a resume finish the step.
+type postPublicationFault struct {
+	name  string
+	build func(t *testing.T, request string, j joins) (f landingFixture, broken joins, repair func())
+}
+
+// postPublicationFaults holds one row for each step after the publication. The marker
+// and reconcile faults are real destination states. The release fault breaks its seam
+// in the copy of the joins that build returns, so the caller's joins stay whole.
+var postPublicationFaults = []postPublicationFault{
+	{name: "marker", build: func(t *testing.T, request string, j joins) (landingFixture, joins, func()) {
+		return markerLandingFixture(t, request, true), j, func() {}
+	}},
+	{name: "reconcile", build: func(t *testing.T, request string, j joins) (landingFixture, joins, func()) {
+		f := publicLandingFixture(t, request, "", "")
+		return f, j, blockLandingReconcile(t, f.root)
+	}},
+	{name: "release", build: func(t *testing.T, request string, j joins) (landingFixture, joins, func()) {
+		j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
+		return publicLandingFixture(t, request, "", ""), j, func() {}
+	}},
 }
 
 // cannedGreenShape is what a bounded green run prints: the phase table, the skip count,
