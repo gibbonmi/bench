@@ -30,7 +30,7 @@ A green unit suite without the required live evidence cannot complete this speci
 
 ## User stories
 
-Line: gpt-5.6-sol / high.
+Line: gpt-6-astra / high.
 Implementation-line reason: Recovery and active-interface proof are the hardest boundaries. The approved behavior is precise, but live evidence remains weak and fixture coverage needs new cases.
 Harder chunks: C2, C3.
 
@@ -497,15 +497,27 @@ The reviewer approved these engineering choices with the seams and fences.
 
 Review round: one independent reviewer sign-off round, with at most two author correction passes.
 The reviewer approved this specification, its ticket graph, the implementation line, and the ownership fences on 2026-10-02.
-Implementation remains unstarted.
+Ticket 1 has preserved, uncommitted implementation work.
+No implementation chunk has received review.
+
+### Author transfer
+
+The prior ticket author stopped before the original session took ownership.
+The prior coordinator confirmed no worktree processes and verified restoration of the doctor-route mutation.
+All eight uncommitted implementation files remain preserved.
+The prior delegated assignment and its source remain recorded at commit 0adf2a61b588dd6c2ba4f8f465fac0eb8f7bdc1f.
+Earlier verification retains its original author and source; the current session performs fresh verification.
+The author session is codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21.
 
 ## Completion plan
 
 The pre-build audit found no implementation drift from the approved source.
 The independent amendment review found no blocking issue.
 
-The version 2 plan records one serial author per ticket.
-Each author uses the approved model and effort.
+The user directed implementation in the original authoring session on 2026-10-02.
+The version 1 plan records this supported single-session execution form.
+The user-directed session retains its declared Astra / high line.
+Independent review still covers all three axes after each chunk.
 The initial implementation has no numeric iteration cap.
 The bounded repair policy still limits each chunk to two post-review repair cycles.
 
@@ -514,5 +526,5 @@ The system check must reject that swap through TestCompatibilityMissingPath.
 After the probe restores the source, the system check must pass.
 
 ```bench-completion-plan
-{"version":2,"chunks":[{"id":"C1","tickets":["1-diagnose-interface.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility","ticket":"1-diagnose-interface.md"},{"id":"adopt","command":"bench test --package ./internal/adopt","ticket":"1-diagnose-interface.md"},{"id":"system","command":"bench test --check system","ticket":"1-diagnose-interface.md"},{"id":"doctor-route-probe","command":"doctor-route-system-swap: follow the Doctor-route mutation procedure","probe":"swap","ticket":"1-diagnose-interface.md"}]},{"id":"C2","tickets":["2-repair-managed-integration.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt","ticket":"2-repair-managed-integration.md"},{"id":"system","command":"bench test --check system","ticket":"2-repair-managed-integration.md"}]},{"id":"C3","tickets":["3-check-and-qualify-sessions.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility","ticket":"3-check-and-qualify-sessions.md"},{"id":"adopt","command":"bench test --package ./internal/adopt","ticket":"3-check-and-qualify-sessions.md"},{"id":"system","command":"bench test --check system","ticket":"3-check-and-qualify-sessions.md"},{"id":"live-qualification","command":"review assets/qualification.md against the source-bound live acceptance rows","ticket":"3-check-and-qualify-sessions.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/cli-desktop-consistency/spec.md"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review actual CLI and desktop transcripts against every live acceptance row"}],"execution":{"mode":"delegate","run_id":"cli-desktop-consistency-20261002","orchestrator_session":"codex:01a0fce1-456e-7052-a8c0-8af9731da06c:/root","author_limit":1,"assignments":{"1-diagnose-interface.md":[{"session":"/root/ticket1","assignment":"f7123d5b2ad592acc6e5a239c1f1f389","model":"gpt-5.6-sol","effort":"high","source":"558524a3cd4ba865ba269d29fff6d6eeb6344939","native_ref":"codex-collaboration:/root/ticket1"}],"2-repair-managed-integration.md":[],"3-check-and-qualify-sessions.md":[]}}}
+{"version":1,"chunks":[{"id":"C1","tickets":["1-diagnose-interface.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"doctor-route-probe","command":"doctor-route-system-swap: follow the Doctor-route mutation procedure","probe":"swap"}]},{"id":"C2","tickets":["2-repair-managed-integration.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"}]},{"id":"C3","tickets":["3-check-and-qualify-sessions.md"],"verification":[{"id":"compatibility","command":"bench test --package ./internal/compatibility"},{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review assets/qualification.md against the source-bound live acceptance rows"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/cli-desktop-consistency/spec.md"},{"id":"system","command":"bench test --check system"},{"id":"live-qualification","command":"review actual CLI and desktop transcripts against every live acceptance row"}]}
 ```
