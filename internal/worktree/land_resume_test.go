@@ -33,7 +33,7 @@ func TestLandCommandIncompleteNextUsesAssignmentPointerForUnsafePath(t *testing.
 	request := "incomplete-unsafe-path"
 	home := filepath.Join(t.TempDir(), "bench\n\x1bhome")
 	f := publicLandingFixtureAtHome(t, request, "private/output", "dist/", home)
-	r := runVerb(t, verbLand, repoHome{f.root, home}.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	wantNext := "next=bench worktree exec " + f.creation.Assignment.ID + " -- bench worktree land --resume '"
 	unsafe := strings.ContainsRune(r.stdout, '\x1b') || strings.Count(r.stdout, "\n") != 1
 	if r.exit != 3 || unsafe || !strings.Contains(r.stdout, wantNext) || !strings.Contains(r.stdout, " --spec 'x' .,census=0}") {

@@ -18,7 +18,7 @@ const siblingReviewPath = "reviews/sibling.md"
 // foldLandingSibling mints one more assignment, commits its own reviewed bytes, and folds
 // that branch into the landing source. The landing then carries the sibling's commits, so
 // the landed proof holds for the sibling against the published commit and fails against
-// the destination base. It answers the sibling and the source's new tip.
+// the destination base.
 //
 // The sibling writes its own review file, which the landing fixture's own spec declares in its
 // ownership fence, so the folded range still authorizes.

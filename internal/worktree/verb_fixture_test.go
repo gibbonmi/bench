@@ -112,8 +112,10 @@ type landingFixture struct {
 	base, tip, tally string
 }
 
-// foldedLanding is a landing fixture whose source folded a destination advance. Its base is
-// the advanced destination tip, and fold is the fold commit that a review reads as its base.
+// foldedLanding is a landing fixture whose source folded a destination advance and then
+// took one more commit. The landing base is the advanced destination tip. fold is the fold
+// commit, which a review reads as its frozen base, and the source tip follows fold. A test
+// can confuse base and fold as the `--base` value.
 type foldedLanding struct {
 	landingFixture
 	fold string

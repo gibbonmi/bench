@@ -64,7 +64,7 @@ func TestLandCommandReauthorizeRecoveryPointsThroughUnsafePath(t *testing.T) {
 	request := "reauthorize-unsafe-path"
 	home := filepath.Join(t.TempDir(), "bench\n\x1bhome")
 	f := publicLandingFixtureAtHome(t, request, "", "", home)
-	r := runVerb(t, verbLand, repoHome{f.root, home}.call(landArgs("unknown-request", f.base, f.tip, f.creation.Path)...))
+	r := runVerb(t, verbLand, f.call(landArgs("unknown-request", f.base, f.tip, f.creation.Path)...))
 	wantNext := "next=" + laterProofsSkipped + "; bench worktree exec " + f.creation.Assignment.ID + " -- bench worktree reauthorize --assignment " + f.creation.Assignment.ID + " --request <new-request> --base '" + f.base + "' --source-tip '" + f.tip + "' .}\n"
 	unsafe := strings.ContainsRune(r.stdout, '\x1b') || strings.Count(r.stdout, "\n") != 1
 	if r.exit != 1 || unsafe || !strings.HasSuffix(r.stdout, wantNext) {
@@ -73,7 +73,7 @@ func TestLandCommandReauthorizeRecoveryPointsThroughUnsafePath(t *testing.T) {
 	// LRS21: a landing-preflight face at the same unsafe path takes the same pointer form,
 	// so no route quotes a path the operator cannot paste.
 	mustWrite(t, filepath.Join(f.creation.Path, "scratch"), []byte("scratch\n"), 0o600)
-	r = runVerb(t, verbLand, repoHome{f.root, home}.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r = runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	wantSource := "; then bench worktree exec " + f.creation.Assignment.ID + " -- bench worktree land --request '" +
 		request + "' --base '" + f.base + "' --source-tip '" + f.tip + "' --spec 'x' -m <message> .}\n"
 	unsafe = strings.ContainsRune(r.stdout, '\x1b') || strings.Count(r.stdout, "\n") != 1

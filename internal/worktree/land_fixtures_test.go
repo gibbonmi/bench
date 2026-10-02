@@ -23,9 +23,10 @@ func landingGateFixture(t *testing.T, environment ...string) *testrepo.GateFixtu
 	return testrepo.NewGateFixture(t.TempDir(), environment...)
 }
 
-// publicLandingFixture mints one private Bench home and carries it in the value. The caller
-// hands that home to every verb it runs, so the fixture binds no process environment
-// and the test it serves stays parallel-eligible.
+// publicLandingFixture mints one private Bench home and carries it in the value, so the
+// fixture binds no process environment and the test it serves stays parallel-eligible. The
+// value's call runs a verb at that home. processHomeCall and interruptLandingAtMarker land
+// at the process home instead.
 func publicLandingFixture(t *testing.T, request, ignored, declaration string) landingFixture {
 	t.Helper()
 	return publicLandingFixtureAtHome(t, request, ignored, declaration, filepath.Join(t.TempDir(), "bench-home"))
@@ -44,10 +45,7 @@ func specLessLandingFixture(t *testing.T, request string) landingFixture {
 	return landingFixtureAtHome(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), false)
 }
 
-// foldedLandingFixture is the spec-less landing fixture after the destination advanced
-// and the source folded that advance, with one more source commit on top of the fold. Its
-// base is the destination tip, its fold is the commit a review reads as its frozen base, and
-// its tip follows the fold — the pair `--base` is easy to confuse.
+// foldedLandingFixture builds a foldedLanding from the spec-less landing fixture.
 func foldedLandingFixture(t *testing.T, request string) foldedLanding {
 	t.Helper()
 	f := specLessLandingFixture(t, request)
@@ -169,10 +167,8 @@ func stageLandSpec(t *testing.T, root, source string) {
 
 // stubLandJoins returns a seam set whose landing publishes a fixed result and whose
 // post-publication steps succeed. The caller replaces the one field its own case is
-// about and hands the value to landWith, so it holds every stub itself.
-// stubLandJoins returns a seam set whose landing publishes a fixed result and whose
-// post-publication steps succeed. The caller replaces the one field its own case is
-// about and hands the value to landWith, so each test holds every stub it makes.
+// about and passes the value to the verb runner through callWith, so each test holds
+// every stub it makes.
 func stubLandJoins(base, tip string) joins {
 	j := defaultJoins()
 	j.landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
