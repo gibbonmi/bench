@@ -868,6 +868,18 @@ Findings: 0. Four new probes bit, on the release adapter, the refresh effect, th
 
 Every R21, R23, and R24 path is on the ticket 8 `Writes:` line. One fresh repair session for ticket 8 repairs all three. After that repair, the ticket 9 and ticket 10 authors rerun their verification at the final chunk source.
 
+## VR-C4 repair 1
+
+The fresh repair session `claude:bench-writer/vr-t8-repair-1` ran on opus at medium effort, from base `5960701e55b35c7383060197d765f6cc197777ab`. The repair commit is `c03908e7785256b2cffa4a841f69c32785484b5b`. It changes no assertion, no test name, and no production file.
+
+- R21: `land_reauthorization_test.go:67` and `:76` and `land_resume_test.go:36` now use `f.call`. At each site, the fixture stores the same `home` as `f.home`.
+- R23: the comment at `land_fixtures_test.go:26-29` states that the value's call runs a verb at the fixture home. It names `processHomeCall` and `interruptLandingAtMarker` as the two calls that land at the process home.
+- R24: the `foldedLanding` type comment at `verb_fixture_test.go:115-118` owns the fact about `base`, `fold`, and the source tip. It uses "frozen base" only for the review base. The `foldedLandingFixture` comment at `land_fixtures_test.go:48` keeps one sentence that names the type it builds. The `foldLandingSibling` comment at `land_effects_cleanup_test.go:18-24` no longer repeats the `foldedSibling` comment. The `stubLandJoins` comment at `land_fixtures_test.go:168-171` has one copy, and it states that the caller passes the value through `callWith`.
+
+The R21 probe on `land_refusal.go` bit with 49 failed tests before and after the repair, and the two failed-test sets are equal.
+
+At `c03908e7`, `bench test --package ./internal/worktree` passed with the two socket capability skips. The VR46 count per test function is the same at `5960701e` and `c03908e7`, and the total stays at 2254. `identity_component_test.go` has 500 lines, and `land_journey_test.go` has 427 lines. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. `bench structure --growth 7fa02b429a66aa71b4303e483b82e074622c80bd` passed. The JSON payload holds the package result as `vr-c4-8-worktree-r3`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2172,6 +2184,24 @@ Every R21, R23, and R24 path is on the ticket 8 `Writes:` line. One fresh repair
           "tip": "7b8477d727f83273800fa5e64a28bafca4eeb814",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "vr-c4-8-worktree-r3",
+          "performer": "claude:bench-writer/vr-t8-repair-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e262977b665cccc76f93fc770af264a901d1e5d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t8-repair-1-20261001/8-worktree@c03908e7",
+            "digest": "sha256:1015348fc29cbffdee0640efa99d9ba54028b66dbab2c6dcc7fc50bf597f2ae5",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62147\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "8-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
         }
       ]
     }
