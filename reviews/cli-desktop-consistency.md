@@ -2,7 +2,8 @@
 
 C1 cycle 4 removed the two comment lines cited by ST-R3-1.
 All required author checks passed, including both restored mutation probes.
-Current independent confirmation and the C1 checkpoint remain pending.
+All three current native axes returned zero findings.
+The quiet C1 checkpoint remains pending.
 The prior cycle had one Standards finding and zero Spec or Coverage findings.
 
 The first confirmation had two findings and two repair targets.
@@ -51,7 +52,9 @@ The complete specification remains unqualified until its live requirements pass.
 
 Cycle 4 author repair: the two cited comment lines are removed.
 Evidence: specs/cli-desktop-consistency/assets/repair-cycle-4.md.
-Independent closure of ST-R3-1 remains pending.
+The current Standards axis closed ST-R3-1.
+Cycle 4 finding count: 0.
+Worst issue: none.
 
 Cycle 3 finding count: 1.
 The worst issue is duplicated contract prose.
@@ -88,6 +91,10 @@ The current finding is supported; the partial read is not a complete Standards p
 
 ## Spec
 
+Cycle 4 finding count: 0.
+Worst issue: none.
+The confirming reviewer found no contract change or missing requirement.
+
 Cycle 3 finding count: 0.
 Worst issue: none.
 The fixture and runtime selection meet the amended C1 requirements.
@@ -113,6 +120,10 @@ Keep the configuration home unknown when its lookup fails.
 Sources: CD03, internal/adopt/compatibility.go:135.
 
 ## Coverage
+
+Cycle 4 finding count: 0.
+Worst issue: none.
+The confirming reviewer found no coverage defect in the comment deletion.
 
 Cycle 3 finding count: 0.
 Worst issue: none.
@@ -1051,6 +1062,72 @@ No review requested a Bench command change.
           "finding_ids": [],
           "supersedes": [
             "c1-coverage-final"
+          ]
+        },
+        {
+          "id": "c1-standards-repair4",
+          "performer": "codex-collaboration:/root/c1_standards_repair4",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "3dbfe494c6912ce48f3a82c37fd3523b7e6c3723",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex-collaboration:/root/c1_standards_repair4",
+            "digest": "sha256:09b5db83f98022ab1bdd134fb4c800bf74c9a9a26332df7c611aa32e128bb979",
+            "excerpt": "Standards\nStatus: claimed, confidence 10/10. Artifact sha256:d2e925d0bb4cc8ffc47ee26d395f1e6c58f6455859f1984f0af9c20713fc931a bound current and clean to 220ce76264d0774ecd97c4c88297d761c14dc660.\nST-R3-1 is closed. The diff 0bcf0db6..220ce762 removes only the two duplicated comment lines from internal/runbinary/runbinary_test.go; every executable statement and assertion remains unchanged. scripts/go-build.sh:18-22 remains the sole owner of the manifest-lifetime explanation, satisfying AGENTS.md:35-48 and craft-comments' one-source rule.\nRaw findings: 0. Worst issue: none. No dispositions or repair targets remain. Optional advice: none. The implementation command did not contribute; no command change is necessary.\nRead scope: complete prepared standards, review/finding/comment, bounded-repair, delegation, review-phase, approved spec, ticket, targeted source, and cycle-four evidence bundles; immutable artifact sources source-1, source-48 (untouched consumers first), and source-49; one frozen Git diff. No tests, probes, writes, commits, or stash operations were performed.\n"
+          },
+          "axis": "Standards",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "59cd51c55abc00de26e4505f79553504f14df108",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-standards-repair3"
+          ]
+        },
+        {
+          "id": "c1-spec-repair4",
+          "performer": "codex-collaboration:/root/c1_spec_repair4",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "3dbfe494c6912ce48f3a82c37fd3523b7e6c3723",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex-collaboration:/root/c1_spec_repair4",
+            "digest": "sha256:4dc7ef285795c61536137037bef47e69546a9245f0106e2a08859e5cf2e34b92",
+            "excerpt": "Spec\nStatus: claimed, confidence 10/10. Binding verified current and clean for 0bcf0db69fdc5a13cc102869936653a16051c419..220ce76264d0774ecd97c4c88297d761c14dc660; delivery remains unverified.\nFinding count: 0. Worst issue: none. Repair targets and dispositions: none.\nThe repair matches the approved C1 contract. The delta removes only the two comment lines before TestBuildLeavesTheWrapperManifestUntouched; the executable test remains at internal/runbinary/runbinary_test.go:328, still uses gittest.KitCopy at line 335, and retains its absence and byte assertions at lines 349 and 354. This satisfies the ticket requirements at 1-diagnose-interface.md:51-53 and the approved completion-plan clauses at spec.md:541-543. Production still directs private manifests beside the temporary executable at internal/runbinary/runbinary.go:241-245; scripts/go-build.sh:18-22 remains the canonical lifetime explanation.\nCycle-4 evidence records no executable or assertion change and reports the required manifest swap biting both fixture cases (repair-cycle-4.md:4-22). The current review record contains all seven required author checks, both probes report bit and restore: pass, and source digest 3dbfe494 is consistent across those entries.\nRead scope: complete spec and ticket 1; current repair delta; source-1 metadata; source-48 consumers with untouched rows first; all 64 source-49 coverage rows; affected production, fixture, build-script, review-record, and cycle-4 evidence sources. C2/C3 planned rows remain explicitly pending and are unaffected.\nOptional advice: none. Command contribution: none. No tests, probes, writes, commits, or stash operations performed.\n"
+          },
+          "axis": "Spec",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "59cd51c55abc00de26e4505f79553504f14df108",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec-repair3"
+          ]
+        },
+        {
+          "id": "c1-coverage-repair4",
+          "performer": "codex-collaboration:/root/c1_coverage_repair4",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "3dbfe494c6912ce48f3a82c37fd3523b7e6c3723",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex-collaboration:/root/c1_coverage_repair4",
+            "digest": "sha256:28ae1dcde405e7238f22f625c6232e124ec8100c201fd37104fae5b9ab5ea66a",
+            "excerpt": "Coverage\nBinding: artifact sha256:d2e925d0bb4cc8ffc47ee26d395f1e6c58f6455859f1984f0af9c20713fc931a was current at clean source 220ce76264d0774ecd97c4c88297d761c14dc660, base 6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69. Reviewed repair delta 0bcf0db..220ce762, sources 1/48/49, the full spec and ticket, hostile-input checklist, review rules, runbinary, gittest, build script, and cycle-four evidence.\nStatus: claimed, confidence 10/10. No tests or probes were authorized or executed. Tree-status confirmation remains coordinator-owned.\nRaw findings: 0. Worst issue: none.\nThe input producer family is TestBuildLeavesTheWrapperManifestUntouched -> gittest.KitCopy -> testrepo.CommitWorkingTree, with absent and present wrapper-manifest states. Production flows through Build -> canonicalBuild -> runBuildScript, passing the output directory as --manifest-dir; scripts/go-build.sh owns parsing and publication. The repair's executable write set is only internal/runbinary/runbinary_test.go; the remaining changes are approval, evidence, and review records.\nThe delta removes only base lines 328-329: TestBuildLeavesTheWrapperManifestUntouched keeps a private executable's manifest; out of the wrapper directory, where it would outlive that executable. No statement, fixture producer, assertion, or production path changed. The build script remains the canonical manifest-lifetime explanation.\nIndependent bypass attempt: a builder could transiently alter and restore bin/<manifest> before return, preserving both final byte/absence assertions while violating a stronger never-touched property. No approved row states that stronger temporal property, and the comment-only delta cannot introduce the behavior. Therefore no missing test attaches to this repair.\nAdvice: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
+          "tip": "59cd51c55abc00de26e4505f79553504f14df108",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-coverage-repair3"
           ]
         }
       ]
