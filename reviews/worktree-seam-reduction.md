@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/worktree-seam-reduction/spec.md",
-  "plan_digest": "sha256:c9feebcde5a12aebbaeb53a8476ca2a1b81cd3483ee036c1544f4df7b7b01e8f",
+  "plan_digest": "sha256:909699cd78b9c5c2fc464daae1bfef4d6fcb70aebf74afc38ed4d48385d8d976",
   "implementation_session": "",
   "chunks": [
     {
       "id": "SR-C1",
       "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
-      "tip": "0d7b40665f232bb348aa81d52e4c1360a9650c83",
-      "plan_digest": "sha256:c9feebcde5a12aebbaeb53a8476ca2a1b81cd3483ee036c1544f4df7b7b01e8f",
-      "source_digest": "e315aa279be4052e543a681cea96b92372bc44ef",
+      "tip": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+      "plan_digest": "sha256:909699cd78b9c5c2fc464daae1bfef4d6fcb70aebf74afc38ed4d48385d8d976",
+      "source_digest": "fefdc8ecd0a7d5876ca46611dcb71ca1538f7390",
       "acceptance_rows": [
         "WS1",
         "WS2",
@@ -37,6 +37,24 @@
             "ref": "claude:agent/sr-t1-author-20261002@6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
             "digest": "sha256:abb0c3abebfe2a00e47a897b117b8226eeff62b78d6c476537509a6c63a05ed7",
             "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,0d7b40665f232bb348aa81d52e4c1360a9650c83,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,20177\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "1-gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "sr-c1-1-gate-repair1",
+          "performer": "claude:bench-writer/sr-t1-repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "fefdc8ecd0a7d5876ca46611dcb71ca1538f7390",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-t1-repair1-20261002@d3637be279ad27405c6621bc3d22e356df777d1e",
+            "digest": "sha256:e1dcc5f648c862587fa4d2c45b98dc3a5099263dfac865b0f6868d855e2ba976",
+            "excerpt": "tree[1]{target,head,dirty}:\n  sr-integration,37e3f72f0fb6b0280b5106bbff0b2133f2ec9996,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,19998\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "1-gate",
           "command": "bench test --package ./internal/gate",
@@ -117,7 +135,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:c9feebcde5a12aebbaeb53a8476ca2a1b81cd3483ee036c1544f4df7b7b01e8f",
+      "to": "sha256:909699cd78b9c5c2fc464daae1bfef4d6fcb70aebf74afc38ed4d48385d8d976",
+      "chunk_ids": {
+        "SR-C1": [
+          "SR-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
@@ -146,3 +175,12 @@ Count: 1. Worst: C1.
 - The WS1 census matches only a string-literal argument.
 - `internal/testreport/command.go` and `internal/preprelease/preprelease.go` read `BENCH_KIT` outside the gate package. Both reads predate this chunk.
 - The empty-root guard and the nil-lane return have no gate-package row.
+
+## SR-C1 repair cycle 1
+
+One fresh opus / high repair session, `claude:bench-writer/sr-t1-repair1`, repaired S1 and C1 in commit `37e3f72f`. The session used 1 of 2 attempts and 1 lane pass. The repair allowance of SR-C1 is 2 cycles, and 1 cycle is used.
+
+- S1: `TestLaneForCommitMarksOnlyTheKitLaneSelective` now calls `manifestLaneRoot`, and its assertions did not change.
+- C1: the WS6 test makes the root the working directory. The named swap probe at `kit_source.go` line 31 was `silent` before the repair and `bit` after it.
+
+The coordinator probe omitted `Selective: true` in `LaneForCommitAtKit`. It returned `bit` with 1 failed test and `restored=yes`.
