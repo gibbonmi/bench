@@ -8,7 +8,9 @@ Covers: RE72, RE73, RE74, RE75, RE76, RE77, RE78, RE79, RE80, RE81, RE82, RE83
 
 Chunk: RE-C3.
 
-Add the `review` form through the transaction of ticket 2 and the excerpt reader of ticket 3. The chunk entry supplies the base, the tip, and the source digest. The role is `independent-review`, and the state is `completed`. The outcome is `pass` with no `--finding`, and `fail` otherwise. The finding IDs keep argv order. `supersedes` holds the ID of the last result of the same axis in that chunk, or no ID.
+Add the `review` form through the transaction of ticket 2 and the excerpt reader of ticket 3. Put its record change in `internal/reviewrecord/write.go`, so `findChunk` stays private. Apply the `--id` check and the control-character rule of ticket 3.
+
+The chunk entry supplies the base, the tip, and the source digest. The role is `independent-review`, and the state is `completed`. The outcome is `pass` with no `--finding`, and `fail` otherwise. The finding IDs keep argv order. `supersedes` holds the ID of the last result of the same axis in that chunk, or no ID.
 
 Print the `review[1]{chunk,id,axis,outcome,supersedes,source_digest,excerpt_digest}` row of the spec. Add the review row to `HelpRows` and to the help golden.
 
