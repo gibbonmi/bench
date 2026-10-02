@@ -942,7 +942,77 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sr-c5-r1-standards",
+          "performer": "claude:bench-reviewer/sr-c5-r1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6e6196b191ad82fc088945c0c007df503bc5ce99",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c5-r1-standards-20261002@564f4d46cc32fb52362fd6fae155650eff6a2386",
+            "digest": "sha256:6585b55820ed7b23810a4e4ebeba4ea0f2582da79e03833ec6f62bc0bee1bae6",
+            "excerpt": "## Standards\nS1. AGENTS.md \"one source per fact\". Ticket 8 adds a second way to find the admin directory: filepath.Dir(mustAdminPath(t, f.creation.Path, \"index\")) at internal/worktree/reauthorize_test.go:180. git.AdminDir owns this fact, and the test package calls it at eligibility_test.go:84 and :114. Ticket 8, auto-fix, confidence 6.\nS2. The AGENTS.md exception for an independent expectation. reauthorize_test.go:175 pins the production text \"bench worktree reauthorize: refresh ownership lock\\n\". The axis found no recorded red in the spec folder or the review record. Ticket 8, auto-fix from the axis, confidence 5. The coordinator classifies it no-op: the commit message of b3c56f85 records the red (the named probe was silent before the pin and bit after it), and the review record now cites it.\nS3. craft-comments \"One source owns a fact\". Three new comments say that the ambient warnings writer \"is the verb's own stderr\": lifecycle.go:462, live_binary.go:20, live_binary_test.go:36. The newAmbient call of each entry decides that, and repoHome.ambient() passes io.Discard. Ticket 7, auto-fix, confidence 5.\ncount: 3\nworst: S1.\nAdvice: inventoryIgnored keeps a `_ joins` parameter (clean.go:311); tickets 11 and 14 hold its callers. mergeSet.joins is dead state (verb_fixture_test.go:52); ticket 14 can take it. The root-privilege guard is in 4 places; the spec directs the precedent. TestIgnoredInventoryStatRaceRetains names a race that no longer exists. No stale comment names a removed seam.\n"
+          },
+          "axis": "Standards",
+          "base": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+          "tip": "564f4d46cc32fb52362fd6fae155650eff6a2386",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c5-r1-spec",
+          "performer": "claude:bench-reviewer/sr-c5-r1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6e6196b191ad82fc088945c0c007df503bc5ce99",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c5-r1-spec-20261002@564f4d46cc32fb52362fd6fae155650eff6a2386",
+            "digest": "sha256:fa6516dde9b6ea5be82b97e7a69076ea8f6c20ff6e58fa2819db7bad664830a4",
+            "excerpt": "## Spec\nBoth findings are spec-text defects in a catch clause; the code meets each behavior.\nP1. WS51 catch clause, spec.md:409: \"The probe that omits the unlock error branch in `reauthorize.go` changes the retained state.\" With the branch omitted, the relock fails on the held lock and the restore fails too, so the retained state stays the same and only stderr changes (reauthorize.go:131-138). The test pins the exact line at reauthorize_test.go:175 and :216. Ticket 8. The axis gave ask-user, confidence 9. Replacement: the omission lets the relock run and fail, so the refusal adds the restore error and stderr no longer equals the pinned line.\nP2. WS46 catch clause, spec.md:404: \"The probe that omits the stat error branch in `clean.go` plans a removal.\" The literal omission does not compile, and the narrower omission reds through a nil info.Size() panic (clean.go:345). The test grades the behavior: worktree_test.go:462 requires ActionRetain and ReasonUncertain. Ticket 7. The axis gave ask-user, confidence 8. Replacement: the probe that empties the stat error branch turns the test red, because the planner no longer retains with the reason uncertain.\nRows closed: WS45, WS47, WS48, WS49, WS50, WS52, WS53, WS54, WS55, WS56, WS81, WS84, WS85. WS46 and WS51: behavior closed, catch clause wrong.\nWS45: joins.go:22-44 declares exactly the 15 fields of the decision. WS81: no silent field loss and no silent skip; worktreeTestCount is 701.\nOther checks hold: permission fixtures use the capability seam; no over-budget file grew; cmd and internal/conformance are unchanged; each commit stays inside its Writes line.\ncount: 2\nworst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+          "tip": "564f4d46cc32fb52362fd6fae155650eff6a2386",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c5-r1-coverage",
+          "performer": "claude:bench-reviewer/sr-c5-r1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6e6196b191ad82fc088945c0c007df503bc5ce99",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c5-r1-coverage-20261002@564f4d46cc32fb52362fd6fae155650eff6a2386",
+            "digest": "sha256:c7c751d5d32527eabd935f4a09d3dbafb4b1b3caafc6afe5a8e7a6aadfe9f581",
+            "excerpt": "## Coverage\nC1. WS46 does not prove the stat branch. State: an ignored file in a directory at mode 0600, with the stat branch at internal/worktree/clean.go:341-344 turned into `continue`. The plan still retains as uncertain, so TestIgnoredInventoryStatRaceRetains stays green. Cause: the same fixture makes classifyNestedState fail on os.Lstat(\"locked/.git\") (worktree.go:200-204), which gives ReasonUncertain through lifecyclepolicy.go:362. The test at worktree_test.go:462 asserts only Action and ReasonCode. The test should also require plan.Reason == \"ignored inventory is uncertain\"; the real tree passes that check. Ticket 7, auto-fix, confidence 9.\nProbes, each --package ./internal/worktree, each restored yes: (1) worktree_test.go mode 0o600 to 0o700, bit; (2) clean.go stat branch body to `continue`, silent (C1); (3) worktree_test.go stronger Reason check added, silent, so the real tree passes it; (4) worktree.go clean entry warnings to io.Discard, silent; (5) clean.go warning moved after os.Remove, silent; (6) clean.go stat branch body omitted, bit by a nil-pointer panic only.\ncount: 1\nworst: C1.\nAdvice: no row pins where the clean and land verbs send their warnings; WS47 and WS48 test only release. A warning moved after the removal stays green; this was true before the change. The stat check at clean.go:300 in discardIgnored has no test. The WS50 socket subtest skips on this host.\nFinal git status: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "2dce1179a24ef0bb1934e1e9733b9874cb6e7632",
+          "tip": "564f4d46cc32fb52362fd6fae155650eff6a2386",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1243,3 +1313,36 @@ The coordinator ran two independent probes, and each returned `bit` with `restor
 Three fresh opus / high sessions read the repair delta `a2ec1cc8..2dce1179`. Each axis confirmed its folds and reported no blocking finding. The Spec axis closed WS34, WS35, WS36, WS41, and WS42. The Coverage axis ran two probes, and each returned `bit` with `restored=yes`. The first made the reconcile a soft reset in `land_identity.go`, and the second removed the reconcile fault from the shared table.
 
 SR-C4 has no open finding, and 1 of 2 repair cycles is used.
+
+## SR-C5 chunk review, round 1
+
+Three fresh opus / high sessions reviewed the frozen pair `2dce1179..564f4d46`, which holds the tickets 7 to 10. The arm B delegate of the tickets 8 to 10 also had one fable / high review in the line comparison. The raw finding count is 6, and the repair-target count is 5. The repair allowance of SR-C5 is 2 cycles, and 0 cycles are used.
+
+### Standards
+
+Count: 3. Worst: S1.
+
+- S1 (`auto-fix`, confidence 6, ticket 8): `internal/worktree/reauthorize_test.go` line 180 finds the admin directory in a second way. `git.AdminDir` owns that fact. The rule is the `AGENTS.md` code standard, one source per fact.
+- S2 (`no-op`, confidence 5, ticket 8): the test pins the refusal line of the unlock failure. The axis found no recorded red. The commit message of `b3c56f85` records it: the named probe was `silent` before the pin and `bit` after it. So the independent expectation meets the exception of the code standard.
+- S3 (`auto-fix`, confidence 5, ticket 7): three new comments say that the ambient warnings writer is the verb's own stderr. The `newAmbient` call of each entry decides that. The sites are `lifecycle.go` line 462, `live_binary.go` line 20, and `live_binary_test.go` line 36.
+
+### Spec
+
+Count: 2. Worst: P1. The axis closed 13 rows, and it confirmed that the joins value holds exactly the 15 decided fields.
+
+- P1 (`auto-fix` by plan commit, confidence 9, ticket 8): the catch clause of WS51 says that the omit probe changes the retained state. The state does not change, and the test pins the refusal line.
+- P2 (`auto-fix` by plan commit, confidence 8, ticket 7): the catch clause of WS46 says that the omit probe plans a removal. The omission reds through a nil-pointer panic.
+
+Both are non-behavioral contradictions. A plan commit amends each clause for reviewer veto.
+
+### Coverage
+
+Count: 1. Worst: C1.
+
+- C1 (`auto-fix`, confidence 9, ticket 7): the WS46 fixture also makes the nested-state read fail, which gives the same `uncertain` reason code. A probe that turns the stat branch of `clean.go` into `continue` stayed silent. The repair makes the test require the reason text `ignored inventory is uncertain`.
+
+### Advice
+
+- `inventoryIgnored` keeps an unused joins parameter, and `mergeSet.joins` is dead state. The tickets 11 and 14 hold those files.
+- No row pins where the clean verb and the land verb send their warnings.
+- A warning that moves after the removal stays green. This was true before the change.
