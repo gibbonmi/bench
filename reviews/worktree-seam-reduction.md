@@ -421,7 +421,72 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sr-c3-r1-standards",
+          "performer": "claude:bench-reviewer/sr-c3-r1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e4719dd4ab867d4c42f3895a6da8f5a0389c709e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c3-r1-standards-20261002@c87a0c3f7953210e3d22c356e948e9e15c302be0",
+            "digest": "sha256:81113036a9202e30707ac96fb8947dc0ec41f2b43d0e7a8f1e2fe16c6b97b938",
+            "excerpt": "## Standards\nS1. craft-comments, Aging: \"Update it or delete it, and never leave it describing the code that was.\" internal/worktree/merge_caller_root_test.go:35-39 (anchor literal at :46-48). The comment says that an authority rooted at the caller's checkout leaves that anchor unmoved, so the check fails. The anchor is now the literal target.Path, and mergeSetAt (:22) commits the passing tally lane on f.root. gate.LaneFor reads the manifest from the working tree (internal/gate/manifest.go:175), so a merge that resolves its lane at the caller root would run the tally lane and pass, and it would not reach the prose check. The comment states a mechanism that the row no longer has, and the caller-root mutation probably no longer turns the row red. The axis ran nothing, so the red is unconfirmed. Disposition auto-fix, confidence 6.\ncount: 1\nworst: S1.\nAuthor claims hold: mergeSetAt is the one builder of the tally lane; commitLaneManifest is the one lane-manifest writer that this delta adds; mergeSet.merge is the one builder that sets the kit. No stale mergeLane, kitSourceCheckout, kitCheckoutJoins, delegatedJourneyJoins, or mergeLaneOf name is left in internal/worktree.\nAdvice: merge_caller_root_test.go now holds the shared lane fixture, so its name does not describe its content. land_journey_test.go:362-363 writes an inline manifest of another shape, outside the delta.\n"
+          },
+          "axis": "Standards",
+          "base": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+          "tip": "c87a0c3f7953210e3d22c356e948e9e15c302be0",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c3-r1-spec",
+          "performer": "claude:bench-reviewer/sr-c3-r1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e4719dd4ab867d4c42f3895a6da8f5a0389c709e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c3-r1-spec-20261002@c87a0c3f7953210e3d22c356e948e9e15c302be0",
+            "digest": "sha256:83e977ef3bb70cf5f058c5ff6d7c9facb4106dfb5d58947773b85f17d2f4a286",
+            "excerpt": "## Spec\nP1. WS22: \"A lane anchored at the caller root reads the target checkout, where the incoming file is absent.\" internal/worktree/merge_caller_root_test.go:46-48. The converted manifest hardcodes target.Path as the check's anchor. mergeSetAt commits a passing tally lane in the primary checkout. Under the mutation mergeOwner(a.kit, root, previous) at merge.go:90, the lane resolves the primary's tally lane, passes, and exits 0. A mutation that moves the grading root is still caught. Fix: commit a failing lane in the primary after the assignments exist, so only a caller-root resolution reads it. Disposition auto-fix, confidence 5. The axis ran no probe.\nRows: WS17, WS18, WS19, WS20, WS21, WS23, WS24, WS25 closed. WS22 partial (P1).\nPredicates hold: no mergeLane or kitSourceCheckout field; merge.go:386 calls LaneForCommitAtKit(target, kit) with a.kit; land.go:196 and :297 use a.kit; each merge call goes through mergeSet.merge; merge_test.go shrank; worktreeTestCount is 701; cmd and internal/conformance are untouched; all eight changed files are on the Writes line.\ncount: 1\nworst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+          "tip": "c87a0c3f7953210e3d22c356e948e9e15c302be0",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c3-r1-coverage",
+          "performer": "claude:bench-reviewer/sr-c3-r1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e4719dd4ab867d4c42f3895a6da8f5a0389c709e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c3-r1-coverage-20261002@c87a0c3f7953210e3d22c356e948e9e15c302be0",
+            "digest": "sha256:5ff0858a2a5d1b2ad2caa2e41d3025d73d0d85723119d53d03f03f932448786c",
+            "excerpt": "## Coverage\nNo findings. No input in the WS17 to WS25 family breaks the delta without a row or a test.\nProbes, each --package ./internal/worktree, each restored yes: (P1) merge.go LaneForCommitAtKit(target, kit) to LaneForCommit(target), silent, 7 ran; (P2) land.go KitSourceCheckoutAtKit(root, kit) to KitSourceCheckout(root), bit (WS24); (P3) internal/landing/merge.go publish guard disabled, bit (WS18, WS19); (P4) merge.go lane error dropped to a nil lane, silent, 54 ran; (P5) merge.go nil lane replaced by an empty lane, silent, 54 ran.\ncount: 0\nworst: none\nAdvice: a mergeOwner that reads the process kit passes WS17 to WS23, because bench test sets BENCH_KIT apart from each target; the census of SR-C6 reports that read. A malformed target manifest at merge has no test, and a target with no declared lane has no test; both gaps are older than this chunk.\nFinal git status: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+          "tip": "c87a0c3f7953210e3d22c356e948e9e15c302be0",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -564,3 +629,31 @@ Three fresh opus / high sessions read the repair delta `f620ccd6..1fde1ac1`. Eac
 ### Advice
 
 - The repaired WS12 test builds its pending fixture inline, which repeats the steps of `newOwnedAssignment` and `newPendingAssignment` with another home path. A home parameter on that helper gives one source. The helper is in `resume_test.go`, which is over its line budget.
+
+## SR-C3 chunk review, round 1
+
+Three fresh opus / high sessions reviewed the frozen pair `1fde1ac1..c87a0c3f`. The coordinator probe swapped the kit argument of `mergeOwner` for the target, and it returned `bit` with 3 failed tests and `restored=yes`. The raw finding count is 2, and the repair-target count is 1. The repair allowance of SR-C3 is 2 cycles, and 0 cycles are used.
+
+### Standards
+
+Count: 1. Worst: S1.
+
+- S1 (`auto-fix`, confidence 6): the comment at `internal/worktree/merge_caller_root_test.go` lines 35 to 39 states a catch that the converted fixture does not give. The rule is the aging rule of `craft-comments`.
+
+### Spec
+
+Count: 1. Worst: P1. The axis closed eight rows and marked WS22 partial.
+
+- P1 (`auto-fix`, confidence 5): WS22 says that a lane anchored at the caller root turns the test red. The shared fixture commits a passing lane on the caller root, so that mutation passes. S1 and P1 name one repair target.
+
+The coordinator confirmed that target. A probe swapped `target.Worktree` for `root` in the `mergeOwner` call of `merge.go`, scoped to the WS22 test. It returned `silent` with `restored=yes`.
+
+### Coverage
+
+Count: 0. The axis ran 5 probes: 2 returned `bit`, and 3 returned `silent` on code that no approved row requires.
+
+### Advice
+
+- A `mergeOwner` that reads the process kit passes WS17 to WS23, because the test run binds `BENCH_KIT` apart from each target. The census of SR-C6 reports that read.
+- A malformed target manifest at merge has no test, and a target with no declared lane has no test. Both gaps are older than this chunk.
+- `merge_caller_root_test.go` now holds the shared lane fixture, so its name does not describe its content.
