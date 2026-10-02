@@ -325,8 +325,6 @@ func TestBuildEnvironmentRefusesWithoutAnAbsoluteHome(t *testing.T) {
 	}
 }
 
-// TestBuildLeavesTheWrapperManifestUntouched keeps a private executable's manifest
-// out of the wrapper directory, where it would outlive that executable.
 func TestBuildLeavesTheWrapperManifestUntouched(t *testing.T) {
 	kit, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {

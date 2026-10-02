@@ -1,8 +1,10 @@
 # CLI and desktop consistency review
 
-C1 cycle 3 has one Standards finding and one repair target.
-Spec and Coverage returned zero findings.
-All required author checks passed; the current checkpoint has not run.
+C1 cycle 4 removed the two comment lines cited by ST-R3-1.
+All required author checks passed, including both restored mutation probes.
+Current independent confirmation and the C1 checkpoint remain pending.
+The prior cycle had one Standards finding and zero Spec or Coverage findings.
+
 The first confirmation had two findings and two repair targets.
 The first review had five findings and five repair targets.
 Repair cycle 1 of 2 completed its author verification and confirmation.
@@ -46,6 +48,10 @@ C2 and C3 remain blocked until the checkpoint passes.
 The complete specification remains unqualified until its live requirements pass.
 
 ## Standards
+
+Cycle 4 author repair: the two cited comment lines are removed.
+Evidence: specs/cli-desktop-consistency/assets/repair-cycle-4.md.
+Independent closure of ST-R3-1 remains pending.
 
 Cycle 3 finding count: 1.
 The worst issue is duplicated contract prose.

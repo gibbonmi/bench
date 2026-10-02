@@ -513,6 +513,8 @@ The prior delegated assignment and its source remain recorded at commit 0adf2a61
 Earlier verification retains its original author and source; the current session performs fresh verification.
 The author session is codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21.
 
+The scoped comment repair is recorded in [fourth-cycle verification](assets/repair-cycle-4.md).
+
 ## Completion plan
 
 The pre-build audit found no implementation drift from the approved source.
