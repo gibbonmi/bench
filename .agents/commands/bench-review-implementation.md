@@ -206,11 +206,20 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    Keep all three headings, including axes with zero findings.
 
    Retain every terminal return in one fenced `bench-review-record` JSON payload.
-   The `internal/reviewrecord` types own the schema. Preflight supplies the source and plan digests.
-   Record the performer, role, model, effort, frozen base and tip, source, state, and native result.
+   The `internal/reviewrecord` types own the schema.
+
+   Write each completed chunk, verification, review, and amendment entry with `bench record`, not with hand-built JSON.
+   `bench record chunk` writes the frozen pair and its digests, and `bench record review` appends one axis result.
+   `bench record verification` appends one planned result, and `bench record amendment` records a plan-digest change.
+   Supply the performer, model, effort, and native result. The verb derives the role, the source, and each digest.
+
+   The completion entry and each result in the failed, skipped, or pending state stay hand-written, because `bench record` has no form for them.
+   A hand-written entry names its performer, role, model, effort, source digest, state, and native result.
+   It embeds the minimal native excerpt with the SHA-256 digest of that excerpt.
 
    Use explicit `unknown` for unavailable model or effort metadata.
-   Embed the minimal native excerpt and its SHA-256 digest; local logs are supplemental evidence.
+   Pass the minimal native excerpt to `bench record` in a file, and the verb computes its digest.
+   Local logs are supplemental evidence.
    Keep author verification separate from independent review.
 
    A request is pending. A failed transport or skipped review remains failed or skipped.
