@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/record-evidence/spec.md",
-  "plan_digest": "sha256:6da27cb1c0194a8005dc9542c541d45e586960ab47bd197753ed8945bafcd2ed",
+  "plan_digest": "sha256:05e594f8177fb8c8cd675f55846877c4895cd2f5439a8756492e0a6f27cb6fc5",
   "implementation_session": "",
   "chunks": [
     {
@@ -1000,9 +1000,9 @@
     {
       "id": "RE-C4",
       "base": "ac18cccaed5232447d1932a6a7a28eee8c5eda50",
-      "tip": "7112b8e1ad5507271309c3de823c62fca98ae9bd",
-      "plan_digest": "sha256:6da27cb1c0194a8005dc9542c541d45e586960ab47bd197753ed8945bafcd2ed",
-      "source_digest": "e21432cef18591052ae5a7ee666ea170fb891451",
+      "tip": "586bfa17f9daa6ed4056d9ec7df09d0ec252b7c9",
+      "plan_digest": "sha256:05e594f8177fb8c8cd675f55846877c4895cd2f5439a8756492e0a6f27cb6fc5",
+      "source_digest": "d31273aa7e867aa438ffba6eb00a3edf965ecb81",
       "acceptance_rows": [
         "RE84",
         "RE85",
@@ -1018,6 +1018,8 @@
         "RE95",
         "RE96",
         "RE97",
+        "RE114",
+        "RE115",
         "RE98",
         "RE99",
         "RE100",
@@ -1253,6 +1255,24 @@
         ],
         "RE-C3": [
           "RE-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6da27cb1c0194a8005dc9542c541d45e586960ab47bd197753ed8945bafcd2ed",
+      "to": "sha256:05e594f8177fb8c8cd675f55846877c4895cd2f5439a8756492e0a6f27cb6fc5",
+      "chunk_ids": {
+        "RE-C1": [
+          "RE-C1"
+        ],
+        "RE-C2": [
+          "RE-C2"
+        ],
+        "RE-C3": [
+          "RE-C3"
+        ],
+        "RE-C4": [
+          "RE-C4"
         ]
       }
     }
@@ -1978,3 +1998,14 @@ The ticket 5 repair takes C1 and C2 in repair cycle 1 of RE-C4.
 ### Command contribution
 
 The Coverage axis suggests that a ticket that adds a form probe each refusal-step membership of that form. The Spec axis suggests a Land sentence that orders the amendment before the chunk entry. That needs a spec decision.
+
+## RE-C4 repair 1
+
+The plan commit `a0aa7812` assigned the fresh repair session `claude:bench-writer/re-t5-repair-1` on opus at medium effort. It also added rows RE114 and RE115 and the spec sentence on the amended chain. The repair commit `586bfa17` closes C1 and C2:
+
+- After the append, `RecordAmendment` runs `mappedIDs` for each recorded chunk to the new digest, and it refuses a chain that does not resolve. Before the fix, the amendment at D exited 0 and wrote a second amendment from A.
+- RE115 grades the step 3 refusal on `--map`. The production check was already present.
+
+RE-C4 has used 1 of its 2 repair cycles. The repair probes bit RE114 and RE115 with `restored=yes`. The coordinator probe mapped each chunk to its own digest in the new loop, and `bench probe` returned `bit` on RE114 with `restored=yes`.
+
+The orchestrator re-froze RE-C4 at tip `586bfa17`. `bench record amendment` first moved the plan digest to `05e594f8`, and then `bench record chunk` updated the RE-C4 entry with 23 acceptance rows.
