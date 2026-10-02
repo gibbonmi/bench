@@ -127,9 +127,9 @@ No review requested a Bench command change.
     {
       "id": "C1",
       "base": "6ea6b7e6fe86e3fee0d0fc9a1ff01b6808486a69",
-      "tip": "7e333f194064cefd23f2df6e42eccaa975908449",
-      "plan_digest": "sha256:088394145d38657fce2c8fe4b1c1f995daf2613993625c7922a93b1636ea30f4",
-      "source_digest": "d975b261a0e973bbe28dc88f44a7f74a94e89169",
+      "tip": "4ac3cdc94567ed8dc515f84b3cf1c8a4e94bd2fe",
+      "plan_digest": "sha256:457cdc13a7804d050b24d017dfb7f29016c026eb30990cb01b08f500b757c9f3",
+      "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
       "acceptance_rows": [
         "CD01",
         "CD02",
@@ -452,6 +452,154 @@ No review requested a Bench command change.
           "requirement": "evidence-command",
           "command": "bench test --package ./internal/preflight/evidencecmd",
           "exit_code": 0
+        },
+        {
+          "id": "c1-repair3-compatibility",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "specs/cli-desktop-consistency/assets/repair-cycle-3.md",
+            "digest": "sha256:29d0b4815d365eb923d85a6ddffa2f6e5cda6ccd91e230d057baf6e5f4b4dc35",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/compatibility,pass,4\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "compatibility",
+          "command": "bench test --package ./internal/compatibility",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-repair3-adopt",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "specs/cli-desktop-consistency/assets/repair-cycle-3.md",
+            "digest": "sha256:64b9dc4bd882a49ed05c56bf82cab66e842fb46dd60f7d060c7693a826c40e1e",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/adopt,pass,21003\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-repair3-system",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "specs/cli-desktop-consistency/assets/repair-cycle-3.md",
+            "digest": "sha256:51111374061d954693f2157d52e15a4af0062621404b772faef8f611e05d32ba",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,61053\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-repair3-doctor-route-probe",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "specs/cli-desktop-consistency/assets/repair-cycle-3.md",
+            "digest": "sha256:26890cfec6b60cc58b60d97d235e6e234f270123d0369574de0e8c156e254853",
+            "excerpt": "Doctor route swap: adoptCommand(\"doctor\") to adoptCommand(\"setup\").\nSealed system suite exited 1 after 59905ms.\nTestCompatibilityMissingPath failed: doctor returned setup usage and exit 2.\nOriginal bytes and mode restored; SHA256 df42cb91f526209d9f1f6512e0b362b63a72e63742af06f9014703d633e563cf.\nRestored sealed system suite passed after 61053ms, with no skips.\n"
+          },
+          "requirement": "doctor-route-probe",
+          "command": "doctor-route-system-swap: follow the Doctor-route mutation procedure",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "specs/cli-desktop-consistency/assets/repair-cycle-3.md",
+              "digest": "sha256:26890cfec6b60cc58b60d97d235e6e234f270123d0369574de0e8c156e254853",
+              "excerpt": "Doctor route swap: adoptCommand(\"doctor\") to adoptCommand(\"setup\").\nSealed system suite exited 1 after 59905ms.\nTestCompatibilityMissingPath failed: doctor returned setup usage and exit 2.\nOriginal bytes and mode restored; SHA256 df42cb91f526209d9f1f6512e0b362b63a72e63742af06f9014703d633e563cf.\nRestored sealed system suite passed after 61053ms, with no skips.\n"
+            }
+          }
+        },
+        {
+          "id": "c1-repair3-evidence-command",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "specs/cli-desktop-consistency/assets/repair-cycle-3.md",
+            "digest": "sha256:4ba258acc582f0d2a5e6757e19d36527354610bd968d224b5eff8043d2ce91dd",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,19397\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "evidence-command",
+          "command": "bench test --package ./internal/preflight/evidencecmd",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-repair3-run-binary",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "specs/cli-desktop-consistency/assets/repair-cycle-3.md",
+            "digest": "sha256:04dda457e869118b09ab65536f2ee5aac40e490732ff5b92bf1ba82e3dea9e61",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/runbinary,pass,22766\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "run-binary",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0
+        },
+        {
+          "id": "c1-repair3-manifest-directory-probe",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cacc60008112e6230d7b4064b3ca53b44ccaf1cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "specs/cli-desktop-consistency/assets/repair-cycle-3.md",
+            "digest": "sha256:42113b093dadfc2e56b78e8b27899232b91d99035fc9b96e6277878c4db536c9",
+            "excerpt": "bench probe: manifest-directory swap in internal/runbinary/runbinary.go.\nverdict: bit\nfailed tests: 2\nrestored: yes\nTestBuildLeavesTheWrapperManifestUntouched/absent failed: private build published wrapper manifest.\nTestBuildLeavesTheWrapperManifestUntouched/present failed: private build changed wrapper manifest.\nProbe test elapsed: 9899ms.\n"
+          },
+          "requirement": "manifest-directory-probe",
+          "command": "bench probe internal/runbinary/runbinary.go --swap 'return runBuildScript(ctx, sourceRoot, output, filepath.Dir(output))' --with 'return runBuildScript(ctx, sourceRoot, output, \"\")' --package ./internal/runbinary --run '^TestBuildLeavesTheWrapperManifestUntouched$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "swap",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "specs/cli-desktop-consistency/assets/repair-cycle-3.md",
+              "digest": "sha256:42113b093dadfc2e56b78e8b27899232b91d99035fc9b96e6277878c4db536c9",
+              "excerpt": "bench probe: manifest-directory swap in internal/runbinary/runbinary.go.\nverdict: bit\nfailed tests: 2\nrestored: yes\nTestBuildLeavesTheWrapperManifestUntouched/absent failed: private build published wrapper manifest.\nTestBuildLeavesTheWrapperManifestUntouched/present failed: private build changed wrapper manifest.\nProbe test elapsed: 9899ms.\n"
+            }
+          }
         }
       ],
       "reviews": [
