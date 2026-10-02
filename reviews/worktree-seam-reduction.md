@@ -1592,7 +1592,79 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sr-c7-r1-standards",
+          "performer": "claude:bench-reviewer/sr-c7-r1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b18681abbbe5d5169165223ed5944e32337834f4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c7-r1-standards-20261002@c3c2aed5743a397826aaa3ed53f30fccabc907d2",
+            "digest": "sha256:bd23240c2b912e51b71b3fb2cb13cd0aecad9f2ab559309a583538509ba0b611",
+            "excerpt": "## Standards\nS1. AGENTS.md \"one source per fact\", and a concrete defect. reset_plan_test.go:51 still spells \"reset_paths\" in an absence check; ticket 14 edited lines 64 and 76 of the file and left line 51. A rename of the table makes the assertion vacuous. The census does not report a whole name outside a block argument. Ticket 14, auto-fix (use resetPathsTable), confidence 7.\nS2. The same rule and defect at land_identity_test.go:90 (\"refusal_paths\" in an absence check). The line predates the chunk and the file is outside the ticket 14 fence. Ticket 14, ask-user, confidence 5.\ncount: 2\nworst: S1.\nAdvice: the listTable rename is supported by the one-source rule, and the name question is a Spec matter. The constants block in list.go mixes verbs (no binding rule; a dedicated file would read better). stringLiteral repeats a four-line unquote step in identity_component_test.go (outside the fence). tableBlockArgs argument indexes restate the helper signatures. viaJoins and mustViaJoins show no duplication. cmd/bench tests still spell worktrees (cross-package; the constant is unexported).\n"
+          },
+          "axis": "Standards",
+          "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "tip": "c3c2aed5743a397826aaa3ed53f30fccabc907d2",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c7-r1-spec",
+          "performer": "claude:bench-reviewer/sr-c7-r1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b18681abbbe5d5169165223ed5944e32337834f4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c7-r1-spec-20261002@c3c2aed5743a397826aaa3ed53f30fccabc907d2",
+            "digest": "sha256:963d6ce2c45bb516263d5f72e1f70e8c335fb6b219af91a374d873937320e708",
+            "excerpt": "## Spec\nP1. spec.md:274 and :635: \"The test-only cleanupTable and selectedTable constants move to production.\" The tree deletes selectedTable and declares listTable = \"worktrees\" (list.go:57), because both list views render the one worktrees block. Non-behavioral; nothing records the deviation. Ticket 14, ask-user, confidence 8. The coordinator follows the tree, amends the two spec lines in the plan commit, and holds the name for veto.\nP2. Story 46: a renamed table leaves no stale literal. The census follows spec.md:276-278 and does not report two absence checks: land_identity_test.go:90 (\"refusal_paths\") and reset_plan_test.go:51 (\"reset_paths\"). Ticket 14, ask-user, confidence 4. The coordinator routes both literals to the repair with S1 and S2, and holds the census scope for veto.\nP3. Ticket 15 line 22: \"Record each probe command and its red in the verification note.\" The record holds six verdict rows and no probe text. Ticket 15, auto-fix (evidence-only record correction), confidence 5.\nRows closed: WS71 to WS80. viaJoins is true only when call.joins != nil, which matches spec.md:282-283. Each ticket stays inside its Writes line; the five registry files are unchanged; no over-budget file grew.\ncount: 3\nworst: P1.\nAdvice: the ticket 15 verification excerpt shows the pre-commit run at 6805b853; re-record at the final source. WS71's failure cell names classifier.go while the test uses a synthetic render.go.\n"
+          },
+          "axis": "Spec",
+          "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "tip": "c3c2aed5743a397826aaa3ed53f30fccabc907d2",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sr-c7-r1-coverage",
+          "performer": "claude:bench-reviewer/sr-c7-r1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b18681abbbe5d5169165223ed5944e32337834f4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude:agent/sr-c7-r1-coverage-20261002@c3c2aed5743a397826aaa3ed53f30fccabc907d2",
+            "digest": "sha256:efe17bec18329e7ebefae01c16a26ef0dba5d0add4591568e68684577442b04c",
+            "excerpt": "## Coverage\nC1. The four identity-refusal tests in land_identity_test.go (runs at lines 38, 52, 67, 84) assert that the landReviewed stub was not called (line 100) and none calls mustViaJoins. Probe P6 (the joins value dropped from one of them) is silent. The spec's joins route section says each such test also calls mustViaJoins. Ticket 15 names six tests and no Writes line holds the file. Ticket 15; the axis gave ask-user, confidence 9; the coordinator routes it as an in-scope fence expansion and repair.\nC2. A run with only a kit or a clock value takes the joins form with defaultJoins(). Probe P1 (viaJoins set on every joins-form run) is silent on the WS75 test. Spec lines 282-283 require the call's joins value. Live exposure: mergeSet.merge always sets kit. Ticket 15, auto-fix (a kit-only case in the WS75 test), confidence 7.\nC3. Two whole-name literals in absence checks survive: reset_plan_test.go:51 and land_identity_test.go:90. The census does not report that shape, and the WS73 test pins the non-report (probe P4 bit). Ticket 14; the axis gave ask-user, confidence 5; the coordinator routes the two literals to the repair (with S1 and S2) and holds the census scope for veto.\nProbes, each --package ./internal/worktree, each restored yes: P1 verb_runner_test.go viaJoins forced on every joins-form run, silent; P2 the constant guard loosened to any identifier, silent; P3a invalid (unused variable); P3b selector name altered, bit 2; P4 block-argument condition dropped, bit 7; P5 a table constant planted in a test file, silent; P6 the joins value dropped from an identity-refusal run, silent.\ncount: 3\nworst: C1.\nAdvice: a table constant declared in a test file escapes the census (P5). WS71 says identifier where the spec section says package constant (P2). Parenthesised or concatenated block arguments, a renderer through a function value, and a dot-imported toon escape the census. The not-called population is a sample from counter names.\nFinal git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "650a614f22a95cdbeb8608436531fd2522025e84",
+          "tip": "c3c2aed5743a397826aaa3ed53f30fccabc907d2",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2103,3 +2175,38 @@ The amended loop sentence agrees with the census. SR-C6 has no open finding, and
 - P2: the spec sentence that counts a loop condition and post statement as the loop body.
 - N1: a dot import of a read package goes unreported; no Won't-handle line decides it.
 - C3 and C4 widened the census beyond the rows as written: method entries, and an error on an empty read set.
+
+## SR-C7 chunk review, round 1
+
+Three fresh opus / high sessions reviewed the frozen pair `650a614f..c3c2aed5`, which holds the tickets 14 and 15. The raw finding count is 8, and the repair-target count is 5. The repair allowance of SR-C7 is 2 cycles, and 0 cycles are used.
+
+### Standards
+
+Count: 2. Worst: S1.
+
+- S1 (`auto-fix`, confidence 7, ticket 14): `reset_plan_test.go` line 51 still spells `"reset_paths"` in an absence check. A rename of the table makes the check vacuous. The rule is one source per fact.
+- S2 (`ask-user` from the axis, confidence 5, ticket 14): the same shape at `land_identity_test.go` line 90 with `"refusal_paths"`. The file was outside the fence; the plan commit adds it to the ticket 14 and ticket 15 fences.
+
+### Spec
+
+Count: 3. Worst: P1. The axis closed WS71 to WS80.
+
+- P1 (`ask-user`, confidence 8, ticket 14): the spec said that `selectedTable` moves to production, and the tree declares `listTable` in its place. One constant names the one `worktrees` block. The deviation is non-behavioral. The plan commit amends the two spec lines and the ticket, and the name stays a reviewer veto item.
+- P2 (`ask-user`, confidence 4, ticket 14): the two absence-check literals of S1 and S2 escape the census by its decided scope. The repair fixes the literals; the census scope is a veto item.
+- P3 (`auto-fix`, confidence 5, ticket 15): the ticket 15 verification excerpt holds six probe verdicts and no probe text. The ticket asks for each command. The repair session re-records the entry at the final source with the commands.
+
+### Coverage
+
+Count: 3. Worst: C1.
+
+- C1 (`ask-user` from the axis, confidence 9, ticket 15): the four identity-refusal tests in `land_identity_test.go` assert that the `landReviewed` stub was not called. None calls `mustViaJoins`. The spec's joins route section covers each such test, and the ticket named six. The coordinator treats this as an in-scope fence expansion, not a shortfall, because the spec text already requires it. The repair adds the four calls and their probes.
+- C2 (`auto-fix`, confidence 7, ticket 15): a run with only a kit or a clock value takes `defaultJoins()`. No case pins `viaJoins` false for it. The repair adds the case to the WS75 test.
+- C3 (`ask-user` from the axis, confidence 5, ticket 14): the same two literals as S1, S2, and P2.
+
+### Advice
+
+- The constants block sits in `list.go` and names every table; a dedicated file would read better, and no binding rule fixes the place.
+- A table constant declared in a test file escapes the census.
+- WS71 says identifier where the spec section says package constant.
+- `cmd/bench` tests still spell `worktrees`; the constant is unexported.
+- The ticket 15 verification run was at the pre-commit tree; the repair re-records at the final source.

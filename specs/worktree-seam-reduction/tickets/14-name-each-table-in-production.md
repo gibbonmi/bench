@@ -1,7 +1,7 @@
 # 14. Name each table in production
 
 Blocked by: 13-make-the-serial-ceiling-exact.md
-Writes: internal/worktree/table_name_census_test.go (new), internal/worktree/classifier.go, internal/worktree/worktree.go, internal/worktree/reset.go, internal/worktree/list_selected.go, internal/worktree/list.go, internal/worktree/build.go, internal/worktree/ownership.go, internal/worktree/pool_reclaim.go, internal/worktree/verb_fixture_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/list_selected_test.go, internal/worktree/build_test.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_landed_hostile_test.go, internal/worktree/clean_landed_test.go, internal/worktree/clean_set_test.go, internal/worktree/clean_unclaimed_test.go, internal/worktree/eligibility_test.go, internal/worktree/journey_race_test.go, internal/worktree/land_release_refusal_test.go, internal/worktree/land_surface_test.go, internal/worktree/list_actions_test.go, internal/worktree/orphan_render_test.go, internal/worktree/path_identifier_test.go, internal/worktree/pool_reclaim_test.go, internal/worktree/reset_apply_test.go, internal/worktree/reset_plan_test.go, internal/worktree/reset_refusal_test.go, internal/worktree/reset_restore_refusal_test.go, internal/worktree/snapshot_test.go, internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/table_name_census_test.go (new), internal/worktree/land_identity_test.go, internal/worktree/classifier.go, internal/worktree/worktree.go, internal/worktree/reset.go, internal/worktree/list_selected.go, internal/worktree/list.go, internal/worktree/build.go, internal/worktree/ownership.go, internal/worktree/pool_reclaim.go, internal/worktree/verb_fixture_test.go, internal/worktree/verb_runner_check_test.go, internal/worktree/list_selected_test.go, internal/worktree/build_test.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_landed_hostile_test.go, internal/worktree/clean_landed_test.go, internal/worktree/clean_set_test.go, internal/worktree/clean_unclaimed_test.go, internal/worktree/eligibility_test.go, internal/worktree/journey_race_test.go, internal/worktree/land_release_refusal_test.go, internal/worktree/land_surface_test.go, internal/worktree/list_actions_test.go, internal/worktree/orphan_render_test.go, internal/worktree/path_identifier_test.go, internal/worktree/pool_reclaim_test.go, internal/worktree/reset_apply_test.go, internal/worktree/reset_plan_test.go, internal/worktree/reset_refusal_test.go, internal/worktree/reset_restore_refusal_test.go, internal/worktree/snapshot_test.go, internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: WS71, WS72, WS73, WS74
 
 ## What to build
@@ -10,7 +10,8 @@ Chunk: SR-C7.
 
 Name each table that the package renders with a package constant. Each `toon.Table` and
 `toon.TableTyped` call in the non-test source takes the constant. The test-only
-`cleanupTable` and `selectedTable` constants move to production.
+`cleanupTable` constant moves to production, and the test-only `selectedTable` constant becomes the
+production `listTable` constant.
 
 Add a table-name census in a new test file. It derives the table names from the
 constants that the non-test source passes to `toon.Table` and `toon.TableTyped`. It
