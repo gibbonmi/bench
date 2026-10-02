@@ -8,7 +8,7 @@ Covers: RE98, RE99, RE100, RE101, RE109, RE110, RE111
 
 Chunk: RE-C4.
 
-Replace lines 208 to 214 of step 6 in `.agents/commands/bench-review-implementation.md` with the text that the spec's "The guidance" section quotes. The text names each completed form and keeps the completion entry and each failed, skipped, or pending result hand-written. It retires three sentences:
+Replace lines 208 to 214 of step 6 in `.agents/commands/bench-review-implementation.md` with the text that the spec's "The guidance" section quotes. The text names each completed form and keeps the completion entry and each result in the failed, skipped, or pending state hand-written. It retires three sentences:
 
 - "Preflight supplies the source and plan digests."
 - "Record the performer, role, model, effort, frozen base and tip, source, state, and native result."
@@ -16,10 +16,10 @@ Replace lines 208 to 214 of step 6 in `.agents/commands/bench-review-implementat
 
 Insert these two sentences after the first sentence of the Land paragraph in `.agents/commands/bench-implement-spec.md`, on the same physical line 56:
 
-- "After each ticket commit, the author sets the chunk tip to that commit with `bench record chunk`."
-- "An author writes each verification entry with `bench record verification`."
+    When the orchestrator freezes a chunk after its last ticket, it records the chunk entry with `bench record chunk`.
+    Each ticket author then writes its verification entries at that chunk source with `bench record verification`.
 
-The file keeps 80 lines by the `proseBudgetLineCount` rule.
+The orchestrator records the chunk entry once, at the freeze that line 48 already states. So no later tip move stales an earlier ticket's verification. The file keeps 80 lines by the `proseBudgetLineCount` rule.
 
 Add six rules to `chunkChainAnchors` and six expectations to `TestChunkChainAnchors`. The require-in-step rule for step 6 of the review phase takes this needle:
 

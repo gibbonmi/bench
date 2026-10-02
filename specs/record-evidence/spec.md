@@ -162,7 +162,7 @@ The coordinator also accepted nine author calls:
 An independent review approved the draft with 11 findings and no blocker. The
 coordinator closed each finding:
 
-1. Step 6 names `bench record` for each completed chunk, verification, review, and amendment entry. The completion entry and each failed, skipped, or pending result stay hand-written.
+1. Step 6 names `bench record` for each completed chunk, verification, review, and amendment entry. The completion entry and each result in the failed, skipped, or pending state stay hand-written.
 2. The implement phase file holds 80 lines by the budget count, against a budget of 81. A review-owned row holds the count at 80.
 3. The verb checks an `--id` against the record before it renders, and its refusal names the ID. `parse.go` keeps its message.
 4. `parse.go` owns the one fence locator, and `fenced` and `Render` both use it. A duplicate fence has its own row.
@@ -176,8 +176,16 @@ coordinator closed each finding:
 
 The coordinator also folded two pieces of advice. `--source` defaults to the
 chunk entry's tip, and a chunk result whose source digest differs from the
-chunk's refuses. The implement phase states that an author sets the chunk tip
-before it records verification.
+chunk's refuses. The implement phase states when each entry is written.
+
+### Decisions closed at the confirming pass, 2026-10-01
+
+A confirming review approved the fold with two findings and no blocker. The
+reviewer pre-approved the spec and the ticket graph, and the coordinator closed
+both findings:
+
+1. The orchestrator records the chunk entry and its tip when it freezes the chunk after the last ticket. Each ticket author then records its verification at that chunk source. A tip move after each ticket would stale the earlier entries of a two-ticket chunk.
+2. The RE7 search covers the production files and `internal/reviewrecord/recordtest`. A `_test.go` file that builds a malformed document on purpose is exempt by rule.
 
 ### The forms and their flags
 
@@ -333,7 +341,7 @@ those lines. The new step 6 text reads:
     `bench record verification` appends one planned result, and `bench record amendment` records a plan-digest change.
     Supply the performer, model, effort, and native result. The verb derives the role, the source, and each digest.
 
-    The completion entry and each failed, skipped, or pending result stay hand-written, because `bench record` has no form for them.
+    The completion entry and each result in the failed, skipped, or pending state stay hand-written, because `bench record` has no form for them.
     A hand-written entry names its performer, role, model, effort, source digest, state, and native result.
     It embeds the minimal native excerpt with the SHA-256 digest of that excerpt.
 
@@ -346,8 +354,8 @@ Ticket 6 inserts two sentences after the first sentence of the Land paragraph in
 `.agents/commands/bench-implement-spec.md`, on the same physical line 56. No
 anchor names a sentence on that line. The new sentences read:
 
-    After each ticket commit, the author sets the chunk tip to that commit with `bench record chunk`.
-    An author writes each verification entry with `bench record verification`.
+    When the orchestrator freezes a chunk after its last ticket, it records the chunk entry with `bench record chunk`.
+    Each ticket author then writes its verification entries at that chunk source with `bench record verification`.
 
 ## Implementation chunks
 
@@ -393,7 +401,7 @@ private excerpt reader of ticket 3 inside RE-C3.
 | RE5 | 35 | The rendered payload has two-space indentation and holds `&` unescaped | planned TestRenderWritesAReadablePayload in internal/reviewrecord, through `Render` | The default JSON encoder escapes `&` as a six-character Unicode sequence. |
 | RE6 | 38 | `Render` over a document with an unterminated fence returns an error | planned TestRenderRefusesAnUnterminatedFence in internal/reviewrecord, through `Render` | A renderer that appends a fence leaves the old opening line, and the reader then refuses the document. |
 | RE102 | 38 | `Render` over a document with two record fences returns an error | planned TestRenderRefusesADuplicateFence in internal/reviewrecord, through `Render` | A renderer that replaces the first fence leaves the second, and the reader then refuses the document. |
-| RE7 | 42 | A search for the fence-opening text `bench-review-record\n` in Go code finds only the hostile literals that Further notes lists | review-owned: the search command in Further notes | A test helper, such as `recordFence`, that keeps its own encoder adds a hit. |
+| RE7 | 42 | A search for the fence-opening text `bench-review-record\n` in the non-test Go files, `internal/reviewrecord/recordtest` included, finds no hit | review-owned: the search command in Further notes | A fixture or a production writer that keeps its own encoder adds a hit. |
 | RE8 | 43 | A search for the text `"bench-review-record"` in non-test Go code finds one constant declaration | review-owned: the search command in Further notes | A renderer with its own literal adds a second hit. |
 | RE103 | 42 | `recordtest.Fixture.Save` of a record whose excerpt holds `&` writes a raw `&` in `reviews/example.md` | planned TestFixtureSaveRendersThroughRender in internal/reviewrecord/source_test.go, through `Save` | A `Save` that keeps `json.MarshalIndent` writes the Unicode escape for `&`. |
 | RE9 | 42 | `TestReviewRecordSource` passes with `recordtest.Fixture.Save` rendering through `Render` | `internal/reviewrecord/source_test.go` (`TestReviewRecordSource`), with no assertion changed | A renderer whose payload the reader cannot parse reds each fixture consumer. |
@@ -433,7 +441,7 @@ private excerpt reader of ticket 3 inside RE-C3.
 | RE36 | 40 | Each of `--performer`, `--model`, `--effort`, and `--id` with a value that holds U+001B makes the verification form exit 1, name that flag, and leave the record bytes unchanged | planned TestRecordRefusesAControlCharacterInAFlag in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | `Parse` grades none of these characters, so a writer that relies on it writes the byte. |
 | RE42 | 11 | A verification result for chunk `1` adds one entry to the chunk's `verification` list and none to its `reviews` list | planned TestRecordVerificationLandsInTheChunkList in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that appends to the review list repeats the worktree-verb-runner error. |
 | RE43 | 12 | `--final --requirement acceptance` adds one entry to `completion.verification` | planned TestRecordFinalVerificationLandsInTheCompletionList in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that needs a chunk refuses the final form. |
-| RE44 | 13 | With `HEAD` past the chunk tip, a chunk result with no `--source` takes the source digest of the chunk tip | planned TestRecordVerificationDefaultsToTheChunkTip in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that defaults to `HEAD` names a later source. |
+| RE44 | 13 | With `HEAD` at a later commit that changes a source file, a chunk result with no `--source` takes the source digest of the chunk tip | planned TestRecordVerificationDefaultsToTheChunkTip in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that defaults to `HEAD` names a later source. |
 | RE107 | 53 | A chunk result whose `--source` names a commit with another source digest exits 1, names `bench record chunk`, and leaves the record bytes unchanged | planned TestRecordVerificationRefusesAStaleSource in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that records any source writes a result that the checkpoint calls stale. |
 | RE108 | 52 | `--final --source` on a commit past the last chunk tip writes the `source_digest` of that commit's tree | planned TestRecordFinalVerificationDigestsTheNamedSource in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer that copies the last chunk's digest fails the match. |
 | RE45 | 14 | The entry's `command` equals `go test ./...`, the planned command of requirement `tests` | planned TestRecordVerificationCopiesThePlannedCommand in internal/reviewrecord/recordcmd, through `Command` over a linked fixture worktree | A writer with no command source writes an empty command, which `Parse` refuses. |
@@ -494,8 +502,8 @@ private excerpt reader of ticket 3 inside RE-C3.
 | RE99 | 47 | `.agents/commands/bench-review-implementation.md` does not hold the sentence "Preflight supplies the source and plan digests." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`), through a new forbid rule | A restored sentence reds the anchor. |
 | RE109 | 47 | `.agents/commands/bench-review-implementation.md` does not hold the sentence `Record the performer, role, model, effort, frozen base and tip, source, state, and native result.` | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`), through a new forbid rule | A restored hand-recording sentence reds the anchor. |
 | RE110 | 47 | `.agents/commands/bench-review-implementation.md` does not hold the sentence `Embed the minimal native excerpt and its SHA-256 digest; local logs are supplemental evidence.` | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`), through a new forbid rule | A restored hand-recording sentence reds the anchor. |
-| RE100 | 48 | The Land section of `.agents/commands/bench-implement-spec.md` holds the sentence "An author writes each verification entry with `bench record verification`." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`), through a new require-in-section rule | A removal of the sentence reds the anchor. |
-| RE111 | 48 | The Land section of `.agents/commands/bench-implement-spec.md` holds the sentence "After each ticket commit, the author sets the chunk tip to that commit with `bench record chunk`." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`), through a new require-in-section rule | A removal of the sentence reds the anchor. |
+| RE100 | 48 | The Land section of `.agents/commands/bench-implement-spec.md` holds the sentence "Each ticket author then writes its verification entries at that chunk source with `bench record verification`." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`), through a new require-in-section rule | A removal of the sentence reds the anchor. |
+| RE111 | 48 | The Land section of `.agents/commands/bench-implement-spec.md` holds the sentence "When the orchestrator freezes a chunk after its last ticket, it records the chunk entry with `bench record chunk`." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`), through a new require-in-section rule | A removal of the sentence reds the anchor. |
 | RE101 | 48 | `.agents/commands/bench-implement-spec.md` holds 80 lines by the `proseBudgetLineCount` rule, its count at `0c95c944` | review-owned: a line count of the file at the ticket 6 tip | The budget check reds only at 82 lines, so only a count catches one added line. |
 
 Not covered: story 49 — the verb has no completion-state form, and FT318 keeps that work open until FT317 decides.
@@ -632,7 +640,8 @@ accepts the marker after the path exists.
 | Fold 9: the hand-recording sentences retired | RE109, RE110 |
 | Fold 11: oversized excerpt, help spellings, failed write | RE104, RE105, RE106 |
 | Advice: `--source` defaults to the chunk tip, and a stale source refuses | RE44, RE107, RE108 |
-| Advice: the author sets the chunk tip before it records | RE111 |
+| Advice and confirming pass 1: the orchestrator records the chunk entry at the freeze, and each author then verifies at that source | RE100, RE111 |
+| Confirming pass 2: the RE7 search scope | RE7 |
 
 ### Reader and writer sweeps
 
@@ -655,14 +664,20 @@ Copies of the fence encoding that ticket 1 replaces:
 - `internal/reviewrecord/recordtest/fixture.go` line 331, in `Save`.
 - `internal/preflight/delegated_evidence_test.go` line 19, in `recordFence`.
 
-Hostile literals that stay, because no encoder can produce them:
+The RE7 search covers the production files and `internal/reviewrecord/recordtest`.
+A `_test.go` file that builds a malformed document on purpose is exempt by rule,
+because no encoder can produce that document. The exempt files include these:
 
 - `internal/reviewrecord/source_test.go` line 166, a duplicate JSON key.
 - `internal/reviewrecord/source_test.go` line 228, a record at a path that holds a newline.
 - `internal/preflight/delegated_evidence_test.go` line 43, an unterminated fence.
+- the planned tests of RE6, RE102, RE32, and RE33, which build malformed documents.
 
-The RE7 search is `rg -n -F 'bench-review-record\n' --glob '*.go'`. The RE8
-search is `rg -n -F '"bench-review-record"' --glob '*.go' --glob '!*_test.go'`.
+The `recordFence` helper sits in a `_test.go` file, so the RE7 search does not see
+it. Review confirms that it renders through `Render`, and RE10 runs it.
+
+The RE7 search is `rg -n -F 'bench-review-record\n' --glob '*.go' --glob '!*_test.go'`.
+The RE8 search is `rg -n -F '"bench-review-record"' --glob '*.go' --glob '!*_test.go'`.
 
 ### Proof checklist
 

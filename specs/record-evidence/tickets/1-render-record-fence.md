@@ -19,7 +19,7 @@ Add `reviewrecord.Render` in the new file `internal/reviewrecord/write.go`. It t
 
 Move the fence name `bench-review-record` into one constant. The reader in `files.go` and `Render` both use it.
 
-Make `recordtest.Fixture.Save` and the `recordFence` helper in `internal/preflight/delegated_evidence_test.go` render through `Render`. `Save` keeps its current file bytes for a record with no `&`, `<`, or `>`. Keep the hostile literal fences that the spec's Further notes lists.
+Make `recordtest.Fixture.Save` and the `recordFence` helper in `internal/preflight/delegated_evidence_test.go` render through `Render`. `Save` keeps its current file bytes for a record with no `&`, `<`, or `>`. Keep each malformed fence that a `_test.go` file builds on purpose, as the spec's Further notes states.
 
 Put the `Render` tests in `record_test.go`. Put the `Save` row in `source_test.go`, because an internal test cannot import `recordtest`. The package then holds 12 source files. Ticket 2 consumes `Render` for every write.
 
@@ -33,4 +33,4 @@ Put the `Render` tests in `record_test.go`. Put the `Save` row in `source_test.g
 - [ ] An unterminated fence and a duplicate fence each make `Render` return an error.
 - [ ] `Save` of a record whose excerpt holds `&` writes a raw `&`.
 - [ ] `TestReviewRecordSource` and `TestDelegatedEvidenceProjection` pass with no assertion changed.
-- [ ] The RE7 and RE8 searches give the hits that the spec names.
+- [ ] The RE7 search finds no hit, and the RE8 search finds one constant declaration.
