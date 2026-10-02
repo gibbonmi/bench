@@ -805,6 +805,26 @@ Before the first edit, the probe on `land_refusal.go` bit with 49 failed tests. 
 
 `identity_component_test.go` has 509 lines at `7fa02b42` and 500 lines at the ticket commit. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. The JSON payload holds the package result as `vr-c4-9-worktree-r1`.
 
+## VR-C4 ticket 10 author evidence
+
+The fresh ticket author `claude:bench-writer/vr-t10-author` ran on opus at medium effort, from tip `c042a8c8f57f245cd92da6f556da856f98960d41`. The ticket commit is `a8bc9310615e1fcef72c376ffcb0b2987a069f11`, and it changes no production file. It writes the 10 `internal/worktree` test files on the ticket's `Writes:` line and no `cmd/bench` or `internal/conformance` file.
+
+Each `land` and `land-resume` call in the 10 files now runs through `runVerb`. Each stubbed landing passes its joins value through `callWith`, so each effect stub still runs. A landing outside the root and the home of a landing fixture uses `repoHome{root, home}`. No test in these files lands at the process home, so no test uses `processHomeCall`. `resumeLandArgs` stays at `land_effects_cleanup_test.go:197`.
+
+No verb call in the 10 files declares an output buffer pair. The buffer pairs that stay in `land_journey_test.go` collect the output of a built `bench` child process, and no verb entry runs there.
+
+The folded-sibling landing in `TestLandCleansTheFoldedSibling` now calls `mustNoFingerprint` at `land_effects_cleanup_test.go:89`, and its `--apply` check stays at line 90. The base check failed on any 64-hex text in stdout. The new check reads only the two fingerprint cells, so it is weaker: a 64-hex text outside those cells no longer fails the test. This is the accepted drop under VR46 that the spec names.
+
+A probe on the committed source swapped `r.mustNoFingerprint(t)` for `r.mustFingerprint(t)`. It bit with 1 failed test, `TestLandCleansTheFoldedSibling`, at `land_effects_cleanup_test.go:89` with the message `verb result carries no fingerprint`.
+
+The verb form command over the 10 files prints no line. The 64-hex command over the same files prints no line. No failure message names a verb entry. The VR46 count per test function has no drop from `c042a8c8` to the ticket commit. Over the 10 files, the count stays at 235 across 79 functions. The only changed function is `TestLandCleansTheFoldedSibling`, which keeps 4 failure calls and adds 1 `mustNoFingerprint` call.
+
+Before the first edit, the probe on `land_refusal.go` with the census-cell swap bit with 49 failed tests. The probe with the `next`-cell swap bit with 8 failed tests. On the ticket commit, the same probes bit with 49 and 8 failed tests. For each probe, the two sorted name sets are equal.
+
+`bench test --package ./internal/worktree` passed on the ticket commit with the two socket capability skips. `bench preflight build worktree-verb-runner` was green with 13 green checks and 0 red checks. `bench structure --growth 7fa02b429a66aa71b4303e483b82e074622c80bd` was ok.
+
+`land_journey_test.go` has 431 lines at `7fa02b42` and 427 lines at the ticket commit. `worktreeTestCount` stays at 688, and the serial ceiling stays at 46. The JSON payload holds the package result as `vr-c4-10-worktree-r1`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1943,7 +1963,7 @@ Before the first edit, the probe on `land_refusal.go` bit with 49 failed tests. 
     {
       "id": "VR-C4",
       "base": "7fa02b429a66aa71b4303e483b82e074622c80bd",
-      "tip": "f99fccf88605b113bc9cf3d6fbe5057263e5c063",
+      "tip": "a8bc9310615e1fcef72c376ffcb0b2987a069f11",
       "plan_digest": "pending",
       "source_digest": "pending",
       "acceptance_rows": [
@@ -1986,6 +2006,24 @@ Before the first edit, the probe on `land_refusal.go` bit with 49 failed tests. 
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,64314\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
           },
           "requirement": "9-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "vr-c4-10-worktree-r1",
+          "performer": "claude:bench-writer/vr-t10-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bb74f2d148868cfa3030708303666e38d2319c3a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/vr-t10-author-20261001/10-worktree@a8bc9310",
+            "digest": "sha256:a94f55632be6b853b2be65fe91d5574394f9d35afbacd1788a356bdf8e48b327",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,62649\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:"
+          },
+          "requirement": "10-worktree",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
         }
