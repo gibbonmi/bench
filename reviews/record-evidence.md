@@ -1026,7 +1026,44 @@
         "RE110",
         "RE111"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "re-c4-v-t5-reviewrecord",
+          "performer": "claude:bench-writer/re-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e21432cef18591052ae5a7ee666ea170fb891451",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t5-author-20261002/verify-5-reviewrecord",
+            "digest": "sha256:5d6efec02aa3b7a16dfebd8d4ed97105867270c0ee2fdfc7cb04990fde53ec93",
+            "excerpt": "packages[3]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1630\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,5134\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "5-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c4-v-t5-cmd",
+          "performer": "claude:bench-writer/re-t5-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e21432cef18591052ae5a7ee666ea170fb891451",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t5-author-20261002/verify-5-cmd",
+            "digest": "sha256:843b0b0f882194ff51c101ceac3c6df29e3cb4f800d08baef70a3da2d0b75621",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13859\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "5-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        }
+      ],
       "reviews": []
     }
   ],
@@ -1704,3 +1741,53 @@ The ticket 5 author asked whether an amendment can follow a chunk entry that nam
 The ticket 6 author ran `bench worktree build`, which left `dist/` and `bin/bench-broker.manifest` in the worktree. The orchestrator removed both ignored artifacts before the gate.
 
 The coordinator probe of ticket 5 made the target check of the amendment accept every chunk. `bench probe` returned `bit` on RE90 and RE92 with `restored=yes`. The coordinator probe of ticket 6 moved the new step 6 anchor to step 5. `bench probe` returned `bit` on `TestRootConformance` with `restored=yes`.
+
+## RE-C4 ticket 5 author evidence
+
+The author session `claude:bench-writer/re-t5-author` ran on opus at medium effort. It used 1 of 3 attempts. The ticket commit is `9b19fb48`, and the commit lane passed.
+
+Route A is a behavioral red before the production edit. All 13 recordcmd tests exited 2 with `usage: bench record (unknown argument: amendment)`. Each row also has a probe after the production edit. Each probe returned `bit` with `restored=yes`.
+
+| Row | Test | Red route | Status |
+|---|---|---|---|
+| RE84 | `TestRecordAmendmentComputesBothDigests` | Route A, and a probe that changed `to` | green |
+| RE85 | `TestRecordAmendmentMovesThePlanDigest` | Route A, and a probe that omitted the digest move | green |
+| RE86 | `TestRecordAmendmentMapsEachChunkToItself` | Route A, and a probe that skipped the first recorded chunk | green |
+| RE87 | `TestRecordAmendmentChainsFromTheLastDigest` | Route A, and a probe that read `from` from a chunk entry | green |
+| RE88 | `TestRecordAmendmentWritesAMappedSplit` | Route A, and a probe that ignored `--map` | green |
+| RE89 | `TestRecordAmendmentRefusesAnUnchangedPlan` | Route A, and a probe that disabled the unchanged check | green |
+| RE90 | `TestRecordAmendmentRefusesAnUnmappedChunk` | Route A, and a probe that skipped the unmapped-key refusal | green |
+| RE91 | `TestRecordAmendmentRefusesAMapForAnUnrecordedChunk` | Route A, and a probe that disabled the unrecorded-key check | green |
+| RE92 | `TestRecordAmendmentRefusesAMapToAnUnplannedChunk` | Route A, and a probe that skipped the map-target refusal | green |
+| RE93 | `TestRecordAmendmentNeedsARecord` | Route A, and a probe that let the write create a record | green |
+| RE94 | `TestRecordAmendmentReportsItsRow` | Route A, and a probe that added 1 to the count | green |
+| RE95 | `TestRecordedAmendmentPassesTheCheckpoint` | Route A, and a probe that omitted the amendment append | green |
+| RE96 | `TestRecordAmendmentGrammarRefusals` | Route A, and one probe for each member: no `=`, an empty old side, an empty new side, an empty new ID, and a repeated key | green |
+| RE97 | `TestHelpInventoryIsComplete` | The golden row was added first, and the test failed at line 147 | green |
+
+A probe that replaced `mappedIDs` with the identity map was silent at first. The author then extended the RE87 test. The test now splits chunk `1` into `1a` and `1b`, and then amends again. It expects the second mapping `{1a:[1a], 1b:[1b]}`. After this change, the same probe returned `bit` on RE87.
+
+The shape after the ticket:
+
+- `command.go` holds 399 lines, and the limit is 400. A shared `row` helper replaces three copies of the table output code. The `valid` rule now reads the parsed result, so the `--map` rule can read each repeated value.
+- The new file `amendment.go` holds 46 lines. It holds the `--map` parser, the grammar rule, and the form output.
+- `coverage.go` holds 252 lines, and `write.go` holds 334 lines. The `internal/reviewrecord/` directory keeps 12 files.
+
+The duplicated-facts sweep found one source for each fact. The `forms` declaration gives the usage line, the grammar, and the help row. The tests derive the output row through `toon.Table` and extend `formArgs`, `succeed`, and `refuseArgs`. The author removed a dead `!found` term, because the empty ID rule refuses a value with no `=`. The comment sweep found that each changed comment states the current code.
+
+Process note: the author ran two edits through `python3` on the pool path, outside `bench worktree exec`. The rule is to use the Edit tool for each edit in the pool path.
+
+Focused checks before the ticket commit, with wall times:
+
+- `bench test --package ./internal/reviewrecord/...` passed in 6.6 s.
+- `bench test --package ./cmd/bench` passed in 15.3 s.
+- `bench test --package ./internal/conformance --run '^TestRootConformance$'` passed in 9.4 s.
+- `bench test --check skip-ownership`, `subcommand-routing`, and `axi-query-registry` each passed in less than 2 s.
+- `bench structure` reported no new issue in the changed files. The lane growth check passed.
+
+Fresh checks at `3b7e7ab7`:
+
+- `bench test --package ./internal/reviewrecord/...` passed in 6.7 s. The verb recorded `re-c4-v-t5-reviewrecord`.
+- `bench test --package ./cmd/bench` passed in 17.0 s. The verb recorded `re-c4-v-t5-cmd`.
+
+No check skipped a test.
