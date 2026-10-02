@@ -315,6 +315,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sr-c2-r2-standards",
+          "performer": "claude:bench-reviewer/sr-c2-r2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "995f6f325872860920aebf1e60aaee419f87a7cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c2-r2-standards-20261002@1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+            "digest": "sha256:8f614bd902e803bf551cbd5380ca28ee77459003a746a213aa69eea6892d2293",
+            "excerpt": "Standards axis, SR-C2 confirming round, repair delta f620ccd6..1fde1ac1: pass, 0 findings.\nS1: confirmed. internal/worktree/verb_runner_test.go:163-165 states what the check refuses and claims nothing wider.\nS2: confirmed. internal/worktree/effects.go:32-33 reads \"The caller supplies the home and the warnings writer.\"\nblocking findings: none.\nAdvice (confidence 6): internal/worktree/resume_clean_ambient_test.go:21-23 builds the pending fixture inline with newWorktreeRepo, mustCreate, and markPending, which repeats the steps of newOwnedAssignment and newPendingAssignment in resume_test.go:532-544 with another home path. A home parameter on newOwnedAssignment would keep one source. resume_test.go is over its line budget.\n"
+          },
+          "axis": "Standards",
+          "base": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+          "tip": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "sr-c2-r2-spec",
+          "performer": "claude:bench-reviewer/sr-c2-r2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "995f6f325872860920aebf1e60aaee419f87a7cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c2-r2-spec-20261002@1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+            "digest": "sha256:39585f5d9aedf3e89c7516cec2ec9f6213b50aabb3ff253d781d1eaa85bd0678",
+            "excerpt": "Spec axis, SR-C2 confirming round, repair delta f620ccd6..1fde1ac1: pass, 0 findings.\nP1: confirmed. internal/worktree/resume_clean_ambient_test.go:22 keeps the test name; the home is the sibling directory \"auto home\", the shape of \"auto clean\" and \"auto dirty\" in resume_test.go:39-40; line 24 fails the test if the checkout path holds no space.\nC1: confirmed. resume_clean_ambient_test.go:59 keeps the test name and the WS13 clean-command assertion, and it also requires \"retained stale-active=1;\".\nScope: confirmed. The only production change is a comment in internal/worktree/effects.go:32-33.\nblocking findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+          "tip": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "sr-c2-r2-coverage",
+          "performer": "claude:bench-reviewer/sr-c2-r2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "995f6f325872860920aebf1e60aaee419f87a7cb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/sr-c2-r2-coverage-20261002@1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+            "digest": "sha256:efafa076931123ab6ea3775f0cc8e48a9e29a010b42624f4bfea75ef8f70da60",
+            "excerpt": "Coverage axis, SR-C2 confirming round, repair delta f620ccd6..1fde1ac1: pass, 0 findings.\nC1: confirmed. The WS13 test requires \"retained stale-active=1;\" (resume_clean_ambient_test.go:59).\nP1: confirmed. The WS12 home is filepath.Join(filepath.Dir(root), \"auto home\") with a guard on the space.\nProbe: bench probe internal/worktree/resume.go --swap 'plan, err := planAutomaticAt(j, root, wt.Path, a.now)' --with 'plan, err := planAutomaticAt(j, root, wt.Path, a.now.AddDate(0, 0, -30))' --package ./internal/worktree --run TestResumeCleanJudgesTheClockValue. Verdict bit, 1 failed test, restored yes.\nblocking findings: none.\nFinal git status: empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "37e3f72f0fb6b0280b5106bbff0b2133f2ec9996",
+          "tip": "1fde1ac102e6b169c46bc40ae03510b29469d1fd",
+          "finding_ids": [],
+          "supersedes": [
+            "sr-c2-r1-coverage"
+          ]
         }
       ]
     }
@@ -439,3 +505,11 @@ One fresh opus / high repair session, `claude:bench-writer/sr-t2-repair1`, repai
 - C1: the WS13 test also requires the `retained stale-active=1` cell. The named swap probe in `resume.go` was `silent` before the repair and `bit` after it.
 
 The coordinator probe swapped the home argument of `census.Drop` in `lifecycle.go`. It returned `bit` with 1 failed test and `restored=yes`. An omission of that line did not compile, so that probe was `invalid`.
+
+## SR-C2 confirming round
+
+Three fresh opus / high sessions read the repair delta `f620ccd6..1fde1ac1`. Each axis confirmed its folds and reported no blocking finding. The Coverage axis moved the plan instant back 30 days in `resume.go`, and the probe returned `bit` with `restored=yes`. SR-C2 has no open finding, and 1 of 2 repair cycles is used.
+
+### Advice
+
+- The repaired WS12 test builds its pending fixture inline, which repeats the steps of `newOwnedAssignment` and `newPendingAssignment` with another home path. A home parameter on that helper gives one source. The helper is in `resume_test.go`, which is over its line budget.
