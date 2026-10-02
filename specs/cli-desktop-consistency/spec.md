@@ -381,6 +381,7 @@ Won't handle: authentication against a malicious same-user process — existing 
 - `internal/conformance/entry_point_parity_bite_test.go`
 - `internal/conformance/entry_point_parity_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/preflight/evidencecmd/evidence_file_reconstruction_test.go`
 - `internal/sessioninspect`
 - `internal/systemtest/compatibility_test.go`
 - `tests/canary/data-handling-derivation/undocumented-passlist-var`
