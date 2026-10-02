@@ -14,8 +14,8 @@ import (
 // with defaultJoins and passes it down; nothing below the boundary reads a package
 // variable. One value carries every family because the families travel together: a
 // landing releases its assignment, a release cleans the worktree, and that cleanup reads
-// the ignored inventory and the live-binary identity. A test builds the value, replaces
-// one field, and calls the internal form, so two tests never share one stub point.
+// the live-binary identity. A test builds the value, replaces one field, and calls the
+// internal form, so two tests never share one stub point.
 //
 // A field whose default has to reach another seam takes the value as its first argument.
 // The default then reads the caller's joins rather than a captured copy.
@@ -31,12 +31,7 @@ type joins struct {
 	claimStealGap        func(string)
 	restoreClean         func(string)
 	chmodPool            func(string, os.FileMode) error
-	ignoredLstat         func(string) (os.FileInfo, error)
 	resolveRunningBinary func() (string, error)
-	liveBinaryWarnings   io.Writer
-	// planLandedExplicit exposes the target-path boundary so a hostile-path test can stand
-	// in for the planner without the fixture the real one needs.
-	planLandedExplicit   func(joins, string, string, CleanupOptions) (CleanupPlan, error)
 	reauthorizeUnlock    func(string, string) error
 	reauthorizeLock      func(string, string, string) error
 	reauthorizeBeforeCAS func(*intent.Assignment)
@@ -69,10 +64,7 @@ func defaultJoins() joins {
 		claimStealGap:            func(string) {},
 		restoreClean:             restoreCleanCheckout,
 		chmodPool:                os.Chmod,
-		ignoredLstat:             os.Lstat,
 		resolveRunningBinary:     os.Executable,
-		liveBinaryWarnings:       os.Stderr,
-		planLandedExplicit:       planExplicitWith,
 		reauthorizeUnlock:        unlockWorktree,
 		reauthorizeLock:          lockWorktree,
 		mergeReconcile:           reconcileMergeCheckout,

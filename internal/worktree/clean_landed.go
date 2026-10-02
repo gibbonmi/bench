@@ -18,10 +18,6 @@ import (
 
 const landedSetFingerprintVersion = "bench-landed-set/v1"
 
-// planLandedExplicitWithOptions exposes the target-path boundary so hostile-path tests
-// can prove shape rejection happens before the explicit planner invokes Git.
-var planLandedExplicitWithOptions = PlanExplicitWithOptions
-
 type landedCleanupRow struct {
 	assignment intent.Assignment
 	plan       CleanupPlan
@@ -134,7 +130,7 @@ func planLandedAssignment(j joins, root string, assignment intent.Assignment, op
 		plan.assignment, plan.owned = &assignment, true
 		return plan
 	}
-	plan, err := j.planLandedExplicit(j, root, assignment.Worktree, options)
+	plan, err := planExplicitWith(j, root, assignment.Worktree, options)
 	if err != nil {
 		plan = retainedPlan(assignment.Worktree, ReasonUncertain, err.Error())
 		plan.Assignment, plan.Recovery, plan.Tracked, plan.ignoredSummary = assignment.ID, "none", "unknown", "unknown"

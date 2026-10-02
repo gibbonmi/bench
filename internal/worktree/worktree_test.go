@@ -1,9 +1,9 @@
 package worktree
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -439,30 +439,30 @@ func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 	}
 }
 
+// TestIgnoredInventoryStatRaceRetains lists an ignored file that the planner cannot stat:
+// its directory grants read but no search, so Git lists the name and the real os.Lstat
+// fails. Root bypasses that mode, so the fixture cannot fail the stat under root.
 func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 	t.Parallel()
+	if os.Geteuid() == 0 {
+		capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny search access to fail the stat")
+	}
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
-	if err := os.WriteFile(filepath.Join(root, ".git", "info", "exclude"), []byte("ignored.txt\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("locked/\n"), 0o644)
 	target := filepath.Join(filepath.Dir(root), "ignored stat race")
 	gitRun(t, root, "worktree", "add", "-q", "-b", "ignored-stat-race", target, "HEAD")
-	ignored := filepath.Join(target, "ignored.txt")
-	if err := os.WriteFile(ignored, []byte("secret\n"), 0o000); err != nil {
-		t.Fatal(err)
-	}
-	j := defaultJoins()
-	j.ignoredLstat = func(path string) (os.FileInfo, error) {
-		if path == ignored {
-			return nil, os.ErrNotExist
-		}
-		return os.Lstat(path)
-	}
-	plan, err := planExplicitWith(j, root, target, CleanupOptions{DiscardIgnored: true})
+	locked := filepath.Join(target, "locked")
+	ignored := filepath.Join(locked, "ignored.txt")
+	mustMkdirAll(t, locked, 0o755)
+	mustWrite(t, ignored, []byte("secret\n"), 0o644)
+	t.Cleanup(func() { _ = os.Chmod(locked, 0o700) })
+	mustNoError(t, os.Chmod(locked, 0o600))
+	plan, err := PlanExplicitWithOptions(root, target, CleanupOptions{DiscardIgnored: true})
 	if err != nil || plan.Action != ActionRetain || plan.ReasonCode != ReasonUncertain {
 		t.Fatalf("stat-race plan = %#v, %v", plan, err)
 	}
+	mustNoError(t, os.Chmod(locked, 0o700))
 	if _, err := os.Lstat(ignored); err != nil {
 		t.Fatalf("stat-race plan mutated ignored file: %v", err)
 	}
@@ -589,18 +589,15 @@ func TestRetirementPrintsTheSectionRemovalError(t *testing.T) {
 			refused = i + 1
 		}
 	}
-	j := defaultJoins()
-	var advisory bytes.Buffer
-	j.liveBinaryWarnings = &advisory
-	r := runVerb(t, verbRelease, f.callWith(j, "--request", "landed-handoff-unparseable", f.creation.Path))
+	r := runVerb(t, verbRelease, f.call("--request", "landed-handoff-unparseable", f.creation.Path))
 	if r.exit != 0 {
 		t.Fatalf("release = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if !strings.Contains(r.stdout, string(ActionRemoved)) {
 		t.Fatalf("release verdict = %q, want %s", r.stdout, ActionRemoved)
 	}
-	if want := fmt.Sprintf("%s:%d:", path, refused); !strings.Contains(advisory.String(), want) {
-		t.Fatalf("advisory = %q, want the file and line %q", advisory.String(), want)
+	if want := fmt.Sprintf("%s:%d:", path, refused); !strings.Contains(r.stderr, want) {
+		t.Fatalf("release stderr = %q, want the file and line %q", r.stderr, want)
 	}
 }
 

@@ -8,22 +8,22 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 )
 
-// The joins value carries two seams here. resolveRunningBinary answers which executable
+// The joins value carries one seam here. resolveRunningBinary answers which executable
 // this process is: bin/bench.sh resolves exactly one binary and execs it, so the running
 // process is that resolution's answer. Reading it reuses the wrapper's own choice instead
 // of restating the search order, and it stays correct for the inherited-BENCH_RUN_BINARY
-// branch too. liveBinaryWarnings is where the residue guard announces a removal that would
-// take the CLI down with it. The guard runs below every command's writer, so the warning
-// must land while the removal is proposed, not in a plan the caller reads afterward.
+// branch too.
 
 // warnBeforeRemovingLiveBinary tells the caller that removing candidate out of root
 // disables the binary answering bench, and names the command that rebuilds it. It stays
-// silent for any other candidate.
-func warnBeforeRemovingLiveBinary(j joins, root, candidate string) {
+// silent for any other candidate. The warning goes to the ambient warnings writer, which
+// is the verb's own stderr. The guard runs below every command's writer, so the warning
+// must land while the removal is proposed, not in a plan the caller reads afterward.
+func warnBeforeRemovingLiveBinary(j joins, a ambient, root, candidate string) {
 	if !isRunningBinary(j, candidate) {
 		return
 	}
-	fmt.Fprintf(j.liveBinaryWarnings,
+	fmt.Fprintf(a.warnings,
 		"bench: %s is the binary currently answering bench; removing it disables the CLI, the git guard it backs, and the gate's BENCH_RUN_BINARY at once. Rebuild it with: %s\n",
 		candidate, freshness.RebuildAction(root))
 }
