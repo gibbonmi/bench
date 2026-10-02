@@ -25,8 +25,8 @@ func landingGateFixture(t *testing.T, environment ...string) *testrepo.GateFixtu
 
 // publicLandingFixture mints one private Bench home and carries it in the value, so the
 // fixture binds no process environment and the test it serves stays parallel-eligible. The
-// value's call builds a verb call at that home. processHomeCall and interruptLandingAtMarker land
-// at the process home instead.
+// value's call builds a verb call at that home. processHomeCall lands at the process home
+// instead.
 func publicLandingFixture(t *testing.T, request, ignored, declaration string) landingFixture {
 	t.Helper()
 	return publicLandingFixtureAtHome(t, request, ignored, declaration, filepath.Join(t.TempDir(), "bench-home"))
@@ -63,6 +63,14 @@ func foldedLandingFixture(t *testing.T, request string) foldedLanding {
 
 func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home string, gradeSpec bool) landingFixture {
 	t.Helper()
+	return landingFixtureWithGateStep(t, request, ignored, declaration, home, gradeSpec, nil)
+}
+
+// landingFixtureWithGateStep is landingFixtureAtHome with one more prospective gate line.
+// A non-nil step receives the gate fixture, so the step declares each command it runs,
+// and the destination root. Its line runs after the tally.
+func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string) landingFixture {
+	t.Helper()
 	gateSpec, prospectiveSpec := "", ""
 	f := landingGateFixture(t)
 	if gradeSpec {
@@ -78,7 +86,11 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 	// into the process environment and declares an empty gate environment. A gate that
 	// read the path from an exported name would make every caller serial.
 	count := "printf g >> '" + tally + "'\n"
-	f.MustWrite(t, root, "set -eu\n"+gateSpec+"[ -f owned.txt ]\n"+count, "set -eu\nruntime=$1\n"+prospectiveSpec+"[ -f owned.txt ]\n"+count)
+	extra := ""
+	if step != nil {
+		extra = step(f, root)
+	}
+	f.MustWrite(t, root, "set -eu\n"+gateSpec+"[ -f owned.txt ]\n"+count, "set -eu\nruntime=$1\n"+prospectiveSpec+"[ -f owned.txt ]\n"+count+extra)
 	if declaration != "" {
 		mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\""+declaration+"\"]}\n"), 0o644)
 	}
@@ -187,7 +199,12 @@ func stubLandJoins(base, tip string) joins {
 // light-path change has exactly this shape: tickets, no spec.md.
 func ticketsOnlyLandingFixture(t *testing.T, request string) landingFixture {
 	t.Helper()
-	f := specLessLandingFixture(t, request)
+	return ticketsOnlyFolderFixture(t, specLessLandingFixture(t, request))
+}
+
+// ticketsOnlyFolderFixture adds the tickets-only folder to a spec-less landing fixture.
+func ticketsOnlyFolderFixture(t *testing.T, f landingFixture) landingFixture {
+	t.Helper()
 	mustMkdirAll(t, filepath.Join(f.root, "specs", "t", "tickets"), 0o755)
 	mustWrite(t, filepath.Join(f.root, "specs", "t", "tickets", "one.md"), []byte("Light path ticket.\n"), 0o644)
 	gitRun(t, f.root, "add", "specs/t")

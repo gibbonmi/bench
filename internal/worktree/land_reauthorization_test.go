@@ -2,8 +2,6 @@
 package worktree
 
 import (
-	"context"
-	"errors"
 	"io"
 	"path/filepath"
 	"strings"
@@ -16,20 +14,12 @@ import (
 func TestResumeLandCommandUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	t.Parallel()
 	request := "resume-reauthorize-recovery"
-	f := publicLandingFixture(t, request, "", "")
-	working := defaultJoins()
-	broken := working
-	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
-		return errors.New("injected marker interruption")
-	}
-	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
-	published := gitOutput(t, f.root, "rev-parse", "main")
+	f := markerLandingFixture(t, request, true)
+	_, published := interruptLandingAtMarker(t, f, landArgs(request, f.base, f.tip, f.creation.Path)...)
 	args := []string{"--resume", published, "--request", "unknown-request", "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 	wantNext := laterProofsSkipped + "; bench worktree reauthorize --assignment " + f.creation.Assignment.ID + " --request <new-request> --base '" + f.base + "' --source-tip '" + f.tip + "' '" + f.creation.Path + "'"
 	want := "refused{detail=request token matches no assignment,observed=assignment:" + f.creation.Assignment.ID + ",next=" + wantNext + "}\n"
-	if r := runVerb(t, verbLand, f.callWith(working, args...)); r.exit != 1 || r.stdout != want || len(r.stderr) != 0 {
+	if r := runVerb(t, verbLand, f.call(args...)); r.exit != 1 || r.stdout != want || len(r.stderr) != 0 {
 		t.Fatalf("unknown-request resume = (%d, %q, %q), want exit 1 and %q", r.exit, r.stdout, r.stderr, want)
 	}
 }

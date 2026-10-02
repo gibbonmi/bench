@@ -1,8 +1,6 @@
 package worktree
 
 import (
-	"context"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,22 +56,15 @@ func TestLandCommandAllowsLocalCaptureInDestinationAndReleases(t *testing.T) {
 func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	t.Parallel()
 	request := "local-capture-resume"
-	f := specLessLandingFixture(t, request)
+	f := markerLandingFixture(t, request, false)
 	base, _ := addLocalCaptureIgnore(t, f.root, "")
 	gitRun(t, f.creation.Path, "rebase", "main")
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	writeLocalCapture(t, f.root)
 
-	working := defaultJoins()
-	broken := working
-	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error { return errors.New("interrupt") }
-	r := runVerb(t, verbLand, f.callWith(broken, specLessLandArgs(request, base, tip, f.creation.Path)...))
-	if r.exit != 3 {
-		t.Fatalf("interrupted land = (%d, %q, %q), want incomplete", r.exit, r.stdout, r.stderr)
-	}
-	published := gitOutput(t, f.root, "rev-parse", "main")
+	_, published := interruptLandingAtMarker(t, f, specLessLandArgs(request, base, tip, f.creation.Path)...)
 	args := []string{"--resume", published, "--request", request, "--base", base, "--source-tip", tip, f.creation.Path}
-	r = runVerb(t, verbLand, f.callWith(working, args...))
+	r := runVerb(t, verbLand, f.call(args...))
 	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
 		t.Fatalf("resume with local capture = (%d, %q, %q), want released", r.exit, r.stdout, r.stderr)
 	}
