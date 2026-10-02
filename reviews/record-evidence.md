@@ -1062,6 +1062,42 @@
           "requirement": "5-cmd",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "re-c4-v-t6-anchors",
+          "performer": "claude:bench-writer/re-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e21432cef18591052ae5a7ee666ea170fb891451",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t6-author-20261002/verify-6-anchors",
+            "digest": "sha256:63691b52434fd564d0627b433615cd8d91e132e9316a403aaf7bf7f50b6bb4d0",
+            "excerpt": "tree[1]{target,head,dirty}:\n  record-evidence-build,84c2682a1919bdcffe42a3bbbcefe3093bd3c5fb,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1009\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "6-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "re-c4-v-t6-budgets",
+          "performer": "claude:bench-writer/re-t6-author",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e21432cef18591052ae5a7ee666ea170fb891451",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:agent/re-t6-author-20261002/verify-6-budgets",
+            "digest": "sha256:b18309cd0e3d7ae36838cdb286a85edc08dfa50b5b493be258caa744473c8c8e",
+            "excerpt": "tree[1]{target,head,dirty}:\n  record-evidence-build,84c2682a1919bdcffe42a3bbbcefe3093bd3c5fb,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "6-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
         }
       ],
       "reviews": []
@@ -1791,3 +1827,48 @@ Fresh checks at `3b7e7ab7`:
 - `bench test --package ./cmd/bench` passed in 17.0 s. The verb recorded `re-c4-v-t5-cmd`.
 
 No check skipped a test.
+
+## RE-C4 ticket 6 author evidence
+
+The author session `claude:bench-writer/re-t6-author` ran on opus at high effort. It used 1 of 3 attempts. The ticket commit is `7112b8e1`, and the commit lane passed.
+
+The red route has three steps. First, the author added the six expectations to `TestChunkChainAnchors`, and the test failed. Next, the author added the six rules to `chunkChainAnchors`. The anchors package passed, and `TestRootConformance` failed on the real tree with `gate: chunk chain: the orchestrator records the chunk entry at the freeze`. Last, the author edited the two guidance files, and `TestRootConformance` passed.
+
+| Row | Test or count | Red route | Status |
+|---|---|---|---|
+| RE98 | `TestChunkChainAnchors` and `TestRootConformance` | The three-step route, and a probe that removed the step 6 sentence | green |
+| RE99 | `TestChunkChainAnchors` and `TestRootConformance` | The three-step route, and a probe that restored the retired sentence | green |
+| RE109 | `TestChunkChainAnchors` and `TestRootConformance` | The three-step route, and a probe that restored the retired sentence | green |
+| RE110 | `TestChunkChainAnchors` and `TestRootConformance` | The three-step route, and a probe that restored the retired sentence | green |
+| RE111 | `TestChunkChainAnchors` and `TestRootConformance` | The three-step route, and a probe that removed the Land sentence | green |
+| RE100 | `TestChunkChainAnchors` and `TestRootConformance` | The three-step route, and a probe that removed the Land sentence | green |
+| RE101 | The line count of `.agents/commands/bench-implement-spec.md` | Review-owned | 80 lines |
+
+The author ran twelve probes. Each probe returned `bit` with `restored=yes`:
+
+- Six probes changed the guidance and ran `TestRootConformance`. Each probe removed one required sentence or restored one retired sentence. Each failure named the diagnostic of its own rule.
+- Six probes removed one new rule from `chunkChainAnchors` and ran `TestChunkChainAnchors`. These probes record one red for each independent expectation.
+
+The guidance probes run through `TestRootConformance`, because the anchors package grades only a minimal tree that the test harness writes. The conformance package grades the anchor registry against the real tree. Thus a probe of the guidance through `./internal/anchors` cannot fail.
+
+A search with `rg --hidden` found the three retired sentences only in the spec, in ticket 6, and in the replaced lines of the review phase. No canary fixture, test, skill, or `.bench/BENCH-reference.md` holds them.
+
+The implement phase holds 80 lines by the `proseBudgetLineCount` rule. The two sentences joined line 56, so the count did not change.
+
+The duplicated-facts sweep found one source for each fact. The guidance names the four forms of `bench record`, but it does not repeat a flag. `bench help` owns the flags. The registry and the test both hold each needle, under the exception for an independent expectation. The six rule-removal probes record the red for each expectation. The delta changes one comment, in the documentation of `chunkChainAnchors`, and that comment states the current rules.
+
+Focused checks before the ticket commit, with wall times:
+
+- `bench test --package ./internal/anchors` passed in 1.0 s.
+- `bench test --check guidance-prose-budgets` passed in less than 1 s.
+- `bench test --package ./internal/conformance` passed in 37.5 s. Three tests skipped, because the environment cannot make a unix socket or a character device.
+- `bench test --package ./internal/conformance --run '^TestRootConformance$'` passed in 7.0 s.
+- `bench test --check canary-fixture-compliance` and `bench test --check prose-mechanics` each passed in less than 1 s.
+- `bench gate-prose` passed on both guidance files.
+
+Fresh checks at `84c2682a`:
+
+- `bench test --package ./internal/anchors` passed in 1.0 s. The verb recorded `re-c4-v-t6-anchors`.
+- `bench test --check guidance-prose-budgets` passed in less than 1 s. The verb recorded `re-c4-v-t6-budgets`.
+
+No fresh check skipped a test.
