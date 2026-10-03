@@ -2,7 +2,7 @@
 
 Bench is this repo's local agent-development workflow. `AGENTS.md` points here.
 The lookup material — the file map, the pieces, the skills index, the harness invocations, the command notes, and the hook layers — lives in
-`.bench/BENCH-reference.md`. Read that file on demand; it is never imported.
+`.bench/BENCH-reference.md`. Read that file on demand; it is never imported. For Codex start and resume, follow its Session compatibility procedure before dependent work, including when no startup hook runs.
 
 ## Roles
 

@@ -27,7 +27,7 @@ type phase func(context.Context, io.Writer, io.Writer, string) int
 
 type stderrKey struct{}
 
-var phases = []phase{environmentPhase, resumePhase, recoveryPhase, statusPhase, guardsPhase}
+var phases = []phase{compatibilityPhase, environmentPhase, resumePhase, recoveryPhase, statusPhase, guardsPhase}
 var runInspect = Inspect
 
 var providerTimeout = bounds.VerdictWindow(bounds.ProviderTimeout)

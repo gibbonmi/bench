@@ -50,7 +50,9 @@ type compatibilitySession struct {
 
 func runCompatibilityDoctor(t *testing.T) (processResult, string, string) {
 	fixture := newCompatibilitySession(t)
-	return fixture.run(t, compatibility.CodexCLI), fixture.repo, fixture.wrapper
+	result := fixture.run(t, compatibility.CodexCLI)
+	result.stdout = compatibilityOutput(t, result)
+	return result, fixture.repo, fixture.wrapper
 }
 
 func newCompatibilitySession(t *testing.T) compatibilitySession {

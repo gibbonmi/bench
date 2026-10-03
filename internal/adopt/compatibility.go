@@ -133,11 +133,8 @@ func collectCompatibility(selected compatibility.Interface) compatibility.Input 
 		Context:       context,
 		Configuration: compatibility.ReadFile(configPath, "selected interface configuration"),
 		GlobalBench:   globalBenchAvailable(),
-		HookAction:    "observe the declared hook in the selected interface",
-		Live: []compatibility.LiveRow{
-			{Capability: "normal-shell", Action: "run a normal-permission shell command in the selected interface"},
-			{Capability: "repository-wrapper", Action: "invoke the repository Bench wrapper in the selected interface"},
-		},
+		HookAction:    compatibility.CapabilityAction("hook-behavior"),
+		Live:          compatibility.LiveObligations("workflow", false),
 	}
 	if rootErr != nil {
 		input.Context.Repository = compatibility.Fact{Source: "git root unavailable"}
@@ -276,7 +273,7 @@ func mutateCompatibility(selected compatibility.Interface, undo string, stdout, 
 	if code != 0 {
 		state = "incomplete"
 	}
-	action := "retest through normal tools in the selected interface"
+	action := compatibility.CapabilityAction("failed-interface-retest")
 	if repair.id != "" {
 		action = "bench doctor --compat " + string(selected) + " --undo " + repair.id + "; then " + action
 	}

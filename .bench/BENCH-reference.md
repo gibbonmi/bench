@@ -147,6 +147,67 @@ Codex phase adapters installed by Bench:
 - `$bench-assess` → `.agents/commands/bench-assess.md`
 - `$bench-deepen` → `.agents/commands/bench-deepen.md`
 
+## Session compatibility
+
+Codex CLI and Desktop use the same repository agreement, skills, hooks, and Bench assignments.
+Their chats and user configuration homes remain independent.
+Bench does not copy credentials, preferences, or conversation history between them.
+The Windows desktop app uses its WSL2 agent for this workflow.
+Native Windows Bench execution is outside this qualification.
+Existing Linux and macOS contracts remain unchanged.
+
+### Check the active operation
+
+1. Identify the actual interface, repository, execution environment, active runtime, configuration home, and relevant policy sources.
+2. Keep an unavailable value unknown; a launcher version does not identify the active server.
+3. Run `pwd` through the actual chat shell with normal permissions.
+4. Run the repository Bench wrapper's `version` command through the same tool in a separate call.
+5. Run `bench doctor --compat codex-cli` or `bench doctor --compat codex-desktop` for the selected interface.
+6. Read the complete report through its spill path when the output is bounded.
+7. Perform each live probe needed by the operation, using the report's capability actions.
+
+For file work, verify scratch bytes through the actual interface's file route.
+Before a skill-led operation, invoke the repository skill from its installed path.
+Before a mutation, observe the required hook and permission behavior without broadening policy.
+Resolve a distinct Bench assignment before each writer's first write.
+For review, verify the chosen route's actual outcome before accepting an equivalent route.
+An optional presentation tool blocks only an operation that requires it without a verified equivalent.
+
+A doctor report describes local inspection and pending live probes.
+A zero exit does not qualify the whole chat.
+A hook, integrated terminal, new subprocess, or elevated shell supplies diagnostic evidence only.
+Keep successful observations in the current chat's memory, with their operation, route, permission mode, and observed context.
+Do not write a reusable green certificate.
+
+Start, resume, runtime replacement, workspace change, and relevant policy change invalidate affected observations.
+When context cannot be compared, repeat the affected live probes before dependent work.
+A runtime version difference alone does not prove a capability failure.
+Report the blocked operation, failed check, and supported next action.
+Continue only work whose required capabilities are verified.
+
+### Repair managed integration
+
+When the report identifies an eligible managed repair, run the selected compatibility command with `--fix`.
+The repair preserves preimages and modified or foreign files.
+Read its recovery classifications before any action that requires reviewer authority.
+Use its recorded `--undo <repair-id>` action when restoration is needed.
+Then repeat the failed probe through the previously failed interface with normal permissions.
+A successful repair command does not supply this live result.
+
+### If no command can start
+
+Preserve the exact startup error and name the failing interface.
+Do not retry dependent mutations through an elevated shell or an external terminal.
+Use supported external diagnostics to inspect the failure without treating their success as recovery.
+
+Keep active work and its continuation evidence before requesting an app restart.
+Obtain explicit reviewer authorization before interrupting a process, changing trust or permissions, or editing private runtime files.
+No supported automatic upstream repair is established.
+If the supported recovery route is unavailable, report the affected work as unresolved.
+
+After an authorized recovery, repeat the separate normal shell and wrapper probes in the failed chat.
+Then repeat its other affected live checks.
+
 ## Command Notes
 
 Bench renders `bench help` from the Go `commandRegistry`; it is the executable

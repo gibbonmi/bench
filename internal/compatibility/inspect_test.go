@@ -206,3 +206,128 @@ func contextValue(report Report, field string) string {
 	}
 	return ""
 }
+
+func TestCompatibilityOptionalTool(t *testing.T) {
+	request := observedSession(t, "diagnose")
+	request.Observations = append(request.Observations, Observation{Capability: "desktop-presentation", Operation: "diagnose", Session: request.Session})
+	report := SessionReport(request)
+	if report.ExitCode() != 0 || sessionState(report, "desktop-presentation") != StateNotRequired {
+		t.Fatalf("optional presentation blocks diagnosis: %#v", report)
+	}
+}
+
+func TestCompatibilityEquivalentEvidence(t *testing.T) {
+	request := observedSession(t, "review")
+	for i := range request.Observations {
+		if request.Observations[i].Capability == "review-outcome" {
+			request.Observations[i].Route = "shell-diff"
+		}
+	}
+	if report := SessionReport(request); report.ExitCode() != 0 {
+		t.Fatalf("observed equivalent refused: %#v", report)
+	}
+	for name, change := range map[string]func(*Observation){
+		"failed":            func(o *Observation) { o.Success = false },
+		"another operation": func(o *Observation) { o.Operation = "diagnose" },
+		"hook":              func(o *Observation) { o.Provenance = "hook-process" },
+		"subprocess":        func(o *Observation) { o.Provenance = "subprocess" },
+		"elevated":          func(o *Observation) { o.Permission = "elevated" },
+		"no route":          func(o *Observation) { o.Route = "" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			changed := request
+			changed.Observations = append([]Observation(nil), request.Observations...)
+			for i := range changed.Observations {
+				if changed.Observations[i].Capability == "review-outcome" {
+					change(&changed.Observations[i])
+				}
+			}
+			if report := SessionReport(changed); report.ExitCode() == 0 || sessionState(report, "review-outcome") == StateOK {
+				t.Fatalf("unobserved equivalent qualified review: %#v", report)
+			}
+		})
+	}
+}
+
+func TestCompatibilityFailureAfterSuccess(t *testing.T) {
+	request := observedSession(t, "review")
+	for _, observation := range request.Observations {
+		if observation.Capability == "review-outcome" {
+			observation.Success = false
+			request.Observations = append(request.Observations, observation)
+			break
+		}
+	}
+	for _, row := range SessionReport(request).Checks {
+		if row.Check == "review-outcome" {
+			if row.State != StateFailed || row.Action == "none" || row.Action == "" {
+				t.Fatalf("later failure lost its recovery action: %#v", row)
+			}
+			return
+		}
+	}
+	t.Fatal("review outcome check is absent")
+}
+
+func TestCompatibilitySupportBoundary(t *testing.T) {
+	request := observedSession(t, "diagnose")
+	request.Session.Context.Environment.Value = "windows/amd64"
+	for i := range request.Observations {
+		request.Observations[i].Session = request.Session
+	}
+	report := SessionReport(request)
+	if report.ExitCode() == 0 || sessionState(report, "supported-environment") != StateFailed {
+		t.Fatalf("native Windows qualified: %#v", report)
+	}
+}
+
+func TestCompatibilityVersionDifference(t *testing.T) {
+	request := observedSession(t, "diagnose")
+	request.Session.Context.LauncherVersion = Fact{Value: "another installed version", Source: "PATH"}
+	if report := SessionReport(request); report.ExitCode() != 0 {
+		t.Fatalf("launcher label invalidated actual capability observations: %#v", report)
+	}
+}
+
+func TestCompatibilityContextInvalidation(t *testing.T) {
+	for name, change := range map[string]func(*Session){
+		"resume":         func(s *Session) { s.Epoch = "resume" },
+		"new chat":       func(s *Session) { s.ID = "another" },
+		"workspace":      func(s *Session) { s.Context.Repository.Value = "/another" },
+		"runtime":        func(s *Session) { s.Context.ActiveRuntime.Value = "replacement" },
+		"policy":         func(s *Session) { s.Context.PolicyProvenance.Value = "changed" },
+		"home":           func(s *Session) { s.Context.ConfigurationHome.Value = "/another" },
+		"unknown source": func(s *Session) { s.Context.PolicyProvenance.Source = "unknown" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			request := observedSession(t, "diagnose")
+			change(&request.Session)
+			report := SessionReport(request)
+			if report.ExitCode() == 0 || sessionState(report, "normal-shell") != StateUnknown {
+				t.Fatalf("changed context retained observation: %#v", report)
+			}
+		})
+	}
+}
+
+func observedSession(t *testing.T, operation string) SessionRequest {
+	t.Helper()
+	context := compatibilityInput(t).Context
+	context.ActiveRuntime = Fact{Value: "active-runtime", Source: "actual interface"}
+	request := SessionRequest{Session: Session{ID: "chat", Epoch: "start", Context: context}, Operation: operation}
+	for _, row := range LiveObligations(operation, true) {
+		request.Observations = append(request.Observations, Observation{
+			Capability: row.Capability, Operation: operation, Route: "native", Provenance: "actual-tool", Permission: "normal", Session: request.Session, Success: true,
+		})
+	}
+	return request
+}
+
+func sessionState(report Report, name string) CheckState {
+	for _, row := range report.Checks {
+		if row.Check == name {
+			return row.State
+		}
+	}
+	return ""
+}
