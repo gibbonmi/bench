@@ -18,6 +18,26 @@ Its pending live statements remain as provenance and are superseded by the quali
 Earlier native excerpts retain their original identities and outcomes.
 C1 and C2 remain accepted, and C3 retains one consumed product repair cycle.
 
+## Standards
+
+The final integration review has one finding and one repair target.
+The worst issue is STD-C3-FINAL-01, with confidence 9/10 and disposition auto-fix.
+The qualification artifact and spec repeat the live repair count that this pickup owns.
+AGENTS.md requires one source per fact, and the bounded repair policy assigns the count to this pickup.
+Remove the count from assets/qualification.md:184 and spec.md:942; preserve each update's local no-cycle statement.
+
+## Spec
+
+The final integration review has zero findings and no repair target.
+Its worst issue is none.
+All 64 acceptance rows reconcile against the frozen source and retained live evidence.
+
+## Coverage
+
+The final integration review has zero findings and no repair target.
+Its worst issue is none.
+No later composition concern invalidates the accepted hostile-edge coverage.
+
 ## Historical C3 state
 
 Source: `cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff`.
@@ -1656,7 +1676,7 @@ No review requested a Bench command change.
     {
       "id": "C3",
       "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
-      "tip": "dadd5698d452cebba0088a2d8a2096c1ebdfb335",
+      "tip": "a7537d64b1d5fe1b69f02e79de457f1ca3c499d9",
       "plan_digest": "sha256:fd1630eb03f3c42be8f1e0eb051b41c427ba16371480294c7104d4db89bf5c52",
       "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
       "acceptance_rows": [
@@ -2040,6 +2060,74 @@ No review requested a Bench command change.
           "supersedes": [
             "c3-coverage-initial"
           ]
+        },
+        {
+          "id": "c3-final-standards-a7537d64",
+          "performer": "native:/root/c3_final_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:/root/c3_final_standards",
+            "digest": "sha256:cbcf4e5eecdb9ab8be9889f4e8b529a9f36a4799104368d8befa92455d8f6dfb",
+            "excerpt": "## Standards\nPerformer: native:/root/c3_final_standards; assignment ecb79718c7418ea7b897d14833f5d8b7; gpt-5.6-sol / high / one pass.\nBinding: prefixed evidence sha256:832234a1085e64c0a471ca62cf3ad41de1396c183405a9885d5aad079d5432d5 returned current=true.\nFrozen pair: ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97..a7537d64b1d5fe1b69f02e79de457f1ca3c499d9.\n\nSTD-C3-FINAL-01 — confidence 9/10 — auto-fix. The later reconciliation duplicates the live repair allowance state. AGENTS.md:35-48 requires one source per fact, and bounded-repair-policy.md:58-60 assigns retained repair-cycle state to the review pickup. The pickup owns “one consumed” at reviews/cli-desktop-consistency.md:19, while assets/qualification.md:184 and spec.md:942 independently restate the same count. If a second repair cycle updates only the pickup, resumed authors can read either stale copy and infer remaining authority incorrectly. Keep the count in the pickup; let the other two documents state only that their respective metadata/integration updates consumed no cycle.\n\nRaw findings: 1. Repair targets: 1. Worst issue: STD-C3-FINAL-01. Optional advice: none.\nImplementation-command contribution: none; no command change is necessary.\nRead set: complete AGENTS/BENCH/profile and review, finding, comment, synthesis, CLI, bounded-repair, and review-phase disciplines; whole spec, C3 ticket, and qualification artifact; evidence cursors s257:0-20/end with relevant untouched consumers first and s258:0-1/end; one stored complete exact-pair diff; targeted current deletion-preflight sources, consumers, and pickup state. I did not read s1, owned by the coordinator.\nNo tests, probes, edits, commits, or landing ran. HEAD remains clean at a7537d64b1d5fe1b69f02e79de457f1ca3c499d9; no live process remains.\nclaim[1]{axis,status,confidence}: Standards,claimed,9\n"
+          },
+          "axis": "Standards",
+          "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
+          "tip": "a7537d64b1d5fe1b69f02e79de457f1ca3c499d9",
+          "finding_ids": [
+            "STD-C3-FINAL-01"
+          ],
+          "supersedes": [
+            "c3-standards-confirm-r1"
+          ]
+        },
+        {
+          "id": "c3-final-spec-a7537d64",
+          "performer": "/root/c3_final_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_final_spec",
+            "digest": "sha256:f2f66c5f9d6dd96f0d6669a6b435ec9c35b80881a8a95a7a3f5371fcbfddc0d7",
+            "excerpt": "## Spec\n\nPerformer: /root/c3_final_spec; independent-review; gpt-5.6-sol / high / one pass.\n\nBinding: sha256:832234a1085e64c0a471ca62cf3ad41de1396c183405a9885d5aad079d5432d5, current and clean for ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97..a7537d64b1d5fe1b69f02e79de457f1ca3c499d9; delivery unverified.\n\nRead set: complete C3 final-review supplement, approved 948-line spec, ticket 3, qualification artifact, current review-record author verification, AGENTS/BENCH/profile, review phase, craft-review/finding discipline, bounded-repair, delegation claim schema, comments, AXI, and synthesis rules. I read the single exact-pair Git diff and its 16,089-line spill, then targeted C3 and composition sources. Evidence cursors fetched: s257:0,3,5,12,15 and s258:0,1; relevant untouched sessioninspect.phases consumers were read first from s257:3.\n\nResult: 0 raw findings; 0 repair targets; worst issue: none; required dispositions: none.\n\nAll 64 mapped behaviors reconcile. The 49 automated rows retain accepted C1/C2/C3 evidence; every C3 production, hook, instruction, and test blob is byte-identical to accepted source fa1dc27. The 15 review-owned live rows are individually reconciled in the qualification artifact, whose current blob exactly matches commit 38dcf00c. That artifact explicitly preserves actual-interface execution at fa1dc27 and does not mislabel it as execution on the composed source. Current compatibility, adoption, system, live reconciliation, final 64-row coverage, and coordinator system evidence cover the composed source. No later delta or composition concern invalidates acceptance.\n\nOptional advice: none.\nImplementation-command contribution: none; no issue requires a command change.\nNo tests, probes, edits, commits, gates, or landings ran. Final venue status contains only the branch header; HEAD is clean at a7537d64b1d5fe1b69f02e79de457f1ca3c499d9.\nclaim[1]{axis,status,confidence}: Spec,claimed,10\n\nProvenance supplement: native Codex session ID unknown (not exposed); current-binding chunk8eb5f3; final clean-venue chunk unknown (projected stdout only). Performer /root/c3_final_spec.\n"
+          },
+          "axis": "Spec",
+          "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
+          "tip": "a7537d64b1d5fe1b69f02e79de457f1ca3c499d9",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-confirm-r1"
+          ]
+        },
+        {
+          "id": "c3-final-coverage-a7537d64",
+          "performer": "codex:/root/c3_final_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_final_coverage",
+            "digest": "sha256:4f21bb9180edc1af2cff24e1dbf6d614d5fa1f741195b669aff62415d5662008",
+            "excerpt": "## Coverage\n\nPerformer: codex:/root/c3_final_coverage\nModel: gpt-5.6-sol, high effort, one pass\nAssignment: 6e0d0a1a71df6aad7ee595bb2229d5ed\nExact pair: ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97..a7537d64b1d5fe1b69f02e79de457f1ca3c499d9\nEvidence binding: sha256:832234a1085e64c0a471ca62cf3ad41de1396c183405a9885d5aad079d5432d5, current for the exact pair.\n\nRead set: complete task supplement; recovered exact-pair diff; complete approved spec and ticket 3; AGENTS/BENCH; benchkit hostile-input inventory; craft-review, finding-discipline, bounded-repair, review-phase, comments, and TDD rules; all s257 consumer pages before both s258 coverage pages; current capability/session producers; session-inspection and system tests; capability-inventory expectations; and the complete qualification record.\n\nThe independently derived input family is the eleven-capability registry across diagnose, work, review, recover, present, and workflow, combined with session identity, epoch, comparable context, provenance, permission, route, success, hook inclusion, and observation ordering. C3 authorizes evidence recording and withholding dependent mutations. Managed repair and undo writes remain C2-owned.\n\nTests exercise missing and optional capabilities, unknown and changed context, hook/subprocess/elevated/empty-route evidence, failure after success, resume, timeout, host boundaries, policy conflict, payload installation, and every registry omission. The fa1dc27 actual-interface qualification stays explicitly historical; it makes no composed-source execution claim. Post-fa1 C3 product sources and tests are unchanged; only the qualification reconciliation changed. No later composition concern invalidates accepted behavior.\n\nFindings: 0.\nRepair targets: 0.\nWorst issue: none.\nDispositions: none.\nOptional advice: none.\nImplementation-command contribution: none; no command change is necessary.\nProbe: none required.\n\nClean source: HEAD a7537d64b1d5fe1b69f02e79de457f1ca3c499d9; git status --short empty.\nClaim schema: completed / coverage / 0 findings / exact pair / clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
+          "tip": "a7537d64b1d5fe1b69f02e79de457f1ca3c499d9",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-confirm-r1"
+          ]
         }
       ]
     }
@@ -2049,7 +2137,62 @@ No review requested a Bench command change.
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "final-desktop-coverage-a7537d64",
+        "performer": "codex:01a101a2-3138-7cc3-a799-cb270ed0b460",
+        "role": "integration-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "native:50ee2f",
+          "digest": "sha256:29ac9d371c4d184254d20b4eae577e0fc7635b14b78ada80863181e65b504858",
+          "excerpt": "Coordinator final coverage verification\nSource: 2c544513133249004bb25e47fa16d48b28baddd0\nNative terminal: 50ee2f\nCommand: bench coverage --check specs/cli-desktop-consistency/spec.md\nExit: 0\ntree[1]{target,head,dirty}:\n  cli-desktop-consistency,2c544513133249004bb25e47fa16d48b28baddd0,false\nok: coverage map valid — 64 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/cli-desktop-consistency/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-desktop-system-a7537d64",
+        "performer": "codex:01a101a2-3138-7cc3-a799-cb270ed0b460",
+        "role": "integration-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "native:0801d8",
+          "digest": "sha256:f769a03b8573338cfcb5251434ecbbadec662e10b94b32cc8ec461b93e9aca7d",
+          "excerpt": "Coordinator final system verification\nSource: a7537d64b1d5fe1b69f02e79de457f1ca3c499d9\nNative terminal: 0801d8\nCommand: bench test --check system\nExit: 0\ntree[1]{target,head,dirty}:\n  cli-desktop-consistency,a7537d64b1d5fe1b69f02e79de457f1ca3c499d9,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,119199\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "final-desktop-live-qualification-a7537d64",
+        "performer": "codex:01a101a2-3138-7cc3-a799-cb270ed0b460",
+        "role": "integration-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "native:45b13e",
+          "digest": "sha256:94feac74c530d3c59234fdff7b1c2ef8eaca680a71b564fe6a5ec5e55377c77c",
+          "excerpt": "Coordinator reconciliation: pass.\nExamined integration source: 2c544513133249004bb25e47fa16d48b28baddd0.\nSource digest: cf74570928d61ad59c469593e712272dc6b3f367.\nPerformer: codex:01a101a2-3138-7cc3-a799-cb270ed0b460.\nExact model and effort: unknown.\n\nThis is a fresh read of retained actual-interface evidence, not new live execution.\nThe actual live observations remain bound to fa1dc27d7730ca3889dad592dd51dff6d7b8a899 and their original contexts.\nThe current source composes the preserved implementation with reviewed main and the approved deletion prerequisite.\nCurrent automated integration checks supply separate evidence for that composition.\n\nCD39/CD40: actual normal tool identities and declared restrictions are retained in the startup, network, and lifecycle native objects.\nCD42: required write393ddd failed; dependent mutation3e886f remained absent.\nCD43: the retained static recovery handoff names separate actual startup retests and the stop on failure.\nCD45: pwd7669ea, wrapper289a0c, assignmentwritee400c9, separateread84a4b0 passed after authorized recovery.\nCD46: CLI and Desktop guidance hashes match for AGENTS, BENCH, skill, and phase.\nCD47: CLI66350a and Desktopc022c7 observed distinct assignment bytes and each other's markers; both tracked trees stayed clean.\nCD48: CLI112e5c and Desktop4732fa published the two disposable greeting sources; both sources released with census0.\nCD49/CD50: the actual hooks refused the harmless fixtures before execution; CLI851862 and Desktop280235/9e1778 confirmed absent sentinels.\nCD51: both native interfaces retained independent zero-finding Standards and Coverage results on the same frozen pair before exchange.\nCD54: each required live row has its retained native evidence; current completion depends on the separate source-bound record and checkpoint.\nCD57: separate actual write and read calls matched the expected scratch bytes in each interface.\nCD58: both sessions invoked bench-debug and followed its phase; the retained rule read includes CLI2e1bfb.\nCD62: permission and runtime changes caused affected actual retests; earlier passes did not authorize reuse.\n\nReviewed native roots: scoped-recovery-results.json selected denial, sentinel, and rule observations; network-active-cli-results.json; network-active-cli-guidance.json; paired-cli-tool-result.json; paired-evidence/desktop-tool-result.json; paired-review/comparison.json; cli-disposable-landing-retry-result.json; desktop-recovery/desktop-after-second-restoration-results.json; desktop-recovery/network-profile-retest.json; desktop-recovery/toolchain-operation-retest-native.json; desktop-recovery/DESKTOP-LANDING-RESULT.json.\nRead the external qualification.md and final CLI reply in full.\nFresh reconciliation read chunks: 4cd6e4, 9ac36e, 6bef0a, b56d16; other accepted live native returns remain retained from this session's earlier qualification.\n\nLimits remain explicit: native Windows is excluded; the historical concurrent writer exercise observed writable roots; later restricted retests establish their own boundaries.\nOptional ShellCheck and eight capability skips are not positive passes. No environment skips occurred in the disposable landings.\nThe launcher deletion actor and durable upstream recovery remain unknown. Host clock instability remains external.\nNo current profile authorization is inferred from these historical observations.\nThe later user instruction authorizes implementation completion and landing; old preservation instructions remain historical in their original records.\n"
+        },
+        "requirement": "live-qualification",
+        "command": "review actual CLI and desktop transcripts against every live acceptance row",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
