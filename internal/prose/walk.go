@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/outline"
 )
 
@@ -54,12 +55,13 @@ func Grade(root string) []string {
 // A link to a directory is not descended and not reported, because a linked tree is
 // graded where it lives.
 //
-// In a git work tree a subject is graded only when git tracks it, so an ignored or
-// untracked file that no commit carries is outside the grade. A root that git cannot list
-// is graded whole: it has no tracked set to select by.
+// When root is the top of its own git work tree, the walk grades only a subject that the
+// git index lists, so an ignored or untracked file is outside the grade. The walk grades
+// any other root whole: a root that git cannot list, or a root below the top of an outer
+// work tree, has no tracked set of its own.
 func collect(root string) ([]string, []string) {
 	var tracked map[string]bool
-	if files, err := outline.TrackedFiles(root); err == nil {
+	if files, err := outline.TrackedFiles(root); err == nil && workTreeTop(root) {
 		tracked = make(map[string]bool, len(files))
 		for _, rel := range files {
 			tracked[rel] = true
@@ -99,4 +101,11 @@ func collect(root string) ([]string, []string) {
 		return nil, []string{fmt.Sprintf("prose: %q: the walk of the graded root failed: %s", root, err)}
 	}
 	return subjects, nil
+}
+
+// workTreeTop reports whether root is the top of its own git work tree. Git prints an
+// empty prefix only at the top, so the check needs no path comparison.
+func workTreeTop(root string) bool {
+	prefix, err := git.Output("-C", root, "rev-parse", "--show-prefix")
+	return err == nil && prefix == ""
 }

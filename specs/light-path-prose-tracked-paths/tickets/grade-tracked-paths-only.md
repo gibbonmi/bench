@@ -27,3 +27,25 @@ ticket evidence.
 - [ ] A tracked `.md` file with the same fault still gives its diagnostic.
 - [ ] An untracked `.md` file that is not ignored gives no diagnostic.
 - [ ] The existing prose suite and the root conformance pass stay green.
+
+## Evidence
+
+The walk selects by the tracked set only when the graded root is the top of
+its own git work tree. The walk grades any other root whole. Such a root is a
+root that git cannot list, or a root below the top of an outer work tree. A
+temporary directory under an in-repo `TMPDIR` is an example of the second
+kind. A work tree top that tracks no file gives no diagnostic.
+
+Each caller of `prose.Grade` gets this result:
+
+- `runProseCheck` in `internal/testreport/command.go` grades the repository
+  root in a real run. Its own test grades a plain temporary directory, which
+  the walk grades whole.
+- `checkProseMechanics` in `internal/conformance/prose_mechanics_test.go`
+  grades the kit root, which is a work tree top in a checkout. The canary and
+  learning-journal tests grade plain temporary directories, which the walk
+  grades whole.
+
+Two `TestGrade` rows hold this result. The row for a root below the top of
+its work tree expects the fault in its untracked file. The row for a work
+tree that tracks no file expects no diagnostic.
