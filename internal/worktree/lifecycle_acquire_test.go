@@ -282,16 +282,9 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 			gitRun(t, f.root, "worktree", "lock", "--reason", "changed full lock reason", f.creation.Path)
 		}},
 		{name: "nested state", setup: func(t *testing.T, f fixture) {
-			nested := filepath.Join(f.creation.Path, "nested")
-			if err := os.MkdirAll(nested, 0o755); err != nil {
-				t.Fatal(err)
-			}
-			gitRun(t, nested, "init", "-q", "-b", "main")
-			mustWrite(t, filepath.Join(nested, "n.txt"), []byte("base\n"), 0o644)
-			gitRun(t, nested, "add", "n.txt")
-			gitRun(t, nested, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "base")
+			plantNestedRepository(t, f.creation.Path)
 		}, mutate: func(t *testing.T, f fixture) {
-			mustWrite(t, filepath.Join(f.creation.Path, "nested", "n.txt"), []byte("dirty\n"), 0o644)
+			mustWrite(t, filepath.Join(f.creation.Path, nestedRepositoryDir, nestedRepositoryFile), []byte("dirty\n"), 0o644)
 		}},
 		{name: "ignored inventory", setup: func(t *testing.T, f fixture) {
 			mustWrite(t, filepath.Join(f.root, ".git", "info", "exclude"), []byte("ignored.txt\n"), 0o644)

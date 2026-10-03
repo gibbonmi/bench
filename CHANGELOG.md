@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Light staleness pass
+
+- Changed the spec staleness pass of `/bench-implement-spec` to one fixed, budgeted procedure in one reference file. Every orchestrator now sends the same light charge, and the pass returns only blocking contradictions.
+
 ### Review completion recording
 
 - Added `bench record completion <slug> --source <commit>`. It validates the
