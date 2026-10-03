@@ -195,9 +195,9 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
 	printCensusHeads(stderr, a.home, root, assignment.ID)
-	if notice := brokerChangeNotice(a.kit, root, assignment.Worktree, source.base, source.tip); notice != "" {
-		fmt.Fprintln(stderr, notice)
-	}
+	// The release removes the source worktree, so the broker check reads it now and the
+	// notice prints after the effects report the refresh.
+	brokerChanged := brokerSourceChanged(assignment.Worktree, source.base, source.tip)
 	result, err := j.landReviewed(ctx, landing.ReviewedRequest{
 		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
@@ -231,7 +231,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		}
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
-	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, records, stdout, stderr)
+	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, brokerChanged, records, stdout, stderr)
 }
 
 // censusCount is the assignment's raw-call count for the landed record. An unreadable
@@ -260,23 +260,20 @@ func hasResumeFlag(args []string) bool {
 	return usage.FlagPresent(landGrammar, args, "--resume")
 }
 
-// brokerChangeNotice names the install step when the reviewed diff changes the
-// promotion broker's own build inputs. Source publication cannot replace the broker's
-// authority: the installed broker keeps landing until the release or repair path
-// installs the new one. An unresolvable input set reports nothing; the landing itself
-// stays under the installed owner either way. The install step it names is the
-// destination's own route, so the printed command runs where the operator stands.
-func brokerChangeNotice(kit, root, worktree, base, tip string) string {
+// brokerSourceChanged reports whether the reviewed diff in worktree changes the promotion
+// broker's own build inputs. An unresolvable input set reports false; the landing itself
+// stays under the installed owner either way.
+func brokerSourceChanged(worktree, base, tip string) bool {
 	if !freshness.DeclaresBuildInputs(worktree) {
-		return ""
+		return false
 	}
 	inputs, err := freshness.BuildInputs(worktree)
 	if err != nil {
-		return ""
+		return false
 	}
 	names, err := git.Output("-C", worktree, "diff", "--name-only", base, tip)
 	if err != nil {
-		return ""
+		return false
 	}
 	changed := map[string]struct{}{}
 	for _, name := range strings.Split(names, "\n") {
@@ -284,20 +281,29 @@ func brokerChangeNotice(kit, root, worktree, base, tip string) string {
 	}
 	for _, input := range inputs {
 		if _, ok := changed[input]; ok {
-			return "landing changes the promotion broker source; the installed broker keeps authority until " + brokerInstallStep(kit, root) + " publishes the new broker"
+			return true
 		}
 	}
-	return ""
+	return false
 }
 
-// brokerInstallStep names the route that installs the changed broker at root, where kit is
-// the kit value that the verb entry read. The kit's own source checkout carries no pin
-// manifest, so 'bench repair' refuses there; its route is the stamped rebuild and 'bench
-// doctor --fix'. The sentence comes from the one rebuild owner, never from a second copy
-// of the command here.
-func brokerInstallStep(kit, root string) string {
+// brokerChangeNotice names the install step that a broker-changing landing at root still
+// owes after its refresh effect reported refresh, where kit is the kit value that the verb
+// entry read. Source publication cannot replace the installed broker's authority.
+//
+// The kit's own source checkout carries no pin manifest, so 'bench repair' refuses there.
+// Its route is the stamped rebuild and 'bench doctor --fix', and the refresh effect is
+// that route, so the notice names it only after a failed refresh. Elsewhere the refresh
+// republishes the destination's executable but not the installed broker, so the notice
+// names 'bench repair' or the release install after every refresh result. The rebuild
+// command comes from the one rebuild owner, never from a second copy here.
+func brokerChangeNotice(kit, root, refresh string) string {
+	step := "'bench repair' or the release install"
 	if gate.KitSourceCheckoutAtKit(root, kit) {
-		return freshness.RebuildAction(root) + " with 'bench doctor --fix'"
+		if refresh != effectFailed {
+			return ""
+		}
+		step = freshness.RebuildAction(root) + " with 'bench doctor --fix'"
 	}
-	return "'bench repair' or the release install"
+	return "landing changes the promotion broker source; the installed broker keeps authority until " + step + " publishes the new broker"
 }
