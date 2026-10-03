@@ -1,6 +1,187 @@
 # Actual-interface qualification
 
-Status: incomplete. No complete compatibility claim or landing is authorized by this record.
+Status: required live qualification complete for the recorded contexts at fa1dc27.
+Integration status: the source-bound review record and completion checkpoint grade the composed source.
+
+## Current evidence and source boundary
+
+The independent CLI and Desktop sessions completed the required live exercises.
+Both disposable repositories passed their Bench landings.
+The observed implementation source is fa1dc27d7730ca3889dad592dd51dff6d7b8a899.
+The results below retain that source and their original authors.
+They do not claim actual-interface execution against the later merged source.
+
+The current author read the external qualification record, its cited native results, and the final CLI reply.
+This author reconciled those retained observations; this author did not repeat the live exercises.
+The external record and complete raw evidence remain local outside the tracked source.
+No raw environment transcript enters this artifact.
+
+| Evidence root | Location |
+| --- | --- |
+| E: native results and complete qualification | /home/mgibs/workspace/bench/.logs/cli-desktop-cli-qualification-01a10184 |
+| Coordination and final CLI reply | /tmp/bench-cli-desktop-handoff-01a10199/cli-reply.md |
+| Preserved implementation reviews | reviews/cli-desktop-consistency.md at fa1dc27 |
+
+Paths in the evidence tables below are relative to E.
+The current integration source composes accepted main with the preserved implementation.
+Its authoring base is 1a90e0fe658d8c73fff92a3b754dabd7bafb6599.
+The source-bound review record owns integration verification for the C3 checkpoint and implementation landing.
+The historical live results do not replace that verification.
+
+## Observed interface contexts
+
+| Interface | Native session | Evidence assignment |
+| --- | --- | --- |
+| CLI | 01a10199-ff8d-73c3-8a20-77ad97a11247 | 63cc7c5d2bff39ba2a99c3b82fa581f0 |
+| Desktop | 01a101a2-3138-7cc3-a799-cb270ed0b460 | 62628424cc0a48c1fb9226306d5d7590 |
+
+The CLI continuation retains earlier observations from session 01a10184-5a71-7302-b24f-a1345d32efeb.
+The user identified the CLI terminal and supplied the independent Desktop session.
+The chats coordinated through files without shared conversation history.
+The repository identity is /home/mgibs/workspace/bench; disposable clones retain the same frozen implementation.
+The execution scope is Codex CLI in WSL2 and the Windows Desktop app with its agent in WSL2.
+Native Windows Bench execution remains excluded.
+
+The actual calls used each interface's normal tools and selected permissions.
+The final lifecycle contexts used restricted filesystems with approved writable assignments and cache paths.
+Network access was enabled by explicit approval.
+The native result objects retain each invocation, its permission mode, and its output.
+Earlier elevated diagnostics and nested sandbox controls remain diagnostic evidence only.
+
+Both lifecycle routes selected GOCACHE=/home/mgibs/.cache/bench/go-build.
+Desktop prepended /home/mgibs/.nvm/versions/node/v25.8.1/bin to its existing PATH.
+Both routes used Node v25.8.1 and npm 11.11.0.
+Desktop repeated the wrapper and hook checks with that selection; its ambient PATH did not change persistently.
+The disposable lifecycle storage was /tmp/bench-disposable-home-01a101a2.
+
+The CLI doctor inspected /home/mgibs/.codex/config.toml and the repository hook declaration.
+Its active-runtime and effective-configuration values remained unknown; parsed files did not establish enforcement.
+The Desktop trace observed PID 2377405 running /mnt/c/Users/gibbo/.codex/bin/wsl/095c52da468c9593/codex.
+Its configuration home was /mnt/c/Users/gibbo/.codex.
+The selected Desktop profile was bench-desktop-qualification, with workspace-write and auto_review.
+Actual mount observations and tool results supplied the permission evidence after profile activation.
+
+These observations identify specific sessions and operations, not every effective configuration source.
+A new chat, resume, runtime replacement, workspace change, or relevant policy change requires the affected checks again.
+Unknown context prevents reuse of the prior observations.
+
+## Required live rows
+
+| Row | Reconciled observation | Native evidence |
+| --- | --- | --- |
+| CD39 | Actual chat tools supply the passes; hook-only results never replace them. | desktop-recovery/desktop-after-second-restoration-results.json; chunks 7669ea, 289a0c |
+| CD40 | Restricted normal Desktop calls pass after recovery; earlier elevated controls remain separate. | Same result object, permission_override=none, nested_sandbox=false; network-active-cli-results.json |
+| CD42 | The required scratch write failed; the dependent mutation remained withheld and its sentinel absent. | scoped-recovery-results.json; red 393ddd, sentinel 3e886f |
+| CD43 | The shipped static recovery route remained available when the actual Desktop shell could not start. | desktop-recovery/recovery-handoff.md, confirmed-startup-cause.md, and syscall-capture/ |
+| CD45 | After authorized restoration, normal restricted Desktop startup, wrapper, assignment write, and separate read passed. | desktop-recovery/desktop-after-second-restoration-results.json; 7669ea, 289a0c, e400c9, 84a4b0 |
+| CD46 | Independent chats read the same agreement, Bench rules, installed skill, and phase; their guidance hashes matched. | network-active-cli-guidance.json; desktop-recovery/network-profile-retest.json, chunk 1d5d9a |
+| CD47 | Concurrent writers used distinct assignments and the same relative scratch path; each retained its own bytes. | paired-cli-tool-result.json, terminal 66350a; paired-evidence/desktop-tool-result.json, terminal c022c7; both complete.json files |
+| CD48 | Both actual interfaces completed candidate commits, independent review, and Bench landings; both final repositories were clean. | Disposable lifecycle table below; terminal chunks 112e5c and 4732fa |
+| CD49 | The actual CLI hook rejected the harmless forbidden command before execution; its sentinel stayed absent. | network-active-cli-results.json, hook error and chunk 851862 |
+| CD50 | The actual Desktop hook rejected the fixture after profile and toolchain changes; its sentinel stayed absent. | desktop-recovery/network-profile-retest.json, chunk 280235; toolchain-operation-retest-native.json, chunk 9e1778 |
+| CD51 | Independent native reviews returned equal outcomes on the same frozen pair. | paired-review/comparison.json, complete native returns, and the review table below |
+| CD54 | Every required live row now has retained evidence; the source-bound review record owns the separate integration completion. | This reconciliation, qualification.md in E, and the final CLI reply |
+| CD57 | Separate actual write and read calls confirmed exact scratch bytes in each interface. | CLI 863271 and 0fd7eb; Desktop 1d5d9a and 280235, in the network retest objects |
+| CD58 | Both chats invoked the installed bench-debug skill and followed its canonical phase. | scoped-recovery-rules.txt, scoped-recovery-results.json chunk 2e1bfb; Desktop recovery charges and native results |
+| CD62 | Permission and runtime changes caused affected normal-tool retests before dependent work continued. | scoped-recovery-results.json, both network retest objects, and desktop-recovery/toolchain-operation-retest-native.json |
+
+The concurrent exercise recorded unrestricted roots in its original contexts.
+It proves assignment isolation; later restricted calls supply the separate recovery evidence.
+The other coverage rows retain their automated tests and accepted implementation reviews at fa1dc27.
+This artifact adds no test expectation and changes no production behavior.
+
+| Capability route | Disposition in this qualification | Evidence |
+| --- | --- | --- |
+| Actual shell and repository wrapper | Required; observed through both normal tool routes | Startup and toolchain retest objects |
+| Files, repository rules, installed skill, hooks, and permissions | Required; observed for each selected operation | CD39 through CD62 references above |
+| Distinct Bench assignments and lifecycle publication | Required; observed through actual interfaces | CD47 and both disposable landings |
+| Native Standards and Coverage review | Equivalent review route; accepted only after both outcomes matched | CD51 paired comparison |
+| Desktop presentation and preview tools | Optional for these shell, review, and publication operations; no presentation pass claimed | Approved operation scope and observed native review route |
+
+## Disposable review and publication
+
+Both disposable clones started at fa1dc27 with the inherited gate intact and no remote.
+Each candidate added only greeting.txt, mode 100644, containing Hello from Bench. and one newline.
+Both candidate trees were cd73d7cb2437c8d985a51b25ca45eaa96f981fee.
+
+| Interface | Disposable repository and assignment | Reviewed source | Published commit | Native terminal and final check |
+| --- | --- | --- | --- | --- |
+| CLI | /tmp/bench-cli-disposable-01a10199; fa6f83446cdd492dc80f521ebd340e9a | f65a9a075eddae4753eeed76f2e8adf2cefb71f3 | 05a22430ec864239350d736c861e11f321d14dac | 112e5c; 3b051e |
+| Desktop | /tmp/bench-desktop-disposable-01a101a2; 1f2623a229a0ecf96d21db56ede8ecc6 | 9a78d06d10946b930821d472f80cc81a3655c976 | 25cc66bda1f5c2bdab5592a5448582ea755530a4 | 4732fa; b7e22a |
+
+The paired comparison used the exact CLI base and tip on both interfaces.
+Each interface retained fresh native Standards and Coverage results before exchange.
+The reviewers used gpt-5.6-sol, high effort, one pass.
+All four venues remained clean at the frozen tip.
+Spec review was explicitly skipped because the disposable greeting had no product spec.
+
+| Review group | Standards assignment | Coverage assignment | Outcome and source |
+| --- | --- | --- | --- |
+| CLI paired | eee934b49f48f67a79738366e2b8e07c | 62f1b1d3c5e0e1fd1374ec04cd08505e | Zero findings; cli-disposable-independent-reviews.json |
+| Desktop paired | 86ecadbdaf16cc2eba17bc0824fe90c3 | 1879c73843e7eea9bf75dabd9bf5cd2e | Zero findings; paired-review/ complete native returns |
+| Desktop own candidate | 0986771ec212e4c0753cb3cf28f30902 | e8cf279d119b165bca77bb529068f1f8 | Zero findings; desktop-recovery/DESKTOP-OWN-REVIEW-RESULTS.json |
+
+Desktop obtained the separate own-candidate reviews before its landing.
+The earlier paired review retained its CLI source identity.
+The short spill-cursor suggestion was optional advice, not a repair finding.
+
+Both landings used the installed authenticated broker at /home/mgibs/workspace/bench/dist/bench.
+Its observed SHA-256 was 1be58cc288fe76e5054163b41d6ad8f90ce7e5b1a1ea1ec4d7f5de1e9f90f872.
+Neither route fabricated a broker manifest or substituted raw Git publication.
+Both Bench results reported completed refresh and cleanup, released source worktrees, and census zero.
+Separate normal calls verified clean main, exact greeting bytes, source ancestry, and no remotes.
+
+The CLI commit and landing passed all six gate phases.
+The Desktop commit and landing passed five phases and skipped optional ShellCheck.
+Each reported eight capability skips: four FIFO cases and four privilege cases; none were environment skips.
+Those skips do not supply positive evidence for the skipped cases.
+Complete gate streams remain beside the native result objects in E.
+
+## Recovery findings and remaining limits
+
+The trace identified a missing codex-linux-sandbox launcher before Bash started.
+The reviewer authorized specific launcher restorations, and actual restricted Desktop retests then passed.
+The deletion actor and durable upstream repair remain unknown.
+Bench adds no automatic launcher repair or runtime edit.
+
+Approved path grants resolved the unchanged assignment-write failures after profile activation.
+The cache grant required the supported workspace-root representation.
+Approved network activation resolved unchanged socket and Bash checks in both interfaces.
+These recoveries changed the explicitly authorized context; they did not weaken the product gate.
+
+Desktop npm 9.2.0 ran prepare during npm pack --ignore-scripts and changed three guarded artifacts.
+The direct producer and package-core check reproduced those writes.
+The existing npm 11.11.0 selection made both unchanged controls pass without artifact changes.
+The files desktop-recovery/NPM-WRITER-CONFIRMED.md and NPM-WRITER-GREEN.md retain the diagnosis and native controls.
+
+The CLI executable check failed before tests with an unset GOCACHE.
+The unchanged commit passed with the canonical cache selection.
+The first CLI landing then failed TestCreateStampsAssignment without publication.
+A focused repetition reproduced a reversed wall-clock interval once in five hundred runs.
+A separate observation recorded wall time moving backward about 0.8 seconds while monotonic time advanced.
+The unchanged landing retry passed; no clock or test change occurred.
+
+The clock evidence is cli-clock-debug.md and clock-observation.json in E.
+The initial failure remains in cli-disposable-landing-result.json; the successful retry remains in cli-disposable-landing-retry-result.json.
+The complete Desktop publication remains in desktop-recovery/DESKTOP-LANDING-RESULT.json.
+
+Desktop handoff reported read-only response-spill storage for its older home-directory evidence assignment.
+A separate read verified the complete handoff section in the primary checkout.
+The disposable lifecycle used writable temporary storage; no recovery is claimed for that older spill location.
+The file desktop-recovery/DESKTOP-HANDOFF-NOTE.md retains chunks 7db058 and 571e6c.
+The cache size also exceeded its advisory limit; no cleanup ran during active gates.
+
+These results do not promise durable launchers, stable host clocks, or unchanged future permissions.
+They are historical qualification evidence, not reusable session authorization.
+The current author's elevated closeout access does not add any normal-permission qualification claim.
+
+## Preserved historical evidence
+
+The sections below retain the original incident, mutation results, automated checks, and first C3 repair cycle.
+Their incomplete and pending statements describe those earlier stages.
+The current reconciliation above supersedes only their live acceptance status.
+Their authors, source identities, observations, and mutation evidence remain unchanged.
+C3 has used one of two product repair cycles; this metadata reconciliation consumes none.
 
 ## Desktop shell repro
 
