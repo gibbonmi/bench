@@ -1,6 +1,24 @@
 # CLI and desktop consistency review
 
-## Current C3 state
+## Final integration record
+
+The user directed completion and landing on 2026-10-03.
+The source is 827af59ba508acb7812ca9161d4c169d135c2978.
+The C3 base remains the accepted C2 tip, ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97.
+The source contains current main and the reconciled qualification artifact.
+The current machine record below binds all new verification and review results.
+
+Both actual interfaces completed the required live exercises against fa1dc27.
+The qualification artifact preserves their original sources, native results, and context limits.
+The resumed author verifies the composed source separately.
+The final coordinator performs the planned integration checks before landing.
+
+All review prose below this section describes historical stages.
+Its pending live statements remain as provenance and are superseded by the qualification artifact.
+Earlier native excerpts retain their original identities and outcomes.
+C1 and C2 remain accepted, and C3 retains one consumed product repair cycle.
+
+## Historical C3 state
 
 Source: `cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff`.
 Base: accepted C2 tip `ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97`.
@@ -319,7 +337,7 @@ No review requested a Bench command change.
 {
   "version": 1,
   "spec": "specs/cli-desktop-consistency/spec.md",
-  "plan_digest": "sha256:180144afd437254151361dc22e85277e6b86672c32f47f5a64506b65942fd381",
+  "plan_digest": "sha256:1671d9c4f7dae2b87ffb7919ca3d46923747990148247165ee080b4b36e0607c",
   "implementation_session": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
   "chunks": [
     {
@@ -1638,9 +1656,9 @@ No review requested a Bench command change.
     {
       "id": "C3",
       "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
-      "tip": "cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff",
-      "plan_digest": "sha256:1a07dbce412bf388e081726fcc6e92c03802c418634a26ecdc31cf1838b6a54d",
-      "source_digest": "17d06ddf08e79f5600349c0afc1a49c0075bceab",
+      "tip": "827af59ba508acb7812ca9161d4c169d135c2978",
+      "plan_digest": "sha256:1671d9c4f7dae2b87ffb7919ca3d46923747990148247165ee080b4b36e0607c",
+      "source_digest": "a1cdc04981354b22ebf0ea1ca0f0152784f30789",
       "acceptance_rows": [
         "CD37",
         "CD38",
@@ -2037,6 +2055,21 @@ No review requested a Bench command change.
         ],
         "C2": [
           "C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:180144afd437254151361dc22e85277e6b86672c32f47f5a64506b65942fd381",
+      "to": "sha256:1671d9c4f7dae2b87ffb7919ca3d46923747990148247165ee080b4b36e0607c",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
         ]
       }
     }
