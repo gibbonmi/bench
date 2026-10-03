@@ -32,7 +32,9 @@ the error text can name the path and the rule in any form.
 Put the Go rule rows over byte pairs in `TestProveGoGap`, and the tree rows over
 real tree pairs in `TestProveTreeGap`. Both tests go in
 `internal/commentgap/commentgap_test.go`. Each refusal row asserts its sentinel
-with `errors.Is`, so a row cannot pass through another rule.
+with `errors.Is`, so a row cannot pass through another rule. The tree fixture
+helpers can go in a second test file of the package, so each file stays under
+400 lines.
 
 ## Acceptance
 

@@ -39,12 +39,15 @@ Build the tests that the spec's `Testing decisions` state:
 - `TestReviewCheckpointCommentOnlyGap` holds CG1, CG2, CG4, and CG5. The fixture gets its Go file through the `prepare` hook of `attachedCheckpointFixture`.
 - `TestReviewCheckpointKeepsStrictEvidence` holds CG6, CG7, CG8, CG33, CG34, and CG36.
 - `TestReviewCheckpointChainGapNamesTheExpectedBase` gains the new clause in its second assertion (CG35).
-- `TestLandingCompletionEvidence` gains one case (CG3). `attachedCompletionFixture` gains a variadic prepare hook, and its two callers stay unchanged.
+- `TestLandingCompletionEvidence` gains one case (CG3). `attachedCompletionFixture` gains a variadic prepare hook. `newCompletionFixture` forwards the hook, and the delegated caller stays unchanged.
 - `TestRecordCompletionAcceptsCommentOnlyGap` holds CG44 and CG45.
 
 The three checkpoint tests go in
 `internal/gate/review_checkpoint_commits_test.go`. Each gap test edits the Go
-file with `Write` and `Commit`.
+file with `Write` and `Commit`. CG34 needs two chunks, and
+`attachedCheckpointFixture` records one. So build CG34 on `outcomeFixture` in
+`run_outcomes_test.go`, as `TestReviewCheckpointChainGapNamesTheExpectedBase`
+does.
 
 ## Acceptance
 
@@ -55,9 +58,11 @@ file with `Write` and `Commit`.
 - [ ] A Go statement change after the reviewed tip refuses with `chunk 1: stale reviewed source: no chunk review covers`, and the oracle does not run.
 - [ ] A committed comment fix beside an uncommitted Go statement change refuses with `chunk 1: stale reviewed source`.
 - [ ] A chunk entry whose digest names the corrected tree, with its tip at the reviewed commit, refuses with `chunk 1: stale source digest`.
-- [ ] CG33, CG34, and CG36 refuse with `completion is incomplete or stale`, `expected base`, and `chunk 1: stale Standards`.
+- [ ] Completion evidence recorded before a comment-only correction refuses with `completion is incomplete or stale`.
+- [ ] A second chunk whose base follows a comment-only correction of the first chunk refuses with `expected base`.
+- [ ] A chunk re-recorded at the corrected tip, with its three axis results at the reviewed pair, refuses with `chunk 1: stale Standards`.
 - [ ] The chain-gap refusal holds `and only record commits and comment-only corrections follow a chunk tip`.
 - [ ] A reviewed landing publishes `Status: implemented` over a comment-only correction after the last chunk.
 - [ ] `bench record completion` writes a completion at the corrected digest, and it refuses a statement gap with exit 1 and unchanged record bytes.
-- [ ] An acceptance that skips `commentgap.Prove` makes the CG6 row fail.
+- [ ] An acceptance that passes every differing digest without a call to `commentgap.Prove` makes the CG6 row fail.
 - [ ] Each file in `Writes:` stays under 400 lines.

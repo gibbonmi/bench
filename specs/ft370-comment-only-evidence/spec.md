@@ -6,7 +6,7 @@ Roadmap: FT370
 
 Decision source: named reviewed artifact — roadmap/FT370.md (rule approved by the reviewer 2026-10-02; drain d-4be30106ede9).
 
-Verification log: pending — the review round has not run.
+Verification log: 2 iteration(s) to accept — spec iteration 1 (Fable xhigh) returned S1 to S9. The coordinator folded eight, S1 through a reviewer decision, and refuted S6. Spec iteration 2 (Sonnet high) confirmed each fold and returned N1, which CG44 and CG45 fold. The tickets pass (Fable xhigh) returned four prose findings, K1 to K4, and the coordinator folded them. The reviewer waived the Sonnet tickets pass because Fable found no blocking defect.
 
 ## Problem
 
@@ -330,7 +330,7 @@ CG-C2 creates the seam that CG-C3 consumes.
 - The checkpoint fixture gets its Go file through the `prepare` hook of `attachedCheckpointFixture`, before `AddChunk` commits the chunk. A gap test edits that file with `Write` and `Commit`. No `recordtest` file changes.
 - A good classifier test drives `Prove` over real tree pairs and the Go rule over byte pairs. Each refusal row asserts its rule sentinel with `errors.Is`, so a row cannot pass through another rule.
 - The `--complete` checkpoint row calls `Complete` and then re-points `Completion.SourceDigest` and the final verification to the corrected digest. `recordtest.Complete` pins completion to the last chunk digest, and `f.Verification` rebuilds the final verification at a named digest.
-- The landing row adds one case to `TestLandingCompletionEvidence`. Today `fixture(t)` commits only `named` and `foreign`. `attachedCompletionFixture` serves `newCompletionFixture` and the delegated test in `delegated_completion_test.go`. So `attachedCompletionFixture` gains a variadic prepare hook that writes one Go file before the first chunk, and its two callers stay unchanged. The case commits a comment edit after the second chunk and re-points the completion evidence to the corrected digest.
+- The landing row adds one case to `TestLandingCompletionEvidence`. Today `fixture(t)` commits only `named` and `foreign`. `attachedCompletionFixture` serves `newCompletionFixture` and the delegated test in `delegated_completion_test.go`. So `attachedCompletionFixture` gains a variadic prepare hook that writes one Go file before the first chunk. `newCompletionFixture` forwards the hook, and the delegated caller stays unchanged. The case commits a comment edit after the second chunk and re-points the completion evidence to the corrected digest.
 - `TestReviewCheckpointChainGapNamesTheExpectedBase` asserts only the first two clauses of the chain rule today, so it passes with either rule text. Its second assertion gains the clause `and only record commits and comment-only corrections follow a chunk tip` (CG35).
 - The mutation-probe target for CG-C2 is a set or count comparison of the directive texts in place of the ordered list. No row reorders two directives.
 - `TestComposedChangesExpandsANamedDirectory`, `TestComposedChangesRepresentsARenameAsDeletionAndAddition`, and `TestComposedChangesCarriesTheSymlinkMode` guard the moved reader without an edit.
@@ -559,7 +559,7 @@ The planned FT370 writes and their line counts at `16efdcb4`:
 | `cmd/bench/help_inventory_test.go` | 314 | tickets 2, 3, 4, 6, 8, and 11 |
 | `internal/conformance/axi_query_registry_test.go` | 445 | tickets 2, 3, 4, 6, 8, and 11 |
 | `internal/conformance/subcommand_routing_table_test.go` | 86 | tickets 2, 3, 4, 6, 8, and 11 |
-| the 28 `tests/canary/workflow-guidance-anchors/` fixture directories in the fence | fixtures | none |
+| the 29 `tests/canary/workflow-guidance-anchors/` fixture directories in the fence | fixtures | none |
 
 The one shared path that FT370 edits is
 `internal/anchors/registry_retained_workflow.go`. FT370 adds one row there, so
@@ -702,5 +702,5 @@ that command file.
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"CG-C1","tickets":["1-move-tree-change-reader.md"],"verification":[{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C2","tickets":["2-prove-comment-only-gaps.md"],"verification":[{"id":"commentgap","command":"bench test --package ./internal/commentgap"}]},{"id":"CG-C3","tickets":["3-accept-proven-gaps-at-checkpoint.md","4-state-comment-only-correction-rule.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/ft370-comment-only-evidence/spec.md"},{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"}]}
+{"version":1,"chunks":[{"id":"CG-C1","tickets":["1-move-tree-change-reader.md"],"verification":[{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C2","tickets":["2-prove-comment-only-gaps.md"],"verification":[{"id":"commentgap","command":"bench test --package ./internal/commentgap"}]},{"id":"CG-C3","tickets":["3-accept-proven-gaps-at-checkpoint.md","4-state-comment-only-correction-rule.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/ft370-comment-only-evidence/spec.md"},{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]}
 ```
