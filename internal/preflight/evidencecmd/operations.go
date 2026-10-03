@@ -5,6 +5,7 @@
 package evidencecmd
 
 import (
+	"slices"
 	"sort"
 	"strings"
 
@@ -129,7 +130,7 @@ func operationSelectors() []string {
 	var names []string
 	for _, flag := range flagTable {
 		for _, op := range operations {
-			if contains(op.selectors, flag.name) {
+			if slices.Contains(op.selectors, flag.name) {
 				names = append(names, flag.name)
 				break
 			}
@@ -273,7 +274,7 @@ func Select(mode string, flags map[string]string) (Operation, string) {
 		}
 		allowed := append(append(append([]string{}, sameMode.selectors...), sameMode.required...), sameMode.optional...)
 		for _, name := range grammarFlagNames() {
-			if present(name) && !contains(allowed, name) {
+			if present(name) && !slices.Contains(allowed, name) {
 				return Operation{}, toon.Usage(Grammar.Cmd, name)
 			}
 		}
@@ -335,7 +336,7 @@ func sameSet(a, b []string) bool {
 
 func subset(inner, outer []string) bool {
 	for _, value := range inner {
-		if !contains(outer, value) {
+		if !slices.Contains(outer, value) {
 			return false
 		}
 	}
@@ -345,18 +346,9 @@ func subset(inner, outer []string) bool {
 func without(values []string, drop ...string) []string {
 	var kept []string
 	for _, value := range values {
-		if !contains(drop, value) {
+		if !slices.Contains(drop, value) {
 			kept = append(kept, value)
 		}
 	}
 	return kept
-}
-
-func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
 }

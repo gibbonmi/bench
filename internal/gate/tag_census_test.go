@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -171,7 +172,7 @@ func TestExecutedCensusReadsTheRaceDriverArgv(t *testing.T) {
 	// operand list that leaked the -run pattern or a build flag's value reds here.
 	var want []string
 	for _, test := range raceTests {
-		if !contains(want, test.PackagePath) {
+		if !slices.Contains(want, test.PackagePath) {
 			want = append(want, test.PackagePath)
 		}
 	}

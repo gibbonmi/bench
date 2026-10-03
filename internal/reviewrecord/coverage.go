@@ -111,7 +111,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			}
 		}
 		previous = chunk
-		if !complete && contains(ids, chunkID) {
+		if !complete && slices.Contains(ids, chunkID) {
 			matched = true
 			break
 		}
@@ -207,13 +207,13 @@ func RecordAmendment(root, spec, source string, changes map[string][]string) (Am
 				return fmt.Errorf("chunk %s: %w", chunk.ID, err)
 			}
 			for _, id := range ids {
-				if !contains(keys, id) {
+				if !slices.Contains(keys, id) {
 					keys = append(keys, id)
 				}
 			}
 		}
 		for _, old := range slices.Sorted(maps.Keys(changes)) {
-			if !contains(keys, old) {
+			if !slices.Contains(keys, old) {
 				return fmt.Errorf("chunk %s is not a recorded chunk under the plan digest %s, so no map can name it", old, record.PlanDigest)
 			}
 		}
