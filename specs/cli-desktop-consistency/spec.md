@@ -463,7 +463,7 @@ Won't handle: authentication against a malicious same-user process — existing 
 Destination composition scope:
 
 The user directed completion and landing on 2026-10-03.
-C3 includes the changes inherited from main at b4a2fe693be05b997c3f30ae3ec5c86a4f0e01cf.
+C3 includes the changes inherited from main at bc4baf78c83452616c46bf4d75efd7c62feace99.
 The following exact paths extend the fence and ticket writes for this composition.
 Their committed contents and modes equal that destination commit.
 The continuation preserves these paths and reviews their integration with C3.
@@ -827,6 +827,14 @@ Their source bytes remain unchanged.
 - `tests/canary/workflow-guidance-anchors/prepared-triage-cli-boundary`
 - `tests/canary/workflow-guidance-anchors/prepared-triage-input-contract`
 - `tests/canary/workflow-guidance-anchors/ticket-stage-routing-anchor`
+
+The approved deletion-aware preflight prerequisite is part of this destination.
+Its additional exact paths are:
+
+- `internal/diff/range.go`
+- `internal/diff/source_tip_pair_test.go`
+- `internal/preflight/deletion_preflight_test.go`
+- `internal/preflight/gather.go`
 
 Reviewer disposition: approved with the ticket graph on 2026-10-02.
 The fence is the union of ticket writes outside the spec and capture folders.
