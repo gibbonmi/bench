@@ -29,7 +29,7 @@ No chunk has consumed a repair cycle.
 {
   "version": 1,
   "spec": "specs/ft370-comment-only-evidence/spec.md",
-  "plan_digest": "sha256:854ff2a41d464bc649da1d3fb4e1c9525a31ff11195d26b4cc4debcf71c9dd67",
+  "plan_digest": "sha256:9bc20dfc5468058ad2a0fac076f85a213a2484f0d033ecc3ed335563ab55ed65",
   "implementation_session": "ft370-root",
   "chunks": [
     {
@@ -150,6 +150,17 @@ No chunk has consumed a repair cycle.
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:854ff2a41d464bc649da1d3fb4e1c9525a31ff11195d26b4cc4debcf71c9dd67",
+      "to": "sha256:9bc20dfc5468058ad2a0fac076f85a213a2484f0d033ecc3ed335563ab55ed65",
+      "chunk_ids": {
+        "CG-C1": [
+          "CG-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
