@@ -4,6 +4,8 @@ import (
 	"errors"
 	"slices"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 type verdictRecordClass struct {
@@ -79,15 +81,11 @@ func validatePendingRecord(_ []byte, r verdictRecord, now time.Time) error {
 	return nil
 }
 
-// recordClockSkew is how far a record time may sit after the reader's now. A host wall
-// clock can step back by up to a second under load, between the write and a later read.
-const recordClockSkew = 2 * time.Second
-
 // recordTimeAt parses a strict record time and refuses one that is ahead of now by more
-// than recordClockSkew.
+// than the bounds clock skew.
 func recordTimeAt(value string, now time.Time) (time.Time, error) {
 	tm, err := strictRecordTime(value)
-	if err != nil || tm.After(now.Add(recordClockSkew)) {
+	if err != nil || tm.After(now.Add(bounds.RecordClockSkew)) {
 		return time.Time{}, errors.New("invalid record time")
 	}
 	return tm, nil
