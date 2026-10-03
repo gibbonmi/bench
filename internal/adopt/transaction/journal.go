@@ -13,6 +13,7 @@ import (
 )
 
 type entry struct {
+	Restored    *image `json:"restored,omitempty"`
 	Span        *Span  `json:"span,omitempty"`
 	Destination string `json:"destination"`
 	Before      image  `json:"before"`

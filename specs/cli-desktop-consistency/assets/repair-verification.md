@@ -3,8 +3,9 @@
 ## Scope
 
 C2 implements CD18 through CD36 in the original approved author session.
-The native review and C2 checkpoint remain pending.
-No post-review repair cycle has been consumed for C2.
+The initial native reviews found four repair targets.
+C2 is in its first post-review repair cycle, with a two-cycle allowance.
+The confirming review and C2 checkpoint remain pending.
 One preservation hardening pass extended the approved cases.
 
 The tests use private repositories and configuration homes.
@@ -90,8 +91,36 @@ Adoption took 57894 milliseconds, public repair took 47680, and transaction test
 This run includes the canonical shim-identity correction.
 The earlier completed checks retain their own source and scope.
 
+## First review repair
+
+The initial native reviews found four repair targets.
+The author repaired retained identity, the final publication check, complete recovery errors, and duplicated data-handling values.
+The changelog obligation remains in its approved C3 ticket.
+
+| Regression | Observed result | Repair verification |
+| --- | --- | --- |
+| TestUndoRefusesEquivalentReplacement | Failed in 36 milliseconds because undo accepted another inode with the same bytes and mode | The journal saves filesystem identity before each publication |
+| TestUndoReportsEveryPreflightFailure | Failed in 78 milliseconds because the second unresolved target was absent | Passed in 69 milliseconds after complete error aggregation |
+| TestIdentityAfterReplacementPreparation | Already covered by the retained-identity repair | Omitting its final identity guard failed apply and undo in 87 milliseconds |
+
+The final-guard probe reported bit and restored the source.
+The public undo test retains its later-edit case and adds an equivalent replacement case.
+Recovery records also identify staged restores before their publication.
+This preserves recovery after interruption without accepting a replacement inode.
+
+The adoption-family run passed without failures or skips after the initial repair.
+Adoption took 119313 milliseconds, public repair took 114579, and transaction tests took 1467.
+Compatibility tests passed in 5 milliseconds without skips.
+The final public conflict cases passed in 6876 milliseconds without skips.
+
+The required undo-omission probe bit in 2431 milliseconds and restored the source.
+Its restored public test passed in 2427 milliseconds without skips.
+The full command package passed in 26687 milliseconds.
+Conformance package fixtures passed in 47148 milliseconds with the same three capability skips.
+The final committed source still requires its sealed system suite.
+
 ## Remaining work
 
-Freeze the C2 source with the current verification record.
-Then obtain the three independent native reviews and the C2 checkpoint.
+Freeze the repaired source with current verification and probe evidence.
+Then obtain the three independent confirming reviews and the C2 checkpoint.
 C3 still owns session integration and actual CLI and desktop qualification.

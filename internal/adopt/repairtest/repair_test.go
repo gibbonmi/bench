@@ -323,30 +323,60 @@ func TestCompatibilityRepairIdempotence(t *testing.T) {
 }
 
 func TestCompatibilityUndoConflict(t *testing.T) {
-	s := linkedSession(t)
-	hook := filepath.Join(s.root, ".codex", "hooks.json")
-	if err := os.Remove(hook); err != nil {
-		t.Fatal(err)
-	}
-	_, stdout, stderr := s.doctor("--fix")
-	if stderr != "" {
-		t.Fatal(stderr)
-	}
-	id := repairID(t, stdout)
-	changed := []byte("user edit after repair\n")
-	if err := os.WriteFile(hook, changed, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chmod(hook, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	code, stdout, stderr := s.doctor("--undo", id)
-	if code != 1 || !strings.Contains(stderr, "undo conflict") {
-		t.Fatalf("stale undo did not report conflict: %d, %s %s", code, stdout, stderr)
-	}
-	data, err := os.ReadFile(hook)
-	info, statErr := os.Stat(hook)
-	if err != nil || statErr != nil || !bytes.Equal(data, changed) || info.Mode().Perm() != 0o600 {
-		t.Fatalf("undo changed the later edit: %q, %v, %v", data, err, statErr)
+	for _, kind := range []string{"edited content", "equivalent replacement"} {
+		t.Run(kind, func(t *testing.T) {
+			s := linkedSession(t)
+			hook := filepath.Join(s.root, ".codex", "hooks.json")
+			if err := os.Remove(hook); err != nil {
+				t.Fatal(err)
+			}
+			_, stdout, stderr := s.doctor("--fix")
+			if stderr != "" {
+				t.Fatal(stderr)
+			}
+			id := repairID(t, stdout)
+			changed := []byte("user edit after repair\n")
+			mode := os.FileMode(0o600)
+			if kind == "equivalent replacement" {
+				var err error
+				changed, err = os.ReadFile(hook)
+				if err != nil {
+					t.Fatal(err)
+				}
+				info, err := os.Stat(hook)
+				if err != nil {
+					t.Fatal(err)
+				}
+				mode = info.Mode()
+			}
+			replacement := hook
+			if kind == "equivalent replacement" {
+				replacement = filepath.Join(s.root, "later-hook")
+			}
+			if err := os.WriteFile(replacement, changed, mode); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chmod(replacement, mode); err != nil {
+				t.Fatal(err)
+			}
+			if replacement != hook {
+				if err := os.Rename(replacement, hook); err != nil {
+					t.Fatal(err)
+				}
+			}
+			before, err := os.Stat(hook)
+			if err != nil {
+				t.Fatal(err)
+			}
+			code, stdout, stderr := s.doctor("--undo", id)
+			if code != 1 || !strings.Contains(stderr, "undo conflict") {
+				t.Fatalf("stale undo did not report conflict: %d, %s %s", code, stdout, stderr)
+			}
+			data, err := os.ReadFile(hook)
+			info, statErr := os.Stat(hook)
+			if err != nil || statErr != nil || !bytes.Equal(data, changed) || info.Mode() != mode || !os.SameFile(before, info) {
+				t.Fatalf("undo changed the later replacement: %q, %v, %v", data, err, statErr)
+			}
+		})
 	}
 }

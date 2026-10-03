@@ -12,12 +12,12 @@ import (
 )
 
 type image struct {
-	identity os.FileInfo
-	Kind     string      `json:"kind"`
-	Mode     os.FileMode `json:"mode,omitempty"`
-	Link     string      `json:"link,omitempty"`
-	Digest   string      `json:"digest,omitempty"`
-	Data     []byte      `json:"-"`
+	Identity *fileIdentity `json:"identity,omitempty"`
+	Kind     string        `json:"kind"`
+	Mode     os.FileMode   `json:"mode,omitempty"`
+	Link     string        `json:"link,omitempty"`
+	Digest   string        `json:"digest,omitempty"`
+	Data     []byte        `json:"-"`
 }
 
 func inspect(path string) (image, error) {
@@ -30,7 +30,7 @@ func inspect(path string) (image, error) {
 	}
 	if info.Mode()&os.ModeSymlink != 0 {
 		target, err := os.Readlink(path)
-		return image{Kind: "symlink", Link: target, identity: info}, err
+		return image{Kind: "symlink", Link: target, Identity: identityOf(info)}, err
 	}
 	if !info.Mode().IsRegular() {
 		return image{}, fmt.Errorf("not a regular managed asset: %s", path)
@@ -49,21 +49,34 @@ func inspect(path string) (image, error) {
 	if err := errors.Join(readErr, closeErr); err != nil {
 		return image{}, err
 	}
-	return image{Kind: "file", Mode: current.Mode(), Digest: digestBytes(data), Data: data, identity: current}, nil
+	return image{Kind: "file", Mode: current.Mode(), Digest: digestBytes(data), Data: data, Identity: identityOf(current)}, nil
 }
 
 func same(a, b image) bool {
 	return a.Kind == b.Kind && a.Mode == b.Mode && a.Link == b.Link && a.Digest == b.Digest
 }
 
+type fileIdentity struct {
+	Device uint64 `json:"device"`
+	Inode  uint64 `json:"inode"`
+}
+
+func identityOf(info os.FileInfo) *fileIdentity {
+	stat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return nil
+	}
+	return &fileIdentity{Device: uint64(stat.Dev), Inode: uint64(stat.Ino)}
+}
+
 func sameObserved(a, b image) bool {
 	if !same(a, b) {
 		return false
 	}
-	if a.identity == nil || b.identity == nil {
-		return a.identity == nil && b.identity == nil
+	if a.Kind == "absent" {
+		return true
 	}
-	return os.SameFile(a.identity, b.identity)
+	return a.Identity != nil && b.Identity != nil && *a.Identity == *b.Identity
 }
 
 // SyncDirectory reports both persistence and close failures for a directory.
@@ -73,54 +86,6 @@ func SyncDirectory(path string) error {
 		return err
 	}
 	return errors.Join(f.Sync(), f.Close())
-}
-
-func publish(path string, value image, persist func(string) error, rename func(string, string) error) error {
-	parent := filepath.Dir(path)
-	if err := ensureDirectory(parent, 0o755, persist); err != nil {
-		return err
-	}
-	if value.Kind == "absent" {
-		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-			return err
-		}
-		return persist(parent)
-	}
-	f, err := os.CreateTemp(parent, ".bench-adopt-")
-	if err != nil {
-		return err
-	}
-	temp := f.Name()
-	defer os.Remove(temp)
-	if value.Kind == "symlink" {
-		if err := f.Close(); err != nil {
-			return err
-		}
-		if err := os.Remove(temp); err != nil {
-			return err
-		}
-		if err := os.Symlink(value.Link, temp); err != nil {
-			return err
-		}
-	} else if value.Kind == "file" {
-		_, err = f.Write(value.Data)
-		if err == nil {
-			err = f.Chmod(value.Mode)
-		}
-		if err == nil {
-			err = f.Sync()
-		}
-		if err = errors.Join(err, f.Close()); err != nil {
-			return err
-		}
-	} else {
-		_ = f.Close()
-		return fmt.Errorf("unknown image kind %q", value.Kind)
-	}
-	if err := rename(temp, path); err != nil {
-		return err
-	}
-	return persist(parent)
 }
 
 func digestBytes(data []byte) string {

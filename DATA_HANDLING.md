@@ -172,28 +172,19 @@ So unbounded or control-bearing text cannot flow into durable state.
 
 ## Adoption recovery
 
-Compatibility repair retains records below
-`<Bench home>/compatibility-repairs/<repository key>/<repair id>/`.
-Directories have mode 0700, and files have mode 0600.
-Records contain managed preimages, destination identities, modes, and restoration metadata.
-A managed block records only its replaced fragment, without surrounding project text.
-Credentials, raw environment values, personal configuration homes, and chat content are excluded.
-The operator removes these local records only after their recovery purpose ends.
+The [compatibility repair owner](internal/adopt/compatibility.go) selects the local recovery namespace.
+The [journal owner](internal/adopt/transaction/journal.go) defines its record schema and private access modes.
+These sources define the executable values; this inventory does not repeat them.
 
-Ordinary adoption uses a private temporary recovery directory and removes it after success.
-A failed publication retains available recovery data and reports its directory and repair identifier.
-A directory-sync failure prevents a successful completion claim.
+Recovery records carry managed preimages and the metadata needed for restoration.
+A [managed fragment](internal/adopt/transaction/fragment.go) excludes the surrounding project text from its backup.
+Credentials, raw environment values, personal configuration homes, and chat content are outside the repair write set.
+The operator removes retained records after their recovery purpose ends.
 
-Adoption writers share destination locks in `/tmp/bench-adoption-locks-<uid>/`.
-The directory has mode 0700, and each lock file has mode 0600.
-Lock names contain destination-path digests and no file content.
-Lock files remain after release so waiting processes share one lock identity.
-The namespace is independent of each chat's Bench home and temporary-directory setting.
-
-`BENCH_LINK_FAULT` is an explicit adoption test input.
-A positive integer or `last` injects a publication failure.
-`interrupt:<positive integer>` exits the repair process before that destination's publication, without normal cleanup.
-This fault tests recovery by a fresh process after earlier destinations changed.
+The [transaction owner](internal/adopt/transaction/transaction.go) controls retention after success and failure.
+The [lock owner](internal/adopt/transaction/lock.go) defines the shared namespace, access modes, and lock lifetime.
+Locks contain destination-path digests, without file content.
+The [adoption publication owner](internal/adopt/transaction.go) defines the explicit fault-injection input for process recovery tests.
 
 ## Log and terminal output
 

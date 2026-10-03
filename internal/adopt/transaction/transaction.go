@@ -120,17 +120,18 @@ func (s Store) Apply(changes []Change) (id string, resultErr error) {
 	if err != nil {
 		return id, fmt.Errorf("repair backup publication failed: %w", err)
 	}
-	for _, e := range entries {
-		current, err := inspect(e.Destination)
+	for i := range r.Entries {
+		e := &r.Entries[i]
+		staged, err := stagePublication(e.Destination, e.After, s.syncDirectory)
 		if err == nil {
-			err = bounds.RefuseLinks(filepath.Dir(e.Destination))
-		}
-		if err == nil && !sameObserved(current, e.Before) {
-			err = fmt.Errorf("repair destination changed: %s", e.Destination)
+			// Persist the inode before its rename so interrupted publication remains recoverable.
+			e.After = staged.value
+			err = s.save(id, r)
 		}
 		if err == nil {
-			err = s.publish(e.Destination, e.After)
+			err = staged.publish(s, &e.Before)
 		}
+		staged.close()
 		if err != nil {
 			saved, loadErr := s.load(id)
 			if loadErr != nil {
@@ -169,52 +170,42 @@ func (s Store) Undo(id string) (resultErr error) {
 }
 
 func (s Store) undo(id string, r record) error {
+	var failures []error
 	for _, e := range r.Entries {
-		if err := bounds.RefuseLinks(filepath.Dir(e.Destination)); err != nil {
-			return err
+		if _, _, err := undoDestination(e, r.State); err != nil {
+			failures = append(failures, fmt.Errorf("restore %s: %w", e.Destination, err))
 		}
-		current, err := inspect(e.Destination)
-		if err != nil {
-			return err
-		}
-		allowed := same(current, e.After)
-		if r.State == statePrepared || r.State == stateUndoing || r.State == stateUndone {
-			allowed = allowed || same(current, e.Before)
-		}
-		if !allowed {
-			return fmt.Errorf("undo conflict: %s", e.Destination)
-		}
-		if same(current, e.After) {
-			if _, err := restoredImage(e, current); err != nil {
-				return err
-			}
-		}
+	}
+	if err := errors.Join(failures...); err != nil {
+		return fmt.Errorf("repair recovery incomplete; retain %s: %w", id, err)
 	}
 	r.State = stateUndoing
 	if err := s.save(id, r); err != nil {
 		return err
 	}
-	var failures []error
 	for i := len(r.Entries) - 1; i >= 0; i-- {
-		e := r.Entries[i]
-		current, err := inspect(e.Destination)
-		if err == nil && same(current, e.Before) {
+		e := &r.Entries[i]
+		current, restored, err := undoDestination(*e, r.State)
+		if err == nil && restored {
 			continue
 		}
-		if err != nil || !same(current, e.After) {
-			failures = append(failures, fmt.Errorf("restore destination changed: %s", e.Destination))
-			continue
+		if err == nil {
+			var value image
+			value, err = restoredImage(*e, current)
+			if err == nil {
+				var staged publication
+				staged, err = stagePublication(e.Destination, value, s.syncDirectory)
+				if err == nil {
+					e.Restored = &staged.value
+					err = s.save(id, r)
+				}
+				if err == nil {
+					err = staged.publish(s, &current)
+				}
+				staged.close()
+			}
 		}
-		if err := bounds.RefuseLinks(filepath.Dir(e.Destination)); err != nil {
-			failures = append(failures, err)
-			continue
-		}
-		restored, err := restoredImage(e, current)
 		if err != nil {
-			failures = append(failures, err)
-			continue
-		}
-		if err := s.publish(e.Destination, restored); err != nil {
 			failures = append(failures, fmt.Errorf("restore %s: %w", e.Destination, err))
 		}
 	}
@@ -225,19 +216,29 @@ func (s Store) undo(id string, r record) error {
 	return s.save(id, r)
 }
 
+func undoDestination(e entry, state recordState) (image, bool, error) {
+	if err := bounds.RefuseLinks(filepath.Dir(e.Destination)); err != nil {
+		return image{}, false, err
+	}
+	current, err := inspect(e.Destination)
+	if err != nil {
+		return current, false, err
+	}
+	if state != stateApplied && (sameObserved(current, e.Before) || (e.Restored != nil && sameObserved(current, *e.Restored))) {
+		return current, true, nil
+	}
+	if !sameObserved(current, e.After) {
+		return current, false, fmt.Errorf("undo conflict: %s", e.Destination)
+	}
+	_, err = restoredImage(e, current)
+	return current, false, err
+}
+
 func (s Store) syncDirectory(path string) error {
 	if s.SyncDirectory != nil {
 		return s.SyncDirectory(path)
 	}
 	return SyncDirectory(path)
-}
-
-func (s Store) publish(path string, value image) error {
-	rename := s.Rename
-	if rename == nil {
-		rename = os.Rename
-	}
-	return publish(path, value, s.syncDirectory, rename)
 }
 
 // Publish commits an adoption transaction without retaining successful preimages.
