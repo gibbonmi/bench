@@ -1,7 +1,7 @@
 # Fix the staleness pass procedure
 
 Blocked by: none
-Writes: .agents/skills/bench-implement-spec/references/staleness-pass.md, .agents/commands/bench-implement-spec.md, CHANGELOG.md
+Writes: .agents/skills/bench-implement-spec/references/staleness-pass.md, .agents/commands/bench-implement-spec.md, CHANGELOG.md, internal/anchors/registry_chunk_chain.go
 Covers: none
 
 ## What to build
