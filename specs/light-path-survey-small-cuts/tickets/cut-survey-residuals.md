@@ -1,7 +1,7 @@
 # Cut the quality survey residuals
 
 Blocked by: none
-Writes: internal/reviewrecord/parse.go, internal/reviewrecord/coverage.go, internal/reviewrecord/record.go, internal/reviewrecord/plan.go, internal/reviewrecord/delegated.go, internal/preflight/evidencecmd/operations.go, internal/gate/gate_go.go, internal/gate/tag_census_test.go, internal/releasepreflight/types.go, internal/releasepreflight/decision.go, internal/releasepreflight/command.go, internal/releaseevidence/release_evidence.go, internal/racetests/racetests.go, internal/census/census_test.go, projects/benchkit.md, ASSESSMENT.md
+Writes: internal/reviewrecord/parse.go, internal/reviewrecord/coverage.go, internal/reviewrecord/record.go, internal/reviewrecord/plan.go, internal/reviewrecord/delegated.go, internal/preflight/evidencecmd/operations.go, internal/gate/gate_go.go, internal/gate/tag_census_test.go, internal/releasepreflight/types.go, internal/releasepreflight/decision.go, internal/releasepreflight/command.go, internal/releaseevidence/release_evidence.go, internal/releaseevidence/release_requirements.go, internal/releaseevidence/requirement_inspection.go, internal/preflight/decision.go, internal/preflight/proposal.go, internal/tickets/registry_data.go, internal/tickets/registry_data_test.go, internal/canary/inventory.go, internal/racetests/racetests.go, internal/census/census_test.go, projects/benchkit.md, ASSESSMENT.md
 Covers: none
 
 ## What to build
@@ -14,6 +14,11 @@ standard `slices.Contains`. The sites are `internal/reviewrecord`,
 `releaseevidence.Contains` helper that `internal/releasepreflight` wraps. Each
 site calls `slices.Contains` directly. The `gitguard` helper is out of scope,
 because it reuses its own `indexOf`.
+
+Four more helpers repeat the same loop under other names:
+`containsStr` in `internal/preflight`, `holdsString` in `internal/tickets` and
+in `internal/canary`, and `containsProfile` in `internal/releaseevidence`. Each
+caller also calls `slices.Contains` directly.
 
 The `internal/racetests` package has one importer, `internal/gate`. Its table
 moves into the gate package, and the package goes. Each reference to the old
