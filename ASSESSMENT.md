@@ -56,7 +56,8 @@ requires `bench release submit` and `promote`, with live digest verification and
 resumption (`docs/release-runbook.md:35-78`). The tag workflow compiles the
 publisher from the tag checkout and runs `bench release submit`
 (`.github/workflows/release.yml:61-73`). The workflow uploads the publication
-record also when the publish step fails (`.github/workflows/release.yml:74-80`).
+record when the publish step passes and when it fails
+(`.github/workflows/release.yml:74-80`).
 **Tracked: FT142.** ✓
 
 **M-A1 — No supported public entry point exists.** There are no repository

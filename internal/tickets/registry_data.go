@@ -1,6 +1,9 @@
 package tickets
 
-import "sort"
+import (
+	"slices"
+	"sort"
+)
 
 // BindingRow binds one package prefix to the files a ticket must co-name when
 // it writes into that package. The prefix matches a `Writes:` path exactly, or
@@ -77,7 +80,7 @@ func BoundFiles(path string) []string {
 			continue
 		}
 		for _, file := range row.Files {
-			if file != path && !holdsString(files, file) {
+			if file != path && !slices.Contains(files, file) {
 				files = append(files, file)
 			}
 		}
@@ -90,13 +93,4 @@ func BoundFiles(path string) []string {
 // comparison is at a `/` segment boundary, never a bare string prefix.
 func prefixCovers(prefix, path string) bool {
 	return path == prefix || (len(path) > len(prefix)+1 && path[:len(prefix)] == prefix && path[len(prefix)] == '/')
-}
-
-func holdsString(list []string, want string) bool {
-	for _, value := range list {
-		if value == want {
-			return true
-		}
-	}
-	return false
 }

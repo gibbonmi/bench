@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 )
 
 func inspectRequirements(root string, run RunEvidence, profile Profile) ([]RequirementStatus, []evidenceDigest, string, error) {
@@ -11,7 +12,7 @@ func inspectRequirements(root string, run RunEvidence, profile Profile) ([]Requi
 	inputs := make([]evidenceDigest, 0, len(requirements.Records)+1)
 	for _, record := range requirements.Records {
 		status := RequirementStatus{Key: record.Key, Owner: record.Owner, Schema: record.Schema, Requiredness: record.Requiredness, Status: "not_applicable"}
-		if !containsProfile(record.Profiles, profile) {
+		if !slices.Contains(record.Profiles, profile) {
 			status.Reason = "requirement is not applicable to selected profile"
 			statuses = append(statuses, status)
 			continue

@@ -1,6 +1,8 @@
 package preflight
 
 import (
+	"slices"
+
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -26,7 +28,7 @@ func renderWritesProposal(root string, f Facts, name string) (string, int) {
 	}
 	verdict := Decide(f)
 	for _, check := range verdict.Checks {
-		if check.Verdict == verdictRed && !containsStr(proposalToleratedChecks, check.Check) {
+		if check.Verdict == verdictRed && !slices.Contains(proposalToleratedChecks, check.Check) {
 			return chargeVerdictRefusal(verdict), 1
 		}
 	}

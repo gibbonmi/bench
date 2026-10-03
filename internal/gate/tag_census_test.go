@@ -166,8 +166,8 @@ func TestExecutedCensusReadsTheRaceDriverArgv(t *testing.T) {
 	if !found {
 		t.Fatalf("census = %v, want a %s entry", got, canary.PhaseRace)
 	}
-	// The expectation reads the race registry that raceDriverArgv builds the phase from,
-	// so a registry edit moves the argv and this expectation together. It repeats the
+	// The expectation reads the raceTests table that raceDriverArgv builds the phase from,
+	// so a table edit moves the argv and this expectation together. It repeats the
 	// driver's own deduplication, which keeps the first occurrence of each path. An
 	// operand list that leaked the -run pattern or a build flag's value reds here.
 	var want []string

@@ -10,6 +10,7 @@
 package preflight
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/freshness"
@@ -458,7 +459,7 @@ func rowsOwnedCheck(f Facts) CheckResult {
 	cited := coversTokens(f)
 	var uncited []string
 	for _, id := range f.DeclaredRowIDs {
-		if !containsStr(cited, id) {
+		if !slices.Contains(cited, id) {
 			uncited = append(uncited, id)
 		}
 	}
@@ -475,7 +476,7 @@ func rowsMembershipCheck(f Facts) CheckResult {
 		if tickets.TagOf(tok) != f.SpecTag {
 			continue
 		}
-		if containsStr(f.DeclaredRowIDs, tok) {
+		if slices.Contains(f.DeclaredRowIDs, tok) {
 			continue
 		}
 		if !seen[tok] {
@@ -497,13 +498,4 @@ func diffNonemptyCheck(f Facts) CheckResult {
 		return red("diff-nonempty", "no changed files since the resolved review base")
 	}
 	return green("diff-nonempty")
-}
-
-func containsStr(list []string, s string) bool {
-	for _, v := range list {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
