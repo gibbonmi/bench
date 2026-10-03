@@ -1,62 +1,50 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `record-completion` (`6281fc3f6614cd14040b4dd1d621222f15acf639`, 2026-10-02).
-An unknown Codex model coordinated the resumed landing. Sol/high sessions implemented the completion writer and prepared the phase-close capture.
-
-The completion writer landed green after focused checks, a routing check, and an independent mutation. The original landing also stayed green.
+Last incorporated landing: `cli-desktop-consistency` (`e91c42fe3c3d0ca85722d6236c9211d1e407c5fa`, 2026-10-03).
+Astra/high authored and repaired the three chunks. Sol/high and Astra/high supplied independent reviews.
+An unknown Codex model coordinated live qualification and the final landing.
 Provider usage and charges remain unknown.
 
 ## Cost assumptions
 
-The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dollar break-even near 5x Terra's token use. The FT311 benchmark arm recorded 99 million input tokens with 98 percent cached and no dollar figure.
+The current planning input prices Luna tokens at 0.2x Terra, so Luna reaches dollar break-even near 5x Terra's token use.
+The FT311 benchmark arm recorded 99 million input tokens with 98 percent cached and no dollar figure.
 
 ## Current routing
 
+Each sample below retains at most the latest ten comparable assignments for each named role.
+
 | model / effort | role and sample | observed quality | current use | calibration |
 | --- | --- | --- | --- | --- |
-| Astra / xhigh, ultra, high, medium, low | decider, 8 consultations; retained implementation, repair, verification, and coordination | On `ref-inventory` Astra/xhigh gave exact row text and decisions in seven consultations, and each decision held through the confirming rounds. The eighth run hung with no output and was stopped. | Reviewer decisions by user direction when the route answers; retain the user-approved author through probes and repairs. | Repair forecast: 0.065 over 4 batch pairs; 0 abstentions |
-| Unknown Codex model / high or unknown | inline implementation, repair, and orchestration; 1 spec build, 3 light tickets, and 1 resumed landing | The earlier high-effort author landed three light tickets with passing gates and omission probes. The current unknown-effort coordinator preserved five checks, reconciled 86 rows, and isolated three host-tool failures. | Retain user-directed inline authorship for bounded tasks; keep exact model identity and effort unknown when the transcript does not supply them. | Repair forecast: 0.49 over 1 prior pair; current landing unscored |
-| Terra / high, medium, low | research and seam inspection, latest 5 assignments; semantic review, latest 10 axis passes | On `bounded-repair-policy`, all three Terra/high axes passed before a cross-harness reviewer found two policy defects. Each axis verified the repairs; Coverage corrected one source-identity claim after the coordinator checked Git. | Standards, Spec, and Coverage review in separate contexts; independently census production callers. | unknown |
-| Luna / max, medium | prose implementation and bounded repairs | Luna preserved the Ticket 4 prose pass. Review found owner-identity and instruction-shape defects that required an Astra repair and refreshed adoption evidence. | Use Luna for narrow prose changes after an owner census and before independent review. | unknown |
-| Sol / high | retained implementation, adoption, and phase-close work | One Sol/high writer landed the completion writer after focused checks and an independent mutation. A second Sol/high writer prepared the retro and both scorecards; usage and charges are unknown. | Use Sol/high for exact specification chunks under independent review and coordinator probes. | unknown; this repair has 1 abstention |
-| Sol / high | independent review, latest 10 of 39 axis returns | The latest ten axes identified the import-resolution gap and confirmed its repairs. Earlier clean axes missed the Git guard fixture omission that the checkpoint exposed. | Keep separate axes, compile proposed examples, and census production-window callers independently. | 0.04 over 1 labeled finding; 9 abstentions |
+| Astra / high | implementation, repair, orchestration, and diagnosis | Three chunks reached accepted behavior after four, one, and two repair cycles. The last repair removed duplicate state and preserved all earlier evidence; the coordinator completed its missing plan amendment. | Retain the user-approved author line and use fresh repair sessions with exact ownership fences. | Final repair claim: 0.01 over 1 pair; earlier unscored claims remain unknown |
+| Astra / high | independent review and plan consultation, latest 7 completed passes | The prerequisite reviews found a stale comment and confirmed the exact-deletion repair. The coordinator's parent-directory mutation exposed an additional negative case before landing. | Review mid-tier implementation independently and retain coordinator probes for policy boundaries. | unknown |
+| Sol / high | implementation and repair | The initial ticket attempt remained incomplete in its retained record. The prerequisite author and repair session delivered exact-deletion handling with observed negative controls and preserved restoration. | Use exact specifications, a bounded repair charge, and independent review before landing. | unknown |
+| Sol / high | independent review, latest 10 completed axes | Reviews separated historical live evidence from current integration checks and found duplicated repair-count state. The confirming axes accepted the corrected source without new findings. | Keep separate axes and use narrow confirmations when the source delta is small. | Final count finding: 0.01 over 1 pair; unscored axes remain unknown |
+| Sol / high and medium | diagnosis, latest 4 completed assignments | Diagnostic sessions inspected staleness, generated artifacts, transaction ownership, and the completion route. Their results supported the repair plan without taking implementation ownership. | Use bounded read-only questions and verify each proposed route against the current tree. | unknown |
+| Unknown Codex model / unknown | orchestration, diagnosis, and verification | The coordinator completed actual CLI/Desktop qualification and isolated runtime, permission, toolchain, and clock failures. It caught a deletion-preflight blocker and a plan-amendment gap, but its own record formatting caused one avoidable lane refusal. | Preserve native results, check the whole plan digest after spec edits, and keep unknown model and effort explicit. | unknown |
 
 ## Representative evidence
 
 | task | result | attribution | routing signal |
 | --- | --- | --- | --- |
-| Bounded repair policy | Astra closed two cross-harness findings in two repair cycles, and all 21 rows passed final reconciliation. Terra missed both initial defects and verified their repair. | spec/ticket, reviewer, and orchestrator | Keep independent cross-harness review for shared workflow guidance. |
-| Test determinism | Sol/high found five retained defects across 39 axes; all current axes and the final gate pass after repair. | spec/ticket for the incomplete wait-family and switch-fixture inventories | Apply current coverage rules to older specs and retain independent caller checks. |
-| FT311 recoverable-reset candidate | A Fable/high round found three behavior defects after the candidate's medium-tier review. | delegate and reviewer | Keep independent adversarial verification when authority or destructive behavior crosses boundaries. |
-| Repair collection pilot | Sol/high implemented three chunks; Astra/medium found gaps in each, then passed every repaired source and final composition. | delegate | Keep one retained author across bounded repair rounds and bind every review to its source. |
-| Worktree seam reduction close | The resumed coordinator found the missing completion writer after the original implementation passed. Sol/high added the writer, and an independent mutation changed covered evidence to pending. | tree/tooling and delegate | Dogfood completion before source release, and keep host-tool failures apart from author quality. |
+| CLI/Desktop live qualification | Both actual interfaces completed concurrent assignments, equivalent independent review, and separate disposable landings. | tree/tooling | Distinguish normal-permission evidence from elevated diagnosis and historical context. |
+| C3 final reconciliation | Current package, system, coverage, and live-row checks passed; review removed duplicated repair-count state. | delegate and orchestrator | Retain one owner for mutable state and confirm only the later delta. |
+| Exact deletion preflight | The prerequisite permits committed declared deletions while typo, directory-prefix, and unrelated absence controls remain red. | tree/tooling | Pair the author omission with a different coordinator mutation. |
+| C1 verification recovery | The host toolchain and a test fixture wrote live build artifacts during verification. | tree/tooling and delegate | Pin observed tool identities and preserve the checkout guard. |
+| Worktree seam reduction close | The resumed coordinator found a missing completion writer after the original implementation passed. | tree/tooling | Exercise the completion route before releasing the source. |
 
 ## Current decisions
 
-- Preserve the user's authorship and delegation choices across resumed sessions.
-- Keep the coordinator's exact model unknown when the transcript supplies only the provider.
-- Attribute the completion-writer gap to tree/tooling, outside the original ticket authors and spec.
-- Keep the Node and npm artifact failure separate from model quality.
-- Treat bounded inline repairs as behavior-preservation evidence, not a model comparison.
-- Keep independent Standards, Spec, and Coverage contexts for formal review.
-- Apply current input-family rules to older staged specs before implementation.
-- Compile reviewer examples before accepting their mutation evidence.
-- Include composition fixtures when changed production windows affect their callers.
-- Retain a demonstrated omission or mutation for each independent expectation.
-- Bind verification to its source and preserve evidence before worktree release.
-- Follow final-check's broker-rehearsal sequence when candidate repair changes the installed shim.
-- Attribute upstream inventory omissions separately from author defects.
-- Keep model identity, usage, costs, and unscored claims explicit when evidence is unavailable.
+- Preserve the user's author line and use a fresh session for each post-review repair.
+- Keep failed dispatches and incomplete attempts in the assessment record.
+- Keep actual normal-permission qualification separate from elevated completion work.
+- Bind every verification and review result to its examined source.
+- Record a plan amendment before rebinding the chunk after any spec change.
+- Keep mutable repair state in the review pickup.
+- Use the required package checks and complete gate without adding unrelated hardening.
+- Confirm only the later delta when prior acceptance evidence remains valid.
+- Retain a different coordinator mutation for a behavior repair.
+- Preserve ignored evidence and the census before a source release.
+- Keep host runtime and clock failures separate from model quality.
+- Keep unavailable usage, dollar costs, model identity, and effort unknown.
 - Change routing only after comparable evidence or explicit user direction.
-
-## Specification evidence
-
-On 2026-10-02, the invoking session authored the staged CLI and desktop consistency spec under the user's explicit authorship choice.
-The declared authoring line was Astra / high; provider usage, cost, and comparative latency are unknown.
-The draft defines 64 acceptance rows across three serial tickets.
-Mechanical author checks found planned-test citation and ownership-closure defects, which the author corrected before sign-off.
-The reviewer approved the specification and ticket graph on 2026-10-02 in one sign-off round.
-Implementation qualification remains pending.
-
-The approved implementation line is Sol / high, with repair and live qualification identified as the harder chunks.
-This specification supplies no new implementation performance evidence and does not change the routing table.
