@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Deleted ticket paths
+
+- Fixed review preflight so that a ticket can name a path deleted in its exact committed source range. Another missing path, or a deletion only in the working tree, remains refused.
+
 ### Light staleness pass
 
 - Changed the spec staleness pass of `/bench-implement-spec` to one fixed, budgeted procedure in one reference file. Every orchestrator now sends the same light charge, and the pass returns only blocking contradictions.

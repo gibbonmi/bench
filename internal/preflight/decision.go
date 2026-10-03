@@ -54,11 +54,10 @@ type Facts struct {
 	// rather than from destination default-branch ancestry.
 	ExplicitSourceRange bool
 
-	// ChangedPaths is the changed-file set since the resolved review base. Explicit
-	// source builds include committed, index, tracked-worktree, and untracked paths. An
-	// empty set is a legitimate answer, not an unresolved one.
+	// ChangedPaths is the complete changed-file set since the resolved review base.
 	ChangedPaths []string
-
+	// DeletedPaths is the explicit committed range's exact D-status subset.
+	DeletedPaths []string
 	// FenceEntries is the spec's declared `## Ownership fences` tokens: backticked,
 	// outside parentheses. paths-authorized checks every changed path against these.
 	FenceEntries []string
@@ -407,11 +406,12 @@ func writesResolveCheck(f Facts) CheckResult {
 	seen := map[string]bool{}
 	for _, ticket := range f.Tickets {
 		for _, entry := range ticket.Writes {
-			if _, isNew := splitWritesEntry(entry); isNew {
+			path, isNew := splitWritesEntry(entry)
+			if isNew {
 				continue
 			}
 			named := ticket.Name + ": " + entry
-			if seen[named] || f.WritesPathExists[entry] {
+			if seen[named] || f.WritesPathExists[entry] || slices.Contains(f.DeletedPaths, path) {
 				continue
 			}
 			seen[named] = true
