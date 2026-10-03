@@ -2,7 +2,7 @@
 
 Blocked by: 1-move-tree-change-reader.md
 Writes: internal/commentgap/ (new), internal/git/tree.go
-Covers: CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46
+Covers: CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46, CG47
 
 ## What to build
 
@@ -44,6 +44,7 @@ helpers can go in a second test file of the package, so each file stays under
 - [ ] CG31 proves a gap in `a b*.go` and in a Go file whose name holds a tab.
 - [ ] CG30 sets `diff.ignoreSubmodules=all` in the fixture repository and gets `ErrMode`.
 - [ ] A directive check that compares only the count of the directive texts makes the CG15, CG17, and CG18 rows fail.
+- [ ] CG47 refuses an empty-directory tree difference with `ErrEmptyChanges`.
 - [ ] CG46 refuses a hidden gitlink beside a visible Go comment edit with `ErrMode`.
 - [ ] `bench test --package ./internal/git` and `bench test --package ./internal/gate` pass.
 - [ ] `go list -deps` shows that `internal/commentgap` imports no Bench package other than `internal/git` and its dependencies.

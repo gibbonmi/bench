@@ -323,7 +323,7 @@ assumption.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | CG-C1 / `1-move-tree-change-reader.md` | One raw tree-change reader in `internal/git` serves the lane, and the lane's change list stays the same. | CG40, CG41 | `bench test --package ./internal/git`, `bench test --package ./internal/gate` | no |
-| CG-C2 / `2-prove-comment-only-gaps.md` | `commentgap.Prove` proves a comment-only Go gap between two trees and names the rule of each refusal. | CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46 | `bench test --package ./internal/commentgap` | yes |
+| CG-C2 / `2-prove-comment-only-gaps.md` | `commentgap.Prove` proves a comment-only Go gap between two trees and names the rule of each refusal. | CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46, CG47 | `bench test --package ./internal/commentgap` | yes |
 | CG-C3 / `3-accept-proven-gaps-at-checkpoint.md`, `4-state-comment-only-correction-rule.md` | The checkpoint, the completion record, and the landing accept a proven gap, the surrounding evidence stays strict, and the guidance routes the correction. | CG1, CG2, CG3, CG4, CG5, CG6, CG7, CG8, CG33, CG34, CG35, CG36, CG37, CG38, CG39, CG44, CG45 | `bench test --package ./internal/gate`, `bench test --package ./internal/reviewrecord/recordcmd`, `bench test --package ./internal/landing`, `bench test --package ./internal/anchors`, `bench test --package ./internal/conformance` | no |
 
 CG-C1 creates the seam that CG-C2 consumes, so its chunk review closes first.
@@ -350,7 +350,7 @@ CG-C2 creates the seam that CG-C3 consumes.
     reviewed chunk tip commit,  ──▶  [ reviewrecord.checkSource ]  ──▶  accept, or the current
     graded tree                          │                                stale-source refusal
                                          ▼
-                              [ commentgap.Prove ] ◀── [ git.TreeChanges, git.ReadTreeFile ]
+                              [ commentgap.Prove ] ◀── [ git.TreeChangesIncludingSubmodules, git.ReadTreeFile ]
                       ◀ tests attach here: real fixture repositories, `RunCommand` exit code,
                         output, and oracle run count; tree pairs and byte pairs at `commentgap`
 
@@ -387,7 +387,7 @@ CG-C2 creates the seam that CG-C3 consumes.
 | CG27 | 22 | A symbolic link named `link.go` whose target text changes is refused with `ErrMode` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A suffix rule alone reads the link target text as Go source. |
 | CG28 | 22 | A gitlink entry named `kit.go` whose commit changes is refused with `ErrMode` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A suffix rule alone tries to read a commit ID as a Go blob. |
 | CG29 | 23 | A comment-only edit of a Go file larger than `bounds.ControlRecordLimit` is refused with `ErrUnreadable` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | An unbounded blob read passes the oversized file. |
-| CG30 | 24 | Two trees that differ only in a gitlink, read under `diff.ignoreSubmodules=all`, are refused with `ErrMode` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A configured reader hides the gitlink and cannot classify its mode. |
+| CG30 | 22 | Two trees that differ only in a gitlink, read under `diff.ignoreSubmodules=all`, are refused with `ErrMode` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A configured reader hides the gitlink and cannot classify its mode. |
 | CG31 | 25 | Comment-only edits of `a b*.go` and of a Go file whose name holds a tab are proven | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A newline-framed or C-quoted path list names a path that no tree holds and refuses. |
 | CG32 | 26 | A gap with comment-only edits of `a.go` and `b.go` and a statement change in `c.go` is refused with `ErrTokens` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A classifier that returns after the first proven path passes the later code change. |
 | CG33 | 27 | A `--complete` checkpoint refuses with `completion is incomplete or stale` when the completion evidence names the reviewed source and a comment-only correction follows it | planned TestReviewCheckpointKeepsStrictEvidence in internal/gate/review_checkpoint_commits_test.go | A gap acceptance copied into the completion check passes stale final verification. |
@@ -404,6 +404,8 @@ CG-C2 creates the seam that CG-C3 consumes.
 | CG44 | 38 | `bench record completion --source <corrected tip>` exits 0 and writes a completion at the corrected digest when a comment-only correction follows the last chunk | planned TestRecordCompletionAcceptsCommentOnlyGap in internal/reviewrecord/recordcmd/completion_test.go | An acceptance placed only in `CheckTrees` leaves `RecordCompletion` refusing, while every checkpoint row stays green. |
 | CG45 | 38 | `bench record completion --source <tip>` exits 1 with `stale reviewed source` and leaves the record bytes unchanged when the gap after the last chunk changes a Go statement | planned TestRecordCompletionAcceptsCommentOnlyGap in internal/reviewrecord/recordcmd/completion_test.go | A record path that skips the proof writes a completion over an unreviewed code change. |
 | CG46 | 40 | A hidden gitlink change beside a Go comment edit under `diff.ignoreSubmodules=all` refuses with `ErrMode` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | The configured list holds the Go edit, so an empty-list check alone accepts the hidden gitlink. |
+
+| CG47 | 24 | Different trees whose only difference is an empty directory tree refuse with `ErrEmptyChanges` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | Git omits the empty directory from its change list, so this row pins the empty-list refusal. |
 
 Not covered: story 39 — the light path has no checkpoint, so no row can observe its repair accounting.
 
@@ -601,7 +603,7 @@ veto each one.
 
 - The new package `internal/commentgap` and its ten rule sentinels.
 - The move of the raw tree-change reader to `internal/git` (CG40, CG41).
-- The empty-change-list refusal (CG30).
+- The empty-change-list refusal (CG47).
 - The whitespace-only acceptance (CG11, F1).
 - The edit of `bench-implement-spec.md` line 54 and its anchor (CG39).
 - The chain-gap message text (CG35).
@@ -711,6 +713,7 @@ Ticket 2 also writes `internal/git/tree.go` to add the complete-list wrapper.
 The wrapper shares the existing reader and parser.
 The reviewer approves the complete reader and CG30's `ErrMode` result on 2026-10-03.
 The classifier refuses the mixed hidden-gitlink case through CG46.
+CG47 preserves the empty-list guarantee with an empty directory tree.
 All chunk IDs and dependencies stay unchanged.
 
 ### Completion plan
