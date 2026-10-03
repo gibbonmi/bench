@@ -628,7 +628,7 @@ Guidance readers, found by key terms and in normalized form:
 - the bounded repair policy, lines 46 to 52
 - `bench-implement-spec.md`, lines 54 to 58
 - `bench-review-implementation.md`, lines 42 to 48, 95, 98, 229, and 231
-- `.bench/BENCH-reference.md`, lines 320 to 328
+- `.bench/BENCH-reference.md`, lines 375 to 383
 - `projects/benchkit.md`, lines 38 to 47
 - `CONTEXT.md`
 
