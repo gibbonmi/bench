@@ -9,11 +9,11 @@ Skill relevance supplies the first demonstration. Ticket #14 owns the final cand
 
 ## Notes
 
-The reviewer parked this research on 2026-10-03 until the November follow-up.
-The [eighth-cycle report](jev-advisor/assets/benchmark/cycle-eight.md) records the pause, preserved evidence, and remaining repair allowance.
+The reviewer parked this research; [FT347](../roadmap/FT347.md) owns the return trigger.
+The [dedicated handoff](jev-advisor/session-handoff.md) owns the resume instructions and evidence locations.
 
 Use the domain and research skills for this map. Ticket #9 also uses the prototype discipline.
-The current pass restores accepted decisions from the prior session and audits preserved evidence.
+The preserved checkpoint restores accepted decisions from the prior session and audits preserved evidence.
 The research asset records the recovery limits and the remaining factual questions.
 
 The reviewer directs this pass to remain in the current Astra session. The CLI/Desktop implementation stays in its separate assignment.

@@ -84,9 +84,8 @@ The original frozen inputs and all prior failures remain preserved.
 Paid execution, adoption, and changes to the CLI/Desktop assignment remain outside this approval.
 ## Parked checkpoint
 
-The reviewer parked the research on 2026-10-03 and requested a return in one month.
-A thread reminder asks whether to resume on 2026-11-03 at 09:00 America/New_York.
-The reminder does not resume research or repairs without a response.
+The reviewer parked the research on 2026-10-03.
+[FT347](../../../../roadmap/FT347.md) owns the return trigger; [the topic handoff](../../session-handoff.md) owns the resume instructions.
 No resumed repair cycle completed before the pause; all six remain unused.
 Ticket #9 and report section 15 remain open.
 
@@ -98,4 +97,4 @@ This result supersedes the earlier isolated handoff success as the latest diagno
 The external `resume-nine-fourteen/` evidence directory preserves the 48-file checkpoint and its verified hash manifest.
 It also holds `focused-baseline.out`, `focused-baseline.json`, and the separate diagnostic source copy.
 The original frozen source and earlier raw evidence remain unchanged.
-Read the session handoff before resuming the existing assignment.
+Read the topic handoff before resuming the research.
