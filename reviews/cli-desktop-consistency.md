@@ -1656,9 +1656,9 @@ No review requested a Bench command change.
     {
       "id": "C3",
       "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
-      "tip": "827af59ba508acb7812ca9161d4c169d135c2978",
-      "plan_digest": "sha256:1671d9c4f7dae2b87ffb7919ca3d46923747990148247165ee080b4b36e0607c",
-      "source_digest": "a1cdc04981354b22ebf0ea1ca0f0152784f30789",
+      "tip": "dadd5698d452cebba0088a2d8a2096c1ebdfb335",
+      "plan_digest": "sha256:fd1630eb03f3c42be8f1e0eb051b41c427ba16371480294c7104d4db89bf5c52",
+      "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
       "acceptance_rows": [
         "CD37",
         "CD38",
