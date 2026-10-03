@@ -21,6 +21,19 @@ Ticket 1 preserves the existing change-list tests.
 The source-mode and destination-mode swap failed the rename test, and Bench restored the file.
 The Git and gate packages passed, as did the root conformance test.
 
+### Classifier verification
+
+CG-C2 passes its classifier, Git, gate, and root checks.
+The count-only directive mutation fails CG15, CG17, and CG18.
+A Go-rule bypass fails all 16 refusal cases in the byte-pair table.
+A forced token refusal fails CG9, CG10, CG11, and CG31.
+A tree-rule bypass fails all 12 refusal cases in the tree table.
+
+The configured-reader substitution fails CG46's mixed hidden-gitlink case.
+Bench restores each mutation before the next check.
+The initial fixture compile failed on an integer conversion and then passed.
+That failed build supplied no behavioral evidence.
+
 ## Repair allowance
 
 No chunk has consumed a repair cycle.
@@ -142,6 +155,99 @@ No chunk has consumed a repair cycle.
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "CG-C2",
+      "base": "67f6159ba5f6df5961bee2c5e7215e43e18e01c7",
+      "tip": "e021e09c7d2f2d638a7ff9f1fed84bdbb5178c6d",
+      "plan_digest": "sha256:9bc20dfc5468058ad2a0fac076f85a213a2484f0d033ecc3ed335563ab55ed65",
+      "source_digest": "80ea4129830d508b4b4adf4cbee47dee5e9bb2c4",
+      "acceptance_rows": [
+        "CG9",
+        "CG10",
+        "CG11",
+        "CG12",
+        "CG13",
+        "CG14",
+        "CG15",
+        "CG16",
+        "CG17",
+        "CG18",
+        "CG19",
+        "CG20",
+        "CG21",
+        "CG22",
+        "CG23",
+        "CG24",
+        "CG25",
+        "CG26",
+        "CG27",
+        "CG28",
+        "CG29",
+        "CG30",
+        "CG31",
+        "CG32",
+        "CG42",
+        "CG43",
+        "CG46"
+      ],
+      "verification": [
+        {
+          "id": "c2-commentgap",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "80ea4129830d508b4b4adf4cbee47dee5e9bb2c4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-root/c2-commentgap",
+            "digest": "sha256:dd8111081c151a9f4326e006be8a3fb827e104840fac665fbf4f11a48686dbef",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft370-build,c0fd00993d4627aac1be378a69ea6ff976cd8c3a,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commentgap,pass,319\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commentgap",
+          "command": "bench test --package ./internal/commentgap",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-git",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "80ea4129830d508b4b4adf4cbee47dee5e9bb2c4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-root/c2-git",
+            "digest": "sha256:ccdaa68c3ae808588d12c6352f5ceb2a9553b1fd6bb9b42a6911b2949127a74a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft370-build,c0fd00993d4627aac1be378a69ea6ff976cd8c3a,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/git,pass,1557\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "git",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-gate",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "80ea4129830d508b4b4adf4cbee47dee5e9bb2c4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-root/c2-gate",
+            "digest": "sha256:4294308c9510bdd8ec618b42983dc95a07cbb46ffc6681af9776f7ea9b58d297",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft370-build,c0fd00993d4627aac1be378a69ea6ff976cd8c3a,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,11821\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
