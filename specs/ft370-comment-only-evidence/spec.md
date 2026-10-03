@@ -41,18 +41,17 @@ consumes no repair cycle.
 
 ## User stories
 
-Line: opus / high.
+Line: current Codex session / high.
 
-Implementation-line reason: CG-C2 is the hardest chunk, because its exact
-predicate meets hostile Go inputs and a wrong verdict silently weakens review.
-The spec fixes each predicate and each refusal rule. The seam is a new deep
-package with table tests, and the gate's package tests observe every row.
-The checkpoint is oracle logic and the guidance takes the leverage override,
-so high effort is the floor for every ticket. A ticket that crosses the
-`reviewrecord`, `gate`, and `landing` owners takes xhigh, per the cached
-routing for a ticket that crosses owner seams. On 2026-10-03 the reviewer
-approved Opus at xhigh effort for ticket 3, and high effort for each other
-ticket.
+The reviewer directs this session to implement all four tickets on 2026-10-03.
+The runtime does not expose its exact model identifier.
+The run keeps the version 1 completion plan because one session owns every ticket.
+Three fresh Sol 6.1 sessions review each chunk at high effort.
+The implementation continues without an iteration cap while progress holds.
+The bounded repair policy still limits each chunk to two repair cycles.
+
+Implementation-line reason: CG-C2 grades hostile Go inputs at an oracle seam.
+The checkpoint and guidance require high effort.
 
 Harder chunks: CG-C2.
 
