@@ -330,7 +330,7 @@ func requireEmptyInventoryOutcome(t *testing.T, f repoHome, absent Creation) {
 	before, err := git.Output("-C", f.root, "rev-parse", "HEAD")
 	mustNoError(t, err)
 	landed := runVerb(t, verbClean, f.call("--landed"))
-	if landed.exit != 0 || landed.stderr != "" || !strings.HasPrefix(landed.stdout, "worktree_cleanup[0]") || len(landed.mustRows(t, cleanupTable)) != 0 {
+	if landed.exit != 0 || landed.stderr != "" || !strings.HasPrefix(landed.stdout, cleanupTable+"[0]") || len(landed.mustRows(t, cleanupTable)) != 0 {
 		t.Fatalf("landed plan = (%d, %q, %q), want an empty plan", landed.exit, landed.stdout, landed.stderr)
 	}
 	targeted := runVerb(t, verbClean, f.call("--target", absent.Assignment.ID))

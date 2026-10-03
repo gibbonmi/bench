@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
-	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
 // Render returns document with record as the payload of its review-record
@@ -160,21 +159,6 @@ func RecordChunk(root, spec, id, base, tip string) (string, Chunk, error) {
 		return nil
 	})
 	return action, entry, err
-}
-
-// atSource reads the tree of commit, a full commit ID, and returns its source digest and
-// the plan in it.
-func atSource(root, spec, commit string) (string, Plan, error) {
-	tree, err := benchgit.Output("-C", root, "rev-parse", "--verify", "--quiet", commit+"^{tree}")
-	if err != nil {
-		return "", Plan{}, fmt.Errorf("unreadable tree of commit %s", commit)
-	}
-	digest, err := SourceDigest(root, tree, spec)
-	if err != nil {
-		return "", Plan{}, err
-	}
-	plan, err := ReadPlan(root, tree, spec)
-	return digest, plan, err
 }
 
 // ErrNoChunkEntry marks a result that needs a current chunk entry first: the record is

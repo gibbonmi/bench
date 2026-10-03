@@ -6,6 +6,16 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Light staleness pass
+
+- Changed the spec staleness pass of `/bench-implement-spec` to one fixed, budgeted procedure in one reference file. Every orchestrator now sends the same light charge, and the pass returns only blocking contradictions.
+
+### Review completion recording
+
+- Added `bench record completion <slug> --source <commit>`. It validates the
+  retained chunk, review, and final evidence before it writes the derived
+  completion entry.
+
 ### Changed-declaration blast
 
 - Fixed `bench consumers --changed` so that it does not report a kept declaration as deleted. A body edit in a file that only a build tag selects, such as a `//go:build system` test file, gave a false `blast_deleted` row. The deletion test now reads the declarations of the pair's tip tree, and not only the files that the default build context loads.

@@ -32,14 +32,14 @@ func TestResumeCleanSurfacesMalformedWorktreeAdmin(t *testing.T) {
 }
 
 func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
+	t.Parallel()
 	home := t.TempDir()
-	bindEnv(t, "BENCH_HOME", home)
 	root := newWorktreeRepo(t)
 	gitRun(t, root, "branch", "-M", "main")
 	clean := filepath.Join(filepath.Dir(root), "auto clean")
 	dirty := filepath.Join(filepath.Dir(root), "auto dirty")
 	locked := filepath.Join(filepath.Dir(root), "auto locked")
-	pool := filepath.Join(Pool(root), "leased")
+	pool := filepath.Join(poolAt(home, root), "leased")
 	mustMkdirAll(t, filepath.Dir(pool), 0o700)
 	for _, path := range []string{clean, dirty, locked, pool} {
 		gitRun(t, root, "worktree", "add", "-q", "--detach", path, "HEAD")
@@ -83,18 +83,18 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 }
 
 func TestResumeCleanKeepsIgnoredOnlyOutOfPoolWorktree(t *testing.T) {
-	bindEnv(t, "BENCH_HOME", t.TempDir())
-	root := newWorktreeRepo(t)
+	t.Parallel()
+	root, home := newWorktreeRepo(t), t.TempDir()
 	gitRun(t, root, "branch", "-M", "main")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
 	gitRun(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "ignore")
-	owned := mustCreate(t, root, Home(), "ignored-only", "ignored residual")
+	owned := mustCreate(t, root, home, "ignored-only", "ignored residual")
 	candidate := owned.Path
 	markPending(t, root, owned.Assignment)
 	ignored := filepath.Join(candidate, "ignored.txt")
 	mustWrite(t, ignored, []byte("retain me\n"), 0o644)
-	resumed := runVerb(t, verbResumeClean, repoHome{root, Home()}.call())
+	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
 	requireTest(t, resumed.exit == 0, "ResumeCleanCommand exit=%d stdout=%s stderr=%s", resumed.exit, resumed.stdout, resumed.stderr)
 	_, err := os.Stat(ignored)
 	requireTest(t, err == nil, "ignored-only WIP was not retained: %v", err)
@@ -140,9 +140,9 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 			}
 			results := make(chan outcome, 2)
 			apply := func() {
-				got, applyErr := applyExplicitWith(j, f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
+				got, applyErr := applyExplicitWith(j, f.ambient(), f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
 				if automatic {
-					got, applyErr = applyAutomaticWithTerminal(j, f.root, f.creation.Path, nil, nil)
+					got, applyErr = applyAutomaticWithTerminal(j, f.ambient(), f.root, f.creation.Path, nil, nil)
 				}
 				results <- outcome{got, applyErr}
 			}
@@ -163,7 +163,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 				"transaction refs=%#v receipts=%#v error=%v", refs, ledger.CleanupReceipts, err)
 			if !automatic {
 				mustNoError(t, intent.DeleteAssignment(f.root, f.creation.Assignment.ID))
-				replay, err := applyExplicitWith(j, f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
+				replay, err := applyExplicitWith(j, f.ambient(), f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
 				requireTest(t, err == nil && replay.Action == ActionRemoved, "compacted replay = %#v, %v", replay, err)
 			}
 		})
@@ -242,7 +242,7 @@ func TestApplyAutomaticHonorsLockScopedReplanOverPreLockCheck(t *testing.T) {
 		}
 		return nil
 	}
-	plan, err := applyAutomaticWithTerminal(j, f.root, f.creation.Path, nil, nil)
+	plan, err := applyAutomaticWithTerminal(j, f.ambient(), f.root, f.creation.Path, nil, nil)
 	requireTest(t, err == nil && plan.Action == ActionRetain,
 		"raced apply = %#v, %v; want the lock-scoped replan's retain honored", plan, err)
 	requireTest(t, raced, "boundary seam never fired; race was not exercised")
@@ -317,13 +317,8 @@ func TestPlanAutomaticRetainsDirtyNestedState(t *testing.T) {
 	t.Parallel()
 	t.Run("dirty nested repository", func(t *testing.T) {
 		f := newOwnedAssignment(t, "dirty-nested")
-		nested := filepath.Join(f.creation.Path, "nested")
-		mustMkdirAll(t, nested, 0o755)
-		gitRun(t, nested, "init", "-q", "-b", "main")
-		mustWrite(t, filepath.Join(nested, "nested.txt"), []byte("base\n"), 0o644)
-		gitRun(t, nested, "add", "nested.txt")
-		gitRun(t, nested, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "nested")
-		mustWrite(t, filepath.Join(nested, "nested.txt"), []byte("dirty\n"), 0o644)
+		nested := plantNestedRepository(t, f.creation.Path)
+		mustWrite(t, filepath.Join(nested, nestedRepositoryFile), []byte("dirty\n"), 0o644)
 		markPending(t, f.root, f.creation.Assignment)
 		requirePlanAction(t, f.root, f.creation.Path, ActionRetain)
 	})
@@ -437,7 +432,7 @@ func TestResumeSupersedesPlannedReceiptOverAbsentTarget(t *testing.T) {
 			}
 			return nil
 		}
-		_, err = applyExplicitWith(faulted, f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
+		_, err = applyExplicitWith(faulted, f.ambient(), f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
 		requireTest(t, errors.Is(err, stop), "preserved window fault = %v", err)
 		receipt := cleanupReceiptAt(t, f.root, f.creation.Path, plan.Fingerprint)
 		requireTest(t, receipt.State == intent.ReceiptInFlight && receipt.Phase == intent.ReceiptPhasePreserved,
@@ -481,9 +476,9 @@ func crashedInCleanupReceiptWindow(t *testing.T, root, target string, preserving
 		return nil
 	}
 	if preserving {
-		_, err = applyExplicitWith(faulted, root, target, plan.Fingerprint, CleanupOptions{})
+		_, err = applyExplicitWith(faulted, newAmbient(Home(), os.Stderr), root, target, plan.Fingerprint, CleanupOptions{})
 	} else {
-		_, err = applyAutomaticWithTerminal(faulted, root, target, nil, nil)
+		_, err = applyAutomaticWithTerminal(faulted, newAmbient(Home(), os.Stderr), root, target, nil, nil)
 	}
 	requireTest(t, errors.Is(err, stop), "cleanup receipt window fault = %v", err)
 	receipt := cleanupReceiptAt(t, root, target, plan.Fingerprint)
@@ -505,9 +500,9 @@ func cleanupReceiptAt(t *testing.T, root, target, fingerprint string) intent.Cle
 // cleanup receipt over an absent target: the receipt's own fingerprint carried back into
 // the transaction behind the automatic planner.
 func resumeCleanupTransaction(root, target, fingerprint string) (CleanupPlan, error) {
-	j := defaultJoins()
-	planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, currentTime()) }
-	return applyCleanupTransaction(j, root, target, fingerprint, planner, nil, nil)
+	j, a := defaultJoins(), newAmbient(Home(), os.Stderr)
+	planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, a.now) }
+	return applyCleanupTransaction(j, a, root, target, fingerprint, planner, nil, nil)
 }
 
 func newOwnedSubmoduleAssignment(t *testing.T, request string) ownedAssignment {

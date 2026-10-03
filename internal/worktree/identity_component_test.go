@@ -4,9 +4,7 @@
 package worktree
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -161,8 +159,8 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 	for _, fixture := range identityComponentFixtures() {
 		t.Run(fixture.component, func(t *testing.T) {
 			request := "resume-component-" + fixture.component
-			f := publicLandingFixture(t, request, "", "")
-			published := interruptLandingAtMarker(t, f.root, f.creation, request, f.base, f.tip)
+			f := markerLandingFixture(t, request, true)
+			_, published := interruptLandingAtMarker(t, f, landArgs(request, f.base, f.tip, f.creation.Path)...)
 			fixture.mutate(t, f.root, f.creation)
 			args := []string{"--resume", published, "--request", fixture.request(request), "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 			r := runVerb(t, verbLand, f.call(args...))
@@ -172,21 +170,6 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 			}
 		})
 	}
-}
-
-// interruptLandingAtMarker publishes the landing and then fails its marker step, which
-// is the state a resume exists to finish. It returns the published commit.
-func interruptLandingAtMarker(t *testing.T, root string, creation Creation, request, base, tip string) string {
-	t.Helper()
-	j := defaultJoins()
-	j.advanceLandingMarker = func(context.Context, string, string, string, string) error {
-		return errors.New("injected marker interruption")
-	}
-	r := runVerb(t, verbLand, repoHome{root, Home()}.callWith(j, landArgs(request, base, tip, creation.Path)...))
-	if r.exit != 3 {
-		t.Fatalf("interrupted landing = (%d, %q, %q), want exit 3", r.exit, r.stdout, r.stderr)
-	}
-	return gitOutput(t, root, "rev-parse", "main")
 }
 
 // TestIdentityComponentRegistryHasAProducingFixture is LR16. The registry is the source
@@ -302,7 +285,7 @@ func landingFaceResume(t *testing.T, fixture landingRefusalFixture, f landingFix
 	request := "landing-face-" + fixture.face
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	broken := defaultJoins()
-	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, tip, f.creation.Path)...)); r.exit != 3 {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}

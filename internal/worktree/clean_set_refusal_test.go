@@ -33,7 +33,7 @@ func TestCleanSetPreflightFaultNamesItsMember(t *testing.T) {
 	// exactly as approved, so no drift explains the refusal.
 	breakLedger(t, f.root)
 
-	plans, applyErr := applyLandedSet(j, f.root, set, CleanupOptions{}, "")
+	plans, applyErr := applyLandedSet(j, f.ambient(), f.root, set, CleanupOptions{}, "")
 	if applyErr == nil || errors.Is(applyErr, errStaleFingerprint) {
 		t.Fatalf("apply error = %v, want a requalify fault that is not drift", applyErr)
 	}
@@ -66,7 +66,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 		first := landedMember(t, root, home, "drift-retained-first", "first.txt")
 		second := landedMember(t, root, home, "drift-retained-second", "second.txt")
 		j := defaultJoins()
-		set := planExplicitSet(j, root, explicitIdentities([]Creation{first, second}), CleanupOptions{})
+		set := planExplicitSet(j, repoHome{root, home}.ambient(), root, explicitIdentities([]Creation{first, second}), CleanupOptions{})
 		if set.fingerprint == "" || len(set.rows) != 2 {
 			t.Fatalf("explicit set = %#v, want two applicable members", set)
 		}
@@ -75,7 +75,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 			mustWrite(t, filepath.Join(drifted.Path, "ignored-late.txt"), []byte("residue\n"), 0o644)
 		})
 
-		plans, err := applyExplicitSet(j, root, set, CleanupOptions{})
+		plans, err := applyExplicitSet(j, repoHome{root, home}.ambient(), root, set, CleanupOptions{})
 		if !errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want the member's own requalify to refuse", err)
 		}
@@ -102,7 +102,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 			mustNoError(t, intent.DeleteAssignment(f.root, drifted.Assignment.ID))
 		})
 
-		plans, err := applyLandedSet(j, f.root, set, CleanupOptions{}, "")
+		plans, err := applyLandedSet(j, f.ambient(), f.root, set, CleanupOptions{}, "")
 		if !errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want the member's own requalify to refuse", err)
 		}
@@ -126,7 +126,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 		survivor := memberByID(t, f.creations, set.rows[1].assignment.ID)
 		j.cleanupBoundary = driftAtSecondRequalify(t, func() { breakLedger(t, f.root) })
 
-		plans, err := applyLandedSet(j, f.root, set, CleanupOptions{}, "")
+		plans, err := applyLandedSet(j, f.ambient(), f.root, set, CleanupOptions{}, "")
 		if err == nil || errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want an in-loop requalify fault that is not drift", err)
 		}
@@ -160,7 +160,7 @@ func TestCleanSetPreflightFaultOnLaterMember(t *testing.T) {
 	}
 	breakLedger(t, f.root)
 
-	plans, applyErr := applyLandedSet(j, f.root, set, CleanupOptions{}, "")
+	plans, applyErr := applyLandedSet(j, f.ambient(), f.root, set, CleanupOptions{}, "")
 	if applyErr == nil || errors.Is(applyErr, errStaleFingerprint) {
 		t.Fatalf("apply error = %v, want a requalify fault that is not drift", applyErr)
 	}
@@ -184,7 +184,7 @@ func TestCleanSetExplicitPreflightFaultOnLaterMember(t *testing.T) {
 	second := landedMember(t, root, home, "explicit-fault-second", "second.txt")
 	members := []Creation{first, second}
 	j := defaultJoins()
-	ordered := planExplicitSet(j, root, explicitIdentities(members), CleanupOptions{})
+	ordered := planExplicitSet(j, repoHome{root, home}.ambient(), root, explicitIdentities(members), CleanupOptions{})
 	if len(ordered.rows) != 2 {
 		t.Fatalf("explicit set = %#v, want two members", ordered.rows)
 	}
@@ -192,7 +192,7 @@ func TestCleanSetExplicitPreflightFaultOnLaterMember(t *testing.T) {
 	// preflight skips it. The fault then lands on the member at index one.
 	leading := memberByID(t, members, ordered.rows[0].assignment.ID)
 	mustWrite(t, filepath.Join(leading.Path, "ignored-one.txt"), []byte("residue\n"), 0o644)
-	set := planExplicitSet(j, root, explicitIdentities(members), CleanupOptions{})
+	set := planExplicitSet(j, repoHome{root, home}.ambient(), root, explicitIdentities(members), CleanupOptions{})
 	if set.fingerprint == "" || set.rows[0].plan.Action.Removes() || !set.rows[1].plan.Action.Removes() {
 		t.Fatalf("explicit set = %#v, want a retained row ahead of a removable one", set.rows)
 	}
@@ -200,7 +200,7 @@ func TestCleanSetExplicitPreflightFaultOnLaterMember(t *testing.T) {
 	// not drift. Every member is still exactly as approved.
 	mustNoError(t, os.RemoveAll(filepath.Join(root, ".git")))
 
-	plans, applyErr := applyExplicitSet(j, root, set, CleanupOptions{})
+	plans, applyErr := applyExplicitSet(j, repoHome{root, home}.ambient(), root, set, CleanupOptions{})
 	if applyErr == nil || errors.Is(applyErr, errStaleFingerprint) {
 		t.Fatalf("apply error = %v, want a requalify fault that is not drift", applyErr)
 	}

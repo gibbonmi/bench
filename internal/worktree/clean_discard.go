@@ -194,9 +194,9 @@ func planUnrecordedRow(branch unclaimedAssignmentBranch, now time.Time, options 
 }
 
 // requalifyUnrecordedRow re-plans one unclaimed member against the repository as it stands
-// now. A member that left the unclaimed set, or whose verdict or discarded ref changed, is
-// stale.
-func requalifyUnrecordedRow(j joins, root string, planned unrecordedCleanupRow, options CleanupOptions) (unrecordedCleanupRow, error) {
+// now, at the run's ambient instant. A member that left the unclaimed set, or whose verdict
+// or discarded ref changed, is stale.
+func requalifyUnrecordedRow(a ambient, root string, planned unrecordedCleanupRow, options CleanupOptions) (unrecordedCleanupRow, error) {
 	set, err := planUnclaimedAssignmentSet(root, unclaimedOptions())
 	if err != nil {
 		return planned, err
@@ -205,7 +205,7 @@ func requalifyUnrecordedRow(j joins, root string, planned unrecordedCleanupRow, 
 		if branch.ref != planned.ref {
 			continue
 		}
-		current, err := planUnrecordedRow(branch, j.now(), options)
+		current, err := planUnrecordedRow(branch, a.now, options)
 		if err != nil {
 			return planned, err
 		}
@@ -221,7 +221,7 @@ func requalifyUnrecordedRow(j joins, root string, planned unrecordedCleanupRow, 
 // applyUnrecordedRows runs each unrecorded member after every recorded one. Each removing
 // member re-plans just before its own transaction, because an earlier member's removal can
 // take away the holder a subsumed member relied on.
-func applyUnrecordedRows(j joins, root string, set explicitCleanupSet, options CleanupOptions, plans []CleanupPlan) ([]CleanupPlan, error) {
+func applyUnrecordedRows(j joins, a ambient, root string, set explicitCleanupSet, options CleanupOptions, plans []CleanupPlan) ([]CleanupPlan, error) {
 	members := set.plans()
 	for k, planned := range set.unrecorded {
 		unreached := members[len(set.rows)+k+1:]
@@ -229,7 +229,7 @@ func applyUnrecordedRows(j joins, root string, set explicitCleanupSet, options C
 			plans = append(plans, planned.plan)
 			continue
 		}
-		current, err := requalifyUnrecordedRow(j, root, planned, options)
+		current, err := requalifyUnrecordedRow(a, root, planned, options)
 		if err != nil {
 			return notAttemptedPlans(append(plans, requalifiedOutcome(planned.plan, current.plan, err)), unreached, notAttemptedDetail), err
 		}

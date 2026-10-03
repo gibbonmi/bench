@@ -22,12 +22,12 @@ func TestLandRetainsSiblingBornAtPublishedTip(t *testing.T) {
 			j, _ := refreshJoins(nil)
 			release := j.releaseLandingAssignment
 			var sibling Creation
-			j.releaseLandingAssignment = func(inner joins, root, home string, args []string, stdout, stderr io.Writer) int {
-				sibling = mustCreate(t, root, home, request+"-sibling", "new sibling")
+			j.releaseLandingAssignment = func(inner joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
+				sibling = mustCreate(t, root, a.home, request+"-sibling", "new sibling")
 				if resume {
 					return 1
 				}
-				return release(inner, root, home, args, stdout, stderr)
+				return release(inner, a, root, args, stdout, stderr)
 			}
 			r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
 			if resume {

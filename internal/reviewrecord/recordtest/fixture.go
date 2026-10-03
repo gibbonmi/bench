@@ -344,3 +344,23 @@ func (f *Fixture) Save() {
 	}
 	f.Write(path, string(data))
 }
+
+// ReplaceRecord renders record into the fixture's existing document. Tests use it to
+// retain surrounding prose while they replace one evidence value with a mutation.
+func (f *Fixture) ReplaceRecord(record rr.Record) {
+	f.T.Helper()
+	path, err := rr.RecordPath(record.Spec)
+	if err != nil {
+		f.T.Fatal(err)
+	}
+	document, err := os.ReadFile(filepath.Join(f.Root, filepath.FromSlash(path)))
+	if err != nil {
+		f.T.Fatal(err)
+	}
+	data, err := rr.Render(document, record)
+	if err != nil {
+		f.T.Fatal(err)
+	}
+	f.Write(path, string(data))
+	f.Record = record
+}

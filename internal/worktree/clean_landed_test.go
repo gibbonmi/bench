@@ -113,7 +113,7 @@ func TestCleanLandedEmptySetExitsClean(t *testing.T) {
 	f := repoHome{root, filepath.Join(root, ".bench-home")}
 	for attempt := 0; attempt < 2; attempt++ {
 		plan := runVerb(t, verbClean, f.call("--landed"))
-		if plan.exit != 0 || plan.stdout != "worktree_cleanup[0]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n" || plan.stderr != "" {
+		if plan.exit != 0 || plan.stdout != cleanupTable+"[0]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n" || plan.stderr != "" {
 			t.Fatalf("attempt %d exit=%d stdout=%q stderr=%q", attempt, plan.exit, plan.stdout, plan.stderr)
 		}
 	}

@@ -24,7 +24,7 @@ func TestSubshellNormalExitReleasesItsAssignment(t *testing.T) {
 	environ := append(os.Environ(), "BENCH_SUBSHELL_PWD="+pwd)
 
 	var stdout, stderr bytes.Buffer
-	code := subshellAt(root, home, shell, environ, nil, strings.NewReader(""), &stdout, &stderr)
+	code := subshellAt(root, newAmbient(home, &stderr), shell, environ, nil, strings.NewReader(""), &stdout, &stderr)
 	requireTest(t, code == 0, "subshell exit = %d, stderr %q", code, stderr.String())
 	assignments, err := intent.Assignments(root)
 	requireTest(t, err == nil && len(assignments) == 0, "subshell assignments = %#v, %v; want no released owner", assignments, err)
@@ -43,7 +43,7 @@ func TestSubshellRecordsAShellThatCannotStart(t *testing.T) {
 	root := newWorktreeRepo(t)
 	home := t.TempDir()
 	var stdout, stderr bytes.Buffer
-	subshellAt(root, home, filepath.Join(t.TempDir(), "absent-shell"), os.Environ(), nil, strings.NewReader(""), &stdout, &stderr)
+	subshellAt(root, newAmbient(home, &stderr), filepath.Join(t.TempDir(), "absent-shell"), os.Environ(), nil, strings.NewReader(""), &stdout, &stderr)
 	requireTest(t, strings.Contains(stderr.String(), "bench worktree shell:"), "absent shell stderr = %q, want the start error", stderr.String())
 	span := shellSpan(t, home, root)
 	requireTest(t, span.Attributes[otelrecord.AttrSubjectID] != "", "absent shell span has no assignment id")
@@ -79,7 +79,7 @@ func TestSubshellSignalsLeaveAReclaimableLease(t *testing.T) {
 		home := os.Getenv("BENCH_SUBSHELL_HOME")
 		signalValue := syscall.Signal(mustSubshellSignal(t, os.Getenv("BENCH_SUBSHELL_SIGNAL")))
 		var stdout, stderr bytes.Buffer
-		code := subshellAt(root, home, subshellShell(), os.Environ(), nil, strings.NewReader(""), &stdout, &stderr)
+		code := subshellAt(root, newAmbient(home, &stderr), subshellShell(), os.Environ(), nil, strings.NewReader(""), &stdout, &stderr)
 		requireTest(t, code == 128+int(signalValue), "signalled subshell exit = %d, want %d (stderr %q)", code, 128+int(signalValue), stderr.String())
 		return
 	}

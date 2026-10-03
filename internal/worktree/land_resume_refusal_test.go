@@ -52,12 +52,7 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 				mustWrite(t, filepath.Join(root, ".env"), []byte("caller bytes\n"), 0o600)
 			}},
 			{name: "nested repository", detail: "landing destination has nested repositories", setup: func(t *testing.T, root string) {
-				nested := filepath.Join(root, "nested")
-				mustMkdirAll(t, nested, 0o755)
-				gitRun(t, nested, "init", "-q", "-b", "main")
-				mustWrite(t, filepath.Join(nested, "nested.txt"), []byte("base\n"), 0o644)
-				gitRun(t, nested, "add", "nested.txt")
-				gitRun(t, nested, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "nested")
+				plantNestedRepository(t, root)
 			}},
 		} {
 			t.Run(journey.name+"/"+tc.name, func(t *testing.T) {
@@ -118,7 +113,7 @@ func TestResumeLandCommandSourceRefusalNamesTheCallersResume(t *testing.T) {
 	request := "resume-source-not-clean"
 	f := publicLandingFixture(t, request, "", "")
 	broken := defaultJoins()
-	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
@@ -182,7 +177,7 @@ func TestResumeLandCommandRefusesAbsentOrBehindMarkerAfterDestinationMoves(t *te
 			f := publicLandingFixture(t, request, "", "")
 			working := defaultJoins()
 			broken := working
-			broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+			broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 			if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
 				t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 			}

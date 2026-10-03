@@ -22,8 +22,8 @@ func TestDiscardTargetRefusesASymrefAtTheDiscardedPath(t *testing.T) {
 	discarded := intent.DiscardedRef(discardDay, ref)
 	gitRun(t, root, "symbolic-ref", discarded, ref)
 	args := []string{"--discard-branch", "--target", strings.TrimPrefix(ref, "refs/heads/")}
-	plan := runVerb(t, verbClean, f.callWith(discardJoins(), args...))
-	applied := runVerb(t, verbClean, f.callWith(discardJoins(), append(args, "--apply", plan.mustFingerprint(t))...))
+	plan := runVerb(t, verbClean, discardCall(f.call(args...)))
+	applied := runVerb(t, verbClean, discardCall(f.call(append(args, "--apply", plan.mustFingerprint(t))...)))
 	rows := textRowsBy(t, applied.mustRows(t, cleanupTable), "target")
 	if plan.stderr != "" || applied.stderr != "" || applied.exit != 1 || rowAction(rows, ref) != string(ActionError) || refTip(root, ref) != tip || gitOutput(t, root, "symbolic-ref", "--quiet", discarded) != ref {
 		t.Fatalf("apply exit=%d stdout=%q stderr=%q, want an error row, the branch at %s, and the symref unchanged", applied.exit, applied.stdout, plan.stderr+applied.stderr, tip)
@@ -39,14 +39,14 @@ func TestDiscardTargetRefusesARefPlantedAfterTheRead(t *testing.T) {
 	ref, tip := uniqueBranch(t, root, "a")
 	discarded := intent.DiscardedRef(discardDay, ref)
 	planted := gitOutput(t, root, "rev-parse", "main")
-	j := discardJoins()
+	j := defaultJoins()
 	j.cleanupBoundary = atStep(StepDiscardedRefAbsent, func() error {
 		gitRun(t, root, "update-ref", discarded, planted)
 		return nil
 	})
 	args := []string{"--discard-branch", "--target", strings.TrimPrefix(ref, "refs/heads/")}
-	plan := runVerb(t, verbClean, f.callWith(discardJoins(), args...))
-	applied := runVerb(t, verbClean, f.callWith(j, append(args, "--apply", plan.mustFingerprint(t))...))
+	plan := runVerb(t, verbClean, discardCall(f.call(args...)))
+	applied := runVerb(t, verbClean, discardCall(f.callWith(j, append(args, "--apply", plan.mustFingerprint(t))...)))
 	rows := textRowsBy(t, applied.mustRows(t, cleanupTable), "target")
 	if plan.stderr != "" || applied.stderr != "" || applied.exit != 1 || rowAction(rows, ref) != string(ActionError) || refTip(root, ref) != tip || refTip(root, discarded) != planted {
 		t.Fatalf("apply exit=%d stdout=%q stderr=%q, want an error row, the branch at %s, and the planted ref at %s", applied.exit, applied.stdout, plan.stderr+applied.stderr, tip, planted)
@@ -73,14 +73,14 @@ func TestDiscardTargetNeverFollowsASymrefPlantedAfterTheRead(t *testing.T) {
 			ref, tip := uniqueBranch(t, root, "a")
 			discarded := intent.DiscardedRef(discardDay, ref)
 			targetTip := refTip(root, tc.target)
-			j := discardJoins()
+			j := defaultJoins()
 			j.cleanupBoundary = atStep(StepDiscardedRefAbsent, func() error {
 				gitRun(t, root, "symbolic-ref", discarded, tc.target)
 				return nil
 			})
 			args := []string{"--discard-branch", "--target", strings.TrimPrefix(ref, "refs/heads/")}
-			plan := runVerb(t, verbClean, f.callWith(discardJoins(), args...))
-			applied := runVerb(t, verbClean, f.callWith(j, append(args, "--apply", plan.mustFingerprint(t))...))
+			plan := runVerb(t, verbClean, discardCall(f.call(args...)))
+			applied := runVerb(t, verbClean, discardCall(f.callWith(j, append(args, "--apply", plan.mustFingerprint(t))...)))
 			rows := textRowsBy(t, applied.mustRows(t, cleanupTable), "target")
 			symref, _ := git.Output("-C", root, "symbolic-ref", "--quiet", discarded)
 			if plan.stderr != "" || applied.stderr != "" {
@@ -106,14 +106,14 @@ func TestDiscardTargetNeverFollowsASymrefPlantedBeforeTheDelete(t *testing.T) {
 	f := repoHome{root, home}
 	ref, tip := uniqueBranch(t, root, "a")
 	discarded := intent.DiscardedRef(discardDay, ref)
-	j := discardJoins()
+	j := defaultJoins()
 	j.cleanupBoundary = atStep(StepDiscardedBranchDelete, func() error {
 		gitRun(t, root, "symbolic-ref", ref, discarded)
 		return nil
 	})
 	args := []string{"--discard-branch", "--target", strings.TrimPrefix(ref, "refs/heads/")}
-	plan := runVerb(t, verbClean, f.callWith(discardJoins(), args...))
-	applied := runVerb(t, verbClean, f.callWith(j, append(args, "--apply", plan.mustFingerprint(t))...))
+	plan := runVerb(t, verbClean, discardCall(f.call(args...)))
+	applied := runVerb(t, verbClean, discardCall(f.callWith(j, append(args, "--apply", plan.mustFingerprint(t))...)))
 	rows := textRowsBy(t, applied.mustRows(t, cleanupTable), "target")
 	if plan.stderr != "" || applied.stderr != "" || refTip(root, discarded) != tip {
 		t.Fatalf("apply exit=%d stdout=%q stderr=%q, want %s kept at %s", applied.exit, applied.stdout, plan.stderr+applied.stderr, discarded, tip)
@@ -141,7 +141,7 @@ func TestDiscardTargetRefusesAFaultedCandidate(t *testing.T) {
 		return gitOutput(t, root, "for-each-ref", "--format=%(refname) %(objectname) %(symref)")
 	}
 	refs := identities()
-	plan := runVerb(t, verbClean, f.callWith(discardJoins(), "--discard-branch", "--target", short))
+	plan := runVerb(t, verbClean, discardCall(f.call("--discard-branch", "--target", short)))
 	if row := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")[short]; plan.exit != 1 || plan.stderr != "" || len(row) != len(cleanupFields) || row["action"] != string(ActionError) || !strings.Contains(row["detail"], "symref") {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q, want an error row naming the symref and no fingerprint", plan.exit, plan.stdout, plan.stderr)
 	}
@@ -152,7 +152,7 @@ func TestDiscardTargetRefusesAFaultedCandidate(t *testing.T) {
 		apply []string
 		code  int
 	}{{[]string{"--apply", strings.Repeat("a", 64)}, 1}, {[]string{"--apply-current"}, 2}} {
-		applied := runVerb(t, verbClean, f.callWith(discardJoins(), append([]string{"--discard-branch", "--target", short}, tc.apply...)...))
+		applied := runVerb(t, verbClean, discardCall(f.call(append([]string{"--discard-branch", "--target", short}, tc.apply...)...)))
 		if applied.exit != tc.code || strings.Contains(applied.stdout, ",removed,") || identities() != refs {
 			t.Fatalf("%s exit=%d stdout=%q stderr=%q, want exit %d and no ref change", tc.apply[0], applied.exit, applied.stdout, applied.stderr, tc.code)
 		}
@@ -169,11 +169,11 @@ func TestDiscardTargetRequalifiesAfterARecordedRemoval(t *testing.T) {
 	ref, holder := recordedBranch(t, root, home, intent.StateActive, false)
 	tip := refTip(root, ref)
 	args := []string{"--discard-branch", "--target", branchSegment(holder), "--target", strings.TrimPrefix(ref, "refs/heads/")}
-	plan := runVerb(t, verbClean, f.callWith(discardJoins(), args...))
+	plan := runVerb(t, verbClean, discardCall(f.call(args...)))
 	if row := textRowsBy(t, plan.mustRows(t, cleanupTable), "target")[ref]; plan.stderr != "" || len(row) != len(cleanupFields) || !strings.HasPrefix(row["detail"], classField+string(classSubsumed)+holderField+holder) {
 		t.Fatalf("plan = %q stderr=%q, want %s subsumed by %s", plan.stdout, plan.stderr, ref, holder)
 	}
-	applied := runVerb(t, verbClean, f.callWith(discardJoins(), append(args, "--apply", plan.mustFingerprint(t))...))
+	applied := runVerb(t, verbClean, discardCall(f.call(append(args, "--apply", plan.mustFingerprint(t))...)))
 	rows := textRowsBy(t, applied.mustRows(t, cleanupTable), "target")
 	if applied.stderr != "" || refTip(root, holder) != "" {
 		t.Fatalf("apply stdout=%q stderr=%q, want the recorded holder %s removed first", applied.stdout, applied.stderr, holder)

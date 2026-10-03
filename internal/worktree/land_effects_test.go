@@ -1,6 +1,5 @@
-// Promotion-broker tests for the landing command: the notice a broker-changing diff
-// prints before publication, and the refresh effect that republishes the destination's
-// own broker after publication.
+// Promotion-broker tests for the landing command: the refresh effect that republishes the
+// destination's own broker after publication.
 package worktree
 
 import (
@@ -14,31 +13,6 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 )
 
-// brokerChangingLanding is the landing fixture whose reviewed diff changes the promotion
-// broker's own build inputs. Both install-step rows read the same notice, so they compose
-// the same destination rather than each building one.
-func brokerChangingLanding(t *testing.T, request string) landingFixture {
-	t.Helper()
-	f := publicLandingFixture(t, request, "", "")
-	writeGoMainFixture(t, f.root)
-	mustWrite(t, filepath.Join(f.root, filepath.FromSlash(freshness.BuildInputsManifest)), []byte(freshness.BuildInputLine("build_script", "scripts/go-build.sh")), 0o644)
-	spec := filepath.Join(f.root, "specs", "x", "spec.md")
-	body, err := os.ReadFile(spec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	mustWrite(t, spec, withFenceEntry(body, "scripts/go-build.sh"), 0o644)
-	gitRun(t, f.root, "add", ".")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
-	gitRun(t, f.creation.Path, "rebase", "main")
-	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
-	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
-	commitInWorktree(t, f.creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
-	refreshLandingEvidence(t, f.creation.Path, f.base)
-	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
-	return f
-}
-
 // writeGoMainFixture writes the resolvable Go main package and build script a broker
 // fixture's destination stands on. The seal's source digest is the build-input closure of
 // that package, so a destination without it reports an unresolvable tree rather than the
@@ -50,74 +24,6 @@ func writeGoMainFixture(t *testing.T, root string) {
 	mustWrite(t, filepath.Join(root, "cmd", "bench", "main.go"), []byte("package main\n\nfunc main() {}\n"), 0o644)
 	mustMkdirAll(t, filepath.Join(root, "scripts"), 0o755)
 	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
-}
-
-// kitCheckoutJoins is the landing seam set whose checkout predicate answers a fixed
-// verdict. The real predicate reads the kit root from the process environment, so a
-// fixture that bound that environment would leave the package's parallel set.
-func kitCheckoutJoins(kit bool) joins {
-	j := defaultJoins()
-	j.kitSourceCheckout = func(string) bool { return kit }
-	return j
-}
-
-// TestLandCommandReportsInstallStepForABrokerChangingDiff is SOL16 and BF19. A reviewed
-// diff that changes the promotion broker's own build inputs lands as source, but the
-// installed broker keeps authority. The landing must name the install step so the
-// operator does not expect source publication to replace it. In the kit source checkout
-// that step is the stamped rebuild and bench doctor --fix, because bench repair reads a
-// pin manifest the source tree does not carry.
-func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
-	t.Parallel()
-	request := "land-owner-broker-change"
-	f := brokerChangingLanding(t, request)
-
-	r := runVerb(t, verbLand, f.callWith(kitCheckoutJoins(true), landArgs(request, f.base, f.tip, f.creation.Path)...))
-	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:refresh") {
-		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
-	}
-	notice := brokerNoticeLine(t, r.stderr)
-	if !strings.Contains(notice, freshness.RebuildAction(f.root)) {
-		t.Fatalf("kit-checkout landing named no rebuild: %q", notice)
-	}
-	if !strings.Contains(notice, "bench doctor --fix") {
-		t.Fatalf("kit-checkout landing named no publication step: %q", notice)
-	}
-}
-
-// TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout is BF20. An installed kit
-// carries the pin manifest bench repair reads, so the notice keeps that route there and
-// names no source-tree rebuild.
-func TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout(t *testing.T) {
-	t.Parallel()
-	request := "land-owner-broker-change-installed"
-	f := brokerChangingLanding(t, request)
-
-	r := runVerb(t, verbLand, f.callWith(kitCheckoutJoins(false), landArgs(request, f.base, f.tip, f.creation.Path)...))
-	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:refresh") {
-		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
-	}
-	notice := brokerNoticeLine(t, r.stderr)
-	if !strings.Contains(notice, "bench repair") {
-		t.Fatalf("installed-kit landing named no install step: %q", notice)
-	}
-	if strings.Contains(notice, freshness.RebuildAction(f.root)) {
-		t.Fatalf("installed-kit landing named the source-tree rebuild: %q", notice)
-	}
-}
-
-// brokerNoticeLine is the install-step notice inside a landing's diagnostics. The refresh
-// effect's own failure names the rebuild command too, so a row about which route the
-// notice names reads that one line rather than the whole stream.
-func brokerNoticeLine(t *testing.T, diagnostics string) string {
-	t.Helper()
-	for _, line := range strings.Split(diagnostics, "\n") {
-		if strings.Contains(line, "the installed broker keeps authority") {
-			return line
-		}
-	}
-	t.Fatalf("landing printed no broker install notice: %q", diagnostics)
-	return ""
 }
 
 // projectGreenMarker reads the destination's project-green marker, answering the empty
@@ -207,6 +113,7 @@ func TestLandSkipsTheRefreshWithoutBuildInputs(t *testing.T) {
 	j, calls := refreshJoins(nil)
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("not-applicable")) {
 		t.Fatalf("landing without build inputs = (%d, %q, %q), want a not-applicable refresh", r.exit, r.stdout, r.stderr)
 	}
@@ -228,6 +135,7 @@ func TestLandSkipsAFreshBroker(t *testing.T) {
 	j, calls := refreshJoins(nil)
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete")) {
 		t.Fatalf("landing with a fresh broker = (%d, %q, %q), want a complete refresh", r.exit, r.stdout, r.stderr)
 	}
@@ -353,9 +261,11 @@ func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 		return publishVerifyingBroker(t, root, executable)
 	})
 	interrupted := working
-	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	interrupted.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 
-	if r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
+	r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 0 {

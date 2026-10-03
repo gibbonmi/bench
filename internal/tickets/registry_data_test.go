@@ -2,6 +2,7 @@ package tickets
 
 import (
 	"reflect"
+	"slices"
 	"sort"
 	"testing"
 )
@@ -70,7 +71,7 @@ func TestBoundFilesResolvesAtASegmentBoundary(t *testing.T) {
 // the gate with a registry nobody updated.
 func TestCommandRowsBindTheHelpProjectionAndEnvelopeCases(t *testing.T) {
 	for _, file := range []string{"cmd/bench/command_registry.go", "cmd/bench/command_registry_test.go"} {
-		if !holdsString(BoundFiles("internal/harnesses/harnesses.go"), file) {
+		if !slices.Contains(BoundFiles("internal/harnesses/harnesses.go"), file) {
 			t.Errorf("BoundFiles for a command package omits %q", file)
 		}
 	}

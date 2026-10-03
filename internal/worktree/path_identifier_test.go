@@ -31,7 +31,7 @@ func TestListActiveRowsUseTargetSlot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode list: %v\n%s", err, out)
 	}
-	rows, err := document.Rows("worktrees")
+	rows, err := document.Rows(listTable)
 	if err != nil || len(rows) != 3 {
 		t.Fatalf("worktrees rows = %#v, %v, want three rows", rows, err)
 	}
@@ -84,7 +84,7 @@ func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	if !slices.ContainsFunc(actions, func(action axitest.HelpAction) bool { return action.Cmd == "bench worktree path <target>" }) {
 		t.Fatalf("list advertised no target-slot path action:\n%s", listed)
 	}
-	rows, err := document.Rows("worktrees")
+	rows, err := document.Rows(listTable)
 	if err != nil || len(rows) != 1 {
 		t.Fatalf("worktrees rows = %#v, %v, want one row", rows, err)
 	}

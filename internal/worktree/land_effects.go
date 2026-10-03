@@ -40,19 +40,28 @@ type effectRow struct {
 // record meet, so the first run and the resume state the same thing about the same tree.
 // A failed effect reaches the existing incomplete render under its own step name, which
 // carries the resume command every other incomplete step carries.
-func landedAfterEffects(j joins, root string, result landing.ReviewedResult, specArg, path, assignment string, active bool, records int, stdout, stderr io.Writer) int {
+//
+// brokerChanged states that the landed diff changes the promotion broker's build inputs.
+// The broker notice prints after the effects row, so it reads the refresh result. A resume
+// has no source worktree to read, so it passes false.
+func landedAfterEffects(j joins, a ambient, root string, result landing.ReviewedResult, specArg, path, assignment string, active, brokerChanged bool, records int, stdout, stderr io.Writer) int {
 	refresh := refreshBroker(j, root, stderr)
 	// A failed effect stops every later effect, so the cleanup never starts and never
 	// touches a checkout. It reports pending, which is the word for an effect that has
 	// not run rather than one that ran and did nothing.
 	cleanup := effectPending
 	if refresh != effectFailed {
-		cleanup = cleanLandedSiblings(j, root, result.DestinationBase, stderr)
+		cleanup = cleanLandedSiblings(j, a, root, result.DestinationBase, stderr)
 	}
 	rows := []effectRow{{effect: refreshEffect, result: refresh}, {effect: cleanupEffect, result: cleanup}}
 	fmt.Fprintf(stdout, "effects[%d]{effect,result}:\n", len(rows))
 	for _, row := range rows {
 		fmt.Fprintf(stdout, "  %s,%s\n", row.effect, row.result)
+	}
+	if brokerChanged {
+		if notice := brokerChangeNotice(a.kit, root, refresh); notice != "" {
+			fmt.Fprintln(stderr, notice)
+		}
 	}
 	for _, row := range rows {
 		if row.result == effectFailed {
@@ -108,7 +117,7 @@ func refreshBroker(j joins, root string, stderr io.Writer) string {
 // A destination base the landing could not resolve names no scope, and a repository-wide
 // removal is not what a landing was asked for. So there is nothing this landing owns to
 // clean, and the effect completes without a mutation.
-func cleanLandedSiblings(j joins, root, base string, stderr io.Writer) string {
+func cleanLandedSiblings(j joins, a ambient, root, base string, stderr io.Writer) string {
 	if base == "" {
 		return effectComplete
 	}
@@ -122,7 +131,7 @@ func cleanLandedSiblings(j joins, root, base string, stderr io.Writer) string {
 	if len(set.rows) == 0 {
 		return effectComplete
 	}
-	if _, err := applyLandedSet(j, root, set, options, base); err != nil {
+	if _, err := applyLandedSet(j, a, root, set, options, base); err != nil {
 		fmt.Fprintln(stderr, "landing cleanup failed: "+sanitize.Controls(err.Error()))
 		return effectFailed
 	}

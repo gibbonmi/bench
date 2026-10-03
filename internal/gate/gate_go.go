@@ -12,16 +12,31 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/racetests"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// raceTests is the gate view of the authoritative race-test registry.
-var raceTests = racetests.Tests
+// raceTest is one regression test the race phase must execute.
+type raceTest struct {
+	PackagePath string
+	Name        string
+}
+
+// raceTests names the regression tests that need race instrumentation because the
+// ordinary suite cannot observe their concurrent failure modes.
+var raceTests = []raceTest{
+	{PackagePath: "./internal/worktree", Name: "TestConcurrentCleanupRecordsOneTransaction"},
+	{PackagePath: "./internal/worktree", Name: "TestParallelJourneysShareTheHarnessSafely"},
+	{PackagePath: "./internal/worktree", Name: "TestParallelJourneysRecordEverySelection"},
+	{PackagePath: "./internal/guards", Name: "TestScanTimeoutPreservesPartialRowsAndHonestCounts"},
+	{PackagePath: "./internal/guards", Name: "TestScanEnumerationTimeoutUsesUnknownCounts"},
+	{PackagePath: "./internal/census", Name: "TestConcurrentRecordsKeepEveryLine"},
+	{PackagePath: "./internal/responsebound", Name: "TestOwnerSerializesConcurrentWrites"},
+}
 
 const gateGoUsage = "usage: bench gate-go <gofmt|test> [root]"
 
@@ -178,20 +193,11 @@ func raceTestNames() []string {
 func raceDriverArgv() []string {
 	argv := BaseTestArgv("", "-race", "-v")
 	for _, test := range raceTests {
-		if !contains(argv, test.PackagePath) {
+		if !slices.Contains(argv, test.PackagePath) {
 			argv = append(argv, test.PackagePath)
 		}
 	}
 	return append(argv, "-run", raceTestFilter())
-}
-
-func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
 }
 
 func declaresRaceTest(root string) bool {

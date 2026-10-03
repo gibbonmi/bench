@@ -161,9 +161,9 @@ func TestVerbResultRowsDecodeTheWholeDocument(t *testing.T) {
 	result := runVerb(t, verbList, call)
 	document, err := axitest.DecodeDocument(result.stdout)
 	mustNoError(t, err)
-	want, err := document.Rows(selectedTable)
+	want, err := document.Rows(listTable)
 	mustNoError(t, err)
-	rows, err := readVerbRows(result.stdout, selectedTable)
+	rows, err := readVerbRows(result.stdout, listTable)
 	if err != nil || len(rows) != 2 || !reflect.DeepEqual(rows, want) {
 		t.Fatalf("rows = %#v, %v; want the two decoded rows %#v", rows, err, want)
 	}
@@ -171,9 +171,9 @@ func TestVerbResultRowsDecodeTheWholeDocument(t *testing.T) {
 
 func TestVerbResultRowsRefuseAPartialDocument(t *testing.T) {
 	t.Parallel()
-	table, err := toon.Table(selectedTable, []string{"id"}, [][]string{{"one"}})
+	table, err := toon.Table(listTable, []string{"id"}, [][]string{{"one"}})
 	mustNoError(t, err)
-	if rows, err := readVerbRows(table+"a line outside the grammar\n", selectedTable); err == nil {
+	if rows, err := readVerbRows(table+"a line outside the grammar\n", listTable); err == nil {
 		t.Fatalf("rows = %#v with no error, want a decode error", rows)
 	}
 }
@@ -181,7 +181,7 @@ func TestVerbResultRowsRefuseAPartialDocument(t *testing.T) {
 func TestVerbResultMustRowsFailsOnAReaderError(t *testing.T) {
 	t.Parallel()
 	recorder := &verbRecorder{}
-	verbResult{stdout: "a line outside the grammar\n"}.mustRows(recorder, selectedTable)
+	verbResult{stdout: "a line outside the grammar\n"}.mustRows(recorder, listTable)
 	if len(recorder.failures) != 1 {
 		t.Fatalf("recorder failures = %q, want one", recorder.failures)
 	}
@@ -363,16 +363,16 @@ func TestVerbRunnerReturnsTheExecAssignment(t *testing.T) {
 
 func TestVerbCallRefusesAKitValue(t *testing.T) {
 	t.Parallel()
-	err := checkVerbCall(verbCall{kit: t.TempDir()})
-	if want := "verb runner: a kit value waits for the seam reduction spec"; err == nil || err.Error() != want {
+	err := checkVerbCall(verbPath, verbCall{kit: t.TempDir()})
+	if want := "verb runner: the path verb takes no kit value"; err == nil || err.Error() != want {
 		t.Fatalf("checkVerbCall = %v, want %q", err, want)
 	}
 }
 
 func TestVerbCallRefusesAClockValue(t *testing.T) {
 	t.Parallel()
-	err := checkVerbCall(verbCall{clock: time.Now})
-	if want := "verb runner: a clock value waits for the seam reduction spec"; err == nil || err.Error() != want {
+	err := checkVerbCall(verbPath, verbCall{clock: time.Now})
+	if want := "verb runner: the path verb takes no clock value"; err == nil || err.Error() != want {
 		t.Fatalf("checkVerbCall = %v, want %q", err, want)
 	}
 }

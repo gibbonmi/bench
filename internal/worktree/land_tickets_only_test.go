@@ -2,8 +2,6 @@
 package worktree
 
 import (
-	"context"
-	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -85,19 +83,10 @@ func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
 func TestResumeLandCommandTicketsOnlySpecCompletesAnInterruptedClose(t *testing.T) {
 	t.Parallel()
 	request := "tickets-only-resume"
-	f := ticketsOnlyLandingFixture(t, request)
-	working := defaultJoins()
-	broken := working
-	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
-		return errors.New("injected marker interruption")
-	}
-	r := runVerb(t, verbLand, f.callWith(broken, ticketsOnlyLandArgs(request, f.base, f.tip, "t", f.creation.Path)...))
-	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
-		t.Fatalf("interrupted tickets-only landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
-	published := gitOutput(t, f.root, "rev-parse", "main")
+	f := ticketsOnlyFolderFixture(t, markerLandingFixture(t, request, false))
+	_, published := interruptLandingAtMarker(t, f, ticketsOnlyLandArgs(request, f.base, f.tip, "t", f.creation.Path)...)
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "t", f.creation.Path}
-	r = runVerb(t, verbLand, f.callWith(working, args...))
+	r := runVerb(t, verbLand, f.call(args...))
 	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
 		t.Fatalf("tickets-only resume = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
@@ -119,7 +108,7 @@ func TestResumeLandCommandTicketsOnlyCloseSurvivesTheConsumedCheckout(t *testing
 	f := ticketsOnlyLandingFixture(t, request)
 	working := defaultJoins()
 	broken := working
-	broken.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 	r := runVerb(t, verbLand, f.callWith(broken, ticketsOnlyLandArgs(request, f.base, f.tip, "t", f.creation.Path)...))
 	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
 		t.Fatalf("interrupted release = (%d, %q, %q)", r.exit, r.stdout, r.stderr)

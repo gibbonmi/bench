@@ -116,7 +116,7 @@ An expected TDD red is not an attempt. An individual tool call is not an attempt
 A diagnostic-only action is not a completed implementation-and-verification attempt.
 
 After two completed attempts with no progress, reassess before the next implementation attempt.
-State the changed hypothesis and the next discriminating check. After reassessment, the ticket author can invoke `$bench-debug`.
+State the changed hypothesis and the next discriminating check. [Debug integration](../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) owns the debug step of each repair.
 
 Stop when the run exhausts a selected numeric cap.
 Stop dependent implementation for a required user decision.

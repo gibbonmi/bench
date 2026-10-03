@@ -295,11 +295,11 @@ func renderPoolReclaimApplied(applied []poolKeyVerdict, fingerprint string) (str
 			removed++
 		}
 	}
-	table, err := toon.Table("pool_reclaim", poolReclaimFields, poolRows(applied))
+	table, err := toon.Table(poolReclaimTable, poolReclaimFields, poolRows(applied))
 	if err != nil {
 		return "", err
 	}
-	aggregate, err := toon.TableTyped("pool_reclaim_applied", []string{"keys", "removed", "retained", "fingerprint"},
+	aggregate, err := toon.TableTyped(poolReclaimAppliedTable, []string{"keys", "removed", "retained", "fingerprint"},
 		[][]any{{len(applied), removed, len(applied) - removed, fingerprint}})
 	if err != nil {
 		return "", err
@@ -330,12 +330,12 @@ func renderPoolReclaimStale() (string, error) {
 // rather than an invitation.
 func renderPoolReclaim(plan poolReclaimPlan) (string, error) {
 	rows := poolRows(plan.verdicts)
-	table, err := toon.Table("pool_reclaim", poolReclaimFields, rows)
+	table, err := toon.Table(poolReclaimTable, poolReclaimFields, rows)
 	if err != nil {
 		return "", err
 	}
 	reclaimable := plan.reclaimableCount()
-	aggregate, err := toon.TableTyped("pool_reclaim_aggregate", []string{"keys", "reclaimable", "retained", "fingerprint"},
+	aggregate, err := toon.TableTyped(poolReclaimAggregateTable, []string{"keys", "reclaimable", "retained", "fingerprint"},
 		[][]any{{len(plan.verdicts), reclaimable, len(plan.verdicts) - reclaimable, plan.fingerprint}})
 	if err != nil {
 		return "", err

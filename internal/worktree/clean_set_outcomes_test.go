@@ -33,14 +33,14 @@ func TestCleanSetPartialApply(t *testing.T) {
 	t.Parallel()
 	f := removableSetFixture(t, 3)
 	j := defaultJoins()
-	set := planExplicitSet(j, f.root, explicitIdentities(f.creations), CleanupOptions{})
+	set := planExplicitSet(j, f.ambient(), f.root, explicitIdentities(f.creations), CleanupOptions{})
 	if set.fingerprint == "" || len(set.rows) != 3 {
 		t.Fatalf("explicit set = %#v, want three applicable members", set)
 	}
 	stop := errors.New("stop before the second member")
 	faultAtSecondLock(&j, stop)
 
-	plans, err := applyExplicitSet(j, f.root, set, CleanupOptions{})
+	plans, err := applyExplicitSet(j, f.ambient(), f.root, set, CleanupOptions{})
 	if !errors.Is(err, stop) {
 		t.Fatalf("apply error = %v, want the injected transaction fault", err)
 	}
@@ -67,7 +67,7 @@ func TestCleanSetUnstartedOutcomes(t *testing.T) {
 	t.Parallel()
 	f := removableSetFixture(t, 3)
 	j := defaultJoins()
-	set := planExplicitSet(j, f.root, explicitIdentities(f.creations), CleanupOptions{})
+	set := planExplicitSet(j, f.ambient(), f.root, explicitIdentities(f.creations), CleanupOptions{})
 	if set.fingerprint == "" || len(set.rows) != 3 {
 		t.Fatalf("explicit set = %#v, want three applicable members", set)
 	}
@@ -236,7 +236,7 @@ func TestCleanSetRetainedMember(t *testing.T) {
 		t.Parallel()
 		f := retainedMemberFixture(t)
 		j := defaultJoins()
-		set := planExplicitSet(j, f.root, []string{f.removable.Assignment.ID, f.retained.Assignment.ID}, CleanupOptions{})
+		set := planExplicitSet(j, f.ambient(), f.root, []string{f.removable.Assignment.ID, f.retained.Assignment.ID}, CleanupOptions{})
 		if set.fingerprint == "" || len(set.rows) != 2 {
 			t.Fatalf("explicit set = %#v, want two members", set)
 		}
@@ -245,7 +245,7 @@ func TestCleanSetRetainedMember(t *testing.T) {
 		// decides nothing about the member being removed.
 		mustWrite(t, filepath.Join(f.retained.Path, "ignored-two.txt"), []byte("more residue\n"), 0o644)
 
-		plans, err := applyExplicitSet(j, f.root, set, CleanupOptions{})
+		plans, err := applyExplicitSet(j, f.ambient(), f.root, set, CleanupOptions{})
 		if err != nil {
 			t.Fatalf("apply error = %v, want the retained member's drift to decide nothing", err)
 		}
@@ -263,13 +263,13 @@ func TestCleanSetRetainedMember(t *testing.T) {
 		t.Parallel()
 		f := retainedMemberFixture(t)
 		j := defaultJoins()
-		set := planExplicitSet(j, f.root, []string{f.removable.Assignment.ID, f.retained.Assignment.ID}, CleanupOptions{})
+		set := planExplicitSet(j, f.ambient(), f.root, []string{f.removable.Assignment.ID, f.retained.Assignment.ID}, CleanupOptions{})
 		if set.fingerprint == "" || len(set.rows) != 2 {
 			t.Fatalf("explicit set = %#v, want two members", set)
 		}
 		mustWrite(t, filepath.Join(f.removable.Path, "removable.txt"), []byte("drifted\n"), 0o644)
 
-		plans, err := applyExplicitSet(j, f.root, set, CleanupOptions{})
+		plans, err := applyExplicitSet(j, f.ambient(), f.root, set, CleanupOptions{})
 		if !errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want a preflight refusal", err)
 		}
@@ -299,7 +299,7 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 		t.Parallel()
 		f := removableSetFixture(t, 2)
 		j := defaultJoins()
-		set := planExplicitSet(j, f.root, explicitIdentities(f.creations), CleanupOptions{})
+		set := planExplicitSet(j, f.ambient(), f.root, explicitIdentities(f.creations), CleanupOptions{})
 		if set.fingerprint == "" || len(set.rows) != 2 {
 			t.Fatalf("explicit set = %#v, want two applicable members", set)
 		}

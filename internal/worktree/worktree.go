@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func textDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
@@ -252,13 +253,12 @@ func cleanInvocationError(stdout io.Writer) int {
 // mutation unless args supply a matching apply fingerprint or --apply-current for an
 // eligible unclaimed set. It returns 2 for invalid grammar and 1 for a refused plan.
 func CleanCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return cleanCommandWith(defaultJoins(), root, home, args, stdout, stderr)
+	return cleanCommandWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// cleanCommandWith is CleanCommand with the seam set resolved explicitly at the caller's
-// boundary.
-func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
-	j.home = home
+// cleanCommandWith is CleanCommand with the seam set and the ambient value resolved
+// explicitly at the caller's boundary.
+func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 1 && args[0] == "--help" {
 		fmt.Fprintln(stdout, "usage: "+usage.WorktreeClean)
 		return 0
@@ -324,7 +324,7 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 			return 1
 		}
 		if fingerprint != "" {
-			plans, applyErr := applyLandedSet(j, root, set, options, "")
+			plans, applyErr := applyLandedSet(j, a, root, set, options, "")
 			if renderErr := applyOutcomes(stdout, plans, staleRows(fingerprint, plans), applyErr, landedReplan(options)); renderErr != nil {
 				fmt.Fprintf(stderr, "bench worktree clean: %v\n", renderErr)
 				return 1
@@ -341,11 +341,11 @@ func cleanCommandWith(j joins, root, home string, args []string, stdout, stderr 
 		return 0
 	}
 	if len(selection.targets) > 0 {
-		return cleanExplicitSet(j, root, selection, stdout, stderr)
+		return cleanExplicitSet(j, a, root, selection, stdout, stderr)
 	}
 	plan, err := planExplicitWith(j, root, target, options)
 	if err == nil && fingerprint != "" {
-		plan, err = applyExplicitWith(j, root, target, fingerprint, options)
+		plan, err = applyExplicitWith(j, a, root, target, fingerprint, options)
 	}
 	if errors.Is(err, errStaleFingerprint) {
 		_ = renderCleanup(stdout, plan)
@@ -384,13 +384,12 @@ func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupR
 // assignment selected by its request token and path. It returns 2 before lifecycle
 // mutation when the required --request grammar is invalid.
 func ReleaseCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return releaseCommandWith(defaultJoins(), root, home, args, stdout, stderr)
+	return releaseCommandWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// releaseCommandWith is ReleaseCommand with the seam set resolved explicitly at the
-// caller's boundary.
-func releaseCommandWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
-	j.home = home
+// releaseCommandWith is ReleaseCommand with the seam set and the ambient value resolved
+// explicitly at the caller's boundary.
+func releaseCommandWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 1 && args[0] == "--help" {
 		fmt.Fprintln(stdout, "usage: "+usage.WorktreeRelease)
 		return 0
@@ -401,16 +400,16 @@ func releaseCommandWith(j joins, root, home string, args []string, stdout, stder
 	}
 	// The record opens after the grammar answers, so a usage refusal records nothing.
 	var assignment string
-	finishSpan := beginVerbSpan(home, root, otelReleaseSeam)
-	exit := releaseAttributed(&assignment, j, releaseRoot(root), args, stdout, stderr)
+	finishSpan := beginVerbSpan(a.home, root, otelReleaseSeam)
+	exit := releaseAttributed(&assignment, j, a, releaseRoot(root), args, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit
 }
 
 // releaseAttributed is the release verb's own work, with the released assignment written
 // to assignment as the receipt names it.
-func releaseAttributed(assignment *string, j joins, root string, args []string, stdout, stderr io.Writer) int {
-	receipt, err := releaseAssignment(j, root, args[1], resolveVerbOperand(root, args[2]))
+func releaseAttributed(assignment *string, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
+	receipt, err := releaseAssignment(j, a, root, args[1], resolveVerbOperand(root, args[2]))
 	if err == nil {
 		*assignment = receipt.Tracked
 		return finishReleaseReceipt(root, stdout, receipt)
@@ -617,14 +616,14 @@ func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) i
 	// opens once the repository is known: a grammar answer creates nothing to record.
 	var assignment string
 	finishSpan := beginVerbSpan(home, root, otelCreateSeam)
-	exit := createAttributed(&assignment, parsed, root, home, args, stdout, stderr)
+	exit := createAttributed(&assignment, parsed, root, home, currentTime(), args, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit
 }
 
-// createAttributed is the create verb's own work, with the assignment the record names
-// written to assignment once the creation resolves it.
-func createAttributed(assignment *string, parsed usage.Result, root, home string, args []string, stdout, stderr io.Writer) int {
+// createAttributed is the create verb's own work at the entry's instant, with the
+// assignment the record names written to assignment once the creation resolves it.
+func createAttributed(assignment *string, parsed usage.Result, root, home string, now time.Time, args []string, stdout, stderr io.Writer) int {
 	from := parsed.Flags["--from"]
 	// The two flags name two starts, so the pair refuses before the refresh runs: a fetch
 	// that moved the default branch would already have taken effect by the refusal.
@@ -653,10 +652,9 @@ func createAttributed(assignment *string, parsed usage.Result, root, home string
 		}
 	}
 	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
-	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime(), resolveStart)
-	if err == nil {
-		*assignment = creation.Assignment.ID
-	}
+	creation, err := createAt(defaultJoins(), root, home, request, label, nil, now, resolveStart)
+	// A failed creation returns the zero Creation, so its empty ID leaves the record unnamed.
+	*assignment = creation.Assignment.ID
 	if err != nil {
 		if fromErr != nil {
 			return printTargetRefusal(stderr, createGrammar.Cmd, err)
@@ -664,7 +662,7 @@ func createAttributed(assignment *string, parsed usage.Result, root, home string
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1
 	}
-	out, err := toon.Table("worktree_create", []string{"path", "assignment", "state"}, [][]string{{creation.Path, creation.Assignment.ID, string(creation.Assignment.State)}})
+	out, err := toon.Table(createTable, []string{"path", "assignment", "state"}, [][]string{{creation.Path, creation.Assignment.ID, string(creation.Assignment.State)}})
 	if err != nil {
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1

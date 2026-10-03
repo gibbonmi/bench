@@ -1,7 +1,8 @@
 # Bench platform assessment — 2026-08-13
 
 Assessment target: `main` at `287bfbf9`, plus the dirty assessment artifacts
-named below. This refreshes the 2026-08-12 assessment after the canary-ownership,
+named below. The release publication claims are re-graded against `main` at
+`6d8191dc`. This refreshes the 2026-08-12 assessment after the canary-ownership,
 serial-gate, and worktree-fixture work. Six read-only area sweeps
 covered adoption and packaging, workflow guidance, enforcement, CLI/Go core,
 gate authority and records, and live operational state. Load-bearing claims
@@ -18,11 +19,13 @@ Severity in this report:
 **NO-GO for public release or external deployment.** The July critical
 worktree, gate-cache, shift-recovery, packaging, and unknown-hook failures are
 substantially repaired. Canary inventory and planted-reason proof now have
-separate truthful owners, and the source tree's full gate is green. Release is
-still blocked because the tag workflow bypasses the governed, resumable
-publication lifecycle.
+separate truthful owners, and the source tree's full gate is green. The tag
+workflow runs the governed, resumable publication lifecycle. Release is still
+blocked because no immutable version has passed the release and bank
+reassessment gate in `ROADMAP.md`. The repository has no tag (M-A1), and FT306
+owns the qualified release.
 
-Current inventory: **1 high, 7 med, and 4 low** findings. Live defect-shaped
+Current inventory: **0 high, 7 med, and 4 low** findings. Live defect-shaped
 roadmap work is prioritized in `capture/FIXES.md`; features and decision-only
 opportunities remain solely on the roadmap.
 
@@ -38,7 +41,7 @@ commit subjects.
 | 3. Shift failure recovery and truthful completion | **FIXED ✓** | Stage errors propagate (`internal/shift/shift.go:55-75`); adapter and commit failures select recovery evidence instead of success/teardown (`internal/shift/loop.go:202-206,251-289,316-318`). |
 | 4. Static guard metadata and aggregate deadline | **FIXED ✓** | Guard descriptions are parsed, not executed (`internal/guards/guards.go:103-153`), under one bounded scan (`internal/guards/guards.go:164-200`). |
 | 5. Clean package staging and runtime selection | **FIXED ✓** | Release staging omits source `prepare` (`scripts/build-release-evidence.mjs:221`); the launcher chooses the selected platform package before development `dist` (`bin/bench.sh:164-180`). |
-| 6. Gate-backed release and security/package evidence | **PARTIAL ✓** | Native verification and publish preflight are ordered before publication (`.github/workflows/release.yml:12-47`), but the publish jobs still call raw `npm publish` instead of `bench release` (`.github/workflows/release.yml:49-73`). |
+| 6. Gate-backed release and security/package evidence | **FIXED, live run unexercised ✓** | Native verification and publish preflight are ordered before publication (`.github/workflows/release.yml:12-47`), and the publish job runs `bench release submit` (`.github/workflows/release.yml:49-80`). |
 | 7. Installed shim/adoption routing and fresh-clone runtime | **FIXED ✓** | Adoption commands route to the installed target before local-wrapper preference (`internal/adopt/doctor.go:110-142`); platform resolution precedes development fallback (`bin/bench.sh:164-180`). |
 | 8. One-command bootstrap | **PARTIAL ✓** | `bench setup` now seeds a project-local profile transactionally (`internal/adopt/setup.go:289-360`), but no public package/tag exists and README presents installed harness commands before installation (`README.md:9,176-194`). |
 | 9. Transactional relink/upgrade/unlink | **PARTIAL ✓** | Link stages and promotes atomically (`internal/adopt/link_transaction.go:164-190,370-399`) and partial unlink exits nonzero (`internal/adopt/unlink.go:55-68`); uninstall guidance can still delete a foreign executable. |
@@ -51,11 +54,14 @@ commit subjects.
 
 ### Adoption and packaging
 
-**H-A1 — Release automation bypasses its governed publisher.** The runbook
-requires `bench release submit` and `promote`, with live digest verification and
-resumption (`docs/release-runbook.md:35-78`). The tag workflow instead
-loops over `npm publish` directly and then publishes the wrapper (`.github/workflows/release.yml:49-73`). A partial immutable publication therefore bypasses the state machine in
-`internal/publication/statemachine.go`. **Tracked: FT142.** ✓
+Release publication is no longer a finding. The tag workflow compiles the
+publisher from the tag checkout and runs `bench release submit`
+(`.github/workflows/release.yml:61-73`). The publisher publishes the platform
+packages first and the wrapper last, and it verifies each live digest. A retry
+resumes from the publication record
+(`internal/publication/statemachine.go:46-66`). The workflow uploads that
+record when the publish step passes and when it fails
+(`.github/workflows/release.yml:74-80`). ✓
 
 **M-A1 — No supported public entry point exists.** There are no repository
 tags, and README truthfully says `redbench` is not published
@@ -150,13 +156,12 @@ architecture report produced with this assessment.** ✓
 | ---: | --- | --- | ---: |
 | 0 | FT198: shape a progressively loaded roadmap | One canonical detail owner; migration and history preserve status; index completeness is mechanically checked | 0.5–1 day decision |
 | 1 | FT189: bound the upstream worktree-list hang | The public command refuses malformed administration state or terminates within the declared bound | 0.5–1 day |
-| 2 | FT142: route CI publication through `bench release` | Partial publish resumes with live digest checks; wrapper cannot lead platforms | 1–2 days |
-| 3 | Close A2/A3/A10 adoption residuals | Packed first-hour setup; emitted local profile; marker-verified shim removal | 1–2 days |
-| 4 | FT133/FT174: harden coverage and ticket ownership | Every acceptance row and ticket edge resolves to one accountable producer and authorized fence | 1–2 days |
-| 5 | FT89/FT102: single-source skill indexing and reconcile workflow contracts | One generator/verifier owner; conformance mutations for each closed contradiction | 1–2 days |
-| 6 | Close C-08 objective exposure | Objective identifier, stdout, scratch, and commit durability follow one documented policy | 0.5–1 day |
-| 7 | FT162/FT185: unify terminal subject and structured gate evidence | Green/red runs project the same subject and outcome without reconstruction | 1 day |
-| 8 | Reconcile the invalid map through maintenance | `bench maps` has no invalid rows and no vanished source paths are invented | 0.25–0.5 day |
+| 2 | Close A2/A3/A10 adoption residuals | Packed first-hour setup; emitted local profile; marker-verified shim removal | 1–2 days |
+| 3 | FT133/FT174: harden coverage and ticket ownership | Every acceptance row and ticket edge resolves to one accountable producer and authorized fence | 1–2 days |
+| 4 | FT89/FT102: single-source skill indexing and reconcile workflow contracts | One generator/verifier owner; conformance mutations for each closed contradiction | 1–2 days |
+| 5 | Close C-08 objective exposure | Objective identifier, stdout, scratch, and commit durability follow one documented policy | 0.5–1 day |
+| 6 | FT162/FT185: unify terminal subject and structured gate evidence | Green/red runs project the same subject and outcome without reconstruction | 1 day |
+| 7 | Reconcile the invalid map through maintenance | `bench maps` has no invalid rows and no vanished source paths are invented | 0.25–0.5 day |
 
 The 24 live fix-class rows are prioritized in `capture/FIXES.md`. FT198 remains
 the overall roadmap's current reviewer-decision entry and is intentionally not

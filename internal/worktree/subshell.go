@@ -36,10 +36,10 @@ func Subshell(home string, args []string, stdin io.Reader, stdout, stderr io.Wri
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	return subshellAt(root, home, subshellShell(), os.Environ(), args, stdin, stdout, stderr)
+	return subshellAt(root, newAmbient(home, stderr), subshellShell(), os.Environ(), args, stdin, stdout, stderr)
 }
 
-func subshellAt(root, home, shell string, environ []string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func subshellAt(root string, a ambient, shell string, environ []string, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	interrupts := make(chan os.Signal, 1)
 	// The shell child runs in its own process group, so this handler is the only path that
 	// reaches it. subprocess.CancelSignals is the one source for that set; SIGHUP arrives
@@ -48,7 +48,7 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 	defer signal.Stop(interrupts)
 	// One worktree.shell span covers the session; every return ends it with the work state
 	// and the cleanup decision. A signal retains the lease for a reclaim.
-	finishSpan, assignment := beginVerbSpan(home, root, otelShellSeam), ""
+	finishSpan, assignment := beginVerbSpan(a.home, root, otelShellSeam), ""
 	end := func(exit int, state, cleanup string) int {
 		finishSpan(exit, assignment, attribute.String(otelrecord.AttrWorkState, state), attribute.String(otelrecord.AttrCleanup, cleanup))
 		return exit
@@ -64,21 +64,21 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 		fmt.Fprintln(stderr, err)
 		return end(1, otelrecord.WorkFailed, otelrecord.CleanupNone)
 	}
-	creation, err := createAt(defaultJoins(), root, home, request, objective, nil, currentTime(), func() (string, error) { return startRef, nil })
+	creation, err := createAt(defaultJoins(), root, a.home, request, objective, nil, a.now, func() (string, error) { return startRef, nil })
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return end(1, otelrecord.WorkFailed, otelrecord.CleanupNone)
 	}
 	assignment = creation.Assignment.ID
 	release := func(state string) int {
-		code := ReleaseCommand(root, home, []string{"--request", request, creation.Path}, io.Discard, stderr)
+		code := releaseCommandWith(defaultJoins(), a, root, []string{"--request", request, creation.Path}, io.Discard, stderr)
 		if code != 0 {
 			return end(code, state, otelrecord.CleanupRetained)
 		}
 		return end(code, state, otelrecord.CleanupReleased)
 	}
 	lease, err := LeaseFile(creation.Path)
-	if err != nil || !claimAt(defaultJoins(), lease, currentTime(), staleLease) {
+	if err != nil || !claimAt(defaultJoins(), lease, a.now, staleLease) {
 		fmt.Fprintln(stderr, "bench worktree shell: cannot claim worktree lease")
 		return release(otelrecord.WorkFailed)
 	}
@@ -88,7 +88,7 @@ func subshellAt(root, home, shell string, environ []string, args []string, stdin
 	}
 	cmd := exec.Command(shell)
 	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = creation.Path, stdin, stdout, stderr
-	cmd.Env = withHome(environ, home)
+	cmd.Env = withHome(environ, a.home)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		_ = os.Remove(lease)

@@ -13,7 +13,10 @@ import (
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -60,17 +63,17 @@ const reviewedRangeDetail = "review base is outside the assignment's reviewed ra
 // consults, rebuilds, or re-executes a repository executable, so candidate landing
 // code cannot run during its own promotion.
 func LandCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return landWith(defaultJoins(), root, home, args, stdout, stderr)
+	return landWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// landWith is LandCommand with the seam set resolved explicitly at the caller's boundary.
-// It is also the landing's record boundary: one span covers the composition and the
-// publication, and the resume path runs inside it, so a resumed landing records the same
-// seam as the first run.
-func landWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+// landWith is LandCommand with the seam set and the ambient value resolved explicitly at
+// the caller's boundary. It is also the landing's record boundary: one span covers the
+// composition and the publication, and the resume path runs inside it, so a resumed
+// landing records the same seam as the first run.
+func landWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	var measures landingMeasures
-	ctx, finishSpan := beginLandingSpan(home, root)
-	exit := landAttributed(ctx, &measures, j, root, home, args, stdout, stderr)
+	ctx, finishSpan := beginLandingSpan(a.home, root)
+	exit := landAttributed(ctx, &measures, j, a, root, args, stdout, stderr)
 	finishSpan(exit, measures)
 	return exit
 }
@@ -119,10 +122,9 @@ func beginLandingSpan(home, root string) (context.Context, func(int, landingMeas
 
 // landAttributed is the first-run landing itself, with the span's measures written to
 // measures as each becomes known.
-func landAttributed(ctx context.Context, measures *landingMeasures, j joins, root, home string, args []string, stdout, stderr io.Writer) int {
-	j.home = home
+func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	if hasResumeFlag(args) {
-		return resumeLandWith(j, root, home, args, stdout, stderr)
+		return resumeLandWith(j, a, root, args, stdout, stderr)
 	}
 	parsed, line, code := usage.Parse(landGrammar, args)
 	if line != "" {
@@ -182,7 +184,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, roo
 	// The count is read before the release step, because that step drops the records.
 	// A landing that stops at an earlier step states the same count, and its resume
 	// reads the file the release never removed.
-	records := censusCount(home, root, assignment.ID)
+	records := censusCount(a.home, root, assignment.ID)
 	measures.censusRawCalls = records
 	measures.censusRawCallsRead = true
 	// The write-set size is the reviewed name-only diff, read from the same range
@@ -192,10 +194,10 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, roo
 		measures.counted = true
 	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
-	printCensusHeads(stderr, home, root, assignment.ID)
-	if notice := brokerChangeNotice(j.kitSourceCheckout, root, assignment.Worktree, source.base, source.tip); notice != "" {
-		fmt.Fprintln(stderr, notice)
-	}
+	printCensusHeads(stderr, a.home, root, assignment.ID)
+	// The release removes the source worktree, so the broker check reads it now and the
+	// notice prints after the effects report the refresh.
+	brokerChanged := brokerSourceChanged(assignment.Worktree, source.base, source.tip)
 	result, err := j.landReviewed(ctx, landing.ReviewedRequest{
 		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
@@ -213,23 +215,23 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, roo
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
 	measures.subject = result.Commit
-	if err := j.advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
+	if err := authorization.AdvanceMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
 	}
-	if err := j.reconcileLanding(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
+	if err := reconcileLandingDestination(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)
 	}
-	if _, err := j.pruneLandedBranches(root); err != nil {
+	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "prune", records)
 	}
 	var releaseDiagnostic bytes.Buffer
-	if release := j.releaseLandingAssignment(j, root, home, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
+	if release := j.releaseLandingAssignment(j, a, root, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
 		if releaseDiagnostic.Len() > 0 {
 			fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(releaseDiagnostic.String(), "\n")))
 		}
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
-	return landedAfterEffects(j, root, result, parsed.Flags["--spec"], path, assignment.ID, true, records, stdout, stderr)
+	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, brokerChanged, records, stdout, stderr)
 }
 
 // censusCount is the assignment's raw-call count for the landed record. An unreadable
@@ -258,23 +260,20 @@ func hasResumeFlag(args []string) bool {
 	return usage.FlagPresent(landGrammar, args, "--resume")
 }
 
-// brokerChangeNotice names the install step when the reviewed diff changes the
-// promotion broker's own build inputs. Source publication cannot replace the broker's
-// authority: the installed broker keeps landing until the release or repair path
-// installs the new one. An unresolvable input set reports nothing; the landing itself
-// stays under the installed owner either way. The install step it names is the
-// destination's own route, so the printed command runs where the operator stands.
-func brokerChangeNotice(kitCheckout func(string) bool, root, worktree, base, tip string) string {
+// brokerSourceChanged reports whether the reviewed diff in worktree changes the promotion
+// broker's own build inputs. An unresolvable input set reports false; the landing itself
+// stays under the installed owner either way.
+func brokerSourceChanged(worktree, base, tip string) bool {
 	if !freshness.DeclaresBuildInputs(worktree) {
-		return ""
+		return false
 	}
 	inputs, err := freshness.BuildInputs(worktree)
 	if err != nil {
-		return ""
+		return false
 	}
 	names, err := git.Output("-C", worktree, "diff", "--name-only", base, tip)
 	if err != nil {
-		return ""
+		return false
 	}
 	changed := map[string]struct{}{}
 	for _, name := range strings.Split(names, "\n") {
@@ -282,19 +281,29 @@ func brokerChangeNotice(kitCheckout func(string) bool, root, worktree, base, tip
 	}
 	for _, input := range inputs {
 		if _, ok := changed[input]; ok {
-			return "landing changes the promotion broker source; the installed broker keeps authority until " + brokerInstallStep(kitCheckout, root) + " publishes the new broker"
+			return true
 		}
 	}
-	return ""
+	return false
 }
 
-// brokerInstallStep names the route that installs the changed broker at root. The kit's
-// own source checkout carries no pin manifest, so 'bench repair' refuses there; its route
-// is the stamped rebuild and 'bench doctor --fix'. The sentence comes from the one
-// rebuild owner, never from a second copy of the command here.
-func brokerInstallStep(kitCheckout func(string) bool, root string) string {
-	if kitCheckout(root) {
-		return freshness.RebuildAction(root) + " with 'bench doctor --fix'"
+// brokerChangeNotice names the install step that a broker-changing landing at root still
+// owes after its refresh effect reported refresh, where kit is the kit value that the verb
+// entry read. Source publication cannot replace the installed broker's authority.
+//
+// The kit's own source checkout carries no pin manifest, so 'bench repair' refuses there.
+// Its route is the stamped rebuild and 'bench doctor --fix', and the refresh effect is
+// that route, so the notice names it only after a failed refresh. Elsewhere the refresh
+// republishes the destination's executable but not the installed broker, so the notice
+// names 'bench repair' or the release install after every refresh result. The rebuild
+// command comes from the one rebuild owner, never from a second copy here.
+func brokerChangeNotice(kit, root, refresh string) string {
+	step := "'bench repair' or the release install"
+	if gate.KitSourceCheckoutAtKit(root, kit) {
+		if refresh != effectFailed {
+			return ""
+		}
+		step = freshness.RebuildAction(root) + " with 'bench doctor --fix'"
 	}
-	return "'bench repair' or the release install"
+	return "landing changes the promotion broker source; the installed broker keeps authority until " + step + " publishes the new broker"
 }

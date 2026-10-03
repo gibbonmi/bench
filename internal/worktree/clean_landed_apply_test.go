@@ -119,7 +119,7 @@ func TestCleanLandedApplyRefusesInitialDriftWithoutMutation(t *testing.T) {
 				args = tc.args(plan.mustFingerprint(t))
 			}
 			applied := runVerb(t, verbClean, f.call(args...))
-			if applied.exit != 1 || applied.stderr != "" || !strings.HasPrefix(applied.stdout, "worktree_cleanup[") || !strings.Contains(applied.stdout, "unknown,error,unknown,unknown,none,") || strings.Count(applied.stdout, errStaleFingerprint.Error()) != 1 {
+			if applied.exit != 1 || applied.stderr != "" || !strings.HasPrefix(applied.stdout, cleanupTable+"[") || !strings.Contains(applied.stdout, "unknown,error,unknown,unknown,none,") || strings.Count(applied.stdout, errStaleFingerprint.Error()) != 1 {
 				t.Fatalf("apply exit=%d stdout=%q stderr=%q, want stale refusal diagnostic", applied.exit, applied.stdout, applied.stderr)
 			}
 			for _, creation := range []Creation{f.first, f.second} {
@@ -296,7 +296,7 @@ func TestCleanLandedApplyCarriesModifiersAndDeletesProvenBranches(t *testing.T) 
 		t.Fatalf("bare plan = (%d, %q, %q), want ignored retain", bare.exit, bare.stdout, bare.stderr)
 	}
 	widened := runVerb(t, verbClean, f.call("--discard-ignored", "--full", "--landed"))
-	if widened.exit != 0 || widened.stderr != "" || !strings.Contains(widened.stdout, ignored.Path+",discard-remove,") || !strings.Contains(widened.stdout, "ignored_paths[1]") {
+	if widened.exit != 0 || widened.stderr != "" || !strings.Contains(widened.stdout, ignored.Path+",discard-remove,") || !strings.Contains(widened.stdout, ignoredPathsTable+"[1]") {
 		t.Fatalf("widened plan = (%d, %q, %q), want discard removal and preview", widened.exit, widened.stdout, widened.stderr)
 	}
 	applied := runVerb(t, verbClean, f.call("--discard-ignored", "--full", "--landed", "--apply", widened.mustFingerprint(t)))

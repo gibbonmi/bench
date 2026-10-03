@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -32,15 +31,13 @@ func newResidueGuardFixture(t *testing.T, request string) ownedAssignment {
 	return ownedAssignment{repoHome: repoHome{root, home}, creation: creation}
 }
 
-// stubbedLiveBinaryJoins returns a seam set whose residue-guard warning sink is the
-// returned buffer and whose running-binary resolution answers with running. Each test
-// holds its own value, so no two tests share a stub point.
-func stubbedLiveBinaryJoins(running string) (joins, *bytes.Buffer) {
-	buffer := &bytes.Buffer{}
+// stubbedLiveBinaryJoins returns a seam set whose running-binary resolution answers with
+// running. Each test holds its own value, so no two tests share a stub point. The stub
+// leaves the ambient warnings writer alone, so the residue guard still writes there.
+func stubbedLiveBinaryJoins(running string) joins {
 	j := defaultJoins()
-	j.liveBinaryWarnings = buffer
 	j.resolveRunningBinary = func() (string, error) { return running, nil }
-	return j, buffer
+	return j
 }
 
 // TestResidueGuardWarnsBeforeRemovingTheLiveBinary is H25. Removing the dist/bench the
@@ -54,12 +51,10 @@ func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 	f := newResidueGuardFixture(t, request)
 	live := filepath.Join(f.creation.Path, "dist", "bench")
 	mustWrite(t, live, []byte("binary\n"), 0o755)
-	j, warnings := stubbedLiveBinaryJoins(live)
-
-	release := runVerb(t, verbRelease, f.callWith(j, "--request", request, f.creation.Path))
+	release := runVerb(t, verbRelease, f.callWith(stubbedLiveBinaryJoins(live), "--request", request, f.creation.Path))
 	requireTest(t, release.exit == 0, "live-binary release exit=%d stdout=%q", release.exit, release.stdout)
 
-	warned := warnings.String()
+	warned := release.stderr
 	rebuild := freshness.RebuildAction(f.creation.Path)
 	requireTest(t, strings.Contains(warned, live), "warning %q does not name the binary it removed (%s)", warned, live)
 	requireTest(t, strings.Contains(warned, rebuild), "warning %q does not name the rebuild invocation (%s)", warned, rebuild)
@@ -90,16 +85,14 @@ func TestIsRunningBinaryFailsSafeWhenResolutionIsUnknown(t *testing.T) {
 
 	t.Run("running path unstattable", func(t *testing.T) {
 		t.Parallel()
-		j, _ := stubbedLiveBinaryJoins(filepath.Join(t.TempDir(), "vanished", "bench"))
-		if !isRunningBinary(j, candidate) {
+		if !isRunningBinary(stubbedLiveBinaryJoins(filepath.Join(t.TempDir(), "vanished", "bench")), candidate) {
 			t.Error("isRunningBinary = false when the running path cannot be stat'd, want true (unknown is not absent)")
 		}
 	})
 
 	t.Run("candidate absent", func(t *testing.T) {
 		t.Parallel()
-		j, _ := stubbedLiveBinaryJoins(candidate)
-		if isRunningBinary(j, filepath.Join(t.TempDir(), "absent")) {
+		if isRunningBinary(stubbedLiveBinaryJoins(candidate), filepath.Join(t.TempDir(), "absent")) {
 			t.Error("isRunningBinary = true for a candidate that does not exist, want false (no live file there to lose)")
 		}
 	})
@@ -119,8 +112,7 @@ func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
 	if err := os.Symlink(real, link); err != nil {
 		capability.Capability(t, capability.Symlink, fmt.Sprintf("cannot create a symlink: %v", err))
 	}
-	j, _ := stubbedLiveBinaryJoins(link)
-	if !isRunningBinary(j, real) {
+	if !isRunningBinary(stubbedLiveBinaryJoins(link), real) {
 		t.Error("isRunningBinary = false for the target of the resolved symlink, want true")
 	}
 }
@@ -143,11 +135,9 @@ func TestResidueGuardRemovesForeignBinariesWithoutWarning(t *testing.T) {
 			mustWrite(t, foreign, []byte("binary\n"), 0o755)
 			elsewhere := filepath.Join(t.TempDir(), "bench")
 			mustWrite(t, elsewhere, []byte("the binary answering bench\n"), 0o755)
-			j, warnings := stubbedLiveBinaryJoins(elsewhere)
-
-			release := runVerb(t, verbRelease, f.callWith(j, "--request", request, f.creation.Path))
+			release := runVerb(t, verbRelease, f.callWith(stubbedLiveBinaryJoins(elsewhere), "--request", request, f.creation.Path))
 			requireTest(t, release.exit == 0, "foreign release exit=%d stdout=%q", release.exit, release.stdout)
-			requireTest(t, warnings.Len() == 0, "foreign %s warned: %q", foreign, warnings.String())
+			requireTest(t, release.stderr == "", "foreign %s warned: %q", foreign, release.stderr)
 		})
 	}
 }

@@ -9,6 +9,9 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
+var amendmentForm = form{name: "amendment", description: "record the plan-digest change at a source commit",
+	flags: []flag{{"--source", "<commit>", false, once}, {"--map", "<old>=<new>[,<new>...]", true, repeated}}, valid: amendmentValid, run: amendment}
+
 // changes reads the --map values of one amendment call into each old chunk ID and its
 // new chunk IDs. ok is false for an empty chunk ID on either side and for an old chunk ID
 // that an earlier value names.

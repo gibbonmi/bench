@@ -414,6 +414,16 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **prose exclusion row** — one line of `.bench/prose-exclusions`: a path the prose
   mechanics check does not grade, and a one-clause reason. The reviewer owns that file.
   Not "allowlist", not "skip list" — prose exclusion row.
+- **block reader** — the one owner of the Markdown block rules: frontmatter, fenced
+  blocks, HTML comments, and H2 headings. It classifies each line of a document, and
+  each grammar module reads its lines from it. Not "fence detector", not "Markdown
+  parser" — block reader.
+- **fenced block** — the lines from a fence opener through its closer. An opener is a
+  run of three or more backticks or tildes after any leading spaces or tabs. A closer
+  is a run of the same character at least as long, and text after the run does not
+  stop the close. Not "code block" without the qualifier — fenced block.
+- **unfenced line** — a body line outside the frontmatter and outside every fenced
+  block. Not "prose line", because a table row or a heading is also an unfenced line.
 - **always-loaded core** — `.bench/BENCH.md`, which holds the six rule families every
   session loads; the mechanics live in `.bench/BENCH-reference.md`. Not "the guide"
   unqualified, and not "progressive loading" (the split is progressive disclosure) —
