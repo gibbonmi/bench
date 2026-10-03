@@ -205,7 +205,7 @@ func applyOutcomes(stdout io.Writer, plans, stale []CleanupPlan, err error, repl
 // Each returns the index of the member that refused, so a fault that is not drift can name
 // itself in that member's row instead of disappearing behind an unstarted detail. An explicit
 // index counts the recorded members first, then the unclaimed ones, as the set's plans do.
-func preflightExplicitSet(j joins, root string, set explicitCleanupSet, options CleanupOptions) (int, error) {
+func preflightExplicitSet(j joins, a ambient, root string, set explicitCleanupSet, options CleanupOptions) (int, error) {
 	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			continue
@@ -218,7 +218,7 @@ func preflightExplicitSet(j joins, root string, set explicitCleanupSet, options 
 		if !planned.plan.Action.Removes() {
 			continue
 		}
-		if _, err := requalifyUnrecordedRow(j, root, planned, options); err != nil {
+		if _, err := requalifyUnrecordedRow(a, root, planned, options); err != nil {
 			return len(set.rows) + k, err
 		}
 	}

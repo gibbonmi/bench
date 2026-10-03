@@ -126,7 +126,7 @@ func TestResetRestoreRefusesAnIgnoredCollision(t *testing.T) {
 	mustWrite(t, filepath.Join(f.creation.Path, "untracked"), []byte("ignored now\n"), 0o644)
 	result := runVerb(t, verbReset, f.call("--restore", f.ref, f.creation.Assignment.ID))
 	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "refused{detail=ignored content would be overwritten}") &&
-		strings.Contains(result.stdout, "refusal_paths[1]{path}:\n  untracked\n"), "collision restore = %d %s %s", result.exit, result.stdout, result.stderr)
+		strings.Contains(result.stdout, refusalPathsTable+"[1]{path}:\n  untracked\n"), "collision restore = %d %s %s", result.exit, result.stdout, result.stderr)
 	body, err := os.ReadFile(filepath.Join(f.creation.Path, "untracked"))
 	mustNoError(t, err)
 	requireTest(t, string(body) == "ignored now\n" && gitOutput(t, f.creation.Path, "rev-parse", "HEAD") == head &&
@@ -147,6 +147,6 @@ func TestResetRestoreRefusesACollisionWithTheEnvelopeTip(t *testing.T) {
 	commitInWorktree(t, f.creation.Path, ".gitignore", "gen\n", "ignore gen")
 	mustWrite(t, filepath.Join(f.creation.Path, "gen"), []byte("ignored now\n"), 0o644)
 	result = runVerb(t, verbReset, f.call("--restore", ref, f.creation.Assignment.ID))
-	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "ignored content would be overwritten") && strings.Contains(result.stdout, "refusal_paths[1]{path}:\n  gen\n"),
+	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "ignored content would be overwritten") && strings.Contains(result.stdout, refusalPathsTable+"[1]{path}:\n  gen\n"),
 		"tip collision = %d %s %s", result.exit, result.stdout, result.stderr)
 }

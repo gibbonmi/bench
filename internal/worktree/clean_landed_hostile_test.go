@@ -71,7 +71,7 @@ func TestCleanLandedTabPathRendersOneRow(t *testing.T) {
 	landAssignment(t, root, creation, "tab.txt")
 
 	plan := runVerb(t, verbClean, repoHome{root, home}.call("--landed"))
-	if plan.exit != 0 || plan.stderr != "" || !strings.HasPrefix(plan.stdout, "worktree_cleanup[1]") || strings.ContainsRune(plan.stdout, '\t') || !strings.Contains(plan.stdout, `\t`) {
+	if plan.exit != 0 || plan.stderr != "" || !strings.HasPrefix(plan.stdout, cleanupTable+"[1]") || strings.ContainsRune(plan.stdout, '\t') || !strings.Contains(plan.stdout, `\t`) {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
 }
@@ -109,12 +109,6 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			j := defaultJoins()
-			plannerCalls := 0
-			j.planLandedExplicit = func(inner joins, root, path string, options CleanupOptions) (CleanupPlan, error) {
-				plannerCalls++
-				return planExplicitWith(inner, root, path, options)
-			}
 			root := newWorktreeRepo(t)
 			home := filepath.Join(root, ".bench-home")
 			creation := mustCreate(t, root, home, "landed-special-"+strings.ReplaceAll(tc.name, " ", "-"), tc.name)
@@ -124,16 +118,13 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 			}
 			tc.make(t, creation.Path)
 
-			plan := runVerb(t, verbClean, repoHome{root, home}.callWith(j, "--landed"))
+			plan := runVerb(t, verbClean, repoHome{root, home}.call("--landed"))
 			if plan.exit != 0 || plan.stderr != "" || !strings.Contains(plan.stdout, ",retain,") || !strings.Contains(plan.stdout, "assignment path shape is "+tc.shape) {
 				t.Fatalf("plan exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 			}
-			applied := runVerb(t, verbClean, repoHome{root, home}.callWith(j, "--landed", "--apply", plan.mustFingerprint(t)))
+			applied := runVerb(t, verbClean, repoHome{root, home}.call("--landed", "--apply", plan.mustFingerprint(t)))
 			if applied.exit != 0 || applied.stderr != "" {
 				t.Fatalf("apply exit=%d stderr=%q", applied.exit, applied.stderr)
-			}
-			if plannerCalls != 0 {
-				t.Fatalf("special path reached explicit planner %d time(s)", plannerCalls)
 			}
 			if _, err := os.Lstat(creation.Path); err != nil {
 				t.Fatalf("special path disappeared: %v", err)

@@ -18,10 +18,6 @@ import (
 
 const landedSetFingerprintVersion = "bench-landed-set/v1"
 
-// planLandedExplicitWithOptions exposes the target-path boundary so hostile-path tests
-// can prove shape rejection happens before the explicit planner invokes Git.
-var planLandedExplicitWithOptions = PlanExplicitWithOptions
-
 type landedCleanupRow struct {
 	assignment intent.Assignment
 	plan       CleanupPlan
@@ -134,7 +130,7 @@ func planLandedAssignment(j joins, root string, assignment intent.Assignment, op
 		plan.assignment, plan.owned = &assignment, true
 		return plan
 	}
-	plan, err := j.planLandedExplicit(j, root, assignment.Worktree, options)
+	plan, err := planExplicitWith(j, root, assignment.Worktree, options)
 	if err != nil {
 		plan = retainedPlan(assignment.Worktree, ReasonUncertain, err.Error())
 		plan.Assignment, plan.Recovery, plan.Tracked, plan.ignoredSummary = assignment.ID, "none", "unknown", "unknown"
@@ -334,7 +330,7 @@ func requalifyLandedRow(j joins, root string, planned landedCleanupRow, options 
 // applyLandedSet removes every qualified member through its own locked transaction. The
 // first member that cannot finish stops the set, and every member the set never started
 // reports its own unstarted outcome.
-func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions, scope string) ([]CleanupPlan, error) {
+func applyLandedSet(j joins, a ambient, root string, set landedCleanupSet, options CleanupOptions, scope string) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	if offender, err := preflightLandedSet(j, root, set, options, scope); err != nil {
 		return preflightOutcomes(plans, landedRowPlans(set.rows), offender, err), err
@@ -365,7 +361,7 @@ func applyLandedSet(j joins, root string, set landedCleanupSet, options CleanupO
 		}
 		// The terminal callback keeps the lifecycle's post-settlement fault boundary between
 		// completed rows, where a later-row drift must still stop the set apply.
-		applied, applyErr := applyCleanupTransaction(j, root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, func(CleanupPlan) error { return nil })
+		applied, applyErr := applyCleanupTransaction(j, a, root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, func(CleanupPlan) error { return nil })
 		if applyErr != nil {
 			plans = append(plans, faultedPlan(current.plan, applied, applyErr))
 			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), applyErr

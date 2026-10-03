@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -161,20 +163,33 @@ func TestReauthorizeCommandRollsBackLockRefreshAndCASLoss(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		name    string
-		install func(joins, Creation) joins
+		install func(*testing.T, reauthorizeSet, joins) joins
+		// stderr is the exact refusal when a case pins one. A denied administration
+		// directory also fails the relock, so the retained state alone cannot show that
+		// the refusal came from the unlock.
+		stderr string
 	}{
 		{
-			name: "unlock failure",
-			install: func(j joins, _ Creation) joins {
-				j.reauthorizeUnlock = func(string, string) error { return errors.New("injected unlock failure") }
+			// The unlock removes the lock file from the administration directory, so a
+			// directory that denies writes fails the real unlock. Root bypasses that mode.
+			name:   "unlock failure",
+			stderr: "bench worktree reauthorize: refresh ownership lock\n",
+			install: func(t *testing.T, f reauthorizeSet, j joins) joins {
+				if os.Geteuid() == 0 {
+					capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny writes to fail the unlock")
+				}
+				admin, err := git.AdminDir(f.creation.Path)
+				mustNoError(t, err)
+				t.Cleanup(func() { _ = os.Chmod(admin, 0o700) })
+				mustNoError(t, os.Chmod(admin, 0o500))
 				return j
 			},
 		},
 		{
 			name: "relock failure",
-			install: func(j joins, creation Creation) joins {
+			install: func(_ *testing.T, f reauthorizeSet, j joins) joins {
 				old := j.reauthorizeLock
-				next := creation.Assignment
+				next := f.creation.Assignment
 				next.Request = intent.RequestDigest("replacement-request")
 				j.reauthorizeLock = func(root, path, reason string) error {
 					if reason == lockReason(next) {
@@ -187,7 +202,7 @@ func TestReauthorizeCommandRollsBackLockRefreshAndCASLoss(t *testing.T) {
 		},
 		{
 			name: "expected-old loss",
-			install: func(j joins, _ Creation) joins {
+			install: func(_ *testing.T, _ reauthorizeSet, j joins) joins {
 				j.reauthorizeBeforeCAS = func(a *intent.Assignment) { a.Request = intent.RequestDigest("concurrent-winner") }
 				return j
 			},
@@ -198,10 +213,10 @@ func TestReauthorizeCommandRollsBackLockRefreshAndCASLoss(t *testing.T) {
 			t.Parallel()
 			f := reauthorizeFixture(t)
 			before := reauthorizeEvidence(t, f.root, f.creation.Path)
-			j := testCase.install(defaultJoins(), f.creation)
+			j := testCase.install(t, f, defaultJoins())
 			args := []string{"--assignment", f.creation.Assignment.ID, "--request", "replacement-request", "--base", f.base, "--source-tip", f.tip, f.creation.Path}
-			if r := runVerb(t, verbReauthorize, f.callWith(j, args...)); r.exit != 1 {
-				t.Fatalf("%s exit = %d, want 1; stdout=%q stderr=%q", testCase.name, r.exit, r.stdout, r.stderr)
+			if r := runVerb(t, verbReauthorize, f.callWith(j, args...)); r.exit != 1 || (testCase.stderr != "" && r.stderr != testCase.stderr) {
+				t.Fatalf("%s exit = %d, want 1; stdout=%q stderr=%q, want stderr %q", testCase.name, r.exit, r.stdout, r.stderr, testCase.stderr)
 			}
 			if got := reauthorizeEvidence(t, f.root, f.creation.Path); got != before {
 				t.Fatalf("%s changed authority or worktree state\nbefore=%q\nafter=%q", testCase.name, before, got)

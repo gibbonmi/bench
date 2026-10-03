@@ -2,34 +2,22 @@
 package worktree
 
 import (
-	"context"
-	"errors"
-	"io"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
 func TestResumeLandCommandUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 	t.Parallel()
 	request := "resume-reauthorize-recovery"
-	f := publicLandingFixture(t, request, "", "")
-	working := defaultJoins()
-	broken := working
-	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
-		return errors.New("injected marker interruption")
-	}
-	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
-	published := gitOutput(t, f.root, "rev-parse", "main")
+	f := markerLandingFixture(t, request, true)
+	_, published := interruptLandingAtMarker(t, f, landArgs(request, f.base, f.tip, f.creation.Path)...)
 	args := []string{"--resume", published, "--request", "unknown-request", "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 	wantNext := laterProofsSkipped + "; bench worktree reauthorize --assignment " + f.creation.Assignment.ID + " --request <new-request> --base '" + f.base + "' --source-tip '" + f.tip + "' '" + f.creation.Path + "'"
 	want := "refused{detail=request token matches no assignment,observed=assignment:" + f.creation.Assignment.ID + ",next=" + wantNext + "}\n"
-	if r := runVerb(t, verbLand, f.callWith(working, args...)); r.exit != 1 || r.stdout != want || len(r.stderr) != 0 {
+	if r := runVerb(t, verbLand, f.call(args...)); r.exit != 1 || r.stdout != want || len(r.stderr) != 0 {
 		t.Fatalf("unknown-request resume = (%d, %q, %q), want exit 1 and %q", r.exit, r.stdout, r.stderr, want)
 	}
 }
@@ -109,10 +97,7 @@ func TestLandCommandAuthenticatesDigestShapedRequestToken(t *testing.T) {
 	t.Parallel()
 	request := strings.Repeat("a", 64)
 	f := publicLandingFixture(t, request, "", "")
-	j := stubLandJoins(f.base, f.tip)
-	j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 0 }
-
-	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
 		t.Fatalf("digest-shaped request land = (%d, %q, %q), want successful authentication", r.exit, r.stdout, r.stderr)
 	}
@@ -158,44 +143,36 @@ func TestLandCommandUnknownRequestWithAmbiguousAssignmentsNamesTheListing(t *tes
 // so the proof that compares it sees the full value and the landing pins it.
 func TestLandCommandExpandsAbbreviatedSourceTip(t *testing.T) {
 	t.Parallel()
-	root := newWorktreeRepo(t)
-	home := filepath.Join(t.TempDir(), "bench-home")
-	request := "landed-abbreviated-source-tip"
-	creation := mustCreate(t, root, home, request, "abbreviated source tip")
-	stageLandSpec(t, root, creation.Path)
-	base := gitOutput(t, root, "rev-parse", "HEAD")
-	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	j := stubLandJoins(base, tip)
-	j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 0 }
-	for _, abbreviated := range []string{tip[:4], tip[:12], tip[:39], strings.ToUpper(tip[:12])} {
-		r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, landArgs(request, base, abbreviated, creation.Path)...))
-		if r.exit != 0 || !strings.Contains(r.stdout, "source_tip="+tip+",") || !strings.Contains(r.stdout, "worktree=released,census=0}") {
-			t.Fatalf("abbreviated source tip %q = (%d, %q, %q), want released with the full tip", abbreviated, r.exit, r.stdout, r.stderr)
-		}
+	// A landing publishes once, so each abbreviated form lands its own fixture.
+	for _, tc := range []struct {
+		name       string
+		abbreviate func(string) string
+	}{
+		{"4", func(tip string) string { return tip[:4] }},
+		{"12", func(tip string) string { return tip[:12] }},
+		{"39", func(tip string) string { return tip[:39] }},
+		{"upper-12", func(tip string) string { return strings.ToUpper(tip[:12]) }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			request := "landed-abbreviated-source-tip"
+			f := publicLandingFixture(t, request, "", "")
+			abbreviated := tc.abbreviate(f.tip)
+			r := runVerb(t, verbLand, f.call(landArgs(request, f.base, abbreviated, f.creation.Path)...))
+			if r.exit != 0 || !strings.Contains(r.stdout, "source_tip="+f.tip+",") || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+				t.Fatalf("abbreviated source tip %q = (%d, %q, %q), want released with the full tip", abbreviated, r.exit, r.stdout, r.stderr)
+			}
+		})
 	}
 }
 
 func TestLandCommandExpandsAbbreviatedBase(t *testing.T) {
 	t.Parallel()
-	root := newWorktreeRepo(t)
-	home := filepath.Join(t.TempDir(), "bench-home")
 	request := "landed-abbreviated-base"
-	creation := mustCreate(t, root, home, request, "abbreviated base")
-	stageLandSpec(t, root, creation.Path)
-	base := gitOutput(t, root, "rev-parse", "HEAD")
-	commitInWorktree(t, creation.Path, "owned.txt", "owned\n", "owned")
-	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
-	j := stubLandJoins(base, tip)
-	j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 0 }
-	authorized := ""
-	j.authorizeLandingSource = func(_, _ string, reviewBase string) (diff.SourceRange, error) {
-		authorized = reviewBase
-		return diff.SourceRange{Base: base, Tip: tip}, nil
-	}
-	r := runVerb(t, verbLand, repoHome{root, home}.callWith(j, landArgs(request, base[:12], tip, creation.Path)...))
-	if r.exit != 0 || authorized != base || !strings.Contains(r.stdout, "worktree=released,census=0}") {
-		t.Fatalf("abbreviated base = (%d, authorized=%q, %q, %q), want the full base authorized and released", r.exit, authorized, r.stdout, r.stderr)
+	f := publicLandingFixture(t, request, "", "")
+	r := runVerb(t, verbLand, f.call(landArgs(request, f.base[:12], f.tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "source_base="+f.base+",") || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+		t.Fatalf("abbreviated base = (%d, %q, %q), want released with the full base", r.exit, r.stdout, r.stderr)
 	}
 }
 

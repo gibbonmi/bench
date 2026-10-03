@@ -25,10 +25,10 @@ func TestEffectBoundaryCensus(t *testing.T) {
 	}
 	for _, entry := range entries {
 		name := entry.Name()
-		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+		if entry.IsDir() || !isSourceFile(name) {
 			continue
 		}
-		if name == "effects.go" {
+		if name == effectsFile {
 			continue // the named effect boundary adapter file
 		}
 		data, err := os.ReadFile(name)
@@ -41,7 +41,7 @@ func TestEffectBoundaryCensus(t *testing.T) {
 				code = code[:idx]
 			}
 			if match := ambientReadPattern.FindString(code); match != "" {
-				t.Errorf("%s:%d: ambient read %s below the effect boundary; resolve it in effects.go and pass the value down", name, i+1, match)
+				t.Errorf("%s:%d: ambient read %s below the effect boundary; resolve it in %s and pass the value down", name, i+1, match, effectsFile)
 			}
 		}
 	}

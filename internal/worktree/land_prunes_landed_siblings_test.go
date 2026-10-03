@@ -1,7 +1,7 @@
 package worktree
 
 import (
-	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -45,16 +45,26 @@ func TestLandCommandPrunesSquashFoldedSiblingBranch(t *testing.T) {
 	}
 }
 
-// A prune that cannot read the repository leaves the landing durable but incomplete,
+// A prune that cannot delete a landed branch leaves the landing durable but incomplete,
 // and the record names the step so the resume repairs it.
 func TestLandCommandReportsIncompletePrune(t *testing.T) {
 	t.Parallel()
 	request := "land-prune-incomplete"
 	f := specLessLandingFixture(t, request)
-	broken := defaultJoins()
-	broken.pruneLandedBranches = func(string) (int, error) { return 0, errors.New("prune refused") }
-	r := runVerb(t, verbLand, f.callWith(broken, specLessLandArgs(request, f.base, f.tip, f.creation.Path)...))
+	lockLandedSibling(t, f.root, f.base)
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, f.tip, f.creation.Path)...))
 	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:prune") {
 		t.Fatalf("interrupted prune = (%d, %q, %q), want exit 3 and incomplete:prune", r.exit, r.stdout, r.stderr)
 	}
+}
+
+// lockLandedSibling creates a sibling branch at landed, a commit the destination already
+// holds, and plants a stale lock for that branch. The landing's prune then reads the
+// branch as landed, and the real branch delete fails on the lock.
+func lockLandedSibling(t *testing.T, root, landed string) {
+	t.Helper()
+	const sibling = "landed-sibling"
+	gitRun(t, root, "branch", sibling, landed)
+	common := gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	mustWrite(t, filepath.Join(common, "refs", "heads", sibling+".lock"), nil, 0o644)
 }

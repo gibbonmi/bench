@@ -211,7 +211,7 @@ func TestResumeLandCompletesTheUnfinishedEffects(t *testing.T) {
 		return publishVerifyingBroker(t, root, executable)
 	})
 	interrupted := failing
-	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	interrupted.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 
 	r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, folded.tip, f.creation.Path)...))
 	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {

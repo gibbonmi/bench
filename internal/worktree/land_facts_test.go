@@ -204,7 +204,7 @@ func TestLandingReleaseFactAdapterTranslatesReleaseExit(t *testing.T) {
 	request := "release-fact-adapter"
 	f := publicLandingFixture(t, request, "", "")
 	j := defaultJoins()
-	j.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
 	want := landingpolicy.Terminal(landingpolicy.TerminalFacts{FailedStep: "release", Active: true})
 	if r.exit != want.ExitCode || !strings.Contains(r.stdout, "worktree="+want.WorktreeState+",next=") {

@@ -1,7 +1,7 @@
 # 4. Interrupt the landing marker with a gate script
 
 Blocked by: 3-pass-the-kit-value-to-merge-and-land.md
-Writes: internal/worktree/land_marker_fixture_test.go (new), internal/worktree/land_specless_test.go, internal/worktree/land_resume_test.go, internal/worktree/land_local_capture_test.go, internal/worktree/land_tickets_only_test.go, internal/worktree/identity_component_test.go, internal/worktree/land_reauthorization_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/land_marker_fixture_test.go (new), internal/worktree/land_specless_test.go, internal/worktree/land_resume_test.go, internal/worktree/land_local_capture_test.go, internal/worktree/land_tickets_only_test.go, internal/worktree/identity_component_test.go, internal/worktree/land_reauthorization_test.go, internal/worktree/land_fixtures_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: WS26, WS27, WS28, WS29, WS30, WS31, WS32, WS33
 
 ## What to build

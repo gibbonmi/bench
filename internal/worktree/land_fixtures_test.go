@@ -2,17 +2,15 @@
 package worktree
 
 import (
-	"context"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
-	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -25,8 +23,8 @@ func landingGateFixture(t *testing.T, environment ...string) *testrepo.GateFixtu
 
 // publicLandingFixture mints one private Bench home and carries it in the value, so the
 // fixture binds no process environment and the test it serves stays parallel-eligible. The
-// value's call builds a verb call at that home. processHomeCall and interruptLandingAtMarker land
-// at the process home instead.
+// value's call builds a verb call at that home. processHomeCall lands at the process home
+// instead.
 func publicLandingFixture(t *testing.T, request, ignored, declaration string) landingFixture {
 	t.Helper()
 	return publicLandingFixtureAtHome(t, request, ignored, declaration, filepath.Join(t.TempDir(), "bench-home"))
@@ -63,6 +61,14 @@ func foldedLandingFixture(t *testing.T, request string) foldedLanding {
 
 func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home string, gradeSpec bool) landingFixture {
 	t.Helper()
+	return landingFixtureWithGateStep(t, request, ignored, declaration, home, gradeSpec, nil)
+}
+
+// landingFixtureWithGateStep is landingFixtureAtHome with one more prospective gate line.
+// A non-nil step receives the gate fixture, so the step declares each command it runs,
+// and the destination root. Its line runs after the tally.
+func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string) landingFixture {
+	t.Helper()
 	gateSpec, prospectiveSpec := "", ""
 	f := landingGateFixture(t)
 	if gradeSpec {
@@ -78,7 +84,11 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 	// into the process environment and declares an empty gate environment. A gate that
 	// read the path from an exported name would make every caller serial.
 	count := "printf g >> '" + tally + "'\n"
-	f.MustWrite(t, root, "set -eu\n"+gateSpec+"[ -f owned.txt ]\n"+count, "set -eu\nruntime=$1\n"+prospectiveSpec+"[ -f owned.txt ]\n"+count)
+	extra := ""
+	if step != nil {
+		extra = step(f, root)
+	}
+	f.MustWrite(t, root, "set -eu\n"+gateSpec+"[ -f owned.txt ]\n"+count, "set -eu\nruntime=$1\n"+prospectiveSpec+"[ -f owned.txt ]\n"+count+extra)
 	if declaration != "" {
 		mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\""+declaration+"\"]}\n"), 0o644)
 	}
@@ -102,6 +112,42 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 		mustWrite(t, filepath.Join(creation.Path, filepath.FromSlash(ignored)), []byte("residue\n"), 0o600)
 	}
 	return landingFixture{ownedAssignment: ownedAssignment{repoHome: repoHome{root, home}, creation: creation}, base: base, tip: tip, tally: tally}
+}
+
+// blockLandingReconcile plants a nested repository in the destination at root, so the
+// real residue guard fails the landing's reconcile step after the publication. The
+// returned repair removes that repository, so a resume then reconciles.
+func blockLandingReconcile(t *testing.T, root string) (repair func()) {
+	t.Helper()
+	nested := resetEmbedded(t, root)
+	return func() { mustRemove(t, nested) }
+}
+
+// postPublicationFault is one landing step that runs after the publication, with the
+// fixture composition that makes that step fail. name is the step name that the
+// interrupted landing reports in its worktree cell. build receives the joins that the
+// landing would run under. It returns the fixture, the joins for the interrupted
+// landing, and the repair that lets a resume finish the step.
+type postPublicationFault struct {
+	name  string
+	build func(t *testing.T, request string, j joins) (f landingFixture, broken joins, repair func())
+}
+
+// postPublicationFaults holds one row for each step after the publication. The marker
+// and reconcile faults are real destination states. The release fault breaks its seam
+// in the copy of the joins that build returns, so the caller's joins stay whole.
+var postPublicationFaults = []postPublicationFault{
+	{name: "marker", build: func(t *testing.T, request string, j joins) (landingFixture, joins, func()) {
+		return markerLandingFixture(t, request, true), j, func() {}
+	}},
+	{name: "reconcile", build: func(t *testing.T, request string, j joins) (landingFixture, joins, func()) {
+		f := publicLandingFixture(t, request, "", "")
+		return f, j, blockLandingReconcile(t, f.root)
+	}},
+	{name: "release", build: func(t *testing.T, request string, j joins) (landingFixture, joins, func()) {
+		j.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
+		return publicLandingFixture(t, request, "", ""), j, func() {}
+	}},
 }
 
 // cannedGreenShape is what a bounded green run prints: the phase table, the skip count,
@@ -165,29 +211,17 @@ func stageLandSpec(t *testing.T, root, source string) {
 	gitRun(t, source, "rebase", "main")
 }
 
-// stubLandJoins returns a seam set whose landing publishes a fixed result and whose
-// post-publication steps succeed. The caller replaces the one field its own case is
-// about and passes the value to the verb runner through callWith, so each test holds
-// every stub it makes.
-func stubLandJoins(base, tip string) joins {
-	j := defaultJoins()
-	j.landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
-		return landing.ReviewedResult{SourceBase: base, SourceTip: tip, DestinationBase: base, Commit: strings.Repeat("a", 40), Tree: strings.Repeat("b", 40)}, nil
-	}
-	j.advanceLandingMarker = func(context.Context, string, string, string, string) error { return nil }
-	j.reconcileLanding = func(joins, string, string, string, string) error { return nil }
-	j.authorizeLandingSource = func(string, string, string) (diff.SourceRange, error) {
-		return diff.SourceRange{Base: base, Tip: tip}, nil
-	}
-	return j
-}
-
 // ticketsOnlyLandingFixture is the spec-less landing fixture with a tickets-only
 // `specs/t/` folder committed at the review base and carried into the source. A
 // light-path change has exactly this shape: tickets, no spec.md.
 func ticketsOnlyLandingFixture(t *testing.T, request string) landingFixture {
 	t.Helper()
-	f := specLessLandingFixture(t, request)
+	return ticketsOnlyFolderFixture(t, specLessLandingFixture(t, request))
+}
+
+// ticketsOnlyFolderFixture adds the tickets-only folder to a spec-less landing fixture.
+func ticketsOnlyFolderFixture(t *testing.T, f landingFixture) landingFixture {
+	t.Helper()
 	mustMkdirAll(t, filepath.Join(f.root, "specs", "t", "tickets"), 0o755)
 	mustWrite(t, filepath.Join(f.root, "specs", "t", "tickets", "one.md"), []byte("Light path ticket.\n"), 0o644)
 	gitRun(t, f.root, "add", "specs/t")

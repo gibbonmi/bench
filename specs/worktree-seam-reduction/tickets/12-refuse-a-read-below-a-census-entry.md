@@ -1,7 +1,7 @@
 # 12. Refuse a read below a census entry
 
 Blocked by: 11-lift-each-read-below-a-census-entry.md
-Writes: internal/worktree/single_read_census_test.go (new), internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/single_read_census_test.go (new), internal/worktree/single_read_census_cases_test.go (new), internal/worktree/effect_census_test.go, internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: WS57, WS58, WS59, WS60, WS61, WS62, WS63, WS64, WS65, WS66, WS67, WS82, WS86
 
 ## What to build

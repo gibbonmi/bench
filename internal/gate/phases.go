@@ -222,7 +222,12 @@ func BaseTestArgv(kit string, args ...string) []string {
 // kitRoot resolves the wrapper-selected kit before an exported entry starts its work.
 // The resolved value is passed through the run so a later phase cannot change oracles.
 func kitRoot(root string) string {
-	if kit := os.Getenv("BENCH_KIT"); kit != "" {
+	return kitRootAt(root, KitValue())
+}
+
+// kitRootAt answers kit, or the graded root when kit is empty.
+func kitRootAt(root, kit string) string {
+	if kit != "" {
 		return kit
 	}
 	return root
