@@ -6,13 +6,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
-### CLI and Desktop compatibility
-
-- Added compatibility diagnostics, reversible managed repair, and startup obligations for independent Codex CLI and Desktop chats. Local inspection requires separate live qualification.
-
 ### Changed-declaration blast
 
 - Fixed `bench consumers --changed` so that it does not report a kept declaration as deleted. A body edit in a file that only a build tag selects, such as a `//go:build system` test file, gave a false `blast_deleted` row. The deletion test now reads the declarations of the pair's tip tree, and not only the files that the default build context loads.
+
+### CLI and Desktop compatibility
+
+- Added compatibility diagnostics, reversible managed repair, and startup obligations for independent Codex CLI and Desktop chats. Local inspection requires separate live qualification.
 
 ### Focused test help
 
