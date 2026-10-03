@@ -1,7 +1,7 @@
 # State the comment-only correction rule in the guidance
 
 Blocked by: 3-accept-proven-gaps-at-checkpoint.md
-Writes: .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .agents/commands/bench-implement-spec.md, internal/anchors/registry_retained_workflow.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/conformance/implementation_continuation_test.go
+Writes: .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .agents/commands/bench-implement-spec.md, internal/anchors/registry_retained_workflow.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/conformance/implementation_continuation_test.go, internal/anchors/registry_debug_loop.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_ft311_preparation.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/workflow-guidance-anchors/delegated-dispatch-declaration, tests/canary/workflow-guidance-anchors/delegated-entry-refusals, tests/canary/workflow-guidance-anchors/delegated-resumption-contents, tests/canary/workflow-guidance-anchors/dg-25, tests/canary/workflow-guidance-anchors/dg-26, tests/canary/workflow-guidance-anchors/dg-29, tests/canary/workflow-guidance-anchors/dg-29-verification-target, tests/canary/workflow-guidance-anchors/dg-30, tests/canary/workflow-guidance-anchors/dg-31, tests/canary/workflow-guidance-anchors/dg-31-contradiction-trigger, tests/canary/workflow-guidance-anchors/implement-spec-adoption-freshness, tests/canary/workflow-guidance-anchors/implement-spec-coverage-task-seeding, tests/canary/workflow-guidance-anchors/implement-spec-cross-harness-pointer, tests/canary/workflow-guidance-anchors/implement-spec-entry-validation, tests/canary/workflow-guidance-anchors/implement-spec-incapable-harness, tests/canary/workflow-guidance-anchors/implement-spec-inline-exception, tests/canary/workflow-guidance-anchors/implement-spec-mandatory-delegation-anchor, tests/canary/workflow-guidance-anchors/implement-spec-prose-owner-transfer, tests/canary/workflow-guidance-anchors/implement-spec-read-only-helper, tests/canary/workflow-guidance-anchors/implement-spec-red-preflight-route, tests/canary/workflow-guidance-anchors/implement-spec-review-charge-omitted, tests/canary/workflow-guidance-anchors/implement-spec-review-charge-order, tests/canary/workflow-guidance-anchors/implement-spec-review-charge-reversed, tests/canary/workflow-guidance-anchors/implement-spec-status-flip-anchor, tests/canary/workflow-guidance-anchors/implement-spec-worktree-before-preflight, tests/canary/workflow-guidance-anchors/implement-spec-write-delegation, tests/canary/workflow-guidance-anchors/line-anchor-missing, tests/canary/workflow-guidance-anchors/prepared-build-approval, tests/canary/workflow-guidance-anchors/prepared-build-freshness
 Covers: CG37, CG38, CG39
 
 ## What to build
@@ -39,6 +39,12 @@ Ticket 3 supplies the checkpoint that accepts the gap and the chain-gap clause
 guidance states that behavior. Do not change `.bench/BENCH.md` or
 `bench-review-implementation.md`. The spec's `The guidance` decision states why
 their repair sentences stay.
+
+`Writes:` also names the closure that build preflight requires for the two
+anchored guidance files. That closure is the other anchor registry files that
+name them, the five command-binding files, and the canary fixtures that pin
+them. No edit is expected in that closure. No canary
+fixture holds the old sentence or the new sentence.
 
 ## Acceptance
 
