@@ -398,9 +398,6 @@ func blockersResolveCheck(f Facts) CheckResult {
 	return green("blockers-resolve")
 }
 
-// writesResolveCheck grades every declared ownership entry against the tree.
-// An entry that names no path and claims no (new) file is a typo that would
-// charge a delegate against nothing, so it reds with the entry named.
 func writesResolveCheck(f Facts) CheckResult {
 	var unresolved []string
 	seen := map[string]bool{}

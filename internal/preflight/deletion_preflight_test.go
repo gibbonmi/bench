@@ -33,6 +33,16 @@ func TestCommandCommittedDeletionDoesNotResolveAnotherMissingPath(t *testing.T) 
 	}
 }
 
+func TestCommandCommittedDeletionDoesNotResolveMissingParentDirectory(t *testing.T) {
+	const missing = "internal/example"
+	_, slug, base, tip := seedDeletionReview(t, missing, true)
+
+	out, code := Command([]string{"review", slug, "--base", base, "--source-tip", tip})
+	if code != 1 || !strings.Contains(out, "writes-resolve,red") || !strings.Contains(out, missing) {
+		t.Fatalf("missing parent directory review = (%d, %q), want writes-resolve red naming %s", code, out, missing)
+	}
+}
+
 // TestCommandFrozenRangeWithoutDeletionEvidenceReds proves that a deletion outside
 // the selected range does not resolve the same absent path.
 func TestCommandFrozenRangeWithoutDeletionEvidenceReds(t *testing.T) {
