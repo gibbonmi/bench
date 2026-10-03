@@ -8,7 +8,8 @@ All five required C2 author results are recorded below against that source.
 Three independent native axes reviewed the clean source through record commit 54ece5c17b26dcc5de840fb06317846a155cf67c.
 The C2 completion checkpoint remains pending.
 
-The initial reviews retain five findings across four repair targets.
+The initial reviews found five findings across four repair targets.
+The confirming reviews report zero current findings on all three axes.
 C2 has consumed one post-review repair cycle.
 The original approved author session repaired all four targets at source 1024fd512f06f79637823fb8f47cce5f81e6ba76.
 The allowance is two cycles, and the initial preservation hardening pass remains separate.
@@ -20,13 +21,14 @@ The repaired source passed its lane and build preflight.
 All five required author results are recorded at source digest 57212b45ade39c54e329df7e5aab2c3dfe03131c.
 The sealed system suite passed in 86843 milliseconds without failures or skips.
 The live-root documentation check passed in 3244 milliseconds without skips.
-The independent confirming reviews and completion checkpoint remain pending.
+All three independent confirming reviews passed.
+The completion checkpoint remains pending.
 
 The journal persists each replacement identity before publication and each restore identity before undo publication.
 The final identity guard runs after staging.
 Undo aggregates its preflight failures before any restoration.
 The data-handling document links to executable owners without repeating their values.
-The author claims these repairs close the four targets, subject to independent confirmation.
+The three independent axes confirmed these repairs from the frozen source.
 
 The identity and aggregate-error regressions each produced a behavioral red before their repairs.
 The final-guard omission failed both publication paths, and the required undo omission also bit.
@@ -35,7 +37,9 @@ The recorded evidence artifact retains exact tests, timings, and historical scop
 
 ## Standards
 
-Count: one retained finding. Worst issue: S2.
+Current count: zero. Worst issue: none.
+The confirming result supersedes S2 with a no-op disposition and confidence 10.
+The following paragraph retains its initial occurrence.
 
 S2 is auto-fix, with confidence 9.
 DATA_HANDLING.md repeats executable namespace, mode, lock, and fault-grammar facts.
@@ -49,7 +53,9 @@ The initial S1 occurrence and its clarification remain in the native excerpt.
 
 ## Spec
 
-Count: one finding. Worst issue: SP-C2-1.
+Current count: zero. Worst issue: none.
+The confirming result closes SP-C2-1 with confidence 10.
+The following paragraph retains its initial occurrence.
 
 SP-C2-1 is auto-fix, with confidence 9.
 The spec requires undo to match the repair postimage identity at spec.md:159 and CD32.
@@ -59,7 +65,10 @@ A replacement inode with identical bytes and mode must remain untouched.
 
 ## Coverage
 
-Count: three findings. Worst issue: C2-COV-1.
+Current count: zero. Worst issue: none.
+The confirming result supersedes all three initial findings with no-op dispositions and confidence 10.
+The following paragraphs retain those initial occurrences.
+
 C2-COV-1 is auto-fix, with confidence 10.
 CD35 requires the final identity check after temporary-file preparation and immediately before publication.
 The current check precedes that preparation at transaction.go:123-132 and image.go:78-123 under internal/adopt/transaction.
@@ -73,6 +82,10 @@ C2-COV-3 is auto-fix, with confidence 9.
 CD36 requires every unresolved restore target to be reported.
 The first validation loop returns on its first failure at internal/adopt/transaction/transaction.go:171-192.
 A multiple-target refusal test must prove complete reporting before any restore.
+
+The public undo-conflict cases run in-process through the doctor entrypoint.
+A fresh Store reload verifies retained identity, and the system suite separately proves fresh-process interruption recovery.
+The issuing Coverage axis corrected this distinction without changing its conclusion.
 
 No axis retained optional advice or required an implementation-command change.
 The native excerpts retain each axis's read scope and current source binding.
@@ -1488,6 +1501,72 @@ No review requested a Bench command change.
             "C2-COV-3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2-standards-confirm1",
+          "performer": "/root/c2_standards_confirm",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "57212b45ade39c54e329df7e5aab2c3dfe03131c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c2_standards_confirm",
+            "digest": "sha256:00602f9e6082d15c3aa75da4d530cadf252cc8d8e8a5cb33a8027577683c9fb7",
+            "excerpt": "## Standards\n\nSource binding: artifact `sha256:46e64aa…e34ae5de`, assignment `f7123d5b…`, frozen pair `b5dd79b9…257c7409`; current `true`, clean, delivery unverified.\n\nRaw findings: **0**. Worst issue: **none**.\n\nNamed concerns:\n\n- **S2 — no-op/refuted, confidence 10.** DATA_HANDLING.md now links the namespace, record-mode, transaction, lock, and fault-input owners without repeating executable values. The repository-wide sweep found each literal at its executable or independent-test owner.\n- **S1 — no-op/refuted, confidence 10.** C3’s ticket owns `CHANGELOG.md`; the repair does not reopen C3.\n- **SP-C2-1 / C2-COV-2 — no-op/refuted, confidence 10.** Persisted device/inode identity is defined once in image.go, retained before apply and undo publication, and compared through `sameObserved`.\n- **C2-COV-1 — no-op/refuted, confidence 10.** Both paths stage first, persist the staged identity, then run the adjacent destination check in `publication.publish` before rename. This stays within the issuing axis’s non-atomic boundary.\n- **C2-COV-3 — no-op/refuted, confidence 10.** transaction.go validates every destination, joins all failures, and returns before restoration.\n- The apparent stale system-suite sentence is also refuted: `repair-verification.md` was committed at `1024fd5` before the final run; `257c740` later committed the canonical review record containing the 86,843 ms pass.\n\nThe added publication-order comment states the non-obvious interruption constraint and satisfies `craft-comments`. The repair introduced no surviving duplicated policy, parser, fixture harness, registry, or derived count.\n\nRead scope: evidence `index.toon`, sources `s1`, `s2`, `s4`, `s19`, and `s20`; full approved spec and C2 ticket; current `AGENTS.md`, `.bench/BENCH.md`, project profile, AXI, synthesis, review, delegation, comments, and bounded-repair rules; all 101 consumer rows with untouched callers first; all 64 coverage rows; relevant production and test consumers; repository-wide hidden duplication sweeps; one complete frozen Git diff. No tests, probes, writes, commits, or stash operations ran.\n\nOptional advice: none. Implementation-command contribution: none; no command change is necessary.\n\nclaim[1]{axis,status,confidence}:\n  Standards,claimed,10\n"
+          },
+          "axis": "Standards",
+          "base": "3c3c1a012be244795f9a1a2841b6b351686231c9",
+          "tip": "1024fd512f06f79637823fb8f47cce5f81e6ba76",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-initial"
+          ]
+        },
+        {
+          "id": "c2-spec-confirm1",
+          "performer": "/root/c2_spec_confirm",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "57212b45ade39c54e329df7e5aab2c3dfe03131c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c2_spec_confirm",
+            "digest": "sha256:2a511e7c4475c17a962c539667ccd4924c5b966b44265677e229f433f67f69ca",
+            "excerpt": "## Spec\n\n**Result:** zero findings. The first C2 repair closes the retained Spec concern and both folded Coverage concerns relevant to Spec. Raw count: **0**. Worst issue: **none**. De-duplicated repair targets remaining: **0**.\n\n**Line:** gpt-5.6-sol / high / one confirming pass.\n\n**Source binding:** assignment `f7123d5b2ad592acc6e5a239c1f1f389`; evidence `sha256:46e64aa8aa9fd95a77ba9d65bedecbbc16dc89f1eb86759300f3e9ede34ae5de`; frozen repair pair `b5dd79b9f629fbd3d7256097edfe7808a3e16238..257c7409b36d52f4ac794c34eb0f914890607995`. The single `bench preflight evidence … --check-current` returned `current=true`, clean tip `257c7409`, and `delivery=unverified`.\n\n**Read scope:** evidence metadata/index; the whole approved spec; C2 ticket; all 64 mapped rows; all 101 consumer rows; untouched consumers first in `internal/adopt/broker.go`, `transaction/fragment.go`, `transaction/journal_test.go`, the relevant existing transaction tests, and `TestCompatibilityInterruptedRepair`; one full frozen-pair diff; then the complete current `image.go`, `publication.go`, `journal.go`, `transaction.go`, and `identity_test.go`, plus the public undo-conflict test, repaired `DATA_HANDLING.md` section, and retained C2 pickup findings. C1 was accepted context only. C3 was not graded.\n\nThe named concerns hold from source:\n\n- **SP-C2-1 / C2-COV-2:** The spec requires postimage identity matching at `spec.md:159` and CD32 at `spec.md:309`. The journaled image now carries filesystem identity at `image.go:15`; `sameObserved` requires matching non-absent identities at `image.go:72-79`; Apply persists the staged postimage identity before publication at `transaction.go:128-132`; and both the package-level and public regressions replace the postimage with a different inode while preserving bytes and mode at `identity_test.go:12` and `repair_test.go:325`. The replacement remains untouched.\n- **C2-COV-1:** CD35 requires the identity check immediately before publication at `spec.md:312`. Preparation completes before `publication.publish` runs; that method re-inspects and compares the destination at `publication.go:82-91`, then performs the rename at `publication.go:104`. `TestIdentityAfterReplacementPreparation` covers both Apply and Undo at `identity_test.go:91`. The issuing axis’s exclusion of atomic compare-and-rename against non-cooperating writers remains respected.\n- **C2-COV-3:** CD36 requires every unresolved restore target and retained recovery state at `spec.md:313`. Undo’s preflight walks every entry and appends each failure at `transaction.go:174-180`; only after a clean preflight does it persist `stateUndoing` at `transaction.go:182-183`. Publication-phase failures are also accumulated at `transaction.go:209`. `TestUndoReportsEveryPreflightFailure` exercises multiple refusals and a successful later recovery at `identity_test.go:46`.\n- **Interruption and recovery:** The spec requires fresh-process recovery and forbids false rollback success at `spec.md:175-176`. Apply saves the staged inode before rename at `transaction.go:128-132`. Undo saves each staged restore identity through `entry.Restored` at `journal.go:16` and `transaction.go:199-203`. A resumed undo recognizes the original preimage or persisted restored identity at `transaction.go:227`. The unchanged fresh-process consumer remains `TestCompatibilityInterruptedRepair` at `internal/systemtest/compatibility_test.go:268`. The repair preserves the existing interruption/recovery guarantee.\n\nS2 is outside the Spec axis, but the read found no scope change: `DATA_HANDLING.md:173-177` removes copied executable values and points to their owners.\n\n### Findings\nNone. There are no dispositions to route.\n\n### Optional advice\nNone.\n\n### Implementation-command contribution\nNo implementation-command change is necessary.\n\n| claim | status | confidence |\n| --- | --- | ---: |\n| SP-C2-1/C2-COV-2 closed | claimed | 10 |\n| C2-COV-1 closed | claimed | 10 |\n| C2-COV-3 closed | claimed | 10 |\n| interruption/recovery preserved | claimed | 9 |\n\nBehavioral status is `claimed` because this read-only confirming pass ran no tests or probes. One of two C2 repair cycles remains consumed; the separate initial preservation hardening pass is unchanged.\n"
+          },
+          "axis": "Spec",
+          "base": "3c3c1a012be244795f9a1a2841b6b351686231c9",
+          "tip": "1024fd512f06f79637823fb8f47cce5f81e6ba76",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-initial"
+          ]
+        },
+        {
+          "id": "c2-coverage-confirm1",
+          "performer": "/root/c2_coverage_confirm",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "57212b45ade39c54e329df7e5aab2c3dfe03131c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c2_coverage_confirm",
+            "digest": "sha256:6d5858dfaabbbbafa5fc1a33361c478776c21672eb318b742143c168efcb8099",
+            "excerpt": "## Coverage\n\n**Result:** zero findings. Worst issue: none. De-duplicated repair targets: zero.\n\n### Source binding\n\n- Evidence: `sha256:46e64aa8aa9fd95a77ba9d65bedecbbc16dc89f1eb86759300f3e9ede34ae5de`\n- Assignment: `f7123d5b2ad592acc6e5a239c1f1f389`\n- Frozen pair: `b5dd79b9f629fbd3d7256097edfe7808a3e16238..257c7409b36d52f4ac794c34eb0f914890607995`\n- Executable repair source: `1024fd512f06f79637823fb8f47cce5f81e6ba76`\n- `--check-current`: current, clean, delivery unverified.\n- One earlier invocation supplied the assignment ID and was rejected before evidence retrieval. The single valid artifact-bound check then succeeded.\n\n### Read scope\n\nRead the evidence index and metadata, full approved spec, C2 ticket, all 64 mapped rows, all 101 frozen consumer rows, the complete project hostile-input checklist and its spec dispositions, the full 10-file repair diff, retained findings, and relevant production and test sources.\n\nUntouched consumers were examined first: `internal/adopt/broker.go`, `internal/adopt/transaction.go`, `internal/adopt/transaction/fragment.go`, `internal/adopt/transaction/journal_test.go`, and the untouched transaction cases. Changed sources included the complete image, journal, publication, and transaction owners. Mapped cases included `TestCompatibilityPlanDrift`, `TestIdentityAfterReplacementPreparation`, both undo-conflict families, `TestUndoRefusesEquivalentReplacement`, `TestUndoReportsEveryPreflightFailure`, `TestCompatibilityRestoreFailure`, and the fresh-process interrupted-repair case.\n\nThe consumed input family is the two `Store.Apply` call-site postures plus persisted journal reload. The repair delta stays within the C2-authorized transaction, public repair, evidence, specification, and data-handling paths.\n\n### Retained finding dispositions\n\n- **C2-COV-1 — no-op, confidence 10.** `stagePublication` prepares the replacement first. `publication.publish` then inspects and compares the destination at `publication.go:82-91`, directly before the remove or rename at `publication.go:96-104`. Apply calls this shared guard at `transaction.go:132`; undo uses the same publication seam after saving the restore identity. `TestIdentityAfterReplacementPreparation` covers both call-site postures at `identity_test.go:91`. This confirms CD35’s required ordering. Atomic compare-and-rename against a non-cooperating writer remains explicitly outside the issuing concern.\n- **C2-COV-2 — no-op, confidence 10.** Filesystem identity is serialized through `image.Identity` at `image.go:14-15`, derived from device and inode at `image.go:59-69`, and required by `sameObserved` at `image.go:72-79`. Apply persists the staged postimage before publication at `transaction.go:128`; undo persists `Restored` before restore publication at `transaction.go:199`. A resumed undo recognizes only the exact retained preimage or restored identity at `transaction.go:219-230`. `TestUndoRefusesEquivalentReplacement` uses a fresh `Store` at `identity_test.go:12`, and the public fresh-process equivalent-replacement case starts at `repair_test.go:325`.\n- **C2-COV-3 — no-op, confidence 10.** Undo walks every entry into `failures` before setting `stateUndoing`; only after `errors.Join` is empty does restoration begin at `transaction.go:172-182`. Restore-loop failures are also accumulated through `transaction.go:212`. `TestUndoReportsEveryPreflightFailure` at `identity_test.go:46` checks both unresolved paths, verifies no backup was lost, and completes recovery afterward. The existing restore-failure case independently covers failures during publication.\n\n### Independent bypass attempt\n\nA late symlink replacement after temporary preparation but during record persistence does not bypass COV-1: the final `inspect` sees the symlink identity and rejects it before publication.\n\nFor COV-2, interruption after apply rename reloads the saved `After` identity; interruption after undo rename reloads the saved `Restored` identity. The resumed path accepts the exact published inode and refuses an equal-byte replacement inode.\n\nFor COV-3, combining a non-file destination with a different-inode equal-content replacement yields two preflight errors. Both are joined before `stateUndoing` or any restore publication.\n\nOptional advice: none.\nImplementation-command contribution: none. No command change is necessary.\n\nNo tests or probes ran, as required. One of two C2 repair cycles remains consumed; the separate preservation hardening pass is unchanged. C1 was not reopened, and C3 was not graded as implemented.\n\n| Claim | Status | Confidence |\n| --- | --- | ---: |\n| coverage-axis-complete | claimed | 10 |\n| C2-COV-1 | claimed | 10 |\n| C2-COV-2 | claimed | 10 |\n| C2-COV-3 | claimed | 10 |\n\nIssuing-axis correction:\nCorrection for C2-COV-2: `TestCompatibilityUndoConflict` at `repair_test.go:325` provides public-entrypoint coverage in-process. `TestUndoRefusesEquivalentReplacement` at `identity_test.go:12` reloads through a fresh `Store`, while `TestCompatibilityInterruptedRepair` supplies the separate fresh-process recovery coverage.\n\nThis distinction changes no finding, disposition, confidence, or conclusion. C2-COV-2 remains `no-op`, confidence 10; the persisted identity and interruption paths remain covered at their respective seams.\n"
+          },
+          "axis": "Coverage",
+          "base": "3c3c1a012be244795f9a1a2841b6b351686231c9",
+          "tip": "1024fd512f06f79637823fb8f47cce5f81e6ba76",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-initial"
+          ]
         }
       ]
     }
