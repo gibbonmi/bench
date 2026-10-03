@@ -28,7 +28,7 @@ verification reruns, and a fresh round of all three axes.
 `bench gate --checkpoint` accepts a comment-only gap between the reviewed
 chunk tip and the graded source. The checkpoint proves the gap itself from the
 two Git trees. Each changed path must be an existing regular Go file whose Go
-tokens and directive-shaped comments stay the same. Any other gap keeps the
+tokens stay the same and which holds no directive-shaped comment. Any other gap keeps the
 current refusal and its current message.
 
 The orchestrator commits the correction, and the plan records no assignment
@@ -77,7 +77,7 @@ Harder chunks: CG-C2.
 12. As a reviewer, I want a changed raw-string literal to refuse, so that data that looks like a comment still takes review.
 13. As a reviewer, I want a block comment that gains a newline after an operand to refuse, because the newline adds a semicolon.
 14. As a reviewer, I want a scanner error on either side to refuse, so that an unterminated block comment cannot pass with equal tokens.
-15. As a reviewer, I want a changed or added directive-shaped comment to refuse, so that a `//go:build`, `//go:embed`, or `//export` edit still takes review.
+15. As a reviewer, I want any changed file with a directive-shaped comment to refuse, so that a `//go:build`, `//go:embed`, or `//export` edit still takes review.
 16. As a reviewer, I want a changed `// +build` line to refuse, so that a legacy build constraint still takes review.
 17. As a reviewer, I want a file that imports `"C"` to refuse, because its preamble comment is C source.
 18. As a reviewer, I want an example-output comment on either side of a `_test.go` file to refuse, because `go test` compares it.
@@ -185,7 +185,7 @@ order.
 
 1. Each blob scans through `go/scanner` with comments skipped. Any scanner error on either side wraps `ErrScan`.
 2. Two token lists that differ in a token kind or a literal wrap `ErrTokens`. Positions do not take part. The automatic semicolon is a token, so a newline that a block comment gains or loses can change the list.
-3. Each blob scans again with `scanner.ScanComments`. Two different ordered lists of directive-shaped comment texts wrap `ErrDirective`.
+3. Each blob scans again with `scanner.ScanComments`. A directive-shaped comment on either side wraps `ErrDirective`, even when its text is unchanged.
 4. A file whose import list holds the path `C` wraps `ErrCgo`. `go/parser` with `ImportsOnly` reads the list, and a parse failure wraps `ErrScan`.
 5. A `_test.go` path with an example-output comment on either side wraps `ErrExampleOutput`.
 
@@ -201,8 +201,8 @@ directive parser in Go 1.25, so the rule names the conservative shape and does
 not copy an unexported standard-library function.
 
 An example-output comment is a comment whose text, without its markers and
-leading spaces and tabs, starts with `output:` or `unordered output:` in any
-letter case.
+leading whitespace, starts with `output:` or `unordered output:` in any
+letter case. `strings.TrimSpace` removes the whitespace, including block-comment newlines.
 
 A whitespace-only layout change passes the Go rule, because every token stays
 the same. That widening is flagged decision F1 below.
@@ -323,7 +323,7 @@ assumption.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | CG-C1 / `1-move-tree-change-reader.md` | One raw tree-change reader in `internal/git` serves the lane, and the lane's change list stays the same. | CG40, CG41 | `bench test --package ./internal/git`, `bench test --package ./internal/gate` | no |
-| CG-C2 / `2-prove-comment-only-gaps.md` | `commentgap.Prove` proves a comment-only Go gap between two trees and names the rule of each refusal. | CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46, CG47 | `bench test --package ./internal/commentgap` | yes |
+| CG-C2 / `2-prove-comment-only-gaps.md` | `commentgap.Prove` proves a comment-only Go gap between two trees and names the rule of each refusal. | CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46, CG47, CG48, CG49, CG50 | `bench test --package ./internal/commentgap` | yes |
 | CG-C3 / `3-accept-proven-gaps-at-checkpoint.md`, `4-state-comment-only-correction-rule.md` | The checkpoint, the completion record, and the landing accept a proven gap, the surrounding evidence stays strict, and the guidance routes the correction. | CG1, CG2, CG3, CG4, CG5, CG6, CG7, CG8, CG33, CG34, CG35, CG36, CG37, CG38, CG39, CG44, CG45 | `bench test --package ./internal/gate`, `bench test --package ./internal/reviewrecord/recordcmd`, `bench test --package ./internal/landing`, `bench test --package ./internal/anchors`, `bench test --package ./internal/conformance` | no |
 
 CG-C1 creates the seam that CG-C2 consumes, so its chunk review closes first.
@@ -337,7 +337,7 @@ CG-C2 creates the seam that CG-C3 consumes.
 - The `--complete` checkpoint row calls `Complete` and then re-points `Completion.SourceDigest` and the final verification to the corrected digest. `recordtest.Complete` pins completion to the last chunk digest, and `f.Verification` rebuilds the final verification at a named digest.
 - The landing row adds one case to `TestLandingCompletionEvidence`. Today `fixture(t)` commits only `named` and `foreign`. `attachedCompletionFixture` serves `newCompletionFixture` and the delegated test in `delegated_completion_test.go`. So `attachedCompletionFixture` gains a variadic prepare hook that writes one Go file before the first chunk. `newCompletionFixture` forwards the hook, and the delegated caller stays unchanged. The case commits a comment edit after the second chunk and re-points the completion evidence to the corrected digest.
 - `TestReviewCheckpointChainGapNamesTheExpectedBase` asserts only the first two clauses of the chain rule today, so it passes with either rule text. Its second assertion gains the clause `and only record commits and comment-only corrections follow a chunk tip` (CG35).
-- The mutation-probe target for CG-C2 is a set or count comparison of the directive texts in place of the ordered list. No row reorders two directives.
+- The mutation-probe target for CG-C2 replaces `if directive(comment.literal) {` with `if false {`. The directive refusal rows must fail.
 - `TestComposedChangesExpandsANamedDirectory`, `TestComposedChangesRepresentsARenameAsDeletionAndAddition`, and `TestComposedChangesCarriesTheSymlinkMode` guard the moved reader without an edit.
 - The gate's `test` phase runs every package test above and the root conformance test, so the gate observes each row except CG40.
 
@@ -407,6 +407,10 @@ CG-C2 creates the seam that CG-C3 consumes.
 
 | CG47 | 24 | Different trees whose only difference is an empty directory tree refuse with `ErrEmptyChanges` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | Git omits the empty directory from its change list, so this row pins the empty-list refusal. |
 
+| CG48 | 15 | Moving an unchanged embed directive from one variable to another refuses with `ErrDirective` | planned TestProveGoGap in internal/commentgap/commentgap_test.go | Equal token and directive-text lists cannot prove that directive attachment stays unchanged. |
+| CG49 | 15 | An ordinary comment edit beside an unchanged directive refuses with `ErrDirective` | planned TestProveGoGap in internal/commentgap/commentgap_test.go | The conservative rule refuses directive-bearing files, even when only another comment changes. |
+| CG50 | 18 | Multiline block example output on either side refuses with `ErrExampleOutput` | planned TestProveGoGap in internal/commentgap/commentgap_test.go | Go reads output after a leading newline, which a spaces-and-tabs trim misses. |
+
 Not covered: story 39 — the light path has no checkpoint, so no row can observe its repair accounting.
 
 ### Edge inventory
@@ -456,7 +460,8 @@ The walk of the hostile-input checklist in `projects/benchkit.md`:
 - Completion evidence recorded before a comment-only correction — the orchestrator reruns final verification and `bench record completion` (CG33, CG44).
   That rerun needs no review and consumes no repair cycle.
 - A chunk base after a comment-only correction — the next base stays the predecessor tip, so the correction joins its delta (CG34).
-- A cgo file or a `_test.go` file with an example-output comment — the existing repair path takes the edit (CG19, CG20, and CG21 pin the refusals).
+- A file with a directive-shaped comment, a cgo file, or a `_test.go` file with an example-output comment takes the repair path.
+  CG19, CG20, CG21, CG48, CG49, and CG50 pin these refusals.
 - A Go blob over the control-record bound — the existing repair path takes the edit (CG29 pins the refusal).
 - A comment edit that adds or removes the space after `//` — the rule reads `//TODO` as directive-shaped, so the edit takes the repair path (CG15).
 
@@ -674,7 +679,7 @@ proposed entry for `CONTEXT.md`:
 
 - **comment-only gap** — a gap after a reviewed chunk tip in which each
   changed path is an existing regular Go file. Each file keeps its Go tokens
-  and its directive-shaped comments. The checkpoint proves the gap from the two
+  and holds no directive-shaped comment. The checkpoint proves the gap from the two
   trees. Not "comment fix", not "cosmetic change", not "trivial delta" —
   comment-only gap.
 
@@ -721,3 +726,10 @@ All chunk IDs and dependencies stay unchanged.
 ```bench-completion-plan
 {"version":1,"chunks":[{"id":"CG-C1","tickets":["1-move-tree-change-reader.md"],"verification":[{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C2","tickets":["2-prove-comment-only-gaps.md"],"verification":[{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C3","tickets":["3-accept-proven-gaps-at-checkpoint.md","4-state-comment-only-correction-rule.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/ft370-comment-only-evidence/spec.md"},{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"git","command":"bench test --package ./internal/git"}]}
 ```
+
+### Approved conservative comment rules
+
+The reviewer approves refusal of changed files with any directive-shaped comment on 2026-10-03.
+This rule covers unchanged directives whose attachment can change program behavior.
+The reviewer also approves recognition of multiline block example output.
+CG48 to CG50 pin these decisions, and the directive-refusal omission is the named probe.

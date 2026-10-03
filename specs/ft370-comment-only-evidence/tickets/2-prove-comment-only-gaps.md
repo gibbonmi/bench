@@ -2,7 +2,7 @@
 
 Blocked by: 1-move-tree-change-reader.md
 Writes: internal/commentgap/ (new), internal/git/tree.go
-Covers: CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46, CG47
+Covers: CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46, CG47, CG48, CG49, CG50
 
 ## What to build
 
@@ -20,7 +20,7 @@ Obey these exact contracts:
 - Add `TreeChangesIncludingSubmodules` in `internal/git/tree.go`. It shares the existing reader and parser, with `--ignore-submodules=none` as its only policy change.
 - The Go rule compares the token kind and the literal of each token, and not the positions.
 - The Go rule keeps the automatic semicolon as a token, so a newline that a block comment gains can change the list.
-- The directive check compares two ordered lists of directive-shaped comment texts, not two sets or two counts.
+- The directive check refuses a directive-shaped comment on either side, including an unchanged directive.
 
 The spec states the three directive shapes and the example-output prefixes.
 Use `go/build/constraint.IsPlusBuild` for the legacy build line, and
@@ -43,7 +43,9 @@ helpers can go in a second test file of the package, so each file stays under
 - [ ] `TestProveTreeGap` holds CG22 to CG32, and each refusal row asserts its own sentinel.
 - [ ] CG31 proves a gap in `a b*.go` and in a Go file whose name holds a tab.
 - [ ] CG30 sets `diff.ignoreSubmodules=all` in the fixture repository and gets `ErrMode`.
-- [ ] A directive check that compares only the count of the directive texts makes the CG15, CG17, and CG18 rows fail.
+- [ ] Replacing `if directive(comment.literal) {` with `if false {` makes the directive refusal rows fail.
+- [ ] CG48 and CG49 refuse relocated and unchanged directives.
+- [ ] CG50 refuses multiline block output on both sides and on either side alone.
 - [ ] CG47 refuses an empty-directory tree difference with `ErrEmptyChanges`.
 - [ ] CG46 refuses a hidden gitlink beside a visible Go comment edit with `ErrMode`.
 - [ ] `bench test --package ./internal/git` and `bench test --package ./internal/gate` pass.
