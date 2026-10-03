@@ -170,6 +170,22 @@ An objective is capped at 200 runes. It is rejected at intake — before any led
 entry, scratch file, or commit — if it is over-long or carries a control byte.
 So unbounded or control-bearing text cannot flow into durable state.
 
+## Adoption recovery
+
+The [compatibility repair owner](internal/adopt/compatibility.go) selects the local recovery namespace.
+The [journal owner](internal/adopt/transaction/journal.go) defines its record schema and private access modes.
+These sources define the executable values; this inventory does not repeat them.
+
+Recovery records carry managed preimages and the metadata needed for restoration.
+A [managed fragment](internal/adopt/transaction/fragment.go) excludes the surrounding project text from its backup.
+Credentials, raw environment values, personal configuration homes, and chat content are outside the repair write set.
+The operator removes retained records after their recovery purpose ends.
+
+The [transaction owner](internal/adopt/transaction/transaction.go) controls retention after success and failure.
+The [lock owner](internal/adopt/transaction/lock.go) defines the shared namespace, access modes, and lock lifetime.
+Locks contain destination-path digests, without file content.
+The [adoption publication owner](internal/adopt/transaction.go) defines the explicit fault-injection input for process recovery tests.
+
 ## Log and terminal output
 
 Every terminal render of operator-influenced text goes through the single

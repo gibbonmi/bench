@@ -147,6 +147,61 @@ Codex phase adapters installed by Bench:
 - `$bench-assess` → `.agents/commands/bench-assess.md`
 - `$bench-deepen` → `.agents/commands/bench-deepen.md`
 
+## Session compatibility
+
+Codex CLI and Desktop use the same repository agreement, skills, hooks, and Bench assignments.
+Their chats and user configuration homes remain independent.
+Bench does not copy credentials, preferences, or conversation history between them.
+The Windows desktop app uses its WSL2 agent for this workflow.
+Native Windows Bench execution is outside this qualification.
+Existing Linux and macOS contracts remain unchanged.
+
+### Check the active operation
+
+1. Identify the actual interface, repository, execution environment, active runtime, configuration home, and relevant policy sources.
+2. Keep an unavailable value unknown; a launcher version does not identify the active server.
+3. Run `bench doctor --compat codex-cli` or `bench doctor --compat codex-desktop` for the selected interface.
+4. Read the complete report through its spill path when the output is bounded.
+5. Follow its `normal-shell` and `repository-wrapper` capability actions in separate calls, in that order.
+6. Perform the remaining capability actions needed by the selected operation.
+
+The report owns the live-probe instructions for every capability.
+If no command can start, use the command-free recovery route below.
+
+A doctor report describes local inspection and pending live probes.
+A zero exit does not qualify the whole chat.
+A hook, integrated terminal, new subprocess, or elevated shell supplies diagnostic evidence only.
+Keep successful observations in the current chat's memory, with their operation, route, permission mode, and observed context.
+Do not write a reusable green certificate.
+
+Start, resume, runtime replacement, workspace change, and relevant policy change invalidate affected observations.
+When context cannot be compared, repeat the affected live probes before dependent work.
+A runtime version difference alone does not prove a capability failure.
+Report the blocked operation, failed check, and supported next action.
+Continue only work whose required capabilities are verified.
+
+### Repair managed integration
+
+When the report identifies an eligible managed repair, run the selected compatibility command with `--fix`.
+The repair preserves preimages and modified or foreign files.
+Read its recovery classifications before any action that requires reviewer authority.
+Use its recorded `--undo <repair-id>` action when restoration is needed.
+Then follow the report's `failed-interface-retest` capability action.
+A successful repair command does not supply this live result.
+
+### If no command can start
+
+Preserve the exact startup error and name the failing interface.
+Do not retry dependent mutations through an elevated shell or an external terminal.
+Use supported external diagnostics to inspect the failure without treating their success as recovery.
+
+Keep active work and its continuation evidence before requesting an app restart.
+Obtain explicit reviewer authorization before interrupting a process, changing trust or permissions, or editing private runtime files.
+No supported automatic upstream repair is established.
+If the supported recovery route is unavailable, report the affected work as unresolved.
+
+After an authorized recovery, repeat the active-operation procedure above in the failed chat.
+
 ## Command Notes
 
 Bench renders `bench help` from the Go `commandRegistry`; it is the executable

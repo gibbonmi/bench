@@ -40,6 +40,16 @@ func Unlink(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
+	var guard *adoptionGuard
+	if !dryRun {
+		guard, err = lockAdoption(root, nil)
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		defer guard.Close()
+	}
+
 	manifestPath := filepath.Join(root, ".bench", "link-manifest.tsv")
 	// Explicit absence guard: the shared reader maps an absent manifest to an empty one with
 	// no error. unlink must not inherit that false-empty and exit 0 on a repo it cannot
@@ -55,7 +65,7 @@ func Unlink(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	plan, err := planUnlink(root, m, dryRun)
+	plan, err := planUnlink(root, m, dryRun, guard)
 	if err != nil {
 		fmt.Fprintf(stderr, "bench unlink: %s: %v\n", root, err)
 		return 1
@@ -81,10 +91,20 @@ type unlinkPlan struct {
 	agentsAction string
 	hookAction   string
 	manifestKept bool
+	stage        string
+	changes      []stagedChange
 }
 
-func planUnlink(root string, m Manifest, dryRun bool) (unlinkPlan, error) {
+func planUnlink(root string, m Manifest, dryRun bool, guard *adoptionGuard) (unlinkPlan, error) {
 	var p unlinkPlan
+	if !dryRun {
+		stage, err := os.MkdirTemp(root, ".bench-unlink-")
+		if err != nil {
+			return p, err
+		}
+		defer os.RemoveAll(stage)
+		p.stage = stage
+	}
 
 	rels := make([]string, 0, len(m.hashes))
 	for rel := range m.hashes {
@@ -120,30 +140,34 @@ func planUnlink(root string, m Manifest, dryRun bool) (unlinkPlan, error) {
 			continue
 		}
 		if !dryRun {
-			if err := os.Remove(full); err != nil {
-				p.refused = append(p.refused, rel)
-				continue
-			}
+			p.changes = append(p.changes, stagedChange{rel: rel})
 		}
 		p.removed = append(p.removed, rel)
 		removedSet[full] = true
 		collectAncestors(&candidateDirs, root, full)
 	}
 
-	p.emptyDirs = sweepEmptyDirs(candidateDirs, removedSet, dryRun)
 	p.agentsAction = stripAgentsForUnlink(root, dryRun, &p)
-	hookAction, err := removeManagedHook(root, dryRun)
+	hookAction, err := removeManagedHook(root, dryRun, &p)
 	if err != nil {
 		return unlinkPlan{}, err
 	}
 	p.hookAction = hookAction
+	if !dryRun && len(p.changes) > 0 {
+		if err := promoteWithLease(root, p.changes, guard); err != nil {
+			return p, err
+		}
+	}
+	p.emptyDirs = sweepEmptyDirs(candidateDirs, removedSet, dryRun)
 
 	// Manifest removed last, and only when nothing was refused, so a partial run leaves the
 	// residual managed state tracked for a follow-up. Dry-run never removes it.
 	if len(p.keptModified)+len(p.refused) > 0 {
 		p.manifestKept = true
 	} else if !dryRun {
-		_ = os.Remove(filepath.Join(root, ".bench", "link-manifest.tsv"))
+		if err := promoteWithLease(root, []stagedChange{{rel: ".bench/link-manifest.tsv"}}, guard); err != nil {
+			return p, err
+		}
 	}
 	return p, nil
 }
@@ -238,58 +262,6 @@ func sweepEmptyDirs(candidateDirs []string, removedSet map[string]bool, dryRun b
 		count++
 	}
 	return count
-}
-
-// stripAgentsForUnlink removes the fenced Bench block from AGENTS.md while preserving the
-// user's surrounding prose. When stripping leaves the file whitespace-only, the case
-// where link created it with no user content, the file is removed, mirroring link's
-// create-if-absent symmetry. A malformed managed block is left in place and counted as a
-// refusal, so the manifest survives for a manual fix. AGENTS.md is bespoke, not a
-// manifest row.
-func stripAgentsForUnlink(root string, dryRun bool, p *unlinkPlan) string {
-	path := filepath.Join(root, "AGENTS.md")
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return ""
-	}
-	stripped, serr := StripAgentsBlock(string(content))
-	if serr != nil {
-		p.refused = append(p.refused, "AGENTS.md")
-		return "kept AGENTS.md (its managed block could not be parsed)"
-	}
-	if stripped == string(content) {
-		return ""
-	}
-	if strings.TrimSpace(stripped) == "" {
-		if !dryRun {
-			_ = os.Remove(path)
-		}
-		return "AGENTS.md (removed - no user prose remained)"
-	}
-	if !dryRun {
-		_ = os.WriteFile(path, []byte(stripped), 0o644)
-	}
-	return "AGENTS.md (managed block stripped, prose kept)"
-}
-
-// removeManagedHook removes the pre-push hook only when it carries the managed marker. It
-// resolves the effective hooks directory the same way link does, honoring core.hooksPath.
-// A hook without the marker is a foreign hook, left in place; its presence is not a
-// refusal because it was never Bench's. The hook is bespoke, not a manifest row.
-func removeManagedHook(root string, dryRun bool) (string, error) {
-	hooks, err := hooksDir(root)
-	if err != nil {
-		return "", err
-	}
-	path := filepath.Join(hooks, "pre-push")
-	content, err := os.ReadFile(path)
-	if err != nil || !strings.Contains(string(content), PrePushMarker) {
-		return "", nil
-	}
-	if !dryRun {
-		_ = os.Remove(path)
-	}
-	return "pre-push hook (managed - removed)", nil
 }
 
 func writeUnlinkReport(w io.Writer, root string, dryRun bool, p unlinkPlan) error {

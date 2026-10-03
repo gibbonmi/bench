@@ -1,0 +1,287 @@
+package adopt
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/adopt/transaction"
+	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/canonicalpath"
+	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/toon"
+
+	"github.com/gibbonmi/bench/internal/compatibility"
+	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/usage"
+)
+
+var compatibilityDoctorUsage = "usage: bench doctor --compat " + compatibility.InterfaceOperand() + " [--fix | --undo <repair-id>]"
+
+var (
+	doctorGrammar = usage.Grammar{
+		Cmd:   "bench doctor",
+		Help:  "usage: bench doctor [--fix]",
+		Flags: []usage.Flag{{Name: "--fix"}},
+	}
+	compatibilityGrammar = usage.Grammar{
+		Cmd:     "bench doctor --compat",
+		Help:    compatibilityDoctorUsage,
+		MinArgs: 1,
+		MaxArgs: 1,
+		Flags:   []usage.Flag{{Name: "--fix"}, {Name: "--undo", HasValue: true, NoEmptyValue: true}},
+	}
+)
+
+// DoctorHelpSuffix derives the public help suffix from the accepted doctor grammars.
+func DoctorHelpSuffix() string {
+	const prefix = "usage: bench doctor"
+	return strings.TrimPrefix(doctorGrammar.Help, prefix) + " |" + strings.TrimPrefix(compatibilityGrammar.Help, prefix)
+}
+
+func Doctor(args []string, stdout, stderr io.Writer, version string) int {
+	if len(args) > 0 && args[0] == "--compat" {
+		return runCompatibilityDoctor(args[1:], stdout, stderr, collectCompatibility, version)
+	}
+	return legacyDoctor(args, stdout, stderr, version)
+}
+
+func legacyDoctor(args []string, stdout, stderr io.Writer, version string) int {
+	parsed, line, code := usage.Parse(doctorGrammar, args)
+	if line != "" {
+		if code == 0 {
+			fmt.Fprintln(stdout, line)
+		} else {
+			fmt.Fprintln(stderr, line)
+		}
+		return code
+	}
+	if _, fix := parsed.Flags["--fix"]; fix {
+		return doctorFix(stdout, stderr, version)
+	}
+	return doctorReport(stdout, version)
+}
+
+type compatibilityCollector func(compatibility.Interface) compatibility.Input
+
+func runCompatibilityDoctor(args []string, stdout, stderr io.Writer, collect compatibilityCollector, version string) int {
+	parsed, line, code := usage.Parse(compatibilityGrammar, args)
+	if line != "" {
+		if code == 0 {
+			fmt.Fprintln(stdout, line)
+		} else {
+			fmt.Fprintln(stderr, line)
+		}
+		return code
+	}
+	selected, ok := compatibility.ParseInterface(parsed.Positionals[0])
+	if !ok {
+		fmt.Fprintln(stderr, compatibilityDoctorUsage)
+		return 2
+	}
+	_, fix := parsed.Flags["--fix"]
+	undo, hasUndo := parsed.Flags["--undo"]
+	if fix && hasUndo {
+		fmt.Fprintln(stderr, compatibilityDoctorUsage)
+		return 2
+	}
+	mutationCode := 0
+	if fix || hasUndo {
+		guidance, err := compatibility.RenderRecovery()
+		if err != nil {
+			fmt.Fprintln(stderr, "compatibility recovery output refused")
+			return 1
+		}
+		fmt.Fprint(stdout, guidance)
+		mutationCode = mutateCompatibility(selected, undo, stdout, stderr, version)
+	}
+	report := compatibility.Inspect(collect(selected))
+	output, err := report.Render()
+	if err != nil {
+		fmt.Fprintln(stderr, "compatibility output refused")
+		return 1
+	}
+	fmt.Fprint(stdout, output)
+	if mutationCode != 0 {
+		return 1
+	}
+	return report.ExitCode()
+}
+
+func collectCompatibility(selected compatibility.Interface) compatibility.Input {
+	root, rootErr := git.Root()
+	context := compatibility.Context{
+		Interface:         selected,
+		Repository:        compatibility.Fact{Value: root, Source: "git root"},
+		Environment:       compatibility.Fact{Value: runtime.GOOS + "/" + runtime.GOARCH, Source: "runtime"},
+		ConfigurationHome: configurationHome(selected),
+		ActiveRuntime:     compatibility.Fact{Source: "not observable from doctor subprocess"},
+		LauncherVersion:   compatibility.Fact{Source: "not observed"},
+	}
+	configPath := ""
+	if context.ConfigurationHome.Value != "" {
+		configPath = filepath.Join(context.ConfigurationHome.Value, "config.toml")
+	}
+	input := compatibility.Input{
+		Context:       context,
+		Configuration: compatibility.ReadFile(configPath, "selected interface configuration"),
+		GlobalBench:   globalBenchAvailable(),
+		HookAction:    compatibility.CapabilityAction("hook-behavior"),
+		Live:          compatibility.LiveObligations("workflow", false),
+	}
+	if rootErr != nil {
+		input.Context.Repository = compatibility.Fact{Source: "git root unavailable"}
+		input.ByPathAction = "run the repository .bench/bin/bench.sh by path"
+		return input
+	}
+	hook := compatibility.ReadFile(filepath.Join(root, ".codex", "hooks.json"), "repository hook declaration")
+	input.HookDeclared = hook.State == "parsed"
+	input.Context.PolicyProvenance = compatibility.PolicyProvenance(input.Configuration, hook)
+	wrapper, _ := linkDestination("bin/bench.sh")
+	if gate.KitSourceCheckout(root) {
+		wrapper = "bin/bench.sh"
+	}
+	input.ByPathAction = fmt.Sprintf("run %s doctor --compat %s", sanitize.ShellQuote(filepath.Join(root, filepath.FromSlash(wrapper))), selected)
+	input.Assets = compatibilityAssets(root)
+	return input
+}
+
+func configurationHome(selected compatibility.Interface) compatibility.Fact {
+	if home := os.Getenv("CODEX_HOME"); home != "" {
+		return compatibility.Fact{Value: home, Source: "CODEX_HOME"}
+	}
+	if selected == compatibility.CodexDesktop {
+		return compatibility.Fact{Source: "CODEX_HOME unavailable for selected desktop interface"}
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return compatibility.Fact{Source: "HOME default unavailable"}
+	}
+	return compatibility.Fact{Value: filepath.Join(home, ".codex"), Source: "HOME default"}
+}
+
+func compatibilityAssets(root string) []compatibility.Asset {
+	kit := gate.KitDir()
+	source := gate.KitSourceCheckout(root)
+	restore := "bench link"
+	if source {
+		restore = "bench doctor --fix"
+	}
+	plan, err := buildLinkPlan(kit)
+	if err != nil {
+		return []compatibility.Asset{{Name: "consumer-payload", File: compatibility.FileFact{State: bounds.StateUnreadable, Reason: err.Error()}, RestoreAction: "inspect the installed Bench payload"}}
+	}
+	assets := make([]compatibility.Asset, 0, len(plan))
+	for _, entry := range plan {
+		rel := entry.rel
+		if source {
+			if entry.kind != "file" {
+				continue
+			}
+			var err error
+			rel, err = filepath.Rel(kit, entry.src)
+			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				continue
+			}
+		}
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		fact := compatibility.FileFact{Path: path, Source: "canonical payload", State: bounds.StateParsed}
+		info, err := os.Stat(path)
+		switch {
+		case os.IsNotExist(err):
+			fact.State = bounds.StateAbsent
+		case err != nil:
+			fact.State, fact.Reason = bounds.StateUnreadable, err.Error()
+		case !info.Mode().IsRegular():
+			fact.State, fact.Reason = bounds.StateWrongType, "required asset is not a regular file"
+		}
+		assets = append(assets, compatibility.Asset{Name: filepath.ToSlash(rel), File: fact, RestoreAction: restore})
+	}
+	return assets
+}
+
+func globalBenchAvailable() bool {
+	_, err := exec.LookPath("bench")
+	return err == nil
+}
+
+type repairRun struct {
+	staging string
+	shim    string
+	pending []transaction.Change
+	spans   map[string]*transaction.Span
+	store   transaction.Store
+	id      string
+}
+
+func mutateCompatibility(selected compatibility.Interface, undo string, stdout, stderr io.Writer, version string) int {
+	root, err := git.Root()
+	if err != nil {
+		fmt.Fprintln(stderr, toon.NotInRepo())
+		return 1
+	}
+	home := benchhome.Dir()
+	if !filepath.IsAbs(home) {
+		fmt.Fprintln(stderr, "compatibility repair requires an absolute resolved Bench home")
+		return 1
+	}
+	home, err = canonicalpath.Resolve(home)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	namespace := filepath.Join(home, "compatibility-repairs")
+	if err := transaction.EnsurePrivateDirectory(namespace); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	repair := repairRun{store: transaction.Store{Directory: filepath.Join(namespace, poolkey.Key(root))}}
+	code := 0
+	state := "unchanged"
+	if undo != "" {
+		repair.id = undo
+		err = repair.store.Undo(undo)
+		state = "undone"
+	} else if gate.KitSourceCheckout(root) {
+		code = doctorFixRun(io.Discard, stderr, version, &repair)
+		if repair.id != "" {
+			state = "applied"
+		}
+	} else {
+		kit := gate.KitDir()
+		plan, planErr := buildLinkPlan(kit)
+		if planErr != nil {
+			fmt.Fprintln(stderr, planErr)
+			return 1
+		}
+		code, _ = transactionalRepair(root, kit, "copy", version, plan, stdout, stderr, &repair)
+		if repair.id != "" {
+			state = "applied"
+		}
+	}
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		code = 1
+	}
+	if code != 0 {
+		state = "incomplete"
+	}
+	action := compatibility.CapabilityAction("failed-interface-retest")
+	if repair.id != "" {
+		action = "bench doctor --compat " + string(selected) + " --undo " + repair.id + "; then " + action
+	}
+	block, renderErr := toon.Table("repair", []string{"id", "state", "action"}, [][]string{{repair.id, state, action}})
+	if renderErr != nil {
+		fmt.Fprintln(stderr, "compatibility repair output refused")
+		return 1
+	}
+	fmt.Fprint(stdout, block)
+	return code
+}

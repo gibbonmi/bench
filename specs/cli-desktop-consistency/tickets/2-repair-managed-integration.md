@@ -1,0 +1,54 @@
+# Repair managed integration reversibly
+
+Blocked by: 1-diagnose-interface.md
+Writes: internal/compatibility, internal/adopt, cmd/bench/main.go, cmd/bench/help_inventory_test.go, internal/systemtest/compatibility_test.go, DATA_HANDLING.md, tests/canary/package-core-guard/unrouted-subcommand, tests/canary/data-handling-derivation/undocumented-passlist-var, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Covers: CD18, CD19, CD20, CD21, CD22, CD23, CD24, CD25, CD26, CD27, CD28, CD29, CD30, CD31, CD32, CD33, CD34, CD35, CD36
+
+## What to build
+
+Consume C1's diagnosis to restore eligible Bench-owned integration through the existing adoption transaction.
+Deliver repair, retained preimages, guarded undo, setup qualification guidance, and shared-writer protection together.
+The repair result supplies C3 with a current local diagnosis and an explicit live-retest obligation.
+It never supplies a certificate that the failed chat recovered.
+
+Preserve the complete adoption package invariant at this package's final ticket.
+Every competing adoption writer must honor the chosen shared-destination exclusion.
+Use `BENCH_KIT` for the system-tagged interruption and concurrency tests.
+
+## Headroom
+
+Keep existing oversized files at or below their current line counts.
+Update the existing doctor registry entry and assertion families without growth.
+Put new behavior and fixtures in focused files within this ticket's ownership fence.
+If an extraction needs another path, request an in-scope fence amendment before that edit.
+
+## Test placement
+
+Public repair tests use the doctor entrypoint from the repairtest child package.
+Transaction fault tests use the transaction child package, which owns publication and recovery.
+The existing system-test file retains the real process owner for interruption and concurrency checks.
+These placements preserve the acceptance rows without increasing the existing oversized directories.
+No structure budget or behavioral guarantee changes.
+The compatibility owner supplies the recovery classifications that the repair command and later session checks consume.
+
+## Acceptance
+
+- [x] One setup installs the shared Bench integration without copying either user configuration home.
+- [x] The compatibility repair restores an unmodified managed asset from the canonical payload.
+- [x] A second identical repair leaves all managed destination bytes and modes unchanged.
+- [x] A modified managed asset remains unchanged and reports a conflict.
+- [x] A foreign file at a repair destination remains unchanged.
+- [x] A repair requiring security-policy change returns a decision action without applying it.
+- [x] A repair requiring process interruption returns a decision action without sending a signal.
+- [x] A private runtime path receives no automatic mutation.
+- [x] A backup-publication failure leaves all repair destinations unchanged.
+- [x] An interrupted repair retains enough state for a fresh process to recover each touched target.
+- [x] A failed terminal record publication reports incomplete repair and preserves recovery data.
+- [x] Concurrent Bench writers cannot interleave changes to the same repair destination.
+- [x] Undo restores every recorded preimage byte and mode.
+- [x] Undo removes a target that the repair created from absence.
+- [x] Undo refuses a destination changed after repair.
+- [x] Repair records contain only managed preimages and their necessary restoration metadata.
+- [x] A hostile repair identifier cannot select a path outside its private record directory.
+- [x] A repair rechecks destination identity immediately before its publication.
+- [x] A failed restore reports each unresolved target and preserves its available backup.

@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // The fixture's expected patch table and the refusal text below are stated by hand,
@@ -156,7 +157,11 @@ func TestReviewFileReconstruction(t *testing.T) {
 		commitReview(t, args, map[string]string{"notes/later.txt": "later chunk\n"}, "chunk two")
 		_, sources, joined := reviewDiff(t, root, args)
 		assertFragments(t, sources, []shapePatch{one("notes/later.txt")})
-		if strings.Contains(joined, "sentinel") || !strings.Contains(joined, ","+args[4]+",explicit pair") {
+		expectedRevision, err := toon.Table("revision", []string{"commit", "base", "method"}, [][]string{{args[6], args[4], "explicit pair"}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(joined, "sentinel") || !strings.Contains(joined, expectedRevision) {
 			t.Fatalf("later charge diff holds the earlier chunk or another base:\n%s", joined)
 		}
 	})

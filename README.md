@@ -384,6 +384,12 @@ actually accept a change. It respects closed decisions: something Bench
 already rejected isn't re-litigated unless the upstream version materially
 changed. It proposes; you own the merge.
 
+## CLI and Desktop compatibility
+
+Bench checks shared repository integration while Codex CLI and Desktop keep independent chats and user settings.
+Read [Session compatibility](.bench/BENCH-reference.md#session-compatibility) for the active-interface checks and reversible managed repair.
+If the chat shell cannot start, use [the command-free recovery procedure](.bench/BENCH-reference.md#if-no-command-can-start).
+
 ## Switching harnesses
 
 `bench link` wires every supported harness to the same portable

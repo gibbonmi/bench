@@ -108,7 +108,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench probe [--in <label|primary>] <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
   bench outline [--in <label|primary>] [path] [--full] [--production|--test]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
   bench consumers [--in <label|primary>] <qualified-symbol>... [--production|--test] [--full]  every resolved Go reference edge as TOON (symbol when several, file:line, via, enclosing); identifies edges, never blessed seams
-  bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
+  bench doctor [--fix] | --compat <codex-cli|codex-desktop> [--fix | --undo <repair-id>]  report shim health or inspect one Codex interface
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
   bench gate [--in <label|primary>] [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]  run the project gate (the oracle; --fresh ignores a reusable green)
   bench prep-release [--in <label|primary>]  ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
