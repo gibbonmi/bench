@@ -11,6 +11,7 @@ Initial implementation, pre-review checks, and the first review consume no repai
 A repair cycle is one repair attempt and verification of its affected findings. It can address several findings.
 Avoid: tool call, individual finding, fresh review alone.
 Individual tool calls and unchanged verification reruns consume no additional repair cycles.
+[Debug integration](../../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) owns the debug step of each repair.
 
 The allowance takes precedence over continuation while progress holds after initial review.
 Progress does not extend the allowance. A fresh review does not reset the same chunk's count.
