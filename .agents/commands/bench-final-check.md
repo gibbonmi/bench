@@ -24,7 +24,7 @@ the exact broker-owned status transform and this spec's review-record delta.
 If destination composition adds another change, include that change in the
 source and complete its review and verification before retrying landing.
 
-A spec changes the promotion broker source when its diff changes a Bench build input, and its landing prints `landing changes the promotion broker source`.
+A spec changes the promotion broker source when its diff changes a Bench build input.
 Before the first landing of such a spec, run `bench worktree build <target>` and then `bench worktree exec <target> -- ./dist/bench doctor`.
 This rehearsal checks the broker seal and manifest on the candidate binary before the landing depends on them.
 If a doctor row says that a landing would refuse, apply the remedy that the row names, even when the row reads `ok`.

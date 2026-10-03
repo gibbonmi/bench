@@ -40,7 +40,11 @@ type effectRow struct {
 // record meet, so the first run and the resume state the same thing about the same tree.
 // A failed effect reaches the existing incomplete render under its own step name, which
 // carries the resume command every other incomplete step carries.
-func landedAfterEffects(j joins, a ambient, root string, result landing.ReviewedResult, specArg, path, assignment string, active bool, records int, stdout, stderr io.Writer) int {
+//
+// brokerChanged states that the landed diff changes the promotion broker's build inputs.
+// The broker notice prints after the effects row, so it reads the refresh result. A resume
+// has no source worktree to read, so it passes false.
+func landedAfterEffects(j joins, a ambient, root string, result landing.ReviewedResult, specArg, path, assignment string, active, brokerChanged bool, records int, stdout, stderr io.Writer) int {
 	refresh := refreshBroker(j, root, stderr)
 	// A failed effect stops every later effect, so the cleanup never starts and never
 	// touches a checkout. It reports pending, which is the word for an effect that has
@@ -53,6 +57,11 @@ func landedAfterEffects(j joins, a ambient, root string, result landing.Reviewed
 	fmt.Fprintf(stdout, "effects[%d]{effect,result}:\n", len(rows))
 	for _, row := range rows {
 		fmt.Fprintf(stdout, "  %s,%s\n", row.effect, row.result)
+	}
+	if brokerChanged {
+		if notice := brokerChangeNotice(a.kit, root, refresh); notice != "" {
+			fmt.Fprintln(stderr, notice)
+		}
 	}
 	for _, row := range rows {
 		if row.result == effectFailed {
