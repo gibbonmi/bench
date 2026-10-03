@@ -454,9 +454,6 @@ The walk of the hostile-input checklist in `projects/benchkit.md`:
 
 ## Ownership fences
 
-These are the planned writes. The slicing pass reconciles this fence with the
-union of the ticket `Writes:` lines.
-
 - `internal/git/tree.go`
 - `internal/gate/lane_select.go`
 - `internal/commentgap/`
