@@ -1833,6 +1833,78 @@ No review requested a Bench command change.
           "requirement": "live-qualification",
           "command": "review assets/qualification.md against the source-bound live acceptance rows",
           "exit_code": null
+        },
+        {
+          "id": "c3-final-author-compatibility-2c544513",
+          "performer": "codex:01a102ad-b534-7561-a10f-aa45d97e554b",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_closeout_author/27761c",
+            "digest": "sha256:136b6c68ef0e17639f6603ef31060efa4638b0f1d86ece02841fb7b51d67f9f7",
+            "excerpt": "Author: codex:01a102ad-b534-7561-a10f-aa45d97e554b\nModel: gpt-6-astra\nEffort: high\nSource: 2c544513133249004bb25e47fa16d48b28baddd0\nSource digest: cf74570928d61ad59c469593e712272dc6b3f367\nAssignment: f7123d5b2ad592acc6e5a239c1f1f389\nPurpose: current composition verification; no actual-interface qualification claim\nCommand: bench test --package ./internal/compatibility\nNative terminal: 27761c\nExit: 0\n\ntree[1]{target,head,dirty}:\n  cli-desktop-consistency,2c544513133249004bb25e47fa16d48b28baddd0,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/compatibility,pass,10\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "compatibility",
+          "command": "bench test --package ./internal/compatibility",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-final-author-adopt-2c544513",
+          "performer": "codex:01a102ad-b534-7561-a10f-aa45d97e554b",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_closeout_author/f3a686",
+            "digest": "sha256:1573d0f8677e4ddba02a1f0be7408ef4d22d9147f009b75b48f83c38a74e85f5",
+            "excerpt": "Author: codex:01a102ad-b534-7561-a10f-aa45d97e554b\nModel: gpt-6-astra\nEffort: high\nSource: 2c544513133249004bb25e47fa16d48b28baddd0\nSource digest: cf74570928d61ad59c469593e712272dc6b3f367\nAssignment: f7123d5b2ad592acc6e5a239c1f1f389\nPurpose: current composition verification; no actual-interface qualification claim\nCommand: bench test --package ./internal/adopt\nNative terminal: f3a686\nExit: 0\n\ntree[1]{target,head,dirty}:\n  cli-desktop-consistency,2c544513133249004bb25e47fa16d48b28baddd0,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/adopt,pass,55971\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-final-author-system-2c544513",
+          "performer": "codex:01a102ad-b534-7561-a10f-aa45d97e554b",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_closeout_author/3f7e54",
+            "digest": "sha256:ea5d50379db36407a224cf21471c7e14b2dd863e8badb2dd6222ed98d1bf41a9",
+            "excerpt": "Author: codex:01a102ad-b534-7561-a10f-aa45d97e554b\nModel: gpt-6-astra\nEffort: high\nSource: 2c544513133249004bb25e47fa16d48b28baddd0\nSource digest: cf74570928d61ad59c469593e712272dc6b3f367\nAssignment: f7123d5b2ad592acc6e5a239c1f1f389\nPurpose: current composition verification; no actual-interface qualification claim\nCommand: bench test --check system\nNative terminal: 3f7e54\nExit: 0\n\ntree[1]{target,head,dirty}:\n  cli-desktop-consistency,2c544513133249004bb25e47fa16d48b28baddd0,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,103013\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-final-author-live-qualification-2c544513",
+          "performer": "codex:01a102ad-b534-7561-a10f-aa45d97e554b",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "cf74570928d61ad59c469593e712272dc6b3f367",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_closeout_author/d33c64",
+            "digest": "sha256:15109251f2151544423063c7aa7d3e95f82ea1118671d91e63d8cdfba719e3a7",
+            "excerpt": "Author: codex:01a102ad-b534-7561-a10f-aa45d97e554b\nModel: gpt-6-astra\nEffort: high\nSource: 2c544513133249004bb25e47fa16d48b28baddd0\nSource digest: cf74570928d61ad59c469593e712272dc6b3f367\nAssignment: f7123d5b2ad592acc6e5a239c1f1f389\nRequirement: live-qualification\nOutcome: pass for source-bound evidence reconciliation\nMethod: author review of retained native results against the approved live rows\nNative reconciliation: d33c64 and complete result read 5f185e\n\nThe qualification artifact matches the Stage 1 commit 38dcf00c exactly.\nIts SHA-256 is 6e8e13739408cb84c3e2333bf731a778c7019cd46b0da934f8d669c09f4cd319.\nThe current spec names fifteen review-owned live rows in CD37 through CD64.\nEach row has retained native evidence in the artifact.\nThe author read those results in this session and preserved their original provenance.\n\nCD39 and CD40 distinguish actual normal tools from hook, elevated, and nested controls.\nCD42 retains the refused write at 393ddd and the absent dependent sentinel at 3e886f.\nCD43 retains static recovery guidance and the traced Desktop startup failure.\nCD45 retains restricted Desktop recovery calls 7669ea, 289a0c, e400c9, and 84a4b0.\nCD46 retains matched repository guidance hashes from independent CLI and Desktop chats.\nCD47 retains concurrent separate assignments and unchanged scratch bytes at 66350a and c022c7.\nCD48 retains actual Bench publications 05a22430ec864239350d736c861e11f321d14dac and 25cc66bda1f5c2bdab5592a5448582ea755530a4.\nThe native landing terminals are 112e5c and 4732fa; separate final checks show clean repositories and released sources.\nCD49 and CD50 retain actual hook refusals and absent sentinels after context changes.\nCD51 retains independent Standards and Coverage reviews with zero findings on the same frozen pair.\nDesktop also obtained separate reviews of its own disposable source before publication.\nCD54 now has every required live row, while source-bound completion remains the coordinator's separate checkpoint.\nCD57 retains separate writes and reads at CLI 863271/0fd7eb and Desktop 1d5d9a/280235.\nCD58 retains installed bench-debug skill invocation and the canonical phase in both independent chats.\nCD62 retains affected normal-tool checks after permission, network, launcher, and toolchain changes.\n\nThese live operations ran against fa1dc27d7730ca3889dad592dd51dff6d7b8a899 and its disposable candidates.\nThey did not run against the later composition.\nThe fresh compatibility, adoption, and sealed system checks separately verify the current composition.\nThis reconciliation does not relabel historical native runs or supply a reusable session authorization.\n\nThe observed contexts include the approved writable assignments, canonical GOCACHE, network access, Node v25.8.1, and npm 11.11.0.\nThe concurrent isolation exercise recorded unrestricted roots; later restricted retests establish the separate recovery boundary.\nNative Windows execution remains excluded.\nThe launcher deletion actor and durable upstream repair remain unknown.\nHost clock instability, optional ShellCheck, capability skips, and older response-spill limitations remain explicit.\nNo production repair, new expectation, or mutation probe was added by this author.\n\nEvidence root: /home/mgibs/workspace/bench/.logs/cli-desktop-cli-qualification-01a10184\nFinal CLI reply: /tmp/bench-cli-desktop-handoff-01a10199/cli-reply.md\nThe ignored stage2-live-evidence-hashes.json records the exact retained files used for this reconciliation.\n"
+          },
+          "requirement": "live-qualification",
+          "command": "review assets/qualification.md against the source-bound live acceptance rows",
+          "exit_code": 0
         }
       ],
       "reviews": [
