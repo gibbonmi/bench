@@ -62,6 +62,10 @@ def git(root, *args):
     return subprocess.check_output(['git', *args], cwd=root)
 
 
+def inventory_changes(before, after):
+    return sorted(name for name in before.keys() | after.keys() if before.get(name) != after.get(name))
+
+
 def file_inventory(root):
     inventory = {}
     for path in root.rglob('*'):

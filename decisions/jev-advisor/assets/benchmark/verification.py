@@ -6,9 +6,10 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
-from evidence import digest, encoded, file_inventory, read, save, validate_links
+from evidence import digest, encoded, file_inventory, inventory_changes, read, save, validate_links
 from execution import execute
 
 BUILD_COMMAND = ['bash', 'scripts/go-build.sh', '--manifest-dir', 'dist', '.', 'dist/bench']
@@ -28,7 +29,10 @@ def copy_workspace(source, destination):
                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
 
-def verify(source, output):
+def verify(source, output, timeout=GATE_TIMEOUT):
+    deadline = time.monotonic() + timeout
+    def remaining():
+        return max(0.001, deadline - time.monotonic())
     source, output = Path(source).resolve(), Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     before = file_inventory(source)
@@ -42,7 +46,7 @@ def verify(source, output):
     go_available = shutil.which('go') is not None
     if go_available:
         go_paths = subprocess.check_output(['go', 'env', '-json', 'GOPATH', 'GOMODCACHE'],
-                                           cwd=work, env=environment, text=True, timeout=GATE_TIMEOUT)
+                                           cwd=work, env=environment, text=True, timeout=remaining())
         environment.update(json.loads(go_paths))
     # Bench derives its cache from the child home, even when GOCACHE is supplied.
     for key, name in (('HOME', 'home'), ('BENCH_HOME', 'bench'), ('GOCACHE', 'go-build'),
@@ -56,17 +60,17 @@ def verify(source, output):
         environment.pop('XDG_CONFIG_HOME', None)
         subprocess.run(['go', 'telemetry', 'off'], cwd=work,
                        env=dict(environment, GOTOOLCHAIN='local'), check=True,
-                       capture_output=True, timeout=GATE_TIMEOUT)
+                       capture_output=True, timeout=remaining())
         settings = {key: environment[key] for key in ('GOPATH', 'GOMODCACHE', 'GOPROXY')}
         subprocess.run(['go', 'env', '-w', *(key + '=' + value for key, value in settings.items())],
                        cwd=work, env=dict(environment, GOTOOLCHAIN='local'), check=True,
-                       capture_output=True, timeout=GATE_TIMEOUT)
+                       capture_output=True, timeout=remaining())
     bootstrap = output / 'bootstrap'
     bootstrap.mkdir()
-    built = execute(BUILD_COMMAND, work, bootstrap, GATE_TIMEOUT, environment)
+    built = execute(BUILD_COMMAND, work, bootstrap, remaining(), environment)
     save(bootstrap / 'result.json', built)
     if built['status'] == 'completed':
-        result = execute(GATE_COMMAND, work, output, GATE_TIMEOUT, environment)
+        result = execute(GATE_COMMAND, work, output, remaining(), environment)
         result['phase'] = 'gate'
     else:
         result = dict(built, command=GATE_COMMAND, phase='bootstrap')
@@ -74,7 +78,7 @@ def verify(source, output):
             shutil.copyfile(bootstrap / name, output / name)
     result['bootstrap'] = built
     after = file_inventory(work)
-    changed = sorted(name for name in before.keys() | after.keys() if before.get(name) != after.get(name))
+    changed = inventory_changes(before, after)
     result.update(input_sha256=digest(encoded(before)), input_inventory=before,
                   workspace_sha256=digest(encoded(after)), generated_or_changed=changed)
     if any(after.get(name) != value for name, value in before.items()):
@@ -95,7 +99,7 @@ def verified_result(directory):
     return result
 
 
-def ensure_verified(source, output, force=False):
+def ensure_verified(source, output, force=False, timeout=GATE_TIMEOUT):
     output.mkdir(parents=True, exist_ok=True)
     wanted = digest(encoded(file_inventory(source)))
     records = []
@@ -113,7 +117,7 @@ def ensure_verified(source, output, force=False):
     else:
         destination = Path(tempfile.mkdtemp(prefix='gate-', dir=output))
         destination.rmdir()
-        result = verify(source, destination)
+        result = verify(source, destination, timeout=timeout)
         name = destination.name
     return {'record': name, 'status': result['status'], 'input_sha256': result['input_sha256'],
             'elapsed_ns': result['elapsed_ns']}

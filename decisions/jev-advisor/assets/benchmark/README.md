@@ -1,6 +1,6 @@
 # Jev skill-selection benchmark
 
-Status: sixth offline repair cycle; paid restart and policy adoption remain unapproved
+Status: seventh offline repair candidate; paid restart and policy adoption remain unapproved
 
 This benchmark measures whether Jev-assisted initial skill selection improves complete task cost without reducing task quality.
 It does not adopt a production skill policy.
@@ -38,6 +38,7 @@ Both arms receive the same packet and a separate workspace from the same snapsho
 Both arms include source inspection, verification, self-review, and repairs within the task session.
 The runner performs the mandatory final gate in a separate copy of the exact authored files.
 The task agent can request earlier gate feedback through the supplied verification command.
+The controller services that request while the task remains in its native sandbox.
 Focused checks and self-review remain available during the task.
 
 The replay excludes production ticket or spec authoring, commits, landings, and publication.
@@ -158,6 +159,17 @@ Each successful task submission receives an independent final gate from the runn
 Task-created verification receipts cannot replace this final check.
 
 Verification copies are distinct from authored workspaces.
+The native task receives write access to a request mailbox, not the verification receipts.
+The request names only the current input digest; commands, paths, and permissions come from the controller.
+The controller refuses altered requests and writes outside the frozen task fence before running feedback.
+It returns the gate result and output through the mailbox.
+
+Mailbox responses are task feedback, not independent completion evidence.
+The final gate always creates a separate controller-owned receipt.
+
+The process deadline includes feedback work.
+Each feedback gate receives the smaller of its ordinary gate limit and the remaining task time.
+A timeout or interruption stops the active gate process and remains a failed or interrupted trial.
 The verifier accepts Codex's protected metadata directories at the output root.
 It rejects other entries that lack a valid receipt.
 
@@ -248,7 +260,8 @@ Those observations diagnose the benchmark; they do not establish Jev performance
 ## Verification and source references
 
 `verification.json` records the offline checks and observed mutation failures.
-`cycle-six.md` records native sandbox verification and the remaining adoption limits.
+`cycle-six.md` records the earlier native failure and reviewer extension.
+`cycle-seven.md` records the controller feedback repair and current qualification limits.
 The recorded corpus pins source excerpts from the archived benchmark revision.
 Freeze that revision in a separate local checkout; changed source must pass fresh excerpt checks.
 Do not relax the context ceiling or remove governing documents to make a packet fit.

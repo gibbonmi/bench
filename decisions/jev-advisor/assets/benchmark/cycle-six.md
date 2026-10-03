@@ -120,3 +120,11 @@ A diagnostic project gate scanned the copies under `.logs` and correctly found d
 The author stopped that superseded run and preserved its output.
 The author verified both complete archive manifests before removing the duplicate local trees.
 The final source remains a research checkpoint, not a qualified benchmark or landing.
+
+## Reviewer extension
+
+On 2026-10-03, the reviewer approved up to six additional offline repair cycles.
+The added allowance covers cycles seven through twelve; six earlier cycles remain consumed.
+Author work remains in the current Astra session at high effort, without delegates.
+This extension permits verification repairs, not paid execution or policy adoption.
+The next cycle starts from commit 244698ec7c73bbe03d28f28d8adfcf50786f41b0.

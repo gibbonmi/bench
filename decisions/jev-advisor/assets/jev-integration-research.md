@@ -228,6 +228,25 @@ Recorded briefs remain development inputs. Fresh real tasks must precede adoptio
 Neither the repaired fixture checks nor the recovered pilot establish complete-task savings.
 Ticket #9 remains open.
 
+## 20. Controller verification feedback
+
+The reviewer approved six additional offline repair cycles after the sixth-cycle checkpoint.
+The seventh cycle moves interim gate execution to the controller that already owns baseline and final verification.
+The native task keeps its sandbox and receives only a request mailbox.
+Each request binds the current authored inputs; the controller fixes the command and checks the write fence.
+The final gate remains independent, and feedback work consumes the task deadline.
+
+The unchanged frozen repository passes its full gate outside the native task sandbox.
+The standalone suite passes 46 tests, including the feedback regression and deadline check.
+Two omission mutations fail their named assertions.
+A pinned native sandbox probe receives successful socket-fixture feedback without an inference call.
+The full frozen-repository feedback probe remains pending at this checkpoint.
+These observations qualify execution behavior only; they do not measure Jev selection or task quality.
+
+Source: `benchmark/cycle-seven.md:1` and its preserved local evidence root.
+Independent review and exact configuration approval remain required before paid execution.
+Accepted decisions and the fresh-real-task adoption requirement remain unchanged.
+
 ## Verification record
 
 - [x] The report distinguishes recovered observations, record arithmetic, and proposals.

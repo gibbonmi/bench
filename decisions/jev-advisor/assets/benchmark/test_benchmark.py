@@ -290,6 +290,59 @@ else:
         config['implementation_sha256'] = implementation_identity()
         return frozen, adapter, config
 
+    def test_task_feedback_runs_in_controller_and_final_gate_is_independent(self):
+        from runner import trial
+        (self.source / 'bin/bench.sh').write_text(
+            '#!/bin/sh\ntest -z "$FIXTURE_TASK_PROCESS" || exit 42\nprintf controller-gate\n')
+        frozen, adapter, config = self.fixture_config()
+        adapter.write_text("import json, os, subprocess, sys\nfrom pathlib import Path\n"
+                           "p=json.load(sys.stdin)\n"
+                           "os.environ['FIXTURE_TASK_PROCESS']='sandboxed-task'\n"
+                           "r=subprocess.run(p['verification_command'], capture_output=True, text=True)\n"
+                           "assert r.returncode == 0, (r.stdout, r.stderr)\n"
+                           "assert 'controller-gate' in r.stdout\n"
+                           "print(json.dumps({'rescued_skills':[], 'self_review':['Checked source.'], "
+                           "'verification':[r.stdout]}))\n")
+        config['timeout_seconds'] = 20
+        output = self.root / 'trial'
+        output.mkdir()
+        result = trial(frozen, output, {'task':'case', 'repeat':0, 'condition':'baseline'}, config)
+        self.assertEqual(result['status'], 'completed', (output / 'task/stderr').read_text())
+        receipts = list((output / 'verification').glob('*/result.json'))
+        self.assertEqual(len(receipts), 2, 'feedback replaced the independent final gate')
+        self.assertFalse((output / 'workspace/.logs').exists())
+
+    def test_feedback_refuses_command_injection_without_running_it(self):
+        from runner import trial
+        frozen, adapter, config = self.fixture_config()
+        adapter.write_text("import json, sys, time\nfrom pathlib import Path\n"
+                           "p=json.load(sys.stdin); box=Path(p['verification_output'])\n"
+                           "(box/('a'*32+'.request')).write_text(json.dumps({'command':['touch','injected']}))\n"
+                           "response=box/('a'*32+'.response')\n"
+                           "while not response.exists(): time.sleep(0.02)\n"
+                           "assert json.loads(response.read_text())['status']=='refused'\n"
+                           "print(json.dumps({'rescued_skills':[], 'self_review':['Checked.'], "
+                           "'verification':['Injection refused.']}))\n")
+        output = self.root / 'trial'; output.mkdir()
+        result = trial(frozen, output, {'task':'case', 'repeat':0, 'condition':'baseline'}, config)
+        self.assertEqual(result['status'], 'completed', (output / 'task/stderr').read_text())
+        self.assertEqual(len(list((output / 'verification').glob('*/result.json'))), 1)
+        self.assertFalse((output / 'workspace/injected').exists())
+
+    def test_feedback_cannot_extend_task_timeout(self):
+        import time
+        from runner import trial
+        (self.source / 'bin/bench.sh').write_text('#!/bin/sh\nsleep 30\n')
+        frozen, adapter, config = self.fixture_config()
+        adapter.write_text("import json, subprocess, sys\np=json.load(sys.stdin)\n"
+                           "subprocess.run(p['verification_command'], check=True)\n")
+        config['timeout_seconds'] = 1
+        output = self.root / 'trial'; output.mkdir()
+        start = time.monotonic()
+        result = trial(frozen, output, {'task':'case', 'repeat':0, 'condition':'baseline'}, config)
+        self.assertEqual(result['status'], 'timeout')
+        self.assertLess(time.monotonic() - start, 5, 'feedback escaped the task deadline')
+
     def test_verification_artifacts_are_separate_and_baseline_red_stops_calls(self):
         frozen, adapter, config = self.fixture_config()
         output = self.root / 'run'

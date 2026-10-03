@@ -10,10 +10,11 @@ import sys
 import time
 from pathlib import Path
 
-from evidence import POLICY, context_check, digest, encoded, freeze, read, request, require_hosted_opt_in, route, save, validate
+from evidence import POLICY, context_check, digest, encoded, freeze, inventory_changes, read, request, require_hosted_opt_in, route, save, validate
 from codex_adapter import captured_native, native_identity
 from integrity import capture_trial, file_inventory, start_ledger
 from execution import execute, now
+from feedback import Feedback
 from verification import copy_workspace, ensure_verified, verify
 
 
@@ -52,7 +53,7 @@ def schedule(corpus, repetitions, seed):
     return rows
 
 
-def invoke(command, payload, cwd, output, timeout, frozen=None):
+def invoke(command, payload, cwd, output, timeout, frozen=None, service=None):
     output.mkdir(parents=True, exist_ok=False)
     body = encoded(payload)
     (output / 'request.json').write_bytes(body)
@@ -64,7 +65,7 @@ def invoke(command, payload, cwd, output, timeout, frozen=None):
         environment['JEV_BENCHMARK_FROZEN_ROOT'] = str(frozen)
     if payload.get('role') in ('task', 'fallback'):
         environment.pop('TYPESAFE_API_KEY', None)
-    result.update(execute(command, cwd, output, timeout, environment, body))
+    result.update(execute(command, cwd, output, timeout, environment, body, service=service))
     try:
         if (output / 'stdout').stat().st_size:
             result['response'] = read(output / 'stdout')
@@ -109,7 +110,7 @@ def selected_fallback(result, packet):
 
 def changed_files(source, workspace):
     before, after = file_inventory(source), file_inventory(workspace)
-    return sorted(name for name in before.keys() | after.keys() if before.get(name) != after.get(name))
+    return inventory_changes(before, after)
 
 
 def assurance_status(response, packet, selected):
@@ -171,13 +172,17 @@ def trial(root, output, row, config):
         payload['execution'] = execution
         verification = output / 'verification'
         verification.mkdir()
-        payload['verification_command'] = [sys.executable, '-B', str(Path(__file__).with_name('verification.py').resolve()),
-                                           '--source', str(work), '--out', str(verification)]
-        payload['verification_output'] = str(verification)
+        mailbox = output / 'feedback'
+        feedback = Feedback(work, source, packet['task']['writes'], mailbox, verification)
+        payload['verification_command'] = [sys.executable, '-B', str(Path(__file__).with_name('feedback.py').resolve()),
+                                           '--source', str(work), '--mailbox', str(mailbox),
+                                           '--timeout', str(config['timeout_seconds'])]
+        payload['verification_output'] = str(mailbox)
         payload['selection_instruction'] = (
             'Select the initial skills from the catalog before the task.' if row['condition'] == 'baseline'
             else 'Start with the supplied skill selection; inspect the catalog if the action needs more skills.')
-        native = invoke(config['adapters']['task'], payload, work, output / 'task', config['timeout_seconds'])
+        native = invoke(config['adapters']['task'], payload, work, output / 'task',
+                        config['timeout_seconds'], service=feedback)
         record['attempts'].append('task')
         record['status'] = native['status']
         response = native['response'] if isinstance(native['response'], dict) else {}

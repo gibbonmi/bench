@@ -12,7 +12,7 @@ def now():
     return datetime.now(timezone.utc).isoformat()
 
 
-def execute(command, cwd, output, timeout, environment, body=None):
+def execute(command, cwd, output, timeout, environment, body=None, service=None):
     started, tick = now(), time.monotonic_ns()
     result = {'started_at': started, 'command': command, 'status': 'failed'}
     child = None
@@ -24,7 +24,21 @@ def execute(command, cwd, output, timeout, environment, body=None):
         try:
             child = subprocess.Popen(command, cwd=cwd, stdin=subprocess.PIPE,
                                      stdout=stdout, stderr=stderr, start_new_session=True, env=environment)
-            child.communicate(body, timeout=timeout)
+            deadline = time.monotonic() + timeout
+            pending = body
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise subprocess.TimeoutExpired(command, timeout)
+                try:
+                    child.communicate(pending, timeout=min(0.1, remaining) if service else remaining)
+                    break
+                except subprocess.TimeoutExpired:
+                    pending = None
+                    if service:
+                        service(max(0, deadline - time.monotonic()))
+                    else:
+                        raise
             result['exit_code'] = child.returncode
             if child.returncode == 0:
                 result['status'] = 'completed'
@@ -32,7 +46,7 @@ def execute(command, cwd, output, timeout, environment, body=None):
             result['status'] = 'timeout'
         except KeyboardInterrupt:
             result['status'] = 'interrupted'
-        except OSError as error:
+        except (OSError, ValueError) as error:
             result['error'] = str(error)
         finally:
             if child is not None and child.poll() is None:
