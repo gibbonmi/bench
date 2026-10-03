@@ -195,3 +195,48 @@ func ReadControlBlob(root, object string) ([]byte, error) {
 	}
 	return read.Data, nil
 }
+
+// treeChangeFields is the field count of one raw-diff entry's metadata: the two
+// modes, the two object IDs, and the status letter.
+const treeChangeFields = 5
+
+// TreeChange is one entry of the raw diff between the base tree and the composed
+// tree. Status is Git's own status letter. SrcMode and DstMode are the six-digit modes
+// of the two sides, and one of them is `000000` when that side holds nothing. Path
+// carries the file's own bytes, so a name with a space or a byte above ASCII survives.
+type TreeChange struct {
+	Status  string
+	SrcMode string
+	DstMode string
+	Path    string
+}
+
+// TreeChanges lists raw changes between two Git trees in path order.
+// Rename detection is off, so each path has one metadata frame and one path frame.
+// NUL framing preserves every path byte without Git's quoted-name encoding.
+func TreeChanges(root, from, to string) ([]TreeChange, error) {
+	raw, err := Raw("-C", root, "diff", "--raw", "--no-renames", "-z", from, to)
+	if err != nil {
+		return nil, fmt.Errorf("git: tree change list unavailable: %w", err)
+	}
+	frames := strings.Split(string(raw), "\x00")
+	var changes []TreeChange
+	for i := 0; i+1 < len(frames); i += 2 {
+		change, err := parseTreeChange(frames[i], frames[i+1])
+		if err != nil {
+			return nil, err
+		}
+		changes = append(changes, change)
+	}
+	return changes, nil
+}
+
+// parseTreeChange reads one `--raw -z` entry, whose metadata frame is
+// `:<srcmode> <dstmode> <srcsha> <dstsha> <status>` and whose path is the frame after it.
+func parseTreeChange(meta, path string) (TreeChange, error) {
+	fields := strings.Fields(strings.TrimPrefix(meta, ":"))
+	if !strings.HasPrefix(meta, ":") || len(fields) != treeChangeFields || path == "" {
+		return TreeChange{}, fmt.Errorf("git: unreadable tree change entry %q", meta)
+	}
+	return TreeChange{Status: fields[4], SrcMode: fields[0], DstMode: fields[1], Path: path}, nil
+}
