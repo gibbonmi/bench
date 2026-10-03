@@ -1,6 +1,6 @@
 # Jev skill-selection benchmark
 
-Status: seventh offline repair candidate; paid restart and policy adoption remain unapproved
+Status: eighth offline repair candidate; paid restart and policy adoption remain unapproved
 
 This benchmark measures whether Jev-assisted initial skill selection improves complete task cost without reducing task quality.
 It does not adopt a production skill policy.
@@ -174,7 +174,8 @@ The verifier accepts Codex's protected metadata directories at the output root.
 It rejects other entries that lack a valid receipt.
 
 Each verification run owns its subprocess home, build caches, and temporary files.
-Go records the resolved module locations in that private home before the gate filters the environment.
+Go records the resolved module locations and caller flags in that private home before the gate filters the environment.
+This preserves the host concurrency limits through the private-home change.
 The verifier disables module fetching and retains checksum verification.
 It disables Go telemetry in the private home so background writes cannot race evidence capture.
 

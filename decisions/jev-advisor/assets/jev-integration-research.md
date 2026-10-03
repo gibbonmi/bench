@@ -240,10 +240,13 @@ The unchanged frozen repository passes its full gate outside the native task san
 The standalone suite passes 46 tests, including the feedback regression and deadline check.
 Two omission mutations fail their named assertions.
 A pinned native sandbox probe receives successful socket-fixture feedback without an inference call.
-The full frozen-repository feedback probe remains pending at this checkpoint.
+
+The full frozen-repository feedback probe returns a handoff lock timeout correctly.
+The eighth cycle preserves caller GOFLAGS after a regression proves that private-home setup lost the host concurrency limits.
+Full qualification remains pending for that repair.
 These observations qualify execution behavior only; they do not measure Jev selection or task quality.
 
-Source: `benchmark/cycle-seven.md:1` and its preserved local evidence root.
+Source: `benchmark/cycle-seven.md:1`, `benchmark/cycle-eight.md:1`, and their preserved local evidence roots.
 Independent review and exact configuration approval remain required before paid execution.
 Accepted decisions and the fresh-real-task adoption requirement remain unchanged.
 

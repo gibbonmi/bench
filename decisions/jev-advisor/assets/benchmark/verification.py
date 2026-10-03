@@ -45,7 +45,7 @@ def verify(source, output, timeout=GATE_TIMEOUT):
     environment.update(BENCH_KIT=str(work), BENCH_OFFLINE='1', GOPROXY='off')
     go_available = shutil.which('go') is not None
     if go_available:
-        go_paths = subprocess.check_output(['go', 'env', '-json', 'GOPATH', 'GOMODCACHE'],
+        go_paths = subprocess.check_output(['go', 'env', '-json', 'GOPATH', 'GOMODCACHE', 'GOFLAGS'],
                                            cwd=work, env=environment, text=True, timeout=remaining())
         environment.update(json.loads(go_paths))
     # Bench derives its cache from the child home, even when GOCACHE is supplied.
@@ -61,7 +61,7 @@ def verify(source, output, timeout=GATE_TIMEOUT):
         subprocess.run(['go', 'telemetry', 'off'], cwd=work,
                        env=dict(environment, GOTOOLCHAIN='local'), check=True,
                        capture_output=True, timeout=remaining())
-        settings = {key: environment[key] for key in ('GOPATH', 'GOMODCACHE', 'GOPROXY')}
+        settings = {key: environment[key] for key in ('GOPATH', 'GOMODCACHE', 'GOFLAGS', 'GOPROXY')}
         subprocess.run(['go', 'env', '-w', *(key + '=' + value for key, value in settings.items())],
                        cwd=work, env=dict(environment, GOTOOLCHAIN='local'), check=True,
                        capture_output=True, timeout=remaining())

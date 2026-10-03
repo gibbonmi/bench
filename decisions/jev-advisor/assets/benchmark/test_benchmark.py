@@ -448,9 +448,9 @@ else:
             child = {key: os.environ[key] for key in ('PATH',) if key in os.environ}
             child['HOME'] = str(record / 'runtime/home')
             settings = json.loads(subprocess.check_output(
-                ['go', 'env', '-json', 'GOPATH', 'GOMODCACHE', 'GOPROXY'], env=child, text=True))
+                ['go', 'env', '-json', 'GOPATH', 'GOMODCACHE', 'GOFLAGS', 'GOPROXY'], env=child, text=True))
             expected = json.loads(subprocess.check_output(
-                ['go', 'env', '-json', 'GOPATH', 'GOMODCACHE'], text=True))
+                ['go', 'env', '-json', 'GOPATH', 'GOMODCACHE', 'GOFLAGS'], text=True))
             self.assertEqual(settings, dict(expected, GOPROXY='off'))
             self.assertEqual(subprocess.check_output(['go', 'telemetry'], env=child, text=True).strip(), 'off')
 

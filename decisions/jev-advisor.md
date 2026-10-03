@@ -41,7 +41,7 @@ A protected evaluation uses fresh cases whose labels remain outside recipe devel
 - Ticket #9 lacks protected evaluation and complete-task savings evidence.
 - Numeric budgets and thresholds remain unset pending that evidence.
 - The recovered research fragments require reconciliation before tickets #6 and #7 can close against current sources.
-- The sixth offline repair exposes a native socket-permission blocker. The cycle report owns the remaining FT347 execution decision.
+- The offline repairs preserve controller verification and host concurrency limits. The cycle reports own qualification and the remaining FT347 execution decision.
 
 ## Spec-writer discretion
 
@@ -59,8 +59,11 @@ A protected evaluation uses fresh cases whose labels remain outside recipe devel
   Supports: recovered decisions, evidence status, and the current development packet for ticket #9.
   Drift: a recovered original file, a new evaluation, or a reviewer scope change.
 - Path: `decisions/jev-advisor/assets/benchmark/cycle-six.md`
-  Supports: approved offline repair, native verification evidence, and the remaining execution blocker.
+  Supports: the sixth-cycle native verification failure and the reviewer extension.
   Drift: a new execution decision or native qualification result.
+- Path: `decisions/jev-advisor/assets/benchmark/cycle-eight.md`
+  Supports: current verifier repairs, qualification evidence, and remaining execution limits.
+  Drift: a new repair, independent review, or native qualification result.
 - Path: `decisions/jev-advisor/assets/jev-benchmark-trial.md`
   Supports: the later benchmark defects and the FT347 repair boundary.
   Drift: a reviewer extension or a new benchmark report.
