@@ -72,6 +72,19 @@ The offline repair therefore does not qualify the paid benchmark for restart.
 A green Python fixture suite cannot substitute for this red full-gate result.
 No gate, fixture, write fence, or provider threshold was weakened.
 
+## Repository gate at the checkpoint
+
+The repository gate ran against committed source `2a591c4d2534448a142a1517e0b959d3f777aa77`.
+Formatting, vet, ordinary tests, race tests, system tests, and shell checks all passed.
+The author changed no source file during this run.
+The overall gate remained red because its checkout guard detected regenerated Bench artifacts.
+The changed paths were `bin/bench-broker.manifest`, `dist/bench`, and `dist/bench.seal`.
+
+The cause of those generated-artifact changes remains unresolved.
+This result supplies no whole-project green claim.
+`repository-gate.json` pins the phase results and preserved logs.
+The research checkpoint passed its declared commit lanes; no landing occurred.
+
 ## Review pickup
 
 The author checked standards, scope, and coverage against the current source.
