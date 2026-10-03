@@ -1,0 +1,202 @@
+{
+  "derived_from": "assessment-records.json",
+  "status": "arithmetic audit only; original labels and predictions unavailable; holdout flag is a recorded declaration",
+  "groups": [
+    {
+      "condition": "skill-policy-v3-jev",
+      "holdout": false,
+      "records": 6,
+      "quality_totals": {
+        "accepted_negative_required": 1,
+        "accepted_positive_clear_extra": 0,
+        "uncertain_candidates": 6
+      },
+      "median_request_wall_seconds": 0.417,
+      "cases": [
+        {
+          "id": "assessment-prototype-mention",
+          "quality": {
+            "accepted_negative_required": 0,
+            "accepted_positive_clear_extra": 0,
+            "uncertain_candidates": 1
+          }
+        },
+        {
+          "id": "cache-fact-no-add",
+          "quality": {
+            "accepted_negative_required": 0,
+            "accepted_positive_clear_extra": 0,
+            "uncertain_candidates": 0
+          }
+        },
+        {
+          "id": "coverage-review-neighbor-triggers",
+          "quality": {
+            "accepted_negative_required": 0,
+            "accepted_positive_clear_extra": 0,
+            "uncertain_candidates": 0
+          }
+        },
+        {
+          "id": "final-check-approved-gate-action",
+          "quality": {
+            "accepted_negative_required": 0,
+            "accepted_positive_clear_extra": 0,
+            "uncertain_candidates": 2
+          }
+        },
+        {
+          "id": "handoff-explicit-domain-preservation",
+          "quality": {
+            "accepted_negative_required": 0,
+            "accepted_positive_clear_extra": 0,
+            "uncertain_candidates": 1
+          }
+        },
+        {
+          "id": "roadmap-flow-spec-multiple",
+          "quality": {
+            "accepted_negative_required": 1,
+            "accepted_positive_clear_extra": 0,
+            "uncertain_candidates": 2
+          }
+        }
+      ]
+    },
+    {
+      "condition": "skill-policy-v3-native",
+      "holdout": false,
+      "records": 6,
+      "quality_totals": {
+        "clear_extra_selections": 0,
+        "required_misses": 0,
+        "selected_disputed_labels": 0
+      },
+      "median_request_wall_seconds": 16.6615,
+      "cases": [
+        {
+          "id": "assessment-prototype-mention",
+          "quality": {
+            "clear_extra_selections": 0,
+            "required_misses": 0,
+            "selected_disputed_labels": 0
+          }
+        },
+        {
+          "id": "cache-fact-no-add",
+          "quality": {
+            "clear_extra_selections": 0,
+            "required_misses": 0,
+            "selected_disputed_labels": 0
+          }
+        },
+        {
+          "id": "coverage-review-neighbor-triggers",
+          "quality": {
+            "clear_extra_selections": 0,
+            "required_misses": 0,
+            "selected_disputed_labels": 0
+          }
+        },
+        {
+          "id": "final-check-approved-gate-action",
+          "quality": {
+            "clear_extra_selections": 0,
+            "required_misses": 0,
+            "selected_disputed_labels": 0
+          }
+        },
+        {
+          "id": "handoff-explicit-domain-preservation",
+          "quality": {
+            "clear_extra_selections": 0,
+            "required_misses": 0,
+            "selected_disputed_labels": 0
+          }
+        },
+        {
+          "id": "roadmap-flow-spec-multiple",
+          "quality": {
+            "clear_extra_selections": 0,
+            "required_misses": 0,
+            "selected_disputed_labels": 0
+          }
+        }
+      ]
+    },
+    {
+      "condition": "skill-policy-v3-jev",
+      "holdout": true,
+      "records": 3,
+      "quality_totals": {
+        "accepted_negative_required": 2,
+        "accepted_positive_clear_extra": 0,
+        "uncertain_candidates": 6
+      },
+      "median_request_wall_seconds": 0.41,
+      "cases": [
+        {
+          "id": "fresh-consumers-dir-files",
+          "quality": {
+            "accepted_negative_required": 1,
+            "accepted_positive_clear_extra": 0,
+            "uncertain_candidates": 2
+          }
+        },
+        {
+          "id": "fresh-prep-release-inventory",
+          "quality": {
+            "accepted_negative_required": 0,
+            "accepted_positive_clear_extra": 0,
+            "uncertain_candidates": 1
+          }
+        },
+        {
+          "id": "fresh-skill-index-preview-spec",
+          "quality": {
+            "accepted_negative_required": 1,
+            "accepted_positive_clear_extra": 0,
+            "uncertain_candidates": 3
+          }
+        }
+      ]
+    },
+    {
+      "condition": "skill-policy-v3-native",
+      "holdout": true,
+      "records": 3,
+      "quality_totals": {
+        "clear_extra_selections": 0,
+        "required_misses": 1,
+        "selected_disputed_labels": 0
+      },
+      "median_request_wall_seconds": 13.426,
+      "cases": [
+        {
+          "id": "fresh-consumers-dir-files",
+          "quality": {
+            "clear_extra_selections": 0,
+            "required_misses": 1,
+            "selected_disputed_labels": 0
+          }
+        },
+        {
+          "id": "fresh-prep-release-inventory",
+          "quality": {
+            "clear_extra_selections": 0,
+            "required_misses": 0,
+            "selected_disputed_labels": 0
+          }
+        },
+        {
+          "id": "fresh-skill-index-preview-spec",
+          "quality": {
+            "clear_extra_selections": 0,
+            "required_misses": 0,
+            "selected_disputed_labels": 0
+          }
+        }
+      ]
+    }
+  ]
+}

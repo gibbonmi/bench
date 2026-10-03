@@ -1,97 +1,69 @@
-# jev advisor: typed answers for routine Bench decisions
+# Jev advisor: evaluated judgments for Bench and project work
 
 Status: shaping
 
 ## Destination
 
-This map decides whether Bench uses the jev decision service, and where.
-jev is a hosted TypeSafe model. A caller sends state and typed questions, and
-jev returns Choice, Score, and Noul answers with probabilities. jev generates
-no text.
-
-The map holds two outcomes. The first outcome is an inventory of the routine
-decisions in the Bench workflow, with a fit verdict for each one. The second
-outcome is the set of candidates that a first spec builds. The compaction
-advisor is the pilot candidate.
+Shape two coordinated specs. Project discovery and parameter development come first; optional CLI integration follows.
+Skill relevance supplies the first demonstration. Ticket #14 owns the final candidate scope.
 
 ## Notes
 
-Domain: the Bench workflow decisions and the jev service. Charge
-`bench-craft-domain` for each session. Charge `bench-craft-research` for the
-Research tickets and the `prototype` skill for the Prototype ticket.
+Use the domain and research skills for this map. Ticket #9 also uses the prototype discipline.
+The current pass restores accepted decisions from the prior session and audits preserved evidence.
+The research asset records the recovery limits and the remaining factual questions.
 
-The terms stay apart:
+The reviewer directs this pass to remain in the current Astra session. The CLI/Desktop implementation stays in its separate assignment.
+The prior assignment no longer exists. The replacement assignment is `jev-shaping`, with request `jev-research-resume-20261003`.
 
-- A **jev call** is one request from Bench or a harness hook to a jev
-  endpoint. Do not write "LLM call" or "model call" for it.
-- The **hosted jev** is the TypeSafe service. **local-jev** is the planned
-  loopback server with the same request shape and a different model. Do not
-  write "jev" alone where the endpoint changes the meaning.
-- A **candidate** is one routine Bench decision that the inventory examines.
-- The **paper screen** is the Research verdict on a candidate. The
-  **replay probe** is a Prototype run of a candidate against recorded Bench
-  decisions. Do not write "test" or "evaluation" for one of them.
-- The **pilot** is the compaction advisor candidate.
-- A **pre-answer** is a jev answer on a reviewer decision that the reviewer
-  confirms or rejects.
-
-Two standing contracts bind each ticket. `DATA_HANDLING.md` states that Bench
-uploads no prompt, objective, or environment data. The dependency standard in
-`AGENTS.md` excludes a runtime service unless the reviewer decides otherwise.
-
-A map-owned asset stays in the map's assets folder,
-decisions/jev-advisor/assets/.
+A recorded brief is source text plus explicit experimental context. It is not a reconstruction of the original session.
+A protected evaluation uses fresh cases whose labels remain outside recipe development. The surviving holdout declarations lack the original protocol needed to verify that protection.
 
 ## Decisions so far
 
-- [Which egress posture does a jev call have?](jev-advisor/tickets/1.md): a jev call occurs only with a committed opt-in plus a key, and `BENCH_OFFLINE` suppresses it.
-- [Which authority ceilings hold for every candidate?](jev-advisor/tickets/2.md): a jev answer never changes a gate verdict, and a reviewer decision gets at most a pre-answer.
-- [Which decisions does the inventory cover?](jev-advisor/tickets/3.md): agent judgment calls, heuristics in the Bench executable, and reviewer decisions.
-- [Does the compaction advisor stay in this map?](jev-advisor/tickets/4.md): it stays as the pilot.
-- [What evidence proves that a candidate fits jev?](jev-advisor/tickets/5.md): the paper screen first, then a replay probe before a spec includes the candidate.
-- [How does local-jev enter the map?](jev-advisor/tickets/15.md): ticket #1 stays, and local-jev is the second arm of the replay probe.
+- [Egress posture](jev-advisor/tickets/1.md): committed opt-in plus a key; offline suppresses hosted calls.
+- [Authority ceilings](jev-advisor/tickets/2.md): the gate and reviewer retain their authority.
+- [Inventory scope](jev-advisor/tickets/3.md): workflow judgments, executable heuristics, and reviewer pre-answers.
+- [First demonstration](jev-advisor/tickets/4.md): skill relevance; compaction remains a comparison candidate.
+- [Evidence requirement](jev-advisor/tickets/5.md): a paper screen and an application probe precede adoption.
+- [Bounded authority](jev-advisor/tickets/10.md): evaluated automatic decisions require fallback.
+- [Dependency exception](jev-advisor/tickets/11.md): optional hosted use; Go HTTP without an additional language runtime.
+- [Fallback](jev-advisor/tickets/13.md): accepted 2A uses the workstream line, then abstains when necessary.
+- [Local endpoint scope](jev-advisor/tickets/15.md): local-jev remains parked.
+- [Local compatibility](jev-advisor/tickets/16.md): the parked endpoint has no current compatibility claim.
+- [Hosted endpoint](jev-advisor/tickets/17.md): hosted TypeSafe under the egress contract.
+- [Synthetic evidence](jev-advisor/tickets/19.md): accepted 3A establishes compatibility only.
+- [Skill action](jev-advisor/tickets/26.md): accepted 1A selects additional skills after evaluation and adoption.
+- [Development cases](jev-advisor/tickets/35.md): recorded briefs first, then fresh tasks before adoption.
 
 ## Not yet specified
 
-- The reviewer stated that Bench took ideas from jev before. The tree names
-  no jev, TypeSafe, or System One concept. The map must name those ideas so
-  that one concept does not get two names.
-- compact-adviser is hint-only on Codex and automatic on Claude Code. The
-  map does not yet state the harness parity that Bench requires.
+- Ticket #9 lacks protected evaluation and complete-task savings evidence.
+- Numeric budgets and thresholds remain unset pending that evidence.
+- The recovered research fragments require reconciliation before tickets #6 and #7 can close against current sources.
+- The later benchmark repair needs the separate FT347 decision. The benchmark report owns that boundary.
 
 ## Spec-writer discretion
 
 ## Out of scope
 
-- A jev answer that changes or replaces a gate verdict.
-- A jev answer that closes a reviewer decision without the reviewer's
-  confirmation.
-- A jev call in a default install with no opt-in.
-- Text generation by jev. The service does not generate text.
+- A Jev answer that replaces a gate verdict or closes a reviewer decision.
+- Hosted calls without the egress conditions in ticket #1.
+- Local-jev delivery under the current scope.
+- Automatic skill selection before application evaluation and adoption.
+- Changes to the active CLI/Desktop implementation.
 
 ## Sources
 
-- URL: https://docs.typesafe.ai/introduction
-  Supports: the destination: the three question types and the no-text limit.
-  Drift: a new question type or a change to the answer fields.
-- URL: https://docs.typesafe.ai/api.md
-  Supports: ticket #1: the endpoint is hosted and needs a bearer key.
-  Drift: a self-hosted or local deployment option.
-- URL: https://docs.typesafe.ai/model-jaggedness/jev-1.13.md
-  Supports: tickets #5 and #7: the limitation list that the paper screen applies.
-  Drift: a newer model limitation page.
-- URL: https://github.com/kunchenguid/compact-adviser
-  Supports: tickets #4 and #9: the pilot mechanism, its inputs, and its harness modes.
-  Drift: a change to the two questions, the threshold curve, or the harness list.
-- URL: https://github.com/kunchenguid/local-jev/blob/main/IMPLEMENTATION-PLAN.md
-  Supports: tickets #15, #16, and #17: the loopback endpoint, the ModernBERT model, and the omitted `confidence` field.
-  Drift: a first release, a second commit, or a change to the answer fields.
-- Path: `DATA_HANDLING.md`
-  Supports: ticket #1: the Network section lists three egress cases and promises no content upload.
-  Drift: a change to the Network section.
-- Path: `AGENTS.md`
-  Supports: tickets #1 and #11: the dependency standard excludes a runtime service by default.
-  Drift: a change to the dependency standard paragraph.
-- Path: `.bench/BENCH.md`
-  Supports: ticket #2: invariant 1 and the Roles section fix the two ceilings.
-  Drift: a change to invariant 1 or to the Roles section.
+- Path: `decisions/jev-advisor/assets/jev-integration-research.md`
+  Supports: recovered decisions, evidence status, and the current development packet for ticket #9.
+  Drift: a recovered original file, a new evaluation, or a reviewer scope change.
+- Path: `decisions/jev-advisor/assets/jev-benchmark-trial.md`
+  Supports: the later benchmark defects and the FT347 repair boundary.
+  Drift: a reviewer extension or a new benchmark report.
+- Path: `decisions/jev-advisor/assets/skill-relevance-20261003/development-packet.json`
+  Supports: ticket #35 and the explicit experimental context.
+  Drift: a change to any frozen input or proposed label.
+- URL: https://docs.typesafe.ai/cookbooks/skill_suggestion
+  Supports: the research comparison with a single-skill suggestion workflow.
+  Drift: a change to the cookbook protocol, candidate representation, or reported results.

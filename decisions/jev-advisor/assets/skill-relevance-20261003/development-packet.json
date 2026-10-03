@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+  "created": "2026-10-03",
+  "holdout": false,
+  "status": "development packet; no new inference",
+  "catalog": [
+    {
+      "id": "craft-adr",
+      "path": ".agents/skills/bench-craft-adr/SKILL.md",
+      "description": "How to write decision records and project docs for an agent or teammate with no memory of the project's history \u2014 document the resulting state, not the change. Use whenever someone says \"write an ADR\" or \"document this decision\".",
+      "index": "recording a decision or writing docs",
+      "sha256": "d66df08c16540374464b6ed8096ccbcb90a4b5f73d1ad7f32188bc94668ae093"
+    },
+    {
+      "id": "craft-cli",
+      "path": ".agents/skills/bench-craft-cli/SKILL.md",
+      "description": "Design standards for building CLI tools that agents drive through the shell \u2014 TOON output, minimal schemas, structured errors, ambient context. Use whenever you build, modify, or review an agent-facing CLI whose project declares AXI conformance.",
+      "index": "building an agent-facing CLI",
+      "sha256": "738a950fdd3302c210ee114253fb91092988ccb869e14a1e6378ace12647fef2"
+    },
+    {
+      "id": "craft-comments",
+      "path": ".agents/skills/bench-craft-comments/SKILL.md",
+      "description": "How to write code comments \u2014 what earns a comment, what stays out, and the register they use. Use whenever writing or editing code that carries comments, docstrings, or doc comments, or when reviewing comment prose in a diff.",
+      "index": "writing or reviewing code comments",
+      "sha256": "0153c88667809c1f149b814bcdc55c2c86dc8dcf83acb2b617c5720b65f2902b"
+    },
+    {
+      "id": "craft-delegate",
+      "path": ".agents/skills/bench-craft-delegate/SKILL.md",
+      "description": "The delegation discipline \u2014 when to spawn a subagent, how to charge and scope it, when it needs an isolated worktree, and how a done-claim is verified. Use whenever you spawn any delegate or accept one's result. The line lives in craft-line.",
+      "index": "spawning a delegate / verifying a delegate's done-claim",
+      "sha256": "d5e4692a97d9e9c3917a73c044398dcb22b230d85ad29b2b20c7118925be98ee"
+    },
+    {
+      "id": "craft-design-system",
+      "path": ".agents/skills/bench-craft-design-system/SKILL.md",
+      "description": "How to consume a project's design system when building UI. Use whenever building or modifying a UI component, applying a color/spacing/type/motion value, or composing a component.",
+      "index": "any UI work",
+      "sha256": "d97e5818171d8c359285d317cfed7a1e1c0eae2f2b2ef99edf2866015cb7645b"
+    },
+    {
+      "id": "craft-domain",
+      "path": ".agents/skills/bench-craft-domain/SKILL.md",
+      "description": "The domain-modeling companion \u2014 canonical terms with Avoid lists, scenarios at concept edges, and code-versus-claim checks. Use during grilling, shaping, or spec authoring, or whenever a term feels vague, overloaded, or contradicted by the code.",
+      "index": "pinning domain terms / enumerating concept-edge scenarios",
+      "sha256": "0024c163ded6ee43c254ac769a4789c62cf921c7c87c7ca642495a1c31c0957c"
+    },
+    {
+      "id": "craft-gate",
+      "path": ".agents/skills/bench-craft-gate/SKILL.md",
+      "description": "How to author the oracle \u2014 add, edit, weaken, or remove a gate check, choose its fail posture, and prove it bites. Use whenever you touch .bench/gate.sh or any project gate, wire an enforcement hook, or scaffold a gate in /bench-setup-repo.",
+      "index": "adding, weakening, or removing a gate check / authoring the oracle",
+      "sha256": "8012d6a3fc3449a86c2d5c49814ea7049f9f3c6aaae1bd456806119537b6de42"
+    },
+    {
+      "id": "craft-grill",
+      "path": ".agents/skills/bench-craft-grill/SKILL.md",
+      "description": "Disciplined frontier-round elicitation to surface a decision or a spec \u2014 each numbered round asks every question whose prerequisites are settled. Use during /bench-shape-idea decision tickets, before /bench-write-spec, or when I say \"grill me\".",
+      "index": "surfacing decisions in numbered frontier rounds",
+      "sha256": "2d0ca7ee8197a4b5797f8bb9f181c4a3172da0f12b6bef4aedba18e886000bef"
+    },
+    {
+      "id": "craft-line",
+      "path": ".agents/skills/bench-craft-line/SKILL.md",
+      "description": "How to pick and govern the line \u2014 which model tier and effort a build, shift, TDD pass, or delegated task gets, and when a tier moves. Use whenever you declare the line (invariant 2), choose a model for a subagent, or escalate a tier.",
+      "index": "declaring the line / picking a delegate's model or effort",
+      "sha256": "cd5eb11b1f47dc910a86cdf5457adb97223b69def0b7ae46102c40d1f17cdbda"
+    },
+    {
+      "id": "craft-research",
+      "path": ".agents/skills/bench-craft-research/SKILL.md",
+      "description": "The research discipline \u2014 the factual question graph, primary sources only, and one cited durable output per run. Use whenever the work becomes factual reading legwork in shaping, specification, diagnosis, assessment, or implementation.",
+      "index": "doing factual reading legwork / writing a cited research report",
+      "sha256": "0e8461334890910e0a94ec252da1d5449e62a147b4bf307519bf81fe114f7644"
+    },
+    {
+      "id": "craft-review",
+      "path": ".agents/skills/bench-craft-review/SKILL.md",
+      "description": "The three-axis review judgment \u2014 Standards, Spec, Coverage \u2014 and the citation standard a finding must meet. Use whenever you review a diff: the /bench-review-implementation phase, a delegate's work, a PR, or a self-review. Advisory, never the oracle.",
+      "index": "reviewing a diff / what a finding must cite",
+      "sha256": "dae8ee66ce7dd545c902a0a9230b2395cd2a57e44a53e4b9b6b7a84c80930eff"
+    },
+    {
+      "id": "craft-seams",
+      "path": ".agents/skills/bench-craft-seams/SKILL.md",
+      "description": "Vocabulary and principles for placing test seams and designing deep modules. Use whenever someone asks \"where should this test live\" or \"is this the right boundary to test\", or when /bench-write-spec picks seams \u2014 even on small changes.",
+      "index": "placing a test / designing an interface",
+      "sha256": "2945a5aa95c77f40c147b0a5430146f2024ba101507543006fa4311b20f952c5"
+    },
+    {
+      "id": "craft-skills",
+      "path": ".agents/skills/bench-craft-skills/SKILL.md",
+      "description": "Principles for writing and editing skills so they fire reliably and stay lean. Use whenever creating, editing, reviewing, or pruning any skill \u2014 the kit's own skills or your project's.",
+      "index": "writing or pruning a skill",
+      "sha256": "3b709907a9fde6ce7ff824fb70cc0d590bd0798e8f1bcab30429f8bfab84a71f"
+    },
+    {
+      "id": "craft-spec",
+      "path": ".agents/skills/bench-craft-spec/SKILL.md",
+      "description": "The spec-authoring discipline \u2014 the acceptance-coverage-map row schema, how stories and scope cuts are sized, and how a build is sliced into review chunks. Use when you author or audit a spec, write coverage rows, or decide an edge is a Won't handle.",
+      "index": "coverage-map rows, edge inventories, story sizing, and review-chunk slicing for a spec",
+      "sha256": "e1119718f99e20ffba7df3ea245d8facbda47134d274e4ba424bf97eb8ab7a0c"
+    },
+    {
+      "id": "craft-synthesis",
+      "path": ".agents/skills/bench-craft-synthesis/SKILL.md",
+      "description": "The discipline for safely folding a candidate change into the Bench kit \u2014 respect closed decisions, assess by the gap it fills, pass the legibility, consistency, and dogfood loops, and propose rather than merge. Use when you evaluate a kit change.",
+      "index": "evaluating a change to the kit itself",
+      "sha256": "db630302c33cd523b96450b2576c15b262eaa1bdff59a08e39dc5e60293b5584"
+    },
+    {
+      "id": "craft-tdd",
+      "path": ".agents/skills/bench-craft-tdd/SKILL.md",
+      "description": "How to apply test-driven development without the cost blowup or the over-fit-and-stop failure. Use whenever writing tests first, someone says \"red-green-refactor\" or \"write the test first\", or building at a seam that /bench-write-spec marked for TDD.",
+      "index": "writing tests first",
+      "sha256": "eb5508a128d5b456e1b60cb3eec8b31d58cf9163ee0cc0064fdfbde6e356f51a"
+    },
+    {
+      "id": "craft-tickets",
+      "path": ".agents/skills/bench-craft-tickets/SKILL.md",
+      "description": "How to break a spec or small change into tracer-bullet tickets \u2014 complete vertical slices, demoable alone, one context window each \u2014 with blockers and review-chunk membership. Use during spec authoring, or when you decide what lands green next.",
+      "index": "breaking a build into tracer-bullet tickets",
+      "sha256": "26cd35f42ef103d74c3b6e96dbcb3b28f4bab9b9d482832c3a91261ec3186ff9"
+    },
+    {
+      "id": "prototype",
+      "path": ".agents/skills/prototype/SKILL.md",
+      "description": "Build a disposable prototype to answer one named question with running code. Use when the reviewer says \"prototype this\", \"spike it\", or \"try an approach\", or when a Prototype decision ticket from /bench-shape-idea needs a concrete choice.",
+      "index": "spiking a disposable prototype",
+      "sha256": "b83d9dd599c3ed500c55bbaa9ee9d1e66d26e710f6b5763a69514070b5ab3dbe"
+    }
+  ],
+  "case_context": {
+    "stage": "implementation preparation",
+    "action": "Choose additional skills before implementing the complete recorded ticket.",
+    "already_loaded": [
+      "craft-line",
+      "craft-synthesis",
+      "craft-tickets"
+    ],
+    "assumption": "The loaded set is experimental, not a historical observation.",
+    "label_status": "author proposals; not independently validated gold labels",
+    "project_facts": [
+      {
+        "text": "For a change that decomposes to one independently-green ticket and crosses no declared seam, write the one ticket file before implementation.",
+        "source": "e667581749f23b9d12243ef4c844b6694abf25c6:.bench/BENCH.md:137-140"
+      }
+    ],
+    "known_required_skills": [
+      "craft-line",
+      "craft-synthesis",
+      "craft-tickets",
+      "craft-skills",
+      "craft-adr"
+    ],
+    "requirement_policy": "Preserve known required skills outside model selection. Resolve remaining labels against the complete skill instructions before inference."
+  },
+  "cases": [
+    {
+      "id": "worktree-create-next-hint",
+      "group": "worktree-lifecycle",
+      "source_path": "tickets/worktree-create-next-hint.md",
+      "source_sha256": "f2edb21879f974b54bcc2afcb8130b82a5855a374c606a3d5171553bea8e4e2b",
+      "recorded_brief": "# `bench worktree create` advertises the label-addressed next action\n\nBlocked by: none\nWrites: internal/worktree/worktree.go, internal/worktree/*_test.go, .agents/skills/bench-craft-delegate/SKILL.md\n\n## What to build\n\nAfter the `worktree_create` table, `bench worktree create` prints a `next[2]:`\nblock. The block names the label-addressed verbs: `bench worktree exec \"<label>\" -- <command>`\nand `bench worktree path \"<label>\"`. A caller never caches the path in a\nscratch variable. The `bench-craft-delegate` skill's Isolation passage states\nthe same rule. A caller addresses a created worktree by label\nthrough `bench worktree exec`/`path`, never through a cached `$WT`.\n\n## Acceptance\n\n- [ ] `bench worktree create --request r --label \"x\"` output ends with a `next[2]:`\n      block whose lines contain `bench worktree exec \"x\" -- <command>` and\n      `bench worktree path \"x\"`; a test asserts it.\n- [ ] Delegate skill Isolation passage carries the sentence.\n- [ ] `bench gate` green.\n",
+      "required_additions_proposed": [
+        "craft-cli"
+      ],
+      "disputed_additions": [
+        "craft-comments"
+      ],
+      "other_labels": "unresolved; not presumed negative",
+      "rationale": "Use the explicit actions in the brief and the frozen skill descriptions. Read full instructions before resolving disputed labels."
+    },
+    {
+      "id": "prune-editorial-prose",
+      "group": "prose-guidance",
+      "source_path": "tickets/prune-editorial-prose.md",
+      "source_sha256": "02292d7e3f78aed8828be8a6e2c466a71b808eb9fb806331633bfe17be89754e",
+      "recorded_brief": "# Prune duplicated and change-narrating prose\n\nBlocked by: none\nWrites: README.md, projects/benchkit.md, .bench/BENCH.md, .bench/BENCH-reference.md, .agents/commands/bench-review-implementation.md, .agents/skills/bench-craft-skills/SKILL.md, scripts/gen-platform-packages.sh, scripts/build-artifacts.sh, internal/worktree/reconcile.go, internal/shift/session.go, internal/lines/lines.go, internal/gate/verdict.go, internal/toon/toon_test.go, internal/conformance/package_shipped_surface_test.go, internal/dashboard/dashboard_test.go, capture/learnings.md\n\n## What to build\n\nThe README points to the reference for the file map and harness details. It\nstates the current adapter contract and keeps its public story and provenance.\nThe review command states authority once. The skill-writing guidance keeps\neach pruning rule in one section. Comments state timeless constraints instead\nof change history. Stray export tags and broken source wraps leave the root\ndocuments.\n\n## Acceptance\n\n- [ ] The README contains no second directory tree and states that adapters read the prompt from stdin.\n- [ ] The review command states that the gate decides done and does not repeat that boundary at exit.\n- [ ] `craft-skills` defines duplication, no-op prose, and sediment only under `Pruning`.\n- [ ] The nine approved comments describe the current code without change narration.\n- [ ] No authored document ends with a stray `</content>` tag.\n- [ ] The prose-only batch passes the project gate through `bench commit`.\n",
+      "required_additions_proposed": [
+        "craft-comments"
+      ],
+      "disputed_additions": [],
+      "other_labels": "unresolved; not presumed negative",
+      "rationale": "Use the explicit actions in the brief and the frozen skill descriptions. Read full instructions before resolving disputed labels."
+    },
+    {
+      "id": "ste-prose-field-line-note",
+      "group": "prose-guidance",
+      "source_path": "tickets/ste-prose-field-line-note.md",
+      "source_sha256": "3281df9ef1a2cac56afe3f5c2d6275752935c2f8761697ce65a0b3958950370a",
+      "recorded_brief": "# `ste-prose.md` notes the field-line rule and the one-line marker rule\n\nBlocked by: none\nWrites: .agents/skills/bench-craft-spec/references/ste-prose.md\n\n## What to build\n\nThe rule file gains one short paragraph. A label line with a colon and no\nsentence terminator is a field line, and the prose mechanics check does not\ngrade it. A grammar field, a marker phrase, and an anchor needle stay on one\nphysical line.\n\n## Acceptance\n\n- [ ] `ste-prose.md` carries the two sentences, and the live prose check stays green.\n",
+      "required_additions_proposed": [],
+      "disputed_additions": [],
+      "other_labels": "unresolved; not presumed negative",
+      "rationale": "Use the explicit actions in the brief and the frozen skill descriptions. Read full instructions before resolving disputed labels."
+    }
+  ]
+}

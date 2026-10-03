@@ -1,0 +1,165 @@
+[
+  {
+    "explicit_required_skills": [],
+    "catalog_omit_ids": [],
+    "partition": "fresh",
+    "id": "fresh-skill-index-preview-spec",
+    "group": "skill-index-command",
+    "task": "Write a Bench spec and ticket breakdown for a `bench skills-index --preview` mode that displays the generated index block without replacing `.bench/BENCH-reference.md`. Define acceptance coverage, choose test seams, and cover command misuse and missing index markers.",
+    "phase": "specification",
+    "project_facts": [
+      "Each skill's `index:` and optional `index-note:` frontmatter supplies the generated index block.",
+      "`bench skills-index` currently accepts `--check` and `--write`; check is the default, and write regenerates the block.",
+      "The command refuses a missing or unmarked reference file before writing.",
+      "The project requires a context-inheriting fork for spec and ticket authoring."
+    ],
+    "loaded_skills": [
+      "craft-research"
+    ],
+    "known_required_skills": [
+      "craft-line",
+      "craft-synthesis",
+      "craft-skills",
+      "craft-adr"
+    ],
+    "labels": {
+      "required_additions": [
+        "craft-delegate",
+        "craft-domain",
+        "craft-seams",
+        "craft-spec",
+        "craft-tickets"
+      ],
+      "discretionary_additions": [],
+      "disputed": [
+        "craft-cli",
+        "craft-tdd"
+      ],
+      "expected_guard": null,
+      "clear_negatives": [
+        "craft-comments",
+        "craft-design-system",
+        "craft-gate",
+        "craft-grill",
+        "craft-review",
+        "prototype"
+      ]
+    },
+    "sources": [
+      "internal/skillsindex/skillsindex.go:1",
+      "internal/skillsindex/command.go:16-34",
+      "cmd/bench/main.go:104",
+      "projects/benchkit.md:575-585",
+      ".agents/skills/bench-craft-domain/SKILL.md:3",
+      ".agents/skills/bench-craft-seams/SKILL.md:3",
+      ".agents/skills/bench-craft-spec/SKILL.md:3-52",
+      ".agents/skills/bench-craft-tickets/SKILL.md:3",
+      ".agents/skills/bench-craft-delegate/SKILL.md:3"
+    ]
+  },
+  {
+    "explicit_required_skills": [],
+    "catalog_omit_ids": [],
+    "partition": "fresh",
+    "id": "fresh-consumers-dir-files",
+    "group": "axi-consumers-aggregate",
+    "task": "Implement a one-ticket Bench update to `bench consumers` so each over-cap `consumers_packages` row reports the number of distinct files in that directory alongside its row count. Keep the `--full` path available and update the command help and existing code comments to state the resulting contract.",
+    "phase": "implementation",
+    "project_facts": [
+      "`bench consumers` is an approved agent-facing AXI query.",
+      "An over-cap default currently emits `consumers_packages` rows with `dir` and `rows`; `--full` emits every consumer row.",
+      "The command already computes a global distinct-file count for its meta row, and its aggregate logic groups file paths by directory.",
+      "The command implementation carries comments describing its output contract."
+    ],
+    "loaded_skills": [],
+    "known_required_skills": [
+      "craft-line",
+      "craft-synthesis",
+      "craft-skills",
+      "craft-adr"
+    ],
+    "labels": {
+      "required_additions": [
+        "craft-cli",
+        "craft-comments",
+        "craft-tickets"
+      ],
+      "discretionary_additions": [],
+      "disputed": [],
+      "expected_guard": null,
+      "clear_negatives": [
+        "craft-delegate",
+        "craft-design-system",
+        "craft-domain",
+        "craft-gate",
+        "craft-grill",
+        "craft-research",
+        "craft-review",
+        "craft-seams",
+        "craft-spec",
+        "craft-tdd",
+        "prototype"
+      ]
+    },
+    "sources": [
+      "cmd/bench/main.go:98",
+      "internal/consumers/command.go:17-50",
+      "internal/consumers/command.go:93-99",
+      "internal/consumers/command.go:148-166",
+      "internal/consumers/command.go:266-292",
+      ".bench/BENCH.md:137-140",
+      "projects/benchkit.md:575-579",
+      ".agents/skills/bench-craft-cli/SKILL.md:3",
+      ".agents/skills/bench-craft-comments/SKILL.md:3",
+      ".agents/skills/bench-craft-tickets/SKILL.md:3"
+    ]
+  },
+  {
+    "explicit_required_skills": [],
+    "catalog_omit_ids": [],
+    "partition": "fresh",
+    "id": "fresh-prep-release-inventory",
+    "group": "ship-tier-orchestration",
+    "task": "From the current Bench source, give the ordered stages run by `bench prep-release`, the prerequisite it checks before starting, and the paths it reports after a green run.",
+    "phase": "assessment",
+    "project_facts": [
+      "`prep-release` owns the ship-tier rehearsal and has one `Steps` enumeration.",
+      "The command checks for a reusable green gate verdict before running the stages.",
+      "A green run reports its release index and artifact directory."
+    ],
+    "loaded_skills": [
+      "craft-research"
+    ],
+    "known_required_skills": [],
+    "labels": {
+      "required_additions": [],
+      "discretionary_additions": [],
+      "disputed": [],
+      "expected_guard": null,
+      "clear_negatives": [
+        "craft-adr",
+        "craft-cli",
+        "craft-comments",
+        "craft-delegate",
+        "craft-design-system",
+        "craft-domain",
+        "craft-gate",
+        "craft-grill",
+        "craft-line",
+        "craft-review",
+        "craft-seams",
+        "craft-skills",
+        "craft-spec",
+        "craft-synthesis",
+        "craft-tdd",
+        "craft-tickets",
+        "prototype"
+      ]
+    },
+    "sources": [
+      "internal/preprelease/preprelease.go:1-12",
+      "internal/preprelease/preprelease.go:82-99",
+      "internal/preprelease/preprelease.go:145-173"
+    ]
+  }
+]
