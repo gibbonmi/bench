@@ -263,7 +263,7 @@ string literal itself. The check carries a bite proof in its own file, as
 | MB-C5 / `10-read-agents-marker-blocks.md`, `11-forbid-block-rule-copies.md` | The managed-block markers use the block reader, and the gate refuses a new copy. | MB57, MB58, MB61, MB62, MB63, MB64, MB65, MB66, MB67, MB68, MB69 | `bench test --package ./internal/adopt`, `bench test --check markdown-block-owner` | no |
 
 MB-C1 creates the seam that every later ticket consumes, so its chunk review
-closes before any other ticket starts. Tickets 2, 3, 4, 6, and 8 each name the
+closes before any other ticket starts. Tickets 2, 3, 4, 6, 8, and 11 each name the
 five command-binding files, because build preflight binds those files to their
 packages. No ticket expects to edit them, but the shared names make those
 tickets run in series. Ticket 11 waits for each module ticket, because the check
@@ -471,14 +471,6 @@ file, `AGENTS.md`, and MB57, MB58, and MB61 cover it.
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route`
 - `reviews/markdown-block-reader.md`
 
-Build preflight adds the paths after `projects/benchkit.md` as closures. The
-five command-binding files follow the bound packages of tickets 2, 3, 4, 6, and
-8. The anchor registry files and the canary fixtures follow `projects/benchkit.md`
-in ticket 11. The fixture `bounds-classify-limit-restated` follows
-`internal/learnings/learnings.go` in ticket 6. No ticket expects to edit a closure
-path. The spec authoring commit adds the three glossary terms to `CONTEXT.md`, so
-no ticket writes the glossary.
-
 ## Ticket graph
 
 | ticket | blocked by | chunk |
@@ -565,6 +557,16 @@ at `spec.go:176` also have no fence rule. The second frontmatter reader is
 
 Each caller keeps its call, because each exported signature stays the same. A
 caller sees only the reclassified lines that the rows name.
+
+### Fence closures
+
+Build preflight adds the fence paths after `projects/benchkit.md` as closures.
+The five command-binding files follow the bound packages of tickets 2, 3, 4, 6,
+8, and 11. The anchor registry files and the canary fixtures follow
+`projects/benchkit.md` in ticket 11. The fixture `bounds-classify-limit-restated`
+follows `internal/learnings/learnings.go` in ticket 6. No ticket expects to edit
+a closure path. The spec authoring commit adds the three glossary terms to
+`CONTEXT.md`, so no ticket writes the glossary.
 
 ### Fence overlap with in-flight work
 
