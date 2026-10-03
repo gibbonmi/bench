@@ -521,6 +521,8 @@ The walk of the hostile-input checklist in `projects/benchkit.md`:
 - `tests/canary/workflow-guidance-anchors/prepared-build-approval`
 - `tests/canary/workflow-guidance-anchors/prepared-build-freshness`
 - `CHANGELOG.md`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 - `reviews/ft370-comment-only-evidence.md`
 
 ## Out of scope
