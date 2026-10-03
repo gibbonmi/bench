@@ -4,7 +4,8 @@
 
 Source: `cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff`.
 Base: accepted C2 tip `ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97`.
-The source passed its ordinary lane.
+The source passed its ordinary lane and the pinned build preflight.
+The preflight reported 15 green checks, one not applicable, and no red checks.
 Compatibility, session-inspection, adoption, and the sealed system suite pass without skips.
 Four live-root documentation checks also pass.
 The earlier full conformance run retains three capability skips; none is positive evidence for those fixtures.
@@ -15,10 +16,29 @@ The pickup is `6e50e655153edc925cf3540d9c81b44e1c2cb988`.
 C1 and C2 remain accepted.
 
 C3 has consumed one of two post-review repair cycles.
-All five targets have author verification; fresh confirming independent reviews are pending.
+All five targets have author verification and fresh confirming independent reviews.
+Standards, Spec, and Coverage each returned zero findings and no optional advice.
 The qualification artifact records all eleven capability-omission reds and both missing system-test reds, with exact restoration.
 Actual CLI and Desktop qualification remains incomplete, as its pending record states.
 No checkpoint or landing is claimed for C3.
+
+## C3 confirming review
+
+The three confirming axes reviewed `6e50e655153edc925cf3540d9c81b44e1c2cb988..46a08eb2a2a7b427ba7f989e3c2e2bd885a97863`.
+Each ran independently on `gpt-5.6-sol`, at high effort, for one pass.
+Their native results bind source digest `17d06ddf08e79f5600349c0afc1a49c0075bceab` and are retained below.
+The independent Coverage probe moved the presentation capability to the wrong operation; both affected operation tests failed, and the subject was restored.
+All three review venues ended with clean tracked status.
+
+| Axis | Current findings | Worst issue | Closed targets |
+| --- | --- | --- | --- |
+| Standards | 0 | None | STD-C3-01, STD-C3-02, STD-C3-03, STD-C3-04 |
+| Spec | 0 | None | All five named folds preserve the approved behavior |
+| Coverage | 0 | None | COV-C3-1 and the recorded system-test reds |
+
+The raw current finding count and the de-duplicated repair-target count are both zero.
+The initial occurrences below remain historical evidence; their confirming occurrences supersede them.
+The required actual-interface acceptance evidence remains pending, so C3 cannot pass its checkpoint or land.
 
 ## Standards
 
@@ -1864,6 +1884,72 @@ No review requested a Bench command change.
             "COV-C3-1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3-standards-confirm-r1",
+          "performer": "/root/c3_confirm_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "17d06ddf08e79f5600349c0afc1a49c0075bceab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_confirm_standards",
+            "digest": "sha256:3b951c590bfce356be602443fa839a0c404c07c1b6c4982f07b34b48e689c83e",
+            "excerpt": "## Standards\n\nResult: zero actionable findings. Worst issue: none. Raw findings: 0. De-duplicated repair targets: 0.\n\nLine: `gpt-5.6-sol` / high / one confirming pass.\n\nBinding: assignment `1214eaac80a4ff485316657ea402f970`; evidence `sha256:933c8abb2130ef1d829adf98a62ae348144e235891d0bca8c06d4082144b62e4`; frozen repair pair `6e50e655153edc925cf3540d9c81b44e1c2cb988..46a08eb2a2a7b427ba7f989e3c2e2bd885a97863`. The single current-action bind returned `current=true` at a clean tip.\n\nNamed dispositions:\n\n- `STD-C3-01`: no-op, confidence 10. `operations()` derives the accepted vocabulary from `capabilities()` plus the aggregate constant (`internal/compatibility/capabilities.go:3,10-49`), and `SessionReport` consumes those owners for validity and diagnostics (`internal/compatibility/session.go:29-36`).\n- `STD-C3-02`: no-op, confidence 10. The guide delegates probe instructions to report actions (`.bench/BENCH-reference.md:159-169,183-190`) and retains the command-free recovery route (`:192-203`); executable action prose remains in `internal/compatibility/capabilities.go:12-22`.\n- `STD-C3-03`: no-op, confidence 10. The retained expectations are at `internal/systemtest/compatibility_session_test.go:30,55`; `qualification.md:348-349` records distinct sealed-system behavioral reds, no skips, and the source-bound author record states exact restoration.\n- `STD-C3-04`: no-op, confidence 10. The unexported type now begins directly at `internal/compatibility/capabilities.go:5`; the deleted comment had only restated the code, which `craft-comments` requires deleting.\n- `COV-C3-1`: no-op, confidence 10. It stays a distinct closed Coverage target rather than folding into `STD-C3-01`. `TestCompatibilityCapabilityInventory` independently enumerates operation/capability expectations and compares both producers (`internal/compatibility/inspect_test.go:336-380`). `qualification.md:323-343` records all eleven row omissions red and restored, satisfying the independent-expectation exception in `AGENTS.md:42-48`.\n\nActionable findings: none. Optional advice: none. No implementation-command change is necessary.\n\nEvidence cursors fetched: `s1:0`, `s15:0`, `s16:0`, `s16:1`. Sources read: `AGENTS.md`, `.bench/BENCH.md`, `projects/benchkit.md`; review, delegation, bounded-repair, synthesis, and comment disciplines; review-phase instructions; full approved spec and C3 ticket; C3 pickup and source-bound author records; qualification evidence; untouched consumer `internal/sessioninspect/compatibility.go` first; targeted repaired production/tests; and the complete single frozen diff.\n\nNo tests, probes, gate, commits, runtime changes, or permission changes ran in this pass. C1 and C2 remain accepted. Actual CLI and standard-policy Desktop qualification remains pending; this clean Standards result does not authorize C3 completion or landing.\n\nFinal status: `git status --short` is empty after the ignored native-log write.\n\nClaim: Standards / claimed / confidence 10.\n"
+          },
+          "axis": "Standards",
+          "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
+          "tip": "cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-initial"
+          ]
+        },
+        {
+          "id": "c3-spec-confirm-r1",
+          "performer": "/root/c3_confirm_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "17d06ddf08e79f5600349c0afc1a49c0075bceab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_confirm_spec",
+            "digest": "sha256:c0fa63e4f9aeaf84481acdb6dafb27bb9c578478f6bef0cb2f644d9d66455a7a",
+            "excerpt": "## Spec\n\nBinding: evidence `sha256:933c8abb2130ef1d829adf98a62ae348144e235891d0bca8c06d4082144b62e4` verified current for assignment `ab46794c01b58e6e0ee9a264776dc684`, frozen pair `6e50e655153edc925cf3540d9c81b44e1c2cb988..46a08eb2a2a7b427ba7f989e3c2e2bd885a97863`. The verified artifact contains 26 pages and 16 sources. Repair source is `cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff`; source digest is `17d06ddf08e79f5600349c0afc1a49c0075bceab`; record tip is `46a08eb2a2a7b427ba7f989e3c2e2bd885a97863`.\n\nModel / effort / pass: `gpt-5.6-sol` / high / one pass.\n\nFold assessment:\n\n- `STD-C3-01` is closed. `internal/compatibility/capabilities.go:3,26-48` owns the workflow token, derives the operation vocabulary from the capability registry, and supplies the shared requirement predicate. `internal/compatibility/session.go:29-36` now derives validity and the diagnostic from that owner. This satisfies the single-source rule at `AGENTS.md:35-47` and the producer-inventory requirements at `spec.md:115-118`.\n- `STD-C3-02` is closed. `.bench/BENCH-reference.md:163-169,189,203` delegates live-probe action prose and the failed-interface retest to the executable report while retaining the command-free recovery route. The repair preserves the active-interface obligations at `spec.md:122-136`.\n- `STD-C3-03` is closed by source-bound evidence. `qualification.md:342-349` records behavioral reds for `TestCompatibilityOtherHosts` and `TestCompatibilityPermissionConflict`, no skips, preservation before mutation, and exact restoration. This meets the independently authored expectation rule in `AGENTS.md:42-46` and the every-expectation red requirement at `spec.md:220`.\n- `STD-C3-04` is closed. The empty comment was removed; `internal/compatibility/capabilities.go:3` now begins the implementation with the shared workflow constant.\n- `COV-C3-1` is closed. `internal/compatibility/inspect_test.go:336` independently enumerates each operation-to-capability expectation against both live and session reports. `qualification.md:316-340` records the formerly silent `file-access` omission becoming red and eleven independent capability-row omission reds with exact restoration. This covers the inventory and mutation obligations at `spec.md:115-118,220`.\n\nC1 and C2 remain accepted. The repair delta supplies no concrete evidence that reopens either chunk.\n\nAcceptance disposition:\n\n- The repaired implementation and evidence preserve the approved C3 behavior.\n- `CD42, CD45-CD49, CD51, CD54, CD57-CD58, and CD62` remain pending actual CLI and standard-policy Desktop evidence as recorded at `qualification.md:260-279` and required by `spec.md:319,322-328,331,334-335,339`.\n- The pending rows remain a material acceptance blocker. `reviews/cli-desktop-consistency.md:17-21` retains one consumed repair cycle, incomplete actual-interface qualification, and no checkpoint or landing claim.\n\nActionable findings: **0**. De-duplicated repair targets: **0**. Worst issue: **none**. No disposition applies because no finding survived refutation.\n\nOptional advice: none.\n\nImplementation-command contribution: none; no command change is necessary.\n\nSources read: complete `AGENTS.md`, `.bench/BENCH.md`, `projects/benchkit.md`, `craft-review`, `craft-delegate`, their required review/repair/claim references, `.agents/commands/bench-review-implementation.md`, the full approved spec, the full C3 ticket, the original C3 review findings and current source-bound record, the qualification repair evidence, changed production/tests/docs, and untouched consumer `internal/sessioninspect/compatibility.go`. Evidence cursors fetched: `s1:0/end`, `s15:0/end` with the untouched row first, and `s16:0,1/end`. The frozen diff was retrieved exactly once and its complete spill was read.\n\nNo tests, probes, gates, commits, configuration changes, or runtime changes ran. The only write is this ignored native return.\n\nFinal `git status --short --branch`: `## bench/assign/a4e21c189ec7057844f1b2d15a118dd2/ab46794c01b58e6e0ee9a264776dc684`; no tracked or untracked repository changes are present.\n\n```text\nclaim[1]{axis,status,confidence}:\n  Spec,claimed,10\n```\n"
+          },
+          "axis": "Spec",
+          "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
+          "tip": "cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-initial"
+          ]
+        },
+        {
+          "id": "c3-coverage-confirm-r1",
+          "performer": "/root/c3_confirm_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "17d06ddf08e79f5600349c0afc1a49c0075bceab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_confirm_coverage",
+            "digest": "sha256:515df64b940341bb4afef6c3b2fb75c0e1988826736da0a48777f27469f63ee9",
+            "excerpt": "## Coverage\n\nResult: zero current findings. Raw finding count: 0. De-duplicated repair targets: 0. Worst issue: none.\n\nSource binding: evidence `sha256:933c8abb2130ef1d829adf98a62ae348144e235891d0bca8c06d4082144b62e4`; assignment `14e33732aad31b0d4cbe1e7df3880a22`; frozen repair pair `6e50e655153edc925cf3540d9c81b44e1c2cb988..46a08eb2a2a7b427ba7f989e3c2e2bd885a97863`. The one valid `--check-current` returned current and clean. Artifact verification passed for 26 pages and 16 sources; delivery remains unverified. The executable repair source is `cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff`, with source digest `17d06ddf08e79f5600349c0afc1a49c0075bceab`; later commits carry the review record.\n\nFold conclusions:\n\n- `STD-C3-01` — no-op, confidence 10. `internal/compatibility/capabilities.go:3,26-38` owns `workflow` and derives every other operation from the capability registry. `internal/compatibility/session.go:26-36` recognizes operations through `required` and renders the diagnostic from `operations`; no independent operation list remains.\n- `STD-C3-02` — no-op, confidence 10. `.bench/BENCH-reference.md:160-203` delegates live-probe instructions and the failed-interface retest to report capability actions. Its `If no command can start` section still preserves the command-free recovery route. The executable actions remain single-sourced in `internal/compatibility/capabilities.go:10-23`.\n- `STD-C3-03` — no-op, confidence 10. `specs/cli-desktop-consistency/assets/qualification.md:323,348-349` records exact restoration for all eleven capability omissions and behavioral reds for `TestCompatibilityOtherHosts` and `TestCompatibilityPermissionConflict`. The source-bound pickup records the restored sealed system suite passing without skips.\n- `STD-C3-04` — no-op, confidence 10. The repair removes the unearned comment above the unexported `capability` type; `internal/compatibility/capabilities.go:5` now begins directly with the type declaration.\n- `COV-C3-1` — no-op, confidence 10. `internal/compatibility/inspect_test.go:336-375` independently enumerates the eleven capability names and their operation memberships, then compares both `LiveObligations` and `SessionReport` for diagnose, work, review, recover, present, and workflow. The author record at `qualification.md:323` demonstrates all eleven complete-row omissions red with exact restoration.\n\nIndependent bypass attempt: I swapped the producer-only `desktop-presentation` mapping from `present` to `review`, which differs from the author's complete-row omissions. `bench probe` ran the exact inventory test, observed a passing baseline, then failed both `TestCompatibilityCapabilityInventory/present` and `/review`. The probe reported `verdict=bit`, two failed tests, and `restored=yes`. This confirms the expectation detects an operation-membership error as well as complete capability omission.\n\nDemonstrated evidence: the probe baseline passed in 7 ms; the mutation failed in 3 ms; no skips were reported. Author evidence retained in the pickup reports compatibility, session-inspection, adoption, and sealed system passing without skips after restoration. I did not repeat the long suites.\n\nLive acceptance remains an explicit separate blocker. Actual independent CLI evidence, standard-policy Desktop recovery, concurrent actual-interface writers, equivalent review outcomes, actual CLI file and skill evidence, configuration drift, and disposable both-interface review and landing remain incomplete. This confirmation does not authorize a C3 checkpoint or landing.\n\nSources read: evidence metadata `s1`; consumer capture `s15`, with untouched `internal/sessioninspect/compatibility.go:12` first; both pages of coverage capture `s16`; the complete single frozen diff and spill; full approved spec; C3 ticket; current pickup and source-bound author records; complete qualification record; AGENTS.md; BENCH.md; benchkit profile and hostile-input checklist; review, delegation, finding, bounded-repair, and review-phase instructions; current capability, session, untouched session-inspection, inventory-test, and system-test sources. No second diff or consumer collection ran.\n\nOptional advice: none. Implementation-command contribution: none; no command change is necessary. C1 and C2 remain accepted.\n\nReview line: `gpt-5.6-sol`, high effort, one pass. Claim: Coverage `verified`, confidence 10.\n\nFinal worktree: HEAD `46a08eb2a2a7b427ba7f989e3c2e2bd885a97863`; tracked and untracked status is clean apart from this permitted ignored evidence file. No tracked edits, commits, gates, runtime changes, permission changes, or live qualification claims were made.\n"
+          },
+          "axis": "Coverage",
+          "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
+          "tip": "cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-initial"
+          ]
         }
       ]
     }
