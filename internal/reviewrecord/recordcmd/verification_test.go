@@ -74,15 +74,6 @@ func final(source string) map[string]string {
 		"--probe-outcome": drop, "--probe-exit-code": drop, "--probe-restore": drop}
 }
 
-// recorded is a fixture with count planned chunks whose chunk 1 entry is written.
-func recorded(t *testing.T, count int) *recordtest.Fixture {
-	t.Helper()
-	f := linked(t, count)
-	base, tip := advance(f, "chunk 1")
-	record(t, f, "1", base, tip)
-	return f
-}
-
 // verify runs the verification form and requires exit 0.
 func verify(t *testing.T, f *recordtest.Fixture, edits ...map[string]string) string {
 	t.Helper()
