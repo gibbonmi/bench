@@ -9,13 +9,13 @@ Covers: MB59, MB60
 Make `FrontmatterField` in `internal/skillsindex` read the block reader's
 frontmatter lines. It returns the first value of the key among those lines. A
 frontmatter fault gives an empty value, as an unclosed opener does today. The
-classifier read through `bounds.ClassifyNoFollow` stays first.
-
-`internal/skillsindex/skillsindex.go` is over its line budget, so it does not
-grow.
+classifier read through `bounds.ClassifyNoFollow` stays first. `findBlock` stays
+as it is, under the spec's Won't handle line.
 
 ## Acceptance
 
 - [ ] A CRLF skill file `---`, `index: x`, `---` gives the value `x`.
 - [ ] `TestFrontmatterFieldRequiresCompleteLeadingFence` and `TestFrontmatterFieldReadsOnlyTheLeadingFence` stay green without an edit.
 - [ ] `bench skills-index --check` is green on the live tree.
+- [ ] `internal/skillsindex/skillsindex.go` holds no literal `---`. The sites today are lines 179 and 185.
+- [ ] `internal/skillsindex/skillsindex.go` (518 lines) does not grow.

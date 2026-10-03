@@ -8,10 +8,13 @@ Covers: MB34, MB35, MB36, MB37
 
 Make `FieldScan.Scan` in `internal/maps` set `Fenced` from the block reader. A
 fence marker line and each fenced line stay `Fenced`, and they match no field.
+`Scan` keeps its return shape, the lines and the duplicate diagnostics, so the
+decision-map output does not change.
 
-Make `ParseTicket` in `internal/tickets` read the reader's fence fault instead of
-its odd count of backtick lines. The diagnostic keeps the exact text
-`unterminated fence`. Delete the `fenceMarker` constant from `internal/tickets`.
+`ParseTicket` in `internal/tickets` calls the block reader on its content for the
+fence fault, instead of its odd count of backtick lines. The diagnostic keeps the
+exact text `unterminated fence`. Delete the `fenceMarker` constant from
+`internal/tickets`.
 
 ## Acceptance
 
@@ -20,3 +23,6 @@ its odd count of backtick lines. The diagnostic keeps the exact text
 - [ ] A four-backtick block that holds a three-backtick line gives no `unterminated fence` diagnostic.
 - [ ] A `Covers:` line inside that block sets no `Covers` value.
 - [ ] `TestParseTicketHostileInput` stays green without an edit.
+- [ ] `ParseTicket` gives the same diagnostics for each ticket under `specs/` at the base and at the tip.
+- [ ] `internal/maps` and `internal/tickets` hold no string literal with a run of three backticks. The sites today are `fields.go:58` and `tickets.go:39`.
+- [ ] No file in `Writes:` grows past 400 lines.

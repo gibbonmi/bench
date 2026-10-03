@@ -2,27 +2,39 @@
 
 Blocked by: 1-add-block-reader.md
 Writes: internal/adopt/marker.go, internal/adopt/link_plan_test.go
-Covers: MB57, MB58, MB61, MB70
+Covers: MB57, MB58, MB61, MB70, MB86, MB87
 
 ## What to build
 
 Start this ticket only after `cli-desktop-consistency` lands on `main`, because
-that branch also writes `internal/adopt/marker.go`. Re-read `marker.go` at that
-tip before the first edit.
+that branch also writes `internal/adopt/marker.go`. Re-read `marker.go` and its
+callers at that tip before the first edit. That branch adds `stagedRepairAgents`
+as a caller.
 
 Make `scanMarkers`, `RewriteAgentsBlock`, and `StripAgentsBlock` read the block
 reader's fence classes. Each one still finds a marker in the raw line text,
 because each marker is itself an HTML comment. The unbalanced-fence flag comes
-from the reader's fence fault. The reader's comment fault gives the same
-conflict, because an unterminated comment hides each later fence marker. Both
-faults keep the exact AGENTS.md conflict message bytes.
+from the reader's fence fault or its comment fault. Either fault refuses only when
+the file holds Bench text, as the fence fault does today at `marker.go:67`. Both
+faults give the exact message at `marker.go:68`:
+`conflict: AGENTS.md has an unclosed code fence around Bench markers; marker detection cannot be trusted`.
 
+The rewrite and the strip write their output from the source bytes by the
+reader's line offsets, so each carriage return survives.
+
+The new rows go in `link_plan_test.go`. `TestRewriteAgentsBlockEdges` lives in
+`internal/adopt/adopt_test.go`, but that file is 802 lines, over the line cap.
 `internal/adopt` is a crowded directory, so the ticket adds no file.
 
 ## Acceptance
 
 - [ ] A marker example inside a `~~~` block stays, and `RewriteAgentsBlock` replaces only the live block.
 - [ ] `StripAgentsBlock` keeps a tilde-fenced marker example and removes the live block.
-- [ ] An unterminated `~~~` block around Bench text refuses with the AGENTS.md conflict message.
-- [ ] An unterminated HTML comment opener before a fenced marker example refuses with the same message.
-- [ ] Each existing marker test in `internal/adopt/adopt_test.go` stays green without an edit.
+- [ ] An unterminated `~~~` block around Bench text refuses with the `marker.go:68` message.
+- [ ] A file that holds only an unterminated comment opener and a fenced marker example refuses with the same message, not the malformed-markers message.
+- [ ] A file that holds an unterminated comment opener and no Bench text rewrites with no refusal.
+- [ ] `RewriteAgentsBlock` on a CRLF file keeps each carriage return outside the replaced block.
+- [ ] `TestRewriteAgentsBlockEdges` stays green without an edit.
+- [ ] `RewriteAgentsBlock` of the live `AGENTS.md` gives the same bytes at the base and at the tip.
+- [ ] `internal/adopt/marker.go` holds no string literal with a run of three backticks. The sites today are lines 44, 100, and 146.
+- [ ] No file in `Writes:` grows past 400 lines.
