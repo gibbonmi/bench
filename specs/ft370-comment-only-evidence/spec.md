@@ -204,7 +204,7 @@ An example-output comment is a comment whose text, without its markers and
 leading whitespace, starts with `output:` or `unordered output:` in any
 letter case. `strings.TrimSpace` removes the whitespace, including block-comment newlines.
 
-A whitespace-only layout change passes the Go rule, because every token stays
+A whitespace-only layout change passes the token comparison, because every token stays
 the same. That widening is flagged decision F1 below.
 
 ### The checkpoint integration
@@ -324,7 +324,7 @@ assumption.
 | --- | --- | --- | --- | --- |
 | CG-C1 / `1-move-tree-change-reader.md` | One raw tree-change reader in `internal/git` serves the lane, and the lane's change list stays the same. | CG40, CG41 | `bench test --package ./internal/git`, `bench test --package ./internal/gate` | no |
 | CG-C2 / `2-prove-comment-only-gaps.md` | `commentgap.Prove` proves a comment-only Go gap between two trees and names the rule of each refusal. | CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46, CG47, CG48, CG49, CG50 | `bench test --package ./internal/commentgap` | yes |
-| CG-C3 / `3-accept-proven-gaps-at-checkpoint.md`, `4-state-comment-only-correction-rule.md` | The checkpoint, the completion record, and the landing accept a proven gap, the surrounding evidence stays strict, and the guidance routes the correction. | CG1, CG2, CG3, CG4, CG5, CG6, CG7, CG8, CG33, CG34, CG35, CG36, CG37, CG38, CG39, CG44, CG45 | `bench test --package ./internal/gate`, `bench test --package ./internal/reviewrecord/recordcmd`, `bench test --package ./internal/landing`, `bench test --package ./internal/anchors`, `bench test --package ./internal/conformance` | no |
+| CG-C3 / `3-accept-proven-gaps-at-checkpoint.md`, `4-state-comment-only-correction-rule.md` | The checkpoint, the completion record, and the landing accept a proven gap, the surrounding evidence stays strict, and the guidance routes the correction. | CG1, CG2, CG3, CG4, CG5, CG6, CG7, CG8, CG33, CG34, CG35, CG36, CG37, CG38, CG39, CG44, CG45 | `bench test --package ./internal/gate`, `bench test --package ./internal/reviewrecord/recordcmd`, `bench test --package ./internal/landing`, `bench test --package ./internal/anchors`, `bench test --package ./internal/conformance`, `bench test --package ./internal/reviewrecord`, `bench test --package ./cmd/bench` | no |
 
 CG-C1 creates the seam that CG-C2 consumes, so its chunk review closes first.
 CG-C2 creates the seam that CG-C3 consumes.
@@ -472,6 +472,8 @@ The walk of the hostile-input checklist in `projects/benchkit.md`:
 - `internal/commentgap/`
 - `internal/reviewrecord/coverage.go`
 - `internal/reviewrecord/recordcmd/completion_test.go`
+- `internal/reviewrecord/recordcmd/verification_test.go`
+- `internal/reviewrecord/recordcmd/chunk_test.go`
 - `internal/gate/review_checkpoint_commits_test.go`
 - `internal/landing/completion_evidence_test.go`
 - `internal/anchors/registry_retained_workflow.go`
@@ -518,6 +520,7 @@ The walk of the hostile-input checklist in `projects/benchkit.md`:
 - `tests/canary/workflow-guidance-anchors/line-anchor-missing`
 - `tests/canary/workflow-guidance-anchors/prepared-build-approval`
 - `tests/canary/workflow-guidance-anchors/prepared-build-freshness`
+- `CHANGELOG.md`
 - `reviews/ft370-comment-only-evidence.md`
 
 ## Out of scope
@@ -724,7 +727,7 @@ All chunk IDs and dependencies stay unchanged.
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"CG-C1","tickets":["1-move-tree-change-reader.md"],"verification":[{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C2","tickets":["2-prove-comment-only-gaps.md"],"verification":[{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C3","tickets":["3-accept-proven-gaps-at-checkpoint.md","4-state-comment-only-correction-rule.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/ft370-comment-only-evidence/spec.md"},{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"git","command":"bench test --package ./internal/git"}]}
+{"version":1,"chunks":[{"id":"CG-C1","tickets":["1-move-tree-change-reader.md"],"verification":[{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C2","tickets":["2-prove-comment-only-gaps.md"],"verification":[{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C3","tickets":["3-accept-proven-gaps-at-checkpoint.md","4-state-comment-only-correction-rule.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"reviewrecord","command":"bench test --package ./internal/reviewrecord"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/ft370-comment-only-evidence/spec.md"},{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"reviewrecord","command":"bench test --package ./internal/reviewrecord"},{"id":"cmd-bench","command":"bench test --package ./cmd/bench"}]}
 ```
 
 ### Approved conservative comment rules
@@ -733,3 +736,11 @@ The reviewer approves refusal of changed files with any directive-shaped comment
 This rule covers unchanged directives whose attachment can change program behavior.
 The reviewer also approves recognition of multiline block example output.
 CG48 to CG50 pin these decisions, and the directive-refusal omission is the named probe.
+
+### Integration fixture and release note
+
+Ticket 3 moves `recorded` beside the chunk fixture helpers and adds a prepare hook.
+This keeps the verification test file within its existing 400-line limit.
+The completion fixture forwards that hook to seed Go before the reviewed chunk.
+Ticket 4 adds the required typed entry to `CHANGELOG.md`.
+The C3 and final verification lists also run the reviewrecord and command packages.

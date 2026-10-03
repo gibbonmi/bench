@@ -1,7 +1,7 @@
 # Accept a proven comment-only gap at the checkpoint
 
 Blocked by: 2-prove-comment-only-gaps.md
-Writes: internal/reviewrecord/coverage.go, internal/gate/review_checkpoint_commits_test.go, internal/reviewrecord/recordcmd/completion_test.go, internal/landing/completion_evidence_test.go
+Writes: internal/reviewrecord/recordcmd/chunk_test.go, internal/reviewrecord/recordcmd/verification_test.go, internal/reviewrecord/coverage.go, internal/gate/review_checkpoint_commits_test.go, internal/reviewrecord/recordcmd/completion_test.go, internal/landing/completion_evidence_test.go
 Covers: CG1, CG2, CG3, CG4, CG5, CG6, CG7, CG8, CG33, CG34, CG35, CG36, CG44, CG45
 
 ## What to build
@@ -41,6 +41,8 @@ Build the tests that the spec's `Testing decisions` state:
 - `TestReviewCheckpointChainGapNamesTheExpectedBase` gains the new clause in its second assertion (CG35).
 - `TestLandingCompletionEvidence` gains one case (CG3). `attachedCompletionFixture` gains a variadic prepare hook. `newCompletionFixture` forwards the hook, and the delegated caller stays unchanged.
 - `TestRecordCompletionAcceptsCommentOnlyGap` holds CG44 and CG45.
+- Move `recorded` from `verification_test.go` beside the chunk fixture helpers in `chunk_test.go`. Add a variadic prepare hook, which `readyCompletion` forwards.
+  This seeds Go before the chunk without copying setup or exceeding the verification file budget.
 
 The three checkpoint tests go in
 `internal/gate/review_checkpoint_commits_test.go`. Each gap test edits the Go
