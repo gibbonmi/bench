@@ -159,9 +159,9 @@ No chunk has consumed a repair cycle.
     {
       "id": "CG-C2",
       "base": "67f6159ba5f6df5961bee2c5e7215e43e18e01c7",
-      "tip": "e021e09c7d2f2d638a7ff9f1fed84bdbb5178c6d",
-      "plan_digest": "sha256:9bc20dfc5468058ad2a0fac076f85a213a2484f0d033ecc3ed335563ab55ed65",
-      "source_digest": "80ea4129830d508b4b4adf4cbee47dee5e9bb2c4",
+      "tip": "3b6542fb38288d982239a5ad3695e642c6b12849",
+      "plan_digest": "sha256:2d9c1d57d328b461a407e5ab8bb2886d987d970101ba8352087b48a6a8adc1bf",
+      "source_digest": "2cc5594fc19302ea5b9616aae737c2965df7d413",
       "acceptance_rows": [
         "CG9",
         "CG10",
@@ -189,7 +189,8 @@ No chunk has consumed a repair cycle.
         "CG32",
         "CG42",
         "CG43",
-        "CG46"
+        "CG46",
+        "CG47"
       ],
       "verification": [
         {
@@ -244,6 +245,60 @@ No chunk has consumed a repair cycle.
           },
           "requirement": "gate",
           "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-final-git",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "2cc5594fc19302ea5b9616aae737c2965df7d413",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c2-complete-reader",
+            "digest": "sha256:3f8a2830bc9bbda18a5b45ae085d7174fcc6e86f985b6cb76bb6a068f0bf410c",
+            "excerpt": "internal/git passed in 1571 ms, no skips.\n"
+          },
+          "requirement": "git",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-final-gate",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "2cc5594fc19302ea5b9616aae737c2965df7d413",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c2-complete-reader",
+            "digest": "sha256:bf58e267fa282d077eddc05522b882c89db98d121b00dc88c22c4a5bf0220813",
+            "excerpt": "internal/gate passed in 12305 ms, no skips.\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-final-commentgap",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "2cc5594fc19302ea5b9616aae737c2965df7d413",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c2-complete-reader",
+            "digest": "sha256:24392751c81983dda44cded5a998c225a68a6f152959af8404cda52a9572fb5c",
+            "excerpt": "Classifier suite passed in 304 ms. No skips. Directive-count probe bit five cases. Configured-reader probe bit CG30 and CG46. Empty-list omission bit CG47. Every probe restored exact bytes. Earlier positive and refusal probes also remain documented in the preceding record.\n"
+          },
+          "requirement": "commentgap",
+          "command": "bench test --package ./internal/commentgap",
           "exit_code": 0
         }
       ],
