@@ -93,8 +93,17 @@ Recorded briefs stay development-only; fresh real tasks remain necessary before 
 
 ## Evidence locations
 
-The assignment retains `.logs/jev-cycle-six/` with commands, failures, test outputs, mutations, frozen packets, and native gate receipts.
+The complete local evidence archive retains commands, failures, test outputs, mutations, frozen packets, and native gate receipts.
+Its path is `/home/mgibs/.bench/experiments/jev-research-recovery-20261003/complete-local-evidence/`.
+The assignment records that location in `.logs/jev-evidence-location.txt`.
+
 The durable preservation bundle lives under `/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-six/`.
 The bundle manifest binds each preserved regular file or symbolic link to its content.
 `verification.json` records the current source digests and the compact results.
 No original probe or earlier experiment archive is overwritten.
+
+Copied repositories must stay outside the active checkout.
+A diagnostic project gate scanned the copies under `.logs` and correctly found duplicate production owners.
+The author stopped that superseded run and preserved its output.
+The author verified both complete archive manifests before removing the duplicate local trees.
+The final source remains a research checkpoint, not a qualified benchmark or landing.

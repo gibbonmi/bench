@@ -101,6 +101,7 @@ Report per-task paired outcomes and variation; do not infer equivalence from a s
 ## Offline preparation
 
 Run these commands through the owning Bench worktree.
+Keep snapshots and run outputs outside the checkout; repository checks can scan ignored directories.
 The following paths are relative to that worktree.
 
 ```sh

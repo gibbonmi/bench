@@ -107,7 +107,7 @@ The recovered request builder sends the task, project facts, protected skills, a
 The pinned Bench guide requires the ticket. Thus the labeled requirement has a source that the provider state does not supply.
 
 Source: `skill-relevance-20261003/recovered-fresh-cases.json:1`; `.bench/BENCH.md:137` at commit `e6675817`.
-Source: `.logs/jev-recovery/followup-20260920/skill-policy-v3-runner.py:73` in the active assignment.
+Source: `jev-recovery/followup-20260920/skill-policy-v3-runner.py:73` in the complete local evidence archive named in `benchmark/cycle-six.md`.
 
 The recovered report records that both Jev and fallback omitted this skill. It also records that fallback recovered the other required negative answers.
 All three fresh cases used fallback, so this sample avoided no native request. Its report records Jev overhead on each case.
