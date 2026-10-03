@@ -9,7 +9,7 @@ import (
 
 func TestRecordGrammarRefusals(t *testing.T) {
 	f := linked(t, 1)
-	for _, args := range [][]string{nil, {"nosuch"}, {"chunk"}, {"chunk", slug(t), "--chunk", "1", "--base", "HEAD"}} {
+	for _, args := range [][]string{nil, {"nosuch"}, {"chunk"}, {"chunk", slug(t), "--chunk", "1", "--base", "HEAD"}, {"completion", slug(t)}} {
 		out, code := recordcmd.Command(f.Root, args)
 		if code != 2 || !strings.HasPrefix(out, "usage: bench record") {
 			t.Errorf("%q = exit %d, output %q; want exit 2 with a usage: bench record line", args, code, out)

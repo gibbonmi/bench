@@ -57,10 +57,7 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 
 func checkCompletion(record Record, plan Plan, source string) error {
 	completion := record.Completion
-	reconciler := record.ImplementationSession
-	if plan.Delegated() {
-		reconciler = plan.Execution.OrchestratorSession
-	}
+	reconciler := completionReconciler(record, plan)
 	if completion.State != "completed" || completion.SourceDigest != source || completion.Performer != reconciler {
 		return errors.New("completion is incomplete or stale; execute final verification and reconcile acceptance")
 	}

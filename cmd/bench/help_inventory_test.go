@@ -132,6 +132,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench record [--in <label|primary>] chunk <slug> --chunk <id> --base <commit> --tip <commit>  write one chunk's frozen pair, digests, and acceptance rows into reviews/<slug>.md
   bench record [--in <label|primary>] verification <slug> (--chunk <id> [--source <commit>] | --final --source <commit>) --requirement <id> --id <id> --performer <session> --model <model> --effort <effort> --exit-code <n> --ref <ref> --excerpt <file> [--probe-outcome <verdict> --probe-exit-code <n> --probe-restore pass|fail]  append one planned verification result with its computed digests
   bench record [--in <label|primary>] review <slug> --chunk <id> --axis Standards|Spec|Coverage --id <id> --performer <session> --model <model> --effort <effort> --ref <ref> --excerpt <file> [--finding <id>]...  append one independent review result to a recorded chunk
+  bench record [--in <label|primary>] completion <slug> --source <commit>  validate and write final completion evidence for a source commit
   bench record [--in <label|primary>] amendment <slug> --source <commit> [--map <old>=<new>[,<new>...]]...  record the plan-digest change at a source commit
   bench spec [--in <label|primary>] retire <slug>  delete a merged spec + its review pickup (validated)
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)

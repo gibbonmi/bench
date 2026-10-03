@@ -72,8 +72,8 @@ var forms = []form{
 			{"--performer", "<session>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
 			{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {"--finding", "<id>", true, repeated}},
 		valid: reviewValid, run: review},
-	{name: "amendment", description: "record the plan-digest change at a source commit",
-		flags: []flag{{"--source", "<commit>", false, once}, {"--map", "<old>=<new>[,<new>...]", true, repeated}}, valid: amendmentValid, run: amendment},
+	completionForm,
+	amendmentForm,
 }
 
 // terms is the layout of f, or its flags in order when the layout is empty.
