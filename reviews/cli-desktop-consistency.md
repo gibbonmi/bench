@@ -337,7 +337,7 @@ No review requested a Bench command change.
 {
   "version": 1,
   "spec": "specs/cli-desktop-consistency/spec.md",
-  "plan_digest": "sha256:1671d9c4f7dae2b87ffb7919ca3d46923747990148247165ee080b4b36e0607c",
+  "plan_digest": "sha256:fd1630eb03f3c42be8f1e0eb051b41c427ba16371480294c7104d4db89bf5c52",
   "implementation_session": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
   "chunks": [
     {
@@ -2061,6 +2061,21 @@ No review requested a Bench command change.
     {
       "from": "sha256:180144afd437254151361dc22e85277e6b86672c32f47f5a64506b65942fd381",
       "to": "sha256:1671d9c4f7dae2b87ffb7919ca3d46923747990148247165ee080b4b36e0607c",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1671d9c4f7dae2b87ffb7919ca3d46923747990148247165ee080b4b36e0607c",
+      "to": "sha256:fd1630eb03f3c42be8f1e0eb051b41c427ba16371480294c7104d4db89bf5c52",
       "chunk_ids": {
         "C1": [
           "C1"
