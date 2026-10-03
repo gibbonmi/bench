@@ -50,8 +50,9 @@ package with table tests, and the gate's package tests observe every row.
 The checkpoint is oracle logic and the guidance takes the leverage override,
 so high effort is the floor for every ticket. A ticket that crosses the
 `reviewrecord`, `gate`, and `landing` owners takes xhigh, per the cached
-routing for a ticket that crosses owner seams. The slicing pass proposes Opus
-at xhigh effort for ticket 3, and high effort for each other ticket.
+routing for a ticket that crosses owner seams. On 2026-10-03 the reviewer
+approved Opus at xhigh effort for ticket 3, and high effort for each other
+ticket.
 
 Harder chunks: CG-C2.
 
@@ -585,8 +586,8 @@ fixture's `Write` and `Commit` methods.
 
 ### Flagged decisions
 
-- **F1. Whitespace-only layout passes.** The Go rule compares tokens, so a change of only blank lines and indentation passes beside a comment edit. The Go tokens are the executable content of the file. Recommendation: accept, because a token-equal change has no executable line, which is the source's reason for the rule.
-- **F2. Records of the correction.** The chunk keeps its reviewed pair, and only the issuing axis records a superseding pass. `bench record verification` refuses a source that differs from the chunk source, and the source claims no verification. Recommendation: accept, because the checkpoint proof and the gate replace re-verification. The authorship half of F2 is closed above.
+- **F1. Whitespace-only layout passes.** The Go rule compares tokens, so a change of only blank lines and indentation passes beside a comment edit. The Go tokens are the executable content of the file. The reviewer accepted F1 on 2026-10-03, because a token-equal change has no executable line, which is the source's reason for the rule.
+- **F2. Records of the correction.** The chunk keeps its reviewed pair, and only the issuing axis records a superseding pass. `bench record verification` refuses a source that differs from the chunk source, and the source claims no verification. The reviewer accepted F2 on 2026-10-03, because the checkpoint proof and the gate replace re-verification. The authorship half of F2 is closed above.
 
 ### Flagged additions
 
