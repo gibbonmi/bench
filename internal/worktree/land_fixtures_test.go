@@ -119,7 +119,7 @@ func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, hom
 // returned repair removes that repository, so a resume then reconciles.
 func blockLandingReconcile(t *testing.T, root string) (repair func()) {
 	t.Helper()
-	nested := resetEmbedded(t, root)
+	nested := plantNestedRepository(t, root)
 	return func() { mustRemove(t, nested) }
 }
 
