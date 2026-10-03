@@ -37,7 +37,7 @@ block reader. A new string-literal detector therefore reds the gate.
 ## User stories
 
 Line: opus / high.
-Implementation-line reason: MB-C1 is the hardest chunk, because the block reader must keep the prose findings and the anchor rejoin rule exact. MB-C4 is the second hard chunk, because the anchor walk maps runes to source positions. Each seam exists, and the package tests observe each row.
+Implementation-line reason: MB-C1 is the hardest chunk, because the block reader must keep the prose findings and the anchor rejoin rule exact. MB-C4 is the second hard chunk, because the anchor walk maps runes to source positions. Each seam exists, and the package tests observe each row. On 2026-10-03 the reviewer approved Opus at xhigh effort for tickets 1 and 8, and high effort for each other ticket.
 Harder chunks: MB-C1, MB-C4.
 
 ### The block reader owns the block rules
