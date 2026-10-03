@@ -16,7 +16,8 @@ The final coordinator performs the planned integration checks before landing.
 All review prose below this section describes historical stages.
 Its pending live statements remain as provenance and are superseded by the qualification artifact.
 Earlier native excerpts retain their original identities and outcomes.
-C1 and C2 remain accepted, and C3 retains one consumed product repair cycle.
+C1 and C2 remain accepted.
+C3 has started its second and final repair cycle for STD-C3-FINAL-01.
 
 ## Standards
 
