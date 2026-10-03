@@ -356,12 +356,3 @@ type producerIdentity struct {
 	SourceCommit   string `json:"source_commit"`
 	PackageVersion string `json:"package_version"`
 }
-
-func containsProfile(profiles []Profile, want Profile) bool {
-	for _, profile := range profiles {
-		if profile == want {
-			return true
-		}
-	}
-	return false
-}

@@ -1,5 +1,7 @@
 package releasepreflight
 
+import "slices"
+
 // DecisionInput is the immutable release evidence presented to preflight policy.
 type DecisionInput struct {
 	Mode    Mode
@@ -27,7 +29,7 @@ func Decide(input DecisionInput) Decision {
 	if input.Mode == ModePublish && input.Profile == "" {
 		return Decision{Failure: usageFailure()}
 	}
-	if input.Focused != "" && !contains(PhaseNames(input.Mode), input.Focused) {
+	if input.Focused != "" && !slices.Contains(PhaseNames(input.Mode), input.Focused) {
 		return Decision{Failure: usageFailure()}
 	}
 	if len(input.Results) == 0 {

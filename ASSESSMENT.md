@@ -38,7 +38,7 @@ commit subjects.
 | 3. Shift failure recovery and truthful completion | **FIXED ✓** | Stage errors propagate (`internal/shift/shift.go:55-75`); adapter and commit failures select recovery evidence instead of success/teardown (`internal/shift/loop.go:202-206,251-289,316-318`). |
 | 4. Static guard metadata and aggregate deadline | **FIXED ✓** | Guard descriptions are parsed, not executed (`internal/guards/guards.go:103-153`), under one bounded scan (`internal/guards/guards.go:164-200`). |
 | 5. Clean package staging and runtime selection | **FIXED ✓** | Release staging omits source `prepare` (`scripts/build-release-evidence.mjs:221`); the launcher chooses the selected platform package before development `dist` (`bin/bench.sh:164-180`). |
-| 6. Gate-backed release and security/package evidence | **PARTIAL ✓** | Native verification and publish preflight are ordered before publication (`.github/workflows/release.yml:12-47`), but the publish jobs still call raw `npm publish` instead of `bench release` (`.github/workflows/release.yml:49-73`). |
+| 6. Gate-backed release and security/package evidence | **PARTIAL ✓** | Native verification and publish preflight are ordered before publication (`.github/workflows/release.yml:12-47`), and the publish job runs `bench release submit` (`.github/workflows/release.yml:49-80`). |
 | 7. Installed shim/adoption routing and fresh-clone runtime | **FIXED ✓** | Adoption commands route to the installed target before local-wrapper preference (`internal/adopt/doctor.go:110-142`); platform resolution precedes development fallback (`bin/bench.sh:164-180`). |
 | 8. One-command bootstrap | **PARTIAL ✓** | `bench setup` now seeds a project-local profile transactionally (`internal/adopt/setup.go:289-360`), but no public package/tag exists and README presents installed harness commands before installation (`README.md:9,176-194`). |
 | 9. Transactional relink/upgrade/unlink | **PARTIAL ✓** | Link stages and promotes atomically (`internal/adopt/link_transaction.go:164-190,370-399`) and partial unlink exits nonzero (`internal/adopt/unlink.go:55-68`); uninstall guidance can still delete a foreign executable. |
@@ -51,11 +51,14 @@ commit subjects.
 
 ### Adoption and packaging
 
-**H-A1 — Release automation bypasses its governed publisher.** The runbook
+**H-A1 — Release automation runs its governed publisher.** The runbook
 requires `bench release submit` and `promote`, with live digest verification and
-resumption (`docs/release-runbook.md:35-78`). The tag workflow instead
-loops over `npm publish` directly and then publishes the wrapper (`.github/workflows/release.yml:49-73`). A partial immutable publication therefore bypasses the state machine in
-`internal/publication/statemachine.go`. **Tracked: FT142.** ✓
+resumption (`docs/release-runbook.md:35-78`). The tag workflow compiles the
+publisher from the tag checkout and runs `bench release submit`
+(`.github/workflows/release.yml:61-73`). The workflow uploads the publication
+record when the publish step passes and when it fails
+(`.github/workflows/release.yml:74-80`).
+**Tracked: FT142.** ✓
 
 **M-A1 — No supported public entry point exists.** There are no repository
 tags, and README truthfully says `redbench` is not published

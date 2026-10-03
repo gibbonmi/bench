@@ -48,7 +48,6 @@ func phaseDefinition(name string) (PhaseDefinition, bool) {
 func phaseSummaries(results []Result) []PhaseSummary { return releaseevidence.PhaseSummaries(results) }
 func packageEvidenceRegistry() []PackageEvidence     { return releaseevidence.PackageEvidenceRegistry() }
 func terminalStatus(results []Result) Status         { return releaseevidence.TerminalStatus(results) }
-func contains(items []string, want string) bool      { return releaseevidence.Contains(items, want) }
 func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 	return releaseevidence.FinalizeEvidence(ctx, root, run)
 }

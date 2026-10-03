@@ -335,7 +335,7 @@ The kit phase table is exactly:
 | `gofmt` | `bench gate-go gofmt <root>` |
 | `vet` | `go -C <root> vet -trimpath ./...` |
 | `test` | `go test -trimpath -count=1 ./...` |
-| `race` | one `go test -trimpath -count=1 -race -v` invocation derived from `internal/racetests.Tests` |
+| `race` | one `go test -trimpath -count=1 -race -v` invocation derived from the race-test table in `internal/gate` |
 | `system` | `go test -trimpath -count=1 -tags=system ./internal/systemtest` |
 | `shellcheck` | the stable shell-file inventory, optional when shellcheck is absent |
 
@@ -381,7 +381,7 @@ canary phase, component partition, or stripped-subject phase schedule. An
 environment-class skip observed by the oracle is red and names the test that emitted it.
 A check the gate failed to stage has no verdict, so it cannot count as green.
 
-The race runner verifies every registry sentinel executed. The tagged system package has one
+The race runner verifies that every sentinel in the race-test table executed. The tagged system package has one
 `TestMain` owner, at most three disposable repositories, one selected executable
 identity ledger, and teardown on green/red/interrupt/timeout. It also has exactly one
 stripped-distribution journey beside one adoption journey. That adoption journey adopts a

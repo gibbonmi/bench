@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -76,7 +77,7 @@ func Parse(data []byte) (Record, error) {
 			if err := validateEvidence(review.Evidence); err != nil {
 				return record, err
 			}
-			if !contains(Axes(), review.Axis) || review.Role != "independent-review" || (record.Version == 1 && review.Performer == record.ImplementationSession) {
+			if !slices.Contains(Axes(), review.Axis) || review.Role != "independent-review" || (record.Version == 1 && review.Performer == record.ImplementationSession) {
 				return record, fmt.Errorf("%s: invalid independent review axis or performer", review.ID)
 			}
 			if !objectID.MatchString(review.Base) || !objectID.MatchString(review.Tip) {
@@ -111,7 +112,7 @@ func validateVerification(items []Verification) error {
 		}
 		// Both verification roles parse here. checkVerification grades which
 		// role each obligation actually owes, so the grammar stays in one place.
-		if !contains(verificationRoles(), item.Role) || item.Requirement == "" || item.Command == "" {
+		if !slices.Contains(verificationRoles(), item.Role) || item.Requirement == "" || item.Command == "" {
 			return fmt.Errorf("%s: invalid author verification", item.ID)
 		}
 		if item.State != "pending" && item.ExitCode == nil {
@@ -173,15 +174,6 @@ func validateNative(ref NativeRef) error {
 
 func occurrenceState(state string) bool {
 	return state == "pending" || state == "completed" || state == "failed" || state == "skipped"
-}
-
-func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
 }
 
 func decode(data []byte, value any) error {

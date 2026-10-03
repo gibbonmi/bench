@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -174,7 +175,7 @@ func FixturePins(root string) (map[string][]string, error) {
 			return nil, pinErr
 		}
 		for _, path := range paths {
-			if !holdsString(pins[path], dir) {
+			if !slices.Contains(pins[path], dir) {
 				pins[path] = append(pins[path], dir)
 			}
 		}
@@ -244,15 +245,6 @@ func pinnedPaths(root, fixture string) ([]string, error) {
 		paths = append(paths, filepath.ToSlash(filepath.Clean(mutation.Path)))
 	}
 	return paths, nil
-}
-
-func holdsString(list []string, want string) bool {
-	for _, value := range list {
-		if value == want {
-			return true
-		}
-	}
-	return false
 }
 
 func discoverFixtures(dir string) ([]fixtureRecord, error) {

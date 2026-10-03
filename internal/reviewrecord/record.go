@@ -1,7 +1,10 @@
 // Package reviewrecord reads source-bound verification and review evidence.
 package reviewrecord
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 type NativeRef struct {
 	Ref     string `json:"ref"`
@@ -96,7 +99,7 @@ func checkReviews(chunk Chunk, excluded []string, reviewerCount int) error {
 		if current == nil {
 			return fmt.Errorf("chunk %s: missing %s; record the native review result", chunk.ID, axis)
 		}
-		if current.Role != "independent-review" || contains(excluded, current.Performer) || current.Performer == "" {
+		if current.Role != "independent-review" || slices.Contains(excluded, current.Performer) || current.Performer == "" {
 			return fmt.Errorf("chunk %s: invalid %s performer or role; obtain independent review", chunk.ID, axis)
 		}
 		axisOwners[current.Performer] = axis

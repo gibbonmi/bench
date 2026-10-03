@@ -252,7 +252,7 @@ func TestRecordKeysOnTheAssignmentID(t *testing.T) {
 }
 
 // TestConcurrentRecordsKeepEveryLine proves the append leaves whole lines when two
-// writers record to one assignment. `internal/racetests` runs it under `-race`,
+// writers record to one assignment. The gate's race phase runs it under `-race`,
 // because the ordinary suite cannot observe the loss. (Coverage row EC15.)
 func TestConcurrentRecordsKeepEveryLine(t *testing.T) {
 	t.Parallel()
