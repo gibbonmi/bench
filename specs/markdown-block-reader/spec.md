@@ -6,7 +6,7 @@ Roadmap: FT358
 
 Decision source: `roadmap/FT358.md`, a named reviewed artifact from drain `d-0bca6e72fedd`.
 
-Verification log: iteration 1 of 2 folded — five reviewers returned 41 findings: 37 confirmed, 3 partly right, and 1 false. The confirmed parts are folded, the false finding is not, and iteration 2 has not run.
+Verification log: 2 iteration(s) to accept — iteration 1 ran five parallel reviewers (Sonnet xhigh, Sonnet high, Opus xhigh, Fable high, and Fable xhigh). They returned 41 findings: 37 confirmed, 3 partly right, and 1 false. The fold added the rule-delta table and closed decisions 8 to 15. Iteration 2 ran Sonnet high, which closed 36 of 40 ids. The fold took the 4 partial ids and 7 new findings, with closed decision 16.
 
 ## Problem
 
@@ -155,14 +155,22 @@ Harder chunks: MB-C1, MB-C4.
 72. As `bench link`, I want a CRLF AGENTS.md rewrite to keep each carriage return, so that the file keeps its line endings.
 73. As `bench link`, I want an unterminated comment without Bench text accepted, so that a stray comment does not block a link.
 74. As the landing, I want a CRLF spec to flip and keep each carriage return, so that the file keeps its line endings.
+75. As a fragment caller, I want no frontmatter pass on a section or State body, so that a leading `---` stays body.
+76. As a module that ignores frontmatter, I want an unclosed `---` read as body, so that each refusal message stays exact.
+77. As the reviewer, I want the three conformance readers on the block reader, so that no test helper keeps a block rule.
 
 ## Implementation decisions
 
 ### The block reader
 
 `internal/markdown` is a new leaf package that imports only the standard library.
-Its one entry point reads a document's bytes and returns the classified lines,
-the removed comment spans, and at most one fault. The reader never refuses. Each
+It has two entry points over one pipeline. `Read` reads a whole document and
+applies the four rules below. `ReadFragment` reads a section or a State body and
+skips the frontmatter rule, because frontmatter is a rule of document position.
+Each one returns the classified lines,
+the removed comment spans, and at most one fault.
+
+The reader never refuses. Each
 caller decides what a fault means for its own grammar.
 
 Each line carries these facts:
@@ -187,8 +195,9 @@ its verdict on the live tree.
 2. Comments. The reader removes each comment opener through the next closer over
    the text outside the frontmatter. A removal that rejoins a new comment removes
    that comment too, with the result of `stripCommentsMapped` in
-   `internal/anchors/locate.go`. One linear pass keeps a stack over the output,
-   and a completed closer with an open opener cuts the output back to that opener.
+   `internal/anchors/locate.go`. The earliest open opener wins, and the search
+   for its closer starts after the opener's four bytes. One linear pass gives
+   that result.
    The removed bytes include newlines, but each line keeps its number.
 
    An unterminated comment removes the rest of the document and gives a comment
@@ -263,7 +272,17 @@ line. The journal is untracked, so no tracked-path prose grade refuses it. The
 prose mechanics check prints the journal's malformed records, so those records are
 the journal's fail-closed channel. Every other module reads an unterminated block
 to the end of the document. The prose grade refuses such a document on each
-tracked path.
+path that the prose grade covers.
+
+Three modules ignore the frontmatter fault and read each line as body:
+`internal/adopt`, `internal/tickets`, and `internal/reviewrecord`. This is
+their behavior today, and it keeps each refusal message exact. MB95, MB96, and
+MB97 cover them.
+
+The fragment callers are `handoffdoc.OpenFence` and `handoffdoc.UnfencedLines`,
+which read a State body, and the anchor scope walks `sectionRunesMapped` and
+`stepRunesMapped`, which read a section body. Each other caller reads a whole
+file through `Read`, `handoffdoc.Parse` and the anchor file read included.
 
 ### Module migrations
 
@@ -348,11 +367,11 @@ but each one copies a block rule.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| MB-C1 / `1-add-block-reader.md` | The block reader exists, and the prose check reads its prose lines from it. | MB1, MB2, MB3, MB4, MB5, MB6, MB7, MB8, MB9, MB10, MB11, MB12, MB13, MB14, MB15, MB16, MB17, MB18, MB19, MB20, MB21, MB22, MB23, MB71, MB72, MB73, MB74, MB75, MB76, MB77, MB78, MB79 | `bench test --package ./internal/markdown`, `bench test --package ./internal/prose`, `bench test --check prose-mechanics` | yes |
-| MB-C2 / `2-read-spec-and-coverage-blocks.md`, `3-read-roadmap-blocks.md`, `4-read-field-scan-blocks.md` | The spec, coverage, roadmap, field-scan, and ticket readers use the block reader. | MB24, MB25, MB26, MB27, MB28, MB29, MB30, MB31, MB32, MB33, MB34, MB35, MB36, MB37, MB80, MB81, MB83 | `bench test --package ./internal/spec`, `bench test --package ./internal/coverage`, `bench test --package ./internal/roadmap`, `bench test --package ./internal/maps`, `bench test --package ./internal/tickets` | no |
-| MB-C3 / `5-read-handoff-blocks.md`, `6-read-journal-blocks.md`, `9-read-skills-frontmatter.md` | The handoff, journal, and skills-index readers use the block reader. | MB38, MB39, MB40, MB41, MB42, MB43, MB44, MB45, MB46, MB47, MB59, MB60, MB82, MB84 | `bench test --package ./internal/handoffdoc`, `bench test --package ./internal/handoff`, `bench test --package ./internal/learnings`, `bench test --package ./internal/retros`, `bench test --package ./internal/skillsindex` | no |
-| MB-C4 / `7-read-review-record-blocks.md`, `8-read-anchor-blocks.md` | The review record and the anchors use the block reader. | MB48, MB49, MB50, MB51, MB52, MB53, MB54, MB55, MB56, MB85 | `bench test --package ./internal/reviewrecord`, `bench test --package ./internal/anchors`, `bench test --check docs-currency-workflow` | yes |
-| MB-C5 / `10-read-agents-marker-blocks.md`, `11-forbid-block-rule-copies.md` | The managed-block markers use the block reader, and the gate refuses a new copy. | MB57, MB58, MB61, MB70, MB86, MB87, MB62, MB63, MB64, MB65, MB66, MB67, MB68, MB69 | `bench test --package ./internal/adopt`, `bench test --check markdown-block-owner` | no |
+| MB-C1 / `1-add-block-reader.md` | The block reader exists, and the prose check reads its prose lines from it. | MB1, MB2, MB3, MB4, MB5, MB6, MB7, MB8, MB9, MB10, MB11, MB12, MB13, MB14, MB15, MB16, MB17, MB18, MB19, MB20, MB21, MB22, MB23, MB71, MB72, MB73, MB74, MB75, MB76, MB77, MB78, MB79, MB88, MB89, MB90, MB92 | `bench test --package ./internal/markdown`, `bench test --package ./internal/prose`, `bench test --check prose-mechanics` | yes |
+| MB-C2 / `2-read-spec-and-coverage-blocks.md`, `3-read-roadmap-blocks.md`, `4-read-field-scan-blocks.md` | The spec, coverage, roadmap, field-scan, and ticket readers use the block reader. | MB24, MB25, MB26, MB27, MB28, MB29, MB30, MB31, MB32, MB33, MB34, MB35, MB36, MB37, MB80, MB81, MB83, MB95 | `bench test --package ./internal/spec`, `bench test --package ./internal/coverage`, `bench test --package ./internal/roadmap`, `bench test --package ./internal/maps`, `bench test --package ./internal/tickets` | no |
+| MB-C3 / `5-read-handoff-blocks.md`, `6-read-journal-blocks.md`, `9-read-skills-frontmatter.md` | The handoff, journal, and skills-index readers use the block reader. | MB38, MB39, MB40, MB41, MB42, MB43, MB44, MB45, MB46, MB47, MB59, MB60, MB82, MB84, MB93 | `bench test --package ./internal/handoffdoc`, `bench test --package ./internal/handoff`, `bench test --package ./internal/learnings`, `bench test --package ./internal/retros`, `bench test --package ./internal/skillsindex` | no |
+| MB-C4 / `7-read-review-record-blocks.md`, `8-read-anchor-blocks.md` | The review record and the anchors use the block reader. | MB48, MB49, MB50, MB51, MB52, MB53, MB54, MB55, MB56, MB85, MB94, MB96 | `bench test --package ./internal/reviewrecord`, `bench test --package ./internal/anchors`, `bench test --check docs-currency-workflow` | yes |
+| MB-C5 / `10-read-agents-marker-blocks.md`, `11-forbid-block-rule-copies.md` | The managed-block markers use the block reader, and the gate refuses a new copy. | MB57, MB58, MB61, MB70, MB86, MB87, MB62, MB63, MB64, MB65, MB66, MB67, MB68, MB69, MB91, MB97, MB98 | `bench test --package ./internal/adopt`, `bench test --check markdown-block-owner`, `bench test --check skill-description-budgets`, `bench test --check skills-index-command-adapters` | no |
 
 MB-C1 creates the seam that every later ticket consumes, so its chunk review
 closes before any other ticket starts. Tickets 2, 3, 4, 6, 8, and 11 each name the
@@ -408,6 +427,10 @@ reds the live tree until the last copy goes.
 | MB12 | 13 | The text `<!<!-- z -->-- needle -->` leaves no `needle` in the line text | planned TestReadBlockRules in internal/markdown/markdown_test.go | A single-pass comment strip leaves the rejoined comment's text visible. |
 | MB71 | 14 | The input of three backticks, a newline, and a comment opener gives the comment fault at line 2 and no fence fault | planned TestReadBlockRules in internal/markdown/markdown_test.go | A reader that reports the fence fault first changes the prose finding for this input. |
 | MB79 | 13 | Reading 1 MiB that holds 10,000 comments allocates at most four times the input size | planned TestReadBlockRules in internal/markdown/markdown_test.go | The per-comment tail copy of `stripCommentsMapped` allocates near 10,000 times the input size. |
+| MB88 | 13 | A line of a comment opener, ` a `, a second opener, ` b `, a closer, and ` c` keeps only ` c`, because the first opener runs through the first closer | planned TestReadBlockRules in internal/markdown/markdown_test.go | A stack that closes the innermost opener leaves the first opener open and gives a comment fault. |
+| MB89 | 14 | A comment opener followed only by `>` gives a comment fault at line 1, because the closer search starts after the opener's four bytes | planned TestReadBlockRules in internal/markdown/markdown_test.go | A search that starts inside the opener reads its own dashes as a closer and removes nothing. |
+| MB90 | 10 | The lines `---`, `a: b`, and `---` with a trailing space give a frontmatter fault on line 1 | planned TestReadBlockRules in internal/markdown/markdown_test.go | The old `TrimSpace` closer test closes the block on the padded line. |
+| MB92 | 75 | `ReadFragment` on `---`, three backticks, `x`, `---` classifies line 2 as a fence opener and gives a fence fault at line 2 | planned TestReadBlockRules in internal/markdown/markdown_test.go | A frontmatter pass on a fragment swallows lines 1 to 4 and hides the open fence. |
 | MB13 | 14 | A comment with no closer gives a comment fault at its opener line, and each later line has empty text | planned TestReadBlockRules in internal/markdown/markdown_test.go | A reader that drops the fault lets a module read the commented rest as live text. |
 | MB14 | 15 | The line `## Title  ` is an H2 heading with the title `Title` | planned TestReadBlockRules in internal/markdown/markdown_test.go | A reader that keeps the trailing spaces gives a title that no exact compare matches. |
 | MB15 | 15 | The lines `  ## Title`, `##Title`, and `### Title` are not H2 headings | planned TestReadBlockRules in internal/markdown/markdown_test.go | A trimmed prefix test reads an indented line or an H3 line as an H2 heading. |
@@ -441,9 +464,11 @@ reds the live tree until the last copy goes.
 | MB35 | 35 | A ticket with an unterminated `~~~` block gives the `unterminated fence` diagnostic | planned TestParseTicketReadsTheBlockReaderFault in internal/tickets/fence_test.go | The old count tests only backtick lines and gives no diagnostic. |
 | MB36 | 36 | A ticket with a four-backtick block that holds a three-backtick line gives no `unterminated fence` diagnostic | planned TestParseTicketReadsTheBlockReaderFault in internal/tickets/fence_test.go | The old odd-count test reports the balanced block as unterminated. |
 | MB37 | 36 | A `Covers:` line inside the four-backtick block of MB36 sets no `Covers` value | planned TestParseTicketReadsTheBlockReaderFault in internal/tickets/fence_test.go | The old toggle closes the block at the inner run and reads the quoted field. |
+| MB95 | 76 | A ticket whose first line is an unclosed `---` gives the same diagnostics as it does today | planned TestParseTicketReadsTheBlockReaderFault in internal/tickets/fence_test.go | A ticket reader that refuses the frontmatter fault adds a diagnostic that no ticket grammar names. |
 | MB38 | 37 | A State body with a four-backtick block that holds a three-backtick line and a `## X` line parses as one section | planned TestParseKeepsANestedFenceInsideState in internal/handoffdoc/document_test.go | The old toggle closes the block at the inner run and splits a section at `## X`. |
 | MB39 | 38 | `OpenFence` on the text `~~~` then a three-backtick line reports line 1 | planned TestOpenFenceUsesTheCloseRule in internal/handoffdoc/document_test.go | The old toggle pairs the two markers and reports no open fence. |
 | MB40 | 39 | `UnfencedLines` yields no line from inside a four-backtick block that holds a three-backtick line | planned TestOpenFenceUsesTheCloseRule in internal/handoffdoc/document_test.go | The old toggle yields the lines after the inner run. |
+| MB93 | 75 | `OpenFence` on the State body of MB92 reports line 2 | planned TestOpenFenceUsesTheCloseRule in internal/handoffdoc/document_test.go | A caller that reads a State body through `Read` hides the open fence inside frontmatter. |
 | MB82 | 68 | `readStateFile` on a State that holds an unterminated comment refuses with a fault that names the opener line | planned TestStateFileRefusesAnUnterminatedComment in internal/handoff/state_file_test.go | Without the fault, the comment hides each later heading from the State walk. |
 | MB41 | 40 | An entry body with a fenced dated heading gives one entry whose body holds the fenced line | planned TestParseKeepsAFencedHeadingInTheBody in internal/learnings/learnings_test.go | The old scan splits a second entry at the quoted heading. |
 | MB42 | 41 | An unterminated fence in an entry body gives the malformed reason `unterminated fenced block` at the opener line | planned TestParseReportsAnUnterminatedBlock in internal/learnings/learnings_test.go | Without the record, the fence swallows each later entry and no reader sees it. |
@@ -457,10 +482,12 @@ reds the live tree until the last copy goes.
 | MB49 | 48 | A record fence with no closer refuses as unterminated | `internal/reviewrecord/record_test.go` (`TestRenderRefusesAnUnterminatedFence`) | A migration that drops the fault reads a truncated record. |
 | MB50 | 48 | Two record fences refuse as a duplicate | `internal/reviewrecord/record_test.go` (`TestRenderRefusesADuplicateFence`) | A migration that takes the first opener hides the second record. |
 | MB51 | 49 | `Render` keeps the prose around the replaced fence byte for byte | `internal/reviewrecord/record_test.go` (`TestRenderKeepsProseAroundTheFence`) | A wrong offset from the reader cuts or duplicates the surrounding prose. |
+| MB96 | 76 | A review record whose first line is an unclosed `---` reads its payload as it does today | planned TestRecordSkipsAQuotedFence in internal/reviewrecord/record_test.go | A record reader that refuses the frontmatter fault drops a readable record. |
 | MB52 | 50 | A needle after a tilde-fenced `## Other` line inside section `S` locates inside `S` | planned TestLocateReadsTheBlockReader in internal/anchors/locate_test.go | The old backtick-only walk ends `S` at the quoted heading. |
 | MB53 | 51 | A tilde-fenced `## S` line before the real `## S` gives a section count of 1 | planned TestLocateReadsTheBlockReader in internal/anchors/locate_test.go | The old walk counts the quoted heading and reports a duplicate section. |
 | MB85 | 71 | An indented `  ## S` line gives no section `S` | planned TestLocateReadsTheBlockReader in internal/anchors/locate_test.go | The old opener compares `trimSpaceRunes` of the line and opens the section on the indented line. |
 | MB54 | 52 | A tilde-fenced step opener gives no step body | planned TestLocateReadsTheBlockReader in internal/anchors/locate_test.go | The old walk opens the step at the quoted line. |
+| MB94 | 75 | `MarkdownNumberedSteps` on a section body whose first line is `---` finds step 1 | planned TestLocateReadsTheBlockReader in internal/anchors/locate_test.go | A scope walk that reads a section body through `Read` swallows the step as frontmatter. |
 | MB55 | 53 | The rejoined comment needle locates nothing, and the text after it keeps line 3 | `internal/anchors/locate_test.go` (`TestLocateStripsRejoinedComments`) | A strip that loses the rejoin or the source position breaks DG43 or the line number. |
 | MB56 | 54 | Each anchor in the live registry keeps its verdict at the ticket tip | review-owned: `bench test --check docs-currency-workflow` green at the tip | A rule change that moves a live section boundary reds or frees a live anchor. |
 | MB57 | 57 | A marker example inside a `~~~` block stays, and `RewriteAgentsBlock` replaces only the live block | planned TestMarkersSkipTildeFences in internal/adopt/link_plan_test.go | The old backtick-only toggle reads the quoted marker as a live start marker. |
@@ -471,6 +498,8 @@ reds the live tree until the last copy goes.
 | MB70 | 67 | A file that holds only an unterminated HTML comment opener and a fenced marker example refuses with the unclosed-fence message of MB61 | planned TestMarkersSkipTildeFences in internal/adopt/link_plan_test.go | A fence-only fault check sees no open fence and rewrites the hidden example as the live block. |
 | MB86 | 73 | A file that holds an unterminated comment opener and no Bench text rewrites with no refusal | planned TestMarkersSkipTildeFences in internal/adopt/link_plan_test.go | A comment fault that ignores the Bench-text condition refuses each file with a stray comment opener. |
 | MB87 | 72 | `RewriteAgentsBlock` on a CRLF file keeps each carriage return outside the replaced block | planned TestMarkersSkipTildeFences in internal/adopt/link_plan_test.go | A rebuild from the reader's line text drops each carriage return. |
+| MB91 | 72 | `StripAgentsBlock` on a CRLF file keeps each carriage return outside the removed block | planned TestMarkersSkipTildeFences in internal/adopt/link_plan_test.go | A rebuild from the reader's line text drops each carriage return. |
+| MB97 | 76 | An AGENTS.md whose first line is an unclosed `---` rewrites as it does today, with no refusal | planned TestMarkersSkipTildeFences in internal/adopt/link_plan_test.go | A marker reader that refuses the frontmatter fault blocks a link on a file that links today. |
 | MB62 | 60 | A production Go literal that contains three backticks after other text gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance/markdown_block_owner_test.go | A check that omits the backtick kind, or tests only a prefix, lets an embedded fence survive. |
 | MB63 | 60 | A production Go literal that contains three tildes after other text gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance/markdown_block_owner_test.go | A check that omits the tilde kind lets a tilde detector survive. |
 | MB64 | 60 | A production Go literal equal to `---` gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance/markdown_block_owner_test.go | A check that omits frontmatter lets a frontmatter reader survive. |
@@ -479,6 +508,7 @@ reds the live tree until the last copy goes.
 | MB67 | 60 | A production Go literal equal to `## ` gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance/markdown_block_owner_test.go | A check that omits the H2 prefix lets a section walk survive. |
 | MB68 | 61 | The same literals in a `_test.go` file and in `internal/markdown` give no diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance/markdown_block_owner_test.go | A check without the exemptions reds each fixture and the owner itself. |
 | MB69 | 62 | `bench test --check markdown-block-owner` is green on the live tree | planned TestMarkdownBlockOwnerHoldsOnTheLiveTree in internal/conformance/markdown_block_owner_test.go | A surviving copy in any module reds the live-tree run. |
+| MB98 | 77 | `skillDescriptionFolded`, `frontmatterHasKey`, and `h2Headings` each call the block reader and hold no block-rule literal | review-owned: the ticket 11 review reads the three function bodies | The check exempts test files, so only a review sees a surviving copy in these helpers. |
 
 Not covered: story 1 — MB1 to MB19 cover the classification facts one at a time, and story 1 is their union.
 Not covered: story 63 — Won't handle: the indented code block.
@@ -519,7 +549,7 @@ reader, because each module reads the files of the repository it runs in.
 
 **Won't handle** — a managed-block marker inside an enclosing HTML comment — the markers are comments, and `RewriteAgentsBlock` reads the raw line, as it does today.
 
-**Won't handle** — a rune-literal fence test — `markdown-block-owner` reads string literals only. The legitimate rune users stay: the code-span fold at `internal/prose/parse.go:63-71`, `internal/coverage/citations.go:294`, and `internal/spec/fences.go:67`. Ticket 1 deletes the rune test at `internal/prose/prepare.go:104`, so no fence test stays in rune form.
+**Won't handle** — a rune-literal fence test — `markdown-block-owner` reads string literals only. The legitimate rune users stay: the code-span fold at `internal/prose/parse.go:63-71` and `backtickRun` at `internal/prose/parse.go:97`, `internal/coverage/citations.go:294`, and `internal/spec/fences.go:67`. Ticket 1 deletes the rune test at `internal/prose/prepare.go:104`, so no fence test stays in rune form.
 
 **Won't handle** — the block markers in `findBlock` at `internal/skillsindex/skillsindex.go:466` — the scan fails closed, because a second marker of either kind leaves the file unchanged.
 
@@ -633,8 +663,8 @@ reader, because each module reads the files of the repository it runs in.
 | "Two accept a tilde fence and twelve do not." | MB1, MB3, MB24, MB31 to MB35, MB39, MB52 to MB54, MB57, MB58, MB61 |
 | "Three line scanners (coverage, learnings, and retros) have no fence rule." | MB29, MB30, MB41 to MB47; the tree holds two more, covered by MB26 to MB28 |
 | "`internal/spec` trims a line at one site and does not trim it at a second site." | MB25 |
-| "One deep reader owns the block rules: fences, frontmatter, comments, and H2 sections." | MB1 to MB19, MB71 to MB79 |
-| "Each grammar module reads unfenced lines from it." | MB20 to MB61, MB80 to MB87 |
+| "One deep reader owns the block rules: fences, frontmatter, comments, and H2 sections." | MB1 to MB19, MB71 to MB79, MB88 to MB90, MB92 |
+| "Each grammar module reads unfenced lines from it." | MB20 to MB61, MB70, MB80 to MB87, MB91 to MB97 |
 | "`internal/prose` stays the prose-rule owner, and the reader composes with it." | MB20 to MB23 |
 | "The fence edges then have one test." | MB1 to MB7, MB73, and MB78 in `TestReadFenceEdges` |
 
@@ -678,7 +708,7 @@ FA9 below), or a Won't handle line.
 | site | indent today | tilde today | CR today | closer today | trim predicate today | comments today | changes under the reader |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `prose/prepare.go:79` `stripFences` | spaces and tabs | yes | ignored after the run | same character, run at least as long, trailing text kept | `TrimLeft` of space and tab | stripped first, one pass per line | none for fences: MB1 to MB7, MB73 |
-| `prose/prepare.go:26` `stripFrontmatter` | any `TrimSpace` space | not applicable | trimmed | next `---` line | `TrimSpace` | not applicable | a padded `---` opens nothing: MB74, MB75, FA1 |
+| `prose/prepare.go:26` `stripFrontmatter` | any `TrimSpace` space | not applicable | trimmed | next `---` line | `TrimSpace` | not applicable | a padded `---` opens or closes nothing: MB74, MB75, MB90, FA1 |
 | `prose/prepare.go:43` `stripComments` | not applicable | not applicable | kept | next closer | none | one pass per line | a rejoined comment goes: MB22 |
 | `handoffdoc/fence.go:15` `isFence` | spaces and tabs | yes | callers replace CRLF, `UnfencedLines` keeps a CR | any marker line toggles | `TrimLeft` and `TrimRight` of space and tab | none | close by character and length: MB38 to MB40; FA2 |
 | `handoff/state_file.go:69` `readStateFile` | through `OpenFence` | through `OpenFence` | through `OpenFence` | through `OpenFence` | `TrimSpace` for the repair text | none | an open comment refuses: MB82 |
@@ -741,10 +771,16 @@ caller sees only the reclassified lines that the rows name.
 
 The test callers of a changed export keep their calls. `prose.Paragraphs` has
 three test callers in `internal/conformance/charge_evidence_guidance_test.go`, at
-lines 121, 147, and 392. `anchors.StripHTMLComments` has one, at
-`internal/conformance/docs_workflow_helpers_test.go:501`. Each one reads live
-guidance text. The prose grade refuses an unterminated comment on that text, and
-`rg` finds no rejoined comment in it, so no test output moves.
+lines 121, 147, and 392. The test callers of the anchor exports are these:
+
+- `anchors.StripHTMLComments`: `internal/conformance/docs_workflow_helpers_test.go:322`, which binds it to the alias `stripHTMLComments`, and line 501 of that file; `internal/anchors/match_test.go:209`; and `internal/anchors/locate_test.go:112` and `:113`.
+- `anchors.MarkdownH2Section`: `internal/conformance/docs_workflow_helpers_test.go:181` and `internal/anchors/match_test.go:100`.
+- `anchors.MarkdownNumberedSteps`: `internal/anchors/match_test.go:114`.
+
+The conformance callers read live guidance text. Ticket 1 records equal
+`bench gate-prose` output over each tracked Markdown file at the base and at the
+tip, and ticket 8 keeps `docs-currency-workflow` green. The anchor package tests
+keep their expectations without an edit, as MB55 states.
 
 ### Fence closures
 
@@ -761,7 +797,7 @@ line, on a separate light path.
 
 ### Fence overlap with in-flight work
 
-- `cli-desktop-consistency` changes `internal/adopt/marker.go` by 101 added lines. Its diff adds no fence detector, but ticket 10 writes the same file. Ticket 10 therefore starts only after that branch lands on `main`, and its author re-reads `marker.go` at that tip.
+- `cli-desktop-consistency` changes `internal/adopt/marker.go` by 101 added lines. Its diff adds no block-rule copy, but ticket 10 writes the same file. Ticket 10 therefore starts only after that branch lands on `main`, and its author re-reads `marker.go` at that tip.
 - `specs/ft290-test-projection` ticket 4 writes `internal/prose/walk.go` and `internal/prose/walk_test.go`. Ticket 1 writes `internal/prose/prepare.go` and `internal/prose/prose_test.go` only, so the two fences do not overlap.
 - The open drain `d-007c40a25f47` owns `ROADMAP.md` and `roadmap/`. This spec writes neither, and the FT358 row retires at this spec's landing.
 
@@ -773,7 +809,7 @@ line, on a separate light path.
 - MB70 and MB86 add a comment-fault refusal to `internal/adopt`, under the Bench-text condition. Closed decision 1 requires it.
 - MB82 adds a comment-fault refusal to `readStateFile`. Closed decision 12 requires it.
 - MB80 lets `Implemented` flip a CRLF spec. Closed decision 11 requires it.
-- FA1: `prose.prepare` stops opening frontmatter on a padded `---` line. Closed decision 8 requires it, and MB23 shows that the live tree does not move.
+- FA1: `prose.prepare` stops opening or closing frontmatter on a padded `---` line. Closed decision 8 requires it, and MB23 shows that the live tree does not move.
 - FA2: a fence marker or a `## ` line inside an HTML comment no longer opens a block or a section. This is new in each module that read comments as text:  `handoffdoc`, `spec`, `coverage`, `maps`, `tickets`, `adopt`, `roadmap`, `reviewrecord`, `learnings`, and `retros`.
 - FA3: a U+00A0 indent stops opening a fence in `spec.LiveSpecSlugs` and `anchors.scopeRunesMapped`, because the reader's indent is space and tab only. MB78 pins the rule.
 - FA4: an indented fence opener now opens a block in each column-zero site. The sites are `roadmap` at `tree.go:112`, `:269`, and `:357`, `maps` at `fields.go:58`, `tickets` at `tickets.go:104`, `adopt` at `marker.go:44`, `:100`, and `:146`, and `spec.metadata` at `spec.go:93`. MB25 covers the spec site. The `reviewrecord` site is FA7.
@@ -796,12 +832,13 @@ The reviewer defers these decisions to the Fable consultation of 2026-10-03.
 7. Ticket 11 closures, accepted (2026-10-03, Fable consultation). Ticket 11 keeps each closure path in `Writes:`, because the ticket grammar has no closure field and build preflight reads closures from `Writes:`.
 8. Frontmatter predicate, decided (2026-10-03, Fable consultation). The opener and the closer are exactly `---` after the carriage-return strip, in every module. This fails closed for a hostile skill file, and no loader accepts an indented opener. MB59, MB74, and MB75 cover it.
 9. Conformance readers, decided (2026-10-03, Fable consultation). Ticket 11 moves `skillDescriptionFolded`, `frontmatterHasKey`, and `h2Headings` onto the block reader. The skill example reader at `internal/tickets/example_test.go:51` takes a Won't handle line.
-10. Linear rejoin, decided (2026-10-03, Fable consultation). The reader removes comments with a stack over its output, in one pass. MB79 bounds the work, and MB55 pins the DG43 result.
+10. Linear rejoin, decided (2026-10-03, Fable consultation). The reader removes comments with a stack over its output, in one pass. MB79 bounds the work, and MB12, MB55, MB88, and MB89 pin the DG43 result.
 11. Rebuild from source bytes, decided (2026-10-03, Fable consultation). The adopt rebuilders and `deriveImplemented` write from the source bytes by the reader's line offsets. MB80 and MB87 cover a CRLF round trip.
 12. Handoff comment fault, decided (2026-10-03, Fable consultation). `readStateFile` refuses an unterminated comment with a new fault that names the opener line. MB82 covers it.
 13. Glossary, decided (2026-10-03, Fable consultation). This branch drops its glossary hunk with a new commit, and the coordinator lands the three terms on a separate light path.
 14. Rune literals, decided (2026-10-03, Fable consultation). The check stops a new string-literal detector only, and a Won't handle line names the legitimate rune users. Ticket 1 deletes the rune test at `internal/prose/prepare.go:104`.
 15. Learnings region, decided (2026-10-03, Fable consultation). The region below the entries marker reads raw lines, because its rule is that nothing belongs there. DL31 stays green without an edit, and MB84 covers it.
+16. Fragments and the frontmatter fault, decided (2026-10-03, Fable consultation). The reader exports `Read` for a document and `ReadFragment` for a section or State body, over one pipeline. The fragment callers are the two handoff State readers and the two anchor scope walks. `internal/adopt`, `internal/tickets`, and `internal/reviewrecord` ignore the frontmatter fault and read each line as body, as they do today. MB92 to MB97 cover it.
 
 ### Pre-review proof checklist
 
@@ -816,5 +853,5 @@ The reviewer defers these decisions to the Fable consultation of 2026-10-03.
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"MB-C1","tickets":["1-add-block-reader.md"],"verification":[{"id":"markdown","command":"bench test --package ./internal/markdown"},{"id":"prose","command":"bench test --package ./internal/prose"},{"id":"prose-mechanics","command":"bench test --check prose-mechanics"}]},{"id":"MB-C2","tickets":["2-read-spec-and-coverage-blocks.md","3-read-roadmap-blocks.md","4-read-field-scan-blocks.md"],"verification":[{"id":"spec","command":"bench test --package ./internal/spec"},{"id":"coverage","command":"bench test --package ./internal/coverage"},{"id":"roadmap","command":"bench test --package ./internal/roadmap"},{"id":"maps","command":"bench test --package ./internal/maps"},{"id":"tickets","command":"bench test --package ./internal/tickets"}]},{"id":"MB-C3","tickets":["5-read-handoff-blocks.md","6-read-journal-blocks.md","9-read-skills-frontmatter.md"],"verification":[{"id":"handoffdoc","command":"bench test --package ./internal/handoffdoc"},{"id":"handoff","command":"bench test --package ./internal/handoff"},{"id":"learnings","command":"bench test --package ./internal/learnings"},{"id":"retros","command":"bench test --package ./internal/retros"},{"id":"skillsindex","command":"bench test --package ./internal/skillsindex"}]},{"id":"MB-C4","tickets":["7-read-review-record-blocks.md","8-read-anchor-blocks.md"],"verification":[{"id":"reviewrecord","command":"bench test --package ./internal/reviewrecord"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"}]},{"id":"MB-C5","tickets":["10-read-agents-marker-blocks.md","11-forbid-block-rule-copies.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"markdown-block-owner","command":"bench test --check markdown-block-owner"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/markdown-block-reader/spec.md"},{"id":"markdown","command":"bench test --package ./internal/markdown"},{"id":"prose-mechanics","command":"bench test --check prose-mechanics"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"markdown-block-owner","command":"bench test --check markdown-block-owner"}]}
+{"version":1,"chunks":[{"id":"MB-C1","tickets":["1-add-block-reader.md"],"verification":[{"id":"markdown","command":"bench test --package ./internal/markdown"},{"id":"prose","command":"bench test --package ./internal/prose"},{"id":"prose-mechanics","command":"bench test --check prose-mechanics"}]},{"id":"MB-C2","tickets":["2-read-spec-and-coverage-blocks.md","3-read-roadmap-blocks.md","4-read-field-scan-blocks.md"],"verification":[{"id":"spec","command":"bench test --package ./internal/spec"},{"id":"coverage","command":"bench test --package ./internal/coverage"},{"id":"roadmap","command":"bench test --package ./internal/roadmap"},{"id":"maps","command":"bench test --package ./internal/maps"},{"id":"tickets","command":"bench test --package ./internal/tickets"}]},{"id":"MB-C3","tickets":["5-read-handoff-blocks.md","6-read-journal-blocks.md","9-read-skills-frontmatter.md"],"verification":[{"id":"handoffdoc","command":"bench test --package ./internal/handoffdoc"},{"id":"handoff","command":"bench test --package ./internal/handoff"},{"id":"learnings","command":"bench test --package ./internal/learnings"},{"id":"retros","command":"bench test --package ./internal/retros"},{"id":"skillsindex","command":"bench test --package ./internal/skillsindex"}]},{"id":"MB-C4","tickets":["7-read-review-record-blocks.md","8-read-anchor-blocks.md"],"verification":[{"id":"reviewrecord","command":"bench test --package ./internal/reviewrecord"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"}]},{"id":"MB-C5","tickets":["10-read-agents-marker-blocks.md","11-forbid-block-rule-copies.md"],"verification":[{"id":"adopt","command":"bench test --package ./internal/adopt"},{"id":"markdown-block-owner","command":"bench test --check markdown-block-owner"},{"id":"skill-description-budgets","command":"bench test --check skill-description-budgets"},{"id":"skills-index-command-adapters","command":"bench test --check skills-index-command-adapters"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/markdown-block-reader/spec.md"},{"id":"markdown","command":"bench test --package ./internal/markdown"},{"id":"prose-mechanics","command":"bench test --check prose-mechanics"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"},{"id":"markdown-block-owner","command":"bench test --check markdown-block-owner"}]}
 ```

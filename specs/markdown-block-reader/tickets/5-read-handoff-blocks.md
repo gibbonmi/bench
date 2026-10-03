@@ -2,11 +2,13 @@
 
 Blocked by: 1-add-block-reader.md
 Writes: internal/handoffdoc/fence.go, internal/handoffdoc/document.go, internal/handoffdoc/document_test.go, internal/handoff/state_file.go, internal/handoff/state_file_test.go
-Covers: MB38, MB39, MB40, MB82
+Covers: MB38, MB39, MB40, MB82, MB93
 
 ## What to build
 
 Replace `isFence` in `internal/handoffdoc` with the block reader. `OpenFence`
+and `UnfencedLines` read a State body through `ReadFragment`, so a leading `---`
+opens no frontmatter. `Parse` reads the whole file through `Read`. `OpenFence`
 reports the opener line of the reader's fence fault. `UnfencedLines` yields the
 raw text of the unfenced lines with trailing whitespace removed, as it does
 today. `splitSections` and `parseSection` read the reader's H2 headings and fence
@@ -25,6 +27,7 @@ same.
 
 - [ ] A State body with a four-backtick block that holds a three-backtick line and a `## X` line parses as one section.
 - [ ] `OpenFence` on `~~~` followed by a three-backtick line reports line 1.
+- [ ] `OpenFence` on a State body of `---`, three backticks, `x`, and `---` reports line 2.
 - [ ] `UnfencedLines` yields no line from inside a block that a longer run closes.
 - [ ] `readStateFile` refuses a State with an unterminated comment and names the opener line.
 - [ ] `TestParseKeepsAFencedHeadingInsideState` and `TestOpenFenceNamesTheOpeningLine` stay green without an edit.

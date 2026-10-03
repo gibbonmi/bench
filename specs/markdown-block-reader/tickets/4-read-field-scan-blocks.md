@@ -2,7 +2,7 @@
 
 Blocked by: 1-add-block-reader.md
 Writes: internal/maps/fields.go, internal/maps/tickets_test.go, internal/tickets/tickets.go, internal/tickets/fence_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: MB34, MB35, MB36, MB37
+Covers: MB34, MB35, MB36, MB37, MB95
 
 ## What to build
 
@@ -14,7 +14,8 @@ decision-map output does not change.
 `ParseTicket` in `internal/tickets` calls the block reader on its content for the
 fence fault, instead of its odd count of backtick lines. The diagnostic keeps the
 exact text `unterminated fence`. Delete the `fenceMarker` constant from
-`internal/tickets`.
+`internal/tickets`. `ParseTicket` ignores the reader's frontmatter fault and reads
+each line as body, as it does today.
 
 ## Acceptance
 
@@ -22,6 +23,7 @@ exact text `unterminated fence`. Delete the `fenceMarker` constant from
 - [ ] A ticket with an unterminated `~~~` block gives `unterminated fence`.
 - [ ] A four-backtick block that holds a three-backtick line gives no `unterminated fence` diagnostic.
 - [ ] A `Covers:` line inside that block sets no `Covers` value.
+- [ ] A ticket whose first line is an unclosed `---` gives the same diagnostics as it does today.
 - [ ] `TestParseTicketHostileInput` stays green without an edit.
 - [ ] `ParseTicket` gives the same diagnostics for each ticket under `specs/` at the base and at the tip.
 - [ ] `internal/maps` and `internal/tickets` hold no string literal with a run of three backticks. The sites today are `fields.go:58` and `tickets.go:39`.
