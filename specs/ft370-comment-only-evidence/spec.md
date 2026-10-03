@@ -157,14 +157,11 @@ mode-only change arrives as status `M` with two modes and one blob. A tree ID
 operand peels through `^{tree}` to itself. `git ls-tree` reads `a*.go` as a
 literal path.
 
-The same probe showed that `diff.ignoreSubmodules=all` in the repository
-configuration hides a gitlink change from the reader. Two different trees then
-give an empty list. The classifier refuses that state (row CG30).
-
-A nonempty configured list also needs a complete read.
-`git.TreeChangesIncludingSubmodules` uses the same reader and parser with
-`--ignore-submodules=none`. The classifier grades that complete list.
-This preserves the lane's configured behavior and CG30's refusal.
+The configured reader can hide a gitlink change under `diff.ignoreSubmodules=all`.
+The classifier uses `git.TreeChangesIncludingSubmodules` to keep every gitlink visible.
+This wrapper shares the raw reader and parser, with `--ignore-submodules=none`.
+The lane retains its configured reader.
+CG30 refuses a hidden gitlink with `ErrMode`.
 CG46 covers a hidden gitlink beside a visible Go comment edit.
 
 ### The tree rule
@@ -172,9 +169,9 @@ CG46 covers a hidden gitlink beside a visible Go comment edit.
 `Prove` applies these rules in this order. The first rule that fails wins.
 
 1. Equal tree IDs return nil.
-2. A reader failure wraps `ErrUnreadable`.
+2. Read the complete list through `git.TreeChangesIncludingSubmodules`. A reader failure wraps `ErrUnreadable`.
 3. An empty change list between two different trees wraps `ErrEmptyChanges`.
-4. Read the complete list through `git.TreeChangesIncludingSubmodules`. A reader failure wraps `ErrUnreadable`. Each change takes the remaining rules in Git path order.
+4. Each change takes the remaining rules in Git path order.
 5. A status other than `M` wraps `ErrStatus`. Rename detection is off, so a rename arrives as `D` and `A`.
 6. Two different modes, or a mode other than `100644` or `100755`, wrap `ErrMode`.
 7. A path without the case-sensitive `.go` suffix wraps `ErrNotGo`.
@@ -390,7 +387,7 @@ CG-C2 creates the seam that CG-C3 consumes.
 | CG27 | 22 | A symbolic link named `link.go` whose target text changes is refused with `ErrMode` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A suffix rule alone reads the link target text as Go source. |
 | CG28 | 22 | A gitlink entry named `kit.go` whose commit changes is refused with `ErrMode` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A suffix rule alone tries to read a commit ID as a Go blob. |
 | CG29 | 23 | A comment-only edit of a Go file larger than `bounds.ControlRecordLimit` is refused with `ErrUnreadable` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | An unbounded blob read passes the oversized file. |
-| CG30 | 24 | Two trees that differ only in a gitlink, read under `diff.ignoreSubmodules=all`, are refused with `ErrEmptyChanges` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A loop over an empty change list passes by construction. |
+| CG30 | 24 | Two trees that differ only in a gitlink, read under `diff.ignoreSubmodules=all`, are refused with `ErrMode` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A configured reader hides the gitlink and cannot classify its mode. |
 | CG31 | 25 | Comment-only edits of `a b*.go` and of a Go file whose name holds a tab are proven | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A newline-framed or C-quoted path list names a path that no tree holds and refuses. |
 | CG32 | 26 | A gap with comment-only edits of `a.go` and `b.go` and a statement change in `c.go` is refused with `ErrTokens` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | A classifier that returns after the first proven path passes the later code change. |
 | CG33 | 27 | A `--complete` checkpoint refuses with `completion is incomplete or stale` when the completion evidence names the reviewed source and a comment-only correction follows it | planned TestReviewCheckpointKeepsStrictEvidence in internal/gate/review_checkpoint_commits_test.go | A gap acceptance copied into the completion check passes stale final verification. |
@@ -712,7 +709,7 @@ that command file.
 
 Ticket 2 also writes `internal/git/tree.go` to add the complete-list wrapper.
 The wrapper shares the existing reader and parser.
-The configured read still precedes the complete read, so CG30 stays unchanged.
+The reviewer approves the complete reader and CG30's `ErrMode` result on 2026-10-03.
 The classifier refuses the mixed hidden-gitlink case through CG46.
 All chunk IDs and dependencies stay unchanged.
 

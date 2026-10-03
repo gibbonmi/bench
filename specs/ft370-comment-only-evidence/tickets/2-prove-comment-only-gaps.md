@@ -16,8 +16,7 @@ Obey these exact contracts:
 - `Prove` returns nil for two equal tree IDs, and for two trees in which each change is a proven Go file.
 - A refusal wraps exactly one rule sentinel and names the first path that the rule refused.
 - The package exports the ten sentinels `ErrUnreadable`, `ErrEmptyChanges`, `ErrStatus`, `ErrMode`, `ErrNotGo`, `ErrScan`, `ErrTokens`, `ErrDirective`, `ErrCgo`, and `ErrExampleOutput`.
-- `Prove` reads the configured change list through `git.TreeChanges` and keeps its empty-list refusal.
-- A nonempty list takes a complete read through `git.TreeChangesIncludingSubmodules`, then the existing per-path rules. Each blob uses `git.ReadTreeFile`.
+- `Prove` reads the complete list through `git.TreeChangesIncludingSubmodules`, then the existing per-path rules. Each blob uses `git.ReadTreeFile`.
 - Add `TreeChangesIncludingSubmodules` in `internal/git/tree.go`. It shares the existing reader and parser, with `--ignore-submodules=none` as its only policy change.
 - The Go rule compares the token kind and the literal of each token, and not the positions.
 - The Go rule keeps the automatic semicolon as a token, so a newline that a block comment gains can change the list.
@@ -43,7 +42,7 @@ helpers can go in a second test file of the package, so each file stays under
 - [ ] `TestProveGoGap` holds CG9 to CG21, CG42, and CG43, and each refusal row asserts its own sentinel.
 - [ ] `TestProveTreeGap` holds CG22 to CG32, and each refusal row asserts its own sentinel.
 - [ ] CG31 proves a gap in `a b*.go` and in a Go file whose name holds a tab.
-- [ ] CG30 sets `diff.ignoreSubmodules=all` in the fixture repository and gets `ErrEmptyChanges`.
+- [ ] CG30 sets `diff.ignoreSubmodules=all` in the fixture repository and gets `ErrMode`.
 - [ ] A directive check that compares only the count of the directive texts makes the CG15, CG17, and CG18 rows fail.
 - [ ] CG46 refuses a hidden gitlink beside a visible Go comment edit with `ErrMode`.
 - [ ] `bench test --package ./internal/git` and `bench test --package ./internal/gate` pass.
