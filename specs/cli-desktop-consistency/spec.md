@@ -312,7 +312,7 @@ real hook tests   deadline tests                    review-owned evidence
 | CD35 | 9 | A repair rechecks destination identity immediately before its publication | `internal/adopt/transaction/transaction_test.go` (`TestCompatibilityPlanDrift`); `internal/adopt/transaction/identity_test.go` (`TestIdentityAfterReplacementPreparation`) | A target replaced after inspection must prevent its planned write |
 | CD36 | 12 | A failed restore reports each unresolved target and preserves its available backup | `internal/adopt/transaction/transaction_test.go` (`TestCompatibilityRestoreFailure`); `internal/adopt/transaction/identity_test.go` (`TestUndoReportsEveryPreflightFailure`) | A restore error cannot become a successful rollback |
 | CD37 | 16 | SessionStart emits the compatibility check obligation before dependent work | planned TestCompatibilityStartup in internal/sessioninspect/compatibility_test.go | Removing the lifecycle call loses the required next action |
-| CD38 | 17 | A resumed session repeats the active-interface checks | planned TestCompatibilityResume in internal/systemtest/compatibility_test.go | A prior success followed by a changed context cannot suppress the resume check |
+| CD38 | 17 | A resumed session repeats the active-interface checks | planned TestCompatibilityResume in internal/systemtest/compatibility_session_test.go | A prior success followed by a changed context cannot suppress the resume check |
 | CD39 | 18 | A hook-process success cannot replace the actual chat-tool probe | review-owned: `assets/qualification.md`, actual-tool transcript | A hook-only success beside a failed tool must remain unqualified |
 | CD40 | 18 | An escalated diagnostic success cannot replace normal-permission evidence | review-owned: `assets/qualification.md`, permission comparison | The observed incident supplies the cheap wrong-success control |
 | CD41 | 19 | A missing optional desktop tool leaves an unrelated Bench operation available | planned TestCompatibilityOptionalTool in internal/compatibility/inspect_test.go | A disabled preview must not block a shell-only diagnostic |
@@ -326,18 +326,18 @@ real hook tests   deadline tests                    review-owned evidence
 | CD49 | 24 | The actual CLI interface rejects the harmless forbidden-command fixture | review-owned: `assets/qualification.md`, CLI guard transcript | The rejected command sentinel must never execute |
 | CD50 | 24 | The actual desktop interface rejects the harmless forbidden-command fixture | review-owned: `assets/qualification.md`, desktop guard transcript | The rejected command sentinel must never execute |
 | CD51 | 25 | A verified equivalent review route produces the same review outcome | review-owned: `assets/qualification.md`, review comparison | A declared equivalent without an observed outcome is insufficient |
-| CD52 | 26 | Existing macOS and Linux contract fixtures retain their prior outcomes | planned TestCompatibilityOtherHosts in internal/systemtest/compatibility_test.go | Platform-specific branches must not change established non-WSL behavior |
+| CD52 | 26 | Existing macOS and Linux contract fixtures retain their prior outcomes | planned TestCompatibilityOtherHosts in internal/systemtest/compatibility_session_test.go | Platform-specific branches must not change established non-WSL behavior |
 | CD53 | 27 | Native Windows Bench execution remains outside the new qualification claim | planned TestCompatibilitySupportBoundary in internal/compatibility/inspect_test.go | A Windows-native fixture must not report WSL qualification |
 | CD54 | 28 | The complete outcome remains unaccepted while any required live qualification row is missing | review-owned: full acceptance reconciliation before landing | A green package suite cannot erase missing actual-interface evidence |
 | CD55 | 29 | A runtime version difference alone does not fail a capability check | planned TestCompatibilityVersionDifference in internal/compatibility/inspect_test.go | Different version labels with identical observed capabilities must not conflict |
 | CD56 | 29 | Unknown context prevents reuse of an earlier live check | planned TestCompatibilityUnknownContext in internal/sessioninspect/compatibility_test.go | A missing runtime or policy observation cannot inherit a prior pass |
 | CD57 | 30 | Each actual interface writes and reads the expected bytes in its own scratch file | review-owned: `assets/qualification.md`, CLI and desktop file probes | A subprocess fixture alone cannot qualify the actual file tools |
 | CD58 | 30 | Each actual interface invokes the repository skill from its installed path | review-owned: `assets/qualification.md`, skill invocation transcripts | An available file without a usable harness skill does not qualify |
-| CD59 | 24 | A required permission conflict remains visible without broadening the configured policy | planned TestCompatibilityPermissionConflict in internal/systemtest/compatibility_test.go | A policy sentinel exposes an automatic bypass |
+| CD59 | 24 | A required permission conflict remains visible without broadening the configured policy | planned TestCompatibilityPermissionConflict in internal/systemtest/compatibility_session_test.go | A policy sentinel exposes an automatic bypass |
 | CD60 | 20 | An unknown upstream repair remains explicitly unresolved in the recovery guidance | planned TestCompatibilityUnknownRepair in internal/sessioninspect/compatibility_test.go | A fabricated repair action cannot turn unknown into recovered |
 | CD61 | 16 | A compatibility inspection timeout preserves the existing informational startup exit | planned TestCompatibilityStartupTimeout in internal/sessioninspect/compatibility_test.go | Slow discovery cannot prevent the chat from opening |
 | CD62 | 17 | A relevant configuration change invalidates the current session observation | review-owned: `assets/qualification.md`, configuration drift transcript | A changed hook or permission context must trigger another affected check |
-| CD63 | 1 | A linked repository receives the compatibility instructions through the real payload installer | planned TestCompatibilityPayload in internal/systemtest/compatibility_test.go | Kit-only documents cannot satisfy a linked consumer |
+| CD63 | 1 | A linked repository receives the compatibility instructions through the real payload installer | planned TestCompatibilityPayload in internal/systemtest/compatibility_session_test.go | Kit-only documents cannot satisfy a linked consumer |
 | CD64 | 19 | An equivalent route counts only after that operation succeeds through the route | planned TestCompatibilityEquivalentEvidence in internal/compatibility/inspect_test.go | Naming an alternate tool cannot satisfy the required capability |
 
 ### Edge inventory
@@ -385,6 +385,7 @@ Won't handle: authentication against a malicious same-user process — existing 
 - `internal/runbinary/runbinary_test.go`
 - `internal/sessioninspect`
 - `internal/systemtest/compatibility_test.go`
+- `internal/systemtest/compatibility_session_test.go`
 - `tests/canary/data-handling-derivation/undocumented-passlist-var`
 - `tests/canary/docs-currency-token-diet/benchref-imported`
 - `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
@@ -472,6 +473,12 @@ These exclusions require 0 edits and 0 gate runs in this build.
 A future expansion requires its own reviewed scope and estimate.
 
 ## Further notes
+
+### C3 test placement
+
+C3 uses a separate system test file for session behavior.
+The existing fixture remains the shared owner.
+The acceptance rows, chunk IDs, dependencies, and system check remain unchanged.
 
 ### Qualification and completion
 
