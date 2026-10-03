@@ -9,6 +9,9 @@ Skill relevance supplies the first demonstration. Ticket #14 owns the final cand
 
 ## Notes
 
+The reviewer parked this research on 2026-10-03 until the November follow-up.
+The [eighth-cycle report](jev-advisor/assets/benchmark/cycle-eight.md) records the pause, preserved evidence, and remaining repair allowance.
+
 Use the domain and research skills for this map. Ticket #9 also uses the prototype discipline.
 The current pass restores accepted decisions from the prior session and audits preserved evidence.
 The research asset records the recovery limits and the remaining factual questions.

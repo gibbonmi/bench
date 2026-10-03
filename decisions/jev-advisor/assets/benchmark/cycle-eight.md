@@ -1,11 +1,11 @@
 # Eighth offline Jev benchmark repair
 
-Status: caller-setting repair verified; complete qualification blocked by the frozen repository gate.
+Status: parked by the reviewer; caller-setting repair verified; complete qualification blocked by the frozen repository gate.
 
 ## Authority and cause
 
 This is the second cycle of the six-cycle extension approved on 2026-10-03.
-Cycles one through eight are consumed. Four approved cycles remain: nine through twelve.
+Cycles one through eight are consumed. The initial extension left four cycles; the resumed allowance below supersedes that remainder.
 The author remains in the current Astra session at high effort, without delegates.
 The starting commit is `c1d47ed821a35fc7cb0e2456d1b404b56a3387ab`.
 
@@ -73,3 +73,29 @@ It schedules 32 trials, with at most 64 adapter calls.
 The proposal makes no monetary-cap claim and carries unknown rates.
 Its configuration digest is `77e1598a7b090f4bbffca4af42599f659fb3c613c65c921f36ca1fc363574de7`.
 Independent review and explicit configuration approval remain necessary before execution.
+
+## Resumed authority
+
+The reviewer then approved up to six further repairs after the flaky-fixture stop.
+This resumed allowance covers cycles nine through fourteen; eight earlier cycles remain consumed.
+It replaces the four unused cycles from the previous allowance, rather than adding ten cycles.
+The approval covers offline diagnosis and repair in the same Astra session at high effort.
+The original frozen inputs and all prior failures remain preserved.
+Paid execution, adoption, and changes to the CLI/Desktop assignment remain outside this approval.
+## Parked checkpoint
+
+The reviewer parked the research on 2026-10-03 and requested a return in one month.
+A thread reminder asks whether to resume on 2026-11-03 at 09:00 America/New_York.
+The reminder does not resume research or repairs without a response.
+No resumed repair cycle completed before the pause; all six remain unused.
+Ticket #9 and report section 15 remain open.
+
+Focused diagnosis ran both named frozen tests with `go test -count=20` before the pause.
+The worktree fixture passed all repetitions; the handoff fixture reproduced the lock timeout.
+The cause remains unresolved, and the author made no core source change.
+This result supersedes the earlier isolated handoff success as the latest diagnostic evidence.
+
+The external `resume-nine-fourteen/` evidence directory preserves the 48-file checkpoint and its verified hash manifest.
+It also holds `focused-baseline.out`, `focused-baseline.json`, and the separate diagnostic source copy.
+The original frozen source and earlier raw evidence remain unchanged.
+Read the session handoff before resuming the existing assignment.
