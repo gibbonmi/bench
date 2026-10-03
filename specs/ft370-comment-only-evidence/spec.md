@@ -121,6 +121,8 @@ Harder chunks: CG-C2.
 
 39. As a light-path author, I want a light-path comment fix to keep the current repair accounting, because no checkpoint proves its gap.
 
+40. As a reviewer, I want a hidden gitlink beside a Go comment edit to refuse, so that a configured filter cannot authorize it.
+
 ## Implementation decisions
 
 ### The classifier seam
@@ -159,6 +161,12 @@ The same probe showed that `diff.ignoreSubmodules=all` in the repository
 configuration hides a gitlink change from the reader. Two different trees then
 give an empty list. The classifier refuses that state (row CG30).
 
+A nonempty configured list also needs a complete read.
+`git.TreeChangesIncludingSubmodules` uses the same reader and parser with
+`--ignore-submodules=none`. The classifier grades that complete list.
+This preserves the lane's configured behavior and CG30's refusal.
+CG46 covers a hidden gitlink beside a visible Go comment edit.
+
 ### The tree rule
 
 `Prove` applies these rules in this order. The first rule that fails wins.
@@ -166,7 +174,7 @@ give an empty list. The classifier refuses that state (row CG30).
 1. Equal tree IDs return nil.
 2. A reader failure wraps `ErrUnreadable`.
 3. An empty change list between two different trees wraps `ErrEmptyChanges`.
-4. Each change takes the rules below, in the reader's path order.
+4. Read the complete list through `git.TreeChangesIncludingSubmodules`. A reader failure wraps `ErrUnreadable`. Each change takes the remaining rules in Git path order.
 5. A status other than `M` wraps `ErrStatus`. Rename detection is off, so a rename arrives as `D` and `A`.
 6. Two different modes, or a mode other than `100644` or `100755`, wrap `ErrMode`.
 7. A path without the case-sensitive `.go` suffix wraps `ErrNotGo`.
@@ -318,7 +326,7 @@ assumption.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | CG-C1 / `1-move-tree-change-reader.md` | One raw tree-change reader in `internal/git` serves the lane, and the lane's change list stays the same. | CG40, CG41 | `bench test --package ./internal/git`, `bench test --package ./internal/gate` | no |
-| CG-C2 / `2-prove-comment-only-gaps.md` | `commentgap.Prove` proves a comment-only Go gap between two trees and names the rule of each refusal. | CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43 | `bench test --package ./internal/commentgap` | yes |
+| CG-C2 / `2-prove-comment-only-gaps.md` | `commentgap.Prove` proves a comment-only Go gap between two trees and names the rule of each refusal. | CG9, CG10, CG11, CG12, CG13, CG14, CG15, CG16, CG17, CG18, CG19, CG20, CG21, CG22, CG23, CG24, CG25, CG26, CG27, CG28, CG29, CG30, CG31, CG32, CG42, CG43, CG46 | `bench test --package ./internal/commentgap` | yes |
 | CG-C3 / `3-accept-proven-gaps-at-checkpoint.md`, `4-state-comment-only-correction-rule.md` | The checkpoint, the completion record, and the landing accept a proven gap, the surrounding evidence stays strict, and the guidance routes the correction. | CG1, CG2, CG3, CG4, CG5, CG6, CG7, CG8, CG33, CG34, CG35, CG36, CG37, CG38, CG39, CG44, CG45 | `bench test --package ./internal/gate`, `bench test --package ./internal/reviewrecord/recordcmd`, `bench test --package ./internal/landing`, `bench test --package ./internal/anchors`, `bench test --package ./internal/conformance` | no |
 
 CG-C1 creates the seam that CG-C2 consumes, so its chunk review closes first.
@@ -398,6 +406,7 @@ CG-C2 creates the seam that CG-C3 consumes.
 | CG43 | 18 | An `// Output:` comment that only the reviewed side of a `_test.go` file holds is refused with `ErrExampleOutput` | planned TestProveGoGap in internal/commentgap/commentgap_test.go | A rule that reads only the later side passes a removed expected output. |
 | CG44 | 38 | `bench record completion --source <corrected tip>` exits 0 and writes a completion at the corrected digest when a comment-only correction follows the last chunk | planned TestRecordCompletionAcceptsCommentOnlyGap in internal/reviewrecord/recordcmd/completion_test.go | An acceptance placed only in `CheckTrees` leaves `RecordCompletion` refusing, while every checkpoint row stays green. |
 | CG45 | 38 | `bench record completion --source <tip>` exits 1 with `stale reviewed source` and leaves the record bytes unchanged when the gap after the last chunk changes a Go statement | planned TestRecordCompletionAcceptsCommentOnlyGap in internal/reviewrecord/recordcmd/completion_test.go | A record path that skips the proof writes a completion over an unreviewed code change. |
+| CG46 | 40 | A hidden gitlink change beside a Go comment edit under `diff.ignoreSubmodules=all` refuses with `ErrMode` | planned TestProveTreeGap in internal/commentgap/commentgap_test.go | The configured list holds the Go edit, so an empty-list check alone accepts the hidden gitlink. |
 
 Not covered: story 39 — the light path has no checkpoint, so no row can observe its repair accounting.
 
@@ -699,8 +708,16 @@ and `outcomeRuns`. The landing `fixture` helper and the `bench anchors` output
 for `bench-review-implementation.md` are also unread. This spec does not edit
 that command file.
 
+### In-scope implementation expansion
+
+Ticket 2 also writes `internal/git/tree.go` to add the complete-list wrapper.
+The wrapper shares the existing reader and parser.
+The configured read still precedes the complete read, so CG30 stays unchanged.
+The classifier refuses the mixed hidden-gitlink case through CG46.
+All chunk IDs and dependencies stay unchanged.
+
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"CG-C1","tickets":["1-move-tree-change-reader.md"],"verification":[{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C2","tickets":["2-prove-comment-only-gaps.md"],"verification":[{"id":"commentgap","command":"bench test --package ./internal/commentgap"}]},{"id":"CG-C3","tickets":["3-accept-proven-gaps-at-checkpoint.md","4-state-comment-only-correction-rule.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/ft370-comment-only-evidence/spec.md"},{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]}
+{"version":1,"chunks":[{"id":"CG-C1","tickets":["1-move-tree-change-reader.md"],"verification":[{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C2","tickets":["2-prove-comment-only-gaps.md"],"verification":[{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"git","command":"bench test --package ./internal/git"},{"id":"gate","command":"bench test --package ./internal/gate"}]},{"id":"CG-C3","tickets":["3-accept-proven-gaps-at-checkpoint.md","4-state-comment-only-correction-rule.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/ft370-comment-only-evidence/spec.md"},{"id":"commentgap","command":"bench test --package ./internal/commentgap"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"git","command":"bench test --package ./internal/git"}]}
 ```
