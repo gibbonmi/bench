@@ -16,8 +16,7 @@ findings in the owner details.
 ## Reviewer priority (2026-10-03)
 
 The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
-and review cost that recent builds paid. FT373 starts after the
-`cli-desktop-consistency` assignment lands.
+and review cost that recent builds paid.
 
 **FT370 (HIGH) — a comment-only correction takes the evidence-only path.**
 
@@ -198,7 +197,7 @@ qualification requirements are met.
 
 **FT346 (EXPERIMENT, decision required) — decide whether a controlled trial tests aibadger topology against current Bench.**
 
-**FT347 (EXPERIMENT, decision required) — decide whether the Jev skill-selection benchmark gets a sixth repair cycle and a new paid run.**
+**FT347 (EXPERIMENT, decision required) — decide whether the paused Jev skill-selection benchmark resumes.**
 
 **FT348 (MEDIUM, decision required) — decide the disposition of each retained stream from the 2026-09-22 parallel implementation wave.**
 
@@ -292,8 +291,8 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `/bench-write-spec FT370` so a comment-only correction takes the evidence-only path.
-2. Run `/bench-implement-spec` on the FT373 light-path ticket after `cli-desktop-consistency` lands, so the gate refuses a standard-library duplicate.
+1. Run `/bench-implement-spec specs/ft370-comment-only-evidence/spec.md` so a comment-only correction takes the evidence-only path.
+2. Run `/bench-implement-spec` on the FT373 light-path ticket so the gate refuses a standard-library duplicate.
 3. Run `/bench-write-spec FT375` so the build preflight reports spec staleness and the staleness pass reads only drift.
 
 The section order supplies the larger sequence. It does not create new literal dependencies.
