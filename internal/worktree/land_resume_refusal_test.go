@@ -52,12 +52,7 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 				mustWrite(t, filepath.Join(root, ".env"), []byte("caller bytes\n"), 0o600)
 			}},
 			{name: "nested repository", detail: "landing destination has nested repositories", setup: func(t *testing.T, root string) {
-				nested := filepath.Join(root, "nested")
-				mustMkdirAll(t, nested, 0o755)
-				gitRun(t, nested, "init", "-q", "-b", "main")
-				mustWrite(t, filepath.Join(nested, "nested.txt"), []byte("base\n"), 0o644)
-				gitRun(t, nested, "add", "nested.txt")
-				gitRun(t, nested, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "nested")
+				plantNestedRepository(t, root)
 			}},
 		} {
 			t.Run(journey.name+"/"+tc.name, func(t *testing.T) {

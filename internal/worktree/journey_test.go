@@ -91,6 +91,22 @@ func newWorktreeRepo(t testing.TB) string {
 	return root
 }
 
+// nestedRepositoryDir and nestedRepositoryFile name the repository that
+// plantNestedRepository builds and the one file that its commit tracks.
+const nestedRepositoryDir, nestedRepositoryFile = "nested", "nested.txt"
+
+// plantNestedRepository builds a separate repository with one commit under parent and
+// returns its path. The parent repository does not track it, so it is an embedded
+// repository, not a submodule. A caller that writes nestedRepositoryFile makes it dirty.
+func plantNestedRepository(t *testing.T, parent string) string {
+	t.Helper()
+	nested := filepath.Join(parent, nestedRepositoryDir)
+	mustMkdirAll(t, nested, 0o755)
+	gitRun(t, nested, "init", "-q", "-b", "main")
+	commitInWorktree(t, nested, nestedRepositoryFile, "base\n", "nested")
+	return nested
+}
+
 // --- explicit environment and directories ---
 
 func bindEnv(t testing.TB, key, value string) {
