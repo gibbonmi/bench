@@ -223,6 +223,10 @@ func TestImplementationContinuation(t *testing.T) {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
 			needle: "A review-record prose correction is evidence-only only when it changes no finding, source identity, observation, disposition, or verification claim.",
 		},
+		"implementation continuation: bounded repair dropped comment-only evidence": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A comment-only Go correction that the checkpoint accepts is evidence-only despite its source change, and the orchestrator commits it with no plan assignment.",
+		},
 		"implementation continuation: bounded repair counted evidence-only prose": {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
 			needle: "Evidence-only corrections consume no repair cycle. Batch all cited corrections before verification.",

@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Comment-only evidence
+
+- Added proof for Go comment-only corrections after a reviewed chunk. Accepted corrections preserve the frozen review pair and count as evidence-only work. Files with directives, cgo imports, or executable example output remain ineligible. Completion still requires current final evidence.
+
 ### Deleted ticket paths
 
 - Fixed review preflight so that a ticket can name a path deleted in its exact committed source range. Another missing path, or a deletion only in the working tree, remains refused.
