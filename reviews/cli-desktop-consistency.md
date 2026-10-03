@@ -2,20 +2,21 @@
 
 ## Current C3 state
 
-Source: `724c7a2f081c27d36aad44db0161f6b951a9c2fa`.
+Source: `cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff`.
 Base: accepted C2 tip `ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97`.
-The source passed its lane and pinned build preflight.
-Its required package and system checks pass; the conformance package reports three capability skips.
-The post-commit system run passed in 265166 milliseconds without skips.
-The qualification artifact retains the behavioral reds and their verified restorations.
+The source passed its ordinary lane.
+Compatibility, session-inspection, adoption, and the sealed system suite pass without skips.
+Four live-root documentation checks also pass.
+The earlier full conformance run retains three capability skips; none is positive evidence for those fixtures.
 
 The user assigned resumed implementation and repairs to the current Desktop session.
-The three independent initial reviews are complete.
-They found five actionable findings across five repair targets.
-C1 and C2 remain accepted; this pickup authorizes no changes to their behavior.
+The initial independent reviews found five actionable findings across five repair targets.
+The pickup is `6e50e655153edc925cf3540d9c81b44e1c2cb988`.
+C1 and C2 remain accepted.
 
 C3 has consumed one of two post-review repair cycles.
-The five initial repair targets have author verification; confirming independent reviews are pending.
+All five targets have author verification; fresh confirming independent reviews are pending.
+The qualification artifact records all eleven capability-omission reds and both missing system-test reds, with exact restoration.
 Actual CLI and Desktop qualification remains incomplete, as its pending record states.
 No checkpoint or landing is claimed for C3.
 
@@ -1617,9 +1618,9 @@ No review requested a Bench command change.
     {
       "id": "C3",
       "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
-      "tip": "724c7a2f081c27d36aad44db0161f6b951a9c2fa",
+      "tip": "cc9c9d271815bfeeb54a3cbedcbf9023433aa7ff",
       "plan_digest": "sha256:1a07dbce412bf388e081726fcc6e92c03802c418634a26ecdc31cf1838b6a54d",
-      "source_digest": "05f9a796e8128094abb201beeee46b2b72f0bdae",
+      "source_digest": "17d06ddf08e79f5600349c0afc1a49c0075bceab",
       "acceptance_rows": [
         "CD37",
         "CD38",
@@ -1712,6 +1713,78 @@ No review requested a Bench command change.
           "model": "gpt-6-astra",
           "effort": "high",
           "source_digest": "05f9a796e8128094abb201beeee46b2b72f0bdae",
+          "state": "pending",
+          "outcome": "unknown",
+          "native_ref": {
+            "ref": "codex:01a10131-751b-71a2-b998-8f7cadba1da0",
+            "digest": "sha256:8319370d860ee74a104ba5142e5fc67db663007cabeb174b2802372beb1120a9",
+            "excerpt": "The live acceptance reconciliation remains incomplete. Actual independent CLI evidence, standard-policy Desktop recovery, concurrent writers, review equivalence, configuration drift, and disposable review/landing qualification are not complete. The one-off narrow sandbox probes passed but do not qualify the actual Desktop route. C3 cannot pass its completion checkpoint or land. See specs/cli-desktop-consistency/assets/qualification.md.\n"
+          },
+          "requirement": "live-qualification",
+          "command": "review assets/qualification.md against the source-bound live acceptance rows",
+          "exit_code": null
+        },
+        {
+          "id": "c3-r1-compatibility-author",
+          "performer": "codex:01a10131-751b-71a2-b998-8f7cadba1da0",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "17d06ddf08e79f5600349c0afc1a49c0075bceab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a10131-751b-71a2-b998-8f7cadba1da0/c3-repair1",
+            "digest": "sha256:487f3f972e6029dfa6cb12c509183ed93eaf24937bd1888c10b415de236361a1",
+            "excerpt": "Compatibility package passed in 11 ms without skips (tool 71c97a). Session-inspection passed in 173 ms without skips (f18c59). The previously silent file-access omission now fails TestCompatibilityCapabilityInventory (5a8b15). Independent omission of all eleven capability rows fails that test, with exact restoration after each probe (3f1384, 6e1ae1).\n"
+          },
+          "requirement": "compatibility",
+          "command": "bench test --package ./internal/compatibility",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-adopt-author",
+          "performer": "codex:01a10131-751b-71a2-b998-8f7cadba1da0",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "17d06ddf08e79f5600349c0afc1a49c0075bceab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a10131-751b-71a2-b998-8f7cadba1da0/c3-repair1",
+            "digest": "sha256:11ff8a8c3f49be0d624c1d12a2b4364ecc57bfd750658c400e3da9e99da66d36",
+            "excerpt": "Adoption package passed in 173040 ms without skips on the restored repair source (tool fab9b3).\n"
+          },
+          "requirement": "adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-system-author",
+          "performer": "codex:01a10131-751b-71a2-b998-8f7cadba1da0",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "17d06ddf08e79f5600349c0afc1a49c0075bceab",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "codex:01a10131-751b-71a2-b998-8f7cadba1da0/c3-repair1",
+            "digest": "sha256:a2f3c1b2199469ee8e9797136ce7a88111ad73f641a33d84693b35047e1d55d8",
+            "excerpt": "bench test --check system passed in 220634 ms without skips on the restored repair source (tool 648936). The all-environments refusal mutation failed TestCompatibilityOtherHosts (eb94d2). The parsed-configuration verified-state mutation failed TestCompatibilityPermissionConflict (bd7bca). Both subjects were restored exactly, verified against retained SHA256 preservation copies (49425e).\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-live-qualification-pending",
+          "performer": "codex:01a10131-751b-71a2-b998-8f7cadba1da0",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "17d06ddf08e79f5600349c0afc1a49c0075bceab",
           "state": "pending",
           "outcome": "unknown",
           "native_ref": {
