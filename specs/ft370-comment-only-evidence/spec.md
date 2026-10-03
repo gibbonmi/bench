@@ -746,3 +746,18 @@ This keeps the verification test file within its existing 400-line limit.
 The completion fixture forwards that hook to seed Go before the reviewed chunk.
 Ticket 4 adds the required typed entry to `CHANGELOG.md`.
 The C3 and final verification lists also run the reviewrecord and command packages.
+
+### Candidate dogfood evidence
+
+On 2026-10-03, a deterministic root-authored adapter drove a real shift in a disposable Go repository with the candidate kit.
+The task corrected integer addition, and the existing Go test graded the result.
+This run checked the CLI, gate, and Stop hook; the acceptance tests checked the comment-gap behavior.
+
+The first run, `bench/shift-20261003-195354`, failed because the fixture lacked its Go gate environment declaration.
+No iteration committed.
+The fixture then declared its environment and tool inputs.
+
+The second run, `bench/shift-20261003-195441`, completed with exit 0 and one committed iteration.
+The Stop hook returned 2 while the real Go test failed and returned 0 after the correction.
+The shift reused that exact green verdict and met its completion predicate.
+The native output is retained in the review record.
