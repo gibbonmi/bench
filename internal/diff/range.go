@@ -26,6 +26,7 @@ type diffRange struct {
 type SourceRange struct {
 	Base, Tip      string
 	CommittedPaths []string
+	DeletedPaths   []string
 }
 
 // ChangedSubject is one coherent set of repository-relative paths.
@@ -159,10 +160,14 @@ func ResolveSourceRange(root, base, tip string) (SourceRange, string, string) {
 		return SourceRange{}, "committed source paths not readable", err.Error()
 	}
 	committed := make([]string, 0, len(paths))
-	for _, path := range paths {
-		committed = append(committed, path[1])
+	var deleted []string
+	for _, row := range paths {
+		committed = append(committed, row[1])
+		if row[0] == "D" {
+			deleted = append(deleted, row[1])
+		}
 	}
-	return SourceRange{Base: b, Tip: tip, CommittedPaths: committed}, "", ""
+	return SourceRange{Base: b, Tip: tip, CommittedPaths: committed, DeletedPaths: deleted}, "", ""
 }
 
 // resolveCommitRange builds the diffRange for `--commit <sha>`: base is <sha>'s

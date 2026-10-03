@@ -93,7 +93,6 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 			}
 		}
 	}
-
 	sealPresent, sealRefusal := binarySealFacts(root)
 
 	return withCompletionPlan(root, Facts{
@@ -110,6 +109,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		PinnedSourceTip:       pinnedTip,
 		ExplicitSourceRange:   source != nil,
 		ChangedPaths:          changedPaths,
+		DeletedPaths:          resolvedSource.DeletedPaths,
 		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,
 		SpecTag:               specTag(ids),
@@ -187,7 +187,7 @@ func AuthorizeReviewedSource(root, slug, base string) (diff.SourceRange, error) 
 	if facts.SourceBase == "" || facts.SourceTip == "" {
 		return diff.SourceRange{}, errors.New("reviewed source range is unresolved")
 	}
-	return diff.SourceRange{Base: facts.SourceBase, Tip: facts.SourceTip, CommittedPaths: facts.ChangedPaths}, nil
+	return diff.SourceRange{Base: facts.SourceBase, Tip: facts.SourceTip, CommittedPaths: facts.ChangedPaths, DeletedPaths: facts.DeletedPaths}, nil
 }
 
 // specStatus resolves the typed Status: value for slug via the spec
