@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/outline"
 )
 
 // skippedDirs are the directory names the walk never enters. A fixture tree, a
@@ -51,7 +53,18 @@ func Grade(root string) []string {
 // collect returns every graded subject under root as a repository-relative slash path.
 // A link to a directory is not descended and not reported, because a linked tree is
 // graded where it lives.
+//
+// In a git work tree a subject is graded only when git tracks it, so an ignored or
+// untracked file that no commit carries is outside the grade. A root that git cannot list
+// is graded whole: it has no tracked set to select by.
 func collect(root string) ([]string, []string) {
+	var tracked map[string]bool
+	if files, err := outline.TrackedFiles(root); err == nil {
+		tracked = make(map[string]bool, len(files))
+		for _, rel := range files {
+			tracked[rel] = true
+		}
+	}
 	var subjects []string
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -75,7 +88,11 @@ func collect(root string) ([]string, []string) {
 		if relErr != nil {
 			return relErr
 		}
-		subjects = append(subjects, filepath.ToSlash(rel))
+		rel = filepath.ToSlash(rel)
+		if tracked != nil && !tracked[rel] {
+			return nil
+		}
+		subjects = append(subjects, rel)
 		return nil
 	})
 	if err != nil {

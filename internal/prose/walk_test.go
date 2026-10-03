@@ -3,6 +3,7 @@ package prose
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -220,6 +221,35 @@ func TestGrade(t *testing.T) {
 				write(t, root, ".bench/prose-exclusions", "docs/ the record keeps its text")
 			},
 		},
+		{
+			name: "FT361 an ignored subject in a git work tree is not graded",
+			build: func(t *testing.T, root string) {
+				write(t, root, "README.md", "Short prose.\n")
+				write(t, root, ".gitignore", "capture/\n")
+				write(t, root, "capture/session-handoff.md", longSentence())
+				write(t, root, ".bench/prose-exclusions", "")
+				gitTrack(t, root, "README.md", ".gitignore", ".bench/prose-exclusions")
+			},
+		},
+		{
+			name: "FT361 a tracked subject in a git work tree is graded",
+			build: func(t *testing.T, root string) {
+				write(t, root, "docs/guide.md", longSentence())
+				write(t, root, ".bench/prose-exclusions", "")
+				gitTrack(t, root, "docs/guide.md", ".bench/prose-exclusions")
+			},
+			count:   1,
+			wantSub: `"docs/guide.md"`,
+		},
+		{
+			name: "FT361 an untracked subject that git does not ignore is not graded",
+			build: func(t *testing.T, root string) {
+				write(t, root, "README.md", "Short prose.\n")
+				write(t, root, "notes.md", longSentence())
+				write(t, root, ".bench/prose-exclusions", "")
+				gitTrack(t, root, "README.md", ".bench/prose-exclusions")
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			root := t.TempDir()
@@ -235,6 +265,17 @@ func TestGrade(t *testing.T) {
 				t.Errorf("Grade() = %q, want exactly %q", got[0], tt.wantEqual)
 			}
 		})
+	}
+}
+
+// gitTrack makes root a git work tree and adds each repository-relative path rel to its
+// index. A path is tracked once the index holds it, so a row needs no commit.
+func gitTrack(t *testing.T, root string, rels ...string) {
+	t.Helper()
+	for _, args := range [][]string{{"init", "-q"}, append([]string{"add", "--"}, rels...)} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, out)
+		}
 	}
 }
 
