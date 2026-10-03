@@ -14,7 +14,8 @@ The three independent initial reviews are complete.
 They found five actionable findings across five repair targets.
 C1 and C2 remain accepted; this pickup authorizes no changes to their behavior.
 
-C3 has consumed zero post-review repair cycles.
+C3 has consumed one of two post-review repair cycles.
+The five initial repair targets have author verification; confirming independent reviews are pending.
 Actual CLI and Desktop qualification remains incomplete, as its pending record states.
 No checkpoint or landing is claimed for C3.
 

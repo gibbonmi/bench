@@ -26,14 +26,14 @@ type SessionRequest struct {
 func SessionReport(request SessionRequest) Report {
 	report := Report{}
 	operation := request.Operation
-	known := operation == "workflow"
+	known := false
 	for _, item := range capabilities() {
 		if required(item, operation) {
 			known = true
 		}
 	}
 	if !known {
-		report.Checks = append(report.Checks, CheckRow{Check: "operation", State: StateUnknown, Action: "select diagnose, work, review, recover, or present before dependent work"})
+		report.Checks = append(report.Checks, CheckRow{Check: "operation", State: StateUnknown, Action: "select an operation before dependent work: " + strings.Join(operations(), ", ")})
 		return report
 	}
 	for _, item := range capabilities() {

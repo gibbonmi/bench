@@ -1,6 +1,7 @@
 package compatibility
 
-// capability ties a workflow requirement to its actual-interface probe.
+const workflowOperation = "workflow"
+
 type capability struct {
 	name, class, action string
 	operations          []string
@@ -22,8 +23,22 @@ func capabilities() []capability {
 	}
 }
 
+func operations() []string {
+	result := []string{workflowOperation}
+	seen := map[string]bool{workflowOperation: true}
+	for _, item := range capabilities() {
+		for _, operation := range item.operations {
+			if !seen[operation] {
+				result = append(result, operation)
+				seen[operation] = true
+			}
+		}
+	}
+	return result
+}
+
 func required(item capability, operation string) bool {
-	if operation == "workflow" {
+	if operation == workflowOperation {
 		return true
 	}
 	for _, candidate := range item.operations {

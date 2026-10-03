@@ -305,3 +305,61 @@ The author checked the delta for duplicated facts and comment contracts.
 Capability requirements and actions have one registry, and context reuse has one comparison owner.
 The system tests reuse the existing fixture and complete-output helper.
 The red probes above demonstrate the independent behavioral expectations.
+
+## C3 repair cycle 1
+
+The initial independent reviews returned four Standards findings, no Spec findings, and one Coverage finding.
+The pickup commit is `6e50e655153edc925cf3540d9c81b44e1c2cb988`.
+The user assigned repairs to the current session and retained the live-qualification blocker.
+C1 and C2 remain accepted.
+
+The Coverage repro omitted the file-access registry entry and left the compatibility package green.
+Tool chunk ef651c records that silent probe and its restoration.
+The observation fixture derived its requirements from the producer, so both lost the same capability.
+The independent expectation in `TestCompatibilityCapabilityInventory` now checks each selected operation against the required capability inventory.
+The same omission now fails the work, review, recovery, and workflow cases; tool chunk 5a8b15 records that red.
+
+Each complete registry row was then omitted independently through `bench probe`.
+All eleven omissions failed the inventory test, and every probe restored the exact original bytes.
+This demonstrates the independent-expectation exception for every named capability and its operation mapping.
+Tool chunks 3f1384 and 6e1ae1 retain the results; `.logs/cli-desktop-handoff/c3-inventory-probes/` retains each native output.
+
+| Omitted capability | Result |
+| --- | --- |
+| hook-behavior | Red; restored |
+| normal-shell | Red; restored |
+| repository-wrapper | Red; restored |
+| file-access | Red; restored |
+| repository-rules | Red; restored |
+| repository-skill | Red; restored |
+| permission-policy | Red; restored |
+| worktree-isolation | Red; restored |
+| review-outcome | Red; restored |
+| failed-interface-retest | Red; restored |
+| desktop-presentation | Red; restored |
+
+The two missing system-test reds now exercise the real sealed system suite.
+Each subject was copied aside, verified before mutation, and restored after the terminal result.
+The preservation manifest is `.logs/cli-desktop-handoff/c3-repair1-system/manifest.json`.
+No test or oracle was weakened.
+
+| Behavioral mutation | Observed red | Evidence |
+| --- | --- | --- |
+| Refuse every nonempty environment instead of native Windows | `TestCompatibilityOtherHosts`; 88392 ms; no skips | Tool chunk eb94d2 |
+| Treat parsed configuration as verified instead of unknown | `TestCompatibilityPermissionConflict`; 150479 ms; no skips | Tool chunk bd7bca |
+
+The operation diagnostic now derives its vocabulary from the capability owner.
+The reference guide delegates capability action prose to the executable report and retains command-free recovery.
+The unearned comment on the unexported capability type was removed.
+These repairs close the duplicated-knowledge causes identified by Standards.
+
+| Restored check | Result | Evidence |
+| --- | --- | --- |
+| Compatibility package | Pass; 11 ms; no skips | Tool chunk 71c97a |
+| Session-inspection package | Pass; 173 ms; no skips | Tool chunk f18c59 |
+| Adoption package | Pass; 173040 ms; no skips | Tool chunk fab9b3 |
+| Sealed system suite | Pass; 220634 ms; no skips | Tool chunk 648936 |
+| Live-root documentation checks | Four checks pass; no skips | Tool chunks 4b1c9a, 489c0c, d01260, 47ef9b |
+
+The independent confirming reviews remain separate from these author results.
+The actual-interface acceptance rows above remain pending; these automated results do not qualify them.

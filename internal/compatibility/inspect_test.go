@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"syscall"
 	"testing"
@@ -330,4 +331,50 @@ func sessionState(report Report, name string) CheckState {
 		}
 	}
 	return ""
+}
+
+func TestCompatibilityCapabilityInventory(t *testing.T) {
+	inventory := map[string][]string{
+		"hook-behavior":           {"work", "review", "recover"},
+		"normal-shell":            {"diagnose", "work", "review", "recover"},
+		"repository-wrapper":      {"diagnose", "work", "review", "recover"},
+		"file-access":             {"work", "review", "recover"},
+		"repository-rules":        {"diagnose", "work", "review", "recover"},
+		"repository-skill":        {"work", "review", "recover"},
+		"permission-policy":       {"diagnose", "work", "review", "recover"},
+		"worktree-isolation":      {"work"},
+		"review-outcome":          {"review"},
+		"failed-interface-retest": {"recover"},
+		"desktop-presentation":    {"present"},
+	}
+	for _, operation := range []string{"diagnose", "work", "review", "recover", "present", "workflow"} {
+		t.Run(operation, func(t *testing.T) {
+			var want []string
+			for name, operations := range inventory {
+				required := operation == "workflow"
+				for _, candidate := range operations {
+					required = required || candidate == operation
+				}
+				if required {
+					want = append(want, name)
+				}
+			}
+			sort.Strings(want)
+			var live, session []string
+			for _, row := range LiveObligations(operation, true) {
+				live = append(live, row.Capability)
+			}
+			for _, row := range SessionReport(SessionRequest{Operation: operation}).Checks {
+				if row.State != StateNotRequired {
+					session = append(session, row.Check)
+				}
+			}
+			for source, got := range map[string][]string{"live": live, "session": session} {
+				sort.Strings(got)
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("%s obligations = %v, want %v", source, got, want)
+				}
+			}
+		})
+	}
 }
