@@ -1,6 +1,6 @@
 # Worktree joins seam reduction
 
-Status: staged
+Status: implemented
 
 Roadmap: FT356
 
