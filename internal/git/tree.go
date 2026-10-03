@@ -215,7 +215,20 @@ type TreeChange struct {
 // Rename detection is off, so each path has one metadata frame and one path frame.
 // NUL framing preserves every path byte without Git's quoted-name encoding.
 func TreeChanges(root, from, to string) ([]TreeChange, error) {
-	raw, err := Raw("-C", root, "diff", "--raw", "--no-renames", "-z", from, to)
+	return treeChanges(root, from, to, false)
+}
+
+// TreeChangesIncludingSubmodules keeps changed gitlinks visible despite Git configuration.
+func TreeChangesIncludingSubmodules(root, from, to string) ([]TreeChange, error) {
+	return treeChanges(root, from, to, true)
+}
+
+func treeChanges(root, from, to string, includeSubmodules bool) ([]TreeChange, error) {
+	args := []string{"-C", root, "diff", "--raw", "--no-renames", "-z"}
+	if includeSubmodules {
+		args = append(args, "--ignore-submodules=none")
+	}
+	raw, err := Raw(append(args, from, to)...)
 	if err != nil {
 		return nil, fmt.Errorf("git: tree change list unavailable: %w", err)
 	}
