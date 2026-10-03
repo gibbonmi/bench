@@ -159,9 +159,9 @@ No chunk has consumed a repair cycle.
     {
       "id": "CG-C2",
       "base": "67f6159ba5f6df5961bee2c5e7215e43e18e01c7",
-      "tip": "3b6542fb38288d982239a5ad3695e642c6b12849",
-      "plan_digest": "sha256:2d9c1d57d328b461a407e5ab8bb2886d987d970101ba8352087b48a6a8adc1bf",
-      "source_digest": "2cc5594fc19302ea5b9616aae737c2965df7d413",
+      "tip": "21bf2be9047f48794ef86094404daccefa9f9850",
+      "plan_digest": "sha256:7f5119003539786b07f5d27e5be7eb7b2794ab4ad5cab20ae022672ce2d47f08",
+      "source_digest": "be1f54f10a47b603a6d1402a1c56489d5483d289",
       "acceptance_rows": [
         "CG9",
         "CG10",
@@ -190,7 +190,10 @@ No chunk has consumed a repair cycle.
         "CG42",
         "CG43",
         "CG46",
-        "CG47"
+        "CG47",
+        "CG48",
+        "CG49",
+        "CG50"
       ],
       "verification": [
         {
@@ -299,6 +302,60 @@ No chunk has consumed a repair cycle.
           },
           "requirement": "commentgap",
           "command": "bench test --package ./internal/commentgap",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-repair-commentgap",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "be1f54f10a47b603a6d1402a1c56489d5483d289",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c2-repair",
+            "digest": "sha256:334632625568e79227e722868f3804549c5fa037e9f218ae7508538c4dfeb756",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft370-build,e970f8fbdd82f6b02d993cbae11079a9cee69597,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commentgap,pass,342\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nFive regressions failed before repair; directive omission bit eight; old output trim bit three. Both probes restored exact bytes.\n"
+          },
+          "requirement": "commentgap",
+          "command": "bench test --package ./internal/commentgap",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-repair-git",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "be1f54f10a47b603a6d1402a1c56489d5483d289",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c2-repair",
+            "digest": "sha256:a8ea7a411447996b397c4c84e8fed3a64fbc021725099013ac35d409afc556b5",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft370-build,e970f8fbdd82f6b02d993cbae11079a9cee69597,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/git,pass,1550\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "git",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-repair-gate",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "be1f54f10a47b603a6d1402a1c56489d5483d289",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c2-repair",
+            "digest": "sha256:40b8ebb6993c4e63f859f2d9269d5bf8806260fb3b43084ad32c78ca7aace9f6",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft370-build,e970f8fbdd82f6b02d993cbae11079a9cee69597,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,12489\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
           "exit_code": 0
         }
       ],
@@ -420,4 +477,7 @@ The initial review has two Coverage findings: C2-COV1 and C2-COV2.
 The reviewer approves conservative directive refusal and multiline output recognition.
 Repair cycle 1 of 2 addresses both findings.
 The user-directed inline session remains the author.
-No repair cycle has completed yet.
+
+Repair cycle 1 passes the focused checks and both mutation probes.
+Five regression cases failed before the repair and now pass.
+A confirming review of all three axes remains required.
