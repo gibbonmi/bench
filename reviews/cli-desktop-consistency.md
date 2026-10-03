@@ -16,8 +16,12 @@ The final coordinator performs the planned integration checks before landing.
 All review prose below this section describes historical stages.
 Its pending live statements remain as provenance and are superseded by the qualification artifact.
 Earlier native excerpts retain their original identities and outcomes.
+
 C1 and C2 remain accepted.
-C3 has started its second and final repair cycle for STD-C3-FINAL-01.
+C3 has completed its second and final repair cycle.
+The native confirmation closes STD-C3-FINAL-01.
+Standards, Spec, and Coverage report zero current findings and no repair targets.
+The results below retain the earlier finding and its superseding confirmations.
 
 ## Standards
 
@@ -358,7 +362,7 @@ No review requested a Bench command change.
 {
   "version": 1,
   "spec": "specs/cli-desktop-consistency/spec.md",
-  "plan_digest": "sha256:93afd8545c6be76323ded6609bc5fca07f352458ba18b969e1f9586fa90a40bd",
+  "plan_digest": "sha256:d9e0d564297a9730586e833cb9e0d8993dfb9b3ce3fb4c740765900a397d0b4b",
   "implementation_session": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
   "chunks": [
     {
@@ -1677,7 +1681,7 @@ No review requested a Bench command change.
     {
       "id": "C3",
       "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
-      "tip": "046556654580cb34b0163f0c318f2fc0b608952a",
+      "tip": "cfbc558d1106d2623b63850d17533b017585db84",
       "plan_digest": "sha256:d9e0d564297a9730586e833cb9e0d8993dfb9b3ce3fb4c740765900a397d0b4b",
       "source_digest": "5d97fe288a21c7b5d2bb9a9f10a04a4b9c438f32",
       "acceptance_rows": [
@@ -2201,6 +2205,72 @@ No review requested a Bench command change.
           "supersedes": [
             "c3-coverage-confirm-r1"
           ]
+        },
+        {
+          "id": "c3-confirm-standards-cfbc558d",
+          "performer": "native:/root/c3_final_standards",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "5d97fe288a21c7b5d2bb9a9f10a04a4b9c438f32",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_final_standards",
+            "digest": "sha256:d32436724aba5dbf52e21fc1443a3706e70a65184dee00d085bd348a1556b3ee",
+            "excerpt": "Standards confirmation — native:/root/c3_final_standards; native UUID unavailable; gpt-5.6-sol/high, one pass.\nBinding sha256:b07496f0b801ab886e5bdf4488f64c7e517203b57c41fcdb6d4eb78b2f1616fd returned current=true for ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97..cfbc558d1106d2623b63850d17533b017585db84.\nSTD-C3-FINAL-01: closed / no-op after repair, confidence10/10. The qualification and spec now preserve only their local no-cycle statements; neither repeats the live count. The review pickup remains the sole current owner and correctly identifies the second and final repair cycle. The version2 plan retains author_limit1, records the fresh repair author after its predecessor, and the review record binds repair046556654580cb34b0163f0c318f2fc0b608952a with all four renewed author checks: compatibility, adoption, system, live qualification.\nNew findings0; repair targets0; worst none; no command change necessary.\nNo tests, probes, writes, gates, or landings ran.\nVenue144c4c3f5ab205e5cd0ebef26faa2808 clean atcfbc558d1106d2623b63850d17533b017585db84.\n"
+          },
+          "axis": "Standards",
+          "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
+          "tip": "cfbc558d1106d2623b63850d17533b017585db84",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-final-standards-a7537d64"
+          ]
+        },
+        {
+          "id": "c3-confirm-spec-cfbc558d",
+          "performer": "/root/c3_final_spec",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "5d97fe288a21c7b5d2bb9a9f10a04a4b9c438f32",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_final_spec",
+            "digest": "sha256:6fc0bad42c4748bc7dde52ea9bc2c29f9ca970e0d05d33ca30e6557d286a71ca",
+            "excerpt": "Spec reaffirmation — /root/c3_final_spec; native Codex UUID unknown/not exposed; gpt-5.6-sol/high, one pass.\nBinding sha256:b07496f0b801ab886e5bdf4488f64c7e517203b57c41fcdb6d4eb78b2f1616fd current and clean for fullC3pair ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97..cfbc558d1106d2623b63850d17533b017585db84; delivery unverified; bindingchunk47d424.\nNarrow read set: a7537d64..cfbc558d; finalpickup/results; C3planassignment/verification semantics; ticket3 addedspecownership; spec/qualificationcountremovals; fourauthorchecks04655665; finalcoordinatorevidence suppliedbyroot.\nCurrent Spec findings0; worstnone; repairtargets/dispositionsnone; optionaladvicenone.\nThe repair removes only duplicated repair-count claims while preserving each artifact's local no-cycle statement. The plan correctly records the fresh repair author, and ticket3 owns the spec edit. Compatibility, adoption, system, and all15historical live-row checks are source-bound and passed. Production, tests, acceptance rows, and historical qualification evidence are unchanged, so prior64-row Spec acceptance remains valid. The post-freeze review-record amendment is checkpoint-owned metadata and creates no semantic invalidation.\nNo tests, probes, edits, gates, or commits ran. Venue clean atcfbc558d1106d2623b63850d17533b017585db84; cleanchunk5058e7.\nclaim[1]{axis,status,confidence}: Spec,claimed,10\n"
+          },
+          "axis": "Spec",
+          "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
+          "tip": "cfbc558d1106d2623b63850d17533b017585db84",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-final-spec-a7537d64"
+          ]
+        },
+        {
+          "id": "c3-confirm-coverage-cfbc558d",
+          "performer": "codex:/root/c3_final_coverage",
+          "role": "independent-review",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "source_digest": "5d97fe288a21c7b5d2bb9a9f10a04a4b9c438f32",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:/root/c3_final_coverage",
+            "digest": "sha256:bd43b56c432ccaf229e17f5f4d26463fbfe3932804eb2eb9d4890b2a754c05e0",
+            "excerpt": "Coverage reaffirmation — codex:/root/c3_final_coverage; native UUID unknown; gpt-5.6-sol/high, one pass.\nFull pair ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97..cfbc558d1106d2623b63850d17533b017585db84.\nCurrent binding sha256:b07496f0b801ab886e5bdf4488f64c7e517203b57c41fcdb6d4eb78b2f1616fd, assignmentfdbdefd6d621d870a54a968042f24e8d, currenttrue, deliveryunverified.\nNarrow read set: a7537d64..cfbc558d delta; current spec930–947; qualification178–188; pickup and machine-record additions; complete c3-final-repair red/green, compatibility, adoption, system, live and native evidence. Prior independently derived producer family and full read set reused.\n0 current Coverage findings; 0 repair targets; worst none; no dispositions or optional advice.\nRepair removes only two duplicated repair-count claims and adds pickup, plan, amendment, and author-verification records. Production, tests, acceptance rows, mutations, expectations, and historical qualification evidence are unchanged. Historical body byte-identical. Compatibility11ms, adoption75468ms, system126428ms, allzero skips; all15historical live rows reconcile.\nNo test, probe, write, gate, or landing ran; implementation-command contribution none.\nVenue clean atcfbc558d1106d2623b63850d17533b017585db84; git status --short empty.\n"
+          },
+          "axis": "Coverage",
+          "base": "ba9c53f675ea3fce51f2134e06bbb7ce5dba9e97",
+          "tip": "cfbc558d1106d2623b63850d17533b017585db84",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-final-coverage-a7537d64"
+          ]
         }
       ]
     }
@@ -2260,6 +2330,60 @@ No review requested a Bench command change.
           "ref": "native:45b13e",
           "digest": "sha256:94feac74c530d3c59234fdff7b1c2ef8eaca680a71b564fe6a5ec5e55377c77c",
           "excerpt": "Coordinator reconciliation: pass.\nExamined integration source: 2c544513133249004bb25e47fa16d48b28baddd0.\nSource digest: cf74570928d61ad59c469593e712272dc6b3f367.\nPerformer: codex:01a101a2-3138-7cc3-a799-cb270ed0b460.\nExact model and effort: unknown.\n\nThis is a fresh read of retained actual-interface evidence, not new live execution.\nThe actual live observations remain bound to fa1dc27d7730ca3889dad592dd51dff6d7b8a899 and their original contexts.\nThe current source composes the preserved implementation with reviewed main and the approved deletion prerequisite.\nCurrent automated integration checks supply separate evidence for that composition.\n\nCD39/CD40: actual normal tool identities and declared restrictions are retained in the startup, network, and lifecycle native objects.\nCD42: required write393ddd failed; dependent mutation3e886f remained absent.\nCD43: the retained static recovery handoff names separate actual startup retests and the stop on failure.\nCD45: pwd7669ea, wrapper289a0c, assignmentwritee400c9, separateread84a4b0 passed after authorized recovery.\nCD46: CLI and Desktop guidance hashes match for AGENTS, BENCH, skill, and phase.\nCD47: CLI66350a and Desktopc022c7 observed distinct assignment bytes and each other's markers; both tracked trees stayed clean.\nCD48: CLI112e5c and Desktop4732fa published the two disposable greeting sources; both sources released with census0.\nCD49/CD50: the actual hooks refused the harmless fixtures before execution; CLI851862 and Desktop280235/9e1778 confirmed absent sentinels.\nCD51: both native interfaces retained independent zero-finding Standards and Coverage results on the same frozen pair before exchange.\nCD54: each required live row has its retained native evidence; current completion depends on the separate source-bound record and checkpoint.\nCD57: separate actual write and read calls matched the expected scratch bytes in each interface.\nCD58: both sessions invoked bench-debug and followed its phase; the retained rule read includes CLI2e1bfb.\nCD62: permission and runtime changes caused affected actual retests; earlier passes did not authorize reuse.\n\nReviewed native roots: scoped-recovery-results.json selected denial, sentinel, and rule observations; network-active-cli-results.json; network-active-cli-guidance.json; paired-cli-tool-result.json; paired-evidence/desktop-tool-result.json; paired-review/comparison.json; cli-disposable-landing-retry-result.json; desktop-recovery/desktop-after-second-restoration-results.json; desktop-recovery/network-profile-retest.json; desktop-recovery/toolchain-operation-retest-native.json; desktop-recovery/DESKTOP-LANDING-RESULT.json.\nRead the external qualification.md and final CLI reply in full.\nFresh reconciliation read chunks: 4cd6e4, 9ac36e, 6bef0a, b56d16; other accepted live native returns remain retained from this session's earlier qualification.\n\nLimits remain explicit: native Windows is excluded; the historical concurrent writer exercise observed writable roots; later restricted retests establish their own boundaries.\nOptional ShellCheck and eight capability skips are not positive passes. No environment skips occurred in the disposable landings.\nThe launcher deletion actor and durable upstream recovery remain unknown. Host clock instability remains external.\nNo current profile authorization is inferred from these historical observations.\nThe later user instruction authorizes implementation completion and landing; old preservation instructions remain historical in their original records.\n"
+        },
+        "requirement": "live-qualification",
+        "command": "review actual CLI and desktop transcripts against every live acceptance row",
+        "exit_code": 0
+      },
+      {
+        "id": "final-desktop-coverage-cfbc558d",
+        "performer": "codex:01a101a2-3138-7cc3-a799-cb270ed0b460",
+        "role": "integration-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "5d97fe288a21c7b5d2bb9a9f10a04a4b9c438f32",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "native:84daa5",
+          "digest": "sha256:ddf458bf6a0187596cf9f279f8bde4d7797cb4f9fbfa9bd43f478746e35c94ea",
+          "excerpt": "Native 84daa5, exit 0, source cfbc558d1106d2623b63850d17533b017585db84, clean.\nok: coverage map valid — 64 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/cli-desktop-consistency/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-desktop-system-cfbc558d",
+        "performer": "codex:01a101a2-3138-7cc3-a799-cb270ed0b460",
+        "role": "integration-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "5d97fe288a21c7b5d2bb9a9f10a04a4b9c438f32",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "native:ba9672",
+          "digest": "sha256:39f450695806cbe68aa28430666baf8ade1dfd69cd9936d23ccc42e987fe7135",
+          "excerpt": "tree[1]{target,head,dirty}:\n  cli-desktop-consistency,cfbc558d1106d2623b63850d17533b017585db84,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,117294\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "final-desktop-live-qualification-cfbc558d",
+        "performer": "codex:01a101a2-3138-7cc3-a799-cb270ed0b460",
+        "role": "integration-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "5d97fe288a21c7b5d2bb9a9f10a04a4b9c438f32",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "native:9014e5-0a3935",
+          "digest": "sha256:8c6419538cd2f6eb04d02c57b8f048168ca75ffee66e88cae2981451f580864f",
+          "excerpt": "Manual current-source reconciliation: pass.\nPerformer codex:01a101a2-3138-7cc3-a799-cb270ed0b460; model and effort unknown.\nSource cfbc558d1106d2623b63850d17533b017585db84.\nRead current qualification reconciliation and all fifteen live-row mappings at native9014e5/full0a3935.\nCompared the exact repair delta at879cb0 and independently verified historical body byte equality and all84 prior record occurrences.\nThe body including its Desktop shell repro heading has SHA2566ff2b7d7488f9ae6d6d5c2491c3777a0c6a5b697cf6dddbfa94fe9eecb17ad75.\nThe repair changes only the duplicated allowance count. It changes no live observation, source identity, limitation, or acceptance requirement.\nThe previous direct native-result reconciliation at45b13e remains applicable to unchanged live evidence.\nCD39,CD40,CD42,CD43,CD45,CD46,CD47,CD48,CD49,CD50,CD51,CD54,CD57,CD58,CD62 remain individually satisfied for recordedfa1 contexts.\nHistorical actual-interface execution remains separate from current composed-source verification.\nOptional ShellCheck, eight capability skips, unknown durable launcher repair, WSL2 scope, and external clock instability remain explicit.\nNo new live execution or permission claim is made.\n"
         },
         "requirement": "live-qualification",
         "command": "review actual CLI and desktop transcripts against every live acceptance row",
@@ -2379,6 +2503,21 @@ No review requested a Bench command change.
     {
       "from": "sha256:fd1630eb03f3c42be8f1e0eb051b41c427ba16371480294c7104d4db89bf5c52",
       "to": "sha256:93afd8545c6be76323ded6609bc5fca07f352458ba18b969e1f9586fa90a40bd",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:93afd8545c6be76323ded6609bc5fca07f352458ba18b969e1f9586fa90a40bd",
+      "to": "sha256:d9e0d564297a9730586e833cb9e0d8993dfb9b3ce3fb4c740765900a397d0b4b",
       "chunk_ids": {
         "C1": [
           "C1"
