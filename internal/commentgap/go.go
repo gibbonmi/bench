@@ -41,9 +41,8 @@ func proveGo(path string, before, after []byte) error {
 	if !slices.Equal(left, right) {
 		return ErrTokens
 	}
-	var directives [2][]string
 	var output bool
-	for i, source := range [][]byte{before, after} {
+	for _, source := range [][]byte{before, after} {
 		comments, err := scan(source, scanner.ScanComments)
 		if err != nil {
 			return err
@@ -53,13 +52,10 @@ func proveGo(path string, before, after []byte) error {
 				continue
 			}
 			if directive(comment.literal) {
-				directives[i] = append(directives[i], comment.literal)
+				return ErrDirective
 			}
 			output = output || exampleOutput(comment.literal)
 		}
-	}
-	if !slices.Equal(directives[0], directives[1]) {
-		return ErrDirective
 	}
 	for _, source := range [][]byte{before, after} {
 		file, err := parser.ParseFile(token.NewFileSet(), path, source, parser.ImportsOnly)
@@ -92,6 +88,6 @@ func exampleOutput(comment string) bool {
 	if strings.HasPrefix(comment, "/*") {
 		text = strings.TrimSuffix(comment[2:], "*/")
 	}
-	text = strings.ToLower(strings.TrimLeft(text, " \t"))
+	text = strings.ToLower(strings.TrimSpace(text))
 	return strings.HasPrefix(text, "output:") || strings.HasPrefix(text, "unordered output:")
 }

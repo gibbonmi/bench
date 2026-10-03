@@ -17,7 +17,7 @@ var (
 	ErrNotGo         = errors.New("path is not a Go file")
 	ErrScan          = errors.New("Go source cannot scan or parse")
 	ErrTokens        = errors.New("Go tokens differ")
-	ErrDirective     = errors.New("directive comments differ")
+	ErrDirective     = errors.New("file contains a directive comment")
 	ErrCgo           = errors.New("file imports C")
 	ErrExampleOutput = errors.New("test file contains example output")
 )
