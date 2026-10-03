@@ -1,7 +1,7 @@
 # Record final completion evidence
 
 Blocked by: none
-Writes: internal/reviewrecord/, specs/record-completion/, CHANGELOG.md
+Writes: internal/reviewrecord/, cmd/bench/help_inventory_test.go, specs/record-completion/, CHANGELOG.md
 Covers: none
 
 ## What to build
