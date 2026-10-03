@@ -9,10 +9,29 @@ Three independent native axes reviewed the clean source through record commit 54
 The C2 completion checkpoint remains pending.
 
 The initial reviews retain five findings across four repair targets.
-C2 has consumed zero post-review repair cycles.
-The first cycle will address all four targets in the original approved author session.
+C2 has consumed one post-review repair cycle.
+The original approved author session repaired all four targets at source 1024fd512f06f79637823fb8f47cce5f81e6ba76.
 The allowance is two cycles, and the initial preservation hardening pass remains separate.
 C3 remains unimplemented and requires actual CLI and desktop qualification.
+
+## C2 repair verification
+
+The repaired source passed its lane and build preflight.
+All five required author results are recorded at source digest 57212b45ade39c54e329df7e5aab2c3dfe03131c.
+The sealed system suite passed in 86843 milliseconds without failures or skips.
+The live-root documentation check passed in 3244 milliseconds without skips.
+The independent confirming reviews and completion checkpoint remain pending.
+
+The journal persists each replacement identity before publication and each restore identity before undo publication.
+The final identity guard runs after staging.
+Undo aggregates its preflight failures before any restoration.
+The data-handling document links to executable owners without repeating their values.
+The author claims these repairs close the four targets, subject to independent confirmation.
+
+The identity and aggregate-error regressions each produced a behavioral red before their repairs.
+The final-guard omission failed both publication paths, and the required undo omission also bit.
+Both probes restored their sources, and the restored public undo test passed.
+The recorded evidence artifact retains exact tests, timings, and historical scopes.
 
 ## Standards
 
@@ -222,7 +241,7 @@ No review requested a Bench command change.
 {
   "version": 1,
   "spec": "specs/cli-desktop-consistency/spec.md",
-  "plan_digest": "sha256:3b1422b2ea101981f177cc5e161e80174a5c513954b575b471c1d639fc8ab80e",
+  "plan_digest": "sha256:ff6f793530546159a62040de50968f8dcc2ed940239d3a0ad9af3ab2b4bf1fe6",
   "implementation_session": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
   "chunks": [
     {
@@ -1195,9 +1214,9 @@ No review requested a Bench command change.
     {
       "id": "C2",
       "base": "3c3c1a012be244795f9a1a2841b6b351686231c9",
-      "tip": "589ab085cd5dbf4e691c79fa3f6f696acb7e886b",
-      "plan_digest": "sha256:3b1422b2ea101981f177cc5e161e80174a5c513954b575b471c1d639fc8ab80e",
-      "source_digest": "e4af95209a58fd978769cdbbcd76b44aa370dfc2",
+      "tip": "1024fd512f06f79637823fb8f47cce5f81e6ba76",
+      "plan_digest": "sha256:ff6f793530546159a62040de50968f8dcc2ed940239d3a0ad9af3ab2b4bf1fe6",
+      "source_digest": "57212b45ade39c54e329df7e5aab2c3dfe03131c",
       "acceptance_rows": [
         "CD18",
         "CD19",
@@ -1305,6 +1324,96 @@ No review requested a Bench command change.
             "ref": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
             "digest": "sha256:b7607cbb6eeba7b5916349ea08d80c4059a0e5dcee921bc6abaadee0797e4a3c",
             "excerpt": "The native author ran bench test --check system at clean committed source 589ab085cd5dbf4e691c79fa3f6f696acb7e886b. The sealed system suite passed in 88274 milliseconds with no failures or skips. It includes real setup, all competing writer routes, aliased destinations, disjoint writer progress, and fresh-process undo after an abrupt multi-target repair interruption.\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-compatibility-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "57212b45ade39c54e329df7e5aab2c3dfe03131c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c2-repair1-compatibility",
+            "digest": "sha256:922a29a93d1063411a6cf837309557abc50397228f682edba5a98cc861934b0a",
+            "excerpt": "bench test --package ./internal/compatibility/...: compatibility passed in 5 ms; fixture support had no tests. No failures or skips.\nAuthor verification by codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21, gpt-6-astra/high. C2 repair cycle 1.\n"
+          },
+          "requirement": "compatibility",
+          "command": "bench test --package ./internal/compatibility",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-adopt-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "57212b45ade39c54e329df7e5aab2c3dfe03131c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c2-repair1-adopt",
+            "digest": "sha256:be198cf2f5ce48e0a99b2a82a1d5e900075325d0393e4d45121cebb8f5751c2c",
+            "excerpt": "bench test --package ./internal/adopt/...: adoption package passed in 119313 ms; no failures or skips. Transaction source bytes match committed repair 1024fd512f06f79637823fb8f47cce5f81e6ba76.\nAuthor verification by codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21, gpt-6-astra/high. C2 repair cycle 1.\n"
+          },
+          "requirement": "adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-repair-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "57212b45ade39c54e329df7e5aab2c3dfe03131c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c2-repair1-repair",
+            "digest": "sha256:dfdd3cf1e11a7b72f987e85a811dbb82e716039d88add1ad8dade78813eaad83",
+            "excerpt": "bench test --package ./internal/adopt/...: public repair package passed in 114579 ms; no failures or skips. The final original-edit plus equivalent-replacement cases passed in 6876 ms. The exact undo-omission probe bit in 2431 ms, restored source, and the restored public undo test passed in 2427 ms.\nAuthor verification by codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21, gpt-6-astra/high. C2 repair cycle 1.\n"
+          },
+          "requirement": "repair",
+          "command": "bench test --package ./internal/adopt/repairtest",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-transaction-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "57212b45ade39c54e329df7e5aab2c3dfe03131c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c2-repair1-transaction",
+            "digest": "sha256:1ebc3d706dfd9230f5c0a7710adb04be0867254d6b40ac4737059f4c9009d86d",
+            "excerpt": "bench test --package ./internal/adopt/...: transaction passed in 1467 ms; no failures or skips. TestUndoRefusesEquivalentReplacement red in 36 ms, green in the full transaction run. TestUndoReportsEveryPreflightFailure red in 78 ms and green in 69 ms. Final publication guard omission compiled and failed both apply and undo cases in 87 ms; probe restored source.\nAuthor verification by codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21, gpt-6-astra/high. C2 repair cycle 1.\n"
+          },
+          "requirement": "transaction",
+          "command": "bench test --package ./internal/adopt/transaction",
+          "exit_code": 0
+        },
+        {
+          "id": "c2-system-repair1",
+          "performer": "codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21",
+          "role": "author-verification",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "source_digest": "57212b45ade39c54e329df7e5aab2c3dfe03131c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c2-repair1-system",
+            "digest": "sha256:d50afb17a0addc37168ed2913abbfade1b2b9cfbfa058ee9f7890ac7c34aaa45",
+            "excerpt": "bench test --check system: sealed system suite passed in 86843 ms at clean committed source 1024fd512f06f79637823fb8f47cce5f81e6ba76. No failures or skips. The suite includes fresh-process interrupted repair recovery and the complete concurrent writer census.\nAuthor verification by codex:01a0fc58-0f59-7f52-9c4c-a25247d5fa21, gpt-6-astra/high. C2 repair cycle 1.\n"
           },
           "requirement": "system",
           "command": "bench test --check system",
@@ -1442,6 +1551,18 @@ No review requested a Bench command change.
       "chunk_ids": {
         "C1": [
           "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3b1422b2ea101981f177cc5e161e80174a5c513954b575b471c1d639fc8ab80e",
+      "to": "sha256:ff6f793530546159a62040de50968f8dcc2ed940239d3a0ad9af3ab2b4bf1fe6",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
         ]
       }
     }
