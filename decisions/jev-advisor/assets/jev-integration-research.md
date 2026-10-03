@@ -170,7 +170,8 @@ Complete a small offline qualification before requesting another paid benchmark:
 4. Prove the native verifier in its actual permissions without an inference request.
 5. Bind any paid run to its exact packet, configuration, request cap, and evidence destination.
 
-The existing benchmark's sixth repair cycle remains a reviewer decision under FT347.
+The reviewer approved one sixth repair cycle, limited to offline verification and complete requirement context.
+Section 19 records its result and the remaining restart blocker.
 This research resumption supplies no configuration acknowledgement for a new paid run.
 The current offline packet requires no service call or change to the CLI/Desktop assignment.
 
@@ -184,6 +185,48 @@ Source: `jev-benchmark-trial.md:155` and `roadmap/FT347.md:1` from the repositor
 - Current provider charges and complete-task savings remain unknown.
 - The declared holdout records lack complete prediction and protocol evidence for an independent adoption assessment.
 - Current service terms and the broader candidate inventory still require reconciliation before the map becomes ready.
+
+## 19. Sixth offline repair cycle
+
+### Facts
+
+The reviewer approved one additional repair cycle on 2026-10-03.
+The work restores the benchmark source from `c929c500501bc86606a0dae55923319a34e685d0` into this assignment.
+All work remains in the current Astra session, independent of the CLI/Desktop assignment.
+No new provider request or paid configuration acknowledgement occurred.
+
+The verifier no longer treats Codex's protected metadata directories as previous gate receipts.
+Each verification run owns its subprocess home, build caches, temporary files, and Go settings.
+The frozen packet permits rescues from unindexed phase guidance, including `bench-debug`.
+Initial selection still uses the original candidate catalog. Full governing documents remain present.
+
+All eight recorded task packets pass the unchanged context ceiling at the original source revision.
+Their largest state-plus-question packet is 119,228 bytes against a 120,000-byte ceiling.
+Those byte checks do not certify the provider's token count.
+The current source rejects stale recorded excerpts, as required.
+
+Source: `benchmark/verification.json:1` and `benchmark/cycle-six.md:1`.
+
+### Native verification limit
+
+The pinned Codex sandbox can run the repaired verifier without an inference call.
+The real build succeeds and the gate reaches its native test suite.
+An existing Unix-socket fixture fails because the sandbox denies its socket operation.
+This is a benchmark execution constraint, not a Jev prediction result.
+The repair therefore does not qualify the paid benchmark for restart.
+
+The next execution proposal must preserve full-gate feedback, the exact authored-file fence, and the independent final gate.
+A controller-owned verification service is one candidate; this cycle does not implement or approve it.
+Keep all earlier raw probes and the failed native gate available for that decision.
+
+Source: `benchmark/cycle-six.md:1`; [Codex permissions](https://learn.chatgpt.com/docs/permissions), retrieved 2026-10-03.
+
+### Adoption boundary
+
+Accepted decisions 1A, 2A, and 3A remain closed.
+Recorded briefs remain development inputs. Fresh real tasks must precede adoption.
+Neither the repaired fixture checks nor the recovered pilot establish complete-task savings.
+Ticket #9 remains open.
 
 ## Verification record
 
@@ -200,4 +243,4 @@ Source: `jev-benchmark-trial.md:155` and `roadmap/FT347.md:1` from the repositor
 Keep ticket #9 open until the evidence contract and fresh-task validation pass.
 Use the offline packet for development and freeze separate case groups before tuning.
 Measure the complete task, including fallback, verification, repairs, and independently checked quality.
-Resolve the FT347 repair boundary before modifying its benchmark or acknowledging a paid configuration.
+Keep the FT347 execution decision separate from any paid configuration acknowledgement.

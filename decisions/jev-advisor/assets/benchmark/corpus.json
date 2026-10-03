@@ -1,0 +1,257 @@
+[
+  {
+    "split": "development",
+    "optional": [],
+    "protected": [
+      "craft-review",
+      "craft-cli",
+      "craft-comments"
+    ],
+    "protected_evidence": "The benchmark includes self-review. craft-review applies whenever reviewing a diff. The task changes an AXI CLI and code comments; their skill descriptions require both skills.",
+    "id": "consumers-count",
+    "family": "consumers",
+    "origin": "Exposed H2 consumers task, reconstructed from repository source.",
+    "brief": "Add a distinct file count to each over-cap consumers_packages directory row. Use columns dir,files,rows in both symbol and changed modes. Keep --full unchanged. Update help, comments, and the existing over-cap test. Run the full consumers package and self-review the diff.",
+    "source_paths": [
+      "internal/consumers/command.go",
+      "internal/consumers/blast.go",
+      "internal/consumers/command_test.go"
+    ],
+    "writes": [
+      "internal/consumers/command.go",
+      "internal/consumers/command_test.go"
+    ],
+    "criteria": [
+      "Distinct files are counted once per directory, including repeated references.",
+      "Both modes use the shared aggregate owner.",
+      "Sorted output, existing row counts, truncation, and --full behavior remain correct.",
+      "The full consumers package passes.",
+      "Help and comments describe dir,files,rows."
+    ],
+    "source_excerpts": {
+      "internal/consumers/command.go": [
+        [
+          93,
+          104,
+          "aggregateFields"
+        ],
+        [
+          148,
+          172,
+          "aggregate(files)"
+        ],
+        [
+          266,
+          299,
+          "func aggregate"
+        ]
+      ],
+      "internal/consumers/blast.go": [
+        [
+          272,
+          307,
+          "aggregate(files)"
+        ]
+      ],
+      "internal/consumers/command_test.go": [
+        [
+          168,
+          203,
+          "TestOverCapDefaultAggregatesAndOffersFull"
+        ]
+      ]
+    }
+  },
+  {
+    "split": "development",
+    "optional": [],
+    "protected": [
+      "craft-review"
+    ],
+    "protected_evidence": "The benchmark includes self-review. craft-review applies whenever reviewing a diff.",
+    "id": "readme-guide",
+    "family": "onboarding",
+    "origin": "Exposed H2 README task, reconstructed from repository source.",
+    "brief": "Reduce the Operating guide body in README.md to at most 80 words. Preserve all six file paths and the three current documentation roles. Preserve all other bytes. Verify the constraints and self-review the diff.",
+    "source_paths": [
+      "README.md"
+    ],
+    "writes": [
+      "README.md"
+    ],
+    "criteria": [
+      "The section has at most 80 words.",
+      "All six paths and the three documentation roles remain.",
+      "Bytes outside the section are unchanged.",
+      "There are no new factual claims."
+    ]
+  },
+  {
+    "split": "development",
+    "optional": [
+      "craft-research"
+    ],
+    "protected": [
+      "craft-review",
+      "craft-domain"
+    ],
+    "protected_evidence": "The benchmark includes self-review. craft-review applies whenever reviewing a diff. The task explicitly requests craft-domain. The reviewer permits either research choice for this exact lookup.",
+    "id": "handoff-terms",
+    "family": "handoff",
+    "origin": "Exposed H2 terminology task with the exact accepted optional exception.",
+    "brief": "Use craft-domain to explain whether main and request identify distinct handoff section types. Write answer.md in at most 150 words. Cite source paths and line numbers. Do not edit source. craft-research is optional for this exact lookup. Check the answer against the source before completion.",
+    "source_paths": [
+      "internal/handoffdoc/document.go"
+    ],
+    "writes": [
+      "answer.md"
+    ],
+    "criteria": [
+      "The answer distinguishes the main key and request assignment identity.",
+      "The request heading prefix is correct.",
+      "Cited lines support the claims.",
+      "The answer is at most 150 words and source bytes are unchanged."
+    ]
+  },
+  {
+    "split": "development",
+    "optional": [],
+    "protected": [
+      "craft-review"
+    ],
+    "protected_evidence": "The benchmark includes self-review. craft-review applies whenever reviewing a diff.",
+    "id": "assessment-unknown",
+    "family": "assessment",
+    "origin": "New development task derived from the current cost and usage contracts.",
+    "brief": "Diagnose why an assessment with no actual billing evidence must not report a zero actual charge. Trace usage and cost handling. Write answer.md with source citations and one concrete example that separates measured zero from missing data. Do not edit production code. Verify the example against the source.",
+    "source_paths": [
+      "internal/assessment/cost.go",
+      "internal/assessment/record.go",
+      "internal/assessment/types.go",
+      "internal/assessment/README.md"
+    ],
+    "writes": [
+      "answer.md"
+    ],
+    "criteria": [
+      "The answer distinguishes unknown actual charges from measured zero.",
+      "The answer explains how missing token categories affect estimate completeness.",
+      "The example agrees with the source and cites supporting lines.",
+      "No production source changes."
+    ]
+  },
+  {
+    "split": "development",
+    "optional": [],
+    "protected": [
+      "craft-review"
+    ],
+    "protected_evidence": "The benchmark includes self-review. craft-review applies whenever reviewing a diff.",
+    "id": "skill-trigger-audit",
+    "family": "skills-index",
+    "origin": "New development task derived from canonical index and frontmatter ownership.",
+    "brief": "Audit whether a short skills-index row is sufficient to determine the full craft-adr trigger. Compare the generated row with the skill description and body. Write answer.md with exact source citations. Explain what evidence a skill selector needs. Do not change the skill or index.",
+    "source_paths": [
+      "internal/skillsindex/skillsindex.go",
+      ".agents/skills/bench-craft-adr/SKILL.md",
+      ".agents/skills/bench-craft-skills/SKILL.md"
+    ],
+    "writes": [
+      "answer.md"
+    ],
+    "criteria": [
+      "The answer distinguishes the short index from the fuller trigger description.",
+      "The answer names the canonical source for each.",
+      "The answer does not treat observed agent choices as ground truth.",
+      "No skill or index changes."
+    ],
+    "source_excerpts": {
+      "internal/skillsindex/skillsindex.go": [
+        [
+          1,
+          10,
+          "Package skillsindex"
+        ],
+        [
+          109,
+          198,
+          "func FrontmatterField"
+        ]
+      ]
+    }
+  },
+  {
+    "split": "development",
+    "optional": [],
+    "protected": [
+      "craft-review",
+      "craft-comments"
+    ],
+    "protected_evidence": "The benchmark includes self-review. craft-review applies whenever reviewing a diff. The task edits a code comment.",
+    "id": "handoff-comment",
+    "family": "handoff",
+    "origin": "New development task derived from the existing parser and renderer.",
+    "brief": "Improve only the doc comment on Section.Next in internal/handoffdoc/document.go. Explain why the next command is separate from Fields and whether this package interprets State. Keep runtime behavior and all other comments unchanged. Verify the diff and run the handoffdoc package tests.",
+    "source_paths": [
+      "internal/handoffdoc/document.go"
+    ],
+    "writes": [
+      "internal/handoffdoc/document.go"
+    ],
+    "criteria": [
+      "The comment accurately describes Next preservation and State ownership.",
+      "No runtime code or unrelated comment changes.",
+      "The handoffdoc package tests pass."
+    ]
+  },
+  {
+    "split": "development",
+    "optional": [],
+    "protected": [
+      "craft-review"
+    ],
+    "protected_evidence": "The benchmark includes self-review. craft-review applies whenever reviewing a diff.",
+    "id": "assessment-doc",
+    "family": "assessment",
+    "origin": "New development task derived from the existing assessment input documentation.",
+    "brief": "Add one short example to internal/assessment/README.md showing inclusive input totals with cached tokens. Use 100 total tokens and 40 cached tokens. State the normalized uncached count. Use the existing Usage field names. Preserve the rest of the document and verify the example against the parser.",
+    "source_paths": [
+      "internal/assessment/README.md",
+      "internal/assessment/record.go"
+    ],
+    "writes": [
+      "internal/assessment/README.md"
+    ],
+    "criteria": [
+      "The example yields 60 uncached input tokens.",
+      "The example uses input_total, input_cached, and total_semantics correctly.",
+      "The rest of the document remains unchanged.",
+      "No unsupported billing or pricing claim appears."
+    ]
+  },
+  {
+    "split": "development",
+    "optional": [],
+    "protected": [
+      "craft-review"
+    ],
+    "protected_evidence": "The benchmark includes self-review. craft-review applies whenever reviewing a diff.",
+    "id": "gate-authority-audit",
+    "family": "gate-policy",
+    "origin": "New development task derived from the current working agreement.",
+    "brief": "Write answer.md explaining whether a clean semantic review can authorize landing when the project gate is red. Cite the governing project rules. Distinguish advisory review from executable gate evidence and reviewer authority. Do not change code, tests, rules, or the gate.",
+    "source_paths": [
+      ".bench/BENCH.md",
+      ".agents/skills/bench-craft-review/SKILL.md"
+    ],
+    "writes": [
+      "answer.md"
+    ],
+    "criteria": [
+      "The answer states that a clean review does not replace a green gate.",
+      "The answer preserves reviewer shipping authority.",
+      "The answer cites current governing rules.",
+      "No source changes."
+    ]
+  }
+]
