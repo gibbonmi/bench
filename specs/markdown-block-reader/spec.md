@@ -144,6 +144,10 @@ Harder chunks: MB-C1, MB-C4.
 65. As a maintainer, I want the block reader to omit the backtick info-string rule, so that the live-tree prose grade stays exact.
 66. As a maintainer, I want each H3 boundary rule to stay in its module, so that the block reader owns only the H2 rule.
 
+### A late amendment to the managed-block markers
+
+67. As `bench link`, I want an unterminated comment around Bench text refused, so that a hidden fence never frees a marker example.
+
 ## Implementation decisions
 
 ### The block reader
@@ -197,6 +201,11 @@ message bytes. These modules are `internal/prose`, `internal/tickets`,
 now reads the reader's fence fault. Only `internal/prose` refuses all three kinds,
 as it does today.
 
+`internal/adopt` also refuses the reader's comment fault, with the same AGENTS.md
+conflict message bytes. Its markers are comments, and the reader removes comments
+before it classifies fences. An unterminated comment therefore hides each later
+fence marker, and a fenced marker example would read as live.
+
 `internal/learnings` adds a malformed record for each fault kind at the fault
 line. The journal is untracked, so the prose grade never reads it. Its malformed
 records are the one fail-closed channel. Every other module reads an unterminated
@@ -243,8 +252,8 @@ decision.
 `markdown-block-owner` is a new `go-source` conformance check. It follows
 `checkGitPlumbingOwner` in `internal/conformance/git_plumbing_owner_test.go`.
 It parses each non-test Go file under `cmd/` and `internal/`, outside
-`internal/markdown`. It refuses a string literal whose value starts with three
-backticks or three tildes. It also refuses a literal whose value is exactly `---`,
+`internal/markdown`. It refuses a string literal whose value contains a run of
+three backticks or three tildes. It also refuses a literal whose value is exactly `---`,
 `<!--`, `-->`, or `## `.
 
 A rune-slice conversion of such a literal counts, because the check reads the
@@ -260,7 +269,7 @@ string literal itself. The check carries a bite proof in its own file, as
 | MB-C2 / `2-read-spec-and-coverage-blocks.md`, `3-read-roadmap-blocks.md`, `4-read-field-scan-blocks.md` | The spec, coverage, roadmap, field-scan, and ticket readers use the block reader. | MB24, MB25, MB26, MB27, MB28, MB29, MB30, MB31, MB32, MB33, MB34, MB35, MB36, MB37 | `bench test --package ./internal/spec`, `bench test --package ./internal/coverage`, `bench test --package ./internal/roadmap`, `bench test --package ./internal/maps`, `bench test --package ./internal/tickets` | no |
 | MB-C3 / `5-read-handoff-blocks.md`, `6-read-journal-blocks.md`, `9-read-skills-frontmatter.md` | The handoff, journal, and skills-index readers use the block reader. | MB38, MB39, MB40, MB41, MB42, MB43, MB44, MB45, MB46, MB47, MB59, MB60 | `bench test --package ./internal/handoffdoc`, `bench test --package ./internal/learnings`, `bench test --package ./internal/retros`, `bench test --package ./internal/skillsindex` | no |
 | MB-C4 / `7-read-review-record-blocks.md`, `8-read-anchor-blocks.md` | The review record and the anchors use the block reader. | MB48, MB49, MB50, MB51, MB52, MB53, MB54, MB55, MB56 | `bench test --package ./internal/reviewrecord`, `bench test --package ./internal/anchors`, `bench test --check docs-currency-workflow` | yes |
-| MB-C5 / `10-read-agents-marker-blocks.md`, `11-forbid-block-rule-copies.md` | The managed-block markers use the block reader, and the gate refuses a new copy. | MB57, MB58, MB61, MB62, MB63, MB64, MB65, MB66, MB67, MB68, MB69 | `bench test --package ./internal/adopt`, `bench test --check markdown-block-owner` | no |
+| MB-C5 / `10-read-agents-marker-blocks.md`, `11-forbid-block-rule-copies.md` | The managed-block markers use the block reader, and the gate refuses a new copy. | MB57, MB58, MB61, MB70, MB62, MB63, MB64, MB65, MB66, MB67, MB68, MB69 | `bench test --package ./internal/adopt`, `bench test --check markdown-block-owner` | no |
 
 MB-C1 creates the seam that every later ticket consumes, so its chunk review
 closes before any other ticket starts. Tickets 2, 3, 4, 6, 8, and 11 each name the
@@ -361,8 +370,9 @@ reds the live tree until the last copy goes.
 | MB59 | 55 | A CRLF skill file `---`, `index: x`, `---` gives the field value `x` | planned TestFrontmatterFieldReadsCRLF in internal/skillsindex | The old exact compare reads `---` plus a carriage return as no opener. |
 | MB60 | 56 | An opener with no closer gives an empty field value | `internal/skillsindex/skillsindex_test.go` (`TestFrontmatterFieldRequiresCompleteLeadingFence`) | A migration that reads the fault as frontmatter authorizes swallowed text. |
 | MB61 | 59 | An unterminated `~~~` block around Bench text refuses with the AGENTS.md conflict message | planned TestMarkersSkipTildeFences in internal/adopt | The old backtick-only toggle sees no open fence and trusts the markers. |
-| MB62 | 60 | A production Go literal that starts with three backticks gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance | A check that omits the backtick kind lets a backtick detector survive. |
-| MB63 | 60 | A production Go literal that starts with three tildes gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance | A check that omits the tilde kind lets a tilde detector survive. |
+| MB70 | 67 | An unterminated HTML comment opener before a fenced marker example refuses with the AGENTS.md conflict message | planned TestMarkersSkipTildeFences in internal/adopt | A fence-only fault check sees no open fence and rewrites the hidden example as the live block. |
+| MB62 | 60 | A production Go literal that contains three backticks after other text gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance | A check that omits the backtick kind, or tests only a prefix, lets an embedded fence survive. |
+| MB63 | 60 | A production Go literal that contains three tildes after other text gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance | A check that omits the tilde kind lets a tilde detector survive. |
 | MB64 | 60 | A production Go literal equal to `---` gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance | A check that omits frontmatter lets a frontmatter reader survive. |
 | MB65 | 60 | A production Go literal equal to `<!--` gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance | A check that omits the comment opener lets a comment strip survive. |
 | MB66 | 60 | A production Go literal equal to `-->` gives one diagnostic | planned TestMarkdownBlockOwnerBites in internal/conformance | A check that omits the comment closer lets a comment strip survive. |
@@ -582,13 +592,19 @@ a closure path. The spec authoring commit adds the three glossary terms to
 - MB22 changes the prose grade of a rejoined comment. The change follows from one comment rule, and DG43 already chose the rejoin rule for the anchors.
 - `markdown-block-owner` is a new conformance check. The source asks for one reader, and the check is the red-capable copy-survival row.
 
-### Pending consultation
+- MB70 adds a comment-fault refusal to `internal/adopt`. Closed decision 1 requires it.
 
-1. Fault posture. Recommendation: keep each existing refusal for the fence fault only, and add the learnings records. Why: this keeps the promises inside the source and closes the one silent-loss path.
-2. Ticket 10 sequencing. Recommendation: start ticket 10 only after `cli-desktop-consistency` lands. Why: both branches write `internal/adopt/marker.go`.
-3. Guard scope. Recommendation: include the `## ` literal and route the renderers through the exported constants. Why: the copy-survival row must be red-capable for each rule that the source names.
-4. H2 opener. Recommendation: a heading opens at column zero only, so the anchors stop accepting an indented `## ` opener. Why: no anchored guidance file has an indented H2 line, and one rule must pick one answer.
-5. Comment rule. Recommendation: the block reader adopts the DG43 rejoin rule for each module. Why: DG43 is a closed decision for the anchors, and one comment rule cannot hold two answers.
+### Closed decisions
+
+The reviewer defers these decisions to the Fable consultation of 2026-10-03.
+
+1. Fault posture, amended (2026-10-03, Fable consultation). Each existing refusal keeps the fence fault, and the learnings records stay. `internal/adopt` also maps the comment fault to its AGENTS.md conflict message, because an unterminated comment hides later fence markers. MB70 covers it.
+2. Ticket 10 sequencing, accepted (2026-10-03, Fable consultation). Ticket 10 starts only after `cli-desktop-consistency` lands, because both branches write `internal/adopt/marker.go`.
+3. Guard scope, accepted (2026-10-03, Fable consultation). The check covers the `## ` literal, and each renderer uses the exported constants.
+4. H2 opener, accepted (2026-10-03, Fable consultation). A heading opens at column zero only, so the anchors stop accepting an indented opener.
+5. Comment rule, accepted (2026-10-03, Fable consultation). The block reader applies the DG43 rejoin rule for each module.
+6. Guard literal rule, amended (2026-10-03, Fable consultation). The check refuses a literal that contains a run of three backticks or three tildes, not only one that starts with the run. The one hit outside the migrated modules is `internal/preflight/preflighttest/fixture.go`, which ticket 11 routes through the fence constant.
+7. Ticket 11 closures, accepted (2026-10-03, Fable consultation). Ticket 11 keeps each closure path in `Writes:`, because the ticket grammar has no closure field and build preflight reads closures from `Writes:`.
 
 ### Pre-review proof checklist
 

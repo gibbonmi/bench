@@ -10,8 +10,8 @@ Add the `markdown-block-owner` conformance check with the `go-source` input. It
 follows `checkGitPlumbingOwner`. It parses each non-test Go file under `cmd/`
 and `internal/`, outside `internal/markdown`, and it reads each string literal.
 
-The check gives one diagnostic for each literal that starts with three backticks
-or three tildes. It also gives one for each literal that is exactly `---`,
+The check gives one diagnostic for each literal that contains a run of three
+backticks or three tildes anywhere in its value. It also gives one for each literal that is exactly `---`,
 `<!--`, `-->`, or `## `. Each diagnostic names the file, the line, and the
 literal kind.
 
