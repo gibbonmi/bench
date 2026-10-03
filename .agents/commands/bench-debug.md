@@ -28,9 +28,7 @@ review against a written spec, run `/bench-review-implementation` first.
 
 Bugs do not go through `/bench-write-spec`. A bug already has a spec — the thing should work and
 does not. The whole discipline builds an external signal that goes red on *this*
-bug; that signal becomes the gate the fix shift runs against. The same invariant governs
-everything else in Bench: the agent never decides the bug is fixed; a check it
-did not author does.
+bug; that signal becomes the gate the fix shift runs against.
 
 ## Phase 1 — build the loop (this is the whole skill)
 
@@ -137,6 +135,8 @@ When a focused result omits evidence that the diagnosis needs, follow its comple
 
 ## How it meets the rest of Bench
 
+Each repair of a diff-owned red or a review finding starts with this bug path.
+Before you apply the repair, record the diagnosed cause of its failure.
 Before review, the current ticket author owns the debug loop and writes its in-scope repair.
 After review, the ticket's fresh repair session owns the loop and writes the repair.
 Additional delegates perform read-only diagnostic work only.

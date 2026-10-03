@@ -92,7 +92,7 @@ func TestImplementationContinuation(t *testing.T) {
 		},
 		"implementation continuation: craft-line dropped the debug route": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
-			needle: "After reassessment, the ticket author can invoke `$bench-debug`.",
+			needle: "[Debug integration](../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) owns the debug step of each repair.",
 		},
 		"implementation continuation: craft-delegate restored its copy of the diagnostic helper boundary that the operating guide owns": {
 			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "",
