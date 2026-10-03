@@ -243,7 +243,9 @@ A pinned native sandbox probe receives successful socket-fixture feedback withou
 
 The full frozen-repository feedback probe returns a handoff lock timeout correctly.
 The eighth cycle preserves caller GOFLAGS after a regression proves that private-home setup lost the host concurrency limits.
-Full qualification remains pending for that repair.
+The repaired native feedback gate passes; its independent final gate fails on a separate frozen landing fixture.
+Both failing fixtures pass three isolated executions each.
+The retry policy stops further aggregate retries with four approved repair cycles remaining.
 These observations qualify execution behavior only; they do not measure Jev selection or task quality.
 
 Source: `benchmark/cycle-seven.md:1`, `benchmark/cycle-eight.md:1`, and their preserved local evidence roots.

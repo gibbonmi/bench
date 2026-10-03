@@ -1,387 +1,474 @@
 {
-  "cycle": 6,
-  "status": "offline repairs verified; native full-gate qualification blocked",
+  "cycle": 8,
+  "status": "offline regressions pass; native feedback green; independent final gate red on inherited fixture",
   "paid_model_calls_during_repair": 0,
   "source_sha256": {
-    "codex_adapter.py": "b95a4566613808af5ed1f58ffeaabd255c1bb8700c007a07d031767b073622bd",
-    "evidence.py": "db9011e3264cb604ba8b3d6a5cb6f0e7071a4df85f3a75005e7108b7608ffdcb",
-    "execution.py": "9fe3408e18a6a54d1573566928a6d3dafd6212a97185c3f49866b671b5fa075a",
-    "integrity.py": "ee9504564342c808c2290e5ab096a361db59b49d3e98cf1ef7d3c41fa972a5ea",
-    "jev_http.py": "2c2759b06fc13bfc79d3728fefccaa9545b28f824410e42017696ceab6409a9e",
+    "execution.py": "de36f6f5928ca439b9e5767de00258a0d63660c0b019d53be382034a1bcaf887",
+    "runner.py": "027ebcf9c41974e84b0c9678080761072b34d0e6b95117ddd266cd22076ca8d7",
     "report.py": "7b38d3882c52160c92614d1fe56dccdf18cc62e6ff96c9e38793e983f5bb3685",
-    "runner.py": "76f5b5d5d4d37339331ce9778900e7fa09c25a8584628392315639cbfebd40be",
-    "test_benchmark.py": "9d97b174be25bedb1a958ad4f2467e9a82b3addfbb8aa6f5444fc76eaba66858",
-    "verification.py": "fa7bca7ca12ffed8f36351e20f934dafb8b42d71a3efc8c0ef46e46aefed517d"
+    "codex_adapter.py": "b95a4566613808af5ed1f58ffeaabd255c1bb8700c007a07d031767b073622bd",
+    "integrity.py": "ee9504564342c808c2290e5ab096a361db59b49d3e98cf1ef7d3c41fa972a5ea",
+    "verification.py": "f5a1cd96d774d2045cee6edf097066d833d30d3aaeddc05c0d71a8d30ad54d12",
+    "jev_http.py": "2c2759b06fc13bfc79d3728fefccaa9545b28f824410e42017696ceab6409a9e",
+    "feedback.py": "6f5d538f024b7c84e331e382818bb8a4a59ead50a4a5c3c5c5827626dd074aeb",
+    "test_benchmark.py": "c87efee0c22ec1ee6beee063f6ed854e7379fe1456c4828f66bc24e010e3880f",
+    "evidence.py": "1372907c186c4062a05590dc342f54ca6a0ae5d5cd6c64b56e27c1313efef18b"
   },
-  "regression_command": "python3 -B decisions/jev-advisor/assets/benchmark/test_benchmark.py -v",
-  "native_regression": {
-    "tests_passed": 43,
-    "output_sha256": "19aa1c38932f0f4f1eac5e5b42037d4d4fe67d1cbc3ba8be5bc92737fde8332f",
-    "command_file": ".logs/jev-cycle-six/native-tests-command.json"
+  "standalone_regression": {
+    "tests_passed": 46,
+    "command": "python3 -B decisions/jev-advisor/assets/benchmark/test_benchmark.py -v",
+    "output": "/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-eight/suite-46.out",
+    "output_sha256": "1255024e20c48fee06d7ecf96cdc4e47be77f207670c606c57d986d976665763"
   },
-  "mutations": [
-    {
-      "mutation": "native-metadata",
-      "file": "verification.py",
-      "test": "test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt",
+  "cycle_seven_mutations": {
+    "request-validation": {
+      "command": [
+        "python3",
+        "-B",
+        "/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-seven/mutations/request-validation/test_benchmark.py",
+        "BenchmarkTests.test_feedback_refuses_command_injection_without_running_it",
+        "-v"
+      ],
       "exit_code": 1,
-      "output": "test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt (__main__.BenchmarkTests.test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt) ... FAIL\n\n======================================================================\nFAIL: test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt (__main__.BenchmarkTests.test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/test_benchmark.py\", line 367, in test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt\n    self.assertEqual(first.returncode, 0, first.stderr)\nAssertionError: 1 != 0 : Traceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/verification.py\", line 130, in <module>\n    main()\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/verification.py\", line 121, in main\n    result = ensure_verified(Path(args.source), Path(args.out))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/verification.py\", line 102, in ensure_verified\n    result = verified_result(directory)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/verification.py\", line 85, in verified_result\n    result = read(directory / 'result.json')\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/evidence.py\", line 51, in read\n    return json.loads(Path(path).read_text())\n                      ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1029, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1015, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmp4rs1aax_/verification/.agents/result.json'\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.105s\n\nFAILED (failures=1)\n"
+      "assertion_red": true
     },
-    {
-      "mutation": "child-home",
-      "file": "verification.py",
-      "test": "test_verifier_owns_cache_writes_outside_authored_source",
+    "task-deadline": {
+      "command": [
+        "python3",
+        "-B",
+        "/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-seven/mutations/task-deadline/test_benchmark.py",
+        "BenchmarkTests.test_feedback_cannot_extend_task_timeout",
+        "-v"
+      ],
       "exit_code": 1,
-      "output": "test_verifier_owns_cache_writes_outside_authored_source (__main__.BenchmarkTests.test_verifier_owns_cache_writes_outside_authored_source) ... FAIL\n\n======================================================================\nFAIL: test_verifier_owns_cache_writes_outside_authored_source (__main__.BenchmarkTests.test_verifier_owns_cache_writes_outside_authored_source)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/child-home/test_benchmark.py\", line 389, in test_verifier_owns_cache_writes_outside_authored_source\n    self.assertEqual(result['status'], 'completed',\nAssertionError: 'failed' != 'completed'\n- failed\n+ completed\n : Traceback (most recent call last):\n  File \"/tmp/tmpwqk0dwxq/cache_probe.py\", line 4, in <module>\n    assert pathlib.Path(os.environ['EXPECTED_OUTPUT']) in p.parents, key\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: HOME\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.374s\n\nFAILED (failures=1)\n"
-    },
-    {
-      "mutation": "go-settings",
-      "file": "verification.py",
-      "test": "test_verifier_owns_cache_writes_outside_authored_source",
-      "exit_code": 1,
-      "output": "test_verifier_owns_cache_writes_outside_authored_source (__main__.BenchmarkTests.test_verifier_owns_cache_writes_outside_authored_source) ... go: downloading go1.25.14 (linux/amd64)\nFAIL\n\n======================================================================\nFAIL: test_verifier_owns_cache_writes_outside_authored_source (__main__.BenchmarkTests.test_verifier_owns_cache_writes_outside_authored_source)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/go-settings/test_benchmark.py\", line 400, in test_verifier_owns_cache_writes_outside_authored_source\n    self.assertEqual(settings, dict(expected, GOPROXY='off'))\nAssertionError: {'GOMODCACHE': '/tmp/tmpf1xbx6cv/verification/gate-jdx8dhs[141 chars]ect'} != {'GOMODCACHE': '/home/mgibs/go/pkg/mod', 'GOPATH': '/home/[23 chars]off'}\n- {'GOMODCACHE': '/tmp/tmpf1xbx6cv/verification/gate-jdx8dhsk/runtime/home/go/pkg/mod',\n-  'GOPATH': '/tmp/tmpf1xbx6cv/verification/gate-jdx8dhsk/runtime/home/go',\n-  'GOPROXY': 'https://proxy.golang.org,direct'}\n+ {'GOMODCACHE': '/home/mgibs/go/pkg/mod',\n+  'GOPATH': '/home/mgibs/go',\n+  'GOPROXY': 'off'}\n\n----------------------------------------------------------------------\nRan 1 test in 6.528s\n\nFAILED (failures=1)\n"
-    },
-    {
-      "mutation": "phase-rescue",
-      "file": "runner.py",
-      "test": "test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate",
-      "exit_code": 1,
-      "output": "test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate (__main__.BenchmarkTests.test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate) ... FAIL\n\n======================================================================\nFAIL: test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate (__main__.BenchmarkTests.test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/phase-rescue/test_benchmark.py\", line 655, in test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate\n    self.assertEqual(assurance_status(response, packet, []), 'completed')\nAssertionError: 'invalid_rescue_evidence' != 'completed'\n- invalid_rescue_evidence\n+ completed\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.096s\n\nFAILED (failures=1)\n"
-    },
-    {
-      "mutation": "guidance-validation",
-      "file": "evidence.py",
-      "test": "test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate",
-      "exit_code": 1,
-      "output": "test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate (__main__.BenchmarkTests.test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate) ... FAIL\n\n======================================================================\nFAIL: test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate (__main__.BenchmarkTests.test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/guidance-validation/test_benchmark.py\", line 659, in test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate\n    with self.assertRaisesRegex(ValueError, 'additional guidance differs'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.107s\n\nFAILED (failures=1)\n"
+      "assertion_red": true
     }
-  ],
-  "additional_red": {
-    "case": "Go telemetry remains enabled in private home",
-    "record": "red-records/native-session-records.json",
-    "green": "test_verifier_owns_cache_writes_outside_authored_source in final native suite"
   },
-  "context_validation": {
-    "freeze_sha256": "df6acd003baaaf91fc1338362a1fba942db751f29178f2d16b81bcd8ce5553ee",
-    "packets": [
-      {
-        "additional_guidance": [
-          "bench-assess",
-          "bench-debug",
-          "bench-deepen",
-          "bench-drain",
-          "bench-final-check",
-          "bench-implement-spec",
-          "bench-review-implementation",
-          "bench-setup-repo",
-          "bench-shape-idea",
-          "bench-update-kit",
-          "bench-what-next",
-          "bench-write-spec",
-          "bench"
-        ],
-        "context": {
-          "limits": {
-            "request_bytes": 240000,
-            "state_and_longest_question_bytes": 120000
-          },
-          "observed": {
-            "request_bytes": 141746,
-            "state_and_longest_question_bytes": 112156
-          },
-          "provider_token_limits": {
-            "request": 64000,
-            "state_and_longest_question": 32000
-          },
-          "source": "https://docs.typesafe.ai/models.md",
-          "token_fit": "not certified; conservative byte refusal based on English-text guidance"
-        },
-        "task": "assessment-doc"
-      },
-      {
-        "additional_guidance": [
-          "bench-assess",
-          "bench-debug",
-          "bench-deepen",
-          "bench-drain",
-          "bench-final-check",
-          "bench-implement-spec",
-          "bench-review-implementation",
-          "bench-setup-repo",
-          "bench-shape-idea",
-          "bench-update-kit",
-          "bench-what-next",
-          "bench-write-spec",
-          "bench"
-        ],
-        "context": {
-          "limits": {
-            "request_bytes": 240000,
-            "state_and_longest_question_bytes": 120000
-          },
-          "observed": {
-            "request_bytes": 148838,
-            "state_and_longest_question_bytes": 119228
-          },
-          "provider_token_limits": {
-            "request": 64000,
-            "state_and_longest_question": 32000
-          },
-          "source": "https://docs.typesafe.ai/models.md",
-          "token_fit": "not certified; conservative byte refusal based on English-text guidance"
-        },
-        "task": "assessment-unknown"
-      },
-      {
-        "additional_guidance": [
-          "bench-assess",
-          "bench-debug",
-          "bench-deepen",
-          "bench-drain",
-          "bench-final-check",
-          "bench-implement-spec",
-          "bench-review-implementation",
-          "bench-setup-repo",
-          "bench-shape-idea",
-          "bench-update-kit",
-          "bench-what-next",
-          "bench-write-spec",
-          "bench"
-        ],
-        "context": {
-          "limits": {
-            "request_bytes": 240000,
-            "state_and_longest_question_bytes": 120000
-          },
-          "observed": {
-            "request_bytes": 144469,
-            "state_and_longest_question_bytes": 114791
-          },
-          "provider_token_limits": {
-            "request": 64000,
-            "state_and_longest_question": 32000
-          },
-          "source": "https://docs.typesafe.ai/models.md",
-          "token_fit": "not certified; conservative byte refusal based on English-text guidance"
-        },
-        "task": "consumers-count"
-      },
-      {
-        "additional_guidance": [
-          "bench-assess",
-          "bench-debug",
-          "bench-deepen",
-          "bench-drain",
-          "bench-final-check",
-          "bench-implement-spec",
-          "bench-review-implementation",
-          "bench-setup-repo",
-          "bench-shape-idea",
-          "bench-update-kit",
-          "bench-what-next",
-          "bench-write-spec",
-          "bench"
-        ],
-        "context": {
-          "limits": {
-            "request_bytes": 240000,
-            "state_and_longest_question_bytes": 120000
-          },
-          "observed": {
-            "request_bytes": 127500,
-            "state_and_longest_question_bytes": 97926
-          },
-          "provider_token_limits": {
-            "request": 64000,
-            "state_and_longest_question": 32000
-          },
-          "source": "https://docs.typesafe.ai/models.md",
-          "token_fit": "not certified; conservative byte refusal based on English-text guidance"
-        },
-        "task": "gate-authority-audit"
-      },
-      {
-        "additional_guidance": [
-          "bench-assess",
-          "bench-debug",
-          "bench-deepen",
-          "bench-drain",
-          "bench-final-check",
-          "bench-implement-spec",
-          "bench-review-implementation",
-          "bench-setup-repo",
-          "bench-shape-idea",
-          "bench-update-kit",
-          "bench-what-next",
-          "bench-write-spec",
-          "bench"
-        ],
-        "context": {
-          "limits": {
-            "request_bytes": 240000,
-            "state_and_longest_question_bytes": 120000
-          },
-          "observed": {
-            "request_bytes": 146578,
-            "state_and_longest_question_bytes": 116988
-          },
-          "provider_token_limits": {
-            "request": 64000,
-            "state_and_longest_question": 32000
-          },
-          "source": "https://docs.typesafe.ai/models.md",
-          "token_fit": "not certified; conservative byte refusal based on English-text guidance"
-        },
-        "task": "handoff-comment"
-      },
-      {
-        "additional_guidance": [
-          "bench-assess",
-          "bench-debug",
-          "bench-deepen",
-          "bench-drain",
-          "bench-final-check",
-          "bench-implement-spec",
-          "bench-review-implementation",
-          "bench-setup-repo",
-          "bench-shape-idea",
-          "bench-update-kit",
-          "bench-what-next",
-          "bench-write-spec",
-          "bench"
-        ],
-        "context": {
-          "limits": {
-            "request_bytes": 240000,
-            "state_and_longest_question_bytes": 120000
-          },
-          "observed": {
-            "request_bytes": 147189,
-            "state_and_longest_question_bytes": 117595
-          },
-          "provider_token_limits": {
-            "request": 64000,
-            "state_and_longest_question": 32000
-          },
-          "source": "https://docs.typesafe.ai/models.md",
-          "token_fit": "not certified; conservative byte refusal based on English-text guidance"
-        },
-        "task": "handoff-terms"
-      },
-      {
-        "additional_guidance": [
-          "bench-assess",
-          "bench-debug",
-          "bench-deepen",
-          "bench-drain",
-          "bench-final-check",
-          "bench-implement-spec",
-          "bench-review-implementation",
-          "bench-setup-repo",
-          "bench-shape-idea",
-          "bench-update-kit",
-          "bench-what-next",
-          "bench-write-spec",
-          "bench"
-        ],
-        "context": {
-          "limits": {
-            "request_bytes": 240000,
-            "state_and_longest_question_bytes": 120000
-          },
-          "observed": {
-            "request_bytes": 145734,
-            "state_and_longest_question_bytes": 116154
-          },
-          "provider_token_limits": {
-            "request": 64000,
-            "state_and_longest_question": 32000
-          },
-          "source": "https://docs.typesafe.ai/models.md",
-          "token_fit": "not certified; conservative byte refusal based on English-text guidance"
-        },
-        "task": "readme-guide"
-      },
-      {
-        "additional_guidance": [
-          "bench-assess",
-          "bench-debug",
-          "bench-deepen",
-          "bench-drain",
-          "bench-final-check",
-          "bench-implement-spec",
-          "bench-review-implementation",
-          "bench-setup-repo",
-          "bench-shape-idea",
-          "bench-update-kit",
-          "bench-what-next",
-          "bench-write-spec",
-          "bench"
-        ],
-        "context": {
-          "limits": {
-            "request_bytes": 240000,
-            "state_and_longest_question_bytes": 120000
-          },
-          "observed": {
-            "request_bytes": 143077,
-            "state_and_longest_question_bytes": 113455
-          },
-          "provider_token_limits": {
-            "request": 64000,
-            "state_and_longest_question": 32000
-          },
-          "source": "https://docs.typesafe.ai/models.md",
-          "token_fit": "not certified; conservative byte refusal based on English-text guidance"
-        },
-        "task": "skill-trigger-audit"
+  "cycle_eight_red": "/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-eight/goflags-red.out",
+  "native_permission_probe": {
+    "evidence": "/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-seven/tmp4qh6a0f4",
+    "result": {
+      "attempts": [
+        "task"
+      ],
+      "changed": [],
+      "clock": "monotonic_ns",
+      "condition": "baseline",
+      "elapsed_ns": 998807498,
+      "ended_at": "2026-10-03T11:06:26.860231+00:00",
+      "outside_write_fence": [],
+      "quality": null,
+      "repeat": 0,
+      "rescued_skills": [],
+      "self_review_claims": [
+        "Offline native feedback probe."
+      ],
+      "started_at": "2026-10-03T11:06:25.861420+00:00",
+      "status": "completed",
+      "task": "case",
+      "timing_scope": "workspace setup through selection, task, and artifact capture",
+      "verification_claims": [
+        "{\n  \"elapsed_ns\": 33553677,\n  \"input_sha256\": \"9eecdcb917a7a0d92514edbdf4fd1e48e2662346d269f25eea8cd703248a98a7\",\n  \"record\": \"gate-7wj3xkse\",\n  \"status\": \"completed\"\n}\n\nsocket-gate-pass\n"
+      ],
+      "verification_result": {
+        "elapsed_ns": 33396120,
+        "input_sha256": "9eecdcb917a7a0d92514edbdf4fd1e48e2662346d269f25eea8cd703248a98a7",
+        "record": "gate-d8o7ukou",
+        "status": "completed"
       }
-    ],
-    "source_revision": "c929c500501bc86606a0dae55923319a34e685d0"
+    }
   },
-  "native_full_gate": {
-    "status": "failed",
-    "exit_code": 1,
-    "phase": "gate",
-    "elapsed_ns": 288093969933,
-    "input_sha256": "091daebacdb25d26230d20bc6b49660003a97ca09208cbd7b27a61a642f07a16",
-    "bootstrap_status": "completed",
-    "verifier_sha256": "d3fe21046e30c8066a4d78af7a45c37f00caf8067095d5994b30194b1961507f",
-    "source_revision": "c929c500501bc86606a0dae55923319a34e685d0",
-    "limits": [
-      "Unix socket operations denied",
-      "TCP fixture listener denied",
-      "handoff concurrency lock timeout; unclassified"
-    ],
-    "note": "Observed before telemetry-only cleanup correction and local-variable refactor; no socket-permission change follows."
+  "native_full_feedback_cycle_seven": {
+    "evidence": "/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-seven/native-full-feedback",
+    "qualification_only": true,
+    "result": {
+      "attempts": [
+        "task"
+      ],
+      "changed": [],
+      "clock": "monotonic_ns",
+      "condition": "baseline",
+      "elapsed_ns": 223844004132,
+      "ended_at": "2026-10-03T11:08:25.275173+00:00",
+      "outside_write_fence": [],
+      "quality": null,
+      "repeat": 0,
+      "rescued_skills": null,
+      "self_review_claims": null,
+      "started_at": "2026-10-03T11:04:50.582173+00:00",
+      "status": "failed",
+      "task": "assessment-doc",
+      "timing_scope": "workspace setup through selection, task, and artifact capture",
+      "verification_claims": null
+    }
+  },
+  "proposed_config": {
+    "path": "/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-eight/proposed-config.json",
+    "sha256": "77e1598a7b090f4bbffca4af42599f659fb3c613c65c921f36ca1fc363574de7",
+    "status": "unapproved; independent review pending",
+    "trials": 32,
+    "max_adapter_calls": 64
   },
   "prior_verification": {
-    "regression_command": "python3 -B decisions/jev-advisor/assets/benchmark/test_benchmark.py -v",
-    "tests_passed": 40,
+    "cycle": 6,
+    "status": "offline repairs verified; native full-gate qualification blocked",
+    "paid_model_calls_during_repair": 0,
     "source_sha256": {
       "codex_adapter.py": "b95a4566613808af5ed1f58ffeaabd255c1bb8700c007a07d031767b073622bd",
-      "evidence.py": "f706374a2c646f7a0adcc8dde7490fe250811220dbdc67dd8a01dc2fe8f56e8c",
+      "evidence.py": "db9011e3264cb604ba8b3d6a5cb6f0e7071a4df85f3a75005e7108b7608ffdcb",
       "execution.py": "9fe3408e18a6a54d1573566928a6d3dafd6212a97185c3f49866b671b5fa075a",
       "integrity.py": "ee9504564342c808c2290e5ab096a361db59b49d3e98cf1ef7d3c41fa972a5ea",
       "jev_http.py": "2c2759b06fc13bfc79d3728fefccaa9545b28f824410e42017696ceab6409a9e",
       "report.py": "7b38d3882c52160c92614d1fe56dccdf18cc62e6ff96c9e38793e983f5bb3685",
-      "runner.py": "3dfa6b4bc540336b9aa982f3c9cb8a6a2bad105d859ff5d0b13eb91f5310163c",
-      "test_benchmark.py": "aa7400e007d82e60af2dd6d0118df83e5b94374cf7763d9907c908f4d7120418",
-      "verification.py": "2b7e73ad769896cf8deea88aed73fd40b793a527ba1767892284ddfe1a53f6a6"
+      "runner.py": "76f5b5d5d4d37339331ce9778900e7fa09c25a8584628392315639cbfebd40be",
+      "test_benchmark.py": "9d97b174be25bedb1a958ad4f2467e9a82b3addfbb8aa6f5444fc76eaba66858",
+      "verification.py": "fa7bca7ca12ffed8f36351e20f934dafb8b42d71a3efc8c0ef46e46aefed517d"
+    },
+    "regression_command": "python3 -B decisions/jev-advisor/assets/benchmark/test_benchmark.py -v",
+    "native_regression": {
+      "tests_passed": 43,
+      "output_sha256": "19aa1c38932f0f4f1eac5e5b42037d4d4fe67d1cbc3ba8be5bc92737fde8332f",
+      "command_file": ".logs/jev-cycle-six/native-tests-command.json"
     },
     "mutations": [
       {
-        "mutation": "overwrite-interruption-with-fence-failure",
-        "file": "runner.py",
-        "test": "test_interruption_remains_authoritative_after_outside_write",
+        "mutation": "native-metadata",
+        "file": "verification.py",
+        "test": "test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt",
         "exit_code": 1,
-        "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nF\n======================================================================\nFAIL: test_interruption_remains_authoritative_after_outside_write (__main__.BenchmarkTests.test_interruption_remains_authoritative_after_outside_write)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair5-mutation-uzryl55_/test_benchmark.py\", line 337, in test_interruption_remains_authoritative_after_outside_write\n    self.assertEqual(result['trials'], 1, 'later calls ran after the task interruption')\nAssertionError: 4 != 1 : later calls ran after the task interruption\n\n----------------------------------------------------------------------\nRan 1 test in 1.399s\n\nFAILED (failures=1)\n"
+        "output": "test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt (__main__.BenchmarkTests.test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt) ... FAIL\n\n======================================================================\nFAIL: test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt (__main__.BenchmarkTests.test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/test_benchmark.py\", line 367, in test_verifier_cli_accepts_native_metadata_and_reuses_its_receipt\n    self.assertEqual(first.returncode, 0, first.stderr)\nAssertionError: 1 != 0 : Traceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/verification.py\", line 130, in <module>\n    main()\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/verification.py\", line 121, in main\n    result = ensure_verified(Path(args.source), Path(args.out))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/verification.py\", line 102, in ensure_verified\n    result = verified_result(directory)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/verification.py\", line 85, in verified_result\n    result = read(directory / 'result.json')\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/native-metadata/evidence.py\", line 51, in read\n    return json.loads(Path(path).read_text())\n                      ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1029, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1015, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmp4rs1aax_/verification/.agents/result.json'\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.105s\n\nFAILED (failures=1)\n"
+      },
+      {
+        "mutation": "child-home",
+        "file": "verification.py",
+        "test": "test_verifier_owns_cache_writes_outside_authored_source",
+        "exit_code": 1,
+        "output": "test_verifier_owns_cache_writes_outside_authored_source (__main__.BenchmarkTests.test_verifier_owns_cache_writes_outside_authored_source) ... FAIL\n\n======================================================================\nFAIL: test_verifier_owns_cache_writes_outside_authored_source (__main__.BenchmarkTests.test_verifier_owns_cache_writes_outside_authored_source)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/child-home/test_benchmark.py\", line 389, in test_verifier_owns_cache_writes_outside_authored_source\n    self.assertEqual(result['status'], 'completed',\nAssertionError: 'failed' != 'completed'\n- failed\n+ completed\n : Traceback (most recent call last):\n  File \"/tmp/tmpwqk0dwxq/cache_probe.py\", line 4, in <module>\n    assert pathlib.Path(os.environ['EXPECTED_OUTPUT']) in p.parents, key\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: HOME\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.374s\n\nFAILED (failures=1)\n"
+      },
+      {
+        "mutation": "go-settings",
+        "file": "verification.py",
+        "test": "test_verifier_owns_cache_writes_outside_authored_source",
+        "exit_code": 1,
+        "output": "test_verifier_owns_cache_writes_outside_authored_source (__main__.BenchmarkTests.test_verifier_owns_cache_writes_outside_authored_source) ... go: downloading go1.25.14 (linux/amd64)\nFAIL\n\n======================================================================\nFAIL: test_verifier_owns_cache_writes_outside_authored_source (__main__.BenchmarkTests.test_verifier_owns_cache_writes_outside_authored_source)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/go-settings/test_benchmark.py\", line 400, in test_verifier_owns_cache_writes_outside_authored_source\n    self.assertEqual(settings, dict(expected, GOPROXY='off'))\nAssertionError: {'GOMODCACHE': '/tmp/tmpf1xbx6cv/verification/gate-jdx8dhs[141 chars]ect'} != {'GOMODCACHE': '/home/mgibs/go/pkg/mod', 'GOPATH': '/home/[23 chars]off'}\n- {'GOMODCACHE': '/tmp/tmpf1xbx6cv/verification/gate-jdx8dhsk/runtime/home/go/pkg/mod',\n-  'GOPATH': '/tmp/tmpf1xbx6cv/verification/gate-jdx8dhsk/runtime/home/go',\n-  'GOPROXY': 'https://proxy.golang.org,direct'}\n+ {'GOMODCACHE': '/home/mgibs/go/pkg/mod',\n+  'GOPATH': '/home/mgibs/go',\n+  'GOPROXY': 'off'}\n\n----------------------------------------------------------------------\nRan 1 test in 6.528s\n\nFAILED (failures=1)\n"
+      },
+      {
+        "mutation": "phase-rescue",
+        "file": "runner.py",
+        "test": "test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate",
+        "exit_code": 1,
+        "output": "test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate (__main__.BenchmarkTests.test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate) ... FAIL\n\n======================================================================\nFAIL: test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate (__main__.BenchmarkTests.test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/phase-rescue/test_benchmark.py\", line 655, in test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate\n    self.assertEqual(assurance_status(response, packet, []), 'completed')\nAssertionError: 'invalid_rescue_evidence' != 'completed'\n- invalid_rescue_evidence\n+ completed\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.096s\n\nFAILED (failures=1)\n"
+      },
+      {
+        "mutation": "guidance-validation",
+        "file": "evidence.py",
+        "test": "test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate",
+        "exit_code": 1,
+        "output": "test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate (__main__.BenchmarkTests.test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate) ... FAIL\n\n======================================================================\nFAIL: test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate (__main__.BenchmarkTests.test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/mgibs/.bench/worktrees/bench-2826441890/983ef0d57a56a64f92d298e601e7f6b3-0813ad99e5f319cafee5b3b7e638773c/.logs/jev-cycle-six/final-mutations/guidance-validation/test_benchmark.py\", line 659, in test_frozen_phase_guidance_can_be_rescued_without_becoming_a_candidate\n    with self.assertRaisesRegex(ValueError, 'additional guidance differs'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.107s\n\nFAILED (failures=1)\n"
       }
     ],
+    "additional_red": {
+      "case": "Go telemetry remains enabled in private home",
+      "record": "red-records/native-session-records.json",
+      "green": "test_verifier_owns_cache_writes_outside_authored_source in final native suite"
+    },
+    "context_validation": {
+      "freeze_sha256": "df6acd003baaaf91fc1338362a1fba942db751f29178f2d16b81bcd8ce5553ee",
+      "packets": [
+        {
+          "additional_guidance": [
+            "bench-assess",
+            "bench-debug",
+            "bench-deepen",
+            "bench-drain",
+            "bench-final-check",
+            "bench-implement-spec",
+            "bench-review-implementation",
+            "bench-setup-repo",
+            "bench-shape-idea",
+            "bench-update-kit",
+            "bench-what-next",
+            "bench-write-spec",
+            "bench"
+          ],
+          "context": {
+            "limits": {
+              "request_bytes": 240000,
+              "state_and_longest_question_bytes": 120000
+            },
+            "observed": {
+              "request_bytes": 141746,
+              "state_and_longest_question_bytes": 112156
+            },
+            "provider_token_limits": {
+              "request": 64000,
+              "state_and_longest_question": 32000
+            },
+            "source": "https://docs.typesafe.ai/models.md",
+            "token_fit": "not certified; conservative byte refusal based on English-text guidance"
+          },
+          "task": "assessment-doc"
+        },
+        {
+          "additional_guidance": [
+            "bench-assess",
+            "bench-debug",
+            "bench-deepen",
+            "bench-drain",
+            "bench-final-check",
+            "bench-implement-spec",
+            "bench-review-implementation",
+            "bench-setup-repo",
+            "bench-shape-idea",
+            "bench-update-kit",
+            "bench-what-next",
+            "bench-write-spec",
+            "bench"
+          ],
+          "context": {
+            "limits": {
+              "request_bytes": 240000,
+              "state_and_longest_question_bytes": 120000
+            },
+            "observed": {
+              "request_bytes": 148838,
+              "state_and_longest_question_bytes": 119228
+            },
+            "provider_token_limits": {
+              "request": 64000,
+              "state_and_longest_question": 32000
+            },
+            "source": "https://docs.typesafe.ai/models.md",
+            "token_fit": "not certified; conservative byte refusal based on English-text guidance"
+          },
+          "task": "assessment-unknown"
+        },
+        {
+          "additional_guidance": [
+            "bench-assess",
+            "bench-debug",
+            "bench-deepen",
+            "bench-drain",
+            "bench-final-check",
+            "bench-implement-spec",
+            "bench-review-implementation",
+            "bench-setup-repo",
+            "bench-shape-idea",
+            "bench-update-kit",
+            "bench-what-next",
+            "bench-write-spec",
+            "bench"
+          ],
+          "context": {
+            "limits": {
+              "request_bytes": 240000,
+              "state_and_longest_question_bytes": 120000
+            },
+            "observed": {
+              "request_bytes": 144469,
+              "state_and_longest_question_bytes": 114791
+            },
+            "provider_token_limits": {
+              "request": 64000,
+              "state_and_longest_question": 32000
+            },
+            "source": "https://docs.typesafe.ai/models.md",
+            "token_fit": "not certified; conservative byte refusal based on English-text guidance"
+          },
+          "task": "consumers-count"
+        },
+        {
+          "additional_guidance": [
+            "bench-assess",
+            "bench-debug",
+            "bench-deepen",
+            "bench-drain",
+            "bench-final-check",
+            "bench-implement-spec",
+            "bench-review-implementation",
+            "bench-setup-repo",
+            "bench-shape-idea",
+            "bench-update-kit",
+            "bench-what-next",
+            "bench-write-spec",
+            "bench"
+          ],
+          "context": {
+            "limits": {
+              "request_bytes": 240000,
+              "state_and_longest_question_bytes": 120000
+            },
+            "observed": {
+              "request_bytes": 127500,
+              "state_and_longest_question_bytes": 97926
+            },
+            "provider_token_limits": {
+              "request": 64000,
+              "state_and_longest_question": 32000
+            },
+            "source": "https://docs.typesafe.ai/models.md",
+            "token_fit": "not certified; conservative byte refusal based on English-text guidance"
+          },
+          "task": "gate-authority-audit"
+        },
+        {
+          "additional_guidance": [
+            "bench-assess",
+            "bench-debug",
+            "bench-deepen",
+            "bench-drain",
+            "bench-final-check",
+            "bench-implement-spec",
+            "bench-review-implementation",
+            "bench-setup-repo",
+            "bench-shape-idea",
+            "bench-update-kit",
+            "bench-what-next",
+            "bench-write-spec",
+            "bench"
+          ],
+          "context": {
+            "limits": {
+              "request_bytes": 240000,
+              "state_and_longest_question_bytes": 120000
+            },
+            "observed": {
+              "request_bytes": 146578,
+              "state_and_longest_question_bytes": 116988
+            },
+            "provider_token_limits": {
+              "request": 64000,
+              "state_and_longest_question": 32000
+            },
+            "source": "https://docs.typesafe.ai/models.md",
+            "token_fit": "not certified; conservative byte refusal based on English-text guidance"
+          },
+          "task": "handoff-comment"
+        },
+        {
+          "additional_guidance": [
+            "bench-assess",
+            "bench-debug",
+            "bench-deepen",
+            "bench-drain",
+            "bench-final-check",
+            "bench-implement-spec",
+            "bench-review-implementation",
+            "bench-setup-repo",
+            "bench-shape-idea",
+            "bench-update-kit",
+            "bench-what-next",
+            "bench-write-spec",
+            "bench"
+          ],
+          "context": {
+            "limits": {
+              "request_bytes": 240000,
+              "state_and_longest_question_bytes": 120000
+            },
+            "observed": {
+              "request_bytes": 147189,
+              "state_and_longest_question_bytes": 117595
+            },
+            "provider_token_limits": {
+              "request": 64000,
+              "state_and_longest_question": 32000
+            },
+            "source": "https://docs.typesafe.ai/models.md",
+            "token_fit": "not certified; conservative byte refusal based on English-text guidance"
+          },
+          "task": "handoff-terms"
+        },
+        {
+          "additional_guidance": [
+            "bench-assess",
+            "bench-debug",
+            "bench-deepen",
+            "bench-drain",
+            "bench-final-check",
+            "bench-implement-spec",
+            "bench-review-implementation",
+            "bench-setup-repo",
+            "bench-shape-idea",
+            "bench-update-kit",
+            "bench-what-next",
+            "bench-write-spec",
+            "bench"
+          ],
+          "context": {
+            "limits": {
+              "request_bytes": 240000,
+              "state_and_longest_question_bytes": 120000
+            },
+            "observed": {
+              "request_bytes": 145734,
+              "state_and_longest_question_bytes": 116154
+            },
+            "provider_token_limits": {
+              "request": 64000,
+              "state_and_longest_question": 32000
+            },
+            "source": "https://docs.typesafe.ai/models.md",
+            "token_fit": "not certified; conservative byte refusal based on English-text guidance"
+          },
+          "task": "readme-guide"
+        },
+        {
+          "additional_guidance": [
+            "bench-assess",
+            "bench-debug",
+            "bench-deepen",
+            "bench-drain",
+            "bench-final-check",
+            "bench-implement-spec",
+            "bench-review-implementation",
+            "bench-setup-repo",
+            "bench-shape-idea",
+            "bench-update-kit",
+            "bench-what-next",
+            "bench-write-spec",
+            "bench"
+          ],
+          "context": {
+            "limits": {
+              "request_bytes": 240000,
+              "state_and_longest_question_bytes": 120000
+            },
+            "observed": {
+              "request_bytes": 143077,
+              "state_and_longest_question_bytes": 113455
+            },
+            "provider_token_limits": {
+              "request": 64000,
+              "state_and_longest_question": 32000
+            },
+            "source": "https://docs.typesafe.ai/models.md",
+            "token_fit": "not certified; conservative byte refusal based on English-text guidance"
+          },
+          "task": "skill-trigger-audit"
+        }
+      ],
+      "source_revision": "c929c500501bc86606a0dae55923319a34e685d0"
+    },
+    "native_full_gate": {
+      "status": "failed",
+      "exit_code": 1,
+      "phase": "gate",
+      "elapsed_ns": 288093969933,
+      "input_sha256": "091daebacdb25d26230d20bc6b49660003a97ca09208cbd7b27a61a642f07a16",
+      "bootstrap_status": "completed",
+      "verifier_sha256": "d3fe21046e30c8066a4d78af7a45c37f00caf8067095d5994b30194b1961507f",
+      "source_revision": "c929c500501bc86606a0dae55923319a34e685d0",
+      "limits": [
+        "Unix socket operations denied",
+        "TCP fixture listener denied",
+        "handoff concurrency lock timeout; unclassified"
+      ],
+      "note": "Observed before telemetry-only cleanup correction and local-variable refactor; no socket-permission change follows."
+    },
     "prior_verification": {
-      "paid_model_calls_during_repair": 0,
       "regression_command": "python3 -B decisions/jev-advisor/assets/benchmark/test_benchmark.py -v",
-      "tests_passed": 39,
+      "tests_passed": 40,
       "source_sha256": {
         "codex_adapter.py": "b95a4566613808af5ed1f58ffeaabd255c1bb8700c007a07d031767b073622bd",
         "evidence.py": "f706374a2c646f7a0adcc8dde7490fe250811220dbdc67dd8a01dc2fe8f56e8c",
@@ -389,168 +476,201 @@
         "integrity.py": "ee9504564342c808c2290e5ab096a361db59b49d3e98cf1ef7d3c41fa972a5ea",
         "jev_http.py": "2c2759b06fc13bfc79d3728fefccaa9545b28f824410e42017696ceab6409a9e",
         "report.py": "7b38d3882c52160c92614d1fe56dccdf18cc62e6ff96c9e38793e983f5bb3685",
-        "runner.py": "14e7c5d47bf437681551f5b9f6711b31d7123be0285afbcc16e9a1717a9e62e1",
-        "test_benchmark.py": "b7d53fb9594bb3ebc25800d5a10be7a96384711ed53d7d38bbe6263ed6c179db",
+        "runner.py": "3dfa6b4bc540336b9aa982f3c9cb8a6a2bad105d859ff5d0b13eb91f5310163c",
+        "test_benchmark.py": "aa7400e007d82e60af2dd6d0118df83e5b94374cf7763d9907c908f4d7120418",
         "verification.py": "2b7e73ad769896cf8deea88aed73fd40b793a527ba1767892284ddfe1a53f6a6"
       },
       "mutations": [
         {
-          "mutation": "drop-safe-links",
-          "file": "evidence.py",
-          "test": "test_committed_safe_links_survive_freeze_and_tampering_is_refused",
-          "exit_code": 1,
-          "output": "F\n======================================================================\nFAIL: test_committed_safe_links_survive_freeze_and_tampering_is_refused (__main__.BenchmarkTests.test_committed_safe_links_survive_freeze_and_tampering_is_refused)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-2i4h813e/test_benchmark.py\", line 70, in test_committed_safe_links_survive_freeze_and_tampering_is_refused\n    self.assertTrue(copied.is_symlink(), 'freeze lost the tracked harness skill link')\nAssertionError: False is not true : freeze lost the tracked harness skill link\n\n----------------------------------------------------------------------\nRan 1 test in 0.041s\n\nFAILED (failures=1)\n"
-        },
-        {
-          "mutation": "accept-unsafe-links",
-          "file": "evidence.py",
-          "test": "test_unsafe_committed_link_refuses_freeze",
-          "exit_code": 1,
-          "output": "F\n======================================================================\nFAIL: test_unsafe_committed_link_refuses_freeze (__main__.BenchmarkTests.test_unsafe_committed_link_refuses_freeze)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-lfx9iqgh/test_benchmark.py\", line 81, in test_unsafe_committed_link_refuses_freeze\n    with self.assertRaisesRegex(ValueError, 'unsafe snapshot link'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.037s\n\nFAILED (failures=1)\n"
-        },
-        {
-          "mutation": "skip-baseline-stop",
+          "mutation": "overwrite-interruption-with-fence-failure",
           "file": "runner.py",
-          "test": "test_verification_artifacts_are_separate_and_baseline_red_stops_calls",
+          "test": "test_interruption_remains_authoritative_after_outside_write",
           "exit_code": 1,
-          "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nE\n======================================================================\nERROR: test_verification_artifacts_are_separate_and_baseline_red_stops_calls (__main__.BenchmarkTests.test_verification_artifacts_are_separate_and_baseline_red_stops_calls)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-7ccgw43j/test_benchmark.py\", line 309, in test_verification_artifacts_are_separate_and_baseline_red_stops_calls\n    self.assertEqual(stopped['stopped'], 'invalid_baseline')\n                     ~~~~~~~^^^^^^^^^^^\nKeyError: 'stopped'\n\n----------------------------------------------------------------------\nRan 1 test in 1.251s\n\nFAILED (errors=1)\n"
-        },
-        {
-          "mutation": "reuse-task-receipt",
-          "file": "verification.py",
-          "test": "test_verification_receipt_cannot_replace_independent_final_gate",
-          "exit_code": 1,
-          "output": "F\n======================================================================\nFAIL: test_verification_receipt_cannot_replace_independent_final_gate (__main__.BenchmarkTests.test_verification_receipt_cannot_replace_independent_final_gate)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-74u15fm1/test_benchmark.py\", line 348, in test_verification_receipt_cannot_replace_independent_final_gate\n    self.assertNotEqual(first['record'], second['record'])\nAssertionError: 'gate-6wqfyl0e' == 'gate-6wqfyl0e'\n\n----------------------------------------------------------------------\nRan 1 test in 0.036s\n\nFAILED (failures=1)\n"
-        },
-        {
-          "mutation": "accept-rewritten-gate-input",
-          "file": "verification.py",
-          "test": "test_gate_cannot_grade_rewritten_source",
-          "exit_code": 1,
-          "output": "F\n======================================================================\nFAIL: test_gate_cannot_grade_rewritten_source (__main__.BenchmarkTests.test_gate_cannot_grade_rewritten_source)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-ozf02wwt/test_benchmark.py\", line 358, in test_gate_cannot_grade_rewritten_source\n    self.assertEqual(result['status'], 'invalid_verification')\nAssertionError: 'completed' != 'invalid_verification'\n- completed\n+ invalid_verification\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.032s\n\nFAILED (failures=1)\n"
-        },
-        {
-          "mutation": "price-unobserved-usage-as-complete",
-          "file": "report.py",
-          "test": "test_nested_native_usage_is_never_reported_as_complete",
-          "exit_code": 1,
-          "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nF\n======================================================================\nFAIL: test_nested_native_usage_is_never_reported_as_complete (__main__.BenchmarkTests.test_nested_native_usage_is_never_reported_as_complete)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-zwqhaoh0/test_benchmark.py\", line 183, in test_nested_native_usage_is_never_reported_as_complete\n    self.assertTrue(attempt['cost'].get('other'), 'unobserved native usage priced as complete')\nAssertionError: None is not true : unobserved native usage priced as complete\n\n----------------------------------------------------------------------\nRan 1 test in 0.662s\n\nFAILED (failures=1)\n"
-        },
-        {
-          "mutation": "lose-interruption-status",
-          "file": "execution.py",
-          "test": "test_interrupt_retains_attempt_result",
-          "exit_code": 1,
-          "output": "F\n======================================================================\nFAIL: test_interrupt_retains_attempt_result (__main__.BenchmarkTests.test_interrupt_retains_attempt_result)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-knrgfomk/test_benchmark.py\", line 376, in test_interrupt_retains_attempt_result\n    self.assertEqual(result['status'], 'interrupted')\nAssertionError: 'failed' != 'interrupted'\n- failed\n+ interrupted\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.005s\n\nFAILED (failures=1)\n"
-        },
-        {
-          "mutation": "lose-incomplete-native-usage",
-          "file": "codex_adapter.py",
-          "test": "test_interrupted_native_capture_keeps_known_and_unknown_usage",
-          "exit_code": 1,
-          "output": "E\n======================================================================\nERROR: test_interrupted_native_capture_keeps_known_and_unknown_usage (__main__.BenchmarkTests.test_interrupted_native_capture_keeps_known_and_unknown_usage)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-peg_gquf/test_benchmark.py\", line 221, in test_interrupted_native_capture_keeps_known_and_unknown_usage\n    self.assertTrue(result['assessment_usage'][-1]['usage']['unknown'])\n                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^\nKeyError: 'unknown'\n\n----------------------------------------------------------------------\nRan 1 test in 0.003s\n\nFAILED (errors=1)\n"
-        },
-        {
-          "mutation": "trust-mutable-preflight",
-          "file": "integrity.py",
-          "test": "test_every_report_refuses_changed_scored_evidence",
-          "exit_code": 1,
-          "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nFFFFFFFFFF\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/result.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e731d00>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/result.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e731da0>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/result.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e744220>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/stdout', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e7440e0>)\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/stdout', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e745260>)\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/stdout', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e745440>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/workspace/.logs/gate-fixture.out', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e745120>)\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/workspace/.logs/gate-fixture.out', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e744fe0>)\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/workspace/.logs/gate-fixture.out', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e744400>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 457, in test_every_report_refuses_changed_scored_evidence\n    self.assertFalse((self.root / 'review').exists())\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 1.367s\n\nFAILED (failures=10)\n"
+          "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nF\n======================================================================\nFAIL: test_interruption_remains_authoritative_after_outside_write (__main__.BenchmarkTests.test_interruption_remains_authoritative_after_outside_write)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair5-mutation-uzryl55_/test_benchmark.py\", line 337, in test_interruption_remains_authoritative_after_outside_write\n    self.assertEqual(result['trials'], 1, 'later calls ran after the task interruption')\nAssertionError: 4 != 1 : later calls ran after the task interruption\n\n----------------------------------------------------------------------\nRan 1 test in 1.399s\n\nFAILED (failures=1)\n"
         }
       ],
       "prior_verification": {
-        "paid_model_calls": 0,
+        "paid_model_calls_during_repair": 0,
         "regression_command": "python3 -B decisions/jev-advisor/assets/benchmark/test_benchmark.py -v",
-        "tests_passed": 28,
+        "tests_passed": 39,
         "source_sha256": {
-          "codex_adapter.py": "d784c8afd1ddbe8a71dec6e37dc47e5655da1d32d230c843bfbb0aac881440f2",
-          "evidence.py": "0fdecffe2b3f9fd59524d61e8a8ba50ad3918249dcc77ffd1b349df6ce471d6f",
-          "integrity.py": "38442068e2cf78ad03ae1e7bc22f59cfaf5acf57a74fc5c0cb84db5209d041a9",
+          "codex_adapter.py": "b95a4566613808af5ed1f58ffeaabd255c1bb8700c007a07d031767b073622bd",
+          "evidence.py": "f706374a2c646f7a0adcc8dde7490fe250811220dbdc67dd8a01dc2fe8f56e8c",
+          "execution.py": "9fe3408e18a6a54d1573566928a6d3dafd6212a97185c3f49866b671b5fa075a",
+          "integrity.py": "ee9504564342c808c2290e5ab096a361db59b49d3e98cf1ef7d3c41fa972a5ea",
           "jev_http.py": "2c2759b06fc13bfc79d3728fefccaa9545b28f824410e42017696ceab6409a9e",
-          "report.py": "7dae6599a16b338b07ff62d4488554d1c8126cfcc6ce4be8f69f72d677422141",
-          "runner.py": "6d2315e2b8268754e53381281cc6ecb3908fee785f855f9499ea4f1a0bb4696e",
-          "test_benchmark.py": "7649103f877b06a2c3ac69d507293988ddf2e0db9be8b7a0f951e40c2c178d93"
+          "report.py": "7b38d3882c52160c92614d1fe56dccdf18cc62e6ff96c9e38793e983f5bb3685",
+          "runner.py": "14e7c5d47bf437681551f5b9f6711b31d7123be0285afbcc16e9a1717a9e62e1",
+          "test_benchmark.py": "b7d53fb9594bb3ebc25800d5a10be7a96384711ed53d7d38bbe6263ed6c179db",
+          "verification.py": "2b7e73ad769896cf8deea88aed73fd40b793a527ba1767892284ddfe1a53f6a6"
         },
         "mutations": [
           {
-            "mutation": "missing-governing-rules",
+            "mutation": "drop-safe-links",
             "file": "evidence.py",
-            "test": "test_missing_rules_and_source_refuse_before_a_request",
+            "test": "test_committed_safe_links_survive_freeze_and_tampering_is_refused",
             "exit_code": 1,
-            "output": "FFFFF\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='AGENTS.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='.bench/BENCH.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='projects/benchkit.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='DATA_HANDLING.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='.agents/skills/bench-craft-spec/references/ste-prose.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.005s\n\nFAILED (failures=5)\n"
+            "output": "F\n======================================================================\nFAIL: test_committed_safe_links_survive_freeze_and_tampering_is_refused (__main__.BenchmarkTests.test_committed_safe_links_survive_freeze_and_tampering_is_refused)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-2i4h813e/test_benchmark.py\", line 70, in test_committed_safe_links_survive_freeze_and_tampering_is_refused\n    self.assertTrue(copied.is_symlink(), 'freeze lost the tracked harness skill link')\nAssertionError: False is not true : freeze lost the tracked harness skill link\n\n----------------------------------------------------------------------\nRan 1 test in 0.041s\n\nFAILED (failures=1)\n"
           },
           {
-            "mutation": "optional-uncertainty-fallback",
+            "mutation": "accept-unsafe-links",
             "file": "evidence.py",
-            "test": "test_optional_uncertainty_does_not_fallback",
+            "test": "test_unsafe_committed_link_refuses_freeze",
             "exit_code": 1,
-            "output": "F\n======================================================================\nFAIL: test_optional_uncertainty_does_not_fallback (test_benchmark.BenchmarkTests.test_optional_uncertainty_does_not_fallback)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g5ljq2o7/test_benchmark.py\", line 88, in test_optional_uncertainty_does_not_fallback\n    self.assertEqual(route(self.packet, self.response(), 'jev-test')['route'], 'selected')\nAssertionError: 'fallback' != 'selected'\n- fallback\n+ selected\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.003s\n\nFAILED (failures=1)\n"
+            "output": "F\n======================================================================\nFAIL: test_unsafe_committed_link_refuses_freeze (__main__.BenchmarkTests.test_unsafe_committed_link_refuses_freeze)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-lfx9iqgh/test_benchmark.py\", line 81, in test_unsafe_committed_link_refuses_freeze\n    with self.assertRaisesRegex(ValueError, 'unsafe snapshot link'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.037s\n\nFAILED (failures=1)\n"
           },
           {
-            "mutation": "only-first-native-turn",
-            "file": "codex_adapter.py",
-            "test": "test_all_native_turn_usage_is_preserved_without_cost_rederivation",
-            "exit_code": 1,
-            "output": "F\n======================================================================\nFAIL: test_all_native_turn_usage_is_preserved_without_cost_rederivation (test_benchmark.BenchmarkTests.test_all_native_turn_usage_is_preserved_without_cost_rederivation)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-267k41wh/test_benchmark.py\", line 143, in test_all_native_turn_usage_is_preserved_without_cost_rederivation\n    self.assertEqual([e['usage']['input_total'] for e in events], [10, 20])\nAssertionError: Lists differ: [10] != [10, 20]\n\nSecond list contains 1 additional elements.\nFirst extra element 1:\n20\n\n- [10]\n+ [10, 20]\n\n----------------------------------------------------------------------\nRan 1 test in 0.003s\n\nFAILED (failures=1)\n"
-          },
-          {
-            "mutation": "omit-mandated-rule-from-production-inventory",
-            "file": "evidence.py",
-            "test": "test_required_documents_are_present_in_produced_packet",
-            "exit_code": 1,
-            "output": "F\n======================================================================\nFAIL: test_required_documents_are_present_in_produced_packet (test_benchmark.BenchmarkTests.test_required_documents_are_present_in_produced_packet)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-d2orhv5h/test_benchmark.py\", line 413, in test_required_documents_are_present_in_produced_packet\n    self.assertIn(name, packet['documents'])\nAssertionError: 'DATA_HANDLING.md' not found in {'.agents/skills/bench-craft-spec/references/ste-prose.md': {'sha256': 'ac0c0edb28ff9bc50bb6c6c16cee38e90563afdea37cf364bb3875134ecd9020', 'text': 'Project rules.\\n'}, '.bench/BENCH.md': {'sha256': 'ac0c0edb28ff9bc50bb6c6c16cee38e90563afdea37cf364bb3875134ecd9020', 'text': 'Project rules.\\n'}, 'AGENTS.md': {'sha256': 'ac0c0edb28ff9bc50bb6c6c16cee38e90563afdea37cf364bb3875134ecd9020', 'text': 'Project rules.\\n'}, 'code.txt': {'sha256': '561b3388577652767e0fac7fb64ec3213c807e6254f92d7d6c02767c7ade89fd', 'text': 'Actual task source.\\n'}, 'projects/benchkit.md': {'sha256': 'ac0c0edb28ff9bc50bb6c6c16cee38e90563afdea37cf364bb3875134ecd9020', 'text': 'Project rules.\\n'}}\n\n----------------------------------------------------------------------\nRan 1 test in 0.030s\n\nFAILED (failures=1)\n"
-          },
-          {
-            "mutation": "ignore-workspace-mode",
-            "file": "integrity.py",
-            "test": "test_workspace_mode_changes_are_visible_to_write_fence",
-            "exit_code": 1,
-            "output": "F\n======================================================================\nFAIL: test_workspace_mode_changes_are_visible_to_write_fence (test_benchmark.BenchmarkTests.test_workspace_mode_changes_are_visible_to_write_fence)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-k6l57pjz/test_benchmark.py\", line 469, in test_workspace_mode_changes_are_visible_to_write_fence\n    self.assertEqual(changed_files(self.source, workspace), ['code.txt'])\nAssertionError: Lists differ: [] != ['code.txt']\n\nSecond list contains 1 additional elements.\nFirst extra element 0:\n'code.txt'\n\n- []\n+ ['code.txt']\n\n----------------------------------------------------------------------\nRan 1 test in 0.008s\n\nFAILED (failures=1)\n"
-          },
-          {
-            "mutation": "trust-mutable-trial-evidence",
-            "file": "integrity.py",
-            "test": "test_scored_values_cannot_be_rewritten_after_capture",
-            "exit_code": 1,
-            "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nFFFFFFFFFFFF\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.410s\n\nFAILED (failures=12)\n"
-          },
-          {
-            "mutation": "trust-same-version-native",
-            "file": "codex_adapter.py",
-            "test": "test_codex_adapter_with_native_cli_fixture",
-            "exit_code": 1,
-            "output": "F\n======================================================================\nFAIL: test_codex_adapter_with_native_cli_fixture (test_benchmark.BenchmarkTests.test_codex_adapter_with_native_cli_fixture)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-kmqz3lt_/test_benchmark.py\", line 199, in test_codex_adapter_with_native_cli_fixture\n    self.assertEqual(changed['status'], 'failed')\nAssertionError: 'completed' != 'failed'\n- completed\n+ failed\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.234s\n\nFAILED (failures=1)\n"
-          },
-          {
-            "mutation": "accept-blank-assurance",
+            "mutation": "skip-baseline-stop",
             "file": "runner.py",
-            "test": "test_assurance_and_rescues_require_meaningful_valid_claims",
+            "test": "test_verification_artifacts_are_separate_and_baseline_red_stops_calls",
             "exit_code": 1,
-            "output": "FFFF\n======================================================================\nFAIL: test_assurance_and_rescues_require_meaningful_valid_claims (test_benchmark.BenchmarkTests.test_assurance_and_rescues_require_meaningful_valid_claims) (key='self_review', value=[''])\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-b2mfzrm5/test_benchmark.py\", line 455, in test_assurance_and_rescues_require_meaningful_valid_claims\n    self.assertEqual(assurance_status(dict(valid, **{key: value}), self.packet, []),\nAssertionError: 'completed' != 'missing_assurance_evidence'\n- completed\n+ missing_assurance_evidence\n\n\n======================================================================\nFAIL: test_assurance_and_rescues_require_meaningful_valid_claims (test_benchmark.BenchmarkTests.test_assurance_and_rescues_require_meaningful_valid_claims) (key='self_review', value=['  '])\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-b2mfzrm5/test_benchmark.py\", line 455, in test_assurance_and_rescues_require_meaningful_valid_claims\n    self.assertEqual(assurance_status(dict(valid, **{key: value}), self.packet, []),\nAssertionError: 'completed' != 'missing_assurance_evidence'\n- completed\n+ missing_assurance_evidence\n\n\n======================================================================\nFAIL: test_assurance_and_rescues_require_meaningful_valid_claims (test_benchmark.BenchmarkTests.test_assurance_and_rescues_require_meaningful_valid_claims) (key='verification', value=[''])\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-b2mfzrm5/test_benchmark.py\", line 455, in test_assurance_and_rescues_require_meaningful_valid_claims\n    self.assertEqual(assurance_status(dict(valid, **{key: value}), self.packet, []),\nAssertionError: 'completed' != 'missing_assurance_evidence'\n- completed\n+ missing_assurance_evidence\n\n\n======================================================================\nFAIL: test_assurance_and_rescues_require_meaningful_valid_claims (test_benchmark.BenchmarkTests.test_assurance_and_rescues_require_meaningful_valid_claims) (key='verification', value=['  '])\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-b2mfzrm5/test_benchmark.py\", line 455, in test_assurance_and_rescues_require_meaningful_valid_claims\n    self.assertEqual(assurance_status(dict(valid, **{key: value}), self.packet, []),\nAssertionError: 'completed' != 'missing_assurance_evidence'\n- completed\n+ missing_assurance_evidence\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.003s\n\nFAILED (failures=4)\n"
+            "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nE\n======================================================================\nERROR: test_verification_artifacts_are_separate_and_baseline_red_stops_calls (__main__.BenchmarkTests.test_verification_artifacts_are_separate_and_baseline_red_stops_calls)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-7ccgw43j/test_benchmark.py\", line 309, in test_verification_artifacts_are_separate_and_baseline_red_stops_calls\n    self.assertEqual(stopped['stopped'], 'invalid_baseline')\n                     ~~~~~~~^^^^^^^^^^^\nKeyError: 'stopped'\n\n----------------------------------------------------------------------\nRan 1 test in 1.251s\n\nFAILED (errors=1)\n"
           },
           {
-            "mutation": "trust-mutable-plan",
+            "mutation": "reuse-task-receipt",
+            "file": "verification.py",
+            "test": "test_verification_receipt_cannot_replace_independent_final_gate",
+            "exit_code": 1,
+            "output": "F\n======================================================================\nFAIL: test_verification_receipt_cannot_replace_independent_final_gate (__main__.BenchmarkTests.test_verification_receipt_cannot_replace_independent_final_gate)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-74u15fm1/test_benchmark.py\", line 348, in test_verification_receipt_cannot_replace_independent_final_gate\n    self.assertNotEqual(first['record'], second['record'])\nAssertionError: 'gate-6wqfyl0e' == 'gate-6wqfyl0e'\n\n----------------------------------------------------------------------\nRan 1 test in 0.036s\n\nFAILED (failures=1)\n"
+          },
+          {
+            "mutation": "accept-rewritten-gate-input",
+            "file": "verification.py",
+            "test": "test_gate_cannot_grade_rewritten_source",
+            "exit_code": 1,
+            "output": "F\n======================================================================\nFAIL: test_gate_cannot_grade_rewritten_source (__main__.BenchmarkTests.test_gate_cannot_grade_rewritten_source)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-ozf02wwt/test_benchmark.py\", line 358, in test_gate_cannot_grade_rewritten_source\n    self.assertEqual(result['status'], 'invalid_verification')\nAssertionError: 'completed' != 'invalid_verification'\n- completed\n+ invalid_verification\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.032s\n\nFAILED (failures=1)\n"
+          },
+          {
+            "mutation": "price-unobserved-usage-as-complete",
+            "file": "report.py",
+            "test": "test_nested_native_usage_is_never_reported_as_complete",
+            "exit_code": 1,
+            "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nF\n======================================================================\nFAIL: test_nested_native_usage_is_never_reported_as_complete (__main__.BenchmarkTests.test_nested_native_usage_is_never_reported_as_complete)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-zwqhaoh0/test_benchmark.py\", line 183, in test_nested_native_usage_is_never_reported_as_complete\n    self.assertTrue(attempt['cost'].get('other'), 'unobserved native usage priced as complete')\nAssertionError: None is not true : unobserved native usage priced as complete\n\n----------------------------------------------------------------------\nRan 1 test in 0.662s\n\nFAILED (failures=1)\n"
+          },
+          {
+            "mutation": "lose-interruption-status",
+            "file": "execution.py",
+            "test": "test_interrupt_retains_attempt_result",
+            "exit_code": 1,
+            "output": "F\n======================================================================\nFAIL: test_interrupt_retains_attempt_result (__main__.BenchmarkTests.test_interrupt_retains_attempt_result)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-knrgfomk/test_benchmark.py\", line 376, in test_interrupt_retains_attempt_result\n    self.assertEqual(result['status'], 'interrupted')\nAssertionError: 'failed' != 'interrupted'\n- failed\n+ interrupted\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.005s\n\nFAILED (failures=1)\n"
+          },
+          {
+            "mutation": "lose-incomplete-native-usage",
+            "file": "codex_adapter.py",
+            "test": "test_interrupted_native_capture_keeps_known_and_unknown_usage",
+            "exit_code": 1,
+            "output": "E\n======================================================================\nERROR: test_interrupted_native_capture_keeps_known_and_unknown_usage (__main__.BenchmarkTests.test_interrupted_native_capture_keeps_known_and_unknown_usage)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-peg_gquf/test_benchmark.py\", line 221, in test_interrupted_native_capture_keeps_known_and_unknown_usage\n    self.assertTrue(result['assessment_usage'][-1]['usage']['unknown'])\n                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^\nKeyError: 'unknown'\n\n----------------------------------------------------------------------\nRan 1 test in 0.003s\n\nFAILED (errors=1)\n"
+          },
+          {
+            "mutation": "trust-mutable-preflight",
             "file": "integrity.py",
             "test": "test_every_report_refuses_changed_scored_evidence",
             "exit_code": 1,
-            "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nFFFF\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (test_benchmark.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='plan.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x79e9d105d760>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-tl5nil0m/test_benchmark.py\", line 300, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (test_benchmark.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='plan.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x79e9d105d800>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-tl5nil0m/test_benchmark.py\", line 300, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (test_benchmark.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='plan.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x79e9d105d580>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-tl5nil0m/test_benchmark.py\", line 300, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (test_benchmark.BenchmarkTests.test_every_report_refuses_changed_scored_evidence)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-tl5nil0m/test_benchmark.py\", line 318, in test_every_report_refuses_changed_scored_evidence\n    self.assertFalse((self.root / 'review').exists())\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 0.618s\n\nFAILED (failures=4)\n"
-          },
-          {
-            "mutation": "trust-inconsistent-configuration",
-            "file": "integrity.py",
-            "test": "test_plan_configuration_fingerprint_is_independently_checked",
-            "exit_code": 1,
-            "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nF\n======================================================================\nFAIL: test_plan_configuration_fingerprint_is_independently_checked (test_benchmark.BenchmarkTests.test_plan_configuration_fingerprint_is_independently_checked)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-fp2t3r78/test_benchmark.py\", line 374, in test_plan_configuration_fingerprint_is_independently_checked\n    with self.assertRaisesRegex(ValueError, 'configuration fingerprint mismatch'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.402s\n\nFAILED (failures=1)\n"
-          },
-          {
-            "mutation": "ignore-unsealed-trials",
-            "file": "integrity.py",
-            "test": "test_every_report_refuses_removed_or_unsealed_trials",
-            "exit_code": 1,
-            "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nF\n======================================================================\nFAIL: test_every_report_refuses_removed_or_unsealed_trials (test_benchmark.BenchmarkTests.test_every_report_refuses_removed_or_unsealed_trials)\n----------------------------------------------------------------------\nValueError: trial evidence changed after capture: trial-000\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-ijsswt__/test_benchmark.py\", line 329, in test_every_report_refuses_removed_or_unsealed_trials\n    with self.assertRaisesRegex(ValueError, 'trial inventory changed'):\nAssertionError: \"trial inventory changed\" does not match \"trial evidence changed after capture: trial-000\"\n\n----------------------------------------------------------------------\nRan 1 test in 0.393s\n\nFAILED (failures=1)\n"
+            "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nFFFFFFFFFF\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/result.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e731d00>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/result.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e731da0>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/result.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e744220>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/stdout', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e7440e0>)\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/stdout', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e745260>)\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/stdout', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e745440>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/workspace/.logs/gate-fixture.out', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e745120>)\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/workspace/.logs/gate-fixture.out', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e744fe0>)\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='preflight/workspace/.logs/gate-fixture.out', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x741e6e744400>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 439, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (__main__.BenchmarkTests.test_every_report_refuses_changed_scored_evidence)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-repair4-mutation-_cfxekop/test_benchmark.py\", line 457, in test_every_report_refuses_changed_scored_evidence\n    self.assertFalse((self.root / 'review').exists())\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 1.367s\n\nFAILED (failures=10)\n"
           }
         ],
-        "historical_result": "Original H2/V3 requests, responses, costs, and scores are unchanged."
+        "prior_verification": {
+          "paid_model_calls": 0,
+          "regression_command": "python3 -B decisions/jev-advisor/assets/benchmark/test_benchmark.py -v",
+          "tests_passed": 28,
+          "source_sha256": {
+            "codex_adapter.py": "d784c8afd1ddbe8a71dec6e37dc47e5655da1d32d230c843bfbb0aac881440f2",
+            "evidence.py": "0fdecffe2b3f9fd59524d61e8a8ba50ad3918249dcc77ffd1b349df6ce471d6f",
+            "integrity.py": "38442068e2cf78ad03ae1e7bc22f59cfaf5acf57a74fc5c0cb84db5209d041a9",
+            "jev_http.py": "2c2759b06fc13bfc79d3728fefccaa9545b28f824410e42017696ceab6409a9e",
+            "report.py": "7dae6599a16b338b07ff62d4488554d1c8126cfcc6ce4be8f69f72d677422141",
+            "runner.py": "6d2315e2b8268754e53381281cc6ecb3908fee785f855f9499ea4f1a0bb4696e",
+            "test_benchmark.py": "7649103f877b06a2c3ac69d507293988ddf2e0db9be8b7a0f951e40c2c178d93"
+          },
+          "mutations": [
+            {
+              "mutation": "missing-governing-rules",
+              "file": "evidence.py",
+              "test": "test_missing_rules_and_source_refuse_before_a_request",
+              "exit_code": 1,
+              "output": "FFFFF\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='AGENTS.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='.bench/BENCH.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='projects/benchkit.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='DATA_HANDLING.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_missing_rules_and_source_refuse_before_a_request (test_benchmark.BenchmarkTests.test_missing_rules_and_source_refuse_before_a_request) (name='.agents/skills/bench-craft-spec/references/ste-prose.md')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-p9pzc51h/test_benchmark.py\", line 61, in test_missing_rules_and_source_refuse_before_a_request\n    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'missing'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.005s\n\nFAILED (failures=5)\n"
+            },
+            {
+              "mutation": "optional-uncertainty-fallback",
+              "file": "evidence.py",
+              "test": "test_optional_uncertainty_does_not_fallback",
+              "exit_code": 1,
+              "output": "F\n======================================================================\nFAIL: test_optional_uncertainty_does_not_fallback (test_benchmark.BenchmarkTests.test_optional_uncertainty_does_not_fallback)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g5ljq2o7/test_benchmark.py\", line 88, in test_optional_uncertainty_does_not_fallback\n    self.assertEqual(route(self.packet, self.response(), 'jev-test')['route'], 'selected')\nAssertionError: 'fallback' != 'selected'\n- fallback\n+ selected\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.003s\n\nFAILED (failures=1)\n"
+            },
+            {
+              "mutation": "only-first-native-turn",
+              "file": "codex_adapter.py",
+              "test": "test_all_native_turn_usage_is_preserved_without_cost_rederivation",
+              "exit_code": 1,
+              "output": "F\n======================================================================\nFAIL: test_all_native_turn_usage_is_preserved_without_cost_rederivation (test_benchmark.BenchmarkTests.test_all_native_turn_usage_is_preserved_without_cost_rederivation)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-267k41wh/test_benchmark.py\", line 143, in test_all_native_turn_usage_is_preserved_without_cost_rederivation\n    self.assertEqual([e['usage']['input_total'] for e in events], [10, 20])\nAssertionError: Lists differ: [10] != [10, 20]\n\nSecond list contains 1 additional elements.\nFirst extra element 1:\n20\n\n- [10]\n+ [10, 20]\n\n----------------------------------------------------------------------\nRan 1 test in 0.003s\n\nFAILED (failures=1)\n"
+            },
+            {
+              "mutation": "omit-mandated-rule-from-production-inventory",
+              "file": "evidence.py",
+              "test": "test_required_documents_are_present_in_produced_packet",
+              "exit_code": 1,
+              "output": "F\n======================================================================\nFAIL: test_required_documents_are_present_in_produced_packet (test_benchmark.BenchmarkTests.test_required_documents_are_present_in_produced_packet)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-d2orhv5h/test_benchmark.py\", line 413, in test_required_documents_are_present_in_produced_packet\n    self.assertIn(name, packet['documents'])\nAssertionError: 'DATA_HANDLING.md' not found in {'.agents/skills/bench-craft-spec/references/ste-prose.md': {'sha256': 'ac0c0edb28ff9bc50bb6c6c16cee38e90563afdea37cf364bb3875134ecd9020', 'text': 'Project rules.\\n'}, '.bench/BENCH.md': {'sha256': 'ac0c0edb28ff9bc50bb6c6c16cee38e90563afdea37cf364bb3875134ecd9020', 'text': 'Project rules.\\n'}, 'AGENTS.md': {'sha256': 'ac0c0edb28ff9bc50bb6c6c16cee38e90563afdea37cf364bb3875134ecd9020', 'text': 'Project rules.\\n'}, 'code.txt': {'sha256': '561b3388577652767e0fac7fb64ec3213c807e6254f92d7d6c02767c7ade89fd', 'text': 'Actual task source.\\n'}, 'projects/benchkit.md': {'sha256': 'ac0c0edb28ff9bc50bb6c6c16cee38e90563afdea37cf364bb3875134ecd9020', 'text': 'Project rules.\\n'}}\n\n----------------------------------------------------------------------\nRan 1 test in 0.030s\n\nFAILED (failures=1)\n"
+            },
+            {
+              "mutation": "ignore-workspace-mode",
+              "file": "integrity.py",
+              "test": "test_workspace_mode_changes_are_visible_to_write_fence",
+              "exit_code": 1,
+              "output": "F\n======================================================================\nFAIL: test_workspace_mode_changes_are_visible_to_write_fence (test_benchmark.BenchmarkTests.test_workspace_mode_changes_are_visible_to_write_fence)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-k6l57pjz/test_benchmark.py\", line 469, in test_workspace_mode_changes_are_visible_to_write_fence\n    self.assertEqual(changed_files(self.source, workspace), ['code.txt'])\nAssertionError: Lists differ: [] != ['code.txt']\n\nSecond list contains 1 additional elements.\nFirst extra element 0:\n'code.txt'\n\n- []\n+ ['code.txt']\n\n----------------------------------------------------------------------\nRan 1 test in 0.008s\n\nFAILED (failures=1)\n"
+            },
+            {
+              "mutation": "trust-mutable-trial-evidence",
+              "file": "integrity.py",
+              "test": "test_scored_values_cannot_be_rewritten_after_capture",
+              "exit_code": 1,
+              "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nFFFFFFFFFFFF\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/trial.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nValueError: review destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"review destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nValueError: export destination already exists\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: \"changed after capture\" does not match \"export destination already exists\"\n\n======================================================================\nFAIL: test_scored_values_cannot_be_rewritten_after_capture (test_benchmark.BenchmarkTests.test_scored_values_cannot_be_rewritten_after_capture) (path='trial-000/task/result.json')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-g3aw83cd/test_benchmark.py\", line 357, in test_scored_values_cannot_be_rewritten_after_capture\n    with self.subTest(path=name), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.410s\n\nFAILED (failures=12)\n"
+            },
+            {
+              "mutation": "trust-same-version-native",
+              "file": "codex_adapter.py",
+              "test": "test_codex_adapter_with_native_cli_fixture",
+              "exit_code": 1,
+              "output": "F\n======================================================================\nFAIL: test_codex_adapter_with_native_cli_fixture (test_benchmark.BenchmarkTests.test_codex_adapter_with_native_cli_fixture)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-kmqz3lt_/test_benchmark.py\", line 199, in test_codex_adapter_with_native_cli_fixture\n    self.assertEqual(changed['status'], 'failed')\nAssertionError: 'completed' != 'failed'\n- completed\n+ failed\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.234s\n\nFAILED (failures=1)\n"
+            },
+            {
+              "mutation": "accept-blank-assurance",
+              "file": "runner.py",
+              "test": "test_assurance_and_rescues_require_meaningful_valid_claims",
+              "exit_code": 1,
+              "output": "FFFF\n======================================================================\nFAIL: test_assurance_and_rescues_require_meaningful_valid_claims (test_benchmark.BenchmarkTests.test_assurance_and_rescues_require_meaningful_valid_claims) (key='self_review', value=[''])\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-b2mfzrm5/test_benchmark.py\", line 455, in test_assurance_and_rescues_require_meaningful_valid_claims\n    self.assertEqual(assurance_status(dict(valid, **{key: value}), self.packet, []),\nAssertionError: 'completed' != 'missing_assurance_evidence'\n- completed\n+ missing_assurance_evidence\n\n\n======================================================================\nFAIL: test_assurance_and_rescues_require_meaningful_valid_claims (test_benchmark.BenchmarkTests.test_assurance_and_rescues_require_meaningful_valid_claims) (key='self_review', value=['  '])\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-b2mfzrm5/test_benchmark.py\", line 455, in test_assurance_and_rescues_require_meaningful_valid_claims\n    self.assertEqual(assurance_status(dict(valid, **{key: value}), self.packet, []),\nAssertionError: 'completed' != 'missing_assurance_evidence'\n- completed\n+ missing_assurance_evidence\n\n\n======================================================================\nFAIL: test_assurance_and_rescues_require_meaningful_valid_claims (test_benchmark.BenchmarkTests.test_assurance_and_rescues_require_meaningful_valid_claims) (key='verification', value=[''])\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-b2mfzrm5/test_benchmark.py\", line 455, in test_assurance_and_rescues_require_meaningful_valid_claims\n    self.assertEqual(assurance_status(dict(valid, **{key: value}), self.packet, []),\nAssertionError: 'completed' != 'missing_assurance_evidence'\n- completed\n+ missing_assurance_evidence\n\n\n======================================================================\nFAIL: test_assurance_and_rescues_require_meaningful_valid_claims (test_benchmark.BenchmarkTests.test_assurance_and_rescues_require_meaningful_valid_claims) (key='verification', value=['  '])\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-b2mfzrm5/test_benchmark.py\", line 455, in test_assurance_and_rescues_require_meaningful_valid_claims\n    self.assertEqual(assurance_status(dict(valid, **{key: value}), self.packet, []),\nAssertionError: 'completed' != 'missing_assurance_evidence'\n- completed\n+ missing_assurance_evidence\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.003s\n\nFAILED (failures=4)\n"
+            },
+            {
+              "mutation": "trust-mutable-plan",
+              "file": "integrity.py",
+              "test": "test_every_report_refuses_changed_scored_evidence",
+              "exit_code": 1,
+              "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nFFFF\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (test_benchmark.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='plan.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x79e9d105d760>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-tl5nil0m/test_benchmark.py\", line 300, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (test_benchmark.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='plan.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x79e9d105d800>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-tl5nil0m/test_benchmark.py\", line 300, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (test_benchmark.BenchmarkTests.test_every_report_refuses_changed_scored_evidence) (path='plan.json', report=<function BenchmarkTests.report_consumers.<locals>.<lambda> at 0x79e9d105d580>)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-tl5nil0m/test_benchmark.py\", line 300, in test_every_report_refuses_changed_scored_evidence\n    with self.subTest(path=name, report=report), self.assertRaisesRegex(ValueError, 'changed after capture'):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_every_report_refuses_changed_scored_evidence (test_benchmark.BenchmarkTests.test_every_report_refuses_changed_scored_evidence)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-tl5nil0m/test_benchmark.py\", line 318, in test_every_report_refuses_changed_scored_evidence\n    self.assertFalse((self.root / 'review').exists())\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 0.618s\n\nFAILED (failures=4)\n"
+            },
+            {
+              "mutation": "trust-inconsistent-configuration",
+              "file": "integrity.py",
+              "test": "test_plan_configuration_fingerprint_is_independently_checked",
+              "exit_code": 1,
+              "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nF\n======================================================================\nFAIL: test_plan_configuration_fingerprint_is_independently_checked (test_benchmark.BenchmarkTests.test_plan_configuration_fingerprint_is_independently_checked)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-fp2t3r78/test_benchmark.py\", line 374, in test_plan_configuration_fingerprint_is_independently_checked\n    with self.assertRaisesRegex(ValueError, 'configuration fingerprint mismatch'):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 1 test in 0.402s\n\nFAILED (failures=1)\n"
+            },
+            {
+              "mutation": "ignore-unsealed-trials",
+              "file": "integrity.py",
+              "test": "test_every_report_refuses_removed_or_unsealed_trials",
+              "exit_code": 1,
+              "output": "{\"task\": \"case\", \"repeat\": 0, \"condition\": \"baseline\", \"completed\": 1}\n{\"task\": \"case\", \"repeat\": 0, \"condition\": \"treatment\", \"completed\": 2}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"treatment\", \"completed\": 3}\n{\"task\": \"case\", \"repeat\": 1, \"condition\": \"baseline\", \"completed\": 4}\nF\n======================================================================\nFAIL: test_every_report_refuses_removed_or_unsealed_trials (test_benchmark.BenchmarkTests.test_every_report_refuses_removed_or_unsealed_trials)\n----------------------------------------------------------------------\nValueError: trial evidence changed after capture: trial-000\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/tmp/jev-mutation-ijsswt__/test_benchmark.py\", line 329, in test_every_report_refuses_removed_or_unsealed_trials\n    with self.assertRaisesRegex(ValueError, 'trial inventory changed'):\nAssertionError: \"trial inventory changed\" does not match \"trial evidence changed after capture: trial-000\"\n\n----------------------------------------------------------------------\nRan 1 test in 0.393s\n\nFAILED (failures=1)\n"
+            }
+          ],
+          "historical_result": "Original H2/V3 requests, responses, costs, and scores are unchanged."
+        },
+        "fresh_baseline": {
+          "revision": "7cf4105dc220638e32a7f07fd921a2bc669515fb",
+          "snapshot_files": 3464,
+          "restored_links": 315,
+          "gate": "/tmp/jev-benchmark-repair4-preflight-built-20260921/gate-4_pgz_pq/workspace/.logs/gate-20260921T194949.166188992Z-3862343.jsonl",
+          "status": "green"
+        },
+        "historical_result": "The stopped live run and earlier historical evidence remain unchanged."
       },
       "fresh_baseline": {
         "revision": "7cf4105dc220638e32a7f07fd921a2bc669515fb",
@@ -559,16 +679,81 @@
         "gate": "/tmp/jev-benchmark-repair4-preflight-built-20260921/gate-4_pgz_pq/workspace/.logs/gate-20260921T194949.166188992Z-3862343.jsonl",
         "status": "green"
       },
-      "historical_result": "The stopped live run and earlier historical evidence remain unchanged."
+      "historical_result": "The stopped live run and earlier historical evidence remain unchanged.",
+      "paid_benchmark_calls_during_repair": 0
+    }
+  },
+  "extension": {
+    "approved_additional_cycles": 6,
+    "consumed_additional_cycles": 2,
+    "remaining_additional_cycles": 4,
+    "historical_consumed_cycles": 8
+  },
+  "native_full_feedback_cycle_eight": {
+    "evidence": "/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-eight/native-full-feedback",
+    "qualification_only": true,
+    "result": {
+      "attempts": [
+        "task"
+      ],
+      "changed": [],
+      "clock": "monotonic_ns",
+      "condition": "baseline",
+      "elapsed_ns": 599039822021,
+      "ended_at": "2026-10-03T11:19:27.261113+00:00",
+      "outside_write_fence": [],
+      "quality": null,
+      "repeat": 0,
+      "rescued_skills": [],
+      "self_review_claims": [
+        "Offline native feedback probe."
+      ],
+      "started_at": "2026-10-03T11:09:51.651009+00:00",
+      "status": "verification_failed",
+      "task": "assessment-doc",
+      "timing_scope": "workspace setup through selection, task, and artifact capture",
+      "verification_claims": [
+        "{\n  \"elapsed_ns\": 294425075500,\n  \"input_sha256\": \"091daebacdb25d26230d20bc6b49660003a97ca09208cbd7b27a61a642f07a16\",\n  \"record\": \"gate-spes13mv\",\n  \"status\": \"completed\"\n}\n\nphases[6]{phase,verdict,elapsed_ms}:\n  gofmt,green,151\n  vet,green,6416\n  test,green,206654\n  race,green,20758\n  system,green,48336\n  shellcheck,skipped,66\ncapability-skips: 8 (capability=8 environment=0; fifo=4 privilege=4)\ngo-build-cache: 897994181 bytes in 11024 files at /home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-eight/native-full-feedback/verification/gate-spes13mv/runtime/home/.cache/bench/go-build (bound 10737418240 bytes)\ngate: green\ngate: progress log /home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-eight/native-full-feedback/verification/gate-spes13mv/workspace/.logs/gate-20261003T111005.971322051Z-3607452.jsonl\ngate: stream /home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-eight/native-full-feedback/verification/gate-spes13mv/workspace/.logs/gate-20261003T111005.971322051Z-3607452.out\n"
+      ],
+      "verification_result": {
+        "elapsed_ns": 274826435722,
+        "input_sha256": "091daebacdb25d26230d20bc6b49660003a97ca09208cbd7b27a61a642f07a16",
+        "record": "gate-3a8nv96g",
+        "status": "failed"
+      }
+    }
+  },
+  "isolated_frozen_tests": {
+    "command": [
+      "go",
+      "test",
+      "-count=3",
+      "-run",
+      "^(TestLandCommandPrunesSquashFoldedSiblingBranch|TestTwoWritersOnDistinctSectionsBothSurvive)$",
+      "./internal/worktree",
+      "./internal/handoffdoc"
+    ],
+    "exit_code": 0,
+    "source_revision": "c929c500501bc86606a0dae55923319a34e685d0",
+    "GOFLAGS": "-p=4 -parallel=4"
+  },
+  "receipts": {
+    "gate-3a8nv96g": {
+      "status": "failed",
+      "exit_code": 1,
+      "input_sha256": "091daebacdb25d26230d20bc6b49660003a97ca09208cbd7b27a61a642f07a16",
+      "elapsed_ns": 274826435722,
+      "phase": "gate",
+      "result_sha256": "a1248a5a117dca5d54d879cb771e247ce29fb7f6fbed08f79c0b6e52d1da1cf3"
     },
-    "fresh_baseline": {
-      "revision": "7cf4105dc220638e32a7f07fd921a2bc669515fb",
-      "snapshot_files": 3464,
-      "restored_links": 315,
-      "gate": "/tmp/jev-benchmark-repair4-preflight-built-20260921/gate-4_pgz_pq/workspace/.logs/gate-20260921T194949.166188992Z-3862343.jsonl",
-      "status": "green"
-    },
-    "historical_result": "The stopped live run and earlier historical evidence remain unchanged.",
-    "paid_benchmark_calls_during_repair": 0
-  }
+    "gate-spes13mv": {
+      "status": "completed",
+      "exit_code": 0,
+      "input_sha256": "091daebacdb25d26230d20bc6b49660003a97ca09208cbd7b27a61a642f07a16",
+      "elapsed_ns": 294425075500,
+      "phase": "gate",
+      "result_sha256": "1f12fa32e5a44ab6619bdcd10ea20f21ccdace4fcbf7c77a7021cef8d03abf74"
+    }
+  },
+  "aggregate_retry": "stopped after two full-gate fixture failures passed isolated checks; independent review and baseline disposition pending"
 }

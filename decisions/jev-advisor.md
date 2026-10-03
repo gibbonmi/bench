@@ -41,7 +41,7 @@ A protected evaluation uses fresh cases whose labels remain outside recipe devel
 - Ticket #9 lacks protected evaluation and complete-task savings evidence.
 - Numeric budgets and thresholds remain unset pending that evidence.
 - The recovered research fragments require reconciliation before tickets #6 and #7 can close against current sources.
-- The offline repairs preserve controller verification and host concurrency limits. The cycle reports own qualification and the remaining FT347 execution decision.
+- The offline repairs preserve controller verification and host concurrency limits. Frozen gate fixtures block qualification; the cycle reports own the next baseline decision.
 
 ## Spec-writer discretion
 

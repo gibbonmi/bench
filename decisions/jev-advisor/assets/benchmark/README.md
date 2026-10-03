@@ -1,6 +1,6 @@
 # Jev skill-selection benchmark
 
-Status: eighth offline repair candidate; paid restart and policy adoption remain unapproved
+Status: eighth offline repair candidate; frozen-gate qualification blocked; paid restart and adoption remain unapproved
 
 This benchmark measures whether Jev-assisted initial skill selection improves complete task cost without reducing task quality.
 It does not adopt a production skill policy.
@@ -262,7 +262,9 @@ Those observations diagnose the benchmark; they do not establish Jev performance
 
 `verification.json` records the offline checks and observed mutation failures.
 `cycle-six.md` records the earlier native failure and reviewer extension.
-`cycle-seven.md` records the controller feedback repair and current qualification limits.
+`cycle-seven.md` records the controller feedback repair.
+`cycle-eight.md` owns current qualification and the inherited-fixture retry stop.
+
 The recorded corpus pins source excerpts from the archived benchmark revision.
 Freeze that revision in a separate local checkout; changed source must pass fresh excerpt checks.
 Do not relax the context ceiling or remove governing documents to make a packet fit.

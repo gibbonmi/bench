@@ -54,7 +54,8 @@ The corrected probe accepts the specific permission errors and passes.
 The full frozen-repository feedback run returns its gate failure correctly.
 Its socket fixtures pass, but the existing two-writer handoff test times out on its lock.
 The failed task stops before independent final verification.
-The current repository gate also remains pending after its sanctioned worktree build.
+The assignment received a sanctioned worktree build.
+The eighth-cycle retry stop prevents a new assignment-wide gate in this pass.
 The earlier generated-artifact guard failure remains preserved and unresolved.
 
 ## Author review and limits
