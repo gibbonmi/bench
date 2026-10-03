@@ -939,7 +939,7 @@ Their empty current histories indicate no new author dispatch for those complete
 The C3 successor reconciles retained live evidence and repeats verification on the composed source.
 Fresh independent axes review that source before its checkpoint.
 The three chunk IDs, acceptance rows, requirements, and behavior remain unchanged.
-C3 retains one consumed repair cycle; this integration and evidence update adds no product repair.
+This integration and evidence update adds no product repair.
 The original author history above describes the earlier version 1 execution.
 
 ```bench-completion-plan

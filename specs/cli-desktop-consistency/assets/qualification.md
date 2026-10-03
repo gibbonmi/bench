@@ -181,7 +181,7 @@ The sections below retain the original incident, mutation results, automated che
 Their incomplete and pending statements describe those earlier stages.
 The current reconciliation above supersedes only their live acceptance status.
 Their authors, source identities, observations, and mutation evidence remain unchanged.
-C3 has used one of two product repair cycles; this metadata reconciliation consumes none.
+This metadata reconciliation consumes no repair cycle.
 
 ## Desktop shell repro
 
