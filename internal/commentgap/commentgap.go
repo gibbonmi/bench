@@ -27,17 +27,12 @@ func Prove(root, reviewed, later string) error {
 	if reviewed == later {
 		return nil
 	}
-	changes, err := benchgit.TreeChanges(root, reviewed, later)
+	changes, err := benchgit.TreeChangesIncludingSubmodules(root, reviewed, later)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrUnreadable, err)
 	}
 	if len(changes) == 0 {
 		return ErrEmptyChanges
-	}
-	// A configured diff can hide a gitlink beside an otherwise eligible Go edit.
-	changes, err = benchgit.TreeChangesIncludingSubmodules(root, reviewed, later)
-	if err != nil {
-		return fmt.Errorf("%w: %v", ErrUnreadable, err)
 	}
 	for _, change := range changes {
 		if err := proveFile(root, reviewed, later, change); err != nil {
@@ -51,7 +46,7 @@ func proveFile(root, reviewed, later string, change benchgit.TreeChange) error {
 	if change.Status != "M" {
 		return ErrStatus
 	}
-	if change.SrcMode != change.DstMode || (change.SrcMode != "100644" && change.SrcMode != "100755") {
+	if change.SrcMode != change.DstMode || !(benchgit.IndexEntry{Mode: change.SrcMode}).IsRegularFile() {
 		return ErrMode
 	}
 	if !strings.HasSuffix(change.Path, ".go") {

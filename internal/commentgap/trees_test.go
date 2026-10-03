@@ -1,6 +1,7 @@
 package commentgap
 
 import (
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"sort"
@@ -49,4 +50,17 @@ func (f trees) commits() (string, string) {
 	first := gittest.Output(f.t, f.root, "commit-tree", tree, "-m", "first")
 	second := gittest.Output(f.t, f.root, "commit-tree", tree, "-p", first, "-m", "second")
 	return first, second
+}
+
+func (f trees) emptyDirectoryTree() string {
+	f.t.Helper()
+	object, err := hex.DecodeString(f.tree(nil))
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	body := append([]byte("40000 empty\x00"), object...)
+	if err := os.WriteFile(filepath.Join(f.root, "payload"), body, 0600); err != nil {
+		f.t.Fatal(err)
+	}
+	return gittest.Output(f.t, f.root, "hash-object", "-w", "-t", "tree", "payload")
 }

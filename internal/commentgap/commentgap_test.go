@@ -45,7 +45,7 @@ func TestProveGoGap(t *testing.T) {
 }
 
 func TestProveTreeGap(t *testing.T) {
-	for _, name := range []string{"CG22 not Go", "CG23 added", "CG24 deleted", "CG25 renamed", "CG26 mode", "CG27 symlink", "CG28 gitlink", "CG29 oversized", "CG30 hidden gitlink", "CG31 hostile paths", "CG32 later code", "CG46 mixed hidden gitlink", "equal trees", "invalid tree", "executable Go"} {
+	for _, name := range []string{"CG22 not Go", "CG23 added", "CG24 deleted", "CG25 renamed", "CG26 mode", "CG27 symlink", "CG28 gitlink", "CG29 oversized", "CG30 hidden gitlink", "CG31 hostile paths", "CG32 later code", "CG46 mixed hidden gitlink", "CG47 empty directory", "equal trees", "invalid tree", "executable Go"} {
 		t.Run(name, func(t *testing.T) {
 			f := newTrees(t)
 			before := map[string]treeEntry{"a.go": {"100644", "package p // before\n"}}
@@ -80,9 +80,6 @@ func TestProveTreeGap(t *testing.T) {
 				if name != "CG28 gitlink" {
 					gittest.Output(t, f.root, "config", "diff.ignoreSubmodules", "all")
 				}
-				if name == "CG30 hidden gitlink" {
-					want, path = ErrEmptyChanges, ""
-				}
 			case "CG29 oversized":
 				body := "package p\n// " + strings.Repeat("x", int(bounds.ControlRecordLimit))
 				before["a.go"], after["a.go"] = treeEntry{"100644", body + "before"}, treeEntry{"100644", body + "after"}
@@ -103,6 +100,10 @@ func TestProveTreeGap(t *testing.T) {
 				before["a.go"], after["a.go"] = treeEntry{"100755", before["a.go"].body}, treeEntry{"100755", after["a.go"].body}
 			}
 			left, right := f.tree(before), f.tree(after)
+			if name == "CG47 empty directory" {
+				left, right = f.tree(nil), f.emptyDirectoryTree()
+				want, path = ErrEmptyChanges, ""
+			}
 			if name == "invalid tree" {
 				left, want, path = strings.Repeat("0", 40), ErrUnreadable, ""
 			}
