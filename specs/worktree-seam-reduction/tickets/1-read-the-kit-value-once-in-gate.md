@@ -1,7 +1,7 @@
 # 1. Read the kit value once in the gate
 
 Blocked by: none
-Writes: internal/gate/kit_source.go, internal/gate/kit_source_test.go, internal/gate/kit_value_test.go (new), internal/gate/phases.go, internal/gate/lane_select.go
+Writes: internal/gate/kit_source.go, internal/gate/kit_source_test.go, internal/gate/kit_value_test.go (new), internal/gate/phases.go, internal/gate/lane_select.go, internal/gate/lane_test.go
 Covers: WS1, WS2, WS3, WS4, WS5, WS6, WS7, WS8
 
 ## What to build

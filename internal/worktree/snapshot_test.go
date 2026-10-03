@@ -96,7 +96,7 @@ func TestClaimRecordedLeaseTakesTheRecordedLine(t *testing.T) {
 	t.Parallel()
 	recorded := "4242 2026-07-05T00:00:00Z"
 	lease := recordedLeaseFile(t, recorded)
-	if !claimRecordedLease(defaultJoins(), lease, recorded) {
+	if !claimRecordedLease(defaultJoins(), lease, recorded, currentTime()) {
 		t.Fatal("the claim of the recorded line conceded")
 	}
 	if got, _ := os.ReadFile(lease); !bytes.HasPrefix(got, []byte(fmt.Sprintf("%d ", os.Getpid()))) {
@@ -108,7 +108,7 @@ func TestClaimRecordedLeaseTakesTheRecordedLine(t *testing.T) {
 func TestClaimRecordedLeaseRefusesAnotherLine(t *testing.T) {
 	t.Parallel()
 	lease := recordedLeaseFile(t, "4343 2026-07-05T00:00:01Z")
-	if claimRecordedLease(defaultJoins(), lease, "4242 2026-07-05T00:00:00Z") {
+	if claimRecordedLease(defaultJoins(), lease, "4242 2026-07-05T00:00:00Z", currentTime()) {
 		t.Fatal("the claim took a lease that holds another line")
 	}
 	if got, _ := os.ReadFile(lease); string(got) != "4343 2026-07-05T00:00:01Z\n" {
@@ -129,7 +129,7 @@ func TestClaimRecordedLeaseConcedesToAWriterInTheGap(t *testing.T) {
 			t.Error(err)
 		}
 	}
-	if claimRecordedLease(j, lease, recorded) {
+	if claimRecordedLease(j, lease, recorded, currentTime()) {
 		t.Fatal("the claim won over a writer in the takeover gap")
 	}
 	if got, _ := os.ReadFile(lease); !bytes.Equal(got, other) {

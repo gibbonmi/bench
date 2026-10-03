@@ -345,7 +345,7 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 			fault := errors.New("interrupt at " + string(step))
 			faulted := defaultJoins()
 			faulted.cleanupBoundary = failLifecycleStep(step, fault)
-			_, err = applyExplicitWith(faulted, f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
+			_, err = applyExplicitWith(faulted, f.ambient(), f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
 			requireTest(t, errors.Is(err, fault), "first apply error = %v, want %v", err, fault)
 			if step == StepRecoveryRef {
 				registration := gitOutput(t, f.root, "worktree", "list", "--porcelain")

@@ -101,9 +101,6 @@ func TestSelectedWorktreesPreserveDefault(t *testing.T) {
 	}
 }
 
-// selectedTable is the table block that the selected list renders its rows in.
-const selectedTable = "worktrees"
-
 func TestSelectedWorktreeFacts(t *testing.T) {
 	t.Parallel()
 	root, assignments := selectedFixture(t)
@@ -117,7 +114,7 @@ func TestSelectedWorktreeFacts(t *testing.T) {
 	if r.exit != 0 {
 		t.Fatalf("selected facts exit=%d output=%q", r.exit, r.stdout)
 	}
-	if got := r.mustRows(t, selectedTable); !reflect.DeepEqual(got, want) {
+	if got := r.mustRows(t, listTable); !reflect.DeepEqual(got, want) {
 		t.Fatalf("selected facts=%#v, want %#v", got, want)
 	}
 }
@@ -131,7 +128,7 @@ func TestSelectedWorktreePartialFailure(t *testing.T) {
 	if r.exit != 1 {
 		t.Fatalf("partial failure exit=%d output=%q", r.exit, r.stdout)
 	}
-	rows := r.mustRows(t, selectedTable)
+	rows := r.mustRows(t, listTable)
 	if len(rows) != 3 {
 		t.Fatalf("partial results=%#v, want all three operands", rows)
 	}
@@ -164,7 +161,7 @@ func TestSelectedWorktreeAliases(t *testing.T) {
 	if r.exit != 1 {
 		t.Fatalf("alias selection exit=%d output=%q", r.exit, r.stdout)
 	}
-	rows := r.mustRows(t, selectedTable)
+	rows := r.mustRows(t, listTable)
 	if len(rows) != 3 {
 		t.Fatalf("alias results=%#v, want two identities and one distinct failure", rows)
 	}
@@ -188,7 +185,7 @@ func TestSelectedWorktreeHostileTarget(t *testing.T) {
 			if r.exit != 1 {
 				t.Fatalf("hostile target exit=%d output=%q", r.exit, r.stdout)
 			}
-			rows := r.mustRows(t, selectedTable)
+			rows := r.mustRows(t, listTable)
 			if len(rows) != 2 {
 				t.Fatalf("hostile results=%#v", rows)
 			}
@@ -212,7 +209,7 @@ func TestSelectedWorktreeHostileTarget(t *testing.T) {
 	if r.exit != 1 {
 		t.Fatalf("position matrix exit=%d output=%q", r.exit, r.stdout)
 	}
-	rows := r.mustRows(t, selectedTable)
+	rows := r.mustRows(t, listTable)
 	wantTargets := []string{assignments[0].Label, sanitize.TargetPointer(2), sanitize.TargetPointer(4), assignments[1].ID, sanitize.TargetPointer(6)}
 	refused := map[int]bool{1: true, 2: true, 4: true}
 	if len(rows) != len(wantTargets) {
@@ -278,10 +275,10 @@ func TestSelectedWorktreesExcludeOldOutput(t *testing.T) {
 	}
 	document, err := axitest.DecodeDocument(r.stdout)
 	mustNoError(t, err)
-	if !reflect.DeepEqual(document.Blocks, []string{selectedTable, "help"}) {
+	if !reflect.DeepEqual(document.Blocks, []string{listTable, "help"}) {
 		t.Fatalf("selected blocks=%q", document.Blocks)
 	}
-	rows := r.mustRows(t, selectedTable)
+	rows := r.mustRows(t, listTable)
 	if len(rows) != 1 || len(rows[0].(map[string]any)) != 5 {
 		t.Fatalf("selected projection=%#v", rows)
 	}
@@ -329,7 +326,7 @@ func TestSelectedWorktreeHostilePath(t *testing.T) {
 				t.Fatalf("stored path exit=%d output=%q, want exit %d", r.exit, r.stdout, wantCode)
 			}
 			want := []any{first, map[string]any{"target": good.ID, "id": good.ID, "path": good.Worktree, "state": string(good.State), "error": ""}}
-			if rows := r.mustRows(t, selectedTable); !reflect.DeepEqual(rows, want) {
+			if rows := r.mustRows(t, listTable); !reflect.DeepEqual(rows, want) {
 				t.Fatalf("stored path results=%#v, want %#v", rows, want)
 			}
 		})

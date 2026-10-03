@@ -153,7 +153,7 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 			}
 			stop := errors.New("stop after recovery metadata")
 			j.cleanupBoundary = failLifecycleStep(StepRecoveryMetadata, stop)
-			_, err = applyExplicitWith(j, f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
+			_, err = applyExplicitWith(j, f.ambient(), f.root, f.creation.Path, plan.Fingerprint, CleanupOptions{})
 			if !errors.Is(err, stop) {
 				t.Fatalf("ApplyExplicit error = %v, want recovery-metadata fault", err)
 			}
@@ -170,7 +170,7 @@ func TestRecoveryPreservesEveryGitVisibleLayerWithoutMovingBranchOrIndex(t *test
 				t.Fatal(err)
 			}
 			j.cleanupBoundary = failLifecycleStep(StepRecoveryRef, stop)
-			_, err = applyExplicitWith(j, f.root, f.creation.Path, replayPlan.Fingerprint, CleanupOptions{})
+			_, err = applyExplicitWith(j, f.ambient(), f.root, f.creation.Path, replayPlan.Fingerprint, CleanupOptions{})
 			if !errors.Is(err, stop) {
 				t.Fatalf("ApplyExplicit replay error = %v, want recovery-ref fault", err)
 			}

@@ -167,7 +167,7 @@ func TestResetRefusesHiddenIndexFlags(t *testing.T) {
 			mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("hidden edit\n"), 0o644)
 			gitRun(t, f.creation.Path, "switch", "--detach", "HEAD")
 			out := requireResetRefusal(t, f.root, f.home, f.creation.Assignment.Start, f.creation.Assignment.ID, "index carries hidden flags")
-			requireTest(t, strings.Contains(out, "refusal_paths[1]{path}:\n  README.md\n"), "hidden flag paths = %s", out)
+			requireTest(t, strings.Contains(out, refusalPathsTable+"[1]{path}:\n  README.md\n"), "hidden flag paths = %s", out)
 			body, err := os.ReadFile(filepath.Join(f.creation.Path, "README.md"))
 			mustNoError(t, err)
 			requireTest(t, string(body) == "hidden edit\n", "hidden edit changed: %q", body)

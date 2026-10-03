@@ -83,7 +83,7 @@ func listSelectedWorktrees(root string, args []string) (string, int) {
 		}
 		rows = append(rows, []any{target, selected.ID, selected.Worktree, string(selected.State), ""})
 	}
-	out, err := toon.TableTyped("worktrees", []string{"target", "id", "path", "state", "error"}, rows)
+	out, err := toon.TableTyped(listTable, []string{"target", "id", "path", "state", "error"}, rows)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}

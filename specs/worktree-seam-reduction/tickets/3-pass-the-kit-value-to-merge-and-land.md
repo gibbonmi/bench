@@ -1,7 +1,7 @@
 # 3. Pass the kit value to merge and land
 
 Blocked by: 2-carry-an-ambient-value-below-each-verb-entry.md
-Writes: internal/worktree/joins.go, internal/worktree/merge.go, internal/worktree/land.go, internal/worktree/merge_test.go, internal/worktree/merge_caller_root_test.go, internal/worktree/delegated_integration_test.go, internal/worktree/land_effects_test.go, internal/worktree/verb_fixture_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/joins.go, internal/worktree/merge.go, internal/worktree/land.go, internal/worktree/merge_test.go, internal/worktree/merge_caller_root_test.go, internal/worktree/delegated_integration_test.go, internal/worktree/land_effects_test.go, internal/worktree/verb_fixture_test.go, internal/worktree/merge_from_sha_test.go, internal/worktree/worktree_test.go, internal/worktree/reset_repair_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: WS17, WS18, WS19, WS20, WS21, WS22, WS23, WS24, WS25
 
 ## What to build

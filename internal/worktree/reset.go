@@ -28,10 +28,10 @@ var resetGrammar = usage.Grammar{
 
 // ResetCommand plans or applies a recoverable return to an assignment checkpoint.
 func ResetCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return resetWith(defaultJoins(), root, home, args, stdout, stderr)
+	return resetWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-func resetWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+func resetWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(resetGrammar, args)
 	if line != "" {
 		if code == 0 {
@@ -55,7 +55,7 @@ func resetWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 		return landRefusalError(stdout, err)
 	}
 	if fingerprint, apply := parsed.Flags["--apply"]; apply {
-		return applyReset(j, root, home, plan, fingerprint, stdout)
+		return applyReset(j, root, a.home, plan, fingerprint, stdout)
 	}
 	next := ""
 	if plan.action != "none" {
@@ -73,7 +73,7 @@ func resetWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 		}
 	}
 	if len(rows) > 0 {
-		table, err := toon.Table("reset_paths", []string{"path", "status"}, rows)
+		table, err := toon.Table(resetPathsTable, []string{"path", "status"}, rows)
 		if err != nil {
 			return landRefusalError(stdout, err)
 		}

@@ -337,7 +337,7 @@ func validateCreationBundle(root string, assignment intent.Assignment) error {
 
 const releaseOperation = "worktree-release"
 
-func releaseAssignment(j joins, root, requestArg, targetArg string) (intent.CleanupReceipt, error) {
+func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (intent.CleanupReceipt, error) {
 	target, err := canonicalPath(targetArg)
 	if err != nil {
 		return intent.CleanupReceipt{}, err
@@ -427,10 +427,10 @@ func releaseAssignment(j joins, root, requestArg, targetArg string) (intent.Clea
 	}
 	var plan CleanupPlan
 	if resumeFingerprint == "" {
-		plan, err = applyAutomaticWithTerminal(j, root, target, nil, terminal)
+		plan, err = applyAutomaticWithTerminal(j, a, root, target, nil, terminal)
 	} else {
-		planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, currentTime()) }
-		plan, err = applyCleanupTransaction(j, root, target, resumeFingerprint, planner, nil, terminal)
+		planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, a.now) }
+		plan, err = applyCleanupTransaction(j, a, root, target, resumeFingerprint, planner, nil, terminal)
 	}
 	if err != nil {
 		return intent.CleanupReceipt{}, err
@@ -509,7 +509,7 @@ func recoveryPendingError(a intent.Assignment) error {
 	return fmt.Errorf("worktree removed out of band; its work is preserved until the next session start sweeps it: git show %s", ref)
 }
 func renderRelease(stdout io.Writer, assignment intent.Assignment, action string) int {
-	out, err := toon.Table("worktree_release", []string{"path", "assignment", "state", "action"}, [][]string{{assignment.Worktree, assignment.ID, string(assignment.State), action}})
+	out, err := toon.Table(releaseTable, []string{"path", "assignment", "state", "action"}, [][]string{{assignment.Worktree, assignment.ID, string(assignment.State), action}})
 	if err != nil {
 		return 1
 	}

@@ -331,7 +331,7 @@ func TestCleanUnclaimedPlanIsReadOnlyAndQuietWhenEmpty(t *testing.T) {
 	root, home := unclaimedBranchFixture(t)
 	f := repoHome{root, home}
 	empty := runVerb(t, verbClean, f.call("--discard-branch", "--unclaimed"))
-	if empty.exit != 0 || empty.stderr != "" || len(empty.mustRows(t, cleanupTable)) != 0 || !strings.HasPrefix(empty.stdout, "worktree_cleanup[0]") {
+	if empty.exit != 0 || empty.stderr != "" || len(empty.mustRows(t, cleanupTable)) != 0 || !strings.HasPrefix(empty.stdout, cleanupTable+"[0]") {
 		t.Fatalf("empty plan exit=%d stderr=%q stdout=%q, want the empty table", empty.exit, empty.stderr, empty.stdout)
 	}
 	addUnclaimedBranch(t, root, "a")

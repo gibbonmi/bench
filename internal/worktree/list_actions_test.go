@@ -277,7 +277,7 @@ func TestListCommandControlBearingOrphanPathPreservesPrimaryAndAction(t *testing
 				t.Fatal(err)
 			}
 			r := runVerb(t, verbList, repoHome{root, Home()}.call())
-			if r.exit != 0 || !strings.HasPrefix(r.stdout, "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n") {
+			if r.exit != 0 || !strings.HasPrefix(r.stdout, listTable+"[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n") {
 				t.Fatalf("ListCommand = (%d, %q), want primary worktree response and exit 0", r.exit, r.stdout)
 			}
 			if !strings.Contains(r.stdout, "help[1]{cmd,why}:\n") {
@@ -306,7 +306,7 @@ func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *t
 				t.Fatal(err)
 			}
 			r := runVerb(t, verbList, repoHome{root, Home()}.call())
-			primary := "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n  foreign," + missing + ",\"\",foreign,foreign,missing,none,unknown,unknown\n"
+			primary := listTable + "[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n  foreign," + missing + ",\"\",foreign,foreign,missing,none,unknown,unknown\n"
 			want := primary + "help[0]{cmd,why}:\n"
 			if r.exit != 0 || r.stdout != want {
 				t.Fatalf("ListCommand = (%d, %q), want checked primary plus honest empty help", r.exit, r.stdout)

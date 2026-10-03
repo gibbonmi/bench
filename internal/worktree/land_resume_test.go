@@ -3,8 +3,6 @@ package worktree
 
 import (
 	"bytes"
-	"context"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -177,21 +175,27 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 	t.Parallel()
 	request := "resume-reconcile"
 	f := publicLandingFixture(t, request, "", "")
-	working := defaultJoins()
-	broken := working
-	broken.reconcileLanding = func(joins, string, string, string, string) error {
-		return errors.New("injected reconciliation interruption")
-	}
-	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:reconcile") {
+	repair := blockLandingReconcile(t, f.root)
+	if r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:reconcile") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	published := gitOutput(t, f.root, "rev-parse", "main")
+	repair()
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
-	if r := runVerb(t, verbLand, f.callWith(working, args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
+	if r := runVerb(t, verbLand, f.call(args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
 		t.Fatalf("resume reconciliation = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "HEAD"); got != published {
 		t.Fatalf("destination checkout = %s, want %s", got, published)
+	}
+	// The publication moves only the ref, so HEAD alone cannot tell a reconciled checkout
+	// from one whose index and files still hold the old base.
+	if got := gitOutput(t, f.root, "status", "--porcelain=v1", "--untracked-files=all"); got != "" {
+		t.Fatalf("destination checkout is not reconciled: status=%q", got)
+	}
+	landed, err := os.ReadFile(filepath.Join(f.root, "owned.txt"))
+	if want := gitOutput(t, f.root, "show", published+":owned.txt"); err != nil || strings.TrimSpace(string(landed)) != want {
+		t.Fatalf("destination owned.txt = %q, error=%v; want the published %q", landed, err, want)
 	}
 	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("resume reran gate: tally=%q error=%v", got, err)
@@ -202,20 +206,11 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 	for _, specArg := range []string{"x", "./specs/x/spec.md"} {
 		t.Run(specArg, func(t *testing.T) {
 			request := "resume-spec-form-" + strings.ReplaceAll(specArg, "/", "-")
-			f := publicLandingFixture(t, request, "", "")
+			f := markerLandingFixture(t, request, true)
 			chdir(t, f.root)
-			working := defaultJoins()
-			broken := working
-			broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
-				return errors.New("injected marker interruption")
-			}
-
-			if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
-				t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-			}
-			published := gitOutput(t, f.root, "rev-parse", "main")
+			_, published := interruptLandingAtMarker(t, f, landArgs(request, f.base, f.tip, f.creation.Path)...)
 			args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", specArg, f.creation.Path}
-			if r := runVerb(t, verbLand, f.callWith(working, args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
+			if r := runVerb(t, verbLand, f.call(args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
 				t.Fatalf("resume with spec %q = (%d, %q, %q)", specArg, r.exit, r.stdout, r.stderr)
 			}
 			if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
@@ -228,18 +223,10 @@ func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 func TestResumeLandCommandCompletesAnInterruptedMarker(t *testing.T) {
 	t.Parallel()
 	request := "resume-marker"
-	f := publicLandingFixture(t, request, "", "")
-	working := defaultJoins()
-	broken := working
-	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
-		return errors.New("injected marker interruption")
-	}
-	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
-	published := gitOutput(t, f.root, "rev-parse", "main")
+	f := markerLandingFixture(t, request, true)
+	_, published := interruptLandingAtMarker(t, f, landArgs(request, f.base, f.tip, f.creation.Path)...)
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
-	if r := runVerb(t, verbLand, f.callWith(working, args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
+	if r := runVerb(t, verbLand, f.call(args...)); r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
 		t.Fatalf("resume marker = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "refs/bench/green/main"); got != published {

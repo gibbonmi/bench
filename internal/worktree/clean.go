@@ -290,17 +290,17 @@ func anchorDetached(root string, plan CleanupPlan) error {
 	}
 	return nil
 }
-func discardIgnored(j joins, plan CleanupPlan) error {
+func discardIgnored(j joins, a ambient, plan CleanupPlan) error {
 	current, _, err := inventoryIgnored(j, plan.Target, false)
 	if err != nil || current.Digest != plan.Ignored.Digest || current.Count != plan.Ignored.Count || current.Bytes != plan.Ignored.Bytes {
 		return errStaleFingerprint
 	}
 	for _, name := range current.Paths {
 		full := filepath.Join(plan.Target, filepath.Clean(filepath.FromSlash(name)))
-		if _, err := j.ignoredLstat(full); err != nil {
+		if _, err := os.Lstat(full); err != nil {
 			return errStaleFingerprint
 		}
-		warnBeforeRemovingLiveBinary(j, plan.Target, full)
+		warnBeforeRemovingLiveBinary(j, a, plan.Target, full)
 		if err := os.Remove(full); err != nil {
 			return fmt.Errorf("discard ignored path: %w", err)
 		}
@@ -308,7 +308,7 @@ func discardIgnored(j joins, plan CleanupPlan) error {
 	return nil
 }
 
-func inventoryIgnored(j joins, target string, full bool) (IgnoredInventory, []byte, error) {
+func inventoryIgnored(_ joins, target string, full bool) (IgnoredInventory, []byte, error) {
 	raw, err := ignoredListing(target)
 	if err != nil {
 		return IgnoredInventory{Uncertain: true}, nil, err
@@ -337,7 +337,7 @@ func inventoryIgnored(j joins, target string, full bool) (IgnoredInventory, []by
 			inventory.Uncertain = true
 			return inventory, canonicalParts(parts...), errors.New("ignored path escapes worktree")
 		}
-		info, statErr := j.ignoredLstat(filepath.Join(target, rel))
+		info, statErr := os.Lstat(filepath.Join(target, rel))
 		if statErr != nil {
 			inventory.Uncertain = true
 			return inventory, canonicalParts(parts...), statErr

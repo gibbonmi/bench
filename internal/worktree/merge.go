@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -41,12 +42,13 @@ func reconcileMergeCheckout(path, tip string) error {
 // commit is a commit in the default branch's history or a sibling assignment's branch
 // tip; no other object reaches the lane.
 func MergeCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return mergeWith(defaultJoins(), root, home, args, stdout, stderr)
+	return mergeWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// mergeWith is MergeCommand with the seam set resolved explicitly at the caller's
-// boundary.
-func mergeWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+// mergeWith is MergeCommand with the ambient value resolved explicitly at the caller's
+// boundary. It takes the seam set first, as each internal verb form does, but the merge
+// reads no seam.
+func mergeWith(_ joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(mergeGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -55,15 +57,15 @@ func mergeWith(j joins, root, home string, args []string, stdout, stderr io.Writ
 	// The record opens after the grammar answers, so a usage refusal composes and records
 	// nothing. The target resolves inside the span.
 	var assignment string
-	finishSpan := beginVerbSpan(home, root, otelMergeSeam)
-	exit := mergeAttributed(&assignment, j, root, parsed, stdout, stderr)
+	finishSpan := beginVerbSpan(a.home, root, otelMergeSeam)
+	exit := mergeAttributed(&assignment, a, root, parsed, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit
 }
 
 // mergeAttributed is the merge verb's own work, with the target assignment written to
 // assignment once the target resolves.
-func mergeAttributed(assignment *string, j joins, root string, parsed usage.Result, stdout, stderr io.Writer) int {
+func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Result, stdout, stderr io.Writer) int {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return landRefusal(stdout, "assignment ledger is unreadable")
@@ -86,7 +88,7 @@ func mergeAttributed(assignment *string, j joins, root string, parsed usage.Resu
 	if err != nil {
 		return landRefusal(stdout, "merge target checkout fingerprint is unreadable")
 	}
-	owner, err := mergeOwner(j, target.Worktree, previous)
+	owner, err := mergeOwner(a.kit, target.Worktree, previous)
 	if err != nil {
 		return landRefusal(stdout, err.Error())
 	}
@@ -125,7 +127,7 @@ func mergeAttributed(assignment *string, j joins, root string, parsed usage.Resu
 	// A `current` target changed nothing, so there is nothing for the checkout to catch
 	// up with; only a published tip needs the reconcile.
 	if result.Kind != landing.MergeKindCurrent {
-		if err := j.mergeReconcile(target.Worktree, result.Tip); err != nil {
+		if err := reconcileMergeCheckout(target.Worktree, result.Tip); err != nil {
 			fmt.Fprintln(stdout, record+",next="+sanitize.Controls(mergeReconcileNext(target, result.Tip))+"}")
 			return 3
 		}
@@ -379,10 +381,10 @@ func mergeDefaultBranchCommit(root, from string) (commit string, resolved, owned
 }
 
 // mergeOwner resolves the authority the composed tree is graded under, the way
-// `bench commit` resolves it, but for the target worktree. A root with no declared lane
-// keeps the whole-project gate.
-func mergeOwner(j joins, target, previous string) (landing.Owner, error) {
-	lane, err := j.mergeLane(target)
+// `bench commit` resolves it, but for the target worktree and under the kit that the verb
+// entry read. A root with no declared lane keeps the whole-project gate.
+func mergeOwner(kit, target, previous string) (landing.Owner, error) {
+	lane, err := gate.LaneForCommitAtKit(target, kit)
 	if err != nil {
 		return landing.Owner{}, err
 	}

@@ -27,9 +27,9 @@ var reauthorizeGrammar = usage.Grammar{
 }
 
 // unlockWorktree and lockWorktree are the ownership-lock effects the reauthorize refresh
-// performs. The joins value carries them, together with reauthorizeBeforeCAS, which lets
-// the operation test model a ledger winner after the lock refresh but before the
-// expected-old comparison.
+// performs. The joins value carries lockWorktree, together with reauthorizeBeforeCAS,
+// which lets the operation test model a ledger winner after the lock refresh but before
+// the expected-old comparison.
 func unlockWorktree(root, path string) error {
 	_, err := exec.Command("git", "-C", root, "worktree", "unlock", path).CombinedOutput()
 	return err
@@ -42,12 +42,12 @@ func lockWorktree(root, path, reason string) error {
 
 // ReauthorizeCommand replaces a retained assignment request after exact identity proofs.
 func ReauthorizeCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return reauthorizeWith(defaultJoins(), root, home, args, stdout, stderr)
+	return reauthorizeWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// reauthorizeWith is ReauthorizeCommand with the seam set resolved explicitly at the
-// caller's boundary.
-func reauthorizeWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+// reauthorizeWith is ReauthorizeCommand with the seam set and the ambient value resolved
+// explicitly at the caller's boundary.
+func reauthorizeWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	parsed, line, code := usage.Parse(reauthorizeGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
@@ -55,7 +55,7 @@ func reauthorizeWith(j joins, root, home string, args []string, stdout, stderr i
 	}
 	// The record opens after the grammar answers. The assignment the caller named is the
 	// subject, because a refusal inside the swap still acted on that named assignment.
-	finishSpan := beginVerbSpan(home, root, otelReauthorizeSeam)
+	finishSpan := beginVerbSpan(a.home, root, otelReauthorizeSeam)
 	exit := reauthorizeParsed(j, root, parsed, stdout, stderr)
 	finishSpan(exit, parsed.Flags["--assignment"])
 	return exit
@@ -128,7 +128,7 @@ func reauthorizeParsed(j joins, root string, parsed usage.Result, stdout, stderr
 }
 
 func refreshReauthorizeLock(j joins, root, path string, old, next intent.Assignment) (func(), error) {
-	if err := j.reauthorizeUnlock(root, path); err != nil {
+	if err := unlockWorktree(root, path); err != nil {
 		return nil, errors.New("refresh ownership lock")
 	}
 	if err := j.reauthorizeLock(root, path, lockReason(next)); err != nil {
@@ -138,7 +138,7 @@ func refreshReauthorizeLock(j joins, root, path string, old, next intent.Assignm
 		return nil, errors.New("refresh ownership lock")
 	}
 	return func() {
-		if j.reauthorizeUnlock(root, path) == nil {
+		if unlockWorktree(root, path) == nil {
 			_ = j.reauthorizeLock(root, path, lockReason(old))
 		}
 	}, nil

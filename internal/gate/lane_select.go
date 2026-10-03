@@ -97,24 +97,6 @@ type Lane struct {
 	Selective bool
 }
 
-// LaneForCommit resolves the lane a worktree commit at root runs. It answers a nil lane
-// for a root that declares none, so one read tells a caller both whether a lane exists
-// and what it is. It applies the gate's own kit-root selection, so a caller outside this
-// package asks the lane question once.
-func LaneForCommit(root string) (*Lane, error) {
-	kit := kitRoot(root)
-	checks, err := LaneFor(root, kit)
-	if err != nil || checks == nil {
-		return nil, err
-	}
-	// The one built-in-versus-manifest decision. LaneFor answers the built-in lane under
-	// this same predicate, so the selection switch and the lane come from one call.
-	if sameDirectory(root, kit) {
-		return &Lane{Checks: checks, Selective: true}, nil
-	}
-	return &Lane{Checks: checks, Kit: kit}, nil
-}
-
 // LaneRequest is one lane run. Root is the repository whose Git dir receives the record
 // and whose object store holds Tree. Tree is the composed snapshot the lane grades. Lane
 // names the lane in its record. Checks is the declared check list, resolved through

@@ -13,7 +13,10 @@ import (
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -60,17 +63,17 @@ const reviewedRangeDetail = "review base is outside the assignment's reviewed ra
 // consults, rebuilds, or re-executes a repository executable, so candidate landing
 // code cannot run during its own promotion.
 func LandCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	return landWith(defaultJoins(), root, home, args, stdout, stderr)
+	return landWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
 
-// landWith is LandCommand with the seam set resolved explicitly at the caller's boundary.
-// It is also the landing's record boundary: one span covers the composition and the
-// publication, and the resume path runs inside it, so a resumed landing records the same
-// seam as the first run.
-func landWith(j joins, root, home string, args []string, stdout, stderr io.Writer) int {
+// landWith is LandCommand with the seam set and the ambient value resolved explicitly at
+// the caller's boundary. It is also the landing's record boundary: one span covers the
+// composition and the publication, and the resume path runs inside it, so a resumed
+// landing records the same seam as the first run.
+func landWith(j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	var measures landingMeasures
-	ctx, finishSpan := beginLandingSpan(home, root)
-	exit := landAttributed(ctx, &measures, j, root, home, args, stdout, stderr)
+	ctx, finishSpan := beginLandingSpan(a.home, root)
+	exit := landAttributed(ctx, &measures, j, a, root, args, stdout, stderr)
 	finishSpan(exit, measures)
 	return exit
 }
@@ -119,10 +122,9 @@ func beginLandingSpan(home, root string) (context.Context, func(int, landingMeas
 
 // landAttributed is the first-run landing itself, with the span's measures written to
 // measures as each becomes known.
-func landAttributed(ctx context.Context, measures *landingMeasures, j joins, root, home string, args []string, stdout, stderr io.Writer) int {
-	j.home = home
+func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
 	if hasResumeFlag(args) {
-		return resumeLandWith(j, root, home, args, stdout, stderr)
+		return resumeLandWith(j, a, root, args, stdout, stderr)
 	}
 	parsed, line, code := usage.Parse(landGrammar, args)
 	if line != "" {
@@ -182,7 +184,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, roo
 	// The count is read before the release step, because that step drops the records.
 	// A landing that stops at an earlier step states the same count, and its resume
 	// reads the file the release never removed.
-	records := censusCount(home, root, assignment.ID)
+	records := censusCount(a.home, root, assignment.ID)
 	measures.censusRawCalls = records
 	measures.censusRawCallsRead = true
 	// The write-set size is the reviewed name-only diff, read from the same range
@@ -192,8 +194,8 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, roo
 		measures.counted = true
 	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
-	printCensusHeads(stderr, home, root, assignment.ID)
-	if notice := brokerChangeNotice(j.kitSourceCheckout, root, assignment.Worktree, source.base, source.tip); notice != "" {
+	printCensusHeads(stderr, a.home, root, assignment.ID)
+	if notice := brokerChangeNotice(a.kit, root, assignment.Worktree, source.base, source.tip); notice != "" {
 		fmt.Fprintln(stderr, notice)
 	}
 	result, err := j.landReviewed(ctx, landing.ReviewedRequest{
@@ -213,23 +215,23 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, roo
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
 	measures.subject = result.Commit
-	if err := j.advanceLandingMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
+	if err := authorization.AdvanceMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
 	}
-	if err := j.reconcileLanding(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
+	if err := reconcileLandingDestination(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)
 	}
-	if _, err := j.pruneLandedBranches(root); err != nil {
+	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "prune", records)
 	}
 	var releaseDiagnostic bytes.Buffer
-	if release := j.releaseLandingAssignment(j, root, home, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
+	if release := j.releaseLandingAssignment(j, a, root, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
 		if releaseDiagnostic.Len() > 0 {
 			fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(releaseDiagnostic.String(), "\n")))
 		}
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
-	return landedAfterEffects(j, root, result, parsed.Flags["--spec"], path, assignment.ID, true, records, stdout, stderr)
+	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, records, stdout, stderr)
 }
 
 // censusCount is the assignment's raw-call count for the landed record. An unreadable
@@ -264,7 +266,7 @@ func hasResumeFlag(args []string) bool {
 // installs the new one. An unresolvable input set reports nothing; the landing itself
 // stays under the installed owner either way. The install step it names is the
 // destination's own route, so the printed command runs where the operator stands.
-func brokerChangeNotice(kitCheckout func(string) bool, root, worktree, base, tip string) string {
+func brokerChangeNotice(kit, root, worktree, base, tip string) string {
 	if !freshness.DeclaresBuildInputs(worktree) {
 		return ""
 	}
@@ -282,18 +284,19 @@ func brokerChangeNotice(kitCheckout func(string) bool, root, worktree, base, tip
 	}
 	for _, input := range inputs {
 		if _, ok := changed[input]; ok {
-			return "landing changes the promotion broker source; the installed broker keeps authority until " + brokerInstallStep(kitCheckout, root) + " publishes the new broker"
+			return "landing changes the promotion broker source; the installed broker keeps authority until " + brokerInstallStep(kit, root) + " publishes the new broker"
 		}
 	}
 	return ""
 }
 
-// brokerInstallStep names the route that installs the changed broker at root. The kit's
-// own source checkout carries no pin manifest, so 'bench repair' refuses there; its route
-// is the stamped rebuild and 'bench doctor --fix'. The sentence comes from the one
-// rebuild owner, never from a second copy of the command here.
-func brokerInstallStep(kitCheckout func(string) bool, root string) string {
-	if kitCheckout(root) {
+// brokerInstallStep names the route that installs the changed broker at root, where kit is
+// the kit value that the verb entry read. The kit's own source checkout carries no pin
+// manifest, so 'bench repair' refuses there; its route is the stamped rebuild and 'bench
+// doctor --fix'. The sentence comes from the one rebuild owner, never from a second copy
+// of the command here.
+func brokerInstallStep(kit, root string) string {
+	if gate.KitSourceCheckoutAtKit(root, kit) {
 		return freshness.RebuildAction(root) + " with 'bench doctor --fix'"
 	}
 	return "'bench repair' or the release install"

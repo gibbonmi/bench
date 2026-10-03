@@ -7,15 +7,33 @@
 package worktree
 
 import (
+	"io"
 	"os"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/gate"
 )
 
 // currentTime is the boundary clock read. A command resolves one instant here and
 // passes it down, so decision code can be tested with an injected time.
 func currentTime() time.Time { return time.Now() }
+
+// ambient is the process context of one verb run: the Bench home and the warnings writer
+// that the verb entry received, the kit value, and one instant. Each internal verb form
+// takes it second, after the joins value, so nothing below the entry reads the process.
+type ambient struct {
+	home     string
+	kit      string
+	now      time.Time
+	warnings io.Writer
+}
+
+// newAmbient reads the kit value and the clock once. The caller supplies the home and the
+// warnings writer.
+func newAmbient(home string, stderr io.Writer) ambient {
+	return ambient{home: home, kit: gate.KitValue(), now: currentTime(), warnings: stderr}
+}
 
 // homeEnv is this package's name for the Bench home variable. internal/benchhome
 // declares the string, and a verb writes it onto every child it starts.

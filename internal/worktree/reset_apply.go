@@ -37,7 +37,7 @@ func applyReset(j joins, root, home string, plan resetPlan, fingerprint string, 
 	if plan.mode == "restore" {
 		movePlan.checkpoint = plan.manifest.Tip
 	}
-	if err := j.resetMove(plan.assignment.Worktree, plan.assignment.Branch, movePlan.checkpoint); err != nil {
+	if err := moveResetCheckout(plan.assignment.Worktree, plan.assignment.Branch, movePlan.checkpoint); err != nil {
 		return resetResult(stdout, plan, envelope.Ref, 3)
 	}
 	if plan.lock == "repair" {

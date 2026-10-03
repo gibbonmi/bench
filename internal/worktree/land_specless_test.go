@@ -2,8 +2,6 @@
 package worktree
 
 import (
-	"context"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -120,22 +118,13 @@ func TestLandCommandSpecLessLandedSourceBaseIsTheResolvedBase(t *testing.T) {
 func TestResumeLandCommandSpecLessCompletesAnInterruptedLanding(t *testing.T) {
 	t.Parallel()
 	request := "spec-less-resume"
-	f := specLessLandingFixture(t, request)
-	working := defaultJoins()
-	broken := working
-	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
-		return errors.New("injected marker interruption")
-	}
-	r := runVerb(t, verbLand, f.callWith(broken, specLessLandArgs(request, f.base, f.tip, f.creation.Path)...))
-	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
-		t.Fatalf("interrupted spec-less landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
+	f := markerLandingFixture(t, request, false)
+	r, published := interruptLandingAtMarker(t, f, specLessLandArgs(request, f.base, f.tip, f.creation.Path)...)
 	if strings.Contains(r.stdout, "--spec") {
 		t.Fatalf("spec-less resume instruction named a spec: %q", r.stdout)
 	}
-	published := gitOutput(t, f.root, "rev-parse", "main")
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, f.creation.Path}
-	r = runVerb(t, verbLand, f.callWith(working, args...))
+	r = runVerb(t, verbLand, f.call(args...))
 	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
 		t.Fatalf("spec-less resume = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
@@ -152,19 +141,10 @@ func TestResumeLandCommandSpecLessCompletesAnInterruptedLanding(t *testing.T) {
 func TestResumeLandCommandWithoutSpecCompletesASpecBackedLanding(t *testing.T) {
 	t.Parallel()
 	request := "spec-backed-spec-less-resume"
-	f := publicLandingFixture(t, request, "", "")
-	working := defaultJoins()
-	broken := working
-	broken.advanceLandingMarker = func(context.Context, string, string, string, string) error {
-		return errors.New("injected marker interruption")
-	}
-	r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...))
-	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:marker") {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
-	published := gitOutput(t, f.root, "rev-parse", "main")
+	f := markerLandingFixture(t, request, true)
+	_, published := interruptLandingAtMarker(t, f, landArgs(request, f.base, f.tip, f.creation.Path)...)
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, f.creation.Path}
-	r = runVerb(t, verbLand, f.callWith(working, args...))
+	r := runVerb(t, verbLand, f.call(args...))
 	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") || len(r.stderr) != 0 {
 		t.Fatalf("spec-less resume of a spec landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}

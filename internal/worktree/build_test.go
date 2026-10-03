@@ -142,7 +142,7 @@ func TestBuildPrintsTheTable(t *testing.T) {
 	f := newOwnedAssignment(t, "build-prints-table")
 	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(buildJoins(&buildRecorder{}), f.creation.Assignment.Label))
 	requireTest(t, r.exit == 0, "build exit = %d, stderr %q", r.exit, r.stderr)
-	want, err := toon.Table("worktree_build", []string{"worktree", "executable"}, [][]string{{f.creation.Assignment.ID, filepath.Join(f.creation.Assignment.Worktree, "dist", "bench")}})
+	want, err := toon.Table(buildTable, []string{"worktree", "executable"}, [][]string{{f.creation.Assignment.ID, filepath.Join(f.creation.Assignment.Worktree, "dist", "bench")}})
 	mustNoError(t, err)
 	requireTest(t, strings.HasPrefix(r.stdout, want), "build printed %q, want the table %q", r.stdout, want)
 }

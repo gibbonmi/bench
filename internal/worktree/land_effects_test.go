@@ -52,15 +52,6 @@ func writeGoMainFixture(t *testing.T, root string) {
 	mustWrite(t, filepath.Join(root, "scripts", "go-build.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 }
 
-// kitCheckoutJoins is the landing seam set whose checkout predicate answers a fixed
-// verdict. The real predicate reads the kit root from the process environment, so a
-// fixture that bound that environment would leave the package's parallel set.
-func kitCheckoutJoins(kit bool) joins {
-	j := defaultJoins()
-	j.kitSourceCheckout = func(string) bool { return kit }
-	return j
-}
-
 // TestLandCommandReportsInstallStepForABrokerChangingDiff is SOL16 and BF19. A reviewed
 // diff that changes the promotion broker's own build inputs lands as source, but the
 // installed broker keeps authority. The landing must name the install step so the
@@ -71,8 +62,10 @@ func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-broker-change"
 	f := brokerChangingLanding(t, request)
+	call := f.call(landArgs(request, f.base, f.tip, f.creation.Path)...)
+	call.kit = f.root
 
-	r := runVerb(t, verbLand, f.callWith(kitCheckoutJoins(true), landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r := runVerb(t, verbLand, call)
 	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:refresh") {
 		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
 	}
@@ -92,8 +85,10 @@ func TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout(t *testing.T) 
 	t.Parallel()
 	request := "land-owner-broker-change-installed"
 	f := brokerChangingLanding(t, request)
+	call := f.call(landArgs(request, f.base, f.tip, f.creation.Path)...)
+	call.kit = t.TempDir()
 
-	r := runVerb(t, verbLand, f.callWith(kitCheckoutJoins(false), landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r := runVerb(t, verbLand, call)
 	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:refresh") {
 		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
 	}
@@ -207,6 +202,7 @@ func TestLandSkipsTheRefreshWithoutBuildInputs(t *testing.T) {
 	j, calls := refreshJoins(nil)
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("not-applicable")) {
 		t.Fatalf("landing without build inputs = (%d, %q, %q), want a not-applicable refresh", r.exit, r.stdout, r.stderr)
 	}
@@ -228,6 +224,7 @@ func TestLandSkipsAFreshBroker(t *testing.T) {
 	j, calls := refreshJoins(nil)
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
 	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("complete")) {
 		t.Fatalf("landing with a fresh broker = (%d, %q, %q), want a complete refresh", r.exit, r.stdout, r.stderr)
 	}
@@ -353,9 +350,11 @@ func TestResumeReadsEffectStateFromTheTree(t *testing.T) {
 		return publishVerifyingBroker(t, root, executable)
 	})
 	interrupted := working
-	interrupted.releaseLandingAssignment = func(joins, string, string, []string, io.Writer, io.Writer) int { return 1 }
+	interrupted.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
 
-	if r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
+	r := runVerb(t, verbLand, f.callWith(interrupted, landArgs(request, f.base, f.tip, f.creation.Path)...))
+	r.mustViaJoins(t)
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:release") {
 		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 0 {
