@@ -1,7 +1,7 @@
 # Authorize publication against current commitment
 
 Blocked by: 04-bind-worktrees-and-shifts.md
-Writes: internal/commitment (new), internal/intent, internal/worktree, internal/landing, internal/roadmap, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go, internal/systemtest/adoption_test.go, internal/systemtest/owner_landing_fixture_test.go
+Writes: internal/commitment (new), internal/intent, internal/worktree, internal/landing, internal/roadmap, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go, internal/systemtest/adoption_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/systemtest/owner_land_race_test.go
 Covers: DC12, DC14, DC28, DC29, DC30, DC32, DC49, DC72
 
 ## What to build
@@ -34,3 +34,12 @@ The existing system journey uses BENCH_KIT through `bench test --check system`. 
 Run `bench test --package ./internal/worktree`, `bench test --package ./internal/landing`, and `bench test --package ./internal/commitment`. Observe the gate-time policy race through the real broker orchestration seam.
 
 Ticket 03 supplies policy and admission in the shared worktree landing fixture. Reuse that setup when publication begins to require current authority.
+
+The installed broker passes the frozen assignment and presented request into the publication seam. The generic landing primitive remains available to its existing unit tests.
+The admitted route requires an admission implementation. A missing implementation refuses; candidate input cannot select an unrestricted route.
+
+Reuse land_specless_test.go for planning and protection coverage. Use land_identity_test.go for stale authority and races, and land_spec_amendment_test.go for continuation scope.
+These existing files provide headroom without expanding the crowded worktree directory.
+
+The system race assignment producer also requires real delivery admission. Update that shared producer before grading its competing-publication and artifact-recovery consumers.
+Run intent, command, conformance, and system checks with the three original package checks.
