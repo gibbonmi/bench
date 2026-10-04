@@ -2044,9 +2044,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C5",
       "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
-      "tip": "1642decabd17dcd1271847abad848a2d7a88a3aa",
-      "plan_digest": "sha256:674fd63d0a3ce41ec12e3f7d52cc03ed74f3cb68d8ea96096afbaaee87428916",
-      "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+      "tip": "18412326603049059084549a24c280a28755d9f4",
+      "plan_digest": "sha256:2798d6fa0000e97d8144b8acc23fab24f8d5bda56d2f9023e522e8588ad5e228",
+      "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
       "acceptance_rows": [
         "DC12",
         "DC14",
@@ -2308,6 +2308,150 @@ This suggestion is optional advice and has no repair disposition.
           },
           "requirement": "system",
           "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-2-worktree",
+          "performer": "claude:dc_r05_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_2:worktree",
+            "digest": "sha256:0a88d8c8d43b375dbe76416501eaa0ae682ae8a9cf98fac316ecc0ee04750a59",
+            "excerpt": "tip 18412326603049059084549a24c280a28755d9f4\nbench test --package ./internal/worktree: internal/worktree,pass,59571; failures[0]; skips[2] socket capability\nexit 0\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-2-landing",
+          "performer": "claude:dc_r05_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_2:landing",
+            "digest": "sha256:47145061af8eaa1fa3946990100f07f4cf6aadccdd8864c6dc7df58f2609fb98",
+            "excerpt": "tip 18412326603049059084549a24c280a28755d9f4\nbench test --package ./internal/landing: internal/landing,pass,8154; failures[0]; skips[2] device privilege\nexit 0\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-2-commitment",
+          "performer": "claude:dc_r05_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_2:commitment",
+            "digest": "sha256:a54d43b0d231d2cebc121b8899dc76958304f1402e9abf7d344edc5db212601a",
+            "excerpt": "tip 18412326603049059084549a24c280a28755d9f4\nbench test --package ./internal/commitment: internal/commitment,pass,3077; failures[0]; skips[0]\nexit 0\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-2-intent",
+          "performer": "claude:dc_r05_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_2:intent",
+            "digest": "sha256:fbf354863d0a4755f60ed78d44fa39e9e35a83a697156f293ad2d0355509d43c",
+            "excerpt": "tip 18412326603049059084549a24c280a28755d9f4\nbench test --package ./internal/intent: internal/intent,pass,3810; failures[0]; skips[0]\nexit 0\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-2-bench",
+          "performer": "claude:dc_r05_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_2:bench",
+            "digest": "sha256:bd7635c767839935f460585351bd9f43b1292e38e1e2b43d460fda5a13618642",
+            "excerpt": "tip 18412326603049059084549a24c280a28755d9f4\nbench test --package ./cmd/bench: cmd/bench,pass,13843; failures[0]; skips[0]\nexit 0\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-2-conformance",
+          "performer": "claude:dc_r05_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_2:conformance",
+            "digest": "sha256:a88f15dbc6c999337d192c519b13a1997da351eb0f9276f1277f0b352cc6f11f",
+            "excerpt": "tip 18412326603049059084549a24c280a28755d9f4\nbench test --package ./internal/conformance: internal/conformance,pass,35880; failures[0]; skips[3] socket/device capability\nexit 0\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-2-system",
+          "performer": "claude:dc_r05_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_2:system",
+            "digest": "sha256:e4ffc8515c8f52d0e4502e8b3f34fe0a69034b3a490cac7e7b6eae5de9de9a07",
+            "excerpt": "tip 18412326603049059084549a24c280a28755d9f4\nbench test --check system (Node 25 PATH): internal/systemtest,pass,72710; failures[0]; skips[0]\nexit 0\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-2-repository",
+          "performer": "claude:dc_r05_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_2:repository",
+            "digest": "sha256:4e12038130f8fc722c44a5a99370fb5d280e93ba154dd2d49957875cb3d9ac75",
+            "excerpt": "tip 18412326603049059084549a24c280a28755d9f4\nbench test --package ./internal/commitment/repository: internal/commitment/repository,pass,368; failures[0]; skips[0]\nextra: bench test --package ./internal/gittest: pass,24; failures[0]\nexit 0\nProbe C5-R2-C2: drop `owner.State != intent.StateActive ||` in internal/commitment/repository/publication.go admitPublication.\nCommand: bench test --package ./internal/commitment/repository -> exit 1\nfailures[1]: TestAdmitPublicationFrozenIdentity/bound-not-active, \"publication_test.go:86: AdmitPublication = <nil>, want a refusal naming \\\"is not active with its presented request and worktree\\\"\"\nRestore: condition restored; publication.go has no diff against the tip (git diff --stat lists no publication.go).\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
           "exit_code": 0
         }
       ],
@@ -3108,4 +3252,13 @@ Standards has three new findings and Coverage has two. All five are accepted for
 - C5-R2-S3: auto-fix. CommitPolicy commits only its named path, as its comment states.
 - C5-R2-C1: plan expansion. DC-C5 gains a repository requirement that runs the commitment repository package.
 - C5-R2-C2: auto-fix. A frozen identity row refuses a bound assignment that is not active, and a probe drops the state filter.
+
+## DC-C5 repair cycle 2
+
+Repair cycles consumed: 2 of 2. A fresh Opus repair session at medium effort corrected C5-R2-S1, C5-R2-S2, C5-R2-S3, and C5-R2-C2.
+The repair source is 18412326603049059084549a24c280a28755d9f4. All eight planned checks pass there, including the new repository check.
+
+The gittest package now owns one error-returning git runner, and the commitment test core uses it. The intent package now owns the one lock path.
+The lock test has a bounded deadline. CommitPolicy commits only its named path.
+A probe that drops the active-state filter failed the new row that refuses an assignment that is not active, and the restore was exact.
 
