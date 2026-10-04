@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capturetx"
+	"github.com/gibbonmi/bench/internal/commitment"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/retros"
@@ -323,6 +324,9 @@ type ContextSnapshot struct {
 	GitChanges         [][]string
 	GateCache          [][]any
 	Failures           []ParseFailure
+	// Commitment is the shared commitment projection. The command adapter supplies it,
+	// so the snapshot reads no policy itself.
+	Commitment commitment.Outlook
 }
 
 // dirBytes sums the sizes of the regular-file entries in a classified directory listing.

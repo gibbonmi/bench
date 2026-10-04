@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
@@ -27,6 +28,7 @@ type view struct {
 	HasGate        bool
 	Gate           gateView
 	Signals        []signalView
+	Commitment     commitmentView
 	RoadmapPresent bool
 	RoadmapText    string
 	Sequence       string
@@ -42,6 +44,15 @@ type gateView struct {
 }
 
 type signalView struct{ Name, Detail, Action string }
+
+// commitmentView is the sanitized outlook. Blocked holds each blocked outcome and its
+// reason. Unapproved marks a recommended sequence that no published commitment backs.
+type commitmentView struct {
+	Fields, Blocked []fieldView
+	Unapproved      bool
+}
+
+type fieldView struct{ Name, Value string }
 
 type worktreeView struct{ Class, Path string }
 
@@ -82,6 +93,7 @@ func Render(s Snapshot) string {
 			Action: sanitize.Controls(sig.Action),
 		})
 	}
+	v.Commitment = commitmentProjection(s.Commitment)
 	for _, idea := range s.Ideas {
 		v.Ideas = append(v.Ideas, sanitize.Controls(idea))
 	}
@@ -98,6 +110,22 @@ func Render(s Snapshot) string {
 		return b.String()
 	}
 	return b.String()
+}
+
+// commitmentProjection sanitizes the outlook fields that the page renders. It pairs the
+// same field names and cells that the TOON readers print, so the page cannot show another
+// projection. An empty cell is omitted.
+func commitmentProjection(outlook commitment.Outlook) commitmentView {
+	view := commitmentView{Unapproved: outlook.State == commitment.OutlookAdoptionRequired}
+	for i, cell := range outlook.Cells() {
+		if cell != "" {
+			view.Fields = append(view.Fields, fieldView{Name: commitment.OutlookFields[i], Value: sanitize.Controls(cell)})
+		}
+	}
+	for _, blocker := range outlook.BlockerCells() {
+		view.Blocked = append(view.Blocked, fieldView{Name: sanitize.Controls(blocker[0]), Value: sanitize.Controls(blocker[1])})
+	}
+	return view
 }
 
 // gateAge renders how long before generation the gate ran, from the cache timestamp. It is
@@ -251,11 +279,26 @@ ul { margin: 0; padding-left: 1.25rem; font-size: .9rem; }
 </section>
 
 <section class="card">
+  <h2>Delivery commitment</h2>
+  <dl>
+    {{range .Commitment.Fields}}<dt>{{.Name}}</dt><dd>{{.Value}}</dd>
+    {{end}}
+  </dl>
+  {{if .Commitment.Blocked}}
+  <h3>Blockers</h3>
+  <dl>
+    {{range .Commitment.Blocked}}<dt>{{.Name}}</dt><dd>{{.Value}}</dd>
+    {{end}}
+  </dl>
+  {{end}}
+</section>
+
+<section class="card">
   <h2>Roadmap</h2>
   {{if .RoadmapPresent}}
   <pre>{{.RoadmapText}}</pre>
   {{if .Sequence}}
-  <h3>Recommended sequence</h3>
+  <h3>Recommended sequence{{if .Commitment.Unapproved}} (unapproved input: no commitment is adopted){{end}}</h3>
   <pre>{{.Sequence}}</pre>
   {{end}}
   {{else}}

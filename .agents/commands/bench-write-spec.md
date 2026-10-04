@@ -13,7 +13,7 @@ synthesize, with no interview. It owns the discipline: stories, acceptance cover
 ## Exit handoff
 
 The spec carries `Status: staged` (staged → implemented at the green gate → promote-then-delete on merge). Stop for sign-off.
-Then recommend the approved implementation line for fresh ticket authors on one integration source. Review each frozen chunk before its successor, reconcile the final source, and hand it to `bench worktree land`.
+Then recommend the approved implementation line for fresh ticket authors on one integration source. Review each frozen chunk before its successor, reconcile the final source, and hand it to `bench worktree land`. A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.
 
 ## Entry contract
 

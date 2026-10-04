@@ -5,7 +5,7 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 # /bench-implement-spec — do the work at the seams
 
 ## Entry orientation
-This is the implementation phase. It starts from an approved spec, or from a change small enough for the lighter-path threshold. It declares the line and works vertical slices at the pre-agreed seams. If there is no spec, the change must fall under that threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
+This is the implementation phase. It starts from an approved spec, or from a change small enough for the lighter-path threshold. It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams. If there is no spec, the change must fall under that threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
 If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
 
 ## Exit handoff
@@ -68,6 +68,7 @@ Report the state: what is done, what remains, the coverage table, and what consu
 - Wrong tier: apply `craft-line`'s ladder.
 - Wrong spec: route to `/bench-write-spec` with the finding quoted.
 - Wrong scope: propose the split for the reviewer to decide.
+- Commitment refusal: report the decision that the refusal names; `.bench/BENCH.md` owns the commitment rule.
 
 ## `--full <spec>`
 

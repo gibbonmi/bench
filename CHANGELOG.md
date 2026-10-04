@@ -6,6 +6,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Delivery commitment
+
+- Added `bench commitment` and the tracked `.bench/commitment.json` delivery commitment. Delivery starts only for the eligible committed outcome, and only an approved plan changes the committed work.
+- Added the commitment outlook to `bench status`, `bench roadmap`, and `bench dashboard`. Each reader names the next eligible outcome, each blocked outcome, and the next command.
+- Changed `/bench-drain` so that drained work stays uncommitted intake. The drain no longer builds a light-path item by default, and it no longer ranks or rewrites the recommended sequence.
+- Changed `/bench-final-check` so that it reports the roadmap closure of a verified delivery landing instead of leaving that closure to a later drain.
+
 ### Comment-only evidence
 
 - Added proof for Go comment-only corrections after a reviewed chunk. Accepted corrections preserve the frozen review pair and count as evidence-only work. Files with directives, cgo imports, or executable example output remain ineligible. Completion still requires current final evidence.

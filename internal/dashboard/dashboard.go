@@ -1,7 +1,7 @@
 // Package dashboard implements `bench dashboard`. It renders one self-contained static
 // HTML snapshot of the project board. The page shows the gate verdict, the ambient
-// signals, the roadmap and its sequence, the parked ideas, the open-learnings count, and
-// the worktree pool. A human opens this page in a browser.
+// signals, the delivery commitment, the roadmap and its sequence, the parked ideas, the
+// open-learnings count, and the worktree pool. A human opens this page in a browser.
 //
 // The package consumes the existing readers. It never adds a new source. The Snapshot is
 // composed from status.Signals, status.GateVerdict, the roadmap readers, and the worktree
@@ -18,6 +18,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/commitment"
+	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/status"
@@ -42,6 +44,7 @@ type Snapshot struct {
 	GeneratedAt    time.Time
 	Gate           status.GateInfo
 	Signals        []status.Signal
+	Commitment     commitment.Outlook
 	RoadmapText    string
 	RoadmapPresent bool
 	Sequence       string
@@ -88,7 +91,8 @@ func Command(args []string) (string, int) {
 
 // gather composes the Snapshot from the existing readers. This is the one place IO and
 // the wall clock enter. gather never re-parses a source. The signals ladder and the gate
-// verdict come from internal/status. The roadmap text, sequence, ideas, and learnings
+// verdict come from internal/status. The commitment outlook is the shared projection that
+// the roadmap and status readers also render. The roadmap text, sequence, ideas, and learnings
 // count come from internal/roadmap. The worktree pool comes from the shared classifier.
 func gather(root string) Snapshot {
 	text, present := roadmap.RoadmapText(root)
@@ -100,6 +104,7 @@ func gather(root string) Snapshot {
 		GeneratedAt:    time.Now(),
 		Gate:           status.GateVerdict(root),
 		Signals:        status.Signals(root),
+		Commitment:     commitcmd.Outlook(root),
 		RoadmapText:    text,
 		RoadmapPresent: present,
 		Sequence:       roadmap.RecommendedSequence(text),

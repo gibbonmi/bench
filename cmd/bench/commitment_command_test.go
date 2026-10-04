@@ -25,9 +25,13 @@ func TestCommitmentCommandDisplaysActiveOrder(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("commitment show code = %d, stderr = %q", code, stderr.String())
 	}
-	out := stdout.String()
+	out := spilledResponse(t, stdout.String())
 	if a, b := strings.Index(out, ",A"), strings.Index(out, ",B"); a < 0 || b < 0 || a >= b {
 		t.Fatalf("commitment show output = %q, want A before B", out)
+	}
+	const outlook = "commitment_outlook[1]{state,active_milestone,next_outcome,deliverable,active,blocked,waiting,command}:\n  eligible,M1,A,\"\",\"\",\"\",B,"
+	if !strings.Contains(out, outlook) {
+		t.Fatalf("commitment show output = %q, want the outlook that names A next", out)
 	}
 }
 

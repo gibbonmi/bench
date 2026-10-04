@@ -25,6 +25,29 @@ func Repo(t testing.TB, policy commitment.Policy) string {
 	return root
 }
 
+// StagedBody is the staged spec that Staged approves for each outcome.
+const StagedBody = "# Delivery\n\nStatus: staged\n"
+
+// Staged creates one repository whose active milestone M1 holds outcomes in order. Each
+// outcome approves one staged spec at `specs/<outcome>/spec.md`, and the policy and the
+// specs are committed together.
+func Staged(t testing.TB, outcomes ...string) string {
+	t.Helper()
+	milestone := commitment.Milestone{ID: "M1"}
+	for _, id := range outcomes {
+		path := "specs/" + id + "/spec.md"
+		source := commitment.SourceBinding{ID: id + ".spec", Path: path, Identity: commitment.Identity([]byte(StagedBody))}
+		milestone.Outcomes = append(milestone.Outcomes, commitment.Outcome{ID: id, Criteria: []commitment.Criterion{{ID: id + ".done", Text: "The outcome is delivered."}}, Deliverables: []commitment.DeliveryBinding{{Source: source}}})
+	}
+	root := gittest.RepoOnBranch(t, "main")
+	WritePolicy(t, root, commitment.Policy{Version: 1, ActiveMilestone: milestone.ID, Milestones: []commitment.Milestone{milestone}})
+	for _, outcome := range milestone.Outcomes {
+		Write(t, root, outcome.Deliverables[0].Source.Path, StagedBody)
+	}
+	Commit(t, root, "approve staged outcomes")
+	return root
+}
+
 // WritePolicy replaces the tracked commitment policy in root.
 func WritePolicy(t testing.TB, root string, policy commitment.Policy) {
 	t.Helper()

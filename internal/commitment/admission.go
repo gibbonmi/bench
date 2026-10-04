@@ -26,43 +26,10 @@ func ActiveOutcome(policy Policy, id string) (Outcome, error) {
 
 // Admit decides a start from one policy and runtime snapshot.
 func Admit(policy Policy, state intent.CommitmentState, binding intent.DeliveryBinding) (intent.CommitmentState, error) {
-	outcome, err := ActiveOutcome(policy, binding.Outcome)
-	if err != nil {
+	if err := eligible(policy, state, binding.Outcome); err != nil {
 		return state, err
 	}
-	delivered := deliveredOutcomes(policy)
-	if delivered[outcome.ID] {
-		return state, fmt.Errorf("outcome %q is already delivered", outcome.ID)
-	}
-	blocked := map[string]bool{}
-	for _, blocker := range state.Blockers {
-		blocked[blocker.Outcome] = true
-	}
-	if blocked[outcome.ID] {
-		return state, fmt.Errorf("outcome %q is blocked", outcome.ID)
-	}
-	for _, dependency := range outcome.Dependencies {
-		if !delivered[dependency] {
-			return state, fmt.Errorf("outcome %q has unfinished dependency %q", outcome.ID, dependency)
-		}
-	}
-	active := map[string]bool{}
-	for _, claim := range state.Claims {
-		active[claim.Outcome] = true
-	}
-	if !active[outcome.ID] && len(active) != 0 && !permitsParallel(policy, active, outcome.ID) {
-		return state, fmt.Errorf("another outcome is active; no parallel grant admits %q", outcome.ID)
-	}
-	if !active[outcome.ID] {
-		for _, prior := range Selection(policy).Outcomes {
-			if prior == outcome.ID {
-				break
-			}
-			if !delivered[prior] && !blocked[prior] && !active[prior] {
-				return state, fmt.Errorf("outcome %q precedes %q", prior, outcome.ID)
-			}
-		}
-	}
+	active := claimed(state)
 	found := false
 	for _, previous := range state.Bindings {
 		if previous.Assignment != binding.Assignment {
@@ -76,10 +43,65 @@ func Admit(policy Policy, state intent.CommitmentState, binding intent.DeliveryB
 	if !found {
 		state.Bindings = append(slices.Clone(state.Bindings), binding)
 	}
-	if !active[outcome.ID] {
-		state.Claims = append(slices.Clone(state.Claims), intent.OutcomeClaim{Milestone: policy.ActiveMilestone, Outcome: outcome.ID})
+	if !active[binding.Outcome] {
+		state.Claims = append(slices.Clone(state.Claims), intent.OutcomeClaim{Milestone: policy.ActiveMilestone, Outcome: binding.Outcome})
 	}
 	return state, nil
+}
+
+// eligible is the one admission decision for an outcome start: it refuses an uncommitted,
+// delivered, blocked, dependent, displacing, or out-of-order outcome. Admit and the reader
+// projection both ask it, so a reader cannot select work that a start would refuse.
+func eligible(policy Policy, state intent.CommitmentState, id string) error {
+	outcome, err := ActiveOutcome(policy, id)
+	if err != nil {
+		return err
+	}
+	delivered := deliveredOutcomes(policy)
+	if delivered[outcome.ID] {
+		return fmt.Errorf("outcome %q is already delivered", outcome.ID)
+	}
+	blocked := blockedOutcomes(state)
+	if blocked[outcome.ID] {
+		return fmt.Errorf("outcome %q is blocked", outcome.ID)
+	}
+	for _, dependency := range outcome.Dependencies {
+		if !delivered[dependency] {
+			return fmt.Errorf("outcome %q has unfinished dependency %q", outcome.ID, dependency)
+		}
+	}
+	active := claimed(state)
+	if active[outcome.ID] {
+		return nil
+	}
+	if len(active) != 0 && !permitsParallel(policy, active, outcome.ID) {
+		return fmt.Errorf("another outcome is active; no parallel grant admits %q", outcome.ID)
+	}
+	for _, prior := range Selection(policy).Outcomes {
+		if prior == outcome.ID {
+			break
+		}
+		if !delivered[prior] && !blocked[prior] && !active[prior] {
+			return fmt.Errorf("outcome %q precedes %q", prior, outcome.ID)
+		}
+	}
+	return nil
+}
+
+func claimed(state intent.CommitmentState) map[string]bool {
+	active := map[string]bool{}
+	for _, claim := range state.Claims {
+		active[claim.Outcome] = true
+	}
+	return active
+}
+
+func blockedOutcomes(state intent.CommitmentState) map[string]bool {
+	blocked := map[string]bool{}
+	for _, blocker := range state.Blockers {
+		blocked[blocker.Outcome] = true
+	}
+	return blocked
 }
 
 func permitsParallel(policy Policy, active map[string]bool, candidate string) bool {

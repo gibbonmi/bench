@@ -23,7 +23,7 @@ func TestContextCommandRowSelectorReturnsOnlyCompleteRows(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "capture", "IDEAS.md"), []byte("- 2026-01-01  "+longCapture+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	out, code := ContextCommand([]string{"--context", "--row", "FT2,FT1,FT1"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context", "--row", "FT2,FT1,FT1"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("selector exit = %d, output=%q", code, out)
 	}
@@ -80,7 +80,7 @@ func TestContextCommandSourcesListsRoadmapDirectory(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newRepo(t)
 			tc.plant(t, root)
-			out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+			out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 			if code != 0 {
 				t.Fatalf("exit = %d, output=%q", code, out)
 			}
@@ -120,7 +120,7 @@ func TestContextCommandDiagnosticRendersFailureAndFlipsRoadmapMalformed(t *testi
 	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT7 (LOW) — x.**\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
 	}
@@ -167,7 +167,7 @@ func TestContextCommandDiagnosticRendersFailureAndFlipsRoadmapMalformed(t *testi
 func TestContextCommandRowSelectorRendersRowFileBody(t *testing.T) {
 	root := newRepo(t)
 	writeBoard(t, root, Row{"**FT7 (LOW) — x.**", "row detail\n"})
-	out, code := ContextCommand([]string{"--context", "--row", "FT7"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context", "--row", "FT7"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
 	}
@@ -197,7 +197,7 @@ func TestContextCommandDirectoryRowFileRendersFailureAndUntrustsSequence(t *test
 	if err := os.MkdirAll(filepath.Join(root, RoadmapDir, "FT7.md"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
 	}
@@ -238,7 +238,7 @@ func TestContextCommandUnrecognizedFileColonInPathRendersFullSource(t *testing.T
 	if err := os.WriteFile(filepath.Join(root, RoadmapDir, "x: y.md"), []byte("scratch\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
 	}
@@ -286,7 +286,7 @@ func TestContextCommandRowSelectorRefusesMalformedAndMissing(t *testing.T) {
 		{[]string{"--context", "--row", "FT1,NOPE2,NOPE3"}, 1, []string{"NOPE2", "NOPE3"}},
 		{[]string{"--context", "--row", "FT1", "--full"}, 2, []string{"usage:"}},
 	} {
-		out, code := ContextCommand(tc.args, func(string) GateCacheFact { return GateCacheFact{} })
+		out, code := ContextCommand(tc.args, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 		missing := false
 		for _, want := range tc.want {
 			if !strings.Contains(out, want) {
@@ -338,7 +338,7 @@ func TestContextCommandRendersLostDatedLearningLineAsParseFailure(t *testing.T) 
 	if err := os.WriteFile(filepath.Join(root, learnings.JournalPath), []byte(journal), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	out, code := ContextCommand([]string{"--context", "--full"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context", "--full"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
 	}

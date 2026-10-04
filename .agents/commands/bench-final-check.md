@@ -81,9 +81,11 @@ Fold a delegate's zero to two CLI improvements into that same entry.
 For `n = 0`, state `census: 0 raw calls` in the close; a nonzero count never blocks a landing.
 The duty is advisory, so a nonzero count never reds the gate.
 
-Leave the roadmap and capture rows to
-`/bench-drain`; that phase owns the reconcile and the drain, and this duty
-never restates it. On a topic branch these duties defer by design: the rows
+Verified closure is part of delivery. The landing publication closes each
+roadmap row and sequence entry that the delivery satisfies; report that closure
+from the landing evidence. `/bench-drain` owns the capture drain and
+the reconcile of historical or residual rows, and this duty never restates it.
+On a topic branch these duties defer by design: the rows
 fire only on the default branch. The next default-branch session's
 SessionStart status re-surfaces them. State the deferral in the close instead
 of a silent skip.

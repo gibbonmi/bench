@@ -269,7 +269,7 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 		},
 		"roadmap": {
 			route: []string{"roadmap"}, successArgv: []string{"roadmap"}, emptyArgv: []string{"roadmap"},
-			blocks:        []string{"roadmap", "board", "sequence", "drain", "help"},
+			blocks:        []string{"roadmap", "board", "commitment_outlook", "commitment_blockers", "sequence", "drain", "help"},
 			successMarker: "roadmap[", emptyMarker: "roadmap[0]{id,title,spec,spec_status,external_trigger,occurrence_count,occurrence_keys}:\n", usage: "usage: bench roadmap", setupSuccess: setupAXIRoadmap, setupEmpty: noSetup,
 		},
 	}

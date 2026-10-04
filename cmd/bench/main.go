@@ -236,7 +236,7 @@ var gatePhasesCommand = gate.PhasesCommand
 
 func roadmapCommand(args []string) (string, int) {
 	if len(args) == 0 || len(args) == 1 && helpArgument(args[0]) {
-		return roadmap.RoadmapCommand(args)
+		return roadmap.RoadmapCommand(args, commitmentOutlook)
 	}
 	// --flow is a mode selector like --context, so it is routed on its leading position
 	// and its own grammar reports any misuse that follows.
@@ -246,7 +246,7 @@ func roadmapCommand(args []string) (string, int) {
 	return roadmap.ContextCommand(args, func(root string) roadmap.GateCacheFact {
 		g := status.GateVerdict(root)
 		return roadmap.GateCacheFact{Present: g.Present, State: g.State, PendingStatus: g.PendingStatus, Status: g.Status, CachedTree: g.CachedTree, WorkTree: g.WorkTree, Timestamp: g.Timestamp, Stale: g.Stale, CacheBytes: g.CacheBytes}
-	})
+	}, commitmentOutlook)
 }
 
 // linesEnv resolves the repo's .bench/lines.env for the two binding consumers,

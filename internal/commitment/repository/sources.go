@@ -84,7 +84,7 @@ func (store Store) sourceRevision() (string, error) {
 func (store Store) defaultRevision() (string, string, error) {
 	branch, ok := git.ResolvedDefault(store.Root)
 	if !ok {
-		return "", "", fmt.Errorf("commitment source: default branch is unresolved")
+		return "", "", errDefaultUnresolved
 	}
 	revision, err := git.Output("-C", store.Root, "rev-parse", branch)
 	return branch, strings.TrimSpace(revision), err

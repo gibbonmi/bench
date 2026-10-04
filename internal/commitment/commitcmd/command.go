@@ -38,10 +38,19 @@ var forms = []form{
 	{name: "verify", description: "verify milestone criterion evidence and record a completion receipt", flags: []flag{{"--milestone", "<id>"}, {"--evidence", "<file>"}}},
 }
 
-func (f form) suffix() string {
+// suffix is the form's help grammar after the family name: every flag shows its placeholder.
+func (f form) suffix() string { return f.suffixWith(nil) }
+
+// suffixWith is the form's grammar after the family name, with each flag that values names
+// carrying that value in place of its placeholder.
+func (f form) suffixWith(values map[string]string) string {
 	terms := []string{"", f.name}
 	for _, flag := range f.flags {
-		terms = append(terms, flag.name, flag.placeholder)
+		value, known := values[flag.name]
+		if !known {
+			value = flag.placeholder
+		}
+		terms = append(terms, flag.name, value)
 	}
 	return strings.Join(terms, " ")
 }
@@ -131,9 +140,17 @@ func show(store commitrepo.Store) (string, int) {
 	if err != nil {
 		return refusal("show", err)
 	}
+	outlook, err := store.Outlook()
+	if err != nil {
+		return refusal("show", err)
+	}
+	next, err := outlookTables(withCommand(outlook))
+	if err != nil {
+		return refusal("show", err)
+	}
 	if !exists {
-		out, _ := toon.Table("commitment", []string{"state", "active_milestone", "next_outcome"}, [][]string{{"adoption-required", "", ""}})
-		return out + "\n", 0
+		out, _ := toon.Table("commitment", []string{"state", "active_milestone", "next_outcome"}, [][]string{{commitment.OutlookAdoptionRequired, "", ""}})
+		return out + "\n" + next, 0
 	}
 	projection := commitment.Selection(policy)
 	rows := make([][]string, 0, len(projection.Outcomes))
@@ -144,7 +161,49 @@ func show(store commitrepo.Store) (string, int) {
 	if err != nil {
 		return refusal("show", err)
 	}
-	return out + "\n", 0
+	return out + "\n" + next, 0
+}
+
+// Outlook is the one commitment projection for root, with its next-action command filled
+// from the form table. The roadmap, status, and dashboard readers render it. A policy or
+// runtime record that does not read projects as unreadable, so a reader stays available
+// and `bench commitment show` names the cause.
+func Outlook(root string) commitment.Outlook {
+	outlook, err := commitrepo.Store{Root: root}.Outlook()
+	if err != nil {
+		outlook = commitment.Unreadable()
+	}
+	return withCommand(outlook)
+}
+
+// withCommand fills the outlook's next-action command. Each value that the outlook knows
+// replaces its placeholder; the request stays a placeholder, because only the worker names it.
+func withCommand(outlook commitment.Outlook) commitment.Outlook {
+	selected, ok := selectForm(outlook.Operation)
+	if !ok {
+		return outlook
+	}
+	values := map[string]string{}
+	for flag, value := range map[string]string{"--outcome": outlook.Next, "--milestone": outlook.Milestone, "--deliverable": outlook.Deliverable} {
+		if value != "" {
+			values[flag] = value
+		}
+	}
+	outlook.Command = "bench commitment" + selected.suffixWith(values)
+	return outlook
+}
+
+// outlookTables renders the outlook as its TOON outlook table and its blocker table.
+func outlookTables(outlook commitment.Outlook) (string, error) {
+	next, err := toon.Table(commitment.OutlookTable, commitment.OutlookFields, [][]string{outlook.Cells()})
+	if err != nil {
+		return "", err
+	}
+	blockers, err := toon.Table(commitment.BlockerTable, commitment.BlockerFields, outlook.BlockerCells())
+	if err != nil {
+		return "", err
+	}
+	return next + "\n" + blockers + "\n", nil
 }
 
 func inventory(store commitrepo.Store) (string, int) {

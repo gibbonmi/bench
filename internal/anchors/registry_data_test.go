@@ -158,8 +158,6 @@ func TestDrainFlowRuleAnchorsRedOnRemoval(t *testing.T) {
 			{file: drain, needle: "Dismiss an occurrence-only entry with one line of why.", want: ".agents/commands/bench-drain.md dropped the occurrence-only dismissal rule"},
 			{file: drain, needle: "A new row needs a `Next:` token and a class before it opens.", want: ".agents/commands/bench-drain.md dropped the new-row rule: a Next: token and a class"},
 			{file: drain, needle: "When the flow report shows a positive net delta, propose reducing moves in the next batch diff.", want: ".agents/commands/bench-drain.md dropped the positive-delta restructure rule"},
-			{file: drain, needle: "build the item in this session (\"implement now\") by default.", want: ".agents/commands/bench-drain.md dropped the build-in-session default for a light-path item"},
-			{file: drain, needle: "Open a `ROADMAP.md` row only when the reviewer declines.", want: ".agents/commands/bench-drain.md dropped the roadmap-row fallback for a light-path item the reviewer declines"},
 		},
 		templates: map[string]string{drain: "# /bench-drain\n%s"},
 	}.check(t)

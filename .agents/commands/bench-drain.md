@@ -9,8 +9,8 @@ description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drai
 This is the single roadmap-maintenance phase. `bench status` and `bench roadmap`
 point here whenever `capture/IDEAS.md` has parked lines, `capture/learnings.md` has open
 entries, or `capture/retros/` has pending implementation retros. One run
-reconciles the roadmap against the tree, drains all three capture sources,
-refreshes the recommended sequence, and hands the reviewer one diff to approve.
+reconciles the roadmap against the tree, drains all three capture sources into
+uncommitted intake, and hands the reviewer one diff to approve.
 
 The "not a workflow phase" label above is scope, not an exemption. `main`
 still takes writes only through a landing. Implement-now writers use their
@@ -78,11 +78,11 @@ If tracked changes remain, the retained drain session authors the complete track
 ## Exit handoff
 
 Report the reconcile verdicts (rows removed or reworded), the drained idea
-count, each retro recommendation disposition, each journal verdict, and the
-refreshed sequence. Flag judgment calls for veto. Run `bench roadmap --flow`
+count, each retro recommendation disposition, each journal verdict, and any
+proposed commitment change. Flag judgment calls for veto. Run `bench roadmap --flow`
 once and quote its flow block in the exit. On approval, commit the pass once on a lane
 pass, over everything the pass touched, and land it through the gate. The recommended next command is the
-top line of the refreshed `## Recommended sequence`.
+`commitment_outlook` command that `bench roadmap` prints.
 
 ## 1. Reconcile first
 
@@ -94,9 +94,12 @@ Retiring a row deletes its `ROADMAP.md` heading line and its `roadmap/FT<n>.md` 
 Before you drain anything, verify every `ROADMAP.md` row against the tree. When a
 row's spec may have shipped, use `bench spec history <slug>` for the shipped-row
 check. Remove shipped work and correct stale wording. Row presence is
-status, so this pass is the backstop for anything spec-retire missed. The
-empty-state recommendation is only trustworthy if the roadmap is current. Write
-no completion markers; history lives in git.
+status. The empty-state recommendation is only trustworthy if the roadmap is
+current. Write no completion markers; history lives in git.
+
+A verified delivery landing closes its own rows, so this pass is the backstop
+for historical or residual work. A row that the active commitment protects
+changes only through `bench commitment plan`.
 
 When several rows need the shipped-row check, use the "Spec histories" focused read in `craft-cli` once.
 When a spec history result omits events and its row's status stays uncertain, follow the `detail` command of that result.
@@ -207,20 +210,22 @@ a raw `git add` standing in for `bench commit` — proves nothing about the
 accused path. Without the real repro, dismiss the entry as unreproduced or
 re-park it. A re-parked entry names the missing repro as its graduation trigger.
 
-For a drained item that meets the light-path observables, build the item in this session ("implement now") by default.
-Write its one ticket file. Implement that ticket in the retained session under `craft-line`. Verify the diff against the ticket's acceptance rows and the gate. Open a `ROADMAP.md` row only when the reviewer declines.
-Items needing a reviewer decision, a new seam, or spec-level design
-still graduate to `ROADMAP.md`.
+Every drained item that a verdict keeps becomes uncommitted intake: a new row, or a merge into the row that already covers it.
+The commitment rule in `.bench/BENCH.md` decides whether intake starts; a drain approval never admits it.
+A drained light-path item is implement-now work only after `bench commitment approve` admits it and `bench commitment start` binds its worktree.
+Write its one ticket file. Implement that ticket in the retained session under `craft-line`. Verify the diff against the ticket's acceptance rows and the gate.
 
-A learning entry with a light-path fix goes to the write delegate that `.bench/BENCH.md` names, and its verdict closes the entry by implementation.
+A learning entry with a light-path fix follows the learning-fix rule in `.bench/BENCH.md`.
+When the active committed outcome does not need that fix, its verdict records the fix as uncommitted intake.
 
 ## 6. Classify every run; restructure on request
 
-While you walk the rows, classify each row. Use fix (a defect in existing
-behavior, with evidence), feature (new capability or guidance), or
-decision-only. Report the classification in the exit rather than write it
-into the row grammar. It exists to steer the sequence. Every run classifies;
-no invocation skips it.
+While you walk the rows, classify each row by its purpose. Use fix (a defect
+in existing behavior, with evidence), refactor (a structure change that keeps
+behavior), feature (new capability or guidance), or decision-only. Report the
+classification in the exit rather than write it into the row grammar. It
+informs a commitment proposal and never reorders committed work. Every run
+classifies; no invocation skips it.
 
 The board-restructuring pass is opt-in. It runs only when the reviewer
 invokes the phase with `--restructure`, because the whole-board pass is
@@ -239,21 +244,14 @@ candidate names it in the exit. It does not apply the change. When the flow
 report shows a positive net delta, propose reducing moves in the next batch
 diff. That obligation does not wait for `--restructure`.
 
-## 7. Refresh the sequence
+## 7. Leave the sequence to the commitment
 
-Rewrite the `## Recommended sequence` section: two or three numbered lines, each
-naming the item and the phase command to run. This is the format contract
-`bench roadmap` extracts verbatim once the sealed capture generation is resolved. The CLI
-does no judgment, so this section is where the judgment lands. Rank rows by
-severity. Within an equal-severity class, choose actionable work over blocked
-work.
-
-Only when rows are equally actionable, apply literal dependencies, then explicit
-reviewer pricing. Only when all four stronger inputs tie, rank by descending
-occurrence count. When occurrence count also ties, apply the
-existing reproduced defect-over-feature rule, then cheapest-first cost rule.
-No CLI command sorts or rewrites `ROADMAP.md`. This is reviewed maintenance
-judgment, not global sorting.
+The drain does not write the `## Recommended sequence` section. After adoption,
+`bench commitment approve` derives it from the committed order, and a verified
+delivery landing removes each delivered entry. Before adoption, the section is
+unapproved input. When the reviewer asks for a new order or new admitted work,
+propose it through `bench commitment plan` under the commitment rule in
+`.bench/BENCH.md`.
 
 ## 8. Batch-propose, then commit once on green
 

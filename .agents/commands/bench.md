@@ -9,9 +9,9 @@ description: Route from the repository's observed state into the one current Ben
 Run `bench status --route` and take its one row.
 
 If the command is `git push`, offer the reviewer a choice before you run it.
-They can push now or continue with the next roadmap item. For roadmap work,
-run `bench roadmap` and take the first `sequence` row. State its item, then
-follow its `command` as the active phase for that item.
+They can push now or continue with the committed work. For that work, run
+`bench roadmap` and take its `commitment_outlook` row. State its outcome, then
+run its `command` under the commitment rule in `.bench/BENCH.md`.
 
 If the row's `command` opens with `/bench-` or `$bench-`, take its first token.
 Remove the leading `/` or `$`. Read the corresponding

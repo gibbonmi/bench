@@ -15,7 +15,7 @@ import (
 func TestContextCommandEndsWithHelpBlock(t *testing.T) {
 	newRepo(t)
 	for _, args := range [][]string{{"--context"}, {"--context", "--full"}} {
-		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} })
+		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 		if code != 0 {
 			t.Fatalf("args=%v exit: got %d, want 0; output=%q", args, code, out)
 		}
@@ -42,7 +42,7 @@ func TestContextCommandEndsWithHelpBlock(t *testing.T) {
 
 func TestContextCommandIndexDisclosesCompleteRoadmapQueries(t *testing.T) {
 	newRepo(t)
-	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
 	}
@@ -55,7 +55,7 @@ func TestContextCommandIndexOmitsRoadmapBodiesWithTrueSizes(t *testing.T) {
 	root := newRepo(t)
 	const body = "complete roadmap evidence"
 	writeBoard(t, root, Row{"**FT1 — first.**", body + "\n"})
-	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
 	}
@@ -89,7 +89,7 @@ func TestContextCommandIndexOmitsCaptureBodiesWithTrueSizes(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
 	}
@@ -131,7 +131,7 @@ func TestContextCommandCarriesCaptureLineNumbersInEveryMode(t *testing.T) {
 		}
 	}
 	for _, args := range [][]string{{"--context"}, {"--context", "--row", "FT1"}, {"--context", "--full"}} {
-		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} })
+		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 		if code != 0 {
 			t.Fatalf("args=%v exit = %d, output=%q", args, code, out)
 		}
@@ -168,7 +168,7 @@ func TestContextCommandFullCarriesCompleteBodiesAtSchemaFour(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	out, code := ContextCommand([]string{"--context", "--full"}, func(string) GateCacheFact { return GateCacheFact{} })
+	out, code := ContextCommand([]string{"--context", "--full"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d, output=%q", code, out)
 	}
@@ -200,7 +200,7 @@ func TestContextCommandSchemaFourHasNoTruncatedColumn(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, args := range [][]string{{"--context"}, {"--context", "--row", "FT1"}, {"--context", "--full"}} {
-		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} })
+		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 		if code != 0 {
 			t.Fatalf("args=%v exit = %d, output=%q", args, code, out)
 		}
@@ -231,7 +231,7 @@ func TestContextCommandIndexOmitsUnsupportedSchemaRaw(t *testing.T) {
 		{[]string{"--context"}, ""},
 		{[]string{"--context", "--full"}, raw},
 	} {
-		out, code := ContextCommand(tc.args, func(string) GateCacheFact { return GateCacheFact{} })
+		out, code := ContextCommand(tc.args, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 		if code != 0 {
 			t.Fatalf("args=%v exit = %d, output=%q", tc.args, code, out)
 		}
@@ -256,12 +256,12 @@ func TestContextCommandEveryModeEnumeratesTheCompleteBlockList(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{
-		"context", "sources", "roadmap_rows", "roadmap_sequence", "ideas", "learnings", "retros",
+		"context", "sources", "roadmap_rows", "roadmap_sequence", "commitment_outlook", "commitment_blockers", "ideas", "learnings", "retros",
 		"capture_occurrences", "occurrence_discrepancies", "structure", "specs", "spec_history",
 		"git", "git_changes", "gate_cache", "parse_failures", "help",
 	}
 	for _, args := range [][]string{{"--context"}, {"--context", "--row", "FT1"}, {"--context", "--full"}} {
-		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} })
+		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 		if code != 0 {
 			t.Fatalf("args=%v exit = %d, output=%q", args, code, out)
 		}

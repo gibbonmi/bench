@@ -142,7 +142,9 @@ The standing approvals are the table below, a size rule I have given you, and th
 | Decomposes to one independently-green ticket and crosses no declared seam | Light path: write the one ticket file (`craft-tickets` owns the template) in a bench worktree, then implement it inline in this session — no breakdown-approval pause, no write-delegate. This table is the standing approval to skip the spec phase. Commit the ticket, then land it through `bench worktree land` with the tickets-only `--spec`; the landing closes the ticket folder. |
 | Either observable is false | Normal full workflow. |
 
-**Delegate a light-path fix for a learning.** At any point in the workflow, `/bench-implement-spec` included, a `bench learning` entry can have a light-path fix that needs no reviewer decision. Dispatch that fix to a fresh write delegate on the mid tier at high effort, in its own bench worktree. This dispatch is my standing decision and the one exception to the light-path row's inline route; the active phase keeps its own worktree and verdict. Verify the done-claim under `craft-delegate`, then land the ticket as the light-path row states. The entry stays in `capture/learnings.md` until `/bench-drain` closes it by implementation.
+**Deliver only the committed outcome.** Delivery starts only through `bench commitment start` for the eligible outcome that `bench status` names, light path and fixes included. Any other finding, idea, learning, or drained item stays uncommitted intake, and minimal support that the active outcome needs stays in that outcome. Only my explicit direction changes the commitment, through `bench commitment plan` and then `bench commitment approve`; no drain, label, score, or count displaces it. When you propose work, put confirmed defects first, then refactors, then features, by purpose rather than label; dependencies and the approved order govern execution. When the active outcome cannot continue, run `bench commitment block` with the reason and tell me; the obligation stays.
+
+**Delegate a light-path fix for a learning.** At any point in the workflow, `/bench-implement-spec` included, a `bench learning` entry can have a light-path fix that the active committed outcome needs. Dispatch that fix to a fresh write delegate on the mid tier at high effort, in its own bench worktree. This dispatch is my standing decision and the one exception to the light-path row's inline route; the active phase keeps its own worktree and verdict. Verify the done-claim under `craft-delegate`, then land the ticket as the light-path row states. The entry stays in `capture/learnings.md` until `/bench-drain` closes it by implementation.
 
 **Every phase runs in a bench worktree and lands through `bench worktree land`.**
 `bench commit` enforces this boundary: it refuses the primary checkout and directs the user to create a Bench worktree. The landing is spec-less when the phase has no spec, and within Bench, `main` receives writes only through landings.
@@ -178,8 +180,6 @@ only through a reviewed drain. With an ignored inbox, the verb writes the
 primary checkout's copy from any checkout, so a parked idea survives the
 worktree's release. With a tracked inbox, the verb refuses the primary
 checkout, so a parked idea lands with the phase and never dirties `main`.
-Parked ideas
-land in `capture/IDEAS.md`. They graduate to the board only through a
-reviewed `/bench-drain` drain, or close by implementation during that same
-drain. The board is an index line in `ROADMAP.md` plus a body and ledger in
-`roadmap/FT<n>.md`.
+Parked ideas land in `capture/IDEAS.md`. A reviewed `/bench-drain` drain moves
+them to the board as uncommitted intake, an index line in `ROADMAP.md` plus a
+body and ledger in `roadmap/FT<n>.md`.
