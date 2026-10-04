@@ -46,6 +46,13 @@ func BuildPlan(current *Policy, proposed Policy) (Plan, error) {
 	}
 	effects := transitionEffects(current, proposed)
 	sources := policySources(proposed)
+	if current != nil {
+		for _, source := range policySources(*current) {
+			if !slices.Contains(sources, source) {
+				sources = append(sources, source)
+			}
+		}
+	}
 	effectBytes, err := json.Marshal(effects)
 	if err != nil {
 		return Plan{}, fmt.Errorf("encode commitment effects: %w", err)

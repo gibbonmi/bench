@@ -17,7 +17,7 @@ var identityPattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9._-]*$`)
 // Parse validates one complete policy document.
 func Parse(data []byte) (Policy, error) {
 	var policy Policy
-	if err := jsonfile.DecodeDocument(data, &policy); err != nil {
+	if err := jsonfile.DecodeExactDocument(data, &policy); err != nil {
 		return Policy{}, fmt.Errorf("commitment policy: %w", err)
 	}
 	if err := Validate(policy); err != nil {

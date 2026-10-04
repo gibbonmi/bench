@@ -18,28 +18,43 @@ import (
 // HelpRow is one public root-help row for a commitment operation.
 type HelpRow struct{ Suffix, Description string }
 
+type flag struct{ name, placeholder string }
+
 type form struct {
-	name, suffix, description string
-	flags                     []usage.Flag
+	name, description string
+	flags             []flag
 }
 
 var forms = []form{
-	{name: "show", suffix: " show", description: "show the current delivery commitment"},
-	{name: "inventory", suffix: " inventory", description: "list roadmap obligations, staged deliverables, and run identities"},
-	{name: "plan", suffix: " plan --input <file>", description: "validate an exact commitment transition", flags: []usage.Flag{{Name: "--input", HasValue: true, NoEmptyValue: true, Required: true}}},
-	{name: "approve", suffix: " approve --plan <id> --decision <reference> --delayed <ids-or-none> --removed <ids-or-none>", description: "approve and stage one exact commitment transition", flags: []usage.Flag{
-		{Name: "--plan", HasValue: true, NoEmptyValue: true, Required: true},
-		{Name: "--decision", HasValue: true, NoEmptyValue: true, Required: true},
-		{Name: "--delayed", HasValue: true, NoEmptyValue: true, Required: true},
-		{Name: "--removed", HasValue: true, NoEmptyValue: true, Required: true},
+	{name: "show", description: "show the current delivery commitment"},
+	{name: "inventory", description: "list roadmap obligations, staged deliverables, and run identities"},
+	{name: "plan", description: "validate an exact commitment transition", flags: []flag{{"--input", "<file>"}}},
+	{name: "approve", description: "approve and stage one exact commitment transition", flags: []flag{
+		{"--plan", "<id>"}, {"--decision", "<reference>"}, {"--delayed", "<ids-or-none>"}, {"--removed", "<ids-or-none>"},
 	}},
+}
+
+func (f form) suffix() string {
+	terms := []string{"", f.name}
+	for _, flag := range f.flags {
+		terms = append(terms, flag.name, flag.placeholder)
+	}
+	return strings.Join(terms, " ")
+}
+
+func (f form) grammar() usage.Grammar {
+	g := usage.Grammar{Cmd: "bench commitment " + f.name, Help: "usage: bench commitment" + f.suffix(), MaxArgs: 0}
+	for _, flag := range f.flags {
+		g.Flags = append(g.Flags, usage.Flag{Name: flag.name, HasValue: flag.placeholder != "", NoEmptyValue: flag.placeholder != "", Required: true})
+	}
+	return g
 }
 
 // HelpRows returns the command family's public forms.
 func HelpRows() []HelpRow {
 	rows := make([]HelpRow, len(forms))
 	for index, form := range forms {
-		rows[index] = HelpRow{Suffix: form.suffix, Description: form.description}
+		rows[index] = HelpRow{Suffix: form.suffix(), Description: form.description}
 	}
 	return rows
 }
@@ -56,7 +71,7 @@ func Command(root string, args []string) (string, int) {
 	if !ok {
 		return toon.Usage("bench commitment", args[0]) + "\n", 2
 	}
-	grammar := usage.Grammar{Cmd: "bench commitment " + selected.name, Help: "usage: bench commitment" + selected.suffix, Flags: selected.flags, MaxArgs: 0}
+	grammar := selected.grammar()
 	parsed, line, code := usage.Parse(grammar, args[1:])
 	if line != "" {
 		return line + "\n", code
@@ -95,7 +110,7 @@ func usageText() string {
 		if index == 0 {
 			prefix = "usage: bench commitment"
 		}
-		lines = append(lines, prefix+form.suffix)
+		lines = append(lines, prefix+form.suffix())
 	}
 	return strings.Join(lines, "\n") + "\n"
 }
@@ -217,7 +232,7 @@ func effectRows(effects commitment.Effects) [][]string {
 
 func refusal(operation string, err error) (string, int) {
 	form, _ := selectForm("plan")
-	return refusalNext(operation, err, "bench commitment"+form.suffix)
+	return refusalNext(operation, err, "bench commitment"+form.suffix())
 }
 
 func refusalNext(operation string, err error, next string) (string, int) {

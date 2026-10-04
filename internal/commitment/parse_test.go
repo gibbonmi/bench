@@ -75,3 +75,31 @@ func TestCommitmentPolicyAuthorityInvariants(t *testing.T) {
 		}
 	})
 }
+
+func TestCommitmentExactFieldNames(t *testing.T) {
+	data, err := commitment.Bytes(validPolicy())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"version", "milestones", "outcomes", "id"} {
+		t.Run(key, func(t *testing.T) {
+			input := strings.Replace(string(data), `"`+key+`"`, `"`+strings.ToUpper(key)+`"`, 1)
+			if _, err := commitment.Parse([]byte(input)); err == nil {
+				t.Fatal("accepted case alias", key)
+			}
+		})
+	}
+}
+
+func TestCommitmentMultiOutcomeCycle(t *testing.T) {
+	p := policy([]commitment.Milestone{milestone("M1", "A", "B")}, "M1")
+	p.Milestones[0].Outcomes[0].Dependencies = []string{"B"}
+	p.Milestones[0].Outcomes[1].Dependencies = []string{"A"}
+	data, err := json.Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := commitment.Parse(data); err == nil {
+		t.Fatal("accepted two-outcome dependency cycle")
+	}
+}
