@@ -1,7 +1,7 @@
 # Authorize publication against current commitment
 
 Blocked by: 04-bind-worktrees-and-shifts.md
-Writes: internal/commitment (new), internal/intent, internal/worktree, internal/landing, internal/roadmap, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go, internal/systemtest/adoption_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/systemtest/owner_land_race_test.go
+Writes: internal/commitment (new), internal/intent, internal/worktree, internal/landing, internal/roadmap, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go, internal/systemtest/adoption_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/systemtest/owner_land_race_test.go, internal/gittest
 Covers: DC12, DC14, DC28, DC29, DC30, DC32, DC49, DC72
 
 ## What to build
