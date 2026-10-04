@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -20,8 +21,8 @@ type completionFixture struct {
 	root, base string
 }
 
-func newCompletionFixture(t *testing.T) completionFixture {
-	return attachedCompletionFixture(t, recordtest.Attach)
+func newCompletionFixture(t *testing.T, prepare ...func(*recordtest.Fixture)) completionFixture {
+	return attachedCompletionFixture(t, recordtest.Attach, prepare...)
 }
 
 // attachedCompletionFixture builds a two-chunk landing fixture from either
@@ -29,7 +30,7 @@ func newCompletionFixture(t *testing.T) completionFixture {
 // chunk sequence. The version 1 and delegated landings share this one
 // sequence, so a change to the oracle or the build order cannot drift between
 // them.
-func attachedCompletionFixture(t *testing.T, attach func(testing.TB, string, int) *recordtest.Fixture) completionFixture {
+func attachedCompletionFixture(t *testing.T, attach func(testing.TB, string, int) *recordtest.Fixture, prepare ...func(*recordtest.Fixture)) completionFixture {
 	t.Helper()
 	f := attach(t, fixture(t), 2)
 	f.Write(".gitignore", ".logs/\n")
@@ -42,6 +43,9 @@ func attachedCompletionFixture(t *testing.T, attach func(testing.TB, string, int
 	source := filepath.Join(t.TempDir(), "source")
 	f.Git("worktree", "add", "-qb", "evidence-source", source, base)
 	f.Root = source
+	for _, apply := range prepare {
+		apply(f)
+	}
 	f.AddChunk()
 	f.Save()
 	f.Commit("retain first chunk")
@@ -77,6 +81,17 @@ func TestLandingCompletionEvidence(t *testing.T) {
 		change       func(*testing.T, completionFixture, *Owner)
 	}{
 		{"complete", "", func(*testing.T, completionFixture, *Owner) {}},
+		{"comment-only gap", "", func(t *testing.T, f completionFixture, _ *Owner) {
+			f.evidence.Write("comment_gap_test.go", "package fixture\nvar value = 1 // after\n")
+			f.evidence.Commit("correct reviewed comment")
+			digest, err := rr.SourceDigest(f.evidence.Root, f.evidence.Tree(), recordtest.Spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			f.evidence.Record.Completion.SourceDigest = digest
+			f.evidence.Record.Completion.Verification = f.evidence.Verification("corrected-final", digest, f.evidence.Plan.FinalVerification)
+			f.evidence.Save()
+		}},
 		{"missing reconciliation", "reconciliation E1", func(t *testing.T, f completionFixture, _ *Owner) {
 			delete(f.evidence.Record.Completion.Reconciliation, "E1")
 			f.evidence.Save()
@@ -138,7 +153,13 @@ func TestLandingCompletionEvidence(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newCompletionFixture(t)
+			var prepare []func(*recordtest.Fixture)
+			if tc.name == "comment-only gap" {
+				prepare = append(prepare, func(f *recordtest.Fixture) {
+					f.Write("comment_gap_test.go", "package fixture\nvar value = 1 // before\n")
+				})
+			}
+			f := newCompletionFixture(t, prepare...)
 			owner := New()
 			tc.change(t, f, &owner)
 			if f.evidence.Git("status", "--porcelain") != "" {

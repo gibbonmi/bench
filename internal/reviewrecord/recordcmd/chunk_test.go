@@ -22,6 +22,18 @@ func linked(t *testing.T, count int) *recordtest.Fixture {
 	return f
 }
 
+// recorded is a fixture with count planned chunks whose chunk 1 entry is written.
+func recorded(t *testing.T, count int, prepare ...func(*recordtest.Fixture)) *recordtest.Fixture {
+	t.Helper()
+	f := linked(t, count)
+	for _, apply := range prepare {
+		apply(f)
+	}
+	base, tip := advance(f, "chunk 1")
+	record(t, f, "1", base, tip)
+	return f
+}
+
 func slug(t *testing.T) string {
 	t.Helper()
 	slug, err := rr.Slug(recordtest.Spec)

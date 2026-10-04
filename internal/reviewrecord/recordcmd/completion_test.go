@@ -13,9 +13,9 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-func readyCompletion(t *testing.T) (*recordtest.Fixture, string) {
+func readyCompletion(t *testing.T, prepare ...func(*recordtest.Fixture)) (*recordtest.Fixture, string) {
 	t.Helper()
-	f := recorded(t, 1)
+	f := recorded(t, 1, prepare...)
 	verify(t, f)
 	verify(t, f, unprobed)
 	for _, axis := range rr.Axes() {
@@ -109,5 +109,45 @@ func TestRecordCompletionPreservesProseAndReplaysByteForByte(t *testing.T) {
 	}
 	if second := bytesOf(t, path); !bytes.Equal(second, first) {
 		t.Fatalf("replayed record changed bytes\nfirst: %s\nsecond: %s", first, second)
+	}
+}
+
+func TestRecordCompletionAcceptsCommentOnlyGap(t *testing.T) {
+	for _, tc := range []struct {
+		name, later string
+		accepted    bool
+	}{
+		{"comment", "package fixture\nvar value = 1 // after\n", true},
+		{"statement", "package fixture\nvar value = 2 // after\n", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f, _ := readyCompletion(t, func(f *recordtest.Fixture) {
+				f.Write("comment_gap_test.go", "package fixture\nvar value = 1 // before\n")
+			})
+			frozen := onlyChunk(t, f)
+			f.Write("comment_gap_test.go", tc.later)
+			f.Commit("correct reviewed source")
+			source := f.Tip()
+			verify(t, f, final(source), map[string]string{"--id": "acceptance-2"})
+			verify(t, f, final(source), map[string]string{"--requirement": "integration", "--id": "integration-2"})
+			before := bytesOf(t, recordFile(t, f))
+			out, code := recordcmd.Command(f.Root, []string{"completion", slug(t), "--source", source})
+			if !tc.accepted {
+				if code != 1 || !strings.Contains(out, "stale reviewed source") {
+					t.Fatalf("statement completion = %d %s", code, out)
+				}
+				if !bytes.Equal(before, bytesOf(t, recordFile(t, f))) {
+					t.Fatal("refused completion changed record bytes")
+				}
+				return
+			}
+			if code != 0 {
+				t.Fatalf("comment completion = %d %s", code, out)
+			}
+			got := read(t, f).Completion
+			if got.State != "completed" || got.SourceDigest != sourceDigest(t, f) || got.SourceDigest == frozen.SourceDigest {
+				t.Fatalf("completion does not name corrected source: %+v", got)
+			}
+		})
 	}
 }

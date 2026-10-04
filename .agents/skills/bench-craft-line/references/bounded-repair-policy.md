@@ -44,6 +44,7 @@ Do not label an unrefuted suggestion as `no-op` to obtain a pass.
 A native review can pass with no finding IDs while its prose retains optional advice.
 
 A review-record prose correction is evidence-only only when it changes no finding, source identity, observation, disposition, or verification claim.
+A comment-only Go correction that the checkpoint accepts is evidence-only despite its source change, and the orchestrator commits it with no plan assignment.
 Evidence-only corrections consume no repair cycle. Batch all cited corrections before verification.
 Only the issuing axis reaffirms an evidence-only correction unless it invalidates another axis's evidence.
 
