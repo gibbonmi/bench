@@ -42,7 +42,7 @@ No chunk has consumed a repair cycle.
 {
   "version": 1,
   "spec": "specs/ft370-comment-only-evidence/spec.md",
-  "plan_digest": "sha256:e001113e1156705ac36afa8be372e228cf9b2084f16adc60cdaac2bb9660bc0c",
+  "plan_digest": "sha256:3bc564489dfaf3e424cf1b2006e934bb557e8fd9a469262b538bcf20b19ec959",
   "implementation_session": "ft370-root",
   "chunks": [
     {
@@ -490,6 +490,287 @@ No chunk has consumed a repair cycle.
           ]
         }
       ]
+    },
+    {
+      "id": "CG-C3",
+      "base": "21bf2be9047f48794ef86094404daccefa9f9850",
+      "tip": "879516b57798eab234a72d482cdedba264d285f0",
+      "plan_digest": "sha256:3bc564489dfaf3e424cf1b2006e934bb557e8fd9a469262b538bcf20b19ec959",
+      "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+      "acceptance_rows": [
+        "CG1",
+        "CG2",
+        "CG3",
+        "CG4",
+        "CG5",
+        "CG6",
+        "CG7",
+        "CG8",
+        "CG33",
+        "CG34",
+        "CG35",
+        "CG36",
+        "CG44",
+        "CG45",
+        "CG37",
+        "CG38",
+        "CG39"
+      ],
+      "verification": [
+        {
+          "id": "c3-gate-1",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "7dafba874b7b26ed82c3048cb81b200cd7b173c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-gate",
+            "digest": "sha256:53eb6d3926d077d0870822ab6ca0f76cba153b7dd1f0cc4616026bda7d4ba92c",
+            "excerpt": "bench test --package ./internal/gate\ntree[1]{target,head,dirty}:\n  ft370-build,6fbb35871100960c80909346b68b765e5cf76077,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,15742\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-recordcmd-1",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "7dafba874b7b26ed82c3048cb81b200cd7b173c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-recordcmd",
+            "digest": "sha256:706a949ae83fd3edaee3a138a1623bcd3cc323680e83536f7759c47492f9b5ca",
+            "excerpt": "bench test --package ./internal/reviewrecord/recordcmd\ntree[1]{target,head,dirty}:\n  ft370-build,6fbb35871100960c80909346b68b765e5cf76077,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,8131\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "recordcmd",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-landing-1",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "7dafba874b7b26ed82c3048cb81b200cd7b173c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-landing",
+            "digest": "sha256:3c7d9491b2b13902680ae1a348f316399e9426518af235bc9a2e792d57d96d6c",
+            "excerpt": "bench test --package ./internal/landing\ntree[1]{target,head,dirty}:\n  ft370-build,6fbb35871100960c80909346b68b765e5cf76077,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,8984\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-anchors-1",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "7dafba874b7b26ed82c3048cb81b200cd7b173c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-anchors",
+            "digest": "sha256:503fb0da9a8e21d3c6b82d402b75b3a4f0016d785eb729d0e344b532f90b21f7",
+            "excerpt": "bench test --package ./internal/anchors\ntree[1]{target,head,dirty}:\n  ft370-build,6fbb35871100960c80909346b68b765e5cf76077,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1092\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-conformance-1",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "7dafba874b7b26ed82c3048cb81b200cd7b173c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-conformance",
+            "digest": "sha256:516f1dae76fd7885955c510c93e0d27bc1925a36e9e06bc60499c5369a5e3d49",
+            "excerpt": "bench test --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  ft370-build,6fbb35871100960c80909346b68b765e5cf76077,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,50112\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/SPQMIR/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket1780802881/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/SPQMIR/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket3926577293/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-reviewrecord-1",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "7dafba874b7b26ed82c3048cb81b200cd7b173c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-reviewrecord",
+            "digest": "sha256:f968837e190cabfbeec127d2b80c8cac398e927234ae33947c4d90a92c92293f",
+            "excerpt": "bench test --package ./internal/reviewrecord\ntree[1]{target,head,dirty}:\n  ft370-build,6fbb35871100960c80909346b68b765e5cf76077,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1958\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-cmd-bench-1",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "7dafba874b7b26ed82c3048cb81b200cd7b173c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-cmd-bench",
+            "digest": "sha256:e1a99a174c7a428c45418e69f4526857388dcae351e5b0812b585a532ec7f948",
+            "excerpt": "bench test --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  ft370-build,6fbb35871100960c80909346b68b765e5cf76077,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17522\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-gate-2",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-final-gate",
+            "digest": "sha256:a85bd57f83a4a5ea94f7450ef7ec3edebc01fbf27d9ae43c84235314129bce28",
+            "excerpt": "bench test --package ./internal/gate\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,16096\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-recordcmd-2",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-final-recordcmd",
+            "digest": "sha256:1a64d6f5496ca5158715df420fd647683c91bb8062b19a8f0f67ffd10043f223",
+            "excerpt": "bench test --package ./internal/reviewrecord/recordcmd\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,7764\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "recordcmd",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-landing-2",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-final-landing",
+            "digest": "sha256:864d63522b655851b3df0924ed5c61988d1d24890f36109d337f760430911da2",
+            "excerpt": "bench test --package ./internal/landing\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,9524\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-anchors-2",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-final-anchors",
+            "digest": "sha256:cccfb6f450732cdaeb71627b517801e5f083f43910dc22d2d22314f8c2390e6c",
+            "excerpt": "bench test --package ./internal/anchors\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1224\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-conformance-2",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-final-conformance",
+            "digest": "sha256:43434c946fa03b757117c87ba1821aab3402fe238327045c75e9cc8b4a433dd3",
+            "excerpt": "bench test --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,46895\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/SFL2RY/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket2951875601/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/SFL2RY/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket855315188/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-reviewrecord-2",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-final-reviewrecord",
+            "digest": "sha256:4d3ab7dd7f23288626a4310cf7c594da0fdfcf68799296cb9cf765fc863269eb",
+            "excerpt": "bench test --package ./internal/reviewrecord\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1829\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-cmd-bench-2",
+          "performer": "ft370-root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "chat:ft370-c3-final-cmd-bench",
+            "digest": "sha256:423c07472e0940fe0cc933b0a4967d13639b9e03cc4f52857dfca5490bfde0ba",
+            "excerpt": "bench test --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15735\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -497,7 +778,188 @@ No chunk has consumed a repair cycle.
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "final-coverage-check-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-coverage-check",
+          "digest": "sha256:b2da74b219f86e9d3802d0f873109219408640f877ddaf0d723dd95675cc130c",
+          "excerpt": "bench coverage --check specs/ft370-comment-only-evidence/spec.md\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\nok: coverage map valid — 50 row(s)\n"
+        },
+        "requirement": "coverage-check",
+        "command": "bench coverage --check specs/ft370-comment-only-evidence/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-commentgap-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-commentgap",
+          "digest": "sha256:1b1eb1e7a7e361e179f876ed8822e98181cdff86463c11be8dbc28e6df898a05",
+          "excerpt": "bench test --package ./internal/commentgap\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commentgap,pass,333\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "commentgap",
+        "command": "bench test --package ./internal/commentgap",
+        "exit_code": 0
+      },
+      {
+        "id": "final-gate-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-gate",
+          "digest": "sha256:a85bd57f83a4a5ea94f7450ef7ec3edebc01fbf27d9ae43c84235314129bce28",
+          "excerpt": "bench test --package ./internal/gate\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,16096\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "gate",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-recordcmd-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-recordcmd",
+          "digest": "sha256:1a64d6f5496ca5158715df420fd647683c91bb8062b19a8f0f67ffd10043f223",
+          "excerpt": "bench test --package ./internal/reviewrecord/recordcmd\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,7764\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "recordcmd",
+        "command": "bench test --package ./internal/reviewrecord/recordcmd",
+        "exit_code": 0
+      },
+      {
+        "id": "final-landing-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-landing",
+          "digest": "sha256:864d63522b655851b3df0924ed5c61988d1d24890f36109d337f760430911da2",
+          "excerpt": "bench test --package ./internal/landing\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,9524\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+        },
+        "requirement": "landing",
+        "command": "bench test --package ./internal/landing",
+        "exit_code": 0
+      },
+      {
+        "id": "final-anchors-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-anchors",
+          "digest": "sha256:cccfb6f450732cdaeb71627b517801e5f083f43910dc22d2d22314f8c2390e6c",
+          "excerpt": "bench test --package ./internal/anchors\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1224\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "anchors",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-conformance",
+          "digest": "sha256:43434c946fa03b757117c87ba1821aab3402fe238327045c75e9cc8b4a433dd3",
+          "excerpt": "bench test --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,46895\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/SFL2RY/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket2951875601/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/SFL2RY/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket855315188/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+        },
+        "requirement": "conformance",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-git-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-git",
+          "digest": "sha256:51bc2e09f30cd112a974e33639f33225e3a32f16f2b0ddf7e3bf79dc170546ff",
+          "excerpt": "bench test --package ./internal/git\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/git,pass,1653\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "git",
+        "command": "bench test --package ./internal/git",
+        "exit_code": 0
+      },
+      {
+        "id": "final-reviewrecord-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-reviewrecord",
+          "digest": "sha256:4d3ab7dd7f23288626a4310cf7c594da0fdfcf68799296cb9cf765fc863269eb",
+          "excerpt": "bench test --package ./internal/reviewrecord\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1829\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "reviewrecord",
+        "command": "bench test --package ./internal/reviewrecord",
+        "exit_code": 0
+      },
+      {
+        "id": "final-cmd-bench-1",
+        "performer": "ft370-root",
+        "role": "author-verification",
+        "model": "unknown",
+        "effort": "unknown",
+        "source_digest": "638c8a6bed583a0fcb4e6735e086db475b16a746",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "chat:ft370-final-cmd-bench",
+          "digest": "sha256:423c07472e0940fe0cc933b0a4967d13639b9e03cc4f52857dfca5490bfde0ba",
+          "excerpt": "bench test --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  ft370-build,879516b57798eab234a72d482cdedba264d285f0,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15735\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "cmd-bench",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -556,6 +1018,36 @@ No chunk has consumed a repair cycle.
           "CG-C2"
         ]
       }
+    },
+    {
+      "from": "sha256:e001113e1156705ac36afa8be372e228cf9b2084f16adc60cdaac2bb9660bc0c",
+      "to": "sha256:739844375cabc0bae81f22623e2045533c4dded525fb63c629cc1356c2cc2681",
+      "chunk_ids": {
+        "CG-C1": [
+          "CG-C1"
+        ],
+        "CG-C2": [
+          "CG-C2"
+        ],
+        "CG-C3": [
+          "CG-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:739844375cabc0bae81f22623e2045533c4dded525fb63c629cc1356c2cc2681",
+      "to": "sha256:3bc564489dfaf3e424cf1b2006e934bb557e8fd9a469262b538bcf20b19ec959",
+      "chunk_ids": {
+        "CG-C1": [
+          "CG-C1"
+        ],
+        "CG-C2": [
+          "CG-C2"
+        ],
+        "CG-C3": [
+          "CG-C3"
+        ]
+      }
     }
   ]
 }
@@ -573,3 +1065,71 @@ Five regression cases failed before the repair and now pass.
 The confirming Standards, Spec, and Coverage reviews pass with no findings.
 C2-COV1 and C2-COV2 are resolved; their original results remain in the record.
 One repair cycle remains available for CG-C2.
+
+## CG-C3 author evidence
+
+The final source is `879516b57798eab234a72d482cdedba264d285f0`.
+Its predecessor remains the accepted CG-C2 code tip.
+The acceptance map resolves all 50 rows to their implemented seams or the named Standards review.
+The earlier CG-C3 verification entries remain historical; the entries ending in `-2` name the final source.
+
+Ticket 3 produced seven expected failures before its production change.
+These were the three accepted checkpoint cases, the chain wording, stale completion, completion recording, and landing.
+All passed after the final source comparison called the classifier.
+The other strict-evidence cases passed before and after that change.
+
+| Probe | Observed result | Restore |
+|---|---|---|
+| Short-circuit before `Prove` in the final comparison | The committed and dirty statement cases failed | byte-exact |
+| Skip the chunk digest recompute comparison | The forged-digest case failed | byte-exact |
+| Skip the predecessor chain comparison | The chain-base case failed | byte-exact |
+| Skip the final completion check | The stale-completion case failed | byte-exact |
+| Skip the review-pair check | The moved-chunk case failed | byte-exact |
+| Short-circuit `Prove` for completion recording | The statement-gap command case failed | byte-exact |
+| Omit the new policy registry row | `implementation-continuation anchor is absent` | byte-exact |
+| Remove the live policy sentence | `bounded repair dropped comment-only evidence` | byte-exact |
+| Restore the retired registry chain sentence | `TestChunkChainAnchors` failed | byte-exact |
+| Restore the retired live chain sentence | `chunk chain: only record and comment-only commits follow the chunk tip` | byte-exact |
+
+The registered package checks passed at the final source.
+The separately invoked system suite also passed, with no skips.
+The landing and conformance packages reported only host capability skips for device and socket fixtures.
+No environment-class skip occurred.
+The implementation phase remains 80 lines, and the retained workflow registry remains below its 400-line limit.
+
+## CG-C3 fresh guidance adoption
+
+The native session `/root/c3_adoption` used `gpt-6.1-sol` at high effort.
+It read the committed guidance at `04e04bf00dc40b8981625df1a280b8a208e2c198` without reading implementation or tests.
+Those owner bytes remain unchanged at the final source.
+It routed accepted comment corrections to the orchestrator, with no assignment or repair cycle.
+It kept refused statement changes, unresolved findings, and stale completion evidence outside that exception.
+
+A precision audit removed an unsupported claim about replacing frozen author verification.
+The report leaves that executable identity detail unknown and retains all mandatory completion obligations.
+Its confidence is 9/10.
+The report is a guidance adoption result, not an implementation review or gate verdict.
+The native report remains at `/tmp/ft370-c3-adoption.txt`.
+
+## CG-C3 candidate dogfood
+
+A root-authored deterministic adapter drove the candidate binary in a real disposable Go repository.
+The first run failed because that fixture lacked its gate environment declaration; no iteration committed.
+After the fixture declared its inputs, the second run exercised the actual Go test and Stop hook.
+The test first reported `Add(2, 3) = -1, want 5`.
+The adapter corrected the operator, and the oracle accepted the result.
+
+Native output:
+
+```text
+Stop hook before: exit 2
+Stop hook after: exit 0
+gate: green (fresh verdict reused for this tree)
+shift_result[1]{outcome,exit,branch,committed,iterations_used,recovery,detail}:
+  complete,"0",bench/shift-20261003-195441,"1","1",none,objective met
+```
+
+The run proves the candidate CLI, gate, and hook integration.
+The acceptance tests separately prove the comment-gap behavior.
+Both runs are recorded in the spec.
+CG-C3 has used zero of its two repair cycles.
