@@ -501,7 +501,73 @@ This suggestion is optional advice and has no repair disposition.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dc-c2-standards",
+          "performer": "/root/dc_c2_standards",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "68b6b25f193cb486e8535cef8286a4992289257f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c2_standards",
+            "digest": "sha256:48b95a985dcbbeda682e12026ec0f021cad39dabb82583cabd329cdcbdf541c3",
+            "excerpt": "Standards: **0 findings**, **0 deduplicated repair targets**. Worst issue: none. No implementation-command change is necessary.\n\nReviewed one frozen diff, `2225afe0312a73980267cd5278fd500dfb883e33..66796aa93693bbc5ada27130b3b62a5a7ff541ca`, against AGENTS.md, BENCH.md, the profile, review/delegation rules, comment and CLI standards, the whole approved spec, and ticket 02. Examined admission, deliverable validation, command forms, durable records, cleanup preservation, shared fixture changes, and recorded mutation evidence. Walked relevant unchanged consumers, including the root command adapter, repository readers, assignment lifecycle, and ledger policy owners.\n\nEvidence bound once on `dc-integration`. Retrieved complete source streams: **s1 page 0; s26 pages 0–2; s27 pages 0–1**.\n\nVerification in `dc-c2-standards`, with Go parallelism limited to 2:\n\n- `bench test --package ./internal/commitment`: pass, 2675 ms; no failures or skips.\n- `bench test --package ./internal/intent`: pass, 3580 ms; no failures or skips.\n- Normal shell, repository wrapper, scratch write/read/remove, and repository-rule/skill access probes passed. Doctor inspection retained unavailable runtime and effective-configuration metadata as unknown.\n\nFinal `git status --short`: empty. HEAD remains `66796aa93693bbc5ada27130b3b62a5a7ff541ca`. No production edits, commits, mutation probes, spawned agents, or live commands/tests remain. This return supplies Standards review evidence, not a gate verdict.\n"
+          },
+          "axis": "Standards",
+          "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+          "tip": "f3d907da1cdf1a423bafd3aa17937371b8b31c71",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c2-spec",
+          "performer": "/root/dc_c2_spec",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "68b6b25f193cb486e8535cef8286a4992289257f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c2_spec",
+            "digest": "sha256:fd9c1ed1e4aaf1b4cfdf25e01001d2ba163a51e382657200a7a8bb341ea9758c",
+            "excerpt": "## Spec\n\nTwo findings; worst issue: the admission producer handles the wrong deliverable types.\n\n1. **C2-S1 — Deliverable admission violates the approved type contract.** Confidence **10/10**; disposition **auto-fix**.\n   - Spec `specs/roadmap-delivery-commitment/spec.md:131`: “Each delivery binding names one approved spec or one tickets-only folder…”\n   - `internal/commitment/repository/admission.go:39` passes deliverables to `validateSources`; `repository/repository.go:217` reads them through `git.ReadTreeFile`. `internal/git/tree.go:171` permits only regular files. Every tickets-only folder therefore refuses before its identity is compared.\n   - Conversely, `internal/commitment/parse.go:173` validates deliverables as generic source paths. A policy naming `src/main.go` permits a successful start.\n   - Independent temporary command probes confirmed both results: folder start exited **1** with `missing or nonregular tree file specs/light/tickets`; ordinary source-file start exited **0**.\n   - Repair the shared deliverable validation and identity contract for approved specs and tickets-only folders. Ticket07 defers closure, while ticket02 owns this admission producer.\n\n2. **C2-S2 — Three current acceptance seams point to different files than their implemented tests.** Confidence **10/10**; disposition **auto-fix**.\n   - DC33, spec **:418**, names `TestCommitmentRetainedClaim` in `store_test.go`; actual definition: `internal/commitment/admission_test.go:191`.\n   - DC48, spec **:433**, names `TestCommitmentAdoptionRequired` in `command_test.go`; actual definition: `internal/commitment/admission_test.go:178`.\n   - DC61, spec **:446**, names `TestCommitmentConcurrentStarts` in `store_test.go`; actual definition: `internal/commitment/concurrent_test.go:15`.\n   - Update the three seam cells to their actual owners. These are evidence-map mismatches, not absent tests.\n\nRaw finding count: **2**. Deduplicated repair targets: **2**. CLI improvement contribution: **0**.\n\nAudited DC16–22, DC33, DC48, DC61, and DC66. The remaining current behavior matches the specified ordering, blockers, exact grants, shared claims, restart retention, and atomic competition. Later consumer, publication, closure, and projection requirements were excluded as charged.\n\nRead the whole spec, ticket02, the single frozen diff, relevant producer definitions, and untouched command/ledger consumers. Evidence fetched completely: **s1 initial; s26 initial plus cursors `.s.26.1` and `.s.26.2`; s27 initial plus `.s.27.1`**, all under the charged evidence identity.\n\nVerification in `dc-c2-spec`:\n\n- Temporary Spec probes: **2 executed failures**, confirming C2-S1; probe file removed.\n- `bench test --package ./internal/commitment`: **pass**, 2,085 ms; no skips.\n- `bench test --package ./internal/intent`: **pass**, 3,531 ms; no skips.\n\nFrozen tip remains `66796aa93693bbc5ada27130b3b62a5a7ff541ca`. Final `git status --porcelain=v1` is empty. No production edits, commits, delegates, or live commands remain.\n"
+          },
+          "axis": "Spec",
+          "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+          "tip": "f3d907da1cdf1a423bafd3aa17937371b8b31c71",
+          "finding_ids": [
+            "C2-S1",
+            "C2-S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c2-coverage",
+          "performer": "/root/dc_c2_coverage",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "68b6b25f193cb486e8535cef8286a4992289257f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c2_coverage",
+            "digest": "sha256:9b37e80e74323061b253a590daa35a81523551289ae4789e50b1c0c7e69aae84",
+            "excerpt": "Coverage: **1 finding, 1 unique repair target.** Disposition: `auto-fix`, held. Confidence: **9/10**. Severity: P2.\n\n**DC-C2-COV-1 — Start-time deliverable identity lacks a behavioral regression.**\n\nThe spec requires: “The start command checks … deliverable identity” ([spec.md:190](/home/mgibs/workspace/bench/specs/roadmap-delivery-commitment/spec.md:190)). The implementation enforces this at [repository/admission.go:39](/home/mgibs/workspace/bench/internal/commitment/repository/admission.go:39).\n\nThe concrete missing state is an approved deliverable whose default-branch bytes change or whose file disappears before `commitment start`. Start must refuse and preserve the ledger bytes. [TestCommitmentStartIdentityAndAtomicRefusal:218](/home/mgibs/workspace/bench/internal/commitment/admission_test.go:218) tests a wrong request and a different deliverable path, but never changes the approved path’s content. The existing [TestCommitmentPublishedSourceIdentity:188](/home/mgibs/workspace/bench/internal/commitment/store_test.go:188) checks approval, not start.\n\nIndependent refutation:\n\n- Omitting the validation call reported `bit`, restored `yes`, but failed only because `TestCommitmentConcurrentStarts` could not reach its Git barrier. This is incidental fixture detection.\n- A swap kept the source read and changed its guard to `err != nil && source.Identity == \"\"`. Approved identities are nonempty, so source errors were ignored. **All 48 commitment tests passed:** `silent`, zero failed tests, restored `yes`.\n\nRepair target: add command-level changed/deleted approved-deliverable cases in `internal/commitment/admission_test.go`, asserting refusal and unchanged bindings/claims. Add the explicit acceptance-map coverage and ticket ownership, then demonstrate that the error-ignoring mutation turns this regression red. Ticket 02 already owns this package ([ticket:4](/home/mgibs/workspace/bench/specs/roadmap-delivery-commitment/tickets/02-admit-committed-outcomes.md:4)).\n\nThe other current rows DC16–22, DC33, DC48, DC61, and DC66 have no retained Coverage findings.\n\nRead and verification scope:\n\n- Read the whole approved spec, ticket 02, frozen diff, governing rules/profile, relevant untouched consumers, admission tests, policy producers, and ledger lifecycle/transaction definitions.\n- Enumerated inputs: default-branch policy and source identities; assignment identity/state/request; durable bindings, claims, and blockers; dependency/order/grant facts; literal command operands.\n- Fetched evidence cursors: `s1/0`, `s26/0–2`, `s27/0–1`, all through their terminal pages. Checked integration binding once: `current=true`, tip `66796aa93693bbc5ada27130b3b62a5a7ff541ca`.\n- Both probe baselines passed. The second mutant passed all 48 tests. I did not independently rerun the intent package or whole gate.\n- Command contribution: **0** new CLI improvements.\n\nFinal venue status: `git status --short` empty. Both mutations restored exactly. No production changes, commits, retained scratch files, or live tools.\n"
+          },
+          "axis": "Coverage",
+          "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+          "tip": "f3d907da1cdf1a423bafd3aa17937371b8b31c71",
+          "finding_ids": [
+            "DC-C2-COV-1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -657,3 +723,28 @@ selection[1]{form,target,run,baseline,ran}:
 spilled{lines=9,bytes=23905,omitted_lines=0,cut_lines=1,path=/home/mgibs/.bench/responses/bench-2826441890/af49ac1c59888c026ae64548dc90b756/1791112556490443470-9b8be7a4d000ec81.out}
 ```
 
+
+## DC-C2 repair pickup
+
+The first round has three raw findings and three repair targets. All are accepted for auto-fix.
+The current session performs the repair under the user override. Repair cycles consumed: 0 of 2.
+
+### Standards
+
+Zero findings. No repair target remains on this axis.
+
+### Spec
+
+Two findings. The worst issue is the deliverable type contract.
+
+- C2-S1: Auto-fix, confidence 10. Admit approved specs and tickets-only folders, per spec line 131. The current source reader accepts only files.
+- C2-S2: Auto-fix, confidence 10. Correct the DC33, DC48, and DC61 seam paths to their test owners.
+
+### Coverage
+
+One finding. The worst issue is the absent source-identity regression.
+
+- DC-C2-COV-1: Auto-fix, confidence 9. Add changed and deleted deliverable cases for the identity check at admission.go:39, per spec line 190.
+
+The native return records contain the complete citations and probe results.
+The repair adds explicit acceptance coverage and reuses the existing tickets-only classifier.
