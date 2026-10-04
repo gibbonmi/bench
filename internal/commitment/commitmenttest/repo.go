@@ -33,6 +33,22 @@ func WritePolicy(t testing.TB, root string, policy commitment.Policy) {
 	}
 }
 
+// EditPolicy parses the working-tree commitment policy in root, applies edit, and writes
+// the result back.
+func EditPolicy(t testing.TB, root string, edit func(*commitment.Policy)) {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(commitment.PolicyPath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy, err := commitment.Parse(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edit(&policy)
+	WritePolicy(t, root, policy)
+}
+
 // Commit records the fixture's current tree on main.
 func Commit(t testing.TB, root, message string) {
 	t.Helper()
@@ -154,17 +170,10 @@ func ApprovePending(t testing.TB, root, deliverable, row string) {
 	t.Helper()
 	const body = "# Pending delivery\n\nStatus: staged\n"
 	Write(t, root, deliverable, body)
-	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(commitment.PolicyPath)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	policy, err := commitment.Parse(data)
-	if err != nil {
-		t.Fatal(err)
-	}
-	delivery := &policy.Milestones[0].Outcomes[0]
-	delivery.Deliverables = append(delivery.Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "pending", Path: deliverable, Identity: commitment.Identity([]byte(body))}, Obligations: []string{row}})
-	WritePolicy(t, root, policy)
+	EditPolicy(t, root, func(policy *commitment.Policy) {
+		delivery := &policy.Milestones[0].Outcomes[0]
+		delivery.Deliverables = append(delivery.Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "pending", Path: deliverable, Identity: commitment.Identity([]byte(body))}, Obligations: []string{row}})
+	})
 }
 
 // writeRow writes the detail owner of row, titled for outcome, and returns its binding.
