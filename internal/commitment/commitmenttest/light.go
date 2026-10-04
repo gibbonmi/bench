@@ -51,16 +51,27 @@ const DeliveredIndex = "# Roadmap\n\n## Parked\n\n**FT2 — B**\n\n## Recommende
 const ResidualIndex = "# Roadmap\n\n## Parked\n\n**FT3 — " + DeliveryOutcome + "**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. " + DeliveryOutcome + "\n2. B\n"
 
 // SeedRowless writes an active milestone whose delivery outcome owns no source and
-// approves the spec at deliverable and the tickets-only folder. Outcome B owns FT2 and
-// follows it on the board. The caller commits.
+// approves the spec at deliverable. Outcome B owns FT2 and follows it on the board. The
+// caller commits.
 func SeedRowless(t testing.TB, root, deliverable string) {
 	t.Helper()
 	SeedAdmission(t, root, deliverable)
-	identity := WriteTickets(t, root)
 	EditPolicy(t, root, func(policy *commitment.Policy) {
 		milestone := &policy.Milestones[0]
-		milestone.Outcomes[0].Deliverables = append(milestone.Outcomes[0].Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "tickets", Path: TicketsFolder, Identity: identity}})
 		milestone.Outcomes = append(milestone.Outcomes, outcome("B", writeRow(t, root, "FT2", "B")))
 	})
 	Write(t, root, "ROADMAP.md", RowlessIndex)
+}
+
+// SeedRowlessPair writes the SeedRowless milestone, and its delivery outcome also approves
+// the tickets-only folder. The rowless outcome stays open until both deliverables are
+// delivered. The caller commits.
+func SeedRowlessPair(t testing.TB, root, deliverable string) {
+	t.Helper()
+	SeedRowless(t, root, deliverable)
+	identity := WriteTickets(t, root)
+	EditPolicy(t, root, func(policy *commitment.Policy) {
+		delivery := &policy.Milestones[0].Outcomes[0]
+		delivery.Deliverables = append(delivery.Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "tickets", Path: TicketsFolder, Identity: identity}})
+	})
 }

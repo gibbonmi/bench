@@ -85,6 +85,28 @@ func TestCommitmentDeliverRowless(t *testing.T) {
 	}
 }
 
+// A rowless outcome with two approved deliverables stays open after the first delivery and
+// completes only after the second, in either order.
+func TestCommitmentDeliverRowlessPair(t *testing.T) {
+	paths := []string{"specs/c/spec.md", "specs/d"}
+	p := deliveryPolicy()
+	c := commitment.Outcome{ID: "C", Criteria: []commitment.Criterion{{ID: "c-done", Text: "C is delivered."}}, Sources: []commitment.SourceBinding{}}
+	for i, path := range paths {
+		c.Deliverables = append(c.Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "rowless" + string(rune('1'+i)), Path: path, Identity: "sha256:" + path}})
+	}
+	p.Milestones[0].Outcomes = append(p.Milestones[0].Outcomes, c)
+	for _, order := range [][]string{paths, {paths[1], paths[0]}} {
+		first, _, err := commitment.Deliver(p, order[0], "source", "evidence")
+		if err != nil || !slices.Equal(commitment.Remaining(first), []string{"A", "B", "C"}) {
+			t.Fatalf("first rowless Deliver of %s: Remaining = %v, %v; want C still open", order[0], commitment.Remaining(first), err)
+		}
+		second, _, err := commitment.Deliver(first, order[1], "source", "evidence")
+		if err != nil || !slices.Equal(commitment.Remaining(second), []string{"A", "B"}) {
+			t.Fatalf("second rowless Deliver of %s: Remaining = %v, %v; want C delivered", order[1], commitment.Remaining(second), err)
+		}
+	}
+}
+
 // Validate refuses each delivery fact that does not name exactly one approved binding with
 // its approved identity and a reviewed source and evidence.
 func TestCommitmentDeliveryFactValidation(t *testing.T) {

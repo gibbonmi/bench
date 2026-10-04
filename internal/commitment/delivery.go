@@ -7,10 +7,10 @@ import (
 
 // Deliver records the verified delivery of the approved deliverable at path. It returns
 // the next policy and the outcome sources that the delivery completely satisfies. An
-// outcome with no source is rowless: the outcome itself is its one obligation, so its
-// delivery records a fact and satisfies no source. A path that the active milestone does
-// not approve, or a binding that names no obligation of an outcome with sources, returns
-// policy unchanged and no source.
+// outcome with no source is rowless: each of its approved deliverables is an obligation of
+// the outcome itself, so its delivery records a fact and satisfies no source. A path that
+// the active milestone does not approve, or a binding that names no obligation of an
+// outcome with sources, returns policy unchanged and no source.
 func Deliver(policy Policy, path, source, evidence string) (Policy, []SourceBinding, error) {
 	outcome, binding, found, err := activeDeliverable(policy, path)
 	if err != nil || !found || (len(binding.Obligations) == 0 && len(outcome.Sources) > 0) {
@@ -88,7 +88,8 @@ func deliveredPaths(policy Policy) map[string]bool {
 }
 
 // deliveredOutcomes holds each outcome with a recorded delivery and no unsatisfied
-// source. A partial delivery therefore leaves its outcome open.
+// obligation. An outcome with sources owes each source. A rowless outcome owes each of its
+// approved deliverables. A partial delivery therefore leaves its outcome open.
 func deliveredOutcomes(policy Policy) map[string]bool {
 	satisfied := Satisfied(policy)
 	recorded := map[string]bool{}
@@ -98,7 +99,13 @@ func deliveredOutcomes(policy Policy) map[string]bool {
 	delivered := map[string]bool{}
 	for _, milestone := range policy.Milestones {
 		for _, outcome := range milestone.Outcomes {
-			delivered[outcome.ID] = recorded[outcome.ID] && !slices.ContainsFunc(outcome.Sources, func(source SourceBinding) bool { return !satisfied[source.ID] })
+			open := slices.ContainsFunc(outcome.Sources, func(source SourceBinding) bool { return !satisfied[source.ID] })
+			if len(outcome.Sources) == 0 {
+				open = slices.ContainsFunc(outcome.Deliverables, func(binding DeliveryBinding) bool {
+					return !BindingDelivered(policy, milestone.ID, outcome.ID, binding.Source.ID)
+				})
+			}
+			delivered[outcome.ID] = recorded[outcome.ID] && !open
 		}
 	}
 	return delivered

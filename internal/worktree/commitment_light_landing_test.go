@@ -121,55 +121,96 @@ func TestCommitmentTicketsOnlyClosure(t *testing.T) {
 }
 
 // A delivery of an outcome that owns no roadmap row records that outcome's fact alone and
-// creates and deletes no row. A project with no board keeps none. A board keeps every row
-// and detail owner, and its sequence drops only the delivered outcome.
+// creates and deletes no row. A project with no board keeps none, and a board keeps every
+// row and detail owner. The outcome is delivered only when every approved deliverable is
+// delivered: with a spec and a tickets-only folder approved, the first delivery in either
+// order keeps the sequence entry and the claim, and the second removes them.
 func TestCommitmentNoRoadmapOwner(t *testing.T) {
 	t.Parallel()
-	rowless := deliveryRoutes[2]
-	index := strings.TrimSpace(commitmenttest.DeliveredIndex)
+	pair := func(t testing.TB, root string) { commitmenttest.SeedRowlessPair(t, root, closureSpec) }
+	open, delivered := strings.TrimSpace(commitmenttest.RowlessIndex), strings.TrimSpace(commitmenttest.DeliveredIndex)
 	for _, row := range []struct {
-		route          deliveryRoute
-		binding, index string
-		remaining      []string
+		name         string
+		seed         func(testing.TB, string)
+		deliverables []string
+		index        string
+		remaining    []string
 	}{
-		{route: deliveryRoute{name: "spec-without-board", deliverable: closureSpec, seed: func(t testing.TB, root string) {
-			commitmenttest.SeedAdmission(t, root, closureSpec)
-		}}, binding: "spec", remaining: []string{}},
-		{route: rowless, binding: "spec", index: index, remaining: []string{"B"}},
-		{route: deliveryRoute{name: "tickets-with-board", deliverable: commitmenttest.TicketsFolder, seed: rowless.seed}, binding: "tickets", index: index, remaining: []string{"B"}},
+		{name: "spec-without-board", seed: func(t testing.TB, root string) { commitmenttest.SeedAdmission(t, root, closureSpec) }, deliverables: []string{closureSpec}, remaining: []string{}},
+		{name: "spec-with-board", seed: deliveryRoutes[2].seed, deliverables: []string{closureSpec}, index: delivered, remaining: []string{"B"}},
+		{name: "spec-then-tickets", seed: pair, deliverables: []string{closureSpec, commitmenttest.TicketsFolder}, index: delivered, remaining: []string{"B"}},
+		{name: "tickets-then-spec", seed: pair, deliverables: []string{commitmenttest.TicketsFolder, closureSpec}, index: delivered, remaining: []string{"B"}},
 	} {
-		t.Run(row.route.name, func(t *testing.T) {
+		t.Run(row.name, func(t *testing.T) {
 			t.Parallel()
-			request := "land-commitment-no-roadmap-owner-" + row.route.name
-			f := row.route.fixture(t, request, nil)
+			request := "land-commitment-no-roadmap-owner-" + row.name
+			first := deliveryRoute{deliverable: row.deliverables[0], seed: row.seed}
+			f := first.fixture(t, request, nil)
 			board := func(revision string) string {
 				return gitOutput(t, f.root, "ls-tree", "-r", "--name-only", revision, "--", roadmap.RoadmapFile, roadmap.RoadmapDir)
 			}
-			r := runVerb(t, verbLand, f.call(row.route.args(request, f, f.tip)...))
-			if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
-				t.Fatalf("rowless delivery = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-			}
-			if before, after := board(f.base), board("main"); after != before {
-				t.Fatalf("published board files = %q, want the base files %q", after, before)
-			}
-			published := ""
-			if git.OK("-C", f.root, "cat-file", "-e", "main:"+roadmap.RoadmapFile) {
-				published = gitOutput(t, f.root, "show", "main:"+roadmap.RoadmapFile)
-			}
-			if published != row.index {
-				t.Fatalf("published board = %q, want %q", published, row.index)
-			}
-			policy, _, err := commitrepo.Store{Root: f.root}.Policy()
-			mustNoError(t, err)
-			if len(policy.Deliveries) != 1 || policy.Deliveries[0].Outcome != commitmenttest.DeliveryOutcome || policy.Deliveries[0].Binding != row.binding || policy.Deliveries[0].Source != f.tip {
-				t.Fatalf("published delivery facts = %+v, want one %s fact naming %s", policy.Deliveries, row.binding, f.tip)
-			}
-			if remaining := commitment.Remaining(policy); !slices.Equal(remaining, row.remaining) {
-				t.Fatalf("remaining outcomes = %v, want %v", remaining, row.remaining)
-			}
-			if deliveryClaimed(t, f.root) {
-				t.Fatal("delivered rowless outcome kept its local claim")
+			for i, deliverable := range row.deliverables {
+				var r verbResult
+				tip := f.tip
+				if i == 0 {
+					r = runVerb(t, verbLand, f.call(first.args(request, f, f.tip)...))
+				} else {
+					r, tip = landNextDelivery(t, f, request+"-next", deliverable)
+				}
+				if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
+					t.Fatalf("rowless delivery of %s = (%d, %q, %q)", deliverable, r.exit, r.stdout, r.stderr)
+				}
+				if before, after := board(f.base), board("main"); after != before {
+					t.Fatalf("published board files = %q, want the base files %q", after, before)
+				}
+				final := i == len(row.deliverables)-1
+				index, remaining := open, []string{commitmenttest.DeliveryOutcome, "B"}
+				if final {
+					index, remaining = row.index, row.remaining
+				}
+				published := ""
+				if git.OK("-C", f.root, "cat-file", "-e", "main:"+roadmap.RoadmapFile) {
+					published = gitOutput(t, f.root, "show", "main:"+roadmap.RoadmapFile)
+				}
+				if published != index {
+					t.Fatalf("published board after %s = %q, want %q", deliverable, published, index)
+				}
+				binding := "spec"
+				if (deliveryRoute{deliverable: deliverable}).tickets() {
+					binding = "tickets"
+				}
+				policy, _, err := commitrepo.Store{Root: f.root}.Policy()
+				mustNoError(t, err)
+				if len(policy.Deliveries) != i+1 || policy.Deliveries[i].Outcome != commitmenttest.DeliveryOutcome || policy.Deliveries[i].Binding != binding || policy.Deliveries[i].Source != tip {
+					t.Fatalf("published delivery facts = %+v, want %d facts, the last a %s fact naming %s", policy.Deliveries, i+1, binding, tip)
+				}
+				if got := commitment.Remaining(policy); !slices.Equal(got, remaining) {
+					t.Fatalf("remaining outcomes after %s = %v, want %v", deliverable, got, remaining)
+				}
+				if claimed := deliveryClaimed(t, f.root); claimed == final {
+					t.Fatalf("rowless outcome claim after %s = %t, want %t", deliverable, claimed, !final)
+				}
 			}
 		})
 	}
+}
+
+// landNextDelivery lands deliverable from a new assignment that request names on the
+// current main of f. The assignment joins the open delivery outcome, binds deliverable,
+// and commits one reviewed change. It returns the landing result and the reviewed tip.
+func landNextDelivery(t *testing.T, f landingFixture, request, deliverable string) (verbResult, string) {
+	t.Helper()
+	route := deliveryRoute{deliverable: deliverable}
+	next := f
+	next.base = gitOutput(t, f.root, "rev-parse", "main")
+	next.creation = mustCreate(t, f.root, f.home, request, "next delivery")
+	commitmenttest.Admit(t, next.creation.Path, request, deliverable)
+	if route.tickets() {
+		commitInWorktree(t, next.creation.Path, commitmenttest.TicketsFolder+"/tickets/one.md", "Light path ticket.\n\n- [x] Accepted.\n", "accept the ticket")
+	} else {
+		commitInWorktree(t, next.creation.Path, "owned.txt", "next reviewed bytes\n", "next reviewed source")
+		refreshLandingEvidence(t, next.creation.Path, next.base)
+	}
+	next.tip = gitOutput(t, next.creation.Path, "rev-parse", "HEAD")
+	return runVerb(t, verbLand, next.call(route.args(request, next, next.tip)...)), next.tip
 }
