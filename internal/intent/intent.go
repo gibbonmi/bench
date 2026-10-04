@@ -20,6 +20,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
 	"github.com/gibbonmi/bench/internal/jsonfile"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // Filename is the ledger's name inside git's common directory. The schema this file
@@ -104,6 +105,13 @@ func readPath(path string) (Ledger, error) {
 	if err := validateCleanupReceipts(ledger.CleanupReceipts); err != nil {
 		return Ledger{}, fmt.Errorf("read intent ledger: %w", err)
 	}
+	seenPlans := map[string]bool{}
+	for _, receipt := range ledger.CommitmentReceipts {
+		if receipt.Plan == "" || receipt.Payload == "" || seenPlans[receipt.Plan] || !sanitize.LineSafe(receipt.Plan) || !sanitize.LineSafe(receipt.Decision) {
+			return Ledger{}, errors.New("read intent ledger: invalid commitment receipt")
+		}
+		seenPlans[receipt.Plan] = true
+	}
 	return ledger, nil
 }
 
@@ -167,6 +175,9 @@ func writePath(path string, ledger Ledger) error {
 	}
 	if ledger.CleanupReceipts == nil {
 		ledger.CleanupReceipts = []CleanupReceipt{}
+	}
+	if ledger.CommitmentReceipts == nil {
+		ledger.CommitmentReceipts = []CommitmentReceipt{}
 	}
 	sort.Slice(ledger.Entries, func(i, j int) bool { return ledger.Entries[i].Key < ledger.Entries[j].Key })
 	sort.Slice(ledger.Assignments, func(i, j int) bool { return ledger.Assignments[i].ID < ledger.Assignments[j].ID })

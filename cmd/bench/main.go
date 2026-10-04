@@ -47,7 +47,6 @@ import (
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
-	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -98,6 +97,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "learning", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " \"<title>\" --what --right [--rule]", Description: "append one open entry to capture/learnings.md (the drain verdicts it)"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(roadmap.LearningCommand)},
 	{Name: "retro", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " <slug> (--body <markdown> | --scaffold)", Description: "draft, or validate and create, one primary-local implementation retrospective"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(roadmap.RetroCommand)},
 	{Name: "roadmap", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 9, Description: "show the top 10 roadmap rows + drain state"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(roadmapCommand)},
+	{Name: "commitment", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(commitmentHelpRows(10)...), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(commitmentCommand)},
 	{Name: "skills-index", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 7, Suffix: " [--check|--write]", Description: "print skills-index drift (default) or regenerate it"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(skillsindex.Command)},
 	{Name: "tree-hash", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(treeHash)},
 	{Name: "resolve-model", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(resolveModel)},
@@ -170,14 +170,6 @@ func helpCommand(c Command, args []string) int {
 	}
 	fmt.Fprint(c.Stdout, renderCommandHelp())
 	return 0
-}
-
-func testCommand(args []string) (string, int) {
-	root, err := git.Root()
-	if err != nil {
-		return toon.NotInRepo() + "\n", 1
-	}
-	return testreport.Command(root, args)
 }
 
 // commandsGrammar is the declared argument shape usage.Parse enforces for `bench

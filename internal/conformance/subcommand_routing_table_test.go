@@ -20,6 +20,7 @@ var subcommandRouting = map[string]routingEntry{
 	"commands":     routed("cmd/bench"),
 	"consumers":    routed("internal/consumers"),
 	"commit":       routed("internal/commit"),
+	"commitment":   routed("internal/commitment/commitcmd"),
 	"coverage":     routed("internal/coverage"),
 	"dashboard":    routed("internal/dashboard"),
 	"diff":         routed("internal/diff"),

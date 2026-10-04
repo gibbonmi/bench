@@ -79,6 +79,10 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench retro [--in <label|primary>] <slug> (--body <markdown> | --scaffold)  draft, or validate and create, one primary-local implementation retrospective
   bench roadmap [--in <label|primary>]  show the top 10 roadmap rows + drain state
   bench status [--in <label|primary>]  ambient dashboard: what needs attention + the next action
+  bench commitment [--in <label|primary>] show  show the current delivery commitment
+  bench commitment [--in <label|primary>] inventory  list roadmap obligations, staged deliverables, and run identities
+  bench commitment [--in <label|primary>] plan --input <file>  validate an exact commitment transition
+  bench commitment [--in <label|primary>] approve --plan <id> --decision <reference> --delayed <ids-or-none> --removed <ids-or-none>  approve and stage one exact commitment transition
   bench handoff [--in <label|primary>] [--harness <name>] [--next <command>] [--state-file <path>]  print the cold-start pin block and rewrite capture/session-handoff.md
   bench commands --brief     print the direct, read-only command probe
   bench dashboard [--in <label|primary>] [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)

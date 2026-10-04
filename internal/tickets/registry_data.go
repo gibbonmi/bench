@@ -45,6 +45,7 @@ var bindings = []BindingRow{
 	{Prefix: "cmd/bench", Files: commandRegistries},
 	{Prefix: "internal/anchors", Files: commandRegistries},
 	{Prefix: "internal/assessment", Files: commandRegistries},
+	{Prefix: "internal/commitment", Files: commandRegistries},
 	{Prefix: "internal/consumers", Files: commandRegistries},
 	{Prefix: "internal/coverage", Files: commandRegistries},
 	{Prefix: "internal/diff", Files: commandRegistries},

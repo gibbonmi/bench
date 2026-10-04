@@ -53,10 +53,19 @@ func HoldsRecovery(pointer string) bool {
 }
 
 type Ledger struct {
-	Schema          int              `json:"schema"`
-	Entries         []Entry          `json:"entries"`
-	Assignments     []Assignment     `json:"assignments,omitempty"`
-	CleanupReceipts []CleanupReceipt `json:"cleanup_receipts,omitempty"`
+	Schema             int                 `json:"schema"`
+	Entries            []Entry             `json:"entries"`
+	Assignments        []Assignment        `json:"assignments,omitempty"`
+	CleanupReceipts    []CleanupReceipt    `json:"cleanup_receipts,omitempty"`
+	CommitmentReceipts []CommitmentReceipt `json:"commitment_receipts,omitempty"`
+}
+
+// CommitmentReceipt holds an opaque commitment plan under the shared intent lock.
+type CommitmentReceipt struct {
+	Plan     string `json:"plan"`
+	Payload  string `json:"payload"`
+	Decision string `json:"decision,omitempty"`
+	Approved bool   `json:"approved,omitempty"`
 }
 
 const AssignmentRecordSchema = "bench-assignment/v1"
