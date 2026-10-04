@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -102,8 +103,11 @@ func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, hom
 	// The ticket writes the fence less its review pickup, so a landing that grades
 	// fence-writes reads a union-exact spec.
 	prepared.SetTicketWrites("owned.txt (new), " + siblingReviewPath + " (new)")
+	commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")
+	prepared.Commit("approve fixture delivery")
 	base := prepared.Tip()
 	creation := mustCreate(t, root, home, request, "public landing")
+	commitmenttest.Admit(t, creation.Path, request, "specs/x/spec.md")
 	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes\n", "reviewed source")
 	refreshLandingEvidence(t, creation.Path, base)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
