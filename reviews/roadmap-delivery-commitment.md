@@ -1014,3 +1014,35 @@ Standards has zero findings. The prior three targets are closed. Repair cycles c
 
 The current session performs repair cycle 2 under the recorded user override.
 The native records retain the source citations and independent probes.
+
+## DC-C2 final repair verification
+
+Repair cycles consumed: 2 of 2 for DC-C2.
+The literal spec path uses the spec owner's folder layout without CLI normalization.
+The command regression first reproduced both planning and start refusals for a directory ending in `.md`.
+Both commands now accept that exact path.
+
+DC73 now changes or deletes a member of an approved tickets-only tree.
+A second ticket keeps the deleted-member folder present, so this case tests its changed tree identity.
+The common fixture builder supplies the approved file or folder binding for both type and identity tests.
+
+Commitment, intent, spec, landing, CLI, and conformance package checks pass.
+Landing reports two existing privilege skips. Conformance reports two socket-path skips and one privilege skip.
+No environment skip supplies verification credit.
+
+Each probe baseline passed. Each mutation failed on behavior and restored exactly.
+The table records current results from the native probe outputs.
+
+| target | mutation | failed tests | restore |
+| --- | --- | --- | --- |
+| Published identity | Ignore deliverable validation errors | Four changed or deleted file and folder cases | Exact |
+| Folder identity | Bypass only the Git-tree identity comparison | Two changed or deleted folder-member cases | Exact |
+| Literal spec path | Restore the CLI-normalization comparison | Planning and start in the literal-folder case | Exact |
+| Atomic admission | Split the runtime check from its write | Concurrent starts both succeeded | Exact |
+
+The native verification entries retain the current package results and required source-error probe.
+The independent test expectations detect the named omissions above.
+
+The commit lane refused growth in the existing oversized spec file.
+Its path helpers now share the existing resolver file, within the directory file budget.
+All six package checks and all four probes passed again on the final layout.

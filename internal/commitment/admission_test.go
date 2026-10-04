@@ -264,37 +264,45 @@ func TestCommitmentMalformedAdmission(t *testing.T) {
 }
 
 func TestCommitmentStartPublishedIdentity(t *testing.T) {
-	for _, deleted := range []bool{false, true} {
-		name := "changed"
-		if deleted {
-			name = "deleted"
-		}
-		t.Run(name, func(t *testing.T) {
-			root, first, _ := admissionRepo(t, false, false)
-			path, err := intent.Address(root)
-			if err != nil {
-				t.Fatal(err)
-			}
-			before, err := os.ReadFile(path)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if deleted {
-				if err := os.Remove(filepath.Join(root, deliverable("A"))); err != nil {
+	for _, kind := range []string{"spec", "tickets-only"} {
+		for _, change := range []string{"changed", "deleted"} {
+			t.Run(kind+"/"+change, func(t *testing.T) {
+				source := "specs/light/spec.md"
+				member := source
+				files := map[string]string{source: deliverableBody}
+				folder := kind == "tickets-only"
+				if folder {
+					source = "specs/light"
+					member = source + "/tickets/01-deliver.md"
+					files = map[string]string{member: "# First ticket\n", source + "/tickets/02-deliver.md": "# Second ticket\n"}
+				}
+				root := boundDeliverable(t, source, files, folder)
+				first := commitmenttest.Assignment(t, root, "first")
+				path, err := intent.Address(root)
+				if err != nil {
 					t.Fatal(err)
 				}
-			} else {
-				commitmenttest.Write(t, root, deliverable("A"), deliverableBody+"Changed acceptance.\n")
-			}
-			commitmenttest.Commit(t, root, "change approved source")
-			out, code := startOutcome(first, "A", "first")
-			after, err := os.ReadFile(path)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if code != 1 || string(before) != string(after) {
-				t.Fatalf("stale deliverable=(%s,%d), unchanged=%v", out, code, string(before) == string(after))
-			}
-		})
+				before, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if change == "deleted" {
+					if err := os.Remove(filepath.Join(root, member)); err != nil {
+						t.Fatal(err)
+					}
+				} else {
+					commitmenttest.Write(t, root, member, files[member]+"Changed acceptance.\n")
+				}
+				commitmenttest.Commit(t, root, "change approved source")
+				out, code := commitcmd.Command(first, []string{"start", "--outcome", "A", "--request", "first", "--deliverable", source})
+				after, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if code != 1 || string(before) != string(after) {
+					t.Fatalf("stale deliverable=(%s,%d), unchanged=%v", out, code, string(before) == string(after))
+				}
+			})
+		}
 	}
 }

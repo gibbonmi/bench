@@ -41,7 +41,7 @@ func (store Store) validateDeliverable(source commitment.SourceBinding) error {
 	if err != nil {
 		return err
 	}
-	isSpec := source.Path == spec.LiveSpecPath(spec.LiveSpecSlug(source.Path))
+	isSpec := spec.IsLiveSpecPath(source.Path)
 	if !isSpec && !ticketsOnlyAt(store.Root, revision, source.Path) {
 		return fmt.Errorf("deliverable %q is not an approved spec or tickets-only folder", source.Path)
 	}
