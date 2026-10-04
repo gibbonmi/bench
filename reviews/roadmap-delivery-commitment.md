@@ -3700,6 +3700,72 @@ This suggestion is optional advice and has no repair disposition.
             "C7-C6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dc-c7-r2-standards",
+          "performer": "claude:dc_c7_r2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c7_r2_standards",
+            "digest": "sha256:79fedf09be0f27ebbb3008bbb3c2d41113a012861c5501e9e3e73cdce264f991",
+            "excerpt": "Standards: 0 findings. C7-S1, C7-S2, C7-S3, C7-S4, C7-S6, C7-S7, C7-S8, and C7-S9 are closed; C7-S5 stays rejected.\npublished.Tree is the one publication seam for the landing, the gate test, and the milestone fixture. commitment.Unsettled, deliveryKey, addedCompletions, and TicketsBinding each have one owner.\nThe gate tickets-only branch, closureAuthority and scopeRefusal, the Examined marker check, and MarkGreen add no blocking defect. Test moves keep or strengthen every assertion. ADR 0015 uses STE prose with no paths or code.\nAdvice: Verification.Green always equals Revision; two private-index edits predate the seam; implementedSpec hides an ls-tree error; a closed board literal repeats in gate tests; the MarkGreen comment is loose.\n"
+          },
+          "axis": "Standards",
+          "base": "55c6f9ccf5f6db7a48e531aac0959e2adb534f4c",
+          "tip": "7fbe970cd32d62e9aa55f869565168dbbb9c5de3",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c7-r1-standards"
+          ]
+        },
+        {
+          "id": "dc-c7-r2-spec",
+          "performer": "claude:dc_c7_r2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c7_r2_spec",
+            "digest": "sha256:2c58ceb4c70957dae23fe48cb2c6942aa8bf284a77f892c3f077e803a5b64dd4",
+            "excerpt": "Spec: 0 findings. C7-P1, C7-P2, C7-P3, C7-P4, and C7-P5 are closed or acceptable.\nThe publication carries the deliverable; closure authority admits a listed scope, refuses an omitted scope, and gives other owners the binding refusal (spec.md:155). DC82 and the restored DC49 expectation hold.\nThe gate grades the exact tickets-only close with a folder proof, the broker closure, and the byte sweep (spec.md:221, :230-232). DC80 and DC81 hold.\nThe rowless every-deliverable rule and the green-marker binding are consistent with DC68 and spec.md:248-249. Ticket 05 and 06 guarantees still hold.\nJudgment calls: the plan source order change affects no live receipt, because no policy is tracked yet; the tickets-only fixture evidence and readyFor for bound owners have no spec effect.\nAdvice: correct stale seam paths for DC67, DC68, DC76, and DC82; consider a canonical plan source order before ticket 10 creates receipts; record legacy deliverables as exact paths.\n"
+          },
+          "axis": "Spec",
+          "base": "55c6f9ccf5f6db7a48e531aac0959e2adb534f4c",
+          "tip": "7fbe970cd32d62e9aa55f869565168dbbb9c5de3",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c7-r1-spec"
+          ]
+        },
+        {
+          "id": "dc-c7-r2-coverage",
+          "performer": "claude:dc_c7_r2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c7_r2_coverage",
+            "digest": "sha256:f64b7b2aaae7f9c7bbc9a115eae9f966ca4092cd1a6b11662669cf4840a66db7",
+            "excerpt": "Coverage: 0 findings. C7-C1, C7-C2, C7-C3, C7-C4, C7-C5, and C7-C6 are closed, each with a recorded probe that fails it.\nAll thirteen rows are covered at their seams with a refusing case for each compared element. The W3 judgment holds: TestAdmitPublicationClosureAuthority isolates the closure authority.\nNo weakened test; the moved active-criteria test is stronger. Census 745 matches. The ten entries match the DC-C7 plan, and the gate entry carries the plan's probe text.\nNon-blocking: rows DC67, DC68, DC76, and DC82 cite commitment_landing_test.go, but the tests now live in commitment_light_landing_test.go.\nAdvice: gate evidence and a criterion share one fixture file; DC82 has no tickets-route scope omission row; legacy closure scope matches exactly while the production path check matches directory prefixes.\n"
+          },
+          "axis": "Coverage",
+          "base": "55c6f9ccf5f6db7a48e531aac0959e2adb534f4c",
+          "tip": "7fbe970cd32d62e9aa55f869565168dbbb9c5de3",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c7-r1-coverage"
+          ]
         }
       ]
     }
@@ -4650,4 +4716,17 @@ A rowless outcome closes only when every approved deliverable is delivered. One 
 One commitment helper owns the settled sources and bindings. Verification binds gate evidence to the green marker, and tests read every stored receipt field.
 
 All ten planned checks pass at the chunk source, and the named gate probe failed and restored. Each behavioral target had a red repro before its fix.
+
+## Confirmed DC-C7 source
+
+Three fresh Claude Opus reviewers at high effort confirm both repair cycles. All three axes report zero findings and zero repair targets.
+Every accepted DC-C7 finding is closed. No later review changed the acceptance requirements.
+
+### Advice
+
+Rows DC67, DC68, DC76, and DC82 cite the old landing test file. The next plan commit corrects those seam paths.
+Plan identity depends on the order of policy sources. Consider a canonical order before the first real approval receipt.
+Legacy closure matches a scope entry exactly, while the production path check accepts a scope directory. A learning records this question.
+
+The final source is 7fbe970cd32d62e9aa55f869565168dbbb9c5de3. The chunk checkpoint remains required before ticket 09.
 
