@@ -1783,7 +1783,71 @@ This suggestion is optional advice and has no repair disposition.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c4-standards",
+          "performer": "/root/dc_c4_standards",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "69b437f4d1fef73137b74052d95cbd7d1d6291db",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "/root/dc_c4_standards",
+            "digest": "sha256:509c35391d4863675f6481b4a07eb1c7682edcb3eb1491d5ab2f1440389c58bc",
+            "excerpt": "Standards: 2 findings, 2 correction targets. Worst: duplicated production identity policy. No smell findings.\n\nC4-S1: auto-fix, confidence 9/10. LegacyScope at internal/commitment/repository/readiness.go:171-173 repeats Start at internal/commitment/repository/admission.go:16-19. Both require one active owning assignment, a nonempty request, and its exact digest. AGENTS.md:35-36 requires two derivations of the same fact to collapse into one source. Transactional and read-only effects differ; their pure identity decision can share one resolver. Production policy does not qualify for the independent-test exception. Source enumeration supports this structural defect. Command contribution: no.\n\nC4-S2: auto-fix, confidence 8/10. The comment at internal/worktree/pool_root.go:68-69 describes startResolver but attaches to creationStart. Move it directly above startResolver at line 75. craft-comments/SKILL.md:68-70 requires edited comments to describe current code. The constraint remains useful; placement is the defect. Evidence-only correction. Command contribution: no.\n\nRead account: whole approved spec and ticket 04; one frozen-pair diff; current standards; targeted source; evidence s1 index 0 complete; current binding true. Final HEAD dd492aaba4686e16db3fb9796e372da37482a413. Final status empty. No tests, edits, commits, stash, or live handles.\nNative receipts: pwd 3e9376; wrapper pwd 4304d6; HEAD 791ddd; status 00b0be. Native terminal return /root/dc_c4_standards. Model gpt-6.1-sol; effort high. Claim status claimed, confidence 9. Repair allowance 0/2. No optional advice or CLI improvements.\n"
+          },
+          "axis": "Standards",
+          "base": "691f1b50f86af4298936bbfca8acc14f061e8d38",
+          "tip": "e3d183ee363d1ff5dabce842861978ac6313962e",
+          "finding_ids": [
+            "C4-S1",
+            "C4-S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c4-spec",
+          "performer": "/root/dc_c4_spec",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "69b437f4d1fef73137b74052d95cbd7d1d6291db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dc_c4_spec",
+            "digest": "sha256:3a7d87b3a0f5b1974be4bf559f0e3f6ca3787544d2360439e93d0fd919f58145",
+            "excerpt": "Spec: 0 findings; worst none. Claim claimed, confidence 8.\nFrozen pair 691f1b50f86af4298936bbfca8acc14f061e8d38 to dd492aaba4686e16db3fb9796e372da37482a413.\nDC23/DC24: exact inherited outcome and deliverable; atomic sibling registration; shared claim and switch refusal tests.\nDC25: loop.go:153 checks ReadyOutcome before refresh, intent, recovery, acquisition, and execution.\nDC50: exact continuation identity matches spec line 439; C5 approval/publication remains deferred.\nDC69: grammar and sibling identity precedence match spec lines 216 and 458; refusal preserves ledger and registration.\nAudited all 74 rows for attribution and cross-chunk consequences. No current C4 shortfall or scope creep survived comparison.\nRead whole approved spec and ticket, standards and review discipline, exact diff, targeted source, and C4 author evidence. Complete streams s1:0, s35:0-1, s36:0-1. No duplicate diff or test runs.\nCommand contribution yes: consumer and coverage projections supported the review.\nNative receipts: shell 306d7b; wrapper 21c339; diff 9723ea; evidence 915df2,013874,164a43,ece1ec,c1be62; HEAD 047155; status b95b23. Final HEAD dd492aaba4686e16db3fb9796e372da37482a413. Status clean. No live handles. Runtime/interface unknown; doctor diagnostic only. Native return /root/dc_c4_spec, gpt-6.1-sol/high.\n"
+          },
+          "axis": "Spec",
+          "base": "691f1b50f86af4298936bbfca8acc14f061e8d38",
+          "tip": "e3d183ee363d1ff5dabce842861978ac6313962e",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4-coverage",
+          "performer": "/root/dc_c4_coverage",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "69b437f4d1fef73137b74052d95cbd7d1d6291db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dc_c4_coverage",
+            "digest": "sha256:8e40f7afe1dc9ce33daa25b104cff02704a35358e8cd57495c67594d12972a40",
+            "excerpt": "Coverage: 0 findings; worst issue none. Claim verified, confidence 9/10.\n\nRead whole approved spec and ticket 04; standards and review disciplines; exact frozen diff; targeted source and fixtures; C4 author record. Enumerated worktree grammar, source identity, planning and bound sources, policy, deliverables, blockers, claims, replay, shift ordering, and exact legacy identity. The changed files stay inside ticket 04's fence. DC23, DC24, DC25, DC50, and DC69 resolve to their named tests.\n\nIndependent falsification baseline: TestCommitmentShiftBeforeEffects passed, 73 ms, zero failures and skips; native 8a48bc. Omitted ready's outcomeID mismatch conjunct in repository/readiness.go. The mutation differs in site and kind from author swaps. Native 34f491 reported bit, one behavioral failure, 209 ms, restored=yes. The wrong outcome executed the adapter and wrote one shift intent. Working-file and HEAD blob both equal 05c245e842ac50dd97a97deacf3f68216fd0f8a8.\n\nPrepared reads: s1:0, s35:0-1, s36:0-1, complete. The reviewer did not replay the broad checks. Interface identity remains unknown; actual normal tools succeeded.\n\nOptional advice only: add configured-remote and unchanged FETCH_HEAD assertions to DC25. Current production ordering is correct. This advice has no finding ID or repair disposition. Command contribution: no.\n\nFinal HEAD dd492aaba4686e16db3fb9796e372da37482a413. Clean final status; both test handles terminated. No commits, records, repairs, or live handles. Native return /root/dc_c4_coverage, gpt-6.1-sol/high.\n"
+          },
+          "axis": "Coverage",
+          "base": "691f1b50f86af4298936bbfca8acc14f061e8d38",
+          "tip": "e3d183ee363d1ff5dabce842861978ac6313962e",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2269,3 +2333,25 @@ The system shift journey supplies explicit fixture admission. Worktree tests reu
 The plan amendment adds commitment, conformance, and system verification to DC-C4. It updates the existing acceptance seam paths without changing scope or pass criteria.
 The two plan commits are `b27e4df4353ab9aa447b2aa26c4f8bcce1ef86d3` and `6ea07f4913cfb4dd22e0dddd808950a562143e38`.
 The regenerated build charge was verified and current. Its identity is `sha256:9d645799c906fc2f4212556f318c0f56f42722601d440fe6abf8da66bda9039f`.
+
+## DC-C4 initial review disposition
+
+Standards has two findings. Spec and Coverage each have zero findings. The findings name two correction targets.
+Repair cycles consumed: 0 of 2. The current session retains repair authorship under the user override.
+
+### Standards
+
+- C4-S1: auto-fix, confidence 9. Share the exact assignment identity predicate between Start and LegacyScope, per AGENTS.md's one-source rule.
+- C4-S2: auto-fix, confidence 8. Move the startResolver comment onto that declaration, per craft-comments. This correction is evidence-only.
+
+### Spec
+
+No findings. The reviewer audited current acceptance and cross-chunk effects.
+
+### Coverage
+
+No findings. An independent omission of the outcome match caused the shift refusal test to fail. The probe restored exactly.
+Optional advice proposes a separate refresh-effect assertion. Current production ordering is correct, so this advice does not block the chunk.
+
+The diagnosed cause is duplicated identity policy in the new continuation reader. One pure resolver will retain both callers' effects and refusal text.
+The moved creation type also separated a comment from its declaration. The correction restores that attachment.
