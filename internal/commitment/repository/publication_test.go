@@ -89,6 +89,61 @@ func TestAdmitPublicationFrozenIdentity(t *testing.T) {
 	}
 }
 
+// The verified closure of the reviewed deliverable needs the owner's authority to close
+// it. The candidate is the closure alone and changes no production path, so no later
+// readiness check can decide it. A bound owner or a listed scope that names the
+// deliverable admits it. An unbound owner receives the start guidance, and a listed scope
+// that omits the deliverable receives the scope refusal.
+func TestAdmitPublicationClosureAuthority(t *testing.T) {
+	for _, row := range []struct {
+		name  string
+		bind  bool
+		scope []string
+		want  string
+	}{
+		{name: "bound", bind: true},
+		{name: "unbound", want: "assignment has no current delivery binding; run bench commitment start"},
+		{name: "listed", scope: []string{closureSpec}},
+		{name: "listed-without-deliverable", scope: []string{"owned.txt"}, want: "legacy continuation scope excludes \"" + closureSpec + "\""},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root, head := closureRoot(t, func(t testing.TB, root string) { commitmenttest.SeedAdmission(t, root, closureSpec) })
+			store := commitrepo.Store{Root: root}
+			edits, err := store.Closure(head, commitrepo.Delivery{Spec: closureSpec, Source: head})
+			if err != nil || len(edits) != 1 {
+				t.Fatalf("Closure = %+v, %v; want the policy edit alone", edits, err)
+			}
+			worktree := commitmenttest.Assignment(t, root, "closer")
+			if row.bind {
+				commitmenttest.Admit(t, worktree, "closer", closureSpec)
+			}
+			commitmenttest.Write(t, worktree, commitment.PolicyPath, string(edits[0].Data))
+			commitmenttest.Commit(t, worktree, "closure")
+			published := publication(t, root, worktree)
+			published.Source, published.Deliverable = head, closureSpec
+			if row.scope != nil {
+				err := intent.Transact(root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+					ledger.Commitment = &intent.CommitmentState{Continuations: []intent.LegacyContinuation{{Assignment: published.Assignment, Request: published.Request, Scope: row.scope}}}
+					return ledger, true, nil
+				}, nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			err = store.AdmitPublication(published, gittest.Output(t, worktree, "rev-parse", "HEAD^{tree}"))
+			if row.want == "" {
+				if err != nil {
+					t.Fatalf("AdmitPublication = %v, want the authorized closure admitted", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), row.want) {
+				t.Fatalf("AdmitPublication = %v, want a refusal naming %q", err, row.want)
+			}
+		})
+	}
+}
+
 // moveAssignment moves the assignment for request to state until the test ends, so later
 // rows read the ledger the fixture wrote.
 func moveAssignment(t *testing.T, root, request string, state intent.AssignmentState) {

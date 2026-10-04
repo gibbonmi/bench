@@ -28,7 +28,8 @@ func (store Store) AuthorizeCandidate(tree string) error {
 // authorizeCandidate grades tree for owner against one ledger snapshot. The caller supplies
 // the owner, so a publication decides for its frozen source assignment rather than for
 // whichever checkout holds the store root. Only a publication supplies a delivery, so only
-// a publication can carry the verified closure of its own approved deliverable.
+// a publication can carry the verified closure of its reviewed deliverable, and only when
+// owner has the authority to close that deliverable.
 func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignment, tree string, delivery *Delivery) error {
 	revision, err := store.sourceRevision()
 	if err != nil {
@@ -48,10 +49,13 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 		if err != nil {
 			return err
 		}
-		if !closed {
-			if err := store.approvedTransition(ledger, current, candidate, revision); err != nil {
-				return err
-			}
+		if closed {
+			err = store.closureAuthority(ledger, owner, delivery.Spec)
+		} else {
+			err = store.approvedTransition(ledger, current, candidate, revision)
+		}
+		if err != nil {
+			return err
 		}
 	}
 	protected := current
@@ -82,7 +86,7 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 	if scope, listed := continuationScope(ledger, owner); listed {
 		for _, path := range production {
 			if !inScope(scope, path) {
-				return fmt.Errorf("legacy continuation scope excludes %q; run bench commitment plan --input <file>", path)
+				return scopeRefusal(path)
 			}
 		}
 		return nil

@@ -8,9 +8,10 @@ import (
 )
 
 // Publication is the source assignment identity a landing froze before its gate, with
-// the reviewed source commit that it publishes and the reviewed spec path, if any.
+// the reviewed source commit that it publishes and the reviewed deliverable that it
+// closes, if any: a staged spec or a tickets-only folder.
 type Publication struct {
-	Assignment, Request, Worktree, Source, Spec string
+	Assignment, Request, Worktree, Source, Deliverable string
 }
 
 // AdmitPublication grades the exact composed tree for the frozen source assignment.
@@ -42,23 +43,30 @@ func (store Store) admitPublication(ledger intent.Ledger, source Publication, tr
 		if owner.State != intent.StateActive || owner.Request != source.Request || len(intent.AssignmentsOwning([]intent.Assignment{owner}, source.Worktree)) != 1 {
 			break
 		}
-		return store.authorizeCandidate(ledger, owner, tree, publishedDelivery(ledger, owner, source))
+		var delivery *Delivery
+		if source.Deliverable != "" {
+			delivery = &Delivery{Spec: source.Deliverable, Source: source.Source}
+		}
+		return store.authorizeCandidate(ledger, owner, tree, delivery)
 	}
 	return fmt.Errorf("publication assignment %q is not active with its presented request and worktree; run bench worktree create", source.Assignment)
 }
 
-// publishedDelivery is the delivery that owner's current binding permits the publication
-// to close. A listed legacy run instead closes the reviewed spec when its scope lists that
-// spec, and the policy then decides whether the spec is an approved deliverable. Any other
-// owner closes nothing.
-func publishedDelivery(ledger intent.Ledger, owner intent.Assignment, source Publication) *Delivery {
-	for _, binding := range runtimeState(ledger).Bindings {
-		if binding.Assignment == owner.ID && binding.Request == owner.Request {
-			return &Delivery{Spec: binding.Deliverable, Source: source.Source}
+// closureAuthority refuses the verified closure of the deliverable at path unless owner
+// may close it. A listed legacy run closes only a deliverable that its scope lists, and
+// the policy decides whether that deliverable is approved. Any other owner closes only
+// its current bound deliverable, so an unbound run receives the start guidance.
+func (store Store) closureAuthority(ledger intent.Ledger, owner intent.Assignment, path string) error {
+	if scope, listed := continuationScope(ledger, owner); listed {
+		if !slices.Contains(scope, path) {
+			return scopeRefusal(path)
 		}
+		return nil
 	}
-	if scope, listed := continuationScope(ledger, owner); listed && source.Spec != "" && slices.Contains(scope, source.Spec) {
-		return &Delivery{Spec: source.Spec, Source: source.Source}
-	}
-	return nil
+	return store.readyFor(ledger, owner, path, "")
+}
+
+// scopeRefusal is the refusal of a path that a listed legacy scope does not authorize.
+func scopeRefusal(path string) error {
+	return fmt.Errorf("legacy continuation scope excludes %q; run bench commitment plan --input <file>", path)
 }

@@ -107,8 +107,9 @@ func requirePublishedSpec(t *testing.T, root, published string, staged []byte) {
 // Adoption lists an existing run with its approved scope instead of a delivery
 // binding. The listed run lands that scope and nothing beyond it, and an unlisted run with
 // no binding lands nothing. The fixture spec is the approved deliverable of a rowless
-// outcome, so each scope lists it and the landing carries its delivery fact. An unlisted
-// run is not authorized to record that fact.
+// outcome, so each scope lists it and the landing carries its delivery fact. A run whose
+// scope omits that spec, or that adoption did not list, is not authorized to record that
+// fact, and its refusal names the scope or the missing binding.
 func TestCommitmentLegacyContinuation(t *testing.T) {
 	t.Parallel()
 	const deliverable = "specs/x/spec.md"
@@ -124,7 +125,9 @@ func TestCommitmentLegacyContinuation(t *testing.T) {
 		{name: "sibling-prefix", scope: []string{"owned", "reviews/x.md", deliverable}, want: "legacy continuation scope excludes"},
 		{name: "directory-scope", scope: []string{"owned.txt", "reviews", deliverable}},
 		{name: "outside-directory", scope: []string{"reviews", deliverable}, want: "legacy continuation scope excludes"},
-		{name: "unlisted", want: "candidate policy has no exact approval"},
+		// A scope that omits the approved deliverable does not authorize its delivery fact.
+		{name: "scope-without-deliverable", scope: []string{"owned.txt", "reviews/x.md"}, want: "legacy continuation scope excludes \"" + deliverable + "\""},
+		{name: "unlisted", want: "assignment has no current delivery binding"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			t.Parallel()

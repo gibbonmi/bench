@@ -122,7 +122,7 @@ func TestCommitmentRowlessAdmissionWithoutBoard(t *testing.T) {
 	commitmenttest.Write(t, worktree, commitment.PolicyPath, string(edits[0].Data))
 	commitmenttest.Commit(t, worktree, "closure")
 	published := publication(t, root, worktree)
-	published.Source, published.Spec = source, closureSpec
+	published.Source, published.Deliverable = source, closureSpec
 	store := commitrepo.Store{Root: root}
 	if err := store.AdmitPublication(published, gittest.Output(t, worktree, "rev-parse", "HEAD^{tree}")); err != nil {
 		t.Fatalf("AdmitPublication = %v, want the rowless closure admitted", err)

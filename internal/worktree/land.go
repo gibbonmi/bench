@@ -199,15 +199,16 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	// The release removes the source worktree, so the broker check reads it now and the
 	// notice prints after the effects report the refresh.
 	brokerChanged := brokerSourceChanged(assignment.Worktree, source.base, source.tip)
-	result, err := j.landReviewed(ctx, landing.ReviewedRequest{
+	request := landing.ReviewedRequest{
 		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
 		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
 		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
 		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
-	}, commitmentAdmission{
+	}
+	result, err := j.landReviewed(ctx, request, commitmentAdmission{
 		store:  commitrepo.Store{Root: root},
-		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Spec: source.specPath},
+		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable()},
 		gap:    j.publicationGap,
 	})
 	if err != nil {
