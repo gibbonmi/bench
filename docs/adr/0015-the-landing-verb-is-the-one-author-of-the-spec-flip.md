@@ -6,17 +6,21 @@ The commit verb reports its publication boundary with exit 3. Exit 1 is a refusa
 
 The same landing is the one author of the verified roadmap closure. The active commitment can approve a spec or a tickets-only folder as the complete delivery of named obligations. A green landing of that deliverable then publishes the spec flip or the folder close, and the closure, in one commit. The closure records the delivery in the commitment policy. It also removes each satisfied row, the detail file of that row, and the sequence entry of each delivered outcome.
 
-A tickets-only folder has no completion record. Its evidence is the folder in the reviewed source, with the ticket acceptance that the gate graded. A `Roadmap:` label is never evidence of a complete delivery.
+A tickets-only folder has no completion record. Its evidence is the folder in the reviewed source, which retains the approved ticket acceptance.
 
-An outcome that owns no roadmap row is its own obligation. Its delivery records the fact and removes the outcome from the recommended sequence. It creates no row and removes no row. A project with no board receives the fact alone.
+An outcome that owns no roadmap row owes each of its approved deliverables. Each delivery records its fact. The outcome leaves the recommended sequence only when every approved deliverable is delivered. The delivery creates no row and removes no row. A project with no board receives the fact alone.
 
 The closure also removes each satisfied row from the board dependency tables. A table row whose dependent is a satisfied row goes. A satisfied row leaves each dependency list, and a table row whose list becomes empty goes. A closed row therefore never keeps dependent work blocked.
 
 A partial delivery closes only its named obligations, and every other row stays. A `Roadmap:` line alone closes nothing.
 
-An explicitly listed legacy run has no delivery binding. When its approved scope lists the landed spec, the landing closes that spec's delivery in the same way. The landing releases the legacy run only when every approved deliverable in its scope is delivered. A partly delivered scope stays open.
+An explicitly listed legacy run has no delivery binding. When its approved scope lists the landed spec or tickets-only folder, the landing closes that delivery in the same way. The landing releases the legacy run only when every approved deliverable in its scope is delivered. A partly delivered scope stays open.
 
-The commitment owner derives one exact closure from the reviewed source. The landing applies that closure, and publication admission accepts no other policy change. The completion gate of a spec landing compares the candidate with the same closure. A list of permitted paths is not sufficient. A kept sequence entry, a missing row removal, or an extra removal makes the gate refuse. The delivery fact names the reviewed source commit and its completion record, and never the publication that carries the fact.
+Only an owner with authority can close a delivery. That owner is the bound run of the deliverable, or a listed legacy run whose scope lists it. Admission refuses any other run with the start guidance or the scope refusal.
+
+The commitment owner derives one exact closure from the reviewed source. The landing applies that closure, and publication admission accepts no other policy change. The completion gate compares the candidate with the same closure on both routes. For a spec, the gate also compares the exact status change. For a tickets-only folder, the gate also proves that the closed folder is absent.
+
+A list of permitted paths is not sufficient. A kept sequence entry, a kept folder, a missing row removal, an extra removal, or one changed byte outside the transform makes the gate refuse. Each delivery fact names the reviewed source commit and its retained completion evidence. It never names the publication that carries the fact.
 
 A failure before publication changes neither the default branch nor the roadmap. After publication, the landing releases the local claims that the published fact satisfies. When that local step fails, the resume completes it and does not publish again. The published fact keeps the obligation closed while the local step waits.
 

@@ -26,7 +26,7 @@ type Edit struct {
 // Delivered returns policy after delivery and the sources that the delivery completely
 // satisfies. The completion evidence of a spec is the record that the reviewed source
 // retains. A tickets-only folder has no record: its evidence is the folder's tree in the
-// reviewed source, which holds the approved ticket acceptance that the gate graded.
+// reviewed source, which retains the approved ticket acceptance.
 func (store Store) Delivered(policy commitment.Policy, delivery Delivery) (commitment.Policy, []commitment.SourceBinding, error) {
 	evidence, err := store.completionEvidence(delivery)
 	if err != nil {

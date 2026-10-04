@@ -89,7 +89,7 @@ func TestCommitmentTicketsOnlyClosure(t *testing.T) {
 				commitmenttest.SeedTicketsOnly(t, root, closureSpec, row.residual...)
 			}}
 			f := route.fixture(t, request, nil)
-			commitInWorktree(t, f.creation.Path, commitmenttest.TicketsFolder+"/tickets/one.md", "Light path ticket.\n\n- [x] Accepted.\n", "accept the ticket")
+			acceptTicket(t, f.creation.Path)
 			tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 			r := runVerb(t, verbLand, f.call(route.args(request, f, tip)...))
 			if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
@@ -195,6 +195,12 @@ func TestCommitmentNoRoadmapOwner(t *testing.T) {
 	}
 }
 
+// acceptTicket commits the accepted ticket of the tickets-only folder in worktree.
+func acceptTicket(t *testing.T, worktree string) {
+	t.Helper()
+	commitInWorktree(t, worktree, commitmenttest.TicketsFolder+"/tickets/one.md", "Light path ticket.\n\n- [x] Accepted.\n", "accept the ticket")
+}
+
 // landNextDelivery lands deliverable from a new assignment that request names on the
 // current main of f. The assignment joins the open delivery outcome, binds deliverable,
 // and commits one reviewed change. It returns the landing result and the reviewed tip.
@@ -206,7 +212,7 @@ func landNextDelivery(t *testing.T, f landingFixture, request, deliverable strin
 	next.creation = mustCreate(t, f.root, f.home, request, "next delivery")
 	commitmenttest.Admit(t, next.creation.Path, request, deliverable)
 	if route.tickets() {
-		commitInWorktree(t, next.creation.Path, commitmenttest.TicketsFolder+"/tickets/one.md", "Light path ticket.\n\n- [x] Accepted.\n", "accept the ticket")
+		acceptTicket(t, next.creation.Path)
 	} else {
 		commitInWorktree(t, next.creation.Path, "owned.txt", "next reviewed bytes\n", "next reviewed source")
 		refreshLandingEvidence(t, next.creation.Path, next.base)

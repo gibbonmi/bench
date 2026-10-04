@@ -121,8 +121,7 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	tip, err := benchgit.ResolveCommit(e.identityRoot, "HEAD")
 	if e.completionSource != "" {
 		tip, err = benchgit.ResolveCommit(e.identityRoot, e.completionSource)
-		complete := e.checkpoint.Complete || e.completionFolder != ""
-		if err == nil && (!e.prospective || !complete || tip != e.completionSource) {
+		if err == nil && (!e.prospective || !e.completing() || tip != e.completionSource) {
 			return subject{}, errors.New("invalid prospective completion source")
 		}
 	}

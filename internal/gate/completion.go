@@ -140,8 +140,14 @@ func (e *gateEvaluation) completionClosure(graded *treeGeneration, sourceTree, p
 	return proven, nil
 }
 
+// completing reports whether the evaluation grades a delivery's completion: a complete
+// spec checkpoint or a tickets-only close.
+func (e *gateEvaluation) completing() bool {
+	return e.checkpoint.Complete || e.completionFolder != ""
+}
+
 func validateCompletionContext(e *gateEvaluation) error {
-	if e.completionSource == "" && e.prospective && (e.checkpoint.Complete || e.completionFolder != "") {
+	if e.completionSource == "" && e.prospective && e.completing() {
 		return errors.New("prospective completion requires the reviewed source tip")
 	}
 	return nil
