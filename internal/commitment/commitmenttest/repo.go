@@ -62,13 +62,19 @@ func Write(t testing.TB, root, path, content string) {
 // Planning creates an owned linked checkout for approval command tests.
 func Planning(t testing.TB, root string) string {
 	t.Helper()
-	id := strings.Repeat("a", 32)
+	return Assignment(t, root, "planning")
+}
+
+// Assignment creates one owned linked checkout for an independent caller request.
+func Assignment(t testing.TB, root, request string) string {
+	t.Helper()
+	id := intent.RequestDigest(request)[:32]
 	owner := strings.Repeat("b", 32)
 	branch := intent.AssignmentBranchRef(owner, id)
 	target := filepath.Join(t.TempDir(), "planning")
 	start := gittest.Output(t, root, "rev-parse", "HEAD")
 	gittest.Output(t, root, "worktree", "add", "-b", strings.TrimPrefix(branch, "refs/heads/"), target, "HEAD")
-	if err := intent.PutAssignment(root, intent.Assignment{Schema: intent.AssignmentRecordSchema, ID: id, OwnerID: owner, Request: intent.RequestDigest("planning"), Label: "planning", Start: start, Branch: branch, Worktree: target, State: intent.StateActive}); err != nil {
+	if err := intent.PutAssignment(root, intent.Assignment{Schema: intent.AssignmentRecordSchema, ID: id, OwnerID: owner, Request: intent.RequestDigest(request), Label: request, Start: start, Branch: branch, Worktree: target, State: intent.StateActive}); err != nil {
 		t.Fatal(err)
 	}
 	return target

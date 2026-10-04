@@ -87,7 +87,7 @@ func readPath(path string) (Ledger, error) {
 	if ledger.Assignments == nil {
 		ledger.Assignments = []Assignment{}
 	}
-	if ledger.Schema == LegacySchema && (len(ledger.Assignments) != 0 || len(ledger.CleanupReceipts) != 0) {
+	if ledger.Schema == LegacySchema && (len(ledger.Assignments) != 0 || len(ledger.CleanupReceipts) != 0 || ledger.Commitment != nil) {
 		return Ledger{}, errors.New("read intent ledger: legacy schema cannot authorize lifecycle records")
 	}
 	assignmentIDs := map[string]bool{}
@@ -103,6 +103,9 @@ func readPath(path string) (Ledger, error) {
 		requests[assignment.Request] = true
 	}
 	if err := validateCleanupReceipts(ledger.CleanupReceipts); err != nil {
+		return Ledger{}, fmt.Errorf("read intent ledger: %w", err)
+	}
+	if err := ValidateCommitment(ledger.Commitment); err != nil {
 		return Ledger{}, fmt.Errorf("read intent ledger: %w", err)
 	}
 	seenPlans := map[string]bool{}

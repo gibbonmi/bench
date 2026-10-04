@@ -173,6 +173,11 @@ func policySources(policy Policy) []SourceBinding {
 	for _, milestone := range policy.Milestones {
 		for _, outcome := range milestone.Outcomes {
 			sources = append(sources, outcome.Sources...)
+			for _, binding := range outcome.Deliverables {
+				if !slices.Contains(sources, binding.Source) {
+					sources = append(sources, binding.Source)
+				}
+			}
 		}
 	}
 	return sources

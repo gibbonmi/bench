@@ -570,3 +570,31 @@ Coverage also checked deleted predecessor sources and aliases at every field occ
 The temporary checks passed and left a clean tree.
 Its independent recursive-cycle omission and field-matcher swap both bit and restored exactly.
 The native Coverage excerpt retains those results.
+
+## DC-C2 author probes
+
+The initial admission tests failed because the three command forms were absent.
+The current admission and intent packages pass. The CLI package also passes.
+The root conformance check passes after the test waits use the shared bound.
+
+The race check pauses B after its runtime snapshot. It then races an unblock and A start against B.
+A split check and write lets both starts succeed. The test refuses that result.
+
+The separate help expectation detects an omitted command form.
+These native probe excerpts record both failures and their exact restores.
+
+```text
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/commitment/repository/admission.go,swap,failed,1,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/commitment,^TestCommitmentConcurrentStarts$,passed,1
+```
+
+```text
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/commitment/commitcmd/command.go,omit,failed,1,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./cmd/bench,^TestHelpInventoryIsComplete$,passed,1
+spilled{lines=9,bytes=23905,omitted_lines=0,cut_lines=1,path=/home/mgibs/.bench/responses/bench-2826441890/af49ac1c59888c026ae64548dc90b756/1791112556490443470-9b8be7a4d000ec81.out}
+```
+

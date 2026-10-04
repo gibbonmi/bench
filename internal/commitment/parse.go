@@ -74,10 +74,12 @@ func Validate(policy Policy) error {
 				}
 				criteria[criterion.ID] = true
 			}
+			if err := validateDeliverables(outcome); err != nil {
+				return err
+			}
 			for _, source := range outcome.Sources {
-				path := filepath.ToSlash(filepath.Clean(source.Path))
-				if !validIdentity(source.ID) || source.Path == "" || !sanitize.LineSafe(source.Path) || path != source.Path || filepath.IsAbs(source.Path) || path == ".." || strings.HasPrefix(path, "../") || !sanitize.LineSafe(source.Identity) || source.Identity == "" {
-					return fmt.Errorf("commitment policy: invalid source binding %q", source.ID)
+				if err := validateSource(source); err != nil {
+					return err
 				}
 				if _, exists := sources[source.ID]; exists || sourcePaths[source.Path] != "" {
 					return fmt.Errorf("commitment policy: source %q has more than one owner", source.ID)
@@ -158,4 +160,39 @@ func dependencyCycle(graph map[string][]string) string {
 		}
 	}
 	return ""
+}
+
+func validateSource(source SourceBinding) error {
+	path := filepath.ToSlash(filepath.Clean(source.Path))
+	if !validIdentity(source.ID) || source.Path == "" || !sanitize.LineSafe(source.Path) || path != source.Path || filepath.IsAbs(source.Path) || path == ".." || strings.HasPrefix(path, "../") || !sanitize.LineSafe(source.Identity) || source.Identity == "" {
+		return fmt.Errorf("commitment policy: invalid source binding %q", source.ID)
+	}
+	return nil
+}
+
+func validateDeliverables(outcome Outcome) error {
+	ids, paths := map[string]bool{}, map[string]bool{}
+	for _, binding := range outcome.Deliverables {
+		if err := validateSource(binding.Source); err != nil {
+			return err
+		}
+		if ids[binding.Source.ID] || paths[binding.Source.Path] {
+			return fmt.Errorf("commitment policy: duplicate deliverable %q", binding.Source.ID)
+		}
+		ids[binding.Source.ID], paths[binding.Source.Path] = true, true
+		seen := map[string]bool{}
+		for _, id := range binding.Obligations {
+			found := false
+			for _, source := range outcome.Sources {
+				if source.ID == id {
+					found = true
+				}
+			}
+			if !found || seen[id] {
+				return fmt.Errorf("commitment policy: invalid deliverable obligation %q", id)
+			}
+			seen[id] = true
+		}
+	}
+	return nil
 }

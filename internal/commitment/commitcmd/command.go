@@ -26,6 +26,9 @@ type form struct {
 }
 
 var forms = []form{
+	{name: "start", description: "claim an eligible committed outcome", flags: []flag{{"--outcome", "<id>"}, {"--request", "<request>"}, {"--deliverable", "<path>"}}},
+	{name: "block", description: "record an outcome blocker", flags: []flag{{"--outcome", "<id>"}, {"--reason", "<text>"}}},
+	{name: "unblock", description: "clear an outcome blocker", flags: []flag{{"--outcome", "<id>"}}},
 	{name: "show", description: "show the current delivery commitment"},
 	{name: "inventory", description: "list roadmap obligations, staged deliverables, and run identities"},
 	{name: "plan", description: "validate an exact commitment transition", flags: []flag{{"--input", "<file>"}}},
@@ -81,6 +84,8 @@ func Command(root string, args []string) (string, int) {
 	}
 	store := commitrepo.Store{Root: root}
 	switch selected.name {
+	case "start", "block", "unblock":
+		return admission(store, selected.name, parsed.Flags)
 	case "show":
 		return show(store)
 	case "inventory":

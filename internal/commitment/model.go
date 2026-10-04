@@ -18,10 +18,17 @@ type Milestone struct {
 
 // Outcome is one immutable delivery outcome.
 type Outcome struct {
-	ID           string          `json:"id"`
-	Criteria     []Criterion     `json:"criteria"`
-	Sources      []SourceBinding `json:"sources"`
-	Dependencies []string        `json:"dependencies,omitempty"`
+	ID           string            `json:"id"`
+	Criteria     []Criterion       `json:"criteria"`
+	Sources      []SourceBinding   `json:"sources"`
+	Deliverables []DeliveryBinding `json:"deliverables,omitempty"`
+	Dependencies []string          `json:"dependencies,omitempty"`
+}
+
+// DeliveryBinding identifies an approved deliverable and its fully satisfied sources.
+type DeliveryBinding struct {
+	Source      SourceBinding `json:"source"`
+	Obligations []string      `json:"obligations,omitempty"`
 }
 
 // Criterion is one immutable outcome criterion.

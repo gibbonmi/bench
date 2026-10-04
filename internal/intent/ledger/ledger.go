@@ -58,6 +58,7 @@ type Ledger struct {
 	Assignments        []Assignment        `json:"assignments,omitempty"`
 	CleanupReceipts    []CleanupReceipt    `json:"cleanup_receipts,omitempty"`
 	CommitmentReceipts []CommitmentReceipt `json:"commitment_receipts,omitempty"`
+	Commitment         *CommitmentState    `json:"commitment,omitempty"`
 }
 
 // CommitmentReceipt holds an opaque commitment plan under the shared intent lock.

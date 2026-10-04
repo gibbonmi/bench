@@ -15,6 +15,10 @@ type (
 	Assignment        = ledger.Assignment
 	CleanupReceipt    = ledger.CleanupReceipt
 	CommitmentReceipt = ledger.CommitmentReceipt
+	CommitmentState   = ledger.CommitmentState
+	DeliveryBinding   = ledger.DeliveryBinding
+	OutcomeClaim      = ledger.OutcomeClaim
+	OutcomeBlocker    = ledger.OutcomeBlocker
 )
 
 const (
@@ -59,6 +63,7 @@ var (
 	ShiftBranchPrefix      = ledger.ShiftBranchPrefix
 	ValidIdentity          = ledger.ValidIdentity
 	ValidateAssignment     = ledger.ValidateAssignment
+	ValidateCommitment     = ledger.ValidateCommitment
 
 	validAssignmentBranchRef = ledger.ValidAssignmentBranchRef
 	validEntry               = ledger.ValidateEntry

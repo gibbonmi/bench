@@ -79,6 +79,9 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench retro [--in <label|primary>] <slug> (--body <markdown> | --scaffold)  draft, or validate and create, one primary-local implementation retrospective
   bench roadmap [--in <label|primary>]  show the top 10 roadmap rows + drain state
   bench status [--in <label|primary>]  ambient dashboard: what needs attention + the next action
+  bench commitment [--in <label|primary>] start --outcome <id> --request <request> --deliverable <path>  claim an eligible committed outcome
+  bench commitment [--in <label|primary>] block --outcome <id> --reason <text>  record an outcome blocker
+  bench commitment [--in <label|primary>] unblock --outcome <id>  clear an outcome blocker
   bench commitment [--in <label|primary>] show  show the current delivery commitment
   bench commitment [--in <label|primary>] inventory  list roadmap obligations, staged deliverables, and run identities
   bench commitment [--in <label|primary>] plan --input <file>  validate an exact commitment transition
