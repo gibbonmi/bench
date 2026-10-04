@@ -3240,6 +3240,188 @@ This suggestion is optional advice and has no repair disposition.
           ]
         }
       ]
+    },
+    {
+      "id": "DC-C7",
+      "base": "55c6f9ccf5f6db7a48e531aac0959e2adb534f4c",
+      "tip": "b1296652eae56ea7b941516529aa24e0e57c5260",
+      "plan_digest": "sha256:01eda07835792651e3f35f745dceb4835df75b290bead9df6f84320feda1abba",
+      "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+      "acceptance_rows": [
+        "DC67",
+        "DC68",
+        "DC77",
+        "DC43",
+        "DC44",
+        "DC45",
+        "DC46",
+        "DC70"
+      ],
+      "verification": [
+        {
+          "id": "dc-c7-t08-commitment",
+          "performer": "claude:dc_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t08:commitment",
+            "digest": "sha256:a1a7c0725b0b98e515afbee5885823e2f624a9c2607ea3c065135f68dbbd0280",
+            "excerpt": "command: bench test --package ./internal/commitment\ntree: dc-integration,b1296652eae56ea7b941516529aa24e0e57c5260,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,3904\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nexit: 0\n\nProbes (bench probe; each verdict bit, restored yes; the mutated run exits 1 because a Go test fails):\n- verification.go swap `if result.Identity != CriterionIdentity(criteria[index]) {` -> `if false {`: red TestCommitmentStaleEvidence/criterion-identity\n- verification.go swap `if evidence.Revision != revision {` -> `if false {`: red TestCommitmentStaleEvidence/revision\n- verification.go swap `if !repositoryPath(reference) {` -> `if false {`: red TestCommitmentVerificationEvidence/evidence-incomplete, /gate-incomplete\n- verification.go swap `object, err := resolve(reference)` -> `object, err := reference, error(nil)`: red TestCommitmentVerificationEvidence/evidence-unresolved, /gate-unresolved\n- verification.go omit `strings.TrimSpace(result.Assessment) == \"\" || `: red TestCommitmentVerificationEvidence/assessment-missing\n- verification.go swap missing-result return -> `continue`: red TestCommitmentCriterionCoverage/missing; separately TestCommitmentEmptyRowsNotComplete/no-criterion-results\n- verification.go swap duplicate guard -> `seen && false`: red TestCommitmentCriterionCoverage/duplicate\n- verification.go swap `if index < 0 {` -> `if index < 0 { continue }; if false {`: red TestCommitmentCriterionCoverage/unknown-criterion\n- verification.go swap `case ResultUnmet, ResultBlocked:` -> unmet as an accepting empty case: red TestCommitmentUnmetCriterion\n- verification.go swap `case ResultUnmet, ResultBlocked:` -> blocked as an accepting empty case: red TestCommitmentCriterionCoverage/blocked\n- verification.go remove the default unknown-result return: red TestCommitmentCriterionCoverage/unknown-result\n- verification.go swap `if milestone != policy.ActiveMilestone {` -> `if false {`: red TestCommitmentVerificationEvidence/inactive-milestone (a later unknown-criterion refusal fires; the test fails on its message)\n- verification.go swap undelivered guard -> `false && len(remaining) > 0`: red TestCommitmentVerificationEvidence/undelivered-outcome\n- verification.go swap gate resolve -> `evidence.Gate, error(nil)`: red TestCommitmentVerificationEvidence/gate-incomplete, /gate-unresolved\n- verification.go swap `if evidence.Version != 1 {` -> `if false {`: red TestCommitmentVerificationEvidence/unsupported-version\n- verification.go swap `if v.Policy != predecessor {` -> `if false {`: red TestCommitmentCompletionProposal/receipt-after-policy-change\n- verification.go swap receipt milestone check -> ID only: red TestCommitmentCompletionProposal/receipt-for-another-milestone\n- verification.go swap `if !slices.Equal(verified, proposedCriteria) {` -> `if false {`: red TestCommitmentCompletionProposal/changes-criteria\n- verification.go swap delivery-fact equality -> `if false {`: red TestCommitmentCompletionProposal/changes-delivery-fact\n- verification.go swap completion-removal guard -> `if false {`: red TestCommitmentCompletionProposal/removes-completion\n- verification.go swap activation guard -> milestone clause only: red TestCommitmentCompletionProposal/activates-successor\n- repository/verification.go swap missing-receipt guard -> `continue`: red TestCommitmentEmptyRowsNotComplete/no-verification-receipt, TestCommitmentCompletionApprovalConsumesReceipt\n- repository/repository.go remove the approve-time verifiedCompletions call: red TestCommitmentCompletionApprovalConsumesReceipt\n- repository/verification.go remove the receipt append: red TestCommitmentMilestoneCompletion\n- authority.go swap completed-effect append -> `_ = completion`: red TestCommitmentMilestoneCompletion\n- authority.go drop the BindingDelivered exemption in policySources: red TestCommitmentMilestoneCompletion (plan refuses: source \"spec\" changed)\n- parse.go `!known` -> `!known && false`: red TestCommitmentCompletionValidation/unknown-milestone\n- parse.go omit `completed[completion.Milestone] || `: red TestCommitmentCompletionValidation/duplicate\n- parse.go omit `completion.Milestone == policy.ActiveMilestone || `: red TestCommitmentCompletionValidation/still-active\n- parse.go omit `!lineValue(completion.Verification) ||`: red TestCommitmentCompletionValidation/no-verification\n- parse.go swap `return !delivered[outcome.ID] })` -> `&& false`: red TestCommitmentCompletionValidation/undelivered-outcome\n- commitcmd/command.go swap verify retry -> plan form: red TestCommitmentUnmetCriterion\n- commitcmd/command.go swap verify success next -> retry form: red TestCommitmentMilestoneCompletion\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-t08-intent",
+          "performer": "claude:dc_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t08:intent",
+            "digest": "sha256:bee92f2c1abfa443a21e4751f2f81d97e5b2df7dc445b662982471b5c0b7c57b",
+            "excerpt": "command: bench test --package ./internal/intent\ntree: dc-integration,b1296652eae56ea7b941516529aa24e0e57c5260,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,3205\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nexit: 0\n\nProbes (verdict bit, restored yes; mutated run exits 1 because a Go test fails):\n- intent.go omit `receipt.ID == \"\" || receipt.Payload == \"\" || `: red TestMilestoneReceiptValidation/empty-identity, /empty-payload\n- intent.go swap `receipt.Payload == \"\" || seenVerifications` -> `seenVerifications`: red TestMilestoneReceiptValidation/empty-payload\n- intent.go omit `seenVerifications[receipt.ID] || `: red TestMilestoneReceiptValidation/duplicate-identity\n- intent.go omit ` || !sanitize.LineSafe(receipt.ID)`: red TestMilestoneReceiptValidation/control-identity\n- transaction.go omit `MilestoneReceipts:  rest.MilestoneReceipts,`: red TestPurgeAssignmentsKeepsMilestoneReceipts\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-t08-bench",
+          "performer": "claude:dc_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t08:bench",
+            "digest": "sha256:3f849719f39d2c2143e8d8160161739981bf6123431790c802f49fb3fc0bbdda",
+            "excerpt": "command: bench test --package ./cmd/bench\ntree: dc-integration,b1296652eae56ea7b941516529aa24e0e57c5260,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14390\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nexit: 0\n\nProbe (verdict bit, restored yes; mutated run exits 1 because a Go test fails):\n- help_inventory_test.go omit the expected `bench commitment [--in <label|primary>] verify --milestone <id> --evidence <file>  verify milestone criterion evidence and record a completion receipt` line: red TestHelpInventoryIsComplete (help prints the registry-derived verify row the expectation lacks)\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-t08-conformance",
+          "performer": "claude:dc_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t08:conformance",
+            "digest": "sha256:31468433c2ccc75bfeeb02fbac6c945ff6262625a9093172094b417947b6f324",
+            "excerpt": "command: bench test --package ./internal/conformance\ntree: dc-integration,b1296652eae56ea7b941516529aa24e0e57c5260,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,34531\nfailures[0]{package,test,line}:\nskips[3]: capability skips (unix sockets, character device) in TestGuidanceProseBudgetRefusesNonRegularSubjects/socket, TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device, TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket\nexit: 0\n\nNo conformance file changed: the commitment route row already routes to internal/commitment/commitcmd, and the verify form derives its help and dispatch from the one commitcmd form table.\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-t08-milestone-repository",
+          "performer": "claude:dc_t08",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t08:milestone-repository",
+            "digest": "sha256:1e84f726c83c5a0272b4e636298693d2bc460105438d2485b2c5c436b069e6ca",
+            "excerpt": "command: bench test --package ./internal/commitment/repository\ntree: dc-integration,b1296652eae56ea7b941516529aa24e0e57c5260,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,631\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nexit: 0\n\nProbes (verdict bit, restored yes; mutated run exits 1 because a Go test fails):\n- authority.go swap `if !satisfied[source.ID] {` -> `if !satisfied[source.ID] || true {`: red TestCommitmentPlanAfterDelivery (commitment source \"FT1\" refused: missing tree file roadmap/FT1.md)\n- repository/sources.go swap BindingDelivered skip -> `if false {`: red TestCommitmentPlanAfterDelivery (deliverable \"specs/x/spec.md\" is not staged)\n\nFocused checks at the same tip:\n- bench test --package ./internal/worktree: pass (62853 ms), exit 0\n- bench test --package ./internal/landing: pass (7828 ms), exit 0\n- bench test --check system (Node 25 PATH): pass (73022 ms), exit 0\n- bench test --package ./internal/gate (extra): pass, exit 0 (run before the commit, after the BuildPlan source change)\n"
+          },
+          "requirement": "milestone-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-t07-worktree",
+          "performer": "claude:dc_t07",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t07:worktree",
+            "digest": "sha256:4c3012054e24da1f57f6baa32effc16b932da24257be1232d05d03b6dba66e7b",
+            "excerpt": "command: bench test --package ./internal/worktree   tip=b1296652 (b1296652eae56ea7b941516529aa24e0e57c5260; only reviews/roadmap-delivery-commitment.md uncommitted, owned by the orchestrator)\nexit: 0\npackages[1]: github.com/gibbonmi/bench/internal/worktree,pass,63203\nfailures[0]; skips[2]: TestCleanLandedSpecialPathsRetainedWithoutOpening/socket, TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket (unix sockets unavailable)\n\n--- probe records (bench probe at the ticket 07 tree; mutated run exits 1 because a Go test failed; restored=yes) ---\n\n## probe-worktree-1\ntree[1]{target,head,dirty}:\n  dc-integration,bb8e0f8a63122c82a9babe850f4bf2174badf96c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/closure.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestCommitmentTicketsOnlyClosure|TestCommitmentNoRoadmapOwner,passed,7\nspilled{lines=11,bytes=1520,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/af49ac1c59888c026ae64548dc90b756/1791139263247161862-85a11c3edcf24810.out}\nfailures[3]{package,test,line}:\n  github.com/gibbonmi/bench/internal/worktree,TestCommitmentNoRoadmapOwner/tickets-with-board,\"commitment_landing_test.go:383: published board = \\\"# Roadmap\\\\\\\\n\\\\\\\\n## Parked\\\\\\\\n\\\\\\\\n**FT2 — B**\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. delivery\\\\\\\\n2. B\\\", want \\\"# Roadmap\\\\\\\\n\\\\\\\\n## Parked\\\\\\\\n\\\\\\\\n**FT2 — B**\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\"\"\n  github.com/gibbonmi/bench/internal/worktree,TestCommitmentTicketsOnlyClosure/complete,\"commitment_landing_test.go:333: published board = \\\"# Roadmap\\\\\\\\n\\\\\\\\n## Parked\\\\\\\\n\\\\\\\\n**FT1 — delivery**\\\\\\\\n\\\\\\\\n**FT2 — B**\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. delivery\\\\\\\\n2. B\\\" rows=map[FT1:true FT2:true FT3:false], want only FT1 closed\"\n  github.com/gibbonmi/bench/internal/worktree,TestCommitmentTicketsOnlyClosure/partial,\"commitment_landing_test.go:333: published board = \\\"# Roadmap\\\\\\\\n\\\\\\\\n## Parked\\\\\\\\n\\\\\\\\n**FT1 — delivery**\\\\\\\\n\\\\\\\\n**FT3 — delivery**\\\\\\\\n\\\\\\\\n**FT2 — B**\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. delivery\\\\\\\\n2. B\\\" rows=map[FT1:true FT2:true FT3:true], want only FT1 closed\"\nskips[0]{package,test,reason}:\n\n## probe-worktree-2\ntree[1]{target,head,dirty}:\n  dc-integration,bb8e0f8a63122c82a9babe850f4bf2174badf96c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/delivery.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestCommitmentNoRoadmapOwner,passed,4\nspilled{lines=11,bytes=1353,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/af49ac1c59888c026ae64548dc90b756/1791139275718888161-c52fb4328abc4b6c.out}\nfailures[3]{package,test,line}:\n  github.com/gibbonmi/bench/internal/worktree,TestCommitmentNoRoadmapOwner/rowless,\"commitment_landing_test.go:383: published board = \\\"# Roadmap\\\\\\\\n\\\\\\\\n## Parked\\\\\\\\n\\\\\\\\n**FT2 — B**\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. delivery\\\\\\\\n2. B\\\", want \\\"# Roadmap\\\\\\\\n\\\\\\\\n## Parked\\\\\\\\n\\\\\\\\n**FT2 — B**\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\"\"\n  github.com/gibbonmi/bench/internal/worktree,TestCommitmentNoRoadmapOwner/spec-without-board,\"commitment_landing_test.go:388: published delivery facts = [], want one spec fact naming 1948dee4e693904363e2b04a2add1eea98e0b527\"\n  github.com/gibbonmi/bench/internal/worktree,TestCommitmentNoRoadmapOwner/tickets-with-board,\"commitment_landing_test.go:383: published board = \\\"# Roadmap\\\\\\\\n\\\\\\\\n## Parked\\\\\\\\n\\\\\\\\n**FT2 — B**\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. delivery\\\\\\\\n2. B\\\", want \\\"# Roadmap\\\\\\\\n\\\\\\\\n## Parked\\\\\\\\n\\\\\\\\n**FT2 — B**\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\"\"\nskips[0]{package,test,reason}:\n\n## probe-worktree-3\ntree[1]{target,head,dirty}:\n  dc-integration,bb8e0f8a63122c82a9babe850f4bf2174badf96c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestCommitmentNoRoadmapOwner,passed,4\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,735\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/worktree,TestCommitmentNoRoadmapOwner/spec-without-board,\"commitment_landing_test.go:373: rowless delivery = (1, \\\"refused{detail=close verified delivery: ROADMAP.md has no recommended sequence}\\\\\\\\n\\\", \\\"landing source{review_base=e2267f0da4ce618525f0afbc467679836135223e,assignment_start=e2267f0da4ce61… (271 bytes)\"\nskips[0]{package,test,reason}:\n\n## probe-worktree-4\ntree[1]{target,head,dirty}:\n  dc-integration,bb8e0f8a63122c82a9babe850f4bf2174badf96c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestCommitmentTicketsOnlyClosure,passed,3\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,fail,682\nfailures[2]{package,test,line}:\n  github.com/gibbonmi/bench/internal/worktree,TestCommitmentTicketsOnlyClosure/complete,\"commitment_landing_test.go:337: published delivery facts = [{Milestone:M Outcome:delivery Binding:tickets Identity:git-tree:23b7659324111c58789bdf556ea812c4e0bd7ecf Source:0fa0011d3c0b191bd89cfd4a239cb4bf6cd31319 Evidence:git-tree:23b765932… (408 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestCommitmentTicketsOnlyClosure/partial,\"commitment_landing_test.go:337: published delivery facts = [{Milestone:M Outcome:delivery Binding:tickets Identity:git-tree:23b7659324111c58789bdf556ea812c4e0bd7ecf Source:0beb03b9517e179a291332ebf6671403c9331ff8 Evidence:git-tree:23b765932… (408 bytes)\"\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-t07-landing",
+          "performer": "claude:dc_t07",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t07:landing",
+            "digest": "sha256:b4bb3db90c1fd3d2210c7c982c061158096fc8533a8c249db0356c62350d640a",
+            "excerpt": "command: bench test --package ./internal/landing   tip=b1296652 (b1296652eae56ea7b941516529aa24e0e57c5260; only reviews/roadmap-delivery-commitment.md uncommitted, owned by the orchestrator)\nexit: 0\npackages[1]: github.com/gibbonmi/bench/internal/landing,pass,7881\nfailures[0]; skips[2]: TestLandPreAuthorizationRefusalTable/descendant-device, /direct-device (no character device privilege)\n\nprobes: the landing-route probe (internal/landing/closure.go) ran against ./internal/worktree; see worktree.txt probe-worktree-1.\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-t07-spec",
+          "performer": "claude:dc_t07",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t07:spec",
+            "digest": "sha256:f6dad94b17d93d085a60b89e12c3d9449fc6d058e439378bc17c8094c19e72db",
+            "excerpt": "command: bench test --package ./internal/spec   tip=b1296652 (b1296652eae56ea7b941516529aa24e0e57c5260; only reviews/roadmap-delivery-commitment.md uncommitted, owned by the orchestrator)\nexit: 0\npackages[1]: github.com/gibbonmi/bench/internal/spec,pass,1044\nfailures[0]; skips[0]\n\n--- probe records (bench probe at the ticket 07 tree; mutated run exits 1 because a Go test failed; restored=yes) ---\n\n## probe-spec-1\ntree[1]{target,head,dirty}:\n  dc-integration,bb8e0f8a63122c82a9babe850f4bf2174badf96c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/retire_next.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestCommitmentRetireClosedRow,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,76\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/spec,TestCommitmentRetireClosedRow/delivered,\"spec_test.go:692: retire = (0, \\\"retired: specs/s\\\\\\\\nnext: promote durable content, remove the ROADMAP row FT7, commit as `spec-retire: s`\\\\\\\\n\\\"), want exit 0 and the last line \\\"next: promote durable content, commit as `spec-retire: s`\\\\\\\\n\\\"\"\nskips[0]{package,test,reason}:\n\n## probe-spec-2\ntree[1]{target,head,dirty}:\n  dc-integration,bb8e0f8a63122c82a9babe850f4bf2174badf96c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/spec/retire_next.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestCommitmentRetireClosedRow,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,fail,83\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/spec,TestCommitmentRetireClosedRow/other-spec,\"spec_test.go:692: retire = (0, \\\"retired: specs/s\\\\\\\\nnext: promote durable content, commit as `spec-retire: s`\\\\\\\\n\\\"), want exit 0 and the last line \\\"next: promote durable content, remove the ROADMAP row FT7, commit as `spec-retire: s`\\\\\\\\n\\\"\"\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "spec",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-t07-repository",
+          "performer": "claude:dc_t07",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t07:repository",
+            "digest": "sha256:d44624435ec40657332be5ae97d1d79cfa5b0ce9d2bf3da9ac1500ff6fc3bee7",
+            "excerpt": "command: bench test --package ./internal/commitment/repository   tip=b1296652 (b1296652eae56ea7b941516529aa24e0e57c5260; only reviews/roadmap-delivery-commitment.md uncommitted, owned by the orchestrator)\nexit: 0\npackages[1]: github.com/gibbonmi/bench/internal/commitment/repository,pass,777\nfailures[0]; skips[0]\n\n--- probe records (bench probe at the ticket 07 tree; mutated run exits 1 because a Go test failed; restored=yes) ---\n\n## probe-repository-1\ntree[1]{target,head,dirty}:\n  dc-integration,bb8e0f8a63122c82a9babe850f4bf2174badf96c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,all,passed,20\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,547\nfailures[2]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCommitmentLightClosure/tickets-only,\"closure_test.go:59: Closure = [], invalid checkpoint spec path; use specs/<slug>/spec.md; want 3 edits\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCommitmentLightClosureRefusal/row-without-board,\"closure_test.go:104: Closure = [], invalid checkpoint spec path; use specs/<slug>/spec.md; want a refusal naming \\\"closed row FT1 appears 0 times\\\"\"\nskips[0]{package,test,reason}:\n\n## probe-repository-2\ntree[1]{target,head,dirty}:\n  dc-integration,bb8e0f8a63122c82a9babe850f4bf2174badf96c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/candidate.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,TestCommitmentRowlessAdmissionWithoutBoard,passed,1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,79\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestCommitmentRowlessAdmissionWithoutBoard,\"closure_test.go:129: AdmitPublication = candidate changes protected commitment: ROADMAP.md has no recommended sequence; run bench commitment plan --input <file>, want the rowless closure admitted\"\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
