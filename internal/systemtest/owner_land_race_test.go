@@ -11,6 +11,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment"
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
@@ -191,7 +194,31 @@ func systemCreateLandingWorktree(t *testing.T, root, home, label, request string
 	if err != nil {
 		t.Fatal(err)
 	}
-	return systemLandingWorktree{path: path, assignment: assignment, branch: systemGitOutput(t, path, "symbolic-ref", "--quiet", "HEAD"), request: request}
+	created := systemLandingWorktree{path: path, assignment: assignment, branch: systemGitOutput(t, path, "symbolic-ref", "--quiet", "HEAD"), request: request}
+	systemAdmitLandingWorktree(t, root, home, created)
+	return created
+}
+
+// systemAdmitLandingWorktree starts a new worktree on the policy's one approved delivery
+// through the real command, so its landing publishes under current authority. A repository
+// without an adopted policy admits nothing.
+func systemAdmitLandingWorktree(t *testing.T, root, home string, worktree systemLandingWorktree) {
+	t.Helper()
+	policy, adopted, err := (commitrepo.Store{Root: root}).Policy()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !adopted {
+		return
+	}
+	outcome, err := commitment.ActiveOutcome(policy, commitmenttest.DeliveryOutcome)
+	if err != nil || len(outcome.Deliverables) != 1 {
+		t.Fatalf("landing fixture policy has no single approved deliverable: %v", err)
+	}
+	result := systemSelected(t, worktree.path, []string{"BENCH_HOME=" + home, "BENCH_SYSTEM_ROOT=" + root, "BENCH_COMMAND_OBSERVE=1"}, "commitment", "start", "--outcome", commitmenttest.DeliveryOutcome, "--request", worktree.request, "--deliverable", outcome.Deliverables[0].Source.Path)
+	if result.code != 0 {
+		t.Fatalf("admit landing worktree %s = (%d, %q, %q)", worktree.request, result.code, result.stdout, result.stderr)
+	}
 }
 
 func systemCommit(t *testing.T, root, name, body, message string) {

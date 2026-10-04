@@ -14,6 +14,21 @@ import (
 
 // AuthorizeCandidate grades the complete proposed tree against current default-branch authority.
 func (store Store) AuthorizeCandidate(tree string) error {
+	ledger, err := intent.Read(store.Root)
+	if err != nil {
+		return err
+	}
+	owner, owned := activeOwner(ledger, store.Root)
+	if !owned {
+		return fmt.Errorf("commit requires an active owned assignment; run bench worktree create")
+	}
+	return store.authorizeCandidate(ledger, owner, tree)
+}
+
+// authorizeCandidate grades tree for owner against one ledger snapshot. The caller supplies
+// the owner, so a publication decides for its frozen source assignment rather than for
+// whichever checkout holds the store root.
+func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignment, tree string) error {
 	revision, err := store.sourceRevision()
 	if err != nil {
 		return err
@@ -25,14 +40,6 @@ func (store Store) AuthorizeCandidate(tree string) error {
 	candidate, identity, err := store.policyAt(tree)
 	if err != nil {
 		return err
-	}
-	ledger, err := intent.Read(store.Root)
-	if err != nil {
-		return err
-	}
-	owners := intent.AssignmentsOwning(ledger.Assignments, store.Root)
-	if len(owners) != 1 || owners[0].State != intent.StateActive {
-		return fmt.Errorf("commit requires an active owned assignment; run bench worktree create")
 	}
 	approved := predecessor != identity
 	if approved {
@@ -55,17 +62,25 @@ func (store Store) AuthorizeCandidate(tree string) error {
 	if err != nil {
 		return err
 	}
-	production := false
+	var production []string
 	for _, change := range changes {
 		if !commitment.PlanningPath(change.Path, change.DstMode, promotions) || !commitment.PlanningPath(change.Path, change.SrcMode, promotions) {
-			production = true
-			break
+			production = append(production, change.Path)
 		}
 	}
-	if production {
-		return store.ready(ledger, "", "")
+	if len(production) == 0 {
+		return nil
 	}
-	return nil
+	// A listed legacy run finishes only its approved scope; it never falls back to a binding.
+	if scope, listed := continuationScope(ledger, owner); listed {
+		for _, path := range production {
+			if !inScope(scope, path) {
+				return fmt.Errorf("legacy continuation scope excludes %q; run bench commitment plan --input <file>", path)
+			}
+		}
+		return nil
+	}
+	return store.readyFor(ledger, owner, "", "")
 }
 
 func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *commitment.Policy, revision string) error {
@@ -168,4 +183,14 @@ func (store Store) planningPromotions(tree string, changes []git.TreeChange) ([]
 		}
 	}
 	return promotions, nil
+}
+
+// inScope reports whether path is one scope entry or lies below a scope directory.
+func inScope(scope []string, path string) bool {
+	for _, entry := range scope {
+		if path == entry || strings.HasPrefix(path, entry+"/") {
+			return true
+		}
+	}
+	return false
 }

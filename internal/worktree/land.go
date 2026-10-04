@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/census"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -204,6 +205,10 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
 		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
 		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
+	}, commitmentAdmission{
+		store:  commitrepo.Store{Root: root},
+		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree},
+		gap:    j.publicationGap,
 	})
 	if err != nil {
 		var conflict landing.ConflictError
@@ -232,6 +237,42 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
 	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, brokerChanged, records, stdout, stderr)
+}
+
+// commitmentAdmission is the installed broker's publication decision for one frozen
+// source assignment. It reads authority from the destination repository, never from the
+// candidate tree that it grades.
+type commitmentAdmission struct {
+	store  commitrepo.Store
+	source commitrepo.Publication
+	gap    func(string)
+}
+
+func (a commitmentAdmission) Check(tree string) error {
+	if err := a.store.AdmitPublication(a.source, tree); err != nil {
+		return fmt.Errorf("commitment: %w", err)
+	}
+	return nil
+}
+
+// Publish leaves a publication failure unwrapped, so compare-and-swap and recovery
+// refusals keep their own text. Only an admission refusal carries the commitment prefix.
+func (a commitmentAdmission) Publish(tree string, publish func() error) error {
+	ran := false
+	var published error
+	err := a.store.PublishAdmitted(a.source, tree, func() error {
+		a.gap(a.store.Root)
+		ran = true
+		published = publish()
+		return published
+	})
+	if ran {
+		return published
+	}
+	if err != nil {
+		return fmt.Errorf("commitment: %w", err)
+	}
+	return nil
 }
 
 // censusCount is the assignment's raw-call count for the landed record. An unreadable

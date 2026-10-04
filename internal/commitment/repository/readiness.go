@@ -18,17 +18,31 @@ func (store Store) Ready(deliverable string) error {
 }
 
 func (store Store) ready(ledger intent.Ledger, deliverable, outcomeID string) error {
-	owners := intent.AssignmentsOwning(ledger.Assignments, store.Root)
-	if len(owners) != 1 || owners[0].State != intent.StateActive {
+	owner, owned := activeOwner(ledger, store.Root)
+	if !owned {
 		return fmt.Errorf("delivery requires an active owned assignment; run bench worktree create")
 	}
+	return store.readyFor(ledger, owner, deliverable, outcomeID)
+}
+
+// activeOwner resolves the one active assignment whose worktree is root.
+func activeOwner(ledger intent.Ledger, root string) (intent.Assignment, bool) {
+	owners := intent.AssignmentsOwning(ledger.Assignments, root)
+	if len(owners) != 1 || owners[0].State != intent.StateActive {
+		return intent.Assignment{}, false
+	}
+	return owners[0], true
+}
+
+// readyFor verifies owner's current delivery binding against current authority.
+func (store Store) readyFor(ledger intent.Ledger, owner intent.Assignment, deliverable, outcomeID string) error {
 	policy, err := store.admissionPolicy()
 	if err != nil {
 		return err
 	}
 	state := runtimeState(ledger)
 	for _, binding := range state.Bindings {
-		if binding.Assignment != owners[0].ID || binding.Request != owners[0].Request {
+		if binding.Assignment != owner.ID || binding.Request != owner.Request {
 			continue
 		}
 		if binding.Milestone != policy.ActiveMilestone || (deliverable != "" && binding.Deliverable != deliverable) || (outcomeID != "" && binding.Outcome != outcomeID) {
@@ -172,10 +186,18 @@ func (store Store) LegacyScope(request string) ([]string, error) {
 	if !valid {
 		return nil, fmt.Errorf("continuation requires the active owned assignment and its exact request")
 	}
-	for _, continuation := range runtimeState(ledger).Continuations {
-		if continuation.Assignment == owner.ID && continuation.Request == owner.Request {
-			return append([]string(nil), continuation.Scope...), nil
-		}
+	if scope, listed := continuationScope(ledger, owner); listed {
+		return scope, nil
 	}
 	return nil, fmt.Errorf("legacy continuation is not approved for this assignment")
+}
+
+// continuationScope returns owner's explicitly listed legacy scope, if adoption listed it.
+func continuationScope(ledger intent.Ledger, owner intent.Assignment) ([]string, bool) {
+	for _, continuation := range runtimeState(ledger).Continuations {
+		if continuation.Assignment == owner.ID && continuation.Request == owner.Request {
+			return append([]string(nil), continuation.Scope...), true
+		}
+	}
+	return nil, false
 }

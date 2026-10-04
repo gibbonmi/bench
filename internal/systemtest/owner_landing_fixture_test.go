@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -56,6 +57,9 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	}
 	// The race writes the fenced files, so the ticket writes them too and the fence stays union-exact.
 	recordtest.Prepare(t, root, 1, "specs/x/spec.md", specBody).SetTicketWrites("loser.txt (new), winner.txt (new)")
+	// Each landing worktree publishes production files, so the race delivers an approved spec.
+	commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")
+	commitmenttest.Commit(t, root, "approve fixture delivery")
 	base := systemGitOutput(t, root, "rev-parse", "HEAD")
 	systemGit(t, root, "update-ref", "refs/bench/green/main", base)
 	return root, home, tally, trees, ready, release

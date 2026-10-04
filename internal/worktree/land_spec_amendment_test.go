@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/spec"
 )
 
@@ -100,5 +101,49 @@ func requirePublishedSpec(t *testing.T, root, published string, staged []byte) {
 	got, err := git.Raw("-C", root, "show", published+":specs/x/spec.md")
 	if err != nil || !bytes.Equal(got, want) {
 		t.Fatalf("published spec = %q (%v), want %q", got, err, want)
+	}
+}
+
+// DC49: adoption lists an existing run with its approved scope instead of a delivery
+// binding. The listed run lands that scope and nothing beyond it, and an unlisted run with
+// no binding lands nothing.
+func TestCommitmentLegacyContinuation(t *testing.T) {
+	t.Parallel()
+	for _, row := range []struct {
+		name  string
+		scope []string
+		want  string
+	}{
+		{name: "listed-scope", scope: []string{"owned.txt", "reviews/x.md"}},
+		{name: "beyond-scope", scope: []string{"reviews/x.md"}, want: "legacy continuation scope excludes"},
+		{name: "unlisted", want: "assignment has no current delivery binding"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			request := "land-legacy-continuation-" + row.name
+			f := publicLandingFixture(t, request, "", "")
+			err := intent.Transact(f.root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+				state := intent.CommitmentState{}
+				if row.scope != nil {
+					state.Continuations = []intent.LegacyContinuation{{Assignment: f.creation.Assignment.ID, Request: f.creation.Assignment.Request, Scope: row.scope}}
+				}
+				ledger.Commitment = &state
+				return ledger, true, nil
+			}, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+			if row.want == "" {
+				if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
+					t.Fatalf("listed continuation = (%d, %q, %q), want a published release", r.exit, r.stdout, r.stderr)
+				}
+				return
+			}
+			if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=commitment: ") || !strings.Contains(r.stdout, row.want) {
+				t.Fatalf("continuation landing = (%d, %q, %q), want a commitment refusal naming %q", r.exit, r.stdout, r.stderr, row.want)
+			}
+			requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, 0)
+		})
 	}
 }

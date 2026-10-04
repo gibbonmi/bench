@@ -4,6 +4,7 @@ package commitmenttest
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -78,4 +79,20 @@ func Assignment(t testing.TB, root, request string) string {
 		t.Fatal(err)
 	}
 	return target
+}
+
+// SeedProtected writes an active milestone whose outcomes A then B own roadmap rows FT1
+// and FT2, with the matching board and recommended sequence. The caller commits it.
+func SeedProtected(t testing.TB, root string) {
+	t.Helper()
+	outcomes := []commitment.Outcome{}
+	for i, id := range []string{"A", "B"} {
+		row := "FT" + strconv.Itoa(i+1)
+		path := "roadmap/" + row + ".md"
+		body := "**" + row + " — " + id + "**\n\nKeep the " + id + " obligation.\n"
+		Write(t, root, path, body)
+		outcomes = append(outcomes, commitment.Outcome{ID: id, Criteria: []commitment.Criterion{{ID: id + "-done", Text: "The obligation is satisfied."}}, Sources: []commitment.SourceBinding{{ID: row, Path: path, Identity: commitment.Identity([]byte(body))}}})
+	}
+	WritePolicy(t, root, commitment.Policy{Version: 1, ActiveMilestone: "M", Milestones: []commitment.Milestone{{ID: "M", Outcomes: outcomes}}})
+	Write(t, root, "ROADMAP.md", "# Roadmap\n\n## Parked\n\n**FT1 — A**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. A\n2. B\n")
 }

@@ -236,9 +236,9 @@ func TestLandCommandResumesEveryPostPublicationFailureWithoutRepublishing(t *tes
 			publications := 0
 			working := defaultJoins()
 			oldLand := working.landReviewed
-			working.landReviewed = func(ctx context.Context, request landing.ReviewedRequest) (landing.ReviewedResult, error) {
+			working.landReviewed = func(ctx context.Context, request landing.ReviewedRequest, admission landing.Admission) (landing.ReviewedResult, error) {
 				publications++
-				return oldLand(ctx, request)
+				return oldLand(ctx, request, admission)
 			}
 			f, broken, repair := tc.build(t, request, working)
 

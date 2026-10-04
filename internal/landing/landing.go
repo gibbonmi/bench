@@ -188,8 +188,12 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 // LandReviewed composes an exact reviewed source, applies its staged-spec
 // transition only to that prospective tree, and publishes a two-parent commit.
 // The worktree lifecycle owns authentication, marker advancement, reconciliation,
-// and release around this irreversible operation.
+// and release around this irreversible operation. It applies no admission.
 func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedResult, error) {
+	return o.landReviewed(ctx, r, unadmitted{})
+}
+
+func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Admission) (ReviewedResult, error) {
 	if r.Root == "" || r.Destination == "" || r.DestinationBase == "" || r.Source == "" || r.SourceTip == "" || r.ReviewBase == "" || r.SourceWorktree == "" || r.SourceFingerprint == "" || r.DestinationFingerprint == "" || strings.TrimSpace(r.Message) == "" {
 		return ReviewedResult{}, errors.New("reviewed landing request is incomplete")
 	}
@@ -248,6 +252,9 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 			return ReviewedResult{}, fmt.Errorf("close tickets-only folder: %w", err)
 		}
 	}
+	if err := admission.Check(tree); err != nil {
+		return ReviewedResult{}, err
+	}
 	if r.SpecPath != "" {
 		ctx = gate.WithCompletion(ctx, r.SpecPath, source)
 	}
@@ -265,12 +272,20 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 	if fingerprint, fingerprintErr := CheckoutFingerprint(r.Root); fingerprintErr != nil || fingerprint != r.DestinationFingerprint {
 		return ReviewedResult{}, errors.New("landing destination checkout changed; rerun the landing to recompose onto the moved destination")
 	}
-	commit, err := output(r.Root, "commit-tree", tree, "-p", destination, "-p", source, "-m", r.Message)
+	var commit string
+	err = admission.Publish(tree, func() error {
+		created, err := output(r.Root, "commit-tree", tree, "-p", destination, "-p", source, "-m", r.Message)
+		if err != nil {
+			return fmt.Errorf("create landing commit: %w", err)
+		}
+		if err := o.updateRef(r.Root, r.Destination, created, destination); err != nil {
+			return destinationUpdateFailure(r.Root, r.Destination, destination, err)
+		}
+		commit = created
+		return nil
+	})
 	if err != nil {
-		return ReviewedResult{}, fmt.Errorf("create landing commit: %w", err)
-	}
-	if err := o.updateRef(r.Root, r.Destination, commit, destination); err != nil {
-		return ReviewedResult{}, destinationUpdateFailure(r.Root, r.Destination, destination, err)
+		return ReviewedResult{}, err
 	}
 	return ReviewedResult{SourceBase: r.ReviewBase, SourceTip: source, DestinationBase: destination, Commit: commit, Tree: tree}, nil
 }

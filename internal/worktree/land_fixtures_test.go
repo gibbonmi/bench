@@ -79,12 +79,7 @@ func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, hom
 		prospectiveSpec = f.Command("grep") + " -q '^Status: implemented$' specs/x/spec.md\n"
 	}
 	root := newWorktreeRepo(t)
-	common := gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
-	tally := filepath.Join(common, "bench-land-gate-tally")
-	// The tally path is a literal in both gate scripts, so the fixture binds no name
-	// into the process environment and declares an empty gate environment. A gate that
-	// read the path from an exported name would make every caller serial.
-	count := "printf g >> '" + tally + "'\n"
+	tally, count := landingGateTally(t, root)
 	extra := ""
 	if step != nil {
 		extra = step(f, root)
@@ -116,6 +111,17 @@ func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, hom
 		mustWrite(t, filepath.Join(creation.Path, filepath.FromSlash(ignored)), []byte("residue\n"), 0o600)
 	}
 	return landingFixture{ownedAssignment: ownedAssignment{repoHome: repoHome{root, home}, creation: creation}, base: base, tip: tip, tally: tally}
+}
+
+// landingGateTally returns the tally file in root's common Git directory and the gate
+// line that appends one run to it. The tally path is a literal in the gate scripts, so the
+// fixture binds no name into the process environment and declares an empty gate
+// environment. A gate that read the path from an exported name would make every caller
+// serial.
+func landingGateTally(t *testing.T, root string) (tally, count string) {
+	t.Helper()
+	tally = filepath.Join(gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), "bench-land-gate-tally")
+	return tally, "printf g >> '" + tally + "'\n"
 }
 
 // blockLandingReconcile plants a nested repository in the destination at root, so the

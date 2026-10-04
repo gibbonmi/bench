@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/freshness"
 )
 
@@ -25,9 +26,12 @@ func brokerChangingLanding(t *testing.T, request string) landingFixture {
 		t.Fatal(err)
 	}
 	mustWrite(t, spec, withFenceEntry(body, "scripts/go-build.sh"), 0o644)
+	// The fence edit changes the approved deliverable, so the same commit re-approves it.
+	commitmenttest.SeedAdmission(t, f.root, "specs/x/spec.md")
 	gitRun(t, f.root, "add", ".")
 	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
 	gitRun(t, f.creation.Path, "rebase", "main")
+	commitmenttest.Rebind(t, f.creation.Path, request, "specs/x/spec.md")
 	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
 	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
 	commitInWorktree(t, f.creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")

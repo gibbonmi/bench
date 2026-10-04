@@ -2,10 +2,13 @@
 package worktree
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 )
 
 // WL1, WL2, WL5, and WL10: the spec-less landing publishes and releases like a spec
@@ -176,4 +179,122 @@ func TestLandCommandRefusesAnEmptySpecValue(t *testing.T) {
 			}
 		})
 	}
+}
+
+// planningLandingFixture is one planning assignment with no delivery binding. Its gate
+// passes and tallies each run. An adopted fixture commits the protected A then B
+// commitment; otherwise the repository has no policy.
+func planningLandingFixture(t *testing.T, request string, adopted bool) landingFixture {
+	t.Helper()
+	root := newWorktreeRepo(t)
+	tally, count := landingGateTally(t, root)
+	landingGateFixture(t).MustWrite(t, root, "set -eu\n"+count, "set -eu\nruntime=$1\n"+count)
+	if adopted {
+		commitmenttest.SeedProtected(t, root)
+	}
+	commitmenttest.Commit(t, root, "planning base")
+	home := filepath.Join(t.TempDir(), "bench-home")
+	creation := mustCreate(t, root, home, request, "planning")
+	return landingFixture{ownedAssignment: ownedAssignment{repoHome: repoHome{root, home}, creation: creation}, base: gitOutput(t, root, "rev-parse", "HEAD"), tally: tally}
+}
+
+// benchCommit runs the built commit verb in the planning worktree for paths.
+func benchCommit(t *testing.T, worktree string, paths ...string) (int, string) {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	cmd := descendant(t, testRunBinary(t), append([]string{"commit", "-m", "planning commit", "--"}, paths...)...)
+	cmd.Dir, cmd.Stdout, cmd.Stderr = worktree, &stdout, &stderr
+	return exitCode(cmd.Run()), stdout.String() + stderr.String()
+}
+
+// refusePlanningLanding lands the planning source spec-less and requires a commitment
+// refusal that names want before the gate, with the destination and source unchanged.
+func refusePlanningLanding(t *testing.T, f landingFixture, request, want string) {
+	t.Helper()
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, tip, f.creation.Path)...))
+	if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=commitment: ") || !strings.Contains(r.stdout, want) {
+		t.Fatalf("planning landing = (%d, %q, %q), want a commitment refusal naming %q", r.exit, r.stdout, r.stderr, want)
+	}
+	if got := gitOutput(t, f.root, "rev-parse", "main"); got != f.base {
+		t.Fatalf("refused planning landing published main=%s, want %s", got, f.base)
+	}
+	if _, err := os.Stat(f.tally); !os.IsNotExist(err) {
+		t.Fatalf("refused planning landing ran the gate: %v", err)
+	}
+	if got := gitOutput(t, f.creation.Path, "rev-parse", "HEAD"); got != tip {
+		t.Fatalf("refused planning landing moved the source to %s, want %s", got, tip)
+	}
+}
+
+// DC30: before adoption, a planning assignment commits and lands a decision map and a
+// staged spec. Adoption cannot require already-admitted planning work.
+func TestCommitmentPlanningBootstrap(t *testing.T) {
+	t.Parallel()
+	f := planningLandingFixture(t, "planning", false)
+	mustMkdirAll(t, filepath.Join(f.creation.Path, "decisions"), 0o755)
+	mustMkdirAll(t, filepath.Join(f.creation.Path, "specs", "y"), 0o755)
+	mustWrite(t, filepath.Join(f.creation.Path, "decisions", "delivery-map.md"), []byte("# Delivery map\n\nDecide the delivery order.\n"), 0o644)
+	mustWrite(t, filepath.Join(f.creation.Path, "specs", "y", "spec.md"), []byte("# y\n\nStatus: staged\n"), 0o644)
+	if code, out := benchCommit(t, f.creation.Path, "decisions/delivery-map.md", "specs/y/spec.md"); code != 0 {
+		t.Fatalf("planning commit = (%d, %q), want exit 0", code, out)
+	}
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	r := runVerb(t, verbLand, f.call(specLessLandArgs("planning", f.base, tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
+		t.Fatalf("planning landing = (%d, %q, %q), want a published release", r.exit, r.stdout, r.stderr)
+	}
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	if got := gitOutput(t, f.root, "show", published+":specs/y/spec.md"); got != "# y\n\nStatus: staged" {
+		t.Fatalf("published staged spec = %q", got)
+	}
+	if got := gitOutput(t, f.root, "show", published+":decisions/delivery-map.md"); !strings.Contains(got, "Decide the delivery order.") {
+		t.Fatalf("published decision map = %q", got)
+	}
+}
+
+// DC32: before adoption, a planning assignment cannot publish a production file through
+// either the commit or a raw-Git source that it then lands.
+func TestCommitmentPlanningFence(t *testing.T) {
+	t.Parallel()
+	f := planningLandingFixture(t, "planning", false)
+	before := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	mustWrite(t, filepath.Join(f.creation.Path, "tool.go"), []byte("package tool\n"), 0o644)
+	if code, out := benchCommit(t, f.creation.Path, "tool.go"); code != 1 || !strings.Contains(out, "commitment adoption required") {
+		t.Fatalf("planning production commit = (%d, %q), want an adoption refusal", code, out)
+	}
+	if got := gitOutput(t, f.creation.Path, "rev-parse", "HEAD"); got != before {
+		t.Fatalf("refused planning commit moved HEAD to %s", got)
+	}
+	commitInWorktree(t, f.creation.Path, "tool.go", "package tool\n", "raw production commit")
+	refusePlanningLanding(t, f, "planning", "commitment adoption required")
+}
+
+// DC12: a planning landing that renames active A's roadmap row refuses publication.
+func TestCommitmentProtectedRename(t *testing.T) {
+	t.Parallel()
+	f := planningLandingFixture(t, "planning", true)
+	board := filepath.Join(f.creation.Path, "ROADMAP.md")
+	body, err := os.ReadFile(board)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, board, bytes.Replace(body, []byte("**FT1 — A**"), []byte("**FT9 — A**"), 1), 0o644)
+	mustWrite(t, filepath.Join(f.creation.Path, "roadmap", "FT9.md"), []byte("**FT9 — A**\n\nKeep the A obligation.\n"), 0o644)
+	mustRemove(t, filepath.Join(f.creation.Path, "roadmap", "FT1.md"))
+	gitRun(t, f.creation.Path, "add", "-A")
+	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "rename the protected row")
+	refusePlanningLanding(t, f, "planning", "candidate changes protected commitment")
+}
+
+// DC14: a planning landing that recommends unrelated C first refuses publication.
+func TestCommitmentProtectedSequence(t *testing.T) {
+	t.Parallel()
+	f := planningLandingFixture(t, "planning", true)
+	body, err := os.ReadFile(filepath.Join(f.creation.Path, "ROADMAP.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	commitInWorktree(t, f.creation.Path, "ROADMAP.md", strings.Replace(string(body), "1. A\n2. B", "1. C\n2. A\n3. B", 1), "recommend unrelated work first")
+	refusePlanningLanding(t, f, "planning", "protected recommended sequence changed")
 }
