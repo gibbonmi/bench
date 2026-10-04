@@ -2,7 +2,7 @@
 
 Blocked by: 05-authorize-current-publication.md
 Writes: internal/commitment (new), internal/intent, internal/worktree, internal/landing, internal/roadmap, internal/spec, internal/gate/completion.go, internal/gate/completion_test.go, internal/gate/commitment_completion_test.go (new), docs/adr/0015-the-landing-verb-is-the-one-author-of-the-spec-flip.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: DC34, DC35, DC36, DC37, DC38, DC39, DC40, DC41, DC42
+Covers: DC34, DC35, DC36, DC37, DC38, DC39, DC40, DC41, DC42, DC75, DC76
 
 ## What to build
 
@@ -27,7 +27,9 @@ Read the existing completion transform, completion oracle, roadmap row and seque
 - [ ] Omitting one sequence removal fails the exact-transform check; demonstrate that mutation (DC38).
 - [ ] A pre-oracle persistence failure leaves authority and destination unchanged (DC40).
 - [ ] A terminal local-write failure resumes the original publication once (DC42).
+- [ ] Verified delivery removes satisfied dependency references from the board dependency tables (DC75).
+- [ ] A listed legacy run closes its delivered scope, and a partly delivered scope stays open (DC76).
 
 ## Checkpoint verification
 
-Run `bench test --package ./internal/worktree`, `bench test --package ./internal/landing`, `bench test --package ./internal/gate`, and `bench test --package ./internal/roadmap`. Record the sequence-omission red and restored green. Tests must compare the real composed tree.
+Run `bench test --package ./internal/worktree`, `bench test --package ./internal/landing`, `bench test --package ./internal/gate`, `bench test --package ./internal/roadmap`, `bench test --package ./internal/commitment`, and `bench test --package ./internal/commitment/repository`. Record the sequence-omission red and restored green. Tests must compare the real composed tree.
