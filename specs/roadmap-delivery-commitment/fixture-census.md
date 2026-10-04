@@ -58,3 +58,20 @@ scaffoldRecordedPublicationRepo: internal/systemtest/exec_bound_test.go:27, inte
 systemLandingRaceFixture: internal/systemtest/owner_artifact_recovery_test.go:21, internal/systemtest/owner_artifact_recovery_test.go:277, internal/systemtest/owner_artifact_recovery_test.go:298, internal/systemtest/owner_land_race_test.go:18, internal/systemtest/owner_landing_fixture_test.go:16
 configureArtifactLandingFixture: internal/systemtest/owner_artifact_recovery_test.go:22, internal/systemtest/owner_artifact_recovery_test.go:278, internal/systemtest/owner_artifact_recovery_test.go:299, internal/systemtest/owner_landing_fixture_test.go:64
 ```
+
+## Ticket 03: separate evidence journey
+
+This shared constructor drives real build charges, including cleanup callers. Seed policy and assignment admission here once.
+The fixture implementation belongs to ticket 03; callers retain their evidence expectations.
+
+```text
+newEvidenceJourney: internal/systemtest/charge_cleanup_test.go:58, internal/systemtest/charge_cleanup_test.go:86, internal/systemtest/charge_cleanup_test.go:112, internal/systemtest/charge_evidence_test.go:32, internal/systemtest/charge_evidence_test.go:167, internal/systemtest/charge_evidence_test.go:188, internal/systemtest/charge_evidence_test.go:217, internal/systemtest/charge_evidence_test.go:239, internal/systemtest/charge_evidence_test.go:266, internal/systemtest/charge_evidence_test.go:312, internal/systemtest/charge_evidence_test.go:327, internal/systemtest/charge_evidence_test.go:354, internal/systemtest/charge_evidence_test.go:381
+```
+
+## Ticket 04: shift help readers
+
+```text
+cmd/bench/main.go:128 — authoritative root help row
+internal/shift/shift.go:127 — shift-owned help
+cmd/bench/help_inventory_test.go:130 — root help inventory expectation
+```
