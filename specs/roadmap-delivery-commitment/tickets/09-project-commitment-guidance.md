@@ -30,8 +30,8 @@ Read only the projection consumers, phase clauses listed in the spec sweep, regi
 - [ ] Removing one admission consumer fails the route test; record its red (DC64).
 - [ ] The data inventory states record contents and local retention (DC65).
 - [ ] Each retired granting sentence has a separate omission-sensitive prohibition. Existing anchors and generated help agree with the new routes.
-- [ ] Approval of a proposal that lists an existing run records exactly that continuation; an unlisted run receives none (DC83).
-- [ ] An open listed continuation occupies the default active slot; only an exact parallel grant that names it admits a new outcome beside it (DC84).
+- [ ] Approval records a continuation for exactly the listed runs, and an unlisted run receives none (DC83).
+- [ ] An open listed continuation holds the default active slot, and only an exact parallel grant that names it admits a new outcome beside it (DC84).
 
 ## Checkpoint verification
 
