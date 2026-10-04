@@ -104,6 +104,14 @@ func deliveredOutcomes(policy Policy) map[string]bool {
 	return delivered
 }
 
+// BindingDelivered reports whether policy records the delivery of the deliverable binding
+// that outcome approves in milestone.
+func BindingDelivered(policy Policy, milestone, outcome, binding string) bool {
+	return slices.ContainsFunc(policy.Deliveries, func(fact DeliveryFact) bool {
+		return fact.Milestone == milestone && fact.Outcome == outcome && fact.Binding == binding
+	})
+}
+
 // deliveredBinding resolves the approved deliverable that fact records.
 func deliveredBinding(policy Policy, fact DeliveryFact) (DeliveryBinding, bool) {
 	for _, milestone := range policy.Milestones {

@@ -18,6 +18,7 @@ type Effects struct {
 	Activated          []string `json:"activated"`
 	Switched           []string `json:"switched"`
 	ParallelAuthorized []string `json:"parallel_authorized"`
+	Completed          []string `json:"completed"`
 }
 
 // Plan binds one predecessor to canonical proposed policy bytes and effects.
@@ -90,6 +91,7 @@ func transitionEffects(current *Policy, proposed Policy) Effects {
 		Activated:          []string{},
 		Switched:           []string{},
 		ParallelAuthorized: []string{},
+		Completed:          []string{},
 	}
 	proposedAll := orderedOutcomes(proposed)
 	proposedSet := sliceSet(proposedAll)
@@ -149,6 +151,11 @@ func transitionEffects(current *Policy, proposed Policy) Effects {
 			effects.Reordered = append(effects.Reordered, commonProposed...)
 		}
 	}
+	for _, completion := range proposed.Completions {
+		if !slices.Contains(current.Completions, completion) {
+			effects.Completed = append(effects.Completed, completion.Milestone)
+		}
+	}
 	oldGrants := sliceSet(parallelKeys(current.ParallelGrants))
 	for _, grant := range parallelKeys(proposed.ParallelGrants) {
 		if !oldGrants[grant] {
@@ -168,13 +175,21 @@ func orderedOutcomes(policy Policy) []string {
 	return outcomes
 }
 
+// policySources returns the sources and deliverables that a plan binds to current content.
+// A recorded delivery settles what it delivered: its closure deletes each satisfied row, and
+// its publication flips a delivered spec. The fact, not the current tree, binds that content.
 func policySources(policy Policy) []SourceBinding {
+	satisfied := Satisfied(policy)
 	var sources []SourceBinding
 	for _, milestone := range policy.Milestones {
 		for _, outcome := range milestone.Outcomes {
-			sources = append(sources, outcome.Sources...)
+			for _, source := range outcome.Sources {
+				if !satisfied[source.ID] {
+					sources = append(sources, source)
+				}
+			}
 			for _, binding := range outcome.Deliverables {
-				if !slices.Contains(sources, binding.Source) {
+				if !BindingDelivered(policy, milestone.ID, outcome.ID, binding.Source.ID) && !slices.Contains(sources, binding.Source) {
 					sources = append(sources, binding.Source)
 				}
 			}

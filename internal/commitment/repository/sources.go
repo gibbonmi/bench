@@ -69,6 +69,9 @@ func (store Store) validateDeliverables(policy commitment.Policy) error {
 	for _, milestone := range policy.Milestones {
 		for _, outcome := range milestone.Outcomes {
 			for _, binding := range outcome.Deliverables {
+				if commitment.BindingDelivered(policy, milestone.ID, outcome.ID, binding.Source.ID) {
+					continue
+				}
 				if err := store.validateDeliverable(binding.Source); err != nil {
 					return err
 				}

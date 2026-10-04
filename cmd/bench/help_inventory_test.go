@@ -86,6 +86,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench commitment [--in <label|primary>] inventory  list roadmap obligations, staged deliverables, and run identities
   bench commitment [--in <label|primary>] plan --input <file>  validate an exact commitment transition
   bench commitment [--in <label|primary>] approve --plan <id> --decision <reference> --delayed <ids-or-none> --removed <ids-or-none>  approve and stage one exact commitment transition
+  bench commitment [--in <label|primary>] verify --milestone <id> --evidence <file>  verify milestone criterion evidence and record a completion receipt
   bench handoff [--in <label|primary>] [--harness <name>] [--next <command>] [--state-file <path>]  print the cold-start pin block and rewrite capture/session-handoff.md
   bench commands --brief     print the direct, read-only command probe
   bench dashboard [--in <label|primary>] [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)

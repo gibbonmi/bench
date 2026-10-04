@@ -16,6 +16,14 @@ type Policy struct {
 	ActiveMilestone string          `json:"active_milestone,omitempty"`
 	ParallelGrants  []ParallelGrant `json:"parallel_grants,omitempty"`
 	Deliveries      []DeliveryFact  `json:"deliveries,omitempty"`
+	Completions     []Completion    `json:"completions,omitempty"`
+}
+
+// Completion records the approved completion of one milestone. Verification names the
+// receipt of the criterion verification that the completion approval consumed.
+type Completion struct {
+	Milestone    string `json:"milestone"`
+	Verification string `json:"verification"`
 }
 
 // Milestone is one immutable milestone identity and its ordered outcomes.

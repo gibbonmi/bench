@@ -105,6 +105,7 @@ func readPathTolerant(path string) (Ledger, int, error) {
 		Entries            []Entry             `json:"entries"`
 		CleanupReceipts    []CleanupReceipt    `json:"cleanup_receipts"`
 		CommitmentReceipts []CommitmentReceipt `json:"commitment_receipts"`
+		MilestoneReceipts  []MilestoneReceipt  `json:"milestone_receipts"`
 		Commitment         *CommitmentState    `json:"commitment,omitempty"`
 	}
 	if err := json.Unmarshal(data, &rest); err != nil {
@@ -129,6 +130,7 @@ func readPathTolerant(path string) (Ledger, int, error) {
 		Assignments:        kept,
 		CleanupReceipts:    rest.CleanupReceipts,
 		CommitmentReceipts: rest.CommitmentReceipts,
+		MilestoneReceipts:  rest.MilestoneReceipts,
 		Commitment:         rest.Commitment,
 	}
 	return ledger, len(stored.Assignments), nil

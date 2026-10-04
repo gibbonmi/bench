@@ -144,6 +144,9 @@ func ClosureIndex(residual ...string) string {
 	return index + "**FT2 — B**\n\n## Recommended sequence\n\n1. " + DeliveryOutcome + "\n2. B\n"
 }
 
+// ClosureMilestone is the active milestone that SeedClosure writes.
+const ClosureMilestone = "M"
+
 // SeedClosure writes an active milestone whose delivery outcome owns FT1 and each residual
 // row, and approves the existing spec at deliverable as the complete delivery of FT1
 // alone. Outcome B owns FT2 and follows the delivery outcome. The caller commits.
@@ -159,7 +162,7 @@ func SeedClosure(t testing.TB, root, deliverable string, residual ...string) {
 	}
 	delivery := outcome(DeliveryOutcome, sources...)
 	delivery.Deliverables = []commitment.DeliveryBinding{{Source: commitment.SourceBinding{ID: "spec", Path: deliverable, Identity: commitment.Identity(data)}, Obligations: []string{"FT1"}}}
-	WritePolicy(t, root, commitment.Policy{Version: 1, ActiveMilestone: "M", Milestones: []commitment.Milestone{{ID: "M", Outcomes: []commitment.Outcome{delivery, outcome("B", writeRow(t, root, "FT2", "B"))}}}})
+	WritePolicy(t, root, commitment.Policy{Version: 1, ActiveMilestone: ClosureMilestone, Milestones: []commitment.Milestone{{ID: ClosureMilestone, Outcomes: []commitment.Outcome{delivery, outcome("B", writeRow(t, root, "FT2", "B"))}}}})
 	Write(t, root, "ROADMAP.md", ClosureIndex(residual...))
 }
 

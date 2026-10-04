@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/jsonfile"
@@ -129,6 +130,16 @@ func Validate(policy Policy) error {
 		}
 		recorded[key] = true
 	}
+	delivered := deliveredOutcomes(policy)
+	completed := map[string]bool{}
+	for _, completion := range policy.Completions {
+		milestone, known := findMilestone(policy, completion.Milestone)
+		if !known || completed[completion.Milestone] || completion.Milestone == policy.ActiveMilestone || !lineValue(completion.Verification) ||
+			slices.ContainsFunc(milestone.Outcomes, func(outcome Outcome) bool { return !delivered[outcome.ID] }) {
+			return fmt.Errorf("commitment policy: invalid completion of milestone %q", completion.Milestone)
+		}
+		completed[completion.Milestone] = true
+	}
 	return nil
 }
 
@@ -169,11 +180,16 @@ func dependencyCycle(graph map[string][]string) string {
 }
 
 func validateSource(source SourceBinding) error {
-	path := filepath.ToSlash(filepath.Clean(source.Path))
-	if !validIdentity(source.ID) || source.Path == "" || !sanitize.LineSafe(source.Path) || path != source.Path || filepath.IsAbs(source.Path) || path == ".." || strings.HasPrefix(path, "../") || !sanitize.LineSafe(source.Identity) || source.Identity == "" {
+	if !validIdentity(source.ID) || !repositoryPath(source.Path) || !sanitize.LineSafe(source.Identity) || source.Identity == "" {
 		return fmt.Errorf("commitment policy: invalid source binding %q", source.ID)
 	}
 	return nil
+}
+
+// repositoryPath reports whether value is one clean relative path inside the repository.
+func repositoryPath(value string) bool {
+	path := filepath.ToSlash(filepath.Clean(value))
+	return value != "" && sanitize.LineSafe(value) && path == value && !filepath.IsAbs(value) && path != ".." && !strings.HasPrefix(path, "../")
 }
 
 func validateDeliverables(outcome Outcome) error {

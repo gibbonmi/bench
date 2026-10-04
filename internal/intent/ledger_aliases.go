@@ -15,6 +15,7 @@ type (
 	Assignment         = ledger.Assignment
 	CleanupReceipt     = ledger.CleanupReceipt
 	CommitmentReceipt  = ledger.CommitmentReceipt
+	MilestoneReceipt   = ledger.MilestoneReceipt
 	CommitmentState    = ledger.CommitmentState
 	DeliveryBinding    = ledger.DeliveryBinding
 	OutcomeClaim       = ledger.OutcomeClaim

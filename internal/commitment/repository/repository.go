@@ -94,6 +94,9 @@ func (store Store) Plan(input []byte) (commitment.Plan, error) {
 		return commitment.Plan{}, fmt.Errorf("encode commitment plan: %w", err)
 	}
 	err = intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+		if err := verifiedCompletions(ledger, current, plan.Predecessor, proposed); err != nil {
+			return ledger, false, err
+		}
 		for _, receipt := range ledger.CommitmentReceipts {
 			if receipt.Plan != plan.ID {
 				continue
@@ -142,7 +145,7 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 					return ledger, false, fmt.Errorf("commitment approval refused: predecessor changed from %s to %s", plan.Predecessor, approved.ProposalIdentity)
 				}
 			}
-			_, predecessor, err := store.defaultPolicy()
+			current, predecessor, err := store.defaultPolicy()
 			if err != nil {
 				return ledger, false, err
 			}
@@ -160,6 +163,13 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 					return ledger, false, errors.New("commitment approval refused: replay decision differs")
 				}
 				return ledger, false, nil
+			}
+			proposed, err := commitment.Parse(plan.Proposed)
+			if err != nil {
+				return ledger, false, err
+			}
+			if err := verifiedCompletions(ledger, current, plan.Predecessor, proposed); err != nil {
+				return ledger, false, err
 			}
 			restore, err = store.stage(plan)
 			if err != nil {

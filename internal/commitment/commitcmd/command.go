@@ -35,6 +35,7 @@ var forms = []form{
 	{name: "approve", description: "approve and stage one exact commitment transition", flags: []flag{
 		{"--plan", "<id>"}, {"--decision", "<reference>"}, {"--delayed", "<ids-or-none>"}, {"--removed", "<ids-or-none>"},
 	}},
+	{name: "verify", description: "verify milestone criterion evidence and record a completion receipt", flags: []flag{{"--milestone", "<id>"}, {"--evidence", "<file>"}}},
 }
 
 func (f form) suffix() string {
@@ -44,6 +45,9 @@ func (f form) suffix() string {
 	}
 	return strings.Join(terms, " ")
 }
+
+// command is the complete command form that a next action names.
+func (f form) command() string { return "bench commitment" + f.suffix() }
 
 func (f form) grammar() usage.Grammar {
 	g := usage.Grammar{Cmd: "bench commitment " + f.name, Help: "usage: bench commitment" + f.suffix(), MaxArgs: 0}
@@ -94,6 +98,8 @@ func Command(root string, args []string) (string, int) {
 		return plan(store, parsed.Flags["--input"])
 	case "approve":
 		return approve(store, parsed.Flags)
+	case "verify":
+		return verify(store, selected, parsed.Flags)
 	default:
 		panic("unreachable commitment form")
 	}
@@ -157,12 +163,21 @@ func inventory(store commitrepo.Store) (string, int) {
 	return out + "\n", 0
 }
 
-func plan(store commitrepo.Store, path string) (string, int) {
+// readInput reads one regular input file without following a link.
+func readInput(path string) ([]byte, error) {
 	classified := bounds.ClassifyNoFollow(filepath.Clean(path))
 	if classified.State != bounds.StateParsed {
-		return refusal("plan", fmt.Errorf("input %q is %s: %s", path, classified.State, classified.Reason))
+		return nil, fmt.Errorf("input %q is %s: %s", path, classified.State, classified.Reason)
 	}
-	result, err := store.Plan(classified.Data)
+	return classified.Data, nil
+}
+
+func plan(store commitrepo.Store, path string) (string, int) {
+	data, err := readInput(path)
+	if err != nil {
+		return refusal("plan", err)
+	}
+	result, err := store.Plan(data)
 	if err != nil {
 		return refusal("plan", err)
 	}
@@ -209,6 +224,30 @@ func approve(store commitrepo.Store, flags map[string]string) (string, int) {
 	return out + "\n", 0
 }
 
+// verify records a milestone verification receipt. A refusal names verify itself, because
+// the next action is corrected evidence; success names the completion proposal.
+func verify(store commitrepo.Store, selected form, flags map[string]string) (string, int) {
+	retry := selected.command()
+	data, err := readInput(flags["--evidence"])
+	if err != nil {
+		return refusalNext("verify", err, retry)
+	}
+	verification, err := store.Verify(flags["--milestone"], data)
+	if err != nil {
+		return refusalNext("verify", err, retry)
+	}
+	out, err := toon.Table("commitment_verification", []string{"id", "milestone", "revision"}, [][]string{{verification.ID, verification.Milestone, verification.Revision}})
+	if err != nil {
+		return refusalNext("verify", err, retry)
+	}
+	planForm, _ := selectForm("plan")
+	actions, err := toon.Table("next", []string{"command"}, [][]string{{planForm.command()}})
+	if err != nil {
+		return refusalNext("verify", err, retry)
+	}
+	return out + "\n" + actions + "\n", 0
+}
+
 func operandSet(value string) ([]string, bool) {
 	if value == "none" {
 		return []string{}, true
@@ -227,7 +266,7 @@ func effectRows(effects commitment.Effects) [][]string {
 	for _, outcomes := range []struct {
 		name string
 		ids  []string
-	}{{"added", effects.Added}, {"reordered", effects.Reordered}, {"delayed", effects.Delayed}, {"removed", effects.Removed}, {"activated", effects.Activated}, {"switched", effects.Switched}, {"parallel-authorized", effects.ParallelAuthorized}} {
+	}{{"added", effects.Added}, {"reordered", effects.Reordered}, {"delayed", effects.Delayed}, {"removed", effects.Removed}, {"activated", effects.Activated}, {"switched", effects.Switched}, {"parallel-authorized", effects.ParallelAuthorized}, {"completed", effects.Completed}} {
 		for _, outcome := range outcomes.ids {
 			rows = append(rows, []string{outcomes.name, outcome})
 		}
@@ -237,7 +276,7 @@ func effectRows(effects commitment.Effects) [][]string {
 
 func refusal(operation string, err error) (string, int) {
 	form, _ := selectForm("plan")
-	return refusalNext(operation, err, "bench commitment"+form.suffix())
+	return refusalNext(operation, err, form.command())
 }
 
 func refusalNext(operation string, err error, next string) (string, int) {

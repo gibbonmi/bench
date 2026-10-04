@@ -126,6 +126,13 @@ func readPath(path string) (Ledger, error) {
 		}
 		seenPlans[receipt.Plan] = true
 	}
+	seenVerifications := map[string]bool{}
+	for _, receipt := range ledger.MilestoneReceipts {
+		if receipt.ID == "" || receipt.Payload == "" || seenVerifications[receipt.ID] || !sanitize.LineSafe(receipt.ID) {
+			return Ledger{}, errors.New("read intent ledger: invalid milestone receipt")
+		}
+		seenVerifications[receipt.ID] = true
+	}
 	return ledger, nil
 }
 
