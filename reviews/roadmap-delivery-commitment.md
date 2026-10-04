@@ -447,9 +447,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C2",
       "base": "2225afe0312a73980267cd5278fd500dfb883e33",
-      "tip": "67413d275ba84dfbb930187c456b04895ea6f538",
+      "tip": "ae1ebbce906d728e1faa41d3fd790962324265ee",
       "plan_digest": "sha256:843b9b52c5196117901caa37f3b2bfe0978ef99e77453b5a6c5fffa7a62c0274",
-      "source_digest": "60d5bb1cbe637bbe50ff1c5e6c062b04570cd35b",
+      "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
       "acceptance_rows": [
         "DC16",
         "DC17",
@@ -616,6 +616,125 @@ This suggestion is optional advice and has no repair disposition.
             "ref": "native:exec:99e657",
             "digest": "sha256:064ab2f2cfb8d81818e884262375a1494212fbbdd2e4e84176b9f0648a413a1d",
             "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,40159\nfailures[0]{package,test,line}:\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c2-r2-commitment",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:exec:c2-r2-commitment",
+            "digest": "sha256:0415f2b4fc962208bc437d6ce4ab9cb4f1732b16a938ea0ce7760a2752672b76",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,4a461e6e8c5cd7586b01da22ac025b6b68c96601,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,2979\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/admission.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment,^TestCommitmentStartPublishedIdentity$,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,fail,267\nfailures[4]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/spec/changed,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/spec/deleted,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/tickets-only/changed,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/tickets-only/deleted,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\nskips[0]{package,test,reason}:\n\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Ignore deliverable validation errors. TestCommitmentStartPublishedIdentity must fail on the reported admission result and preserve an exact source restore.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "native:exec:c2-r2-commitment",
+              "digest": "sha256:0415f2b4fc962208bc437d6ce4ab9cb4f1732b16a938ea0ce7760a2752672b76",
+              "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,4a461e6e8c5cd7586b01da22ac025b6b68c96601,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,2979\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/admission.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment,^TestCommitmentStartPublishedIdentity$,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,fail,267\nfailures[4]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/spec/changed,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/spec/deleted,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/tickets-only/changed,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/tickets-only/deleted,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\nskips[0]{package,test,reason}:\n\n"
+            }
+          }
+        },
+        {
+          "id": "dc-c2-r2-intent",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:exec:c2-r2-intent",
+            "digest": "sha256:8855b6156744b3f558d7997276066001562df61106c9ec634148136a44e5f911",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,4a461e6e8c5cd7586b01da22ac025b6b68c96601,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,4223\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c2-r2-spec",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:exec:c2-r2-spec",
+            "digest": "sha256:00714d43ffe1dca417319bb323d880d461f284f087411d93764a8e3dda7fa2ef",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,4a461e6e8c5cd7586b01da22ac025b6b68c96601,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/spec,pass,1764\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "spec",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c2-r2-landing",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:exec:c2-r2-landing",
+            "digest": "sha256:3f8ae203ca5d2e1c598da44cd655c6bc42d6ca86113d530ef8049cdd8f8f74ce",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,4a461e6e8c5cd7586b01da22ac025b6b68c96601,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,12733\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c2-r2-bench",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:exec:c2-r2-bench",
+            "digest": "sha256:59f082f29de05d70e2e92581432b3dbbd3f3f6bfe184b0626e08987d5301d451",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,4a461e6e8c5cd7586b01da22ac025b6b68c96601,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,21496\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c2-r2-conformance",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:exec:c2-r2-conformance",
+            "digest": "sha256:d2c99296e4fb7ac801ef1fe04301c2acefe2b8e748165f08957786aeee0163aa",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,4a461e6e8c5cd7586b01da22ac025b6b68c96601,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,41948\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/FVIEI3/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket4020550135/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/FVIEI3/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket3225391931/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
           },
           "requirement": "conformance",
           "command": "bench test --package ./internal/conformance",
