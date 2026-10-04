@@ -2185,7 +2185,79 @@ This suggestion is optional advice and has no repair disposition.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dc-c5-r1-standards",
+          "performer": "claude:dc_c5_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c5_standards",
+            "digest": "sha256:d8a1de752ea77e3e7f5f1f309ab7e784fa7401afcb41aa9887a442b11e383401",
+            "excerpt": "Standards: 3 findings (all low).\nS1 low: new DC<n> spec-row provenance tags open eight new test comments (land_identity_test.go:209,229,307; land_specless_test.go:230,256,273,290; land_spec_amendment_test.go:107). Rule: bench-craft-comments treats a row identifier as provenance.\nS2 low: switchActiveMilestone (land_identity_test.go:177-199) restates the commitmenttest WritePolicy and Commit fixture steps. Rule: AGENTS.md one source per fact. Repair: an error-returning core in commitmenttest that the TB helpers also call.\nS3 low: commitmentAdmission.Publish (land.go:462-478) keeps a redundant published copy of err beside ran.\nObservation for Coverage: the default-branch-policy row of TestCommitmentGateRace is refused by the earlier destination guard (landing.go:272-274), so it stays green without the post-gate admission recheck.\nClean: reused seams, sole production caller, census pin 727 to 735, no weakened test, refusal style.\n"
+          },
+          "axis": "Standards",
+          "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+          "tip": "6664d59e0431888c754d2b5c0bdb01887e1646fe",
+          "finding_ids": [
+            "C5-S1",
+            "C5-S2",
+            "C5-S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c5-r1-spec",
+          "performer": "claude:dc_c5_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c5_spec",
+            "digest": "sha256:3fcdc92a3bce07d6685ef71d0889dd39cbf2a074454a6a4740691eef92a4df4b",
+            "excerpt": "Spec: 1 finding (P1 medium, test only; the implementation is correct).\nP1 medium: TestCommitmentPublishLock (DC72) does not catch a final admission decision outside the intent lock. The publicationGap seam (land.go:264) sits after the decision. Spec: spec.md:648 and the DC72 row at spec.md:461. No unit test exercises PublishAdmitted or AdmitPublication.\nDC29 ruling: satisfied. Policy authority and the landing destination resolve the same default ref, so a policy change always moves the destination, and the existing fingerprint guard and ref compare-and-swap refuse it. The blocker row observes the only authority change that does not move the destination.\nVerified: one transaction holds the final decision and the ref update while the gate runs outside it; a nil admission refuses; identity precedence, compare-and-swap, recovery, and resume are preserved; legacy scope is exact; planning admission is one source.\n"
+          },
+          "axis": "Spec",
+          "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+          "tip": "6664d59e0431888c754d2b5c0bdb01887e1646fe",
+          "finding_ids": [
+            "C5-P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c5-r1-coverage",
+          "performer": "claude:dc_c5_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c5_coverage",
+            "digest": "sha256:58d6b3d36108ff5ea6e4b3df53d9bcaaa1512898f55ffaace8cecd9f0d17ee20",
+            "excerpt": "Coverage: 4 findings (worst C1 and C2, medium).\nC1 medium: no test observes that the final decision occurs under the intent lock. A mutation that decides before Transact and locks only the ref update keeps PublishLock and GateRace/blocker green (publication.go:26-33; land_identity_test.go:86-203). No internal/commitment test exercises AdmitPublication or PublishAdmitted.\nC2 medium: the DC29 default-branch-policy leg observes the existing destination fingerprint guard (landing.go:272-274), not admission. An always-admit final decision keeps it green.\nC3 low-medium: the frozen assignment, request, active-state, and worktree-ownership filters in admitPublication are not discriminated; every test uses one assignment.\nC4 low: DC49 inScope sibling-prefix and directory-entry cases are not exercised (candidate.go:178-186).\nRows: DC12, DC14, DC28, DC30, DC32 sound; DC29 blocker leg sound, policy leg vacuous; DC49 and DC72 partial.\nVerification: seven entries match the DC-C5 plan. Census 727 to 735 matches eight new tests. No weakened test.\n"
+          },
+          "axis": "Coverage",
+          "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+          "tip": "6664d59e0431888c754d2b5c0bdb01887e1646fe",
+          "finding_ids": [
+            "C5-C1",
+            "C5-C2",
+            "C5-C3",
+            "C5-C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2750,3 +2822,27 @@ C4-S1 and C4-S2 are closed. No later review changed the acceptance requirements.
 
 The final source is `3612b833a407ccedf34053d0cb47decfef21b3a7`. The confirming record tip is `e85804e557d1a5219eb9ebe821d24d7a4b36a863`.
 The chunk checkpoint remains required before ticket 05.
+
+## DC-C5 initial review disposition
+
+Standards has three findings, Spec has one finding, and Coverage has four findings. The findings name six repair targets.
+Repair cycles consumed: 0 of 2. A fresh Opus repair session at medium effort takes the repair under the delegated author direction.
+
+### Standards
+
+- C5-S1: auto-fix. Remove the new coverage row tags from the test comments, per craft-comments.
+- C5-S2: auto-fix. Give commitmenttest one error-returning policy write and commit core, and make switchActiveMilestone and the existing helpers use it.
+- C5-S3: auto-fix. Remove the redundant published copy of the error in commitmentAdmission.Publish.
+
+### Spec
+
+- C5-P1: auto-fix, test only. Add a test that holds the intent lock in a concurrent transaction, adds a blocker, and then requires PublishAdmitted to refuse.
+- The reviewer ruled that the DC29 pair satisfies the spec. Policy authority and the landing destination resolve the same default ref.
+
+### Coverage
+
+- C5-C1: the same target as C5-P1. The repair also adds direct repository tests for AdmitPublication and PublishAdmitted.
+- C5-C2: rejected. The Spec ruling shows that a default-branch policy change always moves the destination, so no policy change reaches the final decision unrefused.
+- C5-C3: auto-fix. Add a test with two assignments, where the unbound assignment is refused for a production file.
+- C5-C4: auto-fix. Add DC49 rows for a sibling path that shares a scope prefix and for a directory scope entry.
+
