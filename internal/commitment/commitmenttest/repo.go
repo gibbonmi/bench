@@ -2,7 +2,9 @@
 package commitmenttest
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -28,15 +30,7 @@ func Repo(t testing.TB, policy commitment.Policy) string {
 // WritePolicy replaces the tracked commitment policy in root.
 func WritePolicy(t testing.TB, root string, policy commitment.Policy) {
 	t.Helper()
-	data, err := commitment.Bytes(policy)
-	if err != nil {
-		t.Fatal(err)
-	}
-	path := filepath.Join(root, filepath.FromSlash(commitment.PolicyPath))
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := writePolicy(root, policy); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -44,8 +38,40 @@ func WritePolicy(t testing.TB, root string, policy commitment.Policy) {
 // Commit records the fixture's current tree on main.
 func Commit(t testing.TB, root, message string) {
 	t.Helper()
-	gittest.Output(t, root, "add", "-A")
-	gittest.Output(t, root, "commit", "-m", message)
+	if err := commit(root, message); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// CommitPolicy replaces the tracked commitment policy in root and commits that file alone.
+// It returns its failure instead of failing a test, so a goroutine can call it.
+func CommitPolicy(root string, policy commitment.Policy, message string) error {
+	if err := writePolicy(root, policy); err != nil {
+		return err
+	}
+	return commit(root, message, commitment.PolicyPath)
+}
+
+func writePolicy(root string, policy commitment.Policy) error {
+	data, err := commitment.Bytes(policy)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(root, filepath.FromSlash(commitment.PolicyPath))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0o644)
+}
+
+// commit stages paths, or the whole tree when no path is named, and commits them.
+func commit(root, message string, paths ...string) error {
+	for _, args := range [][]string{append([]string{"add", "-A", "--"}, paths...), {"commit", "-m", message}} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+			return fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, out)
+		}
+	}
+	return nil
 }
 
 // Write writes one regular fixture file below root.

@@ -227,7 +227,7 @@ func refusePlanningLanding(t *testing.T, f landingFixture, request, want string)
 	}
 }
 
-// DC30: before adoption, a planning assignment commits and lands a decision map and a
+// Before adoption, a planning assignment commits and lands a decision map and a
 // staged spec. Adoption cannot require already-admitted planning work.
 func TestCommitmentPlanningBootstrap(t *testing.T) {
 	t.Parallel()
@@ -253,7 +253,7 @@ func TestCommitmentPlanningBootstrap(t *testing.T) {
 	}
 }
 
-// DC32: before adoption, a planning assignment cannot publish a production file through
+// Before adoption, a planning assignment cannot publish a production file through
 // either the commit or a raw-Git source that it then lands.
 func TestCommitmentPlanningFence(t *testing.T) {
 	t.Parallel()
@@ -270,7 +270,7 @@ func TestCommitmentPlanningFence(t *testing.T) {
 	refusePlanningLanding(t, f, "planning", "commitment adoption required")
 }
 
-// DC12: a planning landing that renames active A's roadmap row refuses publication.
+// A planning landing that renames active A's roadmap row refuses publication.
 func TestCommitmentProtectedRename(t *testing.T) {
 	t.Parallel()
 	f := planningLandingFixture(t, "planning", true)
@@ -287,7 +287,7 @@ func TestCommitmentProtectedRename(t *testing.T) {
 	refusePlanningLanding(t, f, "planning", "candidate changes protected commitment")
 }
 
-// DC14: a planning landing that recommends unrelated C first refuses publication.
+// A planning landing that recommends unrelated C first refuses publication.
 func TestCommitmentProtectedSequence(t *testing.T) {
 	t.Parallel()
 	f := planningLandingFixture(t, "planning", true)

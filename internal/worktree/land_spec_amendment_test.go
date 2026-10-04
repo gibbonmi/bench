@@ -104,7 +104,7 @@ func requirePublishedSpec(t *testing.T, root, published string, staged []byte) {
 	}
 }
 
-// DC49: adoption lists an existing run with its approved scope instead of a delivery
+// Adoption lists an existing run with its approved scope instead of a delivery
 // binding. The listed run lands that scope and nothing beyond it, and an unlisted run with
 // no binding lands nothing.
 func TestCommitmentLegacyContinuation(t *testing.T) {
@@ -116,6 +116,11 @@ func TestCommitmentLegacyContinuation(t *testing.T) {
 	}{
 		{name: "listed-scope", scope: []string{"owned.txt", "reviews/x.md"}},
 		{name: "beyond-scope", scope: []string{"reviews/x.md"}, want: "legacy continuation scope excludes"},
+		// The scope entry "owned" is a string prefix of the source's owned.txt, not its
+		// directory, so the sibling stays outside the scope.
+		{name: "sibling-prefix", scope: []string{"owned", "reviews/x.md"}, want: "legacy continuation scope excludes"},
+		{name: "directory-scope", scope: []string{"owned.txt", "reviews"}},
+		{name: "outside-directory", scope: []string{"reviews"}, want: "legacy continuation scope excludes"},
 		{name: "unlisted", want: "assignment has no current delivery binding"},
 	} {
 		t.Run(row.name, func(t *testing.T) {

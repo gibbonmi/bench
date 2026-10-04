@@ -190,23 +190,14 @@ func switchActiveMilestone(root string) (string, error) {
 	}
 	policy.Milestones = append(policy.Milestones, commitment.Milestone{ID: "next", Outcomes: []commitment.Outcome{{ID: "successor", Criteria: []commitment.Criterion{{ID: "successor-done", Text: "The successor is accepted."}}, Sources: []commitment.SourceBinding{}}}})
 	policy.ActiveMilestone = "next"
-	data, err := commitment.Bytes(policy)
-	if err != nil {
+	if err := commitmenttest.CommitPolicy(root, policy, "switch the active milestone"); err != nil {
 		return "", err
-	}
-	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(commitment.PolicyPath)), data, 0o644); err != nil {
-		return "", err
-	}
-	for _, args := range [][]string{{"add", commitment.PolicyPath}, {"-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "switch the active milestone"}} {
-		if _, err := git.Output(append([]string{"-C", root}, args...)...); err != nil {
-			return "", err
-		}
 	}
 	tip, err := git.Output("-C", root, "rev-parse", "main")
 	return strings.TrimSpace(tip), err
 }
 
-// DC28: an assignment that a later approved switch displaced cannot land its source,
+// An assignment that a later approved switch displaced cannot land its source,
 // although its start-time binding admitted it.
 func TestCommitmentStaleLanding(t *testing.T) {
 	t.Parallel()
@@ -226,7 +217,7 @@ func TestCommitmentStaleLanding(t *testing.T) {
 	requireIdentityRefusalState(t, f.root, f.creation.Path, f.tally, 0)
 }
 
-// DC29: a commitment change that lands while the gate runs refuses the now-disallowed
+// A commitment change that lands while the gate runs refuses the now-disallowed
 // publication. The gate waits at a FIFO barrier, so each change happens inside the gate.
 func TestCommitmentGateRace(t *testing.T) {
 	t.Parallel()
@@ -304,7 +295,7 @@ func TestCommitmentGateRace(t *testing.T) {
 // still acquires the lock after the publication instead of timing out.
 const publicationHoldWindow = bounds.IntentLockTimeout / 4
 
-// DC72: a competing blocker that arrives between the final admission decision and the
+// A competing blocker that arrives between the final admission decision and the
 // ref update waits for the publication. It then observes the published destination.
 func TestCommitmentPublishLock(t *testing.T) {
 	t.Parallel()

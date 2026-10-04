@@ -259,20 +259,15 @@ func (a commitmentAdmission) Check(tree string) error {
 // refusals keep their own text. Only an admission refusal carries the commitment prefix.
 func (a commitmentAdmission) Publish(tree string, publish func() error) error {
 	ran := false
-	var published error
 	err := a.store.PublishAdmitted(a.source, tree, func() error {
 		a.gap(a.store.Root)
 		ran = true
-		published = publish()
-		return published
+		return publish()
 	})
-	if ran {
-		return published
+	if ran || err == nil {
+		return err
 	}
-	if err != nil {
-		return fmt.Errorf("commitment: %w", err)
-	}
-	return nil
+	return fmt.Errorf("commitment: %w", err)
 }
 
 // censusCount is the assignment's raw-call count for the landed record. An unreadable
