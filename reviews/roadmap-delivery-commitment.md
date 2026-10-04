@@ -3244,18 +3244,23 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C7",
       "base": "55c6f9ccf5f6db7a48e531aac0959e2adb534f4c",
-      "tip": "b1296652eae56ea7b941516529aa24e0e57c5260",
-      "plan_digest": "sha256:01eda07835792651e3f35f745dceb4835df75b290bead9df6f84320feda1abba",
-      "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+      "tip": "7fbe970cd32d62e9aa55f869565168dbbb9c5de3",
+      "plan_digest": "sha256:4ee0dbbd85394dd4df2e41afc90a3720ad7814e0d72c742b6143373a66d306c3",
+      "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
       "acceptance_rows": [
         "DC67",
         "DC68",
         "DC77",
+        "DC78",
+        "DC79",
+        "DC82",
         "DC43",
         "DC44",
         "DC45",
         "DC46",
-        "DC70"
+        "DC70",
+        "DC80",
+        "DC81"
       ],
       "verification": [
         {
@@ -3419,6 +3424,197 @@ This suggestion is optional advice and has no repair disposition.
           "requirement": "repository",
           "command": "bench test --package ./internal/commitment/repository",
           "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r08-1-commitment",
+          "performer": "claude:dc_r08_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r08_1:commitment",
+            "digest": "sha256:b272aa4d8f77c8585e2e66d0ab9370fe0da04630824365612e4e9eeeb5356cf3",
+            "excerpt": "== RED repro (C7-S1, C7-P5) at tip 0a5c8802, tests added before any fix ==\ncmd: bench worktree exec dc-integration -- bench test --package ./internal/commitment --run 'TestCommitmentEmptyRowsNotComplete|TestCommitmentVerificationEvidence'\nexit: 1\nfailures[3]:\n  TestCommitmentEmptyRowsNotComplete: verification_test.go:116: published tickets-only folder = \"specs/t/tickets/one.md\", want the folder closed by its publication\n  TestCommitmentVerificationEvidence/gate-marker-absent: verify succeeded (commitment_verification[1] ... M,a50a5fef...), want refusal\n  TestCommitmentVerificationEvidence/gate-marker-elsewhere: verify succeeded, want refusal\nDiagnosed causes: S1 - commitmenttest.Publish rebuilds the publication by hand and skips the tickets-only folder removal.\nP5 - VerifyMilestone accepts any resolvable gate path; nothing reads the project-green marker.\n\n== GREEN after fix (dirty tree on 0a5c8802) ==\ncmd: bench worktree exec dc-integration -- bench test --package ./internal/commitment\nexit: 0  (github.com/gibbonmi/bench/internal/commitment,pass; failures[0])\ncmd: bench test --package ./internal/commitment/...  exit 0 (commitment pass, repository pass)\n\n== Probes (bench probe; each restored=yes; a failing Go test exits 1, so verdict \"bit\" means the focused run exited 1) ==\nS1  published/published.go swap tickets-only RemoveFolder branch -> `} else if false {`; run TestCommitmentEmptyRowsNotComplete -> bit: published tickets-only folder = \"specs/t/tickets/one.md\"\nP5a verification.go swap `if examined.Green == \"\" {` -> `if false {`; run gate-marker-absent -> bit (refusal message changed to \"project-green marker  is not the published revision\")\nP5b verification.go swap `if examined.Green != revision {` -> `if false {`; run gate-marker-elsewhere -> bit (verification succeeded)\nC1a verification.go drop `Revision: revision` from receipt; run TestCommitmentMilestoneCompletion -> bit (receipt Revision empty)\nC1b verification.go drop `Green: examined.Green` from receipt -> bit\nC1c verification.go receipt Gate stores the path (strings.TrimSuffix(evidence.Gate, gate)) -> bit\nC1d verification.go criterion Object stores the reference (strings.TrimSuffix(result.Evidence, object)) -> bit: receipt result 0 mismatch\nC3  verification.go swap `!sanitize.LineSafe(result.Assessment)` -> `!sanitize.LineSafe(\"\")`; run assessment-control -> bit (verification succeeded)\nC6  repository/verification.go swap \"commitment policy is absent: adoption-required\" -> \"commitment policy is absent\"; run no-policy -> bit\nC4a delivery.go settlement key uses outcome.Deliverables[0] (outcome-level binding exemption); run TestCommitmentUnsettled -> bit: [rowless1 rowless2]; want [rest rowless1 rowless2]\nC4b delivery.go source filter uses outcome.Sources[0] (outcome-level source exemption) -> bit: [FT2]; want [FT3 FT2]\nDC80 parse.go swap active-milestone criterionCount guard -> `if false {`; run TestCommitmentCriteriaBeforeActivation -> bit\nDC81a parse.go completion delivered clause made false; run TestCommitmentCompletionProposal/undelivered-outcome -> bit (refusal became \"has no verification receipt\")\nDC81b verification.go swap `if !slices.Equal(verified, proposedCriteria) {` -> `if false {`; run TestCommitmentCompletionProposal/changes-criteria -> bit (plan succeeded)\nAdvice  verification.go swap `if milestone != policy.ActiveMilestone {` -> `if false {`; run inactive-milestone (M2-shaped evidence) -> bit (M2 verification succeeded, so only the inactive guard refuses)\nNote: three C1 probes first ran concurrently by mistake; two were invalid compile refusals and restored; each was rerun alone with the results above. verification.go was confirmed intact.\n\n== At committed tip 7fbe970c (clean) ==\nbench test --package ./internal/commitment -> exit 0 (pass, failures[0])\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r08-1-intent",
+          "performer": "claude:dc_r08_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r08_1:intent",
+            "digest": "sha256:81b12c486d8a53c88f74bdd94a796126e4f4f32810f1c21290dc78b8c749a024",
+            "excerpt": "== At committed tip 7fbe970c (clean) ==\nbench test --package ./internal/intent -> exit 0 (github.com/gibbonmi/bench/internal/intent,pass; failures[0], skips[0])\nNo intent source changed in this repair.\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r08-1-bench",
+          "performer": "claude:dc_r08_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r08_1:bench",
+            "digest": "sha256:ea58ba65595cf8edf79ae1479dac224b07bb1dfee8f7d55cb2bf087142fd91fc",
+            "excerpt": "== At committed tip 7fbe970c (clean) ==\nbench test --package ./cmd/bench -> exit 0 (github.com/gibbonmi/bench/cmd/bench,pass; failures[0], skips[0])\nNo cmd/bench source changed in this repair (no new verb; registry rows unchanged).\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r08-1-conformance",
+          "performer": "claude:dc_r08_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r08_1:conformance",
+            "digest": "sha256:38641e5dd1c772025c3ee1b95b414637e31b0f9501a319f25e7c710f0f20cfdc",
+            "excerpt": "== At committed tip 7fbe970c (clean) ==\nbench test --package ./internal/conformance -> exit 0 (pass; failures[0]; skips[3], all environment capability skips: unix sockets / character device)\nNo conformance source changed in this repair.\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r08-1-milestone-repository",
+          "performer": "claude:dc_r08_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r08_1:milestone-repository",
+            "digest": "sha256:c259c7a68ff8a9e41344aa85632999efae8cefe8af36ab2aeb225b3d2a140f4c",
+            "excerpt": "== At committed tip 7fbe970c (clean) ==\nbench test --package ./internal/commitment/repository -> exit 0 (pass; failures[0])\nRepository changes: Verify reads greenmarker.Read(root, branch) through Store.defaultRevision; validateDeliverables and protectedCandidate consume commitment.Unsettled.\nRed repros and probes for the repository-side behavior (P5 marker, C6 no-policy) run through the commitment package tests; see commitment.txt.\n\n== Focused checks (dirty tree identical to 7fbe970c, then system at 7fbe970c) ==\nbench test --package ./internal/worktree -> exit 0 (pass; 2 environment socket skips)\nbench test --package ./internal/landing/... -> exit 0 (landing pass, settlepolicy pass; 2 device skips)\nbench test --package ./internal/gate/... -> exit 0 (gate, authorization, greenmarker, prospectiveartifact pass)\nbench test --package ./internal/spec -> exit 0\nenv PATH=node v25.8.1:$PATH bench test --check system -> exit 0 (internal/systemtest pass, 74278 ms) at 7fbe970c clean\n"
+          },
+          "requirement": "milestone-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r07-1-worktree",
+          "performer": "claude:dc_r07_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r07_1:worktree",
+            "digest": "sha256:3faaf1def8531c5ad8b0f5eec1624d4e3082835173c79e4c0639c9fc859968f7",
+            "excerpt": "tip=7fbe970c (7fbe970cd32d62e9aa55f869565168dbbb9c5de3, DC-C7 chunk source)\nbench test --package ./internal/worktree -> exit 0 (pass, 66135 ms; 2 capability skips: unix sockets)\n\n== earlier records (cycle 1, tip a8d352d3 and before) ==\n== C7-P1/P3, C7-C5, DC82 red repro (before fix) ==\ncmd: bench test --package ./internal/worktree --run \"TestCommitmentLegacyContinuation|TestCommitmentLegacyClosure\"  -> exit 1\n  TestCommitmentLegacyClosure/tickets-only-scope: legacy delivery landing = (1, \"refused{detail=commitment: candidate policy has no exact approval; ...}\")\n  TestCommitmentLegacyContinuation/scope-without-deliverable: refusal \"candidate policy has no exact approval\" (want: legacy continuation scope excludes \"specs/x/spec.md\")\n  TestCommitmentLegacyContinuation/unlisted: refusal \"candidate policy has no exact approval\" (want: assignment has no current delivery binding)\nDiagnosed cause: Publication carries only the spec path (empty for a tickets-only close), so publishedDelivery returns nil for a listed tickets-only run; and a closure-shaped policy transition without owner authority falls through to approvedTransition instead of the start/scope refusal.\n\n== C7-P1/P3 fix green ==\ncmd: bench test --package ./internal/worktree --run \"TestCommitment\" -> exit 0 (pass)\n\n== Probe W1 (Publication carries the tickets-only folder) ==\nmutation: internal/worktree/land.go swap \"Deliverable: request.Deliverable()\" -> \"Deliverable: request.SpecPath\"\nred: TestCommitmentLegacyClosure/tickets-only-scope fails (refused \"candidate policy has no exact approval\"); failing Go test exits 1; probe verdict bit, restored yes\n== Probe W2 (closure authority call) ==\nmutation: internal/commitment/repository/candidate.go swap \"err = store.closureAuthority(ledger, owner, delivery.Spec)\" -> \"err = nil\"\nred: TestCommitmentLegacyContinuation/scope-without-deliverable lands (exit 0) instead of refusing; probe verdict bit, restored yes\n== Probe W3 (silent at this seam; isolated in repository) ==\nmutation: publication.go swap \"return store.readyFor(ledger, owner, path, \\\"\\\")\" -> \"return nil\", run TestCommitmentLegacyContinuation\nresult: silent — the unlisted row's source also changes owned.txt, so the later production readiness check refuses with the same text. The repository test TestAdmitPublicationClosureAuthority isolates this (closure-only candidate); see repository.txt.\n\n== C7-P4 red repro (before fix) ==\ncmd: bench test --package ./internal/commitment --run TestCommitmentDeliverRowless -> exit 1\n  TestCommitmentDeliverRowlessPair: first rowless Deliver of specs/c/spec.md: Remaining = [A B], want C still open\ncmd: bench test --package ./internal/worktree --run TestCommitmentNoRoadmapOwner -> exit 1\n  /spec-then-tickets: published board after specs/x/spec.md = \"...1. B\", want \"...1. delivery\\n2. B\"\n  /tickets-then-spec: published board after specs/t = \"...1. B\", want \"...1. delivery\\n2. B\"\nDiagnosed cause: deliveredOutcomes marks an outcome delivered on its first recorded fact when it has no source, so a rowless outcome with several approved deliverables closes on the first.\n\n== C7-P4 fix green ==\nbench test --package ./internal/commitment -> exit 0; bench test --package ./internal/worktree --run TestCommitment -> exit 0\n== Probe W4 ==\nmutation: internal/commitment/delivery.go --swap '\t\t\tif len(outcome.Sources) == 0 {' --with '\t\t\tif len(outcome.Sources) < 0 {'\nred (worktree): TestCommitmentNoRoadmapOwner/spec-then-tickets and /tickets-then-spec: first delivery dropped the sequence entry; failing Go test exits 1; verdict bit, failed_tests 2, restored yes\nred (commitment): TestCommitmentDeliverRowlessPair: Remaining = [A B], want C still open; verdict bit, restored yes\n\n== final tip a8d352d3 ==\nbench test --package ./internal/worktree -> exit 0 (pass; 2 capability skips: unix sockets)\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r07-1-landing",
+          "performer": "claude:dc_r07_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r07_1:landing",
+            "digest": "sha256:b567f74fb846e929cf09de6f9c69a98b698bb7f881c2c11d29b43b9fdba54e2f",
+            "excerpt": "tip=7fbe970c (7fbe970cd32d62e9aa55f869565168dbbb9c5de3, DC-C7 chunk source)\nbench test --package ./internal/landing -> exit 0 (pass, 8116 ms; 2 capability skips: character device)\n\n== earlier records (cycle 1, tip a8d352d3 and before) ==\n== C7-P2 landing binding: TestLandingTicketsOnlyCompletion (internal/landing/completion_evidence_test.go) ==\nReal gate on the published tree; kept-folder row tampers the authorized tree via the authorize seam.\ngreen: bench test --package ./internal/landing --run TestLandingTicketsOnlyCompletion -> exit 0\n== Probe L1 (restores the pre-fix spec-only binding) ==\nmutation: internal/landing/landing.go --swap '\t\tctx = gate.WithCompletion(ctx, deliverable, source)' --with '\t\tctx = gate.WithCompletion(ctx, r.SpecPath, source)'\nred: TestLandingTicketsOnlyCompletion/kept-folder: kept folder = <nil>, want \"completion keeps closed specs/t/tickets/one.md\"; failing Go test exits 1; verdict bit, restored yes\n(--omit of the line was refused by compile: gate import unused; the swap is the equivalent pre-fix state)\nfull: bench test --package ./internal/landing -> exit 0\n\n== final tip a8d352d3 ==\nbench test --package ./internal/landing -> exit 0 (pass; 2 capability skips: char device)\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r07-1-spec",
+          "performer": "claude:dc_r07_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r07_1:spec",
+            "digest": "sha256:059bd7b271ea97bc0f8171ccccd50272758c1ab1162b695fead4fc35cf0edfed",
+            "excerpt": "tip=7fbe970c (7fbe970cd32d62e9aa55f869565168dbbb9c5de3, DC-C7 chunk source)\nbench test --package ./internal/spec -> exit 0 (pass, 1094 ms)\n\n== earlier records (cycle 1, tip a8d352d3 and before) ==\n\n== final tip a8d352d3 ==\nbench test --package ./internal/spec -> exit 0 (pass)\n"
+          },
+          "requirement": "spec",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r07-1-repository",
+          "performer": "claude:dc_r07_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r07_1:repository",
+            "digest": "sha256:d12f70c241d4c49c68c99d0f7f9bff4aa7cea7561b42e4c60eaf61a09142c906",
+            "excerpt": "tip=7fbe970c (7fbe970cd32d62e9aa55f869565168dbbb9c5de3, DC-C7 chunk source)\nbench test --package ./internal/commitment/repository -> exit 0 (pass, 1164 ms)\n\n== earlier records (cycle 1, tip a8d352d3 and before) ==\n== C7-P1/P3 repository seam: TestAdmitPublicationClosureAuthority ==\nClosure-only candidate (no production path), so only the closure authority decides.\ngreen: bench test --package ./internal/commitment/repository --run TestAdmitPublicationClosureAuthority -> exit 0\n== Probe R1 ==\nmutation: publication.go swap \"return store.readyFor(ledger, owner, path, \\\"\\\")\" -> \"return nil\"\nred: TestAdmitPublicationClosureAuthority/unbound: AdmitPublication = <nil>, want \"assignment has no current delivery binding; run bench commitment start\"; failing Go test exits 1; verdict bit, restored yes\n== Probe R2 ==\nmutation: publication.go swap \"if !slices.Contains(scope, path) {\" -> \"if len(path) == 0 && slices.Contains(scope, path) {\"\nred: TestAdmitPublicationClosureAuthority/listed-without-deliverable: AdmitPublication = <nil>, want scope refusal; verdict bit, restored yes\n\n== final tip a8d352d3 ==\nbench test --package ./internal/commitment/repository -> exit 0 (pass)\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c7-r07-1-gate",
+          "performer": "claude:dc_r07_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bd28da544a8c496c744006cc5e562c298d6d6351",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r07_1:gate",
+            "digest": "sha256:916df553cf1c08f58fbf12d0a6d01b6f40e31901157376472a5c98d5d552f526",
+            "excerpt": "tip=7fbe970c (7fbe970cd32d62e9aa55f869565168dbbb9c5de3, DC-C7 chunk source)\nbench test --package ./internal/gate -> exit 0 (pass, 13897 ms)\ngit diff a8d352d3 7fbe970c -- internal/gate -> empty: cycle 2 changed no internal/gate file, so the named probe subject internal/gate/completion.go is identical at 7fbe970c.\nNamed probe (record below): omit the folder removal proof in internal/gate/completion.go -> TestCommitmentTicketsOnlyTransform/kept-folder fails (Go test exit 1), probe verdict bit, restored, gate package passes after restore.\n\n== earlier records (cycle 1, tip a8d352d3 and before) ==\n== C7-P2/C7-C2 red repro (before fix; DC78, DC79) ==\ncmd: bench test --package ./internal/gate --run \"TestCommitmentTicketsOnlyTransform|TestCommitmentUnrelatedByte\" -> exit 1\n  TestCommitmentTicketsOnlyTransform: exact tickets-only close refused: invalid checkpoint spec path; use specs/<slug>/spec.md\n  TestCommitmentUnrelatedByte: tickets-only close with a changed FT2 byte = invalid checkpoint spec path ..., want \"completion composition changes roadmap/FT2.md\"\nDiagnosed cause: the landing bound gate completion only for a spec path; the completion context models only a spec checkpoint, whose validation (reviewrecord.RecordPath) refuses a tickets-only folder, so no oracle grades the tickets-only close.\n\n== fix green ==\nbench test --package ./internal/gate -> exit 0 (pass)\n\n== NAMED PROBE ==\n\"Omit the folder removal proof from the tickets-only oracle. TestCommitmentTicketsOnlyTransform must fail, then pass after the restore.\"\nmutation: bench probe internal/gate/completion.go --omit '\t\t\treturn fmt.Errorf(\"completion keeps closed %s; review the delivery closure\", kept.Path)' --package ./internal/gate --run TestCommitmentTicketsOnlyTransform\nred: TestCommitmentTicketsOnlyTransform/kept-folder: kept-folder = <nil>, want a refusal naming \"completion keeps closed specs/t/\" ; failing Go test exits 1; verdict bit, failed_tests 1, restored yes\nrestore: bench test --package ./internal/gate -> exit 0 (pass)\n\n== Probe G2 (kept detail owner) ==\nmutation: --omit '\t\t\t\treturn nil, fmt.Errorf(\"completion keeps closed %s; review the delivery closure\", edit.Path)'\nred: TestCommitmentTicketsOnlyTransform/kept-detail-owner = <nil>; verdict bit, restored yes\n== Probe G3 (kept sequence entry) ==\nmutation: --swap 'if err != nil || got.mode != edit.Mode || !bytes.Equal(got.data, edit.Data) {' --with 'if err != nil || got.mode != edit.Mode || edit.Path == \"ROADMAP.md\" && false {'\nred: TestCommitmentTicketsOnlyTransform/kept-sequence-entry = <nil>; verdict bit, restored yes\n== Probe G4 (DC79 unrelated byte sweep) ==\nmutation: --swap '\t\t\tif !present || other.Metadata != entry.Metadata {' --with '\t\t\tif !present || other.Metadata == \"\" {'\nred: TestCommitmentUnrelatedByte/spec and /tickets-only both = <nil>; verdict bit, failed_tests 2, restored yes\n\n== final tip a8d352d3 ==\nbench test --package ./internal/gate -> exit 0 (pass)\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the folder removal proof from the tickets-only oracle. TestCommitmentTicketsOnlyTransform must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dc_r07_1:gate",
+              "digest": "sha256:916df553cf1c08f58fbf12d0a6d01b6f40e31901157376472a5c98d5d552f526",
+              "excerpt": "tip=7fbe970c (7fbe970cd32d62e9aa55f869565168dbbb9c5de3, DC-C7 chunk source)\nbench test --package ./internal/gate -> exit 0 (pass, 13897 ms)\ngit diff a8d352d3 7fbe970c -- internal/gate -> empty: cycle 2 changed no internal/gate file, so the named probe subject internal/gate/completion.go is identical at 7fbe970c.\nNamed probe (record below): omit the folder removal proof in internal/gate/completion.go -> TestCommitmentTicketsOnlyTransform/kept-folder fails (Go test exit 1), probe verdict bit, restored, gate package passes after restore.\n\n== earlier records (cycle 1, tip a8d352d3 and before) ==\n== C7-P2/C7-C2 red repro (before fix; DC78, DC79) ==\ncmd: bench test --package ./internal/gate --run \"TestCommitmentTicketsOnlyTransform|TestCommitmentUnrelatedByte\" -> exit 1\n  TestCommitmentTicketsOnlyTransform: exact tickets-only close refused: invalid checkpoint spec path; use specs/<slug>/spec.md\n  TestCommitmentUnrelatedByte: tickets-only close with a changed FT2 byte = invalid checkpoint spec path ..., want \"completion composition changes roadmap/FT2.md\"\nDiagnosed cause: the landing bound gate completion only for a spec path; the completion context models only a spec checkpoint, whose validation (reviewrecord.RecordPath) refuses a tickets-only folder, so no oracle grades the tickets-only close.\n\n== fix green ==\nbench test --package ./internal/gate -> exit 0 (pass)\n\n== NAMED PROBE ==\n\"Omit the folder removal proof from the tickets-only oracle. TestCommitmentTicketsOnlyTransform must fail, then pass after the restore.\"\nmutation: bench probe internal/gate/completion.go --omit '\t\t\treturn fmt.Errorf(\"completion keeps closed %s; review the delivery closure\", kept.Path)' --package ./internal/gate --run TestCommitmentTicketsOnlyTransform\nred: TestCommitmentTicketsOnlyTransform/kept-folder: kept-folder = <nil>, want a refusal naming \"completion keeps closed specs/t/\" ; failing Go test exits 1; verdict bit, failed_tests 1, restored yes\nrestore: bench test --package ./internal/gate -> exit 0 (pass)\n\n== Probe G2 (kept detail owner) ==\nmutation: --omit '\t\t\t\treturn nil, fmt.Errorf(\"completion keeps closed %s; review the delivery closure\", edit.Path)'\nred: TestCommitmentTicketsOnlyTransform/kept-detail-owner = <nil>; verdict bit, restored yes\n== Probe G3 (kept sequence entry) ==\nmutation: --swap 'if err != nil || got.mode != edit.Mode || !bytes.Equal(got.data, edit.Data) {' --with 'if err != nil || got.mode != edit.Mode || edit.Path == \"ROADMAP.md\" && false {'\nred: TestCommitmentTicketsOnlyTransform/kept-sequence-entry = <nil>; verdict bit, restored yes\n== Probe G4 (DC79 unrelated byte sweep) ==\nmutation: --swap '\t\t\tif !present || other.Metadata != entry.Metadata {' --with '\t\t\tif !present || other.Metadata == \"\" {'\nred: TestCommitmentUnrelatedByte/spec and /tickets-only both = <nil>; verdict bit, failed_tests 2, restored yes\n\n== final tip a8d352d3 ==\nbench test --package ./internal/gate -> exit 0 (pass)\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -4443,4 +4639,15 @@ Cycle 1 repairs the ticket 07 targets. Cycle 2 repairs the ticket 08 targets on 
 ### Rejected
 
 - C7-S5: rejected. The repeated fixture text is incidental, and an abstraction would be worse.
+
+## DC-C7 repair cycles 1 and 2
+
+Repair cycles consumed: 2 of 2. Fresh Opus repair sessions at medium effort followed the bench-debug procedure.
+Cycle 1 corrected the ticket 07 targets at a8d352d36f9a4ccc5f457b29defa1e813db1fc76. Cycle 2 corrected the ticket 08 targets at 7fbe970cd32d62e9aa55f869565168dbbb9c5de3.
+
+The publication carries the deliverable path, and a closure without authority receives the binding or scope refusal. The gate grades the exact tickets-only close.
+A rowless outcome closes only when every approved deliverable is delivered. One published-tree seam produces the landing publication, and the milestone fixture uses it.
+One commitment helper owns the settled sources and bindings. Verification binds gate evidence to the green marker, and tests read every stored receipt field.
+
+All ten planned checks pass at the chunk source, and the named gate probe failed and restored. Each behavioral target had a red repro before its fix.
 
