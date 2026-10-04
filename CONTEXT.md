@@ -221,6 +221,17 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   owns that row's body, its `Occurrence:` ledger, and its `Sources:` line.
   `bench roadmap` prints it. A row leaves — index line and detail file together — when the
   work ships or a reconcile removes it. Not "icebox", not "backlog" — roadmap.
+- **milestone** — a finite, reviewer-approved outcome with a verifiable completion
+  criterion. Not "finished row list", not "priority group" — milestone.
+- **uncommitted roadmap work** — assessed open work outside the current delivery
+  commitment. Not "approved next work", not "active outcome" — uncommitted
+  roadmap work.
+- **delivery commitment** — a reviewer-approved finite milestone and its ordered
+  work list. Not "recommended sequence", not "assessment findings" — delivery
+  commitment.
+- **displacement decision** — the reviewer's explicit approval of a change to
+  a delivery commitment, naming the work delayed or removed. Not "drain approval",
+  not "finding approval" — displacement decision.
 - **roadmap index / roadmap detail** — schema-4 projections of the **roadmap** and
   its capture evidence. The index inventories every row and capture unit with
   true body sizes but no bodies. Detail is a complete body, read for a named row
