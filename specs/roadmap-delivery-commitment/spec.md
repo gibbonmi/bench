@@ -505,6 +505,7 @@ An author who discovers another destination updates the ticket and this union, t
 - `internal/conformance`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/help_inventory_single_source_test.go`
 - `internal/dashboard`
 - `internal/gate/commitment_completion_test.go` (new)
 - `internal/gate/completion.go`
@@ -683,3 +684,9 @@ The new policy shape cannot have an existing executable red during this planning
 
 Ticket 10 prepares adoption evidence only. The initial policy is created through the installed commands after this prerequisite publishes.
 FT283 and FT284 remain open unless implementation evidence proves their entire distinct outcomes. Association with this feature does not close either row.
+
+### Ticket 01 help projection closure
+
+Ticket 01 includes the help conformance owner that registers command form projections.
+The command form table remains the single source for help rows.
+The author observed the root conformance refusal before this fence expansion.
