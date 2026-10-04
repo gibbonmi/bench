@@ -2985,6 +2985,74 @@ This suggestion is optional advice and has no repair disposition.
             "C6-C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dc-c6-r2-standards",
+          "performer": "claude:dc_c6_r2_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c6_r2_standards",
+            "digest": "sha256:6145de86fbfe835035cd681536c35530f8d969e669a3bd9af8b0e8c98faaf223",
+            "excerpt": "Standards: 1 finding. C6-S1, C6-S2, and C6-S4 are closed; C6-S3 and C6-S5 stay rejected.\nR2-S1 low: the policy read, parse, edit, and write harness is written twice in this delta, in editPolicy (gate commitment_completion_test.go:82-93) and in commitmenttest.ApprovePending (repo.go:153-168). Rule: AGENTS.md one source per fact for fixture harnesses.\nClean: the dependency-table grammar has one owner (roadmap closure.go); sectionBounds is shared; no provenance tags; census 741 to 743 matches two new tests; the root skip uses the capability idiom; ADR 0015 states the current decision.\nAdvice: the legacy scope match is exact while admission scope admits directories; the sequence heading literal appears twice; closedPolicy now propagates roadmap.Close errors; closeDependencies may not skip fenced blocks.\n"
+          },
+          "axis": "Standards",
+          "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+          "tip": "9f9e2d6bf64139818743ce96ca6ddfe2d90ff4a3",
+          "finding_ids": [
+            "C6-R2-S1"
+          ],
+          "supersedes": [
+            "dc-c6-r1-standards"
+          ]
+        },
+        {
+          "id": "dc-c6-r2-spec",
+          "performer": "claude:dc_c6_r2_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c6_r2_spec",
+            "digest": "sha256:b7e800361d9efa5482b3793619dda22a22777bce54888cf1d2d191bf76e03650",
+            "excerpt": "Spec: 0 findings. C6-P1 (DC75), C6-P3 (DC76), and C6-P4 are resolved; C6-P2 is carried by ticket 07 row DC77.\nThe dependency closure rule matches the board grammar (ROADMAP.md:6-7, :17-20) and spec.md:222; it removes satisfied blockers and keeps open ones. Store.Closure is the only caller of roadmap.Close, and the landing, gate oracle, and admission consume it.\nLegacy closure matches spec.md:241 and story 26: exact scoped path, release only when every approved scope deliverable is delivered, partial work open.\nTicket 05 and 06 guarantees hold.\nUnowned clauses: spec.md:243 (FT283 and FT284 not retired by association), :235-236 (landing result binds identities), :232 (separate identities), :242 first half (retained behavior).\nAdvice: closeDependencies does not track fences inside the section; DC75 has a unit test only; ScopeDelivered discards a duplicate deliverable error; the decision table omits DC75 to DC77.\n"
+          },
+          "axis": "Spec",
+          "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+          "tip": "9f9e2d6bf64139818743ce96ca6ddfe2d90ff4a3",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c6-r1-spec"
+          ]
+        },
+        {
+          "id": "dc-c6-r2-coverage",
+          "performer": "claude:dc_c6_r2_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c6_r2_coverage",
+            "digest": "sha256:c2dbd34119bb4087f5a0b053a3142afdbf706007dfb834c71cf730a2ada35eed",
+            "excerpt": "Coverage: 0 findings. C6-C1, C6-C2, C6-C3, C6-C4, and C6-P4 are closed, each with a recorded probe that fails it.\nAll eleven rows are covered; DC42 now uses the real reconciliation. The gate, roadmap, and commitment packages passed in an independent run.\nNo weakened test. Census 741 to 743 matches two new tests. The six entries match the DC-C6 plan, and the gate entry carries the named probe.\nAdvice: DC76 has no negative for a scope that omits the delivering spec or shares a prefix; DC75 leaves an untouched multi-entry row, an FT10 dependent, and a fenced row unpinned; some worktree probe line citations differ from the tip.\n"
+          },
+          "axis": "Coverage",
+          "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+          "tip": "9f9e2d6bf64139818743ce96ca6ddfe2d90ff4a3",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c6-r1-coverage"
+          ]
         }
       ]
     }
@@ -3740,4 +3808,16 @@ The repair source is 9f9e2d6bf64139818743ce96ca6ddfe2d90ff4a3. All six planned c
 Closure now removes satisfied dependency references from the board dependency tables through the one roadmap closure owner. A listed legacy run closes an exact scoped spec path.
 Reconciliation releases a continuation only when every approved scope deliverable is delivered. New gate, admission, and delivery fact cases each failed under a named probe.
 The DC42 failure now comes from the real reconciliation against an unwritable ledger. The planning file mode and the delivered policy edit each have one source.
+
+## DC-C6 confirming review disposition
+
+Spec and Coverage report zero findings. Standards closes C6-S1, C6-S2, and C6-S4, and it reports one new finding.
+C6-R2-S1 is accepted for repair cycle 2, the last cycle of the allowance.
+
+- C6-R2-S1: auto-fix. The gate test and commitmenttest each repeat the policy read, edit, and write harness. Give that harness one owner in commitmenttest.
+
+### Advice
+
+Two reviewers note that the dependency closure edits table lines inside a fenced block. The spec does not require fence handling, and the board has no such block.
+The DC76 scope rule has no negative for a scope that omits the delivering spec. DC75 leaves an untouched multi-entry row and an FT10 dependent unpinned.
 
