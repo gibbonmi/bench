@@ -3772,14 +3772,16 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C8",
       "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
-      "tip": "0f7fd8768eae657ab9175a96e5e9b4afe81f29d1",
-      "plan_digest": "sha256:0d3b11582be217265a32cb3a3d99f6cc9c2ecc859a0be8ee48260b9bbeda540e",
-      "source_digest": "d9cd30f4277f2241e11eecbdbcf12a7aabf8067d",
+      "tip": "047e47c304d96d40b746dc98cd08c994c5e8cd82",
+      "plan_digest": "sha256:7ef366cdc54cc0695028a3efe36c3e43f9cbadea925748c40c8b327b57de3286",
+      "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
       "acceptance_rows": [
         "DC47",
         "DC54",
         "DC64",
-        "DC65"
+        "DC65",
+        "DC83",
+        "DC84"
       ],
       "verification": [
         {
@@ -3943,6 +3945,197 @@ This suggestion is optional advice and has no repair disposition.
           "requirement": "usage",
           "command": "bench test --package ./internal/usage",
           "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-roadmap",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:roadmap",
+            "digest": "sha256:a87b5e335b0c8e887aa3983df4bb2bd3694f67f81a89110eb9522a0aac1cc349",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/roadmap\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/roadmap pass 1954ms; failures 0; skips 0\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-status",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:status",
+            "digest": "sha256:07a99dcd0eb5d873805f96d9947e6c6da01f9100864b0dfae0a5d047df1149ff",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/status\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/status pass 8405ms; failures 0; skips 0\n"
+          },
+          "requirement": "status",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-dashboard",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:dashboard",
+            "digest": "sha256:c5a1cdc5d84fe87f0f4dcd6c51d38bdb59bed60b6f08c762f69615d0c518b913",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/dashboard\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/dashboard pass 4286ms; failures 0; skips 0\n"
+          },
+          "requirement": "dashboard",
+          "command": "bench test --package ./internal/dashboard",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-bench",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:bench",
+            "digest": "sha256:f2b769c5267db85508ab336d2cedefa16ca5d8ee6106dd71ef6c2a6378e8e627",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./cmd/bench\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ncmd/bench pass 16215ms; failures 0; skips 0\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-anchors",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:anchors",
+            "digest": "sha256:f9c0ae9767abb50c48c15f72866df1a6e3f8051dceabdb9d9408d5e611a4b5cc",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/anchors\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/anchors pass 1080ms; failures 0; skips 0\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-conformance",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:conformance",
+            "digest": "sha256:dd105d162c952ceef9eb7be0ec63867e04c04972a517eea5a86b0aee4c9be9a8",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/conformance\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/conformance pass 41101ms; failures 0; skips 3 (environment capability: unix socket bind invalid argument x2, character device not permitted x1)\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-commitment",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:commitment",
+            "digest": "sha256:0220c18599c76a41efba3b0c76b527d48c40776242afc0e6edfc437b037a0eb3",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/commitment pass 5391ms; failures 0; skips 0\n\n== bench-debug red repro: C8-P4 / DC84 (tip a3c45cf7, dirty: test only) ==\ncommand: bench test --package ./internal/commitment --run '^TestCommitmentContinuationOccupiesSlot$'\nexit: 1 (failing Go test)\nfailure: admission_test.go:172: start beside an open continuation = (commitment_admission[1]{operation,outcome}: ...\nsymptom: with one open continuation and no claim, `bench commitment start --outcome A` is admitted.\nhypotheses (ranked):\n 1. eligible() counts only claimed(state), so a continuation never occupies the slot -> count open continuations in the shared slot check. CONFIRMED.\n 2. Project() falls to all-blocked when Next is empty and no claim exists -> needs the same slot owner. CONFIRMED by reading outlook.go.\n 3. ParallelGrant can name only outcomes -> extend it so an exact grant can name a continuation's assignment.\n\nGreen after fix: bench test --package ./internal/commitment --run '^TestCommitmentContinuationOccupiesSlot$' exit 0 (pass, 4 subtests)\n\n== Probes for TestCommitmentContinuationOccupiesSlot / TestCommitmentContinuationGrantShape (bench probe ... --package ./internal/commitment) ==\nVerdict `bit` means the mutated run failed; a failing Go test exits 1. Every probe reported restored=yes.\n\nNAMED PROBE (DC84): drop the continuation count from the shared slot check.\n  mutation: admission.go '(len(active) != 0 || len(continuations) != 0) &&' -> 'len(active) != 0 &&'\n  red: bit, failed_tests 2: /open and /other-run: start = (commitment_admission[1]{operation,outcome}: ... (start admitted)\n  restore: restored=yes; test passes on the restored tree.\n  grant membership: admission.go 'if !slices.Contains(grant.Continuations, continuation.Assignment) {' -> 'if continuation.Assignment == \"\" {'. bit; /other-run admitted. restored=yes\n     (first attempt '-> if false {' invalid: unused var; restored=yes)\n  projection: outlook.go 'case len(outlook.Active) != 0 || len(OpenContinuations(*policy, state)) != 0:' -> 'case len(outlook.Active) != 0:'. bit; /open and /other-run outlook not active (all-blocked). restored=yes\n  delivered scope: admission.go OpenContinuations 'return ScopeDelivered(policy, continuation.Scope)' -> 'return false'. bit; /delivered: delivered scope kept its continuation. restored=yes\n  grant shape (TestCommitmentContinuationGrantShape):\n    no-outcome: parse.go 'if len(grant.Outcomes) == 0 {' -> '< 0'. bit (no-outcome accepted). restored=yes\n    one-member: 'len(grant.Outcomes)+len(grant.Continuations) < 2' -> '< 1'. bit (one-member accepted). restored=yes\n    invalid-run: 'if !intent.ValidIdentity(assignment) ||' -> 'if'. bit. restored=yes\n    duplicate-run: 'runs[assignment] {' -> 'false {'. bit. restored=yes\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-intent",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:intent",
+            "digest": "sha256:895b74cc15925eb43b898a0be444120caa6da6f081bd5f67c9bd422fcec7adfa",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/intent\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/intent pass 3313ms; failures 0; skips 0\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-usage",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:usage",
+            "digest": "sha256:901b3e17b92f2af819d716e368c7761ba899a6d9b82d03076a510b786ceb8d09",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/usage\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/usage pass 2ms; failures 0; skips 0\n"
+          },
+          "requirement": "usage",
+          "command": "bench test --package ./internal/usage",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09-repository",
+          "performer": "claude:dc_r09_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_2:repository",
+            "digest": "sha256:ee8c05cba1c8d215187bd0f0c6f9d1381d6e3f4172c4dbd31794e3d183e18221",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment/repository\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/commitment/repository pass 1380ms; failures 0; skips 0\n\nAlso at this tip:\n- bench test --package ./internal/worktree: exit 0, pass 72872ms; skips 2 (environment capability: unix sockets unavailable, path length)\n- env PATH=<node v25.8.1>:$PATH bench test --check system: exit 0, internal/systemtest pass 81125ms\n- bench preflight build roadmap-delivery-commitment: exit 1; checks{green=13,not_applicable=1,red=1}; only red row base-current (expected: default branch tip is not an ancestor of HEAD)\n- commit 047e47c3 lane: pass (gofmt, prose, vet, build, structure, docs-currency-workflow)\n  first commit attempt: lane fail check=structure (publication_test.go 451 lines > 400); repaired by moving TestPublishAdmittedDecidesUnderTheLock to publication_lock_test.go\n\n== bench-debug red repro: C8-P3 / DC83 (tip a3c45cf7, dirty: test only) ==\ncommand: bench test --package ./internal/commitment/repository --run '^TestCommitmentContinuationApproval$'\nexit: 1 (failing Go test)\nfailure: publication_test.go:206: Plan = commitment policy: unknown exact JSON field \"continuations\", want the listed run accepted\nsymptom: the plan input cannot list an already-authorized run, so no approval writes a continuation.\nhypotheses (ranked):\n 1. Policy is the whole plan input (exact decode) and Plan/BuildPlan carry no continuation list -> add a proposal list bound by the plan identity. CONFIRMED by reading parse.go/authority.go.\n 2. Approve writes only the receipt and the staged files -> add the continuation write to the approval transaction. CONFIRMED (repository.go Approve).\n 3. A writer exists elsewhere (worktree, intent) -> rejected: rg shows only readers/pruner in production code.\n\nGreen after fix: bench test --package ./internal/commitment/repository --run '^TestCommitmentContinuationApproval$' exit 0 (pass)\n\n== Probes for TestCommitmentContinuationApproval (bench probe ... --package ./internal/commitment/repository --run '^TestCommitmentContinuationApproval$') ==\nVerdict `bit` means the mutated run failed; a failing Go test exits 1. Every probe reported restored=yes (byte-exact restore).\n\nNAMED PROBE (DC83): \"Omit the continuation write in approval. TestCommitmentContinuationApproval must fail, then pass after the restore.\"\n  mutation: internal/commitment/repository/repository.go --swap 'return withContinuations(ledger, plan.Continuations), true, nil' --with 'return ledger, true, nil'\n  red: verdict bit, failed_tests 1: publication_test.go:210: stored continuations = <nil>, want [{Assignment:c49fea74... Request:c49fea74...0267d9... Scope:[owned.txt]}]\n  restore: restored=yes; baseline passed before the mutation and the unmutated test passes after (see green runs).\n\nElement probes (each refusing case has its own):\n  unknown-run: continuation.go swap unknown-run return -> 'continue'. bit; unknown-run: Plan = <nil>, want \"is unknown\". restored=yes\n  other-request: continuation.go 'if run.Request != continuation.Request {' -> 'if false {'. bit; other-request and run-changed-before-approval fail. restored=yes\n  scope-outside-run: continuation.go 'strings.TrimSuffix(listing, \"\\x00\") == \"\"' -> '== \"never\"'. bit; scope-outside-run: Plan = <nil>. restored=yes\n     (first attempt '... -> if err != nil {' was invalid: unused import/var, no write kept, restored=yes)\n  empty-scope: internal/intent/ledger/commitment.go 'len(continuation.Scope) == 0' -> '< 0'. bit; empty-scope: Plan = <nil>. restored=yes\n  duplicate-run: ledger/commitment.go '|| continuations[continuation.Assignment] {' -> '{'. bit; duplicate-run: Plan = <nil>. restored=yes\n  approval recheck: repository.go Approve's '\\t\\t\\tif err := store.listedRuns(...)' -> 'if err := error(nil); ...'. bit; run-changed-before-approval: Approve = <nil>. restored=yes\n  plan identity binds list: authority.go 'bound += \"\\x00\" + string(listed)' -> '_ = listed'. bit; plan without the list = same id, commitment plan identity collision. restored=yes\n  input key (independent test expectation of the input contract): parse.go proposalContinuations \"continuations\" -> \"continuation\". bit; Plan = unknown exact JSON field \"continuations\". restored=yes\n  commit authorization of an approved listed plan: candidate.go Proposal{..., Continuations: retained.Continuations} -> Proposal{Policy: *candidate}. bit; AuthorizeCandidate = candidate policy has no exact approval. restored=yes\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the continuation write in approval. TestCommitmentContinuationApproval must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dc_r09_2:repository",
+              "digest": "sha256:ee8c05cba1c8d215187bd0f0c6f9d1381d6e3f4172c4dbd31794e3d183e18221",
+              "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment/repository\ntip: 047e47c304d96d40b746dc98cd08c994c5e8cd82 (clean)\nexit: 0\ninternal/commitment/repository pass 1380ms; failures 0; skips 0\n\nAlso at this tip:\n- bench test --package ./internal/worktree: exit 0, pass 72872ms; skips 2 (environment capability: unix sockets unavailable, path length)\n- env PATH=<node v25.8.1>:$PATH bench test --check system: exit 0, internal/systemtest pass 81125ms\n- bench preflight build roadmap-delivery-commitment: exit 1; checks{green=13,not_applicable=1,red=1}; only red row base-current (expected: default branch tip is not an ancestor of HEAD)\n- commit 047e47c3 lane: pass (gofmt, prose, vet, build, structure, docs-currency-workflow)\n  first commit attempt: lane fail check=structure (publication_test.go 451 lines > 400); repaired by moving TestPublishAdmittedDecidesUnderTheLock to publication_lock_test.go\n\n== bench-debug red repro: C8-P3 / DC83 (tip a3c45cf7, dirty: test only) ==\ncommand: bench test --package ./internal/commitment/repository --run '^TestCommitmentContinuationApproval$'\nexit: 1 (failing Go test)\nfailure: publication_test.go:206: Plan = commitment policy: unknown exact JSON field \"continuations\", want the listed run accepted\nsymptom: the plan input cannot list an already-authorized run, so no approval writes a continuation.\nhypotheses (ranked):\n 1. Policy is the whole plan input (exact decode) and Plan/BuildPlan carry no continuation list -> add a proposal list bound by the plan identity. CONFIRMED by reading parse.go/authority.go.\n 2. Approve writes only the receipt and the staged files -> add the continuation write to the approval transaction. CONFIRMED (repository.go Approve).\n 3. A writer exists elsewhere (worktree, intent) -> rejected: rg shows only readers/pruner in production code.\n\nGreen after fix: bench test --package ./internal/commitment/repository --run '^TestCommitmentContinuationApproval$' exit 0 (pass)\n\n== Probes for TestCommitmentContinuationApproval (bench probe ... --package ./internal/commitment/repository --run '^TestCommitmentContinuationApproval$') ==\nVerdict `bit` means the mutated run failed; a failing Go test exits 1. Every probe reported restored=yes (byte-exact restore).\n\nNAMED PROBE (DC83): \"Omit the continuation write in approval. TestCommitmentContinuationApproval must fail, then pass after the restore.\"\n  mutation: internal/commitment/repository/repository.go --swap 'return withContinuations(ledger, plan.Continuations), true, nil' --with 'return ledger, true, nil'\n  red: verdict bit, failed_tests 1: publication_test.go:210: stored continuations = <nil>, want [{Assignment:c49fea74... Request:c49fea74...0267d9... Scope:[owned.txt]}]\n  restore: restored=yes; baseline passed before the mutation and the unmutated test passes after (see green runs).\n\nElement probes (each refusing case has its own):\n  unknown-run: continuation.go swap unknown-run return -> 'continue'. bit; unknown-run: Plan = <nil>, want \"is unknown\". restored=yes\n  other-request: continuation.go 'if run.Request != continuation.Request {' -> 'if false {'. bit; other-request and run-changed-before-approval fail. restored=yes\n  scope-outside-run: continuation.go 'strings.TrimSuffix(listing, \"\\x00\") == \"\"' -> '== \"never\"'. bit; scope-outside-run: Plan = <nil>. restored=yes\n     (first attempt '... -> if err != nil {' was invalid: unused import/var, no write kept, restored=yes)\n  empty-scope: internal/intent/ledger/commitment.go 'len(continuation.Scope) == 0' -> '< 0'. bit; empty-scope: Plan = <nil>. restored=yes\n  duplicate-run: ledger/commitment.go '|| continuations[continuation.Assignment] {' -> '{'. bit; duplicate-run: Plan = <nil>. restored=yes\n  approval recheck: repository.go Approve's '\\t\\t\\tif err := store.listedRuns(...)' -> 'if err := error(nil); ...'. bit; run-changed-before-approval: Approve = <nil>. restored=yes\n  plan identity binds list: authority.go 'bound += \"\\x00\" + string(listed)' -> '_ = listed'. bit; plan without the list = same id, commitment plan identity collision. restored=yes\n  input key (independent test expectation of the input contract): parse.go proposalContinuations \"continuations\" -> \"continuation\". bit; Plan = unknown exact JSON field \"continuations\". restored=yes\n  commit authorization of an approved listed plan: candidate.go Proposal{..., Continuations: retained.Continuations} -> Proposal{Policy: *candidate}. bit; AuthorizeCandidate = candidate policy has no exact approval. restored=yes\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -5150,3 +5343,16 @@ Cycle 1 repairs the guidance and reader targets. Cycle 2 repairs the continuatio
 
 - C8-C2: advice. Behavioral rows DC23, DC26, DC28, and DC29 observe each reachability mutation that the reviewer named.
 - C8-C3, C8-C4, and C8-C5: advice. Each one hardens an anchor or an inventory beyond the ticket requirement.
+
+## DC-C8 repair cycles 1 and 2
+
+Repair cycles consumed: 2 of 2. Fresh Opus repair sessions at medium effort followed the bench-debug procedure.
+Cycle 1 corrected the guidance and reader targets at dae5402257715dcd87317646e21e9a4ef22d8c52. Cycle 2 corrected the continuation targets at 047e47c304d96d40b746dc98cd08c994c5e8cd82.
+
+Each anchor needle sits on one line. The "Fix, don't park" paragraph limits the fix to a defect that the active outcome needs, and a forbid row retires the old sentence.
+Before adoption, status shows the adoption row only when a staged spec waits, and it never names a delivery phase. The orchestrator chose this narrower form, which is open to reviewer veto. The dashboard check compares the exact next outcome and milestone.
+
+Approval records exactly the listed continuations, and the plan identity binds that list. The list lives in the proposal and the receipt, not in the tracked policy.
+An open continuation holds the active slot in admission and in the shared projection. A parallel grant must name each open continuation. Both choices are open to reviewer veto.
+
+A plan commit corrected rows DC83 and DC84 to one predicate each, after the coverage parser refused them. All ten planned checks pass at the chunk source, and the named repository probe failed and restored.
