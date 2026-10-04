@@ -9,9 +9,10 @@ import (
 
 // CommitmentState survives assignment cleanup and process termination.
 type CommitmentState struct {
-	Bindings []DeliveryBinding `json:"bindings,omitempty"`
-	Claims   []OutcomeClaim    `json:"claims,omitempty"`
-	Blockers []OutcomeBlocker  `json:"blockers,omitempty"`
+	Bindings      []DeliveryBinding    `json:"bindings,omitempty"`
+	Claims        []OutcomeClaim       `json:"claims,omitempty"`
+	Blockers      []OutcomeBlocker     `json:"blockers,omitempty"`
+	Continuations []LegacyContinuation `json:"continuations,omitempty"`
 }
 
 type DeliveryBinding struct {
@@ -43,7 +44,7 @@ func ValidateCommitment(state *CommitmentState) error {
 	}
 	bindings := map[string]bool{}
 	for _, binding := range state.Bindings {
-		if !ValidIdentity(binding.Assignment) || !digestPattern.MatchString(binding.Request) || !clean(binding.Milestone) || !clean(binding.Outcome) || !clean(binding.Identity) || !clean(binding.Deliverable) || filepath.IsAbs(binding.Deliverable) || filepath.ToSlash(filepath.Clean(binding.Deliverable)) != binding.Deliverable || binding.Deliverable == ".." || strings.HasPrefix(binding.Deliverable, "../") || bindings[binding.Assignment] {
+		if !ValidIdentity(binding.Assignment) || !digestPattern.MatchString(binding.Request) || !clean(binding.Milestone) || !clean(binding.Outcome) || !clean(binding.Identity) || !commitmentPath(binding.Deliverable) || bindings[binding.Assignment] {
 			return fmt.Errorf("invalid commitment delivery binding for assignment %q", binding.Assignment)
 		}
 		bindings[binding.Assignment] = true
@@ -62,5 +63,30 @@ func ValidateCommitment(state *CommitmentState) error {
 		}
 		blockers[blocker.Outcome] = true
 	}
+	continuations := map[string]bool{}
+	for _, continuation := range state.Continuations {
+		if !ValidIdentity(continuation.Assignment) || !digestPattern.MatchString(continuation.Request) || len(continuation.Scope) == 0 || continuations[continuation.Assignment] {
+			return fmt.Errorf("invalid legacy continuation for assignment %q", continuation.Assignment)
+		}
+		continuations[continuation.Assignment] = true
+		paths := map[string]bool{}
+		for _, path := range continuation.Scope {
+			if !commitmentPath(path) || paths[path] {
+				return fmt.Errorf("invalid legacy continuation scope %q", path)
+			}
+			paths[path] = true
+		}
+	}
 	return nil
+}
+
+// LegacyContinuation binds an approved existing run to its original scope.
+type LegacyContinuation struct {
+	Assignment string   `json:"assignment"`
+	Request    string   `json:"request"`
+	Scope      []string `json:"scope"`
+}
+
+func commitmentPath(value string) bool {
+	return strings.TrimSpace(value) != "" && strings.IndexFunc(value, unicode.IsControl) < 0 && !filepath.IsAbs(value) && filepath.ToSlash(filepath.Clean(value)) == value && value != "." && value != ".." && !strings.HasPrefix(value, "../")
 }

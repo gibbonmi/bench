@@ -8,7 +8,6 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/poolkey"
-	refreshop "github.com/gibbonmi/bench/internal/refresh"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -17,7 +16,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 func textDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
@@ -568,109 +566,6 @@ func hexIdentity(value string) bool {
 	return true
 }
 
-var createGrammar = usage.Grammar{
-	Cmd:  "bench worktree create",
-	Help: "usage: " + usage.WorktreeCreate,
-	Flags: []usage.Flag{
-		{Name: "--request", HasValue: true, NoEmptyValue: true, Required: true},
-		{Name: "--label", HasValue: true, NoEmptyValue: true, Required: true},
-		{Name: "--refresh", HasValue: false},
-		{Name: "--from", HasValue: true, NoEmptyValue: true},
-	},
-}
-
-// createSiblingStart resolves `--from` through the one sibling lookup the merge verb also
-// composes. The flag reaches no commit lookup, so a spelling that names no active
-// assignment is a refusal rather than a fallthrough to the default tip. The caller runs
-// fromRepresentable before the creation starts, so this lookup reads a value a line can
-// carry.
-func createSiblingStart(root, from string) (string, error) {
-	assignments, err := intent.Assignments(root)
-	if err != nil {
-		return "", err
-	}
-	tip, _, ok, err := siblingTip(root, assignments, "", from)
-	if err != nil {
-		return "", err
-	}
-	if !ok {
-		return "", refusalError{refusal{detail: "--from names no active assignment", observed: from}}
-	}
-	return tip, nil
-}
-
-// CreateCommand owns the worktree create grammar and creates or replays one owned
-// assignment after parsing succeeds. Grammar answers perform no creation or tracing;
-// --from selects an active sibling tip and cannot be combined with --refresh.
-func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) int {
-	parsed, line, code := usage.Parse(createGrammar, args)
-	if line != "" {
-		if code == 0 {
-			fmt.Fprintln(stdout, line)
-			return 0
-		}
-		fmt.Fprintln(stderr, line)
-		return code
-	}
-	// The seam record opens once the grammar has answered, the way the commit boundary
-	// opens once the repository is known: a grammar answer creates nothing to record.
-	var assignment string
-	finishSpan := beginVerbSpan(home, root, otelCreateSeam)
-	exit := createAttributed(&assignment, parsed, root, home, currentTime(), args, stdout, stderr)
-	finishSpan(exit, assignment)
-	return exit
-}
-
-// createAttributed is the create verb's own work at the entry's instant, with the
-// assignment the record names written to assignment once the creation resolves it.
-func createAttributed(assignment *string, parsed usage.Result, root, home string, now time.Time, args []string, stdout, stderr io.Writer) int {
-	from := parsed.Flags["--from"]
-	// The two flags name two starts, so the pair refuses before the refresh runs: a fetch
-	// that moved the default branch would already have taken effect by the refusal.
-	if _, refresh := parsed.Flags["--refresh"]; refresh && from != "" {
-		fmt.Fprintln(stderr, toon.Usage(createGrammar.Cmd, "--from with --refresh"))
-		return 2
-	}
-	// The value's representability is a grammar fact, so it refuses before the creation
-	// reads anything at all.
-	if from != "" {
-		if err := fromRepresentable(from); err != nil {
-			return printTargetRefusal(stderr, createGrammar.Cmd, err)
-		}
-	}
-	_, startRef := refreshop.Consume(root, args, stdout)
-	// The sibling lookup is deferred, because the creation resolves the request replay
-	// first. A replay returns its existing record, so the sibling's state gates nothing a
-	// no-op run would act on.
-	var fromErr error
-	resolveStart := func() (string, error) { return startRef, nil }
-	if from != "" {
-		resolveStart = func() (string, error) {
-			tip, err := createSiblingStart(root, from)
-			fromErr = err
-			return tip, err
-		}
-	}
-	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
-	creation, err := createAt(defaultJoins(), root, home, request, label, nil, now, resolveStart)
-	// A failed creation returns the zero Creation, so its empty ID leaves the record unnamed.
-	*assignment = creation.Assignment.ID
-	if err != nil {
-		if fromErr != nil {
-			return printTargetRefusal(stderr, createGrammar.Cmd, err)
-		}
-		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
-		return 1
-	}
-	out, err := toon.Table(createTable, []string{"path", "assignment", "state"}, [][]string{{creation.Path, creation.Assignment.ID, string(creation.Assignment.State)}})
-	if err != nil {
-		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
-		return 1
-	}
-	fmt.Fprint(stdout, out)
-	fmt.Fprintf(stdout, "next[2]:\n  bench worktree exec \"%s\" -- <command>\n  bench worktree path \"%s\"\n", label, label)
-	return 0
-}
 func cleanupOutputSafe(value string) bool { return toon.Representable(value) }
 func cleanupOutputValue(value string) string {
 	if cleanupOutputSafe(value) {

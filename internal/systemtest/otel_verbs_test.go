@@ -138,7 +138,9 @@ func TestOtelShiftTraceJourney(t *testing.T) {
 	}
 	env := append(fixture.environment(fixture.home), "BENCH_AGENT="+adapter, "BENCH_MAX_ITERS=1",
 		"OTEL_RESOURCE_ATTRIBUTES=bench.leak=ENVMARK")
-	shifted := systemSelected(t, fixture.root, env, "shift", "OBJMARK objective")
+	commitmenttest.Register(t, fixture.root, "shift-record")
+	commitmenttest.Admit(t, fixture.root, "shift-record", "specs/record/spec.md")
+	shifted := systemSelected(t, fixture.root, env, "shift", "--outcome", "delivery", "OBJMARK objective")
 	// One committed pass under a cap of 1 exhausts the cap, so the shift ends incomplete.
 	if shifted.code != 3 {
 		t.Fatalf("bench shift = (%d, %q, %q), want the incomplete exit 3", shifted.code, shifted.stdout, shifted.stderr)

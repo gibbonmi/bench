@@ -63,7 +63,7 @@ func (store Store) AuthorizeCandidate(tree string) error {
 		}
 	}
 	if production {
-		return store.ready(ledger, "")
+		return store.ready(ledger, "", "")
 	}
 	return nil
 }
