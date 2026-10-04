@@ -92,13 +92,16 @@ func TestCommitmentNextProjection(t *testing.T) {
 			}
 
 			page := run("dashboard", "--stdout")
-			for _, item := range []string{"<dt>state</dt><dd>" + tc.state + "</dd>", "<dt>A</dt><dd>vendor fix</dd>", "<dt>command</dt><dd>" + strings.NewReplacer("<", "&lt;", ">", "&gt;").Replace(tc.command) + "</dd>"} {
+			items := []string{"<dt>state</dt><dd>" + tc.state + "</dd>", "<dt>active_milestone</dt><dd>M1</dd>", "<dt>A</dt><dd>vendor fix</dd>", "<dt>command</dt><dd>" + strings.NewReplacer("<", "&lt;", ">", "&gt;").Replace(tc.command) + "</dd>"}
+			if tc.next != "" {
+				items = append(items, "<dt>next_outcome</dt><dd>"+tc.next+"</dd>")
+			} else if strings.Contains(page, "<dt>next_outcome</dt>") {
+				t.Errorf("dashboard names a next outcome for a dependent successor")
+			}
+			for _, item := range items {
 				if !strings.Contains(page, item) {
 					t.Errorf("dashboard lacks %q", item)
 				}
-			}
-			if names := strings.Contains(page, "<dt>next_outcome</dt>"); names != (tc.next != "") || strings.Contains(page, "<dt>next_outcome</dt><dd>A</dd>") {
-				t.Errorf("dashboard next outcome is wrong for %q", tc.next)
 			}
 		})
 	}
