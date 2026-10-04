@@ -168,12 +168,12 @@ func (store Store) LegacyScope(request string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	owners := intent.AssignmentsOwning(ledger.Assignments, store.Root)
-	if len(owners) != 1 || owners[0].State != intent.StateActive || request == "" || owners[0].Request != intent.RequestDigest(request) {
+	owner, valid := requestedAssignment(ledger, store.Root, request)
+	if !valid {
 		return nil, fmt.Errorf("continuation requires the active owned assignment and its exact request")
 	}
 	for _, continuation := range runtimeState(ledger).Continuations {
-		if continuation.Assignment == owners[0].ID && continuation.Request == owners[0].Request {
+		if continuation.Assignment == owner.ID && continuation.Request == owner.Request {
 			return append([]string(nil), continuation.Scope...), nil
 		}
 	}

@@ -13,8 +13,8 @@ import (
 // Start binds the owned assignment and its deliverable under the intent lock.
 func (store Store) Start(outcome, request, deliverable string) error {
 	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
-		owners := intent.AssignmentsOwning(ledger.Assignments, store.Root)
-		if len(owners) != 1 || owners[0].State != intent.StateActive || request == "" || owners[0].Request != intent.RequestDigest(request) {
+		owner, valid := requestedAssignment(ledger, store.Root, request)
+		if !valid {
 			return ledger, false, errors.New("start requires the active owned assignment and its exact request")
 		}
 		policy, err := store.admissionPolicy()
@@ -39,7 +39,7 @@ func (store Store) Start(outcome, request, deliverable string) error {
 		if err := store.validateDeliverable(*source); err != nil {
 			return ledger, false, err
 		}
-		binding := intent.DeliveryBinding{Assignment: owners[0].ID, Request: owners[0].Request, Milestone: policy.ActiveMilestone, Outcome: outcome, Deliverable: deliverable, Identity: source.Identity}
+		binding := intent.DeliveryBinding{Assignment: owner.ID, Request: owner.Request, Milestone: policy.ActiveMilestone, Outcome: outcome, Deliverable: deliverable, Identity: source.Identity}
 		next, err := commitment.Admit(policy, runtimeState(ledger), binding)
 		if err != nil {
 			return ledger, false, err
@@ -97,4 +97,12 @@ func withRuntime(ledger intent.Ledger, next intent.CommitmentState) (intent.Ledg
 		ledger.Commitment = &next
 	}
 	return ledger, changed, nil
+}
+
+func requestedAssignment(ledger intent.Ledger, root, request string) (intent.Assignment, bool) {
+	owners := intent.AssignmentsOwning(ledger.Assignments, root)
+	if len(owners) != 1 || owners[0].State != intent.StateActive || request == "" || owners[0].Request != intent.RequestDigest(request) {
+		return intent.Assignment{}, false
+	}
+	return owners[0], true
 }

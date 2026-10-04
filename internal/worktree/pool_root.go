@@ -65,13 +65,13 @@ func Create(root, request, label string, fault Fault, requestedStart ...string) 
 	return createAt(defaultJoins(), root, Home(), request, label, fault, currentTime(), func() (creationStart, error) { return creationStart{ref: start}, nil })
 }
 
-// startResolver answers the start a creation branches from. It is a function, not a value,
-// because a caller whose start costs a lookup pays for it only when the request is new.
 type creationStart struct {
 	ref     string
 	binding *intent.DeliveryBinding
 }
 
+// startResolver answers the start a creation branches from. It is a function, not a value,
+// because a caller whose start costs a lookup pays for it only when the request is new.
 type startResolver func() (creationStart, error)
 
 // createAt is Create with the creation instant and the Bench home resolved explicitly at
