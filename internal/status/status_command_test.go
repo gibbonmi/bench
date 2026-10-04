@@ -142,15 +142,17 @@ func TestCommandRouteEscapesControlBytesInProducerPaths(t *testing.T) {
 
 	want := "next[1]{state,why,command}:\n" +
 		"  gate,red,/bench-debug\n" +
-		"also: specs (1 staged spec(s)) → /bench-implement-spec specs/my [draft]\\u001b/spec.md; decisions (1 ready map(s)) → /bench-write-spec decisions/my * map\\u0007.md\n"
+		"also: commitment (adoption-required) → bench commitment plan --input <file>; decisions (1 ready map(s)) → /bench-write-spec decisions/my * map\\u0007.md\n"
 	if got, code := Command([]string{"--route"}); code != 0 || got != want {
 		t.Fatalf("Command(--route) = (%q, %d), want (%q, 0)", got, code, want)
 	}
 }
 
-func TestCommandRouteEscapesControlByteInLeadStagedSpecPath(t *testing.T) {
+// Before adoption a staged spec leads with the adoption plan, so its control-byte path
+// never reaches the route.
+func TestCommandRouteLeadsAdoptionForControlByteStagedSpecPath(t *testing.T) {
 	want := "next[1]{state,why,command}:\n" +
-		"  specs,1 staged spec(s),\"/bench-implement-spec specs/lead\\\\u001b/spec.md\"\n" +
+		"  commitment,adoption-required,bench commitment plan --input <file>\n" +
 		"also: none\n"
 	assertLeadControlRoute(t, func(t *testing.T, root string) {
 		path := filepath.Join(root, "specs", "lead\x1b", "spec.md")

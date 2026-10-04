@@ -1,7 +1,6 @@
 package status
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/commitment"
@@ -13,16 +12,17 @@ import (
 // worktree rows, beside the drain.
 const deliverySeverity = 4
 
-// appendDelivery projects the delivery next action. A published commitment owns that
-// action, so the board renders the shared outlook and names no staged spec beside it.
-// Before adoption no commitment exists, and the staged-spec row stays the planning signal.
+// appendDelivery projects the delivery next action from the shared outlook, so the board
+// never names a staged spec as delivery work. Before adoption the outlook row appears only
+// when a staged spec waits: that delivery needs the initial commitment first, and a board
+// with no waiting delivery stays clean.
 func appendDelivery(rows []row, root string) []row {
 	return appendDeliveryOutlook(rows, root, commitcmd.Outlook(root))
 }
 
 func appendDeliveryOutlook(rows []row, root string, outlook commitment.Outlook) []row {
-	if outlook.State == commitment.OutlookAdoptionRequired {
-		return appendStagedSpecs(rows, root)
+	if outlook.State == commitment.OutlookAdoptionRequired && stagedSpecCount(root) == 0 {
+		return rows
 	}
 	return append(rows, row{deliverySeverity, "commitment", outlookDetail(outlook), outlookAction(outlook)})
 }
@@ -59,30 +59,16 @@ func outlookDetail(outlook commitment.Outlook) string {
 	return detail
 }
 
-func appendStagedSpecs(rows []row, root string) []row {
-	n, slug := stagedSpecCount(root)
-	if n == 0 {
-		return rows
-	}
-	command := commandAction(implementSpecPhaseAction)
-	if n == 1 {
-		command = commandActionWithArgument(implementSpecPhaseAction, "specs/"+slug+"/spec.md")
-	}
-	return append(rows, row{deliverySeverity, "specs", fmt.Sprintf("%d staged spec(s)", n), command})
-}
-
-func stagedSpecCount(root string) (int, string) {
+func stagedSpecCount(root string) int {
 	facts, err := spec.Facts(root)
 	if err != nil {
-		return 0, ""
+		return 0
 	}
-	n, slug := 0, ""
+	n := 0
 	for _, fact := range facts {
-		if fact.Status != "staged" {
-			continue
+		if fact.Status == "staged" {
+			n++
 		}
-		n++
-		slug = fact.Slug
 	}
-	return n, slug
+	return n
 }

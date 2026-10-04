@@ -10,10 +10,10 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-// TestAppendDeliveryRendersTheOutlook holds the delivery row to the shared outlook. A
-// published commitment replaces the staged-spec row, so a staged spec outside the
-// commitment never becomes the board's delivery action. Before adoption the staged-spec
-// row stays. Each expected row is written by hand.
+// TestAppendDeliveryRendersTheOutlook holds the delivery row to the shared outlook, so a
+// staged spec never becomes the board's delivery action. Before adoption a waiting staged
+// spec shows the adoption row, and a repository with no staged spec shows no row. Each
+// expected row is written by hand.
 func TestAppendDeliveryRendersTheOutlook(t *testing.T) {
 	root := initRepo(t)
 	path := filepath.Join(root, "specs", "staged", "spec.md")
@@ -24,8 +24,10 @@ func TestAppendDeliveryRendersTheOutlook(t *testing.T) {
 		t.Fatal(err)
 	}
 	blocked := []intent.OutcomeBlocker{{Outcome: "A", Reason: "vendor fix"}}
+	adoption := commitment.Outlook{State: "adoption-required", Operation: "plan", Command: "bench commitment plan --input <file>"}
 	for _, tc := range []struct {
 		name    string
+		root    string
 		outlook commitment.Outlook
 		want    []row
 	}{
@@ -40,22 +42,37 @@ func TestAppendDeliveryRendersTheOutlook(t *testing.T) {
 			want:    []row{{4, "commitment", "active A in M1", advisoryAction("")}},
 		},
 		{
+			name:    "active outcome without a staged spec",
+			root:    initRepo(t),
+			outlook: commitment.Outlook{State: "active", Milestone: "M1", Active: []string{"A"}},
+			want:    []row{{4, "commitment", "active A in M1", advisoryAction("")}},
+		},
+		{
 			name:    "all blocked",
 			outlook: commitment.Outlook{State: "all-blocked", Milestone: "M1", Blocked: blocked, Operation: "plan", Command: "bench commitment plan --input <file>"},
 			want:    []row{{4, "commitment", "all-blocked in M1; blocked A", commandActionWithArgument(commitmentAction, "plan --input <file>")}},
 		},
 		{
 			name:    "adoption required",
-			outlook: commitment.Outlook{State: "adoption-required", Operation: "plan", Command: "bench commitment plan --input <file>"},
-			want:    []row{{4, "specs", "1 staged spec(s)", commandActionWithArgument(implementSpecPhaseAction, "specs/staged/spec.md")}},
+			outlook: adoption,
+			want:    []row{{4, "commitment", "adoption-required", commandActionWithArgument(commitmentAction, "plan --input <file>")}},
+		},
+		{
+			name:    "adoption required without a staged spec",
+			root:    initRepo(t),
+			outlook: adoption,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := appendDeliveryOutlook(nil, root, tc.outlook)
+			caseRoot := root
+			if tc.root != "" {
+				caseRoot = tc.root
+			}
+			got := appendDeliveryOutlook(nil, caseRoot, tc.outlook)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("rows = %#v, want %#v", got, tc.want)
 			}
-			if got[0].signal == "commitment" && got[0].action.render() != tc.outlook.Command {
+			if len(got) != 0 && got[0].signal == "commitment" && got[0].action.render() != tc.outlook.Command {
 				t.Fatalf("action = %q, want the outlook command %q", got[0].action.render(), tc.outlook.Command)
 			}
 		})

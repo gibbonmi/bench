@@ -44,7 +44,7 @@ func TestAppendSetupStaysQuietWhenBenchPathCannotBeRead(t *testing.T) {
 	}
 }
 
-func TestAppendStagedSpecsRoutesAndOrdersBeforeRetirement(t *testing.T) {
+func TestAppendDeliveryRoutesStagedSpecsToAdoptionBeforeRetirement(t *testing.T) {
 	root := initRepo(t)
 	for path, body := range map[string]string{
 		"specs/staged/spec.md": "Status: staged\n",
@@ -62,14 +62,15 @@ func TestAppendStagedSpecsRoutesAndOrdersBeforeRetirement(t *testing.T) {
 	gitRun(t, root, "add", "-A")
 	gitRun(t, root, "commit", "-m", "base")
 
-	rows := appendStagedSpecs(nil, root)
+	adoption := row{4, "commitment", "adoption-required", commandActionWithArgument(commitmentAction, "plan --input <file>")}
+	rows := appendDelivery(nil, root)
 	rows = appendRetirement(rows, root)
 	want := []row{
-		{4, "specs", "1 staged spec(s)", commandActionWithArgument(implementSpecPhaseAction, "specs/staged/spec.md")},
+		adoption,
 		{8, "specs", "1 merged spec(s) awaiting retirement", commandActionWithArgument(retireSpecAction, "<slug>")},
 	}
 	if !reflect.DeepEqual(rows, want) {
-		t.Fatalf("staged and retirement rows = %#v, want %#v", rows, want)
+		t.Fatalf("adoption and retirement rows = %#v, want %#v", rows, want)
 	}
 
 	second := filepath.Join(root, "specs", "second", "spec.md")
@@ -79,9 +80,8 @@ func TestAppendStagedSpecsRoutesAndOrdersBeforeRetirement(t *testing.T) {
 	if err := os.WriteFile(second, []byte("Status: staged\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	rows = appendStagedSpecs(nil, root)
-	if got := rows[0].action.render(); got != "/bench-implement-spec" {
-		t.Fatalf("multiple staged action = %q, want bare command", got)
+	if rows := appendDelivery(nil, root); !reflect.DeepEqual(rows, []row{adoption}) {
+		t.Fatalf("two staged specs rows = %#v, want only the adoption row", rows)
 	}
 }
 
@@ -138,7 +138,7 @@ func TestRenderSetupLeadsAnUnadoptedRepository(t *testing.T) {
 	}
 }
 
-func TestSignalsOrderStagedSpecsAfterGuardsBeforeDrain(t *testing.T) {
+func TestSignalsOrderStagedSpecAdoptionAfterGuardsBeforeDrain(t *testing.T) {
 	root := initRepo(t)
 	for path, body := range map[string]string{
 		".bench/lines.env":     "BENCH_CODEX_MID=test\n",
@@ -158,12 +158,12 @@ func TestSignalsOrderStagedSpecsAfterGuardsBeforeDrain(t *testing.T) {
 
 	var names []string
 	for _, signal := range Signals(root) {
-		if signal.Name == "guards" || signal.Name == "specs" || signal.Name == "drain" {
+		if signal.Name == "guards" || signal.Name == "commitment" || signal.Name == "drain" {
 			names = append(names, signal.Name)
 		}
 	}
-	if !reflect.DeepEqual(names, []string{"guards", "specs", "drain"}) {
-		t.Fatalf("signal order = %q, want guards, specs, drain", names)
+	if !reflect.DeepEqual(names, []string{"guards", "commitment", "drain"}) {
+		t.Fatalf("signal order = %q, want guards, commitment, drain", names)
 	}
 }
 
@@ -184,12 +184,12 @@ func TestRenderedBoardAndRouteForStagedSpecWithReviewPickup(t *testing.T) {
 	gitRun(t, root, "add", "-A")
 	gitRun(t, root, "commit", "-m", "base")
 
-	wantBoard := "▶ /bench-implement-spec specs/staged/spec.md  (specs)\n" +
-		"  specs      1 staged spec(s)               → /bench-implement-spec specs/staged/spec.md\n"
+	wantBoard := "▶ bench commitment plan --input <file>  (commitment)\n" +
+		"  commitment adoption-required              → bench commitment plan --input <file>\n"
 	if got := render(root, false); got != wantBoard {
 		t.Fatalf("paired-review staged-spec board = %q, want %q", got, wantBoard)
 	}
-	wantRoute := RouteResult{Lead: testSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/staged/spec.md")}
+	wantRoute := RouteResult{Lead: testSignal(4, "commitment", "adoption-required", "bench commitment plan --input <file>")}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, wantRoute) {
 		t.Fatalf("paired-review staged-spec route = %#v, want %#v", got, wantRoute)
 	}
@@ -243,7 +243,7 @@ func TestRouteForLeavesClaimedAssignmentBranchToItsOwner(t *testing.T) {
 	}
 }
 
-func TestRouteForInvokesStagedSpecWhosePathContainsSpacesAheadOfDrain(t *testing.T) {
+func TestRouteForLeadsSpacedStagedSpecAdoptionAheadOfDrain(t *testing.T) {
 	root := initRepo(t)
 	for path, body := range map[string]string{
 		"capture/IDEAS.md":      "- 2026-08-18  pending\n",
@@ -261,13 +261,13 @@ func TestRouteForInvokesStagedSpecWhosePathContainsSpacesAheadOfDrain(t *testing
 	gitRun(t, root, "commit", "-m", "base")
 
 	want := RouteResult{
-		Lead: testSignal(4, "specs", "1 staged spec(s)", "/bench-implement-spec specs/my spec/spec.md"),
+		Lead: testSignal(4, "commitment", "adoption-required", "bench commitment plan --input <file>"),
 		RunnersUp: []Signal{
 			testSignal(4, "drain", "1 idea(s), 0 open learning(s), 0 pending retro(s)", "/bench-drain"),
 		},
 	}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
-		t.Fatalf("spaced staged-spec route = %#v, want %#v", got, want)
+		t.Fatalf("spaced staged-spec adoption route = %#v, want %#v", got, want)
 	}
 }
 

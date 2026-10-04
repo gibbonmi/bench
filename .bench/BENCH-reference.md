@@ -221,10 +221,10 @@ describe the hook and adapter plumbing.
 `bench status`, `bench roadmap`, and `bench dashboard` render one commitment
 outlook. The outlook names its state, the next eligible outcome, each blocked
 outcome with its reason, and the next command. Before adoption the state is
-`adoption-required`, the recommended sequence is unapproved input, and the
-status board keeps its staged-spec row. When the
-policy or the local runtime record does not read, the state is `unreadable`,
-and `bench commitment show` names the cause.
+`adoption-required`, the recommended sequence is unapproved input, and the next
+command is `bench commitment plan --input <file>`. The status board shows that
+row only when a staged spec waits. When the policy or the local runtime record
+does not read, the state is `unreadable`, and `bench commitment show` names the cause.
 
 `bench consumers` is the resolved-reference query for a Go symbol. With
 `--changed`, the same verb is the review blast over a frozen base and source

@@ -279,19 +279,19 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			commit(t, root)
 			return root, Query{}
 		}},
-		{name: "one staged spec", signal: "specs", detail: "1 staged spec", setup: func(t *testing.T) (string, Query) {
+		{name: "one staged spec before adoption", signal: "commitment", detail: "adoption-required", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "specs/my spec/spec.md", "Status: staged\n", 0o644)
 			commit(t, root)
 			return root, Query{}
-		}},
-		{name: "multiple staged specs", signal: "specs", detail: "2 staged spec", setup: func(t *testing.T) (string, Query) {
+		}, exact: []Signal{testSignal(4, "commitment", "adoption-required", "bench commitment plan --input <file>")}},
+		{name: "multiple staged specs before adoption", signal: "commitment", detail: "adoption-required", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "specs/one/spec.md", "Status: staged\n", 0o644)
 			write(t, root, "specs/two/spec.md", "Status: staged\n", 0o644)
 			commit(t, root)
 			return root, Query{}
-		}},
+		}, exact: []Signal{testSignal(4, "commitment", "adoption-required", "bench commitment plan --input <file>")}},
 		{name: "drain", signal: "drain", detail: "1 idea", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			write(t, root, "capture/IDEAS.md", "- 2026-08-18  pending\n", 0o644)
