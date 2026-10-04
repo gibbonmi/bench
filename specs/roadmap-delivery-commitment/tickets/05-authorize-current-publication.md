@@ -32,3 +32,5 @@ Read worktree land admission and resume, landing LandReviewed and ref publicatio
 The existing system journey uses BENCH_KIT through `bench test --check system`. Adapt its fixture at this checkpoint when admission changes its route.
 
 Run `bench test --package ./internal/worktree`, `bench test --package ./internal/landing`, and `bench test --package ./internal/commitment`. Observe the gate-time policy race through the real broker orchestration seam.
+
+Ticket 03 supplies policy and admission in the shared worktree landing fixture. Reuse that setup when publication begins to require current authority.

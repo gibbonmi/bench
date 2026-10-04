@@ -1800,3 +1800,20 @@ All three axes confirm DC-C3-S1, DC-C3-S2, and C3-COV-1 closed.
 
 Coverage independently omitted the blocker update. The blocked-outcome case failed and the probe restored the source.
 All review venues were clean at the frozen tip. Repair allowance consumed: 1 of 2 cycles.
+
+## DC-C3 checkpoint fixture repair
+
+The checkpoint at 384090bf3fa8b4af3cbdbab6397842ba4a4619e9 failed in TestLandGradesASourceCommittedByALanePass.
+Its public landing fixture lacked approved delivery admission before it invoked the real commit command.
+The test’s lane and landing assertions remain valid. Formatting, vet, race, and system phases passed.
+
+```text
+[test] --- FAIL: TestLandGradesASourceCommittedByALanePass (0.38s)
+[test] land_journey_test.go:370: lane commit exit=1
+[test] error: commitment: commitment adoption required: run bench commitment plan --input <file>
+gate: red
+```
+
+The in-scope plan expansion assigns land_fixtures_test.go to ticket 03 and adds its worktree package check.
+The fixture census enumerates its callers before the setup changes. Repair cycle 2 addresses this missed integration consumer.
+Repair allowance consumed: 2 of 2 cycles. No extension is assumed.
