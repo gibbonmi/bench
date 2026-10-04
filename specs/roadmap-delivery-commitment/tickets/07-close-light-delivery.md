@@ -1,8 +1,8 @@
 # Close verified light-path and rowless delivery
 
 Blocked by: 06-close-verified-spec-delivery.md
-Writes: internal/commitment (new), internal/intent, internal/worktree, internal/landing, internal/roadmap, internal/spec, docs/adr/0015-the-landing-verb-is-the-one-author-of-the-spec-flip.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: DC67, DC68, DC77
+Writes: internal/commitment (new), internal/intent, internal/worktree, internal/landing, internal/roadmap, internal/spec, internal/gate/checkpoint.go, internal/gate/commitment_completion_test.go, internal/gate/completion.go, internal/gate/completion_test.go, internal/gate/evaluation.go, docs/adr/0015-the-landing-verb-is-the-one-author-of-the-spec-flip.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Covers: DC67, DC68, DC77, DC78, DC79, DC82
 
 ## What to build
 
@@ -21,6 +21,9 @@ Read the shared spec-owner classifier from ticket 02 and the tickets-only retire
 - [ ] A rowless delivery completes only its bound obligation without creating or deleting roadmap rows (DC68).
 - [ ] Both routes retain ticket 06 refusal and resume behavior through the shared closure owner.
 - [ ] Retirement after a verified closure schedules no roadmap row cleanup, and the landing ADR states that contract (DC77).
+- [ ] The gate grades the exact tickets-only close and refuses a kept folder, detail owner, or sequence entry (DC78).
+- [ ] The gate refuses a completion tree with one byte changed outside the broker transform (DC79).
+- [ ] A listed legacy run lands and closes a tickets-only folder in its scope (DC82).
 
 ## Checkpoint verification
 
