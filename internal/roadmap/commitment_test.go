@@ -115,6 +115,23 @@ func TestCommitmentSequenceClosure(t *testing.T) {
 	}
 }
 
+// Closing FT1 unblocks its dependents in both dependency tables. A row that names FT1 as
+// its dependent goes, FT1 leaves each dependency list, and a row whose list empties goes.
+// FT10 shares FT1's prefix and stays, and the table headings stay byte for byte.
+func TestCommitmentDependencyClosure(t *testing.T) {
+	const tables = "## Dependencies\n\nThe dependent FT is named first.\n\n### Literal\n\n| FT | Depends on | Why |\n|---|---|---|\n"
+	const index = "# Roadmap\n\n**FT1 — A**\n\n**FT2 — B**\n\n" + tables +
+		"| FT2 | FT1 | B needs A. |\n| FT3 | FT10 | C needs J. |\n\n### Recommended\n\n| FT | Better specified after | Why |\n|---|---|---|\n" +
+		"| FT4 | FT5, FT1, FT6 | D follows. |\n| FT1 | FT7 | A follows G. |\n\n## Recommended sequence\n\n1. A\n2. B\n"
+	got, err := Close([]byte(index), []string{"FT1"}, []string{"B"})
+	const want = "# Roadmap\n\n**FT2 — B**\n\n" + tables +
+		"| FT3 | FT10 | C needs J. |\n\n### Recommended\n\n| FT | Better specified after | Why |\n|---|---|---|\n" +
+		"| FT4 | FT5, FT6 | D follows. |\n\n## Recommended sequence\n\n1. B\n"
+	if err != nil || string(got) != want {
+		t.Fatalf("dependency closure = %q, %v; want %q", got, err, want)
+	}
+}
+
 func TestCommitmentOccurrenceUpdate(t *testing.T) {
 	const original = "**FT1 — Preserve the obligation**\n\nThe requirement stays unchanged.\n"
 	got, err := RequirementBytes("roadmap/FT1.md", []byte(original+"Occurrences: first, second\n"))

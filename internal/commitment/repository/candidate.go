@@ -44,7 +44,7 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 	}
 	transition := predecessor != identity
 	if transition {
-		closed, err := store.closedPolicy(current, candidate, delivery)
+		closed, err := store.closedPolicy(revision, candidate, delivery)
 		if err != nil {
 			return err
 		}
@@ -119,21 +119,23 @@ func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *
 	return fmt.Errorf("candidate policy has no exact approval; run bench commitment plan --input <file>")
 }
 
-// closedPolicy reports whether candidate is exactly current after the verified delivery.
-func (store Store) closedPolicy(current, candidate *commitment.Policy, delivery *Delivery) (bool, error) {
-	if current == nil || candidate == nil || delivery == nil {
+// closedPolicy reports whether candidate is exactly the policy edit of the verified closure
+// that delivery makes to revision.
+func (store Store) closedPolicy(revision string, candidate *commitment.Policy, delivery *Delivery) (bool, error) {
+	if candidate == nil || delivery == nil {
 		return false, nil
 	}
-	expected, closed, err := store.Delivered(*current, *delivery)
-	if err != nil || len(closed) == 0 {
-		return false, err
-	}
-	want, err := commitment.Bytes(expected)
+	edits, err := store.Closure(revision, *delivery)
 	if err != nil {
 		return false, err
 	}
-	got, err := commitment.Bytes(*candidate)
-	return err == nil && bytes.Equal(want, got), err
+	for _, edit := range edits {
+		if edit.Path == commitment.PolicyPath {
+			got, err := commitment.Bytes(*candidate)
+			return err == nil && bytes.Equal(edit.Data, got), err
+		}
+	}
+	return false, nil
 }
 
 func (store Store) protectedCandidate(policy *commitment.Policy, revision, tree string, transition bool) error {
@@ -187,7 +189,7 @@ func (store Store) planningPromotions(tree string, changes []git.TreeChange) ([]
 	var artifacts [][]byte
 	var promotions []string
 	for _, change := range changes {
-		if change.DstMode != "100644" || !commitment.PlanningPath(change.Path, change.DstMode, nil) || !strings.HasSuffix(change.Path, ".md") {
+		if change.DstMode != commitment.PlanningMode || !commitment.PlanningPath(change.Path, change.DstMode, nil) || !strings.HasSuffix(change.Path, ".md") {
 			continue
 		}
 		if !strings.HasPrefix(change.Path, "specs/") && !strings.HasPrefix(change.Path, "decisions/") {

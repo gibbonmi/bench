@@ -147,6 +147,26 @@ func SeedClosure(t testing.TB, root, deliverable string, residual ...string) {
 	Write(t, root, "ROADMAP.md", ClosureIndex(residual...))
 }
 
+// ApprovePending writes a staged spec at deliverable and approves it, in the policy that
+// SeedClosure wrote, as the complete delivery of the delivery outcome's residual row. The
+// caller commits.
+func ApprovePending(t testing.TB, root, deliverable, row string) {
+	t.Helper()
+	const body = "# Pending delivery\n\nStatus: staged\n"
+	Write(t, root, deliverable, body)
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(commitment.PolicyPath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy, err := commitment.Parse(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	delivery := &policy.Milestones[0].Outcomes[0]
+	delivery.Deliverables = append(delivery.Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "pending", Path: deliverable, Identity: commitment.Identity([]byte(body))}, Obligations: []string{row}})
+	WritePolicy(t, root, policy)
+}
+
 // writeRow writes the detail owner of row, titled for outcome, and returns its binding.
 func writeRow(t testing.TB, root, row, outcome string) commitment.SourceBinding {
 	t.Helper()

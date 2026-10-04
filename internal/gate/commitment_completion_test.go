@@ -79,6 +79,59 @@ func TestCommitmentExactTransform(t *testing.T) {
 	}
 }
 
+// editPolicy rewrites the closed policy in the fixture's working tree through edit.
+func editPolicy(t *testing.T, f *recordtest.Fixture, edit func(*commitment.Policy)) {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(f.Root, commitment.PolicyPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy, err := commitment.Parse(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edit(&policy)
+	commitmenttest.WritePolicy(t, f.Root, policy)
+}
+
+// The oracle refuses a closure that keeps the closed detail owner, and a policy edit
+// whose delivery fact names another source or evidence, omits the fact, or makes the
+// policy executable. Each refusal comes from the exact closure comparison.
+func TestCommitmentClosureNegatives(t *testing.T) {
+	t.Parallel()
+	const policyRefusal = "completion " + commitment.PolicyPath + " differs from the exact closure transform"
+	for _, row := range []struct {
+		name, want string
+		change     func(*testing.T, *recordtest.Fixture)
+	}{
+		{name: "retained-detail", want: "completion keeps closed roadmap/FT1.md", change: func(t *testing.T, f *recordtest.Fixture) {
+			f.Git("checkout", "HEAD", "--", "roadmap/FT1.md")
+		}},
+		{name: "wrong-source", want: policyRefusal, change: func(t *testing.T, f *recordtest.Fixture) {
+			editPolicy(t, f, func(policy *commitment.Policy) { policy.Deliveries[0].Source = f.Git("rev-parse", "HEAD~1") })
+		}},
+		{name: "wrong-evidence", want: policyRefusal, change: func(t *testing.T, f *recordtest.Fixture) {
+			editPolicy(t, f, func(policy *commitment.Policy) { policy.Deliveries[0].Evidence = policy.Deliveries[0].Identity })
+		}},
+		{name: "omitted-fact", want: policyRefusal, change: func(t *testing.T, f *recordtest.Fixture) {
+			editPolicy(t, f, func(policy *commitment.Policy) { policy.Deliveries = nil })
+		}},
+		{name: "executable-policy", want: policyRefusal, change: func(t *testing.T, f *recordtest.Fixture) {
+			if err := os.Chmod(filepath.Join(f.Root, commitment.PolicyPath), 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			err := gradeClosure(t, func(f *recordtest.Fixture) { row.change(t, f) })
+			if err == nil || !strings.Contains(err.Error(), row.want) {
+				t.Fatalf("%s = %v, want a refusal naming %q", row.name, err, row.want)
+			}
+		})
+	}
+}
+
 // The oracle refuses a closure that also deletes the unrelated obligation B.
 func TestCommitmentExtraClosure(t *testing.T) {
 	t.Parallel()

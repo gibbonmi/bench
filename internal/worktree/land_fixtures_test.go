@@ -77,8 +77,9 @@ func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, hom
 
 // seededLandingFixture is landingFixtureWithGateStep with the approved policy that seed
 // writes before the review base. The seed must approve specs/x/spec.md for the delivery
-// outcome, because the source assignment starts that outcome.
-func seededLandingFixture(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string)) landingFixture {
+// outcome, because the source assignment starts that outcome. Each fence path joins the
+// spec's ownership fence and the ticket writes, so the source may change that path.
+func seededLandingFixture(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string), fence ...string) landingFixture {
 	t.Helper()
 	gateSpec, prospectiveSpec := "", ""
 	f := landingGateFixture(t)
@@ -104,10 +105,15 @@ func seededLandingFixture(t *testing.T, request, ignored, declaration, home stri
 		mustWrite(t, filepath.Join(root, ".gitignore"), []byte(ignore), 0o644)
 	}
 	specBody := "# x\n\nStatus: staged\n\n## User stories\n1. Land source.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | lands | command | catches failure |\n\n## Ownership fences\n\n- `owned.txt`\n- `reviews/x.md`\n- `" + siblingReviewPath + "`\n"
+	writes := "owned.txt (new), " + siblingReviewPath + " (new)"
+	for _, path := range fence {
+		specBody += "- `" + path + "`\n"
+		writes += ", " + path
+	}
 	prepared := recordtest.Prepare(t, root, 1, "specs/x/spec.md", specBody)
 	// The ticket writes the fence less its review pickup, so a landing that grades
 	// fence-writes reads a union-exact spec.
-	prepared.SetTicketWrites("owned.txt (new), " + siblingReviewPath + " (new)")
+	prepared.SetTicketWrites(writes)
 	seed(t, root)
 	prepared.Commit("approve fixture delivery")
 	base := prepared.Tip()

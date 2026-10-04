@@ -6,7 +6,11 @@ The commit verb reports its publication boundary with exit 3. Exit 1 is a refusa
 
 The same landing is the one author of the verified roadmap closure. The active commitment can approve a spec as the complete delivery of named obligations. A green landing of that spec then publishes the spec flip and the closure in one commit. The closure records the delivery in the commitment policy. It also removes each satisfied row, the detail file of that row, and the sequence entry of each delivered outcome.
 
+The closure also removes each satisfied row from the board dependency tables. A table row whose dependent is a satisfied row goes. A satisfied row leaves each dependency list, and a table row whose list becomes empty goes. A closed row therefore never keeps dependent work blocked.
+
 A partial delivery closes only its named obligations, and every other row stays. A `Roadmap:` line alone closes nothing.
+
+An explicitly listed legacy run has no delivery binding. When its approved scope lists the landed spec, the landing closes that spec's delivery in the same way. The landing releases the legacy run only when every approved deliverable in its scope is delivered. A partly delivered scope stays open.
 
 The commitment owner derives one exact closure from the reviewed source. The landing applies that closure, and the completion gate compares the candidate with the same closure. A list of permitted paths is not sufficient. A kept sequence entry, a missing row removal, or an extra removal makes the gate refuse. The delivery fact names the reviewed source commit and its completion record, and never the publication that carries the fact.
 

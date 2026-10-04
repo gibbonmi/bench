@@ -91,9 +91,12 @@ func Selection(policy Policy) Projection {
 	return Projection{}
 }
 
+// PlanningMode is the one mode a planning document carries: a regular non-executable file.
+const PlanningMode = "100644"
+
 // PlanningPath classifies documentation paths. Promotion paths must be named by a planning artifact.
 func PlanningPath(name, mode string, promotions []string) bool {
-	if mode != "000000" && mode != "100644" {
+	if mode != "000000" && mode != PlanningMode {
 		return false
 	}
 	if name == PolicyPath {

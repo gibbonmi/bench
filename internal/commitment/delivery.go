@@ -52,6 +52,29 @@ func Remaining(policy Policy) []string {
 	return slices.DeleteFunc(Selection(policy).Outcomes, func(outcome string) bool { return delivered[outcome] })
 }
 
+// ScopeDelivered reports whether a legacy scope is finished: the policy records a delivery
+// for every scope path that the active milestone approves as a deliverable, and the scope
+// names at least one such path. A partly delivered scope stays open.
+func ScopeDelivered(policy Policy, scope []string) bool {
+	delivered := map[string]bool{}
+	for _, fact := range policy.Deliveries {
+		if binding, found := deliveredBinding(policy, fact); found {
+			delivered[binding.Source.Path] = true
+		}
+	}
+	approved := 0
+	for _, path := range scope {
+		if _, _, found, _ := activeDeliverable(policy, path); !found {
+			continue
+		}
+		if !delivered[path] {
+			return false
+		}
+		approved++
+	}
+	return approved > 0
+}
+
 // deliveredOutcomes holds each outcome with a recorded delivery and no unsatisfied
 // source. A partial delivery therefore leaves its outcome open.
 func deliveredOutcomes(policy Policy) map[string]bool {

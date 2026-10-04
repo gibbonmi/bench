@@ -8,6 +8,13 @@ import (
 )
 
 func sequenceBounds(lines []string) (start, end int, hasSection bool) {
+	return sectionBounds(lines, "## Recommended sequence")
+}
+
+// sectionBounds locates the first level-two section titled heading outside a code fence.
+// start is the heading line, or -1 when the section is absent, and end is the next
+// level-two heading or the end of lines. hasSection reports any level-two heading.
+func sectionBounds(lines []string, heading string) (start, end int, hasSection bool) {
 	inFence := false
 	start, end = -1, len(lines)
 	for idx, line := range lines {
@@ -22,7 +29,7 @@ func sequenceBounds(lines []string) (start, end int, hasSection bool) {
 		if strings.HasPrefix(trimmed, "## ") {
 			hasSection = true
 		}
-		if start < 0 && trimmed == "## Recommended sequence" {
+		if start < 0 && trimmed == heading {
 			start = idx
 			continue
 		}

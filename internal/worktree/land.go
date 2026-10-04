@@ -207,7 +207,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
 	}, commitmentAdmission{
 		store:  commitrepo.Store{Root: root},
-		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip},
+		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Spec: source.specPath},
 		gap:    j.publicationGap,
 	})
 	if err != nil {

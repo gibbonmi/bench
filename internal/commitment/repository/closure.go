@@ -16,16 +16,12 @@ import (
 type Delivery struct{ Spec, Source string }
 
 // Edit is one exact file effect of a verified closure. A deleted path carries no data
-// and no mode.
+// and no mode. A written path is a planning document and carries the planning mode.
 type Edit struct {
 	Path, Mode string
 	Data       []byte
 	Delete     bool
 }
-
-// closureMode is the one mode a closure writes. The policy and the board index are
-// planning documents, and that class admits only a regular non-executable file.
-const closureMode = "100644"
 
 // Delivered returns policy after delivery and the sources that the delivery completely
 // satisfies. The completion evidence is the record that the reviewed source retains.
@@ -58,7 +54,7 @@ func (store Store) Closure(tree string, delivery Delivery) ([]Edit, error) {
 	if err != nil {
 		return nil, err
 	}
-	edits := []Edit{{Path: commitment.PolicyPath, Mode: closureMode, Data: policy}}
+	edits := []Edit{{Path: commitment.PolicyPath, Mode: commitment.PlanningMode, Data: policy}}
 	var rows []string
 	for _, source := range closed {
 		if roadmap.RowOwner(source.ID, source.Path) {
@@ -75,14 +71,15 @@ func (store Store) Closure(tree string, delivery Delivery) ([]Edit, error) {
 		return nil, err
 	}
 	if !bytes.Equal(index, closedIndex) {
-		edits = append(edits, Edit{Path: roadmap.RoadmapFile, Mode: closureMode, Data: closedIndex})
+		edits = append(edits, Edit{Path: roadmap.RoadmapFile, Mode: commitment.PlanningMode, Data: closedIndex})
 	}
 	return edits, nil
 }
 
 // ReconcileDelivered releases each local claim and binding whose outcome the published
-// default-branch policy records as delivered. The published fact is the authority, so a
-// failure here leaves the delivered obligation closed, and a retry changes nothing more.
+// default-branch policy records as delivered, and each legacy continuation whose scope
+// that policy records as delivered. The published fact is the authority, so a failure
+// here leaves the delivered obligation closed, and a retry changes nothing more.
 func (store Store) ReconcileDelivered() error {
 	policy, exists, err := store.Policy()
 	if err != nil || !exists {
@@ -106,6 +103,12 @@ func (store Store) ReconcileDelivered() error {
 		for _, binding := range state.Bindings {
 			if open(binding.Milestone, binding.Outcome) {
 				next.Bindings = append(next.Bindings, binding)
+			}
+		}
+		next.Continuations = nil
+		for _, continuation := range state.Continuations {
+			if !commitment.ScopeDelivered(policy, continuation.Scope) {
+				next.Continuations = append(next.Continuations, continuation)
 			}
 		}
 		return withRuntime(ledger, next)

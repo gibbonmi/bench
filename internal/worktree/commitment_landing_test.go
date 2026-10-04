@@ -8,12 +8,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
@@ -22,9 +24,16 @@ import (
 // residual row, and outcome B owns FT2. A non-nil step adds one prospective gate line.
 func closureLandingFixture(t *testing.T, request string, step func(*testrepo.GateFixture, string) string, residual ...string) landingFixture {
 	t.Helper()
-	return seededLandingFixture(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), true, step, func(t testing.TB, root string) {
+	return seededClosureFixture(t, request, step, func(t testing.TB, root string) {
 		commitmenttest.SeedClosure(t, root, "specs/x/spec.md", residual...)
 	})
+}
+
+// seededClosureFixture is the graded public landing fixture whose policy seed writes. Each
+// fence path joins the spec's ownership fence, so the source may change that path.
+func seededClosureFixture(t *testing.T, request string, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string), fence ...string) landingFixture {
+	t.Helper()
+	return seededLandingFixture(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), true, step, seed, fence...)
 }
 
 // closureState is what main and the local intent record say about the delivery outcome.
@@ -113,6 +122,88 @@ func TestCommitmentPartialDelivery(t *testing.T) {
 	}
 }
 
+// A listed legacy run that delivers an approved spec in its scope closes that delivery
+// with no binding. Reconciliation releases the continuation only when every approved
+// deliverable in the scope is delivered, so a partly delivered scope stays open.
+func TestCommitmentLegacyClosure(t *testing.T) {
+	t.Parallel()
+	for _, row := range []struct {
+		name    string
+		pending string
+		open    bool
+	}{
+		{name: "delivered-scope"},
+		{name: "partly-delivered-scope", pending: "specs/y/spec.md", open: true},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			request := "land-commitment-legacy-closure-" + row.name
+			scope := []string{"owned.txt", "reviews/x.md", "specs/x/spec.md"}
+			f := seededClosureFixture(t, request, nil, func(t testing.TB, root string) {
+				if row.pending == "" {
+					commitmenttest.SeedClosure(t, root, "specs/x/spec.md")
+					return
+				}
+				commitmenttest.SeedClosure(t, root, "specs/x/spec.md", "FT3")
+				commitmenttest.ApprovePending(t, root, row.pending, "FT3")
+				scope = append(scope, row.pending)
+			})
+			mustNoError(t, intent.Transact(f.root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+				ledger.Commitment = &intent.CommitmentState{Continuations: []intent.LegacyContinuation{{Assignment: f.creation.Assignment.ID, Request: f.creation.Assignment.Request, Scope: scope}}}
+				return ledger, true, nil
+			}, nil))
+			r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+			if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
+				t.Fatalf("legacy delivery landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
+			}
+			got := readClosureState(t, f.root)
+			if got.rows["FT1"] || !got.rows["FT2"] || got.rows["FT3"] != row.open || len(got.deliveries) != 1 || got.deliveries[0].Source != f.tip {
+				t.Fatalf("legacy delivery = rows %v facts %+v, want FT1 closed by one fact naming %s", got.rows, got.deliveries, f.tip)
+			}
+			ledger, err := intent.Read(f.root)
+			mustNoError(t, err)
+			if open := ledger.Commitment != nil && len(ledger.Commitment.Continuations) == 1; open != row.open {
+				t.Fatalf("legacy continuation open = %t, want %t: %+v", open, row.open, ledger.Commitment)
+			}
+		})
+	}
+}
+
+// A delivering source that also closes a residual or an unrelated obligation itself, by
+// removing its row and its detail owner, refuses at admission. The refusal comes before
+// the gate runs and before main moves.
+func TestCommitmentClosureAdmission(t *testing.T) {
+	t.Parallel()
+	for _, id := range []string{"FT3", "FT2"} {
+		t.Run(id, func(t *testing.T) {
+			t.Parallel()
+			request := "land-commitment-closure-admission-" + id
+			detail := "roadmap/" + id + ".md"
+			f := seededClosureFixture(t, request, nil, func(t testing.TB, root string) {
+				commitmenttest.SeedClosure(t, root, "specs/x/spec.md", "FT3")
+			}, roadmap.RoadmapFile, detail)
+			index, err := roadmap.Close([]byte(commitmenttest.ClosureIndex("FT3")), []string{id}, []string{commitmenttest.DeliveryOutcome, "B"})
+			mustNoError(t, err)
+			mustWrite(t, filepath.Join(f.creation.Path, roadmap.RoadmapFile), index, 0o644)
+			gitRun(t, f.creation.Path, "rm", "-q", detail)
+			gitRun(t, f.creation.Path, "add", roadmap.RoadmapFile)
+			gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "close "+id)
+			refreshLandingEvidence(t, f.creation.Path, f.base)
+			tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+			r := runVerb(t, verbLand, f.call(landArgs(request, f.base, tip, f.creation.Path)...))
+			if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=commitment: ") || !strings.Contains(r.stdout, "commitment source \""+id+"\" refused") {
+				t.Fatalf("closing %s = (%d, %q, %q), want the protected-source refusal", id, r.exit, r.stdout, r.stderr)
+			}
+			if tally, err := os.ReadFile(f.tally); !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("gate tally = %q, %v; want no gate run", tally, err)
+			}
+			if main := gitOutput(t, f.root, "rev-parse", "main"); main != f.base {
+				t.Fatalf("refused landing moved main to %s, want %s", main, f.base)
+			}
+		})
+	}
+}
+
 // A red prospective gate publishes neither the delivery nor its closure.
 func TestCommitmentClosureGateRed(t *testing.T) {
 	t.Parallel()
@@ -179,13 +270,32 @@ func TestCommitmentPersistenceBeforeGate(t *testing.T) {
 }
 
 // A local claim write that fails after the publication leaves the delivery published.
-// The resume finishes that write and publishes nothing a second time.
+// The real reconciliation fails against an unwritable intent ledger directory. The resume
+// finishes that write and publishes nothing a second time.
 func TestCommitmentClosureResume(t *testing.T) {
 	t.Parallel()
+	if os.Geteuid() == 0 {
+		capability.Capability(t, capability.Privilege, "root bypasses directory permissions; cannot deny the intent ledger write")
+	}
 	request := "land-commitment-closure-resume"
 	f := closureLandingFixture(t, request, nil)
+	address, err := intent.Address(f.root)
+	mustNoError(t, err)
+	dir := filepath.Dir(address)
+	info, err := os.Stat(dir)
+	mustNoError(t, err)
+	t.Cleanup(func() { _ = os.Chmod(dir, info.Mode().Perm()) })
 	broken := defaultJoins()
-	broken.reconcileCommitment = func(string) error { return errors.New("local claim write failed") }
+	reconcile := broken.reconcileCommitment
+	broken.reconcileCommitment = func(root string) error {
+		mustNoError(t, os.Chmod(dir, 0o500))
+		err := reconcile(root)
+		mustNoError(t, os.Chmod(dir, info.Mode().Perm()))
+		if err == nil {
+			t.Error("reconciliation wrote an unwritable intent ledger")
+		}
+		return err
+	}
 	r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...))
 	r.mustViaJoins(t)
 	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:commitment") {
