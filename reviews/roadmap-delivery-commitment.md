@@ -973,6 +973,170 @@ This suggestion is optional advice and has no repair disposition.
           ]
         }
       ]
+    },
+    {
+      "id": "DC-C3",
+      "base": "975be583753195efcc790927fc8019b0e18367ff",
+      "tip": "ca141db2e1e6813ebc6b0ac7c522fb855e52951b",
+      "plan_digest": "sha256:44dc3d96f2c82e35a8c0f95cf64d9a988c14b3a3fd3df478e6b343d2e3bf5b57",
+      "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+      "acceptance_rows": [
+        "DC6",
+        "DC10",
+        "DC11",
+        "DC13",
+        "DC15",
+        "DC26",
+        "DC27",
+        "DC31"
+      ],
+      "verification": [
+        {
+          "id": "c3-author-commit",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c3-commit",
+            "digest": "sha256:db6c6ae5feed9bb8dcfd13419ffa2f8cc903eb90e0941d2dc12bf9630ca0bfeb",
+            "excerpt": "native 46a429: internal/commit pass 11240ms; failures 0; skips 0.\n"
+          },
+          "requirement": "commit",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-author-preflight",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c3-preflight",
+            "digest": "sha256:43cd2dbad756a35dabe8df5515a8cd45b3a1e862272d03a2a4cce5a4718f85aa",
+            "excerpt": "native 745aaf: internal/preflight pass 33666ms; evidencecmd pass 24695ms; chargesource and preflighttest no-tests; failures 0; skips 0.\n"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-author-roadmap",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c3-roadmap",
+            "digest": "sha256:ee0725717d52f99816fe8638641f578d2edebd14673971a4be28ea8e9447617c",
+            "excerpt": "native 583002: internal/roadmap pass 2732ms; failures 0; skips 0.\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-author-commitment",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c3-commitment",
+            "digest": "sha256:7a405230284a367bb4e70a1ba114c728dde45bc45c4216ac043058af3ded7999",
+            "excerpt": "native 632600: internal/commitment pass 3866ms; child packages compiled; failures 0; skips 0. Later candidate change only adds an error remedy and removes an unused parameter; final commit and system runs exercise that source.\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-author-charge-evidence-system",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c3-charge-evidence-system",
+            "digest": "sha256:d45384d33eb20ff724d6ae1b4afedcb601537852774fe8d8708d779266d7defd",
+            "excerpt": "native 29e968: internal/systemtest pass 78515ms; failures 0; skips 0.\n"
+          },
+          "requirement": "charge-evidence-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-author-landing",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c3-landing",
+            "digest": "sha256:6b25a3d16f4c0b14a758a5f374b636a922094204316040363a77616f70b710d9",
+            "excerpt": "native 2ac0f6: internal/landing pass 12382ms; failures 0; capability skips 2 (character device); environment skips 0.\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-author-bench",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c3-bench",
+            "digest": "sha256:941b96113f7ff79df26bb4f3b2968f7dfa9c3fedcdd1ad4fba875b7f074fe4a2",
+            "excerpt": "native 6ec016: cmd/bench pass 19047ms; failures 0; skips 0. Later plan-only bounded-response selection is covered by final evidencecmd run 745aaf.\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-author-conformance",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:c3-conformance",
+            "digest": "sha256:294dec6c251cc5a9041eb6fded9d6240a9ca810f363777cf8f15c8544d1e4336",
+            "excerpt": "native c1559b: internal/conformance pass 38971ms; failures 0; capability skips 3 (two long socket paths, one character device); environment skips 0.\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1288,3 +1452,22 @@ The first checkpoint stopped at evidence validation before running the gate.
 The prior probe record used the wrapper exit of zero. The current entry records the mutated test exit of one.
 The retained native failures, successful baseline, and exact restore are unchanged.
 This metadata correction changes no source, finding, or diagnostic verdict.
+
+## DC-C3 author mutation evidence
+
+The three author probes caught their intended failures. Each probe restored its source exactly.
+These supplemental probes do not replace the eight planned checks.
+
+```text
+native bea16c: probe bit; baseline passed; inner test exit 1; TestCommitmentCommitBeforeEffects fails in both cases when candidate authorization errors are ignored; unbound commit returns 0 and formats Go; restored yes; wrapper exit 0.
+```
+
+```text
+native 228685: probe bit; baseline passed; inner test exit 1; TestCommitmentOccurrenceUpdate fails when the stripped label changes from Occurrences to Unknown; restored yes; wrapper exit 0.
+```
+
+```text
+native 1566ca: probe bit; baseline passed; inner test exit 1; TestHelpInventoryIsComplete fails when --plan-only becomes --plan-draft; restored yes; wrapper exit 0. This proves the independent help expectation detects a public grammar mutation.
+```
+
+The initial review starts with zero repair cycles consumed. The chunk permits two repair cycles.
