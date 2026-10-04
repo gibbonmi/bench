@@ -6,7 +6,9 @@ Roadmap: FT360
 
 Decision source: `roadmap/FT360.md`, the reviewed quality-survey artifact from drain `d-0bca6e72fedd`.
 
-Verification log: 2 iteration(s) to accept the spec — GPT-6.1 Sol/high accepted the caller-class and no-change commit repairs. Slice review is pending.
+Verification log: 2 iteration(s) to accept each stage — GPT-6.1 Sol/high accepted the spec. GPT-5.6 Sol/high accepted the slices.
+
+Implementation approval: pending. This planning phase does not authorize the successor build.
 
 ## Problem
 
