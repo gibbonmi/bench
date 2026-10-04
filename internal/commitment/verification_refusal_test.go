@@ -3,6 +3,7 @@ package commitment_test
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gate/greenmarker"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -18,19 +21,31 @@ import (
 // evidence reference and reviewer assessment.
 func TestCommitmentVerificationEvidence(t *testing.T) {
 	root := deliveredMilestone(t)
+	policy, _, err := (commitrepo.Store{Root: root}).Policy()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The successor's own complete evidence, so only its inactivity refuses it.
+	successor := policy.Milestones[1].Outcomes[0].Criteria[0]
+	successorEvidence := func(evidence *commitment.MilestoneEvidence) {
+		evidence.Results = []commitment.CriterionResult{{Criterion: successor.ID, Identity: commitment.CriterionIdentity(successor), Result: commitment.ResultVerified, Evidence: commitmenttest.MilestoneRecord, Assessment: "The reviewer confirmed the C outcome."}}
+	}
 	for _, row := range []struct {
 		name      string
 		milestone string
 		want      []string
 		edit      func(*commitment.MilestoneEvidence)
 	}{
-		{name: "inactive-milestone", milestone: commitmenttest.SuccessorMilestone, want: []string{"is not the active milestone"}},
+		{name: "inactive-milestone", milestone: commitmenttest.SuccessorMilestone, want: []string{"is not the active milestone"}, edit: successorEvidence},
 		{name: "unsupported-version", want: []string{"unsupported version 2"}, edit: func(evidence *commitment.MilestoneEvidence) { evidence.Version = 2 }},
 		{name: "gate-incomplete", want: []string{"gate evidence", "is incomplete"}, edit: func(evidence *commitment.MilestoneEvidence) { evidence.Gate = "" }},
 		{name: "gate-unresolved", want: []string{"gate evidence", "does not resolve"}, edit: func(evidence *commitment.MilestoneEvidence) { evidence.Gate = "reviews/absent.md" }},
 		{name: "evidence-incomplete", want: []string{"B-done", "is incomplete"}, edit: func(evidence *commitment.MilestoneEvidence) { evidence.Results[1].Evidence = "" }},
 		{name: "evidence-unresolved", want: []string{"B-done", "does not resolve"}, edit: func(evidence *commitment.MilestoneEvidence) { evidence.Results[1].Evidence = "specs/absent.md" }},
 		{name: "assessment-missing", want: []string{"B-done", "has no reviewer outcome assessment"}, edit: func(evidence *commitment.MilestoneEvidence) { evidence.Results[1].Assessment = " " }},
+		{name: "assessment-control", want: []string{"B-done", "has no reviewer outcome assessment"}, edit: func(evidence *commitment.MilestoneEvidence) {
+			evidence.Results[1].Assessment = "The reviewer confirmed B.\nInjected line."
+		}},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			milestone := row.milestone
@@ -43,6 +58,32 @@ func TestCommitmentVerificationEvidence(t *testing.T) {
 	t.Run("undelivered-outcome", func(t *testing.T) {
 		partial := commitmenttest.SeedMilestone(t, commitmenttest.MilestoneSpec)
 		refusesVerification(t, partial, active, nil, "has undelivered outcomes B")
+	})
+	t.Run("no-policy", func(t *testing.T) {
+		bare := gittest.RepoOnBranch(t, "main")
+		commitmenttest.Write(t, bare, commitmenttest.MilestoneRecord, "record\n")
+		commitmenttest.Commit(t, bare, "no policy")
+		commitmenttest.MarkGreen(t, bare)
+		evidence := filepath.Join(t.TempDir(), "evidence.json")
+		commitmenttest.Write(t, filepath.Dir(evidence), filepath.Base(evidence), `{"version":1,"revision":"`+gittest.Output(t, bare, "rev-parse", "main")+`","gate":"`+commitmenttest.MilestoneRecord+`","results":[]}`)
+		before := commitmenttest.MilestoneState(t, bare)
+		if out, code := verifyCommand(bare, active, evidence); code != 1 || !strings.Contains(out, "adoption-required") {
+			t.Fatalf("verify = (%q, %d), want the adoption-required refusal", out, code)
+		}
+		if commitmenttest.MilestoneState(t, bare) != before {
+			t.Fatal("refused verification changed the milestone state")
+		}
+	})
+	t.Run("gate-marker-absent", func(t *testing.T) {
+		root := deliveredMilestone(t)
+		gittest.Output(t, root, "update-ref", "-d", greenmarker.Ref("main"))
+		refusesVerification(t, root, active, nil, "gate evidence", "no project-green marker")
+	})
+	t.Run("gate-marker-elsewhere", func(t *testing.T) {
+		root := deliveredMilestone(t)
+		earlier := gittest.Output(t, root, "rev-parse", "main~1")
+		gittest.Output(t, root, "update-ref", greenmarker.Ref("main"), earlier)
+		refusesVerification(t, root, active, nil, "gate evidence", "project-green marker "+earlier+" is not the published revision")
 	})
 }
 
@@ -69,6 +110,23 @@ func TestCommitmentCompletionProposal(t *testing.T) {
 			refusesCompletion(t, root, completionProposal(t, root, verified(t, root).ID, row.edit), row.want)
 		})
 	}
+	t.Run("undelivered-outcome", func(t *testing.T) {
+		partial := commitmenttest.SeedMilestone(t, commitmenttest.MilestoneSpec)
+		policy, _, err := (commitrepo.Store{Root: partial}).Policy()
+		if err != nil {
+			t.Fatal(err)
+		}
+		policy.Completions = []commitment.Completion{{Milestone: active, Verification: "sha256:unverified"}}
+		policy.ActiveMilestone = ""
+		// The canonical encoder refuses this policy, so the proposal is encoded raw.
+		data, err := json.Marshal(policy)
+		if err != nil {
+			t.Fatal(err)
+		}
+		proposal := filepath.Join(t.TempDir(), "completion.json")
+		commitmenttest.Write(t, filepath.Dir(proposal), filepath.Base(proposal), string(data))
+		refusesCompletion(t, partial, proposal, `invalid completion of milestone "`+active+`"`)
+	})
 	t.Run("receipt-after-policy-change", func(t *testing.T) {
 		root := deliveredMilestone(t)
 		verification := verified(t, root)

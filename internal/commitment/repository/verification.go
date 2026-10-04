@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/commitment"
+	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
@@ -21,7 +22,7 @@ func (store Store) Verify(milestone string, input []byte) (commitment.Verificati
 	if err != nil {
 		return commitment.Verification{}, err
 	}
-	revision, err := store.sourceRevision()
+	branch, revision, err := store.defaultRevision()
 	if err != nil {
 		return commitment.Verification{}, err
 	}
@@ -32,11 +33,17 @@ func (store Store) Verify(milestone string, input []byte) (commitment.Verificati
 	if policy == nil {
 		return commitment.Verification{}, errors.New("commitment policy is absent: adoption-required")
 	}
+	// The project-green marker is the gate's own record of the revision whose tree last
+	// held green, so it binds the retained gate evidence to the examined revision.
+	green, _, err := greenmarker.Read(store.Root, branch)
+	if err != nil {
+		return commitment.Verification{}, fmt.Errorf("gate evidence: %w", err)
+	}
 	resolve := func(reference string) (string, error) {
 		object, err := git.Output("-C", store.Root, "rev-parse", "--verify", "--quiet", revision+":"+reference)
 		return strings.TrimSpace(object), err
 	}
-	verification, err := commitment.VerifyMilestone(*policy, identity, revision, milestone, evidence, resolve)
+	verification, err := commitment.VerifyMilestone(*policy, identity, commitment.Examined{Revision: revision, Green: green}, milestone, evidence, resolve)
 	if err != nil {
 		return commitment.Verification{}, err
 	}

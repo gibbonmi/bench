@@ -17,10 +17,8 @@ func Deliver(policy Policy, path, source, evidence string) (Policy, []SourceBind
 		return policy, nil, err
 	}
 	fact := DeliveryFact{Milestone: policy.ActiveMilestone, Outcome: outcome.ID, Binding: binding.Source.ID, Identity: binding.Source.Identity, Source: source, Evidence: evidence}
-	for _, recorded := range policy.Deliveries {
-		if recorded.Outcome == fact.Outcome && recorded.Binding == fact.Binding {
-			return policy, nil, fmt.Errorf("deliverable %q is already delivered", path)
-		}
+	if deliveredKeys(policy)[fact.key()] {
+		return policy, nil, fmt.Errorf("deliverable %q is already delivered", path)
 	}
 	var closed []SourceBinding
 	for _, candidate := range outcome.Sources {
@@ -87,11 +85,11 @@ func deliveredPaths(policy Policy) map[string]bool {
 	return delivered
 }
 
-// deliveredOutcomes holds each outcome with a recorded delivery and no unsatisfied
-// obligation. An outcome with sources owes each source. A rowless outcome owes each of its
-// approved deliverables. A partial delivery therefore leaves its outcome open.
+// deliveredOutcomes holds each outcome with a recorded delivery and nothing unsettled. An
+// outcome with sources owes each source. A rowless outcome owes each of its approved
+// deliverables. A partial delivery therefore leaves its outcome open.
 func deliveredOutcomes(policy Policy) map[string]bool {
-	satisfied := Satisfied(policy)
+	settled := settle(policy)
 	recorded := map[string]bool{}
 	for _, fact := range policy.Deliveries {
 		recorded[fact.Outcome] = true
@@ -99,11 +97,10 @@ func deliveredOutcomes(policy Policy) map[string]bool {
 	delivered := map[string]bool{}
 	for _, milestone := range policy.Milestones {
 		for _, outcome := range milestone.Outcomes {
-			open := slices.ContainsFunc(outcome.Sources, func(source SourceBinding) bool { return !satisfied[source.ID] })
+			sources, bindings := settled.unsettled(outcome)
+			open := len(sources) > 0
 			if len(outcome.Sources) == 0 {
-				open = slices.ContainsFunc(outcome.Deliverables, func(binding DeliveryBinding) bool {
-					return !BindingDelivered(policy, milestone.ID, outcome.ID, binding.Source.ID)
-				})
+				open = len(bindings) > 0
 			}
 			delivered[outcome.ID] = recorded[outcome.ID] && !open
 		}
@@ -111,12 +108,66 @@ func deliveredOutcomes(policy Policy) map[string]bool {
 	return delivered
 }
 
-// BindingDelivered reports whether policy records the delivery of the deliverable binding
-// that outcome approves in milestone.
-func BindingDelivered(policy Policy, milestone, outcome, binding string) bool {
-	return slices.ContainsFunc(policy.Deliveries, func(fact DeliveryFact) bool {
-		return fact.Milestone == milestone && fact.Outcome == outcome && fact.Binding == binding
-	})
+// Unsettled returns, in policy order, each outcome source that no recorded delivery
+// satisfies and each approved deliverable that no recorded delivery delivers. A recorded
+// delivery settles what it delivered: its closure deleted each satisfied row, and its
+// publication flipped a delivered spec or removed a delivered tickets-only folder. The
+// fact, not the current tree, then binds that content.
+func Unsettled(policy Policy) ([]SourceBinding, []DeliveryBinding) {
+	settled := settle(policy)
+	var sources []SourceBinding
+	var bindings []DeliveryBinding
+	for _, milestone := range policy.Milestones {
+		for _, outcome := range milestone.Outcomes {
+			openSources, openBindings := settled.unsettled(outcome)
+			sources, bindings = append(sources, openSources...), append(bindings, openBindings...)
+		}
+	}
+	return sources, bindings
+}
+
+// settlement holds what the recorded deliveries of one policy settle.
+type settlement struct {
+	satisfied map[string]bool
+	delivered map[deliveryKey]bool
+}
+
+func settle(policy Policy) settlement {
+	return settlement{satisfied: Satisfied(policy), delivered: deliveredKeys(policy)}
+}
+
+// unsettled returns the sources and the deliverables of outcome that settled leaves open.
+func (settled settlement) unsettled(outcome Outcome) ([]SourceBinding, []DeliveryBinding) {
+	var sources []SourceBinding
+	for _, source := range outcome.Sources {
+		if !settled.satisfied[source.ID] {
+			sources = append(sources, source)
+		}
+	}
+	var bindings []DeliveryBinding
+	for _, binding := range outcome.Deliverables {
+		if !settled.delivered[deliveryKey{outcome: outcome.ID, binding: binding.Source.ID}] {
+			bindings = append(bindings, binding)
+		}
+	}
+	return sources, bindings
+}
+
+// deliveryKey names one delivered binding. Outcome identities are unique across the
+// policy, so the outcome and the binding identify it without the milestone.
+type deliveryKey struct{ outcome, binding string }
+
+func (fact DeliveryFact) key() deliveryKey {
+	return deliveryKey{outcome: fact.Outcome, binding: fact.Binding}
+}
+
+// deliveredKeys holds the key of each recorded delivery.
+func deliveredKeys(policy Policy) map[deliveryKey]bool {
+	keys := map[deliveryKey]bool{}
+	for _, fact := range policy.Deliveries {
+		keys[fact.key()] = true
+	}
+	return keys
 }
 
 // deliveredBinding resolves the approved deliverable that fact records.

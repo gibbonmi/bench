@@ -85,16 +85,24 @@ func TestCommitmentDeliverRowless(t *testing.T) {
 	}
 }
 
-// A rowless outcome with two approved deliverables stays open after the first delivery and
-// completes only after the second, in either order.
-func TestCommitmentDeliverRowlessPair(t *testing.T) {
-	paths := []string{"specs/c/spec.md", "specs/d"}
-	p := deliveryPolicy()
+// rowlessPair is the paths of the two deliverables that withRowlessPair approves.
+var rowlessPair = []string{"specs/c/spec.md", "specs/d"}
+
+// withRowlessPair adds to p the rowless outcome C, which approves both rowlessPair paths.
+func withRowlessPair(p commitment.Policy) commitment.Policy {
 	c := commitment.Outcome{ID: "C", Criteria: []commitment.Criterion{{ID: "c-done", Text: "C is delivered."}}, Sources: []commitment.SourceBinding{}}
-	for i, path := range paths {
+	for i, path := range rowlessPair {
 		c.Deliverables = append(c.Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "rowless" + string(rune('1'+i)), Path: path, Identity: "sha256:" + path}})
 	}
 	p.Milestones[0].Outcomes = append(p.Milestones[0].Outcomes, c)
+	return p
+}
+
+// A rowless outcome with two approved deliverables stays open after the first delivery and
+// completes only after the second, in either order.
+func TestCommitmentDeliverRowlessPair(t *testing.T) {
+	paths := rowlessPair
+	p := withRowlessPair(deliveryPolicy())
 	for _, order := range [][]string{paths, {paths[1], paths[0]}} {
 		first, _, err := commitment.Deliver(p, order[0], "source", "evidence")
 		if err != nil || !slices.Equal(commitment.Remaining(first), []string{"A", "B", "C"}) {
@@ -132,5 +140,45 @@ func TestCommitmentDeliveryFactValidation(t *testing.T) {
 				t.Fatalf("Validate = %v, want the invalid-delivery refusal", err)
 			}
 		})
+	}
+}
+
+// Unsettled keeps each source and deliverable that no recorded delivery settles, binding by
+// binding. Outcome A approves two deliverables: the delivery of the spec settles FT1 and
+// the spec, and FT3 and its own deliverable stay bound. The first delivery of the rowless
+// pair settles that binding alone.
+func TestCommitmentUnsettled(t *testing.T) {
+	const rest = "specs/rest/spec.md"
+	p := withRowlessPair(deliveryPolicy("FT1"))
+	a := &p.Milestones[0].Outcomes[0]
+	a.Deliverables = append(a.Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "rest", Path: rest, Identity: "sha256:rest"}, Obligations: []string{"FT3"}})
+	unsettled := func(p commitment.Policy) (sources, bindings []string) {
+		openSources, openBindings := commitment.Unsettled(p)
+		for _, source := range openSources {
+			sources = append(sources, source.ID)
+		}
+		for _, binding := range openBindings {
+			bindings = append(bindings, binding.Source.ID)
+		}
+		return sources, bindings
+	}
+	for _, step := range []struct {
+		deliver           string
+		sources, bindings []string
+	}{
+		{"", []string{"FT1", "FT3", "FT2"}, []string{"spec", "rest", "rowless1", "rowless2"}},
+		{deliverySpec, []string{"FT3", "FT2"}, []string{"rest", "rowless1", "rowless2"}},
+		{rowlessPair[0], []string{"FT3", "FT2"}, []string{"rest", "rowless2"}},
+		{rest, []string{"FT2"}, []string{"rowless2"}},
+	} {
+		if step.deliver != "" {
+			var err error
+			if p, _, err = commitment.Deliver(p, step.deliver, "source", "evidence"); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if sources, bindings := unsettled(p); !slices.Equal(sources, step.sources) || !slices.Equal(bindings, step.bindings) {
+			t.Fatalf("after delivering %q: Unsettled = %v, %v; want %v, %v", step.deliver, sources, bindings, step.sources, step.bindings)
+		}
 	}
 }

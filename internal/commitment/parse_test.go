@@ -59,13 +59,6 @@ func TestCommitmentMalformedPolicy(t *testing.T) {
 }
 
 func TestCommitmentPolicyAuthorityInvariants(t *testing.T) {
-	t.Run("active criteria", func(t *testing.T) {
-		p := validPolicy()
-		p.Milestones[0].Outcomes[0].Criteria = nil
-		if err := commitment.Validate(p); err == nil {
-			t.Fatal("active milestone without criteria was accepted")
-		}
-	})
 	t.Run("source ownership", func(t *testing.T) {
 		p := validPolicy()
 		p.Milestones[0].Outcomes[0].Sources = []commitment.SourceBinding{{ID: "FT1", Path: "obligation.md", Identity: commitment.Identity([]byte("body"))}}
@@ -74,6 +67,24 @@ func TestCommitmentPolicyAuthorityInvariants(t *testing.T) {
 			t.Fatal("one source path gained two outcome owners")
 		}
 	})
+}
+
+// A milestone needs outcome criteria before activation: the policy refuses an active
+// milestone with no criteria and accepts the same milestone while it stays planned.
+func TestCommitmentCriteriaBeforeActivation(t *testing.T) {
+	p := validPolicy()
+	p.Milestones[0].Outcomes[0].Criteria = nil
+	data, err := json.Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := commitment.Parse(data); err == nil || !strings.Contains(err.Error(), `active milestone "M1" has no criteria`) {
+		t.Fatalf("Parse(active milestone without criteria) = %v, want the no-criteria refusal", err)
+	}
+	p.ActiveMilestone = ""
+	if err := commitment.Validate(p); err != nil {
+		t.Fatalf("Validate(planned milestone without criteria) = %v, want valid", err)
+	}
 }
 
 func TestCommitmentExactFieldNames(t *testing.T) {

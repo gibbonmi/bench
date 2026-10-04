@@ -151,10 +151,8 @@ func transitionEffects(current *Policy, proposed Policy) Effects {
 			effects.Reordered = append(effects.Reordered, commonProposed...)
 		}
 	}
-	for _, completion := range proposed.Completions {
-		if !slices.Contains(current.Completions, completion) {
-			effects.Completed = append(effects.Completed, completion.Milestone)
-		}
+	for _, completion := range addedCompletions(current.Completions, proposed.Completions) {
+		effects.Completed = append(effects.Completed, completion.Milestone)
 	}
 	oldGrants := sliceSet(parallelKeys(current.ParallelGrants))
 	for _, grant := range parallelKeys(proposed.ParallelGrants) {
@@ -175,27 +173,27 @@ func orderedOutcomes(policy Policy) []string {
 	return outcomes
 }
 
-// policySources returns the sources and deliverables that a plan binds to current content.
-// A recorded delivery settles what it delivered: its closure deletes each satisfied row, and
-// its publication flips a delivered spec. The fact, not the current tree, binds that content.
+// policySources returns the sources and deliverables that a plan binds to current content:
+// the content that no recorded delivery settles.
 func policySources(policy Policy) []SourceBinding {
-	satisfied := Satisfied(policy)
-	var sources []SourceBinding
-	for _, milestone := range policy.Milestones {
-		for _, outcome := range milestone.Outcomes {
-			for _, source := range outcome.Sources {
-				if !satisfied[source.ID] {
-					sources = append(sources, source)
-				}
-			}
-			for _, binding := range outcome.Deliverables {
-				if !BindingDelivered(policy, milestone.ID, outcome.ID, binding.Source.ID) && !slices.Contains(sources, binding.Source) {
-					sources = append(sources, binding.Source)
-				}
-			}
+	sources, bindings := Unsettled(policy)
+	for _, binding := range bindings {
+		if !slices.Contains(sources, binding.Source) {
+			sources = append(sources, binding.Source)
 		}
 	}
 	return sources
+}
+
+// addedCompletions returns each completion of proposed that current does not record.
+func addedCompletions(current, proposed []Completion) []Completion {
+	var added []Completion
+	for _, completion := range proposed {
+		if !slices.Contains(current, completion) {
+			added = append(added, completion)
+		}
+	}
+	return added
 }
 
 func retainedOrder(order []string, retained map[string]bool) []string {

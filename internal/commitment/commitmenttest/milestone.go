@@ -9,9 +9,10 @@ import (
 
 	"github.com/gibbonmi/bench/internal/commitment"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/landing/published"
 )
 
 // MilestoneSpec is the spec that SeedMilestone approves for the delivery outcome.
@@ -36,7 +37,7 @@ func SeedMilestone(t testing.TB, published ...string) string {
 	SeedClosure(t, root, MilestoneSpec)
 	identity := WriteTickets(t, root)
 	EditPolicy(t, root, func(policy *commitment.Policy) {
-		policy.Milestones[0].Outcomes[1].Deliverables = []commitment.DeliveryBinding{{Source: commitment.SourceBinding{ID: "tickets", Path: TicketsFolder, Identity: identity}, Obligations: []string{"FT2"}}}
+		policy.Milestones[0].Outcomes[1].Deliverables = []commitment.DeliveryBinding{TicketsBinding(identity, "FT2")}
 		policy.Milestones = append(policy.Milestones, commitment.Milestone{ID: SuccessorMilestone, Outcomes: []commitment.Outcome{outcome("C")}})
 	})
 	Commit(t, root, "approve milestone deliveries")
@@ -46,8 +47,9 @@ func SeedMilestone(t testing.TB, published ...string) string {
 	return root
 }
 
-// TicketEvidence is the ticket that the tickets-only folder holds, cited as native evidence.
-const TicketEvidence = TicketsFolder + "/tickets/one.md"
+// TicketEvidence is the native evidence of a tickets-only delivery on the published tree:
+// the policy whose delivery fact records it. The publication removes the folder itself.
+const TicketEvidence = commitment.PolicyPath
 
 // Evidence writes a complete evidence document for the active milestone of the published
 // policy in root and returns its path. Each result is verified at the current main
@@ -90,11 +92,14 @@ func Evidence(t testing.TB, root string, edit func(*commitment.MilestoneEvidence
 }
 
 // MilestoneState returns the milestone state in root that a refused verification or
-// completion must keep: the published policy, the local intent ledger, and the working
-// policy of each checkout.
+// completion must keep: the published policy, or its absence, the local intent ledger, and
+// the working policy of each checkout.
 func MilestoneState(t testing.TB, root string, checkouts ...string) string {
 	t.Helper()
-	state := gittest.Output(t, root, "show", "main:"+commitment.PolicyPath)
+	state := gittest.Output(t, root, "ls-tree", "main", "--", commitment.PolicyPath)
+	if state != "" {
+		state = gittest.Output(t, root, "show", "main:"+commitment.PolicyPath)
+	}
 	address, err := intent.Address(root)
 	if err != nil {
 		t.Fatal(err)
@@ -113,33 +118,30 @@ func MilestoneState(t testing.TB, root string, checkouts ...string) string {
 	return state
 }
 
-// Publish commits on main the publication of the verified delivery of deliverable from
-// the current head: the exact closure that the commitment owner derives, and the status
-// flip of a delivered spec.
+// Publish commits on main the tree that the verified landing of deliverable publishes
+// from the current head, checks that tree out, and advances the project-green marker to
+// the commit as the landing does.
 func Publish(t testing.TB, root, deliverable string) {
 	t.Helper()
 	head := gittest.Output(t, root, "rev-parse", "HEAD")
-	edits, err := (commitrepo.Store{Root: root}).Closure(head, commitrepo.Delivery{Spec: deliverable, Source: head})
-	if err != nil || len(edits) == 0 {
-		t.Fatalf("Closure(%s) = %+v, %v; want a delivery closure", deliverable, edits, err)
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
+	tree, err := published.Tree(root, base, deliverable, head)
+	if err != nil || tree == base {
+		t.Fatalf("published.Tree(%s) = %s, %v; want a delivery publication", deliverable, tree, err)
 	}
-	for _, edit := range edits {
-		if edit.Delete {
-			gittest.Output(t, root, "rm", "-q", "--", edit.Path)
-			continue
-		}
-		Write(t, root, edit.Path, string(edit.Data))
+	gittest.Output(t, root, "reset", "-q", "--hard", gittest.Output(t, root, "commit-tree", tree, "-p", head, "-m", "publish "+deliverable))
+	MarkGreen(t, root)
+}
+
+// MarkGreen advances the project-green marker of main from its prior commit to the tip of
+// main, as a landing does once its publication commits.
+func MarkGreen(t testing.TB, root string) {
+	t.Helper()
+	prior, _, err := greenmarker.Read(root, "main")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if spec.IsLiveSpecPath(deliverable) {
-		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(deliverable)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		flipped, err := spec.Implemented(data)
-		if err != nil {
-			t.Fatal(err)
-		}
-		Write(t, root, deliverable, string(flipped))
+	if err := greenmarker.Advance(root, "main", gittest.Output(t, root, "rev-parse", "main"), prior); err != nil {
+		t.Fatal(err)
 	}
-	Commit(t, root, "publish "+deliverable)
 }

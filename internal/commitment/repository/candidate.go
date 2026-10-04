@@ -175,20 +175,13 @@ func (store Store) protectedCandidate(policy *commitment.Policy, revision, tree 
 	for _, row := range after.Rows {
 		rows[row.ID] = true
 	}
-	satisfied := commitment.Satisfied(*policy)
-	for _, milestone := range policy.Milestones {
-		for _, outcome := range milestone.Outcomes {
-			for _, source := range outcome.Sources {
-				if satisfied[source.ID] {
-					continue
-				}
-				if err := store.validateSourceAt(tree, source); err != nil {
-					return err
-				}
-				if roadmap.RowOwner(source.ID, source.Path) && !rows[source.ID] {
-					return fmt.Errorf("protected roadmap owner %q was removed", source.ID)
-				}
-			}
+	sources, _ := commitment.Unsettled(*policy)
+	for _, source := range sources {
+		if err := store.validateSourceAt(tree, source); err != nil {
+			return err
+		}
+		if roadmap.RowOwner(source.ID, source.Path) && !rows[source.ID] {
+			return fmt.Errorf("protected roadmap owner %q was removed", source.ID)
 		}
 	}
 	return nil

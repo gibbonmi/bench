@@ -24,6 +24,12 @@ func WriteTickets(t testing.TB, root string) string {
 	return commitrepo.TreeIdentity(gittest.Output(t, root, "write-tree", "--prefix="+TicketsFolder+"/"))
 }
 
+// TicketsBinding approves the tickets-only folder whose identity WriteTickets returns as a
+// deliverable that completely satisfies obligations.
+func TicketsBinding(identity string, obligations ...string) commitment.DeliveryBinding {
+	return commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "tickets", Path: TicketsFolder, Identity: identity}, Obligations: obligations}
+}
+
 // SeedTicketsOnly writes the SeedClosure policy and the tickets-only folder, and approves
 // that folder as the complete delivery of FT1. The spec at deliverable stays approved for
 // the delivery outcome with no obligation, so an assignment can start from it and rebind
@@ -35,7 +41,7 @@ func SeedTicketsOnly(t testing.TB, root, deliverable string, residual ...string)
 	EditPolicy(t, root, func(policy *commitment.Policy) {
 		delivery := &policy.Milestones[0].Outcomes[0]
 		delivery.Deliverables[0].Obligations = nil
-		delivery.Deliverables = append(delivery.Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "tickets", Path: TicketsFolder, Identity: identity}, Obligations: []string{"FT1"}})
+		delivery.Deliverables = append(delivery.Deliverables, TicketsBinding(identity, "FT1"))
 	})
 }
 
@@ -72,6 +78,6 @@ func SeedRowlessPair(t testing.TB, root, deliverable string) {
 	identity := WriteTickets(t, root)
 	EditPolicy(t, root, func(policy *commitment.Policy) {
 		delivery := &policy.Milestones[0].Outcomes[0]
-		delivery.Deliverables = append(delivery.Deliverables, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "tickets", Path: TicketsFolder, Identity: identity}})
+		delivery.Deliverables = append(delivery.Deliverables, TicketsBinding(identity))
 	})
 }

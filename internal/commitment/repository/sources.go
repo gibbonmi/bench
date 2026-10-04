@@ -66,28 +66,28 @@ func (store Store) validateDeliverable(source commitment.SourceBinding) error {
 }
 
 func (store Store) validateDeliverables(policy commitment.Policy) error {
-	for _, milestone := range policy.Milestones {
-		for _, outcome := range milestone.Outcomes {
-			for _, binding := range outcome.Deliverables {
-				if commitment.BindingDelivered(policy, milestone.ID, outcome.ID, binding.Source.ID) {
-					continue
-				}
-				if err := store.validateDeliverable(binding.Source); err != nil {
-					return err
-				}
-			}
+	_, bindings := commitment.Unsettled(policy)
+	for _, binding := range bindings {
+		if err := store.validateDeliverable(binding.Source); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
 func (store Store) sourceRevision() (string, error) {
+	_, revision, err := store.defaultRevision()
+	return revision, err
+}
+
+// defaultRevision resolves the default branch and its current revision.
+func (store Store) defaultRevision() (string, string, error) {
 	branch, ok := git.ResolvedDefault(store.Root)
 	if !ok {
-		return "", fmt.Errorf("commitment source: default branch is unresolved")
+		return "", "", fmt.Errorf("commitment source: default branch is unresolved")
 	}
 	revision, err := git.Output("-C", store.Root, "rev-parse", branch)
-	return strings.TrimSpace(revision), err
+	return branch, strings.TrimSpace(revision), err
 }
 
 func (store Store) validateSourceAt(revision string, source commitment.SourceBinding) error {

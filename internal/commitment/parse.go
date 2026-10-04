@@ -121,9 +121,9 @@ func Validate(policy Policy) error {
 			seen[outcome] = true
 		}
 	}
-	recorded := map[[2]string]bool{}
+	recorded := map[deliveryKey]bool{}
 	for _, delivery := range policy.Deliveries {
-		key := [2]string{delivery.Outcome, delivery.Binding}
+		key := delivery.key()
 		binding, bound := deliveredBinding(policy, delivery)
 		if !bound || recorded[key] || delivery.Identity != binding.Source.Identity || !lineValue(delivery.Source) || !lineValue(delivery.Evidence) {
 			return fmt.Errorf("commitment policy: invalid delivery for outcome %q", delivery.Outcome)

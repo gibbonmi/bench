@@ -27,8 +27,8 @@ func verifyCommand(root, milestone, evidence string) (string, int) {
 	return commitcmd.Command(root, []string{"verify", "--milestone", milestone, "--evidence", evidence})
 }
 
-// refusesVerification proves that the evidence edit produces refuses verification of
-// milestone with want and keeps the milestone state.
+// refusesVerification proves that verification of milestone refuses the evidence that
+// edit produces, names each want fragment, and keeps the milestone state.
 func refusesVerification(t *testing.T, root, milestone string, edit func(*commitment.MilestoneEvidence), want ...string) {
 	t.Helper()
 	evidence := commitmenttest.Evidence(t, root, edit)
@@ -60,6 +60,22 @@ func verified(t *testing.T, root string) commitment.Verification {
 	verification, err := (commitrepo.Store{Root: root}).Verify(active, data)
 	if err != nil {
 		t.Fatal(err)
+	}
+	// The receipt stores the examined revision, the project-green marker there, and the
+	// object of the gate evidence and of each criterion's evidence at that revision.
+	document, err := commitment.ParseEvidence(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	revision := gittest.Output(t, root, "rev-parse", "main")
+	object := func(reference string) string { return gittest.Output(t, root, "rev-parse", "main:"+reference) }
+	if verification.Revision != revision || verification.Green != revision || verification.Gate != object(document.Gate) || len(verification.Results) != len(document.Results) {
+		t.Fatalf("receipt = %+v, want revision, marker, and gate object of %s at %s", verification, document.Gate, revision)
+	}
+	for i, result := range verification.Results {
+		if result.Result != document.Results[i] || result.Object != object(document.Results[i].Evidence) {
+			t.Fatalf("receipt result %d = %+v, want %+v at the object of %s", i, result, document.Results[i], document.Results[i].Evidence)
+		}
 	}
 	return verification
 }
@@ -111,6 +127,9 @@ func TestCommitmentEmptyRowsNotComplete(t *testing.T) {
 	board := gittest.Output(t, root, "show", "main:ROADMAP.md")
 	if strings.Contains(board, "FT1") || strings.Contains(board, "FT2") {
 		t.Fatalf("board = %q, want every row of the milestone closed", board)
+	}
+	if listed := gittest.Output(t, root, "ls-tree", "-r", "--name-only", "main", "--", commitmenttest.TicketsFolder); listed != "" {
+		t.Fatalf("published tickets-only folder = %q, want the folder closed by its publication", listed)
 	}
 	t.Run("no-criterion-results", func(t *testing.T) {
 		refusesVerification(t, root, active, func(evidence *commitment.MilestoneEvidence) { evidence.Results = nil }, "has no result")
@@ -181,6 +200,7 @@ func TestCommitmentStaleEvidence(t *testing.T) {
 			policy.Milestones[0].Outcomes[1].Criteria[0].Text = "The B obligation is satisfied for every reader."
 		})
 		commitmenttest.Commit(t, root, "reword criterion")
+		commitmenttest.MarkGreen(t, root)
 	}
 	t.Run("criterion-identity", func(t *testing.T) {
 		root := deliveredMilestone(t)

@@ -41,15 +41,24 @@ type CriterionResult struct {
 }
 
 // Verification is the receipt of one successful milestone verification. It binds the
-// milestone, the policy and published revision that it examined, and the repository
-// object of each evidence reference. A completion proposal consumes it.
+// milestone, the policy and published revision that it examined, the project-green marker
+// at that revision, and the repository object of the retained gate evidence and of each
+// criterion evidence reference. A completion proposal consumes it.
 type Verification struct {
 	ID        string              `json:"id"`
 	Milestone string              `json:"milestone"`
 	Policy    string              `json:"policy"`
 	Revision  string              `json:"revision"`
+	Green     string              `json:"green"`
 	Gate      string              `json:"gate"`
 	Results   []VerifiedCriterion `json:"results"`
+}
+
+// Examined is the published state that a verification examines: the default-branch
+// revision, and the commit that the branch's project-green marker names, empty when the
+// marker is absent.
+type Examined struct {
+	Revision, Green string
 }
 
 // VerifiedCriterion is one verified result and the object its evidence reference names.
@@ -80,11 +89,14 @@ func CriterionIdentity(criterion Criterion) string {
 }
 
 // VerifyMilestone checks evidence for the active milestone of policy, whose canonical
-// identity is policyIdentity, at the published revision. Every outcome of the milestone
-// must already be delivered. Every criterion needs exactly one verified result for its
-// current identity, with a resolvable evidence reference and a reviewer assessment. The
-// check validates evidence identity and coverage; it does not infer the truth of prose.
-func VerifyMilestone(policy Policy, policyIdentity, revision, milestone string, evidence MilestoneEvidence, resolve Resolver) (Verification, error) {
+// identity is policyIdentity, at the examined published revision. Every outcome of the
+// milestone must already be delivered. The project-green marker must name that revision,
+// and the retained gate evidence must resolve there. Every criterion needs exactly one
+// verified result for its current identity, with a resolvable evidence reference and a
+// reviewer assessment. The check validates evidence identity and coverage; it does not
+// infer the truth of prose.
+func VerifyMilestone(policy Policy, policyIdentity string, examined Examined, milestone string, evidence MilestoneEvidence, resolve Resolver) (Verification, error) {
+	revision := examined.Revision
 	if milestone != policy.ActiveMilestone {
 		return Verification{}, fmt.Errorf("milestone %q is not the active milestone", milestone)
 	}
@@ -93,6 +105,12 @@ func VerifyMilestone(policy Policy, policyIdentity, revision, milestone string, 
 	}
 	if evidence.Revision != revision {
 		return Verification{}, fmt.Errorf("evidence revision %q is not the published revision %s", evidence.Revision, revision)
+	}
+	if examined.Green == "" {
+		return Verification{}, fmt.Errorf("gate evidence: the published revision %s has no project-green marker", revision)
+	}
+	if examined.Green != revision {
+		return Verification{}, fmt.Errorf("gate evidence: project-green marker %s is not the published revision %s", examined.Green, revision)
 	}
 	gate, err := resolveReference(evidence.Gate, resolve)
 	if err != nil {
@@ -127,7 +145,7 @@ func VerifyMilestone(policy Policy, policyIdentity, revision, milestone string, 
 		}
 		results[result.Criterion] = VerifiedCriterion{Result: result, Object: object}
 	}
-	verification := Verification{Milestone: milestone, Policy: policyIdentity, Revision: revision, Gate: gate}
+	verification := Verification{Milestone: milestone, Policy: policyIdentity, Revision: revision, Green: examined.Green, Gate: gate}
 	for _, criterion := range criteria {
 		result, found := results[criterion.ID]
 		if !found {
@@ -183,15 +201,11 @@ func Completions(current *Policy, proposed Policy) ([]Completion, error) {
 			return nil, fmt.Errorf("a proposal cannot remove the completion of milestone %q", completion.Milestone)
 		}
 	}
-	var added []Completion
-	for _, completion := range proposed.Completions {
-		if slices.Contains(predecessor.Completions, completion) {
-			continue
-		}
+	added := addedCompletions(predecessor.Completions, proposed.Completions)
+	for _, completion := range added {
 		if completion.Milestone != predecessor.ActiveMilestone || proposed.ActiveMilestone != "" {
 			return nil, fmt.Errorf("completion of milestone %q must clear that active milestone and activate none", completion.Milestone)
 		}
-		added = append(added, completion)
 	}
 	return added, nil
 }
