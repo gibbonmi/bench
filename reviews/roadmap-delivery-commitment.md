@@ -2044,9 +2044,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C5",
       "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
-      "tip": "6664d59e0431888c754d2b5c0bdb01887e1646fe",
-      "plan_digest": "sha256:17b27ec52f900a6f5dd5b29c3c7b0f5625171922061f40df24848ece4b5a2672",
-      "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+      "tip": "1642decabd17dcd1271847abad848a2d7a88a3aa",
+      "plan_digest": "sha256:674fd63d0a3ce41ec12e3f7d52cc03ed74f3cb68d8ea96096afbaaee87428916",
+      "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
       "acceptance_rows": [
         "DC12",
         "DC14",
@@ -2179,6 +2179,132 @@ This suggestion is optional advice and has no repair disposition.
             "ref": "claude-agent:dc_t05:system",
             "digest": "sha256:1f1e3cdfb1aedb9d3aeb2083e146f39c7ad785de7d4cc6096927ebd442a63423",
             "excerpt": "command: env \"PATH=/home/mgibs/.nvm/versions/node/v25.8.1/bin:$PATH\" bench test --check system\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,6664d59e0431888c754d2b5c0bdb01887e1646fe,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,124657\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-1-worktree",
+          "performer": "claude:dc_r05_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_1:worktree",
+            "digest": "sha256:df541eec4ae17e2e3a316b1e0b7268d16a104617a40253c3bc5011d8cf20e05b",
+            "excerpt": "tip=1642decabd17dcd1271847abad848a2d7a88a3aa\ncmd: bench test --package ./internal/worktree\nexit=0\n  github.com/gibbonmi/bench/internal/worktree,pass,68999\nfailures[0]; skips[2] (socket capability: TestCleanLandedSpecialPathsRetainedWithoutOpening/socket, TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket)\n\nprobe C4-sibling (pre-commit tree, production file unchanged):\ncmd: bench probe internal/commitment/repository/candidate.go --swap 'strings.HasPrefix(path, entry+\"/\")' --with 'strings.HasPrefix(path, entry)' --package ./internal/worktree --run TestCommitmentLegacyContinuation\nverdict=bit exit(red run)=1 failed_tests=1 restored=yes\nfailing: TestCommitmentLegacyContinuation/sibling-prefix (land_spec_amendment_test.go:149: continuation landing = (0, ...landed...))\n\nprobe C4-directory (extra):\ncmd: bench probe internal/commitment/repository/candidate.go --omit ' || strings.HasPrefix(path, entry+\"/\")' --package ./internal/worktree --run TestCommitmentLegacyContinuation\nverdict=bit failed_tests=1 restored=yes\nfailing: TestCommitmentLegacyContinuation/directory-scope (refused: legacy continuation scope excludes \"reviews/x.md\")\nrestore: git status after probes showed candidate.go unmodified (empty diff)\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-1-landing",
+          "performer": "claude:dc_r05_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_1:landing",
+            "digest": "sha256:d3eea2d65b760ee0422d06f06166d99e2fdae8c80095bef5d0a163193c1c16da",
+            "excerpt": "tip=1642decabd17dcd1271847abad848a2d7a88a3aa\ncmd: bench test --package ./internal/landing\nexit=0\n  github.com/gibbonmi/bench/internal/landing,pass,10153\nfailures[0]; skips[2] (privilege: character device)\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-1-commitment",
+          "performer": "claude:dc_r05_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_1:commitment",
+            "digest": "sha256:add8652444997285af0577dedc311872e21d03d6ce53fc6221cdcb8f53433baf",
+            "excerpt": "tip=1642decabd17dcd1271847abad848a2d7a88a3aa\ncmd: bench test --package ./internal/commitment\nexit=0\n  github.com/gibbonmi/bench/internal/commitment,pass,2907\ncmd: bench test --package ./internal/commitment/...   (covers the new repository tests)\nexit=0\n  internal/commitment pass 3043; commitcmd no-tests; commitmenttest no-tests; internal/commitment/repository pass 454\nstress: go test -race -count=30 -run 'TestPublishAdmittedDecidesUnderTheLock|TestAdmitPublicationFrozenIdentity|TestPublishAdmitted' ./internal/commitment/repository -> ok 20.172s\n\nprobe P1/C1 (decide before intent.Transact; lock covers only publish):\ncmd: bench probe internal/commitment/repository/publication.go --swap '<Transact{admitPublication; publish}>' --with 'if err := store.AdmitPublication(source, tree); err != nil { return err }; return intent.Transact(... return ledger, false, publish() ...)' --package ./internal/commitment/repository --run 'Publication|PublishAdmitted'\nverdict=bit exit(red run)=1 failed_tests=1 restored=yes\nfailing: TestPublishAdmittedDecidesUnderTheLock (publication_test.go:227: PublishAdmitted = <nil> (published=true), want a blocked refusal that never publishes)\n\nprobe C3 (drop owner.ID != source.Assignment):\ncmd: bench probe internal/commitment/repository/publication.go --swap 'if owner.ID != source.Assignment {' --with 'if false {' --package ./internal/commitment/repository --run 'Publication|PublishAdmitted'\nverdict=bit failed_tests=4 restored=yes\nfailing: TestAdmitPublicationFrozenIdentity/bound, TestPublishAdmitted/admitted, TestPublishAdmitted/publish-fails, TestPublishAdmittedDecidesUnderTheLock\n\nprobe C3 extra (drop request filter): --omit 'owner.Request != source.Request || ' -> bit, TestAdmitPublicationFrozenIdentity/other-request, restored=yes\nprobe C3 extra (drop worktree filter): --omit ' || len(intent.AssignmentsOwning([]intent.Assignment{owner}, source.Worktree)) != 1' -> bit, TestAdmitPublicationFrozenIdentity/other-worktree, restored=yes\nrestore: git status after probes showed publication.go unmodified (empty diff)\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-1-intent",
+          "performer": "claude:dc_r05_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_1:intent",
+            "digest": "sha256:4bd7de7ce5a89b223e6da3cd021b85235e2eb04f18e9eb97a8f7fc108796bec9",
+            "excerpt": "tip=1642decabd17dcd1271847abad848a2d7a88a3aa\ncmd: bench test --package ./internal/intent\nexit=0\n  github.com/gibbonmi/bench/internal/intent,pass,9574\nfailures[0]; skips[0]\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-1-bench",
+          "performer": "claude:dc_r05_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_1:bench",
+            "digest": "sha256:c91d03edb3d3edb8b0126842e43f60f0098c36e02f0ae9db8645ae82b656408b",
+            "excerpt": "tip=1642decabd17dcd1271847abad848a2d7a88a3aa\ncmd: bench test --package ./cmd/bench\nexit=0\n  github.com/gibbonmi/bench/cmd/bench,pass,17905\nfailures[0]; skips[0]\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-1-conformance",
+          "performer": "claude:dc_r05_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_1:conformance",
+            "digest": "sha256:7c1028f01b3e5fbe0e3c1ac000b96a4a6bb586de3e6606d1e57d013affc35474",
+            "excerpt": "tip=1642decabd17dcd1271847abad848a2d7a88a3aa\ncmd: bench test --package ./internal/conformance\nexit=0\n  github.com/gibbonmi/bench/internal/conformance,pass,37040\nfailures[0]; skips[3] (socket/character-device capability)\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-r05-1-system",
+          "performer": "claude:dc_r05_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r05_1:system",
+            "digest": "sha256:5691312b30f23e9d7ca5949b446495283b8c044cd5aa461a93db45d50b689382",
+            "excerpt": "tip=1642decabd17dcd1271847abad848a2d7a88a3aa\ncmd: env \"PATH=/home/mgibs/.nvm/versions/node/v25.8.1/bin:$PATH\" bench test --check system\nexit=0\n  github.com/gibbonmi/bench/internal/systemtest,pass,74743\nfailures[0]; skips[0]\n"
           },
           "requirement": "system",
           "command": "bench test --check system",
@@ -2866,4 +2992,15 @@ Repair cycles consumed: 0 of 2. A fresh Opus repair session at medium effort tak
 - C5-C2: rejected. The Spec ruling shows that a default-branch policy change always moves the destination, so no policy change reaches the final decision unrefused.
 - C5-C3: auto-fix. Add a test with two assignments, where the unbound assignment is refused for a production file.
 - C5-C4: auto-fix. Add DC49 rows for a sibling path that shares a scope prefix and for a directory scope entry.
+
+## DC-C5 repair cycle 1
+
+Repair cycles consumed: 1 of 2. A fresh Opus repair session at medium effort corrected C5-S1, C5-S2, C5-S3, C5-P1, C5-C1, C5-C3, and C5-C4.
+The repair source is 1642decabd17dcd1271847abad848a2d7a88a3aa. All seven planned checks pass there.
+
+New repository tests make the final admission decision under the intent lock and discriminate each frozen identity filter.
+A probe that decides before the lock failed the lock test. Probes that drop the assignment, request, or worktree filter each failed a named row.
+New DC49 rows cover a sibling prefix and a directory scope entry, and a prefix-match probe failed the sibling row.
+
+The planned commitment check does not run the repository subpackage. The orchestrator ran that subpackage separately at the repair source, and it passed.
 
