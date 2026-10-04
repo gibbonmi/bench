@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
 // Effects is the exact policy displacement produced by a proposal.
@@ -21,18 +23,29 @@ type Effects struct {
 	Completed          []string `json:"completed"`
 }
 
-// Plan binds one predecessor to canonical proposed policy bytes and effects.
+// Plan binds one predecessor to canonical proposed policy bytes and effects. Continuations
+// lists each already-authorized run that approval lets finish.
 type Plan struct {
-	ID               string          `json:"id"`
-	Predecessor      string          `json:"predecessor"`
-	ProposalIdentity string          `json:"proposal_identity"`
-	Proposed         []byte          `json:"proposed"`
-	Sources          []SourceBinding `json:"sources"`
-	Effects          Effects         `json:"effects"`
+	ID               string                      `json:"id"`
+	Predecessor      string                      `json:"predecessor"`
+	ProposalIdentity string                      `json:"proposal_identity"`
+	Proposed         []byte                      `json:"proposed"`
+	Sources          []SourceBinding             `json:"sources"`
+	Effects          Effects                     `json:"effects"`
+	Continuations    []intent.LegacyContinuation `json:"continuations,omitempty"`
 }
 
-// BuildPlan computes the exact transition from current to proposed.
-func BuildPlan(current *Policy, proposed Policy) (Plan, error) {
+// Proposal is one plan input: the proposed policy and each already-authorized run that
+// approval lets finish. The plan identity binds the list, and approval records it in the
+// local intent record. The tracked policy never holds it.
+type Proposal struct {
+	Policy        Policy
+	Continuations []intent.LegacyContinuation
+}
+
+// BuildPlan computes the exact transition from current to the proposal.
+func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
+	proposed := proposal.Policy
 	proposedBytes, err := Bytes(proposed)
 	if err != nil {
 		return Plan{}, err
@@ -63,14 +76,23 @@ func BuildPlan(current *Policy, proposed Policy) (Plan, error) {
 		fmt.Fprintf(&binding, "%s\x00%s\x00%s\x00", source.ID, source.Path, source.Identity)
 	}
 	proposalIdentity := identity(proposedBytes)
-	planIdentity := identity([]byte(predecessor + "\x00" + proposalIdentity + "\x00" + binding.String() + "\x00" + string(effectBytes)))
+	bound := predecessor + "\x00" + proposalIdentity + "\x00" + binding.String() + "\x00" + string(effectBytes)
+	// A plan that lists no run binds no list, so the policy transition alone decides its identity.
+	if len(proposal.Continuations) != 0 {
+		listed, err := json.Marshal(proposal.Continuations)
+		if err != nil {
+			return Plan{}, fmt.Errorf("encode commitment continuations: %w", err)
+		}
+		bound += "\x00" + string(listed)
+	}
 	return Plan{
-		ID:               planIdentity,
+		ID:               identity([]byte(bound)),
 		Predecessor:      predecessor,
 		ProposalIdentity: proposalIdentity,
 		Proposed:         proposedBytes,
 		Sources:          sources,
 		Effects:          effects,
+		Continuations:    proposal.Continuations,
 	}, nil
 }
 
@@ -219,7 +241,9 @@ func parallelKeys(grants []ParallelGrant) []string {
 	for _, grant := range grants {
 		outcomes := append([]string(nil), grant.Outcomes...)
 		slices.Sort(outcomes)
-		keys = append(keys, strings.Join(outcomes, "+"))
+		continuations := append([]string(nil), grant.Continuations...)
+		slices.Sort(continuations)
+		keys = append(keys, strings.Join(append(outcomes, continuations...), "+"))
 	}
 	return keys
 }

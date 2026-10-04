@@ -98,19 +98,20 @@ func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *
 	if candidate == nil {
 		return fmt.Errorf("commitment policy deletion is not approved; run bench commitment plan --input <file>")
 	}
-	expected, err := commitment.BuildPlan(current, *candidate)
-	if err != nil {
-		return err
-	}
 	for _, receipt := range ledger.CommitmentReceipts {
-		if !receipt.Approved || receipt.Decision == "" || receipt.Plan != expected.ID {
+		if !receipt.Approved || receipt.Decision == "" {
 			continue
 		}
 		var retained commitment.Plan
 		if err := jsonfile.DecodeDocument([]byte(receipt.Payload), &retained); err != nil {
 			return err
 		}
-		if retained.ID != expected.ID || retained.Predecessor != expected.Predecessor || !bytes.Equal(retained.Proposed, expected.Proposed) {
+		// The plan identity binds the runs that the approval listed, and the receipt retains them.
+		expected, err := commitment.BuildPlan(current, commitment.Proposal{Policy: *candidate, Continuations: retained.Continuations})
+		if err != nil {
+			return err
+		}
+		if receipt.Plan != expected.ID || retained.ID != expected.ID || retained.Predecessor != expected.Predecessor || !bytes.Equal(retained.Proposed, expected.Proposed) {
 			continue
 		}
 		for _, source := range expected.Sources {

@@ -226,6 +226,17 @@ command is `bench commitment plan --input <file>`. The status board shows that
 row only when a staged spec waits. When the policy or the local runtime record
 does not read, the state is `unreadable`, and `bench commitment show` names the cause.
 
+The plan input is the proposed policy document. Its optional `continuations` key
+lists each already-authorized run that can finish. Each entry names the run's
+`assignment` and `request` digest from `bench commitment inventory`, and the
+`scope` paths on that run's branch. The plan identity binds this list. Approval
+records each listed run in the local intent record, and an unlisted run gets no
+continuation.
+
+An open continuation holds the default active slot. To start an
+outcome beside it, a parallel grant names the run's assignment in its own
+`continuations` list.
+
 `bench consumers` is the resolved-reference query for a Go symbol. With
 `--changed`, the same verb is the review blast over a frozen base and source
 tip. Each success response ends with one citation row before the help

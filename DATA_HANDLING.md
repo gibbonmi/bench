@@ -189,7 +189,7 @@ same field set from the ledger types, so a new field cannot stay undocumented.
 | Field | Contents |
 |---|---|
 | `commitment_receipts.plan` | The identity of a planned commitment change. |
-| `commitment_receipts.payload` | The plan: the predecessor identity, the proposed policy, its source identities, and its effects. |
+| `commitment_receipts.payload` | The plan: the predecessor identity, the proposed policy, its source identities, its effects, and the runs that it lists. |
 | `commitment_receipts.decision` | The decision reference that the reviewer gave for the approval. |
 | `commitment_receipts.approved` | Whether the plan is approved. |
 | `milestone_receipts.id` | The identity of a milestone verification receipt. |
@@ -204,7 +204,7 @@ same field set from the ledger types, so a new field cannot stay undocumented.
 | `commitment.claims.outcome` | The claimed outcome. |
 | `commitment.blockers.outcome` | A blocked outcome. |
 | `commitment.blockers.reason` | The one-line blocker reason that the worker wrote. |
-| `commitment.continuations.assignment` | An existing run that the initial commitment lets finish. |
+| `commitment.continuations.assignment` | An existing run that an approved plan lists and lets finish. |
 | `commitment.continuations.request` | The digest of that run's request. |
 | `commitment.continuations.scope` | The paths that the run can still deliver. |
 

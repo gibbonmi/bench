@@ -17,7 +17,8 @@ const (
 	OutlookInactive = "no-active-milestone"
 	// OutlookEligible means one committed outcome can start now.
 	OutlookEligible = "eligible"
-	// OutlookActive means the claimed outcomes hold every slot that admission allows.
+	// OutlookActive means the claimed outcomes and the open legacy continuations hold every
+	// slot that admission allows.
 	OutlookActive = "active"
 	// OutlookAllBlocked means no remaining outcome can start, and none is active.
 	OutlookAllBlocked = "all-blocked"
@@ -97,7 +98,7 @@ func Project(policy *Policy, state intent.CommitmentState) Outlook {
 	case outlook.Next != "":
 		outlook.State, outlook.Operation = OutlookEligible, OperationStart
 		outlook.Deliverable = soleDeliverable(*policy, outlook.Next)
-	case len(outlook.Active) != 0:
+	case len(outlook.Active) != 0 || len(OpenContinuations(*policy, state)) != 0:
 		outlook.State = OutlookActive
 	default:
 		outlook.State, outlook.Operation = OutlookAllBlocked, OperationPlan

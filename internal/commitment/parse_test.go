@@ -102,6 +102,32 @@ func TestCommitmentExactFieldNames(t *testing.T) {
 	}
 }
 
+// A parallel grant can name a legacy continuation's run beside one outcome. It still
+// names an outcome and two members, and each named run is one distinct valid identity.
+func TestCommitmentContinuationGrantShape(t *testing.T) {
+	run, other := strings.Repeat("a", 32), strings.Repeat("c", 32)
+	for _, row := range []struct {
+		name  string
+		grant commitment.ParallelGrant
+		want  string
+	}{
+		{name: "beside-a-run", grant: commitment.ParallelGrant{Outcomes: []string{"A"}, Continuations: []string{run}}},
+		{name: "no-outcome", grant: commitment.ParallelGrant{Continuations: []string{run, other}}, want: "names no outcome"},
+		{name: "one-member", grant: commitment.ParallelGrant{Outcomes: []string{"A"}}, want: "at least two members"},
+		{name: "invalid-run", grant: commitment.ParallelGrant{Outcomes: []string{"A"}, Continuations: []string{"not a run"}}, want: `invalid parallel grant continuation "not a run"`},
+		{name: "duplicate-run", grant: commitment.ParallelGrant{Outcomes: []string{"A"}, Continuations: []string{run, run}}, want: `invalid parallel grant continuation "` + run + `"`},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			p := validPolicy()
+			p.ParallelGrants = []commitment.ParallelGrant{row.grant}
+			err := commitment.Validate(p)
+			if row.want == "" && err != nil || row.want != "" && (err == nil || !strings.Contains(err.Error(), row.want)) {
+				t.Fatalf("Validate(%+v) = %v, want %q", row.grant, err, row.want)
+			}
+		})
+	}
+}
+
 func TestCommitmentMultiOutcomeCycle(t *testing.T) {
 	p := policy([]commitment.Milestone{milestone("M1", "A", "B")}, "M1")
 	p.Milestones[0].Outcomes[0].Dependencies = []string{"B"}

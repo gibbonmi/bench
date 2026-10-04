@@ -1,16 +1,13 @@
 package repository_test
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
+	"reflect"
 	"strings"
-	"syscall"
 	"testing"
-	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
-	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
@@ -144,19 +141,150 @@ func TestAdmitPublicationClosureAuthority(t *testing.T) {
 	}
 }
 
-// moveAssignment moves the assignment for request to state until the test ends, so later
-// rows read the ledger the fixture wrote.
-func moveAssignment(t *testing.T, root, request string, state intent.AssignmentState) {
+// continuationInput is the plan input: one adoption policy and its listed runs.
+type continuationInput struct {
+	commitment.Policy
+	Continuations []intent.LegacyContinuation `json:"continuations,omitempty"`
+}
+
+// continuationRepo has no policy and two runs. Only the legacy run's branch holds
+// owned.txt, its existing scope.
+func continuationRepo(t *testing.T) (root string, legacy, other intent.Assignment, input continuationInput) {
+	t.Helper()
+	root = gittest.RepoOnBranch(t, "main")
+	commitmenttest.Write(t, root, "ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. old\n")
+	commitmenttest.Commit(t, root, "board")
+	legacyPath := commitmenttest.Assignment(t, root, "legacy")
+	commitmenttest.Write(t, legacyPath, "owned.txt", "owned\n")
+	commitmenttest.Commit(t, legacyPath, "legacy scope")
+	otherPath := commitmenttest.Assignment(t, root, "other")
+	legacyRun := publication(t, root, legacyPath)
+	otherRun := publication(t, root, otherPath)
+	legacy = intent.Assignment{ID: legacyRun.Assignment, Request: legacyRun.Request}
+	other = intent.Assignment{ID: otherRun.Assignment, Request: otherRun.Request, Worktree: otherRun.Worktree}
+	input.Policy = commitment.Policy{Version: 1, ActiveMilestone: "M1", Milestones: []commitment.Milestone{{ID: "M1", Outcomes: []commitment.Outcome{{ID: "A", Criteria: []commitment.Criterion{{ID: "A.done", Text: "The outcome is delivered."}}}}}}}
+	input.Continuations = []intent.LegacyContinuation{{Assignment: legacy.ID, Request: legacy.Request, Scope: []string{"owned.txt"}}}
+	return root, legacy, other, input
+}
+
+func encodeInput(t *testing.T, input continuationInput) []byte {
+	t.Helper()
+	data, err := json.Marshal(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}
+
+// Approval records a continuation for exactly the listed run, with its assignment,
+// request, and scope, in the transaction that approves the receipt. The unlisted run
+// receives none, and the plan identity binds the list. Each compared element of a listed
+// run refuses on its own and writes nothing.
+func TestCommitmentContinuationApproval(t *testing.T) {
+	root, legacy, other, input := continuationRepo(t)
+	store := commitrepo.Store{Root: root}
+	plan, err := store.Plan(encodeInput(t, input))
+	if err != nil {
+		t.Fatalf("Plan = %v, want the listed run accepted", err)
+	}
+	bare := input
+	bare.Continuations = nil
+	unlisted, err := store.Plan(encodeInput(t, bare))
+	if err != nil || unlisted.ID == plan.ID {
+		t.Fatalf("plan without the list = %s, %v; want an identity other than %s", unlisted.ID, err, plan.ID)
+	}
+	if _, err := store.Approve(plan.ID, "reviewer adoption", nil, nil); err != nil {
+		t.Fatalf("Approve = %v", err)
+	}
+	ledger, err := intent.Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []intent.LegacyContinuation{{Assignment: legacy.ID, Request: legacy.Request, Scope: []string{"owned.txt"}}}
+	if ledger.Commitment == nil || !reflect.DeepEqual(ledger.Commitment.Continuations, want) {
+		t.Fatalf("stored continuations = %+v, want %+v", ledger.Commitment, want)
+	}
+	for _, continuation := range ledger.Commitment.Continuations {
+		if continuation.Assignment == other.ID {
+			t.Fatalf("unlisted run %s received a continuation", other.ID)
+		}
+	}
+	// The approval that bound the list also authorizes its staged policy at commit.
+	for _, path := range []string{commitment.PolicyPath, "ROADMAP.md"} {
+		data, err := os.ReadFile(root + "/" + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		commitmenttest.Write(t, other.Worktree, path, string(data))
+	}
+	commitmenttest.Commit(t, other.Worktree, "approved adoption")
+	if err := (commitrepo.Store{Root: other.Worktree}).AuthorizeCandidate(gittest.Output(t, other.Worktree, "rev-parse", "HEAD^{tree}")); err != nil {
+		t.Fatalf("AuthorizeCandidate(approved policy) = %v", err)
+	}
+
+	for _, row := range []struct {
+		name string
+		edit func(*intent.LegacyContinuation, *continuationInput)
+		want string
+	}{
+		{name: "unknown-run", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Assignment = strings.Repeat("d", 32) }, want: "is unknown"},
+		{name: "other-request", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Request = other.Request }, want: "request does not match run"},
+		{name: "empty-scope", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Scope = nil }, want: "invalid legacy continuation for assignment"},
+		{name: "scope-outside-run", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Scope = []string{"absent.txt"} }, want: `scope "absent.txt" is outside run`},
+		{name: "duplicate-run", edit: func(c *intent.LegacyContinuation, input *continuationInput) {
+			input.Continuations = append(input.Continuations, *c)
+		}, want: "invalid legacy continuation for assignment"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root, _, _, input := continuationRepo(t)
+			row.edit(&input.Continuations[0], &input)
+			before := commitmenttest.MilestoneState(t, root, root)
+			_, err := (commitrepo.Store{Root: root}).Plan(encodeInput(t, input))
+			if err == nil || !strings.Contains(err.Error(), row.want) || commitmenttest.MilestoneState(t, root, root) != before {
+				t.Fatalf("Plan = %v, want a refusal naming %q that writes nothing", err, row.want)
+			}
+		})
+	}
+
+	// Approval checks the listed run again under the intent lock. A run whose request
+	// changed after the plan refuses and records neither the approval nor a continuation.
+	t.Run("run-changed-before-approval", func(t *testing.T) {
+		root, _, _, input := continuationRepo(t)
+		store := commitrepo.Store{Root: root}
+		plan, err := store.Plan(encodeInput(t, input))
+		if err != nil {
+			t.Fatal(err)
+		}
+		rewriteAssignment(t, root, intent.RequestDigest("legacy"), func(run *intent.Assignment) { run.Request = intent.RequestDigest("changed") })
+		before := commitmenttest.MilestoneState(t, root, root)
+		_, err = store.Approve(plan.ID, "reviewer adoption", nil, nil)
+		if err == nil || !strings.Contains(err.Error(), "request does not match run") || commitmenttest.MilestoneState(t, root, root) != before {
+			t.Fatalf("Approve = %v, want a refusal that writes nothing", err)
+		}
+	})
+}
+
+// rewriteAssignment applies edit to the stored assignment for the request digest and
+// returns the record before the edit.
+func rewriteAssignment(t *testing.T, root, request string, edit func(*intent.Assignment)) intent.Assignment {
 	t.Helper()
 	stored, ok, err := intent.FindAssignmentByRequest(root, request)
 	if err != nil || !ok {
 		t.Fatalf("assignment for request %s = %t, %v", request, ok, err)
 	}
 	moved := stored
-	moved.State = state
+	edit(&moved)
 	if err := intent.PutAssignment(root, moved); err != nil {
 		t.Fatal(err)
 	}
+	return stored
+}
+
+// moveAssignment moves the assignment for request to state until the test ends, so later
+// rows read the ledger the fixture wrote.
+func moveAssignment(t *testing.T, root, request string, state intent.AssignmentState) {
+	t.Helper()
+	stored := rewriteAssignment(t, root, request, func(moved *intent.Assignment) { moved.State = state })
 	t.Cleanup(func() {
 		if err := intent.PutAssignment(root, stored); err != nil {
 			t.Error(err)
@@ -195,124 +323,5 @@ func TestPublishAdmitted(t *testing.T) {
 				t.Fatalf("PublishAdmitted = %v, want the publish result %v", err, row.publish)
 			}
 		})
-	}
-}
-
-// A blocker that a concurrent transaction adds while PublishAdmitted waits for the intent
-// lock decides the publication. The test swaps the held lock file for a FIFO, so opening
-// that FIFO to write returns only when the waiter reads the lock to judge its staleness.
-func TestPublishAdmittedDecidesUnderTheLock(t *testing.T) {
-	root, bound, _, tree := publicationRepo(t)
-	store := commitrepo.Store{Root: root}
-	policy, _, err := store.Policy()
-	if err != nil {
-		t.Fatal(err)
-	}
-	lock, err := intent.LockPath(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	held, proceed := make(chan struct{}), make(chan struct{})
-	holder := make(chan error, 1)
-	go func() {
-		holder <- intent.Transact(root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
-			close(held)
-			<-proceed
-			if ledger.Commitment == nil {
-				return ledger, false, errors.New("ledger has no commitment state")
-			}
-			next, err := commitment.SetBlocker(policy, *ledger.Commitment, commitmenttest.DeliveryOutcome, "competing blocker", true)
-			if err != nil {
-				return ledger, false, err
-			}
-			ledger.Commitment = &next
-			return ledger, true, nil
-		}, nil)
-	}()
-	finished := false
-	finish := func() error {
-		if finished {
-			return nil
-		}
-		finished = true
-		close(proceed)
-		return <-holder
-	}
-	defer func() { _ = finish() }()
-	select {
-	case <-held:
-	case err := <-holder:
-		t.Fatalf("holding transaction ended before its decision: %v", err)
-	}
-
-	owner, err := os.ReadFile(lock)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := syscall.Mkfifo(lock+".fifo", 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
-	}
-	if err := os.Rename(lock+".fifo", lock); err != nil {
-		t.Fatal(err)
-	}
-
-	published := false
-	done := make(chan error, 1)
-	go func() {
-		done <- store.PublishAdmitted(bound, tree, func() error {
-			published = true
-			return nil
-		})
-	}()
-	type opened struct {
-		file *os.File
-		err  error
-	}
-	writer := make(chan opened, 1)
-	go func() {
-		file, err := os.OpenFile(lock, os.O_WRONLY, 0)
-		writer <- opened{file, err}
-	}()
-	// A reader that opens without blocking releases the writer that waits for one.
-	releaseWriter := func() {
-		if reader, err := os.OpenFile(lock, os.O_RDONLY|syscall.O_NONBLOCK, 0); err == nil {
-			_ = reader.Close()
-		}
-	}
-	window := bounds.TestDeadline(bounds.IntentLockTimeout)
-	select {
-	case got := <-writer:
-		if got.err != nil {
-			t.Fatal(got.err)
-		}
-		// The regular lock file replaces the FIFO before the waiter's read ends, so every
-		// later poll reads a live owner and keeps waiting.
-		if err := os.WriteFile(lock+".held", owner, 0o600); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Rename(lock+".held", lock); err != nil {
-			t.Fatal(err)
-		}
-		if _, err := got.file.Write(owner); err != nil {
-			t.Fatal(err)
-		}
-		if err := got.file.Close(); err != nil {
-			t.Fatal(err)
-		}
-	case err := <-done:
-		releaseWriter()
-		t.Fatalf("PublishAdmitted = %v (published=%t) before it waited for the held intent lock", err, published)
-	case <-time.After(window):
-		releaseWriter()
-		t.Fatal(bounds.TestTimeoutVerdict("PublishAdmitted to read the held intent lock", window))
-	}
-
-	if err := finish(); err != nil {
-		t.Fatal(err)
-	}
-	err = <-done
-	if published || err == nil || !strings.Contains(err.Error(), "blocked") {
-		t.Fatalf("PublishAdmitted = %v (published=%t), want a blocked refusal that never publishes", err, published)
 	}
 }

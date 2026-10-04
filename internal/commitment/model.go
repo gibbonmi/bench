@@ -60,9 +60,11 @@ type SourceBinding struct {
 	Identity string `json:"identity"`
 }
 
-// ParallelGrant authorizes the named outcomes to run together.
+// ParallelGrant authorizes the named outcomes to run together. Continuations names the
+// assignment identity of each legacy continuation that the outcomes may run beside.
 type ParallelGrant struct {
-	Outcomes []string `json:"outcomes"`
+	Outcomes      []string `json:"outcomes"`
+	Continuations []string `json:"continuations,omitempty"`
 }
 
 // DeliveryFact is broker-authored evidence for one delivered binding. Binding and Identity

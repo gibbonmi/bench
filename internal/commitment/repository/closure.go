@@ -122,11 +122,9 @@ func (store Store) ReconcileDelivered() error {
 				next.Bindings = append(next.Bindings, binding)
 			}
 		}
-		next.Continuations = nil
-		for _, continuation := range state.Continuations {
-			if !commitment.ScopeDelivered(policy, continuation.Scope) {
-				next.Continuations = append(next.Continuations, continuation)
-			}
+		next.Continuations = commitment.OpenContinuations(policy, state)
+		if len(next.Continuations) == 0 {
+			next.Continuations = nil
 		}
 		return withRuntime(ledger, next)
 	}, nil)

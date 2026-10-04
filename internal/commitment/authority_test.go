@@ -23,7 +23,7 @@ func TestCommitmentDisplacementEffects(t *testing.T) {
 	current := policy([]commitment.Milestone{milestone("M1", "A", "B")}, "M1")
 	proposed := policy([]commitment.Milestone{milestone("M1", "C", "A", "B")}, "M1")
 
-	plan, err := commitment.BuildPlan(&current, proposed)
+	plan, err := commitment.BuildPlan(&current, commitment.Proposal{Policy: proposed})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func TestCommitmentRemovalEffects(t *testing.T) {
 	current := policy([]commitment.Milestone{milestone("M1", "A", "B")}, "M1")
 	proposed := policy([]commitment.Milestone{milestone("M1", "A")}, "M1")
 
-	plan, err := commitment.BuildPlan(&current, proposed)
+	plan, err := commitment.BuildPlan(&current, commitment.Proposal{Policy: proposed})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestCommitmentSwitchEffects(t *testing.T) {
 	current := policy([]commitment.Milestone{milestone("M1", "A", "B"), milestone("M2", "C")}, "M1")
 	proposed := policy([]commitment.Milestone{milestone("M1", "A", "B"), milestone("M2", "C")}, "M2")
 
-	plan, err := commitment.BuildPlan(&current, proposed)
+	plan, err := commitment.BuildPlan(&current, commitment.Proposal{Policy: proposed})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +64,7 @@ func TestCommitmentSwitchEffects(t *testing.T) {
 func TestCommitmentReorderDelaysPassedOutcomes(t *testing.T) {
 	current := policy([]commitment.Milestone{milestone("M1", "A", "B", "C")}, "M1")
 	proposed := policy([]commitment.Milestone{milestone("M1", "C", "A", "B")}, "M1")
-	plan, err := commitment.BuildPlan(&current, proposed)
+	plan, err := commitment.BuildPlan(&current, commitment.Proposal{Policy: proposed})
 	if err != nil {
 		t.Fatal(err)
 	}

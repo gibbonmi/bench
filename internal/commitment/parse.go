@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -25,6 +26,37 @@ func Parse(data []byte) (Policy, error) {
 		return Policy{}, err
 	}
 	return policy, nil
+}
+
+// proposalContinuations is the one plan-input key outside the policy document.
+const proposalContinuations = "continuations"
+
+// ParseProposal validates one plan input: a policy document that can also list the
+// already-authorized runs under its continuations key. Parse owns every policy field, and
+// the intent record's validation owns the shape of each listed run.
+func ParseProposal(data []byte) (Proposal, error) {
+	var fields map[string]json.RawMessage
+	if err := jsonfile.DecodeDocument(data, &fields); err != nil {
+		return Proposal{}, fmt.Errorf("commitment proposal: %w", err)
+	}
+	var proposal Proposal
+	if listed, ok := fields[proposalContinuations]; ok {
+		if err := jsonfile.DecodeExactDocument(listed, &proposal.Continuations); err != nil {
+			return Proposal{}, fmt.Errorf("commitment proposal continuations: %w", err)
+		}
+		delete(fields, proposalContinuations)
+		if err := intent.ValidateCommitment(&intent.CommitmentState{Continuations: proposal.Continuations}); err != nil {
+			return Proposal{}, fmt.Errorf("commitment proposal: %w", err)
+		}
+	}
+	policy, err := json.Marshal(fields)
+	if err != nil {
+		return Proposal{}, fmt.Errorf("commitment proposal: %w", err)
+	}
+	if proposal.Policy, err = Parse(policy); err != nil {
+		return Proposal{}, err
+	}
+	return proposal, nil
 }
 
 // Bytes returns the canonical tracked representation of policy.
@@ -110,8 +142,11 @@ func Validate(policy Policy) error {
 		return fmt.Errorf("commitment policy: dependency cycle at %q", cycle)
 	}
 	for _, grant := range policy.ParallelGrants {
-		if len(grant.Outcomes) < 2 {
-			return errors.New("commitment policy: parallel grant needs at least two outcomes")
+		if len(grant.Outcomes) == 0 {
+			return errors.New("commitment policy: parallel grant names no outcome")
+		}
+		if len(grant.Outcomes)+len(grant.Continuations) < 2 {
+			return errors.New("commitment policy: parallel grant needs at least two members")
 		}
 		seen := map[string]bool{}
 		for _, outcome := range grant.Outcomes {
@@ -119,6 +154,13 @@ func Validate(policy Policy) error {
 				return fmt.Errorf("commitment policy: invalid parallel grant outcome %q", outcome)
 			}
 			seen[outcome] = true
+		}
+		runs := map[string]bool{}
+		for _, assignment := range grant.Continuations {
+			if !intent.ValidIdentity(assignment) || runs[assignment] {
+				return fmt.Errorf("commitment policy: invalid parallel grant continuation %q", assignment)
+			}
+			runs[assignment] = true
 		}
 	}
 	recorded := map[deliveryKey]bool{}

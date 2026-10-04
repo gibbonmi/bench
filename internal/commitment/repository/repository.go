@@ -71,10 +71,11 @@ func (store Store) Inventory() ([]InventoryItem, error) {
 
 // Plan validates and records one proposed policy.
 func (store Store) Plan(input []byte) (commitment.Plan, error) {
-	proposed, err := commitment.Parse(input)
+	proposal, err := commitment.ParseProposal(input)
 	if err != nil {
 		return commitment.Plan{}, err
 	}
+	proposed := proposal.Policy
 	current, _, err := store.defaultPolicy()
 	if err != nil {
 		return commitment.Plan{}, err
@@ -82,7 +83,7 @@ func (store Store) Plan(input []byte) (commitment.Plan, error) {
 	if err := store.validateDeliverables(proposed); err != nil {
 		return commitment.Plan{}, err
 	}
-	plan, err := commitment.BuildPlan(current, proposed)
+	plan, err := commitment.BuildPlan(current, proposal)
 	if err != nil {
 		return commitment.Plan{}, err
 	}
@@ -95,6 +96,9 @@ func (store Store) Plan(input []byte) (commitment.Plan, error) {
 	}
 	err = intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		if err := verifiedCompletions(ledger, current, plan.Predecessor, proposed); err != nil {
+			return ledger, false, err
+		}
+		if err := store.listedRuns(ledger, plan.Continuations); err != nil {
 			return ledger, false, err
 		}
 		for _, receipt := range ledger.CommitmentReceipts {
@@ -171,6 +175,9 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 			if err := verifiedCompletions(ledger, current, plan.Predecessor, proposed); err != nil {
 				return ledger, false, err
 			}
+			if err := store.listedRuns(ledger, plan.Continuations); err != nil {
+				return ledger, false, err
+			}
 			restore, err = store.stage(plan)
 			if err != nil {
 				return ledger, false, err
@@ -178,7 +185,7 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 			receipt.Decision = decision
 			receipt.Approved = true
 			changed = true
-			return ledger, true, nil
+			return withContinuations(ledger, plan.Continuations), true, nil
 		}
 		return ledger, false, fmt.Errorf("commitment approval refused: plan %q is unknown", planID)
 	}, func() {

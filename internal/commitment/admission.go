@@ -74,8 +74,9 @@ func eligible(policy Policy, state intent.CommitmentState, id string) error {
 	if active[outcome.ID] {
 		return nil
 	}
-	if len(active) != 0 && !permitsParallel(policy, active, outcome.ID) {
-		return fmt.Errorf("another outcome is active; no parallel grant admits %q", outcome.ID)
+	continuations := OpenContinuations(policy, state)
+	if (len(active) != 0 || len(continuations) != 0) && !permitsParallel(policy, active, continuations, outcome.ID) {
+		return fmt.Errorf("another outcome or a legacy continuation is active; no parallel grant admits %q", outcome.ID)
 	}
 	for _, prior := range Selection(policy).Outcomes {
 		if prior == outcome.ID {
@@ -104,7 +105,18 @@ func blockedOutcomes(state intent.CommitmentState) map[string]bool {
 	return blocked
 }
 
-func permitsParallel(policy Policy, active map[string]bool, candidate string) bool {
+// OpenContinuations returns each listed legacy continuation whose scope policy has not
+// delivered. An open continuation holds the default active slot. Admission, the reader
+// projection, and the delivery reconciliation all ask this one predicate.
+func OpenContinuations(policy Policy, state intent.CommitmentState) []intent.LegacyContinuation {
+	return slices.DeleteFunc(slices.Clone(state.Continuations), func(continuation intent.LegacyContinuation) bool {
+		return ScopeDelivered(policy, continuation.Scope)
+	})
+}
+
+// permitsParallel reports whether one grant names candidate, every active outcome, and the
+// assignment of every open continuation.
+func permitsParallel(policy Policy, active map[string]bool, continuations []intent.LegacyContinuation, candidate string) bool {
 	for _, grant := range policy.ParallelGrants {
 		if !slices.Contains(grant.Outcomes, candidate) {
 			continue
@@ -112,6 +124,11 @@ func permitsParallel(policy Policy, active map[string]bool, candidate string) bo
 		matches := true
 		for id := range active {
 			if !slices.Contains(grant.Outcomes, id) {
+				matches = false
+			}
+		}
+		for _, continuation := range continuations {
+			if !slices.Contains(grant.Continuations, continuation.Assignment) {
 				matches = false
 			}
 		}
