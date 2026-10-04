@@ -1345,6 +1345,72 @@ This suggestion is optional advice and has no repair disposition.
             "C3-COV-1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3-r1-standards",
+          "performer": "/root/dc_c3_r1_standards",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/dc_c3_r1_standards",
+            "digest": "sha256:3226e6c0f3e3a6aa840379d10f4d19d829f33dce1517fa54f77b0cb23001a46e",
+            "excerpt": "Standards confirmation: no findings. Raw count: 0. Distinct repair targets: 0. Worst issue: none. No optional advice or implementation-command change is necessary.\nReviewed repair delta eeae69331b2e26b946bbe6347c313cdc1ac3b5f2..76f0c012edf1b8d1c44487aae8cbcd5dab2f3534 on GPT-6.1 Sol/high, one iteration.\nDC-C3-S1 repaired: PlanningPromotionPath at internal/commitment/model.go:120 owns promotion eligibility. PlanningPath:112 and repository/candidate.go:160 consume it. The duplicated production classifier is removed.\nDC-C3-S2 repaired: occurrenceLedgerLabel and isOccurrenceLedgerLine at internal/roadmap/occurrences.go:181–184 own recognition. Both parseOccurrenceLedger:191 and RequirementBytes at tree_validation.go:45 consume it. The grammar move into occurrences.go is cohesive.\nC3-COV-1 Standards check passes: the added tests reuse existing fixtures, require refusal without a current row, and compare ledger bytes before and after. The retained probe demonstrates both independent expectations turn red under the authority-check bypass. Independent behavioral confirmation remains with Coverage.\nClaim: {\"status\":\"claimed\",\"confidence\":9}. No tests, probes, edits, stash, commits, or review-record writes. Final HEAD is 76f0c012edf1b8d1c44487aae8cbcd5dab2f3534; porcelain status is empty. No live commands remain. Repair allowance remains 1/2 consumed.\n"
+          },
+          "axis": "Standards",
+          "base": "975be583753195efcc790927fc8019b0e18367ff",
+          "tip": "e006513b2c1886ce5a16c590916965254222f828",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-initial-standards"
+          ]
+        },
+        {
+          "id": "c3-r1-spec",
+          "performer": "/root/dc_c3_r1_spec",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/dc_c3_r1_spec",
+            "digest": "sha256:3eff19cf40d9df143e3c3ad27b94be63579e9d8590f44d5adc341dfb51cf8f17",
+            "excerpt": "Spec: no findings. Raw count: 0. Distinct repair targets: 0. Worst issue: none.\nDC-C3-S1: PlanningPromotionPath owns promotion eligibility. PlanningPath and Store.planningPromotions both consume it, preserving ticket 03’s requirement for “one production definition.”\nDC-C3-S2: isOccurrenceLedgerLine owns ledger-line recognition. Parsing and RequirementBytes use it. The grammar moved intact into occurrences.go; validation still precedes exclusion. This preserves DC15’s requirement identity behavior.\nC3-COV-1: Both new TestEvidenceCurrentBinding cases prepare and successfully check an admitted build charge, then revoke its binding or block its outcome without changing the assignment or source pins. They require exit 1, a commitment refusal, no current row, and identical ledger bytes. currentEvidenceCommand rechecks Store.Ready before emitting success, satisfying story 13’s “recheck current authority” requirement. The retained guard-swap probe failed both new cases and reported restoration.\nClaim schema: {\"status\":\"claimed\",\"confidence\":8}. Semantic confirmation completed; no tests or probes executed by this axis. No optional advice or implementation-command contribution.\nFinal dc-c3-r1-spec HEAD: 76f0c012edf1b8d1c44487aae8cbcd5dab2f3534. Porcelain status empty. No edits, stash, commits, record writes, or live commands. Repair allowance remains 1/2 consumed.\n"
+          },
+          "axis": "Spec",
+          "base": "975be583753195efcc790927fc8019b0e18367ff",
+          "tip": "e006513b2c1886ce5a16c590916965254222f828",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-initial-spec"
+          ]
+        },
+        {
+          "id": "c3-r1-coverage",
+          "performer": "/root/dc_c3_r1_coverage",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/dc_c3_r1_coverage",
+            "digest": "sha256:4b159e5fc14a72e26c189e33b0a2453dbb8bfb0d4f724e3c7acb3360fba80df0",
+            "excerpt": "Coverage: no findings. Raw count 0; distinct repair targets 0; worst issue none.\nC3-COV-1 repaired: TestEvidenceCurrentBinding now prepares an admitted charge, then separately revokes its binding or blocks its outcome without changing assignment/Git pins. Both cases require commitment refusal, no current row, and unchanged ledger bytes (internal/preflight/evidencecmd/evidence_modes_test.go:53–91). Focused baseline passed, no skips. The committed author probe demonstrates both cases fail when current authority enforcement is bypassed.\nIndependent refutation: omitted the blocked-state update in commitment.SetBlocker, at internal/commitment/admission.go:115, a different site and mutation kind from the author’s charge_pack.go swap. Probe bit: baseline passed, 8 tests ran, outcome_blocked failed by emitting successful current evidence. Inner test exit 1; wrapper exit 0; restored=yes.\nDC-C3-S1 behavior preserved: both promotion consumers now use the identical extracted PlanningPromotionPath predicate. DC-C3-S2 behavior preserved: shared occurrence recognition retains the prior grammar; focused requirement normalization, valid ledger, incident boundary, malformed ledger, and line-ending tests passed without skips.\nNo optional advice. No implementation command change is necessary. Claim: {\"status\":\"verified\",\"confidence\":9}.\nFinal HEAD 76f0c012edf1b8d1c44487aae8cbcd5dab2f3534; porcelain status empty. No retained edits, commits, stash, record writes, or live tests. Repair allowance remains 1/2 consumed.\n"
+          },
+          "axis": "Coverage",
+          "base": "975be583753195efcc790927fc8019b0e18367ff",
+          "tip": "e006513b2c1886ce5a16c590916965254222f828",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-initial-coverage"
+          ]
         }
       ]
     }
@@ -1726,3 +1792,11 @@ skips[0]{package,test,reason}:
 ```
 
 Repair allowance consumed: 1 of 2 cycles. All three predicates await independent confirmation.
+
+## DC-C3 confirming review
+
+Standards: zero findings. Spec: zero findings. Coverage: zero findings. There are zero remaining repair targets.
+All three axes confirm DC-C3-S1, DC-C3-S2, and C3-COV-1 closed.
+
+Coverage independently omitted the blocker update. The blocked-outcome case failed and the probe restored the source.
+All review venues were clean at the frozen tip. Repair allowance consumed: 1 of 2 cycles.
