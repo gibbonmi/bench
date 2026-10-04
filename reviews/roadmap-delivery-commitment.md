@@ -3421,7 +3421,91 @@ This suggestion is optional advice and has no repair disposition.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dc-c7-r1-standards",
+          "performer": "claude:dc_c7_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c7_standards",
+            "digest": "sha256:4ba27582b92b9fbd6692609fba0b724d42acd6a2eab2b84011bc21d2ddd243ce",
+            "excerpt": "Standards: 9 findings (S1 and S2 medium).\nS1 medium: commitmenttest.Publish (milestone.go:119-145) rebuilds the landing publication by hand and omits the tickets-only folder removal (landing/closure.go:31), so ticket 08 tests cite evidence on a tree the real landing never publishes.\nS2 medium: the delivery-settled exemption is derived in three walks (authority.go:182-195, sources.go:69-74, candidate.go:174-180).\nS3 low: BindingDelivered (delivery.go:109-113) repeats the delivered-binding check with a different key than Deliver and Validate.\nS4 low: transitionEffects and Completions each derive the added completions.\nS5 low: new tests repeat existing fixture specs and the bound-assignment setup.\nS6 low: the tickets binding and the rowless board are built by hand in several fixtures.\nS7 low: ADR 0015:19 says each delivery fact names a completion record, which is wrong for tickets-only.\nS8 low: ADR 0015:9 repeats line 15 and says label for line.\nS9 low: the refusesVerification doc comment is ungrammatical (verification_test.go:30).\nClean: one Closure owner; one command form row; no provenance tags; neither ticket 05 expectation change weakens a test; census 743 to 745 matches.\n"
+          },
+          "axis": "Standards",
+          "base": "55c6f9ccf5f6db7a48e531aac0959e2adb534f4c",
+          "tip": "b1296652eae56ea7b941516529aa24e0e57c5260",
+          "finding_ids": [
+            "C7-S1",
+            "C7-S2",
+            "C7-S3",
+            "C7-S4",
+            "C7-S5",
+            "C7-S6",
+            "C7-S7",
+            "C7-S8",
+            "C7-S9"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c7-r1-spec",
+          "performer": "claude:dc_c7_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c7_spec",
+            "digest": "sha256:56808d0d20497c710bc80f64828b787efdcdf27257ff621097f0580471b4789f",
+            "excerpt": "Spec: 5 findings (P1 and P2 medium).\nP1 medium: a listed legacy run cannot land an approved tickets-only folder; Publication.Spec is empty for a tickets-only close (land.go:210, publication.go:60-61), so admission refuses (candidate.go:119). Spec.md:241, :268.\nP2 medium: the tickets-only closure is not graded by the completion oracle; WithCompletion is set only for a spec path (landing.go:251-253). Spec.md:221, :230-232. Ticket 07 Writes omits internal/gate.\nP3 low-medium: an unbound or unlisted run that lands an approved deliverable receives \"candidate policy has no exact approval\" instead of the start guidance (candidate.go:45-55 vs readiness.go:81). Spec.md:155.\nP4 low: a rowless outcome with several deliverables closes on its first delivery (delivery.go:16, :101; parse.go:195-218). Spec.md:241.\nP5 low: verification accepts any resolvable path as gate evidence (verification.go:97). Spec.md:248-249.\nRulings: the ticket 05 expectation changes keep DC49 and DC72; no-board closure, DC77, the settled-source skip, policy-bound receipts, and plan/approve completion are acceptable.\nUnowned clauses: tickets-only grading at spec.md:230-231; omitted row removal and unrelated byte rows; spec.md:227 acceptance content; spec.md:247 and :257 lack rows.\n"
+          },
+          "axis": "Spec",
+          "base": "55c6f9ccf5f6db7a48e531aac0959e2adb534f4c",
+          "tip": "b1296652eae56ea7b941516529aa24e0e57c5260",
+          "finding_ids": [
+            "C7-P1",
+            "C7-P2",
+            "C7-P3",
+            "C7-P4",
+            "C7-P5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c7-r1-coverage",
+          "performer": "claude:dc_c7_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5d2a6bac5793396e0c0bf566686f5ae07828d3db",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c7_coverage",
+            "digest": "sha256:81c187e13d813e5b6f3508a5f9b72610fac3054146db5a826c158c067f3bc356",
+            "excerpt": "Coverage: 6 findings (C1 and C2 medium).\nC1 medium: no test reads the receipt's stored revision, gate object, or evidence objects (verification.go:128-130); a receipt built with only milestone and policy passes every test. Spec.md:256.\nC2 medium: nothing refuses an incomplete closure on the tickets-only route; the completion oracle runs only for a spec path (landing.go:251-253). Output tests catch source mutations, but no refusing oracle exists.\nC3 low: the assessment control-character check (verification.go:125) has no refusing case.\nC4 low: the delivered exemptions are not tested after a partial delivery or with two bindings; an outcome-level exemption escapes at plan time.\nC5 low: the legacy test lost the listed-scope-without-deliverable state, and no test covers it now.\nC6 low: the verify refusal for a repository with no policy has no test.\nRows: all eight are covered at their seams. No weakened test. Census 743 to 745 matches. All nine entries match the plan.\nAdvice: the inactive-milestone test should use M2-shaped evidence; a Completions clause is not isolated; a closure comment claims graded ticket acceptance.\n"
+          },
+          "axis": "Coverage",
+          "base": "55c6f9ccf5f6db7a48e531aac0959e2adb534f4c",
+          "tip": "b1296652eae56ea7b941516529aa24e0e57c5260",
+          "finding_ids": [
+            "C7-C1",
+            "C7-C2",
+            "C7-C3",
+            "C7-C4",
+            "C7-C5",
+            "C7-C6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -4279,4 +4363,30 @@ The C6-C2 policy compare probe was not run again after the helper move. Code equ
 The worktree closed-board expectation has no recorded failure of its own. Some fixture path expressions repeat short text.
 
 The final source is ccfdc3071972c202ce176946f9f1096f98322d43. The chunk checkpoint remains required before ticket 07.
+
+## DC-C7 initial review disposition
+
+Standards has nine findings, Spec has five, and Coverage has six. A read-only Fable consultant at high effort set the dispositions under the reviewer's direction. No finding needs a reviewer decision.
+Repair cycles consumed: 0 of 2, and the reviewer pre-approved extensions. Each repair session follows the bench-debug procedure.
+
+Cycle 1 repairs the ticket 07 targets. Cycle 2 repairs the ticket 08 targets on the seam that cycle 1 exports. One review round then grades the combined delta.
+
+### Ticket 07 targets
+
+- C7-P1 and C7-P3: auto-fix with one broker change. The publication carries the deliverable path for a spec or a tickets-only folder. A closure without a binding or scope receives the start or scope refusal, and the DC49 unlisted expectation returns to the delivery binding refusal.
+- C7-P2 and C7-C2: auto-fix. The gate completion oracle gains a tickets-only closure branch that proves the closed folder absent and keeps the unrelated byte sweep. A plan commit adds the gate files to ticket 07.
+- C7-P4: auto-fix. A rowless outcome is delivered only when every approved deliverable is delivered. This is a delegated engineering choice, open to reviewer veto.
+- C7-C5: auto-fix. Restore the listed legacy scope that omits the approved deliverable.
+- C7-S7 and C7-S8: auto-fix. ADR 0015 names retained completion evidence for both routes and drops the repeated sentence.
+
+### Ticket 08 targets
+
+- C7-S1: auto-fix. The milestone fixture publishes through the real landing transform that cycle 1 exports.
+- C7-S2, C7-S3, C7-S4, C7-S6, and C7-C4: auto-fix. One commitment helper owns the settled sources and delivered bindings, and its tests cover partial delivery and two bindings.
+- C7-P5: auto-fix. Verification binds gate evidence to the green marker at the examined revision. This is a delegated engineering choice, open to reviewer veto.
+- C7-C1, C7-C3, C7-C6, and C7-S9: auto-fix. Tests read the stored receipt fields, refuse a control character in the assessment, and refuse verification without a policy.
+
+### Rejected
+
+- C7-S5: rejected. The repeated fixture text is incidental, and an abstraction would be worse.
 
