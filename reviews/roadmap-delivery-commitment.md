@@ -1972,6 +1972,72 @@ This suggestion is optional advice and has no repair disposition.
           "tip": "e3d183ee363d1ff5dabce842861978ac6313962e",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "c4-r1-standards",
+          "performer": "/root/dc_c4_r1_standards",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dc_c4_r1_standards",
+            "digest": "sha256:1e975facd41ec2f52e4cac94f476162904fe7c5ed66fe80c1f0ca7a146e6eb26",
+            "excerpt": "Standards: 0 findings, 0 repair targets; worst none. C4-S1 and C4-S2 close.\nStart and LegacyScope call requestedAssignment; enumeration found one definition and two callers. The helper owns one active owner, nonempty request, and exact digest. Other ownership checks answer different questions. Caller refusal text is retained. The startResolver comment now attaches directly to its declaration.\nRead current standards, relevant spec and ticket, complete repair diff and targeted sources. Evidence s1:0 reached stream end; current binding true at clean e85804e557d1a5219eb9ebe821d24d7a4b36a863. Consumer and coverage packet reads were not needed for these structural repairs. No tests or repeated unchanged-material review.\nClaim claimed, confidence 9. No optional advice. Command contribution no. Final HEAD e85804e557d1a5219eb9ebe821d24d7a4b36a863, clean status, no live handles. Native receipts: wrapper 9f396e; diff d6cec1 and spill 9146ea; metadata ef887f and spill ac9050; current 6efb4c; predicate enumeration 4ccd8e and spill 2fc5bb; HEAD 07af12; status a3bd87. Native return /root/dc_c4_r1_standards; gpt-6.1-sol/high. Repair count 1/2.\n"
+          },
+          "axis": "Standards",
+          "base": "691f1b50f86af4298936bbfca8acc14f061e8d38",
+          "tip": "3612b833a407ccedf34053d0cb47decfef21b3a7",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards"
+          ]
+        },
+        {
+          "id": "c4-r1-spec",
+          "performer": "/root/dc_c4_r1_spec",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dc_c4_r1_spec",
+            "digest": "sha256:f6240fdd69bbab4b8bcc39642c26467ad6074b7317284bf77e48349f1f8a6eb8",
+            "excerpt": "Spec confirmation: 0 findings; worst none. No optional advice. Claim claimed, confidence 10.\nThe helper retains the identical ordered predicate: one canonical owner, active state, nonempty request, exact digest. Each caller retains its refusal. Start still uses the exact owner in its transaction. LegacyScope matches both identity fields and returns a scope copy. Spec lines 190-191, 216, 267-268 remain satisfied. Comment relocation changes no execution order or C4 acceptance behavior.\nRead current standards, binding spec passages and ticket04, three affected files, owner/digest definitions, repair record, and one exact repair diff. No accepted unchanged-material re-review. Evidence s1:0 complete; check-current true at e85804e. No s36/s37 reads needed. Source-based confirmation; no tests or probes.\nCommand contribution yes, no proposed improvement. One wrong ticket lookup was corrected. Final HEAD e85804e557d1a5219eb9ebe821d24d7a4b36a863. Clean status, no edits or live handles. Native receipts: diff ce57e7/52b304; source af8468; binding d5b063; evidence 4ff1d0/a35599; HEAD/status 0b9fab/ae9807. Native return /root/dc_c4_r1_spec; gpt-6.1-sol/high.\n"
+          },
+          "axis": "Spec",
+          "base": "691f1b50f86af4298936bbfca8acc14f061e8d38",
+          "tip": "3612b833a407ccedf34053d0cb47decfef21b3a7",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec"
+          ]
+        },
+        {
+          "id": "c4-r1-coverage",
+          "performer": "/root/dc_c4_r1_coverage",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/root/dc_c4_r1_coverage",
+            "digest": "sha256:3aa678e26944bcf5a843469ee07ecc86725ac65c329e2c98c7feb292c0f4b5d5",
+            "excerpt": "Coverage: 0 findings; worst none. Claim claimed, confidence 9. No new optional advice.\nThe repair preserves the exact original identity predicate. Both callers retain refusal text. Start remains transactional; LegacyScope stays read-only and returns a copied scope. No additional write occurs. Source paths are within ticket04 fences.\nEnumerated canonical-path owner counts, active/inactive states, empty/matching/mismatching raw requests, exact request digests, listed/unlisted continuations, and Start authority inputs. Inspected DC23,24,25,50,69 and Start identity/atomic-refusal tests. Existing assertions remain intact. No extraction-specific bypass hypothesis justified another test or probe.\nRead approved spec/ticket, current rules, repair diff, producers, consumers, fixtures, and evidence. Complete packet streams s1:0, s36:0-1, s37:0-1; current true. No tests, mutations, writes, or private-runtime inspection. Interface identity unknown. Command contribution no.\nFinal HEAD e85804e557d1a5219eb9ebe821d24d7a4b36a863, clean status, no live handles. Native HEAD f675cb, status f7bc7a, current 04e8ee. Native return /root/dc_c4_r1_coverage; gpt-6.1-sol/high.\n"
+          },
+          "axis": "Coverage",
+          "base": "691f1b50f86af4298936bbfca8acc14f061e8d38",
+          "tip": "3612b833a407ccedf34053d0cb47decfef21b3a7",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-coverage"
+          ]
         }
       ]
     }
@@ -2494,3 +2560,11 @@ All seven planned checks pass. Worktree and conformance retain five existing cap
 
 The earlier mutation sites remain in place. Their retained failures demonstrate the original acceptance assertions.
 The independent Coverage omission also failed before this extraction and restored exactly. These probes are historical evidence; current package results verify the repair.
+
+## Confirmed DC-C4 source
+
+Three fresh GPT-6.1 Sol reviewers at high effort confirm repair cycle 1. All three axes report zero findings and zero repair targets.
+C4-S1 and C4-S2 are closed. No later review changed the acceptance requirements.
+
+The final source is `3612b833a407ccedf34053d0cb47decfef21b3a7`. The confirming record tip is `e85804e557d1a5219eb9ebe821d24d7a4b36a863`.
+The chunk checkpoint remains required before ticket 05.
