@@ -2667,6 +2667,128 @@ This suggestion is optional advice and has no repair disposition.
           ]
         }
       ]
+    },
+    {
+      "id": "DC-C6",
+      "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+      "tip": "7a0e9080652f89f4d968e7e92e98f7a3046ff376",
+      "plan_digest": "sha256:a215b9301f7af704618ce746866720fde5ea4430a3cb0aed7ed83d8cbe40953f",
+      "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+      "acceptance_rows": [
+        "DC34",
+        "DC35",
+        "DC36",
+        "DC37",
+        "DC38",
+        "DC39",
+        "DC40",
+        "DC41",
+        "DC42"
+      ],
+      "verification": [
+        {
+          "id": "dc-c6-t06-worktree",
+          "performer": "claude:dc_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t06:worktree",
+            "digest": "sha256:0edcd53c151f1c5917031bfa7be50373cc211efb55e89498eeb9823a29e59d1c",
+            "excerpt": "command: bench test --package ./internal/worktree\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,7a0e9080652f89f4d968e7e92e98f7a3046ff376,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,61199\nfailures[0]{package,test,line}:\nskips[2]: TestCleanLandedSpecialPathsRetainedWithoutOpening/socket, TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket (unix sockets unavailable)\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-t06-landing",
+          "performer": "claude:dc_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t06:landing",
+            "digest": "sha256:413a5eb556a204cecbe4a18b7d5a4cb0ef81469c61860ed8353a889397848601",
+            "excerpt": "command: bench test --package ./internal/landing\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,7a0e9080652f89f4d968e7e92e98f7a3046ff376,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,8142\nfailures[0]{package,test,line}:\nskips[2]: TestLandPreAuthorizationRefusalTable/descendant-device, TestLandPreAuthorizationRefusalTable/direct-device (capability: privilege)\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-t06-gate",
+          "performer": "claude:dc_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t06:gate",
+            "digest": "sha256:4f7c78f957b8038bb2caf5ca4c2967d2f27b857eb1b1ab40c7b3b59d428bd632",
+            "excerpt": "command: bench test --package ./internal/gate\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,7a0e9080652f89f4d968e7e92e98f7a3046ff376,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,13696\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\nprobe (planned mutation: omit one sequence removal from the exact allowed transform):\ncommand: bench probe internal/commitment/repository/closure.go --swap 'commitment.Remaining(next)' --with 'commitment.Selection(next).Outcomes' --package ./internal/gate --run TestCommitmentExactTransform\nprobe exit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,1,yes\nselection: package ./internal/gate run TestCommitmentExactTransform baseline=passed ran=1\nmutated run: github.com/gibbonmi/bench/internal/gate,fail (go test red)\nfailures[1]:\n  github.com/gibbonmi/bench/internal/gate,TestCommitmentExactTransform,\"commitment_completion_test.go:75: kept sequence entry = <nil>, want the exact-transform refusal\"\nrestore: restored=yes; git diff --exit-code -- internal/commitment/repository/closure.go exit 0 (empty)\npost-restore: bench test --package ./internal/gate exit 0, pass (13268 ms)\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit one sequence removal from the exact allowed transform. The exact-transform check must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dc_t06:gate",
+              "digest": "sha256:4f7c78f957b8038bb2caf5ca4c2967d2f27b857eb1b1ab40c7b3b59d428bd632",
+              "excerpt": "command: bench test --package ./internal/gate\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,7a0e9080652f89f4d968e7e92e98f7a3046ff376,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/gate,pass,13696\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\nprobe (planned mutation: omit one sequence removal from the exact allowed transform):\ncommand: bench probe internal/commitment/repository/closure.go --swap 'commitment.Remaining(next)' --with 'commitment.Selection(next).Outcomes' --package ./internal/gate --run TestCommitmentExactTransform\nprobe exit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,1,yes\nselection: package ./internal/gate run TestCommitmentExactTransform baseline=passed ran=1\nmutated run: github.com/gibbonmi/bench/internal/gate,fail (go test red)\nfailures[1]:\n  github.com/gibbonmi/bench/internal/gate,TestCommitmentExactTransform,\"commitment_completion_test.go:75: kept sequence entry = <nil>, want the exact-transform refusal\"\nrestore: restored=yes; git diff --exit-code -- internal/commitment/repository/closure.go exit 0 (empty)\npost-restore: bench test --package ./internal/gate exit 0, pass (13268 ms)\n"
+            }
+          }
+        },
+        {
+          "id": "dc-c6-t06-roadmap",
+          "performer": "claude:dc_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t06:roadmap",
+            "digest": "sha256:a8e242f57a3a5410e0983ce432f33b70cd915a3674bf703d42010cafd9394053",
+            "excerpt": "command: bench test --package ./internal/roadmap\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,7a0e9080652f89f4d968e7e92e98f7a3046ff376,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/roadmap,pass,1800\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-t06-repository",
+          "performer": "claude:dc_t06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t06:repository",
+            "digest": "sha256:de7b26ec5f64fe96f51f7d1ebe0c6462f62a59edeeed81576076bd59607a09cb",
+            "excerpt": "command: bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,7a0e9080652f89f4d968e7e92e98f7a3046ff376,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,395\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
