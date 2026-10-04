@@ -2382,6 +2382,79 @@ This suggestion is optional advice and has no repair disposition.
             "C5-C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dc-c5-r2-spec",
+          "performer": "claude:dc_c5_r2_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c5_r2_spec",
+            "digest": "sha256:35f98c434fa7ffbf1f9149d16ed3524df3fd26ad3dcc50a786669db2cce39e67",
+            "excerpt": "Spec: 0 findings.\nC5-P1 closed: TestPublishAdmittedDecidesUnderTheLock (publication_test.go:128-229) holds the intent lock, makes the waiter block on the held lock through a FIFO, adds a blocker, and requires a blocked refusal with no publication. Spec: spec.md:648-649 and the DC72 row at :461.\nProduction delta is the behavior-equivalent Publish cleanup only (land.go:261-272).\nPreserved: gate outside the lock, final decision and compare-and-swap in one transaction, missing admission refusal, identity precedence, recovery text, resume, legacy scope, planning bootstrap and fence.\nC5-C2 rejection is sound: policy authority and the landing destination both resolve the default ref, and a moved tip fails the compare-and-swap.\n"
+          },
+          "axis": "Spec",
+          "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+          "tip": "1642decabd17dcd1271847abad848a2d7a88a3aa",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c5-r1-spec"
+          ]
+        },
+        {
+          "id": "dc-c5-r2-standards",
+          "performer": "claude:dc_c5_r2_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c5_r2_standards",
+            "digest": "sha256:dc209fba84123c9fd64463908d27afe400c76651b873b975a57949b5de5a6276",
+            "excerpt": "Standards: 3 findings (all low). C5-S1, C5-S2, and C5-S3 are closed.\nR2-S1 low: commitmenttest commit (repo.go:63-71) re-implements the gittest.Output runner and its failure format. Rule: one source per fact. Fix: an error-returning gittest primitive that Output wraps.\nR2-S2 low: the FIFO barrier (publication_test.go:133,168-221) derives the intent lock path again and depends on acquire and staleLock internals; its select has no test deadline arm. Fix: one exported lock-path accessor or test hook in intent, plus a deadline.\nR2-S3 low: the CommitPolicy comment (repo.go:46) says it commits that file alone, but a plain git commit commits the whole index.\nClean: comment register, test hygiene, the census pin, and safe teardown of the FIFO test.\n"
+          },
+          "axis": "Standards",
+          "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+          "tip": "1642decabd17dcd1271847abad848a2d7a88a3aa",
+          "finding_ids": [
+            "C5-R2-S1",
+            "C5-R2-S2",
+            "C5-R2-S3"
+          ],
+          "supersedes": [
+            "dc-c5-r1-standards"
+          ]
+        },
+        {
+          "id": "dc-c5-r2-coverage",
+          "performer": "claude:dc_c5_r2_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "fbcd987defd8bfef65ae00539ef2e322d236a53e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c5_r2_coverage",
+            "digest": "sha256:9170ba33204d86faef8b0887ba95a8a29934750fa41763541dc237d119ca02ba",
+            "excerpt": "Coverage: 2 findings. C5-C1 and C5-C4 are closed; C5-C3 is partly closed. The repository package passed at 1642deca.\nR2-C1 low-medium: no planned DC-C5 command runs internal/commitment/repository, so the new lock and identity tests have no planned verification entry. Remedy: add a repository requirement to DC-C5.\nR2-C2 low: the active-state filter (publication.go:40) is not discriminated; dropping it keeps every test green. Remedy: a row with a complete or cleanup-pending bound assignment, plus a probe.\nRows: DC12, DC14, DC28, DC30, DC32, DC49, DC72 sound; DC29 blocker leg sound, policy leg per the C5-C2 ruling.\nNo weakened test. The seven repair entries match the plan.\n"
+          },
+          "axis": "Coverage",
+          "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+          "tip": "1642decabd17dcd1271847abad848a2d7a88a3aa",
+          "finding_ids": [
+            "C5-R2-C1",
+            "C5-R2-C2"
+          ],
+          "supersedes": [
+            "dc-c5-r1-coverage"
+          ]
         }
       ]
     }
@@ -3003,4 +3076,15 @@ A probe that decides before the lock failed the lock test. Probes that drop the 
 New DC49 rows cover a sibling prefix and a directory scope entry, and a prefix-match probe failed the sibling row.
 
 The planned commitment check does not run the repository subpackage. The orchestrator ran that subpackage separately at the repair source, and it passed.
+
+## DC-C5 confirming review disposition
+
+Spec reports zero findings and confirms C5-P1 and the C5-C2 rejection. Standards closes C5-S1, C5-S2, and C5-S3. Coverage closes C5-C1 and C5-C4.
+Standards has three new findings and Coverage has two. All five are accepted for repair cycle 2, the last cycle of the allowance.
+
+- C5-R2-S1: auto-fix. The commitmenttest commit core must reuse one error-returning git runner, per the one-source rule. A plan commit adds internal/gittest to the ticket 05 fence.
+- C5-R2-S2: auto-fix. The intent package exports the one lock-path accessor, and the lock test uses it. The lock test gains a test deadline.
+- C5-R2-S3: auto-fix. CommitPolicy commits only its named path, as its comment states.
+- C5-R2-C1: plan expansion. DC-C5 gains a repository requirement that runs the commitment repository package.
+- C5-R2-C2: auto-fix. A frozen identity row refuses a bound assignment that is not active, and a probe drops the state filter.
 
