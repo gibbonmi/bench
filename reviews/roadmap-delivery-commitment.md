@@ -739,6 +739,35 @@ This suggestion is optional advice and has no repair disposition.
           "requirement": "conformance",
           "command": "bench test --package ./internal/conformance",
           "exit_code": 0
+        },
+        {
+          "id": "dc-c2-r2-commitment-probe-exit",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:exec:1c3d51+faab0e",
+            "digest": "sha256:0415f2b4fc962208bc437d6ce4ab9cb4f1732b16a938ea0ce7760a2752672b76",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,4a461e6e8c5cd7586b01da22ac025b6b68c96601,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,2979\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/admission.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment,^TestCommitmentStartPublishedIdentity$,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,fail,267\nfailures[4]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/spec/changed,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/spec/deleted,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/tickets-only/changed,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/tickets-only/deleted,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\nskips[0]{package,test,reason}:\n\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Ignore deliverable validation errors. TestCommitmentStartPublishedIdentity must fail on the reported admission result and preserve an exact source restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "native:exec:1c3d51+faab0e",
+              "digest": "sha256:0415f2b4fc962208bc437d6ce4ab9cb4f1732b16a938ea0ce7760a2752672b76",
+              "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,4a461e6e8c5cd7586b01da22ac025b6b68c96601,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,2979\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/admission.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment,^TestCommitmentStartPublishedIdentity$,passed,5\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,fail,267\nfailures[4]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/spec/changed,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/spec/deleted,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/tickets-only/changed,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentStartPublishedIdentity/tickets-only/deleted,\"admission_test.go:303: stale deliverable=(commitment_admission[1]{operation,outcome}:\\\\nstart,A\\\\n,0), unchanged=false\"\nskips[0]{package,test,reason}:\n\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1242,3 +1271,8 @@ The confirming pair ends at its record commit, `607f9db7f1684028e6b84a4d0e5b9c26
 Coverage independently read the predecessor tree identity instead of the current tree.
 Both changed-folder cases failed on admission behavior, and the probe restored exactly.
 All earlier C2 findings are closed. The full chunk checkpoint remains required before ticket 03.
+
+The first checkpoint stopped at evidence validation before running the gate.
+The prior probe record used the wrapper exit of zero. The current entry records the mutated test exit of one.
+The retained native failures, successful baseline, and exact restore are unchanged.
+This metadata correction changes no source, finding, or diagnostic verdict.
