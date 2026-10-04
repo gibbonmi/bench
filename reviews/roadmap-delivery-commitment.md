@@ -977,9 +977,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C3",
       "base": "975be583753195efcc790927fc8019b0e18367ff",
-      "tip": "ca141db2e1e6813ebc6b0ac7c522fb855e52951b",
+      "tip": "e006513b2c1886ce5a16c590916965254222f828",
       "plan_digest": "sha256:44dc3d96f2c82e35a8c0f95cf64d9a988c14b3a3fd3df478e6b343d2e3bf5b57",
-      "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+      "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
       "acceptance_rows": [
         "DC6",
         "DC10",
@@ -1133,6 +1133,150 @@ This suggestion is optional advice and has no repair disposition.
           },
           "requirement": "conformance",
           "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-preflight",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:d78df1",
+            "digest": "sha256:0f0c109fa620f558f1fd3cfb5630b8263c1410ee86d1a3e515377655e7c005bd",
+            "excerpt": "native 8f0ad6\n\nnative f1edd9\n\nnative aa4501\n\nnative a1d253\n\nnative aa362c\n\nnative 65a255\n\nnative f4d6a4\n\nnative 579427\n\nnative 5245a6\n\nnative d78df1\ntree[1]{target,head,dirty}:\n  dc-integration,30fe969f0ea7cef080ed9148ae22d13bb86295ed,true\npackages[4]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,39216\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,29787\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-conformance",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:03cddb",
+            "digest": "sha256:fecc75e0b04429e61c7bdf2f84f321a8f6063bf15155e222c5529ada4ecf0f59",
+            "excerpt": "native 14afa9\n\nnative d73fdf\n\nnative 80fda7\n\nnative 0b25d5\n\nnative 433519\n\nnative 50787c\n\nnative 283cb5\n\nnative 23d605\n\nnative 6d3b32\n\nnative 03cddb\ntree[1]{target,head,dirty}:\n  dc-integration,30fe969f0ea7cef080ed9148ae22d13bb86295ed,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,40203\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/ZLLRGN/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket336442614/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/ZLLRGN/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket2987433645/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-charge-evidence-system",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:2fd683",
+            "digest": "sha256:48517862a6f17ad0739841ed8c04dc15747283f9f120b039813a3f4da1428c2a",
+            "excerpt": "native 3f76b2\n\nnative a1f4f6\n\nnative 97174d\n\nnative b8958c\n\nnative 704264\n\nnative 7b4395\n\nnative ffd118\n\nnative c9ac17\n\nnative 3e37ae\n\nnative d18be2\n\nnative 7a9f24\n\nnative 3445c8\n\nnative 5a9272\n\nnative 99a997\n\nnative 81d06d\n\nnative b8b088\n\nnative 5cd859\n\nnative 988a0d\n\nnative 6c85d3\n\nnative 2fd683\ntree[1]{target,head,dirty}:\n  dc-integration,30fe969f0ea7cef080ed9148ae22d13bb86295ed,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,88748\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "charge-evidence-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-bench",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:fa654c",
+            "digest": "sha256:9cbc96e517b98e07aa3518413fadd2aa2ec9ce48a04506c214f984a7af2a1cee",
+            "excerpt": "native 439886\n\nnative 49e5cf\n\nnative b25da0\n\nnative 12ec9d\n\nnative 092fde\n\nnative fa654c\ntree[1]{target,head,dirty}:\n  dc-integration,30fe969f0ea7cef080ed9148ae22d13bb86295ed,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20170\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-landing",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:b5efe9",
+            "digest": "sha256:22ab4b02bb29604405eea0863a9865ca7781e52bc4572c9eb4f208183d2a81d9",
+            "excerpt": "native 942db0\n\nnative ab7cb0\n\nnative 07dac9\n\nnative 9e53a1\n\nnative b5efe9\ntree[1]{target,head,dirty}:\n  dc-integration,30fe969f0ea7cef080ed9148ae22d13bb86295ed,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,13844\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-commitment",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:085a94",
+            "digest": "sha256:7e9bec36f16c98c5a0791df6a2efecb7960b7af2f950f3c74d5daf2a32294442",
+            "excerpt": "native 3843ad\n\nnative 085a94\ntree[1]{target,head,dirty}:\n  dc-integration,30fe969f0ea7cef080ed9148ae22d13bb86295ed,true\npackages[4]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,3263\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,no-tests,0\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0\n  github.com/gibbonmi/bench/internal/commitment/repository,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-roadmap",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:81271a",
+            "digest": "sha256:d9f447b0e8a23b06ac993237da4f78a1bbb139ffd31b6f9131778330dbda3c5c",
+            "excerpt": "native b9d502\n\nnative 81271a\ntree[1]{target,head,dirty}:\n  dc-integration,30fe969f0ea7cef080ed9148ae22d13bb86295ed,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/roadmap,pass,2799\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r1-commit",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:5d918b",
+            "digest": "sha256:62bb978157643ce096b9f1e6909c45deff19bde9739e6af80562d65d74a0990d",
+            "excerpt": "native f593af\n\nnative bd6eeb\n\nnative 68121b\n\nnative 5d918b\ntree[1]{target,head,dirty}:\n  dc-integration,30fe969f0ea7cef080ed9148ae22d13bb86295ed,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,10091\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commit",
+          "command": "bench test --package ./internal/commit",
           "exit_code": 0
         }
       ],
@@ -1557,3 +1701,28 @@ No findings. The reviewer checked all eight current acceptance rows.
 
 Repair cycle 1 addresses these three targets. The current session retains repair authorship under the reviewer’s standing direction.
 The chunk permits two repair cycles. No optional advice was retained.
+
+## DC-C3 repair cycle 1
+
+DC-C3-S1 now uses one promotion predicate in the commitment owner. DC-C3-S2 now uses the occurrence parser’s shared line recognizer.
+The occurrence grammar moved into its existing owner to preserve the file budget.
+
+C3-COV-1 now covers revoked bindings and blocked outcomes after charge preparation. Both cases refuse without a current row or ledger change.
+All eight planned checks passed on the repair source. The authority bypass now makes both new cases fail.
+
+```text
+tree[1]{target,head,dirty}:
+  dc-integration,30fe969f0ea7cef080ed9148ae22d13bb86295ed,true
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/preflight/charge_pack.go,swap,failed,2,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/preflight/evidencecmd,^TestEvidenceCurrentBinding$,passed,8
+packages[1]{package,status,elapsed_ms}:
+  github.com/gibbonmi/bench/internal/preflight/evidencecmd,fail,1453
+failures[2]{package,test,line}:
+  github.com/gibbonmi/bench/internal/preflight/evidencecmd,TestEvidenceCurrentBinding/binding_revoked,"evidence_modes_test.go:86: revoked charge = (0): current[1]{evidence,assignment,base,source_tip,current,delivery}:\\n\"sha256:ade902b5cac65a8b38b6f18557faa4bd38414ca94f8d056fd945cb13be2e4df4\",\"00000000000000000000000000000001\",a390927c55f12b6a145c7b84052e878b39f026b4,512c0557b5a6ddc0b1a262e92378123d9477e5dc,true,unverified"
+  github.com/gibbonmi/bench/internal/preflight/evidencecmd,TestEvidenceCurrentBinding/outcome_blocked,"evidence_modes_test.go:86: revoked charge = (0): current[1]{evidence,assignment,base,source_tip,current,delivery}:\\n\"sha256:ade902b5cac65a8b38b6f18557faa4bd38414ca94f8d056fd945cb13be2e4df4\",\"00000000000000000000000000000001\",a390927c55f12b6a145c7b84052e878b39f026b4,512c0557b5a6ddc0b1a262e92378123d9477e5dc,true,unverified"
+skips[0]{package,test,reason}:
+```
+
+Repair allowance consumed: 1 of 2 cycles. All three predicates await independent confirmation.
