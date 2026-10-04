@@ -245,8 +245,8 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 	if err := admission.Check(tree); err != nil {
 		return ReviewedResult{}, err
 	}
-	if r.SpecPath != "" {
-		ctx = gate.WithCompletion(ctx, r.SpecPath, source)
+	if deliverable != "" {
+		ctx = gate.WithCompletion(ctx, deliverable, source)
 	}
 	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); !o.reviewedPublishes.permits(got.Kind) {
 		return ReviewedResult{}, errors.New(refusalMessage(got))

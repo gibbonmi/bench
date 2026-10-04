@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
@@ -14,12 +15,24 @@ import (
 )
 
 type completionSourceKey struct{}
+type completionFolderKey struct{}
 
-// WithCompletion binds the broker's reviewed source to prospective completion.
+// WithCompletion binds the broker's reviewed source to the prospective completion of the
+// deliverable at path. A staged spec completes its checkpoint with its completion record.
+// A tickets-only folder has no record, so its completion proves the folder closed instead.
 func WithCompletion(ctx context.Context, path, sourceTip string) context.Context {
-	return context.WithValue(WithCheckpoint(ctx, Checkpoint{Spec: path, Complete: true}), completionSourceKey{}, sourceTip)
+	if spec.IsLiveSpecPath(path) {
+		ctx = WithCheckpoint(ctx, Checkpoint{Spec: path, Complete: true})
+	} else {
+		ctx = context.WithValue(ctx, completionFolderKey{}, path)
+	}
+	return context.WithValue(ctx, completionSourceKey{}, sourceTip)
 }
 
+// completionTree proves that graded is exactly the reviewed source after the broker
+// transform, and returns the source tree. The deliverable's own proof comes first: the
+// exact spec status with the record allowance, or the absent tickets-only folder. The
+// verified closure follows, and every other path must keep its source bytes and mode.
 func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) {
 	sourceTree, err := benchgit.Output("-C", e.identityRoot, "rev-parse", "--verify", e.completionSource+"^{tree}")
 	if err != nil {
@@ -29,31 +42,21 @@ func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	path := e.checkpoint.Spec
-	original, err := e.completionFile(source, path)
+	path, proven := e.checkpoint.Spec, map[string]bool{}
+	if e.completionFolder != "" {
+		path = e.completionFolder
+		err = closedFolder(source, graded, path, proven)
+	} else {
+		err = e.completedSpec(source, graded, path, proven)
+	}
 	if err != nil {
 		return "", err
 	}
-	want, err := spec.Implemented(original.data)
+	closed, err := e.completionClosure(graded, sourceTree, path)
 	if err != nil {
 		return "", err
 	}
-	got, err := e.completionFile(graded, path)
-	if err != nil {
-		return "", err
-	}
-	if !bytes.Equal(want, got.data) || original.mode != got.mode {
-		return "", fmt.Errorf("completion spec %s differs from the exact status transform; review the spec delta", path)
-	}
-	record, err := reviewrecord.RecordPath(path)
-	if err != nil {
-		return "", err
-	}
-	proven, err := e.completionClosure(graded, sourceTree, path)
-	if err != nil {
-		return "", err
-	}
-	proven[path], proven[record] = true, true
+	maps.Copy(proven, closed)
 	// Only after proving the exact transform can a proven path differ between these snapshots.
 	for _, pair := range [][2]*treeGeneration{{source, graded}, {graded, source}} {
 		for _, entry := range pair[0].snapshot.entries {
@@ -69,11 +72,54 @@ func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) 
 	return sourceTree, nil
 }
 
+// completedSpec proves that graded carries the exact implemented status of the source spec
+// at path, and marks the spec and its completion record proven.
+func (e *gateEvaluation) completedSpec(source, graded *treeGeneration, path string, proven map[string]bool) error {
+	original, err := e.completionFile(source, path)
+	if err != nil {
+		return err
+	}
+	want, err := spec.Implemented(original.data)
+	if err != nil {
+		return err
+	}
+	got, err := e.completionFile(graded, path)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(want, got.data) || original.mode != got.mode {
+		return fmt.Errorf("completion spec %s differs from the exact status transform; review the spec delta", path)
+	}
+	record, err := reviewrecord.RecordPath(path)
+	if err != nil {
+		return err
+	}
+	proven[path], proven[record] = true, true
+	return nil
+}
+
+// closedFolder proves that graded keeps no entry beneath the closed tickets-only folder,
+// and marks each entry that the source folder holds proven.
+func closedFolder(source, graded *treeGeneration, folder string, proven map[string]bool) error {
+	under := func(path string) bool { return strings.HasPrefix(path, folder+"/") }
+	for _, kept := range graded.snapshot.entries {
+		if under(kept.Path) {
+			return fmt.Errorf("completion keeps closed %s; review the delivery closure", kept.Path)
+		}
+	}
+	for _, entry := range source.snapshot.entries {
+		if under(entry.Path) {
+			proven[entry.Path] = true
+		}
+	}
+	return nil
+}
+
 // completionClosure proves that graded carries exactly the verified closure that the
 // commitment owner derives from the reviewed source tree, and returns each proven path.
 // A path list cannot catch a kept sequence entry or an extra row removal.
-func (e *gateEvaluation) completionClosure(graded *treeGeneration, sourceTree, spec string) (map[string]bool, error) {
-	edits, err := commitrepo.Store{Root: e.identityRoot}.Closure(sourceTree, commitrepo.Delivery{Spec: spec, Source: e.completionSource})
+func (e *gateEvaluation) completionClosure(graded *treeGeneration, sourceTree, path string) (map[string]bool, error) {
+	edits, err := commitrepo.Store{Root: e.identityRoot}.Closure(sourceTree, commitrepo.Delivery{Spec: path, Source: e.completionSource})
 	if err != nil {
 		return nil, fmt.Errorf("completion closure: %w", err)
 	}
@@ -95,7 +141,7 @@ func (e *gateEvaluation) completionClosure(graded *treeGeneration, sourceTree, s
 }
 
 func validateCompletionContext(e *gateEvaluation) error {
-	if e.completionSource == "" && e.checkpoint.Complete && e.prospective {
+	if e.completionSource == "" && e.prospective && (e.checkpoint.Complete || e.completionFolder != "") {
 		return errors.New("prospective completion requires the reviewed source tip")
 	}
 	return nil
