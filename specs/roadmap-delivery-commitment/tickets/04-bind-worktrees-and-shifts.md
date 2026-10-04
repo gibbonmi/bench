@@ -38,3 +38,6 @@ Read worktree CreateCommand and attribution, lifecycle and ownership helpers, sh
 The existing system journey uses BENCH_KIT through `bench test --check system`. Adapt its fixture at this checkpoint when admission changes its route.
 
 Run `bench test --package ./internal/worktree`, `bench test --package ./internal/shift`, `bench test --package ./internal/intent`, and `bench test --package ./cmd/bench`. Retain existing head, tip, and checked-out-ref cases where fixture assignment identity changes.
+
+Run `bench test --package ./internal/commitment` and `bench test --package ./internal/conformance` for the shared admission owner and command grammar. Run `bench test --check system` for the installed shift route.
+The existing pool and target test files hold DC23, DC24, DC50, and DC69. The shift refresh test file holds DC25.
