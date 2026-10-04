@@ -13,7 +13,7 @@ A `Roadmap:` label alone is never evidence of full delivery.
 An approved complete row closes in the light-path publication. A rowless outcome records only its bound obligation and produces no invented board entry.
 Keep partial completion and unrelated obligations under the same owner rule as spec delivery. Do not copy a second closure algorithm.
 
-Read the spec metadata and tickets-only retirement readers, then consume the reviewed ticket 06 closure seam. The checkpoint is a second real delivery route, not a test-only follow-up.
+Read the shared spec-owner classifier from ticket 02 and the tickets-only retirement readers, then consume the reviewed ticket 06 closure seam. The checkpoint is a second real delivery route, not a test-only follow-up.
 
 ## Acceptance
 

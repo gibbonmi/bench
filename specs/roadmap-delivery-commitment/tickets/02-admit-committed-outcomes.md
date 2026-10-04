@@ -1,13 +1,16 @@
 # Admit only eligible committed outcomes
 
 Blocked by: 01-plan-exact-policy-changes.md
-Writes: internal/commitment (new), internal/intent, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: DC16, DC17, DC18, DC19, DC20, DC21, DC22, DC33, DC48, DC61, DC66
+Writes: internal/commitment (new), internal/intent, internal/spec, internal/landing/close.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Covers: DC16, DC17, DC18, DC19, DC20, DC21, DC22, DC33, DC48, DC61, DC66, DC73, DC74
 
 ## What to build
 
 Deliver `commitment start`, `block`, and `unblock`. A start atomically binds the current assignment, deliverable, and eligible outcome under the intent transaction.
 Ticket 01 supplies validated policy facts and exact approval identity. This ticket adds the one shared admission decision and durable runtime claim.
+
+Move the existing tickets-only classifier to the spec owner and retain the landing API as a delegate.
+Use that shared classifier for approved deliverables, with exact identities for files and committed folder trees.
 The command refuses absent policy with the adoption remedy. It distinguishes corruption from missing adoption.
 
 Apply the committed order, dependency edges, blocker state, and exact parallel grants. A blocker preserves the obligation and allows only the next independent committed outcome.
@@ -28,6 +31,12 @@ Read ticket 01 exports and the intent lock and record lifecycle. Keep this new a
 - [ ] Restart retains the claim, and unblocking A leaves active B in place (DC33, DC66).
 - [ ] Missing policy refuses start with a concrete initial-planning remedy (DC48).
 
+- [ ] Changed or deleted approved deliverables refuse without runtime writes (DC73).
+- [ ] Approved specs and tickets-only folders start; ordinary source files refuse (DC74).
+
 ## Checkpoint verification
 
 Run `bench test --package ./internal/commitment` and `bench test --package ./internal/intent`. Use a controlled transaction race and verify both the reply and persisted claims. Observe a separate-check-and-write mutation turn the race check red.
+
+Run the spec, landing, CLI, and conformance package checks for the shared classifier and public forms.
+Ignore source-validation errors while preserving its read. The changed-source regression must then fail on admission behavior.
