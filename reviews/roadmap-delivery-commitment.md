@@ -2788,7 +2788,84 @@ This suggestion is optional advice and has no repair disposition.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dc-c6-r1-standards",
+          "performer": "claude:dc_c6_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c6_standards",
+            "digest": "sha256:30eff9c00e1c0ee3ef967f11b5dca100acd7e5055bb0b68597a3170b803272a3",
+            "excerpt": "Standards: 5 findings (all low).\nS1 low: closureMode (repository/closure.go:26-28) restates the planning-document mode rule that commitment.PlanningPath owns (model.go:37; candidate.go:190).\nS2 low: admission re-assembles the policy-after-delivery bytes (candidate.go:127-135) instead of consuming the Closure derivation (closure.go:53-60).\nS3 low: ReconcileDelivered hand-rolls two filter loops (closure.go:98-110) where siblings use slices.DeleteFunc.\nS4 low: the hand-built DeliveryFact expectation in the gate test (commitment_completion_test.go:46) has no recorded red, per the AGENTS.md test-expectation rule.\nS5 low: closeDelivery spells a fourth inline index removal (landing/closure.go:37) beside removeIndexTree, the named one spelling.\nClean: the landing and the gate oracle consume Store.Closure; no provenance tags; census 735 to 741 matches six new tests; the ADR states the current decision in STE prose.\nAdvice: the owner-binding predicate has three copies; the roadmap row extent rule lives in two places; two parameter names shadow package names.\n"
+          },
+          "axis": "Standards",
+          "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+          "tip": "7a0e9080652f89f4d968e7e92e98f7a3046ff376",
+          "finding_ids": [
+            "C6-S1",
+            "C6-S2",
+            "C6-S3",
+            "C6-S4",
+            "C6-S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c6-r1-spec",
+          "performer": "claude:dc_c6_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c6_spec",
+            "digest": "sha256:1a1c7b29f0b1e3bea0e5dfca5c13a6bd88ae1b7ab673e586600b74437f17131a",
+            "excerpt": "Spec: 4 findings.\nP1 medium: closure does not remove satisfied dependency references (spec.md:222; ticket 06). ROADMAP.md:262-289 holds Literal and Recommended dependency tables that name FT rows; roadmap.Close (closure.go:16) leaves them stale.\nP2 medium: retirement still schedules completed-row cleanup (spec.md:242, :639). internal/spec/spec.go:304 and roadmapRemainder (:419) still name the row, and ADR 0015 still says retire names the board remainder. No ticket owns the change.\nP3 medium: an explicitly authorized legacy run cannot land its closure (spec.md:241, :74). publishedDelivery (publication.go:51) reads only bindings, not continuations; ReconcileDelivered does not release continuations.\nP4 low: the DC42 failure half fakes the reconcileCommitment join instead of the intent transaction seam (spec.md:345).\nConfirmed: one Closure derivation for the landing and the gate; facts carry no self reference; partial delivery keeps residual work; red and interrupted gates publish nothing; ticket 05 guarantees hold.\nRulings: rowless bindings deferred to ticket 07, full delivery semantics, and the DC40 seam are acceptable.\n"
+          },
+          "axis": "Spec",
+          "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+          "tip": "7a0e9080652f89f4d968e7e92e98f7a3046ff376",
+          "finding_ids": [
+            "C6-P1",
+            "C6-P2",
+            "C6-P3",
+            "C6-P4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c6-r1-coverage",
+          "performer": "claude:dc_c6_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c6_coverage",
+            "digest": "sha256:fec424e61d3bb821b4f008a20c12ba3e360ed755f6e22729b540669429de72a8",
+            "excerpt": "Coverage: 4 findings (worst C1 and C2, medium).\nC1 medium: no test keeps a closed detail file in the graded tree, so dropping the \"completion keeps closed\" refusal (completion.go:84-86) keeps every test green (DC38).\nC2 medium: no negative test of the policy edit bytes or mode (completion.go:88-92); a wrong Source or Evidence, an omitted fact, or a 100755 mode escapes (DC38).\nC3 low-medium: admission protection of residual and unrelated sources during a delivering publication (candidate.go:167-173) is not pinned; replacing satisfied[source.ID] with len(satisfied) > 0 escapes (DC36, DC39).\nC4 low: the new delivery-fact validation rules (parse.go:126-130) and the Deliver guard (delivery.go:20) have no direct test.\nRows: DC34, DC35, DC37, DC39, DC40, DC41, DC42 covered; DC36 covered except C3; DC38 partial.\nNo weakened test. Census 735 to 741 matches six new tests. The five entries and the named probe match the plan.\nAdvice: DC37 and DC41 assert only a refusal prefix; DC42 does not assert destination reconciliation; no fixture exercises outcome dependencies.\n"
+          },
+          "axis": "Coverage",
+          "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+          "tip": "7a0e9080652f89f4d968e7e92e98f7a3046ff376",
+          "finding_ids": [
+            "C6-C1",
+            "C6-C2",
+            "C6-C3",
+            "C6-C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3482,4 +3559,31 @@ The new deadline arm of the lock test has no demonstrated failure. The exported 
 When the lock test already fails, its waiting goroutine can outlive the test.
 
 The final source is 18412326603049059084549a24c280a28755d9f4. The chunk checkpoint remains required before ticket 06.
+
+## DC-C6 initial review disposition
+
+Standards has five findings, Spec has four, and Coverage has four. A read-only Fable consultant at high effort set the dispositions under the reviewer's direction.
+Repair cycles consumed: 0 of 2. A fresh Opus repair session at medium effort takes the ticket 06 targets in one cycle.
+
+### Spec
+
+- C6-P1: auto-fix. Closure also removes satisfied dependency references from the board dependency tables. A plan commit adds coverage row DC75 to ticket 06.
+- C6-P2: assigned to ticket 07. Retirement must not schedule completed-row cleanup, and ADR 0015 must match. A plan commit adds coverage row DC77 and the ADR to ticket 07.
+- C6-P3: auto-fix. An explicitly listed legacy run closes its delivered scope, and reconciliation releases its continuation only when every scope deliverable is delivered. A plan commit adds coverage row DC76 to ticket 06.
+- C6-P4: auto-fix, test only. The DC42 failure uses the real reconciliation against an unwritable ledger instead of a replaced join.
+
+### Coverage
+
+- C6-C1: auto-fix. A gate case keeps a closed detail file and expects the refusal.
+- C6-C2: auto-fix. Gate cases with a wrong fact source, wrong evidence, an omitted fact, and an executable mode each refuse. These cases also supply the red that C6-S4 requires.
+- C6-C3: auto-fix. An admission test refuses a delivering source that deletes a residual or unrelated row before the gate.
+- C6-C4: auto-fix. Direct tests cover the delivery fact validation rules and the already-delivered guard.
+
+### Standards
+
+- C6-S1: auto-fix. The commitment package exports the planning file mode once.
+- C6-S2: auto-fix. Admission consumes the policy edit of the closure derivation.
+- C6-S3: rejected as advice. No documented standard requires the slices idiom.
+- C6-S4: closed with C6-C2. The hand-written fact expectation stays independent, and the C6-C2 negative cases record its red.
+- C6-S5: rejected. The repeated index removal is one incidental Git invocation, and the named helper removes a tree, not one path.
 
