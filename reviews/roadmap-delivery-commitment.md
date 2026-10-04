@@ -2671,9 +2671,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C6",
       "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
-      "tip": "7a0e9080652f89f4d968e7e92e98f7a3046ff376",
-      "plan_digest": "sha256:a215b9301f7af704618ce746866720fde5ea4430a3cb0aed7ed83d8cbe40953f",
-      "source_digest": "bdfe33caec0fedab36f6605ad250462f63a163c7",
+      "tip": "9f9e2d6bf64139818743ce96ca6ddfe2d90ff4a3",
+      "plan_digest": "sha256:da0de6b3aac3915953f39ab823ab9ff2ff058105f162608b82637eee60d69ae3",
+      "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
       "acceptance_rows": [
         "DC34",
         "DC35",
@@ -2683,7 +2683,9 @@ This suggestion is optional advice and has no repair disposition.
         "DC39",
         "DC40",
         "DC41",
-        "DC42"
+        "DC42",
+        "DC75",
+        "DC76"
       ],
       "verification": [
         {
@@ -2785,6 +2787,125 @@ This suggestion is optional advice and has no repair disposition.
           },
           "requirement": "repository",
           "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-1-worktree",
+          "performer": "claude:dc_r06_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_1:worktree",
+            "digest": "sha256:39c4039ffbfd8082e67d59c52555f6d995957166f420c8cb98dc0d7c02a722d2",
+            "excerpt": "## C6-C3 probe: admission skips every unsatisfied source once any delivery exists\nbench probe internal/commitment/repository/candidate.go --swap 'if satisfied[source.ID] {' --with 'if len(satisfied) > 0 {' --package ./internal/worktree --run TestCommitmentClosureAdmission\nprobe: verdict=bit cause=failed failed_tests=2 restored=yes\nfailures: TestCommitmentClosureAdmission/FT2 and /FT3 commitment_landing_test.go:192: closing FTn = (0, \"effects...landed{...}\") -- the landing published; no admission refusal\nrestored: see the focused run below\nnote: first fixture attempt (detail file deleted, row kept) refused on \"roadmap ... structurally untrusted\" and the probe was silent; the test now removes both the row and its detail owner, so the refusal is the protected-source check: commitment source \"FTn\" refused: missing or nonregular tree file roadmap/FTn.md\n\n## DC76 probe 1: publication carries no legacy delivery\nbench probe internal/commitment/repository/publication.go --swap 'listed && source.Spec != \"\"' --with 'listed && false' --package ./internal/worktree --run TestCommitmentLegacyClosure\nprobe: verdict=bit failed_tests=2 restored=yes\nfailures: both subtests commitment_landing_test.go:149: legacy delivery landing = (1, \"refused{detail=commitment: candidate policy has no exact approval; ...}\")\n\n## DC76 probe 2: reconciliation never releases a continuation\nbench probe internal/commitment/repository/closure.go --swap 'if !commitment.ScopeDelivered(policy, continuation.Scope) {' --with 'if true {' --package ./internal/worktree --run TestCommitmentLegacyClosure\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentLegacyClosure/delivered-scope :158: legacy continuation open = true, want false\n\n## DC76 probe 3: a partly delivered scope releases\nbench probe internal/commitment/delivery.go --swap 'if !delivered[path] { return false }' --with 'if !delivered[path] { continue }' --package ./internal/worktree --run TestCommitmentLegacyClosure\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentLegacyClosure/partly-delivered-scope :158: legacy continuation open = false, want true\n\n## C6-P4 probe: reconciliation that never writes the ledger\nbench probe internal/commitment/repository/closure.go --swap '\tremaining := map[string]bool{}' --with '\tif exists { return nil }; remaining := map[string]bool{}' --package ./internal/worktree --run TestCommitmentClosureResume\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentClosureResume commitment_landing_test.go:292: reconciliation wrote an unwritable intent ledger\n\n## Final tip 9f9e2d6b: bench test --package ./internal/worktree -> pass (68102 ms), exit 0\nskips: TestCleanLandedSpecialPathsRetainedWithoutOpening/socket, TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket (capability: unix sockets unavailable)\ncensus pin worktreeTestCount 741 -> 743 (TestCommitmentLegacyClosure, TestCommitmentClosureAdmission)\nAlso at tip: ./internal/spec pass, ./internal/intent pass, ./internal/conformance pass (3 capability skips), ./cmd/bench pass, bench test --check system (Node 25 PATH) pass 75439 ms\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-1-landing",
+          "performer": "claude:dc_r06_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_1:landing",
+            "digest": "sha256:5c41a9ad9751091a735823adbfd60d370928632dc81f8d166a84c4a1a31c743d",
+            "excerpt": "## Final tip 9f9e2d6b: bench test --package ./internal/landing -> pass (8197 ms), exit 0\nskips: TestLandPreAuthorizationRefusalTable/descendant-device, /direct-device (capability: privilege: cannot create a character device)\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-1-gate",
+          "performer": "claude:dc_r06_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_1:gate",
+            "digest": "sha256:634062452196f5e8816fb0615776a41e18dd36dc30372e86056d8ab6e289556d",
+            "excerpt": "## C6-C1 probe: retained detail branch disabled\nbench probe internal/gate/completion.go --swap 'if _, present := graded.entry(edit.Path); present {' --with '... present && false {' --package ./internal/gate --run TestCommitmentClosureNegatives\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentClosureNegatives/retained-detail :129: retained-detail = <nil>, want a refusal naming \"completion keeps closed roadmap/FT1.md\"\n\n## C6-C2/S4 probe 1: policy path compare skipped\nbench probe internal/gate/completion.go --swap 'got, err := e.completionFile(graded, edit.Path)' --with 'if edit.Path == \".bench/commitment.json\" { continue }; got, err := ...' --package ./internal/gate --run TestCommitmentClosureNegatives\nprobe: verdict=bit failed_tests=4 restored=yes\nfailures: wrong-source, wrong-evidence, omitted-fact, executable-policy each = <nil>, want \"completion .bench/commitment.json differs from the exact closure transform\"\n(this is the recorded red for the independently hand-built DeliveryFact expectation in gradeClosure, C6-S4)\n\n## C6-C2/S4 probe 2: mode clause dropped\nbench probe internal/gate/completion.go --swap 'if err != nil || got.mode != edit.Mode || !bytes.Equal(got.data, edit.Data) {' --with 'if err != nil || !bytes.Equal(got.data, edit.Data) {' --package ./internal/gate --run TestCommitmentClosureNegatives\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentClosureNegatives/executable-policy = <nil>, want the exact-transform refusal\n\n## Named probe (DC38) at final tip 9f9e2d6b: omit one sequence removal\nbench probe internal/commitment/repository/closure.go --swap 'roadmap.Close(index, rows, commitment.Remaining(next))' --with 'roadmap.Close(index, rows, commitment.Selection(next).Outcomes)' --package ./internal/gate --run TestCommitmentExactTransform\ntree: dc-integration,9f9e2d6bf64139818743ce96ca6ddfe2d90ff4a3,dirty=false\nprobe: verdict=bit cause=failed failed_tests=1 restored=yes\nfailure: TestCommitmentExactTransform commitment_completion_test.go:75: kept sequence entry = <nil>, want the exact-transform refusal\n\n## Final tip 9f9e2d6b: bench test --package ./internal/gate -> pass (18521 ms), exit 0\n\n## Probe exit code derivation (named DC38 probe)\nThe bench probe verb reports the mutated run as cause=failed, packages status=fail, failed_tests=1, and it does not print a raw exit code. A Go test run that has a failed test exits 1, so the probe exit code is 1. The ticket 06 author derived the same value for this probe. The bench probe verb itself exited 0 with verdict=bit, and the restored run passed (restored=yes).\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit one sequence removal from the exact allowed transform. The exact-transform check must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dc_r06_1:gate",
+              "digest": "sha256:634062452196f5e8816fb0615776a41e18dd36dc30372e86056d8ab6e289556d",
+              "excerpt": "## C6-C1 probe: retained detail branch disabled\nbench probe internal/gate/completion.go --swap 'if _, present := graded.entry(edit.Path); present {' --with '... present && false {' --package ./internal/gate --run TestCommitmentClosureNegatives\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentClosureNegatives/retained-detail :129: retained-detail = <nil>, want a refusal naming \"completion keeps closed roadmap/FT1.md\"\n\n## C6-C2/S4 probe 1: policy path compare skipped\nbench probe internal/gate/completion.go --swap 'got, err := e.completionFile(graded, edit.Path)' --with 'if edit.Path == \".bench/commitment.json\" { continue }; got, err := ...' --package ./internal/gate --run TestCommitmentClosureNegatives\nprobe: verdict=bit failed_tests=4 restored=yes\nfailures: wrong-source, wrong-evidence, omitted-fact, executable-policy each = <nil>, want \"completion .bench/commitment.json differs from the exact closure transform\"\n(this is the recorded red for the independently hand-built DeliveryFact expectation in gradeClosure, C6-S4)\n\n## C6-C2/S4 probe 2: mode clause dropped\nbench probe internal/gate/completion.go --swap 'if err != nil || got.mode != edit.Mode || !bytes.Equal(got.data, edit.Data) {' --with 'if err != nil || !bytes.Equal(got.data, edit.Data) {' --package ./internal/gate --run TestCommitmentClosureNegatives\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentClosureNegatives/executable-policy = <nil>, want the exact-transform refusal\n\n## Named probe (DC38) at final tip 9f9e2d6b: omit one sequence removal\nbench probe internal/commitment/repository/closure.go --swap 'roadmap.Close(index, rows, commitment.Remaining(next))' --with 'roadmap.Close(index, rows, commitment.Selection(next).Outcomes)' --package ./internal/gate --run TestCommitmentExactTransform\ntree: dc-integration,9f9e2d6bf64139818743ce96ca6ddfe2d90ff4a3,dirty=false\nprobe: verdict=bit cause=failed failed_tests=1 restored=yes\nfailure: TestCommitmentExactTransform commitment_completion_test.go:75: kept sequence entry = <nil>, want the exact-transform refusal\n\n## Final tip 9f9e2d6b: bench test --package ./internal/gate -> pass (18521 ms), exit 0\n\n## Probe exit code derivation (named DC38 probe)\nThe bench probe verb reports the mutated run as cause=failed, packages status=fail, failed_tests=1, and it does not print a raw exit code. A Go test run that has a failed test exits 1, so the probe exit code is 1. The ticket 06 author derived the same value for this probe. The bench probe verb itself exited 0 with verdict=bit, and the restored run passed (restored=yes).\n"
+            }
+          }
+        },
+        {
+          "id": "dc-c6-r06-1-roadmap",
+          "performer": "claude:dc_r06_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_1:roadmap",
+            "digest": "sha256:d8a004a590a8dd0c4953d76bd543e20f80692e9136a65335dfa1a7a50ea862fe",
+            "excerpt": "## DC75 probe: omit dependency closure\nbench probe internal/roadmap/closure.go --swap 'ProjectSequence([]byte(strings.Join(closeDependencies(kept, rows), \"\\n\")), outcomes)' --with 'ProjectSequence([]byte(strings.Join(kept, \"\\n\")), outcomes)' --package ./internal/roadmap --run TestCommitmentDependencyClosure\nprobe: verdict=bit cause=failed failed_tests=1 restored=yes\nfailure: TestCommitmentDependencyClosure commitment_test.go:131: dependency closure = \"...| FT2 | FT1 | B needs A. |...\" (FT1 references kept)\nrestored run: bench test --package ./internal/roadmap --run TestCommitment -> pass\n## Final tip 9f9e2d6b: bench test --package ./internal/roadmap -> pass (2413 ms), exit 0\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-1-repository",
+          "performer": "claude:dc_r06_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_1:repository",
+            "digest": "sha256:b1d4d522e3e0f6901b4b7b21214961fdb135181bf884174ba2c4710baa7f18d7",
+            "excerpt": "## Final tip 9f9e2d6b: bench test --package ./internal/commitment/repository -> pass (480 ms), exit 0\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-1-commitment",
+          "performer": "claude:dc_r06_1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_1:commitment",
+            "digest": "sha256:cfae87b87751aaf1db9a75d20e1bb9b492048bb5c16743646432878523d6f332",
+            "excerpt": "## C6-C4 probe 1: identity-mismatch check dropped\n(--omit of the clause leaves `binding` unused and the probe refuses to build: verdict=invalid; recorded the swap instead)\nbench probe internal/commitment/parse.go --swap ' || delivery.Identity != binding.Source.Identity' --with ' || binding.Source.Identity == \"\"' --package ./internal/commitment --run TestCommitmentDeliveryFactValidation\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentDeliveryFactValidation/identity-mismatch delivery_test.go:82: Validate = <nil>, want the invalid-delivery refusal\n\n## C6-C4 probe 2: already-delivered guard dropped\nbench probe internal/commitment/delivery.go --swap 'if recorded.Outcome == fact.Outcome && recorded.Binding == fact.Binding {' --with 'if recorded.Outcome == \"\" {' --package ./internal/commitment --run 'TestCommitmentDeliver$'\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentDeliver delivery_test.go:48: second Deliver = commitment policy: invalid delivery for outcome \"A\", want the already-delivered refusal\n\n## Independent expectation red: hand-built DeliveryFact in TestCommitmentDeliver\nbench probe internal/commitment/delivery.go --swap 'Source: source, Evidence: evidence}' --with 'Source: evidence, Evidence: source}' --package ./internal/commitment --run 'TestCommitmentDeliver$'\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentDeliver delivery_test.go:36: delivery fact = {... Source:evidence Evidence:source}, want {... Source:source Evidence:evidence}\n## Final tip 9f9e2d6b: bench test --package ./internal/commitment -> pass (3020 ms), exit 0\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
           "exit_code": 0
         }
       ],
@@ -3610,4 +3731,13 @@ Repair cycles consumed: 0 of 2. A fresh Opus repair session at medium effort tak
 - C6-S3: rejected as advice. No documented standard requires the slices idiom.
 - C6-S4: closed with C6-C2. The hand-written fact expectation stays independent, and the C6-C2 negative cases record its red.
 - C6-S5: rejected. The repeated index removal is one incidental Git invocation, and the named helper removes a tree, not one path.
+
+## DC-C6 repair cycle 1
+
+Repair cycles consumed: 1 of 2. A fresh Opus repair session at medium effort corrected C6-P1, C6-P3, C6-P4, C6-C1, C6-C2, C6-C3, C6-C4, C6-S1, and C6-S2.
+The repair source is 9f9e2d6bf64139818743ce96ca6ddfe2d90ff4a3. All six planned checks pass there, and the named sequence probe failed and restored.
+
+Closure now removes satisfied dependency references from the board dependency tables through the one roadmap closure owner. A listed legacy run closes an exact scoped spec path.
+Reconciliation releases a continuation only when every approved scope deliverable is delivered. New gate, admission, and delivery fact cases each failed under a named probe.
+The DC42 failure now comes from the real reconciliation against an unwritable ledger. The planning file mode and the delivered policy edit each have one source.
 
