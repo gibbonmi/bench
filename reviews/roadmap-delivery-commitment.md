@@ -1136,7 +1136,73 @@ This suggestion is optional advice and has no repair disposition.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3-initial-standards",
+          "performer": "/root/dc_c3_standards",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "collaboration:/root/dc_c3_standards",
+            "digest": "sha256:8a199959244ad5a785e250e56c066aad95dfbb515e75f7fb7c323c23891174e5",
+            "excerpt": "Standards: 2 findings, both auto-fix, on 2 distinct repair targets within ticket 03. Worst issue: duplicated planning-promotion policy.\n\nDC-C3-S1 — Promotion destinations have two production classifiers. Confidence 9/10; disposition auto-fix.\ninternal/commitment/model.go:112 permits named promotions only for CONTEXT.md or docs/adr/. internal/commitment/repository/candidate.go:160 independently repeats that destination predicate before collecting promotions. The adapter already calls PlanningPath at line 147, but its second destination classifier remains separate policy knowledge. A destination-policy change therefore requires edits in both owners.\nBinding rule: AGENTS.md:35–40, “Two derivations of the same fact must collapse into one source.” Lines 46–48 expressly retain this requirement for production policy. Ticket 03 also requires one planning classifier. Repair by making promotion eligibility one commitment-owned decision consumed by both sites.\n\nDC-C3-S2 — Requirement normalization independently recognizes occurrence-ledger lines. Confidence 9/10; disposition auto-fix.\ninternal/roadmap/tree_validation.go:40 validates through parseOccurrenceLedger, then lines 44–46 independently rediscover ledger lines with strings.HasPrefix(line, \"Occurrences:\"). The canonical parser already makes that classification at internal/roadmap/context_parse.go:52–58; tree.go:181 consumes its result. Validation reuse preserves malformed-input handling, but does not single-source which bytes normalization excludes.\nBinding rule: AGENTS.md:35–40 and 46–48, which explicitly keep production parsers single-sourced. Repair by returning the recognized ledger span or sharing its recognition predicate. The recorded occurrence mutation establishes the independent test expectation’s exception; it does not exempt two production derivations.\n\nBoth findings concern mandatory static standards. No dedicated automated duplication check exists for these predicates, and this axis was expressly barred from tests/probes. I inspected the canonical owners, their contrary reuse evidence, the test-expectation exception, and ticket decisions before retaining them. These findings assert duplication, not an observed behavioral failure.\nImplementation-command contribution: none. No writes, commits, stash, tests, probes, or review-record mutations. Final reviewer HEAD: eeae69331b2e26b946bbe6347c313cdc1ac3b5f2; porcelain status empty. No live commands remain. Initial review consumed 0/2 repair cycles.\n"
+          },
+          "axis": "Standards",
+          "base": "975be583753195efcc790927fc8019b0e18367ff",
+          "tip": "ca141db2e1e6813ebc6b0ac7c522fb855e52951b",
+          "finding_ids": [
+            "DC-C3-S1",
+            "DC-C3-S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-initial-spec",
+          "performer": "/root/dc_c3_spec",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "collaboration:/root/dc_c3_spec",
+            "digest": "sha256:790ef26475326c2d9cc8a2e937a9a626448eaea60c53f7760ba50b9371e1124a",
+            "excerpt": "Spec: No findings. Raw count: 0. Distinct repair targets: 0. Worst issue: none.\nI independently read the whole approved spec and ticket 03 before comparing the frozen delta. DC6, DC10, DC11, DC13, DC15, DC26, DC27, and DC31 are satisfied on inspection: exact proposal approval, protected roadmap requirements and sequence, occurrence normalization, authorization before formatting, ordinary build admission, and claim-free plan-only validation. Future-ticket behavior was excluded.\nThe contrary-source checks resolved my concerns: the roadmap parser rejects mismatched headings, readiness revalidates deliverable identity and blocked state, and the operation table excludes plan-only charge preparation. No implementation command change is necessary.\nClaim schema: {\"status\":\"claimed\",\"confidence\":8}. Semantic review completed; no tests or probes executed.\nFinal dc-c3-spec HEAD: eeae69331b2e26b946bbe6347c313cdc1ac3b5f2. Git status clean. No writes, commits, or live tests. C3 repair allowance remains 0/2 consumed.\n"
+          },
+          "axis": "Spec",
+          "base": "975be583753195efcc790927fc8019b0e18367ff",
+          "tip": "ca141db2e1e6813ebc6b0ac7c522fb855e52951b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c3-initial-coverage",
+          "performer": "/root/dc_c3_coverage",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "fe4d7c5ea584850cb933745cef9b4a4c5406309c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "collaboration:/root/dc_c3_coverage",
+            "digest": "sha256:9f4372010f9b181550dce8ce1376b25bd972db9fa418534a429b721185e418f0",
+            "excerpt": "Coverage: 1 finding, 1 distinct target. Worst: missing authority-revocation regression.\nC3-COV-1 — held; auto-fix; confidence 9/10.\nPrepare an admitted build charge, then block its outcome or remove its delivery binding while keeping its assignment and source pins unchanged. bench preflight evidence <id> --check-current must refuse, emit no current=true row, and preserve the ledger.\nThe production guard exists in internal/preflight/charge_pack.go:115. Its negative state is untested. TestEvidenceCurrentBinding in internal/preflight/evidencecmd/evidence_modes_test.go:49 covers unchanged pins, moved tip, released assignment, dirty checkout, and altered source bytes. TestCommitmentBuildPreflight and TestCommitmentPlanOnly in internal/preflight/commitment_test.go:69 revoke authority before preparation or planning, without rechecking an existing charge.\nBinding requirement: spec story 13 requires commands to “recheck current authority”; DC27 protects ordinary build admission. Add this state to the existing current-binding test family within ticket 03’s preflight fence.\nRefutation replaced the current-evidence Ready guard with harmless Store construction. Both runs remained green: ./internal/preflight, 353 tests, mutation silent, inner exit 0, wrapper exit 1, restore yes; ./internal/preflight/evidencecmd ^TestEvidenceCurrentBinding$, 6 tests, mutation silent, inner exit 0, wrapper exit 1, restore yes.\nIndependent biting probe: omitted charge-preparation admission in internal/preflight/command.go, a different site and mutation kind from author probes. TestCommitmentBuildPreflight failed because an unbound charge prepared successfully; baseline passed, inner test exit 1, wrapper exit 0, restored=yes.\nNo optional advice or command contribution. Claim dc-c3-coverage verified, confidence 9.\nFinal HEAD: eeae69331b2e26b946bbe6347c313cdc1ac3b5f2. Status clean. No retained edits, commits, review-record writes, or live tests.\n"
+          },
+          "axis": "Coverage",
+          "base": "975be583753195efcc790927fc8019b0e18367ff",
+          "tip": "ca141db2e1e6813ebc6b0ac7c522fb855e52951b",
+          "finding_ids": [
+            "C3-COV-1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1471,3 +1537,23 @@ native 1566ca: probe bit; baseline passed; inner test exit 1; TestHelpInventoryI
 ```
 
 The initial review starts with zero repair cycles consumed. The chunk permits two repair cycles.
+
+## DC-C3 initial review disposition
+
+Standards has two findings. Spec has none. Coverage has one finding. The three findings name three distinct repair targets.
+
+### Standards
+
+- DC-C3-S1: auto-fix, confidence 9. Share promotion eligibility between the two consumers. AGENTS.md requires one source for production policy.
+- DC-C3-S2: auto-fix, confidence 9. Share occurrence-line recognition with the canonical parser. AGENTS.md requires one source for production parsers.
+
+### Spec
+
+No findings. The reviewer checked all eight current acceptance rows.
+
+### Coverage
+
+- C3-COV-1: auto-fix, confidence 9. Test current-evidence refusal after delivery authority is revoked. Story 13 requires current authority checks.
+
+Repair cycle 1 addresses these three targets. The current session retains repair authorship under the reviewer’s standing direction.
+The chunk permits two repair cycles. No optional advice was retained.
