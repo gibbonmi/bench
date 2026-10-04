@@ -4211,6 +4211,75 @@ This suggestion is optional advice and has no repair disposition.
             "C8-C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dc-c8-r2-standards",
+          "performer": "claude:dc_c8_r2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r2_standards",
+            "digest": "sha256:fe00ba5ab4f5cd259a06da5f42e5ad17db8912a75ee79e026b06d289a9874c4f",
+            "excerpt": "Standards: 0 findings\nReviewer claude:dc_c8_r2_standards, opus high. Subject 1a803d5c..047e47c3, evidence sha256:e3318222d95e99af20c9664281d4cd42480dceadc444a03be09b6810c8070cc7.\nC8-S1 closed: bench-drain.md:227 and DATA_HANDLING.md:215 hold each needle on one line; tests quote no wrap bytes; all 18 Require needles match on one line.\nOpenContinuations (admission.go:108-114) is the one owner, used by eligible, Project, ReconcileDelivered. ParseProposal restates no policy rule. listedRuns shared by plan and approve. approvedTransition follows Approve's existing receipt decode. No weaker status assertion. Test move byte-identical. Guidance forbid row and restore present. No budget growth.\nAdvice: implementSpecPhaseAction and optionalSpecPath now unused in production; readiness.go:195 stale comment (\"if adoption listed it\"); parallelKeys joins outcome and run ids with no label; listedRuns reports any ls-tree failure as outside-run; internal/commitment/repository at 14 files; BENCH.md:153 \"needs fixed\" and two names for the active outcome, BENCH-reference.md:236 early break; status detail names no run when only a continuation is active; small placement points.\n"
+          },
+          "axis": "Standards",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "047e47c304d96d40b746dc98cd08c994c5e8cd82",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c8-r1-standards"
+          ]
+        },
+        {
+          "id": "dc-c8-r2-coverage",
+          "performer": "claude:dc_c8_r2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r2_coverage",
+            "digest": "sha256:106e140d8103df39ad286569e9ec8cffd14d63724845330b4e6f30561d82d886",
+            "excerpt": "Coverage: 0 findings\nReviewer claude:dc_c8_r2_coverage, opus high. Subject 1a803d5c..047e47c3, record 54afc72c, evidence sha256:e3318222d95e99af20c9664281d4cd42480dceadc444a03be09b6810c8070cc7.\nC8-C1 closed: cmd/bench/commitment_test.go:95-105 pins active_milestone M1 and next_outcome B, refuses next_outcome in the dependent case; legacy-selector mutation in gather fails.\nRow verdicts: DC47, DC54, DC64, DC65 hold; DC83 holds (DeepEqual of stored continuation, one refusing row and probe per element, MilestoneState unchanged); DC84 holds (open/other-run refuse, granted/delivered admit, projection agrees).\nCycle 1 status: no weaker assertion; Option B refusing cases present with probes.\nNo weakened test; TestPublishAdmittedDecidesUnderTheLock byte-identical after the move.\nTen entries match the plan; only repository carries the named probe with exit code 1 derived from the failing Go test.\nAdvice: A1 delivered-scope filter unobserved at admission (admission.go:77, outlook.go:101); A2 plan identity checked only list vs no list (authority.go:86); A3 keep-other-continuations branch of withContinuations unexercised (continuation.go:41-47); A4 only request change tested before approval; A5 dashboard deliverable/active/waiting unasserted.\n"
+          },
+          "axis": "Coverage",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "047e47c304d96d40b746dc98cd08c994c5e8cd82",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c8-r1-coverage"
+          ]
+        },
+        {
+          "id": "dc-c8-r2-spec",
+          "performer": "claude:dc_c8_r2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f74caaa9b97dfd4a776591873c7f13876d25c8a7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r2_spec",
+            "digest": "sha256:c40cc150b13121428ca1f22e02e5e92c805e353013bee7068109527a6ad0ac7b",
+            "excerpt": "Spec: 2 findings\nReviewer claude:dc_c8_r2_spec, opus high. Subject 1a803d5c..047e47c3, evidence sha256:e3318222d95e99af20c9664281d4cd42480dceadc444a03be09b6810c8070cc7.\nPrior: C8-P1 closed (narrow form meets ticket 09 line 9, spec 262-264, 286-288; delivery.go:23-27). C8-P2 closed (BENCH.md:153, forbid row registry_commitment.go:46). C8-P3/DC83 closed (parse.go:31-60, authority.go:79-87, repository.go:178,188, continuation.go:37-47, candidate.go:101-116). C8-P4/DC84 closed (admission.go:77-80,119-139, outlook.go:101).\nDelegated choices: list in proposal and receipt acceptable; ParallelGrant names continuations acceptable (spec 270 sentence added in plan expansion, reviewer veto surface); scope-on-branch-tip acceptable as a sanity check; \"known run\" = any ledger record NOT acceptable.\nC8-P5 (medium): a plan after adoption can list continuations (repository.go:73-197, authority.go transitionEffects ignores them). A later plan listing any ledger run R, including one created after adoption, has empty effects, records R, then start of the eligible outcome refuses (admission.go:77-80) and R publishes in scope without a binding (candidate.go:86-93). Spec 266, ticket 05 line 17, spec 158-161, story 3. Fix: accept continuations only on the initial adoption plan, and only for runs that exist and are open.\nC8-P6 (medium): a continuation that never delivers holds the slot forever. ScopeDelivered false when no scope path is an active-milestone deliverable (delivery.go:58-71); production-only scope lands (candidate.go:86-93) but ReconcileDelivered keeps it (closure.go:125); nothing removes a continuation; listedRuns accepts complete runs (publication.go:43). DC84, spec 268, 270.\nGuarantees: six closed decisions hold; tickets 01-08 hold.\nUnowned: spec 301; spec 243; spec 266 first sentence (inventory scope evidence); spec 156 (no force flag, sampled).\nAdvice: implementSpecPhaseAction unused; no adoption signal in status without a staged spec; continuations take effect at approval before publication and survive an abandoned plan; grants put local ids in tracked policy.\n"
+          },
+          "axis": "Spec",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "047e47c304d96d40b746dc98cd08c994c5e8cd82",
+          "finding_ids": [
+            "C8-P5",
+            "C8-P6"
+          ],
+          "supersedes": [
+            "dc-c8-r1-spec"
+          ]
         }
       ]
     }
@@ -5356,3 +5425,15 @@ Approval records exactly the listed continuations, and the plan identity binds t
 An open continuation holds the active slot in admission and in the shared projection. A parallel grant must name each open continuation. Both choices are open to reviewer veto.
 
 A plan commit corrected rows DC83 and DC84 to one predicate each, after the coverage parser refused them. All ten planned checks pass at the chunk source, and the named repository probe failed and restored.
+
+## DC-C8 confirming review disposition
+
+Standards and Coverage report zero findings, and every accepted round 1 finding is closed. Spec reports C8-P5 and C8-P6 in the continuation code of cycle 2.
+A read-only Fable consultant at high effort set the dispositions. No finding needs a reviewer decision.
+Repair cycles consumed: 2 of 2. The reviewer pre-approved extensions, so extension cycle 3 repairs both findings.
+
+- C8-P5: auto-fix. A proposal can list continuations only when no policy is published. Each listed run must be active at plan and at approval.
+- C8-P6: auto-fix. A continuation holds the slot only while its run is active and its scope is undelivered. A plan commit extends the DC84 row and spec line 268 with this closer.
+- Cycle 3 also observes the open predicate at admission before reconciliation, and it checks that a changed list changes the plan identity. A failed branch read gets its own refusal.
+
+The parallel grant sentence at spec line 270 stays open to reviewer veto. The other advice items stay advice.
