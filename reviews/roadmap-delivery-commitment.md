@@ -977,9 +977,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C3",
       "base": "975be583753195efcc790927fc8019b0e18367ff",
-      "tip": "e006513b2c1886ce5a16c590916965254222f828",
-      "plan_digest": "sha256:44dc3d96f2c82e35a8c0f95cf64d9a988c14b3a3fd3df478e6b343d2e3bf5b57",
-      "source_digest": "4b1c31f77e9d42701eb832719bedf89a55e0d4d9",
+      "tip": "b49363207f45c906eceec81f91db66fec5f0c763",
+      "plan_digest": "sha256:8bcab78843cb4b58702f222d18726b67d439e4f0312015f4133ade77b40c3bf6",
+      "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
       "acceptance_rows": [
         "DC6",
         "DC10",
@@ -1277,6 +1277,168 @@ This suggestion is optional advice and has no repair disposition.
           },
           "requirement": "commit",
           "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r2-worktree",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:e9987e",
+            "digest": "sha256:d16fa2b0c078fc53e1336ac174e745062d16efe33ba7882f82c4a8cc45eb4cf9",
+            "excerpt": "native 52e1b3\n\nnative fc9a8c\n\nnative 8a43d8\n\nnative 8fb791\n\nnative 1a2cbf\n\nnative 3f3e86\n\nnative c7b969\n\nnative 99851c\n\nnative 0f255f\n\nnative 41379d\n\nnative 18635f\n\nnative 171ffe\n\nnative 1e51a1\n\nnative 2054a8\n\nnative 2dbe80\n\nnative bbf064\n\nnative 825918\n\nnative 0bf068\n\nnative 7293cc\n\nnative 66f471\n\nnative c24604\n\nnative e9987e\ntree[1]{target,head,dirty}:\n  dc-integration,69381d87f1c25c8fc3ce0623f192b13ab03b2984,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,101968\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable: listen unix /tmp/PUBXWM/t/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket2415845659/001/.bench-home/worktrees/001-494238302/8b8dd4b107f357f7c8eb4a4240a3bc05-cfbb8b95d29ce5987ed625f64a52e7b7: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/PUBXWM/t/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket4284586498/001/.bench-home/worktrees/001-857439790/504b8b0f7fd6ea7157a0e7ec96ab08bb-9d96dbecf8db73283e9bf21f62927c86/.git: bind: invalid argument\"\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r2-charge-evidence-system",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:65d3b8",
+            "digest": "sha256:79ae8c84f9e56297e4e706a29b4424ffe9591e8dddf8f7ff1371f465234404ae",
+            "excerpt": "native a64275\n\nnative 5e79dc\n\nnative 5477af\n\nnative 2e9d87\n\nnative 28fed2\n\nnative 61ce97\n\nnative 835ccf\n\nnative 22a483\n\nnative 2cc09b\n\nnative 3114af\n\nnative 63762d\n\nnative b4b05c\n\nnative 1f4bed\n\nnative 1ee4e5\n\nnative 5cadac\n\nnative 1afc6f\n\nnative 7455e1\n\nnative 60cfbb\n\nnative 719bec\n\nnative 13bab2\n\nnative 197b04\n\nnative 2f36b9\n\nnative a24208\n\nnative 574af3\n\nnative 92d53b\n\nnative 16b30e\n\nnative 65d3b8\ntree[1]{target,head,dirty}:\n  dc-integration,69381d87f1c25c8fc3ce0623f192b13ab03b2984,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,127293\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "charge-evidence-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r2-preflight",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:a34ae5",
+            "digest": "sha256:0e58db07decbb80876f3feeac2c6d791eb3d213cdd4cc1c59b7f4c167028d89c",
+            "excerpt": "native fec4b8\n\nnative 09af05\n\nnative 308770\n\nnative 5720b8\n\nnative 6e5edc\n\nnative e24d8e\n\nnative a801db\n\nnative 1b0466\n\nnative 1bdc25\n\nnative a34ae5\ntree[1]{target,head,dirty}:\n  dc-integration,69381d87f1c25c8fc3ce0623f192b13ab03b2984,true\npackages[4]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,43432\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,31046\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r2-bench",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:d882a9",
+            "digest": "sha256:a52eff9adbc5506182306c06095acb37bdf65f68dd4114c728a583c07d7bec3a",
+            "excerpt": "native ebf658\n\nnative 8ddd4a\n\nnative 9dabe3\n\nnative 37aeb3\n\nnative d882a9\ntree[1]{target,head,dirty}:\n  dc-integration,69381d87f1c25c8fc3ce0623f192b13ab03b2984,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18791\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r2-conformance",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:07169c",
+            "digest": "sha256:726b6aca23af31bbd7a5364d32589433c0dc775e215041821f73b95893287e9c",
+            "excerpt": "native f0a7cf\n\nnative 4104dd\n\nnative 2139ff\n\nnative fec982\n\nnative 1ad396\n\nnative db0125\n\nnative 239fe5\n\nnative 7e1fcf\n\nnative 2dbfd0\n\nnative 07169c\ntree[1]{target,head,dirty}:\n  dc-integration,69381d87f1c25c8fc3ce0623f192b13ab03b2984,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,39781\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/DHGA4F/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket2567785968/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/DHGA4F/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket278044613/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r2-commit",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:ecf1b0",
+            "digest": "sha256:3454e5e2a51943b121e5231f2620ea6385a8ee016da2e550462142d4aaeb1113",
+            "excerpt": "native 518b1e\n\nnative 562e6d\n\nnative c1fc52\n\nnative ecf1b0\ntree[1]{target,head,dirty}:\n  dc-integration,69381d87f1c25c8fc3ce0623f192b13ab03b2984,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,10000\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commit",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r2-landing",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:7cb53b",
+            "digest": "sha256:502c74f9587b985c7bf0567f97bbf13ca021b94f95e60e6bb645bef9e614a4ed",
+            "excerpt": "native 7c33ac\n\nnative 97f6f3\n\nnative 230746\n\nnative 7cb53b\ntree[1]{target,head,dirty}:\n  dc-integration,69381d87f1c25c8fc3ce0623f192b13ab03b2984,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,13454\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r2-commitment",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:1ca844",
+            "digest": "sha256:e7a988f2a86faf9d51b8e173bfbf55707ad43b0aba2a5676f95005ec53d2db35",
+            "excerpt": "native 1f1973\n\nnative 1ca844\ntree[1]{target,head,dirty}:\n  dc-integration,69381d87f1c25c8fc3ce0623f192b13ab03b2984,true\npackages[4]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,3202\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,no-tests,0\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0\n  github.com/gibbonmi/bench/internal/commitment/repository,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "c3-r2-roadmap",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "1c992416645781efa93b7c58f7387d77ad4cbac1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:b79d54",
+            "digest": "sha256:7121f654f98ed45c3e7e93dd67e41cc424dd416b3a5d2b3471ce1974e214755c",
+            "excerpt": "native 55e6ee\n\nnative b79d54\ntree[1]{target,head,dirty}:\n  dc-integration,69381d87f1c25c8fc3ce0623f192b13ab03b2984,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/roadmap,pass,2618\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
           "exit_code": 0
         }
       ],
@@ -1832,3 +1994,11 @@ gate: red
 The in-scope plan expansion assigns land_fixtures_test.go to ticket 03 and adds its worktree package check.
 The fixture census enumerates its callers before the setup changes. Repair cycle 2 addresses this missed integration consumer.
 Repair allowance consumed: 2 of 2 cycles. No extension is assumed.
+
+## DC-C3 repair cycle 2 verification
+
+The shared landing fixture seeds an approved policy and admits its exact assignment through the existing commitment fixture owner.
+The unchanged lane-commit journey passed after its recorded checkpoint failure. The full worktree package and the eight existing checks passed.
+No production code or test assertion changed in this repair. The fixture census retains one caller enumeration per helper.
+
+The current source awaits confirmation of this final fixture delta. Repair allowance consumed: 2 of 2 cycles.
