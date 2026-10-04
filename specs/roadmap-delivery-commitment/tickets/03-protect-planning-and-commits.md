@@ -1,7 +1,7 @@
 # Protect planning commits and build charges
 
 Blocked by: 02-admit-committed-outcomes.md
-Writes: internal/commitment (new), internal/intent, internal/commit, internal/preflight, internal/roadmap, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go, internal/systemtest/charge_evidence_test.go
+Writes: internal/commitment (new), internal/intent, internal/commit, internal/landing/attribution.go, internal/preflight, internal/roadmap, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go, internal/systemtest/charge_evidence_test.go
 Covers: DC6, DC10, DC11, DC13, DC15, DC26, DC27, DC31
 
 ## What to build
@@ -39,3 +39,6 @@ Read commit orchestration, preflight gather and decisions, roadmap context parsi
 The existing system journey uses BENCH_KIT through `bench test --check system`. Adapt its fixture at this checkpoint when admission changes its route.
 
 Run `bench test --package ./internal/commit`, `bench test --package ./internal/preflight`, `bench test --package ./internal/roadmap`, and `bench test --package ./internal/commitment`. Exercise commit through its actual composed-candidate path.
+
+The landing owner exposes its existing attributed composition for the early commitment check. No consumer creates another temporary-index algorithm.
+Run the landing, root command, and root conformance package checks with the existing checks.
