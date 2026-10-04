@@ -16,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/landing/published"
 )
 
 // Request is the complete, immutable input to one prospective landing.
@@ -235,13 +236,9 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 		fmt.Fprintf(r.Stderr, "landing composition{resolved=%s}\n", strings.Join(composition.Resolved, ","))
 	}
 	tree := composition.Tree
-	if r.SpecPath != "" {
-		if tree, err = completeSpec(r, tree, source); err != nil {
-			return ReviewedResult{}, err
-		}
-	}
-	if r.ClosePath != "" {
-		if tree, err = completeTickets(r, tree, source); err != nil {
+	deliverable := r.Deliverable()
+	if deliverable != "" {
+		if tree, err = published.Tree(r.Root, tree, deliverable, source); err != nil {
 			return ReviewedResult{}, err
 		}
 	}

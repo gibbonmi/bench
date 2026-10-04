@@ -194,26 +194,6 @@ func reconcile(r Request, paths []string, snapshot composedSnapshot) error {
 	return nil
 }
 
-// removeIndexTree drops every entry beneath rel from the prospective index, so the
-// published tree carries the deletion rather than the checkout carrying it afterwards.
-// The pathspec is literal and the removals name exact index paths, so a folder name
-// holding a space or a glob character resolves to itself.
-func removeIndexTree(root, idx, rel string) error {
-	listed, err := indexOutputRaw(root, idx, "ls-files", "-z", "--cached", "--", ":(literal)"+rel)
-	if err != nil {
-		return fmt.Errorf("list tracked entries under %q: %w", rel, err)
-	}
-	for _, path := range strings.Split(string(listed), "\x00") {
-		if path == "" {
-			continue
-		}
-		if err := indexRun(root, idx, "update-index", "--force-remove", "--", path); err != nil {
-			return fmt.Errorf("remove %q from prospective index: %w", path, err)
-		}
-	}
-	return nil
-}
-
 func trackedAt(root, base, path string) bool {
 	return run(root, "cat-file", "-e", base+":"+path) == nil
 }
