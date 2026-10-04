@@ -305,7 +305,7 @@ func TestCommitmentDataInventory(t *testing.T) {
 		{"unknown field", blocker, blocker + "| `commitment.blockers.transcript` | A copied chat. |\n", `DATA_HANDLING.md commitment record: documented field "commitment.blockers.transcript" is not a ledger field`},
 		{"missing listing", "<!-- commitment-record:begin -->", "", "DATA_HANDLING.md commitment record region missing: expected the field listing between <!-- commitment-record:begin --> and <!-- commitment-record:end -->"},
 		{"local retention", "The records stay on the local machine.", "", "commitment guidance: data inventory dropped the local retention of commitment records"},
-		{"contents boundary", "They hold no transcript, prompt, objective text,\nenvironment value, or credential.", "", "commitment guidance: data inventory dropped the record contents boundary"},
+		{"contents boundary", "They hold no transcript, prompt, objective text, environment value, or credential.", "", "commitment guidance: data inventory dropped the record contents boundary"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if count := strings.Count(live, tc.old); count != 1 {

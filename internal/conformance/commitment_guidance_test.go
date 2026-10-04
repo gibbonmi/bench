@@ -49,7 +49,7 @@ func TestCommitmentGuidance(t *testing.T) {
 		remove("drain admission route", drain, "The commitment rule in `.bench/BENCH.md` decides whether intake starts; a drain approval never admits it.", "drain dropped its route to the commitment rule"),
 		remove("drain implement-now admission", drain, "A drained light-path item is implement-now work only after `bench commitment approve` admits it and `bench commitment start` binds its worktree.", "drain dropped the admission route for implement-now work"),
 		remove("drain sequence owner", drain, sequence, "drain dropped the commitment ownership of the recommended sequence"),
-		remove("drain classification limit", drain, "It\ninforms a commitment proposal and never reorders committed work.", "drain dropped the classification limit"),
+		remove("drain classification limit", drain, "It informs a commitment proposal and never reorders committed work.", "drain dropped the classification limit"),
 		remove("final-check closure", finalCheck, "Verified closure is part of delivery. ", "final check dropped verified closure from delivery"),
 		remove("implementation start", ".agents/commands/bench-implement-spec.md", "It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams.", "implementation dropped its commitment start"),
 		remove("staged spec", ".agents/commands/bench-write-spec.md", " A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.", "spec authoring dropped the planning-only staged spec"),
@@ -70,6 +70,7 @@ func TestCommitmentGuidance(t *testing.T) {
 		restore("later drain closure", finalCheck, "Verified closure is part of delivery.", "Leave the roadmap and capture rows to `/bench-drain`; that phase owns the reconcile and the drain, and this duty never restates it.", "final check restored roadmap closure as a later drain"),
 		restore("unadmitted learning fix", guide, "**Delegate a light-path fix for a learning.**", "A `bench learning` entry can have a light-path fix that needs no reviewer decision.", "operating guide restored the learning fix without admission"),
 		restore("drain implementation", guide, "Parked ideas land in `capture/IDEAS.md`.", "They graduate to the board only through a reviewed `/bench-drain` drain, or close by implementation during that same drain.", "operating guide restored implementation inside a drain"),
+		restore("mid-work defect fix", guide, "**Fix, don't park.**", "A small defect you find mid-work is not roadmap work: the fix lands in the active workflow as its own commit.", "operating guide restored the fix of every mid-work defect without admission"),
 		restore("first sequence row", router, "State its outcome, then", "For roadmap work, run `bench roadmap` and take the first `sequence` row.", "router restored the first sequence row as its work"),
 	} {
 		t.Run(mutation.name, func(t *testing.T) {

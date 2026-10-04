@@ -211,9 +211,10 @@ same field set from the ledger types, so a new field cannot stay undocumented.
 <!-- commitment-record:end -->
 
 These records hold identities, digests, paths, references, and the reviewer's
-and the worker's one-line text. They hold no transcript, prompt, objective text,
-environment value, or credential. A decision reference and an evidence
-reference name their source; Bench does not resolve or copy that source.
+and the worker's one-line text.
+They hold no transcript, prompt, objective text, environment value, or credential.
+A decision reference and an evidence reference name their source; Bench does
+not resolve or copy that source.
 
 The records stay on the local machine. Bench removes no receipt by itself, so an
 unconsumed receipt stays available for recovery. After its publication is

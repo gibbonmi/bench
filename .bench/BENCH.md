@@ -150,7 +150,7 @@ The standing approvals are the table below, a size rule I have given you, and th
 `bench commit` enforces this boundary: it refuses the primary checkout and directs the user to create a Bench worktree. The landing is spec-less when the phase has no spec, and within Bench, `main` receives writes only through landings.
 Merge composition is the landing primitive because a rebase rewrites the reviewed tip, so the workflow rejects rebases. Editors and raw Git remain outside Bench's command boundary. `.bench/BENCH-reference.md` holds the landing shape.
 
-**Fix, don't park.** A small defect you find mid-work is not roadmap work: the fix lands in the active workflow as its own commit. Park a fix to `capture/IDEAS.md` or `capture/learnings.md` only when it needs a reviewer decision, a new seam, or spec-level design.
+**Fix, don't park.** A small defect that the active committed outcome needs fixed is not roadmap work: the fix lands in the active workflow as its own commit. A small defect that the active outcome does not need is uncommitted intake under the commitment rule above. Park a fix to `capture/IDEAS.md` or `capture/learnings.md` when it needs a reviewer decision, a new seam, or spec-level design.
 
 **A batch approval covers per-spec sign-offs when I'm unreachable.** If I
 approved a batch plan and went AFK, build on rather than stall. Leave each

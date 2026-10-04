@@ -43,6 +43,7 @@ var commitmentAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: finalCheckCommand, Kind: Forbid, Needle: "Leave the roadmap and capture rows to `/bench-drain`", Diagnostic: CommitmentDiagnosticPrefix + "final check restored roadmap closure as a later drain"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "a light-path fix that needs no reviewer decision", Diagnostic: CommitmentDiagnosticPrefix + "operating guide restored the learning fix without admission"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "or close by implementation during that same drain", Diagnostic: CommitmentDiagnosticPrefix + "operating guide restored implementation inside a drain"},
+	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "A small defect you find mid-work is not roadmap work", Diagnostic: CommitmentDiagnosticPrefix + "operating guide restored the fix of every mid-work defect without admission"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench.md", Kind: Forbid, Needle: "take the first `sequence` row", Diagnostic: CommitmentDiagnosticPrefix + "router restored the first sequence row as its work"},
 }
 

@@ -223,9 +223,9 @@ When the active committed outcome does not need that fix, its verdict records th
 While you walk the rows, classify each row by its purpose. Use fix (a defect
 in existing behavior, with evidence), refactor (a structure change that keeps
 behavior), feature (new capability or guidance), or decision-only. Report the
-classification in the exit rather than write it into the row grammar. It
-informs a commitment proposal and never reorders committed work. Every run
-classifies; no invocation skips it.
+classification in the exit rather than write it into the row grammar.
+It informs a commitment proposal and never reorders committed work.
+Every run classifies; no invocation skips it.
 
 The board-restructuring pass is opt-in. It runs only when the reviewer
 invokes the phase with `--restructure`, because the whole-board pass is
