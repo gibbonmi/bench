@@ -31,3 +31,24 @@ Read only the projection consumers, phase clauses listed in the spec sweep, regi
 ## Checkpoint verification
 
 Run `bench test --package ./internal/roadmap`, `bench test --package ./internal/status`, `bench test --package ./internal/dashboard`, `bench test --package ./cmd/bench`, `bench test --package ./internal/anchors`, and `bench test --package ./internal/conformance`. Run prose checks on each changed document.
+
+## Retired grants
+
+Create one forbid row for each source grant below. Each row restores its own old sentence to demonstrate a red.
+Conditional mentions of an already admitted implementation can remain when they route through commitment admission.
+
+| source at the planning base | retired grant |
+| --- | --- |
+| `.agents/commands/bench-drain.md:210` | Default implementation for every light-path drained item |
+| `.agents/commands/bench-drain.md:211` | Open a roadmap row only when the reviewer declines implementation |
+| `.agents/commands/bench-drain.md:215` | Send each light-path learning fix directly to implementation |
+| `.agents/commands/bench-drain.md:244` | Rewrite the recommended sequence on every drain |
+| `.agents/commands/bench-drain.md:247` | Rank selected work by severity without protected membership |
+| `.agents/commands/bench-drain.md:248` | Prefer actionable work without restricting it to the commitment |
+| `.agents/commands/bench-drain.md:251` | Apply dependencies and reviewer pricing only after actionability ties |
+| `.agents/commands/bench-drain.md:252` | Use occurrence count as an automatic selection tiebreaker |
+| `.agents/commands/bench-drain.md:253` | Use defect and cost rules only after occurrence ties |
+| `.agents/commands/bench-final-check.md:84` | Defer completed roadmap closure to a later drain |
+
+Read the full surrounding clauses when replacing these grants. Preserve uncommitted intake and historical reconciliation.
+The revised policy has one canonical owner; the other clauses route to it.

@@ -1,7 +1,7 @@
 # Bind worktrees and shifts to one outcome
 
 Blocked by: 03-protect-planning-and-commits.md
-Writes: internal/commitment (new), internal/intent, internal/worktree, internal/shift, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/commitment (new), internal/intent, internal/worktree, internal/shift, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go
 Covers: DC23, DC24, DC25, DC50, DC69
 
 ## What to build
@@ -28,5 +28,7 @@ Read worktree CreateCommand and attribution, lifecycle and ownership helpers, sh
 - [ ] Usage or assignment identity errors retain their precedence and leave no admission effects (DC69).
 
 ## Checkpoint verification
+
+The existing system journey uses BENCH_KIT through `bench test --check system`. Adapt its fixture at this checkpoint when admission changes its route.
 
 Run `bench test --package ./internal/worktree`, `bench test --package ./internal/shift`, and `bench test --package ./internal/intent`. Retain existing head, tip, and checked-out-ref cases where fixture assignment identity changes.

@@ -1,7 +1,7 @@
 # Authorize publication against current commitment
 
 Blocked by: 04-bind-worktrees-and-shifts.md
-Writes: internal/commitment (new), internal/intent, internal/worktree, internal/landing, internal/roadmap, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/commitment (new), internal/intent, internal/worktree, internal/landing, internal/roadmap, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go, internal/systemtest/adoption_test.go, internal/systemtest/owner_landing_fixture_test.go
 Covers: DC12, DC14, DC28, DC29, DC30, DC32, DC49, DC72
 
 ## What to build
@@ -28,5 +28,7 @@ Read worktree land admission and resume, landing LandReviewed and ref publicatio
 - [ ] A coordinated blocker race cannot alter admission between the final check and ref update (DC72).
 
 ## Checkpoint verification
+
+The existing system journey uses BENCH_KIT through `bench test --check system`. Adapt its fixture at this checkpoint when admission changes its route.
 
 Run `bench test --package ./internal/worktree`, `bench test --package ./internal/landing`, and `bench test --package ./internal/commitment`. Observe the gate-time policy race through the real broker orchestration seam.
