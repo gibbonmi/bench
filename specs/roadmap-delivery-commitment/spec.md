@@ -522,6 +522,7 @@ An author who discovers another destination updates the ticket and this union, t
 - `internal/intent`
 - `internal/jsonfile`
 - `internal/landing`
+- `internal/landing/close.go`
 - `internal/preflight`
 - `internal/roadmap`
 - `internal/shift`
