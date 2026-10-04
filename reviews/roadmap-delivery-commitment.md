@@ -443,6 +443,65 @@ This suggestion is optional advice and has no repair disposition.
           ]
         }
       ]
+    },
+    {
+      "id": "DC-C2",
+      "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+      "tip": "f3d907da1cdf1a423bafd3aa17937371b8b31c71",
+      "plan_digest": "sha256:326be25226515d9d41f40d116e837f042c3d445cb05a0e99f1a5b4cc3d31eda5",
+      "source_digest": "68b6b25f193cb486e8535cef8286a4992289257f",
+      "acceptance_rows": [
+        "DC16",
+        "DC17",
+        "DC18",
+        "DC19",
+        "DC20",
+        "DC21",
+        "DC22",
+        "DC33",
+        "DC48",
+        "DC61",
+        "DC66"
+      ],
+      "verification": [
+        {
+          "id": "dc-c2-intent-author",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "68b6b25f193cb486e8535cef8286a4992289257f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:exec:ceb03d",
+            "digest": "sha256:3ede76fc0f6d85e9ad558fb10d93aa96933030d87b47e332bad0e09df02430f7",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,3419\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c2-commitment-author",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "68b6b25f193cb486e8535cef8286a4992289257f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:exec:ce7cb9",
+            "digest": "sha256:08539c63ab69fed1415de61780da016bc799dc924031fc5029845335f0d5085a",
+            "excerpt": "packages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,1997\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
