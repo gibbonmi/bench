@@ -9,21 +9,21 @@ Repair cycles consumed: 1 of 2 for DC-C1.
 
 ## Standards
 
-Two findings remain open. The worst finding is duplicated command grammar.
+The initial review found two issues. Repair cycle 1 closes both; zero current findings remain.
 
 - `DC-C1-Standards-S1`: Auto-fix, confidence 10. Derive grammar and help from one flag declaration, per `AGENTS.md:35` and `commitcmd/command.go:29`.
 - `DC-C1-Standards-S2`: Auto-fix, confidence 10. Commit the existing probe evidence, as `.agents/commands/bench-implement-spec.md:50` requires.
 
 ## Spec
 
-Two findings remain open. The worst finding permits approval after a protected source changes.
+The initial review found two issues. Repair cycle 1 closes both; zero current findings remain.
 
 - `DC-C1-Spec-S1`: Auto-fix, confidence 10. Bind affected predecessor sources, per spec lines 158 and 164 and `authority.go:48`.
 - `DC-C1-Spec-S2`: Auto-fix, confidence 10. Refuse case aliases in JSON field names, per spec line 464 and `parse.go:20`.
 
 ## Coverage
 
-Two findings remain open. The worst finding overlaps the Spec source-binding defect.
+The initial review found two issues, including the shared source-binding defect. Repair cycle 1 closes both; zero current findings remain.
 
 - `COV-1`: Auto-fix, confidence 9. Add the removed-source command regression, per spec lines 158 and 164 and `repository.go:152`.
 - `COV-2`: Auto-fix, confidence 10. Add a two-outcome dependency cycle test for DC56. The cycle-guard omission passed all 27 tests.
@@ -375,6 +375,72 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c1-coverage-initial"
           ]
+        },
+        {
+          "id": "dc-c1-standards-r1",
+          "performer": "/root/dc_c1_r1_standards",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "6c06ee1b5cec9a450b56aed10a2f3c80d414e53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c1_r1_standards",
+            "digest": "sha256:b5b92a6b0afd0e678414cabe60051a5243b6b65d800f78701572a3097d2613c5",
+            "excerpt": "Standards: **0 findings; worst: none; 0 repair targets.**\n\nThe five requested folds confirm:\n\n- **Standards-S1 resolved**, confidence 10, `no-op`: `commitcmd/command.go:28` owns flag declarations; `suffix` and `grammar` derive help and parsing from them, satisfying `AGENTS.md:35`.\n- **Standards-S2 resolved**, confidence 10, `no-op`: `reviews/roadmap-delivery-commitment.md:403` retains seven author probe outcomes, their source context, and restoration results, satisfying `.agents/commands/bench-implement-spec.md:50`.\n- **Removed-source binding confirmed:** `authority.go:48` includes predecessor sources; `repository.go:152` validates that plan set before staging. The regression preserves policy and receipt bytes.\n- **Exact fields confirmed:** `parse.go:20` calls `DecodeExactDocument`; `jsonfile/fields.go:35` derives field names from struct tags. The existing scanner remains the document and duplicate-field owner. Existing decoder entry points pass a nil schema.\n- **Two-outcome cycle confirmed:** `parse_test.go:94` supplies A→B→A. The retained repair probe records that omitting graph-cycle rejection turns this regression red.\n\nNo duplicated production grammar, JSON field inventory, scanner, or fixture harness was found in the repair.\n"
+          },
+          "axis": "Standards",
+          "base": "ca339ea83ef401f5edea17a012ba6dc891ec2995",
+          "tip": "3df02a0850105a852ca308134f41d822f34991a0",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c1-standards-native"
+          ]
+        },
+        {
+          "id": "dc-c1-spec-r1",
+          "performer": "/root/dc_c1_r1_spec",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "6c06ee1b5cec9a450b56aed10a2f3c80d414e53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c1_r1_spec",
+            "digest": "sha256:6174d4acdc6d063c5e2ee9ec36177689df74a1f93983495ca8df0dfa94044f40",
+            "excerpt": "Spec: **0 findings; 0 repair targets. Worst issue: none.** Repair cycle 1 accepted for this axis.\n\n- **DC-C1-Spec-S1 closed.** Spec:158 binds affected sources; spec:164 requires changed protected sources to invalidate approval. `internal/commitment/authority.go:50` now includes predecessor sources. Approval rechecks them at `repository/repository.go:152`. The removed-source command regression passed and checks unchanged policy and receipt bytes.\n- **DC-C1-Spec-S2 closed.** Spec:464 requires exact field names. `parse.go:20` now uses the existing scanner with the typed schema; `internal/jsonfile/fields.go:47` rejects unmatched names. Nested case-alias regressions passed. `Store.Plan` parses before writing receipts.\n- The two-outcome cycle regression and existing published-source, grammar, framing, and control-input checks passed. Shared JSON package checks passed.\n\nIndependent verification: focused commitment selection passed in 304 ms; JSON package passed in 2 ms. Both reported zero failures and skips. No new scope change or repair regression found. Successor-ticket requirements remain future work.\n"
+          },
+          "axis": "Spec",
+          "base": "ca339ea83ef401f5edea17a012ba6dc891ec2995",
+          "tip": "3df02a0850105a852ca308134f41d822f34991a0",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c1-spec-native"
+          ]
+        },
+        {
+          "id": "dc-c1-coverage-r1",
+          "performer": "/root/dc_c1_r1_coverage",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "6c06ee1b5cec9a450b56aed10a2f3c80d414e53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c1_r1_coverage",
+            "digest": "sha256:dbd8af4e1e769118345eae5fcc3485fdde27817ed7275539d4018f93d6fb587e",
+            "excerpt": "Coverage: **0 current findings; 0 repair targets. COV-1 and COV-2 are closed.** No blocking issue remains in the repair delta.\n\n- **COV-1 — Refuted; no-op; confidence 10.** `TestCommitmentRemovalBindsRemovedSource` passes. It changes B’s published source after planning removal, then requires approval refusal with unchanged policy and receipt bytes (`removed_source_test.go:16–59`). `BuildPlan` now includes predecessor-only bindings (`authority.go:48–55`), which approval rechecks (`repository.go:152`). An independent command test also deleted B’s source after planning; approval refused and preserved policy, roadmap, and receipt bytes.\n- **COV-2 — Refuted; no-op; confidence 10.** The distinct A→B→A fixture reaches graph-cycle rejection (`parse_test.go:94–103`). My omission of the recursive traversal at `dependencyCycle`, a different site from the author’s guard omission, returned **bit**, one failed test, zero skips, **restored=yes**. [Native evidence](/home/mgibs/.bench/responses/bench-2826441890/primary/1791111184397485760-2055ba7821a62582.out).\n- **Exact-field repair confirmed.** Independently substituted case aliases at every field occurrence in a valid fixture containing criteria, sources, dependencies, parallel grants, and delivery facts. Every command refused before receipt writes. Swapping the matcher to `strings.EqualFold` returned **bit**, four failing alias cases, zero skips, **restored=yes**. [Native evidence](/home/mgibs/.bench/responses/bench-2826441890/3369b698aea02234ecca57bb5a85d77e/1791111207992668368-f68395298a64dea1.out).\n"
+          },
+          "axis": "Coverage",
+          "base": "ca339ea83ef401f5edea17a012ba6dc891ec2995",
+          "tip": "3df02a0850105a852ca308134f41d822f34991a0",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c1-coverage-native"
+          ]
         }
       ]
     }
@@ -479,7 +545,7 @@ The standard decoder entry points retain their existing behavior.
 
 The command form now derives its help and grammar from one flag declaration.
 The new dependency test uses two distinct outcomes, which reaches the graph-cycle guard.
-Independent confirmation of all five repair targets remains pending.
+Independent confirmation closes all five repair targets with zero current findings.
 
 ### Repair probes
 
@@ -491,3 +557,16 @@ These runs used the working tree that committed as the repair source above.
 | Removed source | Omit predecessor-source binding from `BuildPlan` | `TestCommitmentRemovalBindsRemovedSource` | Approval succeeded and changed policy bytes. |
 | Exact fields | Replace the exact decoder with the existing document decoder | `TestCommitmentExactFieldNames` | Four case-alias inputs were accepted. |
 | DC56 cycle | Omit graph-cycle rejection | `TestCommitmentMultiOutcomeCycle` | The two-outcome cycle was accepted. |
+
+## Confirmed DC-C1 source
+
+Three fresh GPT-6.1 Sol reviewers at high effort accepted repair cycle 1.
+Standards, Spec, and Coverage each report zero findings and zero repair targets.
+The exact source remains `3df02a0850105a852ca308134f41d822f34991a0`.
+The confirming review pair ends at its record commit, `d619163d2107790c4aea024fd8d73033484557e6`.
+The full chunk checkpoint remains required before ticket 02.
+
+Coverage also checked deleted predecessor sources and aliases at every field occurrence in a complete policy fixture.
+The temporary checks passed and left a clean tree.
+Its independent recursive-cycle omission and field-matcher swap both bit and restored exactly.
+The native Coverage excerpt retains those results.
