@@ -262,3 +262,39 @@ func TestCommitmentMalformedAdmission(t *testing.T) {
 		t.Fatalf("corruption=(%s,%d)", out, code)
 	}
 }
+
+func TestCommitmentStartPublishedIdentity(t *testing.T) {
+	for _, deleted := range []bool{false, true} {
+		name := "changed"
+		if deleted {
+			name = "deleted"
+		}
+		t.Run(name, func(t *testing.T) {
+			root, first, _ := admissionRepo(t, false, false)
+			path, err := intent.Address(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			before, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if deleted {
+				if err := os.Remove(filepath.Join(root, deliverable("A"))); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				commitmenttest.Write(t, root, deliverable("A"), deliverableBody+"Changed acceptance.\n")
+			}
+			commitmenttest.Commit(t, root, "change approved source")
+			out, code := startOutcome(first, "A", "first")
+			after, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if code != 1 || string(before) != string(after) {
+				t.Fatalf("stale deliverable=(%s,%d), unchanged=%v", out, code, string(before) == string(after))
+			}
+		})
+	}
+}

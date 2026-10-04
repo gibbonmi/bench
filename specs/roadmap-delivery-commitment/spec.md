@@ -459,7 +459,6 @@ The test package owns the production seam it drives. System rows name the instal
 | DC70 | 22 | Missing, duplicate, blocked, or unknown criterion results each refuse milestone completion | planned TestCommitmentCriterionCoverage in internal/commitment/verification_test.go | An incomplete evidence list cannot become a verified outcome. |
 | DC71 | 32 | A valid proposal whose last line has no newline plans the same transition | planned TestCommitmentInputFraming in internal/commitment/command_test.go | Human-authored input must not require persisted-record framing. |
 | DC72 | 33 | A competing blocker cannot change admission between the final check and ref publication | planned TestCommitmentPublishLock in internal/worktree/commitment_landing_test.go | A last read without a lock retains a runtime authority race. |
-
 | DC73 | 8 | A changed or deleted approved deliverable refuses start without changing bindings or claims | planned TestCommitmentStartPublishedIdentity in internal/commitment/admission_test.go | Path equality cannot prove current source identity. |
 | DC74 | 8 | Start accepts an approved spec or tickets-only folder and refuses an ordinary source file | planned TestCommitmentDeliverableTypes in internal/commitment/deliverable_test.go | A generic regular-file reader rejects folders and admits the wrong file type. |
 

@@ -79,6 +79,9 @@ func (store Store) Plan(input []byte) (commitment.Plan, error) {
 	if err != nil {
 		return commitment.Plan{}, err
 	}
+	if err := store.validateDeliverables(proposed); err != nil {
+		return commitment.Plan{}, err
+	}
 	plan, err := commitment.BuildPlan(current, proposed)
 	if err != nil {
 		return commitment.Plan{}, err
@@ -205,21 +208,13 @@ func (store Store) defaultPolicy() (*commitment.Policy, string, error) {
 }
 
 func (store Store) validateSources(sources []commitment.SourceBinding) error {
-	branch, ok := git.ResolvedDefault(store.Root)
-	if !ok {
-		return errors.New("commitment source: default branch is unresolved")
-	}
-	revision, err := git.Output("-C", store.Root, "rev-parse", branch)
+	revision, err := store.sourceRevision()
 	if err != nil {
 		return err
 	}
 	for _, source := range sources {
-		data, err := git.ReadTreeFile(store.Root, strings.TrimSpace(revision), source.Path)
-		if err != nil {
-			return fmt.Errorf("commitment source %q refused: %w", source.ID, err)
-		}
-		if got := commitment.Identity(data); got != source.Identity {
-			return fmt.Errorf("commitment source %q changed from %s to %s", source.ID, source.Identity, got)
+		if err := store.validateSourceAt(revision, source); err != nil {
+			return err
 		}
 	}
 	return nil

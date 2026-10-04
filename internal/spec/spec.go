@@ -53,7 +53,7 @@ func LiveSpecPath(arg string) string {
 
 // specPath is the folder-spec layout for one literal directory name, taken verbatim.
 func specPath(name string) string {
-	return filepath.ToSlash(filepath.Join("specs", name, "spec.md"))
+	return ClosedFolderPath(name) + "/spec.md"
 }
 
 // LiveSpecSlug returns the slug named by a live spec slug or explicit path.

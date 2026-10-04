@@ -760,3 +760,43 @@ One finding. The worst issue is the absent source-identity regression.
 
 The native return records contain the complete citations and probe results.
 The repair adds explicit acceptance coverage and reuses the existing tickets-only classifier.
+
+## DC-C2 repair verification
+
+Repair cycles consumed: 1 of 2 for DC-C2.
+
+The spec owner now supplies the tickets-only classifier. The landing API delegates to that owner.
+Admission accepts staged specs and tickets-only folders. It binds file bytes or the complete committed folder tree.
+The three acceptance seam paths now name their test owners. DC73 and DC74 add the missing coverage.
+
+The new type tests first reproduced the folder refusal and ordinary-file admission.
+A further case reproduced admission of an unstaged spec. All three now pass with the repaired producer.
+The changed and deleted source cases pass, and ignoring validation errors makes both fail on admission behavior.
+
+Commitment, intent, spec, landing, CLI, and conformance package checks pass.
+Landing reports two existing privilege skips. Conformance reports two socket-path skips and one privilege skip.
+No environment skip supplies verification credit.
+
+These native excerpts record the current probes and their exact restores.
+
+```text
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/commitment/repository/admission.go,swap,failed,2,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/commitment,^TestCommitmentStartPublishedIdentity$,passed,3
+```
+
+```text
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/commitment/repository/admission.go,swap,failed,1,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/commitment,^TestCommitmentConcurrentStarts$,passed,1
+```
+
+```text
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/commitment/repository/sources.go,swap,failed,1,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/commitment,^TestCommitmentDeliverableTypes/source-file$,passed,2
+```
+

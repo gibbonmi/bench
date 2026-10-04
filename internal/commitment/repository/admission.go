@@ -36,7 +36,7 @@ func (store Store) Start(outcome, request, deliverable string) error {
 		if source == nil {
 			return ledger, false, fmt.Errorf("deliverable %q is not approved for outcome %q", deliverable, outcome)
 		}
-		if err := store.validateSources([]commitment.SourceBinding{*source}); err != nil {
+		if err := store.validateDeliverable(*source); err != nil {
 			return ledger, false, err
 		}
 		binding := intent.DeliveryBinding{Assignment: owners[0].ID, Request: owners[0].Request, Milestone: policy.ActiveMilestone, Outcome: outcome, Deliverable: deliverable, Identity: source.Identity}
