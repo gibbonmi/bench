@@ -2671,9 +2671,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C6",
       "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
-      "tip": "9f9e2d6bf64139818743ce96ca6ddfe2d90ff4a3",
-      "plan_digest": "sha256:da0de6b3aac3915953f39ab823ab9ff2ff058105f162608b82637eee60d69ae3",
-      "source_digest": "f6a45c89daead753435db29f33530a3ed32557e3",
+      "tip": "ccfdc3071972c202ce176946f9f1096f98322d43",
+      "plan_digest": "sha256:b49d43da06dcb9d4892c03d68f002fcdd505cbf40b351d1fead56fc8521294d6",
+      "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
       "acceptance_rows": [
         "DC34",
         "DC35",
@@ -2903,6 +2903,125 @@ This suggestion is optional advice and has no repair disposition.
             "ref": "claude-agent:dc_r06_1:commitment",
             "digest": "sha256:cfae87b87751aaf1db9a75d20e1bb9b492048bb5c16743646432878523d6f332",
             "excerpt": "## C6-C4 probe 1: identity-mismatch check dropped\n(--omit of the clause leaves `binding` unused and the probe refuses to build: verdict=invalid; recorded the swap instead)\nbench probe internal/commitment/parse.go --swap ' || delivery.Identity != binding.Source.Identity' --with ' || binding.Source.Identity == \"\"' --package ./internal/commitment --run TestCommitmentDeliveryFactValidation\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentDeliveryFactValidation/identity-mismatch delivery_test.go:82: Validate = <nil>, want the invalid-delivery refusal\n\n## C6-C4 probe 2: already-delivered guard dropped\nbench probe internal/commitment/delivery.go --swap 'if recorded.Outcome == fact.Outcome && recorded.Binding == fact.Binding {' --with 'if recorded.Outcome == \"\" {' --package ./internal/commitment --run 'TestCommitmentDeliver$'\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentDeliver delivery_test.go:48: second Deliver = commitment policy: invalid delivery for outcome \"A\", want the already-delivered refusal\n\n## Independent expectation red: hand-built DeliveryFact in TestCommitmentDeliver\nbench probe internal/commitment/delivery.go --swap 'Source: source, Evidence: evidence}' --with 'Source: evidence, Evidence: source}' --package ./internal/commitment --run 'TestCommitmentDeliver$'\nprobe: verdict=bit failed_tests=1 restored=yes\nfailure: TestCommitmentDeliver delivery_test.go:36: delivery fact = {... Source:evidence Evidence:source}, want {... Source:source Evidence:evidence}\n## Final tip 9f9e2d6b: bench test --package ./internal/commitment -> pass (3020 ms), exit 0\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-2-worktree",
+          "performer": "claude:dc_r06_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_2:worktree",
+            "digest": "sha256:40e05547c4dde037e868d0f8cee3de38fad171ae0e0fed03f09e60d0c6de2ddb",
+            "excerpt": "tip ccfdc3071972c202ce176946f9f1096f98322d43\n$ bench test --package ./internal/worktree  -> exit 0\n  github.com/gibbonmi/bench/internal/worktree,pass,61855\n  failures[0]; skips[2]: socket subtests (unix sockets unavailable in sandbox)\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-2-landing",
+          "performer": "claude:dc_r06_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_2:landing",
+            "digest": "sha256:d74edcf8257a76fd933c940955fdf141f63fa337af22967b0340b4e45641f351",
+            "excerpt": "tip ccfdc3071972c202ce176946f9f1096f98322d43\n$ bench test --package ./internal/landing  -> exit 0\n  github.com/gibbonmi/bench/internal/landing,pass,8255\n  failures[0]; skips[2]: device subtests (cannot create character device)\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-2-gate",
+          "performer": "claude:dc_r06_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_2:gate",
+            "digest": "sha256:42792a3615b43eb918daadad94ba33bb2bde373a432f25fda61742a755d076ae",
+            "excerpt": "tip ccfdc3071972c202ce176946f9f1096f98322d43\n$ bench test --package ./internal/gate  -> exit 0\n  github.com/gibbonmi/bench/internal/gate,pass,14196\n  failures[0] skips[0]\n\n$ bench probe internal/commitment/repository/closure.go --swap 'commitment.Remaining(next)' --with 'commitment.Selection(next).Outcomes' --package ./internal/gate --run TestCommitmentExactTransform\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,1,yes\npackages: github.com/gibbonmi/bench/internal/gate,fail,44\nfailures: TestCommitmentExactTransform,\"commitment_completion_test.go:75: kept sequence entry = <nil>, want the exact-transform refusal\"\nProbe exit code: 1, derived from the failed Go test run (cause=failed); bench probe prints no raw exit code.\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit one sequence removal from the exact allowed transform. The exact-transform check must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dc_r06_2:gate",
+              "digest": "sha256:42792a3615b43eb918daadad94ba33bb2bde373a432f25fda61742a755d076ae",
+              "excerpt": "tip ccfdc3071972c202ce176946f9f1096f98322d43\n$ bench test --package ./internal/gate  -> exit 0\n  github.com/gibbonmi/bench/internal/gate,pass,14196\n  failures[0] skips[0]\n\n$ bench probe internal/commitment/repository/closure.go --swap 'commitment.Remaining(next)' --with 'commitment.Selection(next).Outcomes' --package ./internal/gate --run TestCommitmentExactTransform\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,1,yes\npackages: github.com/gibbonmi/bench/internal/gate,fail,44\nfailures: TestCommitmentExactTransform,\"commitment_completion_test.go:75: kept sequence entry = <nil>, want the exact-transform refusal\"\nProbe exit code: 1, derived from the failed Go test run (cause=failed); bench probe prints no raw exit code.\n"
+            }
+          }
+        },
+        {
+          "id": "dc-c6-r06-2-roadmap",
+          "performer": "claude:dc_r06_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_2:roadmap",
+            "digest": "sha256:6f5075bfb48a90e3cc3355a8cceade604dcc56ad35f6ef5f372266924c4c204c",
+            "excerpt": "tip ccfdc3071972c202ce176946f9f1096f98322d43\n$ bench test --package ./internal/roadmap  -> exit 0\n  github.com/gibbonmi/bench/internal/roadmap,pass,1874\n  failures[0] skips[0]\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-2-repository",
+          "performer": "claude:dc_r06_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_2:repository",
+            "digest": "sha256:b1dd44db231aed59f2190aa101bad7038622140cd2cc570c0899eaa55c6efbf0",
+            "excerpt": "tip ccfdc3071972c202ce176946f9f1096f98322d43\n$ bench test --package ./internal/commitment/repository  -> exit 0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,367\n  failures[0] skips[0]\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c6-r06-2-commitment",
+          "performer": "claude:dc_r06_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r06_2:commitment",
+            "digest": "sha256:64c0f48b13c97ebd0cfe1c89cf43bb7ef0c141757a137f61b70657d5610d793c",
+            "excerpt": "tip ccfdc3071972c202ce176946f9f1096f98322d43\n$ bench test --package ./internal/commitment  -> exit 0\n  github.com/gibbonmi/bench/internal/commitment,pass,2134\n  failures[0] skips[0]\n"
           },
           "requirement": "commitment",
           "command": "bench test --package ./internal/commitment",
@@ -3844,4 +3963,12 @@ C6-R2-S1 is accepted for repair cycle 2, the last cycle of the allowance.
 
 Two reviewers note that the dependency closure edits table lines inside a fenced block. The spec does not require fence handling, and the board has no such block.
 The DC76 scope rule has no negative for a scope that omits the delivering spec. DC75 leaves an untouched multi-entry row and an FT10 dependent unpinned.
+
+A Fable consultant found that the remaining unowned clauses in the closure section need no new coverage row. Existing rows or retained tests already pin them.
+
+## DC-C6 repair cycle 2
+
+Repair cycles consumed: 2 of 2. A fresh Opus repair session at medium effort corrected C6-R2-S1.
+The repair source is ccfdc3071972c202ce176946f9f1096f98322d43. All six planned checks pass there, and the named sequence probe failed and restored.
+One commitmenttest helper now owns the policy read, edit, and write harness. No assertion changed.
 
