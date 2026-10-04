@@ -1,9 +1,10 @@
 # OpenAI model scorecard
 
-Last incorporated landing: `cli-desktop-consistency` (`e91c42fe3c3d0ca85722d6236c9211d1e407c5fa`, 2026-10-03).
-Astra/high authored and repaired the three chunks. Sol/high and Astra/high supplied independent reviews.
-An unknown Codex model coordinated live qualification and the final landing.
-Provider usage and charges remain unknown.
+Last incorporated landing: `ft370-comment-only-evidence` (`bc6763be81f721ebbe0588a66e88fbc36ce899cc`, 2026-10-03).
+The user directed this Codex session to implement all four tickets.
+Sol 6.1/high supplied twelve independent review axes and one guidance adoption check.
+Sol 5.6/medium supplied the staleness check.
+The root model, effective effort, provider usage, and charges remain unknown.
 
 ## Cost assumptions
 
@@ -19,32 +20,32 @@ Each sample below retains at most the latest ten comparable assignments for each
 | Astra / high | implementation, repair, orchestration, and diagnosis | Three chunks reached accepted behavior after four, one, and two repair cycles. The last repair removed duplicate state and preserved all earlier evidence; the coordinator completed its missing plan amendment. | Retain the user-approved author line and use fresh repair sessions with exact ownership fences. | Final repair claim: 0.01 over 1 pair; earlier unscored claims remain unknown |
 | Astra / high | independent review and plan consultation, latest 7 completed passes | The prerequisite reviews found a stale comment and confirmed the exact-deletion repair. The coordinator's parent-directory mutation exposed an additional negative case before landing. | Review mid-tier implementation independently and retain coordinator probes for policy boundaries. | unknown |
 | Sol / high | implementation and repair | The initial ticket attempt remained incomplete in its retained record. The prerequisite author and repair session delivered exact-deletion handling with observed negative controls and preserved restoration. | Use exact specifications, a bounded repair charge, and independent review before landing. | unknown |
-| Sol / high | independent review, latest 10 completed axes | Reviews separated historical live evidence from current integration checks and found duplicated repair-count state. The confirming axes accepted the corrected source without new findings. | Keep separate axes and use narrow confirmations when the source delta is small. | Final count finding: 0.01 over 1 pair; unscored axes remain unknown |
-| Sol / high and medium | diagnosis, latest 4 completed assignments | Diagnostic sessions inspected staleness, generated artifacts, transaction ownership, and the completion route. Their results supported the repair plan without taking implementation ownership. | Use bounded read-only questions and verify each proposed route against the current tree. | unknown |
-| Unknown Codex model / unknown | orchestration, diagnosis, and verification | The coordinator completed actual CLI/Desktop qualification and isolated runtime, permission, toolchain, and clock failures. It caught a deletion-preflight blocker and a plan-amendment gap, but its own record formatting caused one avoidable lane refusal. | Preserve native results, check the whole plan digest after spec edits, and keep unknown model and effort explicit. | unknown |
+| Sol 6.1 / high | independent review, latest 10 completed axes | Coverage found two executable-comment gaps that required approved spec amendments. Confirming reviews passed, and a separate coordinator probe refuted the final untracked-file candidate. | Keep independent axes and test concrete bypass candidates in isolated assignments. | Two confirmed findings: 0 over 2 pairs; other claims remain unknown |
+| Sol 6.1 / high and Sol 5.6 / medium | diagnosis, latest 6 completed assignments | The staleness check found one stale citation, and guidance adoption recovered the approved workflow. The coordinator narrowed an unsupported claim about verification identity. | Use bounded read-only questions and require source support for each operational claim. | unknown |
+| Unknown Codex model / unknown | implementation, orchestration, diagnosis, and verification | Four tickets passed after one classifier repair round caused by approved spec changes. The coordinator found the hidden-gitlink gap and repeated final checks after late evidence edits. | Honor explicit session direction, finish required evidence before freezing, and retain exact source identities. | Expected one repair round: 0.09 over 1 pair; 0 abstentions |
 
 ## Representative evidence
 
 | task | result | attribution | routing signal |
 | --- | --- | --- | --- |
+| FT370 executable comments | Coverage exposed directive relocation and multiline example expectations; the reviewer approved conservative refusal. | spec/ticket | Pair literal spec review with adversarial behavior probes. |
+| FT370 hidden gitlink | The coordinator showed that configured submodule suppression could hide a changed gitlink beside a comment edit. | spec/ticket | Enumerate the full classifier input while preserving the lane contract. |
+| FT370 final evidence | Checkpoint, completion recording, and landing tests accept proven corrections and preserve strict surrounding evidence. | orchestrator | Verify each production entry and finish evidence prose before the final source freeze. |
 | CLI/Desktop live qualification | Both actual interfaces completed concurrent assignments, equivalent independent review, and separate disposable landings. | tree/tooling | Distinguish normal-permission evidence from elevated diagnosis and historical context. |
-| C3 final reconciliation | Current package, system, coverage, and live-row checks passed; review removed duplicated repair-count state. | delegate and orchestrator | Retain one owner for mutable state and confirm only the later delta. |
-| Exact deletion preflight | The prerequisite permits committed declared deletions while typo, directory-prefix, and unrelated absence controls remain red. | tree/tooling | Pair the author omission with a different coordinator mutation. |
-| C1 verification recovery | The host toolchain and a test fixture wrote live build artifacts during verification. | tree/tooling and delegate | Pin observed tool identities and preserve the checkout guard. |
-| Worktree seam reduction close | The resumed coordinator found a missing completion writer after the original implementation passed. | tree/tooling | Exercise the completion route before releasing the source. |
+| Exact deletion preflight | Declared committed deletions pass while typo, directory-prefix, and unrelated absence controls remain red. | tree/tooling | Pair author coverage with a different coordinator mutation. |
 
 ## Current decisions
 
-- Preserve the user's author line and use a fresh session for each post-review repair.
+- Honor explicit user direction on the implementation model and session.
+- Use fresh ticket and repair authors when no user override applies.
 - Keep failed dispatches and incomplete attempts in the assessment record.
-- Keep actual normal-permission qualification separate from elevated completion work.
-- Bind every verification and review result to its examined source.
-- Record a plan amendment before rebinding the chunk after any spec change.
-- Keep mutable repair state in the review pickup.
-- Use the required package checks and complete gate without adding unrelated hardening.
+- Keep normal-permission qualification separate from elevated worktree operations.
+- Bind each verification and review result to its examined source.
+- Record plan amendments before rebinding a chunk after spec edits.
+- Finish required dogfood results and coverage citations before final verification.
+- Keep review axes independent and test concrete bypass candidates in isolated worktrees.
+- Separate approved spec corrections from implementation defects when attributing repairs.
 - Confirm only the later delta when prior acceptance evidence remains valid.
-- Retain a different coordinator mutation for a behavior repair.
-- Preserve ignored evidence and the census before a source release.
-- Keep host runtime and clock failures separate from model quality.
-- Keep unavailable usage, dollar costs, model identity, and effort unknown.
+- Preserve ignored evidence and the census before source release.
+- Keep unavailable usage, charges, model identity, and effort unknown.
 - Change routing only after comparable evidence or explicit user direction.
