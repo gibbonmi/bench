@@ -2040,6 +2040,152 @@ This suggestion is optional advice and has no repair disposition.
           ]
         }
       ]
+    },
+    {
+      "id": "DC-C5",
+      "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+      "tip": "6664d59e0431888c754d2b5c0bdb01887e1646fe",
+      "plan_digest": "sha256:17b27ec52f900a6f5dd5b29c3c7b0f5625171922061f40df24848ece4b5a2672",
+      "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+      "acceptance_rows": [
+        "DC12",
+        "DC14",
+        "DC28",
+        "DC29",
+        "DC30",
+        "DC32",
+        "DC49",
+        "DC72"
+      ],
+      "verification": [
+        {
+          "id": "dc-c5-t05-worktree",
+          "performer": "claude:dc_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t05:worktree",
+            "digest": "sha256:b5845255bf52b172f145ce8fddaf004d54fb9dd70ec80fc7e2927a13a08bb9d4",
+            "excerpt": "command: bench test --package ./internal/worktree\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,6664d59e0431888c754d2b5c0bdb01887e1646fe,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,77335\nfailures[0]{package,test,line}:\nskips[2]: TestCleanLandedSpecialPathsRetainedWithoutOpening/socket, TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket (unix sockets unavailable on host)\n\n--- probe evidence ---\nTip: 6664d59e0431888c754d2b5c0bdb01887e1646fe (clean)\n\nREQUIRED PROBE (DC29/DC72 post-gate recheck; final decision inside the lock always admits)\ncommand: bench probe internal/commitment/repository/publication.go --swap \"if err := store.admitPublication(ledger, source, tree); err != nil {\" --with \"if err := error(nil); err != nil {\" --package ./internal/worktree --run \"TestCommitment(GateRace|PublishLock)\"\nresult: verdict=bit, cause=failed, failed_tests=1, restored=yes (probe exit 0; mutated test run exit 1)\nred: TestCommitmentGateRace/blocker land_identity_test.go:286 gate-time change = (0, \"...landed{...\") -- the blocked outcome published\nrestore: git diff --stat HEAD empty; bench test --package ./internal/worktree pass (58921 ms), exit 0\n\nADDITIONAL PROBES (all restored=yes, run on the same delta before/at commit)\n1. Central omission (spec testing decision): internal/worktree/joins.go swap LandAdmitted(ctx, request, admission) -> LandReviewed(ctx, request), run TestCommitment(StaleLanding|GateRace|ProtectedRename|ProtectedSequence|PlanningFence|LegacyContinuation|PublishLock)\n   verdict=bit failed_tests=8: GateRace/blocker, LegacyContinuation/beyond-scope, LegacyContinuation/unlisted, PlanningFence, ProtectedRename, ProtectedSequence, PublishLock (\"published without entering its publication lock\"), StaleLanding (gate infrastructure refusal instead of commitment refusal)\n2. Lock released before publish (DC72): internal/worktree/land.go swap PublishAdmitted(...) with an unlocked AdmitPublication-then-publish closure, run TestCommitmentPublishLock\n   verdict=bit failed_tests=1: competing blocker early=true, observed main = pre-publication tip\n3. Planning loses its pre-adoption route (DC30): internal/commitment/repository/candidate.go swap \"if len(production) == 0 {\" -> \"if production == nil && false {\", run TestCommitmentPlanningBootstrap\n   verdict=bit failed_tests=1: planning commit exit 1 \"commitment adoption required\"\n4. Continuations ignored (DC49): candidate.go swap continuationScope lookup -> \"[]string(nil), false\", run TestCommitmentLegacyContinuation\n   verdict=bit failed_tests=2: listed-scope and beyond-scope refuse with \"no current delivery binding\"\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-t05-landing",
+          "performer": "claude:dc_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t05:landing",
+            "digest": "sha256:9101217222a6e025273786898c670947cb7d5bfd0d68914844d34f26ec3347cb",
+            "excerpt": "command: bench test --package ./internal/landing\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,6664d59e0431888c754d2b5c0bdb01887e1646fe,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/landing,pass,9948\nfailures[0]{package,test,line}:\nskips[2]: TestLandPreAuthorizationRefusalTable/descendant-device, /direct-device (cannot create a character device)\n"
+          },
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-t05-commitment",
+          "performer": "claude:dc_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t05:commitment",
+            "digest": "sha256:f91efd4814271125521f0f8190b8401e82668fb0e23191abe03cd5f84be5fad6",
+            "excerpt": "command: bench test --package ./internal/commitment\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,6664d59e0431888c754d2b5c0bdb01887e1646fe,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,3543\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-t05-intent",
+          "performer": "claude:dc_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t05:intent",
+            "digest": "sha256:5ba27a404cda8b7b57413b960f8bdc9429bf6c01992c9f48097c3ed28dfa15b3",
+            "excerpt": "command: bench test --package ./internal/intent\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,6664d59e0431888c754d2b5c0bdb01887e1646fe,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,7138\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-t05-bench",
+          "performer": "claude:dc_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t05:bench",
+            "digest": "sha256:adc3e7aed6ba2b2f6a1e159233304832a1f73bd9a41969c13bed120885a7a103",
+            "excerpt": "command: bench test --package ./cmd/bench\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,6664d59e0431888c754d2b5c0bdb01887e1646fe,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14359\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-t05-conformance",
+          "performer": "claude:dc_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t05:conformance",
+            "digest": "sha256:e30f1b438bb2ef88d59c5a21a4c187793cb016d359a5b1aa9ec9b2f033dc6201",
+            "excerpt": "command: bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,6664d59e0431888c754d2b5c0bdb01887e1646fe,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,34867\nfailures[0]{package,test,line}:\nskips[3]: two unix-socket subjects and one character-device subject (host capability)\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c5-t05-system",
+          "performer": "claude:dc_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "32af9096f00fe8d30ee89fe40fc789119957f497",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t05:system",
+            "digest": "sha256:1f1e3cdfb1aedb9d3aeb2083e146f39c7ad785de7d4cc6096927ebd442a63423",
+            "excerpt": "command: env \"PATH=/home/mgibs/.nvm/versions/node/v25.8.1/bin:$PATH\" bench test --check system\nexit: 0\ntree[1]{target,head,dirty}:\n  dc-integration,6664d59e0431888c754d2b5c0bdb01887e1646fe,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,124657\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
