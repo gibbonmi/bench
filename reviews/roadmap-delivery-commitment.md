@@ -2599,6 +2599,72 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c5-r1-coverage"
           ]
+        },
+        {
+          "id": "dc-c5-r3-standards",
+          "performer": "claude:dc_c5_r3_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c5_r3_standards",
+            "digest": "sha256:c21898a68ff857f3ac99f24ce68fa3eea065e664f475229a9cb7a7c05d4b1730",
+            "excerpt": "Standards: 0 findings. C5-R2-S1, C5-R2-S2, and C5-R2-S3 are closed.\ngittest.Run is the one error-returning git runner, and gittest.Output wraps it with unchanged text. The commitmenttest core uses it.\nlockOf (intent.go:50) is the one intent lock-path derivation; production and every former test site use it or intent.LockPath. The FIFO test has a bounded deadline arm.\nCommitPolicy commits only its named path; every Commit caller keeps whole-index behavior through the no-path form.\nAdvice: the bound-not-active row is a hardening check; the lock test goroutine can outlive an already-failing run; lockOf has no doc comment.\n"
+          },
+          "axis": "Standards",
+          "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+          "tip": "18412326603049059084549a24c280a28755d9f4",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c5-r2-standards"
+          ]
+        },
+        {
+          "id": "dc-c5-r3-spec",
+          "performer": "claude:dc_c5_r3_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c5_r3_spec",
+            "digest": "sha256:02e4c4d64f78cc777bcc3b99f4638c5957a5fe254877310e7157b94eb1e0bb80",
+            "excerpt": "Spec: 0 findings.\nThe plan commit 3ec313b0 adds a repository check and the internal/gittest fence entry; it removes no check and weakens no pass criterion.\nCycle 2 production changes alter no approved behavior: lockOf returns the same lock path that transaction.go used before, and acquire, stale-lock reclaim, and release are unchanged.\nC5-P1 and the earlier conclusions still hold: one transaction holds the final decision and publication (publication.go:26-33), the gate runs outside it, a missing admission refuses, and precedence, recovery, resume, legacy scope, and planning are untouched.\nAdvice: intent.LockPath is an exported production function that only tests use. A learning entry records the plan expansion.\n"
+          },
+          "axis": "Spec",
+          "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+          "tip": "18412326603049059084549a24c280a28755d9f4",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c5-r2-spec"
+          ]
+        },
+        {
+          "id": "dc-c5-r3-coverage",
+          "performer": "claude:dc_c5_r3_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2b77296bef1faf03bc85a8dbaacc82c58390d465",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c5_r3_coverage",
+            "digest": "sha256:88a77376b1e4bcf1957d84d7b3b44f1e5b1385349d2ac921c4a1c5dd92504a09",
+            "excerpt": "Coverage: 0 findings. C5-R2-C1 and C5-R2-C2 are closed.\nThe DC-C5 plan lists eight requirements, and the eight dc-c5-r05-2 entries match them with exit code 0 at 18412326.\nThe bound-not-active row refuses an assignment that is not active, and the recorded state-filter probe failed it.\nNo existing test was weakened; the intent tests changed only to the shared lock path. The FIFO lock test stays deterministic with a bounded deadline arm.\nThe repository and intent packages passed in an independent run. Every row is covered with no regression.\nAdvice: the deadline arm has no demonstrated red; the bound-not-active row relies on its cleanup.\n"
+          },
+          "axis": "Coverage",
+          "base": "2a8416f7fd9dfd3df0a868f9352532f00b91d876",
+          "tip": "18412326603049059084549a24c280a28755d9f4",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c5-r2-coverage"
+          ]
         }
       ]
     }
@@ -3261,4 +3327,16 @@ The repair source is 18412326603049059084549a24c280a28755d9f4. All eight planned
 The gittest package now owns one error-returning git runner, and the commitment test core uses it. The intent package now owns the one lock path.
 The lock test has a bounded deadline. CommitPolicy commits only its named path.
 A probe that drops the active-state filter failed the new row that refuses an assignment that is not active, and the restore was exact.
+
+## Confirmed DC-C5 source
+
+Three fresh Claude Sonnet reviewers at high effort confirm repair cycle 2. All three axes report zero findings and zero repair targets.
+C5-R2-S1, C5-R2-S2, C5-R2-S3, C5-R2-C1, and C5-R2-C2 are closed. No later review changed the acceptance requirements.
+
+### Advice
+
+The new deadline arm of the lock test has no demonstrated failure. The exported intent lock path has only test callers.
+When the lock test already fails, its waiting goroutine can outlive the test.
+
+The final source is 18412326603049059084549a24c280a28755d9f4. The chunk checkpoint remains required before ticket 06.
 
