@@ -687,6 +687,76 @@ This suggestion is optional advice and has no repair disposition.
             "DC-C2-COV-1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dc-c2-r1-standards",
+          "performer": "/root/dc_c2_r1_standards",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "60d5bb1cbe637bbe50ff1c5e6c062b04570cd35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c2_r1_standards",
+            "digest": "sha256:a66eaddd2656afd586282f42a396c28623a255777966b87d49fff5a2249d93b1",
+            "excerpt": "Standards: **0 findings, 0 unique repair targets**. Worst issue: none. No implementation-command change is necessary.\n\nReviewed the single repair diff `66796aa93693bbc5ada27130b3b62a5a7ff541ca..d9796c107278e8a35231d17590d34618d902a9cd`, the whole approved spec, ticket02, governing standards, comment/CLI rules, and targeted source consumers.\n\nThe repair satisfies the one-source rule: `spec.TicketsOnly` owns classification, landing forwards to that owner, and admission uses it. Source identity and identity comparison each have one production owner. The changed/deleted regression’s independent expectations have a committed behavioral red under the error-ignoring mutation. Corrected seams and DC73/DC74 amendments introduce no retained Standards issue.\n\nEvidence bound once through `dc-integration`: `current=true`. Retrieved **s1/0 and s35/0,2,3**; intentionally omitted unrelated consumer page 1. Examined untouched command, status, landing identity/resume, immutable Git reader, and source-validation consumers.\n\nIndependent checks in `dc-c2-r1-standards`, with Go parallelism 2:\n\n- Commitment package: **pass**, 2396 ms.\n- Spec package: **pass**, 1626 ms.\n- Landing `^TestTicketsOnly`: **pass**, 26 ms.\n- All three reported zero failures and zero skips.\n- Normal shell, repository wrapper, scratch write/read/remove, and rules/skill access passed. Unavailable runtime/configuration observations remain unknown.\n\nFinal `git status --short` is empty. HEAD remains `d9796c107278e8a35231d17590d34618d902a9cd`. No production edits, commits, mutation probes, delegates, retained scratch files, or live tools remain. This is confirming Standards evidence, not a gate verdict.\n"
+          },
+          "axis": "Standards",
+          "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+          "tip": "67413d275ba84dfbb930187c456b04895ea6f538",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c2-standards"
+          ]
+        },
+        {
+          "id": "dc-c2-r1-spec-review",
+          "performer": "/root/dc_c2_r1_spec",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "60d5bb1cbe637bbe50ff1c5e6c062b04570cd35b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c2_r1_spec",
+            "digest": "sha256:f12e14c51cc07410fa08d29024b81e463306d99101fdbdb5ceedbbbedf7e778c",
+            "excerpt": "## Spec\n\n**1 blocking finding; 1 unique repair target.** Worst issue: approved specs with literal `.md` directory names cannot start.\n\n**C2-R1-S1 — Deliverable classification normalizes a literal folder name.** Confidence **10/10**; disposition **auto-fix**, held.\n\n- Spec `specs/roadmap-delivery-commitment/spec.md:131` requires: “Each delivery binding names one approved spec or one tickets-only folder…”\n- New `internal/commitment/repository/sources.go:44` compares the path with `LiveSpecPath(LiveSpecSlug(path))`. For `specs/release.md/spec.md`, this produces `specs/release/spec.md`.\n- `internal/spec/spec.go:45–46` explicitly reserves the `.md` trim for CLI arguments. Existing `internal/spec/spec_test.go:308–312` preserves a literal `.md` directory in spec facts.\n- Independent temporary command probes confirmed that an approved staged `specs/release.md/spec.md` refuses both planning and start. The equivalent `specs/release/spec.md` passes. Start reports exit **1** and “not an approved spec or tickets-only folder.”\n- Repair the path classification to preserve the literal parent name, and extend the deliverable regression through planning and start.\n\nC2-S2’s DC33/DC48/DC61 seam paths are corrected. DC73 and its changed/deleted cases close the previous identity regression; the committed ignored-error probe records behavioral failures and restoration. The shared tickets-only classifier, folder tree identity, landing delegates, ownership expansion, and later ticket07 contract match the approved repair.\n\nRaw findings: **1**. Unique repair targets: **1**. Optional advice: **0**. Implementation-command contribution: **0**; no command change is necessary.\n\nRead the whole approved spec and ticket02, one repair diff `66796aa93693bbc5ada27130b3b62a5a7ff541ca..d9796c107278e8a35231d17590d34618d902a9cd`, governing rules/profile, producer definitions, recorded repair evidence, and relevant untouched command, landing, resume, status, and spec consumers. Evidence bound once through `dc-integration`. Retrieved **s1/0, s35/0–1, s36/0–1**; s35 retrieval was intentionally limited to relevant consumer rows.\n\nVerification in `dc-c2-r1-spec`, Go parallelism **2**:\n\n- Temporary literal-folder probe reproduced planning and start refusals; scratch file removed.\n- Focused commitment checks for published identity, deliverable types, retained claims, missing adoption, and concurrent starts: **pass**, 731 ms; zero failures/skips.\n\nFinal `git status --porcelain=v1`: **empty**. HEAD remains `d9796c107278e8a35231d17590d34618d902a9cd`. No production edits, commits, spawned agents, retained scratch files, or live tools/tests remain.\n"
+          },
+          "axis": "Spec",
+          "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+          "tip": "67413d275ba84dfbb930187c456b04895ea6f538",
+          "finding_ids": [
+            "C2-R1-S1"
+          ],
+          "supersedes": [
+            "dc-c2-spec"
+          ]
+        },
+        {
+          "id": "dc-c2-r1-coverage-review",
+          "performer": "/root/dc_c2_r1_coverage",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "60d5bb1cbe637bbe50ff1c5e6c062b04570cd35b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c2_r1_coverage",
+            "digest": "sha256:bd8a87ca1bf1e1f63176623d3b831aacf2395ebdbf368294abf35f88a03254d8",
+            "excerpt": "Coverage: **1 finding, 1 unique repair target.** Worst issue: changed tickets-only tree identity has no behavioral regression. CLI improvement contribution: **0**.\n\n**DC-C2-COV-2 — DC73 omits changed approved tickets-only folders.** Confidence **10/10**; disposition **auto-fix**, held.\n\nThe repair introduces committed folder identities at `internal/commitment/repository/sources.go:25`. Ticket 02 explicitly requires “exact identities for files and committed folder trees” (`tickets/02-admit-committed-outcomes.md:13`). DC73 requires changed approved deliverables to refuse without runtime writes (`spec.md:462`).\n\nThe concrete missing input is an approved `specs/light` folder whose ticket content changes on the default branch before start. Start must refuse and preserve the ledger bytes.\n\n- `TestCommitmentStartPublishedIdentity`, `admission_test.go:266`, changes/deletes only `specs/A/spec.md`, through `admissionRepo` and `deliverable`.\n- `TestCommitmentDeliverableTypes`, `deliverable_test.go:20`, starts an unchanged tickets-only folder. Its approved tree identity is captured at **:36**, and no descendant changes before the command at **:50**.\n- The complete tree-identity test inventory search found this folder fixture as the only `git-tree:` expectation in the commitment tests. Existing approval identity tests use regular files.\n\nIndependent bypass at `repository/sources.go:91`:\n\n```go\nif got != source.Identity && !strings.HasPrefix(got, \"git-tree:\") {\n```\n\nThis preserves regular-file enforcement while ignoring changed folder identities. The full commitment package remained green:\n\n```text\nprobe: silent; failed_tests=0; restored=yes\nselection: all; baseline=passed; ran=57\ncommitment package: pass, 2415 ms\nfailures=0; skips=0\n```\n\nRepair target: extend DC73’s command regression with a changed approved tickets-only descendant; assert refusal and unchanged ledger bytes. Demonstrate that the tree-specific bypass becomes a behavioral red. This falls within ticket 02’s existing `internal/commitment` fence (`ticket:4`).\n\nThe original regular-file COV-1 repair is verified: ignoring admission validation errors produced **two behavioral failures**, `changed` and `deleted`, with `restored=yes`; baseline ran three tests and passed.\n\n```text\nclaims[2]{id,status,confidence}:\n  DC-C2-COV-1-file-regression,verified,10\n  DC-C2-COV-2,verified,10\n```\n\nReviewed one repair diff, `66796aa93693bbc5ada27130b3b62a5a7ff541ca..d9796c107278e8a35231d17590d34618d902a9cd`, the whole spec, ticket 02, producer/type/identity owners, command adapters, fixture owners, and existing classifier tests. Enumerated regular spec blobs, tickets-only committed trees, invalid file/folder types, changed/deleted sources, and the approved write fence. Later ticket 03–10 behavior was excluded.\n\nEvidence bound current **once** on integration. Complete evidence pages fetched: **s1/0, s35/0–3, s36/0–1**, through terminal pages.\n\nFinal venue `git status --porcelain=v1`: empty. HEAD remains `d9796c107278e8a35231d17590d34618d902a9cd`. Probes restored exactly. No retained scratch files, production edits, commits, spawned agents, or live commands/tests remain.\n"
+          },
+          "axis": "Coverage",
+          "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+          "tip": "67413d275ba84dfbb930187c456b04895ea6f538",
+          "finding_ids": [
+            "DC-C2-COV-2"
+          ],
+          "supersedes": [
+            "dc-c2-coverage"
+          ]
         }
       ]
     }
@@ -933,3 +1003,14 @@ selection[1]{form,target,run,baseline,ran}:
   package,./internal/commitment,^TestCommitmentDeliverableTypes/source-file$,passed,2
 ```
 
+
+## DC-C2 final repair pickup
+
+The confirming round has two raw findings and two repair targets. Both are accepted for auto-fix.
+Standards has zero findings. The prior three targets are closed. Repair cycles consumed: 1 of 2.
+
+- C2-R1-S1: Spec, confidence 10. Preserve literal spec folder names ending in `.md`, per the approved deliverable contract.
+- DC-C2-COV-2: Coverage, confidence 10. Extend DC73 to changed tickets-only descendants and prove that a tree-identity bypass fails.
+
+The current session performs repair cycle 2 under the recorded user override.
+The native records retain the source citations and independent probes.
