@@ -296,7 +296,8 @@ func TestCommitmentGateRace(t *testing.T) {
 const publicationHoldWindow = bounds.IntentLockTimeout / 4
 
 // A competing blocker that arrives between the final admission decision and the
-// ref update waits for the publication. It then observes the published destination.
+// ref update waits for the publication. It then observes the published destination,
+// whose policy records the outcome as delivered, so the blocker refuses.
 func TestCommitmentPublishLock(t *testing.T) {
 	t.Parallel()
 	request := "land-commitment-publish-lock"
@@ -333,7 +334,7 @@ func TestCommitmentPublishLock(t *testing.T) {
 	}
 	published := gitOutput(t, f.root, "rev-parse", "main")
 	got := <-competing
-	if early || got.err != nil || got.main != published {
+	if early || got.err == nil || !strings.Contains(got.err.Error(), "is already delivered") || got.main != published {
 		t.Fatalf("competing blocker = (early=%t, main=%s, err=%v), want it to wait for the publication %s", early, got.main, got.err, published)
 	}
 }

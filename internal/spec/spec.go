@@ -231,8 +231,8 @@ const RetireNextPrefix = "next: "
 // exit 1 without deleting anything. A spec refuses when it is not merged-implemented: staged,
 // or implemented only in the working tree and not yet at HEAD. An unknown slug refuses, and so
 // does an orphaned review pickup with no spec. Inside a repository, the primary checkout
-// refuses too, because Bench write verbs run from a worktree. The next: line names the board
-// remainder that roadmapRemainder renders from the Roadmap: value, read before deletion.
+// refuses too, because Bench write verbs run from a worktree. retireNext renders the next:
+// line from the Roadmap: value, read before deletion, and from the delivery at HEAD.
 func retireCommand(arg string) (string, int) {
 	base := RepoBase()
 	if base != "" {
@@ -301,7 +301,7 @@ func retireCommand(arg string) (string, int) {
 		}
 	}
 	_, roadmapID := metadata(content)
-	fmt.Fprintf(&b, RetireNextPrefix+"promote durable content, remove the ROADMAP row%s, commit as `spec-retire: %s`\n", roadmapRemainder(base, roadmapID), slug)
+	b.WriteString(retireNext(base, resolved, roadmapID, slug))
 	return b.String(), 0
 }
 
@@ -449,12 +449,7 @@ func folderResidue(base, arg string) (string, bool) {
 // marker — the "finishing commit has landed" guard. It reads the blob through git and
 // discards stderr, so a spec absent from HEAD or still staged there reads as false.
 func implementedAtHEAD(base, resolved string) bool {
-	rel := filepath.ToSlash(RelTo(base, resolved))
-	args := []string{"show", "HEAD:" + rel}
-	if base != "" {
-		args = append([]string{"-C", base}, args...)
-	}
-	content, err := git.Raw(args...)
+	content, err := headBlob(base, filepath.ToSlash(RelTo(base, resolved)))
 	if err != nil {
 		return false
 	}

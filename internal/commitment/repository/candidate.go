@@ -150,8 +150,13 @@ func (store Store) protectedCandidate(policy *commitment.Policy, revision, tree 
 	if err != nil {
 		return err
 	}
+	// A revision with no board has no sequence to project, so its candidate keeps none.
+	_, board, err := roadmap.RevisionIndex(store.Root, revision)
+	if err != nil {
+		return err
+	}
 	sequence := before.SequenceText
-	if transition {
+	if transition && board {
 		projected, err := roadmap.ProjectSequence([]byte(before.Text), commitment.Remaining(*policy))
 		if err != nil {
 			return err

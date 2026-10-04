@@ -106,22 +106,25 @@ func requirePublishedSpec(t *testing.T, root, published string, staged []byte) {
 
 // Adoption lists an existing run with its approved scope instead of a delivery
 // binding. The listed run lands that scope and nothing beyond it, and an unlisted run with
-// no binding lands nothing.
+// no binding lands nothing. The fixture spec is the approved deliverable of a rowless
+// outcome, so each scope lists it and the landing carries its delivery fact. An unlisted
+// run is not authorized to record that fact.
 func TestCommitmentLegacyContinuation(t *testing.T) {
 	t.Parallel()
+	const deliverable = "specs/x/spec.md"
 	for _, row := range []struct {
 		name  string
 		scope []string
 		want  string
 	}{
-		{name: "listed-scope", scope: []string{"owned.txt", "reviews/x.md"}},
-		{name: "beyond-scope", scope: []string{"reviews/x.md"}, want: "legacy continuation scope excludes"},
+		{name: "listed-scope", scope: []string{"owned.txt", "reviews/x.md", deliverable}},
+		{name: "beyond-scope", scope: []string{"reviews/x.md", deliverable}, want: "legacy continuation scope excludes"},
 		// The scope entry "owned" is a string prefix of the source's owned.txt, not its
 		// directory, so the sibling stays outside the scope.
-		{name: "sibling-prefix", scope: []string{"owned", "reviews/x.md"}, want: "legacy continuation scope excludes"},
-		{name: "directory-scope", scope: []string{"owned.txt", "reviews"}},
-		{name: "outside-directory", scope: []string{"reviews"}, want: "legacy continuation scope excludes"},
-		{name: "unlisted", want: "assignment has no current delivery binding"},
+		{name: "sibling-prefix", scope: []string{"owned", "reviews/x.md", deliverable}, want: "legacy continuation scope excludes"},
+		{name: "directory-scope", scope: []string{"owned.txt", "reviews", deliverable}},
+		{name: "outside-directory", scope: []string{"reviews", deliverable}, want: "legacy continuation scope excludes"},
+		{name: "unlisted", want: "candidate policy has no exact approval"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			t.Parallel()

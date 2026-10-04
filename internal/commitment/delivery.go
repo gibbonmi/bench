@@ -6,12 +6,14 @@ import (
 )
 
 // Deliver records the verified delivery of the approved deliverable at path. It returns
-// the next policy and the outcome sources that the delivery completely satisfies. A path
-// that the active milestone does not approve, or a binding that names no obligation,
-// returns policy unchanged and no source.
+// the next policy and the outcome sources that the delivery completely satisfies. An
+// outcome with no source is rowless: the outcome itself is its one obligation, so its
+// delivery records a fact and satisfies no source. A path that the active milestone does
+// not approve, or a binding that names no obligation of an outcome with sources, returns
+// policy unchanged and no source.
 func Deliver(policy Policy, path, source, evidence string) (Policy, []SourceBinding, error) {
 	outcome, binding, found, err := activeDeliverable(policy, path)
-	if err != nil || !found || len(binding.Obligations) == 0 {
+	if err != nil || !found || (len(binding.Obligations) == 0 && len(outcome.Sources) > 0) {
 		return policy, nil, err
 	}
 	fact := DeliveryFact{Milestone: policy.ActiveMilestone, Outcome: outcome.ID, Binding: binding.Source.ID, Identity: binding.Source.Identity, Source: source, Evidence: evidence}
@@ -56,12 +58,7 @@ func Remaining(policy Policy) []string {
 // for every scope path that the active milestone approves as a deliverable, and the scope
 // names at least one such path. A partly delivered scope stays open.
 func ScopeDelivered(policy Policy, scope []string) bool {
-	delivered := map[string]bool{}
-	for _, fact := range policy.Deliveries {
-		if binding, found := deliveredBinding(policy, fact); found {
-			delivered[binding.Source.Path] = true
-		}
-	}
+	delivered := deliveredPaths(policy)
 	approved := 0
 	for _, path := range scope {
 		if _, _, found, _ := activeDeliverable(policy, path); !found {
@@ -73,6 +70,21 @@ func ScopeDelivered(policy Policy, scope []string) bool {
 		approved++
 	}
 	return approved > 0
+}
+
+// PathDelivered reports whether policy records a verified delivery of the deliverable at
+// path. The publication of that delivery closed every row that it satisfied.
+func PathDelivered(policy Policy, path string) bool { return deliveredPaths(policy)[path] }
+
+// deliveredPaths holds the path of each deliverable that a recorded fact delivers.
+func deliveredPaths(policy Policy) map[string]bool {
+	delivered := map[string]bool{}
+	for _, fact := range policy.Deliveries {
+		if binding, found := deliveredBinding(policy, fact); found {
+			delivered[binding.Source.Path] = true
+		}
+	}
+	return delivered
 }
 
 // deliveredOutcomes holds each outcome with a recorded delivery and no unsatisfied

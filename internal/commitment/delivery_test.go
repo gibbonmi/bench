@@ -57,6 +57,34 @@ func TestCommitmentDeliver(t *testing.T) {
 	}
 }
 
+// An outcome with no source is its own obligation, so its delivery records one fact that
+// satisfies no source and completes only that outcome. A binding with no obligation of an
+// outcome that has sources records nothing. PathDelivered names only a delivered path.
+func TestCommitmentDeliverRowless(t *testing.T) {
+	const rowlessSpec = "specs/c/spec.md"
+	p := deliveryPolicy()
+	p.Milestones[0].Outcomes = append(p.Milestones[0].Outcomes, commitment.Outcome{ID: "C", Criteria: []commitment.Criterion{{ID: "c-done", Text: "C is delivered."}}, Sources: []commitment.SourceBinding{},
+		Deliverables: []commitment.DeliveryBinding{{Source: commitment.SourceBinding{ID: "rowless", Path: rowlessSpec, Identity: "sha256:rowless"}}}})
+	delivered, closed, err := commitment.Deliver(p, rowlessSpec, "source", "evidence")
+	want := commitment.DeliveryFact{Milestone: "M1", Outcome: "C", Binding: "rowless", Identity: "sha256:rowless", Source: "source", Evidence: "evidence"}
+	if err != nil || len(closed) != 0 || len(delivered.Deliveries) != 1 || delivered.Deliveries[0] != want {
+		t.Fatalf("rowless Deliver = %+v, %+v, %v; want the one fact %+v and no source", delivered.Deliveries, closed, err, want)
+	}
+	if remaining := commitment.Remaining(delivered); !slices.Equal(remaining, []string{"A", "B"}) {
+		t.Fatalf("rowless Remaining = %v, want A and B open", remaining)
+	}
+	if len(commitment.Satisfied(delivered)) != 0 {
+		t.Fatalf("rowless Satisfied = %v, want no source", commitment.Satisfied(delivered))
+	}
+	if !commitment.PathDelivered(delivered, rowlessSpec) || commitment.PathDelivered(delivered, deliverySpec) || commitment.PathDelivered(p, rowlessSpec) {
+		t.Fatal("PathDelivered must name exactly the delivered deliverable")
+	}
+	unchanged, closed, err := commitment.Deliver(p, deliverySpec, "source", "evidence")
+	if err != nil || closed != nil || len(unchanged.Deliveries) != 0 {
+		t.Fatalf("obligation-free Deliver = %+v, %+v, %v; want no fact for an outcome with sources", unchanged.Deliveries, closed, err)
+	}
+}
+
 // Validate refuses each delivery fact that does not name exactly one approved binding with
 // its approved identity and a reviewed source and evidence.
 func TestCommitmentDeliveryFactValidation(t *testing.T) {

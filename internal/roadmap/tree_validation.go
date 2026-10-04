@@ -49,18 +49,25 @@ func RequirementBytes(name string, data []byte) ([]byte, error) {
 	return []byte(strings.Join(kept, "\n")), nil
 }
 
+// RevisionIndex reads the board index of an immutable revision. present is false when the
+// revision has no index, and an index that is not a regular file is an error.
+func RevisionIndex(root, revision string) (data []byte, present bool, err error) {
+	listing, err := git.Output("-C", root, "ls-tree", "-z", revision, "--", RoadmapFile)
+	if err != nil || listing == "" {
+		return nil, false, err
+	}
+	data, err = git.ReadTreeFile(root, revision, RoadmapFile)
+	return data, err == nil, err
+}
+
 // RevisionDocument parses an immutable roadmap through the canonical split-board parser.
 func RevisionDocument(root, revision string) (Document, error) {
 	tree := Tree{Index: bounds.Classified{State: bounds.StateAbsent}, DirState: bounds.StateAbsent}
-	index, err := git.Output("-C", root, "ls-tree", "-z", revision, "--", RoadmapFile)
+	data, present, err := RevisionIndex(root, revision)
 	if err != nil {
 		return Document{}, err
 	}
-	if index != "" {
-		data, err := git.ReadTreeFile(root, revision, RoadmapFile)
-		if err != nil {
-			return Document{}, err
-		}
+	if present {
 		tree.Index = bounds.Classified{State: bounds.StateParsed, Data: data}
 	}
 	directory, err := git.Output("-C", root, "ls-tree", "-z", revision, "--", RoadmapDir)

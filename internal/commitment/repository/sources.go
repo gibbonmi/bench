@@ -17,13 +17,16 @@ func SourceIdentity(root, revision, path string) (string, error) {
 	return identity, err
 }
 
+// TreeIdentity is the identity of a tickets-only folder whose Git tree is object.
+func TreeIdentity(object string) string { return "git-tree:" + object }
+
 func sourceAt(root, revision, path string) (string, []byte, error) {
 	if ticketsOnlyAt(root, revision, path) {
 		object, err := git.Output("-C", root, "rev-parse", "--verify", revision+":"+path)
 		if err != nil {
 			return "", nil, err
 		}
-		return "git-tree:" + strings.TrimSpace(object), nil, nil
+		return TreeIdentity(strings.TrimSpace(object)), nil, nil
 	}
 	data, err := git.ReadTreeFile(root, revision, path)
 	if err != nil {

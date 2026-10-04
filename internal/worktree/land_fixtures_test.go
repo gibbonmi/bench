@@ -71,12 +71,15 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string) landingFixture {
 	t.Helper()
 	return seededLandingFixture(t, request, ignored, declaration, home, gradeSpec, step, func(t testing.TB, root string) {
-		commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")
+		commitmenttest.SeedAdmission(t, root, closureSpec)
 	})
 }
 
+// closureSpec is the landing fixture's staged spec.
+const closureSpec = "specs/x/spec.md"
+
 // seededLandingFixture is landingFixtureWithGateStep with the approved policy that seed
-// writes before the review base. The seed must approve specs/x/spec.md for the delivery
+// writes before the review base. The seed must approve closureSpec for the delivery
 // outcome, because the source assignment starts that outcome. Each fence path joins the
 // spec's ownership fence and the ticket writes, so the source may change that path.
 func seededLandingFixture(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string), fence ...string) landingFixture {
@@ -110,7 +113,7 @@ func seededLandingFixture(t *testing.T, request, ignored, declaration, home stri
 		specBody += "- `" + path + "`\n"
 		writes += ", " + path
 	}
-	prepared := recordtest.Prepare(t, root, 1, "specs/x/spec.md", specBody)
+	prepared := recordtest.Prepare(t, root, 1, closureSpec, specBody)
 	// The ticket writes the fence less its review pickup, so a landing that grades
 	// fence-writes reads a union-exact spec.
 	prepared.SetTicketWrites(writes)
@@ -118,7 +121,7 @@ func seededLandingFixture(t *testing.T, request, ignored, declaration, home stri
 	prepared.Commit("approve fixture delivery")
 	base := prepared.Tip()
 	creation := mustCreate(t, root, home, request, "public landing")
-	commitmenttest.Admit(t, creation.Path, request, "specs/x/spec.md")
+	commitmenttest.Admit(t, creation.Path, request, closureSpec)
 	commitInWorktree(t, creation.Path, "owned.txt", "reviewed bytes\n", "reviewed source")
 	refreshLandingEvidence(t, creation.Path, base)
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
@@ -248,9 +251,7 @@ func ticketsOnlyLandingFixture(t *testing.T, request string) landingFixture {
 // ticketsOnlyFolderFixture adds the tickets-only folder to a spec-less landing fixture.
 func ticketsOnlyFolderFixture(t *testing.T, f landingFixture) landingFixture {
 	t.Helper()
-	mustMkdirAll(t, filepath.Join(f.root, "specs", "t", "tickets"), 0o755)
-	mustWrite(t, filepath.Join(f.root, "specs", "t", "tickets", "one.md"), []byte("Light path ticket.\n"), 0o644)
-	gitRun(t, f.root, "add", "specs/t")
+	commitmenttest.WriteTickets(t, f.root)
 	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "tickets-only folder")
 	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
 	gitRun(t, f.root, "update-ref", "refs/bench/green/main", f.base)

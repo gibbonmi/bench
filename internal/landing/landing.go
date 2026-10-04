@@ -240,12 +240,9 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 			return ReviewedResult{}, err
 		}
 	}
-	// The close consumes the tickets-only folder from the published tree by index
-	// removal. A folder the destination already removed lists no entries, so the removal
-	// writes the composed tree back unchanged.
 	if r.ClosePath != "" {
-		if tree, err = removeTreeFolder(r.Root, tree, r.ClosePath); err != nil {
-			return ReviewedResult{}, fmt.Errorf("close tickets-only folder: %w", err)
+		if tree, err = completeTickets(r, tree, source); err != nil {
+			return ReviewedResult{}, err
 		}
 	}
 	if err := admission.Check(tree); err != nil {

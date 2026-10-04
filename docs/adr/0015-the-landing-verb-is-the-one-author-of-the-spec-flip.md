@@ -4,7 +4,11 @@
 
 The commit verb reports its publication boundary with exit 3. Exit 1 is a refusal before publication, and exit 2 is a grammar error. Exit 3 means the commit is published and the checkout did not reconcile. The record names the published commit, the path that did not reconcile, and one restore command over every named path as the repair. A path that is not line-safe takes a placeholder in the repair, so the record stays pasteable.
 
-The same landing is the one author of the verified roadmap closure. The active commitment can approve a spec as the complete delivery of named obligations. A green landing of that spec then publishes the spec flip and the closure in one commit. The closure records the delivery in the commitment policy. It also removes each satisfied row, the detail file of that row, and the sequence entry of each delivered outcome.
+The same landing is the one author of the verified roadmap closure. The active commitment can approve a spec or a tickets-only folder as the complete delivery of named obligations. A green landing of that deliverable then publishes the spec flip or the folder close, and the closure, in one commit. The closure records the delivery in the commitment policy. It also removes each satisfied row, the detail file of that row, and the sequence entry of each delivered outcome.
+
+A tickets-only folder has no completion record. Its evidence is the folder in the reviewed source, with the ticket acceptance that the gate graded. A `Roadmap:` label is never evidence of a complete delivery.
+
+An outcome that owns no roadmap row is its own obligation. Its delivery records the fact and removes the outcome from the recommended sequence. It creates no row and removes no row. A project with no board receives the fact alone.
 
 The closure also removes each satisfied row from the board dependency tables. A table row whose dependent is a satisfied row goes. A satisfied row leaves each dependency list, and a table row whose list becomes empty goes. A closed row therefore never keeps dependent work blocked.
 
@@ -12,11 +16,13 @@ A partial delivery closes only its named obligations, and every other row stays.
 
 An explicitly listed legacy run has no delivery binding. When its approved scope lists the landed spec, the landing closes that spec's delivery in the same way. The landing releases the legacy run only when every approved deliverable in its scope is delivered. A partly delivered scope stays open.
 
-The commitment owner derives one exact closure from the reviewed source. The landing applies that closure, and the completion gate compares the candidate with the same closure. A list of permitted paths is not sufficient. A kept sequence entry, a missing row removal, or an extra removal makes the gate refuse. The delivery fact names the reviewed source commit and its completion record, and never the publication that carries the fact.
+The commitment owner derives one exact closure from the reviewed source. The landing applies that closure, and publication admission accepts no other policy change. The completion gate of a spec landing compares the candidate with the same closure. A list of permitted paths is not sufficient. A kept sequence entry, a missing row removal, or an extra removal makes the gate refuse. The delivery fact names the reviewed source commit and its completion record, and never the publication that carries the fact.
 
 A failure before publication changes neither the default branch nor the roadmap. After publication, the landing releases the local claims that the published fact satisfies. When that local step fails, the resume completes it and does not publish again. The published fact keeps the obligation closed while the local step waits.
 
-A spec retirement names the board remainder it leaves. When the spec carries a `Roadmap: FT<n>` line, the retire verb names the board row `FT<n>` and, when it exists, the row's detail file. The retire verb removes neither. Without a valid `Roadmap:` line, the verb names the row and the detail file generically.
+A spec retirement can promote durable content and delete the delivered spec. When the committed policy records the verified delivery of that spec, the retire verb schedules no board cleanup. That delivery already closed each row that it satisfied, and a row that it left open is residual work.
+
+Without that delivery, the retirement names the board remainder it leaves. When the spec carries a `Roadmap: FT<n>` line, the retire verb names the board row `FT<n>` and, when it exists, the row's detail file. The retire verb removes neither. Without a valid `Roadmap:` line, the verb names the row and the detail file generically.
 
 ## Considered options
 

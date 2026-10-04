@@ -11,8 +11,8 @@ import (
 	"github.com/gibbonmi/bench/internal/roadmap"
 )
 
-// Delivery names one verified spec publication: the approved spec path and the reviewed
-// source commit whose completion record verifies it.
+// Delivery names one verified publication: the approved spec path or tickets-only folder,
+// and the reviewed source commit whose completion evidence verifies it.
 type Delivery struct{ Spec, Source string }
 
 // Edit is one exact file effect of a verified closure. A deleted path carries no data
@@ -24,30 +24,44 @@ type Edit struct {
 }
 
 // Delivered returns policy after delivery and the sources that the delivery completely
-// satisfies. The completion evidence is the record that the reviewed source retains.
+// satisfies. The completion evidence of a spec is the record that the reviewed source
+// retains. A tickets-only folder has no record: its evidence is the folder's tree in the
+// reviewed source, which holds the approved ticket acceptance that the gate graded.
 func (store Store) Delivered(policy commitment.Policy, delivery Delivery) (commitment.Policy, []commitment.SourceBinding, error) {
-	record, err := reviewrecord.RecordPath(delivery.Spec)
+	evidence, err := store.completionEvidence(delivery)
 	if err != nil {
 		return policy, nil, err
-	}
-	evidence, err := git.Output("-C", store.Root, "rev-parse", "--verify", delivery.Source+":"+record)
-	if err != nil {
-		return policy, nil, fmt.Errorf("read completion evidence %s: %w", record, err)
 	}
 	return commitment.Deliver(policy, delivery.Spec, delivery.Source, evidence)
 }
 
+func (store Store) completionEvidence(delivery Delivery) (string, error) {
+	if ticketsOnlyAt(store.Root, delivery.Source, delivery.Spec) {
+		return SourceIdentity(store.Root, delivery.Source, delivery.Spec)
+	}
+	record, err := reviewrecord.RecordPath(delivery.Spec)
+	if err != nil {
+		return "", err
+	}
+	evidence, err := git.Output("-C", store.Root, "rev-parse", "--verify", delivery.Source+":"+record)
+	if err != nil {
+		return "", fmt.Errorf("read completion evidence %s: %w", record, err)
+	}
+	return evidence, nil
+}
+
 // Closure derives the exact closure that delivery makes to tree. It records the delivery
 // in the policy, removes each satisfied row and its detail owner, and projects the
-// recommended sequence from the outcomes that remain. A tree whose policy approves no
-// obligation for the spec needs no edit.
+// recommended sequence from the outcomes that remain. A tree whose policy records no new
+// fact for the deliverable needs no edit. A rowless delivery closes no row, so a tree
+// with no board needs the policy edit alone.
 func (store Store) Closure(tree string, delivery Delivery) ([]Edit, error) {
 	current, _, err := store.policyAt(tree)
 	if err != nil || current == nil {
 		return nil, err
 	}
 	next, closed, err := store.Delivered(*current, delivery)
-	if err != nil || len(closed) == 0 {
+	if err != nil || len(next.Deliveries) == len(current.Deliveries) {
 		return nil, err
 	}
 	policy, err := commitment.Bytes(next)
@@ -62,9 +76,12 @@ func (store Store) Closure(tree string, delivery Delivery) ([]Edit, error) {
 			edits = append(edits, Edit{Path: source.Path, Delete: true})
 		}
 	}
-	index, err := git.ReadTreeFile(store.Root, tree, roadmap.RoadmapFile)
+	index, present, err := roadmap.RevisionIndex(store.Root, tree)
 	if err != nil {
 		return nil, err
+	}
+	if !present && len(rows) == 0 {
+		return edits, nil
 	}
 	closedIndex, err := roadmap.Close(index, rows, commitment.Remaining(next))
 	if err != nil {
