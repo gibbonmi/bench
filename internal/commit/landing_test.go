@@ -17,8 +17,6 @@ import (
 // so a folder name a shell would expand must land unchanged.
 const ticketsSlug = "ft900 tickets [x]*"
 
-// landingRepo builds the minimal linked worktree `bench commit` lands into. It returns
-// that worktree and its pre-landing HEAD.
 // runCommand invokes the real command from root, the way the CLI does.
 func runCommand(t *testing.T, root string, args ...string) (code int, stdout, stderr string) {
 	t.Helper()

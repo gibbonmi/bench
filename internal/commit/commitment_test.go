@@ -12,6 +12,8 @@ import (
 	"testing"
 )
 
+// landingRepo builds the minimal linked worktree `bench commit` lands into. It returns
+// that worktree and its pre-landing HEAD.
 func landingRepo(t *testing.T, gateExit int, write func(t *testing.T, root string)) (root, before string) {
 	t.Helper()
 	notTheKitRoot(t)
