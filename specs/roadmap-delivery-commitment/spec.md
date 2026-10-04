@@ -519,6 +519,7 @@ An author who discovers another destination updates the ticket and this union, t
 - `internal/tickets/registry_data.go`
 - `internal/usage`
 - `internal/worktree`
+- `tests/canary/package-core-guard/unrouted-subcommand`
 - `tests/canary/workflow-guidance-anchors`
 - `tests/canary/data-handling-derivation/undocumented-passlist-var`
 - `tests/canary/docs-currency-token-diet/benchref-imported`

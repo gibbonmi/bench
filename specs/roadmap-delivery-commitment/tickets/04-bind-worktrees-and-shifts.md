@@ -1,7 +1,7 @@
 # Bind worktrees and shifts to one outcome
 
 Blocked by: 03-protect-planning-and-commits.md
-Writes: internal/commitment (new), internal/intent, internal/worktree, internal/shift, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go, cmd/bench/main.go
+Writes: internal/commitment (new), internal/intent, internal/worktree, internal/shift, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/systemtest/otel_verbs_test.go, cmd/bench/main.go, tests/canary/package-core-guard/unrouted-subcommand
 Covers: DC23, DC24, DC25, DC50, DC69
 
 ## What to build
