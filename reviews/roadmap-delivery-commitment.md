@@ -3172,6 +3172,72 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c6-r1-coverage"
           ]
+        },
+        {
+          "id": "dc-c6-r3-spec",
+          "performer": "claude:dc_c6_r3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c6_r3_spec",
+            "digest": "sha256:29afb4aa9f3784a5a937d52095003dcc5b0b4c5d43b1ba21d5bc274fe9128cc2",
+            "excerpt": "Spec: 0 findings.\nThe cycle 2 delta is test only: EditPolicy (commitmenttest repo.go:36-50) replaces the gate test helper with the same edits and refusal text.\nPlan commit 72af8151 changes only the cycle 2 assignment and the reviewer line; no chunk, ticket, row, check, probe, or pass criterion changed.\nAt ccfdc307 every row holds: one Closure derivation for the landing, gate oracle, and admission; no self-referencing fact; partial delivery open; red and interrupted gates publish nothing; pre-oracle failure leaves state unchanged; resume once; DC75; DC76; the ticket 05 lock and compare-and-swap.\nAdvice: the earlier fence, DC76 negative, and DC75 untouched-row advice still applies.\n"
+          },
+          "axis": "Spec",
+          "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+          "tip": "ccfdc3071972c202ce176946f9f1096f98322d43",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c6-r2-spec"
+          ]
+        },
+        {
+          "id": "dc-c6-r3-coverage",
+          "performer": "claude:dc_c6_r3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c6_r3_coverage",
+            "digest": "sha256:eba5f8dff845381109e2ada1ac5764db261ee84239ba15965181b343652b2ed8",
+            "excerpt": "Coverage: 0 findings.\nThe cycle 2 delta weakened no assertion: EditPolicy repeats the removed helper step for step, and the three moved gate rows keep the same edits and refusal.\nThe six dc-c6-r06-2 entries match the DC-C6 plan; the gate entry carries the named probe text, bit, exit code 1, and restore pass.\nAll eleven rows remain covered. The gate and commitment packages passed in an independent run at 450f485f.\nAdvice: the C6-C2 policy-compare probe was not rerun after the helper move; equivalence and a green run confirm the moved rows.\n"
+          },
+          "axis": "Coverage",
+          "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+          "tip": "ccfdc3071972c202ce176946f9f1096f98322d43",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c6-r2-coverage"
+          ]
+        },
+        {
+          "id": "dc-c6-r3-standards",
+          "performer": "claude:dc_c6_r3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e26018730be65dec8607dcffb13f8d203afdc212",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c6_r3_standards",
+            "digest": "sha256:cf907fd365c82f14df9c97a20781f3c2aae48b1c69863c517bd2870b0ac950a4",
+            "excerpt": "Standards: 0 findings. C6-R2-S1 is closed: commitmenttest.EditPolicy (repo.go:36-50) is the one owner of the policy read, parse, edit, and write sequence, and ApprovePending and the gate test use it.\nThe cycle 2 delta adds no defect; gofmt is clean and no assertion changed.\nA whole-chunk re-check finds no blocking defect: one Closure derivation, one Remaining, one PlanningMode, one RowOwner, and one dependency-table grammar owner. ADR 0015 states the current decision.\nAdvice: gradeClosure could use EditPolicy; the policy file path expression appears twice; two hand-written closed boards and a spelled-out outcome id exist in tests; a row-path rule repeats in fixtures; one doc comment line is long.\n"
+          },
+          "axis": "Standards",
+          "base": "24f2f2d012cf0f83332c1de0858a6066e868873a",
+          "tip": "ccfdc3071972c202ce176946f9f1096f98322d43",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c6-r2-standards"
+          ]
         }
       ]
     }
@@ -3971,4 +4037,16 @@ A Fable consultant found that the remaining unowned clauses in the closure secti
 Repair cycles consumed: 2 of 2. A fresh Opus repair session at medium effort corrected C6-R2-S1.
 The repair source is ccfdc3071972c202ce176946f9f1096f98322d43. All six planned checks pass there, and the named sequence probe failed and restored.
 One commitmenttest helper now owns the policy read, edit, and write harness. No assertion changed.
+
+## Confirmed DC-C6 source
+
+Three fresh Claude Opus reviewers at high effort confirm repair cycle 2. All three axes report zero findings and zero repair targets.
+C6-R2-S1 is closed. No later review changed the acceptance requirements.
+
+### Advice
+
+The C6-C2 policy compare probe was not run again after the helper move. Code equivalence and a green run confirm the moved cases.
+The worktree closed-board expectation has no recorded failure of its own. Some fixture path expressions repeat short text.
+
+The final source is ccfdc3071972c202ce176946f9f1096f98322d43. The chunk checkpoint remains required before ticket 07.
 
