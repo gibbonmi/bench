@@ -207,7 +207,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
 	}, commitmentAdmission{
 		store:  commitrepo.Store{Root: root},
-		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree},
+		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip},
 		gap:    j.publicationGap,
 	})
 	if err != nil {
@@ -222,6 +222,9 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	measures.subject = result.Commit
 	if err := authorization.AdvanceMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
+	}
+	if err := j.reconcileCommitment(root); err != nil {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "commitment", records)
 	}
 	if err := reconcileLandingDestination(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)

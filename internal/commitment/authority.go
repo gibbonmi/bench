@@ -183,14 +183,6 @@ func policySources(policy Policy) []SourceBinding {
 	return sources
 }
 
-func deliveredOutcomes(policy Policy) map[string]bool {
-	delivered := map[string]bool{}
-	for _, fact := range policy.Deliveries {
-		delivered[fact.Outcome] = true
-	}
-	return delivered
-}
-
 func retainedOrder(order []string, retained map[string]bool) []string {
 	var result []string
 	for _, item := range order {

@@ -16,7 +16,6 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	benchgit "github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/spec"
 )
 
 // Request is the complete, immutable input to one prospective landing.
@@ -186,7 +185,8 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 }
 
 // LandReviewed composes an exact reviewed source, applies its staged-spec
-// transition only to that prospective tree, and publishes a two-parent commit.
+// transition and verified closure only to that prospective tree, and publishes a
+// two-parent commit.
 // The worktree lifecycle owns authentication, marker advancement, reconciliation,
 // and release around this irreversible operation. It applies no admission.
 func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedResult, error) {
@@ -236,12 +236,8 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 	}
 	tree := composition.Tree
 	if r.SpecPath != "" {
-		implemented, err := spec.Implemented(r.SpecBytes)
-		if err != nil {
+		if tree, err = completeSpec(r, tree, source); err != nil {
 			return ReviewedResult{}, err
-		}
-		if tree, err = replaceTreeFile(r.Root, composition.Tree, r.SpecPath, implemented, r.SpecMode); err != nil {
-			return ReviewedResult{}, fmt.Errorf("transition staged spec: %w", err)
 		}
 	}
 	// The close consumes the tickets-only folder from the published tree by index

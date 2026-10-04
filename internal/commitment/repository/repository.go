@@ -239,8 +239,7 @@ func (store Store) stage(plan commitment.Plan) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	projection := commitment.Selection(policy)
-	projected, err := roadmap.ProjectSequence(roadmapBefore.data, projection.Outcomes)
+	projected, err := roadmap.ProjectSequence(roadmapBefore.data, commitment.Remaining(policy))
 	if err != nil {
 		return nil, err
 	}

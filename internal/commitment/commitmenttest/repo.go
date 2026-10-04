@@ -112,11 +112,50 @@ func SeedProtected(t testing.TB, root string) {
 	outcomes := []commitment.Outcome{}
 	for i, id := range []string{"A", "B"} {
 		row := "FT" + strconv.Itoa(i+1)
-		path := "roadmap/" + row + ".md"
-		body := "**" + row + " — " + id + "**\n\nKeep the " + id + " obligation.\n"
-		Write(t, root, path, body)
-		outcomes = append(outcomes, commitment.Outcome{ID: id, Criteria: []commitment.Criterion{{ID: id + "-done", Text: "The obligation is satisfied."}}, Sources: []commitment.SourceBinding{{ID: row, Path: path, Identity: commitment.Identity([]byte(body))}}})
+		outcomes = append(outcomes, outcome(id, writeRow(t, root, row, id)))
 	}
 	WritePolicy(t, root, commitment.Policy{Version: 1, ActiveMilestone: "M", Milestones: []commitment.Milestone{{ID: "M", Outcomes: outcomes}}})
 	Write(t, root, "ROADMAP.md", "# Roadmap\n\n## Parked\n\n**FT1 — A**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. A\n2. B\n")
+}
+
+// ClosureIndex is the board index that SeedClosure writes. The delivery outcome owns FT1
+// and each residual row in order, and outcome B owns FT2.
+func ClosureIndex(residual ...string) string {
+	index := "# Roadmap\n\n## Parked\n\n**FT1 — " + DeliveryOutcome + "**\n\n"
+	for _, row := range residual {
+		index += "**" + row + " — " + DeliveryOutcome + "**\n\n"
+	}
+	return index + "**FT2 — B**\n\n## Recommended sequence\n\n1. " + DeliveryOutcome + "\n2. B\n"
+}
+
+// SeedClosure writes an active milestone whose delivery outcome owns FT1 and each residual
+// row, and approves the existing spec at deliverable as the complete delivery of FT1
+// alone. Outcome B owns FT2 and follows the delivery outcome. The caller commits.
+func SeedClosure(t testing.TB, root, deliverable string, residual ...string) {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(deliverable)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var sources []commitment.SourceBinding
+	for _, row := range append([]string{"FT1"}, residual...) {
+		sources = append(sources, writeRow(t, root, row, DeliveryOutcome))
+	}
+	delivery := outcome(DeliveryOutcome, sources...)
+	delivery.Deliverables = []commitment.DeliveryBinding{{Source: commitment.SourceBinding{ID: "spec", Path: deliverable, Identity: commitment.Identity(data)}, Obligations: []string{"FT1"}}}
+	WritePolicy(t, root, commitment.Policy{Version: 1, ActiveMilestone: "M", Milestones: []commitment.Milestone{{ID: "M", Outcomes: []commitment.Outcome{delivery, outcome("B", writeRow(t, root, "FT2", "B"))}}}})
+	Write(t, root, "ROADMAP.md", ClosureIndex(residual...))
+}
+
+// writeRow writes the detail owner of row, titled for outcome, and returns its binding.
+func writeRow(t testing.TB, root, row, outcome string) commitment.SourceBinding {
+	t.Helper()
+	path := "roadmap/" + row + ".md"
+	body := "**" + row + " — " + outcome + "**\n\nKeep the " + outcome + " obligation.\n"
+	Write(t, root, path, body)
+	return commitment.SourceBinding{ID: row, Path: path, Identity: commitment.Identity([]byte(body))}
+}
+
+func outcome(id string, sources ...commitment.SourceBinding) commitment.Outcome {
+	return commitment.Outcome{ID: id, Criteria: []commitment.Criterion{{ID: id + "-done", Text: "The obligation is satisfied."}}, Sources: sources}
 }

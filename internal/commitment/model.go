@@ -57,12 +57,17 @@ type ParallelGrant struct {
 	Outcomes []string `json:"outcomes"`
 }
 
-// DeliveryFact is broker-authored evidence for one delivered outcome.
+// DeliveryFact is broker-authored evidence for one delivered binding. Binding and Identity
+// name the approved deliverable. Source is the reviewed source commit, and Evidence is
+// the completion record that source retains. Neither names the publication that carries
+// the fact, so the fact has no circular reference to its own commit.
 type DeliveryFact struct {
 	Milestone string `json:"milestone"`
 	Outcome   string `json:"outcome"`
 	Binding   string `json:"binding"`
 	Identity  string `json:"identity"`
+	Source    string `json:"source"`
+	Evidence  string `json:"evidence"`
 }
 
 // Projection is the canonical active-policy view consumed by commands.

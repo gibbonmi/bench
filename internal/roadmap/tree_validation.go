@@ -90,6 +90,3 @@ func RevisionDocument(root, revision string) (Document, error) {
 	}
 	return document, nil
 }
-
-// RowPath returns the canonical detail owner of an existing row identity.
-func RowPath(id string) string { return rowFilePath(id) }

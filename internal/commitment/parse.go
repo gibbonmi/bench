@@ -120,15 +120,21 @@ func Validate(policy Policy) error {
 			seen[outcome] = true
 		}
 	}
+	recorded := map[[2]string]bool{}
 	for _, delivery := range policy.Deliveries {
-		if !milestones[delivery.Milestone] || !outcomes[delivery.Outcome] || delivery.Binding == "" || delivery.Identity == "" || !sanitize.LineSafe(delivery.Binding) || !sanitize.LineSafe(delivery.Identity) {
+		key := [2]string{delivery.Outcome, delivery.Binding}
+		binding, bound := deliveredBinding(policy, delivery)
+		if !bound || recorded[key] || delivery.Identity != binding.Source.Identity || !lineValue(delivery.Source) || !lineValue(delivery.Evidence) {
 			return fmt.Errorf("commitment policy: invalid delivery for outcome %q", delivery.Outcome)
 		}
+		recorded[key] = true
 	}
 	return nil
 }
 
 func validIdentity(value string) bool { return identityPattern.MatchString(value) }
+
+func lineValue(value string) bool { return value != "" && sanitize.LineSafe(value) }
 
 func dependencyCycle(graph map[string][]string) string {
 	const (

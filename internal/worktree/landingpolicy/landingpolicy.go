@@ -255,8 +255,8 @@ func Publication(f PublicationFacts) Refusal {
 
 // TerminalFacts describe how a published landing's follow-up work ended.
 type TerminalFacts struct {
-	// FailedStep is the follow-up step that failed: "marker", "reconcile",
-	// "prune", or "release". Empty when every follow-up step completed.
+	// FailedStep is the follow-up step that failed: "marker", "commitment",
+	// "reconcile", "prune", or "release". Empty when every follow-up step completed.
 	FailedStep string
 	// Active is true when the landing released its assignment in this run,
 	// and false when a prior run already completed the release.

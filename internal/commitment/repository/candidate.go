@@ -22,13 +22,14 @@ func (store Store) AuthorizeCandidate(tree string) error {
 	if !owned {
 		return fmt.Errorf("commit requires an active owned assignment; run bench worktree create")
 	}
-	return store.authorizeCandidate(ledger, owner, tree)
+	return store.authorizeCandidate(ledger, owner, tree, nil)
 }
 
 // authorizeCandidate grades tree for owner against one ledger snapshot. The caller supplies
 // the owner, so a publication decides for its frozen source assignment rather than for
-// whichever checkout holds the store root.
-func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignment, tree string) error {
+// whichever checkout holds the store root. Only a publication supplies a delivery, so only
+// a publication can carry the verified closure of its own approved deliverable.
+func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignment, tree string, delivery *Delivery) error {
 	revision, err := store.sourceRevision()
 	if err != nil {
 		return err
@@ -41,17 +42,23 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 	if err != nil {
 		return err
 	}
-	approved := predecessor != identity
-	if approved {
-		if err := store.approvedTransition(ledger, current, candidate, revision); err != nil {
+	transition := predecessor != identity
+	if transition {
+		closed, err := store.closedPolicy(current, candidate, delivery)
+		if err != nil {
 			return err
+		}
+		if !closed {
+			if err := store.approvedTransition(ledger, current, candidate, revision); err != nil {
+				return err
+			}
 		}
 	}
 	protected := current
-	if approved {
+	if transition {
 		protected = candidate
 	}
-	if err := store.protectedCandidate(protected, revision, tree, approved); err != nil {
+	if err := store.protectedCandidate(protected, revision, tree, transition); err != nil {
 		return fmt.Errorf("candidate changes protected commitment: %w; run bench commitment plan --input <file>", err)
 	}
 	changes, err := git.TreeChangesIncludingSubmodules(store.Root, revision, tree)
@@ -112,6 +119,23 @@ func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *
 	return fmt.Errorf("candidate policy has no exact approval; run bench commitment plan --input <file>")
 }
 
+// closedPolicy reports whether candidate is exactly current after the verified delivery.
+func (store Store) closedPolicy(current, candidate *commitment.Policy, delivery *Delivery) (bool, error) {
+	if current == nil || candidate == nil || delivery == nil {
+		return false, nil
+	}
+	expected, closed, err := store.Delivered(*current, *delivery)
+	if err != nil || len(closed) == 0 {
+		return false, err
+	}
+	want, err := commitment.Bytes(expected)
+	if err != nil {
+		return false, err
+	}
+	got, err := commitment.Bytes(*candidate)
+	return err == nil && bytes.Equal(want, got), err
+}
+
 func (store Store) protectedCandidate(policy *commitment.Policy, revision, tree string, transition bool) error {
 	if policy == nil {
 		return nil
@@ -126,7 +150,7 @@ func (store Store) protectedCandidate(policy *commitment.Policy, revision, tree 
 	}
 	sequence := before.SequenceText
 	if transition {
-		projected, err := roadmap.ProjectSequence([]byte(before.Text), commitment.Selection(*policy).Outcomes)
+		projected, err := roadmap.ProjectSequence([]byte(before.Text), commitment.Remaining(*policy))
 		if err != nil {
 			return err
 		}
@@ -140,13 +164,17 @@ func (store Store) protectedCandidate(policy *commitment.Policy, revision, tree 
 	for _, row := range after.Rows {
 		rows[row.ID] = true
 	}
+	satisfied := commitment.Satisfied(*policy)
 	for _, milestone := range policy.Milestones {
 		for _, outcome := range milestone.Outcomes {
 			for _, source := range outcome.Sources {
+				if satisfied[source.ID] {
+					continue
+				}
 				if err := store.validateSourceAt(tree, source); err != nil {
 					return err
 				}
-				if source.Path == roadmap.RowPath(source.ID) && !rows[source.ID] {
+				if roadmap.RowOwner(source.ID, source.Path) && !rows[source.ID] {
 					return fmt.Errorf("protected roadmap owner %q was removed", source.ID)
 				}
 			}

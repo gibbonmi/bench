@@ -47,13 +47,16 @@ func specNeutralizedDestination(root, destination, path string, want []byte, mod
 }
 
 func replaceTreeFile(root, baseTree, path string, content []byte, mode os.FileMode) (string, error) {
-	return editTree(root, baseTree, func(idx string) error {
-		blob, err := outputInput(root, content, "hash-object", "-w", "--stdin")
-		if err != nil {
-			return err
-		}
-		return indexRun(root, idx, "update-index", "--add", "--cacheinfo", gitRegularFileMode(mode)+","+blob+","+path)
-	})
+	return editTree(root, baseTree, func(idx string) error { return writeIndexFile(root, idx, path, content, gitRegularFileMode(mode)) })
+}
+
+// writeIndexFile stores content as one regular index entry at path.
+func writeIndexFile(root, idx, path string, content []byte, mode string) error {
+	blob, err := outputInput(root, content, "hash-object", "-w", "--stdin")
+	if err != nil {
+		return err
+	}
+	return indexRun(root, idx, "update-index", "--add", "--cacheinfo", mode+","+blob+","+path)
 }
 
 // removeTreeFolder writes baseTree without every entry beneath rel, through

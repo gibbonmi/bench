@@ -70,6 +70,16 @@ func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home stri
 // and the destination root. Its line runs after the tally.
 func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string) landingFixture {
 	t.Helper()
+	return seededLandingFixture(t, request, ignored, declaration, home, gradeSpec, step, func(t testing.TB, root string) {
+		commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")
+	})
+}
+
+// seededLandingFixture is landingFixtureWithGateStep with the approved policy that seed
+// writes before the review base. The seed must approve specs/x/spec.md for the delivery
+// outcome, because the source assignment starts that outcome.
+func seededLandingFixture(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string)) landingFixture {
+	t.Helper()
 	gateSpec, prospectiveSpec := "", ""
 	f := landingGateFixture(t)
 	if gradeSpec {
@@ -98,7 +108,7 @@ func landingFixtureWithGateStep(t *testing.T, request, ignored, declaration, hom
 	// The ticket writes the fence less its review pickup, so a landing that grades
 	// fence-writes reads a union-exact spec.
 	prepared.SetTicketWrites("owned.txt (new), " + siblingReviewPath + " (new)")
-	commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")
+	seed(t, root)
 	prepared.Commit("approve fixture delivery")
 	base := prepared.Tip()
 	creation := mustCreate(t, root, home, request, "public landing")

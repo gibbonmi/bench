@@ -95,6 +95,26 @@ func rowNextTree(section, body string) Tree {
 	return splitTree(index, map[string]string{"FT1.md": heading + "\n" + body})
 }
 
+// Closing A's row removes its heading and every sequence entry for A, and keeps B's row
+// and B's sequence entry byte for byte.
+func TestCommitmentSequenceClosure(t *testing.T) {
+	const index = "# Roadmap\n\n## Parked\n\n**FT1 — A**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. A\n2. B\n"
+	got, err := Close([]byte(index), []string{"FT1"}, []string{"B"})
+	const want = "# Roadmap\n\n## Parked\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. B\n"
+	if err != nil || string(got) != want {
+		t.Fatalf("closure = %q, %v; want %q", got, err, want)
+	}
+	document, _, diagnostics := ParseDocument(splitTree(string(got), map[string]string{"FT2.md": "**FT2 — B**\n"}), nil, true)
+	if len(diagnostics) != 0 || len(document.Rows) != 1 || document.Rows[0].ID != "FT2" || len(document.Sequence) != 1 || document.Sequence[0].Text != "B" {
+		t.Fatalf("closed board = %+v, %v", document, diagnostics)
+	}
+	for _, rows := range [][]string{{"FT3"}, {"FT1", "FT1"}} {
+		if _, err := Close([]byte(index+"**FT1 — A again**\n"), rows, nil); err == nil {
+			t.Fatalf("closure of %v accepted an absent or repeated row", rows)
+		}
+	}
+}
+
 func TestCommitmentOccurrenceUpdate(t *testing.T) {
 	const original = "**FT1 — Preserve the obligation**\n\nThe requirement stays unchanged.\n"
 	got, err := RequirementBytes("roadmap/FT1.md", []byte(original+"Occurrences: first, second\n"))

@@ -6,9 +6,10 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-// Publication is the source assignment identity a landing froze before its gate.
+// Publication is the source assignment identity a landing froze before its gate, with
+// the reviewed source commit that it publishes.
 type Publication struct {
-	Assignment, Request, Worktree string
+	Assignment, Request, Worktree, Source string
 }
 
 // AdmitPublication grades the exact composed tree for the frozen source assignment.
@@ -40,7 +41,18 @@ func (store Store) admitPublication(ledger intent.Ledger, source Publication, tr
 		if owner.State != intent.StateActive || owner.Request != source.Request || len(intent.AssignmentsOwning([]intent.Assignment{owner}, source.Worktree)) != 1 {
 			break
 		}
-		return store.authorizeCandidate(ledger, owner, tree)
+		return store.authorizeCandidate(ledger, owner, tree, publishedDelivery(ledger, owner, source.Source))
 	}
 	return fmt.Errorf("publication assignment %q is not active with its presented request and worktree; run bench worktree create", source.Assignment)
+}
+
+// publishedDelivery is the delivery that owner's current binding permits the publication
+// to close. An unbound owner closes nothing.
+func publishedDelivery(ledger intent.Ledger, owner intent.Assignment, source string) *Delivery {
+	for _, binding := range runtimeState(ledger).Bindings {
+		if binding.Assignment == owner.ID && binding.Request == owner.Request {
+			return &Delivery{Spec: binding.Deliverable, Source: source}
+		}
+	}
+	return nil
 }
