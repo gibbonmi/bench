@@ -3945,7 +3945,81 @@ This suggestion is optional advice and has no repair disposition.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dc-c8-r1-standards",
+          "performer": "claude:dc_c8_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d9cd30f4277f2241e11eecbdbcf12a7aabf8067d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_standards",
+            "digest": "sha256:031cf042ef79a2760690dea63433b5cbc0e7a3e21ac2df1677d59335446c879b",
+            "excerpt": "Standards: 1 findings\nReviewer claude:dc_c8_standards, opus high. Subject 1a803d5c..0f7fd876, evidence sha256:a72049d94caa5cd486b77808dec85ea0033b6aa8afdf3b2475edab79d2b595dc.\nS1 (low, blocking): two new anchor needles wrap across physical lines.\n- .agents/commands/bench-drain.md:226-227 wraps \"It informs a commitment proposal and never reorders committed work.\" (needle internal/anchors/registry_commitment.go:23)\n- DATA_HANDLING.md:214-215 wraps \"They hold no transcript, prompt, objective text, environment value, or credential.\" (needle registry_commitment.go:31)\nThe tests quote the wrap bytes (commitment_guidance_test.go:52, data_handling_test.go:308); internal/canary/mutation.go:75 refuses a wrapped anchor.\nRule: ste-prose.md:32 keeps an anchor needle on one physical line. Fix: rewrap both paragraphs and drop the \\n from the two test old strings.\nChecks: Writes fence held; one shared projection commitment.Project used by status, dashboard, roadmap; route inventory hand-written list accepted under the AGENTS.md exception with recorded red; canonical rule single-sourced at .bench/BENCH.md:145; comments clean; no weakened test (forbid rows + restore cases replace retired require rows; canary repurposed with equal strength); line budgets at limit, acceptable.\nAdvice: drain route at bench-drain.md:218 lost its named Require anchor; commitcmd command.go:192 composition and hard-coded flag names; status/delivery.go:36 reparses the command string; placement nits (errDefaultUnresolved, tableBlock, block alias, commitmentOutlook middle man); declarationName re-derives internal/consumers receiverName; some repeated non-marker facts; BENCH.md:145 sentence length.\n"
+          },
+          "axis": "Standards",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "0f7fd8768eae657ab9175a96e5e9b4afe81f29d1",
+          "finding_ids": [
+            "C8-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c8-r1-spec",
+          "performer": "claude:dc_c8_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d9cd30f4277f2241e11eecbdbcf12a7aabf8067d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_spec",
+            "digest": "sha256:15fcbd6735fdab914c05bc2f2e6eed09e1a38448b6cf3106397cbf06f6d5e3c2",
+            "excerpt": "Spec: 4 findings\nReviewer claude:dc_c8_spec, opus high. Subject 1a803d5c..0f7fd876, evidence sha256:a72049d94caa5cd486b77808dec85ea0033b6aa8afdf3b2475edab79d2b595dc.\nP1 (medium): before adoption, internal/status/delivery.go:24-25 falls back to appendStagedSpecs and names /bench-implement-spec, which the start route refuses (admission.go:78-79). Roadmap and dashboard show adoption-required -> bench commitment plan. Spec lines 262, 264, 288; ticket 09 line 9 (outcome, blocker, approval, remedy agree). Locked by delivery_test.go:47-50 and BENCH-reference.md:225. Suggested auto-fix (inside ticket 09 Writes).\nP2 (medium): .bench/BENCH.md:153 \"Fix, don't park\" keeps an unconditional implement-now direction, against spec lines 282, 294 and story 5, and against BENCH.md:145. It is a gated shared rule (FixDontParkMarker, registry_data.go:5). Suggested ask-user.\nP3 (high, predates ticket 09): no production path writes a legacy continuation. Policy (model.go:13-20) has no continuation list; only readiness.go:197 and closure.go:125-128 read or prune. Every LegacyContinuation is built in tests. Spec lines 266-267, 134, story 26, decision 11. Ticket 10 Writes cannot add a writer. Suggested ask-user (needs a spec row).\nP4 (medium, predates ticket 09): active continuations do not occupy the active-work allowance; eligible() counts only claims (admission.go ~82-147, outlook.go:78-95). Spec line 270. No row, no ticket. Suggested ask-user with P3.\nRulings: staged-spec row before adoption = violation (P1); forbid rows and canary = acceptable; shared commitment.Project = acceptable; BENCH.md:145 meets DC54 except P2.\nGuarantees 01-08 hold; no live adoption at tip.\nUnowned clauses: line 270 (P4); lines 266-267 (P3); line 301 (no network/hosted/dependency/transcript archive, review-only); line 243 (FT283/FT284 requirements, non-behavioral).\nAdvice: land --resume absent from DC64 inventory (defensible); roadmap sequence rows before adoption lack an unapproved marker; stale text in bench-shape-idea.md:114,119 (outside fence).\n"
+          },
+          "axis": "Spec",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "0f7fd8768eae657ab9175a96e5e9b4afe81f29d1",
+          "finding_ids": [
+            "C8-P1",
+            "C8-P2",
+            "C8-P3",
+            "C8-P4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c8-r1-coverage",
+          "performer": "claude:dc_c8_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d9cd30f4277f2241e11eecbdbcf12a7aabf8067d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_coverage",
+            "digest": "sha256:d3dbb928b734d469a6432ebda1f5001beffcf02f0c6f28ab2f7fc5d4ca67b933",
+            "excerpt": "Coverage: 5 findings\nReviewer claude:dc_c8_coverage, opus high. Subject 1a803d5c..0f7fd876, evidence sha256:a72049d94caa5cd486b77808dec85ea0033b6aa8afdf3b2475edab79d2b595dc.\nC1 (medium): DC47 dashboard part (cmd/bench/commitment_test.go:94-102) checks only that next_outcome is not A; gather (dashboard.go:107) is never pinned to B or the deliverable. Escape: set Commitment.Next from roadmap.RecommendedSequence in gather. Add exact dashboard asserts and a dashboard reader probe.\nC2 (medium): DC64 (commitment_test.go:119-149, declarationUses :155-193) checks call text exists, not reachability or result use. Escapes: joins.go:58 LandAdmitted -> LandReviewed; pool_root.go:196 record closure never invoked; commit.go:141-145 AuthorizeCandidate result ignored.\nC3 (medium): DC65 (commitment_record_test.go:60-64) lists three record types by hand; a new Ledger field of a new commitment type passes. Derive from Ledger fields or fail on unclassified fields.\nC4 (low): DC54 severity forbid row (registry_commitment.go:37) is the exact sentence in one file; rewordings and other files pass.\nC5 (low): BENCH.md:147 learning-fix condition and bench-drain.md:219 routing have no anchor; deleting the condition passes.\nVerdicts: DC47 partial (C1); DC54 holds for exact text; DC64 holds for removal of each call; DC65 holds for the known types.\nNo weakened test; census pin matches; nine entries match the plan (source_digest computation not examined).\nAdvice: DC64 reverse AST check; DC47 active/waiting/active_milestone/blocked not compared; bench-drain.md:218 pinned only as an insertion point; empty-region diagnostic unexercised; README copy case.\n"
+          },
+          "axis": "Coverage",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "0f7fd8768eae657ab9175a96e5e9b4afe81f29d1",
+          "finding_ids": [
+            "C8-C1",
+            "C8-C2",
+            "C8-C3",
+            "C8-C4",
+            "C8-C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -4962,3 +5036,27 @@ Legacy closure matches a scope entry exactly, while the production path check ac
 
 The final source is 7fbe970cd32d62e9aa55f869565168dbbb9c5de3. The chunk checkpoint remains required before ticket 09.
 
+## DC-C8 initial review disposition
+
+Standards has one finding, Spec has four, and Coverage has five. A read-only Fable consultant at high effort set the dispositions under the reviewer's direction. No finding needs a reviewer decision.
+Repair cycles consumed: 0 of 2, and the reviewer pre-approved extensions. Each repair session follows the bench-debug procedure.
+
+Ticket 09 owns every repair target, because its `Writes:` line holds each target path. A plan commit adds rows DC83 and DC84 to ticket 09 and adds the repository package check to DC-C8.
+Cycle 1 repairs the guidance and reader targets. Cycle 2 repairs the continuation targets. One review round then grades the combined delta.
+
+### Cycle 1 targets
+
+- C8-S1: auto-fix. Each anchor needle stays on one physical line, and the tests quote no wrap bytes.
+- C8-P1: auto-fix. Before adoption, status shows the commitment row with the adoption remedy and names no staged spec.
+- C8-P2: auto-fix. The "Fix, don't park" paragraph limits the fix to a defect that the active outcome needs. The marker phrase stays verbatim, and a forbid row retires the old sentence. This rewrite of platform prose is open to reviewer veto.
+- C8-C1: auto-fix. The dashboard check compares the exact next outcome and the active milestone.
+
+### Cycle 2 targets
+
+- C8-P3: auto-fix. Approval records each listed legacy continuation with its assignment, request, and scope (DC83).
+- C8-P4: auto-fix. An open continuation occupies the default active slot, and only an exact parallel grant that names it admits new delivery (DC84). The grant shape is a delegated engineering choice, open to reviewer veto.
+
+### Advice only
+
+- C8-C2: advice. Behavioral rows DC23, DC26, DC28, and DC29 observe each reachability mutation that the reviewer named.
+- C8-C3, C8-C4, and C8-C5: advice. Each one hardens an anchor or an inventory beyond the ticket requirement.
