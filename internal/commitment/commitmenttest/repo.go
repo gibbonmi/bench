@@ -31,7 +31,7 @@ func WritePolicy(t testing.TB, root string, policy commitment.Policy) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(root, ".bench", "commitment.json")
+	path := filepath.Join(root, filepath.FromSlash(commitment.PolicyPath))
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}

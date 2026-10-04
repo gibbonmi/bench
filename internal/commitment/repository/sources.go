@@ -7,6 +7,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/spec"
 )
 
@@ -28,7 +29,11 @@ func sourceAt(root, revision, path string) (string, []byte, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	return commitment.Identity(data), data, nil
+	normalized, err := roadmap.RequirementBytes(path, data)
+	if err != nil {
+		return "", nil, err
+	}
+	return commitment.Identity(normalized), data, nil
 }
 
 func ticketsOnlyAt(root, revision, path string) bool {

@@ -55,7 +55,7 @@ func TestCommandBuildRedsAbsentCompletionPlan(t *testing.T) {
 // TestCommandBuildGreenCompletionPlan is that regression's sibling: the same
 // tree with the plan in place answers green and exits 0.
 func TestCommandBuildGreenCompletionPlan(t *testing.T) {
-	_, slug := preflighttest.SeedConformant(t)
+	_, slug := preflighttest.SeedAdmitted(t)
 
 	out, code := Command([]string{"build", slug})
 	if code != 0 {

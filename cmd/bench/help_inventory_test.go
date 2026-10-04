@@ -101,6 +101,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight [--in <label|primary>] review <slug> [--base <commit>] [--source-tip <commit>]  review-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
   bench preflight [--in <label|primary>] review <slug> --charge --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable review evidence artifact and print its bounded orientation
   bench preflight [--in <label|primary>] build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
+  bench preflight [--in <label|primary>] build <slug> --plan-only [--base <commit>] [--source-tip <commit>]  validate the authored spec and tickets without delivery admission or a build charge
   bench preflight [--in <label|primary>] build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
   bench preflight [--in <label|primary>] build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
   bench preflight [--in <label|primary>] evidence <id> [--cursor <cursor>]  print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor

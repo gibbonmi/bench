@@ -94,3 +94,20 @@ func rowNextTree(section, body string) Tree {
 	}
 	return splitTree(index, map[string]string{"FT1.md": heading + "\n" + body})
 }
+
+func TestCommitmentOccurrenceUpdate(t *testing.T) {
+	const original = "**FT1 — Preserve the obligation**\n\nThe requirement stays unchanged.\n"
+	got, err := RequirementBytes("roadmap/FT1.md", []byte(original+"Occurrences: first, second\n"))
+	if err != nil || string(got) != original {
+		t.Fatalf("occurrence requirement = %q, %v", got, err)
+	}
+	for _, value := range []string{"Occurrences:", "Occurrences: second, first", "Occurrences: changed requirement prose"} {
+		if _, err := RequirementBytes("roadmap/FT1.md", []byte(original+value+"\n")); err == nil {
+			t.Fatalf("accepted malformed event %q", value)
+		}
+	}
+	got, err = RequirementBytes("roadmap/FT1.md", []byte(original+"Event: a replacement requirement\n"))
+	if err != nil || string(got) == original {
+		t.Fatalf("unknown label erased requirement: %q %v", got, err)
+	}
+}

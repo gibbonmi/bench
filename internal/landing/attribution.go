@@ -47,6 +47,16 @@ func ResolveAttributedPaths(root, expected string, raw []string) ([]string, erro
 	return attributedPaths(root, expected, raw)
 }
 
+// CandidateTree composes the attributed working changes without modifying the real index.
+func CandidateTree(root, expected string, paths []string) (string, error) {
+	named, err := attributedPaths(root, expected, paths)
+	if err != nil {
+		return "", err
+	}
+	snapshot, err := compose(Request{Root: root, Expected: expected}, named)
+	return snapshot.tree, err
+}
+
 func repositoryPath(root, path string) (string, error) {
 	abs := path
 	if !filepath.IsAbs(abs) {

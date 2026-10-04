@@ -23,7 +23,7 @@ func bareRowCount(mode string) int {
 func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {
 		t.Run(mode, func(t *testing.T) {
-			_, slug := preflighttest.SeedConformant(t)
+			_, slug := preflighttest.SeedAdmitted(t)
 			out, code := Command([]string{mode, slug})
 			if code != 0 {
 				t.Fatalf("bare %s = (%d):\n%s", mode, code, out)
@@ -44,7 +44,7 @@ func TestSourceTipOmittedKeepsTodaysVerdict(t *testing.T) {
 func TestSourceTipAcceptedByBothModes(t *testing.T) {
 	for _, mode := range []string{"review", "build"} {
 		t.Run(mode, func(t *testing.T) {
-			_, slug := preflighttest.SeedConformant(t)
+			_, slug := preflighttest.SeedAdmitted(t)
 			base := preflighttest.RunGit(t, "rev-parse", "main")
 			tip := preflighttest.RunGit(t, "rev-parse", "HEAD")
 

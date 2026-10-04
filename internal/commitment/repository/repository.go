@@ -180,11 +180,15 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 }
 
 func (store Store) defaultPolicy() (*commitment.Policy, string, error) {
-	branch, ok := git.ResolvedDefault(store.Root)
-	if !ok {
-		return nil, "", errors.New("commitment policy: default branch is unresolved")
+	revision, err := store.sourceRevision()
+	if err != nil {
+		return nil, "", err
 	}
-	const path = ".bench/commitment.json"
+	return store.policyAt(revision)
+}
+
+func (store Store) policyAt(branch string) (*commitment.Policy, string, error) {
+	const path = commitment.PolicyPath
 	listing, err := git.Output("-C", store.Root, "ls-tree", "-z", branch, "--", path)
 	if err != nil {
 		return nil, "", fmt.Errorf("read commitment policy: %w", err)
@@ -221,7 +225,7 @@ func (store Store) validateSources(sources []commitment.SourceBinding) error {
 }
 
 func (store Store) stage(plan commitment.Plan) (func(), error) {
-	policyPath := filepath.Join(store.Root, ".bench", "commitment.json")
+	policyPath := filepath.Join(store.Root, filepath.FromSlash(commitment.PolicyPath))
 	roadmapPath := filepath.Join(store.Root, roadmap.RoadmapFile)
 	policyBefore, err := snapshotFile(policyPath, true)
 	if err != nil {

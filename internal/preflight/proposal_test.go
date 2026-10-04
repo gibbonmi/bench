@@ -1,6 +1,7 @@
 package preflight
 
 import (
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"strings"
 	"testing"
 
@@ -49,6 +50,7 @@ func seedProposalWith(t *testing.T, selectedWrites string, others map[string]str
 	preflighttest.MustWriteFile(t, chargesource.DelegateSkill, "# Delegation skill\n")
 	preflighttest.MustWriteFile(t, chargesource.DelegateProcedure, "# Delegation procedure\n")
 	preflighttest.MustWriteFile(t, chargesource.BuildPhase, "# Build phase\n")
+	commitmenttest.SeedAdmission(t, root, "specs/"+slug+"/spec.md")
 	preflighttest.RunGit(t, "add", ".")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
 	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")

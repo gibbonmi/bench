@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	specref "github.com/gibbonmi/bench/internal/spec"
@@ -110,6 +111,11 @@ func currentEvidenceCommand(root, identity string, args []string) (string, int) 
 		}
 		if verdict := Decide(facts); verdict.Red {
 			return chargeVerdictRefusal(boundedVerdict(verdict)), 1
+		}
+		if selection.Mode == modeBuild {
+			if err := (commitrepo.Store{Root: root}).Ready(facts.SpecPath); err != nil {
+				return chargeRefusal("commitment", err.Error(), "run bench commitment start for this deliverable"), 1
+			}
 		}
 		if facts.SourceTip != selection.SourceTip {
 			return chargeRefusal("source", "the current source tip "+facts.SourceTip+" is not the prepared source tip "+selection.SourceTip,

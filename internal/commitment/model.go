@@ -1,6 +1,14 @@
 // Package commitment owns delivery-policy validation and transition decisions.
 package commitment
 
+import (
+	"path"
+	"strings"
+)
+
+// PolicyPath is the project-owned tracked commitment.
+const PolicyPath = ".bench/commitment.json"
+
 // Policy is the tracked delivery commitment.
 type Policy struct {
 	Version         int             `json:"version"`
@@ -76,4 +84,34 @@ func Selection(policy Policy) Projection {
 		return projection
 	}
 	return Projection{}
+}
+
+// PlanningPath classifies documentation paths. Promotion paths must be named by a planning artifact.
+func PlanningPath(name, mode string, promotions []string) bool {
+	if mode != "000000" && mode != "100644" {
+		return false
+	}
+	if name == PolicyPath {
+		return true
+	}
+	if path.Base(name) == "AGENTS.md" || path.Base(name) == "CLAUDE.md" {
+		return false
+	}
+	if path.Ext(name) != ".md" {
+		return false
+	}
+	if name == "ROADMAP.md" {
+		return true
+	}
+	for _, prefix := range []string{"specs/", "roadmap/", "capture/", "research/", "decisions/"} {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+	for _, promoted := range promotions {
+		if name == promoted && (name == "CONTEXT.md" || strings.HasPrefix(name, "docs/adr/")) {
+			return true
+		}
+	}
+	return false
 }

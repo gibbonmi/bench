@@ -6,6 +6,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/chargeevidence"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -91,7 +92,7 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 	case evidencecmd.KindCleanApply:
 		return evidencecmd.CleanApply(root, flags)
 	}
-	return verdictCommand(root, op.Mode, slug, base, sourceTip, args)
+	return verdictCommand(root, op.Mode, slug, base, sourceTip, args, op.Kind == evidencecmd.KindPlanOnly)
 }
 
 // prepareEvidenceCommand runs the movement-checked build preparation and hands each
@@ -100,6 +101,11 @@ func prepareEvidenceCommand(root, slug, base, sourceTip, name string, quota uint
 	return evidencecmd.Prepare(root, quota, func(stage func(*chargeevidence.Pack, string, string) string) (string, int) {
 		return preparedAttempts(root, modeBuild, slug, base, sourceTip, "charge", args, func(facts Facts) (string, int) {
 			pack, refusal := buildChargePack(root, facts, boundedVerdict(Decide(facts)), name, buildSourcePolicy())
+			if refusal == "" {
+				if err := (commitrepo.Store{Root: root}).Ready(facts.SpecPath); err != nil {
+					refusal = chargeRefusal("commitment", err.Error(), "run bench commitment start for this deliverable")
+				}
+			}
 			if refusal = stage(pack, facts.AssignmentTarget, refusal); refusal != "" {
 				return refusal, 1
 			}
@@ -135,7 +141,7 @@ func boundedVerdict(verdict Verdict) Verdict {
 	return verdict
 }
 
-func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (string, int) {
+func verdictCommand(root, mode, slug, base, sourceTip string, args []string, planOnly bool) (string, int) {
 	facts, bootErr := GatherPinned(root, mode, slug, base, sourceTip)
 	if bootErr != nil {
 		if bootErr.Kind == "snapshot drift" {
@@ -148,6 +154,12 @@ func verdictCommand(root, mode, slug, base, sourceTip string, args []string) (st
 	}
 
 	verdict := Decide(facts)
+	if mode == modeBuild && !planOnly && !verdict.Red {
+		if err := (commitrepo.Store{Root: root}).Ready(facts.SpecPath); err != nil {
+			verdict.Checks = append(verdict.Checks, CheckResult{Check: "commitment", Verdict: verdictRed, Detail: err.Error(), Next: "bench commitment start"})
+			verdict.Red = true
+		}
+	}
 	checks, err := renderChecks(verdict)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1

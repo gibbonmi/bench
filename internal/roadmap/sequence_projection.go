@@ -56,3 +56,9 @@ func ProjectSequence(document []byte, outcomes []string) ([]byte, error) {
 	projected = append(projected, lines[end:]...)
 	return []byte(strings.Join(projected, "\n")), nil
 }
+
+// SequenceText returns the canonical parser's complete recommended-sequence section.
+func SequenceText(document []byte) string {
+	_, text, _ := parseSequence(strings.Split(string(document), "\n"))
+	return text
+}
