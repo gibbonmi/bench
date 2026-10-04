@@ -48,7 +48,7 @@ func transact(root string, mode ReadMode, decide countedDecision, compensate Com
 	if err != nil {
 		return err
 	}
-	release, err := acquire(path + ".lock")
+	release, err := acquire(lockOf(path))
 	if err != nil {
 		return err
 	}

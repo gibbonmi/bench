@@ -2,9 +2,7 @@
 package commitmenttest
 
 import (
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -66,9 +64,9 @@ func writePolicy(root string, policy commitment.Policy) error {
 
 // commit stages paths, or the whole tree when no path is named, and commits them.
 func commit(root, message string, paths ...string) error {
-	for _, args := range [][]string{append([]string{"add", "-A", "--"}, paths...), {"commit", "-m", message}} {
-		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
-			return fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, out)
+	for _, args := range [][]string{append([]string{"add", "-A", "--"}, paths...), append([]string{"commit", "-m", message, "--"}, paths...)} {
+		if _, err := gittest.Run(root, args...); err != nil {
+			return err
 		}
 	}
 	return nil

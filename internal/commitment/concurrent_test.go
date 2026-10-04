@@ -47,11 +47,11 @@ exec "$DC_REAL_GIT" "$@"
 	bDone := make(chan result, 1)
 	go func() { out, code := startOutcome(second, "B", "second"); bDone <- result{out, code} }()
 	waitFile(t, filepath.Join(barrier, "entered"))
-	ledgerPath, err := intent.Address(root)
+	lock, err := intent.LockPath(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, lockErr := os.Stat(ledgerPath + ".lock")
+	_, lockErr := os.Stat(lock)
 	aDone := make(chan result, 1)
 	go func() {
 		out, code := commitcmd.Command(first, []string{"unblock", "--outcome", "A"})

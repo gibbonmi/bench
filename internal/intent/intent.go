@@ -38,6 +38,17 @@ func Address(root string) (string, error) {
 	return filepath.Join(common, Filename), nil
 }
 
+// LockPath resolves the lock file that every ledger transaction holds.
+func LockPath(root string) (string, error) {
+	path, err := Address(root)
+	if err != nil {
+		return "", err
+	}
+	return lockOf(path), nil
+}
+
+func lockOf(address string) string { return address + ".lock" }
+
 func Read(root string) (Ledger, error) {
 	path, err := Address(root)
 	if err != nil {

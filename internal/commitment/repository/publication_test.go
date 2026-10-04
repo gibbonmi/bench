@@ -7,7 +7,9 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
@@ -59,6 +61,7 @@ func TestAdmitPublicationFrozenIdentity(t *testing.T) {
 	for _, row := range []struct {
 		name   string
 		source commitrepo.Publication
+		state  intent.AssignmentState
 		want   string
 	}{
 		{name: "bound", source: bound},
@@ -66,8 +69,12 @@ func TestAdmitPublicationFrozenIdentity(t *testing.T) {
 		{name: "borrowed-request-and-worktree", source: commitrepo.Publication{Assignment: unbound.Assignment, Request: bound.Request, Worktree: bound.Worktree}, want: mismatch},
 		{name: "other-request", source: commitrepo.Publication{Assignment: bound.Assignment, Request: unbound.Request, Worktree: bound.Worktree}, want: mismatch},
 		{name: "other-worktree", source: commitrepo.Publication{Assignment: bound.Assignment, Request: bound.Request, Worktree: unbound.Worktree}, want: mismatch},
+		{name: "bound-not-active", source: bound, state: intent.StateComplete, want: mismatch},
 	} {
 		t.Run(row.name, func(t *testing.T) {
+			if row.state != "" {
+				moveAssignment(t, root, row.source.Request, row.state)
+			}
 			err := (commitrepo.Store{Root: root}).AdmitPublication(row.source, tree)
 			if row.want == "" {
 				if err != nil {
@@ -80,6 +87,26 @@ func TestAdmitPublicationFrozenIdentity(t *testing.T) {
 			}
 		})
 	}
+}
+
+// moveAssignment moves the assignment for request to state until the test ends, so later
+// rows read the ledger the fixture wrote.
+func moveAssignment(t *testing.T, root, request string, state intent.AssignmentState) {
+	t.Helper()
+	stored, ok, err := intent.FindAssignmentByRequest(root, request)
+	if err != nil || !ok {
+		t.Fatalf("assignment for request %s = %t, %v", request, ok, err)
+	}
+	moved := stored
+	moved.State = state
+	if err := intent.PutAssignment(root, moved); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := intent.PutAssignment(root, stored); err != nil {
+			t.Error(err)
+		}
+	})
 }
 
 // An admitted publication runs publish once and returns its error unchanged. A refused
@@ -126,11 +153,10 @@ func TestPublishAdmittedDecidesUnderTheLock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	address, err := intent.Address(root)
+	lock, err := intent.LockPath(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	lock := address + ".lock"
 
 	held, proceed := make(chan struct{}), make(chan struct{})
 	holder := make(chan error, 1)
@@ -193,6 +219,13 @@ func TestPublishAdmittedDecidesUnderTheLock(t *testing.T) {
 		file, err := os.OpenFile(lock, os.O_WRONLY, 0)
 		writer <- opened{file, err}
 	}()
+	// A reader that opens without blocking releases the writer that waits for one.
+	releaseWriter := func() {
+		if reader, err := os.OpenFile(lock, os.O_RDONLY|syscall.O_NONBLOCK, 0); err == nil {
+			_ = reader.Close()
+		}
+	}
+	window := bounds.TestDeadline(bounds.IntentLockTimeout)
 	select {
 	case got := <-writer:
 		if got.err != nil {
@@ -213,11 +246,11 @@ func TestPublishAdmittedDecidesUnderTheLock(t *testing.T) {
 			t.Fatal(err)
 		}
 	case err := <-done:
-		// A reader that opens without blocking releases the writer that waits for one.
-		if reader, openErr := os.OpenFile(lock, os.O_RDONLY|syscall.O_NONBLOCK, 0); openErr == nil {
-			_ = reader.Close()
-		}
+		releaseWriter()
 		t.Fatalf("PublishAdmitted = %v (published=%t) before it waited for the held intent lock", err, published)
+	case <-time.After(window):
+		releaseWriter()
+		t.Fatal(bounds.TestTimeoutVerdict("PublishAdmitted to read the held intent lock", window))
 	}
 
 	if err := finish(); err != nil {

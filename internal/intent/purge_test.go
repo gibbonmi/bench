@@ -109,8 +109,8 @@ func TestPurgeAssignmentsRefusesAnUndecodableEntriesField(t *testing.T) {
 	if err != nil || string(after) != string(before) {
 		t.Fatalf("the refused purge rewrote the ledger: %v", err)
 	}
-	if _, err := os.Lstat(path + ".lock"); !os.IsNotExist(err) {
-		t.Fatalf("the refused purge left a lock at %s: %v", filepath.Base(path)+".lock", err)
+	if _, err := os.Lstat(lockOf(path)); !os.IsNotExist(err) {
+		t.Fatalf("the refused purge left a lock at %s: %v", filepath.Base(lockOf(path)), err)
 	}
 }
 
