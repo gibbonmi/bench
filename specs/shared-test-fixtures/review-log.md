@@ -14,3 +14,12 @@ The reviewer accepted the repaired spec for slicing. Its judgment was claimed wi
 The author folded its nonblocking table-format correction. Both review passes used GPT-6.1 Sol/high.
 
 The spec acceptance does not approve implementation. The final slice review and the user's sign-off remain separate checkpoints.
+
+## Slice review
+
+Round 1 examined commit `135e41c19bdc6a164a021740deb01eecf8ff5a85` on GPT-5.6 Sol/high.
+The reviewer found one blocking size defect. GF-C5 combined independently useful package families with specialized probe classification.
+The author split it into GF-C5A through GF-C5D. Each chunk has its own package checks and preservation evidence.
+
+The reviewer found no other caller, dependency, checkpoint, or fence blocker. The confirming pass is pending.
+The inventory representation was compacted without changing its parsed data.
