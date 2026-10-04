@@ -157,7 +157,7 @@ func (store Store) planningPromotions(tree string, changes []git.TreeChange) ([]
 		artifacts = append(artifacts, data)
 	}
 	for _, change := range changes {
-		if change.Path != "CONTEXT.md" && !strings.HasPrefix(change.Path, "docs/adr/") {
+		if !commitment.PlanningPromotionPath(change.Path) {
 			continue
 		}
 		for _, artifact := range artifacts {

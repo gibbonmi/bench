@@ -1,12 +1,14 @@
 package evidencecmd_test
 
 import (
+	"bytes"
 	"encoding/binary"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
@@ -49,6 +51,46 @@ func craftedDigestArtifact(t *testing.T, root, identity, oldDigest, newDigest st
 
 // TestEvidenceCurrentBinding is CE57, CE58, CE59, CE123, and CE124.
 func TestEvidenceCurrentBinding(t *testing.T) {
+	for _, state := range []string{"binding revoked", "outcome blocked"} {
+		t.Run(state, func(t *testing.T) {
+			root, slug := preflighttest.SeedConformant(t)
+			identity, _, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
+			if out, code := checkCurrent(t, identity); code != 0 {
+				t.Fatalf("admitted charge = (%d): %s", code, out)
+			}
+			ledger, err := intent.Read(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if state == "binding revoked" {
+				err = intent.Transact(root, intent.StrictRead, func(current intent.Ledger) (intent.Ledger, bool, error) {
+					current.Commitment.Bindings = nil
+					return current, true, nil
+				}, nil)
+			} else {
+				err = (commitrepo.Store{Root: root}).Block(ledger.Commitment.Bindings[0].Outcome, "awaiting reviewer")
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			ledgerPath, err := intent.Address(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			before, err := os.ReadFile(ledgerPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			out, code := checkCurrent(t, identity)
+			if code != 1 || !strings.Contains(out, "commitment") || strings.Contains(out, "current[1]") {
+				t.Fatalf("revoked charge = (%d): %s", code, out)
+			}
+			after, err := os.ReadFile(ledgerPath)
+			if err != nil || !bytes.Equal(before, after) {
+				t.Fatalf("authority check changed ledger: %v", err)
+			}
+		})
+	}
 	t.Run("CE59 current binding for unchanged pins", func(t *testing.T) {
 		root, slug := preflighttest.SeedConformant(t)
 		args := preflighttest.ChargeArgs(t, root, slug)

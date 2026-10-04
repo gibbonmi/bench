@@ -109,9 +109,14 @@ func PlanningPath(name, mode string, promotions []string) bool {
 		}
 	}
 	for _, promoted := range promotions {
-		if name == promoted && (name == "CONTEXT.md" || strings.HasPrefix(name, "docs/adr/")) {
+		if name == promoted && PlanningPromotionPath(name) {
 			return true
 		}
 	}
 	return false
+}
+
+// PlanningPromotionPath identifies documents that need an explicit planning-artifact reference.
+func PlanningPromotionPath(name string) bool {
+	return name == "CONTEXT.md" || strings.HasPrefix(name, "docs/adr/")
 }

@@ -42,7 +42,7 @@ func RequirementBytes(name string, data []byte) ([]byte, error) {
 	}
 	kept := make([]string, 0, len(lines))
 	for _, line := range lines {
-		if !strings.HasPrefix(line, "Occurrences:") {
+		if !isOccurrenceLedgerLine(line) {
 			kept = append(kept, line)
 		}
 	}
