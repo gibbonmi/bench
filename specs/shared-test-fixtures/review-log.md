@@ -37,8 +37,22 @@ Twenty-three rows name planned implementation checks without current seam citati
 
 Two full gate runs failed at the checkout guard. Both runs passed formatting, vet, package tests, race tests, system tests, and shell checks.
 The guard reported changed generated files: `bin/bench-broker.manifest`, `dist/bench`, and `dist/bench.seal`.
-The second run had no concurrent command in this worktree. No tracked path changed, and the process that rewrote these files remains unconfirmed.
+The second run had no concurrent command in this worktree. No tracked path changed. These runs did not identify the writer.
 
 The retained gate logs are `.logs/gate-20261004T101210.114634570Z-2964979.jsonl` and `.logs/gate-20261004T101927.537060541Z-3266510.jsonl`.
 This record preserves a validation limit. It does not claim a green full gate or authorize a landing.
 The reviewed plan remains staged for the successor milestone. Implementation and the generated-artifact failure remain separate from this planning deliverable.
+
+## Landing diagnosis
+
+The user authorized landing the planning artifacts on 2026-10-04. The first prospective landing reproduced the generated-file failure and refused publication.
+The author narrowed the writer to the root conformance check named `package-core-guard`.
+The shell selected Node 18.19.1 and npm 9.2.0. That npm version ran the package's prepare script despite `--ignore-scripts`.
+
+A separate minimal package reproduced the same lifecycle error. Its prepare script wrote a marker during a dry-run pack with scripts disabled.
+
+The installed Node 25.8.1 runtime includes npm 11.11.0. The same minimal package skipped prepare under that runtime.
+The root conformance check then passed and left all three generated files unchanged.
+
+The landing uses that installed runtime by prepending its binary directory to PATH. No gate check, repository code, or global installation changed.
+The landing's retained gate verdict determines publication. The earlier failed runs remain part of the evidence.
