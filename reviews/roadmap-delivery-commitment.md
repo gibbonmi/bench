@@ -876,6 +876,72 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c2-coverage"
           ]
+        },
+        {
+          "id": "dc-c2-r2-standards-review",
+          "performer": "/root/dc_c2_r2_standards",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c2_r2_standards",
+            "digest": "sha256:e02d7dfb9eab8b2e713501e64fe4edb438cf624a96047afc21babc00bc3eb9ab",
+            "excerpt": "Standards: **pass — 0 raw findings, 0 unique repair targets**. Worst issue: none. Optional advice: 0. Repair dispositions: none. Implementation-command contribution: 0.\n\n```text\nclaims[1]{id,status,confidence}:\n  dc-c2-r2-standards,claimed,9\n```\n\nReviewed the single repair delta `d9796c107278e8a35231d17590d34618d902a9cd..607f9db7f1684028e6b84a4d0e5b9c2647fbb640`, the whole approved spec, ticket 02, governing rules/profile, review/delegate discipline, and comment/CLI/gate standards.\n\nThe repair satisfies the one-source rule:\n\n- `internal/spec/resolve.go:119–125` shares the literal folder layout between construction and recognition; admission consumes it at `repository/sources.go:44`.\n- `deliverable_test.go:62` supplies the common fixture builder to both test families.\n- `admission_test.go:266–303` covers changed/deleted file and folder members. The retained second ticket preserves the folder for the deleted-member case.\n- The committed repair record retains behavioral reds and exact restoration for the independent expectations. Moved comments describe the current contract.\n\nEvidence bound **once** through `dc-integration`: `current=true`. Complete evidence pages fetched and read: **s1/0, s36/0–3, s37/0–1**. Relevant untouched path consumers in status, roadmap, preflight, retirement, landing refusal, and resume were inspected; no cross-chunk concern invalidates earlier evidence.\n\nIndependent checks in `dc-c2-r2-standards`, Go parallelism 2:\n\n- Deliverable type and published-identity tests: **pass**, 846 ms.\n- Spec package: **pass**, 1671 ms.\n- Both report zero failures and zero skips.\n\nNormal shell, repository wrapper, rules/skill access, and scratch write/read/remove passed. Unavailable runtime observations remain unknown.\n\nFinal `git status --porcelain=v1` is empty. HEAD remains `607f9db7f1684028e6b84a4d0e5b9c2647fbb640`. No production edits, commits, mutation probes, delegates, retained scratch files, or live tools/tests remain. This confirms Standards; it is not a gate verdict.\n"
+          },
+          "axis": "Standards",
+          "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+          "tip": "ae1ebbce906d728e1faa41d3fd790962324265ee",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "dc-c2-r2-spec-review",
+          "performer": "/root/dc_c2_r2_spec",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c2_r2_spec",
+            "digest": "sha256:06e08623c5f0de19053712402c369b4fc6d7bb88de3159fd9e6b8a4ffaaef5d0",
+            "excerpt": "Spec: **0 findings; 0 unique repair targets.** Worst issue: none. Optional advice: 0. Implementation-command contribution: 0.\n\nBoth repair targets conform to the approved requirements:\n\n- **C2-R1-S1:** Spec `:131` permits approved specs. `repository/sources.go:44` now uses `spec.IsLiveSpecPath`; `resolve.go:124` preserves literal folder names through the existing layout owner. `deliverable_test.go:21,33,46` checks planning and start for `specs/release.md/spec.md`.\n- **DC-C2-COV-2:** DC73 (`spec.md:462`) requires changed or deleted deliverables to refuse without runtime writes. `admission_test.go:277` retains two folder members; `:289–303` changes or deletes one, invokes start, and checks refusal plus identical ledger bytes.\n\nReviewed the whole approved spec, ticket02, governing rules/profile, the single repair delta `d9796c1..607f9db`, changed owners, relevant untouched consumers, and committed verification/probe records. No cross-chunk concern invalidated earlier evidence. Tickets03–10 remain outside this checkpoint.\n\nEvidence bound current once on `dc-integration`: **true**. Retrieved **s1/0, s36/0–3, s37/0–1**, including terminal pages; inspected relevant consumer rows.\n\nIndependent checks in `dc-c2-r2-spec`, Go parallelism 2:\n\n- Focused commitment identity/type/persistence/adoption/concurrency tests: **pass**, 1062 ms, zero failures/skips.\n- Spec path and facts tests: **pass**, 11 ms, zero failures/skips.\n- Normal shell, wrapper, scratch write/read/remove, rules and skill access passed. Runtime identity remains unknown.\n\nNo mutation probe was independently executed this round; committed author probe evidence was inspected.\n\n```text\nclaims[1]{id,status,confidence}:\n  DC-C2-final-Spec-conformance,claimed,9\n```\n\nFinal status is empty; HEAD remains `607f9db7f1684028e6b84a4d0e5b9c2647fbb640`. No production edits, commits, delegates, retained scratch files, or live tools/tests remain.\n"
+          },
+          "axis": "Spec",
+          "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+          "tip": "ae1ebbce906d728e1faa41d3fd790962324265ee",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c2-r1-spec-review"
+          ]
+        },
+        {
+          "id": "dc-c2-r2-coverage-review",
+          "performer": "/root/dc_c2_r2_coverage",
+          "role": "independent-review",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "source_digest": "76648b9d99695133d13af2cebd9220e73c0f17b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:collaboration:/root/dc_c2_r2_coverage",
+            "digest": "sha256:87cb3669a1880c45a6fe9ea7d59cd52838f54d8426a687437e511b0edea40ce5",
+            "excerpt": "Coverage: **0 findings, 0 unique repair targets**. Worst issue: none. Optional advice: 0. Implementation-command contribution: 0.\n\nReviewed only `d9796c107278e8a35231d17590d34618d902a9cd..607f9db7f1684028e6b84a4d0e5b9c2647fbb640`, against the whole approved spec and ticket 02. Later-ticket behavior remains outside this round.\n\nThe repaired input family covers staged spec blobs, literal `.md` spec directories, committed tickets-only trees, invalid source files, unstaged specs, and folders containing specs. DC73 now exercises both changed and deleted file/folder members. Its deleted-folder-member fixture retains a second ticket, ensuring identity comparison remains reachable (`internal/commitment/admission_test.go:266`). Both refusal cases assert identical ledger bytes. The shared fixture builder supplies committed identities (`internal/commitment/deliverable_test.go:62`). Changes remain within ticket 02’s commitment/spec fences and the authorized review pickup.\n\nIndependent bypass attempt: in `repository.sourceAt`, changed the tree read from `revision+\":\"+path` to `revision+\"^:\"+path`. This preserved unchanged deliverables while admitting stale folder content through a different production site from the author’s comparison bypass.\n\n```text\nprobe: bit\nsubject: internal/commitment/repository/sources.go\nmutation: swap\nbaseline: passed, ran=12\nfailures:\n  TestCommitmentStartPublishedIdentity/tickets-only/changed\n  TestCommitmentStartPublishedIdentity/tickets-only/deleted\nrestored: yes\nskips: 0\n```\n\nThe literal-directory case checks planning and start through the production command (`TestCommitmentDeliverableTypes`, `deliverable_test.go:15`). The moved helpers retain existing CLI normalization coverage and literal-directory fact coverage (`internal/spec/spec_test.go:308`, `:332`, `:342`).\n\nIndependent checks, serialized with Go parallelism 2:\n\n- Commitment package: pass, 2779 ms; zero failures/skips.\n- Spec package: pass, 1610 ms; zero failures/skips.\n\n```text\nclaims[2]{id,status,confidence}:\n  DC-C2-COV-2-repair,verified,10\n  literal-folder-command-regression,claimed,10\n```\n\nEvidence bound current once through `dc-integration`. Complete pages fetched: **s1/0, s36/0–3, s37/0–1**, through terminal pages. Read governing rules, Session compatibility, project profile, review/delegate/gate instructions, complete spec/ticket, the single repair diff, fixture and identity owners, and relevant untouched path-helper consumers.\n\nFinal venue status is empty; HEAD remains `607f9db7f1684028e6b84a4d0e5b9c2647fbb640`. Probe restored exactly. No retained scratch files, production edits, commits, spawned agents, or live commands/tests remain.\n"
+          },
+          "axis": "Coverage",
+          "base": "2225afe0312a73980267cd5278fd500dfb883e33",
+          "tip": "ae1ebbce906d728e1faa41d3fd790962324265ee",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c2-r1-coverage-review"
+          ]
         }
       ]
     }
@@ -1165,3 +1231,14 @@ The independent test expectations detect the named omissions above.
 The commit lane refused growth in the existing oversized spec file.
 Its path helpers now share the existing resolver file, within the directory file budget.
 All six package checks and all four probes passed again on the final layout.
+
+## Confirmed DC-C2 source
+
+Three fresh GPT-6.1 Sol reviewers at high effort accepted repair cycle 2.
+Standards, Spec, and Coverage each report zero findings and zero repair targets.
+The exact source is `ae1ebbce906d728e1faa41d3fd790962324265ee`.
+The confirming pair ends at its record commit, `607f9db7f1684028e6b84a4d0e5b9c2647fbb640`.
+
+Coverage independently read the predecessor tree identity instead of the current tree.
+Both changed-folder cases failed on admission behavior, and the probe restored exactly.
+All earlier C2 findings are closed. The full chunk checkpoint remains required before ticket 03.
