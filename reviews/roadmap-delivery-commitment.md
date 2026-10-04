@@ -40,7 +40,7 @@ This suggestion is optional advice and has no repair disposition.
 {
   "version": 1,
   "spec": "specs/roadmap-delivery-commitment/spec.md",
-  "plan_digest": "sha256:a215b9301f7af704618ce746866720fde5ea4430a3cb0aed7ed83d8cbe40953f",
+  "plan_digest": "sha256:da0de6b3aac3915953f39ab823ab9ff2ff058105f162608b82637eee60d69ae3",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -3047,6 +3047,30 @@ This suggestion is optional advice and has no repair disposition.
         ],
         "DC-C5": [
           "DC-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a215b9301f7af704618ce746866720fde5ea4430a3cb0aed7ed83d8cbe40953f",
+      "to": "sha256:da0de6b3aac3915953f39ab823ab9ff2ff058105f162608b82637eee60d69ae3",
+      "chunk_ids": {
+        "DC-C1": [
+          "DC-C1"
+        ],
+        "DC-C2": [
+          "DC-C2"
+        ],
+        "DC-C3": [
+          "DC-C3"
+        ],
+        "DC-C4": [
+          "DC-C4"
+        ],
+        "DC-C5": [
+          "DC-C5"
+        ],
+        "DC-C6": [
+          "DC-C6"
         ]
       }
     }
