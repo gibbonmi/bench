@@ -1645,9 +1645,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C4",
       "base": "691f1b50f86af4298936bbfca8acc14f061e8d38",
-      "tip": "e3d183ee363d1ff5dabce842861978ac6313962e",
+      "tip": "3612b833a407ccedf34053d0cb47decfef21b3a7",
       "plan_digest": "sha256:22c5ab3932ba95eeb358cdf47996ffa4d6fc6450373b4d3feaeb9eb0be536962",
-      "source_digest": "69b437f4d1fef73137b74052d95cbd7d1d6291db",
+      "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
       "acceptance_rows": [
         "DC23",
         "DC24",
@@ -1777,6 +1777,132 @@ This suggestion is optional advice and has no repair disposition.
             "ref": "functions.exec:c45d2d",
             "digest": "sha256:77fab1dea5783a9b4cb0883239649665e62e48ce4db2a4e9fbf3d7213a0e7708",
             "excerpt": "Command: bench test --full --package ./internal/commitment\nNative tool chunk: c45d2d\ntree[1]{target,head,dirty}:\n  dc-integration,6ea07f4913cfb4dd22e0dddd808950a562143e38,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,3390\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "c4-r1-system",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e8b6c0",
+            "digest": "sha256:79f39f1e1a8fb3857e878080c196de004bb1e673d1ff069480fd09ceac830b27",
+            "excerpt": "bench test --check system\nnative e8b6c0; exit 0\ntree[1]{target,head,dirty}:\n  dc-integration,3e0695a7abb202b344fbbfabda87b77cd5f7b62e,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,99082\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "c4-r1-worktree",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "7679fe",
+            "digest": "sha256:bbe6d6ff75f74fb4df5acb85a007537ac70c4a36dccc943146b86707db394569",
+            "excerpt": "bench test --full --package ./internal/worktree\nnative 7679fe; exit 0\ntree[1]{target,head,dirty}:\n  dc-integration,3e0695a7abb202b344fbbfabda87b77cd5f7b62e,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,172143\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/WCK4D3/t/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket888175119/001/.bench-home/worktrees/001-2636400917/14d0d8b28a48b8ea7460da1867faede6-1e5ef6ace570e939b50c9bfbf2e65962: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/WCK4D3/t/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket2991630717/001/.bench-home/worktrees/001-4194700300/caa1497f17ab900a42a5f9adfbfea92f-8a0c30afc4835f389a25c683b9bee10b/.git: bind: invalid argument\"\n"
+          },
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "c4-r1-root-help",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "140d2c",
+            "digest": "sha256:bcfa282c8eb57ae95ebf681a8e688cea92e965c15e8ee0236cabb04626b92caf",
+            "excerpt": "bench test --full --package ./cmd/bench\nnative 140d2c; exit 0\ntree[1]{target,head,dirty}:\n  dc-integration,3e0695a7abb202b344fbbfabda87b77cd5f7b62e,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20872\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-help",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "c4-r1-conformance",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "e359e7",
+            "digest": "sha256:5e499576eaf2e9d5271c1ad73504e7767a13e1287e0b0698f73f6fa1ddba2b3e",
+            "excerpt": "bench test --full --package ./internal/conformance\nnative e359e7; exit 0\ntree[1]{target,head,dirty}:\n  dc-integration,3e0695a7abb202b344fbbfabda87b77cd5f7b62e,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,38888\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/UYZJBM/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket1357423966/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/UYZJBM/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket405542981/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "c4-r1-shift",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "be4652",
+            "digest": "sha256:4681aa66d8cbdc245adc135629c2f37ad2a1a0dedacade7a23ad57f8aca239ce",
+            "excerpt": "bench test --full --package ./internal/shift\nnative be4652; exit 0\ntree[1]{target,head,dirty}:\n  dc-integration,3e0695a7abb202b344fbbfabda87b77cd5f7b62e,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/shift,pass,18101\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "shift",
+          "command": "bench test --package ./internal/shift",
+          "exit_code": 0
+        },
+        {
+          "id": "c4-r1-intent",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "61cd95",
+            "digest": "sha256:4388ae96edaf2202bc16c654f8b9868982dfe8f5c93056de4110fabb05dfc2a4",
+            "excerpt": "bench test --full --package ./internal/intent\nnative 61cd95; exit 0\ntree[1]{target,head,dirty}:\n  dc-integration,3e0695a7abb202b344fbbfabda87b77cd5f7b62e,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,4028\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "c4-r1-commitment",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "99480bb49a033f0b15381e5142fe086ced6b7dc7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "545589",
+            "digest": "sha256:4ae16fd866c53b0bbbde18ae6a80e90075100d702c2656452190385d93d021d2",
+            "excerpt": "bench test --full --package ./internal/commitment\nnative 545589; exit 0\ntree[1]{target,head,dirty}:\n  dc-integration,3e0695a7abb202b344fbbfabda87b77cd5f7b62e,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,3340\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "commitment",
           "command": "bench test --package ./internal/commitment",
@@ -2355,3 +2481,16 @@ Optional advice proposes a separate refresh-effect assertion. Current production
 
 The diagnosed cause is duplicated identity policy in the new continuation reader. One pure resolver will retain both callers' effects and refusal text.
 The moved creation type also separated a comment from its declaration. The correction restores that attachment.
+
+## DC-C4 repair cycle 1
+
+Repair cycles consumed: 1 of 2. C4-S1 and C4-S2 are corrected.
+Start and LegacyScope now share one pure assignment resolver. Their effects and refusal text stay intact.
+The startResolver comment now attaches to its function type.
+
+The structural check first found two copies of the identity predicate, then found one after extraction. Native receipts are 55405b and 5c1715.
+The existing behavioral tests pass on the final repair bytes. No new acceptance requirement or hardening check was added.
+All seven planned checks pass. Worktree and conformance retain five existing capability skips; no environment skip supplies credit.
+
+The earlier mutation sites remain in place. Their retained failures demonstrate the original acceptance assertions.
+The independent Coverage omission also failed before this extraction and restored exactly. These probes are historical evidence; current package results verify the repair.
