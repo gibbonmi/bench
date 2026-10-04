@@ -5,7 +5,7 @@ The previous ticket 01 author stopped before its first commit.
 The current session preserves that source and performs fresh verification.
 Independent review uses three separate GPT-6.1 Sol sessions at high effort.
 
-Repair cycles consumed: 0 of 2 for DC-C1.
+Repair cycles consumed: 1 of 2 for DC-C1.
 
 ## Standards
 
@@ -46,9 +46,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C1",
       "base": "ca339ea83ef401f5edea17a012ba6dc891ec2995",
-      "tip": "75bdb76c551f026c58369e4d92156318933d8e24",
-      "plan_digest": "sha256:90d07b9062b87212aeafb5aa3d16850c1107cffd9762b127f7e1c25b38a3f331",
-      "source_digest": "9fdad244f80cf037eda7934b2887907cafff4c27",
+      "tip": "3df02a0850105a852ca308134f41d822f34991a0",
+      "plan_digest": "sha256:326be25226515d9d41f40d116e837f042c3d445cb05a0e99f1a5b4cc3d31eda5",
+      "source_digest": "6c06ee1b5cec9a450b56aed10a2f3c80d414e53e",
       "acceptance_rows": [
         "DC1",
         "DC2",
@@ -138,6 +138,96 @@ This suggestion is optional advice and has no repair disposition.
           },
           "requirement": "bench",
           "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c1-r1-commitment",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "6c06ee1b5cec9a450b56aed10a2f3c80d414e53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:root:dc-c1-r1:commitment",
+            "digest": "sha256:dbb1481dec8c691146065a2cd73df023af7958d27cdddae2f011262653850713",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,5d207a8865063b055206af588b3b31e900993cce,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,661\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c1-r1-jsonfile",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "6c06ee1b5cec9a450b56aed10a2f3c80d414e53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:root:dc-c1-r1:jsonfile",
+            "digest": "sha256:50970728fec739ec8b87baf6328300f0225ef772877f8655957799b789cd1cf5",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,5d207a8865063b055206af588b3b31e900993cce,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/jsonfile,pass,2\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "jsonfile",
+          "command": "bench test --package ./internal/jsonfile",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c1-r1-intent",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "6c06ee1b5cec9a450b56aed10a2f3c80d414e53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:root:dc-c1-r1:intent",
+            "digest": "sha256:e8b447fe28ff5eac39a2d9837981e3d63b5ef5c74dcb5a44d947a2e9af3b9b54",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,5d207a8865063b055206af588b3b31e900993cce,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/intent,pass,4480\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c1-r1-bench",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "6c06ee1b5cec9a450b56aed10a2f3c80d414e53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:root:dc-c1-r1:bench",
+            "digest": "sha256:c612599a3903a57d207902bb4a7a2124c21a69e52a3b741858a3bc8d48270295",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,5d207a8865063b055206af588b3b31e900993cce,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18197\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c1-r1-roadmap",
+          "performer": "/root",
+          "role": "author-verification",
+          "model": "unknown",
+          "effort": "unknown",
+          "source_digest": "6c06ee1b5cec9a450b56aed10a2f3c80d414e53e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "native:root:dc-c1-r1:roadmap",
+            "digest": "sha256:da84b81c2e2bf0ff4b8c19a1e349f217b95d0cb4bce853b1683afcc400cc458e",
+            "excerpt": "tree[1]{target,head,dirty}:\n  dc-integration,5d207a8865063b055206af588b3b31e900993cce,true\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/roadmap,pass,2790\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
           "exit_code": 0
         }
       ],
@@ -366,3 +456,38 @@ probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
 failures[1]{package,test,line}:
   github.com/gibbonmi/bench/internal/commitment,TestCommitmentInputFraming,"command_test.go:73: framed plan = (\"commitment_plan[1]{id,predecessor,proposal}:\\\\n  \\\\\"sha256:9e3d5e35da6d1386796177646ff95cbc30b1d769535285a02a17830f556b6757\\\\\",\\\\\"sha256:bd1b1d1dff9f4e4b164062709ab307bd31ee6528698e8bf1659b6f4d4085dd2c\\\\\",\\\\\"sha256:2609e8f85fbbcd7bcf43c0de2cf98c39004a9ec7ef1600067cafcb12ff8fd7c6
 ```
+
+## Repair cycle 1
+
+The repair source is `3df02a0850105a852ca308134f41d822f34991a0`.
+Current verification passes for commitment, intent, roadmap, the CLI, and JSON.
+The conformance package also passes, including its root conformance test.
+Three existing capability cases skip: two Unix socket paths and one character device.
+A root-package selection matched no tests. It supplies no verification credit.
+
+The source defect came from omission of predecessor-only bindings in the plan.
+The alternative causes were a wrong published revision and a stale receipt lookup.
+The command regression changes only the protected source, which isolates the omitted binding.
+The plan now binds the union of current and proposed sources.
+The refusal preserves both policy and receipt bytes.
+
+The field-name defect came from the decoder's case-insensitive field matching.
+The alternatives were literal duplicate scanning and an invalid fixture.
+The literal duplicate case already refused, while a valid uppercase alias was accepted.
+The existing JSON scanner now takes an optional typed schema for exact field matching.
+The standard decoder entry points retain their existing behavior.
+
+The command form now derives its help and grammar from one flag declaration.
+The new dependency test uses two distinct outcomes, which reaches the graph-cycle guard.
+Independent confirmation of all five repair targets remains pending.
+
+### Repair probes
+
+Each baseline passed. Each mutation returned `bit`, and each source restored exactly.
+These runs used the working tree that committed as the repair source above.
+
+| target | mutation | test | observed red |
+| --- | --- | --- | --- |
+| Removed source | Omit predecessor-source binding from `BuildPlan` | `TestCommitmentRemovalBindsRemovedSource` | Approval succeeded and changed policy bytes. |
+| Exact fields | Replace the exact decoder with the existing document decoder | `TestCommitmentExactFieldNames` | Four case-alias inputs were accepted. |
+| DC56 cycle | Omit graph-cycle rejection | `TestCommitmentMultiOutcomeCycle` | The two-outcome cycle was accepted. |
