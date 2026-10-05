@@ -5,9 +5,12 @@ package systemtest
 import (
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
@@ -63,6 +66,140 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	base := systemGitOutput(t, root, "rev-parse", "HEAD")
 	systemGit(t, root, "update-ref", "refs/bench/green/main", base)
 	return root, home, tally, trees, ready, release
+}
+
+// linkedDeliverable is the staged spec that a linked project's adoption approves.
+const linkedDeliverable = "specs/x/spec.md"
+
+// linkedProject is one project that `bench setup` linked before any commitment policy
+// exists, and the installed distribution whose promotion broker publishes its landings.
+type linkedProject struct {
+	root, home, wrapper string
+	install             landRouteInstall
+}
+
+// newLinkedProject links a disposable project that holds one staged spec and a roadmap
+// with a recommended sequence. Its gate is a plain green script, so each landing grades
+// commitment authority and not project checks. The installed broker is the selected
+// executable, bound by the manifest that the land route authenticates.
+func newLinkedProject(t *testing.T) linkedProject {
+	t.Helper()
+	root := landRouteRepo(t, "linked-adoption [project]-")
+	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
+		systemGit(t, root, "config", identity[0], identity[1])
+	}
+	home, err := os.MkdirTemp(owner.root, "linked-adoption [home]-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	commitmenttest.Write(t, root, "go.mod", "module example.com/linked\n\ngo 1.22\n")
+	commitmenttest.Write(t, root, linkedDeliverable, commitmenttest.StagedBody)
+	commitmenttest.Write(t, root, "ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. old\n")
+	project := linkedProject{root: root, home: home, wrapper: filepath.Join(root, ".bench", "bin", "bench.sh"), install: newLandRouteInstall(t)}
+	if err := owner.observeSelected(); err != nil {
+		t.Fatal(err)
+	}
+	setup := owner.runAt(root, project.env(), owner.selected.path, "setup", "--yes")
+	if setup.code != 0 {
+		t.Fatalf("linked project setup = (%d, %q, %q)", setup.code, setup.stdout, setup.stderr)
+	}
+	testrepo.NewGateFixture(t.TempDir()).MustWrite(t, root, "exit 0\n", "")
+	commitmenttest.Commit(t, root, "link the project")
+	broker, err := os.ReadFile(owner.selected.path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(project.install.broker, broker, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	project.install.writeManifest(t, landRouteManifest(project.install.broker, "9.9.9", brokerPlatformSuffix(), fileDigest(t, project.install.broker)))
+	return project
+}
+
+func (p linkedProject) env() []string {
+	return []string{"BENCH_HOME=" + p.home, "BENCH_RUN_BINARY=" + owner.selected.path, "BENCH_KIT=" + owner.kit}
+}
+
+// run launches the project's installed wrapper in dir.
+func (p linkedProject) run(t *testing.T, dir string, args ...string) processResult {
+	t.Helper()
+	if err := owner.observeSelected(); err != nil {
+		t.Fatal(err)
+	}
+	return owner.runAt(dir, p.env(), "bash", append([]string{p.wrapper}, args...)...)
+}
+
+// land publishes source through the installed broker from the operator's own shell, so
+// no inherited routing override reaches the land route.
+func (p linkedProject) land(t *testing.T, source systemLandingWorktree, base string) processResult {
+	t.Helper()
+	return owner.runAt(p.root, []string{"BENCH_HOME=" + p.home, "BENCH_KIT", "BENCH_RUN_BINARY", "BENCH_WRAPPER"}, "bash", p.install.wrapper,
+		"worktree", "land", "--request", source.request, "--base", base, "--source-tip", source.tip, "-m", "publish "+source.request, source.path)
+}
+
+// refuseLanding requires the installed broker to refuse source with want before it
+// publishes anything.
+func (p linkedProject) refuseLanding(t *testing.T, source systemLandingWorktree, base, want string) {
+	t.Helper()
+	before := systemGitOutput(t, p.root, "show-ref", "--head")
+	refused := p.land(t, source, base)
+	if refused.code != 1 || !strings.Contains(refused.stdout, want) {
+		t.Fatalf("landing %s = (%d, %q, %q), want a refusal naming %q", source.request, refused.code, refused.stdout, refused.stderr, want)
+	}
+	if after := systemGitOutput(t, p.root, "show-ref", "--head"); after != before {
+		t.Fatalf("refused landing %s moved refs: got %q want %q", source.request, after, before)
+	}
+}
+
+// publish requires the installed broker to land source.
+func (p linkedProject) publish(t *testing.T, source systemLandingWorktree, base string) {
+	t.Helper()
+	landed := p.land(t, source, base)
+	if landed.code != 0 || !strings.Contains(landed.stdout, "landed{") {
+		t.Fatalf("landing %s = (%d, %q, %q)", source.request, landed.code, landed.stdout, landed.stderr)
+	}
+}
+
+// commitSource records the planning or production change in source with plain Git, which no
+// Bench guard grades, so only the installed broker decides its publication.
+func commitSource(t *testing.T, source *systemLandingWorktree, message string) {
+	t.Helper()
+	commitmenttest.Commit(t, source.path, message)
+	source.tip = systemGitOutput(t, source.path, "rev-parse", "HEAD")
+}
+
+// propose writes the adoption policy that approves linkedDeliverable into planning and
+// commits it with no approval.
+func (p linkedProject) propose(t *testing.T, planning *systemLandingWorktree) {
+	t.Helper()
+	commitmenttest.SeedAdmission(t, planning.path, linkedDeliverable)
+	commitSource(t, planning, "propose the adoption policy")
+}
+
+// approve plans the proposed policy and approves that exact plan through the installed
+// wrapper, then commits the staged result.
+func (p linkedProject) approve(t *testing.T, planning *systemLandingWorktree) {
+	t.Helper()
+	planned := p.run(t, planning.path, "commitment", "plan", "--input", filepath.FromSlash(commitment.PolicyPath))
+	match := regexp.MustCompile(`(?m)^  "(sha256:[0-9a-f]{64})",`).FindStringSubmatch(planned.stdout)
+	if planned.code != 0 || match == nil {
+		t.Fatalf("adoption plan = (%d, %q, %q)", planned.code, planned.stdout, planned.stderr)
+	}
+	approved := p.run(t, planning.path, "commitment", "approve", "--plan", match[1], "--decision", "reviewer adoption", "--delayed", "none", "--removed", "none")
+	if approved.code != 0 {
+		t.Fatalf("adoption approval = (%d, %q, %q)", approved.code, approved.stdout, approved.stderr)
+	}
+	commitSource(t, planning, "stage the approved adoption")
+}
+
+// adopt proposes, approves, and publishes the adoption policy from a fresh planning run.
+func (p linkedProject) adopt(t *testing.T) {
+	t.Helper()
+	base := systemGitOutput(t, p.root, "rev-parse", "HEAD")
+	planning := systemCreateLandingWorktree(t, p.root, p.home, "planning", "planning")
+	p.propose(t, &planning)
+	p.approve(t, &planning)
+	p.publish(t, planning, base)
 }
 
 func configureArtifactLandingFixture(t *testing.T, root string) {
