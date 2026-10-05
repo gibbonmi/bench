@@ -45,6 +45,41 @@ Advice: the `slices.Equal` clause in `retainedObligationFree` is redundant,
 because both bindings on that path list no obligation. The `changed` fixture
 in `authority_test.go` repeats the `legacy` builder expression.
 
+## FD-C2 pickup
+
+The FD-C2 review covers the frozen pair `4e1fb87f..90697fd0`. The Coverage
+findings start repair cycle 1 of 2. This cycle is the one hardening cycle of
+the chunk, because rows FD12 to FD22 and FD25 prove.
+
+### FD-C2 Standards
+
+Findings: 0. Worst issue: none.
+
+Advice: the roadmap-row source rule appears inline in
+`TestCommitmentPlanSourcesAreCanonical`, beside `bindObligationFree`, and in
+`authority_internal_test.go`.
+
+### FD-C2 Spec
+
+Findings: 0. Worst issue: none. Every chunk row is met, and the FD-C1 rows
+still hold.
+
+### FD-C2 Coverage
+
+Findings: 2. Worst issue: C1.
+
+- C1 (`auto-fix`, confidence 5): `internal/commitment/authority.go:111`. No
+  `boundSources` test has two sources with an equal ID and path and a
+  different identity. A probe that drops the identity tiebreak was silent.
+- C3 (`auto-fix`, confidence 5): `internal/commitment/authority.go:110`. No
+  test tells byte order from a case-folded compare. A probe that folds the ID
+  case was silent.
+
+The reviewer decided on 2026-10-05 to leave the whole-binding comparison at
+`internal/commitment/authority.go:74` unpinned. A test for it would freeze the
+re-pin behavior that the spec puts out of scope, so the idea is parked as
+intake.
+
 ```bench-review-record
 {
   "version": 2,
@@ -723,7 +758,71 @@ in `authority_test.go` repeats the `legacy` builder expression.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "fdc2-standards-r1",
+          "performer": "claude:fdc2_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "93c18dfe15b94618c9651a12fd9761cebd4f4d6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc2_standards",
+            "digest": "sha256:71c3aceec3ede408e9b4416838e0dd26c7180b24a3673d4f729240279cdd92b6",
+            "excerpt": "Standards axis, FD-C2 (4e1fb87f..90697fd0), sonnet high, evidence sha256:7423d84e check-current=true.\nFindings: 0.\nAdvice (no finding ID): the roadmap-row SourceBinding rule (path roadmap/<row>.md, identity of the row) is spelled inline at authority_test.go:119 beside bindObligationFree (authority_test.go:85) and in authority_internal_test.go:80-81; one line; the internal test cannot share across the import cycle.\nRefuted: second source encoding or order (only boundSources, authority.go:105-118); second settled rule (BuildPlan and policySources call Unsettled); RemoveTickets pairs with WriteTickets; FD12/FD14/FD18 share one table body; comments are timeless.\n"
+          },
+          "axis": "Standards",
+          "base": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+          "tip": "90697fd0dfc23439ae1f6204b0f08b692f7d3930",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "fdc2-spec-r1",
+          "performer": "claude:fdc2_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "93c18dfe15b94618c9651a12fd9761cebd4f4d6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc2_spec",
+            "digest": "sha256:ee78c7f1fc620bb9731c821c935ffc3fa6f5858f0912d61d110a0180bf1e03a2",
+            "excerpt": "Spec axis, FD-C2 (4e1fb87f..90697fd0), sonnet high, evidence sha256:7423d84e check-current=true.\nFindings: 0.\nRows FD12-FD22 and FD25 met (TestCommitmentPlanSurvivesRemovedDeliverable, TestCommitmentPlanSourcesOmitDroppedDeliverable, TestCommitmentRemovalBindsRemovedSource, TestCommitmentPlanAfterDelivery, TestCommitmentApprovalBindsKeptDeliverable, TestBoundSourcesIgnoresInputOrder, TestCommitmentPlanSourcesAreCanonical).\nFD-C1 rows still hold by reading. Closed decisions honored: only Unsettled(*current) sources join; one boundSources owns order and encoding; no repository owner edit.\n"
+          },
+          "axis": "Spec",
+          "base": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+          "tip": "90697fd0dfc23439ae1f6204b0f08b692f7d3930",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "fdc2-coverage-r1",
+          "performer": "claude:fdc2_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "93c18dfe15b94618c9651a12fd9761cebd4f4d6a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:fdc2_coverage",
+            "digest": "sha256:374c7bc40b6f2b3825f0c06729b172e7853ebcfec6ae0e96b9bd5316ce61319a",
+            "excerpt": "Coverage axis, FD-C2 (4e1fb87f..90697fd0), sonnet high, evidence sha256:7423d84e check-current=true, all probes restored.\nP1 authority.go:111 drop the identity tiebreak: silent. P2 drop the path tiebreak: bit. P3/P4 authority.go:74 match by ID only: silent in commitment and repository. P5 authority.go:110 case-folded ID compare: silent.\nC1 authority.go:111 no boundSources test with equal ID and path and different identity; auto-fix; confidence 5.\nC3 authority.go:110 byte order is not distinguished from a case-folded compare; auto-fix; confidence 5.\nReviewer decision 2026-10-05 (no finding ID): the whole-binding comparison at authority.go:74 (P3/P4) stays unpinned, because pinning it freezes the out-of-scope re-pin behavior; parked as intake.\nCount 2 (C1, C3). Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+          "tip": "90697fd0dfc23439ae1f6204b0f08b692f7d3930",
+          "finding_ids": [
+            "C1",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
