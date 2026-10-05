@@ -40,7 +40,7 @@ This suggestion is optional advice and has no repair disposition.
 {
   "version": 1,
   "spec": "specs/roadmap-delivery-commitment/spec.md",
-  "plan_digest": "sha256:833e37e8f2d248450d79bfb47a270ab5aeae25e0d732f2b5b2977c39c8b3f3d6",
+  "plan_digest": "sha256:05016b18363c7da2329077a2d6769e211f863e718260160a8297ecaffd5e3656",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -4825,9 +4825,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C9",
       "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
-      "tip": "cfdc6bfd3be1d0dfab3bc80193f559ac0de084fb",
-      "plan_digest": "sha256:833e37e8f2d248450d79bfb47a270ab5aeae25e0d732f2b5b2977c39c8b3f3d6",
-      "source_digest": "96d6b665460d4e6289b987ea4e012928fbf8856c",
+      "tip": "f276988ed70212465836600dff85caeaf4142810",
+      "plan_digest": "sha256:05016b18363c7da2329077a2d6769e211f863e718260160a8297ecaffd5e3656",
+      "source_digest": "16411ad64b5598daa2813dfab31acc60a3024fcc",
       "acceptance_rows": [
         "DC51",
         "DC52",
@@ -6067,6 +6067,39 @@ This suggestion is optional advice and has no repair disposition.
           "DC-C9"
         ]
       }
+    },
+    {
+      "from": "sha256:833e37e8f2d248450d79bfb47a270ab5aeae25e0d732f2b5b2977c39c8b3f3d6",
+      "to": "sha256:05016b18363c7da2329077a2d6769e211f863e718260160a8297ecaffd5e3656",
+      "chunk_ids": {
+        "DC-C1": [
+          "DC-C1"
+        ],
+        "DC-C2": [
+          "DC-C2"
+        ],
+        "DC-C3": [
+          "DC-C3"
+        ],
+        "DC-C4": [
+          "DC-C4"
+        ],
+        "DC-C5": [
+          "DC-C5"
+        ],
+        "DC-C6": [
+          "DC-C6"
+        ],
+        "DC-C7": [
+          "DC-C7"
+        ],
+        "DC-C8": [
+          "DC-C8"
+        ],
+        "DC-C9": [
+          "DC-C9"
+        ]
+      }
     }
   ]
 }
@@ -6821,3 +6854,5 @@ These choices remain open to reviewer veto: no-board approval skips the sequence
 
 Commit cfdc6bfd3be1d0dfab3bc80193f559ac0de084fb reconciles the coverage map against the landed tests and changes only the spec. The plan digest changes, so the orchestrator records the amendment and re-freezes DC-C9 at that commit.
 The six planned checks run again at the new source, and one reaffirming round on all three axes grades the spec-only delta.
+
+The cycle 2 session is no longer reachable, so plan commit f276988ed70212465836600dff85caeaf4142810 assigns a fresh re-verification session, claude:dc_r10_3, under ticket 10. The orchestrator records that amendment and re-freezes DC-C9 at the plan commit. The session changes no file; it runs and records the six planned checks only.
