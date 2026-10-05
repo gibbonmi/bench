@@ -6,7 +6,7 @@ Roadmap: FT391
 
 Decision source: the reviewer-confirmed current conversation (2026-10-05).
 
-Verification log: pending — iteration 1 of the sonnet-high round returned accept after fixes. This draft folds B1, S1 to S6, and N1 to N4.
+Verification log: 2 iteration(s) to accept — Sonnet high ran the independent review. Iteration 1 returned accept after fixes: B1 found that the predicate ran before `readyFor`. It also found S1 to S6 and N1 to N4. Iteration 2 accepted, and the fold took three wording notes.
 
 ## Problem
 
@@ -80,6 +80,7 @@ Harder chunks: LP-C1.
 - One unexported predicate in `internal/commitment/repository` decides whether a candidate is light-path work. It runs only after `readyFor` refuses, at the `readyFor` call in `authorizeCandidate`.
 - When `readyFor` admits, the candidate is admitted, and the predicate reads no tree. A bound commit therefore pays no tree walk and never names another change's ticket.
 - When `readyFor` refuses, the predicate either admits the candidate or returns a refusal. It returns the `readyFor` refusal unchanged when no qualifying folder exists.
+- The predicate runs only on the binding fault of `readyFor`. It returns each other `readyFor` error unchanged, for example an unreadable policy.
 - The transition check, `protectedCandidate`, the production-path loop, and the continuation scope check run before `readyFor`, so their refusals win first.
 - A tickets-only folder qualifies when four conditions hold. `spec.TicketsOnly` accepts it in the read tree, and its `tickets/` subtree holds exactly one `.md` regular file. That ticket parses with no diagnostic through `tickets.ParseTicket` with the empty tag. No milestone of the current `main` policy approves the folder as a deliverable.
 - The predicate counts the `tickets.Ext` entries at every depth below `tickets/`, so `tickets/sub/two.md` is a second ticket. Another extension is an asset, and the predicate ignores it. A `tickets.Ext` entry whose tree mode is not `100644` or `100755` refuses the folder.
@@ -206,7 +207,7 @@ LP-C2 starts after the LP-C1 checkpoint, so the guidance never states an exempti
         ▼
     candidate tree  ──▶  [ AuthorizeCandidate → authorizeCandidate (commit mode):
                            transition, protected rows, production paths,
-                           continuation scope, light-path predicate, readyFor ]  ──▶  admitted or refused
+                           continuation scope, readyFor, then the light-path predicate ]  ──▶  admitted or refused
                       ◀ tests attach here: Store.AuthorizeCandidate over a fixture
                         tree; bench commit in planningCommitRepo
 
@@ -271,7 +272,7 @@ LP-C2 starts after the LP-C1 checkpoint, so the guidance never states an exempti
 | LP47 | 26 | ADR 0028 states that the commitment gates spec implementations and that a one-ticket light-path change needs none | review-owned: the Spec axis reads the ADR | An ADR is prose, and no executable check grades its decision. |
 | LP48 | 27 | ADR 0023 names the drain's light-path delegate route | review-owned: the Spec axis reads the ADR | An ADR is prose, and no executable check grades its decision. |
 | LP49 | 28 | `Store.AuthorizeCandidate` admits a bound assignment's production path that a qualifying folder in the same tree does not cover | planned TestLightPathCandidate in internal/commitment/repository/light_path_test.go | A predicate placed before `readyFor` refuses bound work beside an open light-path folder. |
-| LP50 | 28 | `Store.AdmitPublication` admits a bound assignment's spec delivery whose composed tree holds a qualifying folder that does not cover its production paths | planned TestLightPathPublication in internal/commitment/repository/light_path_test.go | A publication mode placed before `readyFor` refuses a bound spec landing. |
+| LP50 | 28 | `Store.AdmitPublication` admits a bound assignment's spec delivery whose composed tree holds a qualifying folder that does not cover its production paths | planned TestLightPathPublication in internal/commitment/repository/light_path_test.go | A publication mode that reuses the commit-mode check before `readyFor` refuses a bound spec landing. |
 | LP51 | 7 | `Store.AuthorizeCandidate` refuses a folder with `tickets/one.md` and `tickets/sub/two.md` with a refusal that contains `assignment has no current delivery binding` | planned TestLightPathCandidate in internal/commitment/repository/light_path_test.go | A count of the top level only admits a second ticket at depth. |
 | LP52 | 7 | `Store.AdmitPublication` with a delivery that names a two-ticket folder refuses with a refusal that contains `assignment has no current delivery binding` | planned TestLightPathPublication in internal/commitment/repository/light_path_test.go | A publication mode that skips the count lands a multi-ticket folder unbound. |
 | LP53 | 19 | The LP26 refusal for the folder slug `a b` contains `--spec "a b"` | planned TestLightPathPublication in internal/commitment/repository/light_path_test.go | An unquoted slug splits the printed repair command at the space. |
@@ -369,7 +370,7 @@ Build preflight binds the commitment, worktree, and anchors packages to the five
 - **The `Writes:` boundary.** The decision source names the folder, not the paths. This spec also requires every production path to stay inside the one ticket's `Writes:` line, so a one-ticket folder cannot carry unrelated work.
 - **Approved folders keep the binding.** A tickets-only folder that a milestone approves is committed work, so the exemption skips it.
 - **Mid-work fixes wait for the drain.** A light-path fix that the active outcome does not need goes to `bench learning`, and the drain ships it. The reviewer-confirmed conversation of 2026-10-05 names the drain route only: "Light path recommendations should be implemented as part of the drain via delegate."
-- **Three forbid rows retire.** The reviewer reopened drain-time implementation, which these rows prohibited. The new forbid rows keep the old admission sentences out.
+- **Two forbid rows retire.** The reviewer reopened drain-time implementation, which these rows prohibited. The new forbid rows keep the old admission sentences out.
 - **Row closure stays manual.** A light-path change may remove an unpinned row, but Bench closes no row on its own. The source says "may close", and an automatic route is out of scope.
 
 ### Flagged additions
