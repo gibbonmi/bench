@@ -5639,6 +5639,74 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r3-spec"
           ]
+        },
+        {
+          "id": "dc-c9-r5-spec",
+          "performer": "claude:dc_c9_r5_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r5_spec",
+            "digest": "sha256:a58dc859c1b936e8d813c2aa77a9ccd27dcbfcbe0b5e7aff3bc249bf41e56a66",
+            "excerpt": "DC-C9 round 5, Spec axis (claude:dc_c9_r5_spec), frozen pair ffc100d5..62e10a4d: zero findings. C9R4-P1 is closed. Spec line 387 now states \"Every named test below is declared in its cited file.\" A per-row parse at 62e10a4d confirmed this for all 86 map rows. Each of the 85 named tests has exactly one `func` declaration in its cited file. DC53 is the single review-owned row, and DC76 and DC82 share one declared test. The plan JSON change appends only the `claude:dc_r10_4` assignment to ticket 10, and every other field and key order is byte-equivalent. Its preserved commit 71918a38 is reachable from the tip. `bench coverage --check` reports \"coverage map valid — 86 row(s)\". Not graded: the seven existing clauses with no row (known, out of scope).\n"
+          },
+          "axis": "Spec",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "62e10a4dd8c356043a9db2a857945dadd7af9ae3",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r4-spec"
+          ]
+        },
+        {
+          "id": "dc-c9-r5-coverage",
+          "performer": "claude:dc_c9_r5_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r5_coverage",
+            "digest": "sha256:c23b19e268062b32c8d9a2e9cd736968f0a7338f14d30c95da952a431405911d",
+            "excerpt": "Coverage: 0 findings. Reviewer claude:dc_c9_r5_coverage. Frozen pair ffc100d5..62e10a4d, read at 888b51f2, a record-only delta past the tip.\nThe delta bdeede94..HEAD touches only spec.md and the review record; a pathspec diff over roadmap/, adoption-proposal.md, internal/, cmd/, tests/, .agents/ and .bench/ is empty. No test, production, owner or proposal byte changed.\n62e10a4d changes spec.md line 387 (the C9R4-P1 fix) and appends the claude:dc_r10_4 assignment. No chunk, verification or probe entry changed.\nI recomputed source_digest in memory as the 62e10a4d tree without the review record, the same exclusion as TreeWithoutFile: 04b22f5f. It matches the DC-C9 freeze header; a control recompute of f276988e gives the round 4 value 16411ad6.\nAll six dc-c9-r10e entries (installed-adoption, finite-adoption-review, commitment, repository, roadmap, bench) carry 04b22f5f, pass and exit 0, one per planned DC-C9 check.\nThe DC85 probe on repository.go:287 bit with exit 1 and restored to pass.\nDC51, DC52 and DC63 resolve to one test definition each in internal/systemtest/adoption_test.go under the system check. DC85 and DC86 resolve in internal/commitment/store_test.go under the commitment check. DC53 stays review-owned under finite-adoption-review.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "62e10a4dd8c356043a9db2a857945dadd7af9ae3",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r4-coverage"
+          ]
+        },
+        {
+          "id": "dc-c9-r5-standards",
+          "performer": "claude:dc_c9_r5_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r5_standards",
+            "digest": "sha256:5161c91166906b647cb7562653fd79bc62b0862578d1eb3ae43471d0e124775e",
+            "excerpt": "Standards round 5 on DC-C9 (claude:dc_c9_r5_standards) graded f276988e..62e10a4d and the record through 888b51f2. One low judgment-call finding.\nC9R5-S1: record line 7205 says \"The known issue for such clauses stays open until FT376 lands\", but no tracked file defines that known issue. A cold reader cannot find it (BENCH.md invariant 3). Fix: state the decided state directly. This is a record-only edit with no source-digest effect.\nThe spec edit changes only the preamble at line 387. The plan JSON appends only claude:dc_r10_4, which follows the dc_r10_3 pattern (source 5f12d72b is the plan commit's parent; preserved 71918a38 is the predecessor's recorded verification) and passes validateAssignment.\ngate-prose passes for spec.md and the record. git diff 62e10a4d..888b51f2 touches only the record, which supports source_digest 04b22f5f.\ndc-c9-r10e-*: all six requirements present and passing with exit 0. The tip and DC53 owner-file claims were confirmed with git diff. The probe derivation matches the text accepted in round 4.\nbench preflight review was not run: the tree was dirty from the uncommitted dc-c9-r5-spec entry. Worst issue: C9R5-S1.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "62e10a4dd8c356043a9db2a857945dadd7af9ae3",
+          "finding_ids": [
+            "C9R5-S1"
+          ],
+          "supersedes": [
+            "dc-c9-r4-standards"
+          ]
         }
       ]
     }
@@ -7202,4 +7270,9 @@ The re-verification session recorded all six planned checks green at the amended
 Spec reports C9R4-P1, a low non-behavioral finding: the coverage map preamble still says that every named test is planned. The orchestrator confirmed it and closes it by a plan commit that restates the preamble as current state.
 That plan commit also assigns a fresh re-verification session, claude:dc_r10_4, because the spec edit changes the source digest. The orchestrator then records the amendment, re-freezes DC-C9, and runs one more reaffirming round.
 
-The Spec reviewer also listed seven clauses with no row and no explicit owning ticket. They predate this delta and are not delta findings. The known issue for such clauses stays open until FT376 lands.
+The Spec reviewer also listed seven clauses with no row and no explicit owning ticket. They predate this delta and are not delta findings. No check maps each spec clause to a row yet. FT376 adds that check; until it lands, such clauses can carry no row.
+
+## DC-C9 reaffirming round 5 disposition
+
+The re-verification session claude:dc_r10_4 recorded all six planned checks green at the C9R4-P1 fix source, and the named probe failed and restored. Spec and Coverage report zero findings, and C9R4-P1 is closed.
+Standards reports C9R5-S1, a low finding: the round 4 disposition named a known issue that no tracked file defines. The orchestrator restates that sentence as the decided state. The edit is record-only, so the source digest does not change; one confirming Standards review grades it.
