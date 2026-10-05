@@ -756,6 +756,71 @@ intake.
           "requirement": "t4-conformance",
           "command": "bench test --package ./internal/conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t4-commitment-v2",
+          "performer": "claude:fd_t4_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t4_r1",
+            "digest": "sha256:52136ca6e3fd450ae1ddc95fd5cb9034339bd1b0e788d6e3c3c880dd349ce7a6",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit: 0\ntree[1]{target,head,dirty}:\n  FT390,bb73045c213a6dfe97314b245a6b52954c465a03,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,5598\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec FT390 -- bench probe internal/commitment/authority.go --swap 'slices.SortFunc(sorted, func(a, b SourceBinding) int {' --with '_ = (func(a, b SourceBinding) int {' --package ./internal/commitment --run TestBoundSourcesIgnoresInputOrder\nexit: 0 (bench probe verb)\ntree[1]{target,head,dirty}:\n  FT390,bb73045c213a6dfe97314b245a6b52954c465a03,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/authority.go,swap,failed,1,yes\nselection: package ./internal/commitment, run TestBoundSourcesIgnoresInputOrder, baseline passed\nmutated focused test run exit: 1 (cause failed, package status fail)\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestBoundSourcesIgnoresInputOrder,\"authority_internal_test.go:20: boundSources lists = [{a roadmap/a.md ...} {FT9 roadmap/FT9.md ...} {FT9 ... (1020 bytes)\"\n\nRepair coverage probes (run at the f85f6922 test content before commit; --package ./internal/commitment --run TestBoundSourcesIgnoresInputOrder; baseline passed):\nC1 --swap 'cmp.Compare(a.Identity, b.Identity)' --with 'cmp.Compare(0, 0)'\n  bit,internal/commitment/authority.go,swap,failed,1,yes\n  failed: TestBoundSourcesIgnoresInputOrder (authority_internal_test.go:20, list starts FT1, FT9 sha256:a18b..., so input order leaks through the tie)\nC3 --swap 'cmp.Compare(a.ID, b.ID)' --with 'cmp.Compare(strings.ToLower(a.ID), strings.ToLower(b.ID))'\n  bit,internal/commitment/authority.go,swap,failed,1,yes\n  failed: TestBoundSourcesIgnoresInputOrder (authority_internal_test.go:20, list starts with a before FT1)\n"
+          },
+          "requirement": "t4-commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In boundSources, return the copy without the sort. TestBoundSourcesIgnoresInputOrder must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:fd_t4_r1",
+              "digest": "sha256:52136ca6e3fd450ae1ddc95fd5cb9034339bd1b0e788d6e3c3c880dd349ce7a6",
+              "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit: 0\ntree[1]{target,head,dirty}:\n  FT390,bb73045c213a6dfe97314b245a6b52954c465a03,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,5598\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec FT390 -- bench probe internal/commitment/authority.go --swap 'slices.SortFunc(sorted, func(a, b SourceBinding) int {' --with '_ = (func(a, b SourceBinding) int {' --package ./internal/commitment --run TestBoundSourcesIgnoresInputOrder\nexit: 0 (bench probe verb)\ntree[1]{target,head,dirty}:\n  FT390,bb73045c213a6dfe97314b245a6b52954c465a03,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/authority.go,swap,failed,1,yes\nselection: package ./internal/commitment, run TestBoundSourcesIgnoresInputOrder, baseline passed\nmutated focused test run exit: 1 (cause failed, package status fail)\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestBoundSourcesIgnoresInputOrder,\"authority_internal_test.go:20: boundSources lists = [{a roadmap/a.md ...} {FT9 roadmap/FT9.md ...} {FT9 ... (1020 bytes)\"\n\nRepair coverage probes (run at the f85f6922 test content before commit; --package ./internal/commitment --run TestBoundSourcesIgnoresInputOrder; baseline passed):\nC1 --swap 'cmp.Compare(a.Identity, b.Identity)' --with 'cmp.Compare(0, 0)'\n  bit,internal/commitment/authority.go,swap,failed,1,yes\n  failed: TestBoundSourcesIgnoresInputOrder (authority_internal_test.go:20, list starts FT1, FT9 sha256:a18b..., so input order leaks through the tie)\nC3 --swap 'cmp.Compare(a.ID, b.ID)' --with 'cmp.Compare(strings.ToLower(a.ID), strings.ToLower(b.ID))'\n  bit,internal/commitment/authority.go,swap,failed,1,yes\n  failed: TestBoundSourcesIgnoresInputOrder (authority_internal_test.go:20, list starts with a before FT1)\n"
+            }
+          }
+        },
+        {
+          "id": "t4-commitment-repository-v2",
+          "performer": "claude:fd_t4_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t4_r1",
+            "digest": "sha256:b418c8dfca26e1b3ed2e08a3e4dbcc42ed80268f63ab8648444ebf3032c44f45",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  FT390,bb73045c213a6dfe97314b245a6b52954c465a03,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,2118\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-conformance-v2",
+          "performer": "claude:fd_t4_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t4_r1",
+            "digest": "sha256:4040eebce9e605e3f8cc7f673ad68796f6759a5d86a5fad0dfa6402b1b2397c6",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  FT390,bb73045c213a6dfe97314b245a6b52954c465a03,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,39594\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  TestGuidanceProseBudgetRefusesNonRegularSubjects/socket (capability: unix sockets unavailable on this filesystem)\n  TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (capability: cannot create a character device)\n  TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket (capability: unix sockets unavailable on this filesystem)\n"
+          },
+          "requirement": "t4-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
