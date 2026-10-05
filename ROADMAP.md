@@ -56,7 +56,9 @@ and review cost that recent builds paid.
 
 **FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
 
-**FT382 (HIGH) — the commitment plan identity sorts its policy sources canonically.**
+**FT390 (HIGH) — a commitment deliverable either closes its outcome or refuses, and a commitment plan is canonical and survives a settled deliverable.**
+
+**FT391 (HIGH, decision required) — a hotfix lane lands a small change at once, outside the roadmap row and commitment ceremony.**
 
 **FT387 (MEDIUM) — a verified harness path preserves complete tool output before it returns a bounded replacement.**
 
