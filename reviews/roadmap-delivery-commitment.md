@@ -5080,6 +5080,74 @@ This suggestion is optional advice and has no repair disposition.
             "C9-C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "dc-c9-r2-standards",
+          "performer": "claude:dc_c9_r2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cddf16fd2afa2fe8e7b89a3dfd019811179f0c4f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r2_standards",
+            "digest": "sha256:72b999a9927783618ba13d245894896269ab7aac4c60cdabdd721ef9f14fd1fb",
+            "excerpt": "Standards: 0 findings\nReviewer claude:dc_c9_r2_standards, opus high. Frozen chunk ffc100d5..f5b2648c, repair 02fb82b0 and b8320b5d, evidence sha256:a195d22701ad1b16e474eaab41b33a443b47d4052288d1e697ee5e29698d0667.\nC9-S1 closed: landRouteVersion at land_route_test.go:27, bindBroker at :34-40, used at :116, :260 and owner_landing_fixture_test.go:111; no other 9.9.9 literal.\nIdentities have one owner (SourceIdentity, repository.go:55,:74; sources.go:94); RowFilePath forwards to rowFilePath. No-board stage branch restores the policy only. Fixture approve() asserts a clean checkout. scope column defined once. New tests hygienic. File sizes within limits. Proposal prose reads as STE.\nAdvice: Inventory comment overstates the revision read (spec status from working tree, repository.go:43,:61); no-board rule derived in stage (working tree) and landing (revision); small hoists; stage repeats the policy write; RowFilePath pass-through; scope column holds three meanings and BENCH-reference.md:229-233 names cells assignment and request; mustBytes used once; mixed expectation styles.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "f5b2648c617f66332d405ac7f97a942170546a0f",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r1-standards"
+          ]
+        },
+        {
+          "id": "dc-c9-r2-spec",
+          "performer": "claude:dc_c9_r2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cddf16fd2afa2fe8e7b89a3dfd019811179f0c4f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r2_spec",
+            "digest": "sha256:bf4be944bd6326fab8e624d68db161a5cbe3085e147a77bfb2b87c34f5616006",
+            "excerpt": "Spec: 0 findings\nReviewer claude:dc_c9_r2_spec, opus high. Frozen chunk ffc100d5..f5b2648c, repair 02fb82b0 and b8320b5d, evidence sha256:a195d22701ad1b16e474eaab41b33a443b47d4052288d1e697ee5e29698d0667.\nC9-P1 (DC85) closed: stage allowAbsent=true (repository.go:287), policy alone with no board (:295-301); spec.md:266; landing agrees (candidate.go:158-171, closure.go:83); fixture no longer seeds a roadmap; TestCommitmentBootstrapInstall and TestCommitmentApprovalWithoutBoard (store_test.go:95).\nC9-P2 (DC86) closed: Inventory at sourceRevision; roadmap and deliverable identity via SourceIdentity; run identity = request; scope column (command.go:216-218); TestCommitmentInventoryIdentity (store_test.go:128).\nC9-P3 closed: FT376.quantified, callers, digests (adoption-proposal.md:77-79); FT349.floor (:94).\nC9-P4 closed: decisions index :38, :72, :75; decision 16 :12.\nDelegated choices accepted: no-board approval skips the sequence; scope column (advice: empty for runs at adoption); staged specs absent from the default revision are omitted.\nSix closed decisions hold; no live adoption.\nUnowned: 127, 156, 243/721, 263-264, 289, 290, 293, 294.\nAdvice: show run branch or label for unbound runs; board presence decided twice; inventory status from working tree vs identity from revision; continuation and roadmap-row scope paths untested; five Writes entries never written; FT376.quantified timing phrase; spec 147 wording; round 1 advice still open.\n"
+          },
+          "axis": "Spec",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "f5b2648c617f66332d405ac7f97a942170546a0f",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r1-spec"
+          ]
+        },
+        {
+          "id": "dc-c9-r2-coverage",
+          "performer": "claude:dc_c9_r2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cddf16fd2afa2fe8e7b89a3dfd019811179f0c4f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r2_coverage",
+            "digest": "sha256:22cc21fc0ac0415148dd21f76645dd168b56fe60fa68f814182bc2afee912ee0",
+            "excerpt": "Coverage: 1 findings\nReviewer claude:dc_c9_r2_coverage, opus high. Frozen chunk ffc100d5..f5b2648c, repair 02fb82b0 and b8320b5d, evidence sha256:a195d22701ad1b16e474eaab41b33a443b47d4052288d1e697ee5e29698d0667. Ran ./internal/commitment and --check system: pass.\nC9-C1 closed: no seeded board (owner_landing_fixture_test.go:85-113); stage allowAbsent=true (repository.go:287); DC52 asserts approval, clean checkout, same tip refused then published, policy without ROADMAP.md (adoption_test.go:186-195); DC51 and DC63 run on the same fixture.\nC9R2-C1 (medium, blocking): DC86 \"or scope\" clause (spec.md:477, ticket 10 acceptance) is not covered. The fixture has one bound run (store_test.go:135); only the binding branch is asserted (:168-170). Green mutations: delete the continuation loop (repository.go:100-104); change binding.Assignment == assignment (:96) to true. Needed: a second, unbound run with a recorded continuation; assert its scope equals the joined continuation scope and that it does not inherit the first run's deliverable.\nVerdicts: DC51, DC52, DC63, DC85 pass; DC53 review-owned; DC86 partial.\nNo weakened test; approve() change is stronger. Six entries match the plan; only commitment carries the probe.\nAdvice: revision vs working tree read untested (uncommitted edit would catch); redundant assertion :143-146; CLI scope column untested; boardless restore untested; pre-adoption run scope always empty; status vs identity source; board presence decided twice; excerpt wording; board path only unit-tested.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "f5b2648c617f66332d405ac7f97a942170546a0f",
+          "finding_ids": [
+            "C9R2-C1"
+          ],
+          "supersedes": [
+            "dc-c9-r1-coverage"
+          ]
         }
       ]
     }
@@ -6478,3 +6546,10 @@ Approval in a project with no board stages the policy alone, and the system jour
 The proposal adds the three FT376 criteria and the full FT349 check floor, and a disposable replay pins the new plan identity. One version constant and one broker helper serve both fixtures.
 
 Plan commit f5b2648c617f66332d405ac7f97a942170546a0f closed the spec fence and the registry closure, and it moved the DC85 probe to the package that holds its test. All six planned checks pass at the chunk source, and the named probe failed and restored.
+
+## DC-C9 confirming review disposition
+
+Standards and Spec report zero findings, and every round 1 finding is closed. Coverage reports C9R2-C1: the DC86 test covers only a bound run, so the scope of an unbound run with a continuation has no test.
+The orchestrator accepts C9R2-C1 as blocking, because the DC86 row names that clause. The repair adds a test only, inside the ticket 10 fence. Cycle 2 repairs it with a second, unbound run that has a recorded continuation.
+
+Repair cycles consumed: 1 of 2. The cycle also checks that inventory reads sources at the revision, not the working tree.
