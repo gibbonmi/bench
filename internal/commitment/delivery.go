@@ -13,7 +13,7 @@ import (
 // outcome with sources, returns policy unchanged and no source.
 func Deliver(policy Policy, path, source, evidence string) (Policy, []SourceBinding, error) {
 	outcome, binding, found, err := activeDeliverable(policy, path)
-	if err != nil || !found || (len(binding.Obligations) == 0 && len(outcome.Sources) > 0) {
+	if err != nil || !found || obligationFree(outcome, binding) {
 		return policy, nil, err
 	}
 	fact := DeliveryFact{Milestone: policy.ActiveMilestone, Outcome: outcome.ID, Binding: binding.Source.ID, Identity: binding.Source.Identity, Source: source, Evidence: evidence}
@@ -31,6 +31,11 @@ func Deliver(policy Policy, path, source, evidence string) (Policy, []SourceBind
 		return Policy{}, nil, err
 	}
 	return policy, closed, nil
+}
+
+// obligationFree reports whether binding can close no source of outcome.
+func obligationFree(outcome Outcome, binding DeliveryBinding) bool {
+	return len(binding.Obligations) == 0 && len(outcome.Sources) > 0
 }
 
 // Satisfied returns the source identities that recorded deliveries completely satisfy.

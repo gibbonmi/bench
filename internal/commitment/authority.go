@@ -50,6 +50,9 @@ func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
 	if err != nil {
 		return Plan{}, err
 	}
+	if err := refuseObligationFree(current, proposed); err != nil {
+		return Plan{}, err
+	}
 	predecessor := "absent"
 	if current != nil {
 		currentBytes, err := Bytes(*current)
@@ -94,6 +97,41 @@ func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
 		Effects:          effects,
 		Continuations:    proposal.Continuations,
 	}, nil
+}
+
+// refuseObligationFree refuses each obligation-free binding of proposed, in any milestone,
+// unless current holds the same outcome with an equal binding that is already
+// obligation-free. Validate does not take this rule, so a legacy policy stays readable and
+// a plan can repair it.
+func refuseObligationFree(current *Policy, proposed Policy) error {
+	for _, milestone := range proposed.Milestones {
+		for _, outcome := range milestone.Outcomes {
+			for _, binding := range outcome.Deliverables {
+				if obligationFree(outcome, binding) && !retainedObligationFree(current, outcome.ID, binding) {
+					return fmt.Errorf("outcome %q deliverable %q names no obligation; list each outcome source that it completely satisfies", outcome.ID, binding.Source.ID)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// retainedObligationFree reports whether current approves binding unchanged for the outcome
+// named id, and that binding is already obligation-free there.
+func retainedObligationFree(current *Policy, id string, binding DeliveryBinding) bool {
+	if current == nil {
+		return false
+	}
+	for _, milestone := range current.Milestones {
+		for _, outcome := range milestone.Outcomes {
+			if outcome.ID == id {
+				return slices.ContainsFunc(outcome.Deliverables, func(kept DeliveryBinding) bool {
+					return kept.Source == binding.Source && slices.Equal(kept.Obligations, binding.Obligations) && obligationFree(outcome, kept)
+				})
+			}
+		}
+	}
+	return false
 }
 
 // Identity returns the content identity used by plans and source bindings.
