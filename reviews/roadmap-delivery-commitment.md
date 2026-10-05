@@ -40,7 +40,7 @@ This suggestion is optional advice and has no repair disposition.
 {
   "version": 1,
   "spec": "specs/roadmap-delivery-commitment/spec.md",
-  "plan_digest": "sha256:f4cbafa3a20de0b4667e09806cc6b10903c7b9068faf8630099b4cf887b8d8b7",
+  "plan_digest": "sha256:a6d34579db2ede87d1966ee01aef34e1c6471a3cab2b5b44c121d309e547d5a5",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -4825,9 +4825,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C9",
       "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
-      "tip": "62e10a4dd8c356043a9db2a857945dadd7af9ae3",
-      "plan_digest": "sha256:f4cbafa3a20de0b4667e09806cc6b10903c7b9068faf8630099b4cf887b8d8b7",
-      "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+      "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+      "plan_digest": "sha256:a6d34579db2ede87d1966ee01aef34e1c6471a3cab2b5b44c121d309e547d5a5",
+      "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
       "acceptance_rows": [
         "DC51",
         "DC52",
@@ -6731,6 +6731,39 @@ This suggestion is optional advice and has no repair disposition.
           "DC-C9"
         ]
       }
+    },
+    {
+      "from": "sha256:f4cbafa3a20de0b4667e09806cc6b10903c7b9068faf8630099b4cf887b8d8b7",
+      "to": "sha256:a6d34579db2ede87d1966ee01aef34e1c6471a3cab2b5b44c121d309e547d5a5",
+      "chunk_ids": {
+        "DC-C1": [
+          "DC-C1"
+        ],
+        "DC-C2": [
+          "DC-C2"
+        ],
+        "DC-C3": [
+          "DC-C3"
+        ],
+        "DC-C4": [
+          "DC-C4"
+        ],
+        "DC-C5": [
+          "DC-C5"
+        ],
+        "DC-C6": [
+          "DC-C6"
+        ],
+        "DC-C7": [
+          "DC-C7"
+        ],
+        "DC-C8": [
+          "DC-C8"
+        ],
+        "DC-C9": [
+          "DC-C9"
+        ]
+      }
     }
   ]
 }
@@ -7512,3 +7545,11 @@ The final DC-C9 source digest is 04b22f5f168809e3f18010befd08feab7b3040d2. The c
 
 The DC-C9 checkpoint passed at record tip d42ced91da4c6206fef32f1c4b2965bcc95b14f1 with eight capability skips. All nine chunks are accepted.
 The orchestrator ran the five final verification commands at that source, and each exits 0. Completion evidence covers all 86 rows at source digest 04b22f5f168809e3f18010befd08feab7b3040d2.
+
+## DC-C9 fold of main and re-freeze
+
+The completion gate requires the composed tree to equal the reviewed source, and main moved past the run base. On 2026-10-05 the reviewer approved a fold of main with a one-time fence expansion.
+Merge 48f8d1546c8e18b5938b4a877398d84a2af470f0 folds main 3347fdbdca6cb69726ce67dedfcf7299bbdbb55e. The folded commits change only specs/shared-test-fixtures and the OpenAI scorecard.
+
+Two plan commits add specs/shared-test-fixtures to the ticket 10 fence and to the spec fence union. Plan commit 5fa7fc335b9c502d87cfe289330220c0468daa63 assigns a fresh re-verification session, claude:dc_r10_5.
+The orchestrator records the amendment and re-freezes DC-C9 at that plan commit. The session changes no file; it runs and records the six planned checks only. One round on all three axes then grades the fold delta.
