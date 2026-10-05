@@ -80,6 +80,13 @@ The reviewer decided on 2026-10-05 to leave the whole-binding comparison at
 re-pin behavior that the spec puts out of scope, so the idea is parked as
 intake.
 
+### FD-C2 repair state
+
+Repair cycle 1 of 2 is consumed, and it closes C1 and C3. A fresh ticket 4
+repair session added test rows in commit `f85f6922`. The confirming round of
+all three axes at that tip found no finding, and independent probes confirmed
+C1 and C3.
+
 ```bench-review-record
 {
   "version": 2,
@@ -951,6 +958,72 @@ intake.
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "fdc2-standards-r2",
+          "performer": "claude:fdc2_standards_r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc2_standards_r2",
+            "digest": "sha256:a1355dd3ed3e18695f1913d453da1c443af97f035ae3dafe13994dca5d18813a",
+            "excerpt": "Standards axis, FD-C2 confirming round (repair delta 6f9b2db3..f85f6922), sonnet high, evidence sha256:c2767704 check-current=true.\nFindings: 0.\nRefuted: the four inline row copies are one row closure (authority_internal_test.go:20-22); commitmenttest.writeRow is unexported and the import cycle blocks reuse; the comment at lines 10-13 states the why in present tense; names ascending and descending hold.\n"
+          },
+          "axis": "Standards",
+          "base": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+          "tip": "f85f69225daee9c88cbfd45e18584750ccc7fcb4",
+          "finding_ids": [],
+          "supersedes": [
+            "fdc2-standards-r1"
+          ]
+        },
+        {
+          "id": "fdc2-spec-r2",
+          "performer": "claude:fdc2_spec_r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc2_spec_r2",
+            "digest": "sha256:a389cee94f40c50c005b4dbad66a592e06e1b854c1029c527bd49d2535c14449",
+            "excerpt": "Spec axis, FD-C2 confirming round (repair delta 6f9b2db3..f85f6922), sonnet high, evidence sha256:c2767704 check-current=true.\nFindings: 0.\nC1 confirmed (authority_internal_test.go:13-19, equal ID and path in opposite input orders). C3 confirmed (ID a sorts after FT1 and FT9 in byte order). FD20 still met (:19, :22).\nAdvice (no finding ID): the FD20 pair FT9, FT1 is now a subset of a four-row input.\n"
+          },
+          "axis": "Spec",
+          "base": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+          "tip": "f85f69225daee9c88cbfd45e18584750ccc7fcb4",
+          "finding_ids": [],
+          "supersedes": [
+            "fdc2-spec-r1"
+          ]
+        },
+        {
+          "id": "fdc2-coverage-r2",
+          "performer": "claude:fdc2_coverage_r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc2_coverage_r2",
+            "digest": "sha256:9924eb6120d755040ea65f02ea31ae0b6851efdd8e23f1a76bdc7b899757df66",
+            "excerpt": "Coverage axis, FD-C2 confirming round (repair delta 6f9b2db3..f85f6922), sonnet high, evidence sha256:c2767704 check-current=true, tree clean.\nP1 (C1) authority.go:111 swap the identity compare to cmp.Compare(0, 0): bit, restored yes, TestBoundSourcesIgnoresInputOrder failed.\nP2 (C3) authority.go:111 swap the ID compare to a case-folded compare: bit, restored yes, TestBoundSourcesIgnoresInputOrder failed.\nC1 confirmed. C3 confirmed. Findings: 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+          "tip": "f85f69225daee9c88cbfd45e18584750ccc7fcb4",
+          "finding_ids": [],
+          "supersedes": [
+            "fdc2-coverage-r1"
+          ]
         }
       ]
     }
