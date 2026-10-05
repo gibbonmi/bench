@@ -5247,6 +5247,125 @@ This suggestion is optional advice and has no repair disposition.
           "requirement": "bench",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10e-installed-adoption",
+          "performer": "claude:dc_r10_4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_4:installed-adoption",
+            "digest": "sha256:a507faf10c22dfed80ec835397858886032e375454a750ee7bcfd3dcc28d1261",
+            "excerpt": "command: bench worktree exec dc-integration -- env \"PATH=/home/mgibs/.nvm/versions/node/v25.8.1/bin:$PATH\" bench test --check system\ntip: 01276c940e2b23fca8d922159f6472347e856cb3 (one record commit past the frozen tip 62e10a4dd8c356043a9db2a857945dadd7af9ae3; git diff 62e10a4d..HEAD touches reviews/roadmap-delivery-commitment.md only)\nexit: 0\noutput: tree dc-integration,01276c940e2b23fca8d922159f6472347e856cb3,false; packages[1] github.com/gibbonmi/bench/internal/systemtest,pass,88754; failures[0]; skips[0]\n\nDelta since the last accepted verification (71918a38..62e10a4d): specs/roadmap-delivery-commitment/spec.md (one preamble line) and reviews/roadmap-delivery-commitment.md only; no Go, test, owner, or proposal file changed.\nRows DC51, DC52, DC63, DC85 (system leg) run in internal/systemtest/adoption_test.go as recorded in dc-c9-r10c-installed-adoption.\nThe named probes there were taken on the same system sources; they were not rerun.\n"
+          },
+          "requirement": "installed-adoption",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10e-finite-adoption-review",
+          "performer": "claude:dc_r10_4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_4:finite-adoption-review",
+            "digest": "sha256:61371317110a0e6318126d7084bd2c115e0b9ebfee53434b39f541e7bed031b2",
+            "excerpt": "command: bench worktree exec dc-integration -- bench roadmap --context\ntip: 01276c940e2b23fca8d922159f6472347e856cb3 (one record commit past the frozen tip 62e10a4dd8c356043a9db2a857945dadd7af9ae3; git diff 62e10a4d..HEAD touches reviews/roadmap-delivery-commitment.md only)\nexit: 0\noutput: tree dc-integration,01276c940e2b23fca8d922159f6472347e856cb3,false; context[1]{schema,full,sequence_trusted}: 4,false,true; parse_failures[0]\n\nDelta since the last accepted verification (71918a38..62e10a4d): specs/roadmap-delivery-commitment/spec.md (one preamble line) and reviews/roadmap-delivery-commitment.md only; no Go, test, owner, or proposal file changed.\nDC53 manual check (review-owned): git diff bdeede94..HEAD on roadmap/FT376.md, roadmap/FT373.md, roadmap/FT349.md and\nspecs/roadmap-delivery-commitment/adoption-proposal.md is empty, so the owner evidence, the plan source identities, and\nthe plan-input replay recorded in dc-c9-r10c-finite-adoption-review stand. They were not rerun.\n"
+          },
+          "requirement": "finite-adoption-review",
+          "command": "bench roadmap --context",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10e-commitment",
+          "performer": "claude:dc_r10_4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_4:commitment",
+            "digest": "sha256:c7c38fd9e72728a520f7421d763614c81d96bce29283b8f332356fadc75296d8",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment\ntip: 01276c940e2b23fca8d922159f6472347e856cb3 (one record commit past the frozen tip 62e10a4dd8c356043a9db2a857945dadd7af9ae3; git diff 62e10a4d..HEAD touches reviews/roadmap-delivery-commitment.md only)\nexit: 0\noutput: tree dc-integration,01276c940e2b23fca8d922159f6472347e856cb3,false; packages[1] github.com/gibbonmi/bench/internal/commitment,pass,8804; failures[0]; skips[0]\n\nDelta since the last accepted verification (71918a38..62e10a4d): specs/roadmap-delivery-commitment/spec.md (one preamble line) and reviews/roadmap-delivery-commitment.md only; no Go, test, owner, or proposal file changed.\nCovering tests in internal/commitment/store_test.go: DC85 TestCommitmentApprovalWithoutBoard, DC86 TestCommitmentInventoryIdentity.\n\nNamed DC85 probe: \"Restore allowAbsent=false for the roadmap snapshot. TestCommitmentApprovalWithoutBoard must fail, then pass after the restore.\"\n  bench worktree exec dc-integration -- bench probe internal/commitment/repository/repository.go\n    --swap \"roadmapBefore, err := snapshotFile(roadmapPath, true)\"\n    --with \"roadmapBefore, err := snapshotFile(roadmapPath, false)\"\n    --package ./internal/commitment --run TestCommitmentApprovalWithoutBoard --full\n  subject line: repository.go:287\n  probe row: bit, internal/commitment/repository/repository.go, swap, failed, 1, yes\n  red: store_test.go:108: Approve() without a board = read commitment output .../ROADMAP.md: lstat .../ROADMAP.md: no such file or directory\n  after the restore: bench test --package ./internal/commitment -> exit 0 (pass, 5387 ms); git status --short empty; tree dirty false.\n\nMutated-run exit code (bench probe does not print it): 1, derived from the source.\n  internal/probe/probe.go:163 runs the mutant through testreport.Execute and discards its exit code.\n  internal/testreport/outcome.go:88-89: a report with a failing test row is OutcomeFailed (the probe's cause \"failed\", failed_tests 1).\n  internal/testreport/command.go:319-320: when the go test child exits nonzero (a failing test), Execute returns exit 1.\n  So the mutated bench test run exits 1.\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore allowAbsent=false for the roadmap snapshot. TestCommitmentApprovalWithoutBoard must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dc_r10_4:commitment",
+              "digest": "sha256:c7c38fd9e72728a520f7421d763614c81d96bce29283b8f332356fadc75296d8",
+              "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment\ntip: 01276c940e2b23fca8d922159f6472347e856cb3 (one record commit past the frozen tip 62e10a4dd8c356043a9db2a857945dadd7af9ae3; git diff 62e10a4d..HEAD touches reviews/roadmap-delivery-commitment.md only)\nexit: 0\noutput: tree dc-integration,01276c940e2b23fca8d922159f6472347e856cb3,false; packages[1] github.com/gibbonmi/bench/internal/commitment,pass,8804; failures[0]; skips[0]\n\nDelta since the last accepted verification (71918a38..62e10a4d): specs/roadmap-delivery-commitment/spec.md (one preamble line) and reviews/roadmap-delivery-commitment.md only; no Go, test, owner, or proposal file changed.\nCovering tests in internal/commitment/store_test.go: DC85 TestCommitmentApprovalWithoutBoard, DC86 TestCommitmentInventoryIdentity.\n\nNamed DC85 probe: \"Restore allowAbsent=false for the roadmap snapshot. TestCommitmentApprovalWithoutBoard must fail, then pass after the restore.\"\n  bench worktree exec dc-integration -- bench probe internal/commitment/repository/repository.go\n    --swap \"roadmapBefore, err := snapshotFile(roadmapPath, true)\"\n    --with \"roadmapBefore, err := snapshotFile(roadmapPath, false)\"\n    --package ./internal/commitment --run TestCommitmentApprovalWithoutBoard --full\n  subject line: repository.go:287\n  probe row: bit, internal/commitment/repository/repository.go, swap, failed, 1, yes\n  red: store_test.go:108: Approve() without a board = read commitment output .../ROADMAP.md: lstat .../ROADMAP.md: no such file or directory\n  after the restore: bench test --package ./internal/commitment -> exit 0 (pass, 5387 ms); git status --short empty; tree dirty false.\n\nMutated-run exit code (bench probe does not print it): 1, derived from the source.\n  internal/probe/probe.go:163 runs the mutant through testreport.Execute and discards its exit code.\n  internal/testreport/outcome.go:88-89: a report with a failing test row is OutcomeFailed (the probe's cause \"failed\", failed_tests 1).\n  internal/testreport/command.go:319-320: when the go test child exits nonzero (a failing test), Execute returns exit 1.\n  So the mutated bench test run exits 1.\n"
+            }
+          }
+        },
+        {
+          "id": "dc-c9-r10e-repository",
+          "performer": "claude:dc_r10_4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_4:repository",
+            "digest": "sha256:09677ef4c1077ee978e7ddf9511a1aada9f1747517acb1698f77f44b59c97f33",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment/repository\ntip: 01276c940e2b23fca8d922159f6472347e856cb3 (one record commit past the frozen tip 62e10a4dd8c356043a9db2a857945dadd7af9ae3; git diff 62e10a4d..HEAD touches reviews/roadmap-delivery-commitment.md only)\nexit: 0\noutput: tree dc-integration,01276c940e2b23fca8d922159f6472347e856cb3,false; packages[1] github.com/gibbonmi/bench/internal/commitment/repository,pass,2010; failures[0]; skips[0]\n\nDelta since the last accepted verification (71918a38..62e10a4d): specs/roadmap-delivery-commitment/spec.md (one preamble line) and reviews/roadmap-delivery-commitment.md only; no Go, test, owner, or proposal file changed.\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10e-roadmap",
+          "performer": "claude:dc_r10_4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_4:roadmap",
+            "digest": "sha256:75688a6ef34e95bb12c25cc6c085e6e312bd8f92f57e1826af8413dc5db72b44",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/roadmap\ntip: 01276c940e2b23fca8d922159f6472347e856cb3 (one record commit past the frozen tip 62e10a4dd8c356043a9db2a857945dadd7af9ae3; git diff 62e10a4d..HEAD touches reviews/roadmap-delivery-commitment.md only)\nexit: 0\noutput: tree dc-integration,01276c940e2b23fca8d922159f6472347e856cb3,false; packages[1] github.com/gibbonmi/bench/internal/roadmap,pass,2016; failures[0]; skips[0]\n\nDelta since the last accepted verification (71918a38..62e10a4d): specs/roadmap-delivery-commitment/spec.md (one preamble line) and reviews/roadmap-delivery-commitment.md only; no Go, test, owner, or proposal file changed.\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10e-bench",
+          "performer": "claude:dc_r10_4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_4:bench",
+            "digest": "sha256:7b83b8b9b21e7c18ba248ab801e9b52ead1a94c6bad41a2f441f33391d38079f",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./cmd/bench\ntip: 01276c940e2b23fca8d922159f6472347e856cb3 (one record commit past the frozen tip 62e10a4dd8c356043a9db2a857945dadd7af9ae3; git diff 62e10a4d..HEAD touches reviews/roadmap-delivery-commitment.md only)\nexit: 0\noutput: tree dc-integration,01276c940e2b23fca8d922159f6472347e856cb3,false; packages[1] github.com/gibbonmi/bench/cmd/bench,pass,13764; failures[0]; skips[0]\n\nDelta since the last accepted verification (71918a38..62e10a4d): specs/roadmap-delivery-commitment/spec.md (one preamble line) and reviews/roadmap-delivery-commitment.md only; no Go, test, owner, or proposal file changed.\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
