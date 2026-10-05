@@ -22,9 +22,10 @@ import (
 // Store addresses one repository's tracked policy and local receipts.
 type Store struct{ Root string }
 
-// InventoryItem is one source available to an adoption proposal.
+// InventoryItem is one source available to an adoption proposal. Identity is the identity that
+// plan binds, or a run's request. Scope is a row's detail owner, a spec's row, or a run's scope.
 type InventoryItem struct {
-	Kind, ID, State, Identity string
+	Kind, ID, State, Identity, Scope string
 }
 
 // Policy returns the current default-branch policy and whether it exists.
@@ -39,34 +40,69 @@ func (store Store) Policy() (commitment.Policy, bool, error) {
 	return *policy, true, nil
 }
 
-// Inventory projects roadmap obligations, staged specs, and assignment identities.
+// Inventory reads sources at the revision that plan validates, so each identity feeds plan unchanged.
 func (store Store) Inventory() ([]InventoryItem, error) {
-	tree := roadmap.LoadTree(store.Root)
-	document, failures, diagnostics := roadmap.ParseDocument(tree, nil, true)
-	if len(failures) > 0 || len(diagnostics) > 0 {
-		return nil, errors.New("commitment inventory refused: roadmap is structurally untrusted")
+	revision, err := store.sourceRevision()
+	if err != nil {
+		return nil, err
+	}
+	document, err := roadmap.RevisionDocument(store.Root, revision)
+	if err != nil {
+		return nil, fmt.Errorf("commitment inventory refused: %w", err)
 	}
 	items := make([]InventoryItem, 0, len(document.Rows))
 	for _, row := range document.Rows {
-		items = append(items, InventoryItem{Kind: "roadmap", ID: row.ID, State: row.SpecStatus, Identity: commitment.Identity([]byte(row.Body))})
+		identity, err := SourceIdentity(store.Root, revision, roadmap.RowFilePath(row.ID))
+		if err != nil {
+			return nil, fmt.Errorf("commitment inventory refused: roadmap row %s: %w", row.ID, err)
+		}
+		items = append(items, InventoryItem{Kind: "roadmap", ID: row.ID, State: row.SpecStatus, Identity: identity, Scope: roadmap.RowFilePath(row.ID)})
 	}
 	facts, err := spec.Facts(store.Root)
 	if err != nil {
 		return nil, err
 	}
+	held, err := git.Output("-C", store.Root, "ls-tree", "-r", "-z", "--name-only", revision, "--", "specs")
+	if err != nil {
+		return nil, err
+	}
 	for _, fact := range facts {
-		if fact.Status == "staged" {
-			items = append(items, InventoryItem{Kind: "deliverable", ID: fact.Path, State: fact.Status, Identity: fact.RoadmapID})
+		// A spec that the revision does not hold is not yet a source that plan can bind.
+		if fact.Status != "staged" || !slices.Contains(strings.Split(held, "\x00"), fact.Path) {
+			continue
 		}
+		identity, err := SourceIdentity(store.Root, revision, fact.Path)
+		if err != nil {
+			return nil, fmt.Errorf("commitment inventory refused: deliverable %s: %w", fact.Path, err)
+		}
+		items = append(items, InventoryItem{Kind: "deliverable", ID: fact.Path, State: fact.Status, Identity: identity, Scope: fact.RoadmapID})
 	}
 	ledger, err := intent.Read(store.Root)
 	if err != nil {
 		return nil, err
 	}
 	for _, assignment := range ledger.Assignments {
-		items = append(items, InventoryItem{Kind: "run", ID: assignment.ID, State: string(assignment.State), Identity: assignment.Request})
+		items = append(items, InventoryItem{Kind: "run", ID: assignment.ID, State: string(assignment.State), Identity: assignment.Request, Scope: runScope(ledger.Commitment, assignment.ID)})
 	}
 	return items, nil
+}
+
+// runScope names the deliverable that binds the assignment, or else its continuation scope.
+func runScope(state *intent.CommitmentState, assignment string) string {
+	if state == nil {
+		return ""
+	}
+	for _, binding := range state.Bindings {
+		if binding.Assignment == assignment {
+			return binding.Deliverable
+		}
+	}
+	for _, continuation := range state.Continuations {
+		if continuation.Assignment == assignment {
+			return strings.Join(continuation.Scope, " ")
+		}
+	}
+	return ""
 }
 
 // Plan validates and records one proposed policy.
@@ -248,13 +284,20 @@ func (store Store) stage(plan commitment.Plan) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	roadmapBefore, err := snapshotFile(roadmapPath, false)
+	roadmapBefore, err := snapshotFile(roadmapPath, true)
 	if err != nil {
 		return nil, err
 	}
 	policy, err := commitment.Parse(plan.Proposed)
 	if err != nil {
 		return nil, err
+	}
+	// A project with no board has no sequence to project, so approval stages the policy alone.
+	if !roadmapBefore.present {
+		if err := atomicWrite(policyPath, plan.Proposed, 0o644); err != nil {
+			return nil, err
+		}
+		return func() { _ = policyBefore.restore() }, nil
 	}
 	projected, err := roadmap.ProjectSequence(roadmapBefore.data, commitment.Remaining(policy))
 	if err != nil {

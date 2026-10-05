@@ -2,6 +2,7 @@ package commitment_test
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -86,6 +88,95 @@ func TestCommitmentApprovalReplay(t *testing.T) {
 	if !bytes.Equal(policyAfter, policyBefore) || !bytes.Equal(receiptAfter, receiptBefore) {
 		t.Fatal("identical replay changed policy or receipt bytes")
 	}
+}
+
+// TestCommitmentApprovalWithoutBoard approves a policy in a project that has no board. A
+// linked project has no ROADMAP.md, so approval stages the policy alone and writes no board.
+func TestCommitmentApprovalWithoutBoard(t *testing.T) {
+	current := policy([]commitment.Milestone{milestone("M1", "A")}, "M1")
+	root := commitmenttest.Repo(t, current)
+	gittest.Output(t, root, "rm", "-q", "ROADMAP.md")
+	commitmenttest.Commit(t, root, "remove the board")
+	store := commitrepo.Store{Root: root}
+	plan, err := store.Plan(mustBytes(t, policy([]commitment.Milestone{milestone("M1", "A", "B")}, "M1")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	changed, err := store.Approve(plan.ID, "decision-1", plan.Effects.Delayed, plan.Effects.Removed)
+	if err != nil {
+		t.Fatalf("Approve() without a board = %v", err)
+	}
+	if !changed {
+		t.Fatal("approval without a board reported no change")
+	}
+	staged, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(commitment.PolicyPath)))
+	if err != nil || !bytes.Equal(staged, plan.Proposed) {
+		t.Fatalf("staged policy = (%q, %v), want the proposed policy", staged, err)
+	}
+	if _, err := os.Lstat(filepath.Join(root, "ROADMAP.md")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("approval without a board wrote ROADMAP.md: %v", err)
+	}
+	if _, err := store.Inventory(); err != nil {
+		t.Fatalf("Inventory() without a board = %v", err)
+	}
+}
+
+// TestCommitmentInventoryIdentity reads the inventory that an adoption proposal copies. A
+// roadmap or deliverable identity is the identity that plan binds, and a run names its
+// bound deliverable.
+func TestCommitmentInventoryIdentity(t *testing.T) {
+	const deliverable, request = "specs/delivery/spec.md", "inventory-run"
+	root := commitmenttest.Repo(t, policy([]commitment.Milestone{milestone("M1", "A")}, "M1"))
+	commitmenttest.SeedProtected(t, root)
+	commitmenttest.Write(t, root, deliverable, commitmenttest.StagedBody)
+	commitmenttest.SeedAdmission(t, root, deliverable)
+	commitmenttest.Commit(t, root, "seed the inventory sources")
+	commitmenttest.Admit(t, commitmenttest.Assignment(t, root, request), request, deliverable)
+	// The default branch does not hold this spec, so plan cannot bind it yet.
+	commitmenttest.Write(t, root, "specs/uncommitted/spec.md", commitmenttest.StagedBody)
+
+	items, err := commitrepo.Store{Root: root}.Inventory()
+	if err != nil {
+		t.Fatalf("Inventory() with an uncommitted staged spec = %v", err)
+	}
+	for _, item := range items {
+		if item.ID == "specs/uncommitted/spec.md" {
+			t.Errorf("inventory lists the uncommitted spec %+v", item)
+		}
+	}
+	find := func(kind, id string) commitrepo.InventoryItem {
+		t.Helper()
+		for _, item := range items {
+			if item.Kind == kind && item.ID == id {
+				return item
+			}
+		}
+		t.Fatalf("inventory %v has no %s row %s", items, kind, id)
+		return commitrepo.InventoryItem{}
+	}
+	row, err := commitrepo.SourceIdentity(root, "main", "roadmap/FT1.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := find("roadmap", "FT1").Identity; got != row {
+		t.Errorf("roadmap identity = %q, want the plan source identity %q", got, row)
+	}
+	if got, want := find("deliverable", deliverable).Identity, commitment.Identity([]byte(commitmenttest.StagedBody)); got != want {
+		t.Errorf("deliverable identity = %q, want the plan source identity %q", got, want)
+	}
+	if got := find("run", intent.RequestDigest(request)[:32]).Scope; got != deliverable {
+		t.Errorf("run scope = %q, want its bound deliverable %q", got, deliverable)
+	}
+}
+
+func mustBytes(t *testing.T, policy commitment.Policy) []byte {
+	t.Helper()
+	data, err := commitment.Bytes(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 func TestCommitmentApprovalRequiresExactEffects(t *testing.T) {

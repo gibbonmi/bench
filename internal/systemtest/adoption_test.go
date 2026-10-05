@@ -186,6 +186,13 @@ func TestCommitmentBootstrapInstall(t *testing.T) {
 	project.refuseLanding(t, planning, base, "candidate policy has no exact approval")
 	project.approve(t, &planning)
 	project.publish(t, planning, base)
+	// The linked project has no board, so the adoption publishes the policy alone.
+	if got := systemGitOutput(t, project.root, "ls-tree", "--name-only", "main", "--", commitment.PolicyPath, "ROADMAP.md"); got != commitment.PolicyPath {
+		t.Fatalf("published adoption tree = %q, want the policy alone", got)
+	}
+	if _, err := os.Lstat(filepath.Join(project.root, "ROADMAP.md")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("adoption wrote ROADMAP.md in the project root: %v", err)
+	}
 
 	unapproved := project.run(t, delivery.path, "commitment", "start", "--outcome", commitmenttest.DeliveryOutcome, "--request", delivery.request, "--deliverable", "specs/other/spec.md")
 	if unapproved.code != 1 || !strings.Contains(unapproved.stdout, `deliverable "specs/other/spec.md" is not approved`) {

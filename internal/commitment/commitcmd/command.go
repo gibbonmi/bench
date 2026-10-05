@@ -213,9 +213,9 @@ func inventory(store commitrepo.Store) (string, int) {
 	}
 	rows := make([][]string, 0, len(items))
 	for _, item := range items {
-		rows = append(rows, []string{item.Kind, item.ID, item.State, item.Identity})
+		rows = append(rows, []string{item.Kind, item.ID, item.State, item.Identity, item.Scope})
 	}
-	out, err := toon.Table("commitment_inventory", []string{"kind", "id", "state", "identity"}, rows)
+	out, err := toon.Table("commitment_inventory", []string{"kind", "id", "state", "identity", "scope"}, rows)
 	if err != nil {
 		return refusal("inventory", err)
 	}

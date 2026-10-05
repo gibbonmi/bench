@@ -58,6 +58,9 @@ func LoadTree(root string) Tree {
 // migration, and every reader that names a row's file go through it.
 func rowFilePath(id string) string { return RoadmapDir + "/" + id + ".md" }
 
+// RowFilePath is the repo-relative detail owner of one row ID for a caller outside this package.
+func RowFilePath(id string) string { return rowFilePath(id) }
+
 // Diagnostic is one integrity fault that ParseDocument found in the split board. It
 // carries its own path and reason, not a formatted string a caller would have to
 // re-parse. A legal basename may itself contain ": ", the string String returns. A reader

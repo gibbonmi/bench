@@ -78,8 +78,8 @@ type linkedProject struct {
 	install             landRouteInstall
 }
 
-// newLinkedProject links a disposable project that holds one staged spec and a roadmap
-// with a recommended sequence. Its gate is a plain green script, so each landing grades
+// newLinkedProject links a disposable project that holds one staged spec and no board, as
+// `bench setup` leaves it. Its gate is a plain green script, so each landing grades
 // commitment authority and not project checks. The installed broker is the selected
 // executable, bound by the manifest that the land route authenticates.
 func newLinkedProject(t *testing.T) linkedProject {
@@ -94,7 +94,6 @@ func newLinkedProject(t *testing.T) linkedProject {
 	}
 	commitmenttest.Write(t, root, "go.mod", "module example.com/linked\n\ngo 1.22\n")
 	commitmenttest.Write(t, root, linkedDeliverable, commitmenttest.StagedBody)
-	commitmenttest.Write(t, root, "ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. old\n")
 	project := linkedProject{root: root, home: home, wrapper: filepath.Join(root, ".bench", "bin", "bench.sh"), install: newLandRouteInstall(t)}
 	if err := owner.observeSelected(); err != nil {
 		t.Fatal(err)
@@ -109,10 +108,7 @@ func newLinkedProject(t *testing.T) linkedProject {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(project.install.broker, broker, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	project.install.writeManifest(t, landRouteManifest(project.install.broker, "9.9.9", brokerPlatformSuffix(), fileDigest(t, project.install.broker)))
+	project.install.bindBroker(t, broker)
 	return project
 }
 
@@ -177,7 +173,8 @@ func (p linkedProject) propose(t *testing.T, planning *systemLandingWorktree) {
 }
 
 // approve plans the proposed policy and approves that exact plan through the installed
-// wrapper, then commits the staged result.
+// wrapper. The project has no board, so approval stages the committed proposal alone and
+// leaves the planning checkout clean.
 func (p linkedProject) approve(t *testing.T, planning *systemLandingWorktree) {
 	t.Helper()
 	planned := p.run(t, planning.path, "commitment", "plan", "--input", filepath.FromSlash(commitment.PolicyPath))
@@ -189,7 +186,9 @@ func (p linkedProject) approve(t *testing.T, planning *systemLandingWorktree) {
 	if approved.code != 0 {
 		t.Fatalf("adoption approval = (%d, %q, %q)", approved.code, approved.stdout, approved.stderr)
 	}
-	commitSource(t, planning, "stage the approved adoption")
+	if status := systemGitOutput(t, planning.path, "status", "--porcelain", "--untracked-files=all"); status != "" {
+		t.Fatalf("approval without a board changed the planning checkout: %q", status)
+	}
 }
 
 // adopt proposes, approves, and publishes the adoption policy from a fresh planning run.
