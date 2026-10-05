@@ -6017,6 +6017,31 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r9-standards"
           ]
+        },
+        {
+          "id": "dc-c9-r11-standards",
+          "performer": "claude:dc_c9_r11_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r11_standards",
+            "digest": "sha256:fab0666709d7c976720b0fb110d253ff5fe4681cc4a0bb05f2da255213af678d",
+            "excerpt": "DC-C9 round 11 confirming Standards (claude:dc_c9_r11_standards), frozen pair ffc100d5..5fa7fc33, record delta cd4f5e79..HEAD: two low findings, both ask-user.\nThe delta touches only reviews/roadmap-delivery-commitment.md; bench gate-prose passes.\nC9R10-S1, C9R10-S3, and C9R10-S4 close. The initial DC-C9 disposition at record:7743 reads \"Repair cycles consumed: 0 of 2, and the reviewer pre-approved extensions.\"\nC9R11-S1 (low, confidence 5, ask-user): record:7848 says the allowance stands at 2 of 2 and that this correction uses the extension. Under bounded-repair-policy.md:11 and :48 a correction that is not evidence-only is a repair cycle, and :59 requires the consumed count; the DC-C8 precedent at record:7712 records the count with its extension. Whether the round 9 fold also counts is unstated.\nC9R11-S2 (low, confidence 5, ask-user): record:7849 bases a Standards-only confirmation on the evidence-only rule at bounded-repair-policy.md:49, which record:7847 has set aside. The record cites neither :51 (current results from every axis) nor :54; unchanged source digest may keep the round 8 Spec and round 9 Coverage results current.\nAdvice: the C9R8-S1 label appears at record:7827, 7836, and 7845; \"later convention\" at record:7840 is true by commit order but unstated; record:7844 claims closure before confirmation.\nImplementation command contribution: yes. bench-review-implementation.md:231 and bounded-repair-policy.md:46-51 do not cover a record-only correction that changes a disposition at an unchanged source digest.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [
+            "C9R11-S1",
+            "C9R11-S2"
+          ],
+          "supersedes": [
+            "dc-c9-r10-standards"
+          ]
         }
       ]
     }
