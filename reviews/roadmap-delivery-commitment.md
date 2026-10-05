@@ -5707,6 +5707,30 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r4-standards"
           ]
+        },
+        {
+          "id": "dc-c9-r6-standards",
+          "performer": "claude:dc_c9_r6_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r6_standards",
+            "digest": "sha256:164e66414039c645821dc4f69158ce3ac89ef5a94eb0f4c59646aa3ea3d6ed36",
+            "excerpt": "Standards round 6 on DC-C9 (claude:dc_c9_r6_standards) graded the record delta 888b51f2..f94c064e and found one low finding. C9R5-S1 is closed because the undefined \"known issue\" referent is gone. C9R6-S1: record line 7273 says \"FT376 adds that check\", meaning a check that maps each spec clause to a row. Neither roadmap/FT376.md:6-17 nor the FT376 criteria at adoption-proposal.md:75-79 contain such a check. The clause \"such clauses can carry no row\" states a policy that no tracked decision records. Fix: state the decided state without attributing the check to FT376. This is record-only and does not change the source digest. The three r5 entries, the six dc-c9-r10e entries (claude:dc_r10_4, 04b22f5f, pass) and the probe claim match the record. gate-prose passes. Preflight at f94c064e: clean, green=15, not_applicable=0, red=0.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "62e10a4dd8c356043a9db2a857945dadd7af9ae3",
+          "finding_ids": [
+            "C9R6-S1"
+          ],
+          "supersedes": [
+            "dc-c9-r5-standards"
+          ]
         }
       ]
     }
@@ -7270,9 +7294,11 @@ The re-verification session recorded all six planned checks green at the amended
 Spec reports C9R4-P1, a low non-behavioral finding: the coverage map preamble still says that every named test is planned. The orchestrator confirmed it and closes it by a plan commit that restates the preamble as current state.
 That plan commit also assigns a fresh re-verification session, claude:dc_r10_4, because the spec edit changes the source digest. The orchestrator then records the amendment, re-freezes DC-C9, and runs one more reaffirming round.
 
-The Spec reviewer also listed seven clauses with no row and no explicit owning ticket. They predate this delta and are not delta findings. No check maps each spec clause to a row yet. FT376 adds that check; until it lands, such clauses can carry no row.
+The Spec reviewer also listed seven clauses with no row and no explicit owning ticket. They predate this delta and are not delta findings. The round 4 Spec entry lists them, and no check maps each spec clause to a row.
 
 ## DC-C9 reaffirming round 5 disposition
 
 The re-verification session claude:dc_r10_4 recorded all six planned checks green at the C9R4-P1 fix source, and the named probe failed and restored. Spec and Coverage report zero findings, and C9R4-P1 is closed.
 Standards reports C9R5-S1, a low finding: the round 4 disposition named a known issue that no tracked file defines. The orchestrator restates that sentence as the decided state. The edit is record-only, so the source digest does not change; one confirming Standards review grades it.
+
+Round 6 Standards closes C9R5-S1 and reports C9R6-S1, a low finding. The restated sentence named FT376 as the owner of a clause-to-row check, but FT376 has no such check. The orchestrator removes that attribution and states only the decided state.
