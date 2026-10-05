@@ -111,5 +111,15 @@
       ]
     }
   ],
-  "active_milestone": "quality-1"
+  "active_milestone": "quality-1",
+  "deliveries": [
+    {
+      "milestone": "quality-1",
+      "outcome": "ADR26",
+      "binding": "adr-0026-retire-dc",
+      "identity": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774",
+      "source": "a7a70e5df7c9abcaac19048ad745341463e9ef25",
+      "evidence": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774"
+    }
+  ]
 }
