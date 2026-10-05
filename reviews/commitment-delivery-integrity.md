@@ -656,6 +656,71 @@ in `authority_test.go` repeats the `legacy` builder expression.
           "requirement": "t3-conformance",
           "command": "bench test --package ./internal/conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t4-commitment-v1",
+          "performer": "claude:fd_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "93c18dfe15b94618c9651a12fd9761cebd4f4d6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t4",
+            "digest": "sha256:899442f177fc89585baa3c39e5a020bb4a38188e7ec35a56e7d92f6aaf1fad32",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit 0\ntree[1]{target,head,dirty}:\n  FT390,9d224f92399108cbdf8bd1a06906f64cd02fda85,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,6360\nfailures[0]{package,test,line}:\n\n$ bench worktree exec FT390 -- bench probe internal/commitment/authority.go --swap \"slices.SortFunc(sorted, func(a, b SourceBinding) int {\" --with \"_ = (func(a, b SourceBinding) int {\" --package ./internal/commitment --run TestBoundSourcesIgnoresInputOrder\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/authority.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,fail,4\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestBoundSourcesIgnoresInputOrder,\"authority_internal_test.go:15: boundSources lists = [{FT9 ...} {FT1 ...}] ...\"\nnote: bench probe --omit of the sort statement is refused (build fails: \"cmp\" imported and not used), so the probe runs as a swap that leaves the copy unsorted.\n"
+          },
+          "requirement": "t4-commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In boundSources, return the copy without the sort. TestBoundSourcesIgnoresInputOrder must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:fd_t4",
+              "digest": "sha256:899442f177fc89585baa3c39e5a020bb4a38188e7ec35a56e7d92f6aaf1fad32",
+              "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit 0\ntree[1]{target,head,dirty}:\n  FT390,9d224f92399108cbdf8bd1a06906f64cd02fda85,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,6360\nfailures[0]{package,test,line}:\n\n$ bench worktree exec FT390 -- bench probe internal/commitment/authority.go --swap \"slices.SortFunc(sorted, func(a, b SourceBinding) int {\" --with \"_ = (func(a, b SourceBinding) int {\" --package ./internal/commitment --run TestBoundSourcesIgnoresInputOrder\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/authority.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,fail,4\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestBoundSourcesIgnoresInputOrder,\"authority_internal_test.go:15: boundSources lists = [{FT9 ...} {FT1 ...}] ...\"\nnote: bench probe --omit of the sort statement is refused (build fails: \"cmp\" imported and not used), so the probe runs as a swap that leaves the copy unsorted.\n"
+            }
+          }
+        },
+        {
+          "id": "t4-commitment-repository-v1",
+          "performer": "claude:fd_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "93c18dfe15b94618c9651a12fd9761cebd4f4d6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t4",
+            "digest": "sha256:ff3de982962c716bce3687c14b4603fe27eb7fff26ce966b56875b4200ab3b65",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment/repository\nexit 0\ntree[1]{target,head,dirty}:\n  FT390,9d224f92399108cbdf8bd1a06906f64cd02fda85,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,2322\nfailures[0]{package,test,line}:\n"
+          },
+          "requirement": "t4-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-conformance-v1",
+          "performer": "claude:fd_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "93c18dfe15b94618c9651a12fd9761cebd4f4d6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t4",
+            "digest": "sha256:6c177728cc18e6111e6eeba99201af182b5c61ae15cd73287ccbaa6aa3172c19",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/conformance\nexit 0\ntree[1]{target,head,dirty}:\n  FT390,9d224f92399108cbdf8bd1a06906f64cd02fda85,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,41717\nfailures[0]{package,test,line}:\nskips[3]: two unix-socket subjects and one character-device subject (environment capability skips)\n"
+          },
+          "requirement": "t4-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
         }
       ],
       "reviews": []
