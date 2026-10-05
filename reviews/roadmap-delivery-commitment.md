@@ -5942,6 +5942,54 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r5-coverage"
           ]
+        },
+        {
+          "id": "dc-c9-r9-standards",
+          "performer": "claude:dc_c9_r9_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r9_standards",
+            "digest": "sha256:fd2ba5bf2f9874539da2aa10ad45c3d29b0ced0cbe9744940def53ec84acf3fd",
+            "excerpt": "DC-C9 round 9 confirming Standards (claude:dc_c9_r9_standards), frozen pair ffc100d5..5fa7fc33, record tip 0c46fab7: three low findings.\ncheck-current exited 1 with no effect: 0c46fab7 is a record-only commit past the prepared tip d92d1912.\nConfirmed: the C9R8-S1 attribution is correct. 6bfad796 changes only ticket 10; a36ce19d and 5fa7fc33 change only spec.md; in 62e10a4d..5fa7fc33 exactly 4e7decce, d42ced91, efe4a77a, f94c064e, 888b51f2, and 01276c94 change the review record.\nConfirmed: the r8 excerpt digests recompute; supersession and outcomes match internal/reviewrecord/parse.go:91; gate-prose passes; the fixture diff from 3347fdbd is empty.\nC9R9-S1 (native F1; low, confidence 7, ask-user): record:7748 drops the round 8 Spec flag. spec.md:333 says independent review uses Claude Opus at high effort, and spec.md:759 says separate Claude Sonnet sessions at high effort. BENCH.md requires a non-behavioral spec contradiction to be flagged for reviewer veto.\nC9R9-S2 (native F2; low, confidence 5, ask-user): record:7750-7752 labels C9R8-S1 no-op, but the record concedes the error; finding-discipline.md:67 reserves no-op for a refuted concern. A conceded error closed by an appended correction is auto-fix.\nC9R9-S3 (native F3; low, confidence 7, auto-fix): record:7754 names C9R8-C1, but the r8 Coverage excerpt names COV-F1; no sentence maps the two IDs.\nAdvice: record:7750 uses change and record:7751 uses changed for the same kind of commit fact.\nOutside this axis: no final_verification command holds the empty-diff check at spec.md:341; the record prose holds it.\nImplementation command contribution: yes. bench-review-implementation.md:189 names no label for a true defect inside a digest-bound excerpt, and lines 211-217 do not require a native excerpt to use the record finding ID.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [
+            "C9R9-S1",
+            "C9R9-S2",
+            "C9R9-S3"
+          ],
+          "supersedes": [
+            "dc-c9-r8-standards"
+          ]
+        },
+        {
+          "id": "dc-c9-r9-coverage",
+          "performer": "claude:dc_c9_r9_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r9_coverage",
+            "digest": "sha256:75b72007577ab240d987457a916cd630c1f032fc68b9bfc8550eb74f9380909d",
+            "excerpt": "DC-C9 round 9 confirming Coverage (claude:dc_c9_r9_coverage), frozen pair ffc100d5..5fa7fc33, record tip 0c46fab7: zero findings. C9R8-C1 is closed.\ncheck-current exited 1 with no effect: the current tip 0c46fab7 is a record-only commit past the prepared tip d92d1912; the tree is clean.\ngit diff --stat d92d1912 0c46fab7: reviews/roadmap-delivery-commitment.md only, +82/-0: three dc-c9-r8 review entries and the round 8 disposition section.\ngit diff 3347fdbdca6cb69726ce67dedfcf7299bbdbb55e HEAD -- specs/shared-test-fixtures is empty at 0c46fab7; the latest commit on that path is main commit effc651a.\nA later non-main write there changes the source, and the completion gate requires the composed tree to equal the reviewed source, so a re-freeze and a new round would see it.\nThe delta changes no plan JSON, final_verification, command, probe text, Go file, test, or fixture.\nNote, not a finding: the r8 Coverage excerpt names COV-F1, and the record maps it to C9R8-C1 consistently.\nImplementation command contribution: by omission, as round 8 recorded; no further improvement.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r8-coverage"
+          ]
         }
       ]
     }
@@ -7751,6 +7799,17 @@ Standards reports C9R8-S1, a low finding. The dc-c9-r10f excerpts say that the t
 Record commits 01276c94, 888b51f2, f94c064e, efe4a77a, d42ced91, and 4e7decce changed the review record. The excerpts are digest-bound, and their conclusion is true: no Go, test, owner, or proposal file changed.
 The orchestrator closes C9R8-S1 as no-op with this correct attribution. This call is open to reviewer veto.
 
-Coverage reports C9R8-C1, a low finding. The fence entry admits the whole specs/shared-test-fixtures directory, and no check enforces its fold-only scope.
+Coverage reports C9R8-C1 (native COV-F1), a low finding. The fence entry admits the whole specs/shared-test-fixtures directory, and no check enforces its fold-only scope.
 The orchestrator closes C9R8-C1 as no-op. At this record, the diff of specs/shared-test-fixtures from 3347fdbdca6cb69726ce67dedfcf7299bbdbb55e is empty, and final reconciliation repeats that check at the landing source.
 One confirming round on Standards and Coverage grades these dispositions.
+
+## DC-C9 fold round 9 disposition
+
+Coverage reports zero findings, and C9R8-C1 is closed. Standards confirms the C9R8-S1 attribution and reports three low findings.
+C9R9-S2: the record concedes the C9R8-S1 error, so no-op is the wrong label. C9R8-S1 is auto-fix, and the appended attribution in the round 8 disposition closes it.
+C9R9-S3: the round 8 Coverage excerpt names the finding COV-F1. The round 8 disposition now maps COV-F1 to C9R8-C1.
+
+C9R9-S1: the spec contradicts itself on the independent review line. The spec section on review assignment names Claude Opus at high effort, and its last section names Claude Sonnet at high effort.
+The contradiction is non-behavioral. The run obeys the current convention, Claude Opus at high effort, which the reviewer directed. This call is open to reviewer veto.
+
+These corrections change no source identity, observation, or verification claim. One confirming Standards review grades them.
