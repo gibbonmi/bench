@@ -40,7 +40,7 @@ This suggestion is optional advice and has no repair disposition.
 {
   "version": 1,
   "spec": "specs/roadmap-delivery-commitment/spec.md",
-  "plan_digest": "sha256:9b07024691c1844dc82c07e5e4aa060a7760572380fa064ade10af7ff9676780",
+  "plan_digest": "sha256:c193118928271044fec821847a01bdb27e4e92ed977577c41555407d5286eaac",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -5358,6 +5358,36 @@ This suggestion is optional advice and has no repair disposition.
           "DC-C8"
         ]
       }
+    },
+    {
+      "from": "sha256:9b07024691c1844dc82c07e5e4aa060a7760572380fa064ade10af7ff9676780",
+      "to": "sha256:c193118928271044fec821847a01bdb27e4e92ed977577c41555407d5286eaac",
+      "chunk_ids": {
+        "DC-C1": [
+          "DC-C1"
+        ],
+        "DC-C2": [
+          "DC-C2"
+        ],
+        "DC-C3": [
+          "DC-C3"
+        ],
+        "DC-C4": [
+          "DC-C4"
+        ],
+        "DC-C5": [
+          "DC-C5"
+        ],
+        "DC-C6": [
+          "DC-C6"
+        ],
+        "DC-C7": [
+          "DC-C7"
+        ],
+        "DC-C8": [
+          "DC-C8"
+        ]
+      }
     }
   ]
 }
@@ -6058,3 +6088,11 @@ Standards and Coverage report zero findings at 62cb6847afa3d97443abbac73f48a6453
 Three advice items stay open. The persisted drop has no test. Admission does not observe the delivered-scope filter alone. The slot rows cover only complete and purged runs.
 
 Repair cycles consumed: 3, one of them an extension. The final source is 62cb6847afa3d97443abbac73f48a645323f5e16. The chunk checkpoint remains required before ticket 10.
+
+## DC-C8 checkpoint and DC-C9 plan
+
+The DC-C8 checkpoint passed at record tip ffc100d510e93a3d73fe3c5086af2a94d7a7e343 with eight capability skips. The final DC-C8 source is 298f18ec4ce4bc75fc4da7754f908df694d825b4.
+A seam correction after the first freeze required a re-freeze, rerun verification, and a reaffirming round on all three axes. A learning records this order rule.
+
+On 2026-10-04 the reviewer set the first milestone to FT376, FT373, and FT349, in that order. The September 29 survey rows stay uncommitted intake.
+Plan commit ac9213d7e58588b1bce5aa262e4024f36ba07c2e applies this decision to the spec, decision 14, and ticket 10, and it assigns ticket 10 to claude:dc_t10.
