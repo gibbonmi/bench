@@ -40,7 +40,7 @@ This suggestion is optional advice and has no repair disposition.
 {
   "version": 1,
   "spec": "specs/roadmap-delivery-commitment/spec.md",
-  "plan_digest": "sha256:a8b49e5512df72b1a2b4bb27b0471364c8e1337992f23829996c7812799ff230",
+  "plan_digest": "sha256:448c2e6665f7218dc2f6ddb6e1dd09aeb96df6571524428da4df6a0372a9df3d",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -4825,14 +4825,16 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C9",
       "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
-      "tip": "1d072da306aa37c9b0b392770725193f7ca2e6ed",
-      "plan_digest": "sha256:18caace7a7e155a3bc181682b45abcfb509a4f6d48c716a723bb9f35c1daf255",
-      "source_digest": "6aeb148a0c65a511ba4d46d86353be09b1a98851",
+      "tip": "f5b2648c617f66332d405ac7f97a942170546a0f",
+      "plan_digest": "sha256:448c2e6665f7218dc2f6ddb6e1dd09aeb96df6571524428da4df6a0372a9df3d",
+      "source_digest": "cddf16fd2afa2fe8e7b89a3dfd019811179f0c4f",
       "acceptance_rows": [
         "DC51",
         "DC52",
         "DC53",
-        "DC63"
+        "DC63",
+        "DC85",
+        "DC86"
       ],
       "verification": [
         {
@@ -5565,6 +5567,39 @@ This suggestion is optional advice and has no repair disposition.
     {
       "from": "sha256:18caace7a7e155a3bc181682b45abcfb509a4f6d48c716a723bb9f35c1daf255",
       "to": "sha256:a8b49e5512df72b1a2b4bb27b0471364c8e1337992f23829996c7812799ff230",
+      "chunk_ids": {
+        "DC-C1": [
+          "DC-C1"
+        ],
+        "DC-C2": [
+          "DC-C2"
+        ],
+        "DC-C3": [
+          "DC-C3"
+        ],
+        "DC-C4": [
+          "DC-C4"
+        ],
+        "DC-C5": [
+          "DC-C5"
+        ],
+        "DC-C6": [
+          "DC-C6"
+        ],
+        "DC-C7": [
+          "DC-C7"
+        ],
+        "DC-C8": [
+          "DC-C8"
+        ],
+        "DC-C9": [
+          "DC-C9"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a8b49e5512df72b1a2b4bb27b0471364c8e1337992f23829996c7812799ff230",
+      "to": "sha256:448c2e6665f7218dc2f6ddb6e1dd09aeb96df6571524428da4df6a0372a9df3d",
       "chunk_ids": {
         "DC-C1": [
           "DC-C1"
