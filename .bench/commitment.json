@@ -18,9 +18,9 @@
           ],
           "sources": [
             {
-              "id": "adr-0026-retire-dc",
-              "path": "specs/adr-0026-retire-dc",
-              "identity": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774"
+              "id": "FT389",
+              "path": "roadmap/FT389.md",
+              "identity": "sha256:a75c563407db1334fb21fc211ac62adba6612444e9b66591ef2eb29bbbc33a1a"
             }
           ],
           "deliverables": [
