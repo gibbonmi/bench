@@ -4890,7 +4890,77 @@ This suggestion is optional advice and has no repair disposition.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dc-c9-r1-spec",
+          "performer": "claude:dc_c9_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6aeb148a0c65a511ba4d46d86353be09b1a98851",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_spec",
+            "digest": "sha256:f0e262cffe4aeb1ef27e7d6506365e154506df23002c237719b363bea6ecf82f",
+            "excerpt": "Spec: 4 findings\nReviewer claude:dc_c9_spec, opus high. Frozen chunk ffc100d5..1d072da3, evidence sha256:c6b01c5666ad3d7a44306f12ee3ca335b388d242bc4bce83ceb068f2888ed8e6.\nRows: DC51 met; DC52 met only on a seeded roadmap; DC63 met; DC53 met for membership, order, and continuations (FT376, FT373, FT349 blobs and history verified; identities recomputed).\nC9-P1 (high, ask-user, owner ticket 01): a freshly linked project cannot adopt. bench setup creates no ROADMAP.md (internal/adopt/init.go:79-83); Store.stage snapshots ROADMAP.md with allowAbsent=false (repository.go:251, :284-291); roadmap.ProjectSequence refuses a missing section (sequence_projection.go:47-50). Spec 263, 93, 130, DC68, DC52. The fixture hides it (owner_landing_fixture_test.go:97). Spec violation, not a material shortfall; repair behavior (skip projection or create the section) not decided by the spec.\nC9-P2 (medium, auto-fix, owner ticket 01): inventory identities cannot feed plan. Inventory digests the row body (repository.go:51); plan checks the normalized file identity (sources.go:31-39); deliverable rows put the roadmap id in the identity cell (repository.go:59); run rows show no scope (repository.go:67, commitcmd/command.go:214-218). Spec 145, 127, 266. Repair inventory to use the SourceIdentity owner.\nC9-P3 (medium, auto-fix, owner ticket 10): FT376 criteria in adoption-proposal.md:73-74 drop three obligations of roadmap/FT376.md (:14, :16, :17) while :30 claims the complete obligation; FT349.floor (:89) may omit root conformance and the cmd/bench check (FT349.md:4-7). Ticket 10:16-18, spec 247, 257.\nC9-P4 (low, auto-fix via plan commit): decision-14 occurrences left stale: decisions/roadmap-delivery-commitment.md:38 and Sources :71-76; tickets/16.md:12. Spec 632.\nRulings: probe removal weakens no guarantee; author defect (a) = C9-P1; (b) = C9-P2; six closed decisions hold.\nUnowned (sample): 156, 243/712, 127, 288, 287, 292, 263-264, 266, 291 (commit-time sequence refusal).\nAdvice: Occurrence line format vs identity after adoption; source-order decision needs a learning; DC51 state check after refused start; 83 seam cells still say planned (final reconciliation should cite); spec 331 vs 747 reviewer model contradiction; rowless delivery without ROADMAP.md untested; title-only roadmap refusal could name the remedy.\n"
+          },
+          "axis": "Spec",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "1d072da306aa37c9b0b392770725193f7ca2e6ed",
+          "finding_ids": [
+            "C9-P1",
+            "C9-P2",
+            "C9-P3",
+            "C9-P4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c9-r1-standards",
+          "performer": "claude:dc_c9_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6aeb148a0c65a511ba4d46d86353be09b1a98851",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_standards",
+            "digest": "sha256:3c1a5175317f53178def30ccfb8f717a1f16dd480a3bdad43414d88a93612f93",
+            "excerpt": "Standards: 1 findings\nReviewer claude:dc_c9_standards, opus high. Frozen chunk ffc100d5..1d072da3, evidence sha256:c6b01c5666ad3d7a44306f12ee3ca335b388d242bc4bce83ceb068f2888ed8e6.\nFence held: 7f7e90d0 writes adoption_test.go, owner_landing_fixture_test.go, adoption-proposal.md.\nC9-S1 (low): internal/systemtest/owner_landing_fixture_test.go:108-115 repeats the broker swap and manifest rebind of land_route_test.go:257-260 and hard-codes the install version \"9.9.9\" that newLandRouteInstall owns (land_route_test.go:97,108). The wrapper refuses a version mismatch (bin/bench.sh:437-439). Rule: AGENTS.md one source per fact. Suggested fix: a landRouteInstall method or one version constant; needs land_route_test.go in ticket 10 Writes.\nROADMAP.md fixture text: advice (incidental; commitmenttest.Repo writes a policy).\nAdvice: land() repeats the routing-override list of landRouteEnv; git identity loop repeated; regexp compiled per call (systemTOONCell exists); propose receiver unused; inventory identity cell is a different digest from the plan source identity (repository.go:51); ticket 10 Writes labels the review record (new).\nComposition, comments, file size, test hygiene, STE prose, and CLI grammar pass.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "1d072da306aa37c9b0b392770725193f7ca2e6ed",
+          "finding_ids": [
+            "C9-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dc-c9-r1-coverage",
+          "performer": "claude:dc_c9_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6aeb148a0c65a511ba4d46d86353be09b1a98851",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_coverage",
+            "digest": "sha256:c21301c1d99ffc66de67dde49c2f9795a8252c1f785149f64d76dacd7b60bb91",
+            "excerpt": "Coverage: 1 findings\nReviewer claude:dc_c9_coverage, opus high. Frozen chunk ffc100d5..1d072da3, evidence sha256:c6b01c5666ad3d7a44306f12ee3ca335b388d242bc4bce83ceb068f2888ed8e6. Ran bench test --check system at 0f7ec378: pass.\nC9-C1 (high, blocking): owner_landing_fixture_test.go:97 writes a ROADMAP.md with a recommended sequence before bench setup. bench setup writes no ROADMAP.md (internal/adopt/init.go:78-82). Store.Approve -> stage (repository.go:181) snapshots ROADMAP.md with allowAbsent=false (:251, :286-290) and calls roadmap.ProjectSequence (:259), which refuses a missing section (sequence_projection.go:48-49). The landing side already supports a project with no board (candidate.go:158-159, TestCommitmentRowlessAdmissionWithoutBoard, DC68 spec.md:457). So an ordinary linked project can never approve, contradicting DC52 and story 27. Missing test: bootstrap on a project with no ROADMAP.md through propose, plan, approve, publish, start. Fix touches repository.go, outside ticket 10 Writes.\nVerdicts: DC51 pass; DC52 pass on its phases but blocked by C9-C1 for ordinary linked projects; DC53 pass (FT376, FT373, FT349 in decision 14 order, blobs 2aa9ea81, a54205e4, a35a5e55, history only drains); DC63 pass (refs unchanged, broker probe lands the mutant).\nNo weakened test. Entries match the plan.\nAdvice: DC51 unbound commit should assert HEAD unchanged; DC52 phase 3 has two guards with a board; approved start checks only exit 0; record source_digest binding not derived; canonical source order still open.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "1d072da306aa37c9b0b392770725193f7ca2e6ed",
+          "finding_ids": [
+            "C9-C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -6199,3 +6269,16 @@ A seam correction after the first freeze required a re-freeze, rerun verificatio
 
 On 2026-10-04 the reviewer set the first milestone to FT376, FT373, and FT349, in that order. The September 29 survey rows stay uncommitted intake.
 Plan commit ac9213d7e58588b1bce5aa262e4024f36ba07c2e applies this decision to the spec, decision 14, and ticket 10, and it assigns ticket 10 to claude:dc_t10.
+
+## DC-C9 initial review disposition
+
+Standards has one finding, Spec has four, and Coverage has one. C9-C1 and C9-P1 are the same defect. A read-only Fable consultant at high effort set the dispositions, and no finding needs a reviewer decision.
+Repair cycles consumed: 0 of 2, and the reviewer pre-approved extensions. One repair session under ticket 10 follows the bench-debug procedure.
+
+Ticket 10 owns every repair, because the defects grade its own rows. A plan commit expands its `Writes:` line to the exact repair files and adds rows DC85 and DC86. Repairs under tickets 01 or 09 would reopen accepted chunks.
+
+- C9-C1 and C9-P1: auto-fix. Approval in a project with no board stages the policy alone, as the landing side already does. The system fixture drops its seeded roadmap. This choice is open to reviewer veto.
+- C9-P2: auto-fix. Inventory reports the source identity that the plan binds, and a run row names its bound deliverable or scope. The new scope column is open to reviewer veto.
+- C9-P3: auto-fix. The proposal adds the three missing FT376 criteria and states the full FT349 check floor.
+- C9-S1: auto-fix. One version constant and one broker binding helper serve both fixtures.
+- C9-P4: closed by the plan commit. The decisions index and decision 16 state the reviewer's first milestone. The decision 16 wording is open to reviewer veto.
