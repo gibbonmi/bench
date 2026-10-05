@@ -18,11 +18,11 @@ Third, the plan identity hashes the plan sources in traversal order. `BuildPlan`
 
 ## Solution
 
-`bench commitment plan` refuses a proposal that approves a deliverable with no obligation for an outcome that owns sources. The refusal names the outcome and the deliverable. A legacy policy that already holds such a binding stays readable, so a plan can repair it. A completion landing of that legacy binding refuses before it publishes, and its refusal names `bench commitment plan --input <file>`.
+`bench commitment plan` refuses a proposal that adds or changes a deliverable with no obligation for an outcome that owns sources. The refusal names the outcome and the deliverable. A legacy policy that already holds such a binding stays readable. A plan that keeps that binding byte for byte still plans, so an unrelated plan and a repair plan both work. A completion landing of that legacy binding refuses before it publishes, and its refusal names `bench commitment plan --input <file>`.
 
 A plan binds the content that its proposal keeps open, and each unsettled outcome source that its proposal drops. It does not bind a deliverable that the proposal no longer approves. A plan that drops a deleted deliverable therefore plans, and its approval commits.
 
-The plan sorts its sources in one canonical order before it hashes them. The plan receipt lists the sources in that same order.
+The plan sorts its sources once, in one canonical order, and hashes that sorted list. The plan receipt lists the sources in that same order.
 
 ## User stories
 
@@ -56,7 +56,7 @@ An obligation-free binding is a deliverable binding that lists no obligation, in
 14. As a reviewer, I want a deliverable with a recorded delivery fact to stay unbound, so that a settled deliverable never blocks a later plan.
 15. As a reviewer, I want a kept unsettled deliverable to stay bound at `main`, so that a changed or deleted one still refuses the plan.
 16. As a reviewer, I want a plan to re-approve a changed deliverable at its new identity, so that it needs no old bytes.
-17. As a worker, I want the commit of an approved removal to pass candidate authorization without the removed deliverable, so that the approval can land.
+17. As a worker, I want an approved drop or removal to pass candidate authorization without the deliverable on `main`, so that the approval can land.
 
 ### The plan identity is canonical
 
@@ -64,10 +64,15 @@ An obligation-free binding is a deliverable binding that lists no obligation, in
 19. As a reviewer, I want the plan to list its sources in that same canonical order, so that the receipt and the identity agree.
 20. As a reviewer, I want two sources with the same identifier to order by path, so that the order is total across outcomes.
 
+### A plan keeps a legacy binding and checks every milestone
+
+21. As a reviewer, I want a plan that keeps a legacy obligation-free binding unchanged to plan, so that a legacy policy blocks no plan.
+22. As a reviewer, I want a plan to refuse a new obligation-free binding in an inactive milestone, so that no activation makes it landable.
+
 ### Reviewed exclusions
 
-21. As a reviewer, I want `bench commitment start` to keep admitting a legacy obligation-free binding, so that this spec changes only the plan and the closure.
-22. As a reviewer, I want a re-pinned roadmap row source to keep its plan behavior, so that this spec does not reopen the row-identity rule.
+23. As a reviewer, I want `bench commitment start` to keep admitting a legacy obligation-free binding, so that this spec changes only the plan and the closure.
+24. As a reviewer, I want a re-pinned roadmap row source to keep its plan behavior, so that this spec does not reopen the row-identity rule.
 
 ## Implementation decisions
 
@@ -75,17 +80,21 @@ An obligation-free binding is a deliverable binding that lists no obligation, in
 
 One unexported predicate in `internal/commitment` decides whether a binding is obligation-free: the binding lists no obligation, and its outcome owns at least one source. Both enforcement points call that predicate. Rows FD1 to FD11 reach it.
 
-`BuildPlan` refuses a proposed policy that holds an obligation-free binding. `BuildPlan` is the one plan derivation: `Store.Plan` calls it before it records a receipt, and `approvedTransition` calls it again at the commit. The refusal names the outcome identifier, the binding identifier, and the words `names no obligation`. Rows FD1, FD2, FD3, and FD5 reach it through `BuildPlan` and the plan command.
+`BuildPlan` refuses each obligation-free binding of the proposed policy that is new or changed against the current policy. A binding is retained when the current policy holds the same outcome with an equal binding that is already obligation-free. A retained binding plans, and the check covers every milestone.
+
+`BuildPlan` is the one plan derivation: `Store.Plan` calls it before it records a receipt, and `approvedTransition` calls it again at the commit. The refusal names the outcome identifier, the binding identifier, and the words `names no obligation`. Rows FD1, FD2, FD3, FD5, FD23, FD24, and FD26 reach it through `BuildPlan` and the plan command.
 
 `Deliver` refuses an approved obligation-free binding with an error. The error names the deliverable path, the outcome, the words `names no obligation`, and `bench commitment plan --input <file>`. The current early return that hands back the policy unchanged goes away for that case. `Deliver` keeps the unchanged return for a path that the active milestone does not approve. `Store.Closure` returns the `Deliver` error, so `published.Tree`, `closedPolicy`, and `completionClosure` each refuse. Rows FD6 to FD10 reach it.
 
 Contestable call, for reviewer veto: the source offers a plan refusal or a landing refusal. This spec takes both, through one predicate, because the kit ships to linked repositories. A plan refusal alone leaves a legacy binding to land silently. A landing refusal alone lets a plan approve a build that cannot land.
 
+Contestable call, for reviewer veto: the plan refusal is scoped to new or changed bindings. An unscoped check refuses every later plan on a legacy policy, the repair plan included. `Deliver` stays the landing-time guard for a retained binding, so a retained binding still cannot land without a fact.
+
 `Validate` does not take the rule. `Parse` calls `Validate` on every policy read, so a parse-time rule makes a legacy policy unreadable. The plan that repairs it reads that policy first. Row FD9 pins this.
 
 ### Plan sources
 
-`BuildPlan` binds the unsettled sources and the unsettled deliverables of the proposed policy. From the current policy it adds only each unsettled outcome source that the proposed policy does not hold. The comparison uses the whole binding, as it does today. It no longer adds a current-policy deliverable. Rows FD12 to FD19 reach this.
+`BuildPlan` binds the unsettled sources and the unsettled deliverables of the proposed policy. From the current policy it adds only each unsettled outcome source that the proposed policy does not hold. The comparison uses the whole binding, as it does today. It no longer adds a current-policy deliverable. Rows FD12 to FD19 and FD25 reach this.
 
 The removal binding of `TestCommitmentRemovalBindsRemovedSource` stays: a removed outcome's row is still bound. A deliverable is the work product, and the row is the obligation, so only the row binds a removal.
 
@@ -93,16 +102,16 @@ A settled deliverable is one with a recorded delivery fact, as `Unsettled` defin
 
 ### Canonical order
 
-One unexported function in `authority.go` returns the plan sources in canonical order. The order compares the identifier, then the path, then the identity, each as a Go string, which is byte order. `BuildPlan` stores that order in `Plan.Sources`. The plan identity derivation sorts its own input through the same function before it hashes, so the identity cannot depend on the caller's order. Rows FD20, FD21, and FD22 reach it.
+One new unexported function in `authority.go`, `boundSources`, owns the canonical order. It sorts a copy of the plan sources once and returns the sorted list and the identity of its encoding. The order compares the identifier, then the path, then the identity, each as a Go string, which is byte order. `BuildPlan` stores the sorted list in `Plan.Sources` and puts the returned identity into the bound plan input. Today no separate identity function exists, because `BuildPlan` encodes the sources inline. Rows FD20, FD21, and FD22 reach `boundSources`.
 
-The change moves each plan identity whose sources were out of canonical order. A receipt approved before this change and not yet committed no longer matches at the commit. The commit then refuses with its existing `candidate policy has no exact approval; run bench commitment plan --input <file>` message, and the reviewer plans again.
+Two causes move an existing plan identity: the canonical order, and the smaller source set of the plan-sources decision. A receipt approved before this change and not yet committed can therefore fail to match at the commit. The commit then refuses with its existing `candidate policy has no exact approval; run bench commitment plan --input <file>` message, and the reviewer plans again.
 
 ## Implementation chunks
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| FD-C1 / tickets pending the slicing delegate | A plan refuses an obligation-free binding, and a completion landing of a legacy one refuses before it publishes. | FD1, FD2, FD3, FD4, FD5, FD6, FD7, FD8, FD9, FD10, FD11 | `bench test --package ./internal/commitment`, `bench test --package ./internal/commitment/repository`, `bench test --package ./internal/worktree` | yes |
-| FD-C2 / tickets pending the slicing delegate | A plan binds only what its proposal keeps open and the removed rows, in one canonical order. | FD12, FD13, FD14, FD15, FD16, FD17, FD18, FD19, FD20, FD21, FD22 | `bench test --package ./internal/commitment`, `bench test --package ./internal/commitment/repository` | no |
+| FD-C1 / tickets pending the slicing delegate | A plan refuses an obligation-free binding, and a completion landing of a legacy one refuses before it publishes. | FD1, FD2, FD3, FD4, FD5, FD6, FD7, FD8, FD9, FD10, FD11, FD23, FD24, FD26 | `bench test --package ./internal/commitment`, `bench test --package ./internal/commitment/repository`, `bench test --package ./internal/worktree` | yes |
+| FD-C2 / tickets pending the slicing delegate | A plan binds only what its proposal keeps open and the removed rows, in one canonical order. | FD12, FD13, FD14, FD15, FD16, FD17, FD18, FD19, FD20, FD21, FD22, FD25 | `bench test --package ./internal/commitment`, `bench test --package ./internal/commitment/repository` | no |
 
 Both chunks write `internal/commitment/authority.go`, so FD-C2 starts after FD-C1 commits green. The slicing delegate writes the ticket basenames, the ticket graph, and the completion plan.
 
@@ -113,7 +122,7 @@ Both chunks write `internal/commitment/authority.go`, so FD-C2 starts after FD-C
 - The repository rules attach at `Store.Plan`, `Store.Closure`, and `Store.AuthorizeCandidate`, after the precedent of `TestCommitmentPlanAfterDelivery`, `TestCommitmentLightClosure`, and `TestCommitmentRemovalBindsRemovedSource`.
 - The command rows attach at `commitcmd.Command`, after the precedent of `TestCommitmentLiteralInput`.
 - The landing rows attach at `bench worktree land` through the `deliveryRoute` fixture, after the precedent of `TestCommitmentTicketsOnlyClosure`.
-- The canonical-identity row is an internal test in package `commitment`, because no public input can change the traversal order while it keeps every bound fact.
+- The canonical-identity row is an internal test of `boundSources`, because no public input changes the traversal order and keeps every bound fact.
 - The package tests run in the gate's `test` phase.
 
 ### Seam diagram
@@ -143,7 +152,7 @@ Both chunks write `internal/commitment/authority.go`, so FD-C2 starts after FD-C
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| FD1 | 1 | `BuildPlan` returns an error that contains `names no obligation` for a proposal whose outcome owns `FT1` and approves a deliverable with no `obligations` key | planned TestCommitmentPlanRefusesObligationFreeBinding in internal/commitment/authority_test.go | The current `BuildPlan` returns a plan for this proposal. |
+| FD1 | 1 | `BuildPlan` returns an error that contains `names no obligation` for a proposal whose outcome owns `FT1` and approves a deliverable with no `obligations` key, against a current policy without that binding | planned TestCommitmentPlanRefusesObligationFreeBinding in internal/commitment/authority_test.go | The current `BuildPlan` returns a plan for this proposal. |
 | FD2 | 3 | `bench commitment plan --input` exits 1 for a proposal whose binding holds `"obligations": []` and whose staged spec exists at `main` | planned TestCommitmentPlanCommandRefusesEmptyObligations in internal/commitment/command_test.go | A check that tests only for an absent key lets the empty list plan. |
 | FD3 | 2 | The FD1 refusal text contains the outcome identifier and the binding identifier | planned TestCommitmentPlanRefusesObligationFreeBinding in internal/commitment/authority_test.go | A generic refusal leaves the reviewer to search the policy for the binding. |
 | FD4 | 4 | `BuildPlan` returns a plan for a proposal whose rowless outcome approves a deliverable with no obligation | planned TestCommitmentPlanRefusesObligationFreeBinding in internal/commitment/authority_test.go | A predicate that ignores the outcome sources refuses every rowless plan. |
@@ -159,15 +168,19 @@ Both chunks write `internal/commitment/authority.go`, so FD-C2 starts after FD-C
 | FD14 | 12 | `Store.Plan` returns a plan for a proposal that removes outcome `B` when a later `main` commit deleted the folder that `B` approves | planned TestCommitmentPlanSurvivesRemovedDeliverable in internal/commitment/repository/plan_after_delivery_test.go | The current plan binds the removed outcome's deliverable and refuses at `main`. |
 | FD15 | 13 | Approval of a removal refuses when the removed outcome's row changed after the plan | `internal/commitment/removed_source_test.go` (`TestCommitmentRemovalBindsRemovedSource`) | A source set that drops every current-policy source drops the removed row too. |
 | FD16 | 14 | `Store.Plan` returns a plan after a delivery flips the delivered spec | `internal/commitment/repository/plan_after_delivery_test.go` (`TestCommitmentPlanAfterDelivery`) | A source set that binds settled deliverables refuses at the flipped spec. |
-| FD17 | 15 | `Store.Plan` refuses a proposal that keeps a tickets-only binding whose folder a later `main` commit deleted | planned TestCommitmentPlanSurvivesRemovedDeliverable in internal/commitment/repository/plan_after_delivery_test.go | A fix that skips every deliverable at `main` lets a kept deleted folder plan. |
+| FD17 | 15 | Approval refuses a plan that keeps a tickets-only binding when a `main` commit after the plan deletes that folder | planned TestCommitmentApprovalBindsKeptDeliverable in internal/commitment/removed_source_test.go | `Store.Approve` reads only `Plan.Sources`, so a fix that drops every deliverable from the plan sources lets the approval stage. |
 | FD18 | 16 | `Store.Plan` returns a plan for a proposal that approves a changed staged spec at its new `main` identity | planned TestCommitmentPlanSurvivesRemovedDeliverable in internal/commitment/repository/plan_after_delivery_test.go | The current plan binds the old identity and refuses at `main`. |
 | FD19 | 17 | After the FD12 plan is approved, `Store.AuthorizeCandidate` of the planning checkout's committed tree returns no error | planned TestCommitmentPlanSurvivesRemovedDeliverable in internal/commitment/repository/plan_after_delivery_test.go | `approvedTransition` recomputes `BuildPlan`, so a source set that differs at the commit refuses there. |
-| FD20 | 18 | The plan identity derivation returns one identity for the sources `FT9`, `FT1` and for the sources `FT1`, `FT9` | planned TestPlanIdentityIgnoresSourceOrder in internal/commitment/authority_internal_test.go | A hash over the caller's order returns two identities. |
-| FD21 | 19 | `BuildPlan` lists `FT1` before `FT9` when outcome `A` owns `FT9` and the later outcome `B` owns `FT1` | planned TestCommitmentPlanSourcesAreCanonical in internal/commitment/authority_test.go | A sort applied only inside the hash leaves the receipt in traversal order. |
+| FD20 | 18 | `boundSources` returns one sorted list and one identity for the inputs `FT9`, `FT1` and `FT1`, `FT9` | planned TestBoundSourcesIgnoresInputOrder in internal/commitment/authority_internal_test.go | A hash over the caller's order returns two identities. |
+| FD21 | 19 | `BuildPlan` lists `FT10` before `FT9` when outcome `A` owns `FT9` and the later outcome `B` owns `FT10` | planned TestCommitmentPlanSourcesAreCanonical in internal/commitment/authority_test.go | Traversal order and numeric order each put `FT9` first, and only byte order puts `FT10` first. |
 | FD22 | 20 | `BuildPlan` lists the deliverable `spec` at `specs/a/spec.md` before the deliverable `spec` at `specs/b/spec.md` when outcome `A` approves the `b` path | planned TestCommitmentPlanSourcesAreCanonical in internal/commitment/authority_test.go | A sort on the identifier alone leaves equal identifiers in traversal order. |
+| FD23 | 21 | `BuildPlan` returns a plan for a proposal that keeps an obligation-free binding of the current policy byte for byte and adds outcome `C` | planned TestCommitmentPlanRefusesObligationFreeBinding in internal/commitment/authority_test.go | An unscoped check refuses every plan on a legacy policy. |
+| FD24 | 21 | `BuildPlan` returns an error that contains `names no obligation` for a proposal that keeps the legacy binding at a changed identity | planned TestCommitmentPlanRefusesObligationFreeBinding in internal/commitment/authority_test.go | A retention test by binding identifier alone lets a changed binding plan. |
+| FD25 | 17 | After the FD14 plan is approved, `Store.AuthorizeCandidate` of the planning checkout's committed tree returns no error | planned TestCommitmentPlanSurvivesRemovedDeliverable in internal/commitment/repository/plan_after_delivery_test.go | `approvedTransition` recomputes `BuildPlan`, so a removal that binds the deleted folder refuses at the commit. |
+| FD26 | 22 | `BuildPlan` returns an error that contains `names no obligation` for a new obligation-free binding in an inactive milestone | planned TestCommitmentPlanRefusesObligationFreeBinding in internal/commitment/authority_test.go | A check copied from the active-milestone scope of `Deliver` lets the binding plan. |
 
-Not covered: story 21 — a reviewed exclusion; the edge inventory states why it is safe.
-Not covered: story 22 — a reviewed exclusion; Out of scope prices it.
+Not covered: story 23 — a reviewed exclusion; the edge inventory states why it is safe.
+Not covered: story 24 — a reviewed exclusion; Out of scope prices it.
 
 ### Edge inventory
 
@@ -176,6 +189,8 @@ The hostile-input classes of `projects/benchkit.md` reach no new parse surface h
 **Won't handle** — `bench commitment start` of a legacy obligation-free binding — only a legacy policy holds one, and FD6 refuses its landing with the repair command.
 
 **Won't handle** — numeric order of row identifiers, so `FT10` sorts before `FT9` — byte order is one total order, and FD21 observes it.
+
+The two checks have different milestone scopes, by decision. `Deliver` checks only the active milestone, because `activeDeliverable` resolves a path only there. A landing of an inactive-milestone deliverable records no fact and refuses nothing, as FD10 shows. `BuildPlan` checks every milestone, because a later activation makes an inactive binding landable. FD26 pins that scope.
 
 **Won't handle** — an uncommitted receipt approved before this change — its commit refuses with the existing plan guidance, and FD19 shows that a fresh plan commits.
 
@@ -191,6 +206,7 @@ The hostile-input classes of `projects/benchkit.md` reach no new parse surface h
 - `internal/commitment/delivery.go`
 - `internal/commitment/delivery_test.go`
 - `internal/commitment/parse_test.go`
+- `internal/commitment/removed_source_test.go`
 - `internal/commitment/command_test.go`
 - `internal/commitment/commitmenttest/`
 - `internal/commitment/repository/closure_test.go`
@@ -210,11 +226,11 @@ The hostile-input classes of `projects/benchkit.md` reach no new parse surface h
 
 | source sentence | rows |
 | --- | --- |
-| "A plan that binds a deliverable to an outcome with sources lists the obligations that the deliverable closes." | FD1, FD2, FD3, FD4, FD5 |
+| "A plan that binds a deliverable to an outcome with sources lists the obligations that the deliverable closes." | FD1, FD2, FD3, FD4, FD5, FD23, FD24, FD26 |
 | "Today the plan accepts an empty obligation list." | FD1, FD2 |
 | "The completion landing then records no delivery fact, because `Deliver` returns the policy unchanged." | FD6, FD8, FD11 |
 | "Either the plan refuses that binding, or the completion landing refuses a completion that records no fact." | FD1 to FD11; the contestable call takes both sides |
-| "A plan that settles or removes a deliverable does not need that deliverable on `main`." | FD12, FD13, FD14, FD16, FD19 |
+| "A plan that settles or removes a deliverable does not need that deliverable on `main`." | FD12, FD13, FD14, FD16, FD19, FD25 |
 | "Today `BuildPlan` adds each unsettled source of the current policy, and the source check reads each one at `main`." | FD13, FD15, FD17 |
 | "A deleted deliverable folder then blocks every plan." | FD12, FD14 |
 | "The plan identity sorts its policy sources in one canonical order." | FD20, FD21, FD22 |
@@ -230,8 +246,8 @@ Occurrences, each re-read in this session:
 
 - Readers of `Plan.Sources`: `Store.Plan` and `Store.Approve` through `validateSources`, `approvedTransition` through `validateSourceAt`, and the receipt payload in the intent ledger. Each reads the canonical order with no order assumption.
 - Readers of the plan identity: the receipt lookup in `Store.Approve`, the receipt match in `approvedTransition`, and the `commitment_plan` table of `commitcmd`.
-- Callers of `BuildPlan`: `Store.Plan`, `approvedTransition`, and the four tests in `authority_test.go`.
-- Callers of `Deliver`: `Store.Delivered` alone in production, and `delivery_test.go`.
+- Callers of `BuildPlan`: `Store.Plan`, `approvedTransition`, and the four tests in `authority_test.go`. `approvedTransition` passes the policy at `main` as the current policy, so a retained legacy binding stays retained at the commit.
+- Callers of `Deliver`: `Store.Delivered` alone in production. The test callers are `delivery_test.go`, `retirePolicy` in `internal/spec/spec_test.go`, and `TestCommitmentContinuationOccupiesSlot` in `internal/commitment/continuation_test.go`. Each of the two extra callers delivers a binding that lists an obligation or a rowless binding, so neither reaches the new refusal.
 - Callers of `Store.Closure`: `published.closeDelivery`, `closedPolicy` in `candidate.go`, and `completionClosure` in `internal/gate/completion.go`. Each returns the closure error unchanged, so none needs an edit.
 - Input constructors of the plan predicate: each test builder that builds a binding with no obligation. `SeedTicketsOnly` is the one builder whose outcome owns sources; it writes the policy directly, and FD6 and FD8 use it as the legacy fixture. The rowless builders in `admission_test.go`, `outlook_test.go`, `deliverable_test.go`, `commitmenttest/repo.go`, and `delivery_test.go` stay valid under FD4.
 - Shipped-surface claim words: ADR 0015 already says that a deliverable is "the complete delivery of named obligations", so no doc changes.
