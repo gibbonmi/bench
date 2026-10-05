@@ -4471,6 +4471,75 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c8-r1-spec"
           ]
+        },
+        {
+          "id": "dc-c8-r3-standards",
+          "performer": "claude:dc_c8_r3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "88aa65946dd6a40a8a1ea3b6fdd3710e1045915f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r3_standards",
+            "digest": "sha256:9b236e3faf33e65c45024694eff29db8a860ab03cbefe62d4260cf75c494adb0",
+            "excerpt": "Standards: 0 findings\nReviewer claude:dc_c8_r3_standards, opus high. Subject 1a803d5c..62cb6847 (cycle 3 0de55af2..62cb6847), evidence sha256:151c04248f72e281b713b7c9a30944227c59595f7afcac0167712dc6139ce0bb.\nlistedRuns (continuation.go:19-46) is the one owner of the initial-only and active-run rules; Plan (repository.go:101) and Approve (:178) call it. storedState is the only production reader of ledger.Commitment; runtimeState filters liveness once and OpenContinuations filters delivery once. withRuntime compares against storedState, so the drop persists. Test move unchanged apart from the new rows. run-recovered fixture follows tree practice. No weaker assertion; gofmt clean.\nAdvice: active-run check in two places (continuation.go:29, admission.go:97-101); withContinuations and runtimeState and listedRuns comments; duplicated nil normalization; long after-adoption expectation; format placeholder in test rows; two refusals lack a next action; ledger drop not asserted after admission (Coverage).\n"
+          },
+          "axis": "Standards",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "62cb6847afa3d97443abbac73f48a645323f5e16",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c8-r2-standards"
+          ]
+        },
+        {
+          "id": "dc-c8-r3-coverage",
+          "performer": "claude:dc_c8_r3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "88aa65946dd6a40a8a1ea3b6fdd3710e1045915f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r3_coverage",
+            "digest": "sha256:c85fb2d51ee13b2d674d974479c174c385d11e215637d4bdf0e0531c7559ef94",
+            "excerpt": "Coverage: 0 findings\nReviewer claude:dc_c8_r3_coverage, opus high. Subject 1a803d5c..62cb6847 (cycle 3 0de55af2..62cb6847), record ac898e05, evidence sha256:151c04248f72e281b713b7c9a30944227c59595f7afcac0167712dc6139ce0bb.\nRan ./internal/commitment/repository and ./internal/commitment once each: pass.\nP5: every compared element has its own refusing case and probe (publication_test.go 243-314; continuation.go :20,:29,:38,:41); not-active rows do not pass through the request check; each refusal leaves MilestoneState unchanged.\nP6: run-complete and run-purged observe the predicate at admission without reconcile; projection agrees.\nA2 closed (publication_test.go:197-202). A1 still open (advice).\nNo weakened test; move unchanged apart from new rows. Ten entries match the plan; only repository carries the probe.\nVerdicts: DC83 holds; DC84 holds.\nAdvice: persisted drop untested (repository/admission.go:117 storedState->runtimeState stays green, no visible effect today); A1 delivered-scope filter at admission; admission run-state filter tested only for complete and absent; TestCommitmentLegacyClosure partly-delivered-scope row checks a leftover stored value; spec.md:473 DC84 seam names the old test file admission_test.go; A3-A5 unchanged.\n"
+          },
+          "axis": "Coverage",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "62cb6847afa3d97443abbac73f48a645323f5e16",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c8-r2-coverage"
+          ]
+        },
+        {
+          "id": "dc-c8-r3-spec",
+          "performer": "claude:dc_c8_r3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "88aa65946dd6a40a8a1ea3b6fdd3710e1045915f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r3_spec",
+            "digest": "sha256:3999c73bbcb05274f81fbed511f3266a86665de074d18728c8fdce19bad9d2ec",
+            "excerpt": "Spec: 2 findings\nReviewer claude:dc_c8_r3_spec, opus high. Subject 1a803d5c..62cb6847 (cycle 3 0de55af2..62cb6847), evidence sha256:151c04248f72e281b713b7c9a30944227c59595f7afcac0167712dc6139ce0bb.\nC8-P5 closed: continuation.go:20-22 (initial only), :29-31 (active run); Plan repository.go:79,101; Approve :152,178 inside the transaction before withContinuations :188.\nC8-P6 closed for the slot: runtimeState (repository/admission.go:92-106) drops non-active runs; every production reader uses it; withRuntime compares storedState (:117); landing order holds (land.go:227 reconcile, :237 release; publication.go:43 needs an active owner; only pool_root.go:147 creates an active run). The stored record drops the entry only on the next commitment write.\nC8-P7 (low): internal/worktree/commitment_light_landing_test.go:52,64 (DC76, partly-delivered-scope) requires the raw stored continuation to stay open after the run is released; doc at :19-21 says it stays open. Contradicts spec 270 and the single predicate. internal/worktree is outside ticket 09 Writes (tickets 06 and 07 own it). Fix: assert through the shared predicate that the ended continuation holds no slot, keep the row-open check at :56, correct :19-21; or persist the drop on release.\nC8-P8 (low): spec.md:472 DC84 names internal/commitment/admission_test.go; the test is now in internal/commitment/continuation_test.go:20. One-cell plan correction.\nGuarantees: six closed decisions hold; tickets 01-08 and cycles 1-2 hold; no other gap.\nUnowned: spec 301, 243, 266 first sentence, 156.\nAdvice: slot rows cover only complete and purged; BENCH-reference.md:229-238 omits the initial-only and active-run rules; record line 5657 says spec line 268 but the commit changed 270; OpenContinuations comment; continuations take effect at approval before publication.\n"
+          },
+          "axis": "Spec",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "62cb6847afa3d97443abbac73f48a645323f5e16",
+          "finding_ids": [
+            "C8-P7",
+            "C8-P8"
+          ],
+          "supersedes": [
+            "dc-c8-r2-spec"
+          ]
         }
       ]
     }
@@ -5654,7 +5723,7 @@ A read-only Fable consultant at high effort set the dispositions. No finding nee
 Repair cycles consumed: 2 of 2. The reviewer pre-approved extensions, so extension cycle 3 repairs both findings.
 
 - C8-P5: auto-fix. A proposal can list continuations only when no policy is published. Each listed run must be active at plan and at approval.
-- C8-P6: auto-fix. A continuation holds the slot only while its run is active and its scope is undelivered. A plan commit extends the DC84 row and spec line 268 with this closer.
+- C8-P6: auto-fix. A continuation holds the slot only while its run is active and its scope is undelivered. A plan commit extends the DC84 row and spec line 270 with this closer.
 - Cycle 3 also observes the open predicate at admission before reconciliation, and it checks that a changed list changes the plan identity. A failed branch read gets its own refusal.
 
 The parallel grant sentence at spec line 270 stays open to reviewer veto. The other advice items stay advice.
@@ -5669,3 +5738,14 @@ A continuation whose run is no longer active holds no slot. The repository state
 All ten planned checks pass at the chunk source, and the named repository probe failed and restored. One worktree landing test failed once on a short source-tip prefix and passed on rerun. A learning records it.
 
 The reviewer approved the "Fix, don't park" rewrite on 2026-10-04.
+
+## Accepted DC-C8 source
+
+Standards and Coverage report zero findings at 62cb6847afa3d97443abbac73f48a645323f5e16. Spec closes C8-P5 and C8-P6 and reports two low findings. A read-only Fable consultant at high effort set the dispositions, and no finding needs a reviewer decision.
+
+- C8-P8: closed by a plan correction. The DC84 seam cell names the moved test file, `internal/commitment/continuation_test.go`. The next plan commit makes this correction, as for the DC-C7 seam paths.
+- C8-P7: rejected as advice. The DC76 landing test reads the stored continuation after release, and the slot predicate already drops it. No required check fails, and the test file is outside the ticket 09 fence. This call is open to reviewer veto.
+
+Three advice items stay open. The persisted drop has no test. Admission does not observe the delivered-scope filter alone. The slot rows cover only complete and purged runs.
+
+Repair cycles consumed: 3, one of them an extension. The final source is 62cb6847afa3d97443abbac73f48a645323f5e16. The chunk checkpoint remains required before ticket 10.
