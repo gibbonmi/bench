@@ -5452,6 +5452,74 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r2-coverage"
           ]
+        },
+        {
+          "id": "dc-c9-r4-coverage",
+          "performer": "claude:dc_c9_r4_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "16411ad64b5598daa2813dfab31acc60a3024fcc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r4_coverage",
+            "digest": "sha256:3476e9d8b267840fb0d4c30eb0b72c045683e9b2d7ead828b590a5c23c9d2047",
+            "excerpt": "Coverage: 0 findings. Reviewer claude:dc_c9_r4_coverage. Frozen pair ffc100d5..f276988e, read at 71918a38 (record-only delta).\nDelta bdeede94..f276988e touches spec.md and the review record only. No test, production, owner, or proposal byte changed.\nI enumerated all 86 map rows and found exactly one `func TestX(` in the named file for each of the 85 test-backed rows. DC53 is review-owned. No \"planned\" seam is left. `bench coverage --check`: ok, 86 rows.\nRe-pointed rows DC7, DC8 and DC9 (store_test.go:19, :40, :225) and DC62 (store_test.go:249) assert their row behavior.\nDC-C9 rows: DC51 adoption_test.go:210, DC52 :164, DC63 :239, DC85 store_test.go:95 (plus system leg adoption_test.go:190-195), DC86 store_test.go:128. Each test asserts its row. The DC53 owner files did not change since bdeede94.\nThe dc-c9-r10d entries cover all six planned checks, each pass with exit 0. The DC85 probe is bit, with mutated exit 1 and a passing restore.\nTheir source_digest 16411ad6 equals the record-excluded tree of f276988e, a9969ec3 and 71918a38. I rebuilt it per reviewrecord.SourceDigest.\nAdversarial pass: every DC-C9 row runs under one of the six checks, and nothing changed since acceptance to open a new input edge. Worst issue: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "f276988ed70212465836600dff85caeaf4142810",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r3-coverage"
+          ]
+        },
+        {
+          "id": "dc-c9-r4-standards",
+          "performer": "claude:dc_c9_r4_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "16411ad64b5598daa2813dfab31acc60a3024fcc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r4_standards",
+            "digest": "sha256:1d4b939e3653b2155e445230720e4cb6452f83efe86ecb43c30ec36ec7fdf9e1",
+            "excerpt": "Standards: 0 findings\nReviewer claude:dc_c9_r4_standards. Frozen pair ffc100d5..f276988e; delta bdeede94..f276988e is spec.md and the review record only, with no Go, test, owner, or proposal change.\nCoverage map (cfdc6bfd): every test-backed row cites `<path>_test.go` (`<Name>`) as map-discipline.md:117 prescribes. All 85 names resolve against a full rg of TestCommitment definitions, including DC7-DC9 in store_test.go and DC62 TestCommitmentConcurrentReplacementAdmitsOnePlan. bench coverage --check: 86 rows valid. No new duplicated source.\nPlan JSON (f276988e): the claude:dc_r10_3 assignment follows the dc_r10_2 pattern (source = parent of plan commit 0070a189; preserved = predecessor commit bdeede94).\nRecord prose 6982-6999: gate-prose pass for both files, consistent with the plan JSON. bench preflight review at 71918a38: 15 green, 0 red.\ndc-c9-r10d-*: all six requirements present, source_digest 16411ad6 equals the chunk record digest; the excerpts state honestly that the run was at a9969ec3 (a record commit past the tip) and cite r10c evidence rather than copying it.\nProbe exit 1 derivation checked: probe.go:163, outcome.go:88-89, and command.go:319-320 say what the excerpt claims; subject repository.go:287 matches; check.go:47 requires a nonzero mutated-run code.\nAdvice: the meaning of the probe exit_code field lives only in check.go:47.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "f276988ed70212465836600dff85caeaf4142810",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r3-standards"
+          ]
+        },
+        {
+          "id": "dc-c9-r4-spec",
+          "performer": "claude:dc_c9_r4_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "16411ad64b5598daa2813dfab31acc60a3024fcc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r4_spec",
+            "digest": "sha256:63a787c0bfe6b5dd1f4641209bf5bb4a346f1c4bacdf670e745effb060d9a3e4",
+            "excerpt": "Spec round 4 on DC-C9 graded the delta bdeede94..f276988e under `specs/` against the whole approved spec. The delta changes only the seam column of 85 coverage rows; a column diff shows every row's story, behavior and why cell unchanged. It also appends one assignment, `claude:dc_r10_3`, to ticket 10 in the plan JSON; all other plan content is identical. Four seams changed beyond format: DC7–9 moved to `internal/commitment/store_test.go`, and DC62 now names `TestCommitmentConcurrentReplacementAdmitsOnePlan`. Each named test asserts its row's guarantee and comes from ticket 01's commit 75bdb76c. All 85 cited tests are declared in their cited files at f276988e. `Covers:` lines give each of DC1–DC86 exactly one ticket owner, and `bench coverage --check` reports 86 valid rows. One low finding, C9R4-P1: spec.md:387 still says \"Every named test below is planned\", which the reconciled map contradicts. Seven clauses that predate the delta have no row and no explicit ticket owner (lines 154, 156, 262, 264, 290, 293, 294); they are listed for the record, not raised as delta findings. Verdict: the reconciliation weakens no guarantee; accept after the one-line P1 text repair.\n"
+          },
+          "axis": "Spec",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "f276988ed70212465836600dff85caeaf4142810",
+          "finding_ids": [
+            "C9R4-P1"
+          ],
+          "supersedes": [
+            "dc-c9-r3-spec"
+          ]
         }
       ]
     }
@@ -6975,3 +7043,11 @@ Commit cfdc6bfd3be1d0dfab3bc80193f559ac0de084fb reconciles the coverage map agai
 The six planned checks run again at the new source, and one reaffirming round on all three axes grades the spec-only delta.
 
 The cycle 2 session is no longer reachable, so plan commit f276988ed70212465836600dff85caeaf4142810 assigns a fresh re-verification session, claude:dc_r10_3, under ticket 10. The orchestrator records that amendment and re-freezes DC-C9 at the plan commit. The session changes no file; it runs and records the six planned checks only.
+
+## DC-C9 reaffirming round 4 disposition
+
+The re-verification session recorded all six planned checks green at the amended source, and the named probe failed and restored. Standards and Coverage report zero findings.
+Spec reports C9R4-P1, a low non-behavioral finding: the coverage map preamble still says that every named test is planned. The orchestrator confirmed it and closes it by a plan commit that restates the preamble as current state.
+That plan commit also assigns a fresh re-verification session, claude:dc_r10_4, because the spec edit changes the source digest. The orchestrator then records the amendment, re-freezes DC-C9, and runs one more reaffirming round.
+
+The Spec reviewer also listed seven clauses with no row and no explicit owning ticket. They predate this delta and are not delta findings. The known issue for such clauses stays open until FT376 lands.
