@@ -5990,6 +5990,33 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r8-coverage"
           ]
+        },
+        {
+          "id": "dc-c9-r10-standards",
+          "performer": "claude:dc_c9_r10_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r10_standards",
+            "digest": "sha256:9ec6e2dbf4a384d1aa5d0dd1744f1c26bcaa68a04095927b3c96c6374f5759e8",
+            "excerpt": "DC-C9 round 10 confirming Standards (claude:dc_c9_r10_standards), frozen pair ffc100d5..5fa7fc33, record delta 0c46fab7..HEAD: four low findings and one advice item.\ngit diff 0c46fab7 HEAD changes only reviews/roadmap-delivery-commitment.md (+60/-1); bench gate-prose passes.\nC9R9-S1 holds: spec.md:333 (Opus high, 72af8151) is later than spec.md:759 (Sonnet high, 1b1f268f); the record flags the contradiction for veto with no spec edit, per .bench/BENCH.md.\nC9R9-S3 holds: record:7802 reads C9R8-C1 (native COV-F1). C9R9-S2: the auto-fix label is correct, but the old label remains.\nC9R10-S1 (low, confidence 7, auto-fix): record:7800 says C9R8-S1 is no-op, and record:7809 says it is auto-fix; two labels for one finding.\nC9R10-S2 (low, confidence 5, ask-user): record:7815 omits disposition from the evidence-only test in bounded-repair-policy.md:46-49; the S2 fold changes a disposition, so the corrections are not evidence-only. The record states neither the rule that allows Standards-only confirmation nor whether the repair consumes a cycle at 2 of 2 (record:7750).\nC9R10-S3 (low, confidence 6, auto-fix): record:7808-7813 gives C9R9-S1, S2, and S3 no disposition label; bench-review-implementation.md:187 and :203-204 require one.\nC9R10-S4 (low, confidence 6, auto-fix): record:7812 names a spec section on review assignment; spec.md:333 is under Implementation chunks (spec.md:305).\nAdvice: record:7810 uses now, which narrates a change.\nImplementation command contribution: yes. bench-review-implementation.md:187-204 does not say whether a disposition correction edits the earlier label in place or appends a superseding label.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [
+            "C9R10-S1",
+            "C9R10-S2",
+            "C9R10-S3",
+            "C9R10-S4"
+          ],
+          "supersedes": [
+            "dc-c9-r9-standards"
+          ]
         }
       ]
     }
@@ -7797,7 +7824,7 @@ The re-verification session claude:dc_r10_5 recorded all six planned checks gree
 
 Standards reports C9R8-S1, a low finding. The dc-c9-r10f excerpts say that the three plan commits change the review record, but those commits change only the spec and ticket 10.
 Record commits 01276c94, 888b51f2, f94c064e, efe4a77a, d42ced91, and 4e7decce changed the review record. The excerpts are digest-bound, and their conclusion is true: no Go, test, owner, or proposal file changed.
-The orchestrator closes C9R8-S1 as no-op with this correct attribution. This call is open to reviewer veto.
+C9R8-S1 is auto-fix, and this correct attribution closes it.
 
 Coverage reports C9R8-C1 (native COV-F1), a low finding. The fence entry admits the whole specs/shared-test-fixtures directory, and no check enforces its fold-only scope.
 The orchestrator closes C9R8-C1 as no-op. At this record, the diff of specs/shared-test-fixtures from 3347fdbdca6cb69726ce67dedfcf7299bbdbb55e is empty, and final reconciliation repeats that check at the landing source.
@@ -7806,10 +7833,17 @@ One confirming round on Standards and Coverage grades these dispositions.
 ## DC-C9 fold round 9 disposition
 
 Coverage reports zero findings, and C9R8-C1 is closed. Standards confirms the C9R8-S1 attribution and reports three low findings.
-C9R9-S2: the record concedes the C9R8-S1 error, so no-op is the wrong label. C9R8-S1 is auto-fix, and the appended attribution in the round 8 disposition closes it.
-C9R9-S3: the round 8 Coverage excerpt names the finding COV-F1. The round 8 disposition now maps COV-F1 to C9R8-C1.
+C9R9-S2 is auto-fix. The record concedes the C9R8-S1 error, so the round 8 disposition labels C9R8-S1 auto-fix.
+C9R9-S3 is auto-fix. The round 8 Coverage excerpt names the finding COV-F1, and the round 8 disposition maps COV-F1 to C9R8-C1.
 
-C9R9-S1: the spec contradicts itself on the independent review line. The spec section on review assignment names Claude Opus at high effort, and its last section names Claude Sonnet at high effort.
-The contradiction is non-behavioral. The run obeys the current convention, Claude Opus at high effort, which the reviewer directed. This call is open to reviewer veto.
+C9R9-S1 is ask-user. The spec contradicts itself on the independent review line. The Implementation chunks section names Claude Opus at high effort, and the Delegated author direction section names Claude Sonnet at high effort.
+The contradiction is non-behavioral. The run obeys the later convention, Claude Opus at high effort, which the reviewer directed. This call is open to reviewer veto.
 
-These corrections change no source identity, observation, or verification claim. One confirming Standards review grades them.
+## DC-C9 fold round 10 disposition
+
+Standards confirms C9R9-S1 and C9R9-S3 and reports four low findings on the round 8 and round 9 dispositions. This record correction closes the three auto-fix findings.
+C9R10-S1 is auto-fix: the round 8 disposition gives C9R8-S1 one label, auto-fix. C9R10-S3 is auto-fix: each round 9 finding has its disposition label. C9R10-S4 is auto-fix: the round 9 disposition names each spec section by its heading.
+
+C9R10-S2 is ask-user. These corrections change dispositions, so they are not evidence-only. They change no source identity, test, or verification entry.
+The DC-C9 repair allowance stands at 2 of 2, and the reviewer pre-approved extensions in the initial DC-C9 disposition. This record-only correction uses that extension, and this call is open to reviewer veto.
+One confirming Standards review grades it, because only Standards findings changed.
