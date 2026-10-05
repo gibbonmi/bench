@@ -9,12 +9,16 @@ import (
 // the next policy and the outcome sources that the delivery completely satisfies. An
 // outcome with no source is rowless: each of its approved deliverables is an obligation of
 // the outcome itself, so its delivery records a fact and satisfies no source. A path that
-// the active milestone does not approve, or a binding that names no obligation of an
-// outcome with sources, returns policy unchanged and no source.
+// the active milestone does not approve returns policy unchanged and no source. The
+// delivery of a binding that names no obligation of an outcome with sources refuses,
+// because it can close no source; a plan must first name its obligations.
 func Deliver(policy Policy, path, source, evidence string) (Policy, []SourceBinding, error) {
 	outcome, binding, found, err := activeDeliverable(policy, path)
-	if err != nil || !found || obligationFree(outcome, binding) {
+	if err != nil || !found {
 		return policy, nil, err
+	}
+	if obligationFree(outcome, binding) {
+		return policy, nil, fmt.Errorf("deliverable %q of outcome %q names no obligation; list the sources that it satisfies with bench commitment plan --input <file>", path, outcome.ID)
 	}
 	fact := DeliveryFact{Milestone: policy.ActiveMilestone, Outcome: outcome.ID, Binding: binding.Source.ID, Identity: binding.Source.Identity, Source: source, Evidence: evidence}
 	if deliveredKeys(policy)[fact.key()] {

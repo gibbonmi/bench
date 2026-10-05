@@ -56,6 +56,11 @@ var deliveryRoutes = []deliveryRoute{
 	}},
 }
 
+// obligationFreeRoute delivers the spec that the tickets-only seed approves with no
+// obligation of its outcome, which owns sources: the legacy binding that the completion
+// landing refuses.
+var obligationFreeRoute = deliveryRoute{name: "obligation-free", deliverable: closureSpec, index: commitmenttest.ClosureIndex(), seed: deliveryRoutes[1].seed}
+
 func (route deliveryRoute) tickets() bool { return route.deliverable == commitmenttest.TicketsFolder }
 
 // fixture builds the route's public landing fixture and binds the source assignment to the
