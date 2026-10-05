@@ -7924,9 +7924,11 @@ The round 11 disposition records the repair count and the confirmation basis for
 ## DC-C9 fold round 11 disposition
 
 Standards closes C9R10-S1, C9R10-S3, and C9R10-S4 and reports C9R11-S1 and C9R11-S2. Both are ask-user, and the reviewer decided both on 2026-10-05.
-C9R11-S1: the round 9 and round 10 record corrections are one repair cycle. Repair cycles consumed: 3, one of them a pre-approved extension.
+C9R11-S1: the round 9 and round 10 record corrections are one repair cycle, and the round 12 correction is another. Repair cycles consumed: 4. On 2026-10-05 the reviewer removed the DC-C9 repair cap.
+
 C9R11-S2: the source digest 4d4850e162fd06e0cf3a43942fd48dc67a4f96cf did not change, and the corrections change no Spec or Coverage result. The round 8 Spec and round 9 Coverage results stay current under the bounded repair policy.
 
 One confirming Standards review grades C9R11-S1 and C9R11-S2 only. This decision closes C9R10-S2.
 
-Round 12 Standards closes C9R11-S1 and C9R11-S2 and reports C9R12-S1 and C9R12-S2, two low auto-fix wording findings in this section. This evidence-only correction applies both, and the Standards axis reaffirms it.
+Round 12 Standards closes C9R11-S1 and C9R11-S2 and reports C9R12-S1 and C9R12-S2, two low auto-fix wording findings in this section. The round 12 correction applies both.
+Round 13 Standards closes C9R12-S1 and C9R12-S2 and reports C9R13-S1, ask-user: the round 12 correction is a repair cycle. The repair count above includes it.
