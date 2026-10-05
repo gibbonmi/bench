@@ -6091,6 +6091,30 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r12-standards"
           ]
+        },
+        {
+          "id": "dc-c9-r14-standards",
+          "performer": "claude:dc_c9_r14_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r14_standards",
+            "digest": "sha256:f09b2d685e65ce6cd41b7df86600c22de10077239302205bd4042de46b0b4358",
+            "excerpt": "DC-C9 round 14 Standards reaffirmation (claude:dc_c9_r14_standards), record delta ed5dbdf5..54ce5cf3: C9R13-S1 closes as charged; one low finding.\ngit diff ed5dbdf5 HEAD changes only reviews/roadmap-delivery-commitment.md (+4/-2); bench gate-prose passes.\nEarlier DC-C9 counts: 0 of 2 at record:7817, 1 of 2 at :7829 and :7841, 2 of 2 at :7845 and :7851; 4 at :7927 follows from the reviewer's count of 3 plus the round 12 correction.\nThe count and the cap removal appear only at :7927; :7933 no longer says evidence-only; :7934 points to the count.\nC9R14-S1 (low, confidence 4, ask-user): record:7927 counts the round 12 correction as a repair cycle but not the round 11 correction (392d8688) or this correction (54ce5cf3), which also change claims; under bounded-repair-policy.md:46 and :48 the count would be 5 or 6 unless a stated rule excludes them.\nAdvice: :7927 sits under the C9R11-S1 label but holds the C9R13-S1 decision; :7934 restates that the round 12 correction is a repair cycle.\nImplementation command contribution: yes, by omission; bounded-repair-policy.md:46-48 does not say whether a record-only correction is a repair cycle.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [
+            "C9R14-S1"
+          ],
+          "supersedes": [
+            "dc-c9-r13-standards"
+          ]
         }
       ]
     }
@@ -7924,11 +7948,11 @@ The round 11 disposition records the repair count and the confirmation basis for
 ## DC-C9 fold round 11 disposition
 
 Standards closes C9R10-S1, C9R10-S3, and C9R10-S4 and reports C9R11-S1 and C9R11-S2. Both are ask-user, and the reviewer decided both on 2026-10-05.
-C9R11-S1: the round 9 and round 10 record corrections are one repair cycle, and the round 12 correction is another. Repair cycles consumed: 4. On 2026-10-05 the reviewer removed the DC-C9 repair cap.
+C9R11-S1: on 2026-10-05 the reviewer decided that a record-only change consumes no repair cycle and removed the DC-C9 repair cap. Repair cycles consumed: 2.
 
 C9R11-S2: the source digest 4d4850e162fd06e0cf3a43942fd48dc67a4f96cf did not change, and the corrections change no Spec or Coverage result. The round 8 Spec and round 9 Coverage results stay current under the bounded repair policy.
 
 One confirming Standards review grades C9R11-S1 and C9R11-S2 only. This decision closes C9R10-S2.
 
 Round 12 Standards closes C9R11-S1 and C9R11-S2 and reports C9R12-S1 and C9R12-S2, two low auto-fix wording findings in this section. The round 12 correction applies both.
-Round 13 Standards closes C9R12-S1 and C9R12-S2 and reports C9R13-S1, ask-user: the round 12 correction is a repair cycle. The repair count above includes it.
+Round 13 Standards closes C9R12-S1 and C9R12-S2 and reports C9R13-S1, ask-user. Round 14 closes C9R13-S1 and reports C9R14-S1, ask-user; both ask how to count record corrections. The reviewer's record-only rule above closes both.
