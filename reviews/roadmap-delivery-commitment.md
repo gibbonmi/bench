@@ -40,7 +40,7 @@ This suggestion is optional advice and has no repair disposition.
 {
   "version": 1,
   "spec": "specs/roadmap-delivery-commitment/spec.md",
-  "plan_digest": "sha256:05016b18363c7da2329077a2d6769e211f863e718260160a8297ecaffd5e3656",
+  "plan_digest": "sha256:f4cbafa3a20de0b4667e09806cc6b10903c7b9068faf8630099b4cf887b8d8b7",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -4825,9 +4825,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C9",
       "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
-      "tip": "f276988ed70212465836600dff85caeaf4142810",
-      "plan_digest": "sha256:05016b18363c7da2329077a2d6769e211f863e718260160a8297ecaffd5e3656",
-      "source_digest": "16411ad64b5598daa2813dfab31acc60a3024fcc",
+      "tip": "62e10a4dd8c356043a9db2a857945dadd7af9ae3",
+      "plan_digest": "sha256:f4cbafa3a20de0b4667e09806cc6b10903c7b9068faf8630099b4cf887b8d8b7",
+      "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
       "acceptance_rows": [
         "DC51",
         "DC52",
@@ -6258,6 +6258,39 @@ This suggestion is optional advice and has no repair disposition.
     {
       "from": "sha256:833e37e8f2d248450d79bfb47a270ab5aeae25e0d732f2b5b2977c39c8b3f3d6",
       "to": "sha256:05016b18363c7da2329077a2d6769e211f863e718260160a8297ecaffd5e3656",
+      "chunk_ids": {
+        "DC-C1": [
+          "DC-C1"
+        ],
+        "DC-C2": [
+          "DC-C2"
+        ],
+        "DC-C3": [
+          "DC-C3"
+        ],
+        "DC-C4": [
+          "DC-C4"
+        ],
+        "DC-C5": [
+          "DC-C5"
+        ],
+        "DC-C6": [
+          "DC-C6"
+        ],
+        "DC-C7": [
+          "DC-C7"
+        ],
+        "DC-C8": [
+          "DC-C8"
+        ],
+        "DC-C9": [
+          "DC-C9"
+        ]
+      }
+    },
+    {
+      "from": "sha256:05016b18363c7da2329077a2d6769e211f863e718260160a8297ecaffd5e3656",
+      "to": "sha256:f4cbafa3a20de0b4667e09806cc6b10903c7b9068faf8630099b4cf887b8d8b7",
       "chunk_ids": {
         "DC-C1": [
           "DC-C1"
