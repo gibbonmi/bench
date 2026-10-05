@@ -291,8 +291,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. Run `/bench-implement-spec specs/ft370-comment-only-evidence/spec.md` so a comment-only correction takes the evidence-only path.
-2. Run `/bench-implement-spec` on the FT373 light-path ticket so the gate refuses a standard-library duplicate.
-3. Run `/bench-write-spec FT375` so the build preflight reports spec staleness and the staleness pass reads only drift.
-
-The section order supplies the larger sequence. It does not create new literal dependencies.
+1. FT376
+2. FT373
+3. FT349
