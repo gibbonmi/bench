@@ -29,7 +29,10 @@
                 "id": "adr-0026-retire-dc",
                 "path": "specs/adr-0026-retire-dc",
                 "identity": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774"
-              }
+              },
+              "obligations": [
+                "FT389"
+              ]
             }
           ]
         },
