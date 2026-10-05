@@ -38,15 +38,15 @@ Findings: 4. Worst issue: C2.
 {
   "version": 2,
   "spec": "specs/commitment-delivery-integrity/spec.md",
-  "plan_digest": "sha256:e1af045505879acfbe050e31acc668e35464b452e9a3f71f2b38add2733381ef",
+  "plan_digest": "sha256:37236d7f76612ed55db6b4a27b59899919a497c041af08415e14869512b9d73d",
   "implementation_session": "",
   "chunks": [
     {
       "id": "FD-C1",
       "base": "9febee8f284bfed4f6de714717f4364adede738e",
-      "tip": "29eabd3090ad23b7e6dc359a1922029df50cab79",
-      "plan_digest": "sha256:e1af045505879acfbe050e31acc668e35464b452e9a3f71f2b38add2733381ef",
-      "source_digest": "876937bb5fdcad91e0f23a047f59964ca3c3fb61",
+      "tip": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+      "plan_digest": "sha256:37236d7f76612ed55db6b4a27b59899919a497c041af08415e14869512b9d73d",
+      "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
       "acceptance_rows": [
         "FD1",
         "FD2",
@@ -306,6 +306,17 @@ Findings: 4. Worst issue: C2.
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:e1af045505879acfbe050e31acc668e35464b452e9a3f71f2b38add2733381ef",
+      "to": "sha256:37236d7f76612ed55db6b4a27b59899919a497c041af08415e14869512b9d73d",
+      "chunk_ids": {
+        "FD-C1": [
+          "FD-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
