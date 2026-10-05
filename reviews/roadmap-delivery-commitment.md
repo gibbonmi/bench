@@ -6067,6 +6067,30 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r11-standards"
           ]
+        },
+        {
+          "id": "dc-c9-r13-standards",
+          "performer": "claude:dc_c9_r13_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r13_standards",
+            "digest": "sha256:4be763b7d7429b0c65602c1bf05a85b1d6cc07999c6fbd4f3e5f79f87aaabc3b",
+            "excerpt": "DC-C9 round 13 Standards reaffirmation (claude:dc_c9_r13_standards), record delta 392d8688..69d0a1b9: C9R12-S1 and C9R12-S2 close; one low finding.\nbench gate-prose passes. Record:7906 reads \"This decision closes C9R10-S2.\" in the active voice.\nRecord:7904 reads \"the corrections change no Spec or Coverage result\"; git diff 0c46fab7 77115e81 adds no Spec entry and changes no existing Spec or Coverage entry, so the claim is true.\nThe new paragraph at record:7908 is true and within the STE bounds.\nC9R13-S1 (low, confidence 5, ask-user): record:7908 calls the round 12 correction evidence-only, but the C9R12-S2 fix at record:7904 replaces one factual claim with another, which can be read as a changed observation under bounded-repair-policy.md:46. Under :48 that fix is a repair cycle, so the count at record:7903 would be stale under :59. The C9R12-S1 voice fix alone is evidence-only.\nAdvice: record:7908 states the reaffirmation before this round returns.\nImplementation command contribution: yes, by omission; bounded-repair-policy.md:46 does not define observation.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [
+            "C9R13-S1"
+          ],
+          "supersedes": [
+            "dc-c9-r12-standards"
+          ]
         }
       ]
     }
