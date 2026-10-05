@@ -4825,9 +4825,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C9",
       "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
-      "tip": "f5b2648c617f66332d405ac7f97a942170546a0f",
-      "plan_digest": "sha256:448c2e6665f7218dc2f6ddb6e1dd09aeb96df6571524428da4df6a0372a9df3d",
-      "source_digest": "cddf16fd2afa2fe8e7b89a3dfd019811179f0c4f",
+      "tip": "bdeede94fc9c3197b542b67110bd607df24a5164",
+      "plan_digest": "sha256:1fc6a916ee43a961c6d2b55d45a4384dc29b34481ea8b7c73a3e3c9749039d38",
+      "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
       "acceptance_rows": [
         "DC51",
         "DC52",
@@ -5005,6 +5005,125 @@ This suggestion is optional advice and has no repair disposition.
             "ref": "claude-agent:dc_r10_1:bench",
             "digest": "sha256:4d2f6e4741d7fbcfdca59830f01793edfafbb9dd774cc16520b42e6abb12a075",
             "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./cmd/bench\ntip: 350bbe0b15c5d11042f332e036208313df647671 (frozen source f5b2648c617f66332d405ac7f97a942170546a0f)\nexit: 0\noutput: tree dc-integration,350bbe0b...,false; packages[1] github.com/gibbonmi/bench/cmd/bench,pass; failures[0]; skips[0]\n\nChange: internal/commitment/commitcmd/command.go. The commitment_inventory table has the columns kind, id, state,\nidentity, scope. A live read in this worktree (./dist/bench commitment inventory, exit 0) printed:\n  roadmap,FT376,\"\",\"sha256:2d5a52f6...df4f4\",roadmap/FT376.md\n  roadmap,FT373,\"\",\"sha256:64628d70...c9938\",roadmap/FT373.md\n  roadmap,FT349,\"\",\"sha256:f4f89dbf...a268\",roadmap/FT349.md\n  deliverable,specs/markdown-block-reader/spec.md,staged,\"sha256:0ac19b9e...\",FT358\n  run,<assignment>,active,<request digest>,\"\"\nThese roadmap identities equal the plan source identities in adoption-proposal.md.\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10c-installed-adoption",
+          "performer": "claude:dc_r10_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_2:installed-adoption",
+            "digest": "sha256:2494141c738f071d0da19342e16e8ffd03f885601b530317818a2bb2c4965178",
+            "excerpt": "command: bench worktree exec dc-integration -- env \"PATH=/home/mgibs/.nvm/versions/node/v25.8.1/bin:$PATH\" bench test --check system\ntip: bdeede94fc9c3197b542b67110bd607df24a5164 (repair cycle 2 changes internal/commitment/store_test.go only)\nexit: 0\noutput: tree dc-integration,bdeede94fc9c3197b542b67110bd607df24a5164,false; packages[1] github.com/gibbonmi/bench/internal/systemtest,pass,90156; failures[0]; skips[0]\n\nCarried forward from scratchpad/r10b/installed-adoption.txt (the system sources did not change in this cycle):\n\nThe probe records below were taken at code tip b8320b5d (scratchpad/r10/sysprobe.sh); the source has not changed since.\n\nRows covered (internal/systemtest/adoption_test.go; one fixture, newLinkedProject in owner_landing_fixture_test.go):\n  DC51 TestCommitmentLinkedAdoption\n  DC52 TestCommitmentBootstrapInstall\n  DC63 TestCommitmentInstalledAuthority\n  DC85 (system leg) TestCommitmentBootstrapInstall: after publish, main holds .bench/commitment.json and no ROADMAP.md,\n       and the project root has no ROADMAP.md\nThe fixture now has no board, as bench setup leaves a linked project. approve() no longer commits: with no board the\napproval stages the already committed proposal alone, and approve() asserts that the planning checkout stays clean.\nDC51 and DC63 stay green on this real setup shape.\n\nFixture refactor (C9-S1): land_route_test.go has const landRouteVersion = \"9.9.9\" at every stamped-version site\n(package.json, the default manifest, the recovered-Go manifest, the stamped builds, the platform manifest, the\nincomplete manifest); the \"dev\" cases stay literal. bindBroker writes a broker at 0o755 and republishes its manifest at\nlandRouteVersion. Callers: newLandRouteInstall, TestWorktreeLandRouteGivesRecoveredGoPathToBroker, newLinkedProject.\n\nProbe method: system is not a bench probe target. Each probe copies the subject aside, applies one mutation, runs the\nfocused system test with go test, restores the copy, and proves the restore with cmp. A failing Go test exits 1.\nScript: scratchpad/r10/sysprobe.sh, run through bench worktree exec dc-integration at tip b8320b5d (dirty 0 before and after).\n\nFocused green: BENCH_RUN_BINARY=$PWD/dist/bench BENCH_KIT=$PWD go test -tags system -count=1 -v -run '^TestCommitment' ./internal/systemtest\n  exit 0: PASS TestCommitmentBootstrapInstall, TestCommitmentLinkedAdoption, TestCommitmentInstalledAuthority\n\nDC63 named probe (fixture omission of the candidate's admission call)\n  subject: internal/systemtest/adoption_test.go\n  mutation: delete the `admitted := project.run(... \"commitment\", \"start\" ...)` call and its check in TestCommitmentInstalledAuthority\n  run: go test -tags system -count=1 -run '^TestCommitmentInstalledAuthority$' ./internal/systemtest\n  red (exit 1):\n    adoption_test.go:248: landing candidate = (1, \"refused{detail=commitment: assignment has no current delivery binding;\n    run bench commitment start --outcome <id> --request <request> --deliverable <path>}\\n\", \"landing source{...}\\n\")\n  The installed broker refused the candidate before publication.\n  restore: cp from the preserved copy; cmp -> restored byte-exact; focused rerun green.\n\nDC85 system probe (the same mutation as the named unit probe, in the installed binary)\n  subject: internal/commitment/repository/repository.go\n  mutation: snapshotFile(roadmapPath, true) -> snapshotFile(roadmapPath, false); mutant built by scripts/go-build.sh into a\n  scratch directory and passed as BENCH_RUN_BINARY; dist/bench unchanged\n  run: go test -tags system -count=1 -run '^TestCommitmentBootstrapInstall$' ./internal/systemtest\n  red (exit 1):\n    adoption_test.go:187: adoption approval = (1, \"... error: bench commitment approve refused — read commitment output\n    .../ROADMAP.md ...\")\n  restore: restored byte-exact.\n\nEarlier independent expectation reds P1-P6 (scratchpad/t10b/installed-adoption.txt) were taken on the seeded-board\nfixture. Their subjects and refusal lines are unchanged by this repair; they were not rerun.\n"
+          },
+          "requirement": "installed-adoption",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10c-finite-adoption-review",
+          "performer": "claude:dc_r10_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_2:finite-adoption-review",
+            "digest": "sha256:f2174e80d4a3d527b03a41bd8690f9392130ee5d5daebf4118a264be824a0a46",
+            "excerpt": "command: bench worktree exec dc-integration -- bench roadmap --context\ntip: bdeede94fc9c3197b542b67110bd607df24a5164\nexit: 0\noutput: tree dc-integration,bdeede94fc9c3197b542b67110bd607df24a5164,false; context[1]{schema,full,sequence_trusted}: 4,false,true; parse_failures[0]\n\nCarried forward from scratchpad/r10b/finite-adoption-review.txt (owner sources and the proposal did not change in this cycle):\n\nDC53 manual check (review-owned). Owner evidence, compared with decision 14\n(specs/roadmap-delivery-commitment/decisions/roadmap-delivery-commitment/tickets/14.md) and with\nspecs/roadmap-delivery-commitment/adoption-proposal.md as of b8320b5d.\n\nOwner blobs are identical on main 3347fdbd and the repaired tip 02fb82b0 (git rev-parse <rev>:roadmap/FT<n>.md):\n  FT376 2aa9ea81, FT373 a54205e4, FT349 a35a5e55\n\nFT376 (order 1) - remaining\n  history: only drain commits c9a9f4e0 and 4dd5e178 (2026-10-03) touched it\n  owner lines 8-10, 12-14, 16-17. bench-craft-spec has the reader sweep and the cheapest-wrong rule and makes each\n  quantifier a row (SKILL.md:48). It has no pin-operator, unexported-entry, or derived-expectation trace, no\n  consolidation old/new rule table, no pre-review check of each quantified obligation at every site and ticket, no\n  bench consumers caller sweep, and no trace of a new step's writes through later digests.\n  criteria now: FT376.trace, FT376.consolidation, FT376.quantified (:14), FT376.callers (:16), FT376.digests (:17)\n  plan source identity: sha256:2d5a52f6bf9e764cf1511395b052a8447160c4680300cf1a2494d7ac300df4f4\n\nFT373 (order 2) - remaining (unchanged by this repair)\n  history: only drain commits c9a9f4e0 and 4dd5e178 touched it\n  no gate phase, script, or Go package runs the modernize analyzers; go.mod lists golang.org/x/tools v0.49.0\n  plan source identity: sha256:64628d70448b2d9fe32ccdc2466af3a69ad192d019d767954fa4acb8f86c9938\n\nFT349 (order 3) - remaining\n  history: only drain commit d49d9af6 (2026-09-27) touched it\n  the check floor exists only as guidance in bench-implement-spec; internal/coverage still exempts a planned seam cell\n  FT349.floor now: \"The ticket checkpoint refuses a commit whose checks omit root conformance, the tests of a package\n  that the ticket Writes line derives, or the whole cmd/bench package when a public response or embed pattern changed.\"\n  plan source identity: sha256:f4f89dbf1f4de267d1877ad2a3eb9ba7c410bebc7df46214d3fc573e6b51a268\n\nNo owner had a delivered obligation, so the proposal omits none.\n\nInventory identities (C9-P2 repaired): in the clone below and in this worktree, `bench commitment inventory` prints\nfor FT376, FT373, FT349 exactly the plan source identities above, with scope roadmap/FT<n>.md.\nThe proposal now says: \"The identity cell of `bench commitment inventory` is the plan source identity. Copy it into the\nplan input.\" Step 2 compares the table with that cell.\n\nPlan-input replay (disposable clone of 02fb82b0 with main at 02fb82b0, origin removed, private BENCH_HOME; not this\nrepository; scripts scratchpad/r10/replay/plan.sh and approve.sh; input byte-equal to the proposal JSON block):\n  bench commitment inventory -> exit 0; FT376/FT373/FT349 identity cells as above\n  bench commitment plan --input quality-1.json -> exit 0, plan\n    sha256:4c2037efbd1af65c7269123f9fa769c9f3efff0843ffc8afe23b5e2791c96220, predecessor absent,\n    effects added FT376, FT373, FT349 and activated FT376, FT373, FT349; a second plan returned the same id\n  bench worktree create --request \"replay quality-1 adoption\" --label quality-1-adoption -> exit 0\n  bench commitment approve --plan <id> --decision \"replay check\" --delayed none --removed none (in that worktree)\n    -> exit 0, changed true; staged .bench/commitment.json and ROADMAP.md with the sequence 1. FT376 2. FT373 3. FT349\n  The proposal pins the new plan identity; the old sha256:9f4981f3... is gone.\nThis worktree has no .bench/commitment.json (git status clean at b8320b5d).\n"
+          },
+          "requirement": "finite-adoption-review",
+          "command": "bench roadmap --context",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10c-commitment",
+          "performer": "claude:dc_r10_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_2:commitment",
+            "digest": "sha256:c7ba7b30fb5ab729a6b4147ae375cd3670e348d02302f14cb7ddd4c26548dc58",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment\ntip: bdeede94fc9c3197b542b67110bd607df24a5164\nexit: 0\noutput: tree dc-integration,bdeede94...,false; packages[1] github.com/gibbonmi/bench/internal/commitment,pass,5929; failures[0]; skips[0]\n\nCovering tests in internal/commitment/store_test.go (package commitment_test):\n  DC85 TestCommitmentApprovalWithoutBoard\n  DC86 TestCommitmentInventoryIdentity\n\nRepair cycle 2 (C9R2-C1, DC86 \"or scope\"; Coverage advice: revision versus working tree):\n  TestCommitmentInventoryIdentity adds the run \"continued-run\" with no binding and a recorded continuation\n  (scope owned.txt, notes.txt, written through intent.Transact as publication_test.go does). It also writes\n  uncommitted edits to roadmap/FT1.md and to the staged deliverable, so the working tree differs from main.\n  New assertion :185 unbound run scope == \"owned.txt notes.txt\" (one assertion; a scope equal to the joined\n  continuation also proves that the run did not inherit the bound deliverable).\n  Existing assertions :176 roadmap identity, :179 deliverable identity, :182 bound run scope now run against\n  the changed working tree.\n\nAll probes: bench worktree exec dc-integration -- bench probe internal/commitment/repository/repository.go\n  <mutation> --package ./internal/commitment --run <test> --full\nbench probe prints no raw exit code. A failing Go test exits 1, so each red probe exits 1.\n\nBaseline at d42472e8 (before the test change), TestCommitmentInventoryIdentity: probes 1, 2, 3a, 3b each verdict\nsilent, cause passed, restored yes. This is the gap.\n\nProbe 1 (delete the continuation loop in runScope), at tip bdeede94\n  --omit the `for _, continuation := range state.Continuations { ... }` loop\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:185: unbound run scope = \"\", want its continuation scope \"owned.txt notes.txt\" and not the bound deliverable \"specs/delivery/spec.md\"\n\nProbe 2 (binding.Assignment == assignment -> true), at tip bdeede94\n  --swap \"binding.Assignment == assignment\" --with \"true\"\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:185: unbound run scope = \"specs/delivery/spec.md\", want its continuation scope \"owned.txt notes.txt\" and not the bound deliverable \"specs/delivery/spec.md\"\n\nProbe 3a (roadmap identity from the working tree), at tip bdeede94\n  --swap \"identity, err := SourceIdentity(store.Root, revision, roadmap.RowFilePath(row.ID))\"\n  --with \"data, err := os.ReadFile(filepath.Join(store.Root, filepath.FromSlash(roadmap.RowFilePath(row.ID)))); identity := commitment.Identity(data)\"\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:176: roadmap identity = \"sha256:4d8b18c9...\", want the plan source identity \"sha256:6cb82ed1...\"\n\nProbe 3b (deliverable identity from the working tree), at tip bdeede94\n  --swap \"identity, err := SourceIdentity(store.Root, revision, fact.Path)\"\n  --with \"data, err := os.ReadFile(filepath.Join(store.Root, filepath.FromSlash(fact.Path))); identity := commitment.Identity(data)\"\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:179: deliverable identity = \"sha256:38d076a4...\", want the plan source identity \"sha256:c0724cf0...\"\n\nNamed DC85 probe: \"Restore allowAbsent=false for the roadmap snapshot. TestCommitmentApprovalWithoutBoard must fail, then pass after the restore.\"\n  --swap \"roadmapBefore, err := snapshotFile(roadmapPath, true)\"\n  --with \"roadmapBefore, err := snapshotFile(roadmapPath, false)\"\n  --run TestCommitmentApprovalWithoutBoard, at tip bdeede94\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:108: Approve() without a board = read commitment output .../ROADMAP.md: lstat .../ROADMAP.md: no such file or directory\n  after the restore: bench test --package ./internal/commitment -> exit 0 (pass); git status clean.\n\nElement probes from the cycle 1 repair (scratchpad/r10/commitment.txt) were taken before this cycle moved the\nassertion lines; they were not rerun.\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore allowAbsent=false for the roadmap snapshot. TestCommitmentApprovalWithoutBoard must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dc_r10_2:commitment",
+              "digest": "sha256:c7ba7b30fb5ab729a6b4147ae375cd3670e348d02302f14cb7ddd4c26548dc58",
+              "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment\ntip: bdeede94fc9c3197b542b67110bd607df24a5164\nexit: 0\noutput: tree dc-integration,bdeede94...,false; packages[1] github.com/gibbonmi/bench/internal/commitment,pass,5929; failures[0]; skips[0]\n\nCovering tests in internal/commitment/store_test.go (package commitment_test):\n  DC85 TestCommitmentApprovalWithoutBoard\n  DC86 TestCommitmentInventoryIdentity\n\nRepair cycle 2 (C9R2-C1, DC86 \"or scope\"; Coverage advice: revision versus working tree):\n  TestCommitmentInventoryIdentity adds the run \"continued-run\" with no binding and a recorded continuation\n  (scope owned.txt, notes.txt, written through intent.Transact as publication_test.go does). It also writes\n  uncommitted edits to roadmap/FT1.md and to the staged deliverable, so the working tree differs from main.\n  New assertion :185 unbound run scope == \"owned.txt notes.txt\" (one assertion; a scope equal to the joined\n  continuation also proves that the run did not inherit the bound deliverable).\n  Existing assertions :176 roadmap identity, :179 deliverable identity, :182 bound run scope now run against\n  the changed working tree.\n\nAll probes: bench worktree exec dc-integration -- bench probe internal/commitment/repository/repository.go\n  <mutation> --package ./internal/commitment --run <test> --full\nbench probe prints no raw exit code. A failing Go test exits 1, so each red probe exits 1.\n\nBaseline at d42472e8 (before the test change), TestCommitmentInventoryIdentity: probes 1, 2, 3a, 3b each verdict\nsilent, cause passed, restored yes. This is the gap.\n\nProbe 1 (delete the continuation loop in runScope), at tip bdeede94\n  --omit the `for _, continuation := range state.Continuations { ... }` loop\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:185: unbound run scope = \"\", want its continuation scope \"owned.txt notes.txt\" and not the bound deliverable \"specs/delivery/spec.md\"\n\nProbe 2 (binding.Assignment == assignment -> true), at tip bdeede94\n  --swap \"binding.Assignment == assignment\" --with \"true\"\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:185: unbound run scope = \"specs/delivery/spec.md\", want its continuation scope \"owned.txt notes.txt\" and not the bound deliverable \"specs/delivery/spec.md\"\n\nProbe 3a (roadmap identity from the working tree), at tip bdeede94\n  --swap \"identity, err := SourceIdentity(store.Root, revision, roadmap.RowFilePath(row.ID))\"\n  --with \"data, err := os.ReadFile(filepath.Join(store.Root, filepath.FromSlash(roadmap.RowFilePath(row.ID)))); identity := commitment.Identity(data)\"\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:176: roadmap identity = \"sha256:4d8b18c9...\", want the plan source identity \"sha256:6cb82ed1...\"\n\nProbe 3b (deliverable identity from the working tree), at tip bdeede94\n  --swap \"identity, err := SourceIdentity(store.Root, revision, fact.Path)\"\n  --with \"data, err := os.ReadFile(filepath.Join(store.Root, filepath.FromSlash(fact.Path))); identity := commitment.Identity(data)\"\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:179: deliverable identity = \"sha256:38d076a4...\", want the plan source identity \"sha256:c0724cf0...\"\n\nNamed DC85 probe: \"Restore allowAbsent=false for the roadmap snapshot. TestCommitmentApprovalWithoutBoard must fail, then pass after the restore.\"\n  --swap \"roadmapBefore, err := snapshotFile(roadmapPath, true)\"\n  --with \"roadmapBefore, err := snapshotFile(roadmapPath, false)\"\n  --run TestCommitmentApprovalWithoutBoard, at tip bdeede94\n  verdict bit, cause failed, failed_tests 1, restored yes\n  red: store_test.go:108: Approve() without a board = read commitment output .../ROADMAP.md: lstat .../ROADMAP.md: no such file or directory\n  after the restore: bench test --package ./internal/commitment -> exit 0 (pass); git status clean.\n\nElement probes from the cycle 1 repair (scratchpad/r10/commitment.txt) were taken before this cycle moved the\nassertion lines; they were not rerun.\n"
+            }
+          }
+        },
+        {
+          "id": "dc-c9-r10c-repository",
+          "performer": "claude:dc_r10_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_2:repository",
+            "digest": "sha256:a84ad109e90b513715b3579105399ae0c655601a5d20f87c34aba8a6ada71a7a",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment/repository\ntip: bdeede94fc9c3197b542b67110bd607df24a5164\nexit: 0\noutput: tree dc-integration,bdeede94fc9c3197b542b67110bd607df24a5164,false; packages[1] github.com/gibbonmi/bench/internal/commitment/repository,pass,1881; failures[0]; skips[0]\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10c-roadmap",
+          "performer": "claude:dc_r10_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_2:roadmap",
+            "digest": "sha256:3a45fbe986c1b1c95ee01e0facb16944de72e6dc09c6c137ce48b8c71b696351",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/roadmap\ntip: bdeede94fc9c3197b542b67110bd607df24a5164\nexit: 0\noutput: tree dc-integration,bdeede94fc9c3197b542b67110bd607df24a5164,false; packages[1] github.com/gibbonmi/bench/internal/roadmap,pass,1910; failures[0]; skips[0]\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c9-r10c-bench",
+          "performer": "claude:dc_r10_2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r10_2:bench",
+            "digest": "sha256:0b59d313afe8faf90dbc8e1248b30c986896c511687ab4423bf5c10a6e31a110",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./cmd/bench\ntip: bdeede94fc9c3197b542b67110bd607df24a5164\nexit: 0\noutput: tree dc-integration,bdeede94fc9c3197b542b67110bd607df24a5164,false; packages[1] github.com/gibbonmi/bench/cmd/bench,pass,13299; failures[0]; skips[0]\n"
           },
           "requirement": "bench",
           "command": "bench test --package ./cmd/bench",
@@ -6586,3 +6705,9 @@ Standards and Spec report zero findings, and every round 1 finding is closed. Co
 The orchestrator accepts C9R2-C1 as blocking, because the DC86 row names that clause. The repair adds a test only, inside the ticket 10 fence. Cycle 2 repairs it with a second, unbound run that has a recorded continuation.
 
 Repair cycles consumed: 1 of 2. The cycle also checks that inventory reads sources at the revision, not the working tree.
+
+## DC-C9 repair cycle 2
+
+Repair cycles consumed: 2 of 2. A fresh Opus repair session at medium effort followed the bench-debug procedure and committed bdeede94fc9c3197b542b67110bd607df24a5164, a test-only change.
+The DC86 test now has an unbound run whose scope is its continuation scope. An uncommitted working-tree edit proves that inventory reads the revision.
+Four targeted mutations stayed green before the change and fail after it. All six planned checks pass at the chunk source, and the named probe failed and restored.
