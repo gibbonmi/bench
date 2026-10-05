@@ -18,6 +18,8 @@ findings in the owner details.
 The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
 and review cost that recent builds paid.
 
+**FT389 (MEDIUM) — ADR 0026 records the default class order, and the delivered commitment spec retires.**
+
 **FT373 (HIGH) — a gate check refuses production code that re-implements a standard-library function.**
 
 **FT293 (HIGH, decision required) — preflight closes each ticket's complete ownership fence.**
