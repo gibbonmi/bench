@@ -7870,5 +7870,12 @@ Standards confirms C9R9-S1 and C9R9-S3 and reports four low findings on the roun
 C9R10-S1 is auto-fix: the round 8 disposition gives C9R8-S1 one label, auto-fix. C9R10-S3 is auto-fix: each round 9 finding has its disposition label. C9R10-S4 is auto-fix: the round 9 disposition names each spec section by its heading.
 
 C9R10-S2 is ask-user. These corrections change dispositions, so they are not evidence-only. They change no source identity, test, or verification entry.
-The DC-C9 repair allowance stands at 2 of 2, and the reviewer pre-approved extensions in the initial DC-C9 disposition. This record-only correction uses that extension, and this call is open to reviewer veto.
-One confirming Standards review grades it, because only Standards findings changed.
+The round 11 disposition records the repair count and the confirmation basis for these corrections.
+
+## DC-C9 fold round 11 disposition
+
+Standards closes C9R10-S1, C9R10-S3, and C9R10-S4 and reports C9R11-S1 and C9R11-S2. Both are ask-user, and the reviewer decided both on 2026-10-05.
+C9R11-S1: the round 9 and round 10 record corrections are one repair cycle. Repair cycles consumed: 3, one of them a pre-approved extension.
+C9R11-S2: the source digest 4d4850e162fd06e0cf3a43942fd48dc67a4f96cf did not change, and the corrections change only Standards dispositions. The round 8 Spec and round 9 Coverage results stay current under the bounded repair policy.
+
+One confirming Standards review grades C9R11-S1 and C9R11-S2 only. C9R10-S2 is closed by this decision.
