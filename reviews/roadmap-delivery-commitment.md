@@ -6042,6 +6042,31 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r10-standards"
           ]
+        },
+        {
+          "id": "dc-c9-r12-standards",
+          "performer": "claude:dc_c9_r12_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r12_standards",
+            "digest": "sha256:1fa42dab903930167f1c925d16d38e0343096f6b0648caff31a30f6ed91b0324",
+            "excerpt": "DC-C9 round 12 confirming Standards (claude:dc_c9_r12_standards), frozen pair ffc100d5..5fa7fc33, reviewed HEAD 392d8688, record delta b11ee65a..HEAD: C9R11-S1 and C9R11-S2 close; two low findings.\nThe delta touches only reviews/roadmap-delivery-commitment.md; bench gate-prose passes.\nCount form passes: record:7878 retains the count and the extension, as bounded-repair-policy.md:19 and :59 require, in the DC-C8 form at record:7737.\nBasis passes: record:7879 keeps the round 8 Spec and round 9 Coverage results current under :51 and :54; the reliance on :49 is gone.\nOne source passes: the count and the basis each appear once; record:7873 points to them.\nC9R12-S1 (low, confidence 7, auto-fix): record:7881 \"C9R10-S2 is closed by this decision.\" is passive; ste-prose.md:14 requires the active voice.\nC9R12-S2 (low, confidence 5, auto-fix): record:7879 says the corrections change only Standards dispositions, but cd4f5e79 added (native COV-F1) to the Coverage finding line; the conclusion holds, because no Spec or Coverage result changed.\nAdvice: none.\nImplementation command contribution: yes, the round 11 gap; bounded-repair-policy.md:46-54 do not cover a record-only disposition change at an unchanged source digest.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [
+            "C9R12-S1",
+            "C9R12-S2"
+          ],
+          "supersedes": [
+            "dc-c9-r11-standards"
+          ]
         }
       ]
     }
@@ -7876,6 +7901,8 @@ The round 11 disposition records the repair count and the confirmation basis for
 
 Standards closes C9R10-S1, C9R10-S3, and C9R10-S4 and reports C9R11-S1 and C9R11-S2. Both are ask-user, and the reviewer decided both on 2026-10-05.
 C9R11-S1: the round 9 and round 10 record corrections are one repair cycle. Repair cycles consumed: 3, one of them a pre-approved extension.
-C9R11-S2: the source digest 4d4850e162fd06e0cf3a43942fd48dc67a4f96cf did not change, and the corrections change only Standards dispositions. The round 8 Spec and round 9 Coverage results stay current under the bounded repair policy.
+C9R11-S2: the source digest 4d4850e162fd06e0cf3a43942fd48dc67a4f96cf did not change, and the corrections change no Spec or Coverage result. The round 8 Spec and round 9 Coverage results stay current under the bounded repair policy.
 
-One confirming Standards review grades C9R11-S1 and C9R11-S2 only. C9R10-S2 is closed by this decision.
+One confirming Standards review grades C9R11-S1 and C9R11-S2 only. This decision closes C9R10-S2.
+
+Round 12 Standards closes C9R11-S1 and C9R11-S2 and reports C9R12-S1 and C9R12-S2, two low auto-fix wording findings in this section. This evidence-only correction applies both, and the Standards axis reaffirms it.
