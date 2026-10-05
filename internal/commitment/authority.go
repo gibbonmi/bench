@@ -1,6 +1,7 @@
 package commitment
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -79,12 +80,9 @@ func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
 	if err != nil {
 		return Plan{}, fmt.Errorf("encode commitment effects: %w", err)
 	}
-	var binding strings.Builder
-	for _, source := range sources {
-		fmt.Fprintf(&binding, "%s\x00%s\x00%s\x00", source.ID, source.Path, source.Identity)
-	}
+	sources, sourcesIdentity := boundSources(sources)
 	proposalIdentity := identity(proposedBytes)
-	bound := predecessor + "\x00" + proposalIdentity + "\x00" + binding.String() + "\x00" + string(effectBytes)
+	bound := predecessor + "\x00" + proposalIdentity + "\x00" + sourcesIdentity + "\x00" + string(effectBytes)
 	// A plan that lists no run binds no list, so the policy transition alone decides its identity.
 	if len(proposal.Continuations) != 0 {
 		listed, err := json.Marshal(proposal.Continuations)
@@ -102,6 +100,21 @@ func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
 		Effects:          effects,
 		Continuations:    proposal.Continuations,
 	}, nil
+}
+
+// boundSources returns a sorted copy of sources and the identity of its encoding. The sort
+// compares the identifier, then the path, then the identity, in byte order, so the plan
+// identity does not change when the policy traversal changes.
+func boundSources(sources []SourceBinding) ([]SourceBinding, string) {
+	sorted := slices.Clone(sources)
+	slices.SortFunc(sorted, func(a, b SourceBinding) int {
+		return cmp.Or(cmp.Compare(a.ID, b.ID), cmp.Compare(a.Path, b.Path), cmp.Compare(a.Identity, b.Identity))
+	})
+	var encoding strings.Builder
+	for _, source := range sorted {
+		fmt.Fprintf(&encoding, "%s\x00%s\x00%s\x00", source.ID, source.Path, source.Identity)
+	}
+	return sorted, identity([]byte(encoding.String()))
 }
 
 // refuseObligationFree refuses each obligation-free binding of proposed, in any milestone,

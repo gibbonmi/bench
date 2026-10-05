@@ -141,6 +141,29 @@ func TestCommitmentPlanSourcesOmitDroppedDeliverable(t *testing.T) {
 	}
 }
 
+// A plan lists its sources in byte order of the identifier, then the path, whatever order
+// the policy holds them in. Two deliverables with one identifier order by path.
+func TestCommitmentPlanSourcesAreCanonical(t *testing.T) {
+	owned := milestone("M1", "A", "B")
+	for index, row := range []struct{ id, row, path string }{{"A", "FT9", "specs/b/spec.md"}, {"B", "FT10", "specs/a/spec.md"}} {
+		source := commitment.SourceBinding{ID: row.row, Path: "roadmap/" + row.row + ".md", Identity: commitment.Identity([]byte(row.row))}
+		deliverable := commitment.SourceBinding{ID: "spec", Path: row.path, Identity: commitment.Identity([]byte(row.path))}
+		owned.Outcomes[index].Sources = []commitment.SourceBinding{source}
+		owned.Outcomes[index].Deliverables = []commitment.DeliveryBinding{{Source: deliverable, Obligations: []string{row.row}}}
+	}
+	plan, err := commitment.BuildPlan(nil, commitment.Proposal{Policy: policy([]commitment.Milestone{owned}, "M1")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, source := range plan.Sources {
+		got = append(got, source.ID+" "+source.Path)
+	}
+	if want := []string{"FT10 roadmap/FT10.md", "FT9 roadmap/FT9.md", "spec specs/a/spec.md", "spec specs/b/spec.md"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("plan sources = %v, want %v", got, want)
+	}
+}
+
 func TestCommitmentReorderDelaysPassedOutcomes(t *testing.T) {
 	current := policy([]commitment.Milestone{milestone("M1", "A", "B", "C")}, "M1")
 	proposed := policy([]commitment.Milestone{milestone("M1", "C", "A", "B")}, "M1")
