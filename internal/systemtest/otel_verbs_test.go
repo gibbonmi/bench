@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
@@ -24,6 +25,10 @@ func TestOtelCommitAndLandingRecordJourney(t *testing.T) {
 	const subject = "objective subject text 8f3a"
 	fixture := scaffoldRecordedPublicationRepo(t)
 	source := systemCreateLandingWorktree(t, fixture.root, fixture.home, "otel-record", "otel record")
+	admitted := systemSelected(t, source.path, fixture.environment(fixture.home), "commitment", "start", "--outcome", "delivery", "--request", source.request, "--deliverable", "specs/record/spec.md")
+	if admitted.code != 0 {
+		t.Fatalf("admit record fixture: %s %s", admitted.stdout, admitted.stderr)
+	}
 	base := systemGitOutput(t, fixture.root, "rev-parse", "main")
 
 	if err := os.WriteFile(filepath.Join(source.path, "landed.txt"), []byte("landed\n"), 0o644); err != nil {
@@ -133,7 +138,9 @@ func TestOtelShiftTraceJourney(t *testing.T) {
 	}
 	env := append(fixture.environment(fixture.home), "BENCH_AGENT="+adapter, "BENCH_MAX_ITERS=1",
 		"OTEL_RESOURCE_ATTRIBUTES=bench.leak=ENVMARK")
-	shifted := systemSelected(t, fixture.root, env, "shift", "OBJMARK objective")
+	commitmenttest.Register(t, fixture.root, "shift-record")
+	commitmenttest.Admit(t, fixture.root, "shift-record", "specs/record/spec.md")
+	shifted := systemSelected(t, fixture.root, env, "shift", "--outcome", "delivery", "OBJMARK objective")
 	// One committed pass under a cap of 1 exhausts the cap, so the shift ends incomplete.
 	if shifted.code != 3 {
 		t.Fatalf("bench shift = (%d, %q, %q), want the incomplete exit 3", shifted.code, shifted.stdout, shifted.stderr)
@@ -236,6 +243,8 @@ func scaffoldRecordedPublicationRepo(t *testing.T) recordedPublicationRepo {
 	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(inputs), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	commitmenttest.Write(t, root, "specs/record/spec.md", "# Record fixture\n\nStatus: staged\n")
+	commitmenttest.SeedAdmission(t, root, "specs/record/spec.md")
 	systemGit(t, root, "add", ".")
 	systemGit(t, root, "commit", "-qm", "publication record base")
 	systemGit(t, root, "update-ref", "refs/bench/green/main", systemGitOutput(t, root, "rev-parse", "HEAD"))

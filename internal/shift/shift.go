@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
+	grammar "github.com/gibbonmi/bench/internal/usage"
 )
 
 // scratchFiles are the shift's per-run scratch, carried between iterations and excluded
@@ -124,20 +125,52 @@ func cleanupScratch(root string) {
 	}
 }
 
-const commandHelp = "usage: bench shift [--refresh] \"<objective>\""
+const outcomeFlag = "--outcome"
+const refreshFlag = "--refresh"
 
-// Command is the `bench shift [objective...]` entry: the objective is every positional
-// argument joined, mirroring the shell's `$*`. An empty objective is not defaulted;
-// Loop's validation rejects it with exit 2.
+var commandFlags = []struct {
+	name, value string
+	required    bool
+}{
+	{refreshFlag, "", false},
+	{outcomeFlag, "<id>", true},
+}
+
+// Arguments projects the command flags for both help surfaces.
+func Arguments() string {
+	var words []string
+	for _, flag := range commandFlags {
+		word := flag.name
+		if flag.value != "" {
+			word += " " + flag.value
+		}
+		if !flag.required {
+			word = "[" + word + "]"
+		}
+		words = append(words, word)
+	}
+	return strings.Join(words, " ") + " \"<objective>\""
+}
+
+func shiftGrammar() grammar.Grammar {
+	g := grammar.Grammar{Cmd: "bench shift", Help: "usage: bench shift " + Arguments(), MinArgs: 1, MaxArgs: -1}
+	for _, flag := range commandFlags {
+		g.Flags = append(g.Flags, grammar.Flag{Name: flag.name, HasValue: flag.value != "", NoEmptyValue: flag.value != "", Required: flag.required})
+	}
+	return g
+}
+
+// Command validates the explicit outcome and joins the objective's positional words.
 func Command(args []string, stdout, stderr io.Writer) int {
-	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
-		fmt.Fprintln(stdout, commandHelp)
-		return 0
+	parsed, line, code := grammar.Parse(shiftGrammar(), args)
+	if line != "" {
+		if code == 0 {
+			fmt.Fprintln(stdout, line)
+		} else {
+			fmt.Fprintln(stderr, line)
+		}
+		return code
 	}
-	refresh := len(args) > 0 && args[0] == "--refresh"
-	if refresh {
-		args = args[1:]
-	}
-	objective := strings.Join(args, " ")
-	return loop(objective, refresh, stdout, stderr)
+	_, refresh := parsed.Flags[refreshFlag]
+	return loop(parsed.Flags[outcomeFlag], strings.Join(parsed.Positionals, " "), refresh, stdout, stderr)
 }

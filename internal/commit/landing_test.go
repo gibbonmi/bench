@@ -17,59 +17,6 @@ import (
 // so a folder name a shell would expand must land unchanged.
 const ticketsSlug = "ft900 tickets [x]*"
 
-// landingRepo builds the minimal linked worktree `bench commit` lands into. It returns
-// that worktree and its pre-landing HEAD.
-func landingRepo(t *testing.T, gateExit int, write func(t *testing.T, root string)) (root, before string) {
-	t.Helper()
-	notTheKitRoot(t)
-	primary := t.TempDir()
-	initializeLandingRepo(t, primary, gateExit)
-	root = filepath.Join(t.TempDir(), "linked")
-	runGit(t, primary, "worktree", "add", "-q", "-b", "topic", root)
-	return prepareLandingCheckout(t, root, write)
-}
-
-func primaryLandingRepo(t *testing.T, gateExit int, write func(t *testing.T, root string)) (root, before string) {
-	t.Helper()
-	notTheKitRoot(t)
-	root = t.TempDir()
-	initializeLandingRepo(t, root, gateExit)
-	return prepareLandingCheckout(t, root, write)
-}
-
-// notTheKitRoot points the kit-root selection away from the fixture. Every fixture here
-// is a linked project, not the Bench kit, so it declares its lane in a phase manifest or
-// declares none. Without this the selection would answer the fixture itself and hand it
-// the kit's built-in lane.
-func notTheKitRoot(t *testing.T) {
-	t.Helper()
-	t.Setenv("BENCH_KIT", t.TempDir())
-}
-
-func initializeLandingRepo(t *testing.T, root string, gateExit int) {
-	t.Helper()
-	git := func(args ...string) { t.Helper(); runGit(t, root, args...) }
-	git("init", "-q", "-b", "main")
-	git("config", "user.email", "a@b.c")
-	git("config", "user.name", "a")
-	mustMkdirAll(t, filepath.Join(root, ".bench"))
-	mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), "#!/bin/sh\nexit "+strconv.Itoa(gateExit)+"\n", 0o755)
-	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`, 0o644)
-	mustWrite(t, filepath.Join(root, "tracked.txt"), "base\n", 0o644)
-	git("add", "-A")
-	git("commit", "-qm", "bootstrap")
-}
-
-func prepareLandingCheckout(t *testing.T, root string, write func(t *testing.T, root string)) (string, string) {
-	t.Helper()
-	write(t, root)
-	runGit(t, root, "add", "-A")
-	runGit(t, root, "commit", "--allow-empty", "-qm", "base")
-	mustWrite(t, filepath.Join(root, "tracked.txt"), "changed\n", 0o644)
-	runGit(t, root, "add", "tracked.txt")
-	return root, strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
-}
-
 // runCommand invokes the real command from root, the way the CLI does.
 func runCommand(t *testing.T, root string, args ...string) (code int, stdout, stderr string) {
 	t.Helper()

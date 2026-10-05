@@ -16,7 +16,7 @@ copy, an edit under test. In that case, create or select its isolated worktree
 writes becomes dirty in an unattributable way. A fix lands from that bench
 worktree through `bench worktree land` with no `--spec`; it is the spec-less
 landing. Do not decide isolation after Phase 1 already produced artifacts; that
-decision comes too late.
+decision comes too late. Diagnosis needs no commitment start, but each commit of the repro or the fix follows the commitment rule in `.bench/BENCH.md`.
 
 ## Exit handoff
 

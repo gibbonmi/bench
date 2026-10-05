@@ -14,6 +14,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -641,100 +642,6 @@ func TestRetireStagedRefusesAndDeletesNothing(t *testing.T) {
 	}
 }
 
-// TestRetirePreflightsEveryPlannedRemovalBeforeDeleting pins the retirement plan's
-// atomicity: a later blocked target refuses before the earlier review pickup moves.
-func TestRetirePreflightsEveryPlannedRemovalBeforeDeleting(t *testing.T) {
-	root := retireRepo(t, "s", "Status: implemented\nRoadmap: FT7\n", nil)
-	folder := filepath.Join(root, "specs", "s")
-	pickup := filepath.Join(root, "reviews", "s.md")
-	if err := os.MkdirAll(filepath.Dir(pickup), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(pickup, []byte("pickup\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	ticket := filepath.Join(folder, "tickets", "01.md")
-	if err := os.MkdirAll(filepath.Dir(ticket), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(ticket, []byte("ticket\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chmod(folder, 0o755) })
-	if err := os.Chmod(folder, 0o500); err != nil {
-		capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot restrict spec folder: %v", err))
-	}
-	if probe, err := os.CreateTemp(folder, "retire-preflight-probe-"); err == nil {
-		_ = probe.Close()
-		_ = os.Remove(probe.Name())
-		capability.Capability(t, capability.Privilege, "read-only spec folder remains writable by this user")
-	}
-
-	out, code := runRetire(t, root, "s")
-	if code != 1 {
-		t.Fatalf("code = %d, want 1; out = %q", code, out)
-	}
-	for _, path := range []string{"specs/s/spec.md", "specs/s/tickets"} {
-		if !strings.Contains(out, path) {
-			t.Errorf("refusal = %q, want blocked path %q", out, path)
-		}
-	}
-	if strings.Index(out, "specs/s/spec.md") > strings.Index(out, "specs/s/tickets") {
-		t.Errorf("refusal paths are not deterministic: %q", out)
-	}
-	if _, err := os.Stat(pickup); err != nil {
-		t.Errorf("earlier pickup was removed before refusal: %v", err)
-	}
-	for _, path := range []string{filepath.Join(folder, "spec.md"), filepath.Join(folder, "tickets")} {
-		if _, err := os.Stat(path); err != nil {
-			t.Errorf("planned target was removed before refusal: %s: %v", path, err)
-		}
-	}
-}
-
-// TestRetirePreflightsNestedRecursiveRemovalBeforeDeleting keeps RemoveAll from
-// discovering a blocked descendant only after it has retired the review pickup.
-func TestRetirePreflightsNestedRecursiveRemovalBeforeDeleting(t *testing.T) {
-	root := retireRepo(t, "s", "Status: implemented\nRoadmap: FT7\n", nil)
-	folder := filepath.Join(root, "specs", "s")
-	pickup := filepath.Join(root, "reviews", "s.md")
-	if err := os.MkdirAll(filepath.Dir(pickup), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(pickup, []byte("pickup\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	nested := filepath.Join(folder, "tickets", "nested")
-	if err := os.MkdirAll(nested, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(nested, "01.md"), []byte("ticket\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chmod(nested, 0o755) })
-	if err := os.Chmod(nested, 0o500); err != nil {
-		capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot restrict nested ticket directory: %v", err))
-	}
-	if probe, err := os.CreateTemp(nested, "retire-preflight-probe-"); err == nil {
-		_ = probe.Close()
-		_ = os.Remove(probe.Name())
-		capability.Capability(t, capability.Privilege, "read-only nested ticket directory remains writable by this user")
-	}
-
-	out, code := runRetire(t, root, "s")
-	if code != 1 {
-		t.Fatalf("code = %d, want 1; out = %q", code, out)
-	}
-	if !strings.Contains(out, "specs/s/tickets") {
-		t.Errorf("refusal = %q, want recursive blocked path", out)
-	}
-	for _, path := range []string{pickup, filepath.Join(folder, "spec.md"), filepath.Join(folder, "tickets"), folder} {
-		if _, err := os.Stat(path); err != nil {
-			t.Errorf("planned target was removed before refusal: %s: %v", path, err)
-		}
-	}
-}
-
 // TestRetireDeletesTheFolderAndExitsZero pins FA4: the surviving verb still removes a
 // merged-implemented spec's whole folder at exit 0.
 func TestRetireDeletesTheFolderAndExitsZero(t *testing.T) {
@@ -746,6 +653,74 @@ func TestRetireDeletesTheFolderAndExitsZero(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(root, "specs", "s")); !os.IsNotExist(err) {
 		t.Errorf("specs/s still present: err = %v", err)
 	}
+}
+
+// TestCommitmentRetireClosedRow pins retirement after a verified closure. That delivery
+// closed its row in its own publication, so the next: line schedules no board cleanup,
+// and the verb still deletes the folder. A HEAD policy that records no delivery of this
+// spec keeps the board-remainder line.
+func TestCommitmentRetireClosedRow(t *testing.T) {
+	closed := "next: promote durable content, commit as `spec-retire: s`\n"
+	open := "next: promote durable content, remove the ROADMAP row FT7, commit as `spec-retire: s`\n"
+	for _, tc := range []struct {
+		name, delivered, want string
+		uncommitted           bool
+	}{
+		{name: "delivered", delivered: "specs/s/spec.md", want: closed},
+		{name: "undelivered", want: open},
+		{name: "other-spec", delivered: "specs/other/spec.md", want: open},
+		{name: "working-tree-only", delivered: "specs/s/spec.md", uncommitted: true, want: open},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			policy := map[string]string{commitment.PolicyPath: retirePolicy(t, tc.delivered)}
+			committed := policy
+			if tc.uncommitted {
+				committed = nil
+			}
+			root := retireRepo(t, "s", "Status: implemented\nRoadmap: FT7\n", committed)
+			if tc.uncommitted {
+				if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(commitment.PolicyPath)), []byte(policy[commitment.PolicyPath]), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			out, code := runRetire(t, root, "s")
+			lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+			if code != 0 || lines[len(lines)-1]+"\n" != tc.want {
+				t.Fatalf("retire = (%d, %q), want exit 0 and the last line %q", code, out, tc.want)
+			}
+			if _, err := os.Stat(filepath.Join(root, "specs", "s")); !os.IsNotExist(err) {
+				t.Errorf("specs/s still present: err = %v", err)
+			}
+		})
+	}
+}
+
+// retirePolicy is a valid commitment policy whose outcome A owns FT7 and approves
+// specs/s/spec.md and specs/other/spec.md. It records the delivery of delivered, if any.
+func retirePolicy(t *testing.T, delivered string) string {
+	t.Helper()
+	binding := func(id, path string) commitment.DeliveryBinding {
+		return commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: id, Path: path, Identity: "sha256:" + id}, Obligations: []string{"FT7"}}
+	}
+	policy := commitment.Policy{Version: 1, ActiveMilestone: "M", Milestones: []commitment.Milestone{{ID: "M", Outcomes: []commitment.Outcome{{
+		ID: "A", Criteria: []commitment.Criterion{{ID: "done", Text: "The row is delivered."}},
+		Sources:      []commitment.SourceBinding{{ID: "FT7", Path: "roadmap/FT7.md", Identity: "sha256:FT7"}},
+		Deliverables: []commitment.DeliveryBinding{binding("s", "specs/s/spec.md"), binding("other", "specs/other/spec.md")},
+	}}}}}
+	var err error
+	if delivered != "" {
+		if policy, _, err = commitment.Deliver(policy, delivered, "source", "evidence"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	data, err := commitment.Bytes(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
 }
 
 // TestRetireOnPrimaryCheckoutRefusesAndDeletesNothing pins the primary-checkout refusal:

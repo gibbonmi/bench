@@ -30,7 +30,7 @@ func seamAttr(seam string) string {
 func runRecordedShift(t *testing.T, wantCode int) (otelrecord.Span, []byte, string) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	if code := Loop("recorded shift", &stdout, &stderr); code != wantCode {
+	if code := Loop("delivery", "recorded shift", &stdout, &stderr); code != wantCode {
 		t.Fatalf("Loop = %d, want %d; stdout:\n%s\nstderr:\n%s", code, wantCode, stdout.String(), stderr.String())
 	}
 	span, _, raw := recordedShift(t)

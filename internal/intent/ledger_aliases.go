@@ -7,13 +7,20 @@ import "github.com/gibbonmi/bench/internal/intent/ledger"
 // alias, and a function and a constant are a declared value.
 
 type (
-	Kind            = ledger.Kind
-	Entry           = ledger.Entry
-	Ledger          = ledger.Ledger
-	AssignmentState = ledger.AssignmentState
-	Recovery        = ledger.Recovery
-	Assignment      = ledger.Assignment
-	CleanupReceipt  = ledger.CleanupReceipt
+	Kind               = ledger.Kind
+	Entry              = ledger.Entry
+	Ledger             = ledger.Ledger
+	AssignmentState    = ledger.AssignmentState
+	Recovery           = ledger.Recovery
+	Assignment         = ledger.Assignment
+	CleanupReceipt     = ledger.CleanupReceipt
+	CommitmentReceipt  = ledger.CommitmentReceipt
+	MilestoneReceipt   = ledger.MilestoneReceipt
+	CommitmentState    = ledger.CommitmentState
+	DeliveryBinding    = ledger.DeliveryBinding
+	OutcomeClaim       = ledger.OutcomeClaim
+	OutcomeBlocker     = ledger.OutcomeBlocker
+	LegacyContinuation = ledger.LegacyContinuation
 )
 
 const (
@@ -58,6 +65,7 @@ var (
 	ShiftBranchPrefix      = ledger.ShiftBranchPrefix
 	ValidIdentity          = ledger.ValidIdentity
 	ValidateAssignment     = ledger.ValidateAssignment
+	ValidateCommitment     = ledger.ValidateCommitment
 
 	validAssignmentBranchRef = ledger.ValidAssignmentBranchRef
 	validEntry               = ledger.ValidateEntry

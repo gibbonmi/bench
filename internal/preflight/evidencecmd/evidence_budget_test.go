@@ -183,7 +183,7 @@ func TestEvidenceResponseBound(t *testing.T) {
 	cases := boundedFormCases(t,
 		map[string]string{"<slug>": slug, "<id>": identity},
 		map[string]string{
-			"--charge": "", "--verify": "", "--check-current": "",
+			"--charge": "", "--plan-only": "", "--verify": "", "--check-current": "",
 			"--ticket":          "one.md",
 			"--base":            preflighttest.RunGit(t, "rev-parse", "main"),
 			"--source-tip":      preflighttest.RunGit(t, "rev-parse", "HEAD"),

@@ -37,7 +37,7 @@ func TestStagedSpecCountUsesFactsStatusReader(t *testing.T) {
 	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
 		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
 	}
-	if got, _ := stagedSpecCount(root); got != 1 {
+	if got := stagedSpecCount(root); got != 1 {
 		t.Fatalf("stagedSpecCount = %d, want 1", got)
 	}
 
@@ -47,8 +47,7 @@ func TestStagedSpecCountUsesFactsStatusReader(t *testing.T) {
 	}
 	done := make(chan int, 1)
 	go func() {
-		count, _ := stagedSpecCount(fifoRoot)
-		done <- count
+		done <- stagedSpecCount(fifoRoot)
 	}()
 	window := bounds.TestDeadline(0)
 	select {

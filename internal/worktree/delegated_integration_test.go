@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/intent"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
@@ -75,16 +76,23 @@ func delegatedJourneyFixture(t *testing.T) *delegatedJourney {
 
 	// The merge set commits its lane before the base, so the reviewed range holds no lane.
 	journey := &delegatedJourney{root: root, home: home, merges: mergeSetAt(t, root, home), authors: map[string]Creation{}}
+	// The staged spec and its approval reach the destination before delivery starts, so
+	// the integration assignment binds to the approved deliverable.
+	journey.fixture = recordtest.Prepare(t, root, 4, delegatedJourneySpec,
+		delegatedJourneySpecBody, delegatedJourneyChunks, recordtest.Delegate)
+	commitmenttest.SeedAdmission(t, root, delegatedJourneySpec)
+	commitmenttest.Commit(t, root, "approve the delegated delivery")
 	journey.base = gitOutput(t, root, "rev-parse", "HEAD")
 	journey.integration = mustCreate(t, root, home, "delegated-integration", "integration")
+	commitmenttest.Admit(t, journey.integration.Path, "delegated-integration", delegatedJourneySpec)
+	// The run's evidence accumulates on the integration source, never on the destination.
+	journey.fixture.Root = journey.integration.Path
 	for _, ticket := range []string{"1.md", "2.md", "3.md", "4.md"} {
 		label := "author-" + strings.TrimSuffix(ticket, ".md")
 		journey.authors[ticket] = mustCreate(t, root, home, "delegated-"+label, label)
 	}
 	journey.unrelated = mustCreate(t, root, home, "delegated-unrelated", "unrelated")
 	commitInWorktree(t, journey.unrelated.Path, "unrelated.txt", "outside the run\n", "unrelated work")
-	journey.fixture = recordtest.Prepare(t, journey.integration.Path, 4, delegatedJourneySpec,
-		delegatedJourneySpecBody, delegatedJourneyChunks, recordtest.Delegate)
 	return journey
 }
 

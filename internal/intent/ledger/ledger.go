@@ -53,10 +53,28 @@ func HoldsRecovery(pointer string) bool {
 }
 
 type Ledger struct {
-	Schema          int              `json:"schema"`
-	Entries         []Entry          `json:"entries"`
-	Assignments     []Assignment     `json:"assignments,omitempty"`
-	CleanupReceipts []CleanupReceipt `json:"cleanup_receipts,omitempty"`
+	Schema             int                 `json:"schema"`
+	Entries            []Entry             `json:"entries"`
+	Assignments        []Assignment        `json:"assignments,omitempty"`
+	CleanupReceipts    []CleanupReceipt    `json:"cleanup_receipts,omitempty"`
+	CommitmentReceipts []CommitmentReceipt `json:"commitment_receipts,omitempty"`
+	MilestoneReceipts  []MilestoneReceipt  `json:"milestone_receipts,omitempty"`
+	Commitment         *CommitmentState    `json:"commitment,omitempty"`
+}
+
+// CommitmentReceipt holds an opaque commitment plan under the shared intent lock.
+type CommitmentReceipt struct {
+	Plan     string `json:"plan"`
+	Payload  string `json:"payload"`
+	Decision string `json:"decision,omitempty"`
+	Approved bool   `json:"approved,omitempty"`
+}
+
+// MilestoneReceipt holds an opaque milestone verification receipt under the shared intent
+// lock. A later completion proposal consumes it by its identity.
+type MilestoneReceipt struct {
+	ID      string `json:"id"`
+	Payload string `json:"payload"`
 }
 
 const AssignmentRecordSchema = "bench-assignment/v1"

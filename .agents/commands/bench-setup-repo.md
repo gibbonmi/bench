@@ -22,6 +22,11 @@ configured profile path. Recommend `/bench-shape-idea` when unresolved product
 fog remains. Recommend `/bench-write-spec` when the first build is already clear.
 Recommend `/bench-debug` when a concrete bug prompted setup.
 
+Delivery work waits for the initial commitment. Run `bench commitment inventory`
+to list the obligations and the existing runs. Then propose the initial
+commitment through `bench commitment plan` under the commitment rule in
+`.bench/BENCH.md`. Planning, diagnosis, and staged specs need no commitment.
+
 ## 0. Run `bench setup`
 
 Run `bench setup` first. It is one command. It inspects the repo, prints a plan

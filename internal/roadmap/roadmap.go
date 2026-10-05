@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capturetx"
+	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/retros"
@@ -135,7 +136,8 @@ func needsNewline(data []byte) bool {
 }
 
 // RoadmapCommand implements the bounded top-of-board projection for `bench roadmap`.
-func RoadmapCommand(args []string) (string, int) {
+// outlook supplies the commitment projection that the board renders beside the sequence.
+func RoadmapCommand(args []string, outlook OutlookSource) (string, int) {
 	if _, line, code := usage.Parse(roadmapGrammar, args); line != "" {
 		return line + "\n", code
 	}
@@ -146,7 +148,7 @@ func RoadmapCommand(args []string) (string, int) {
 	tree := LoadTree(root)
 	switch {
 	case tree.Index.State == bounds.StateAbsent:
-		return renderRoadmapBoard(Document{}, nil, DrainCounts(root), true, tree.DirState)
+		return renderRoadmapBoard(Document{}, nil, DrainCounts(root), true, tree.DirState, outlook(root))
 	case tree.Index.State == bounds.StateEmpty:
 		// The classifier carries no diagnostic for a clean read of nothing. The error line
 		// supplies the one fact that separates this state from absence.
@@ -160,10 +162,10 @@ func RoadmapCommand(args []string) (string, int) {
 			return toon.RecordError(RoadmapFile, bounds.StateUnsupportedSchema, f.Reason) + "\n", 1
 		}
 	}
-	return renderRoadmapBoard(doc, diagnostics, DrainCounts(root), false, tree.DirState)
+	return renderRoadmapBoard(doc, diagnostics, DrainCounts(root), false, tree.DirState, outlook(root))
 }
 
-func renderRoadmapBoard(doc Document, diagnostics []Diagnostic, drain Drain, absent bool, dirState bounds.FileState) (string, int) {
+func renderRoadmapBoard(doc Document, diagnostics []Diagnostic, drain Drain, absent bool, dirState bounds.FileState, outlook commitment.Outlook) (string, int) {
 	rowsShown := len(doc.Rows)
 	if rowsShown > 10 {
 		rowsShown = 10
@@ -185,28 +187,19 @@ func renderRoadmapBoard(doc Document, diagnostics []Diagnostic, drain Drain, abs
 		{Source: retros.Directory + "/", State: string(drain.RetrosState)},
 	}
 	trusted := occurrenceSequenceTrusted(doc.OccurrenceDiscrepancies, diagnostics, sources)
-	blocks := []struct {
-		name   string
-		fields []string
-		rows   [][]any
-	}{
+	blocks := []tableBlock{
 		{"roadmap", []string{"id", "title", "spec", "spec_status", "external_trigger", "occurrence_count", "occurrence_keys"}, roadmapRows},
 		{"board", []string{"rows_shown", "rows_total", "sequence_trusted"}, [][]any{{rowsShown, len(doc.Rows), trusted}}},
-		{"sequence", []string{"rank", "text", "command"}, sequenceRows},
-		{"drain", []string{"ideas", "ideas_state", "learnings", "learnings_state", "retros", "retros_state"}, [][]any{{drain.Ideas, string(drain.IdeasState), drain.OpenLearnings, string(drain.LearningsState), drain.Retros, string(drain.RetrosState)}}},
 	}
+	blocks = append(blocks, commitmentBlocks(outlook)...)
+	blocks = append(blocks,
+		tableBlock{"sequence", []string{"rank", "text", "command"}, sequenceRows},
+		tableBlock{"drain", []string{"ideas", "ideas_state", "learnings", "learnings_state", "retros", "retros_state"}, [][]any{{drain.Ideas, string(drain.IdeasState), drain.OpenLearnings, string(drain.LearningsState), drain.Retros, string(drain.RetrosState)}}},
+	)
 	if absent || drain.Ideas != 0 || drain.OpenLearnings != 0 || drain.Retros != 0 {
-		blocks = append(blocks, struct {
-			name   string
-			fields []string
-			rows   [][]any
-		}{"help", []string{"cmd", "why"}, [][]any{{"/bench-drain", "create or drain the working roadmap"}}})
+		blocks = append(blocks, tableBlock{"help", []string{"cmd", "why"}, [][]any{{"/bench-drain", "create or drain the working roadmap"}}})
 	} else {
-		blocks = append(blocks, struct {
-			name   string
-			fields []string
-			rows   [][]any
-		}{"help", []string{"cmd", "why"}, nil})
+		blocks = append(blocks, tableBlock{"help", []string{"cmd", "why"}, nil})
 	}
 	var out strings.Builder
 	for _, block := range blocks {

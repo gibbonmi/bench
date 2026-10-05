@@ -20,6 +20,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
 	"github.com/gibbonmi/bench/internal/jsonfile"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // Filename is the ledger's name inside git's common directory. The schema this file
@@ -36,6 +37,17 @@ func Address(root string) (string, error) {
 	}
 	return filepath.Join(common, Filename), nil
 }
+
+// LockPath resolves the lock file that every ledger transaction holds.
+func LockPath(root string) (string, error) {
+	path, err := Address(root)
+	if err != nil {
+		return "", err
+	}
+	return lockOf(path), nil
+}
+
+func lockOf(address string) string { return address + ".lock" }
 
 func Read(root string) (Ledger, error) {
 	path, err := Address(root)
@@ -86,7 +98,7 @@ func readPath(path string) (Ledger, error) {
 	if ledger.Assignments == nil {
 		ledger.Assignments = []Assignment{}
 	}
-	if ledger.Schema == LegacySchema && (len(ledger.Assignments) != 0 || len(ledger.CleanupReceipts) != 0) {
+	if ledger.Schema == LegacySchema && (len(ledger.Assignments) != 0 || len(ledger.CleanupReceipts) != 0 || ledger.Commitment != nil) {
 		return Ledger{}, errors.New("read intent ledger: legacy schema cannot authorize lifecycle records")
 	}
 	assignmentIDs := map[string]bool{}
@@ -103,6 +115,23 @@ func readPath(path string) (Ledger, error) {
 	}
 	if err := validateCleanupReceipts(ledger.CleanupReceipts); err != nil {
 		return Ledger{}, fmt.Errorf("read intent ledger: %w", err)
+	}
+	if err := ValidateCommitment(ledger.Commitment); err != nil {
+		return Ledger{}, fmt.Errorf("read intent ledger: %w", err)
+	}
+	seenPlans := map[string]bool{}
+	for _, receipt := range ledger.CommitmentReceipts {
+		if receipt.Plan == "" || receipt.Payload == "" || seenPlans[receipt.Plan] || !sanitize.LineSafe(receipt.Plan) || !sanitize.LineSafe(receipt.Decision) {
+			return Ledger{}, errors.New("read intent ledger: invalid commitment receipt")
+		}
+		seenPlans[receipt.Plan] = true
+	}
+	seenVerifications := map[string]bool{}
+	for _, receipt := range ledger.MilestoneReceipts {
+		if receipt.ID == "" || receipt.Payload == "" || seenVerifications[receipt.ID] || !sanitize.LineSafe(receipt.ID) {
+			return Ledger{}, errors.New("read intent ledger: invalid milestone receipt")
+		}
+		seenVerifications[receipt.ID] = true
 	}
 	return ledger, nil
 }
@@ -167,6 +196,9 @@ func writePath(path string, ledger Ledger) error {
 	}
 	if ledger.CleanupReceipts == nil {
 		ledger.CleanupReceipts = []CleanupReceipt{}
+	}
+	if ledger.CommitmentReceipts == nil {
+		ledger.CommitmentReceipts = []CommitmentReceipt{}
 	}
 	sort.Slice(ledger.Entries, func(i, j int) bool { return ledger.Entries[i].Key < ledger.Entries[j].Key })
 	sort.Slice(ledger.Assignments, func(i, j int) bool { return ledger.Assignments[i].ID < ledger.Assignments[j].ID })

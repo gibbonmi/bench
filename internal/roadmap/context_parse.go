@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capturetx"
+	"github.com/gibbonmi/bench/internal/commitment"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/retros"
@@ -25,51 +26,6 @@ var ideaRe = regexp.MustCompile(`^- ([0-9]{4}-[0-9]{2}-[0-9]{2})  (.*)$`)
 func ValidRowID(id string) bool {
 	m := roadmapStartRe.FindStringSubmatch("**" + id)
 	return m != nil && m[1] == id
-}
-
-// ValidOccurrenceIncident is the shared grammar for the incident half of an
-// occurrence token and a roadmap ledger entry.
-func ValidOccurrenceIncident(key string) bool {
-	if len(key) < 1 || len(key) > 64 {
-		return false
-	}
-	letterOrDigit := func(b byte) bool { return b >= 'a' && b <= 'z' || b >= '0' && b <= '9' }
-	if !letterOrDigit(key[0]) || !letterOrDigit(key[len(key)-1]) {
-		return false
-	}
-	for i := 0; i < len(key); i++ {
-		if !letterOrDigit(key[i]) && key[i] != '-' {
-			return false
-		}
-	}
-	return true
-}
-
-func parseOccurrenceLedger(lines []string) (string, int, bool) {
-	var ledger string
-	for _, line := range lines {
-		line = strings.TrimSuffix(line, "\r")
-		if !strings.HasPrefix(line, "Occurrences:") {
-			continue
-		}
-		if ledger != "" || line == "Occurrences:" || !strings.HasPrefix(line, "Occurrences: ") {
-			return "", 0, false
-		}
-		ledger = strings.TrimPrefix(line, "Occurrences: ")
-	}
-	if ledger == "" {
-		return "", 0, true
-	}
-	keys := strings.Split(ledger, ", ")
-	if strings.Join(keys, ", ") != ledger {
-		return "", 0, false
-	}
-	for i, key := range keys {
-		if !ValidOccurrenceIncident(key) || (i > 0 && keys[i-1] >= key) {
-			return "", 0, false
-		}
-	}
-	return ledger, len(keys), true
 }
 
 // noRoadmapRowsReason names the unsupported-schema failure. ParseDocument returns this
@@ -368,6 +324,9 @@ type ContextSnapshot struct {
 	GitChanges         [][]string
 	GateCache          [][]any
 	Failures           []ParseFailure
+	// Commitment is the shared commitment projection. The command adapter supplies it,
+	// so the snapshot reads no policy itself.
+	Commitment commitment.Outlook
 }
 
 // dirBytes sums the sizes of the regular-file entries in a classified directory listing.

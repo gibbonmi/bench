@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -20,7 +21,13 @@ import (
 // A field whose default has to reach another seam takes the value as its first argument.
 // The default then reads the caller's joins rather than a captured copy.
 type joins struct {
-	landReviewed             func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error)
+	landReviewed func(context.Context, landing.ReviewedRequest, landing.Admission) (landing.ReviewedResult, error)
+	// publicationGap runs under the publication lock, after the final admission decision
+	// and before the ref update. It receives the destination root.
+	publicationGap func(string)
+	// reconcileCommitment runs after the publication. It releases the local claims that
+	// the published delivery facts satisfy. It receives the destination root.
+	reconcileCommitment      func(string) error
 	releaseLandingAssignment func(joins, ambient, string, []string, io.Writer, io.Writer) int
 	// cleanupBoundary is the deterministic transaction fault seam. A nil value carries no
 	// fault, exactly as hit reads it, so it is also the default.
@@ -47,9 +54,11 @@ type joins struct {
 // lives, so a verb's boundary and a test's starting value cannot disagree.
 func defaultJoins() joins {
 	return joins{
-		landReviewed: func(ctx context.Context, request landing.ReviewedRequest) (landing.ReviewedResult, error) {
-			return landing.New().LandReviewed(ctx, request)
+		landReviewed: func(ctx context.Context, request landing.ReviewedRequest, admission landing.Admission) (landing.ReviewedResult, error) {
+			return landing.New().LandAdmitted(ctx, request, admission)
 		},
+		publicationGap:           func(string) {},
+		reconcileCommitment:      func(root string) error { return commitrepo.Store{Root: root}.ReconcileDelivered() },
 		releaseLandingAssignment: releaseCommandWith,
 		cleanupLockAttempt:       func(string) {},
 		creationLockAttempt:      func(string) {},

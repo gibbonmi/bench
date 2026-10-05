@@ -100,6 +100,7 @@ const (
 	shapeIdeaPhaseAction
 	writeSpecPhaseAction
 	otherPhaseAction
+	commitmentAction
 	actionCount
 )
 
@@ -111,6 +112,7 @@ const (
 	optionalSpecPath
 	optionalDecisionPath
 	anyPhaseCommand
+	commandArguments
 )
 
 type actionDefinition struct {
@@ -148,6 +150,7 @@ var actionDefinitions = [actionCount]actionDefinition{
 		kind: actionPhase, command: "/bench-write-spec", argument: optionalDecisionPath,
 	},
 	otherPhaseAction: {kind: actionPhase, argument: anyPhaseCommand},
+	commitmentAction: {kind: actionBench, command: "bench commitment", argument: commandArguments},
 }
 
 type statusAction struct {
@@ -266,7 +269,7 @@ func signalsWith(root string, query Query, home string) []Signal {
 	rows = appendIntent(rows, root)
 	rows = appendGuards(rows, root)
 	rows = appendCensus(rows, root, home)
-	rows = appendStagedSpecs(rows, root)
+	rows = appendDelivery(rows, root)
 	rows = appendDrain(rows, root)
 	rows = appendStructure(rows, root)
 	rows = appendMaps(rows, root)
@@ -299,34 +302,6 @@ func appendSetup(rows []row, root string) []row {
 		return append(rows, row{0, "setup", "no .bench/", commandAction(setupAction)})
 	}
 	return rows
-}
-
-func appendStagedSpecs(rows []row, root string) []row {
-	n, slug := stagedSpecCount(root)
-	if n == 0 {
-		return rows
-	}
-	command := commandAction(implementSpecPhaseAction)
-	if n == 1 {
-		command = commandActionWithArgument(implementSpecPhaseAction, "specs/"+slug+"/spec.md")
-	}
-	return append(rows, row{4, "specs", fmt.Sprintf("%d staged spec(s)", n), command})
-}
-
-func stagedSpecCount(root string) (int, string) {
-	facts, err := spec.Facts(root)
-	if err != nil {
-		return 0, ""
-	}
-	n, slug := 0, ""
-	for _, fact := range facts {
-		if fact.Status != "staged" {
-			continue
-		}
-		n++
-		slug = fact.Slug
-	}
-	return n, slug
 }
 
 // Command implements `bench status`. It renders the ambient board by default, its full

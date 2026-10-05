@@ -178,8 +178,12 @@ func TestLegacyPreflightDifferential(t *testing.T) {
 		if pin != "" {
 			args = append(args, "--source-tip", pin)
 		}
+		counts := countVerdicts(pinnedVerdicts(t, mode, slug, explicitBase, pin))
+		if mode == modeBuild && counts.red == 0 {
+			preflighttest.ActiveAssignment(t, root, root)
+		}
 		r := run(args, root, base, tip)
-		r.counts = countVerdicts(pinnedVerdicts(t, mode, slug, explicitBase, pin))
+		r.counts = counts
 		return r
 	}
 	cases := []struct {

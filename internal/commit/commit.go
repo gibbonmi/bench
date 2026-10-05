@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
@@ -133,6 +134,14 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 	named, err := landing.ResolveAttributedPaths(root, strings.TrimSpace(string(expectedBytes)), paths)
 	if err != nil {
 		fmt.Fprintf(stderr, "error: %v\n", err)
+		return 1
+	}
+	candidate, err := landing.CandidateTree(root, strings.TrimSpace(string(expectedBytes)), named)
+	if err == nil {
+		err = (commitrepo.Store{Root: root}).AuthorizeCandidate(candidate)
+	}
+	if err != nil {
+		fmt.Fprintf(stderr, "error: commitment: %v\n", err)
 		return 1
 	}
 	// The composed path count is the attributed set the commit publishes. It is counted

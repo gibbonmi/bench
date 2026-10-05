@@ -51,6 +51,9 @@ assignments; the file map, adapter contracts, and hook layers live below.
   heading line per row, with no bodies. `roadmap/` holds one detail owner per
   row, `roadmap/FT<n>.md`, carrying that row's body, `Occurrence:` ledger, and
   `Sources:` line.
+- `.bench/commitment.json` is the tracked delivery commitment: the milestones,
+  their ordered outcomes, and the verified delivery facts. `bench commitment`
+  reads and stages it, and `.bench/BENCH.md` states the commitment rule.
 - `.bench/bin/` is the local CLI copy `bench link` installs for hooks, so Stop
   and SessionStart do not depend on a global `bench` on PATH.
 - `.agents/commands/` contains portable Bench command phases.
@@ -214,6 +217,25 @@ describe the hook and adapter plumbing.
 - Context commands expose current state, navigation, capture, and planning evidence.
 - Oracle commands inspect or enforce readiness from development through release.
 - Work commands own isolated execution, gated changes, and spec lifecycle operations.
+
+`bench status`, `bench roadmap`, and `bench dashboard` render one commitment
+outlook. The outlook names its state, the next eligible outcome, each blocked
+outcome with its reason, and the next command. Before adoption the state is
+`adoption-required`, the recommended sequence is unapproved input, and the next
+command is `bench commitment plan --input <file>`. The status board shows that
+row only when a staged spec waits. When the policy or the local runtime record
+does not read, the state is `unreadable`, and `bench commitment show` names the cause.
+
+The plan input is the proposed policy document. Its optional `continuations` key
+lists each already-authorized run that can finish. Each entry names the run's
+`assignment` and `request` digest from `bench commitment inventory`, and the
+`scope` paths on that run's branch. The plan identity binds this list. Approval
+records each listed run in the local intent record, and an unlisted run gets no
+continuation.
+
+An open continuation holds the default active slot. To start an
+outcome beside it, a parallel grant names the run's assignment in its own
+`continuations` list.
 
 `bench consumers` is the resolved-reference query for a Go symbol. With
 `--changed`, the same verb is the review blast over a frozen base and source

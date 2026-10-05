@@ -75,6 +75,73 @@ func (f completionFixture) request(t *testing.T) ReviewedRequest {
 	}
 }
 
+// The reviewed landing binds the gate's completion oracle to a tickets-only close. The
+// real gate grades the exact close green, and it refuses an authorized tree that keeps
+// the closed folder, so the landing does not publish that tree.
+func TestLandingTicketsOnlyCompletion(t *testing.T) {
+	const closed = "specs/t"
+	for _, row := range []struct {
+		name, reason string
+		keep         bool
+	}{
+		{name: "exact-close"},
+		{name: "kept-folder", reason: "completion keeps closed " + closed + "/tickets/one.md", keep: true},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root := fixture(t)
+			write(t, root, closed+"/tickets/one.md", "# One\n")
+			g := testrepo.NewGateFixture(t.TempDir())
+			if err := g.Write(root, "exit 0\n", ""); err != nil {
+				t.Fatal(err)
+			}
+			git(t, root, "add", ".")
+			git(t, root, "commit", "-qm", "stage tickets and the landing oracle")
+			destination := git(t, root, "rev-parse", "HEAD")
+			sourceWorktree := filepath.Join(t.TempDir(), "source")
+			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			write(t, sourceWorktree, "reviewed", "source bytes\n")
+			git(t, sourceWorktree, "add", "reviewed")
+			git(t, sourceWorktree, "commit", "-qm", "reviewed work")
+			sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
+			if err != nil {
+				t.Fatal(err)
+			}
+			destinationFingerprint, err := CheckoutFingerprint(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			owner := New()
+			if row.keep {
+				owner.authorize = func(ctx context.Context, root, tree string, stdout, stderr io.Writer) authorization.Result {
+					kept, err := replaceTreeFile(root, tree, closed+"/tickets/one.md", []byte("# One\n"), 0o644)
+					if err != nil {
+						t.Fatal(err)
+					}
+					return authorization.AuthorizeWithWriters(ctx, root, kept, stdout, stderr)
+				}
+			}
+			_, err = owner.LandReviewed(t.Context(), ReviewedRequest{
+				Root: root, Destination: "refs/heads/main", DestinationBase: destination,
+				Source: "refs/heads/reviewed-source", SourceTip: git(t, sourceWorktree, "rev-parse", "HEAD"), ReviewBase: destination,
+				SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+				ClosePath: closed, Message: "land the tickets-only close", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{},
+			})
+			if row.reason == "" {
+				if err != nil || git(t, root, "rev-parse", "main") == destination {
+					t.Fatalf("exact tickets-only close = %v, want a publication", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), row.reason) {
+				t.Fatalf("kept folder = %v, want a refusal naming %q", err, row.reason)
+			}
+			if got := git(t, root, "rev-parse", "main"); got != destination {
+				t.Fatalf("refused close moved main to %s", got)
+			}
+		})
+	}
+}
+
 func TestLandingCompletionEvidence(t *testing.T) {
 	cases := []struct {
 		name, reason string

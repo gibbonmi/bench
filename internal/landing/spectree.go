@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/landing/published"
 )
 
 // stagedSpecMatches proves provenance, not agreement: the bytes the landing will
@@ -47,35 +47,7 @@ func specNeutralizedDestination(root, destination, path string, want []byte, mod
 }
 
 func replaceTreeFile(root, baseTree, path string, content []byte, mode os.FileMode) (string, error) {
-	return editTree(root, baseTree, func(idx string) error {
-		blob, err := outputInput(root, content, "hash-object", "-w", "--stdin")
-		if err != nil {
-			return err
-		}
-		return indexRun(root, idx, "update-index", "--add", "--cacheinfo", gitRegularFileMode(mode)+","+blob+","+path)
+	return published.Edit(root, baseTree, func(idx string) error {
+		return published.WriteFile(root, idx, path, content, gitRegularFileMode(mode))
 	})
-}
-
-// removeTreeFolder writes baseTree without every entry beneath rel, through
-// removeIndexTree's one spelling of the removal.
-func removeTreeFolder(root, baseTree, rel string) (string, error) {
-	return editTree(root, baseTree, func(idx string) error { return removeIndexTree(root, idx, rel) })
-}
-
-// editTree reads baseTree into a private index, applies edit to that index, and
-// writes the resulting tree. No checkout or repository index is touched.
-func editTree(root, baseTree string, edit func(idx string) error) (string, error) {
-	dir, err := os.MkdirTemp("", "bench-reviewed-landing-index-")
-	if err != nil {
-		return "", err
-	}
-	defer os.RemoveAll(dir)
-	idx := filepath.Join(dir, "index")
-	if err := indexRun(root, idx, "read-tree", baseTree); err != nil {
-		return "", err
-	}
-	if err := edit(idx); err != nil {
-		return "", err
-	}
-	return indexOutput(root, idx, "write-tree")
 }

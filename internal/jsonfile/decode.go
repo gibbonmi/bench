@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 )
 
 // Decode decodes one persisted JSON value into target.
@@ -15,7 +16,7 @@ func Decode(data []byte, target any) error {
 	if len(data) == 0 || data[len(data)-1] != '\n' {
 		return errors.New("persisted JSON requires a final newline")
 	}
-	return decodeDocument(data[:len(data)-1], target)
+	return decodeDocument(data[:len(data)-1], target, nil)
 }
 
 // DecodeDocument strictly decodes one complete JSON document without imposing
@@ -24,13 +25,22 @@ func DecodeDocument(data []byte, target any) error {
 	if len(data) == 0 {
 		return errors.New("JSON document is empty")
 	}
-	return decodeDocument(data, target)
+	return decodeDocument(data, target, nil)
 }
 
-func decodeDocument(body []byte, target any) error {
+// DecodeExactDocument also requires each struct key to match its declared name.
+// Its schema must use named fields rather than anonymous field promotion.
+func DecodeExactDocument(data []byte, target any) error {
+	if len(data) == 0 {
+		return errors.New("JSON document is empty")
+	}
+	return decodeDocument(data, target, reflect.TypeOf(target))
+}
+
+func decodeDocument(body []byte, target any, schema reflect.Type) error {
 	scan := json.NewDecoder(bytes.NewReader(body))
 	scan.UseNumber()
-	if err := scanValue(scan); err != nil {
+	if err := scanValue(scan, schema); err != nil {
 		return err
 	}
 	if err := rejectTrailing(scan); err != nil {
@@ -45,7 +55,7 @@ func decodeDocument(body []byte, target any) error {
 	return rejectTrailing(decoder)
 }
 
-func scanValue(decoder *json.Decoder) error {
+func scanValue(decoder *json.Decoder, schema reflect.Type) error {
 	token, err := decoder.Token()
 	if err != nil {
 		return fmt.Errorf("decode persisted JSON: %w", err)
@@ -70,13 +80,17 @@ func scanValue(decoder *json.Decoder) error {
 				return fmt.Errorf("duplicate object field %q", name)
 			}
 			seen[name] = true
-			if err := scanValue(decoder); err != nil {
+			child, err := objectField(schema, name)
+			if err != nil {
+				return err
+			}
+			if err := scanValue(decoder, child); err != nil {
 				return err
 			}
 		}
 	case '[':
 		for decoder.More() {
-			if err := scanValue(decoder); err != nil {
+			if err := scanValue(decoder, elementType(schema)); err != nil {
 				return err
 			}
 		}

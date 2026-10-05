@@ -170,6 +170,58 @@ An objective is capped at 200 runes. It is rejected at intake — before any led
 entry, scratch file, or commit — if it is over-long or carries a control byte.
 So unbounded or control-bearing text cannot flow into durable state.
 
+## Delivery commitment records
+
+The tracked policy `.bench/commitment.json` is reviewable project data. It holds
+the milestone and outcome identities, the outcome criteria, and the dependency
+references. It also holds the source and deliverable paths with their content
+identities, the parallel grants, and the delivery facts that the landing broker
+records. Its history is ordinary repository history.
+
+The commitment commands keep their local runtime records in the intent ledger
+(`bench-intent.json`). The ledger lives in the Git common directory at mode 0600,
+and every write runs under its shared lock and atomic transaction. The listing
+below names each commitment field of that ledger. A conformance check derives the
+same field set from the ledger types, so a new field cannot stay undocumented.
+
+<!-- commitment-record:begin -->
+
+| Field | Contents |
+|---|---|
+| `commitment_receipts.plan` | The identity of a planned commitment change. |
+| `commitment_receipts.payload` | The plan: the predecessor identity, the proposed policy, its source identities, its effects, and the runs that it lists. |
+| `commitment_receipts.decision` | The decision reference that the reviewer gave for the approval. |
+| `commitment_receipts.approved` | Whether the plan is approved. |
+| `milestone_receipts.id` | The identity of a milestone verification receipt. |
+| `milestone_receipts.payload` | The verification: the milestone, its criteria, the examined revision, each result, and its native evidence reference. |
+| `commitment.bindings.assignment` | The assignment that a start bound to an outcome. |
+| `commitment.bindings.request` | The digest of that assignment's request. |
+| `commitment.bindings.milestone` | The milestone of the bound outcome. |
+| `commitment.bindings.outcome` | The bound outcome. |
+| `commitment.bindings.deliverable` | The path of the approved deliverable. |
+| `commitment.bindings.identity` | The content identity of that deliverable. |
+| `commitment.claims.milestone` | The milestone of an active outcome claim. |
+| `commitment.claims.outcome` | The claimed outcome. |
+| `commitment.blockers.outcome` | A blocked outcome. |
+| `commitment.blockers.reason` | The one-line blocker reason that the worker wrote. |
+| `commitment.continuations.assignment` | An existing run that an approved plan lists and lets finish. |
+| `commitment.continuations.request` | The digest of that run's request. |
+| `commitment.continuations.scope` | The paths that the run can still deliver. |
+
+<!-- commitment-record:end -->
+
+These records hold identities, digests, paths, references, and the reviewer's
+and the worker's one-line text.
+They hold no transcript, prompt, objective text, environment value, or credential.
+A decision reference and an evidence reference name their source; Bench does
+not resolve or copy that source.
+
+The records stay on the local machine. Bench removes no receipt by itself, so an
+unconsumed receipt stays available for recovery. After its publication is
+verified, a consumed receipt can go, but the removal keeps every live binding,
+claim, blocker, and continuation. The published delivery facts stay in the
+tracked policy.
+
 ## Adoption recovery
 
 The [compatibility repair owner](internal/adopt/compatibility.go) selects the local recovery namespace.

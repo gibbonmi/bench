@@ -28,6 +28,7 @@ func WithCheckpoint(ctx context.Context, checkpoint Checkpoint) context.Context 
 func checkpointEvaluation(ctx context.Context, evaluation *gateEvaluation) *gateEvaluation {
 	evaluation.checkpoint, _ = ctx.Value(checkpointKey{}).(Checkpoint)
 	evaluation.completionSource, _ = ctx.Value(completionSourceKey{}).(string)
+	evaluation.completionFolder, _ = ctx.Value(completionFolderKey{}).(string)
 	return evaluation
 }
 
@@ -114,13 +115,13 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	if err := e.checkpoint.validate(); err != nil {
 		return subject{}, err
 	}
-	if e.checkpoint.Spec == "" {
+	if e.checkpoint.Spec == "" && e.completionFolder == "" {
 		return plan, nil
 	}
 	tip, err := benchgit.ResolveCommit(e.identityRoot, "HEAD")
 	if e.completionSource != "" {
 		tip, err = benchgit.ResolveCommit(e.identityRoot, e.completionSource)
-		if err == nil && (!e.prospective || !e.checkpoint.Complete || tip != e.completionSource) {
+		if err == nil && (!e.prospective || !e.completing() || tip != e.completionSource) {
 			return subject{}, errors.New("invalid prospective completion source")
 		}
 	}
@@ -139,13 +140,19 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 			return subject{}, err
 		}
 	}
-	if err := reviewrecord.CheckTrees(e.identityRoot, sourceTree, generation.tree, tip, e.checkpoint.Spec, e.checkpoint.Chunk, e.checkpoint.Complete); err != nil {
-		return subject{}, routedRefusal(e.checkpoint.Spec, fmt.Errorf("completion evidence: %w", err))
+	// A tickets-only close has no completion record; its completion tree is its evidence.
+	if e.checkpoint.Spec != "" {
+		if err := reviewrecord.CheckTrees(e.identityRoot, sourceTree, generation.tree, tip, e.checkpoint.Spec, e.checkpoint.Chunk, e.checkpoint.Complete); err != nil {
+			return subject{}, routedRefusal(e.checkpoint.Spec, fmt.Errorf("completion evidence: %w", err))
+		}
 	}
 	purpose, _ := json.Marshal(e.checkpoint)
 	hash := sha256.New()
 	frame(hash, plan.Oracle)
 	frame(hash, string(purpose))
+	if e.completionFolder != "" {
+		frame(hash, e.completionFolder)
+	}
 	frame(hash, tip)
 	plan.Oracle = hex.EncodeToString(hash.Sum(nil))
 	return plan, nil

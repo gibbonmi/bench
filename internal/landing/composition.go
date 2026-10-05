@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/landing/published"
 	"github.com/gibbonmi/bench/internal/landing/settlepolicy"
 )
 
@@ -124,7 +125,7 @@ func resolveCaptureConflict(root, mergeOutput string, records []settlepolicy.Sta
 	if err != nil {
 		return "", nil, settlepolicy.Refusal{}, false, err
 	}
-	tree, err := editTree(root, baseTree, func(idx string) error {
+	tree, err := published.Edit(root, baseTree, func(idx string) error {
 		for i, verdict := range settlement.Verdicts {
 			record := settled[i]
 			if record == nil {

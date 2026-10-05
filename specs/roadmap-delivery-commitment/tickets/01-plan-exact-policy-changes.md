@@ -1,7 +1,7 @@
 # Plan and approve exact commitment changes
 
 Blocked by: none
-Writes: internal/commitment (new), internal/intent, internal/roadmap, cmd/bench, internal/tickets/registry_data.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/jsonfile, internal/commitment (new), internal/intent, internal/roadmap, cmd/bench, internal/tickets/registry_data.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/help_inventory_single_source_test.go
 Covers: DC1, DC2, DC3, DC4, DC5, DC7, DC8, DC9, DC55, DC56, DC57, DC58, DC59, DC60, DC62, DC71
 
 ## What to build
@@ -17,6 +17,7 @@ A planned milestone changes no active selection. An unrelated default-branch com
 This checkpoint stages policy and the derived sequence in a planning assignment. Commit and publication consumers arrive in later tickets.
 The usable checkpoint is the proposal and approval command journey, including refusal and replay. It must not claim that all delivery routes are enforced yet.
 Add the command family to the existing registry and bind its package in the ticket registry.
+Register the commitment form projection in the existing help conformance owner.
 
 Read the spec contracts, `internal/jsonfile`, intent transaction and assignment records, roadmap identity and sequence readers, and the command registry. The read surface is these owners, not every command package. Review this owner seam before ticket 02 starts.
 
@@ -31,4 +32,7 @@ Read the spec contracts, `internal/jsonfile`, intent transaction and assignment 
 
 ## Checkpoint verification
 
-Run `bench test --package ./internal/commitment`, `bench test --package ./internal/intent`, `bench test --package ./internal/roadmap`, and `bench test --package ./cmd/bench`. Record a stale-plan or missing-effect red before the corresponding production change.
+Run `bench test --package ./internal/jsonfile`, `bench test --package ./internal/commitment`, `bench test --package ./internal/intent`, `bench test --package ./internal/roadmap`, and `bench test --package ./cmd/bench`. Record a stale-plan or missing-effect red before the corresponding production change.
+
+The JSON owner also validates exact field names for policy input.
+A case alias must refuse before a receipt write.

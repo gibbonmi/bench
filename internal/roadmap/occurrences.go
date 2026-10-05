@@ -159,3 +159,54 @@ func malformedOccurrenceParts(token string) (string, string) {
 	}
 	return parts[0], parts[1]
 }
+
+// ValidOccurrenceIncident is the shared grammar for the incident half of an
+// occurrence token and a roadmap ledger entry.
+func ValidOccurrenceIncident(key string) bool {
+	if len(key) < 1 || len(key) > 64 {
+		return false
+	}
+	letterOrDigit := func(b byte) bool { return b >= 'a' && b <= 'z' || b >= '0' && b <= '9' }
+	if !letterOrDigit(key[0]) || !letterOrDigit(key[len(key)-1]) {
+		return false
+	}
+	for i := 0; i < len(key); i++ {
+		if !letterOrDigit(key[i]) && key[i] != '-' {
+			return false
+		}
+	}
+	return true
+}
+
+const occurrenceLedgerLabel = "Occurrences:"
+
+func isOccurrenceLedgerLine(line string) bool {
+	return strings.HasPrefix(line, occurrenceLedgerLabel)
+}
+
+func parseOccurrenceLedger(lines []string) (string, int, bool) {
+	var ledger string
+	for _, line := range lines {
+		line = strings.TrimSuffix(line, "\r")
+		if !isOccurrenceLedgerLine(line) {
+			continue
+		}
+		if ledger != "" || line == occurrenceLedgerLabel || !strings.HasPrefix(line, occurrenceLedgerLabel+" ") {
+			return "", 0, false
+		}
+		ledger = strings.TrimPrefix(line, occurrenceLedgerLabel+" ")
+	}
+	if ledger == "" {
+		return "", 0, true
+	}
+	keys := strings.Split(ledger, ", ")
+	if strings.Join(keys, ", ") != ledger {
+		return "", 0, false
+	}
+	for i, key := range keys {
+		if !ValidOccurrenceIncident(key) || (i > 0 && keys[i-1] >= key) {
+			return "", 0, false
+		}
+	}
+	return ledger, len(keys), true
+}

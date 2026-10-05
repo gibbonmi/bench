@@ -2,7 +2,7 @@
 
 Blocked by: 07-close-light-delivery.md
 Writes: internal/commitment (new), internal/intent, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: DC43, DC44, DC45, DC46, DC70
+Covers: DC43, DC44, DC45, DC46, DC70, DC80, DC81
 
 ## What to build
 
@@ -23,6 +23,8 @@ Read the approved criterion and completion contracts plus the commitment command
 - [ ] Complete current evidence and explicit approval complete M1 and leave M2 inactive (DC45).
 - [ ] Changed criteria or revision invalidate evidence (DC46).
 - [ ] Missing, duplicate, blocked, and unknown criterion results each refuse without changing milestone state (DC70).
+- [ ] A policy whose active milestone has no criteria refuses (DC80).
+- [ ] Completion refuses an undelivered outcome and a changed examined criterion (DC81).
 
 ## Checkpoint verification
 

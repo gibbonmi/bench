@@ -23,8 +23,20 @@ func brokerPlatformSuffix() string {
 	return runtime.GOOS + "-" + arch
 }
 
+// landRouteVersion is the package version that every fabricated installation stamps.
+const landRouteVersion = "9.9.9"
+
 type landRouteInstall struct {
 	root, wrapper, broker, manifest, stub string
+}
+
+// bindBroker writes body as the install's broker and binds it at landRouteVersion.
+func (i landRouteInstall) bindBroker(t *testing.T, body []byte) {
+	t.Helper()
+	if err := os.WriteFile(i.broker, body, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	i.writeManifest(t, landRouteManifest(i.broker, landRouteVersion, brokerPlatformSuffix(), fileDigest(t, i.broker)))
 }
 
 // writeManifest replaces the install's broker manifest with body, so one case can
@@ -82,9 +94,11 @@ func newLandRouteInstall(t *testing.T) landRouteInstall {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bin := filepath.Join(install, "bin")
-	if err := os.MkdirAll(bin, 0o755); err != nil {
-		t.Fatal(err)
+	bin, broker := filepath.Join(install, "bin"), filepath.Join(install, "libexec", "broker")
+	for _, dir := range []string{bin, filepath.Dir(broker)} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
 	}
 	source, err := os.ReadFile(filepath.Join(owner.kit, "bin", "bench.sh"))
 	if err != nil {
@@ -94,23 +108,13 @@ func newLandRouteInstall(t *testing.T) landRouteInstall {
 	if err := os.WriteFile(wrapper, source, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(install, "package.json"), []byte("{\n  \"version\": \"9.9.9\"\n}\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(install, "package.json"), []byte("{\n  \"version\": \""+landRouteVersion+"\"\n}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	broker := filepath.Join(install, "libexec", "broker")
-	if err := os.MkdirAll(filepath.Dir(broker), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	stub := "#!/bin/sh\nprintf 'broker=%s\\n' \"$0\"\nprintf 'argv=%s\\n' \"$*\"\n"
-	if err := os.WriteFile(broker, []byte(stub), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	manifest := landRouteManifest(broker, "9.9.9", brokerPlatformSuffix(), fileDigest(t, broker))
-	manifestPath := filepath.Join(bin, "bench-broker.manifest")
-	if err := os.WriteFile(manifestPath, []byte(manifest), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	return landRouteInstall{root: install, wrapper: wrapper, broker: broker, manifest: manifestPath, stub: stub}
+	created := landRouteInstall{root: install, wrapper: wrapper, broker: broker, manifest: filepath.Join(bin, "bench-broker.manifest"),
+		stub: "#!/bin/sh\nprintf 'broker=%s\\n' \"$0\"\nprintf 'argv=%s\\n' \"$*\"\n"}
+	created.bindBroker(t, []byte(created.stub))
+	return created
 }
 
 // landRouteManifest is the one spelling of the broker manifest the land route reads:
@@ -253,11 +257,7 @@ func TestWorktreeLandRouteGivesRecoveredGoPathToBroker(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(home, ".bash_profile"), []byte(profile), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	broker := "#!/bin/sh\nprintf 'go=%s\\n' \"$(command -v go)\"\n"
-	if err := os.WriteFile(install.broker, []byte(broker), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	install.writeManifest(t, landRouteManifest(install.broker, "9.9.9", brokerPlatformSuffix(), fileDigest(t, install.broker)))
+	install.bindBroker(t, []byte("#!/bin/sh\nprintf 'go=%s\\n' \"$(command -v go)\"\n"))
 
 	repo := landRouteRepo(t, "land-route [go recovery]-")
 	shimDir, marker := landRouteGitShim(t)
@@ -287,7 +287,7 @@ func TestWorktreeLandRouteRefusesInheritedRoutingBeforeRepositoryReads(t *testin
 	plantRepositoryDecoys(t, primary)
 	// The install carries the one state the route would rebuild for. The override
 	// refusals stand ahead of that recovery, so no build runs on an inherited route.
-	install.plantStampedBuild(t, "9.9.9")
+	install.plantStampedBuild(t, landRouteVersion)
 	install.writeManifest(t, landRouteManifest(install.broker, "dev", brokerPlatformSuffix(), fileDigest(t, install.broker)))
 	// Each variable appears twice: carrying a value, and set but empty. A guard that
 	// tests the value rather than the presence accepts the empty spelling, and the
@@ -336,7 +336,7 @@ func TestWorktreeLandRouteRefusesInheritedRoutingBeforeRepositoryReads(t *testin
 // routes to the broker the digest binds.
 func TestWorktreeLandRouteDoesNotRederiveTheBrokerPlatform(t *testing.T) {
 	install := newLandRouteInstall(t)
-	install.writeManifest(t, landRouteManifest(install.broker, "9.9.9", "plan9-vax", fileDigest(t, install.broker)))
+	install.writeManifest(t, landRouteManifest(install.broker, landRouteVersion, "plan9-vax", fileDigest(t, install.broker)))
 	primary := landRouteRepo(t, "land-route [platform]-")
 	plantRepositoryDecoys(t, primary)
 
@@ -369,7 +369,7 @@ func TestWorktreeLandRouteRefusesEveryUnauthenticatedBroker(t *testing.T) {
 			recovers:   true,
 			wantBuilds: 1,
 			breakIt: func(t *testing.T, i landRouteInstall) {
-				i.plantStampedBuild(t, "9.9.9")
+				i.plantStampedBuild(t, landRouteVersion)
 				i.writeManifest(t, landRouteManifest(i.broker, "dev", brokerPlatformSuffix(), fileDigest(t, i.broker)))
 			},
 		},
@@ -390,7 +390,7 @@ func TestWorktreeLandRouteRefusesEveryUnauthenticatedBroker(t *testing.T) {
 				// The rebuild republishes the manifest, then leaves the executable it
 				// bound tampered. A recovered version never authorizes bytes the digest
 				// does not bind.
-				i.plantStampedBuild(t, "9.9.9", "printf 'tampered\\n' >> '"+i.broker+"'")
+				i.plantStampedBuild(t, landRouteVersion, "printf 'tampered\\n' >> '"+i.broker+"'")
 				i.writeManifest(t, landRouteManifest(i.broker, "dev", brokerPlatformSuffix(), fileDigest(t, i.broker)))
 			},
 		},
@@ -407,7 +407,7 @@ func TestWorktreeLandRouteRefusesEveryUnauthenticatedBroker(t *testing.T) {
 			name: "incomplete manifest",
 			want: "is incomplete",
 			breakIt: func(t *testing.T, i landRouteInstall) {
-				i.writeManifest(t, "path\t"+i.broker+"\nversion\t9.9.9\nplatform\t"+brokerPlatformSuffix()+"\n")
+				i.writeManifest(t, "path\t"+i.broker+"\nversion\t"+landRouteVersion+"\nplatform\t"+brokerPlatformSuffix()+"\n")
 			},
 		},
 		{

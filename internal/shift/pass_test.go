@@ -323,7 +323,7 @@ func TestASecondShiftStartsWithEmptyNotes(t *testing.T) {
 	seen := t.TempDir()
 	withAgent(t, "cat > '"+seen+"/prompt'\ncp "+notesFile+" '"+seen+"/notes'\necho MEMMARK >> "+notesFile+"\n")
 	for run := range 2 {
-		if code := Loop("memory shift", io.Discard, io.Discard); code != exitCodes[OutcomeNoOp] {
+		if code := Loop("delivery", "memory shift", io.Discard, io.Discard); code != exitCodes[OutcomeNoOp] {
 			t.Fatalf("Loop = %d, want no-op", code)
 		}
 		if files := memoryFiles(t); run == 0 && (len(files) != 1 || !bytes.Contains(files[0], []byte("MEMMARK"))) {

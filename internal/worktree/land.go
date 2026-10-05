@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/census"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -198,12 +199,17 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	// The release removes the source worktree, so the broker check reads it now and the
 	// notice prints after the effects report the refresh.
 	brokerChanged := brokerSourceChanged(assignment.Worktree, source.base, source.tip)
-	result, err := j.landReviewed(ctx, landing.ReviewedRequest{
+	request := landing.ReviewedRequest{
 		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
 		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
 		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
 		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
+	}
+	result, err := j.landReviewed(ctx, request, commitmentAdmission{
+		store:  commitrepo.Store{Root: root},
+		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable()},
+		gap:    j.publicationGap,
 	})
 	if err != nil {
 		var conflict landing.ConflictError
@@ -217,6 +223,9 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	measures.subject = result.Commit
 	if err := authorization.AdvanceMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
+	}
+	if err := j.reconcileCommitment(root); err != nil {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "commitment", records)
 	}
 	if err := reconcileLandingDestination(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)
@@ -232,6 +241,37 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
 	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, brokerChanged, records, stdout, stderr)
+}
+
+// commitmentAdmission is the installed broker's publication decision for one frozen
+// source assignment. It reads authority from the destination repository, never from the
+// candidate tree that it grades.
+type commitmentAdmission struct {
+	store  commitrepo.Store
+	source commitrepo.Publication
+	gap    func(string)
+}
+
+func (a commitmentAdmission) Check(tree string) error {
+	if err := a.store.AdmitPublication(a.source, tree); err != nil {
+		return fmt.Errorf("commitment: %w", err)
+	}
+	return nil
+}
+
+// Publish leaves a publication failure unwrapped, so compare-and-swap and recovery
+// refusals keep their own text. Only an admission refusal carries the commitment prefix.
+func (a commitmentAdmission) Publish(tree string, publish func() error) error {
+	ran := false
+	err := a.store.PublishAdmitted(a.source, tree, func() error {
+		a.gap(a.store.Root)
+		ran = true
+		return publish()
+	})
+	if ran || err == nil {
+		return err
+	}
+	return fmt.Errorf("commitment: %w", err)
 }
 
 // censusCount is the assignment's raw-call count for the landed record. An unreadable

@@ -110,6 +110,7 @@ func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) 
 	}
 	runGit("add", "-A")
 	runGit("commit", "-q", "-m", "init")
+	admitShiftFixture(t, root)
 
 	oldWD, err := os.Getwd()
 	if err != nil {
@@ -163,7 +164,7 @@ func TestLoopStagingFaultPreservesAndSplitsEvidence(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("staging fault", &stdout, &stderr)
+	code := Loop("delivery", "staging fault", &stdout, &stderr)
 
 	if code != 1 {
 		t.Fatalf("Loop returned %d, want 1 (failed, zero commits): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
@@ -191,7 +192,7 @@ func TestLoopTeardownFaultReportsFailed(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("teardown fault", &stdout, &stderr)
+	code := Loop("delivery", "teardown fault", &stdout, &stderr)
 
 	if code != 1 {
 		t.Fatalf("Loop returned %d, want 1 (teardown failure is always failed/1): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
@@ -224,7 +225,7 @@ func TestFinishReportsUpsertFailure(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("upsert fault", &stdout, &stderr)
+	code := Loop("delivery", "upsert fault", &stdout, &stderr)
 
 	if code != 3 {
 		t.Fatalf("Loop returned %d, want 3 (incomplete — the fault must not change the outcome): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
@@ -242,7 +243,7 @@ func TestLoopRetainsAndLocksDirtyWorktree(t *testing.T) {
 	root := faultFixture(t, "#!/usr/bin/env bash\nexit 1\n") // red gate: forces the preserving path
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("preserving failure", &stdout, &stderr)
+	code := Loop("delivery", "preserving failure", &stdout, &stderr)
 
 	if code != 1 {
 		t.Fatalf("Loop returned %d, want 1 (failed, zero commits): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
@@ -276,7 +277,7 @@ var helperWindow = bounds.TestDeadline(0)
 func TestShiftHelperProcess(t *testing.T) {
 	switch os.Getenv(helperRoleEnv) {
 	case "interrupt":
-		os.Exit(Loop("interrupted shift", io.Discard, io.Discard))
+		os.Exit(Loop("delivery", "interrupted shift", io.Discard, io.Discard))
 	case "recover-act":
 		shiftFault = func(step shiftStep) error {
 			if step == stepRecoveryAct {

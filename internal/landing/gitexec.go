@@ -44,20 +44,11 @@ func hashBlob(root string, content []byte) (string, error) {
 	b, err := c.Output()
 	return strings.TrimSpace(string(b)), err
 }
-func outputInput(root string, input []byte, args ...string) (string, error) {
-	c := exec.Command("git", append([]string{"-C", root}, args...)...)
-	c.Stdin = strings.NewReader(string(input))
-	b, err := c.Output()
-	return strings.TrimSpace(string(b)), err
-}
 func run(root string, args ...string) error {
 	return exec.Command("git", append([]string{"-C", root}, args...)...).Run()
 }
 func indexRun(root, idx string, args ...string) error {
 	return benchgit.IndexCommand(root, idx, args...).Run()
-}
-func indexOutputRaw(root, idx string, args ...string) ([]byte, error) {
-	return benchgit.IndexCommand(root, idx, args...).Output()
 }
 func indexOutput(root, idx string, args ...string) (string, error) {
 	b, err := benchgit.IndexCommand(root, idx, args...).Output()

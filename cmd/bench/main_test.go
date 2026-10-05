@@ -766,7 +766,7 @@ func TestRoadmapFlagsRouteToTheirOwners(t *testing.T) {
 	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT1.md": heading + "\n"})
 	t.Chdir(root)
 
-	wantBare, wantCode := roadmap.RoadmapCommand(nil)
+	wantBare, wantCode := roadmap.RoadmapCommand(nil, commitmentOutlook)
 	gotBare, gotCode := roadmapCommand(nil)
 	if gotBare != wantBare || gotCode != wantCode {
 		t.Fatalf("bare roadmap = %q, %d; want its owner's %q, %d", gotBare, gotCode, wantBare, wantCode)

@@ -93,14 +93,16 @@ flowchart TD
     checkpoint --> land["bench worktree land<br/>compose + whole-project gate"]
     land --> result{"Gate green?"}
     result -->|"no; nothing published"| repair["Return to the owning repair or debug path"]
-    result -->|"yes"| publish["Publish + release the source"]
+    result -->|"yes"| publish["Publish, close delivered roadmap rows,<br/>release the source"]
     publish --> final["/bench-final-check<br/>report retained evidence + capture retro"]
     final --> human["Human reviews the green evidence<br/>and owns further ship decisions"]
     final -. "new design concern" .-> concern["Route a finding to semantic review"]
 ```
 
 Capture stores deferred work and evidence. An unresolved in-scope finding
-remains a repair target or blocker instead of entering the inbox.
+remains a repair target or blocker instead of entering the inbox. Drained work
+stays uncommitted intake until the reviewer admits it to the delivery
+commitment.
 
 ```mermaid
 flowchart TD
@@ -115,8 +117,8 @@ flowchart TD
     reconcile --> approval{"Reviewer approves the batch?"}
     approval -->|"revise"| drain
     approval -->|"approve"| landing["Green drain batch landing"]
-    landing --> roadmap["Roadmap updated or item closed"]
-    roadmap --> next["Recommended next command<br/>shape, spec, or implement"]
+    landing --> roadmap["Uncommitted intake on the roadmap"]
+    roadmap --> next["Commitment outlook names the next outcome<br/>bench commitment plan proposes new work"]
     next --> active
 ```
 
@@ -199,7 +201,7 @@ only when the gate passes.
 ## Operating guide
 
 The shared working agreement is canonical in `.bench/BENCH.md`: roles,
-invariant authority, and workflow proportionality. It also covers
+invariant authority, workflow proportionality, and the delivery commitment. It also covers
 communication rules and how the gate, hooks, skills, commands, and CLI fit
 together. README is only the onboarding surface.
 

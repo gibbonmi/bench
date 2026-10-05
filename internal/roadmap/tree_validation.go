@@ -1,5 +1,13 @@
 package roadmap
 
+import (
+	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/git"
+	"path/filepath"
+	"strings"
+)
+
 // ValidateRoadmapTree grades the split board at root and returns the loader's ordered
 // integrity diagnostics, rendered to strings. It is the conformance check's whole
 // implementation. The parse already derives every fault class, so the gate reads the same
@@ -18,4 +26,74 @@ func ValidateRoadmapTree(root string) []string {
 		rendered[i] = d.String()
 	}
 	return rendered
+}
+
+// RequirementBytes excludes only a validated occurrence ledger from a detail owner.
+func RequirementBytes(name string, data []byte) ([]byte, error) {
+	if filepath.ToSlash(filepath.Dir(name)) != RoadmapDir {
+		return data, nil
+	}
+	if _, ok := rowFileID(filepath.Base(name)); !ok {
+		return data, nil
+	}
+	lines := strings.Split(string(data), "\n")
+	if _, _, valid := parseOccurrenceLedger(lines); !valid {
+		return nil, fmt.Errorf("%s has a malformed occurrence ledger", name)
+	}
+	kept := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if !isOccurrenceLedgerLine(line) {
+			kept = append(kept, line)
+		}
+	}
+	return []byte(strings.Join(kept, "\n")), nil
+}
+
+// RevisionIndex reads the board index of an immutable revision. present is false when the
+// revision has no index, and an index that is not a regular file is an error.
+func RevisionIndex(root, revision string) (data []byte, present bool, err error) {
+	listing, err := git.Output("-C", root, "ls-tree", "-z", revision, "--", RoadmapFile)
+	if err != nil || listing == "" {
+		return nil, false, err
+	}
+	data, err = git.ReadTreeFile(root, revision, RoadmapFile)
+	return data, err == nil, err
+}
+
+// RevisionDocument parses an immutable roadmap through the canonical split-board parser.
+func RevisionDocument(root, revision string) (Document, error) {
+	tree := Tree{Index: bounds.Classified{State: bounds.StateAbsent}, DirState: bounds.StateAbsent}
+	data, present, err := RevisionIndex(root, revision)
+	if err != nil {
+		return Document{}, err
+	}
+	if present {
+		tree.Index = bounds.Classified{State: bounds.StateParsed, Data: data}
+	}
+	directory, err := git.Output("-C", root, "ls-tree", "-z", revision, "--", RoadmapDir)
+	if err != nil {
+		return Document{}, err
+	}
+	if directory != "" {
+		names, err := git.Output("-C", root, "ls-tree", "--name-only", "-z", revision+":"+RoadmapDir)
+		if err != nil {
+			return Document{}, err
+		}
+		tree.DirState = bounds.StateParsed
+		for _, name := range strings.Split(names, "\x00") {
+			if name == "" {
+				continue
+			}
+			data, err := git.ReadTreeFile(root, revision, RoadmapDir+"/"+name)
+			if err != nil {
+				return Document{}, err
+			}
+			tree.Files = append(tree.Files, RowFile{Name: name, State: bounds.StateParsed, Data: data})
+		}
+	}
+	document, failures, diagnostics := ParseDocument(tree, nil, true)
+	if len(failures) != 0 || len(diagnostics) != 0 {
+		return Document{}, fmt.Errorf("roadmap at %s is structurally untrusted", revision)
+	}
+	return document, nil
 }

@@ -1,3 +1,3 @@
 # /bench-drain
 
-A declined light-path item is dismissed.
+Open a `ROADMAP.md` row only when the reviewer declines.

@@ -142,7 +142,7 @@ func TestAShiftRecoversBeforeItsAcquire(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(home, "worktrees"), nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if code := Loop("recovering shift", io.Discard, io.Discard); code != exitCodes[OutcomeUsage] {
+	if code := Loop("delivery", "recovering shift", io.Discard, io.Discard); code != exitCodes[OutcomeUsage] {
 		t.Fatalf("Loop = %d, want usage from the failed acquire", code)
 	}
 	if got := ledgerEntry(t, root, entry.Key).Outcome; got != otelrecord.WorkAbandoned {

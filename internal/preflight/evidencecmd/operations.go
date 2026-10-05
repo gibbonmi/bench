@@ -19,6 +19,7 @@ type Kind int
 // Operation kinds. Each registered operation dispatches to exactly one kind.
 const (
 	KindVerdict Kind = iota
+	KindPlanOnly
 	KindProposal
 	KindPrepareEvidence
 	KindPrepareReviewEvidence
@@ -35,6 +36,7 @@ const (
 	FlagBase     = "--base"
 	FlagTip      = "--source-tip"
 	flagCharge   = "--charge"
+	flagPlanOnly = "--plan-only"
 	flagPropose  = "--propose-writes"
 	FlagTicket   = "--ticket"
 	flagQuota    = "--max-store-bytes"
@@ -62,6 +64,7 @@ var flagTable = []flagSpec{
 	{FlagBase, "<commit>"},
 	{FlagTip, "<commit>"},
 	{flagCharge, ""},
+	{flagPlanOnly, ""},
 	{flagPropose, ""},
 	{FlagTicket, "<basename>"},
 	{flagQuota, "<n>"},
@@ -101,6 +104,8 @@ var operations = []Operation{
 		description: "prepare one immutable review evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
 		description: "build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only"},
+	{Mode: ModeBuild, selectors: []string{flagPlanOnly}, optional: []string{FlagBase, FlagTip}, Kind: KindPlanOnly, Bounded: true,
+		description: "validate the authored spec and tickets without delivery admission or a build charge"},
 	{Mode: ModeBuild, selectors: []string{flagCharge}, required: []string{FlagTicket, FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareEvidence, Bounded: true,
 		description: "prepare one immutable build evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, selectors: []string{flagPropose}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindProposal,
@@ -309,6 +314,9 @@ func SelectOperand(op Operation, positionals []string) (string, string) {
 
 func requirementLine(op Operation) string {
 	needs := append([]string{op.Mode}, op.required...)
+	if len(needs) == 1 {
+		return toon.Usage(Grammar.Cmd, strings.Join(op.selectors, " and ")+" requires "+needs[0])
+	}
 	list := strings.Join(needs[:len(needs)-1], ", ") + ", and " + needs[len(needs)-1]
 	if len(needs) == 2 {
 		list = needs[0] + " and " + needs[1]

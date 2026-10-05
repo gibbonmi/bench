@@ -17,6 +17,8 @@ import (
 // the reverse direction: it rejects every detected reader absent from this classification or
 // the executable registry.
 var classifiedLiveTreeTests = map[string]bool{
+	"TestCommitmentDataInventory":                                  true,
+	"TestCommitmentGuidance":                                       true,
 	"TestConformanceMetaBites":                                     true,
 	"TestCoreSubprocessFailuresUseProbeFormatter":                  true,
 	"TestDecisionMapIntegrityCheckValidatesEveryCandidate":         true,
