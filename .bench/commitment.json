@@ -58,6 +58,18 @@
               "path": "roadmap/FT390.md",
               "identity": "sha256:21abf5134af02a40474f90a44698600bdaa78c1e6ad873b109b1f098533642e2"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "commitment-delivery-integrity",
+                "path": "specs/commitment-delivery-integrity/spec.md",
+                "identity": "sha256:69565705a0de2b96f5c627dfed09bcfdb9970d76d41d763ed4adfa90577d7044"
+              },
+              "obligations": [
+                "FT390"
+              ]
+            }
           ]
         },
         {
