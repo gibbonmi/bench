@@ -1,7 +1,9 @@
 package commitment_test
 
 import (
+	"cmp"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -65,43 +67,60 @@ func TestCommitmentSwitchEffects(t *testing.T) {
 // obligationFreeBinding names the binding that obligationFreeMilestone approves.
 const obligationFreeBinding = "spec"
 
-// obligationFreeMilestone returns milestone whose first outcome approves one binding with no
-// obligation. A nonempty row is a source that the outcome owns; an empty row leaves the
-// outcome rowless.
+// obligationFreeMilestone returns bindObligationFree for the first outcome of milestone and
+// the binding obligationFreeBinding.
 func obligationFreeMilestone(milestone commitment.Milestone, row string) commitment.Milestone {
-	outcome := &milestone.Outcomes[0]
+	return bindObligationFree(milestone, milestone.Outcomes[0].ID, row, obligationFreeBinding)
+}
+
+// bindObligationFree returns a copy of milestone whose outcome named id also approves binding
+// with no obligation. The binding source derives from binding alone, so two outcomes that
+// approve one name approve an equal binding. A nonempty row is a source that the outcome
+// owns; an empty row adds no source.
+func bindObligationFree(milestone commitment.Milestone, id, row, binding string) commitment.Milestone {
+	milestone.Outcomes = slices.Clone(milestone.Outcomes)
+	index := slices.IndexFunc(milestone.Outcomes, func(outcome commitment.Outcome) bool { return outcome.ID == id })
+	outcome := &milestone.Outcomes[index]
 	if row != "" {
 		outcome.Sources = []commitment.SourceBinding{{ID: row, Path: "roadmap/" + row + ".md", Identity: commitment.Identity([]byte(row))}}
 	}
-	outcome.Deliverables = []commitment.DeliveryBinding{{Source: commitment.SourceBinding{ID: obligationFreeBinding, Path: "specs/" + outcome.ID + "/spec.md", Identity: commitment.Identity([]byte(obligationFreeBinding))}}}
+	outcome.Deliverables = append(slices.Clone(outcome.Deliverables), commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: binding, Path: "specs/" + binding + "/spec.md", Identity: commitment.Identity([]byte(binding))}})
 	return milestone
 }
 
 // A plan refuses a new or changed binding that can close no row of its outcome, in any
-// milestone. It plans a rowless deliverable and a legacy binding that it keeps unchanged.
+// outcome of any milestone. It plans a rowless deliverable. It also plans a legacy binding
+// that the same outcome keeps unchanged when that binding is already obligation-free.
 func TestCommitmentPlanRefusesObligationFreeBinding(t *testing.T) {
 	empty := policy([]commitment.Milestone{milestone("M1", "A")}, "M1")
+	rowless := policy([]commitment.Milestone{obligationFreeMilestone(milestone("M1", "A"), "")}, "M1")
 	legacy := policy([]commitment.Milestone{obligationFreeMilestone(milestone("M1", "A"), "FT1")}, "M1")
 	changed := policy([]commitment.Milestone{obligationFreeMilestone(milestone("M1", "A"), "FT1")}, "M1")
 	changed.Milestones[0].Outcomes[0].Deliverables[0].Source.Identity = commitment.Identity([]byte("changed"))
+	second := policy([]commitment.Milestone{bindObligationFree(milestone("M1", "A", "B"), "B", "FT2", obligationFreeBinding)}, "M1")
 	for _, row := range []struct {
 		name              string
 		current, proposed commitment.Policy
-		refused           string
+		refused, binding  string
 	}{
 		{name: "new binding", current: empty, proposed: legacy, refused: "A"},
-		{name: "rowless outcome", current: empty, proposed: policy([]commitment.Milestone{obligationFreeMilestone(milestone("M1", "A"), "")}, "M1")},
+		{name: "rowless outcome", current: empty, proposed: rowless},
 		{name: "kept legacy binding", current: legacy, proposed: policy([]commitment.Milestone{obligationFreeMilestone(milestone("M1", "A", "C"), "FT1")}, "M1")},
 		{name: "changed legacy binding", current: legacy, proposed: changed, refused: "A"},
+		{name: "rowless binding gains a row", current: rowless, proposed: legacy, refused: "A"},
+		{name: "legacy binding moved to another outcome", current: legacy, proposed: second, refused: "B"},
+		{name: "new binding after a kept binding", current: legacy, proposed: policy([]commitment.Milestone{bindObligationFree(legacy.Milestones[0], "A", "", "draft")}, "M1"), refused: "A", binding: "draft"},
+		{name: "second outcome", current: empty, proposed: second, refused: "B"},
 		{name: "inactive milestone", current: legacy, proposed: policy([]commitment.Milestone{legacy.Milestones[0], obligationFreeMilestone(milestone("M2", "B"), "FT2")}, "M1"), refused: "B"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
+			binding := cmp.Or(row.binding, obligationFreeBinding)
 			_, err := commitment.BuildPlan(&row.current, commitment.Proposal{Policy: row.proposed})
 			if row.refused == "" && err != nil {
 				t.Fatalf("BuildPlan() = %v, want a plan", err)
 			}
-			if row.refused != "" && (err == nil || !strings.Contains(err.Error(), "names no obligation") || !strings.Contains(err.Error(), `"`+row.refused+`"`) || !strings.Contains(err.Error(), `"`+obligationFreeBinding+`"`)) {
-				t.Fatalf("BuildPlan() = %v, want the refusal of outcome %q binding %q", err, row.refused, obligationFreeBinding)
+			if row.refused != "" && (err == nil || !strings.Contains(err.Error(), "names no obligation") || !strings.Contains(err.Error(), `"`+row.refused+`"`) || !strings.Contains(err.Error(), `"`+binding+`"`)) {
+				t.Fatalf("BuildPlan() = %v, want the refusal of outcome %q binding %q", err, row.refused, binding)
 			}
 		})
 	}
