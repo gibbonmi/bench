@@ -1029,11 +1029,111 @@ C1 and C3.
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+    "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+    "reconciliation": {
+      "FD1": "covered",
+      "FD10": "covered",
+      "FD11": "covered",
+      "FD12": "covered",
+      "FD13": "covered",
+      "FD14": "covered",
+      "FD15": "covered",
+      "FD16": "covered",
+      "FD17": "covered",
+      "FD18": "covered",
+      "FD19": "covered",
+      "FD2": "covered",
+      "FD20": "covered",
+      "FD21": "covered",
+      "FD22": "covered",
+      "FD23": "covered",
+      "FD24": "covered",
+      "FD25": "covered",
+      "FD26": "covered",
+      "FD3": "covered",
+      "FD4": "covered",
+      "FD5": "covered",
+      "FD6": "covered",
+      "FD7": "covered",
+      "FD8": "covered",
+      "FD9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage-check-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:2ef3ef9fde9023286dbcec496cc5dd0a2ab9be7308091d66c16b63717fc61978",
+          "excerpt": "bench coverage --check specs/commitment-delivery-integrity/spec.md at cbdcdb53: exit 0. ok: coverage map valid, 26 rows. Advisory: 22 rows have no seam-cell citation.\n"
+        },
+        "requirement": "coverage-check",
+        "command": "bench coverage --check specs/commitment-delivery-integrity/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-commitment-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:e96e808b968d72399731aa6ac1a18c9cd0135bc6ba45494aee10761414f1e98a",
+          "excerpt": "bench test --package ./internal/commitment at cbdcdb53: exit 0. pass, 5635 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "commitment",
+        "command": "bench test --package ./internal/commitment",
+        "exit_code": 0
+      },
+      {
+        "id": "final-commitment-repository-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:07a08730e6d2f8f544b7851f615d23268dfdd5dd2dc518c3140b4e1e7fa9e936",
+          "excerpt": "bench test --package ./internal/commitment/repository at cbdcdb53: exit 0. pass, 2098 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "commitment-repository",
+        "command": "bench test --package ./internal/commitment/repository",
+        "exit_code": 0
+      },
+      {
+        "id": "final-worktree-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:83aba68df39422bb0efaf8a10ea207b012c08ae49eb1b5da84d2a65b9b98f90d",
+          "excerpt": "bench test --package ./internal/worktree at cbdcdb53: exit 0. pass, 67153 ms, 0 failures, 2 socket-capability skips.\n"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
