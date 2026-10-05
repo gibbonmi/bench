@@ -84,7 +84,7 @@ intake.
 {
   "version": 2,
   "spec": "specs/commitment-delivery-integrity/spec.md",
-  "plan_digest": "sha256:aad803245152d604f292375130e8ccf0aae170848859f48fa1b44d4e36300ae8",
+  "plan_digest": "sha256:de78ccd7ca2d1e0e46fb3800c0176a9ac1f589f2786aee72b6432691f2ca8dae",
   "implementation_session": "",
   "chunks": [
     {
@@ -609,9 +609,9 @@ intake.
     {
       "id": "FD-C2",
       "base": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
-      "tip": "90697fd0dfc23439ae1f6204b0f08b692f7d3930",
-      "plan_digest": "sha256:aad803245152d604f292375130e8ccf0aae170848859f48fa1b44d4e36300ae8",
-      "source_digest": "93c18dfe15b94618c9651a12fd9761cebd4f4d6a",
+      "tip": "f85f69225daee9c88cbfd45e18584750ccc7fcb4",
+      "plan_digest": "sha256:de78ccd7ca2d1e0e46fb3800c0176a9ac1f589f2786aee72b6432691f2ca8dae",
+      "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
       "acceptance_rows": [
         "FD12",
         "FD13",
@@ -848,6 +848,18 @@ intake.
       "chunk_ids": {
         "FD-C1": [
           "FD-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:aad803245152d604f292375130e8ccf0aae170848859f48fa1b44d4e36300ae8",
+      "to": "sha256:de78ccd7ca2d1e0e46fb3800c0176a9ac1f589f2786aee72b6432691f2ca8dae",
+      "chunk_ids": {
+        "FD-C1": [
+          "FD-C1"
+        ],
+        "FD-C2": [
+          "FD-C2"
         ]
       }
     }
