@@ -3772,9 +3772,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C8",
       "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
-      "tip": "62cb6847afa3d97443abbac73f48a645323f5e16",
-      "plan_digest": "sha256:3110f5627e72b578ab7387c2689c59e9f9e874b47848c3f4a36249b45252f2bb",
-      "source_digest": "88aa65946dd6a40a8a1ea3b6fdd3710e1045915f",
+      "tip": "298f18ec4ce4bc75fc4da7754f908df694d825b4",
+      "plan_digest": "sha256:9b07024691c1844dc82c07e5e4aa060a7760572380fa064ade10af7ff9676780",
+      "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
       "acceptance_rows": [
         "DC47",
         "DC54",
@@ -4325,6 +4325,197 @@ This suggestion is optional advice and has no repair disposition.
               "ref": "claude-agent:dc_r09_3:repository",
               "digest": "sha256:700ee4c31fd37a7720268b7bd87b0c4f88d5e2d8916472672c224d4149c0b0ba",
               "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment/repository\ntip: 62cb6847afa3d97443abbac73f48a645323f5e16\nexit: 0\nresult: package ./internal/commitment/repository pass, failures 0\n\nnamed DC83 probe (at final tip 62cb6847)\n\"Omit the continuation write in approval. TestCommitmentContinuationApproval must fail, then pass after the restore.\"\ncommand: bench worktree exec dc-integration -- bench probe internal/commitment/repository/repository.go --swap 'return withContinuations(ledger, plan.Continuations), true, nil' --with 'return ledger, true, nil' --package ./internal/commitment/repository --run TestCommitmentContinuationApproval\nred: verdict bit, failed_tests 1: TestCommitmentContinuationApproval publication_test.go:212: stored continuations = <nil>, want [{Assignment:c49fea74... Request:c49fea74...0267d9... Scope:[owned.txt]}]; a failing Go test exits 1\nrestore: restored yes; bench test --package ./internal/commitment/repository exits 0 at 62cb6847\n\nbench-debug red repro, C8-P5 (before the fix, tip 0de55af2, test edits only)\ncommand: bench worktree exec dc-integration -- bench test --package ./internal/commitment/repository --run TestCommitmentContinuationApproval\nexit: 1 (a failing Go test exits 1)\n  after-adoption: Plan = <nil>, want a refusal naming \"only the initial adoption lists runs; remove the continuations and run bench commitment plan --input <file>\"\n  run-complete / run-cleanup-pending / run-recovered: Plan = <nil>, want a refusal naming run \"<id>\" is not active\n  run-ended-before-approval: Approve = <nil>, want a refusal naming \"is not active\"\n  branch-unreadable: Plan = scope \"owned.txt\" is outside run \"<id>\", want \"cannot read the branch of run\"\n  (the A2 third-identity assertion passed already: the identity binds the list)\ncause: listedRuns checked only run existence, request, and scope; it read neither the published policy nor the run state, and it folded a git error into \"outside run\".\ngreen: same command after the fix exits 0.\n\nprobes (each at the pre-commit fix state, restored yes, package green after)\n1. initial-only: --swap 'len(continuations) != 0 && current != nil' --with 'false && current != nil' -> bit, 1 failed: after-adoption (Plan = <nil>)\n2. run active: --swap 'if run.State != intent.StateActive {' --with 'if false {' -> bit, 4 failed: run-complete, run-cleanup-pending, run-recovered, run-ended-before-approval\n3. git error split: --swap 'cannot read the branch of run %q: %w\", run.ID, err)' --with 'scope %q is outside run %q\", path, run.ID)' -> bit, 1 failed: branch-unreadable\n4. empty listing: --swap 'if strings.TrimSuffix(listing, \"\\x00\") == \"\" {' --with '... == \"never\" {' -> bit, 1 failed: scope-outside-run\n5. approval recheck (Approve's listedRuns call, 3-tab prefix): --with 'store.listedRuns(ledger, current, nil)' -> bit, 2 failed: run-changed-before-approval, run-ended-before-approval\nEach failing Go test exits 1.\n"
+            }
+          }
+        },
+        {
+          "id": "dc-c8-r09d-roadmap",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-roadmap",
+            "digest": "sha256:691c41e6aba09d2ae39df38fac31056700cdf6a1bfb5b713b702a9c2ea184f84",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/roadmap\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/roadmap pass, failures 0\n"
+          },
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09d-status",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-status",
+            "digest": "sha256:1897d09bf95c8946b07941c8d6612ca0f270048c5cfa2dd6f801f56c7c103817",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/status\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/status pass, failures 0\n"
+          },
+          "requirement": "status",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09d-dashboard",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-dashboard",
+            "digest": "sha256:3d3e744c941c6c20fbe15e76aa2f6e23ce176269f68205ef656f7366534d0a45",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/dashboard\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/dashboard pass, failures 0\n"
+          },
+          "requirement": "dashboard",
+          "command": "bench test --package ./internal/dashboard",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09d-bench",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-bench",
+            "digest": "sha256:cbe0ace82cf27023a9078b9ece47f8607748cd352c6c0a7b406ef00c225f3ef4",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./cmd/bench\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./cmd/bench pass, failures 0\n"
+          },
+          "requirement": "bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09d-anchors",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-anchors",
+            "digest": "sha256:f3ff307cb7067f90d04e2a8f04758e5e1fd0a419c70747e6dbe5b8d6a8a2cccf",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/anchors\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/anchors pass, failures 0\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09d-conformance",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-conformance",
+            "digest": "sha256:28025afca6be9f5edd1a101dc6f36848ee63e28c099456628732341143be3a55",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/conformance\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/conformance pass, failures 0\nskips (environment capability only): TestGuidanceProseBudgetRefusesNonRegularSubjects/socket, TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device, TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09d-commitment",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-commitment",
+            "digest": "sha256:ff5a4ac3690b073a85316d1d91f87ea2572a7f335b8c5d484a555c7ebd771164",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/commitment pass, failures 0\n"
+          },
+          "requirement": "commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09d-intent",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-intent",
+            "digest": "sha256:53f08d65ea132b67f5612cf7b3668ddb5ebe16d5b253f0857c28d4408cfc50c2",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/intent\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/intent pass, failures 0\n"
+          },
+          "requirement": "intent",
+          "command": "bench test --package ./internal/intent",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09d-usage",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-usage",
+            "digest": "sha256:035e49dcdcb3e140b7c88988c494a3f770b52fe33e27b20851edb4788333bc26",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/usage\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/usage pass, failures 0\n"
+          },
+          "requirement": "usage",
+          "command": "bench test --package ./internal/usage",
+          "exit_code": 0
+        },
+        {
+          "id": "dc-c8-r09d-repository",
+          "performer": "claude:dc_r09_3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_r09_3:d-repository",
+            "digest": "sha256:08591a83c51bc6e3b11ab9f706ecae6f47db6faf4adc3e4cc61840ce85f5b8af",
+            "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment/repository\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/commitment/repository pass, failures 0\n\nnamed DC83 probe: \"Omit the continuation write in approval. TestCommitmentContinuationApproval must fail, then pass after the restore.\"\ncommand: bench worktree exec dc-integration -- bench probe internal/commitment/repository/repository.go --swap 'return withContinuations(ledger, plan.Continuations), true, nil' --with 'return ledger, true, nil' --package ./internal/commitment/repository --run TestCommitmentContinuationApproval\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8\nred: verdict bit, failed_tests 1: TestCommitmentContinuationApproval publication_test.go:212: stored continuations = <nil>, want [{Assignment:c49fea7425fa7f8699897a97c159c669 Request:c49fea74...5c325d84 Scope:[owned.txt]}]\nprobe exit code: 1 (a failing Go test exits 1)\nrestore: restored yes; bench test --package ./internal/commitment/repository --run TestCommitmentContinuationApproval then exits 0 (pass)\n"
+          },
+          "requirement": "repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the continuation write in approval. TestCommitmentContinuationApproval must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:dc_r09_3:d-repository",
+              "digest": "sha256:08591a83c51bc6e3b11ab9f706ecae6f47db6faf4adc3e4cc61840ce85f5b8af",
+              "excerpt": "command: bench worktree exec dc-integration -- bench test --package ./internal/commitment/repository\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8 (frozen source 298f18ec4ce4bc75fc4da7754f908df694d825b4; later commits change only reviews/roadmap-delivery-commitment.md)\nexit: 0\nresult: package ./internal/commitment/repository pass, failures 0\n\nnamed DC83 probe: \"Omit the continuation write in approval. TestCommitmentContinuationApproval must fail, then pass after the restore.\"\ncommand: bench worktree exec dc-integration -- bench probe internal/commitment/repository/repository.go --swap 'return withContinuations(ledger, plan.Continuations), true, nil' --with 'return ledger, true, nil' --package ./internal/commitment/repository --run TestCommitmentContinuationApproval\ntip: ad90b12cf33e7a9bbeaebd19235bb42bd00c10e8\nred: verdict bit, failed_tests 1: TestCommitmentContinuationApproval publication_test.go:212: stored continuations = <nil>, want [{Assignment:c49fea7425fa7f8699897a97c159c669 Request:c49fea74...5c325d84 Scope:[owned.txt]}]\nprobe exit code: 1 (a failing Go test exits 1)\nrestore: restored yes; bench test --package ./internal/commitment/repository --run TestCommitmentContinuationApproval then exits 0 (pass)\n"
             }
           }
         }
