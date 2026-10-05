@@ -229,6 +229,71 @@ Findings: 4. Worst issue: C2.
           "requirement": "t2-bench",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "t1-commitment-v2",
+          "performer": "claude:fd_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t1_r1",
+            "digest": "sha256:c192b6825b1fe0dcf9e9083b1798ebfe0c7d46dafd122d871c1bccbc190d28b6",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit: 0\ntree[1]{target,head,dirty}:\n  FT390,a7414079fc441354e4587d4910ecc710be4935cb,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,6196\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec FT390 -- bench probe internal/commitment/authority.go --swap 'if obligationFree(outcome, binding) && !retainedObligationFree(current, outcome.ID, binding) {' --with 'if false && obligationFree(outcome, binding) && !retainedObligationFree(current, outcome.ID, binding) {' --package ./internal/commitment --run TestCommitmentPlanRefusesObligationFreeBinding\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/authority.go,swap,failed,7,yes\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/new_binding,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"spec\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/new_binding_after_a_kept_binding,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"draft\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/rowless_binding_gains_a_row,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"spec\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/second_outcome,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"B\\\" binding \\\"spec\\\"\"\n\nRepair coverage probes (run at 4e1fb87f content before commit; --run TestCommitmentPlanRefusesObligationFreeBinding):\nC1 --swap 'if outcome.ID == id {' --with 'if outcome.ID == id || len(outcome.Deliverables) > 0 {'\n  bit,internal/commitment/authority.go,swap,failed,2,yes\n  failed: legacy_binding_moved_to_another_outcome, inactive_milestone\nC2 --omit ' && obligationFree(outcome, kept)'\n  bit,internal/commitment/authority.go,omit,failed,1,yes\n  failed: rowless_binding_gains_a_row\nC3 --swap 'range outcome.Deliverables {' --with 'range outcome.Deliverables[:min(1, len(outcome.Deliverables))] {'\n  bit,internal/commitment/authority.go,swap,failed,1,yes\n  failed: new_binding_after_a_kept_binding\nC4 --swap 'range milestone.Outcomes {' --with 'range milestone.Outcomes[:min(1, len(milestone.Outcomes))] {'\n  bit,internal/commitment/authority.go,swap,failed,2,yes\n  failed: legacy_binding_moved_to_another_outcome, second_outcome\n"
+          },
+          "requirement": "t1-commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In BuildPlan, skip the refusal of a new obligation-free binding. TestCommitmentPlanRefusesObligationFreeBinding must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:fd_t1_r1",
+              "digest": "sha256:c192b6825b1fe0dcf9e9083b1798ebfe0c7d46dafd122d871c1bccbc190d28b6",
+              "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit: 0\ntree[1]{target,head,dirty}:\n  FT390,a7414079fc441354e4587d4910ecc710be4935cb,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,6196\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec FT390 -- bench probe internal/commitment/authority.go --swap 'if obligationFree(outcome, binding) && !retainedObligationFree(current, outcome.ID, binding) {' --with 'if false && obligationFree(outcome, binding) && !retainedObligationFree(current, outcome.ID, binding) {' --package ./internal/commitment --run TestCommitmentPlanRefusesObligationFreeBinding\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/authority.go,swap,failed,7,yes\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/new_binding,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"spec\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/new_binding_after_a_kept_binding,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"draft\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/rowless_binding_gains_a_row,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"spec\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/second_outcome,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"B\\\" binding \\\"spec\\\"\"\n\nRepair coverage probes (run at 4e1fb87f content before commit; --run TestCommitmentPlanRefusesObligationFreeBinding):\nC1 --swap 'if outcome.ID == id {' --with 'if outcome.ID == id || len(outcome.Deliverables) > 0 {'\n  bit,internal/commitment/authority.go,swap,failed,2,yes\n  failed: legacy_binding_moved_to_another_outcome, inactive_milestone\nC2 --omit ' && obligationFree(outcome, kept)'\n  bit,internal/commitment/authority.go,omit,failed,1,yes\n  failed: rowless_binding_gains_a_row\nC3 --swap 'range outcome.Deliverables {' --with 'range outcome.Deliverables[:min(1, len(outcome.Deliverables))] {'\n  bit,internal/commitment/authority.go,swap,failed,1,yes\n  failed: new_binding_after_a_kept_binding\nC4 --swap 'range milestone.Outcomes {' --with 'range milestone.Outcomes[:min(1, len(milestone.Outcomes))] {'\n  bit,internal/commitment/authority.go,swap,failed,2,yes\n  failed: legacy_binding_moved_to_another_outcome, second_outcome\n"
+            }
+          }
+        },
+        {
+          "id": "t1-conformance-v2",
+          "performer": "claude:fd_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t1_r1",
+            "digest": "sha256:441c5ebf39d293c93048c5c07a0738621fd1736bb10eb64f46572525317742b9",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  FT390,a7414079fc441354e4587d4910ecc710be4935cb,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,38391\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n"
+          },
+          "requirement": "t1-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-bench-v2",
+          "performer": "claude:fd_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t1_r1",
+            "digest": "sha256:cd5fdaca7e874300fc1cddd31301e0a0cf6075604b39aded102fd5412b702d62",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./cmd/bench\nexit: 0\ntree[1]{target,head,dirty}:\n  FT390,a7414079fc441354e4587d4910ecc710be4935cb,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,12831\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
