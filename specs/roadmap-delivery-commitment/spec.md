@@ -502,6 +502,8 @@ The review pickup is `reviews/roadmap-delivery-commitment.md` (new). Its source-
 Directory fences include focused sibling extraction destinations for the named owner. They do not authorize unrelated refactoring.
 An author who discovers another destination updates the ticket and this union, then reruns closure preflight before writing there.
 
+The `specs/shared-test-fixtures` entry admits only the reviewer-approved fold of main; this spec makes no write of its own there.
+
 - `.agents/commands/bench-debug.md`
 - `.agents/commands/bench-drain.md`
 - `.agents/commands/bench-final-check.md`
@@ -559,6 +561,7 @@ An author who discovers another destination updates the ticket and this union, t
 - `internal/usage`
 - `internal/worktree`
 - `internal/worktree/land_fixtures_test.go`
+- `specs/shared-test-fixtures`
 - `tests/canary/package-core-guard/unrouted-subcommand`
 - `tests/canary/workflow-guidance-anchors`
 - `tests/canary/data-handling-derivation/undocumented-passlist-var`
