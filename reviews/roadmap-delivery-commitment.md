@@ -5731,6 +5731,28 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r5-standards"
           ]
+        },
+        {
+          "id": "dc-c9-r7-standards",
+          "performer": "claude:dc_c9_r7_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r7_standards",
+            "digest": "sha256:935d7276860feb7d7928fb2eba864db89f83339a5b629b85b46ff7786a5e64f0",
+            "excerpt": "Standards round 7 on DC-C9 (claude:dc_c9_r7_standards) graded the record delta f94c064e..efe4a77a and reports zero findings. C9R6-S1 is closed: line 7297 no longer gives FT376 a clause-to-row check and states no unrecorded policy. The round 4 Spec entry lists the seven clauses at line 5631. A search for \"clause\" over all non-test code at efe4a77a found no check that maps each spec clause to a row; coverage.go checks only the map shape and story references. The round 6 paragraph and the dc-c9-r6-standards entry match the record and FT376.md. The delta past 62e10a4d touches only the record, so the source digest stays 04b22f5f. gate-prose passes. Preflight at efe4a77a: clean, green=15, not_applicable=0, red=0.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "62e10a4dd8c356043a9db2a857945dadd7af9ae3",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r6-standards"
+          ]
         }
       ]
     }
@@ -7302,3 +7324,8 @@ The re-verification session claude:dc_r10_4 recorded all six planned checks gree
 Standards reports C9R5-S1, a low finding: the round 4 disposition named a known issue that no tracked file defines. The orchestrator restates that sentence as the decided state. The edit is record-only, so the source digest does not change; one confirming Standards review grades it.
 
 Round 6 Standards closes C9R5-S1 and reports C9R6-S1, a low finding. The restated sentence named FT376 as the owner of a clause-to-row check, but FT376 has no such check. The orchestrator removes that attribution and states only the decided state.
+
+## Accepted DC-C9 source after the coverage map amendment
+
+Round 7 Standards closes C9R6-S1 with zero findings. Round 5 Spec and Coverage report zero findings at the same source, so all three axes pass at tip 62e10a4dd8c356043a9db2a857945dadd7af9ae3.
+The final DC-C9 source digest is 04b22f5f168809e3f18010befd08feab7b3040d2. The chunk checkpoint follows.
