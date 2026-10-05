@@ -37,6 +37,30 @@
           ]
         },
         {
+          "id": "FT390",
+          "criteria": [
+            {
+              "id": "FT390.obligations",
+              "text": "A plan that binds a deliverable to an outcome with sources refuses an empty obligation list, or the completion landing refuses a completion that records no delivery fact."
+            },
+            {
+              "id": "FT390.settled",
+              "text": "A plan that settles or removes a deliverable succeeds when that deliverable is absent on main."
+            },
+            {
+              "id": "FT390.canonical",
+              "text": "The plan identity sorts its policy sources in one canonical order."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT390",
+              "path": "roadmap/FT390.md",
+              "identity": "sha256:21abf5134af02a40474f90a44698600bdaa78c1e6ad873b109b1f098533642e2"
+            }
+          ]
+        },
+        {
           "id": "FT376",
           "criteria": [
             {
@@ -65,6 +89,22 @@
               "id": "FT376",
               "path": "roadmap/FT376.md",
               "identity": "sha256:2d5a52f6bf9e764cf1511395b052a8447160c4680300cf1a2494d7ac300df4f4"
+            }
+          ]
+        },
+        {
+          "id": "FT391",
+          "criteria": [
+            {
+              "id": "FT391.shape",
+              "text": "A reviewed decision map for the hotfix lane records the qualifying change, the bookkeeping planning paths, the commitment rule exception, and the landing evidence."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT391",
+              "path": "roadmap/FT391.md",
+              "identity": "sha256:2af62a00f72899c536f35c860a09108cac4be53b3815ceedb959e64b48722528"
             }
           ]
         },
