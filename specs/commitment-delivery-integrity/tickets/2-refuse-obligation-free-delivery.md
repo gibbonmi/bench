@@ -1,7 +1,7 @@
 # 2. Refuse an obligation-free delivery at the completion landing
 
 Blocked by: 1-refuse-obligation-free-plan.md
-Writes: internal/commitment/delivery.go, internal/commitment/delivery_test.go, internal/commitment/repository/closure_test.go, internal/worktree/commitment_light_landing_test.go, internal/worktree/commitment_landing_fixture_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/commitment/delivery.go, internal/commitment/delivery_test.go, internal/commitment/repository/closure_test.go, internal/worktree/commitment_light_landing_test.go, internal/worktree/commitment_landing_fixture_test.go, internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: FD6, FD7, FD8, FD10, FD11
 
 ## What to build

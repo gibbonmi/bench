@@ -224,6 +224,7 @@ The two checks have different milestone scopes, by decision. `Deliver` checks on
 - `internal/commitment/repository/plan_after_delivery_test.go`
 - `internal/worktree/commitment_light_landing_test.go`
 - `internal/worktree/commitment_landing_fixture_test.go`
+- `internal/worktree/parallel_census_test.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
