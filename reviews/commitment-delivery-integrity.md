@@ -323,6 +323,107 @@ Findings: 4. Worst issue: C2.
               "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit: 0\ntree[1]{target,head,dirty}:\n  FT390,a7414079fc441354e4587d4910ecc710be4935cb,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,6196\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec FT390 -- bench probe internal/commitment/authority.go --swap 'if obligationFree(outcome, binding) && !retainedObligationFree(current, outcome.ID, binding) {' --with 'if false && obligationFree(outcome, binding) && !retainedObligationFree(current, outcome.ID, binding) {' --package ./internal/commitment --run TestCommitmentPlanRefusesObligationFreeBinding\nexit: 0 (bench probe verb)\ntree[1]{target,head,dirty}:\n  FT390,ad660e7e13a4a510785a652905ff21df3e6d5f6c,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/authority.go,swap,failed,7,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding,passed,10\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,fail,3\nmutated focused test run exit: 1 (cause failed, package status fail; the failing go test run exits 1)\nfailures[7]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/changed_legacy_binding,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"spec\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/inactive_milestone,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"B\\\" binding \\\"spec\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/legacy_binding_moved_to_another_outcome,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"B\\\" binding \\\"spec\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/new_binding,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"spec\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/new_binding_after_a_kept_binding,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"draft\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/rowless_binding_gains_a_row,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"A\\\" binding \\\"spec\\\"\"\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentPlanRefusesObligationFreeBinding/second_outcome,\"authority_test.go:123: BuildPlan() = <nil>, want the refusal of outcome \\\"B\\\" binding \\\"spec\\\"\"\n\nRepair coverage probes (run at 4e1fb87f content before commit; --run TestCommitmentPlanRefusesObligationFreeBinding):\nC1 --swap 'if outcome.ID == id {' --with 'if outcome.ID == id || len(outcome.Deliverables) > 0 {'\n  bit,internal/commitment/authority.go,swap,failed,2,yes\n  failed: legacy_binding_moved_to_another_outcome, inactive_milestone\nC2 --omit ' && obligationFree(outcome, kept)'\n  bit,internal/commitment/authority.go,omit,failed,1,yes\n  failed: rowless_binding_gains_a_row\nC3 --swap 'range outcome.Deliverables {' --with 'range outcome.Deliverables[:min(1, len(outcome.Deliverables))] {'\n  bit,internal/commitment/authority.go,swap,failed,1,yes\n  failed: new_binding_after_a_kept_binding\nC4 --swap 'range milestone.Outcomes {' --with 'range milestone.Outcomes[:min(1, len(milestone.Outcomes))] {'\n  bit,internal/commitment/authority.go,swap,failed,2,yes\n  failed: legacy_binding_moved_to_another_outcome, second_outcome\n"
             }
           }
+        },
+        {
+          "id": "t2-commitment-v2",
+          "performer": "claude:fd_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t2",
+            "digest": "sha256:a99fdc5fdce181ff4fbd6d6dc3753e6537a4fdc55d0d2bfa3123442139e8b3f5",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,6313\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n$ bench worktree exec FT390 -- bench probe internal/commitment/delivery.go --swap 'return policy, nil, fmt.Errorf(\"deliverable %q of outcome %q names no obligation; list the sources that it satisfies with bench commitment plan --input <file>\", path, outcome.ID)' --with 'return policy, nil, nil' --package ./internal/commitment --run 'TestCommitmentDeliverRowless$'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/delivery.go,swap,failed,1,yes\nmutated focused test run: exit 1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,fail,3\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentDeliverRowless,\"delivery_test.go:96: obligation-free Deliver = <nil>, want the names-no-obligation refusal for an outcome with sources\"\n"
+          },
+          "requirement": "t2-commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In Deliver, return the policy unchanged with no error for an obligation-free binding of an outcome with sources. TestCommitmentDeliverRowless must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:fd_t2",
+              "digest": "sha256:a99fdc5fdce181ff4fbd6d6dc3753e6537a4fdc55d0d2bfa3123442139e8b3f5",
+              "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,pass,6313\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n$ bench worktree exec FT390 -- bench probe internal/commitment/delivery.go --swap 'return policy, nil, fmt.Errorf(\"deliverable %q of outcome %q names no obligation; list the sources that it satisfies with bench commitment plan --input <file>\", path, outcome.ID)' --with 'return policy, nil, nil' --package ./internal/commitment --run 'TestCommitmentDeliverRowless$'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/delivery.go,swap,failed,1,yes\nmutated focused test run: exit 1\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment,fail,3\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment,TestCommitmentDeliverRowless,\"delivery_test.go:96: obligation-free Deliver = <nil>, want the names-no-obligation refusal for an outcome with sources\"\n"
+            }
+          }
+        },
+        {
+          "id": "t2-commitment-repository-v2",
+          "performer": "claude:fd_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t2",
+            "digest": "sha256:f18dbdce893c9d21a3844544b2235b3ca27bbdc671e42e832f08814e643845ca",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment/repository\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,1751\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-worktree-v2",
+          "performer": "claude:fd_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t2",
+            "digest": "sha256:e7335b433646a5d9bcb594b2b1d9b06a2638ecfae4aab4344b234feac9e08384",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/worktree\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,67799\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "t2-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-conformance-v2",
+          "performer": "claude:fd_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t2",
+            "digest": "sha256:eab60a53d3643a7d50fba8f7bf62e379018d7bebc3983cd40fcc80a4e61efa22",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/conformance\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,43431\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n"
+          },
+          "requirement": "t2-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-bench-v2",
+          "performer": "claude:fd_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t2",
+            "digest": "sha256:1ab3b053bf4f472244ab15ced58f2f94422d1dad6dba3839d0d77626d8dc0ad4",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./cmd/bench\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13639\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
