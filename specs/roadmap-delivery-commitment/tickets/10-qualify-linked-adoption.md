@@ -14,14 +14,14 @@ Remove the candidate's admission call in the system fixture and attempt displace
 Restore the call and retain the green journey. Do not create a second nested test runner or system fixture framework.
 
 Prepare an adoption proposal for the reviewer after the prerequisite publishes. Verify each named quality owner against delivered history and retain only its remaining obligation.
-The finite set is FT373, FT358, FT360, FT362, FT363, FT364, FT365, FT366, and FT368. Preserve the staged FT358 spec and do not reopen already delivered work.
+The finite set is FT376, FT373, and FT349, in that order. Do not reopen already delivered work.
 Record exact source identities, criteria, ordered remaining outcomes, and any approved legacy continuation evidence. Findings outside this set remain uncommitted.
 
 The proposal is a review artifact, not an active policy. Include replayable inventory, plan, and approve commands for the newly installed version.
 Actual kit adoption follows prerequisite publication and explicit reviewer direction. This ticket must not write `.bench/commitment.json` or grant itself authority.
 Record final coverage and review pickup in the existing feature review record.
 
-Read adoption_test.go, its installed-owner fixture helper, the reviewed wrapper land_route contract, and the nine named roadmap owners. Reuse existing fixture callers. These two system files own the journey and its helper; add any newly discovered relocation destination to this ticket before use.
+Read adoption_test.go, its installed-owner fixture helper, the reviewed wrapper land_route contract, and the three named roadmap owners. Reuse existing fixture callers. These two system files own the journey and its helper; add any newly discovered relocation destination to this ticket before use.
 
 ## Acceptance
 
