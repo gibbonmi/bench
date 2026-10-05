@@ -1,5 +1,39 @@
 # Review outcomes
 
+## FD-C1 pickup
+
+The FD-C1 review covers the frozen pair `9febee8f..29eabd30`. The Coverage
+findings start repair cycle 1 of 2. This cycle is the one hardening cycle of
+the chunk, because rows FD1 to FD11, FD23, FD24, and FD26 prove.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+Advice: `obligationFreeRoute` in the landing fixture reuses the seed of
+`deliveryRoutes[1]` by position.
+
+## Spec
+
+Findings: 0. Worst issue: none. Every closed decision held, and every chunk
+row is met.
+
+## Coverage
+
+Findings: 4. Worst issue: C2.
+
+- C1 (`auto-fix`, confidence 8): `internal/commitment/authority.go:127`. No
+  test moves a kept legacy binding to another outcome. Probe t3 was silent.
+- C2 (`auto-fix`, confidence 9): `internal/commitment/authority.go:129`. No
+  test keeps a binding of a rowless outcome that gains sources. Probe t4 was
+  silent.
+- C3 (`auto-fix`, confidence 8): `internal/commitment/authority.go:109`. No
+  test puts a new binding after a kept binding in one outcome. Probe t5 was
+  silent.
+- C4 (`auto-fix`, confidence 8): `internal/commitment/authority.go:108`. No
+  test puts the binding on a later outcome of a milestone. Probe t6 was
+  silent.
+
 ```bench-review-record
 {
   "version": 2,
@@ -197,7 +231,73 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "fdc1-standards-r1",
+          "performer": "claude:fdc1_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "876937bb5fdcad91e0f23a047f59964ca3c3fb61",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc1_standards",
+            "digest": "sha256:8ffda479b549219eadc3ac41664c8b63d30a2db171b338f647f2ec9af82df82b",
+            "excerpt": "Standards axis, FD-C1 (9febee8f..29eabd30), sonnet high, evidence sha256:e06ff36b check-current=true.\nS1 commitment_landing_fixture_test.go:62 obligationFreeRoute reuses deliveryRoutes[1].seed by position; no-op; confidence 3.\nS2 authority.go:129 retainedObligationFree compares the two DeliveryBinding fields; refuted (model.go:45-48 has two fields); no-op; confidence 2.\nS3 authority_test.go:79, delivery_test.go:15 two fixture builders with different identity conventions; refuted (different shapes, shared helper exists); no-op; confidence 2.\nTwo refusal texts: not a defect; one predicate obligationFree (delivery.go:41) serves Deliver and BuildPlan; texts differ by spec lines 87 and 89; plan remedy clause harmless; no-op; confidence 7.\nCount 3, all no-op. Worst: S1.\nAdvice (no finding ID): S1 commitment_landing_fixture_test.go:62 positional seed reuse deliveryRoutes[1].seed.\n"
+          },
+          "axis": "Standards",
+          "base": "9febee8f284bfed4f6de714717f4364adede738e",
+          "tip": "29eabd3090ad23b7e6dc359a1922029df50cab79",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "fdc1-spec-r1",
+          "performer": "claude:fdc1_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "876937bb5fdcad91e0f23a047f59964ca3c3fb61",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc1_spec",
+            "digest": "sha256:46ade649f197ca38e7617a5f3700e6a464c1fb9da74d529449dcab93b5fdbe73",
+            "excerpt": "Spec axis, FD-C1 (9febee8f..29eabd30), sonnet high, evidence sha256:e06ff36b check-current=true.\nP1 spec.md:227, ticket 2 Writes line: the census pin fence expansion (plan commit bf4654cc) and the pre-expansion charge identity are not a behavioral deviation; no-op; confidence 7.\nClosed decisions held: one predicate obligationFree (delivery.go:41) called by Deliver and BuildPlan; Validate untouched; BuildPlan refuses new or changed bindings in every milestone; Deliver checks the active milestone; no repository or landing caller edit.\nRows FD1-FD11, FD23, FD24, FD26: met.\nCount 1, no-op. Worst: P1 (record hygiene).\n"
+          },
+          "axis": "Spec",
+          "base": "9febee8f284bfed4f6de714717f4364adede738e",
+          "tip": "29eabd3090ad23b7e6dc359a1922029df50cab79",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "fdc1-coverage-r1",
+          "performer": "claude:fdc1_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "876937bb5fdcad91e0f23a047f59964ca3c3fb61",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:fdc1_coverage",
+            "digest": "sha256:293da5b6d0a12d9fbc8a80fbd3b87daa0ab70f6aafe8a58dd949c48795c6e1ea",
+            "excerpt": "Coverage axis, FD-C1 (9febee8f..29eabd30), sonnet high, evidence sha256:e06ff36b check-current=true, tree clean after probes.\nC1 authority.go:127 retention across outcomes untested; probe t3 swap (match any outcome with deliverables) silent, restored yes; auto-fix; confidence 8.\nC2 authority.go:129 \"already obligation-free in current\" clause untested (rowless outcome gains sources, binding kept); probe t4 omit silent, restored yes; auto-fix; confidence 9.\nC3 authority.go:109 only the first deliverable of an outcome is exercised; probe t5 swap Deliverables[:1] silent, restored yes; auto-fix; confidence 8.\nC4 authority.go:108 only the first outcome of a milestone is exercised; probe t6 swap Outcomes[:1] silent, restored yes; auto-fix; confidence 8.\nRefuted: obligation list change on a kept binding; outcome moved between milestones; landing order (commitment_light_landing_test.go:347-361); Store.Plan receipt; inactive-only Deliver.\nCount 4. Worst: C2.\n"
+          },
+          "axis": "Coverage",
+          "base": "9febee8f284bfed4f6de714717f4364adede738e",
+          "tip": "29eabd3090ad23b7e6dc359a1922029df50cab79",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
