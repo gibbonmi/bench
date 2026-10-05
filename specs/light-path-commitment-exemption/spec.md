@@ -186,10 +186,22 @@ The implementation command's entry paragraph already holds six sentences. A new 
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| LP-C1 / sliced after review | A light-path change commits and lands without a binding, and every other guard holds | LP1 to LP33, LP49 to LP53, LP56 | `internal/tickets`, `internal/preflight`, `internal/commitment/repository`, `internal/commit`, `internal/worktree` package tests | yes |
-| LP-C2 / sliced after review | The guide, the drain, the implementation command, and the ADRs state the new scope | LP34 to LP48, LP54, LP55 | `internal/conformance` package tests and the guidance canary | no |
+| LP-C1 / `1-own-writes-grammar.md`, `2-admit-light-path-commit.md`, `3-admit-light-path-landing.md` | A light-path change commits and lands without a binding, and every other guard holds | LP1 to LP33, LP49 to LP53, LP56 | `internal/tickets`, `internal/preflight`, `internal/commitment/repository`, `internal/commit`, `internal/worktree` package tests | yes |
+| LP-C2 / `4-state-light-path-guidance.md`, `5-record-commitment-scope-adr.md` | The guide, the drain, the implementation command, and the ADRs state the new scope | LP34 to LP48, LP54, LP55 | `internal/conformance` package tests and the guidance canary | no |
 
 LP-C2 starts after the LP-C1 checkpoint, so the guidance never states an exemption that the gate does not yet admit.
+
+The three LP-C1 tickets run in series on one integration source, because each one writes `internal/commitment/repository/candidate.go`. The two LP-C2 tickets write no shared file, so they can author concurrently after the LP-C1 review.
+
+| Ticket | Blocked by | Delivered coverage |
+| --- | --- | --- |
+| [1. Move the Writes grammar to one owner in internal/tickets](tickets/1-own-writes-grammar.md) | none | LP27, LP28, LP29, LP30, LP31, LP32, LP33 |
+| [2. Admit an unbound light-path commit inside its ticket's Writes line](tickets/2-admit-light-path-commit.md) | 1-own-writes-grammar.md | LP1, LP2, LP7, LP8, LP9, LP10, LP11, LP12, LP13, LP14, LP15, LP16, LP17, LP18, LP19, LP20, LP21, LP22, LP23, LP49, LP51, LP56 |
+| [3. Publish an unbound light-path landing that names its folder](tickets/3-admit-light-path-landing.md) | 2-admit-light-path-commit.md | LP3, LP4, LP5, LP6, LP24, LP25, LP26, LP50, LP52, LP53 |
+| [4. State the light-path scope in the guide, the drain, and the implementation command](tickets/4-state-light-path-guidance.md) | 3-admit-light-path-landing.md | LP34, LP35, LP36, LP37, LP38, LP39, LP40, LP41, LP42, LP43, LP44, LP45, LP46, LP54, LP55 |
+| [5. Record the commitment scope in ADR 0028 and the delegate route in ADR 0023](tickets/5-record-commitment-scope-adr.md) | 3-admit-light-path-landing.md | LP47, LP48 |
+
+Ticket 1 adds `tickets.WritesPath` and `tickets.Covers`, and ticket 2 calls them from the light-path predicate. Ticket 3 adds publication mode to the reader and the predicate of ticket 2. Tickets 4 and 5 wait for the LP-C1 checkpoint.
 
 ## Testing decisions
 
@@ -313,6 +325,7 @@ Each excluded edge takes a Won't handle line:
 - `internal/preflight/fence_writes.go`
 - `internal/preflight/proposal.go`
 - `internal/commitment/repository/candidate.go`
+- `internal/commitment/repository/readiness.go`
 - `internal/commitment/repository/publication.go`
 - `internal/commitment/repository/light_path.go`
 - `internal/commitment/repository/light_path_test.go`
@@ -324,13 +337,41 @@ Each excluded edge takes a Won't handle line:
 - `.bench/BENCH.md`
 - `.agents/commands/bench-drain.md`
 - `.agents/commands/bench-implement-spec.md`
+- `projects/benchkit.md`
 - `docs/adr/0023-each-ticket-gets-a-fresh-author.md`
 - `docs/adr/0028-the-commitment-gates-spec-implementations.md`
 - `internal/anchors/registry_commitment.go`
 - `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/anchor_harness_diagnostics_test.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/anchors/registry_chunk_chain.go`
+- `internal/anchors/registry_chunk_chain_test.go`
+- `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry_ft311_preparation.go`
 - `internal/conformance/commitment_guidance_test.go`
 - `internal/conformance/recurrence_maintenance_contract_test.go`
-- `tests/canary/workflow-guidance-anchors/drain-implement-now-route/`
+- `tests/canary/workflow-guidance-anchors/`
+- `tests/canary/docs-currency-token-diet/benchref-imported`
+- `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
+- `tests/canary/docs-currency-token-diet/benchref-section-duplicated`
+- `tests/canary/docs-currency-token-diet/dogfood-referent-shipped`
+- `tests/canary/docs-currency-token-diet/missing-cli-inventory`
+- `tests/canary/docs-currency-token-diet/stale-cli-doc-reference`
+- `tests/canary/load-validity-metadata/readme-shared-rule-drift`
+- `tests/canary/load-validity-metadata/shared-rule-drift`
+- `tests/canary/skills-index-command-adapters/adapter-inert-invocation-key`
+- `tests/canary/skills-index-command-adapters/command-invocation-disabled-against-policy`
+- `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
+- `tests/canary/row-next-grammar/token-table-lacks-kit-edit`
+- `tests/canary/guidance-prose-budgets/over-budget-skill`
+- `tests/canary/line-routing/line-binding-prose-drift`
+- `tests/canary/skill-description-budgets/budget-table-missing`
+- `tests/canary/skill-description-budgets/description-folded`
+- `tests/canary/skill-description-budgets/description-missing`
+- `tests/canary/skill-description-budgets/over-budget-command`
+- `tests/canary/skill-description-budgets/over-budget-description`
 - `CHANGELOG.md`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
@@ -339,7 +380,11 @@ Each excluded edge takes a Won't handle line:
 - `internal/conformance/subcommand_routing_table_test.go`
 - `reviews/light-path-commitment-exemption.md`
 
-Build preflight binds the commitment, worktree, and anchors packages to the five command-registry files above, so each ticket that writes those packages names them. No ticket expects to edit them. The ticket slicer refines this list into `Writes:` lines.
+Build preflight binds the commitment, worktree, and anchors packages to the five command-registry files above, so each ticket that writes those packages names them. No ticket expects to edit them.
+
+Ticket 4 also names the fixture canaries that pin each guidance file it edits, and the anchor registry files that name each such file. Ticket 4 edits a canary or a registry file only when its check reds. The workflow guidance anchors entry holds the route canary of row LP45.
+
+`.bench/BENCH.md` and `.agents/commands/bench-implement-spec.md` are at their line budgets, so ticket 4 may raise their rows in `projects/benchkit.md`.
 
 ## Out of scope
 
@@ -411,3 +456,9 @@ None. The predicate decides admission before the gate, and it launches no execut
 ### Source disclosure
 
 This session read the two learnings named in the charge only through their titles in this conversation. It did not re-read `capture/learnings.md` in this phase. The completion plan fence follows the ticket slice.
+
+### Completion plan
+
+```bench-completion-plan
+{"version":1,"chunks":[{"id":"LP-C1","tickets":["1-own-writes-grammar.md","2-admit-light-path-commit.md","3-admit-light-path-landing.md"],"verification":[{"id":"tickets","command":"bench test --package ./internal/tickets"},{"id":"preflight","command":"bench test --package ./internal/preflight"},{"id":"commitment-repository","command":"bench test --package ./internal/commitment/repository"},{"id":"commit","command":"bench test --package ./internal/commit"},{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"LP-C2","tickets":["4-state-light-path-guidance.md","5-record-commitment-scope-adr.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"prose-budgets","command":"bench test --check guidance-prose-budgets"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/light-path-commitment-exemption/spec.md"},{"id":"tickets","command":"bench test --package ./internal/tickets"},{"id":"preflight","command":"bench test --package ./internal/preflight"},{"id":"commitment-repository","command":"bench test --package ./internal/commitment/repository"},{"id":"commit","command":"bench test --package ./internal/commit"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"anchors","command":"bench test --package ./internal/anchors"}]}
+```
