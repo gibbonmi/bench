@@ -5758,11 +5758,189 @@ This suggestion is optional advice and has no repair disposition.
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+    "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+    "reconciliation": {
+      "DC1": "covered",
+      "DC10": "covered",
+      "DC11": "covered",
+      "DC12": "covered",
+      "DC13": "covered",
+      "DC14": "covered",
+      "DC15": "covered",
+      "DC16": "covered",
+      "DC17": "covered",
+      "DC18": "covered",
+      "DC19": "covered",
+      "DC2": "covered",
+      "DC20": "covered",
+      "DC21": "covered",
+      "DC22": "covered",
+      "DC23": "covered",
+      "DC24": "covered",
+      "DC25": "covered",
+      "DC26": "covered",
+      "DC27": "covered",
+      "DC28": "covered",
+      "DC29": "covered",
+      "DC3": "covered",
+      "DC30": "covered",
+      "DC31": "covered",
+      "DC32": "covered",
+      "DC33": "covered",
+      "DC34": "covered",
+      "DC35": "covered",
+      "DC36": "covered",
+      "DC37": "covered",
+      "DC38": "covered",
+      "DC39": "covered",
+      "DC4": "covered",
+      "DC40": "covered",
+      "DC41": "covered",
+      "DC42": "covered",
+      "DC43": "covered",
+      "DC44": "covered",
+      "DC45": "covered",
+      "DC46": "covered",
+      "DC47": "covered",
+      "DC48": "covered",
+      "DC49": "covered",
+      "DC5": "covered",
+      "DC50": "covered",
+      "DC51": "covered",
+      "DC52": "covered",
+      "DC53": "covered",
+      "DC54": "covered",
+      "DC55": "covered",
+      "DC56": "covered",
+      "DC57": "covered",
+      "DC58": "covered",
+      "DC59": "covered",
+      "DC6": "covered",
+      "DC60": "covered",
+      "DC61": "covered",
+      "DC62": "covered",
+      "DC63": "covered",
+      "DC64": "covered",
+      "DC65": "covered",
+      "DC66": "covered",
+      "DC67": "covered",
+      "DC68": "covered",
+      "DC69": "covered",
+      "DC7": "covered",
+      "DC70": "covered",
+      "DC71": "covered",
+      "DC72": "covered",
+      "DC73": "covered",
+      "DC74": "covered",
+      "DC75": "covered",
+      "DC76": "covered",
+      "DC77": "covered",
+      "DC78": "covered",
+      "DC79": "covered",
+      "DC8": "covered",
+      "DC80": "covered",
+      "DC81": "covered",
+      "DC82": "covered",
+      "DC83": "covered",
+      "DC84": "covered",
+      "DC85": "covered",
+      "DC86": "covered",
+      "DC9": "covered"
+    },
+    "verification": [
+      {
+        "id": "dc-final-coverage",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final-coverage",
+          "digest": "sha256:4a0e7c0c0d2223a9a8ae1e72f19811cad05157b410570adf264d98c26113a3d2",
+          "excerpt": "command: bench coverage --check specs/roadmap-delivery-commitment/spec.md\ntip: d42ced91da4c6206fef32f1c4b2965bcc95b14f1\nexit: 0\noutput:\n  ok: coverage map valid — 86 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/roadmap-delivery-commitment/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "dc-final-installed-adoption",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final-installed-adoption",
+          "digest": "sha256:4f7ad2f7fe8c4cf42987831dc80e6adb46e743334ee4d3e2f9bc5d58077225ad",
+          "excerpt": "command: bench worktree exec dc-integration -- env \"PATH=/home/mgibs/.nvm/versions/node/v25.8.1/bin:$PATH\" bench test --check system\ntip: d42ced91da4c6206fef32f1c4b2965bcc95b14f1\nexit: 0\noutput:\n  packages[1]{package,status,elapsed_ms}:\n    github.com/gibbonmi/bench/internal/systemtest,pass,86230\n  failures[0]{package,test,line}:\n  skips[0]{package,test,reason}:\n"
+        },
+        "requirement": "installed-adoption",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "dc-final-route-inventory",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final-route-inventory",
+          "digest": "sha256:8f8488ad600e9a7a1bb870f1579e3a620e1aca76fde429558c2c6e661c2096ee",
+          "excerpt": "command: bench test --package ./cmd/bench\ntip: d42ced91da4c6206fef32f1c4b2965bcc95b14f1\nexit: 0\noutput:\n  packages[1]{package,status,elapsed_ms}:\n    github.com/gibbonmi/bench/cmd/bench,pass,13417\n  failures[0]{package,test,line}:\n  skips[0]{package,test,reason}:\n"
+        },
+        "requirement": "route-inventory",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "dc-final-completion-oracle",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final-completion-oracle",
+          "digest": "sha256:f0b3581336ce5094d6430b278691aead59eb4b108cd891f9aa21321eef0de05a",
+          "excerpt": "command: bench test --package ./internal/gate\ntip: d42ced91da4c6206fef32f1c4b2965bcc95b14f1\nexit: 0\noutput:\n  packages[1]{package,status,elapsed_ms}:\n    github.com/gibbonmi/bench/internal/gate,pass,14460\n  failures[0]{package,test,line}:\n  skips[0]{package,test,reason}:\n"
+        },
+        "requirement": "completion-oracle",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "dc-final-guidance",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final-guidance",
+          "digest": "sha256:466ab9d702ddf0832303186a699ebda367b2c818c8c631c2c71a3a813cbf72bf",
+          "excerpt": "command: bench test --package ./internal/conformance\ntip: d42ced91da4c6206fef32f1c4b2965bcc95b14f1\nexit: 0\noutput:\n  packages[1]{package,status,elapsed_ms}:\n    github.com/gibbonmi/bench/internal/conformance,pass,40150\n  failures[0]{package,test,line}:\n  skips[3]{package,test,reason}: capability skips only\n    TestGuidanceProseBudgetRefusesNonRegularSubjects/socket (fifo: unix sockets unavailable)\n    TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (privilege)\n    TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket (fifo: unix sockets unavailable)\n"
+        },
+        "requirement": "guidance",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -7329,3 +7507,8 @@ Round 6 Standards closes C9R5-S1 and reports C9R6-S1, a low finding. The restate
 
 Round 7 Standards closes C9R6-S1 with zero findings. Round 5 Spec and Coverage report zero findings at the same source, so all three axes pass at tip 62e10a4dd8c356043a9db2a857945dadd7af9ae3.
 The final DC-C9 source digest is 04b22f5f168809e3f18010befd08feab7b3040d2. The chunk checkpoint follows.
+
+## DC-C9 checkpoint and final reconciliation
+
+The DC-C9 checkpoint passed at record tip d42ced91da4c6206fef32f1c4b2965bcc95b14f1 with eight capability skips. All nine chunks are accepted.
+The orchestrator ran the five final verification commands at that source, and each exits 0. Completion evidence covers all 86 rows at source digest 04b22f5f168809e3f18010befd08feab7b3040d2.
