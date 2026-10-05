@@ -40,7 +40,7 @@ This suggestion is optional advice and has no repair disposition.
 {
   "version": 1,
   "spec": "specs/roadmap-delivery-commitment/spec.md",
-  "plan_digest": "sha256:c193118928271044fec821847a01bdb27e4e92ed977577c41555407d5286eaac",
+  "plan_digest": "sha256:18caace7a7e155a3bc181682b45abcfb509a4f6d48c716a723bb9f35c1daf255",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -4825,9 +4825,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C9",
       "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
-      "tip": "7f7e90d059d9ed5bd2d6bd6f3483f754e8414146",
-      "plan_digest": "sha256:c193118928271044fec821847a01bdb27e4e92ed977577c41555407d5286eaac",
-      "source_digest": "1a8803c05470f0420de1a527dba8f6bbca9bd18c",
+      "tip": "1d072da306aa37c9b0b392770725193f7ca2e6ed",
+      "plan_digest": "sha256:18caace7a7e155a3bc181682b45abcfb509a4f6d48c716a723bb9f35c1daf255",
+      "source_digest": "6aeb148a0c65a511ba4d46d86353be09b1a98851",
       "acceptance_rows": [
         "DC51",
         "DC52",
@@ -5420,6 +5420,39 @@ This suggestion is optional advice and has no repair disposition.
         ],
         "DC-C8": [
           "DC-C8"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c193118928271044fec821847a01bdb27e4e92ed977577c41555407d5286eaac",
+      "to": "sha256:18caace7a7e155a3bc181682b45abcfb509a4f6d48c716a723bb9f35c1daf255",
+      "chunk_ids": {
+        "DC-C1": [
+          "DC-C1"
+        ],
+        "DC-C2": [
+          "DC-C2"
+        ],
+        "DC-C3": [
+          "DC-C3"
+        ],
+        "DC-C4": [
+          "DC-C4"
+        ],
+        "DC-C5": [
+          "DC-C5"
+        ],
+        "DC-C6": [
+          "DC-C6"
+        ],
+        "DC-C7": [
+          "DC-C7"
+        ],
+        "DC-C8": [
+          "DC-C8"
+        ],
+        "DC-C9": [
+          "DC-C9"
         ]
       }
     }
