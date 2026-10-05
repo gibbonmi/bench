@@ -49,7 +49,7 @@ in `authority_test.go` repeats the `legacy` builder expression.
 {
   "version": 2,
   "spec": "specs/commitment-delivery-integrity/spec.md",
-  "plan_digest": "sha256:37236d7f76612ed55db6b4a27b59899919a497c041af08415e14869512b9d73d",
+  "plan_digest": "sha256:aad803245152d604f292375130e8ccf0aae170848859f48fa1b44d4e36300ae8",
   "implementation_session": "",
   "chunks": [
     {
@@ -570,6 +570,29 @@ in `authority_test.go` repeats the `legacy` builder expression.
           ]
         }
       ]
+    },
+    {
+      "id": "FD-C2",
+      "base": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+      "tip": "90697fd0dfc23439ae1f6204b0f08b692f7d3930",
+      "plan_digest": "sha256:aad803245152d604f292375130e8ccf0aae170848859f48fa1b44d4e36300ae8",
+      "source_digest": "93c18dfe15b94618c9651a12fd9761cebd4f4d6a",
+      "acceptance_rows": [
+        "FD12",
+        "FD13",
+        "FD14",
+        "FD15",
+        "FD16",
+        "FD17",
+        "FD18",
+        "FD19",
+        "FD25",
+        "FD20",
+        "FD21",
+        "FD22"
+      ],
+      "verification": [],
+      "reviews": []
     }
   ],
   "completion": {
@@ -583,6 +606,15 @@ in `authority_test.go` repeats the `legacy` builder expression.
     {
       "from": "sha256:e1af045505879acfbe050e31acc668e35464b452e9a3f71f2b38add2733381ef",
       "to": "sha256:37236d7f76612ed55db6b4a27b59899919a497c041af08415e14869512b9d73d",
+      "chunk_ids": {
+        "FD-C1": [
+          "FD-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:37236d7f76612ed55db6b4a27b59899919a497c041af08415e14869512b9d73d",
+      "to": "sha256:aad803245152d604f292375130e8ccf0aae170848859f48fa1b44d4e36300ae8",
       "chunk_ids": {
         "FD-C1": [
           "FD-C1"
