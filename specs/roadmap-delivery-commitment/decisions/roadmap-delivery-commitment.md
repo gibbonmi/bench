@@ -35,7 +35,7 @@ Milestone completion, intake, blocked work, concurrency, enforcement, closure, a
 
 - [Which work classes take priority?](roadmap-delivery-commitment/tickets/13.md): defects and refactoring generally precede new features; modernization and deepening work are the current priority.
 
-- [What bounds the first quality milestone?](roadmap-delivery-commitment/tickets/14.md): FT373 and the remaining named September 29 survey outcomes; verify delivery state before scheduling.
+- [What bounds the first quality milestone?](roadmap-delivery-commitment/tickets/14.md): FT376, FT373, and FT349, in order; survey outcomes stay uncommitted intake; verify delivery state first.
 - [How do defects rank against refactoring?](roadmap-delivery-commitment/tickets/15.md): confirmed defects generally precede refactoring, which precedes new features.
 - [When does commitment enforcement implementation run?](roadmap-delivery-commitment/tickets/16.md): commitment enforcement and closure run first as one bounded prerequisite; the quality milestone follows.
 
@@ -69,8 +69,8 @@ Milestone completion, intake, blocked work, concurrency, enforcement, closure, a
   Supports: the existing standard-library modernization scope.
   Drift: a change to its scope or delivery state.
 - Path: `ROADMAP.md`
-  Supports: the remaining September 29 survey owners and current sequence.
-  Drift: a survey owner is added, changed, merged, or retired.
+  Supports: the FT376, FT373, and FT349 owner rows and the current sequence as unapproved input.
+  Drift: one of the three owner rows is changed, merged, or retired, or the sequence changes.
 - Path: `specs/markdown-block-reader/spec.md`
-  Supports: FT358 already has a staged specification for the reader consolidation and correctness fixes.
+  Supports: the staged FT358 spec stays uncommitted intake outside the first milestone.
   Drift: its scope or status changes.
