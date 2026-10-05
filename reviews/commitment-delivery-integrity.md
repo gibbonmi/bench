@@ -34,6 +34,17 @@ Findings: 4. Worst issue: C2.
   test puts the binding on a later outcome of a milestone. Probe t6 was
   silent.
 
+## FD-C1 repair state
+
+Repair cycle 1 of 2 is consumed, and it closes C1 to C4. A fresh ticket 1
+repair session added test rows in commit `4e1fb87f`. The confirming round of
+all three axes at that tip found no finding. Probes confirmed C2, C3, and C4,
+and the Spec axis confirmed C1 by reading.
+
+Advice: the `slices.Equal` clause in `retainedObligationFree` is redundant,
+because both bindings on that path list no obligation. The `changed` fixture
+in `authority_test.go` repeats the `legacy` builder expression.
+
 ```bench-review-record
 {
   "version": 2,
@@ -491,6 +502,72 @@ Findings: 4. Worst issue: C2.
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "fdc1-standards-r2",
+          "performer": "claude:fdc1_standards_r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc1_standards_r2",
+            "digest": "sha256:b3c86ad3951401ac94671140454680cbb52188789039ea5ef81d88a27b22e11e",
+            "excerpt": "Standards axis, FD-C1 confirming round (repair delta 33465a09..4e1fb87f), sonnet high, evidence sha256:f0bab143 check-current=true.\nFindings: 0.\nAdvice (no finding ID): authority_test.go:97-98 the changed fixture repeats the legacy builder expression before it changes one identity; pre-existing; cosmetic.\nRefuted: bindObligationFree is the one builder and obligationFreeMilestone wraps it; comments state current behavior; the message literal is a pre-existing independent expectation.\n"
+          },
+          "axis": "Standards",
+          "base": "9febee8f284bfed4f6de714717f4364adede738e",
+          "tip": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+          "finding_ids": [],
+          "supersedes": [
+            "fdc1-standards-r1"
+          ]
+        },
+        {
+          "id": "fdc1-spec-r2",
+          "performer": "claude:fdc1_spec_r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc1_spec_r2",
+            "digest": "sha256:51d871bcfc6c0202cb447601cd28851699dc1fd60f88513b28befe448f29daca",
+            "excerpt": "Spec axis, FD-C1 confirming round (repair delta 33465a09..4e1fb87f), sonnet high, evidence sha256:f0bab143 check-current=true.\nFindings: 0.\nFolds C1-C4 confirmed by code reading (authority_test.go:110-112 against authority.go:108-129).\nFD1, FD3, FD4, FD23, FD24, FD26 still met; FD9 (parse_test.go:133) accepts the moved fixture path; FD2 and FD5 do not use the helper.\n"
+          },
+          "axis": "Spec",
+          "base": "9febee8f284bfed4f6de714717f4364adede738e",
+          "tip": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+          "finding_ids": [],
+          "supersedes": [
+            "fdc1-spec-r1"
+          ]
+        },
+        {
+          "id": "fdc1-coverage-r2",
+          "performer": "claude:fdc1_coverage_r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "579e52ff4d3dadd051e6a9dce337c58646b90739",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fdc1_coverage_r2",
+            "digest": "sha256:ff27c423ab15151fc40af372fc58e060f7964d4627b29b4daaa425f09cd52f84",
+            "excerpt": "Coverage axis, FD-C1 confirming round (repair delta 33465a09..4e1fb87f), sonnet high, evidence sha256:f0bab143 check-current=true.\np1 authority.go:129 omit obligationFree(outcome, kept): bit, restored yes (C2 confirmed).\np2 authority.go:109 swap Deliverables[:1]: bit, restored yes (C3 confirmed).\np3 authority.go:129 omit slices.Equal: silent, restored yes; equivalent mutant because both bindings are obligation-free on that path; refuted, no finding.\nCoordinator probe authority.go:108 swap Outcomes[:1]: bit, 2 failed (legacy_binding_moved_to_another_outcome, second_outcome), restored yes (C4 confirmed).\nC1: repair session probe t3 bit; Spec axis confirmed by reading.\nFindings: 0.\nAdvice (no finding ID): the slices.Equal clause at authority.go:129 is redundant production code.\n"
+          },
+          "axis": "Coverage",
+          "base": "9febee8f284bfed4f6de714717f4364adede738e",
+          "tip": "4e1fb87f9d5378c895e4219e74e339bb87cb1d46",
+          "finding_ids": [],
+          "supersedes": [
+            "fdc1-coverage-r1"
+          ]
         }
       ]
     }
