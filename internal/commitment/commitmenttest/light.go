@@ -1,6 +1,8 @@
 package commitmenttest
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment"
@@ -22,6 +24,16 @@ func WriteTickets(t testing.TB, root string) string {
 	Write(t, root, TicketsFolder+"/tickets/one.md", "Light path ticket.\n")
 	gittest.Output(t, root, "add", "--", TicketsFolder)
 	return commitrepo.TreeIdentity(gittest.Output(t, root, "write-tree", "--prefix="+TicketsFolder+"/"))
+}
+
+// RemoveTickets deletes the tickets-only folder that WriteTickets wrote below root and
+// commits the deletion on main.
+func RemoveTickets(t testing.TB, root string) {
+	t.Helper()
+	if err := os.RemoveAll(filepath.Join(root, filepath.FromSlash(TicketsFolder))); err != nil {
+		t.Fatal(err)
+	}
+	Commit(t, root, "remove tickets folder")
 }
 
 // TicketsBinding approves the tickets-only folder whose identity WriteTickets returns as a

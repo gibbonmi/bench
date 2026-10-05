@@ -172,6 +172,14 @@
       "identity": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774",
       "source": "a7a70e5df7c9abcaac19048ad745341463e9ef25",
       "evidence": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT390",
+      "binding": "commitment-delivery-integrity",
+      "identity": "sha256:69565705a0de2b96f5c627dfed09bcfdb9970d76d41d763ed4adfa90577d7044",
+      "source": "6e0005d2e51b223e2359d035cf4c7be20ca74024",
+      "evidence": "2b110e11af722a05d5d267b27caa829abfcab4d5"
     }
   ]
 }

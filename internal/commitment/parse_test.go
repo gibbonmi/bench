@@ -128,6 +128,17 @@ func TestCommitmentContinuationGrantShape(t *testing.T) {
 	}
 }
 
+// Parse reads a legacy policy whose binding names no obligation, so a plan can repair it.
+func TestCommitmentParseKeepsObligationFreeBinding(t *testing.T) {
+	data, err := json.Marshal(policy([]commitment.Milestone{obligationFreeMilestone(milestone("M1", "A"), "FT1")}, "M1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := commitment.Parse(data); err != nil {
+		t.Fatalf("Parse(obligation-free binding) = %v, want valid", err)
+	}
+}
+
 func TestCommitmentMultiOutcomeCycle(t *testing.T) {
 	p := policy([]commitment.Milestone{milestone("M1", "A", "B")}, "M1")
 	p.Milestones[0].Outcomes[0].Dependencies = []string{"B"}

@@ -1,6 +1,7 @@
 package commitment
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -50,6 +51,9 @@ func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
 	if err != nil {
 		return Plan{}, err
 	}
+	if err := refuseObligationFree(current, proposed); err != nil {
+		return Plan{}, err
+	}
 	predecessor := "absent"
 	if current != nil {
 		currentBytes, err := Bytes(*current)
@@ -60,8 +64,13 @@ func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
 	}
 	effects := transitionEffects(current, proposed)
 	sources := policySources(proposed)
+	// Each open source of the current policy that the proposal does not hold stays bound, so
+	// the approval of a removal refuses when the removed row changes. A deliverable that the
+	// proposal drops binds nothing, so its deletion from the default branch leaves the plan
+	// valid.
 	if current != nil {
-		for _, source := range policySources(*current) {
+		open, _ := Unsettled(*current)
+		for _, source := range open {
 			if !slices.Contains(sources, source) {
 				sources = append(sources, source)
 			}
@@ -71,12 +80,9 @@ func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
 	if err != nil {
 		return Plan{}, fmt.Errorf("encode commitment effects: %w", err)
 	}
-	var binding strings.Builder
-	for _, source := range sources {
-		fmt.Fprintf(&binding, "%s\x00%s\x00%s\x00", source.ID, source.Path, source.Identity)
-	}
+	sources, sourcesIdentity := boundSources(sources)
 	proposalIdentity := identity(proposedBytes)
-	bound := predecessor + "\x00" + proposalIdentity + "\x00" + binding.String() + "\x00" + string(effectBytes)
+	bound := predecessor + "\x00" + proposalIdentity + "\x00" + sourcesIdentity + "\x00" + string(effectBytes)
 	// A plan that lists no run binds no list, so the policy transition alone decides its identity.
 	if len(proposal.Continuations) != 0 {
 		listed, err := json.Marshal(proposal.Continuations)
@@ -94,6 +100,56 @@ func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
 		Effects:          effects,
 		Continuations:    proposal.Continuations,
 	}, nil
+}
+
+// boundSources returns a sorted copy of sources and the identity of its encoding. The sort
+// compares the identifier, then the path, then the identity, in byte order, so the plan
+// identity does not change when the policy traversal changes.
+func boundSources(sources []SourceBinding) ([]SourceBinding, string) {
+	sorted := slices.Clone(sources)
+	slices.SortFunc(sorted, func(a, b SourceBinding) int {
+		return cmp.Or(cmp.Compare(a.ID, b.ID), cmp.Compare(a.Path, b.Path), cmp.Compare(a.Identity, b.Identity))
+	})
+	var encoding strings.Builder
+	for _, source := range sorted {
+		fmt.Fprintf(&encoding, "%s\x00%s\x00%s\x00", source.ID, source.Path, source.Identity)
+	}
+	return sorted, identity([]byte(encoding.String()))
+}
+
+// refuseObligationFree refuses each obligation-free binding of proposed, in any milestone,
+// unless current holds the same outcome with an equal binding that is already
+// obligation-free. Validate does not take this rule, so a legacy policy stays readable and
+// a plan can repair it.
+func refuseObligationFree(current *Policy, proposed Policy) error {
+	for _, milestone := range proposed.Milestones {
+		for _, outcome := range milestone.Outcomes {
+			for _, binding := range outcome.Deliverables {
+				if obligationFree(outcome, binding) && !retainedObligationFree(current, outcome.ID, binding) {
+					return fmt.Errorf("outcome %q deliverable %q names no obligation; list each outcome source that it completely satisfies", outcome.ID, binding.Source.ID)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// retainedObligationFree reports whether current approves binding unchanged for the outcome
+// named id, and that binding is already obligation-free there.
+func retainedObligationFree(current *Policy, id string, binding DeliveryBinding) bool {
+	if current == nil {
+		return false
+	}
+	for _, milestone := range current.Milestones {
+		for _, outcome := range milestone.Outcomes {
+			if outcome.ID == id {
+				return slices.ContainsFunc(outcome.Deliverables, func(kept DeliveryBinding) bool {
+					return kept.Source == binding.Source && slices.Equal(kept.Obligations, binding.Obligations) && obligationFree(outcome, kept)
+				})
+			}
+		}
+	}
+	return false
 }
 
 // Identity returns the content identity used by plans and source bindings.

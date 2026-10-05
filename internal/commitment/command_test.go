@@ -1,6 +1,7 @@
 package commitment_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -71,6 +72,39 @@ func TestCommitmentInputFraming(t *testing.T) {
 	withoutOutput, withoutCode := commitcmd.Command(root, []string{"plan", "--input", withoutNewline})
 	if withCode != 0 || withoutCode != 0 || withOutput != withoutOutput {
 		t.Fatalf("framed plan = (%q, %d), unframed plan = (%q, %d)", withOutput, withCode, withoutOutput, withoutCode)
+	}
+}
+
+// The plan command refuses a binding with an empty obligation list before it records a
+// receipt. The row and the staged spec exist at main, so only the refusal stops the plan.
+func TestCommitmentPlanCommandRefusesEmptyObligations(t *testing.T) {
+	root := commitmenttest.Repo(t, policy([]commitment.Milestone{milestone("M1", "A")}, "M1"))
+	proposed := policy([]commitment.Milestone{obligationFreeMilestone(milestone("M1", "A"), "FT1")}, "M1")
+	outcome := &proposed.Milestones[0].Outcomes[0]
+	for _, source := range []*commitment.SourceBinding{&outcome.Sources[0], &outcome.Deliverables[0].Source} {
+		commitmenttest.Write(t, root, source.Path, commitmenttest.StagedBody)
+		source.Identity = commitment.Identity([]byte(commitmenttest.StagedBody))
+	}
+	commitmenttest.Commit(t, root, "write the row and the staged spec")
+	data, err := json.Marshal(proposed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "proposal.json")
+	if err := os.WriteFile(path, []byte(strings.Replace(string(data), `"source":{`, `"obligations":[],"source":{`, 1)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, code := commitcmd.Command(root, []string{"plan", "--input", path})
+	if code != 1 || !strings.Contains(out, "names no obligation") {
+		t.Errorf("Command(plan empty obligations) = (%q, %d), want the obligation refusal", out, code)
+	}
+	ledger, err := intent.Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ledger.CommitmentReceipts) != 0 {
+		t.Errorf("refused plan recorded receipts %v", ledger.CommitmentReceipts)
 	}
 }
 

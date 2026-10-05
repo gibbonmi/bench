@@ -106,6 +106,16 @@ func TestCommitmentLightClosureRefusal(t *testing.T) {
 	}
 }
 
+// The closure refuses the delivery of the spec that SeedTicketsOnly approves with no
+// obligation, because that delivery can close no source of its outcome.
+func TestCommitmentClosureRefusesObligationFreeBinding(t *testing.T) {
+	root, head := closureRoot(t, func(t testing.TB, root string) { commitmenttest.SeedTicketsOnly(t, root, closureSpec) })
+	edits, err := (commitrepo.Store{Root: root}).Closure(head, commitrepo.Delivery{Spec: closureSpec, Source: head})
+	if err == nil || !strings.Contains(err.Error(), "names no obligation") {
+		t.Fatalf("Closure = %+v, %v; want the names-no-obligation refusal", edits, err)
+	}
+}
+
 // A project with no board admits the bound rowless closure, and its candidate keeps no
 // sequence: a candidate that adds a board with a sequence refuses.
 func TestCommitmentRowlessAdmissionWithoutBoard(t *testing.T) {

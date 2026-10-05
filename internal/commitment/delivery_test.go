@@ -25,7 +25,8 @@ func deliveryPolicy(obligations ...string) commitment.Policy {
 
 // A partial delivery records one fact, satisfies only its obligation, and leaves its
 // outcome in the remaining sequence. A complete delivery removes the outcome. A second
-// delivery of the same binding refuses, and an unapproved path changes nothing.
+// delivery of the same binding refuses. A path that the active milestone does not approve
+// changes nothing, even when an inactive milestone approves it with no obligation.
 func TestCommitmentDeliver(t *testing.T) {
 	partial, closed, err := commitment.Deliver(deliveryPolicy("FT1"), deliverySpec, "source", "evidence")
 	if err != nil || len(closed) != 1 || closed[0].ID != "FT1" || len(partial.Deliveries) != 1 {
@@ -51,15 +52,27 @@ func TestCommitmentDeliver(t *testing.T) {
 	if err != nil || !slices.Equal(commitment.Remaining(complete), []string{"B"}) {
 		t.Fatalf("complete Remaining = %v, %v; want B alone", commitment.Remaining(complete), err)
 	}
-	unchanged, closed, err := commitment.Deliver(deliveryPolicy("FT1"), "specs/other/spec.md", "source", "evidence")
-	if err != nil || closed != nil || len(unchanged.Deliveries) != 0 {
-		t.Fatalf("unapproved Deliver = %+v, %+v, %v; want no change", unchanged.Deliveries, closed, err)
+	inactive := deliveryPolicy()
+	inactive.Milestones = append(inactive.Milestones, milestone("M2", "D"))
+	inactive.ActiveMilestone = "M2"
+	for _, row := range []struct {
+		name, path string
+		policy     commitment.Policy
+	}{
+		{"unapproved-path", "specs/other/spec.md", deliveryPolicy("FT1")},
+		{"inactive-obligation-free", deliverySpec, inactive},
+	} {
+		unchanged, closed, err := commitment.Deliver(row.policy, row.path, "source", "evidence")
+		if err != nil || closed != nil || len(unchanged.Deliveries) != 0 {
+			t.Fatalf("%s Deliver = %+v, %+v, %v; want no change", row.name, unchanged.Deliveries, closed, err)
+		}
 	}
 }
 
 // An outcome with no source is its own obligation, so its delivery records one fact that
-// satisfies no source and completes only that outcome. A binding with no obligation of an
-// outcome that has sources records nothing. PathDelivered names only a delivered path.
+// satisfies no source and completes only that outcome. The delivery of a binding with no
+// obligation of an outcome that has sources refuses. PathDelivered names only a delivered
+// path.
 func TestCommitmentDeliverRowless(t *testing.T) {
 	const rowlessSpec = "specs/c/spec.md"
 	p := deliveryPolicy()
@@ -79,9 +92,8 @@ func TestCommitmentDeliverRowless(t *testing.T) {
 	if !commitment.PathDelivered(delivered, rowlessSpec) || commitment.PathDelivered(delivered, deliverySpec) || commitment.PathDelivered(p, rowlessSpec) {
 		t.Fatal("PathDelivered must name exactly the delivered deliverable")
 	}
-	unchanged, closed, err := commitment.Deliver(p, deliverySpec, "source", "evidence")
-	if err != nil || closed != nil || len(unchanged.Deliveries) != 0 {
-		t.Fatalf("obligation-free Deliver = %+v, %+v, %v; want no fact for an outcome with sources", unchanged.Deliveries, closed, err)
+	if _, _, err := commitment.Deliver(p, deliverySpec, "source", "evidence"); err == nil || !strings.Contains(err.Error(), "names no obligation") {
+		t.Fatalf("obligation-free Deliver = %v, want the names-no-obligation refusal for an outcome with sources", err)
 	}
 }
 

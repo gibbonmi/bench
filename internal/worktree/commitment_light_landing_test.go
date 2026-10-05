@@ -3,6 +3,8 @@
 package worktree
 
 import (
+	"errors"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -193,6 +195,24 @@ func TestCommitmentNoRoadmapOwner(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The completion landing of a legacy binding that names no obligation refuses before the
+// gate runs and before main moves, and its refusal names the repair command.
+func TestCommitmentLandingRefusesObligationFreeDelivery(t *testing.T) {
+	t.Parallel()
+	request := "land-commitment-obligation-free"
+	route := obligationFreeRoute
+	f := route.fixture(t, request, nil)
+	open := readClosureState(t, f.root)
+	r := runVerb(t, verbLand, f.call(route.args(request, f, f.tip)...))
+	if r.exit == 0 || !strings.Contains(r.stdout, "bench commitment plan --input <file>") {
+		t.Fatalf("obligation-free landing = (%d, %q, %q), want the refusal that names the plan command", r.exit, r.stdout, r.stderr)
+	}
+	if tally, err := os.ReadFile(f.tally); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("gate tally = %q, %v; want no gate run", tally, err)
+	}
+	requireOpenObligation(t, f, route, open)
 }
 
 // acceptTicket commits the accepted ticket of the tickets-only folder in worktree.

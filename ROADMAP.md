@@ -56,8 +56,6 @@ and review cost that recent builds paid.
 
 **FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
 
-**FT390 (HIGH) — a commitment deliverable either closes its outcome or refuses, and a commitment plan is canonical and survives a settled deliverable.**
-
 **FT391 (HIGH, decision required) — a hotfix lane lands a small change at once, outside the roadmap row and commitment ceremony.**
 
 **FT387 (MEDIUM) — a verified harness path preserves complete tool output before it returns a bounded replacement.**
@@ -314,8 +312,7 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT390
-2. FT376
-3. FT391
-4. FT373
-5. FT349
+1. FT376
+2. FT391
+3. FT373
+4. FT349
