@@ -40,7 +40,7 @@ This suggestion is optional advice and has no repair disposition.
 {
   "version": 1,
   "spec": "specs/roadmap-delivery-commitment/spec.md",
-  "plan_digest": "sha256:1fc6a916ee43a961c6d2b55d45a4384dc29b34481ea8b7c73a3e3c9749039d38",
+  "plan_digest": "sha256:833e37e8f2d248450d79bfb47a270ab5aeae25e0d732f2b5b2977c39c8b3f3d6",
   "implementation_session": "/root",
   "chunks": [
     {
@@ -4825,9 +4825,9 @@ This suggestion is optional advice and has no repair disposition.
     {
       "id": "DC-C9",
       "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
-      "tip": "bdeede94fc9c3197b542b67110bd607df24a5164",
-      "plan_digest": "sha256:1fc6a916ee43a961c6d2b55d45a4384dc29b34481ea8b7c73a3e3c9749039d38",
-      "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+      "tip": "cfdc6bfd3be1d0dfab3bc80193f559ac0de084fb",
+      "plan_digest": "sha256:833e37e8f2d248450d79bfb47a270ab5aeae25e0d732f2b5b2977c39c8b3f3d6",
+      "source_digest": "96d6b665460d4e6289b987ea4e012928fbf8856c",
       "acceptance_rows": [
         "DC51",
         "DC52",
@@ -6034,6 +6034,39 @@ This suggestion is optional advice and has no repair disposition.
           "DC-C9"
         ]
       }
+    },
+    {
+      "from": "sha256:1fc6a916ee43a961c6d2b55d45a4384dc29b34481ea8b7c73a3e3c9749039d38",
+      "to": "sha256:833e37e8f2d248450d79bfb47a270ab5aeae25e0d732f2b5b2977c39c8b3f3d6",
+      "chunk_ids": {
+        "DC-C1": [
+          "DC-C1"
+        ],
+        "DC-C2": [
+          "DC-C2"
+        ],
+        "DC-C3": [
+          "DC-C3"
+        ],
+        "DC-C4": [
+          "DC-C4"
+        ],
+        "DC-C5": [
+          "DC-C5"
+        ],
+        "DC-C6": [
+          "DC-C6"
+        ],
+        "DC-C7": [
+          "DC-C7"
+        ],
+        "DC-C8": [
+          "DC-C8"
+        ],
+        "DC-C9": [
+          "DC-C9"
+        ]
+      }
     }
   ]
 }
@@ -6783,3 +6816,8 @@ Four targeted mutations stayed green before the change and fail after it. All si
 All three axes report zero findings at bdeede94fc9c3197b542b67110bd607df24a5164, and every DC-C9 finding is closed. Repair cycles consumed: 2 of 2.
 The advice stays advice. A third run with no binding and no continuation would catch one more mutation of the continuation match. Inventory still reads spec status from the working tree.
 These choices remain open to reviewer veto: no-board approval skips the sequence, the inventory scope column, the decision 16 wording, and the removed non-mutation probe.
+
+## DC-C9 coverage map amendment and re-freeze
+
+Commit cfdc6bfd3be1d0dfab3bc80193f559ac0de084fb reconciles the coverage map against the landed tests and changes only the spec. The plan digest changes, so the orchestrator records the amendment and re-freezes DC-C9 at that commit.
+The six planned checks run again at the new source, and one reaffirming round on all three axes grades the spec-only delta.
