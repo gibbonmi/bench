@@ -4821,6 +4821,40 @@ This suggestion is optional advice and has no repair disposition.
           ]
         }
       ]
+    },
+    {
+      "id": "DC-C9",
+      "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+      "tip": "7f7e90d059d9ed5bd2d6bd6f3483f754e8414146",
+      "plan_digest": "sha256:c193118928271044fec821847a01bdb27e4e92ed977577c41555407d5286eaac",
+      "source_digest": "1a8803c05470f0420de1a527dba8f6bbca9bd18c",
+      "acceptance_rows": [
+        "DC51",
+        "DC52",
+        "DC53",
+        "DC63"
+      ],
+      "verification": [
+        {
+          "id": "dc-c9-t10-installed-adoption",
+          "performer": "claude:dc_t10",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1a8803c05470f0420de1a527dba8f6bbca9bd18c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_t10:installed-adoption",
+            "digest": "sha256:367a7323d18b7bc33d776855305cc1d9da9013a95075772d07abea6d912c790e",
+            "excerpt": "command: bench worktree exec dc-integration -- env \"PATH=/home/mgibs/.nvm/versions/node/v25.8.1/bin:$PATH\" bench test --check system\ntip: 7f7e90d059d9ed5bd2d6bd6f3483f754e8414146\nexit: 0\noutput:\n  tree[1]{target,head,dirty}:\n    dc-integration,7f7e90d059d9ed5bd2d6bd6f3483f754e8414146,false\n  packages[1]{package,status,elapsed_ms}:\n    github.com/gibbonmi/bench/internal/systemtest,pass,89254\n  failures[0]{package,test,line}:\n  skips[0]{package,test,reason}:\n\nRows covered (internal/systemtest/adoption_test.go, fixture in owner_landing_fixture_test.go):\n  DC51 TestCommitmentLinkedAdoption\n  DC52 TestCommitmentBootstrapInstall\n  DC63 TestCommitmentInstalledAuthority\n\nFocused green before probes (same tree content as the tip):\n  BENCH_RUN_BINARY=$PWD/dist/bench BENCH_KIT=$PWD go test -tags system -count=1 -v -run '^TestCommitment' ./internal/systemtest\n  exit 0: PASS TestCommitmentBootstrapInstall, TestCommitmentLinkedAdoption, TestCommitmentInstalledAuthority\n\nProbe method: system is not a bench probe target, so each probe copies the subject aside, applies one\nmutation, runs the focused system test with go test, restores the copy, and proves the restore with cmp.\nA failing Go test exits 1. Production probes build the mutant through scripts/go-build.sh into a scratch\ndirectory and pass it as BENCH_RUN_BINARY; the dist binary stays unchanged.\n\nDC63 named probe (fixture omission of the candidate's admission call)\n  subject: internal/systemtest/adoption_test.go\n  mutation: delete the `admitted := project.run(... \"commitment\", \"start\" ...)` call and its check in TestCommitmentInstalledAuthority\n  run: go test -tags system -count=1 -run '^TestCommitmentInstalledAuthority$' ./internal/systemtest\n  red (exit 1):\n    --- FAIL: TestCommitmentInstalledAuthority (3.08s)\n        adoption_test.go:241: landing candidate = (1, \"refused{detail=commitment: assignment has no current delivery binding; run bench commitment start --outcome <id> --request <request> --deliverable <path>}\\n\", \"landing source{review_base=097482db...,assignment_start=097482db...}\\n\")\n  The installed broker refused the candidate before publication.\n  restore: cp from preserved copy; cmp -> restored byte-exact; focused rerun green.\n\nBroker authority probe (no older guard owns the refusals)\n  subject: internal/commitment/repository/publication.go\n  mutation: admitPublication `return store.authorizeCandidate(ledger, owner, tree, delivery)` -> `return nil`\n  red (exit 1):\n    --- FAIL: TestCommitmentBootstrapInstall: adoption_test.go:183: landing delivery = (0, ... landed{...})\n    --- FAIL: TestCommitmentInstalledAuthority: adoption_test.go:239: landing candidate = (0, ... landed{...})\n  restore: restored byte-exact.\n\nIndependent expectation reds (one for each refusal expectation):\n  P1 repository/admission.go `if !exists {` -> `if !exists && false {`\n     red exit 1: TestCommitmentBootstrapInstall adoption_test.go:179 start before adoption = (1, \"... no milestone is active ...\")\n  P2 repository/candidate.go `return fmt.Errorf(\"candidate policy has no exact approval; ...\")` -> `return nil`\n     red exit 1: TestCommitmentBootstrapInstall adoption_test.go:186 landing planning refused by \"protected recommended sequence changed\", not the approval refusal\n  P3 repository/admission.go `if approved.Source.Path == deliverable {` -> `... || true {`\n     red exit 1: TestCommitmentBootstrapInstall adoption_test.go:192 start of an unapproved deliverable = (0, ... start,delivery)\n  P4 commitment/admission.go ActiveOutcome `if outcome.ID == id {` -> `... || true {`\n     red exit 1: TestCommitmentLinkedAdoption adoption_test.go:212 start of an uncommitted outcome = (0, ... start,uncommitted)\n  P5 repository/readiness.go readyFor `return fmt.Errorf(\"assignment has no current delivery binding; ...\")` -> `return nil`\n     red exit 1: TestCommitmentLinkedAdoption adoption_test.go:217 production commit with no delivery binding = (0, \"committed 1 path(s)\")\n                 TestCommitmentInstalledAuthority adoption_test.go:239 landing candidate = (0, landed{...})\n  P6 fixture: insert commitmenttest.SeedAdmission(t, project.root, linkedDeliverable) before the policy-absent check\n     red exit 1: TestCommitmentBootstrapInstall adoption_test.go:168 setup wrote a commitment policy: <nil>\n  Every subject restored byte-exact (cmp).\n"
+          },
+          "requirement": "installed-adoption",
+          "command": "bench test --check system",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
