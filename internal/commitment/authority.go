@@ -63,8 +63,13 @@ func BuildPlan(current *Policy, proposal Proposal) (Plan, error) {
 	}
 	effects := transitionEffects(current, proposed)
 	sources := policySources(proposed)
+	// Each open source of the current policy that the proposal does not hold stays bound, so
+	// the approval of a removal refuses when the removed row changes. A deliverable that the
+	// proposal drops binds nothing, so its deletion from the default branch leaves the plan
+	// valid.
 	if current != nil {
-		for _, source := range policySources(*current) {
+		open, _ := Unsettled(*current)
+		for _, source := range open {
 			if !slices.Contains(sources, source) {
 				sources = append(sources, source)
 			}

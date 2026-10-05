@@ -126,6 +126,21 @@ func TestCommitmentPlanRefusesObligationFreeBinding(t *testing.T) {
 	}
 }
 
+// A plan binds only the content that its proposal keeps open. A deliverable that the
+// proposal drops binds nothing, and the row that the outcome keeps stays bound.
+func TestCommitmentPlanSourcesOmitDroppedDeliverable(t *testing.T) {
+	current := policy([]commitment.Milestone{obligationFreeMilestone(milestone("M1", "A"), "FT1")}, "M1")
+	proposed := policy([]commitment.Milestone{obligationFreeMilestone(milestone("M1", "A"), "FT1")}, "M1")
+	proposed.Milestones[0].Outcomes[0].Deliverables = nil
+	plan, err := commitment.BuildPlan(&current, commitment.Proposal{Policy: proposed})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := current.Milestones[0].Outcomes[0].Sources; !reflect.DeepEqual(plan.Sources, want) {
+		t.Fatalf("plan sources = %+v, want only the kept row %+v", plan.Sources, want)
+	}
+}
+
 func TestCommitmentReorderDelaysPassedOutcomes(t *testing.T) {
 	current := policy([]commitment.Milestone{milestone("M1", "A", "B", "C")}, "M1")
 	proposed := policy([]commitment.Milestone{milestone("M1", "C", "A", "B")}, "M1")

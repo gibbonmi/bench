@@ -3,6 +3,7 @@ package commitment_test
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -57,5 +58,32 @@ func TestCommitmentRemovalBindsRemovedSource(t *testing.T) {
 	}
 	if code != 1 || !strings.Contains(out, "source") || string(before) != string(after) {
 		t.Fatalf("changed removed source approval=(%q,%d), policy unchanged=%v; want source refusal without staging", out, code, string(before) == string(after))
+	}
+}
+
+// A plan that keeps an unsettled deliverable binds it, so a later main commit that deletes
+// that tickets-only folder refuses the approval.
+func TestCommitmentApprovalBindsKeptDeliverable(t *testing.T) {
+	root := commitmenttest.SeedMilestone(t)
+	store := commitrepo.Store{Root: root}
+	current, _, err := store.Policy()
+	if err != nil {
+		t.Fatal(err)
+	}
+	kept := current.Milestones[0].Outcomes[1].Deliverables[0].Source
+	current.Milestones = append(current.Milestones, milestone("M3", "D"))
+	proposal, err := commitment.Bytes(current)
+	if err != nil {
+		t.Fatal(err)
+	}
+	planning := commitmenttest.Planning(t, root)
+	plan, err := store.Plan(proposal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commitmenttest.RemoveTickets(t, root)
+	staged, err := (commitrepo.Store{Root: planning}).Approve(plan.ID, "decision", nil, nil)
+	if staged || err == nil || !strings.Contains(err.Error(), "commitment source "+strconv.Quote(kept.ID)) {
+		t.Fatalf("Approve after the kept folder was deleted = (%v, %v), want the refusal of source %q", staged, err, kept.ID)
 	}
 }
