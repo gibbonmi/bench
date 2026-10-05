@@ -6143,7 +6143,7 @@ This suggestion is optional advice and has no repair disposition.
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "04b22f5f168809e3f18010befd08feab7b3040d2",
+    "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
     "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
     "reconciliation": {
       "DC1": "covered",
@@ -6319,6 +6319,96 @@ This suggestion is optional advice and has no repair disposition.
           "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final-guidance",
           "digest": "sha256:466ab9d702ddf0832303186a699ebda367b2c818c8c631c2c71a3a813cbf72bf",
           "excerpt": "command: bench test --package ./internal/conformance\ntip: d42ced91da4c6206fef32f1c4b2965bcc95b14f1\nexit: 0\noutput:\n  packages[1]{package,status,elapsed_ms}:\n    github.com/gibbonmi/bench/internal/conformance,pass,40150\n  failures[0]{package,test,line}:\n  skips[3]{package,test,reason}: capability skips only\n    TestGuidanceProseBudgetRefusesNonRegularSubjects/socket (fifo: unix sockets unavailable)\n    TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (privilege)\n    TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket (fifo: unix sockets unavailable)\n"
+        },
+        "requirement": "guidance",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "dc-final2-coverage",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final2-coverage",
+          "digest": "sha256:d0f32bd77b7c1b037bf4ccb58519b7022e07fb90b001315026399188cee52fc5",
+          "excerpt": "command: bench coverage --check specs/roadmap-delivery-commitment/spec.md\ntip: 580889b04b7811f2d087ba50420b6ab52f5cc342\nexit: 0\noutput:\n  ok: coverage map valid — 86 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/roadmap-delivery-commitment/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "dc-final2-installed-adoption",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final2-installed-adoption",
+          "digest": "sha256:f94b855a4eacbaf652190a4f55e6d56dfbc4cd1b500eabace9321ca1680f8cf7",
+          "excerpt": "command: env PATH=<node v25.8.1>:$PATH bench test --check system\ntip: 580889b04b7811f2d087ba50420b6ab52f5cc342\nexit: 0\noutput:\n  github.com/gibbonmi/bench/internal/systemtest,pass,91917; failures[0]; skips[0]\n"
+        },
+        "requirement": "installed-adoption",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "dc-final2-route-inventory",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final2-route-inventory",
+          "digest": "sha256:27f3b6012ba4f43f10835ab333f9427d45054f65a8ef02abcec6a2fc316ff786",
+          "excerpt": "command: bench test --package ./cmd/bench\ntip: 580889b04b7811f2d087ba50420b6ab52f5cc342\nexit: 0\noutput:\n  github.com/gibbonmi/bench/cmd/bench,pass,14938; failures[0]; skips[0]\n"
+        },
+        "requirement": "route-inventory",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "dc-final2-completion-oracle",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final2-completion-oracle",
+          "digest": "sha256:a468e466e4f9f3a5c8a77be41766ae85770db7b0df04d1352b8520aefa1db853",
+          "excerpt": "command: bench test --package ./internal/gate\ntip: 580889b04b7811f2d087ba50420b6ab52f5cc342\nexit: 0\noutput:\n  github.com/gibbonmi/bench/internal/gate,pass,16296; failures[0]; skips[0]\n"
+        },
+        "requirement": "completion-oracle",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "dc-final2-guidance",
+        "performer": "claude:session_01U6xYL2GjVjH4DvNmn18cMy",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01U6xYL2GjVjH4DvNmn18cMy:final2-guidance",
+          "digest": "sha256:ab0160a0f28943d5451a5191ea3bc5c916c9bb3b2858e84fa0c490f1b4a48e38",
+          "excerpt": "command: bench test --package ./internal/conformance\ntip: 580889b04b7811f2d087ba50420b6ab52f5cc342\nexit: 0\noutput:\n  github.com/gibbonmi/bench/internal/conformance,pass,45024; failures[0]\n  skips[3]: two fifo socket capability skips and one privilege character-device capability skip\n"
         },
         "requirement": "guidance",
         "command": "bench test --package ./internal/conformance",
@@ -7983,3 +8073,9 @@ Round 13 Standards closes C9R12-S1 and C9R12-S2 and reports C9R13-S1, ask-user. 
 
 Round 15 Standards closes C9R14-S1 with zero findings. Round 8 Spec and round 9 Coverage report zero findings at the same source, so all three axes pass at tip 5fa7fc335b9c502d87cfe289330220c0468daa63.
 The DC-C9 source digest is 4d4850e162fd06e0cf3a43942fd48dc67a4f96cf. The chunk checkpoint follows.
+
+## DC-C9 checkpoint and final reconciliation after the fold
+
+The DC-C9 checkpoint passed at record tip 580889b04b7811f2d087ba50420b6ab52f5cc342 with eight capability skips. All nine chunks are accepted.
+The orchestrator ran the five final verification commands at that source, and each exits 0. Completion evidence covers all 86 rows at source digest 4d4850e162fd06e0cf3a43942fd48dc67a4f96cf.
+At that source, the diff of specs/shared-test-fixtures from 3347fdbdca6cb69726ce67dedfcf7299bbdbb55e is empty.
