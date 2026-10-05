@@ -470,7 +470,7 @@ The test package owns the production seam it drives. System rows name the instal
 | DC81 | 23 | Completion refuses while an outcome is undelivered and when the proposal changes an examined criterion | planned TestCommitmentCompletionProposal in internal/commitment/verification_refusal_test.go | A changed or partial milestone must not inherit earlier evidence. |
 | DC82 | 26 | A listed legacy run lands a tickets-only folder in its scope, and the publication closes that delivery | planned TestCommitmentLegacyClosure in internal/worktree/commitment_light_landing_test.go | A continuation without a spec path otherwise cannot close its folder. |
 | DC83 | 26 | Approval records a continuation for exactly the listed runs, each with its assignment, request, and scope | planned TestCommitmentContinuationApproval in internal/commitment/repository/publication_test.go | Without a writer, no real adoption can authorize a legacy run, so DC49 and DC76 prove only seeded state. |
-| DC84 | 26 | An open listed continuation holds the default active slot until a parallel grant names it, its scope is delivered, or its run is no longer active | planned TestCommitmentContinuationOccupiesSlot in internal/commitment/admission_test.go | A continuation outside the slot count lets adoption start a second concurrent delivery with no grant. |
+| DC84 | 26 | An open listed continuation holds the default active slot until a parallel grant names it, its scope is delivered, or its run is no longer active | planned TestCommitmentContinuationOccupiesSlot in internal/commitment/continuation_test.go | A continuation outside the slot count lets adoption start a second concurrent delivery with no grant. |
 
 ### Edge inventory
 
