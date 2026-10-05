@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/commitment"
@@ -84,7 +85,28 @@ func (store Store) admissionPolicy() (commitment.Policy, error) {
 	return policy, nil
 }
 
+// runtimeState is the commitment state that every decision reads. A continuation lasts
+// only while its run is active, so it drops each continuation whose run is complete,
+// recovered, cleanup-pending, or absent. commitment.OpenContinuations then drops each
+// delivered scope. A write of the result persists the drop.
 func runtimeState(ledger intent.Ledger) intent.CommitmentState {
+	state := storedState(ledger)
+	if len(state.Continuations) == 0 {
+		return state
+	}
+	state.Continuations = slices.DeleteFunc(slices.Clone(state.Continuations), func(continuation intent.LegacyContinuation) bool {
+		return !slices.ContainsFunc(ledger.Assignments, func(run intent.Assignment) bool {
+			return run.ID == continuation.Assignment && run.State == intent.StateActive
+		})
+	})
+	if len(state.Continuations) == 0 {
+		state.Continuations = nil
+	}
+	return state
+}
+
+// storedState is the commitment state as the ledger holds it.
+func storedState(ledger intent.Ledger) intent.CommitmentState {
 	if ledger.Commitment != nil {
 		return *ledger.Commitment
 	}
@@ -92,7 +114,7 @@ func runtimeState(ledger intent.Ledger) intent.CommitmentState {
 }
 
 func withRuntime(ledger intent.Ledger, next intent.CommitmentState) (intent.Ledger, bool, error) {
-	changed := !reflect.DeepEqual(runtimeState(ledger), next)
+	changed := !reflect.DeepEqual(storedState(ledger), next)
 	if changed {
 		ledger.Commitment = &next
 	}

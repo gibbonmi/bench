@@ -98,7 +98,7 @@ func (store Store) Plan(input []byte) (commitment.Plan, error) {
 		if err := verifiedCompletions(ledger, current, plan.Predecessor, proposed); err != nil {
 			return ledger, false, err
 		}
-		if err := store.listedRuns(ledger, plan.Continuations); err != nil {
+		if err := store.listedRuns(ledger, current, plan.Continuations); err != nil {
 			return ledger, false, err
 		}
 		for _, receipt := range ledger.CommitmentReceipts {
@@ -175,7 +175,7 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 			if err := verifiedCompletions(ledger, current, plan.Predecessor, proposed); err != nil {
 				return ledger, false, err
 			}
-			if err := store.listedRuns(ledger, plan.Continuations); err != nil {
+			if err := store.listedRuns(ledger, current, plan.Continuations); err != nil {
 				return ledger, false, err
 			}
 			restore, err = store.stage(plan)

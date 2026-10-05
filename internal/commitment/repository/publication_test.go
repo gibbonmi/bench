@@ -3,6 +3,7 @@ package repository_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -193,6 +194,12 @@ func TestCommitmentContinuationApproval(t *testing.T) {
 	if err != nil || unlisted.ID == plan.ID {
 		t.Fatalf("plan without the list = %s, %v; want an identity other than %s", unlisted.ID, err, plan.ID)
 	}
+	rescoped := input
+	rescoped.Continuations = []intent.LegacyContinuation{{Assignment: legacy.ID, Request: legacy.Request, Scope: []string{"ROADMAP.md"}}}
+	changed, err := store.Plan(encodeInput(t, rescoped))
+	if err != nil || changed.ID == plan.ID || changed.ID == unlisted.ID {
+		t.Fatalf("plan with another scope = %s, %v; want an identity other than %s and %s", changed.ID, err, plan.ID, unlisted.ID)
+	}
 	if _, err := store.Approve(plan.ID, "reviewer adoption", nil, nil); err != nil {
 		t.Fatalf("Approve = %v", err)
 	}
@@ -222,11 +229,35 @@ func TestCommitmentContinuationApproval(t *testing.T) {
 		t.Fatalf("AuthorizeCandidate(approved policy) = %v", err)
 	}
 
+	recovered := func(run *intent.Assignment) {
+		run.State = intent.StateRecovered
+		oid := strings.Repeat("a", 40)
+		run.Recovery = []intent.Recovery{{Ref: intent.RecoveryRefPrefix(run.OwnerID, run.ID) + "work", Root: oid, Payloads: []string{oid}}}
+	}
 	for _, row := range []struct {
-		name string
-		edit func(*intent.LegacyContinuation, *continuationInput)
-		want string
+		name  string
+		setup func(t *testing.T, root string, input continuationInput)
+		edit  func(*intent.LegacyContinuation, *continuationInput)
+		want  string
 	}{
+		{name: "after-adoption", setup: func(t *testing.T, root string, input continuationInput) {
+			if err := commitmenttest.CommitPolicy(root, input.Policy, "adopt the policy"); err != nil {
+				t.Fatal(err)
+			}
+		}, want: "only the initial adoption lists runs; remove the continuations and run bench commitment plan --input <file>"},
+		{name: "run-complete", setup: func(t *testing.T, root string, _ continuationInput) {
+			moveAssignment(t, root, intent.RequestDigest("legacy"), intent.StateComplete)
+		}, want: "run %q is not active"},
+		{name: "run-cleanup-pending", setup: func(t *testing.T, root string, _ continuationInput) {
+			moveAssignment(t, root, intent.RequestDigest("legacy"), intent.StateCleanupPending)
+		}, want: "run %q is not active"},
+		{name: "run-recovered", setup: func(t *testing.T, root string, _ continuationInput) {
+			rewriteAssignment(t, root, intent.RequestDigest("legacy"), recovered)
+		}, want: "run %q is not active"},
+		{name: "branch-unreadable", setup: func(t *testing.T, root string, _ continuationInput) {
+			run := rewriteAssignment(t, root, intent.RequestDigest("legacy"), func(*intent.Assignment) {})
+			gittest.Output(t, root, "update-ref", "-d", "refs/heads/"+strings.TrimPrefix(run.Branch, "refs/heads/"))
+		}, want: "cannot read the branch of run"},
 		{name: "unknown-run", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Assignment = strings.Repeat("d", 32) }, want: "is unknown"},
 		{name: "other-request", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Request = other.Request }, want: "request does not match run"},
 		{name: "empty-scope", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Scope = nil }, want: "invalid legacy continuation for assignment"},
@@ -237,31 +268,50 @@ func TestCommitmentContinuationApproval(t *testing.T) {
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			root, _, _, input := continuationRepo(t)
-			row.edit(&input.Continuations[0], &input)
+			if row.setup != nil {
+				row.setup(t, root, input)
+			}
+			if row.edit != nil {
+				row.edit(&input.Continuations[0], &input)
+			}
+			want := row.want
+			if strings.Contains(want, "%q") {
+				want = fmt.Sprintf(want, input.Continuations[0].Assignment)
+			}
 			before := commitmenttest.MilestoneState(t, root, root)
 			_, err := (commitrepo.Store{Root: root}).Plan(encodeInput(t, input))
-			if err == nil || !strings.Contains(err.Error(), row.want) || commitmenttest.MilestoneState(t, root, root) != before {
-				t.Fatalf("Plan = %v, want a refusal naming %q that writes nothing", err, row.want)
+			if err == nil || !strings.Contains(err.Error(), want) || commitmenttest.MilestoneState(t, root, root) != before {
+				t.Fatalf("Plan = %v, want a refusal naming %q that writes nothing", err, want)
 			}
 		})
 	}
 
 	// Approval checks the listed run again under the intent lock. A run whose request
-	// changed after the plan refuses and records neither the approval nor a continuation.
-	t.Run("run-changed-before-approval", func(t *testing.T) {
-		root, _, _, input := continuationRepo(t)
-		store := commitrepo.Store{Root: root}
-		plan, err := store.Plan(encodeInput(t, input))
-		if err != nil {
-			t.Fatal(err)
-		}
-		rewriteAssignment(t, root, intent.RequestDigest("legacy"), func(run *intent.Assignment) { run.Request = intent.RequestDigest("changed") })
-		before := commitmenttest.MilestoneState(t, root, root)
-		_, err = store.Approve(plan.ID, "reviewer adoption", nil, nil)
-		if err == nil || !strings.Contains(err.Error(), "request does not match run") || commitmenttest.MilestoneState(t, root, root) != before {
-			t.Fatalf("Approve = %v, want a refusal that writes nothing", err)
-		}
-	})
+	// changed, or that left the active state, after the plan refuses and records neither
+	// the approval nor a continuation.
+	for _, row := range []struct {
+		name string
+		edit func(*intent.Assignment)
+		want string
+	}{
+		{name: "run-changed-before-approval", edit: func(run *intent.Assignment) { run.Request = intent.RequestDigest("changed") }, want: "request does not match run"},
+		{name: "run-ended-before-approval", edit: func(run *intent.Assignment) { run.State = intent.StateComplete }, want: "is not active"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root, legacy, _, input := continuationRepo(t)
+			store := commitrepo.Store{Root: root}
+			plan, err := store.Plan(encodeInput(t, input))
+			if err != nil {
+				t.Fatal(err)
+			}
+			rewriteAssignment(t, root, legacy.Request, row.edit)
+			before := commitmenttest.MilestoneState(t, root, root)
+			_, err = store.Approve(plan.ID, "reviewer adoption", nil, nil)
+			if err == nil || !strings.Contains(err.Error(), row.want) || commitmenttest.MilestoneState(t, root, root) != before {
+				t.Fatalf("Approve = %v, want a refusal naming %q that writes nothing", err, row.want)
+			}
+		})
+	}
 }
 
 // rewriteAssignment applies edit to the stored assignment for the request digest and

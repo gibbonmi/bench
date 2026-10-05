@@ -107,7 +107,8 @@ func blockedOutcomes(state intent.CommitmentState) map[string]bool {
 
 // OpenContinuations returns each listed legacy continuation whose scope policy has not
 // delivered. An open continuation holds the default active slot. Admission, the reader
-// projection, and the delivery reconciliation all ask this one predicate.
+// projection, and the delivery reconciliation all ask this one predicate. The state it
+// reads holds only the continuations of active runs, so a run that ended holds no slot.
 func OpenContinuations(policy Policy, state intent.CommitmentState) []intent.LegacyContinuation {
 	return slices.DeleteFunc(slices.Clone(state.Continuations), func(continuation intent.LegacyContinuation) bool {
 		return ScopeDelivered(policy, continuation.Scope)
