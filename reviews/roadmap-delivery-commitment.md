@@ -4540,6 +4540,28 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c8-r2-spec"
           ]
+        },
+        {
+          "id": "dc-c8-r4-spec",
+          "performer": "claude:dc_c8_r4_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "88aa65946dd6a40a8a1ea3b6fdd3710e1045915f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r4_spec",
+            "digest": "sha256:beb9070a417c36d0bd41047529841714953a423efd23e473e7cdd801b337237e",
+            "excerpt": "Spec: 0 findings\nReviewer claude:dc_c8_r4_spec, opus high. Subject 1a803d5c..62cb6847 (source unchanged since round 3), evidence sha256:7aeae4752548a20fb58470d23e8e1fb455157a133358b16dda9bc2f0544727bf.\nC8-P8 closed: 298f18ec sets the DC84 seam to internal/commitment/continuation_test.go, which declares the test at :20.\nC8-P7 advice, not blocking: no required check, acceptance, correctness, safety, or mandatory standard fails (bounded-repair-policy.md:24-31). DC76 row-open obligation holds at commitment_light_landing_test.go:56; spec 270 binds \"holds no slot\", and every slot reader uses runtimeState (repository/admission.go:92-106). The stored-entry assertion at :64 is a preference (:33-35).\nNo new blocking finding; every ticket 09 seam cell resolves to a real test declaration.\nUnowned clauses unchanged: spec 301, 243, 266 first sentence, 156.\nAdvice: DC76 :64 could assert through the shared predicate (outside fence); DC84 slot rows cover only complete and purged; persisted drop untested; A1; BENCH-reference.md:229-238 omits the initial-only and active-run rules; OpenContinuations comment; continuations take effect at approval.\n"
+          },
+          "axis": "Spec",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "62cb6847afa3d97443abbac73f48a645323f5e16",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c8-r3-spec"
+          ]
         }
       ]
     }
