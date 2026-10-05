@@ -821,6 +821,71 @@ intake.
           "requirement": "t4-conformance",
           "command": "bench test --package ./internal/conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t3-commitment-v2",
+          "performer": "claude:fd_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t3",
+            "digest": "sha256:cf7e6be150d72999076a3b87dcde18473eff7e247298ff20f01eaeaec6a65daf",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit 0\ntree: FT390,8b101c68f966a01033402b16db48cd84783081e1,false\npackages: github.com/gibbonmi/bench/internal/commitment,pass,5501\nfailures[0] skips[0]\n$ bench worktree exec FT390 -- bench probe internal/commitment/authority.go --swap \"open, _ := Unsettled(*current)\" --with \"open := policySources(*current)\" --package ./internal/commitment --run TestCommitmentPlanSourcesOmitDroppedDeliverable\nprobe{verdict,subject,mutation,cause,failed_tests,restored}: bit,internal/commitment/authority.go,swap,failed,1,yes\npackages: github.com/gibbonmi/bench/internal/commitment,fail,3\nfailures: TestCommitmentPlanSourcesOmitDroppedDeliverable,\"authority_test.go:140: plan sources = [{ID:FT1 ...} {ID:spec ...}] ...\"\n"
+          },
+          "requirement": "t3-commitment",
+          "command": "bench test --package ./internal/commitment",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In BuildPlan, add each unsettled deliverable of the current policy to the plan sources again. TestCommitmentPlanSourcesOmitDroppedDeliverable must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:fd_t3",
+              "digest": "sha256:cf7e6be150d72999076a3b87dcde18473eff7e247298ff20f01eaeaec6a65daf",
+              "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment\nexit 0\ntree: FT390,8b101c68f966a01033402b16db48cd84783081e1,false\npackages: github.com/gibbonmi/bench/internal/commitment,pass,5501\nfailures[0] skips[0]\n$ bench worktree exec FT390 -- bench probe internal/commitment/authority.go --swap \"open, _ := Unsettled(*current)\" --with \"open := policySources(*current)\" --package ./internal/commitment --run TestCommitmentPlanSourcesOmitDroppedDeliverable\nprobe{verdict,subject,mutation,cause,failed_tests,restored}: bit,internal/commitment/authority.go,swap,failed,1,yes\npackages: github.com/gibbonmi/bench/internal/commitment,fail,3\nfailures: TestCommitmentPlanSourcesOmitDroppedDeliverable,\"authority_test.go:140: plan sources = [{ID:FT1 ...} {ID:spec ...}] ...\"\n"
+            }
+          }
+        },
+        {
+          "id": "t3-commitment-repository-v2",
+          "performer": "claude:fd_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t3",
+            "digest": "sha256:b60103cbb9a7690cb458685ab97950edc20dfeaa4f6a20c29b85f0caa303530f",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/commitment/repository\nexit 0\ntree: FT390,8b101c68f966a01033402b16db48cd84783081e1,false\npackages: github.com/gibbonmi/bench/internal/commitment/repository,pass,2201\nfailures[0] skips[0]\n"
+          },
+          "requirement": "t3-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-conformance-v2",
+          "performer": "claude:fd_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a344fe82f87536a8f9d0fdefd8fe132f1e51b93",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:fd_t3",
+            "digest": "sha256:bbb70bcd90e1a91aae7297959ad2f9b479e93d976d4141f4e1fed56277f8161a",
+            "excerpt": "$ bench worktree exec FT390 -- bench test --package ./internal/conformance\nexit 0\ntree: FT390,8b101c68f966a01033402b16db48cd84783081e1,false\npackages: github.com/gibbonmi/bench/internal/conformance,pass,38550\nfailures[0]\nskips[3]: TestGuidanceProseBudgetRefusesNonRegularSubjects/socket (capability: fifo), TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (capability: privilege), TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket (capability: fifo)\n"
+          },
+          "requirement": "t3-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
