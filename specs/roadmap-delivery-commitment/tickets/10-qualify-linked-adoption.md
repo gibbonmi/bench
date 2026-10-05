@@ -1,7 +1,7 @@
 # Qualify installed adoption and prepare the finite milestone
 
 Blocked by: 09-project-commitment-guidance.md
-Writes: internal/systemtest/adoption_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/systemtest/land_route_test.go, internal/commitment/repository/repository.go, internal/commitment/commitcmd/command.go, internal/commitment/store_test.go, internal/roadmap/tree.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, specs/roadmap-delivery-commitment/adoption-proposal.md (new), reviews/roadmap-delivery-commitment.md
+Writes: internal/systemtest/adoption_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/systemtest/land_route_test.go, internal/commitment/repository/repository.go, internal/commitment/commitcmd/command.go, internal/commitment/store_test.go, internal/roadmap/tree.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, specs/roadmap-delivery-commitment/adoption-proposal.md (new), reviews/roadmap-delivery-commitment.md, specs/shared-test-fixtures
 Covers: DC51, DC52, DC53, DC63, DC85, DC86
 
 ## What to build
