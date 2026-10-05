@@ -4753,6 +4753,72 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c8-r3-spec"
           ]
+        },
+        {
+          "id": "dc-c8-r5-spec",
+          "performer": "claude:dc_c8_r5_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r5_spec",
+            "digest": "sha256:2d47747d9e817db91f253a00fc0762275e54f312229597189ddc46ec645a17ee",
+            "excerpt": "Spec: 0 findings\nReviewer claude:dc_c8_r5_spec, opus high. Frozen pair 1a803d5c..298f18ec, evidence sha256:0d7005f59d7186c1b6da566f7842554863108702bc1582d367b75e64b5af7c63.\nDelta 62cb6847..298f18ec: two record-only commits (ac898e05, 2fd9290d) and plan commit 298f18ec, which changes only the DC84 seam cell (spec.md:473) to internal/commitment/continuation_test.go; that file declares TestCommitmentContinuationOccupiesSlot at :20, the only declaration. No acceptance row, behavior text, ticket, source, or test changed.\nRound 3 and round 4 Spec results hold for the whole frozen pair; the source tree is unchanged. C8-P7 stays advice. Unowned clauses and advice carry forward.\n"
+          },
+          "axis": "Spec",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "298f18ec4ce4bc75fc4da7754f908df694d825b4",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c8-r4-spec"
+          ]
+        },
+        {
+          "id": "dc-c8-r5-standards",
+          "performer": "claude:dc_c8_r5_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r5_standards",
+            "digest": "sha256:fcdb8b12f8a86c073362b7219ff275dee32f87b7af85b91b081326fea6aee127",
+            "excerpt": "Standards: 0 findings\nReviewer claude:dc_c8_r5_standards, opus high. Frozen pair 1a803d5c..298f18ec, evidence sha256:0d7005f59d7186c1b6da566f7842554863108702bc1582d367b75e64b5af7c63.\nDelta 62cb6847..298f18ec: record-only commits ac898e05 and 2fd9290d, and plan commit 298f18ec changing the DC84 seam cell (spec.md:473) to internal/commitment/continuation_test.go. No code, test, or guidance changed.\nOne source per fact passes: the test is declared once at continuation_test.go:20, and the spec cell is the only path source for DC84. STE prose unchanged.\nRound 3 Standards holds for the whole frozen pair; the graded source did not change after 62cb6847.\n"
+          },
+          "axis": "Standards",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "298f18ec4ce4bc75fc4da7754f908df694d825b4",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c8-r3-standards"
+          ]
+        },
+        {
+          "id": "dc-c8-r5-coverage",
+          "performer": "claude:dc_c8_r5_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5ef1a02560692206aa2f3b9ba91cfd04d3ef09f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c8_r5_coverage",
+            "digest": "sha256:9a69a215a0ba3715ffb8ec93a3dd751dec7c97bfc2ff138733031c9c7a63703b",
+            "excerpt": "Coverage: 0 findings\nReviewer claude:dc_c8_r5_coverage, opus high. Frozen pair 1a803d5c..298f18ec, evidence sha256:0d7005f59d7186c1b6da566f7842554863108702bc1582d367b75e64b5af7c63.\nDelta 62cb6847..298f18ec changes no code or test: two record-only commits and the DC84 seam cell. DC84 resolves to continuation_test.go:20; DC83 resolves to publication_test.go:184.\nTen dc-c8-r09d entries match the DC-C8 plan: performer claude:dc_r09_3, exit 0, source_digest 5ef1a025; only repository carries the named probe (bit, exit code 1 from the failing Go test at publication_test.go:212, restore pass). Runs at ad90b12c share the tested source with 298f18ec.\nRound 3 Coverage holds for the whole frozen pair. Advice carries forward except the stale DC84 seam, now fixed.\n"
+          },
+          "axis": "Coverage",
+          "base": "1a803d5c9782ff25ec58efa9ddab9a5a5bc2bc91",
+          "tip": "298f18ec4ce4bc75fc4da7754f908df694d825b4",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c8-r3-coverage"
+          ]
         }
       ]
     }
