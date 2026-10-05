@@ -5,6 +5,35 @@
       "id": "quality-1",
       "outcomes": [
         {
+          "id": "ADR26",
+          "criteria": [
+            {
+              "id": "ADR26.adr",
+              "text": "ADR 0026 records the default class order, the explicit reviewer order that governs it, and the out-of-scope rules of the delivery commitment."
+            },
+            {
+              "id": "ADR26.retire",
+              "text": "The roadmap-delivery-commitment spec folder and its review record are retired through a spec-retire landing."
+            }
+          ],
+          "sources": [
+            {
+              "id": "adr-0026-retire-dc",
+              "path": "specs/adr-0026-retire-dc",
+              "identity": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "adr-0026-retire-dc",
+                "path": "specs/adr-0026-retire-dc",
+                "identity": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774"
+              }
+            }
+          ]
+        },
+        {
           "id": "FT376",
           "criteria": [
             {

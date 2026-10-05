@@ -312,6 +312,7 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT376
-2. FT373
-3. FT349
+1. ADR26
+2. FT376
+3. FT373
+4. FT349
