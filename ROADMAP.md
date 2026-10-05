@@ -18,8 +18,6 @@ findings in the owner details.
 The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
 and review cost that recent builds paid.
 
-**FT370 (HIGH) — a comment-only correction takes the evidence-only path.**
-
 **FT373 (HIGH) — a gate check refuses production code that re-implements a standard-library function.**
 
 **FT293 (HIGH, decision required) — preflight closes each ticket's complete ownership fence.**
@@ -57,6 +55,12 @@ and review cost that recent builds paid.
 **FT305 (HIGH, decision required) — durable local factory execution survives a worker or conversation stop.**
 
 **FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
+
+**FT382 (HIGH) — the commitment plan identity sorts its policy sources canonically.**
+
+**FT387 (MEDIUM) — a verified harness path preserves complete tool output before it returns a bounded replacement.**
+
+**FT388 (LOW) — the session-context-efficiency coordinator closes when its overflow child lands.**
 
 ## Quality survey (2026-09-29)
 
@@ -144,6 +148,18 @@ and the small cuts. The rows below hold the rest.
 
 **FT241 (LOW, decision required) — versioned acceptance promises with retained evidence.**
 
+**FT379 (MEDIUM) — a record-only correction consumes no repair cycle, and its confirming round checks only the named findings.**
+
+**FT380 (MEDIUM) — every plan commit passes the coverage parser and build preflight before dispatch.**
+
+**FT381 (MEDIUM, decision required) — a delegated full run has decided risk classes, repair routing, and author-replacement records.**
+
+**FT378 (MEDIUM, decision required) — known issues and their workarounds have one tracked owner that each delegate charge reads.**
+
+**FT384 (MEDIUM, decision required) — legacy closure and the production path check share one scope matcher.**
+
+**FT386 (LOW, decision required) — the spec stage proposes a split above a row or ticket threshold.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -169,6 +185,8 @@ and the small cuts. The rows below hold the rest.
 **FT351 (LOW) — an offline diff report carries the approved visual prototype into a supported feature.**
 
 **FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
+
+**FT383 (LOW) — the planning commit test reuses the protected policy fixture.**
 
 ## Release qualification
 
@@ -223,6 +241,8 @@ qualification requirements are met.
 
 **FT372 (MEDIUM, parked pending a repro) — the local-capture landing tests isolate their handoff state.**
 
+**FT385 (LOW, parked pending a repro) — the abbreviated source-tip landing test uses a prefix that is unique in its fixture.**
+
 
 ## Release and bank reassessment gate
 
@@ -272,6 +292,7 @@ recommended table is sequencing advice.
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305 | Adoption follows durable execution. |
+| FT388 | FT387 | The coordinator closes after its last child lands. |
 
 ### Recommended
 
