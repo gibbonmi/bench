@@ -6,7 +6,7 @@ Roadmap: FT391
 
 Decision source: the reviewer-confirmed current conversation (2026-10-05).
 
-Verification log: pending — the sonnet-high review round runs after this draft.
+Verification log: pending — iteration 1 of the sonnet-high round returned accept after fixes. This draft folds B1, S1 to S6, and N1 to N4.
 
 ## Problem
 
@@ -69,27 +69,44 @@ Harder chunks: LP-C1.
 26. As a teammate, I want an ADR to record the commitment scope, so that the decision outlives this spec.
 27. As a teammate, I want ADR 0023 to name the light-path delegate route, so that the ADR states the current authorship.
 
+### A bound assignment keeps its admission
+
+28. As a bound author, I want a light-path folder in my tree to change nothing, so that my commit keeps its current admission.
+
 ## Implementation decisions
 
 ### The light-path predicate
 
-- One unexported predicate in `internal/commitment/repository` decides whether a candidate is light-path work. `authorizeCandidate` calls it after the legacy continuation check and before `readyFor`. The production-path loop, the policy transition check, and `protectedCandidate` stay unchanged, so their refusals win first.
+- One unexported predicate in `internal/commitment/repository` decides whether a candidate is light-path work. It runs only after `readyFor` refuses, at the `readyFor` call in `authorizeCandidate`.
+- When `readyFor` admits, the candidate is admitted, and the predicate reads no tree. A bound commit therefore pays no tree walk and never names another change's ticket.
+- When `readyFor` refuses, the predicate either admits the candidate or returns a refusal. It returns the `readyFor` refusal unchanged when no qualifying folder exists.
+- The transition check, `protectedCandidate`, the production-path loop, and the continuation scope check run before `readyFor`, so their refusals win first.
 - A tickets-only folder qualifies when four conditions hold. `spec.TicketsOnly` accepts it in the read tree, and its `tickets/` subtree holds exactly one `.md` regular file. That ticket parses with no diagnostic through `tickets.ParseTicket` with the empty tag. No milestone of the current `main` policy approves the folder as a deliverable.
-- The predicate counts `.md` entries at every depth below `tickets/`, after the enumeration rule of `tickets.Enumerate`. A non-`.md` entry is an asset, and the predicate ignores it. A `.md` entry whose tree mode is not a regular file refuses the folder.
+- The predicate counts the `tickets.Ext` entries at every depth below `tickets/`, so `tickets/sub/two.md` is a second ticket. Another extension is an asset, and the predicate ignores it. A `tickets.Ext` entry whose tree mode is not `100644` or `100755` refuses the folder.
 - A qualifying folder admits the candidate when its ticket's `Writes:` entries cover every production path. A production path is the existing `production` slice in `authorizeCandidate`.
+
+### The tree reader
+
+- The new file `internal/commitment/repository/light_path.go` owns the read of every tickets-only folder in a Git tree. `tickets.Enumerate` reads the filesystem, and `spec.TicketsOnlyFolders` reads only the working tree, so neither serves a tree object.
+- The reader runs one `git ls-tree -r -z` of `specs` in the read tree, after the precedent in `repository.go`. That listing gives each entry's mode and path, so the folders, the ticket count, and the modes come from one read.
+- The reader confirms each folder through `spec.TicketsOnly(spec.CommitTree(root, tree), slug)`. The reader of `CommitTree` resolves `<tree>:<path>`, which Git accepts for a tree object, so `internal/spec` needs no edit.
+- The reader reads the one ticket through the bounded `git.ReadTreeFile` and parses it through `tickets.ParseTicket`.
 
 ### Commit and publication modes
 
 - `bench commit` reaches `AuthorizeCandidate`, which grades in commit mode. Commit mode reads every tickets-only folder of the candidate tree. One qualifying folder must cover all production paths.
 - A landing reaches `admitPublication`, which grades in publication mode. Publication mode reads only the folder that the landing's `--spec` names, at the reviewed source commit `Delivery.Source`. `published.Tree` removes that folder from the graded tree before admission, so the graded tree cannot supply the ticket.
 - A publication with no delivery is a spec-less landing. It is never light-path work. Its refusal adds the `--spec` route when the candidate tree holds a qualifying folder that covers every production path.
+- In both modes, a bound assignment stays admitted through `readyFor`, whatever folders the tree holds.
 - A publication whose delivery names a staged spec keeps the current rules.
 
 ### Refusal words
 
 - A path that no qualifying ticket covers: `production path %q is outside the Writes line of light-path ticket %q; add the path to that line, or run bench commitment start`. The second operand is the ticket path. Commit mode names the first uncovered production path in change order, and the first qualifying ticket in folder order.
 - Paths that each qualifying ticket covers only in part: `production paths span more than one light-path ticket; a light-path change carries one ticket`.
-- A spec-less landing of a covered light-path tree: the existing binding refusal, then `; land the light-path change with --spec %s`, where the operand is the folder slug.
+- A spec-less landing of a covered light-path tree: the existing binding refusal, then `; land the light-path change with --spec %q`, where the operand is the folder slug.
+- The Writes refusal and the span refusal replace the binding refusal only when `readyFor` refuses and a qualifying folder exists.
+- When some production path is outside every qualifying ticket, the Writes refusal wins. The span refusal applies only when each production path is inside some qualifying ticket and no one ticket covers all of them.
 - Each other case keeps its current refusal unchanged, including `assignment has no current delivery binding`.
 - Each operand renders through Go `%q`, so a space or a control byte stays inside the quotes.
 
@@ -97,6 +114,8 @@ Harder chunks: LP-C1.
 
 - `internal/tickets` gains two exported functions. `WritesPath(entry)` returns the tree path that one `Writes:` entry names and whether it carries `(new)`. `Covers(entry, path)` reports whether that entry names path exactly or contains it at a `/` segment boundary.
 - `splitWritesEntry` and `pathCovered` in `internal/preflight` retire, and their callers call the `internal/tickets` functions. `prefixCovers` in `internal/tickets/registry_data.go` delegates to the same segment rule, so the package holds one copy.
+- `inScope` in `internal/commitment/repository/candidate.go` calls `tickets.Covers` for each scope entry. Its rule is the same segment rule, so the legacy scope check keeps its behavior.
+- `Covers` takes an entry that is already split. Each caller that holds a raw `Writes:` entry calls `WritesPath` first.
 - The new import edge `internal/commitment/repository` → `internal/tickets` is acyclic. `go list -deps ./internal/tickets` names no commitment, preflight, or spec package.
 
 ### Roadmap rows
@@ -117,17 +136,19 @@ A new operating-guide paragraph follows it, with these exact sentences:
 - "Its production paths stay inside that ticket's `Writes:` line."
 - "It may remove a roadmap row that no committed outcome pins as a source; a pinned row changes only through its outcome."
 
-The learning paragraph becomes "**Delegate each light-path fix.**" and keeps the two anchored dispatch sentences verbatim. It adds these exact sentences and drops its last sentence, which the drain now owns:
+The learning paragraph keeps six sentences. Its heading becomes "**Delegate each light-path fix.**" It keeps the two anchored dispatch sentences and the done-claim sentence verbatim. It drops its last sentence, which the drain now owns. Its first sentence changes, and one sentence follows it:
 
-- "`/bench-drain` dispatches each light-path fix that its verdicts keep, whatever the active commitment is."
-- "Outside a drain, the active phase dispatches only a light-path fix that its outcome needs; every other fix waits for the drain."
+- "At any point in the workflow, `/bench-implement-spec` included, a `bench learning` entry's light-path fix ships at once only when the active outcome needs it."
+- "`/bench-drain` dispatches every other light-path fix that its verdicts keep, whatever the active commitment is."
 
 The fix paragraph changes its second sentence, and the capture paragraph adds one sentence. The light-path table row stays verbatim.
 
 - "A small defect that the active outcome does not need goes to `bench learning`, and the drain delegates its light-path fix."
 - "A drain implements a light-path idea under the light-path fix rule instead."
 
-The drain command's step 5 changes three sentences to these exact sentences, and adds a fourth:
+The drain command's step 5 changes its intake sentence and three later sentences to these exact sentences, and adds a fifth:
+
+- "Every kept item that needs a spec becomes uncommitted intake: a new row, or a merge into the row that already covers it."
 
 - "The commitment rule in `.bench/BENCH.md` decides whether spec intake starts; a drain approval never admits it."
 - "A drained light-path item needs no commitment: the drain dispatches it under the light-path fix rule in `.bench/BENCH.md`."
@@ -139,14 +160,19 @@ Three more drain sentences change:
 - The learning sentence reads: "A learning entry with a light-path fix follows the light-path fix rule in `.bench/BENCH.md`."
 - The next sentence reads: "Its verdict closes the entry by implementation after the fix lands."
 - `## Delegate the evidence` reads: "Implement-now delegates may run while other reads continue."
+- The next sentence reads: "Route their line through `craft-line` and keep their authorship under `.bench/BENCH.md`."
 
 The implementation command's entry paragraph already holds six sentences. A new paragraph after it holds one exact sentence: "A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule."
 
 ### Anchor and conformance registry
 
-- The commitment family requires each new and changed sentence above, and keeps every other row.
-- It forbids two retired fragments. In the guide, `light path and fixes included` raises `commitment guidance: operating guide restored the commitment start for light-path work`. In the drain, `is implement-now work only after` raises `commitment guidance: drain restored the commitment admission of a light-path item`.
-- Three forbid rows retire, because the reviewer reopened drain-time implementation. They are the guide's `a light-path fix that needs no reviewer decision` and `or close by implementation during that same drain`, and the drain's direct learning-fix sentence.
+- The registry requires exactly twelve of the new and changed sentences, one row each: LP34 to LP40, LP43 to LP46, and LP55. The other new sentences are unanchored prose, and the Spec axis reviews them.
+- The required guide sentences are the start route, the intake sentence, the observable, the `Writes:` boundary, the row rule, and the drain dispatch.
+- The required drain sentences are the spec-intake sentence, the delegate route, the delegate sentence, the implement-now overlap, and the plural routing sentence. The required implementation sentence is the light-path start exemption.
+- The family forbids three retired fragments. In the guide, `light path and fixes included` raises `commitment guidance: operating guide restored the commitment start for light-path work`.
+- In the guide, `a light-path fix that the active committed outcome needs` raises `commitment guidance: operating guide restored the learning fix for the active outcome only`. In the drain, `is implement-now work only after` raises `commitment guidance: drain restored the commitment admission of a light-path item`.
+- Two forbid rows retire, because the reviewer reopened drain-time implementation. They are the guide's `or close by implementation during that same drain` and the drain's direct learning-fix sentence. The guide's `a light-path fix that needs no reviewer decision` forbid row stays.
+- `TestCommitmentGuidance` re-anchors two restore cases. The `unadmitted learning fix` case anchors on `**Delegate each light-path fix.**`. The `default implementation` and `declined row` cases anchor on `The coordinator verifies the done-claim against the ticket's acceptance rows and the gate.`
 - The `registry_data.go` row for the retained implement-now route takes the new delegate sentence. Its diagnostic becomes `.agents/commands/bench-drain.md dropped the delegated implement-now light-path route`, and the canary `drain-implement-now-route` expects it.
 - `TestCommitmentGuidance` and `TestRecurrenceMaintenanceContractCheckBites` take the same sentences as independent copies, so a dropped row fails its own case.
 
@@ -159,8 +185,8 @@ The implementation command's entry paragraph already holds six sentences. A new 
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| LP-C1 / sliced after review | A light-path change commits and lands without a binding, and every other guard holds | LP1 to LP33 | `internal/tickets`, `internal/preflight`, `internal/commitment/repository`, `internal/commit`, `internal/worktree` package tests | yes |
-| LP-C2 / sliced after review | The guide, the drain, the implementation command, and the ADRs state the new scope | LP34 to LP48 | `internal/conformance` package tests and the guidance canary | no |
+| LP-C1 / sliced after review | A light-path change commits and lands without a binding, and every other guard holds | LP1 to LP33, LP49 to LP53, LP56 | `internal/tickets`, `internal/preflight`, `internal/commitment/repository`, `internal/commit`, `internal/worktree` package tests | yes |
+| LP-C2 / sliced after review | The guide, the drain, the implementation command, and the ADRs state the new scope | LP34 to LP48, LP54, LP55 | `internal/conformance` package tests and the guidance canary | no |
 
 LP-C2 starts after the LP-C1 checkpoint, so the guidance never states an exemption that the gate does not yet admit.
 
@@ -228,7 +254,7 @@ LP-C2 starts after the LP-C1 checkpoint, so the guidance never states an exempti
 | LP30 | 20 | `tickets.Covers` reports false for the entry `internal/d` and the path `internal/dx/a.go` | planned TestWritesEntryCover in internal/tickets/writes_test.go | A bare string-prefix cover claims a sibling package. |
 | LP31 | 20 | The preflight `writes-resolve` row stays green over a `(new)` entry that the tree lacks | `internal/preflight/decision_test.go` (`TestWritesResolveAcceptsNewMarker`) | A caller that drops the marker split after the move reds this test. |
 | LP32 | 20 | The preflight review fence keeps its segment boundary | `internal/preflight/command_review_test.go` (`TestCommandFencePrefixBoundary`) | A caller that adopts a bare prefix after the move reds this test. |
-| LP33 | 20 | No copy of the `(new)` split or the segment rule survives outside `internal/tickets` | review-owned: the Standards axis runs `rg` over `internal/preflight` and `internal/tickets/registry_data.go` | A surviving copy drifts from the owner that the commitment check reads. |
+| LP33 | 20 | No copy of the `(new)` split or the segment rule survives outside `internal/tickets`, `inScope` included | review-owned: the Standards axis runs `rg` over `internal/preflight`, `internal/tickets/registry_data.go`, and `internal/commitment/repository/candidate.go` | A surviving copy drifts from the owner that the commitment check reads. |
 | LP34 | 21 | Deleting the spec start-route sentence from `.bench/BENCH.md` raises `commitment guidance: operating guide dropped the spec start route` | `internal/conformance/commitment_guidance_test.go` (`TestCommitmentGuidance`) | A registry that keeps the old needle passes the deletion. |
 | LP35 | 21 | Deleting the rewritten intake sentence raises `commitment guidance: operating guide dropped uncommitted intake` | `internal/conformance/commitment_guidance_test.go` (`TestCommitmentGuidance`) | A registry that keeps the old intake needle passes the deletion. |
 | LP36 | 22 | Deleting `It carries one tickets-only folder with exactly one ticket, and it lands with that folder as` from the guide raises `commitment guidance: operating guide dropped the light-path observable` | `internal/conformance/commitment_guidance_test.go` (`TestCommitmentGuidance`) | A guide without the observable leaves the exemption undefined for the agent. |
@@ -244,10 +270,18 @@ LP-C2 starts after the LP-C1 checkpoint, so the guidance never states an exempti
 | LP46 | 23 | Swapping `Implement-now delegates may run while other reads continue.` raises `bench-drain does not allow implement-now work to overlap remaining reads` | `internal/conformance/recurrence_maintenance_contract_test.go` (`TestRecurrenceMaintenanceContractCheckBites`) | A contract that keeps the old sentence reds the live drain. |
 | LP47 | 26 | ADR 0028 states that the commitment gates spec implementations and that a one-ticket light-path change needs none | review-owned: the Spec axis reads the ADR | An ADR is prose, and no executable check grades its decision. |
 | LP48 | 27 | ADR 0023 names the drain's light-path delegate route | review-owned: the Spec axis reads the ADR | An ADR is prose, and no executable check grades its decision. |
+| LP49 | 28 | `Store.AuthorizeCandidate` admits a bound assignment's production path that a qualifying folder in the same tree does not cover | planned TestLightPathCandidate in internal/commitment/repository/light_path_test.go | A predicate placed before `readyFor` refuses bound work beside an open light-path folder. |
+| LP50 | 28 | `Store.AdmitPublication` admits a bound assignment's spec delivery whose composed tree holds a qualifying folder that does not cover its production paths | planned TestLightPathPublication in internal/commitment/repository/light_path_test.go | A publication mode placed before `readyFor` refuses a bound spec landing. |
+| LP51 | 7 | `Store.AuthorizeCandidate` refuses a folder with `tickets/one.md` and `tickets/sub/two.md` with a refusal that contains `assignment has no current delivery binding` | planned TestLightPathCandidate in internal/commitment/repository/light_path_test.go | A count of the top level only admits a second ticket at depth. |
+| LP52 | 7 | `Store.AdmitPublication` with a delivery that names a two-ticket folder refuses with a refusal that contains `assignment has no current delivery binding` | planned TestLightPathPublication in internal/commitment/repository/light_path_test.go | A publication mode that skips the count lands a multi-ticket folder unbound. |
+| LP53 | 19 | The LP26 refusal for the folder slug `a b` contains `--spec "a b"` | planned TestLightPathPublication in internal/commitment/repository/light_path_test.go | An unquoted slug splits the printed repair command at the space. |
+| LP54 | 24 | Restoring `a light-path fix that the active committed outcome needs` beside the live guide raises `commitment guidance: operating guide restored the learning fix for the active outcome only` | `internal/conformance/commitment_guidance_test.go` (`TestCommitmentGuidance`) | A guide that restores the old condition blocks every drain fix. |
+| LP55 | 23 | Swapping `Route their line through` sentence raises `bench-drain does not route implement-now work through craft-line and retained authorship` | `internal/conformance/recurrence_maintenance_contract_test.go` (`TestRecurrenceMaintenanceContractCheckBites`) | A contract that keeps the singular sentence reds the live drain. |
+| LP56 | 9 | `Store.AuthorizeCandidate` refuses with a refusal that names the uncovered path when two qualifying tickets leave one production path outside both | planned TestLightPathCandidate in internal/commitment/repository/light_path_test.go | A span refusal that wins first hides the path that no ticket covers. |
 
 ### Edge inventory
 
-The in-scope edges are the rows above: two tickets (LP12), a path outside `Writes:` (LP2, LP10, LP25), and two partial tickets (LP13). The others are an approved folder (LP14), a grammar fault (LP15), and a symbolic link (LP16). The guard edges are the policy edit (LP17), a pinned row (LP18), a legacy continuation (LP19), and an unpinned row (LP20). The landing edges are a spec-less landing (LP6, LP26) and an active spec outcome (LP7).
+The in-scope edges are the rows above: two tickets (LP12, LP51, LP52), a path outside `Writes:` (LP2, LP10, LP25), and two partial tickets (LP13). The others are an approved folder (LP14), a grammar fault (LP15), and a symbolic link (LP16). The guard edges are the policy edit (LP17), a pinned row (LP18), a legacy continuation (LP19), and an unpinned row (LP20). The landing edges are a spec-less landing (LP6, LP26) and an active spec outcome (LP7).
 
 The hostile-input classes of `projects/benchkit.md` reach these surfaces:
 
@@ -261,6 +295,10 @@ Each excluded edge takes a Won't handle line:
 **Won't handle** — a production path whose name holds a comma — the `Writes:` grammar splits on commas, and the spec route still lands that change.
 
 **Won't handle** — a mid-work light-path fix that the active outcome does not need — the fix goes to `bench learning`, and the drain's delegate route ships it.
+
+**Won't handle** — a copy of an approved folder under a new slug — `protectedCandidate` ignores bindings, but the approved binding stays open in `bench status`.
+
+**Won't handle** — a `--spec` that closes a folder another change wrote — the cover and the gate still grade this change.
 
 **Won't handle** — a light-path change made only of planning paths — it already needs no binding today, and LP1 keeps that route.
 
@@ -318,8 +356,10 @@ Build preflight binds the commitment, worktree, and anchors packages to the five
 | "`bench commit` and `bench worktree land` need no outcome, plan, or start for it." | LP1, LP3, LP7, LP24, LP44 |
 | "A light-path landing may close a roadmap row that no committed outcome pins as a source." | LP20, LP38 |
 | "A pinned row changes only through its outcome." | LP18, LP38 |
-| "`/bench-drain` implements light-path recommendations through a fresh write delegate (mid tier, high effort, own bench worktree) regardless of the active commitment." | LP39, LP40, LP42, LP45, LP46, LP48 |
-| "This replaces the 'active committed outcome needs it' condition in `.bench/BENCH.md`." | LP39, LP41 |
+| "`/bench-drain` implements light-path recommendations through a fresh write delegate (mid tier, high effort, own bench worktree) regardless of the active commitment." | LP39, LP40, LP42, LP45, LP46, LP48, LP55 |
+| "Light path recommendations should be implemented as part of the drain via delegate." | LP39, LP40, LP54 |
+| "It should only affect spec implementations, not light path single ticket implementations." | LP49, LP50 |
+| "This replaces the 'active committed outcome needs it' condition in `.bench/BENCH.md`." | LP39, LP41, LP54 |
 | "The new outcome sits in quality-1 ahead of FT376; it needs a roadmap row as its source." | none: the commitment plan after staging owns it; see the flagged calls |
 | "The unapproved ADR27 plan is dropped; the tickets-only folder `specs/adr-0027-retire-cdi` becomes the first light-path delivery after this ships." | LP11 |
 
@@ -328,7 +368,7 @@ Build preflight binds the commitment, worktree, and anchors packages to the five
 - **FT391 instead of FT392.** `roadmap/FT391.md` already owns this capability: "a hotfix lane lands a small change at once, outside the roadmap row and commitment ceremony". A new FT392 row would duplicate it, so this spec names FT391 and opens no row. The plan after staging binds this spec to FT391 with the obligation FT391 and moves FT391 ahead of FT376. The pinned FT391 row and its criterion change only through that plan.
 - **The `Writes:` boundary.** The decision source names the folder, not the paths. This spec also requires every production path to stay inside the one ticket's `Writes:` line, so a one-ticket folder cannot carry unrelated work.
 - **Approved folders keep the binding.** A tickets-only folder that a milestone approves is committed work, so the exemption skips it.
-- **Mid-work fixes wait for the drain.** A light-path fix that the active outcome does not need goes to `bench learning`, and the drain ships it. The decision source names the drain route only.
+- **Mid-work fixes wait for the drain.** A light-path fix that the active outcome does not need goes to `bench learning`, and the drain ships it. The reviewer-confirmed conversation of 2026-10-05 names the drain route only: "Light path recommendations should be implemented as part of the drain via delegate."
 - **Three forbid rows retire.** The reviewer reopened drain-time implementation, which these rows prohibited. The new forbid rows keep the old admission sentences out.
 - **Row closure stays manual.** A light-path change may remove an unpinned row, but Bench closes no row on its own. The source says "may close", and an automatic route is out of scope.
 
@@ -342,7 +382,7 @@ Build preflight binds the commitment, worktree, and anchors packages to the five
 
 - Callers of `authorizeCandidate`: `AuthorizeCandidate`, which `internal/commit/commit.go` calls, and `admitPublication`. `AdmitPublication` and `PublishAdmitted` call `admitPublication`, and the landing in `internal/landing/landing.go` reaches both through `admission.Check` and `admission.Publish`.
 - Callers of `readyFor`: `authorizeCandidate`, `ready`, and `closureAuthority`. `ready` serves `Ready`, which `internal/preflight/command.go` and `internal/preflight/charge_pack.go` call. It also serves `ReadyOutcome`, which `internal/shift/loop.go` calls. Each such caller grades a spec or a shift outcome, so none changes.
-- Callers of `splitWritesEntry`: `internal/preflight/closure.go` twice, `fence_writes.go`, and `decision.go` twice. Callers of `pathCovered`: `closure.go`, `decision.go`, and `proposal.go`. Caller of `prefixCovers`: `BoundFiles`.
+- Callers of `inScope`: `authorizeCandidate` once. Callers of `splitWritesEntry`: `internal/preflight/closure.go` twice, `fence_writes.go`, and `decision.go` twice. Callers of `pathCovered`: `closure.go`, `decision.go`, and `proposal.go`. Caller of `prefixCovers`: `BoundFiles`.
 - Readers of the tickets-only folder: `spec.TicketsOnly` serves `ticketsOnlyAt`, the landing close in `land_identity.go`, and the resume in `land_resume.go`. Only the new predicate reads the ticket count.
 - Input constructors: `commitmenttest.WriteTickets` writes `Light path ticket.`, which has no `Writes:` field. Its fixtures therefore never qualify, and their binding rows stay valid. A new helper in `internal/commitment/commitmenttest` writes a grammatical one-ticket folder.
 - Guidance readers of the changed sentences: `.bench/BENCH.md`, `.agents/commands/bench-drain.md`, `.agents/commands/bench-implement-spec.md`, the anchors registry, `TestCommitmentGuidance`, `TestRecurrenceMaintenanceContractCheckBites`, and the canary `drain-implement-now-route`. The canary `drain-implement-now-row-fallback` pins a forbid row that stays, so it does not change. `.claude/commands` is a symbolic link to `.agents/commands`, and `.agents/skills/bench-drain/SKILL.md` only routes to the command.
@@ -361,7 +401,7 @@ Build preflight binds the commitment, worktree, and anchors packages to the five
 - `Promised field labels`: `production path`, `is outside the Writes line of light-path ticket`, `production paths span more than one light-path ticket`, `land the light-path change with --spec`, and each guidance sentence and diagnostic above.
 - `Changed-function callers`: the reader sweep lists each caller of `authorizeCandidate`, `readyFor`, `splitWritesEntry`, `pathCovered`, and `prefixCovers`.
 - `Copy survival`: LP33 names the review-owned check that fails when a copy of the split or the segment rule survives.
-- `Rendered-shape readers`: the old needles `light path and fixes included`, `is implement-now work only after`, and `Implement that ticket in the retained session` appear in `.bench/BENCH.md`, `.agents/commands/bench-drain.md`, `internal/anchors/registry_commitment.go`, `internal/anchors/registry_data.go`, `internal/conformance/commitment_guidance_test.go`, and the route canary. `Retained implement-now work may run` appears in the drain and `recurrence_maintenance_contract_test.go`. Each file is in the fence.
+- `Rendered-shape readers`: the old needles `light path and fixes included`, `is implement-now work only after`, and `Implement that ticket in the retained session` appear in `.bench/BENCH.md`, `.agents/commands/bench-drain.md`, `internal/anchors/registry_commitment.go`, `internal/anchors/registry_data.go`, `internal/conformance/commitment_guidance_test.go`, and the route canary. `Retained implement-now work may run` and `Route its line` appear in the drain and `recurrence_maintenance_contract_test.go`. The restore anchors `**Delegate a light-path fix for a learning.**` and `Verify the diff against the ticket's acceptance rows and the gate.` appear in `commitment_guidance_test.go`. Each file is in the fence.
 
 ### Bootstrap authority
 
