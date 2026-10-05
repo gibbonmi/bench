@@ -112,10 +112,19 @@ Two causes move an existing plan identity: the canonical order, and the smaller 
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| FD-C1 / tickets pending the slicing delegate | A plan refuses an obligation-free binding, and a completion landing of a legacy one refuses before it publishes. | FD1, FD2, FD3, FD4, FD5, FD6, FD7, FD8, FD9, FD10, FD11, FD23, FD24, FD26 | `bench test --package ./internal/commitment`, `bench test --package ./internal/commitment/repository`, `bench test --package ./internal/worktree` | yes |
-| FD-C2 / tickets pending the slicing delegate | A plan binds only what its proposal keeps open and the removed rows, in one canonical order. | FD12, FD13, FD14, FD15, FD16, FD17, FD18, FD19, FD20, FD21, FD22, FD25 | `bench test --package ./internal/commitment`, `bench test --package ./internal/commitment/repository` | no |
+| FD-C1 / `1-refuse-obligation-free-plan.md`, `2-refuse-obligation-free-delivery.md` | A plan refuses an obligation-free binding, and a completion landing of a legacy one refuses before it publishes. | FD1, FD2, FD3, FD4, FD5, FD6, FD7, FD8, FD9, FD10, FD11, FD23, FD24, FD26 | `bench test --package ./internal/commitment`, `bench test --package ./internal/commitment/repository`, `bench test --package ./internal/worktree` | yes |
+| FD-C2 / `3-bind-only-open-plan-sources.md`, `4-order-plan-sources-canonically.md` | A plan binds only what its proposal keeps open and the removed rows, in one canonical order. | FD12, FD13, FD14, FD15, FD16, FD17, FD18, FD19, FD20, FD21, FD22, FD25 | `bench test --package ./internal/commitment`, `bench test --package ./internal/commitment/repository` | no |
 
-Both chunks write `internal/commitment/authority.go`, so FD-C2 starts after FD-C1 commits green. The slicing delegate writes the ticket basenames, the ticket graph, and the completion plan.
+Both chunks write `internal/commitment/authority.go`, so FD-C2 starts after FD-C1 commits green. The four tickets run in series on one integration source.
+
+| Ticket | Blocked by | Delivered coverage |
+| --- | --- | --- |
+| [1. Refuse an obligation-free binding at plan time](tickets/1-refuse-obligation-free-plan.md) | none | FD1, FD2, FD3, FD4, FD5, FD9, FD23, FD24, FD26 |
+| [2. Refuse an obligation-free delivery at the completion landing](tickets/2-refuse-obligation-free-delivery.md) | 1-refuse-obligation-free-plan.md | FD6, FD7, FD8, FD10, FD11 |
+| [3. Bind only the content that a plan keeps open](tickets/3-bind-only-open-plan-sources.md) | 1-refuse-obligation-free-plan.md, 2-refuse-obligation-free-delivery.md | FD12, FD13, FD14, FD15, FD16, FD17, FD18, FD19, FD25 |
+| [4. Order plan sources in one canonical order](tickets/4-order-plan-sources-canonically.md) | 3-bind-only-open-plan-sources.md | FD20, FD21, FD22 |
+
+Ticket 1 adds the obligation predicate, and ticket 2 calls it. Ticket 3 waits for the FD-C1 checkpoint, and its fixtures obey the plan refusal of ticket 1. Ticket 4 orders the source set that ticket 3 defines.
 
 ## Testing decisions
 
@@ -215,7 +224,14 @@ The two checks have different milestone scopes, by decision. `Deliver` checks on
 - `internal/commitment/repository/plan_after_delivery_test.go`
 - `internal/worktree/commitment_light_landing_test.go`
 - `internal/worktree/commitment_landing_fixture_test.go`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
 - `reviews/commitment-delivery-integrity.md`
+
+Build preflight binds the commitment and worktree packages to the five command-registry files above, so each ticket names them. No ticket expects to edit them.
 
 ## Out of scope
 
@@ -275,3 +291,9 @@ Occurrences, each re-read in this session:
 ### Source disclosure
 
 The source names `capture/learnings.md` from drains `d-553013ef861d` and `d-0a44235dc225`. That file is git-ignored, and the drains closed those entries, so this session could not re-read their text. This spec re-reads the roadmap diffs of commits `695fa4b5` and `86ea7696`, the FT382 detail that `695fa4b5` folded, and the ADR26 commits named above.
+
+### Completion plan
+
+```bench-completion-plan
+{"version":1,"chunks":[{"id":"FD-C1","tickets":["1-refuse-obligation-free-plan.md","2-refuse-obligation-free-delivery.md"],"verification":[{"id":"commitment","command":"bench test --package ./internal/commitment"},{"id":"commitment-repository","command":"bench test --package ./internal/commitment/repository"},{"id":"worktree","command":"bench test --package ./internal/worktree"}]},{"id":"FD-C2","tickets":["3-bind-only-open-plan-sources.md","4-order-plan-sources-canonically.md"],"verification":[{"id":"commitment","command":"bench test --package ./internal/commitment"},{"id":"commitment-repository","command":"bench test --package ./internal/commitment/repository"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/commitment-delivery-integrity/spec.md"},{"id":"commitment","command":"bench test --package ./internal/commitment"},{"id":"commitment-repository","command":"bench test --package ./internal/commitment/repository"},{"id":"worktree","command":"bench test --package ./internal/worktree"}]}
+```
