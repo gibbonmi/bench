@@ -124,17 +124,30 @@ func TestCommitmentApprovalWithoutBoard(t *testing.T) {
 
 // TestCommitmentInventoryIdentity reads the inventory that an adoption proposal copies. A
 // roadmap or deliverable identity is the identity that plan binds, and a run names its
-// bound deliverable.
+// bound deliverable or, without a binding, its continuation scope.
 func TestCommitmentInventoryIdentity(t *testing.T) {
-	const deliverable, request = "specs/delivery/spec.md", "inventory-run"
+	const deliverable, request, continued = "specs/delivery/spec.md", "inventory-run", "continued-run"
 	root := commitmenttest.Repo(t, policy([]commitment.Milestone{milestone("M1", "A")}, "M1"))
 	commitmenttest.SeedProtected(t, root)
 	commitmenttest.Write(t, root, deliverable, commitmenttest.StagedBody)
 	commitmenttest.SeedAdmission(t, root, deliverable)
 	commitmenttest.Commit(t, root, "seed the inventory sources")
 	commitmenttest.Admit(t, commitmenttest.Assignment(t, root, request), request, deliverable)
+	commitmenttest.Assignment(t, root, continued)
+	err := intent.Transact(root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+		state := *ledger.Commitment
+		state.Continuations = []intent.LegacyContinuation{{Assignment: intent.RequestDigest(continued)[:32], Request: intent.RequestDigest(continued), Scope: []string{"owned.txt", "notes.txt"}}}
+		ledger.Commitment = &state
+		return ledger, true, nil
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// The default branch does not hold this spec, so plan cannot bind it yet.
 	commitmenttest.Write(t, root, "specs/uncommitted/spec.md", commitmenttest.StagedBody)
+	// Uncommitted edits make the working tree differ from the revision that plan validates.
+	commitmenttest.Write(t, root, "roadmap/FT1.md", "**FT1 — A**\n\nAn uncommitted edit.\n")
+	commitmenttest.Write(t, root, deliverable, commitmenttest.StagedBody+"\nAn uncommitted edit.\n")
 
 	items, err := commitrepo.Store{Root: root}.Inventory()
 	if err != nil {
@@ -167,6 +180,9 @@ func TestCommitmentInventoryIdentity(t *testing.T) {
 	}
 	if got := find("run", intent.RequestDigest(request)[:32]).Scope; got != deliverable {
 		t.Errorf("run scope = %q, want its bound deliverable %q", got, deliverable)
+	}
+	if got, want := find("run", intent.RequestDigest(continued)[:32]).Scope, "owned.txt notes.txt"; got != want {
+		t.Errorf("unbound run scope = %q, want its continuation scope %q and not the bound deliverable %q", got, want, deliverable)
 	}
 }
 
