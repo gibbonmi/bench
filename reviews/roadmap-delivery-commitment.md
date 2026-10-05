@@ -5872,6 +5872,76 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r6-standards"
           ]
+        },
+        {
+          "id": "dc-c9-r8-standards",
+          "performer": "claude:dc_c9_r8_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r8_standards",
+            "digest": "sha256:c420309106bd607d83cbf861ddef8525e366e2796e514feacceb56897ae4d2cf",
+            "excerpt": "DC-C9 round 8 (fold of main), Standards axis (claude:dc_c9_r8_standards), frozen pair ffc100d5..5fa7fc33, record tip d92d1912: one low finding, C9R8-S1, disposition no-op.\ncheck-current through bench worktree exec dc-integration: current=true, source_tip d92d1912, base ffc100d5. A first run from the primary checkout refused (ffc100d5 is not an ancestor of 3347fdbd) with no effect.\nMerge 48f8d154 (parents 4e7decce, 3347fdbd): against the first parent it changes only specs/shared-test-fixtures/** and capture/agent-performance/open-ai-models.md; against the second parent both are byte-identical. No conflict edit to this spec's files or its review record.\nOne source per fact: the fence entry at ticket 10 line 4 and spec.md:564 is the derived union that spec.md:500 requires; the reason is stated once at spec.md:505.\nThe dc_r10_5 assignment follows the r10_2..r10_4 pattern and satisfies validateAssignment (internal/reviewrecord/delegated.go:162-192).\nThe six r10f entries match the r10e shape; each digest is the sha256 of its excerpt; the amendment f4cbafa3 -> a6d34579 maps each chunk to itself; the re-freeze source digest 4d4850e1 matches the r10f entries.\nNew prose at spec.md:505 and the review record disposition obeys the STE bounds; bench gate-prose passes all three edited files.\nC9R8-S1 (low, confidence 9, no-op): the r10f excerpts say plan commits 6bfad796, a36ce19d, 5fa7fc33 change reviews/roadmap-delivery-commitment.md. Those commits touch only spec.md and ticket 10; record commits 01276c94, 888b51f2, f94c064e, efe4a77a, d42ced91, 4e7decce changed the review record. The excerpts are digest-bound, and their conclusion that no Go, test, owner, or proposal file changed is true.\nNot a finding: completion.source_digest stays 04b22f5f until completion is recorded again; completionTree enforces the source match.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [
+            "C9R8-S1"
+          ],
+          "supersedes": [
+            "dc-c9-r7-standards"
+          ]
+        },
+        {
+          "id": "dc-c9-r8-spec",
+          "performer": "claude:dc_c9_r8_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r8_spec",
+            "digest": "sha256:8f610c2024360f25e53708100dc5d259708b7fc41190dfde2bd4c201d2f569bb",
+            "excerpt": "DC-C9 round 8 (fold of main), Spec axis (claude:dc_c9_r8_spec), frozen pair ffc100d5..5fa7fc33, record tip d92d1912: zero findings.\ncheck-current: current=true, source_tip d92d1912, base ffc100d5.\nOutside specs/shared-test-fixtures, reviews, and capture, git diff --stat 62e10a4d d92d1912 shows only spec.md (+4/-1) and ticket 10 (+1/-1). No Go, test, owner, roadmap, or proposal byte changed.\nMerge 48f8d154 first-parent diff touches only specs/shared-test-fixtures/** (19 files) and capture/agent-performance/open-ai-models.md; spec.md:500 excludes capture from the fence.\nDC51, DC52, DC63 tests at adoption_test.go:164, :210, :239; DC85 and DC86 at store_test.go:95, :128. Six dc-c9-r10f passes at source digest 4d4850e1; the DC85 probe bit and restored.\nDC53 holds: specs/shared-test-fixtures names none of FT376, FT373, FT349; FT360 spec.md:25 and :531 recheck after this build lands.\nFence: ticket 10 line 4 and spec.md:564 add the same entry, so the union at spec.md:500 stays exact; spec.md:505 states the fold-only scope; ticket 10 assigns no work there.\nPlan JSON dc_r10_5 keeps the prior pattern: source is the plan commit parent a36ce19d; preserved 888b51f2 is dc_r10_4's record.\nNotes, not findings: the ticket 10 Writes entry has no qualifier (no-op, a second copy would duplicate spec.md:505); spec.md:333 (Opus high review) and spec.md:759 (Sonnet high) disagree outside the delta, reported for the reviewer.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Spec",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r5-spec"
+          ]
+        },
+        {
+          "id": "dc-c9-r8-coverage",
+          "performer": "claude:dc_c9_r8_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d4850e162fd06e0cf3a43942fd48dc67a4f96cf",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r8_coverage",
+            "digest": "sha256:2eacba5361a9f39364b9a8e63e838516ff0f6ab2330ba7f5730b81ed8577fdae",
+            "excerpt": "DC-C9 round 8 (fold of main), Coverage axis (claude:dc_c9_r8_coverage), frozen pair ffc100d5..5fa7fc33, record tip d92d1912: one low finding, COV-F1, disposition no-op.\ncheck-current: current=true, tip d92d1912, base ffc100d5.\ngit diff --name-status 62e10a4d..d92d1912: 23 paths; 19 new under specs/shared-test-fixtures/**, plus the scorecard, the review record, spec.md, and ticket 10. No Go, test, fixture, owner, proposal, script, or go.mod byte changed.\nThe only plan JSON change is the claude:dc_r10_5 assignment; DC-C9 commands, probe text, and final_verification are unchanged.\ngit diff 3347fdbd d92d1912 -- specs/shared-test-fixtures capture/agent-performance is empty, so the folded bytes equal main.\nThe r10c DC63 and DC85 system probes (record :5014-5030) and the DC53 evidence (:5032) still stand.\nThe six dc-c9-r10f entries match the six planned DC-C9 requirement ids, cite tip b954bfdf, and exit 0; the commitment probe records bit, exit 1, restore pass, with the planned mutation text.\nNo branch check that walks the repo reads specs/; capture/ is outside the fence by spec.md:500.\nCOV-F1 (low, confidence 7, no-op): spec.md:564 fences the whole specs/shared-test-fixtures directory, and fenceAuthorizes at internal/preflight/decision.go:345-353 matches by prefix, so no check enforces the fold-only scope at spec.md:505. The edge is latent: final reconciliation records that git diff 3347fdbd <landing tip> -- specs/shared-test-fixtures is empty.\nImplementation command contribution: yes, by omission. The command has no procedure for a fold of main mid-run; a fold-only fence entry should name the folded main commit, and final reconciliation should record the empty diff for that entry.\nOutside this axis: the system command field omits the env PATH prefix that the excerpt shows, as in the earlier accepted r10c entries.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "5fa7fc335b9c502d87cfe289330220c0468daa63",
+          "finding_ids": [
+            "C9R8-C1"
+          ],
+          "supersedes": [
+            "dc-c9-r5-coverage"
+          ]
         }
       ]
     }
@@ -7672,3 +7742,15 @@ Merge 48f8d1546c8e18b5938b4a877398d84a2af470f0 folds main 3347fdbdca6cb69726ce67
 
 Two plan commits add specs/shared-test-fixtures to the ticket 10 fence and to the spec fence union. Plan commit 5fa7fc335b9c502d87cfe289330220c0468daa63 assigns a fresh re-verification session, claude:dc_r10_5.
 The orchestrator records the amendment and re-freezes DC-C9 at that plan commit. The session changes no file; it runs and records the six planned checks only. One round on all three axes then grades the fold delta.
+
+## DC-C9 fold round 8 disposition
+
+The re-verification session claude:dc_r10_5 recorded all six planned checks green at the folded source, and the named probe failed and restored. Spec reports zero findings.
+
+Standards reports C9R8-S1, a low finding. The dc-c9-r10f excerpts say that the three plan commits change the review record, but those commits change only the spec and ticket 10.
+Record commits 01276c94, 888b51f2, f94c064e, efe4a77a, d42ced91, and 4e7decce changed the review record. The excerpts are digest-bound, and their conclusion is true: no Go, test, owner, or proposal file changed.
+The orchestrator closes C9R8-S1 as no-op with this correct attribution. This call is open to reviewer veto.
+
+Coverage reports C9R8-C1, a low finding. The fence entry admits the whole specs/shared-test-fixtures directory, and no check enforces its fold-only scope.
+The orchestrator closes C9R8-C1 as no-op. At this record, the diff of specs/shared-test-fixtures from 3347fdbdca6cb69726ce67dedfcf7299bbdbb55e is empty, and final reconciliation repeats that check at the landing source.
+One confirming round on Standards and Coverage grades these dispositions.
