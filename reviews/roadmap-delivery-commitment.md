@@ -5267,6 +5267,72 @@ This suggestion is optional advice and has no repair disposition.
           "supersedes": [
             "dc-c9-r1-coverage"
           ]
+        },
+        {
+          "id": "dc-c9-r3-spec",
+          "performer": "claude:dc_c9_r3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r3_spec",
+            "digest": "sha256:e2a33d088ea85cd16374852e2568d22b78e88e81cb37a94327a5ac4b9b543a63",
+            "excerpt": "Spec: 0 findings\nReviewer claude:dc_c9_r3_spec, opus high. Frozen chunk ffc100d5..bdeede94, evidence sha256:5b6d8dcc4dc228c964d487b958241f1535a07d5451d3f2997e3a5bcf92e0ea16.\nDelta f5b2648c..bdeede94: store_test.go (test only, bdeede94); spec.md plan JSON adds only the claude:dc_r10_2 assignment (b1f621f5); record-only commits. No acceptance row, behavior text, ticket, or production file changed.\nDC86 \"or scope\" clause now observed: unbound run continued-run with continuation scope owned.txt notes.txt (store_test.go:137-146), asserted exactly (:184-186); bound run assertion kept (:181-183); uncommitted edits (:149-150) prove the revision read.\nRound 2 Spec result holds for the whole frozen pair; production source unchanged since f5b2648c.\nUnowned and advice carried forward from round 2.\n"
+          },
+          "axis": "Spec",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "bdeede94fc9c3197b542b67110bd607df24a5164",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r2-spec"
+          ]
+        },
+        {
+          "id": "dc-c9-r3-standards",
+          "performer": "claude:dc_c9_r3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r3_standards",
+            "digest": "sha256:a38e5472106d4da4ef672d2c8dc48bb212e3a57df3bd2a705d85117a15491ed8",
+            "excerpt": "Standards: 0 findings\nReviewer claude:dc_c9_r3_standards, opus high. Frozen chunk ffc100d5..bdeede94, evidence sha256:5b6d8dcc4dc228c964d487b958241f1535a07d5451d3f2997e3a5bcf92e0ea16.\nDelta f5b2648c..bdeede94: store_test.go (TestCommitmentInventoryIdentity only), plan JSON assignment, record. Round 2 Standards holds for the unchanged source.\nThe literal \"owned.txt notes.txt\" (store_test.go:184) meets the AGENTS.md independent-expectation exception: named mutations turn it red and the reds are recorded. Hygiene, comments, gofmt, file size (317 lines), and fixture reuse pass.\nAdvice: assignment-ID derivation repeated in the test; state := *ledger.Commitment can panic if the fixture changes; continuation-seeding blocks repeated across packages; failure message wording at :185.\n"
+          },
+          "axis": "Standards",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "bdeede94fc9c3197b542b67110bd607df24a5164",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r2-standards"
+          ]
+        },
+        {
+          "id": "dc-c9-r3-coverage",
+          "performer": "claude:dc_c9_r3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "aa3a6bff1d2708e92b13805790d4c81263a88417",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dc_c9_r3_coverage",
+            "digest": "sha256:38dba0651298e5c3f66ed9cbec5e08bd7c6670d8da1592513a97dbc00a7315b7",
+            "excerpt": "Coverage: 0 findings\nReviewer claude:dc_c9_r3_coverage, opus high. Frozen chunk ffc100d5..bdeede94, evidence sha256:5b6d8dcc4dc228c964d487b958241f1535a07d5451d3f2997e3a5bcf92e0ea16. Ran ./internal/commitment: pass.\nC9R2-C1 closed: unbound continued-run with continuation scope owned.txt notes.txt (store_test.go:136-145), exact assertion (:184-186); probes 1 and 2 red at :185 and green at baseline d42472e8.\nRevision read: uncommitted edits (:148-150); probes 3a (:176) and 3b (:179) red.\nNo assertion weakened; DC85 test untouched. Six entries match the plan; only commitment carries the probe.\nVerdicts: DC51, DC52, DC53, DC63, DC85 hold; DC86 pass.\nAdvice: continuation.Assignment == assignment -> true (repository.go:101) likely stays green; a third run with no binding and no continuation would catch it. Roadmap expectation reuses SourceIdentity.\n"
+          },
+          "axis": "Coverage",
+          "base": "ffc100d510e93a3d73fe3c5086af2a94d7a7e343",
+          "tip": "bdeede94fc9c3197b542b67110bd607df24a5164",
+          "finding_ids": [],
+          "supersedes": [
+            "dc-c9-r2-coverage"
+          ]
         }
       ]
     }
@@ -6711,3 +6777,9 @@ Repair cycles consumed: 1 of 2. The cycle also checks that inventory reads sourc
 Repair cycles consumed: 2 of 2. A fresh Opus repair session at medium effort followed the bench-debug procedure and committed bdeede94fc9c3197b542b67110bd607df24a5164, a test-only change.
 The DC86 test now has an unbound run whose scope is its continuation scope. An uncommitted working-tree edit proves that inventory reads the revision.
 Four targeted mutations stayed green before the change and fail after it. All six planned checks pass at the chunk source, and the named probe failed and restored.
+
+## Accepted DC-C9 source
+
+All three axes report zero findings at bdeede94fc9c3197b542b67110bd607df24a5164, and every DC-C9 finding is closed. Repair cycles consumed: 2 of 2.
+The advice stays advice. A third run with no binding and no continuation would catch one more mutation of the continuation match. Inventory still reads spec status from the working tree.
+These choices remain open to reviewer veto: no-board approval skips the sequence, the inventory scope column, the decision 16 wording, and the removed non-mutation probe.
