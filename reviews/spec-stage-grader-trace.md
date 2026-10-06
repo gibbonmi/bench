@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/spec-stage-grader-trace/spec.md",
-  "plan_digest": "sha256:1b0cc417b91dfb0abeb241102024cfed076c5e5d4ead195f5d96e11b1f206846",
+  "plan_digest": "sha256:09dd264bc7810caa74745505ed5559bb38178dd4f7b327f44fc416a5395b3881",
   "implementation_session": "",
   "chunks": [
     {
@@ -316,7 +316,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:1b0cc417b91dfb0abeb241102024cfed076c5e5d4ead195f5d96e11b1f206846",
+      "to": "sha256:09dd264bc7810caa74745505ed5559bb38178dd4f7b327f44fc416a5395b3881",
+      "chunk_ids": {
+        "GT-C1": [
+          "GT-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
