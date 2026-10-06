@@ -139,6 +139,22 @@ reader runs `git show` on a path with no separator, so a folder name with a
 glob character never qualifies. The failure is closed, and the defect is
 parked as an idea.
 
+## LP-C1 cycle 2 confirming round
+
+The cycle 2 confirming round read the delta `498b419c..7e0804d5` on the
+fable line at high effort. All three axes confirmed the S3, S4, and P2
+folds. Standards and Coverage found nothing.
+
+- P3 (`auto-fix`, confidence 9): spec line 93 still says that
+  `internal/spec` needs no edit. Commit `7e0804d5` edits that package, and
+  the spec fence lists the file. The finding is a non-behavioral spec
+  contradiction, so it consumes no repair cycle. The LP-C2 enabling plan
+  commit corrects the sentence, because a spec edit after the chunk tip
+  would move the frozen source.
+
+Advice: spec line 92 names a folder, but a delivery can name a spec file.
+The same plan commit widens that wording.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1085,6 +1101,74 @@ parked as an idea.
           ],
           "supersedes": [
             "lp-c1-coverage-r1"
+          ]
+        },
+        {
+          "id": "lp-c1-standards-r3",
+          "performer": "claude:lpce_c1_standards_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "842e96e36ece273c2f1f37418ada7c2740c217d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_standards_r3",
+            "digest": "sha256:fcaecaf8499d70b39b2f9680686abcdd2309c8057f888d9278bdb3bced8754dc",
+            "excerpt": "Standards axis — LP-C1 cycle 2 confirming round, fable/high, evidence sha256:01598c72ae1857afeb97e45a957d75dd560c3e5abf3d92e803fb938cefbbbff9 current at 2d3a434a. Delta 498b419c..7e0804d5.\n\nFindings: none. Count 0.\nFolds: S3 confirmed (internal/spec/tickets_only.go:14-15 exports SpecsDir; light_path.go:27,44,114 read spec.SpecsDir; no local copy in internal/commitment besides the parked repository.go:65 literal; 7e0804d5 touches only these two files). S4 confirmed (light_path.go:104-105 comment holds for the root, a folder, and a spec-file delivery; craft-comments register).\nAdvice: spec.md:96 says publication lists only the folder that --spec names, but Delivery.Spec can be a spec file (closure.go:14); harmless for a light-path landing. The fence list plus Writes line is the existing convention.\nRead: git diff 498b419c 7e0804d5 -- ':!reviews'; light_path.go, publication.go, closure.go, tickets_only.go delta; AGENTS.md; craft-review and craft-comments skills. No tests or probes.\n"
+          },
+          "axis": "Standards",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "7e0804d59a4bb518bd6c859d0333ff2ad9ae5d62",
+          "finding_ids": [],
+          "supersedes": [
+            "lp-c1-standards-r2"
+          ]
+        },
+        {
+          "id": "lp-c1-spec-r3",
+          "performer": "claude:lpce_c1_spec_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "842e96e36ece273c2f1f37418ada7c2740c217d6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_spec_r3",
+            "digest": "sha256:737b3fe80dee27733fde319a432de2bdbd42b83d738eb2b5b1f185aac805a3ad",
+            "excerpt": "Spec axis — LP-C1 cycle 2 confirming round, fable/high, evidence sha256:01598c72ae1857afeb97e45a957d75dd560c3e5abf3d92e803fb938cefbbbff9 current at 2d3a434a. Delta 498b419c..7e0804d5.\n\nP3 — low — spec.md:93 (\"... so internal/spec needs no edit\") vs 7e0804d5, which edits internal/spec/tickets_only.go:14-15 (export of SpecsDir), and the fence at spec.md:330 that now lists that file. Confidence 9. Disposition auto-fix (one-sentence non-behavioral spec amendment; reviewer veto surface). Command contributed: plan commit f33d04fb expanded the fence without reconciling line 93.\nFolds: P2 confirmed (spec.md:92 agrees with 98-99 and light_path.go:27,44,55). Fence confirmed (7e0804d5 touches only ticket 3 Writes paths; f33d04fb added tickets_only.go to the spec fence and ticket 3 together). No behavior change confirmed (SpecsDir keeps \"specs\"; git grep enumerates every caller moved).\nC4 and C5 not reopened.\nCount: 1. Worst: P3.\n"
+          },
+          "axis": "Spec",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "7e0804d59a4bb518bd6c859d0333ff2ad9ae5d62",
+          "finding_ids": [
+            "P3"
+          ],
+          "supersedes": [
+            "lp-c1-spec-r2"
+          ]
+        },
+        {
+          "id": "lp-c1-coverage-r3",
+          "performer": "claude:lpce_c1_coverage_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "842e96e36ece273c2f1f37418ada7c2740c217d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_coverage_r3",
+            "digest": "sha256:1c3c18e5eaa0b05a1ff3d3ad90b55f0ba7c21924a331a09a6367cb4ccb2bb2f7",
+            "excerpt": "Coverage axis — LP-C1 cycle 2 confirming round, fable/high, evidence sha256:01598c72ae1857afeb97e45a957d75dd560c3e5abf3d92e803fb938cefbbbff9 current at 2d3a434a. Delta 498b419c..7e0804d5.\n\nFindings: none. Count 0.\nChecks: bench test --package ./internal/commitment/repository pass; bench test --package ./internal/spec pass. Probe bench probe internal/spec/tickets_only.go --swap 'const SpecsDir = \"specs\"' --with 'const SpecsDir = \"spec\"' --package ./internal/commitment/repository: bit, 13 tests failed including TestLightPathCandidate and TestLightPathPublication, restored yes; git status clean after. Enumeration: every root reference is in light_path.go (27, 44, 114) and tickets_only.go (15, 90, 96, 117); no residual lightPathRoot. The delta adds no branch, input class, or state. C5 left closed.\n"
+          },
+          "axis": "Coverage",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "7e0804d59a4bb518bd6c859d0333ff2ad9ae5d62",
+          "finding_ids": [],
+          "supersedes": [
+            "lp-c1-coverage-r2"
           ]
         }
       ]
