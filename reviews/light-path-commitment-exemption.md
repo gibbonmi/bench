@@ -220,6 +220,89 @@
           "requirement": "t2-bench",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "t3-commitment-repository-v1",
+          "performer": "claude:lpce_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3",
+            "digest": "sha256:05552020d47947bdc7f337e2206b6ec6d7e8390f37d9296cc0deac678f00a4bb",
+            "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,266b88585ec2e54998f40910b757b072a6109c7b,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,4000\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n$ bench worktree exec lpce-integration -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover([]lightPathTicket{ticket}, production)' --with 'return unbound' --package ./internal/commitment/repository --run TestLightPathPublication\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,266b88585ec2e54998f40910b757b072a6109c7b,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,TestLightPathPublication,passed,8\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,558\nfailures[2]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-names-folder,\"light_path_test.go:167: AdmitPublication = assignment has no current delivery binding; run bench commitment start --outcome <id> --request <request> --deliverable <path>, want admission\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-uncovered,\"light_path_test.go:172: AdmitPublication = assignment has no current delivery binding; run bench commitment start --outcome <id> --request <request> --deliverable <path>, want a refusal naming \\\"production path \\\\\\\\\\\"other.go\\\\\\\\\\\" is outside the Wr… (310 bytes)\"\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In publication mode, return the readyFor refusal unchanged for a delivery that names a qualifying light-path folder. TestLightPathPublication must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:lpce_t3",
+              "digest": "sha256:05552020d47947bdc7f337e2206b6ec6d7e8390f37d9296cc0deac678f00a4bb",
+              "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,266b88585ec2e54998f40910b757b072a6109c7b,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,4000\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n$ bench worktree exec lpce-integration -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover([]lightPathTicket{ticket}, production)' --with 'return unbound' --package ./internal/commitment/repository --run TestLightPathPublication\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,266b88585ec2e54998f40910b757b072a6109c7b,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,TestLightPathPublication,passed,8\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,558\nfailures[2]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-names-folder,\"light_path_test.go:167: AdmitPublication = assignment has no current delivery binding; run bench commitment start --outcome <id> --request <request> --deliverable <path>, want admission\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-uncovered,\"light_path_test.go:172: AdmitPublication = assignment has no current delivery binding; run bench commitment start --outcome <id> --request <request> --deliverable <path>, want a refusal naming \\\"production path \\\\\\\\\\\"other.go\\\\\\\\\\\" is outside the Wr… (310 bytes)\"\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t3-worktree-v1",
+          "performer": "claude:lpce_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3",
+            "digest": "sha256:130e9563ca5fe76b768ee3de42071b9cdd382ca2af40bdb0e2118396b1f05a16",
+            "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./internal/worktree\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,266b88585ec2e54998f40910b757b072a6109c7b,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,71329\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable: listen unix /tmp/J2ES3J/t/TestCleanLandedSpecialPathsRetainedWithoutOpeningsocket2825958183/001/.bench-home/worktrees/001-948769744/23e88bc5a3c2f24b01522d0d7e60a03f-e7283cf74380c959… (280 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix /tmp/J2ES3J/t/TestLandedConsumersRejectSpecialGitMetadataBeforePlanningsocket4268883645/001/.bench-home/worktrees/001-2485860665/04a5d364d5f20ddeb1255de95316c5af-50c7bd1cd8cb49143eb63f… (279 bytes)\"\n"
+          },
+          "requirement": "t3-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-conformance-v1",
+          "performer": "claude:lpce_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3",
+            "digest": "sha256:4872b6444e3e5ea142c0029f157dc6445daf854a4f05d3fc856f994a00f9052e",
+            "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,266b88585ec2e54998f40910b757b072a6109c7b,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,42444\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/ZMMMEO/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket4287508356/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/ZMMMEO/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket2161168677/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "t3-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-bench-v1",
+          "performer": "claude:lpce_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3",
+            "digest": "sha256:a23af705857f5ed35040597a63e983b80a0ef68b4f632b924d40cd737ab1ca5a",
+            "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./cmd/bench\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,266b88585ec2e54998f40910b757b072a6109c7b,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14148\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": []
