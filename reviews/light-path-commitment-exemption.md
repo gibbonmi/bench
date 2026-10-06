@@ -80,6 +80,56 @@ Repair cycle 1 of 2 is consumed. The reviewer closed C4 with no repair.
 The chunk is frozen again at `498b419c`. A confirming round of all three
 axes follows the verification records.
 
+## LP-C1 confirming round
+
+The confirming round read the repair delta `04e27cea..498b419c` on the
+fable line at high effort. Every earlier fold is confirmed: S1, P1, C1, C2,
+and C3. The axes found 5 new findings. These findings collapse into 3 repair
+targets, which start repair cycle 2 of 2.
+
+### LP-C1 confirming Standards
+
+Findings: 2. Worst issue: S3.
+
+- S3 (`auto-fix`, confidence 7): `internal/commitment/repository/light_path.go:102`.
+  `lightPathRoot` spells the specs root that `specsDir` in
+  `internal/spec/tickets_only.go:15` owns. The axis proposed `ask-user`,
+  because the fold needs an export on no `Writes:` line. The reviewer
+  approved plan expansions in advance, so a plan commit adds that path to
+  ticket 3.
+- S4 (`auto-fix`, confidence 7): `internal/commitment/repository/light_path.go:107`.
+  The doc comment says that the scope is the root or one folder below it. A
+  delivery can name a spec file, which is two levels below the root.
+
+Advice: a test in `cmd/bench` holds a hand-written copy of the ticket body,
+outside this delta.
+
+### LP-C1 confirming Spec
+
+Findings: 1. Worst issue: P2.
+
+- P2 (`auto-fix`, confidence 7): spec line 92 still says that the reader
+  lists all of `specs`. Publication mode now lists only the named folder, as
+  spec line 99 requires. The axis proposed `no-op` for this non-behavioral
+  contradiction. The coordinator corrects the spec words in the plan commit.
+
+### LP-C1 confirming Coverage
+
+Findings: 2. Worst issue: C5.
+
+- C5 (`auto-fix`, confidence 8): `internal/commitment/repository/light_path.go:110`.
+  No test pins `--literal-pathspecs`. A folder name can hold a glob
+  character, so a delivery for `l*` can list a sibling folder without the
+  flag.
+- C6 (`no-op`, confidence 7): `internal/commitment/repository/light_path.go:60`.
+  A drop of the slug match is silent. With the one-folder scope, the match
+  guards only a deliverable that no producer emits.
+
+### LP-C1 repair cycle 2
+
+A fresh ticket 3 repair session takes S3, S4, and C5. This cycle is the last
+cycle that the bounded repair policy allows for LP-C1.
+
 ```bench-review-record
 {
   "version": 2,
@@ -704,6 +754,80 @@ axes follows the verification records.
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "lp-c1-standards-r2",
+          "performer": "claude:lpce_c1_standards_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_standards_r2",
+            "digest": "sha256:747de7c5800b224b51981c776bd4aa82b9f2423fb77f40ba7fe151609aa295c5",
+            "excerpt": "Standards axis — LP-C1 confirming round, fable/high, evidence sha256:b12b16fe8f4d834cc1571f54f0d4c88be2ca40ca62c143dfb3ef55b65c72fe2e current at 842f9e51. Repair delta 04e27cea..498b419c.\n\nS1' — minor — internal/commitment/repository/light_path.go:102 const lightPathRoot = \"specs\" is a second source of the specs root beside internal/spec/tickets_only.go:15 const specsDir = \"specs\". AGENTS.md \"one source per fact\". Confidence 7. Disposition ask-user (the fold needs an export from internal/spec, on no Writes line). Command: did not introduce it; the repair promoted a function-local const.\nS2' — low — light_path.go:107 doc comment \"Scope is lightPathRoot or one folder below it\" is not true: Delivery.Spec can be a spec file path two levels below the root. craft-comments SKILL.md. Confidence 7. Disposition auto-fix (reword). Command: the P1 scoping contributed.\n\nFolds: S1 confirmed (TicketBody is the one template; WritesTicketDoc delegates; bytes unchanged for all 8 call sites). P1 confirmed (one ls-tree reader with --literal-pathspecs; no second parser or qualify predicate). drops field passes.\nAdvice: cmd/bench/preflight_version_test.go:33-46 holds a hand-written ticket body copy, out of delta.\nCount: 2. Worst: S1'.\n"
+          },
+          "axis": "Standards",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "498b419c05ae0a526356ff307d5018a4857daa6e",
+          "finding_ids": [
+            "S3",
+            "S4"
+          ],
+          "supersedes": [
+            "lp-c1-standards-r1"
+          ]
+        },
+        {
+          "id": "lp-c1-spec-r2",
+          "performer": "claude:lpce_c1_spec_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_spec_r2",
+            "digest": "sha256:97e069059e72da1561cdd5ccc52defbed58818803fd495b71a3f36ef6e449fa0",
+            "excerpt": "Spec axis — LP-C1 confirming round, fable/high, evidence sha256:b12b16fe8f4d834cc1571f54f0d4c88be2ca40ca62c143dfb3ef55b65c72fe2e current at 842f9e51. Repair delta 04e27cea..498b419c.\n\nP1' — low — spec.md:92 (\"one git ls-tree -r -z of specs\") vs light_path.go:110, which lists delivery.Spec in publication mode. The repair obeys spec line 99; line 92's wording is stale. Non-behavioral spec contradiction. Confidence 7. Disposition no-op (reviewer veto surface; a spec-wording tidy). Command: did not contribute.\n\nFolds: P1 confirmed (publication lists only delivery.Spec at delivery.Source; commit mode and the spec-less route list the specs root). Refusal words confirmed byte for byte against spec 106-108. Fence confirmed for a49c87d6 and f4a0a278. C4 not reopened.\nAdvice: with one-folder scope, the slug comparison is a defensive guard; TicketBody body text changed with no assertion on it.\nCount: 1. Worst: P1'.\n"
+          },
+          "axis": "Spec",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "498b419c05ae0a526356ff307d5018a4857daa6e",
+          "finding_ids": [
+            "P2"
+          ],
+          "supersedes": [
+            "lp-c1-spec-r1"
+          ]
+        },
+        {
+          "id": "lp-c1-coverage-r2",
+          "performer": "claude:lpce_c1_coverage_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_coverage_r2",
+            "digest": "sha256:d3c30c0ee053832fd07337d242b55942767d7d1633a4714defee8a02a64d66e4",
+            "excerpt": "Coverage axis — LP-C1 confirming round, fable/high, evidence sha256:b12b16fe8f4d834cc1571f54f0d4c88be2ca40ca62c143dfb3ef55b65c72fe2e current at 842f9e51. Repair delta 04e27cea..498b419c.\n\nC5' — low — light_path.go:110. The new --literal-pathspecs flag has no test; omitting it is silent across TestLightPath*. Reachable: a glob character is a legal folder name, so a delivery --spec \"l*\" beside specs/lp lists the sibling without the flag. Confidence 8. Disposition auto-fix (one TestLightPathPublication row with a glob slug and an oversized sibling ticket). Command: the delta introduced the flag.\nC2b' — low — light_path.go:60. Dropping the slug match is silent; with scope narrowed to delivery.Spec it guards only a non-canonical deliverable no producer emits. Confidence 7. Disposition no-op (equivalent under current producers).\n\nFolds: C1 confirmed (probe bit). C2 confirmed for scope widening (probe bit). C3 confirmed (probe bit). P1 confirmed; drops is sound.\nAdvice: pin or drop the slug match at light_path.go:60.\nTests and probes: package baseline pass; C1 bit; scope->root bit; slug-match drop silent; found[0]->last bit; omit --literal-pathspecs silent. Tree clean after each.\nCount: 2. Worst: C5'.\n"
+          },
+          "axis": "Coverage",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "498b419c05ae0a526356ff307d5018a4857daa6e",
+          "finding_ids": [
+            "C5",
+            "C6"
+          ],
+          "supersedes": [
+            "lp-c1-coverage-r1"
+          ]
         }
       ]
     }
