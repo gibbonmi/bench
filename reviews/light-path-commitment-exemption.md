@@ -1039,6 +1039,89 @@ Commit `caec9d72` widens that wording to a path.
           "requirement": "t3-bench",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "t2-commitment-repository-v4",
+          "performer": "claude:lpce_t2_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c83886b595845c55c414664fd7664fdd47f59726",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t2_r1",
+            "digest": "sha256:0af127104295ce3afc916a2a48bdfe3db34aa46d02016aae4eb3fc79cdfb0e51",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,6096e4e4882bf92394c470d8eecf885639bf7aa6,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,4867\nfailures[0]{package,test,line}:\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover(found, production)' --with 'return nil' --package ./internal/commitment/repository --run TestLightPathCandidate\nexit: 1\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,4,yes\nfailed: TestLightPathCandidate/directory-sibling, TestLightPathCandidate/hostile-path, TestLightPathCandidate/span, TestLightPathCandidate/uncovered-beside-span\n\nRepair coverage (C1):\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap ' || !spec.TicketsOnly(spec.CommitTree(store.Root, tree), slug) {' --with ' {' --package ./internal/commitment/repository --run TestLightPathCandidate\nexit: 1\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,1,yes\nfailed: TestLightPathCandidate/spec-folder (AuthorizeCandidate = <nil>, want a refusal naming \"assignment has no current delivery binding\")\n\nRepair coverage (C3):\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'or run bench commitment start\", p, found[0].path)' --with 'or run bench commitment start\", p, found[len(found)-1].path)' --package ./internal/commitment/repository --run TestLightPathCandidate\nexit: 1\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,1,yes\nfailed: TestLightPathCandidate/uncovered-beside-span (refusal named \"specs/lp2/tickets/one.md\")\n\nRepair coverage (S1 consumer):\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/preflight\nexit: 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,22763\nfailures[0]{package,test,line}:\n"
+          },
+          "requirement": "t2-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In the light-path predicate, admit a qualifying folder without the Writes cover of the production paths. TestLightPathCandidate must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:lpce_t2_r1",
+              "digest": "sha256:0af127104295ce3afc916a2a48bdfe3db34aa46d02016aae4eb3fc79cdfb0e51",
+              "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,6096e4e4882bf92394c470d8eecf885639bf7aa6,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,4867\nfailures[0]{package,test,line}:\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover(found, production)' --with 'return nil' --package ./internal/commitment/repository --run TestLightPathCandidate\nexit: 1\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,4,yes\nfailed: TestLightPathCandidate/directory-sibling, TestLightPathCandidate/hostile-path, TestLightPathCandidate/span, TestLightPathCandidate/uncovered-beside-span\n\nRepair coverage (C1):\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap ' || !spec.TicketsOnly(spec.CommitTree(store.Root, tree), slug) {' --with ' {' --package ./internal/commitment/repository --run TestLightPathCandidate\nexit: 1\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,1,yes\nfailed: TestLightPathCandidate/spec-folder (AuthorizeCandidate = <nil>, want a refusal naming \"assignment has no current delivery binding\")\n\nRepair coverage (C3):\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'or run bench commitment start\", p, found[0].path)' --with 'or run bench commitment start\", p, found[len(found)-1].path)' --package ./internal/commitment/repository --run TestLightPathCandidate\nexit: 1\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,1,yes\nfailed: TestLightPathCandidate/uncovered-beside-span (refusal named \"specs/lp2/tickets/one.md\")\n\nRepair coverage (S1 consumer):\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/preflight\nexit: 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/preflight,pass,22763\nfailures[0]{package,test,line}:\n"
+            }
+          }
+        },
+        {
+          "id": "t2-commit-v4",
+          "performer": "claude:lpce_t2_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c83886b595845c55c414664fd7664fdd47f59726",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t2_r1",
+            "digest": "sha256:2d3b343829c72fd4aa0d84a5c17c7dc0c94492d87e1e39176155cab317b8ac1b",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/commit\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,6096e4e4882bf92394c470d8eecf885639bf7aa6,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,7352\nfailures[0]{package,test,line}:\n"
+          },
+          "requirement": "t2-commit",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-conformance-v4",
+          "performer": "claude:lpce_t2_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c83886b595845c55c414664fd7664fdd47f59726",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t2_r1",
+            "digest": "sha256:7e876b51ce3b9c6af3c4f277459388f2cfbc78fa3ab635acecae208c868dc08e",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,6096e4e4882bf92394c470d8eecf885639bf7aa6,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,44387\nfailures[0]{package,test,line}:\nskips[3]: capability skips (unix sockets unavailable; character device needs privilege)\n"
+          },
+          "requirement": "t2-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-bench-v4",
+          "performer": "claude:lpce_t2_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c83886b595845c55c414664fd7664fdd47f59726",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t2_r1",
+            "digest": "sha256:a5fcfedf631cb4f002cbce97920fa368247029c3d676b31617360b98c6a115ab",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./cmd/bench\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,6096e4e4882bf92394c470d8eecf885639bf7aa6,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14236\nfailures[0]{package,test,line}:\n"
+          },
+          "requirement": "t2-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
