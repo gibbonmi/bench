@@ -40,13 +40,14 @@ type report struct {
 	tests      map[string]*testResult
 	packageLog map[string][]string
 	terminal   bool
-	// ranTests holds one key for each test that emitted a run event, so the count of
-	// tests that ran and the fact that any ran are one observation.
-	ranTests map[string]bool
+	// ranTests holds, for each package, one key for each test that emitted a run event,
+	// so the packages row count, the count of tests that ran, and the fact that any ran
+	// are one observation.
+	ranTests map[string]map[string]bool
 }
 
 func newReport() *report {
-	return &report{statuses: map[string]string{}, elapsedMS: map[string]int64{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string][]string{}, ranTests: map[string]bool{}}
+	return &report{statuses: map[string]string{}, elapsedMS: map[string]int64{}, seen: map[string]bool{}, tests: map[string]*testResult{}, packageLog: map[string][]string{}, ranTests: map[string]map[string]bool{}}
 }
 
 func decode(stream io.Reader) (*report, error) {
@@ -69,7 +70,10 @@ func decode(stream io.Reader) (*report, error) {
 		}
 		report.seen[e.Package] = true
 		if e.Action == "run" && e.Test != "" {
-			report.ranTests[e.Package+"\x00"+e.Test] = true
+			if report.ranTests[e.Package] == nil {
+				report.ranTests[e.Package] = map[string]bool{}
+			}
+			report.ranTests[e.Package][e.Test] = true
 		}
 		if e.Test == "" && strings.Contains(e.Output, "[no test files]") {
 			report.statuses[e.Package] = "no-tests"
@@ -156,12 +160,12 @@ func (r *report) render(full bool) (string, error) {
 	sort.Strings(packages)
 	packageRows := make([][]any, 0, len(packages))
 	for _, pkg := range packages {
-		// The name and the status are strings the encoder escapes; the third cell is a
-		// count of milliseconds, so it emits bare and stays an integer on a round-trip.
-		packageRows = append(packageRows, []any{pkg, r.statuses[pkg], r.elapsedMS[pkg]})
+		// The name and the status are strings the encoder escapes; the last two cells are
+		// counts, so they emit bare and stay integers on a round-trip.
+		packageRows = append(packageRows, []any{pkg, r.statuses[pkg], r.elapsedMS[pkg], len(r.ranTests[pkg])})
 	}
 	failures := r.failures(full)
-	packageBlock, err := toon.TableTyped("packages", []string{"package", "status", "elapsed_ms"}, packageRows)
+	packageBlock, err := toon.TableTyped("packages", []string{"package", "status", "elapsed_ms", "tests_run"}, packageRows)
 	if err != nil {
 		return "", err
 	}

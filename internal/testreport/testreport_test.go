@@ -74,7 +74,7 @@ func TestPackageTableCarriesElapsedMilliseconds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "packages[2]{package,status,elapsed_ms}:\n  timed,pass,412\n  untimed,pass,0\n"
+	want := "packages[2]{package,status,elapsed_ms,tests_run}:\n  timed,pass,412,0\n  untimed,pass,0,0\n"
 	if !strings.Contains(output, want) {
 		t.Fatalf("package result = %q, want %q", output, want)
 	}

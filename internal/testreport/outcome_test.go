@@ -236,31 +236,31 @@ var baseGoldens = map[string]struct {
 	code   int
 }{
 	"failing/package": {
-		output: "packages[1]{package,status,elapsed_ms}:\n  canned,fail,500\nfailures[1]{package,test,line}:\n  canned,TestCanned,\"canned_test.go:9: boom\"\nskips[0]{package,test,reason}:\n",
+		output: "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,fail,500,1\nfailures[1]{package,test,line}:\n  canned,TestCanned,\"canned_test.go:9: boom\"\nskips[0]{package,test,reason}:\n",
 		code:   1,
 	},
 	"failing/run": {
-		output: "packages[1]{package,status,elapsed_ms}:\n  canned,fail,500\nfailures[1]{package,test,line}:\n  canned,TestCanned,\"canned_test.go:9: boom\"\nskips[0]{package,test,reason}:\n",
+		output: "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,fail,500,1\nfailures[1]{package,test,line}:\n  canned,TestCanned,\"canned_test.go:9: boom\"\nskips[0]{package,test,reason}:\n",
 		code:   1,
 	},
 	"passing/package": {
-		output: "packages[1]{package,status,elapsed_ms}:\n  canned,pass,250\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+		output: "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,pass,250,1\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
 		code:   0,
 	},
 	"passing/run": {
-		output: "packages[1]{package,status,elapsed_ms}:\n  canned,pass,250\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+		output: "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,pass,250,1\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
 		code:   0,
 	},
 	"build-fail/package": {
-		output: "packages[1]{package,status,elapsed_ms}:\n  canned,fail,0\nfailures[1]{package,test,line}:\n  canned,\"\",\"./canned.go:3:1: syntax error: unexpected }\"\nskips[0]{package,test,reason}:\n",
+		output: "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,fail,0,0\nfailures[1]{package,test,line}:\n  canned,\"\",\"./canned.go:3:1: syntax error: unexpected }\"\nskips[0]{package,test,reason}:\n",
 		code:   1,
 	},
 	"build-fail/run": {
-		output: "packages[1]{package,status,elapsed_ms}:\n  canned,fail,0\nfailures[1]{package,test,line}:\n  canned,\"\",\"./canned.go:3:1: syntax error: unexpected }\"\nskips[0]{package,test,reason}:\n",
+		output: "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,fail,0,0\nfailures[1]{package,test,line}:\n  canned,\"\",\"./canned.go:3:1: syntax error: unexpected }\"\nskips[0]{package,test,reason}:\n",
 		code:   1,
 	},
 	"no-run/package": {
-		output: "packages[1]{package,status,elapsed_ms}:\n  canned,no-tests,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
+		output: "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,no-tests,0,0\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n",
 		code:   0,
 	},
 	"no-run/run": {

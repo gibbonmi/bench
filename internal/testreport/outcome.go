@@ -78,7 +78,10 @@ func interruptedOutcome(line string, code int) (Outcome, string, int) {
 // failure rows; a row with no test name is the package's own diagnostic, which is the
 // build failure the kinds separate from a test failure.
 func (r *report) outcome(full bool) Outcome {
-	ran := len(r.ranTests)
+	ran := 0
+	for _, tests := range r.ranTests {
+		ran += len(tests)
+	}
 	failed := 0
 	for _, row := range r.failures(full) {
 		if row[1] != "" {
