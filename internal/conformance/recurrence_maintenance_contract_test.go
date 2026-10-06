@@ -87,8 +87,8 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	decisionsBeforeWriter := "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts."
 	treeVerification := "Verify that the tree stayed unchanged."
 	coordinatorOwnership := "Keep sealed capture retirement, the handoff, verification, and landing with the coordinator."
-	implementOverlap := "Retained implement-now work may run while other reads continue."
-	implementRouting := "Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`."
+	implementOverlap := "Implement-now delegates may run while other reads continue."
+	implementRouting := "Route their line through `craft-line` and keep their authorship under `.bench/BENCH.md`."
 	withImplementTiming := "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`."
 	withoutImplementTiming := "If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions."
 	singleWriter := "If tracked changes remain, the retained drain session authors the complete tracked batch."
@@ -213,8 +213,8 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		{"decisions before writer", "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts.", "Resolve duplicate incidents after retained batch authorship starts.", "bench-drain does not resolve cross-source decisions before batch writing"},
 		{"tree verification", "Verify that the tree stayed unchanged.", "Assume that the tree stayed unchanged.", "bench-drain does not verify the tree stayed unchanged after reading"},
 		{"coordinator ownership", "Keep sealed capture retirement, the handoff,\nverification, and landing with the coordinator.", "Delegate sealed capture retirement and landing.", "bench-drain does not retain coordinator ownership of local and landing work"},
-		{"implement-now overlap", "Retained implement-now work may run while other reads continue.", "Start implement-now work after every read finishes.", "bench-drain does not allow implement-now work to overlap remaining reads"},
-		{"implement-now routing", "Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`.", "Route implement-now work without craft-line or retained authorship.", "bench-drain does not route implement-now work through craft-line and retained authorship"},
+		{"implement-now overlap", "Implement-now delegates may run while other reads continue.", "Start implement-now work after every read finishes.", "bench-drain does not allow implement-now work to overlap remaining reads"},
+		{"implement-now routing", "Route their line through `craft-line` and keep their authorship under `.bench/BENCH.md`.", "Route implement-now work without craft-line or retained authorship.", "bench-drain does not route implement-now work through craft-line and retained authorship"},
 		{"implement-now landing timing", "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`.", "Create the batch worktree before implement-now items land.", "bench-drain does not wait for every implement-now landing before batch creation"},
 		{"no-implement-now timing", "If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions.", "If no implement-now item exists, never create the batch worktree.", "bench-drain does not create the batch after reads when no implement-now item exists"},
 		{"single batch writer", "If tracked changes remain, the retained drain session authors the complete tracked batch.", "A later write delegate authors the complete tracked batch.", "bench-drain does not retain one conditional tracked batch author"},

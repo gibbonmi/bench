@@ -30,9 +30,9 @@ func TestCommitmentGuidance(t *testing.T) {
 		router     = ".agents/commands/bench.md"
 		prefix     = "commitment guidance: "
 	)
-	ticket := "Verify the diff against the ticket's acceptance rows and the gate."
+	ticket := "The coordinator verifies the done-claim against the ticket's acceptance rows and the gate."
 	sequence := "The drain does not write the `## Recommended sequence` section."
-	learning := "A learning entry with a light-path fix follows the learning-fix rule in `.bench/BENCH.md`."
+	learningFix := "**Delegate each light-path fix.**"
 	remove := func(name, file, sentence, want string) commitmentGuidanceMutation {
 		return commitmentGuidanceMutation{name: name, file: file, old: sentence, want: prefix + want}
 	}
@@ -41,17 +41,22 @@ func TestCommitmentGuidance(t *testing.T) {
 	}
 	for _, mutation := range []commitmentGuidanceMutation{
 		remove("canonical rule", guide, "**Deliver only the committed outcome.** ", "operating guide dropped the canonical delivery commitment rule"),
-		remove("start route", guide, "Delivery starts only through `bench commitment start` for the eligible outcome that `bench status` names, light path and fixes included. ", "operating guide dropped the committed-outcome start route"),
-		remove("uncommitted intake", guide, "Any other finding, idea, learning, or drained item stays uncommitted intake, and minimal support that the active outcome needs stays in that outcome. ", "operating guide dropped uncommitted intake"),
+		remove("start route", guide, "A spec implementation starts only through `bench commitment start` for the eligible outcome that `bench status` names. ", "operating guide dropped the spec start route"),
+		remove("uncommitted intake", guide, "Any other finding, idea, learning, or drained item that needs a spec stays uncommitted intake; minimal support for the active outcome stays in it. ", "operating guide dropped uncommitted intake"),
 		remove("explicit displacement", guide, "Only my explicit direction changes the commitment, through `bench commitment plan` and then `bench commitment approve`; no drain, label, score, or count displaces it. ", "operating guide dropped explicit displacement"),
 		remove("purpose priority", guide, "When you propose work, put confirmed defects first, then refactors, then features, by purpose rather than label; dependencies and the approved order govern execution. ", "operating guide dropped purpose-based defect and refactor priority"),
 		remove("blocker report", guide, " When the active outcome cannot continue, run `bench commitment block` with the reason and tell me; the obligation stays.", "operating guide dropped the blocker report"),
-		remove("drain admission route", drain, "The commitment rule in `.bench/BENCH.md` decides whether intake starts; a drain approval never admits it.", "drain dropped its route to the commitment rule"),
-		remove("drain implement-now admission", drain, "A drained light-path item is implement-now work only after `bench commitment approve` admits it and `bench commitment start` binds its worktree.", "drain dropped the admission route for implement-now work"),
+		remove("light-path observable", guide, " It carries one tickets-only folder with exactly one ticket, and it lands with that folder as `--spec`.", "operating guide dropped the light-path observable"),
+		remove("light-path Writes boundary", guide, " Its production paths stay inside that ticket's `Writes:` line.", "operating guide dropped the light-path Writes boundary"),
+		remove("light-path row rule", guide, " It may remove a roadmap row that no committed outcome pins as a source; a pinned row changes only through its outcome.", "operating guide dropped the light-path row rule"),
+		remove("drain light-path dispatch", guide, " `/bench-drain` dispatches every other light-path fix that its verdicts keep, whatever the active commitment is.", "operating guide dropped the drain light-path dispatch"),
+		remove("drain spec intake route", drain, "The commitment rule in `.bench/BENCH.md` decides whether spec intake starts; a drain approval never admits it.", "drain dropped its route to the commitment rule"),
+		remove("drain delegate route", drain, "A drained light-path item needs no commitment: the drain dispatches it under the light-path fix rule in `.bench/BENCH.md`.", "drain dropped the delegate route for a light-path item"),
 		remove("drain sequence owner", drain, sequence, "drain dropped the commitment ownership of the recommended sequence"),
 		remove("drain classification limit", drain, "It informs a commitment proposal and never reorders committed work.", "drain dropped the classification limit"),
 		remove("final-check closure", finalCheck, "Verified closure is part of delivery. ", "final check dropped verified closure from delivery"),
 		remove("implementation start", ".agents/commands/bench-implement-spec.md", "It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams.", "implementation dropped its commitment start"),
+		remove("implementation light-path exemption", ".agents/commands/bench-implement-spec.md", "A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.", "implementation dropped the light-path start exemption"),
 		remove("staged spec", ".agents/commands/bench-write-spec.md", " A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.", "spec authoring dropped the planning-only staged spec"),
 		remove("debug route", ".agents/commands/bench-debug.md", " Diagnosis needs no commitment start, but each commit of the repro or the fix follows the commitment rule in `.bench/BENCH.md`.", "debug dropped its route to the commitment rule"),
 		remove("router outlook", router, "take its `commitment_outlook` row", "router dropped the commitment outlook"),
@@ -59,7 +64,7 @@ func TestCommitmentGuidance(t *testing.T) {
 
 		restore("default implementation", drain, ticket, "For a drained item that meets the light-path observables, build the item in this session (\"implement now\") by default.", "drain restored the default implementation of a light-path item"),
 		restore("declined row", drain, ticket, "Open a `ROADMAP.md` row only when the reviewer declines.", "drain restored the roadmap row only for a declined item"),
-		restore("direct learning fix", drain, learning, "A learning entry with a light-path fix goes to the write delegate that `.bench/BENCH.md` names, and its verdict closes the entry by implementation.", "drain restored the direct implementation of each light-path learning fix"),
+		restore("commitment admission", drain, ticket, "A drained light-path item is implement-now work only after `bench commitment approve` admits it and `bench commitment start` binds its worktree.", "drain restored the commitment admission of a light-path item"),
 		restore("sequence rewrite", drain, sequence, "Rewrite the `## Recommended sequence` section: two or three numbered lines, each naming the item and the phase command to run.", "drain restored the sequence rewrite"),
 		restore("severity rank", drain, sequence, "Rank rows by severity.", "drain restored the severity rank"),
 		restore("actionable preference", drain, sequence, "Within an equal-severity class, choose actionable work over blocked work.", "drain restored the actionable-work preference"),
@@ -68,8 +73,9 @@ func TestCommitmentGuidance(t *testing.T) {
 		restore("defect and cost tiebreaker", drain, sequence, "When occurrence count also ties, apply the existing reproduced defect-over-feature rule, then cheapest-first cost rule.", "drain restored the defect and cost rules as an occurrence tiebreaker"),
 		restore("refreshed sequence command", drain, sequence, "The recommended next command is the top line of the refreshed `## Recommended sequence`.", "drain restored the refreshed sequence as its next command"),
 		restore("later drain closure", finalCheck, "Verified closure is part of delivery.", "Leave the roadmap and capture rows to `/bench-drain`; that phase owns the reconcile and the drain, and this duty never restates it.", "final check restored roadmap closure as a later drain"),
-		restore("unadmitted learning fix", guide, "**Delegate a light-path fix for a learning.**", "A `bench learning` entry can have a light-path fix that needs no reviewer decision.", "operating guide restored the learning fix without admission"),
-		restore("drain implementation", guide, "Parked ideas land in `capture/IDEAS.md`.", "They graduate to the board only through a reviewed `/bench-drain` drain, or close by implementation during that same drain.", "operating guide restored implementation inside a drain"),
+		restore("unadmitted learning fix", guide, learningFix, "A `bench learning` entry can have a light-path fix that needs no reviewer decision.", "operating guide restored the learning fix without admission"),
+		restore("light-path commitment start", guide, "**Deliver only the committed outcome.**", "Delivery starts only through `bench commitment start` for the eligible outcome that `bench status` names, light path and fixes included.", "operating guide restored the commitment start for light-path work"),
+		restore("active-outcome learning fix", guide, learningFix, "At any point in the workflow, `/bench-implement-spec` included, a `bench learning` entry can have a light-path fix that the active committed outcome needs.", "operating guide restored the learning fix for the active outcome only"),
 		restore("mid-work defect fix", guide, "**Fix, don't park.**", "A small defect you find mid-work is not roadmap work: the fix lands in the active workflow as its own commit.", "operating guide restored the fix of every mid-work defect without admission"),
 		restore("first sequence row", router, "State its outcome, then", "For roadmap work, run `bench roadmap` and take the first `sequence` row.", "router restored the first sequence row as its work"),
 	} {
