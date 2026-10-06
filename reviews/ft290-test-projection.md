@@ -336,6 +336,93 @@ Count: 4. Worst issue: C1.
               "excerpt": "source: d49b069704efe603a84203bdeffa9614c4802c37 (chunk TP-C1a, after review repair)\n$ bench test --package ./internal/testreport\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,33197\nfailures[0] skips[0]\n$ bench probe internal/testreport/named_check.go --omit ' + \"\\n\" + namedCheckInventory()' --package ./internal/testreport --run '^TestUnknownNamedCheckReportsOperandAndInventory$'\nexit 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/named_check.go,omit,failed,1,yes\nfailure: TestUnknownNamedCheckReportsOperandAndInventory check_test.go:217 (refusal lost the checks inventory)\n"
             }
           }
+        },
+        {
+          "id": "t1-testreport-v3",
+          "performer": "claude:ft290_t1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t1",
+            "digest": "sha256:b1f072c8ed444d64df88435c5bffb19d7254414741a6a9df963cdfe4c086fdf3",
+            "excerpt": "source: 72c5cbc4e94dd5ad6ece7616431f73b74daf42f2 (chunk TP-C1a), tree clean\n$ bench test --package ./internal/testreport\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,35016\nfailures[0] skips[0]\n$ bench probe internal/testreport/named_check.go --omit ' + \"\\n\" + namedCheckInventory()' --package ./internal/testreport --run '^TestUnknownNamedCheckReportsOperandAndInventory$'\nbench probe exit 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/named_check.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,^TestUnknownNamedCheckReportsOperandAndInventory$,passed,1\npackages[1]: github.com/gibbonmi/bench/internal/testreport,fail,3\nfailure: TestUnknownNamedCheckReportsOperandAndInventory check_test.go:217 (refusal lost the checks inventory)\nmutated run exit code: the probe output prints no exit-code cell for the mutated run.\nRecorded probe exit code 1, inferred from cause=failed, failed_tests=1, and package status fail.\n"
+          },
+          "requirement": "t1-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omission at the moved unknown-name branch of the named-check owner: omit the namedCheckInventory call in the unknown-check refusal with bench probe --omit. TestUnknownNamedCheckReportsOperandAndInventory must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t1",
+              "digest": "sha256:b1f072c8ed444d64df88435c5bffb19d7254414741a6a9df963cdfe4c086fdf3",
+              "excerpt": "source: 72c5cbc4e94dd5ad6ece7616431f73b74daf42f2 (chunk TP-C1a), tree clean\n$ bench test --package ./internal/testreport\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,35016\nfailures[0] skips[0]\n$ bench probe internal/testreport/named_check.go --omit ' + \"\\n\" + namedCheckInventory()' --package ./internal/testreport --run '^TestUnknownNamedCheckReportsOperandAndInventory$'\nbench probe exit 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/named_check.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,^TestUnknownNamedCheckReportsOperandAndInventory$,passed,1\npackages[1]: github.com/gibbonmi/bench/internal/testreport,fail,3\nfailure: TestUnknownNamedCheckReportsOperandAndInventory check_test.go:217 (refusal lost the checks inventory)\nmutated run exit code: the probe output prints no exit-code cell for the mutated run.\nRecorded probe exit code 1, inferred from cause=failed, failed_tests=1, and package status fail.\n"
+            }
+          }
+        },
+        {
+          "id": "t2-testreport-r2",
+          "performer": "claude:ft290_t2_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t2_r1",
+            "digest": "sha256:93af44ce3e2170196ce75606fefae53d2e0c7ffe027ac54cc67ef33e95678815",
+            "excerpt": "HEAD 72c5cbc4e94dd5ad6ece7616431f73b74daf42f2\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/testreport.go --swap 'len(r.ranTests[pkg])' --with '0' --package ./internal/testreport --run '^TestPackagesRowCountsRunEvents$'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/testreport.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,fail,58\nfailures[1]: TestPackagesRowCountsRunEvents got \"canned,pass,250,0\", want \"canned,pass,250,2\"\nMutated focused run exit code: 1, inferred from verdict bit, cause failed, failed_tests 1, and package status fail (bench probe prints no exit cell for the mutated run).\n\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,31944\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nexit 0\n"
+          },
+          "requirement": "t2-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the packages-row producer: replace the tests_run count of distinct run events with the constant 0. TestPackagesRowCountsRunEvents must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t2_r1",
+              "digest": "sha256:93af44ce3e2170196ce75606fefae53d2e0c7ffe027ac54cc67ef33e95678815",
+              "excerpt": "HEAD 72c5cbc4e94dd5ad6ece7616431f73b74daf42f2\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/testreport.go --swap 'len(r.ranTests[pkg])' --with '0' --package ./internal/testreport --run '^TestPackagesRowCountsRunEvents$'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/testreport.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,fail,58\nfailures[1]: TestPackagesRowCountsRunEvents got \"canned,pass,250,0\", want \"canned,pass,250,2\"\nMutated focused run exit code: 1, inferred from verdict bit, cause failed, failed_tests 1, and package status fail (bench probe prints no exit cell for the mutated run).\n\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,31944\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nexit 0\n"
+            }
+          }
+        },
+        {
+          "id": "t3-testreport-r2",
+          "performer": "claude:ft290_t3_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t3_r1",
+            "digest": "sha256:63ad4b44b04ce59435d56501d60ed11f174cca83b8f44301559774707c04d99f",
+            "excerpt": "HEAD 72c5cbc4e94dd5ad6ece7616431f73b74daf42f2\n$ bench probe internal/testreport/named_check.go --omit '<OutcomeNoTestRun zero-rule branch>' --package ./internal/testreport --run '^TestNamedCheckRanNothingExitsOne$'\n  probe: bit,internal/testreport/named_check.go,omit,failed,1,yes\n  mutated run: internal/testreport,fail,42 ms; failures[1] TestNamedCheckRanNothingExitsOne check_row_test.go:87\n  mutated-run exit 1: inferred from verdict bit, cause failed, failed_tests 1, package status fail (bench probe prints no exit cell)\n$ bench test --package ./internal/testreport\n  internal/testreport,pass,32417 ms; failures[0]; skips[0]; exit 0\n"
+          },
+          "requirement": "t3-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omission at the zero rule: omit the OutcomeNoTestRun branch that prints the named check ran nothing title and exits 1. TestNamedCheckRanNothingExitsOne must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t3_r1",
+              "digest": "sha256:63ad4b44b04ce59435d56501d60ed11f174cca83b8f44301559774707c04d99f",
+              "excerpt": "HEAD 72c5cbc4e94dd5ad6ece7616431f73b74daf42f2\n$ bench probe internal/testreport/named_check.go --omit '<OutcomeNoTestRun zero-rule branch>' --package ./internal/testreport --run '^TestNamedCheckRanNothingExitsOne$'\n  probe: bit,internal/testreport/named_check.go,omit,failed,1,yes\n  mutated run: internal/testreport,fail,42 ms; failures[1] TestNamedCheckRanNothingExitsOne check_row_test.go:87\n  mutated-run exit 1: inferred from verdict bit, cause failed, failed_tests 1, package status fail (bench probe prints no exit cell)\n$ bench test --package ./internal/testreport\n  internal/testreport,pass,32417 ms; failures[0]; skips[0]; exit 0\n"
+            }
+          }
         }
       ],
       "reviews": [
