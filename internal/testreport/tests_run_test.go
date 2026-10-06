@@ -48,6 +48,19 @@ func TestPackagesRowNoTestsCountsZero(t *testing.T) {
 	}
 }
 
+// TestPackagesRowIgnoresUnnamedRunEvent grades that a run event with no test name counts
+// no test that ran: the package that emits only that event prints 0.
+func TestPackagesRowIgnoresUnnamedRunEvent(t *testing.T) {
+	output, code := commandOverEvents(t, []string{
+		`{"Action":"run","Package":"canned"}`,
+		`{"Action":"pass","Package":"canned","Elapsed":0.25}`,
+	}, 0)
+	want := "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,pass,250,0\n"
+	if !strings.HasPrefix(output, want) {
+		t.Fatalf("Command = (%d, %q), want prefix %q", code, output, want)
+	}
+}
+
 // TestPackageFormHasNoSelectedBy grades that a `--package` result prints the packages
 // header with no cause cell. (Coverage row TP47.)
 func TestPackageFormHasNoSelectedBy(t *testing.T) {
