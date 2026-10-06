@@ -67,23 +67,32 @@ spec-less route with two qualifying folders.
 
 ## LP-C1 repair state
 
-Repair cycle 1 of 2 is open. A fresh ticket 2 repair session takes S1, C1,
-and C3. A fresh ticket 3 repair session then takes P1 and C2. The reviewer
-closed C4 with no repair.
+Repair cycle 1 of 2 is consumed. The reviewer closed C4 with no repair.
+
+- The fresh ticket 2 repair session closed S1, C1, and C3 in commit
+  `a49c87d6`. Probes for C1 and C3 bit and restored.
+- The fresh ticket 3 repair session closed P1 and C2 in commit `f4a0a278`.
+  Publication mode now lists only the folder that `--spec` names. Probes for
+  P1 and C2 bit and restored.
+- The ticket 1 author ran in a cleared session, so a fresh session reruns
+  the ticket 1 verification at the repair source.
+
+The chunk is frozen again at `498b419c`. A confirming round of all three
+axes follows the verification records.
 
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/light-path-commitment-exemption/spec.md",
-  "plan_digest": "sha256:ee3082fcb4249624afaa1ed7651a32d840d1a170a5551c067e42c4da56afe988",
+  "plan_digest": "sha256:ec4525fc97530b0be25d362a341778ea663b9f15214849522c765ff999535415",
   "implementation_session": "",
   "chunks": [
     {
       "id": "LP-C1",
       "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
-      "tip": "04e27ceae64de006cbfbdc6d940eef67f163efd3",
-      "plan_digest": "sha256:ee3082fcb4249624afaa1ed7651a32d840d1a170a5551c067e42c4da56afe988",
-      "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+      "tip": "498b419c05ae0a526356ff307d5018a4857daa6e",
+      "plan_digest": "sha256:ec4525fc97530b0be25d362a341778ea663b9f15214849522c765ff999535415",
+      "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
       "acceptance_rows": [
         "LP27",
         "LP28",
@@ -456,6 +465,17 @@ closed C4 with no repair.
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:ee3082fcb4249624afaa1ed7651a32d840d1a170a5551c067e42c4da56afe988",
+      "to": "sha256:ec4525fc97530b0be25d362a341778ea663b9f15214849522c765ff999535415",
+      "chunk_ids": {
+        "LP-C1": [
+          "LP-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
