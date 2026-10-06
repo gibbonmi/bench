@@ -198,6 +198,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,
   OpenCode, …). The kit is harness-agnostic by design.
+- **harness interface** — the user-facing entry point to a harness, such as Codex CLI or the desktop app. Not "execution environment" or "chat" — harness interface.
+- **execution environment** — the operating-system context in which a harness runs a command or a tool. Not "harness interface" or "worktree" — execution environment.
+- **required capability** — a tool or integration behavior that a specific Bench operation needs to execute its approved contract. Not "available tool" or "optional feature" — required capability.
 - **environment closure** — the harness process carries the toolchain effects
   implied by its inherited initialization state. Not "loaded environment" or
   "working PATH" — both names hide partial propagation.
@@ -218,6 +221,17 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   owns that row's body, its `Occurrence:` ledger, and its `Sources:` line.
   `bench roadmap` prints it. A row leaves — index line and detail file together — when the
   work ships or a reconcile removes it. Not "icebox", not "backlog" — roadmap.
+- **milestone** — a finite, reviewer-approved outcome with a verifiable completion
+  criterion. Not "finished row list", not "priority group" — milestone.
+- **uncommitted roadmap work** — assessed open work outside the current delivery
+  commitment. Not "approved next work", not "active outcome" — uncommitted
+  roadmap work.
+- **delivery commitment** — a reviewer-approved finite milestone and its ordered
+  work list. Not "recommended sequence", not "assessment findings" — delivery
+  commitment.
+- **displacement decision** — the reviewer's explicit approval of a change to
+  a delivery commitment, naming the work delayed or removed. Not "drain approval",
+  not "finding approval" — displacement decision.
 - **roadmap index / roadmap detail** — schema-4 projections of the **roadmap** and
   its capture evidence. The index inventories every row and capture unit with
   true body sizes but no bodies. Detail is a complete body, read for a named row
@@ -411,6 +425,16 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **prose exclusion row** — one line of `.bench/prose-exclusions`: a path the prose
   mechanics check does not grade, and a one-clause reason. The reviewer owns that file.
   Not "allowlist", not "skip list" — prose exclusion row.
+- **block reader** — the one owner of the Markdown block rules: frontmatter, fenced
+  blocks, HTML comments, and H2 headings. It classifies each line of a document, and
+  each grammar module reads its lines from it. Not "fence detector", not "Markdown
+  parser" — block reader.
+- **fenced block** — the lines from a fence opener through its closer. An opener is a
+  run of three or more backticks or tildes after any leading spaces or tabs. A closer
+  is a run of the same character at least as long, and text after the run does not
+  stop the close. Not "code block" without the qualifier — fenced block.
+- **unfenced line** — a body line outside the frontmatter and outside every fenced
+  block. Not "prose line", because a table row or a heading is also an unfenced line.
 - **always-loaded core** — `.bench/BENCH.md`, which holds the six rule families every
   session loads; the mechanics live in `.bench/BENCH-reference.md`. Not "the guide"
   unqualified, and not "progressive loading" (the split is progressive disclosure) —

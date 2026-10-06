@@ -77,30 +77,6 @@ The unexecuted proposal uses Astra at high effort for 32 trials and at most 64 a
 Rates remain unknown, and the proposal supplies no monetary cap.
 Read the preserved configuration and its review requirements before proposing execution.
 
-## Landing blocker
-
-The reviewer authorized this research snapshot to land on `main` on 2026-10-03.
-The committed candidate is `e4d93a4e49800ff31649891621491c828f7211a6`.
-The landing did not publish; this source assignment remains the current research owner.
-The proposed FT347 update remains on this branch until the landing succeeds.
-
-The normal landing passed formatting, vet, Go tests, race checks, and system checks.
-The checkout guard then refused generated changes to these paths:
-
-- `bin/bench-broker.manifest`
-- `dist/bench`
-- `dist/bench.seal`
-
-The earlier merge check reproduced the same refusal.
-A sanctioned worktree rebuild and a healthy doctor result did not resolve it.
-The infrastructure refusal during another active gate caused no publication and no test result.
-Preserve the gate checks; resolve the generated writes before retrying the landing.
-FT327 records the related artifact-publication concern, but this run did not identify the responsible test.
-
-Gate evidence: `landing-parking/gate-20261003T114837.644524186Z-2863251.jsonl` and its `.out` file under the external evidence root.
-Landing request: jev-research-resume-20261003
-Landing base: 0602615722b0e82fa9bae0b10f4cd0f7cf76e198
-
 ## First work after resumption
 
 Choose a disposition for the failing frozen baseline before another aggregate qualification run.

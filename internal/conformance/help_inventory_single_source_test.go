@@ -24,7 +24,11 @@ const helpInventoryTitle = "bench — Pocock pipeline meets Kun Chen substrate, 
 // helpRowProjections names each command whose help rows derive from its own form
 // registry, and the projection call that must supply them. Every other public command keeps
 // literal helpRow metadata.
-var helpRowProjections = map[string]string{"preflight": "preflightHelpRows", "record": "recordHelpRows"}
+var helpRowProjections = map[string]string{
+	"commitment": "commitmentHelpRows",
+	"preflight":  "preflightHelpRows",
+	"record":     "recordHelpRows",
+}
 
 // isHelpRowProjection reports whether a publicInventory call spreads exactly one call of
 // the named projection and nothing else.

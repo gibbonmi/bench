@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"slices"
 
+	"github.com/gibbonmi/bench/internal/commentgap"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -78,7 +79,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 				return err
 			}
 			if baseDigest != previous.SourceDigest || !benchgit.OK("-C", root, "merge-base", "--is-ancestor", previous.Tip, chunk.Base) {
-				return fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands only before the first chunk, and only record commits follow a chunk tip; review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)
+				return fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands only before the first chunk, and only record commits and comment-only corrections follow a chunk tip; review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)
 			}
 		}
 		// Verification ownership reads the frozen plan above, so a historical
@@ -111,7 +112,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			}
 		}
 		previous = chunk
-		if !complete && contains(ids, chunkID) {
+		if !complete && slices.Contains(ids, chunkID) {
 			matched = true
 			break
 		}
@@ -119,7 +120,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 	if !complete && !matched {
 		return fmt.Errorf("missing chunk %s; record its completed evidence", chunkID)
 	}
-	if previous.SourceDigest != digest {
+	if previous.SourceDigest != digest && commentgap.Prove(root, previous.SourceDigest, digest) != nil {
 		// The reviewed tip and the requested tip bound the delta no review covers. When they
 		// are one commit, the delta is the uncommitted work past that commit.
 		uncovered := previous.Tip + ".." + tip
@@ -207,13 +208,13 @@ func RecordAmendment(root, spec, source string, changes map[string][]string) (Am
 				return fmt.Errorf("chunk %s: %w", chunk.ID, err)
 			}
 			for _, id := range ids {
-				if !contains(keys, id) {
+				if !slices.Contains(keys, id) {
 					keys = append(keys, id)
 				}
 			}
 		}
 		for _, old := range slices.Sorted(maps.Keys(changes)) {
-			if !contains(keys, old) {
+			if !slices.Contains(keys, old) {
 				return fmt.Errorf("chunk %s is not a recorded chunk under the plan digest %s, so no map can name it", old, record.PlanDigest)
 			}
 		}

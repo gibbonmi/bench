@@ -20,8 +20,9 @@ var contextGrammar = usage.Grammar{
 	Flags: []usage.Flag{{Name: "--context"}, {Name: "--full"}, {Name: "--row", HasValue: true, NoEmptyValue: true}},
 }
 
-// ContextCommand implements the read-only schema-4 AXI roadmap snapshot.
-func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int) {
+// ContextCommand implements the read-only schema-4 AXI roadmap snapshot. gate and outlook
+// supply the gate-cache fact and the commitment projection for the resolved root.
+func ContextCommand(args []string, gate func(string) GateCacheFact, outlook OutlookSource) (string, int) {
 	parsed, line, code := usage.Parse(contextGrammar, args)
 	if line != "" {
 		return line + "\n", code
@@ -62,6 +63,7 @@ func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int
 	if err != nil {
 		return toon.Errorf("roadmap context failed", err.Error()) + "\n", 1
 	}
+	s.Commitment = outlook(root)
 	if selectRows {
 		omitCaptureBodies(&s)
 		for i := range s.Failures {
@@ -116,11 +118,7 @@ func omitCaptureBodies(s *ContextSnapshot) {
 }
 
 func renderContext(s ContextSnapshot) (string, error) {
-	type block struct {
-		name   string
-		fields []string
-		rows   [][]any
-	}
+	type block = tableBlock
 	var bs []block
 	bs = append(bs, block{"context", []string{"schema", "full", "sequence_trusted"}, [][]any{{4, s.Full, s.SequenceTrusted}}})
 	rows := make([][]any, len(s.Sources))
@@ -138,6 +136,7 @@ func renderContext(s ContextSnapshot) (string, error) {
 		rows = append(rows, []any{r.Rank, r.Text, r.Command})
 	}
 	bs = append(bs, block{"roadmap_sequence", []string{"rank", "text", "command"}, rows})
+	bs = append(bs, commitmentBlocks(s.Commitment)...)
 	rows = nil
 	for _, r := range s.Ideas {
 		rows = append(rows, []any{r.Date, r.Line, r.Text, r.TextBytes})

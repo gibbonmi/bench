@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/adopt/transaction"
 )
 
-// stagedChange is the journal entry for one managed target.  stage is empty for
-// a deletion.  Promotion always renames the old target aside before installing
-// the staged replacement, which makes reversing a returned write error local and
-// deterministic.
+// stagedChange identifies a managed replacement, or a deletion when stage is empty.
 type stagedChange struct {
-	rel, dest, stage, backup string
+	rel, dest, stage string
 }
 
 var syncDirectory = syncDir
@@ -47,11 +46,7 @@ func writeSyncClose(path string, f *os.File, data []byte) error {
 	return nil
 }
 
-// changesModifyTree reports whether promoting changes would actually alter any file's
-// content, as opposed to rewriting the same bytes back. transactionalLink always restages
-// and repromotes every accepted entry regardless of content, so mtimes/inodes churn on
-// every run even when nothing meaningful changed. It must run before promoteAll: it reads
-// each destination's current fingerprint, which promoteAll is about to overwrite.
+// changesModifyTree compares planned fingerprints before publication for setup's result.
 func changesModifyTree(root string, changes []stagedChange) (bool, error) {
 	for _, c := range changes {
 		dest, ok := changeDestination(root, c)
@@ -75,112 +70,69 @@ func changesModifyTree(root string, changes []stagedChange) (bool, error) {
 }
 
 func promoteAll(root string, changes []stagedChange) error {
-	created := map[string]bool{}
-	done := make([]stagedChange, 0, len(changes))
-	faultName := os.Getenv("BENCH_LINK_FAULT")
-	fault, _ := strconv.Atoi(faultName)
+	return promoteWithLease(root, changes, nil)
+}
+
+func promoteWithLease(root string, changes []stagedChange, guard *adoptionGuard) error {
+	prepared := make([]transaction.Change, 0, len(changes))
+	parents := map[string]bool{}
+	destinations := map[string]int{}
 	for i, c := range changes {
 		dest, ok := changeDestination(root, c)
 		if !ok {
 			return fmt.Errorf("invalid managed path %s", c.rel)
 		}
-		if err := makeParents(filepath.Dir(dest), root, created); err != nil {
-			rollback(root, done, created)
+		change, err := observedChange(dest, c.stage, guard)
+		if err != nil {
 			return err
 		}
-		if _, err := os.Lstat(dest); err == nil {
-			if err := os.Rename(dest, c.backup); err != nil {
-				rollback(root, done, created)
-				return err
-			}
+		if guard != nil && guard.repair != nil {
+			change.Span = guard.repair.spans[dest]
 		}
-		done = append(done, c)
-		if (fault > 0 && i+1 == fault) || (faultName == "last" && i+1 == len(changes)) {
-			rollback(root, done, created)
-			return fmt.Errorf("injected link promotion fault %s", faultName)
-		}
-		if c.stage != "" {
-			if err := os.Rename(c.stage, dest); err != nil {
-				rollback(root, done, created)
-				return err
-			}
-		}
+		prepared = append(prepared, change)
+		parents[filepath.Dir(dest)] = true
+		destinations[dest] = i + 1
 	}
-	if err := syncChangeParents(root, done); err != nil {
-		rollback(root, done, created)
-		syncChangeParentsBestEffort(root, done)
+	faultName := os.Getenv("BENCH_LINK_FAULT")
+	fault, _ := strconv.Atoi(faultName)
+	interrupt := 0
+	if value, ok := strings.CutPrefix(faultName, "interrupt:"); ok {
+		interrupt, _ = strconv.Atoi(value)
+	}
+	var lease *transaction.Lease
+	if guard != nil {
+		lease = guard.Lease
+	}
+	options := transaction.Store{
+		Lease: lease,
+		SyncDirectory: func(dir string) error {
+			if parents[dir] {
+				return syncDirectory(dir)
+			}
+			return syncDir(dir)
+		},
+		Rename: func(old, new string) error {
+			if index := destinations[new]; index > 0 && index == interrupt {
+				// Abrupt exit leaves the durable journal for a fresh-process recovery test.
+				os.Exit(97)
+			}
+			if index := destinations[new]; index > 0 && ((fault > 0 && index == fault) || (faultName == "last" && index == len(changes))) {
+				return fmt.Errorf("injected link promotion fault %s", faultName)
+			}
+			return os.Rename(old, new)
+		},
+	}
+	if guard != nil && guard.repair != nil {
+		options.Directory = guard.repair.store.Directory
+		id, err := options.Apply(prepared)
+		guard.repair.id = id
 		return err
 	}
-	for _, c := range done {
-		_ = os.Remove(c.backup)
-	}
-	return nil
-}
-
-func syncChangeParents(root string, changes []stagedChange) error {
-	dirs, err := changeParentDirs(root, changes)
-	if err != nil {
-		return err
-	}
-	for dir := range dirs {
-		if err := syncDirectory(dir); err != nil {
-			return fmt.Errorf("sync destination directory %s: %w", dir, err)
-		}
-	}
-	return nil
-}
-
-func syncChangeParentsBestEffort(root string, changes []stagedChange) {
-	dirs, err := changeParentDirs(root, changes)
-	if err != nil {
-		return
-	}
-	for dir := range dirs {
-		_ = syncDirectory(dir)
-	}
-}
-
-func changeParentDirs(root string, changes []stagedChange) (map[string]bool, error) {
-	dirs := map[string]bool{}
-	for _, c := range changes {
-		dest, ok := changeDestination(root, c)
-		if !ok {
-			return nil, fmt.Errorf("invalid managed path %s", c.rel)
-		}
-		dirs[filepath.Dir(dest)] = true
-	}
-	return dirs, nil
+	return transaction.Publish(prepared, options)
 }
 
 func syncDir(dir string) error {
-	f, err := os.Open(dir)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return f.Sync()
-}
-
-func rollback(root string, done []stagedChange, created map[string]bool) {
-	for i := len(done) - 1; i >= 0; i-- {
-		c := done[i]
-		dest, ok := changeDestination(root, c)
-		if !ok {
-			continue
-		}
-		_ = os.Remove(dest)
-		if _, err := os.Lstat(c.backup); err == nil {
-			_ = os.Rename(c.backup, dest)
-		}
-	}
-	dirs := make([]string, 0, len(created))
-	for dir := range created {
-		dirs = append(dirs, dir)
-	}
-	sort.Slice(dirs, func(i, j int) bool { return len(dirs[i]) > len(dirs[j]) })
-	for _, dir := range dirs {
-		_ = os.Remove(dir)
-	}
+	return transaction.SyncDirectory(dir)
 }
 
 func changeDestination(root string, c stagedChange) (string, bool) {
@@ -190,22 +142,100 @@ func changeDestination(root string, c stagedChange) (string, bool) {
 	return resolveInside(root, c.rel)
 }
 
-func makeParents(dir, root string, created map[string]bool) error {
-	var missing []string
-	for d := dir; ; d = filepath.Dir(d) {
-		if _, err := os.Stat(d); err == nil {
-			break
-		}
-		missing = append(missing, d)
-		if d == root || filepath.Dir(d) == d {
-			break
+type adoptionObservation struct {
+	change transaction.Change
+	err    error
+}
+
+type adoptionGuard struct {
+	*transaction.Lease
+	observations map[string]adoptionObservation
+	repair       *repairRun
+}
+
+func lockAdoption(root string, plan []planEntry) (*adoptionGuard, error) {
+	manifest := filepath.Join(root, ".bench", "link-manifest.tsv")
+	observed, err := transaction.Prepare(manifest, "")
+	if err != nil {
+		return nil, err
+	}
+	paths, err := adoptionPaths(root, plan)
+	if err != nil {
+		return nil, err
+	}
+	guard, err := lockObserved(paths)
+	if err != nil {
+		return nil, err
+	}
+	if err := observed.Recheck(); err != nil {
+		guard.Close()
+		return nil, err
+	}
+	return guard, nil
+}
+
+func lockObserved(paths []string) (*adoptionGuard, error) {
+	lease, err := transaction.Lock(paths)
+	if err != nil {
+		return nil, err
+	}
+	guard := &adoptionGuard{Lease: lease, observations: map[string]adoptionObservation{}}
+	for _, path := range paths {
+		change, err := transaction.Prepare(path, "")
+		guard.observations[path] = adoptionObservation{change, err}
+	}
+	return guard, nil
+}
+
+func adoptionPaths(root string, plan []planEntry) ([]string, error) {
+	paths := []string{filepath.Join(root, ".bench", "link-manifest.tsv"), filepath.Join(root, "AGENTS.md"), filepath.Join(root, "CLAUDE.md")}
+	for _, e := range plan {
+		paths = append(paths, filepath.Join(root, filepath.FromSlash(e.rel)))
+	}
+	old, err := ReadManifest(paths[0])
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range old.Rows() {
+		if dest, ok := resolveInside(root, row.rel); ok {
+			paths = append(paths, dest)
 		}
 	}
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	hooks, err := hooksDir(root)
+	if err != nil {
+		return nil, err
+	}
+	return append(paths, filepath.Join(hooks, "pre-push")), nil
+}
+
+func observedChange(dest, stage string, guard *adoptionGuard) (transaction.Change, error) {
+	if guard == nil {
+		return transaction.Prepare(dest, stage)
+	}
+	observed, ok := guard.observations[dest]
+	if !ok {
+		return transaction.Change{}, fmt.Errorf("adoption destination absent from the inspected plan: %s", dest)
+	}
+	change := observed.change
+	change.Stage = stage
+	return change, observed.err
+}
+
+func publishObserved(dest, stage string, guard *adoptionGuard) error {
+	change, err := observedChange(dest, stage, guard)
+	if err != nil {
 		return err
 	}
-	for _, d := range missing {
-		created[d] = true
+	return publishChange(change, guard)
+}
+
+func publishChange(change transaction.Change, guard *adoptionGuard) error {
+	if guard != nil && guard.repair != nil {
+		return retainDoctorChange(change, guard.repair)
 	}
-	return nil
+	options := transaction.Store{}
+	if guard != nil {
+		options.Lease = guard.Lease
+	}
+	return transaction.Publish([]transaction.Change{change}, options)
 }

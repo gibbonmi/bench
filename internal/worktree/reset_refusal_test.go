@@ -90,27 +90,18 @@ func TestResetRefusesADirtyNestedRepository(t *testing.T) {
 	requireResetRefusal(t, f.root, f.home, f.creation.Assignment.Start, f.creation.Assignment.ID, "nested repository is dirty")
 }
 
-func resetEmbedded(t *testing.T, path string) string {
-	t.Helper()
-	nested := filepath.Join(path, "nested")
-	mustMkdirAll(t, nested, 0o755)
-	gitRun(t, nested, "init", "-q", "-b", "main")
-	commitInWorktree(t, nested, "nested.txt", "base\n", "nested")
-	return nested
-}
-
 func TestResetRefusesAnEmbeddedRepository(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "reset-embedded")
-	resetEmbedded(t, f.creation.Path)
+	plantNestedRepository(t, f.creation.Path)
 	requireResetRefusal(t, f.root, f.home, f.creation.Assignment.Start, f.creation.Assignment.ID, "embedded repository is retained")
 }
 
 func TestResetRefusesADirtyEmbeddedRepository(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "reset-dirty-embedded")
-	nested := resetEmbedded(t, f.creation.Path)
-	mustWrite(t, filepath.Join(nested, "nested.txt"), []byte("dirty\n"), 0o644)
+	nested := plantNestedRepository(t, f.creation.Path)
+	mustWrite(t, filepath.Join(nested, nestedRepositoryFile), []byte("dirty\n"), 0o644)
 	requireResetRefusal(t, f.root, f.home, f.creation.Assignment.Start, f.creation.Assignment.ID, "embedded repository is retained")
 }
 

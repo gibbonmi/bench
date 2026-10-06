@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // write puts a fixture at the repository-relative path rel under root and makes every
@@ -44,6 +45,7 @@ func TestGrade(t *testing.T) {
 	for _, tt := range []struct {
 		name      string
 		build     func(*testing.T, string)
+		at        string // the root-relative directory the row grades; empty grades root
 		count     int
 		wantSub   string
 		wantEqual string
@@ -220,11 +222,60 @@ func TestGrade(t *testing.T) {
 				write(t, root, ".bench/prose-exclusions", "docs/ the record keeps its text")
 			},
 		},
+		{
+			name: "FT361 an ignored subject in a git work tree is not graded",
+			build: func(t *testing.T, root string) {
+				write(t, root, "README.md", "Short prose.\n")
+				write(t, root, ".gitignore", "capture/\n")
+				write(t, root, "capture/session-handoff.md", longSentence())
+				write(t, root, ".bench/prose-exclusions", "")
+				gitTrack(t, root, "README.md", ".gitignore", ".bench/prose-exclusions")
+			},
+		},
+		{
+			name: "FT361 a tracked subject in a git work tree is graded",
+			build: func(t *testing.T, root string) {
+				write(t, root, "docs/guide.md", longSentence())
+				write(t, root, ".bench/prose-exclusions", "")
+				gitTrack(t, root, "docs/guide.md", ".bench/prose-exclusions")
+			},
+			count:   1,
+			wantSub: `"docs/guide.md"`,
+		},
+		{
+			name: "FT361 an untracked subject that git does not ignore is not graded",
+			build: func(t *testing.T, root string) {
+				write(t, root, "README.md", "Short prose.\n")
+				write(t, root, "notes.md", longSentence())
+				write(t, root, ".bench/prose-exclusions", "")
+				gitTrack(t, root, "README.md", ".bench/prose-exclusions")
+			},
+		},
+		{
+			name: "FT361 a git work tree that tracks no file grades no subject",
+			build: func(t *testing.T, root string) {
+				write(t, root, "notes.md", longSentence())
+				write(t, root, ".bench/prose-exclusions", "")
+				gitTrack(t, root)
+			},
+		},
+		{
+			name: "FT361 a root below the top of its work tree is graded whole",
+			build: func(t *testing.T, root string) {
+				write(t, root, "README.md", "Short prose.\n")
+				write(t, root, "nested/notes.md", longSentence())
+				write(t, root, "nested/.bench/prose-exclusions", "")
+				gitTrack(t, root, "README.md")
+			},
+			at:      "nested",
+			count:   1,
+			wantSub: `"notes.md"`,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			root := t.TempDir()
 			tt.build(t, root)
-			got := Grade(root)
+			got := Grade(filepath.Join(root, filepath.FromSlash(tt.at)))
 			if len(got) != tt.count {
 				t.Fatalf("Grade() = %q, want %d diagnostics", got, tt.count)
 			}
@@ -236,6 +287,14 @@ func TestGrade(t *testing.T) {
 			}
 		})
 	}
+}
+
+// gitTrack makes root a git work tree and adds each repository-relative path rel to its
+// index. A path is tracked once the index holds it, so a row needs no commit.
+func gitTrack(t *testing.T, root string, rels ...string) {
+	t.Helper()
+	gittest.Output(t, root, "init", "-q")
+	gittest.Output(t, root, append([]string{"add", "--"}, rels...)...)
 }
 
 // requireSymlink makes one link or reports the host capability the assertion needs.

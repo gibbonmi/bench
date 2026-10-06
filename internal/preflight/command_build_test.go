@@ -1,6 +1,7 @@
 package preflight
 
 import (
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +31,8 @@ func TestCommandBuildFresh(t *testing.T) {
 // every declared row, `build` runs rows-owned and rows-membership for real
 // — green, not not-applicable — while diff-nonempty stays not-applicable.
 func TestCommandBuildResumedTicketsRunForReal(t *testing.T) {
-	_, slug := preflighttest.SeedConformant(t) // SeedConformant's tickets/one.md cites PF1 and PF2
+	root, slug := preflighttest.SeedConformant(t) // SeedConformant's tickets/one.md cites PF1 and PF2
+	preflighttest.ActiveAssignment(t, root, root)
 
 	out, code := Command([]string{"build", slug})
 	if code != 0 {
@@ -46,13 +48,15 @@ func TestCommandBuildResumedTicketsRunForReal(t *testing.T) {
 // valid Covers: token, so the ticket that cites it parses and owns the row.
 func TestCommandBuildCoversAcceptsEveryMapRowID(t *testing.T) {
 	slug := "example"
-	preflighttest.StartRepo(t)
+	root := preflighttest.StartRepo(t)
 	spec := strings.Replace(preflighttest.SpecBody(slug), "| PF2 |", "| PF02 |", 1)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", spec)
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF02"))
+	commitmenttest.SeedAdmission(t, root, "specs/"+slug+"/spec.md")
 	preflighttest.RunGit(t, "add", ".")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
 
+	preflighttest.ActiveAssignment(t, root, root)
 	out, _ := Command([]string{"build", slug})
 	verdicts := renderedVerdicts(t, out, modeBuild, slug)
 	requireVerdict(t, verdicts, verdictGreen, "tickets-parse", "rows-owned", "rows-membership")

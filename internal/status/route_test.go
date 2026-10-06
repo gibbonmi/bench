@@ -54,6 +54,9 @@ func (definition actionDefinition) match(text string) (string, bool) {
 		return matchOptionalPath(text, definition.command, "specs/", "/spec.md")
 	case optionalDecisionPath:
 		return matchOptionalPath(text, definition.command, "decisions/", ".md")
+	case commandArguments:
+		argument, ok := strings.CutPrefix(text, definition.command+" ")
+		return argument, ok && argument != ""
 	case anyPhaseCommand:
 		command, argument, hasArgument := strings.Cut(text, " ")
 		if command == harnessPrefix[HarnessClaude] || !strings.HasPrefix(command, harnessPrefix[HarnessClaude]) ||
@@ -125,6 +128,8 @@ func TestActionDefinitionsRenderAndParseTheSameCommand(t *testing.T) {
 			action = commandActionWithArgument(id, "specs/my draft/spec.md")
 		case optionalDecisionPath:
 			action = commandActionWithArgument(id, "decisions/my map.md")
+		case commandArguments:
+			action = commandActionWithArgument(id, "start --outcome B")
 		}
 		rendered := action.render()
 		parsed := parseAction(rendered)

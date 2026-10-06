@@ -13,7 +13,7 @@ import (
 )
 
 func TestExplicitBaseReviewOwnsSourceRangeNotDestinationHandoff(t *testing.T) {
-	root, slug := preflighttest.SeedConformant(t)
+	root, slug := preflighttest.SeedAdmitted(t)
 	base := preflighttest.RunGit(t, "rev-parse", "main")
 	tip := preflighttest.RunGit(t, "rev-parse", "feature")
 	preflighttest.RunGit(t, "checkout", "-q", "main")
@@ -105,7 +105,7 @@ func TestExplicitBasePreflightRefusesDirtyReview(t *testing.T) {
 }
 
 func TestExplicitBasePreflightRetriesConvergedTrackedWorktreeMovement(t *testing.T) {
-	root, slug := preflighttest.SeedConformant(t)
+	root, slug := preflighttest.SeedAdmitted(t)
 	base := preflighttest.RunGit(t, "rev-parse", "main")
 	tip := preflighttest.RunGit(t, "rev-parse", "HEAD")
 	configBefore, err := os.ReadFile(filepath.Join(root, ".git", "config"))
@@ -338,7 +338,7 @@ func TestSnapshotDriftRefusalKeepsPrimaryErrorWhenRetryActionCannotRender(t *tes
 }
 
 func TestExplicitBasePreflightCommandUsesResolvedRootFromSubdirectory(t *testing.T) {
-	root, slug := preflighttest.SeedConformant(t)
+	root, slug := preflighttest.SeedAdmitted(t)
 	base := preflighttest.RunGit(t, "rev-parse", "main")
 	t.Chdir(filepath.Join(root, "internal", slug))
 	out, code := Command([]string{"build", slug, "--base", base})

@@ -41,26 +41,6 @@ type Fact struct {
 	Slug, Path, Status, RoadmapID string
 }
 
-// LiveSpecPath normalizes a live spec slug or explicit path to its repository-relative
-// path. The `.md` trim is a CLI-argument affordance: `bench <verb> foo.md` means the
-// spec `foo`. It belongs here, never in an enumerated directory name.
-func LiveSpecPath(arg string) string {
-	if strings.ContainsRune(arg, '/') {
-		return filepath.ToSlash(filepath.Clean(arg))
-	}
-	return specPath(strings.TrimSuffix(arg, ".md"))
-}
-
-// specPath is the folder-spec layout for one literal directory name, taken verbatim.
-func specPath(name string) string {
-	return filepath.ToSlash(filepath.Join("specs", name, "spec.md"))
-}
-
-// LiveSpecSlug returns the slug named by a live spec slug or explicit path.
-func LiveSpecSlug(arg string) string {
-	return filepath.Base(filepath.Dir(filepath.FromSlash(LiveSpecPath(arg))))
-}
-
 // LiveSpecSlugs enumerates distinct live folder-spec slugs named outside fenced code.
 func LiveSpecSlugs(content []byte) []string {
 	seen := map[string]bool{}
@@ -251,8 +231,8 @@ const RetireNextPrefix = "next: "
 // exit 1 without deleting anything. A spec refuses when it is not merged-implemented: staged,
 // or implemented only in the working tree and not yet at HEAD. An unknown slug refuses, and so
 // does an orphaned review pickup with no spec. Inside a repository, the primary checkout
-// refuses too, because Bench write verbs run from a worktree. The next: line names the board
-// remainder that roadmapRemainder renders from the Roadmap: value, read before deletion.
+// refuses too, because Bench write verbs run from a worktree. retireNext renders the next:
+// line from the Roadmap: value, read before deletion, and from the delivery at HEAD.
 func retireCommand(arg string) (string, int) {
 	base := RepoBase()
 	if base != "" {
@@ -321,7 +301,7 @@ func retireCommand(arg string) (string, int) {
 		}
 	}
 	_, roadmapID := metadata(content)
-	fmt.Fprintf(&b, RetireNextPrefix+"promote durable content, remove the ROADMAP row%s, commit as `spec-retire: %s`\n", roadmapRemainder(base, roadmapID), slug)
+	b.WriteString(retireNext(base, resolved, roadmapID, slug))
 	return b.String(), 0
 }
 
@@ -469,12 +449,7 @@ func folderResidue(base, arg string) (string, bool) {
 // marker — the "finishing commit has landed" guard. It reads the blob through git and
 // discards stderr, so a spec absent from HEAD or still staged there reads as false.
 func implementedAtHEAD(base, resolved string) bool {
-	rel := filepath.ToSlash(RelTo(base, resolved))
-	args := []string{"show", "HEAD:" + rel}
-	if base != "" {
-		args = append([]string{"-C", base}, args...)
-	}
-	content, err := git.Raw(args...)
+	content, err := headBlob(base, filepath.ToSlash(RelTo(base, resolved)))
 	if err != nil {
 		return false
 	}

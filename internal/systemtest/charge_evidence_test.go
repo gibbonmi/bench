@@ -17,6 +17,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/chargeevidence"
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 )
@@ -57,6 +58,8 @@ func newEvidenceJourney(t *testing.T) evidenceJourney {
 	}
 	spec := "# x\n\nStatus: staged\n\n## User stories\n1. Prepare evidence.\n\n### Acceptance coverage map\n| row | story | behavior | seam | why it catches the failure |\n|---|---|---|---|---|\n| E1 | 1 | prepares | command | catches failure |\n\n## Ownership fences\n\n- `source.txt`\n- `reviews/x.md`\n"
 	recordtest.Prepare(t, root, 1, "specs/x/spec.md", spec)
+	commitmenttest.SeedAdmission(t, root, "specs/x/spec.md")
+	commitmenttest.Commit(t, root, "approve fixture delivery")
 	return evidenceJourney{root: root, home: home, base: systemGitOutput(t, root, "rev-parse", "HEAD")}
 }
 
@@ -73,6 +76,10 @@ func (j evidenceJourney) assignment(t *testing.T, label, body string, from ...st
 		extra = []string{"--from", from[0]}
 	}
 	worktree := systemCreateLandingWorktree(t, j.root, j.home, label, label+" request", extra...)
+	result := systemSelected(t, worktree.path, j.env(), "commitment", "start", "--outcome", "delivery", "--request", label+" request", "--deliverable", "specs/x/spec.md")
+	if result.code != 0 {
+		t.Fatalf("admit evidence assignment: %s %s", result.stdout, result.stderr)
+	}
 	if body != "" {
 		systemCommit(t, worktree.path, "source.txt", body, "change "+label)
 	}

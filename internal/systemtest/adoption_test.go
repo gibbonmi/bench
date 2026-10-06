@@ -3,12 +3,15 @@
 package systemtest
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/commitment"
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 )
 
@@ -152,6 +155,104 @@ func TestAdoptionSmokeJourney(t *testing.T) {
 		t.Fatalf("gate with an empty tests/canary = (%d, %q, %q)", empty.code, empty.stdout, empty.stderr)
 	}
 	assertPrivateHomeEmpty(t, home)
+}
+
+// TestCommitmentBootstrapInstall links a project before any commitment policy exists. The
+// installation needs no policy, and absent adoption refuses new delivery at its start and
+// at the installed broker. A policy with no approval cannot publish itself; the planned and
+// approved policy publishes and then admits only its approved deliverable.
+func TestCommitmentBootstrapInstall(t *testing.T) {
+	project := newLinkedProject(t)
+	if _, err := os.Stat(filepath.Join(project.root, filepath.FromSlash(commitment.PolicyPath))); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("setup wrote a commitment policy: %v", err)
+	}
+	show := project.run(t, project.root, "commitment", "show")
+	if show.code != 0 || !strings.Contains(show.stdout, commitment.OutlookAdoptionRequired) {
+		t.Fatalf("installed commitment show = (%d, %q, %q)", show.code, show.stdout, show.stderr)
+	}
+	base := systemGitOutput(t, project.root, "rev-parse", "HEAD")
+	delivery := systemCreateLandingWorktree(t, project.root, project.home, "delivery", "delivery")
+	planning := systemCreateLandingWorktree(t, project.root, project.home, "planning", "planning")
+
+	early := project.run(t, delivery.path, "commitment", "start", "--outcome", commitmenttest.DeliveryOutcome, "--request", delivery.request, "--deliverable", linkedDeliverable)
+	if early.code != 1 || !strings.Contains(early.stdout, "commitment adoption required") {
+		t.Fatalf("start before adoption = (%d, %q, %q)", early.code, early.stdout, early.stderr)
+	}
+	commitmenttest.Write(t, delivery.path, "delivery.txt", "delivered\n")
+	commitSource(t, &delivery, "deliver before adoption")
+	project.refuseLanding(t, delivery, base, "commitment adoption required")
+
+	project.propose(t, &planning)
+	project.refuseLanding(t, planning, base, "candidate policy has no exact approval")
+	project.approve(t, &planning)
+	project.publish(t, planning, base)
+	// The linked project has no board, so the adoption publishes the policy alone.
+	if got := systemGitOutput(t, project.root, "ls-tree", "--name-only", "main", "--", commitment.PolicyPath, "ROADMAP.md"); got != commitment.PolicyPath {
+		t.Fatalf("published adoption tree = %q, want the policy alone", got)
+	}
+	if _, err := os.Lstat(filepath.Join(project.root, "ROADMAP.md")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("adoption wrote ROADMAP.md in the project root: %v", err)
+	}
+
+	unapproved := project.run(t, delivery.path, "commitment", "start", "--outcome", commitmenttest.DeliveryOutcome, "--request", delivery.request, "--deliverable", "specs/other/spec.md")
+	if unapproved.code != 1 || !strings.Contains(unapproved.stdout, `deliverable "specs/other/spec.md" is not approved`) {
+		t.Fatalf("start of an unapproved deliverable = (%d, %q, %q)", unapproved.code, unapproved.stdout, unapproved.stderr)
+	}
+	approved := project.run(t, delivery.path, "commitment", "start", "--outcome", commitmenttest.DeliveryOutcome, "--request", delivery.request, "--deliverable", linkedDeliverable)
+	if approved.code != 0 {
+		t.Fatalf("start of the approved deliverable = (%d, %q, %q)", approved.code, approved.stdout, approved.stderr)
+	}
+}
+
+// TestCommitmentLinkedAdoption drives an adopted linked project through its installed
+// wrapper. A start of an outcome that the commitment does not hold refuses, and a
+// production commit with no delivery binding refuses until the committed outcome starts.
+func TestCommitmentLinkedAdoption(t *testing.T) {
+	project := newLinkedProject(t)
+	delivery := systemCreateLandingWorktree(t, project.root, project.home, "delivery", "delivery")
+	project.adopt(t)
+	// The run predates adoption, so it takes the published policy before it commits.
+	systemGit(t, delivery.path, "merge", "--no-edit", "main")
+
+	uncommitted := project.run(t, delivery.path, "commitment", "start", "--outcome", "uncommitted", "--request", delivery.request, "--deliverable", linkedDeliverable)
+	if uncommitted.code != 1 || !strings.Contains(uncommitted.stdout, `outcome "uncommitted" is not committed`) {
+		t.Fatalf("start of an uncommitted outcome = (%d, %q, %q)", uncommitted.code, uncommitted.stdout, uncommitted.stderr)
+	}
+	commitmenttest.Write(t, delivery.path, "delivery.txt", "delivered\n")
+	unbound := project.run(t, delivery.path, "commit", "-m", "deliver", "--", "delivery.txt")
+	if unbound.code == 0 || !strings.Contains(unbound.stdout+unbound.stderr, "assignment has no current delivery binding") {
+		t.Fatalf("production commit with no delivery binding = (%d, %q, %q)", unbound.code, unbound.stdout, unbound.stderr)
+	}
+	started := project.run(t, delivery.path, "commitment", "start", "--outcome", commitmenttest.DeliveryOutcome, "--request", delivery.request, "--deliverable", linkedDeliverable)
+	if started.code != 0 {
+		t.Fatalf("start of the committed outcome = (%d, %q, %q)", started.code, started.stdout, started.stderr)
+	}
+	bound := project.run(t, delivery.path, "commit", "-m", "deliver", "--", "delivery.txt")
+	if bound.code != 0 {
+		t.Fatalf("production commit with its delivery binding = (%d, %q, %q)", bound.code, bound.stdout, bound.stderr)
+	}
+}
+
+// TestCommitmentInstalledAuthority publishes a candidate that bypasses every Bench guard
+// in its own checkout. The installed broker refuses its displaced production work before
+// publication, and the same tip lands only after the candidate's admission call.
+func TestCommitmentInstalledAuthority(t *testing.T) {
+	project := newLinkedProject(t)
+	base := systemGitOutput(t, project.root, "rev-parse", "HEAD")
+	candidate := systemCreateLandingWorktree(t, project.root, project.home, "candidate", "candidate")
+	project.adopt(t)
+	commitmenttest.Write(t, candidate.path, "displaced.txt", "displaced\n")
+	commitSource(t, &candidate, "displace the committed outcome")
+	project.refuseLanding(t, candidate, base, "assignment has no current delivery binding")
+
+	admitted := project.run(t, candidate.path, "commitment", "start", "--outcome", commitmenttest.DeliveryOutcome, "--request", candidate.request, "--deliverable", linkedDeliverable)
+	if admitted.code != 0 {
+		t.Fatalf("candidate admission = (%d, %q, %q)", admitted.code, admitted.stdout, admitted.stderr)
+	}
+	project.publish(t, candidate, base)
+	if got := systemGitOutput(t, project.root, "show", "main:displaced.txt"); got != "displaced" {
+		t.Fatalf("published candidate content = %q", got)
+	}
 }
 
 // retireSentinelLine performs the one documented operator step. It removes exactly the

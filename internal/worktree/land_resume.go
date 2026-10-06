@@ -19,8 +19,8 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree/landingpolicy"
 )
 
-// ResumeLandCommand finishes only a published landing's marker, destination checkout,
-// and release work. Its proofs keep a retry from becoming a second publication attempt.
+// ResumeLandCommand finishes only a published landing's marker, commitment claims,
+// destination checkout, and release work. Its proofs keep a retry from becoming a second publication attempt.
 func ResumeLandCommand(root, home string, args []string, stdout, stderr io.Writer) int {
 	return resumeLandWith(defaultJoins(), newAmbient(home, stderr), root, args, stdout, stderr)
 }
@@ -84,6 +84,9 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 	case landingpolicy.MarkerRefuse:
 		return landRefusalError(stdout, landingFaceRefusal(faceResumeMarker, "", rerun, nil))
 	}
+	if err := j.reconcileCommitment(root); err != nil {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "commitment", records)
+	}
 	if err := reconcileLandingDestination(j, root, destination, published, destinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile", records)
 	}
@@ -93,12 +96,12 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 	// A released assignment still owns its effects, so the terminal path runs them rather
 	// than returning a complete landing over an unfinished tree.
 	if !active {
-		return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignmentID, false, records, stdout, stderr)
+		return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignmentID, false, false, records, stdout, stderr)
 	}
 	if j.releaseLandingAssignment(j, a, root, []string{"--request", parsed.Flags["--request"], assignment.Worktree}, io.Discard, stderr) != 0 {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release", records)
 	}
-	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignmentID, true, records, stdout, stderr)
+	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignmentID, true, false, records, stdout, stderr)
 }
 
 func terminalResumeReceipt(root, path, request, sourceTip string) (intent.CleanupReceipt, error) {

@@ -79,6 +79,14 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench retro [--in <label|primary>] <slug> (--body <markdown> | --scaffold)  draft, or validate and create, one primary-local implementation retrospective
   bench roadmap [--in <label|primary>]  show the top 10 roadmap rows + drain state
   bench status [--in <label|primary>]  ambient dashboard: what needs attention + the next action
+  bench commitment [--in <label|primary>] start --outcome <id> --request <request> --deliverable <path>  claim an eligible committed outcome
+  bench commitment [--in <label|primary>] block --outcome <id> --reason <text>  record an outcome blocker
+  bench commitment [--in <label|primary>] unblock --outcome <id>  clear an outcome blocker
+  bench commitment [--in <label|primary>] show  show the current delivery commitment
+  bench commitment [--in <label|primary>] inventory  list roadmap obligations, staged deliverables, and run identities
+  bench commitment [--in <label|primary>] plan --input <file>  validate an exact commitment transition
+  bench commitment [--in <label|primary>] approve --plan <id> --decision <reference> --delayed <ids-or-none> --removed <ids-or-none>  approve and stage one exact commitment transition
+  bench commitment [--in <label|primary>] verify --milestone <id> --evidence <file>  verify milestone criterion evidence and record a completion receipt
   bench handoff [--in <label|primary>] [--harness <name>] [--next <command>] [--state-file <path>]  print the cold-start pin block and rewrite capture/session-handoff.md
   bench commands --brief     print the direct, read-only command probe
   bench dashboard [--in <label|primary>] [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
@@ -94,6 +102,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight [--in <label|primary>] review <slug> [--base <commit>] [--source-tip <commit>]  review-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
   bench preflight [--in <label|primary>] review <slug> --charge --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable review evidence artifact and print its bounded orientation
   bench preflight [--in <label|primary>] build <slug> [--base <commit>] [--source-tip <commit>]  build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only
+  bench preflight [--in <label|primary>] build <slug> --plan-only [--base <commit>] [--source-tip <commit>]  validate the authored spec and tickets without delivery admission or a build charge
   bench preflight [--in <label|primary>] build <slug> --charge --ticket <basename> --base <commit> --source-tip <commit> [--max-store-bytes <n>]  prepare one immutable build evidence artifact and print its bounded orientation
   bench preflight [--in <label|primary>] build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>  propose one ticket's Writes: entries from the pinned source
   bench preflight [--in <label|primary>] evidence <id> [--cursor <cursor>]  print the summary of a prepared evidence artifact, or one bounded fragment at a cursor, and its exact successor
@@ -108,7 +117,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench probe [--in <label|primary>] <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
   bench outline [--in <label|primary>] [path] [--full] [--production|--test]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
   bench consumers [--in <label|primary>] <qualified-symbol>... [--production|--test] [--full]  every resolved Go reference edge as TOON (symbol when several, file:line, via, enclosing); identifies edges, never blessed seams
-  bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
+  bench doctor [--fix] | --compat <codex-cli|codex-desktop> [--fix | --undo <repair-id>]  report shim health or inspect one Codex interface
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
   bench gate [--in <label|primary>] [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]  run the project gate (the oracle; --fresh ignores a reusable green)
   bench prep-release [--in <label|primary>]  ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
@@ -127,7 +136,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree land --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] -m <message> <path>  compose, gate, and publish one owned worktree
   bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>  resume incomplete post-publication landing work
   bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
-  bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
+  bench shift [--refresh] --outcome <id> "<objective>" gated loop in a pooled worktree; commit on green
   bench commit [--in <label|primary>] -m <msg> [--preflight-build <slug>] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
   bench record [--in <label|primary>] chunk <slug> --chunk <id> --base <commit> --tip <commit>  write one chunk's frozen pair, digests, and acceptance rows into reviews/<slug>.md
   bench record [--in <label|primary>] verification <slug> (--chunk <id> [--source <commit>] | --final --source <commit>) --requirement <id> --id <id> --performer <session> --model <model> --effort <effort> --exit-code <n> --ref <ref> --excerpt <file> [--probe-outcome <verdict> --probe-exit-code <n> --probe-restore pass|fail]  append one planned verification result with its computed digests

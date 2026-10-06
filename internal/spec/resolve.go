@@ -104,3 +104,28 @@ func isDir(path string, noFollow bool) bool {
 	}
 	return err == nil && fi.IsDir()
 }
+
+// LiveSpecPath normalizes a live spec slug or explicit path to its repository-relative
+// path. The `.md` trim is a CLI-argument affordance: `bench <verb> foo.md` means the
+// spec `foo`. It belongs here, never in an enumerated directory name.
+func LiveSpecPath(arg string) string {
+	if strings.ContainsRune(arg, '/') {
+		return filepath.ToSlash(filepath.Clean(arg))
+	}
+	return specPath(strings.TrimSuffix(arg, ".md"))
+}
+
+// specPath is the folder-spec layout for one literal directory name, taken verbatim.
+func specPath(name string) string {
+	return ClosedFolderPath(name) + "/spec.md"
+}
+
+// IsLiveSpecPath recognizes the canonical folder-spec layout with a literal folder name.
+func IsLiveSpecPath(path string) bool {
+	return path == specPath(filepath.Base(filepath.Dir(filepath.FromSlash(path))))
+}
+
+// LiveSpecSlug returns the slug named by a live spec slug or explicit path.
+func LiveSpecSlug(arg string) string {
+	return filepath.Base(filepath.Dir(filepath.FromSlash(LiveSpecPath(arg))))
+}

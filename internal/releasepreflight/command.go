@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"syscall"
 
@@ -123,7 +124,7 @@ func parseArgs(args []string) (Mode, string, Profile, *Failure) {
 	if mode != ModeVerify && mode != ModePublish {
 		return "", "", "", usageFailure()
 	}
-	if focused != "" && !contains(PhaseNames(mode), focused) {
+	if focused != "" && !slices.Contains(PhaseNames(mode), focused) {
 		return "", "", "", usageFailure()
 	}
 	if profile != "" && profile != ProfilePublic && profile != ProfileBank {

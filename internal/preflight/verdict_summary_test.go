@@ -120,7 +120,7 @@ func requireVerdict(t *testing.T, verdicts map[string]string, want string, check
 func TestPreflightGreenSummaryLine(t *testing.T) {
 	for _, mode := range []string{modeBuild, modeReview} {
 		t.Run(mode, func(t *testing.T) {
-			_, slug := preflighttest.SeedConformant(t)
+			_, slug := preflighttest.SeedAdmitted(t)
 			want := fixtureCounts(t, mode, slug)
 			if want.red != 0 || want.green == 0 {
 				t.Fatalf("the conformant fixture is not all green in %s mode: %+v", mode, want)

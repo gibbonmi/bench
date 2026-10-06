@@ -41,6 +41,10 @@ const (
 	WorktreeListTimeout = 15 * time.Second
 	GuardScanTimeout    = 5 * time.Second
 	GateTimeout         = 45 * time.Minute
+	// RecordClockSkew is how far a gate record time may sit after the reader's now. A
+	// host wall clock can step back by up to a second under load, between the write and
+	// a later read.
+	RecordClockSkew = 2 * time.Second
 	// PackageLoadTimeout bounds one Go package-loader invocation. The loader opens every
 	// file it walks, so one FIFO anywhere under a loaded package tree blocks it in open(2)
 	// with no deadline of its own. The value sits far above a cold expansion of `./...` on

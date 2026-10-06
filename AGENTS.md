@@ -93,6 +93,9 @@ information; the next session does not need to confirm it.
   calls. Use plain `grep` only inside kit scripts, where the kit's own
   portability rules require POSIX grep. Prefer dedicated read tools over
   `cat`, `head`, `tail`, and `sed`.
+- Give every `rg` call an explicit path, such as `.`, unless a pipe in the
+  same command feeds it. Without a path, `rg` reads stdin when stdin is an open
+  pipe, and the call waits until that pipe closes.
 - Run `bench` commands with the default login-shell behavior. Do not set
   `login: false` for a `bench` command. The login shell adds `$HOME/.local/bin`,
   which contains `bench`, to `PATH`. Envman sandbox warnings are non-fatal when

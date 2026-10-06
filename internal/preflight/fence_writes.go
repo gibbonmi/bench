@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // fenceWritesCheck grades the spec fence against the union of the ticket `Writes:`
@@ -42,7 +43,7 @@ func unionSide(f Facts, entries []string, pickup string) map[string]bool {
 	side := map[string]bool{}
 	implicit := implicitEntries(f)
 	for _, entry := range entries {
-		path, _ := splitWritesEntry(entry)
+		path, _ := tickets.WritesPath(entry)
 		if path == "" || path == pickup || fenceAuthorizes(path, implicit) {
 			continue
 		}

@@ -1,9 +1,13 @@
 package worktree
 
 import (
+	"bytes"
 	"errors"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/intent"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"syscall"
 	"testing"
@@ -212,4 +216,64 @@ func requirePoolRootMode(t *testing.T, pool string) os.FileInfo {
 		t.Fatalf("pool root mode = %v, want a directory at 0700", info.Mode())
 	}
 	return info
+}
+
+func TestCommitmentTicketAssignments(t *testing.T) {
+	t.Parallel()
+	f := specLessLandingFixture(t, "integration")
+	for _, request := range []string{"ticket-one", "ticket-two"} {
+		result := runVerb(t, verbCreate, verbCall{root: f.root, home: f.home, args: []string{"--request", request, "--label", request, "--from", f.creation.Assignment.ID}})
+		if result.exit != 0 {
+			t.Fatalf("create = %d: %s %s", result.exit, result.stdout, result.stderr)
+		}
+		a, found, err := intent.FindAssignmentForRequest(f.root, request)
+		if err != nil || !found {
+			t.Fatalf("assignment = %v, %v", found, err)
+		}
+		if err := (commitrepo.Store{Root: a.Worktree}).Ready("specs/x/spec.md"); err != nil {
+			t.Fatalf("sibling cannot deliver: %v", err)
+		}
+	}
+	ledger, err := intent.Read(f.root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ledger.Commitment == nil || len(ledger.Commitment.Bindings) != 3 || len(ledger.Commitment.Claims) != 1 {
+		t.Fatalf("ticket assignments must share one outcome claim: %#v", ledger.Commitment)
+	}
+}
+
+func TestCommitmentLegacyIdentity(t *testing.T) {
+	t.Parallel()
+	root, home := newWorktreeRepo(t), t.TempDir()
+	listed := mustCreate(t, root, home, "listed", "listed")
+	other := mustCreate(t, root, home, "other", "other")
+	err := intent.Transact(root, intent.StrictRead, func(l intent.Ledger) (intent.Ledger, bool, error) {
+		l.Commitment = &intent.CommitmentState{Continuations: []intent.LegacyContinuation{{Assignment: listed.Assignment.ID, Request: listed.Assignment.Request, Scope: []string{"owned.txt"}}}}
+		return l, true, nil
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope, err := (commitrepo.Store{Root: listed.Path}).LegacyScope("listed")
+	if err != nil || !reflect.DeepEqual(scope, []string{"owned.txt"}) {
+		t.Fatalf("listed scope = %v, %v", scope, err)
+	}
+	address, err := intent.Address(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadFile(address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, request := range []string{"listed", "other"} {
+		if _, err := (commitrepo.Store{Root: other.Path}).LegacyScope(request); err == nil {
+			t.Fatalf("unlisted assignment borrowed continuation with %q", request)
+		}
+	}
+	after, err := os.ReadFile(address)
+	if err != nil || !bytes.Equal(before, after) {
+		t.Fatalf("refusal changed ledger: %v", err)
+	}
 }

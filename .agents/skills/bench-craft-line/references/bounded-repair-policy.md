@@ -11,6 +11,7 @@ Initial implementation, pre-review checks, and the first review consume no repai
 A repair cycle is one repair attempt and verification of its affected findings. It can address several findings.
 Avoid: tool call, individual finding, fresh review alone.
 Individual tool calls and unchanged verification reruns consume no additional repair cycles.
+[Debug integration](../../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) owns the debug step of each repair.
 
 The allowance takes precedence over continuation while progress holds after initial review.
 Progress does not extend the allowance. A fresh review does not reset the same chunk's count.
@@ -43,6 +44,7 @@ Do not label an unrefuted suggestion as `no-op` to obtain a pass.
 A native review can pass with no finding IDs while its prose retains optional advice.
 
 A review-record prose correction is evidence-only only when it changes no finding, source identity, observation, disposition, or verification claim.
+A comment-only Go correction that the checkpoint accepts is evidence-only despite its source change, and the orchestrator commits it with no plan assignment.
 Evidence-only corrections consume no repair cycle. Batch all cited corrections before verification.
 Only the issuing axis reaffirms an evidence-only correction unless it invalidates another axis's evidence.
 

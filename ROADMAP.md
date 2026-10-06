@@ -13,17 +13,38 @@ use. The 2026-07-11 release-readiness and repository-controlled compliance
 assessments are evidence snapshots. `RR:` and `RC:` identify their active
 findings in the owner details.
 
-## Delivery queue
+## Reviewer priority (2026-10-03)
 
-**FT370 (HIGH) — a comment-only correction takes the evidence-only path.**
+The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
+and review cost that recent builds paid.
+
+**FT373 (HIGH) — a gate check refuses production code that re-implements a standard-library function.**
+
+**FT293 (HIGH, decision required) — preflight closes each ticket's complete ownership fence.**
+
+**FT375 (MEDIUM) — the build preflight reports spec staleness, and the staleness pass audits only drift and red rows.**
+
+**FT376 (MEDIUM) — the spec stage traces each pinned check, entry read, and derived expectation to its grader before the first review.**
+
+**FT369 (MEDIUM) — the delegate charge and the slicing checks close the 2026-09-30 batch's fence and venue gaps.**
+
+**FT349 (MEDIUM) — the ticket checkpoint enforces the check floor and refuses a leftover `planned` citation.**
+
+**FT352 (MEDIUM, decision required) — the orchestrator reads its own context size, and a spec can then restore a gated ticket fork.**
+
+**FT125 (LOW) — section, story, symbol, and worktree readers return precise slices.**
+
+**FT204 (LOW, decision required) — one bounded transcript/session query.**
+
+**FT231 (EXPERIMENT, decision required) — a measurement harness and the instrumentation it reads.**
+
+## Delivery queue
 
 **FT290 (MEDIUM) — `bench test` projects a check's fixture family, a widened-set explanation, and a check inventory.**
 
 **FT215 (HIGH, decision required) — the path-aware lane closes its correctness edges before cost tuning.**
 
 **FT258 (HIGH, decision required) — `bench commit` derives a complete change set and preserves merge parents.**
-
-**FT293 (HIGH, decision required) — preflight closes each ticket's complete ownership fence.**
 
 **FT342 (HIGH, decision required) — a chunked build has one sanctioned route for a moved `main`, from preflight through completion and landing.**
 
@@ -35,15 +56,15 @@ findings in the owner details.
 
 **FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
 
+**FT387 (MEDIUM) — a verified harness path preserves complete tool output before it returns a bounded replacement.**
+
+**FT388 (LOW) — the session-context-efficiency coordinator closes when its overflow child lands.**
+
 ## Quality survey (2026-09-29)
 
 The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure. Its
-2026-09-30 and 2026-10-01 light paths landed cards 03 and 07, most of card 06, and most
-small cuts. The rows below hold the rest.
-
-**FT356 (HIGH) — the worktree joins seam set keeps only the seams that make a failure reproducible.**
-
-**FT361 (MEDIUM) — the prose live-tree check grades tracked paths only.**
+light paths and the worktree-seam-reduction build landed cards 01, 03, 04, 06, and 07
+and the small cuts. The rows below hold the rest.
 
 **FT366 (MEDIUM, decision required) — hook input and shell-wrapper grammar have one owner.**
 
@@ -58,8 +79,6 @@ small cuts. The rows below hold the rest.
 **FT363 (MEDIUM) — the clean modes share one member-set applier.**
 
 **FT365 (LOW) — conformance tests derive restated tables from their owners and share one Go-rule scanner.**
-
-**FT367 (LOW) — the quality survey's residual small cuts and one stale assessment claim.**
 
 **FT368 (LOW, decision required) — the survey's speculative surfaces each get a keep or cut verdict.**
 
@@ -101,15 +120,11 @@ small cuts. The rows below hold the rest.
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
 
-**FT349 (MEDIUM) — the ticket checkpoint enforces the check floor and refuses a leftover `planned` citation.**
-
 **FT343 (MEDIUM, decision required) — production test seams have one decided policy that the injected-port audit enforces.**
-
-**FT369 (MEDIUM) — the delegate charge and the slicing checks close the 2026-09-30 batch's fence and venue gaps.**
 
 **FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
 
-**FT318 (MEDIUM) — `bench record` writes the completion entry, and a record refusal names its `bench record` repair.**
+**FT318 (MEDIUM) — a `bench record` refusal names its repair form, and the completion form records a capability-blocked row's decided value.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -131,9 +146,19 @@ small cuts. The rows below hold the rest.
 
 **FT241 (LOW, decision required) — versioned acceptance promises with retained evidence.**
 
-## Evidence, diagnostics, and maintenance
+**FT379 (MEDIUM) — a record-only correction consumes no repair cycle, and its confirming round checks only the named findings.**
 
-**FT231 (EXPERIMENT, decision required) — a measurement harness and the instrumentation it reads.**
+**FT380 (MEDIUM) — every plan commit passes the coverage parser and build preflight before dispatch.**
+
+**FT381 (MEDIUM, decision required) — a delegated full run has decided risk classes, repair routing, and author-replacement records.**
+
+**FT378 (MEDIUM, decision required) — known issues and their workarounds have one tracked owner that each delegate charge reads.**
+
+**FT384 (MEDIUM, decision required) — legacy closure and the production path check share one scope matcher.**
+
+**FT386 (LOW, decision required) — the spec stage proposes a split above a row or ticket threshold.**
+
+## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
 
@@ -142,12 +167,6 @@ small cuts. The rows below hold the rest.
 **FT307 (MEDIUM, decision required) — `bench structure` grades working-tree changes and projects scoped headroom.**
 
 **FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
-
-**FT204 (LOW, decision required) — one bounded transcript/session query.**
-
-**FT352 (MEDIUM, decision required) — the orchestrator reads its own context size, and a spec can then restore a gated ticket fork.**
-
-**FT125 (LOW) — section, story, symbol, and worktree readers return precise slices.**
 
 **FT168 (MEDIUM) — file-backed replacements and system or Markdown subjects extend the focused probe.**
 
@@ -162,6 +181,10 @@ small cuts. The rows below hold the rest.
 **FT314 (MEDIUM, decision required) — an unchanged landing composition reuses gate evidence only under a complete authorization key.**
 
 **FT351 (LOW) — an offline diff report carries the approved visual prototype into a supported feature.**
+
+**FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
+
+**FT383 (LOW) — the planning commit test reuses the protected policy fixture.**
 
 ## Release qualification
 
@@ -192,6 +215,8 @@ qualification requirements are met.
 
 **FT348 (MEDIUM, decision required) — decide the disposition of each retained stream from the 2026-09-22 parallel implementation wave.**
 
+**FT374 (MEDIUM, decision required) — each Go-only code-aware verb and check has a decided TypeScript, JavaScript, and Python equivalent.**
+
 ## Parked and scheduled work
 
 **FT347 (EXPERIMENT, parked until 2026-11-03) — return to the Jev skill-relevance research.**
@@ -213,6 +238,8 @@ qualification requirements are met.
 **FT355 (MEDIUM, parked pending a repro) — the OTel crash system test reaps its child and removes its own home.**
 
 **FT372 (MEDIUM, parked pending a repro) — the local-capture landing tests isolate their handoff state.**
+
+**FT385 (LOW, parked pending a repro) — the abbreviated source-tip landing test uses a prefix that is unique in its fixture.**
 
 
 ## Release and bank reassessment gate
@@ -263,6 +290,7 @@ recommended table is sequencing advice.
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305 | Adoption follows durable execution. |
+| FT388 | FT387 | The coordinator closes after its last child lands. |
 
 ### Recommended
 
@@ -277,11 +305,11 @@ recommended table is sequencing advice.
 | FT254 | FT258 | Resolution follows the `MERGE_HEAD` contract. |
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
 | FT318 | FT317 | The completion form records the decided value of a capability-blocked row. |
+| FT365 | FT373 | The shared Go-rule scanner absorbs the standard-library duplicate rule family. |
+| FT374 | FT373 | Each language equivalent mirrors the Go rule family. |
 
 ## Recommended sequence
 
-1. Run `/bench-implement-spec specs/worktree-seam-reduction/spec.md` to shrink the worktree joins seam set.
-2. Run `/bench-write-spec FT370` so a comment-only correction takes the evidence-only path.
-3. Run `/bench-implement-spec` on the FT361 light-path ticket so a plain `go test` is red only for a defect.
-
-The section order supplies the larger sequence. It does not create new literal dependencies.
+1. FT376
+2. FT373
+3. FT349

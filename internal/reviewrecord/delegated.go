@@ -3,6 +3,7 @@ package reviewrecord
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 )
 
@@ -85,7 +86,7 @@ func (p Plan) Participants() []string {
 	result := []string{p.Execution.OrchestratorSession}
 	for _, name := range p.ticketNames() {
 		for _, item := range p.Execution.Assignments[name] {
-			if !contains(result, item.Session) {
+			if !slices.Contains(result, item.Session) {
 				result = append(result, item.Session)
 			}
 		}
@@ -175,7 +176,7 @@ func validateAssignment(item Assignment, index int, history []Assignment, orches
 	if item.Predecessor != previous.Session || item.Session == previous.Session {
 		return errors.New("invalid predecessor; name the distinct preceding author")
 	}
-	if !contains(Triggers(), item.Trigger) {
+	if !slices.Contains(Triggers(), item.Trigger) {
 		return fmt.Errorf("invalid replacement trigger %q", item.Trigger)
 	}
 	if item.Stopped == "" {

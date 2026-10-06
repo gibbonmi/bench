@@ -1,0 +1,122 @@
+package commitmenttest
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/commitment"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gittest"
+)
+
+// TicketsSlug names the tickets-only folder that WriteTickets writes.
+const TicketsSlug = "t"
+
+// TicketsFolder is the repository path of that folder.
+const TicketsFolder = "specs/" + TicketsSlug
+
+// WriteTickets writes the light-path tickets-only folder below root and returns the
+// identity that approves it. The identity is the folder's Git tree, so the folder stays
+// staged in the index. The caller commits.
+func WriteTickets(t testing.TB, root string) string {
+	t.Helper()
+	Write(t, root, TicketsFolder+"/tickets/one.md", "Light path ticket.\n")
+	return FolderIdentity(t, root, TicketsFolder)
+}
+
+// FolderIdentity stages the tickets-only folder below root and returns the identity that
+// approves it: the folder's Git tree.
+func FolderIdentity(t testing.TB, root, folder string) string {
+	t.Helper()
+	gittest.Output(t, root, "add", "--", folder)
+	return commitrepo.TreeIdentity(gittest.Output(t, root, "write-tree", "--prefix="+folder+"/"))
+}
+
+// WriteLightTicket writes the TicketBody ticket at path below root whose Writes line lists
+// writes. The caller commits.
+func WriteLightTicket(t testing.TB, root, path string, writes ...string) {
+	t.Helper()
+	Write(t, root, path, TicketBody("Light-path fix", writes, "LP1"))
+}
+
+// TicketBody renders a grammatical ticket with title that writes exactly writes and cites
+// covers. With no writes entry, the ticket has no Writes line, which is a grammar fault.
+func TicketBody(title string, writes []string, covers ...string) string {
+	body := "# " + title + "\n\nBlocked by: none\n"
+	if len(writes) > 0 {
+		body += "Writes: " + strings.Join(writes, ", ") + "\n"
+	}
+	return body + "Covers: " + strings.Join(covers, ", ") + "\n\n" +
+		"## What to build\n\nBuild it.\n\n" +
+		"## Acceptance\n\n- [ ] It is built.\n"
+}
+
+// RemoveTickets deletes the tickets-only folder that WriteTickets wrote below root and
+// commits the deletion on main.
+func RemoveTickets(t testing.TB, root string) {
+	t.Helper()
+	if err := os.RemoveAll(filepath.Join(root, filepath.FromSlash(TicketsFolder))); err != nil {
+		t.Fatal(err)
+	}
+	Commit(t, root, "remove tickets folder")
+}
+
+// TicketsBinding approves the tickets-only folder whose identity WriteTickets returns as a
+// deliverable that completely satisfies obligations.
+func TicketsBinding(identity string, obligations ...string) commitment.DeliveryBinding {
+	return commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "tickets", Path: TicketsFolder, Identity: identity}, Obligations: obligations}
+}
+
+// SeedTicketsOnly writes the SeedClosure policy and the tickets-only folder, and approves
+// that folder as the complete delivery of FT1. The spec at deliverable stays approved for
+// the delivery outcome with no obligation, so an assignment can start from it and rebind
+// to the folder. The caller commits.
+func SeedTicketsOnly(t testing.TB, root, deliverable string, residual ...string) {
+	t.Helper()
+	SeedClosure(t, root, deliverable, residual...)
+	identity := WriteTickets(t, root)
+	EditPolicy(t, root, func(policy *commitment.Policy) {
+		delivery := &policy.Milestones[0].Outcomes[0]
+		delivery.Deliverables[0].Obligations = nil
+		delivery.Deliverables = append(delivery.Deliverables, TicketsBinding(identity, "FT1"))
+	})
+}
+
+// RowlessIndex is the board index that SeedRowless writes. Only outcome B owns a row.
+const RowlessIndex = "# Roadmap\n\n## Parked\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. " + DeliveryOutcome + "\n2. B\n"
+
+// DeliveredIndex is the board after the delivery outcome is delivered from the index of
+// SeedClosure or of SeedRowless: only outcome B and its row remain.
+const DeliveredIndex = "# Roadmap\n\n## Parked\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. B\n"
+
+// ResidualIndex is the board after a delivery closes FT1 from the SeedClosure index with
+// the residual row FT3. The delivery outcome keeps FT3 and its sequence entry.
+const ResidualIndex = "# Roadmap\n\n## Parked\n\n**FT3 — " + DeliveryOutcome + "**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. " + DeliveryOutcome + "\n2. B\n"
+
+// SeedRowless writes an active milestone whose delivery outcome owns no source and
+// approves the spec at deliverable. Outcome B owns FT2 and follows it on the board. The
+// caller commits.
+func SeedRowless(t testing.TB, root, deliverable string) {
+	t.Helper()
+	SeedAdmission(t, root, deliverable)
+	EditPolicy(t, root, func(policy *commitment.Policy) {
+		milestone := &policy.Milestones[0]
+		milestone.Outcomes = append(milestone.Outcomes, outcome("B", writeRow(t, root, "FT2", "B")))
+	})
+	Write(t, root, "ROADMAP.md", RowlessIndex)
+}
+
+// SeedRowlessPair writes the SeedRowless milestone, and its delivery outcome also approves
+// the tickets-only folder. The rowless outcome stays open until both deliverables are
+// delivered. The caller commits.
+func SeedRowlessPair(t testing.TB, root, deliverable string) {
+	t.Helper()
+	SeedRowless(t, root, deliverable)
+	identity := WriteTickets(t, root)
+	EditPolicy(t, root, func(policy *commitment.Policy) {
+		delivery := &policy.Milestones[0].Outcomes[0]
+		delivery.Deliverables = append(delivery.Deliverables, TicketsBinding(identity))
+	})
+}

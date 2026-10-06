@@ -88,7 +88,7 @@ func TestCommandHelpPrecedesAdapterCheck(t *testing.T) {
 		if code := Command(args, &stdout, &stderr); code != 0 {
 			t.Fatalf("Command(%q) = %d, want 0; stderr: %s", args, code, stderr.String())
 		}
-		if stdout.String() != "usage: bench shift [--refresh] \"<objective>\"\n" {
+		if stdout.String() != "usage: bench shift [--refresh] --outcome <id> \"<objective>\"\n" {
 			t.Fatalf("Command(%q) stdout = %q", args, stdout.String())
 		}
 		if stderr.Len() != 0 {
@@ -97,63 +97,12 @@ func TestCommandHelpPrecedesAdapterCheck(t *testing.T) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	if code := Command([]string{"ordinary shift"}, &stdout, &stderr); code != 2 {
+	if code := Command([]string{"--outcome", "delivery", "ordinary shift"}, &stdout, &stderr); code != 2 {
 		t.Fatalf("Command ordinary shift = %d, want 2", code)
 	}
 	if !strings.Contains(stderr.String(), "BENCH_AGENT") {
 		t.Fatalf("Command ordinary shift stderr = %q, want adapter refusal", stderr.String())
 	}
-}
-
-// shiftCollisionFixture builds a bare repo plus a passing gate and agent, and points
-// timeNow at a fixed instant so the derived branch name is deterministic. preExisting
-// names additional branches, relative to the base bench/shift-<ts> name (e.g. "-2"), for
-// the fixture to pre-create. This exercises the loop's collision retry.
-func shiftCollisionFixture(t *testing.T, preExisting ...string) (tmp, baseBranch string) {
-	t.Helper()
-	tmp = t.TempDir()
-	runGit := func(args ...string) {
-		t.Helper()
-		cmd := exec.Command("git", args...)
-		cmd.Dir = tmp
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v failed: %v\n%s", args, err, out)
-		}
-	}
-	runGit("init", "-q")
-	f := testrepo.NewGateFixture(t.TempDir())
-	if err := f.Write(tmp, f.Command("bash")+" -c 'exit 0'\n", ""); err != nil {
-		t.Fatal(err)
-	}
-	agentPath := filepath.Join(tmp, "agent")
-	if err := os.WriteFile(agentPath, []byte("#!/usr/bin/env bash\nexit 0\n"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "add", "-A")
-	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "init")
-
-	fixed := time.Date(2026, 7, 4, 9, 30, 0, 0, time.UTC)
-	baseBranch = "bench/shift-" + fixed.Format("20060102-150405")
-	runGit("branch", baseBranch)
-	for _, suffix := range preExisting {
-		runGit("branch", baseBranch+suffix)
-	}
-	oldNow := timeNow
-	timeNow = func() time.Time { return fixed }
-	t.Cleanup(func() { timeNow = oldNow })
-
-	oldWD, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(tmp); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(oldWD) })
-	t.Setenv("BENCH_AGENT", agentPath)
-	t.Setenv("BENCH_HOME", filepath.Join(tmp, "bench-home"))
-	t.Setenv("BENCH_MAX_ITERS", "1")
-	return tmp, baseBranch
 }
 
 // TestLoopRetriesBranchCreationOnCollision covers spec row 18. When the derived
@@ -164,7 +113,7 @@ func TestLoopRetriesBranchCreationOnCollision(t *testing.T) {
 	_, baseBranch := shiftCollisionFixture(t)
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("branch collision", &stdout, &stderr)
+	code := Loop("delivery", "branch collision", &stdout, &stderr)
 	if code != 4 { // no-op adapter (exit 0, no commit) reads as no-op/4
 		t.Fatalf("Loop = %d, want 4 (no-op); stdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
 	}
@@ -188,7 +137,7 @@ func TestLoopReportsBranchCreationFailureAfterExhaustingRetries(t *testing.T) {
 	_, baseBranch := shiftCollisionFixture(t, taken...)
 
 	var stdout, stderr bytes.Buffer
-	if code := Loop("branch collision", &stdout, &stderr); code == 0 {
+	if code := Loop("delivery", "branch collision", &stdout, &stderr); code == 0 {
 		t.Fatalf("Loop returned success despite exhausted collision retries; stdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stderr.String(), "could not create shift branch") {
@@ -214,6 +163,7 @@ func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 	}
 	gitCmd("add", ".")
 	gitCmd("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
+	admitShiftFixture(t, root)
 	old, _ := os.Getwd()
 	_ = os.Chdir(root)
 	t.Cleanup(func() { _ = os.Chdir(old) })
@@ -224,7 +174,7 @@ func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 	}
 	t.Setenv("BENCH_HOME", blockedHome)
 	var stdout, stderr bytes.Buffer
-	if code := Loop("multi word objective", &stdout, &stderr); code == 0 {
+	if code := Loop("delivery", "multi word objective", &stdout, &stderr); code == 0 {
 		t.Fatal("Loop unexpectedly acquired worktree")
 	}
 	ledger, err := intent.Read(root)

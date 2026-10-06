@@ -1,7 +1,6 @@
 package adopt
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -20,119 +19,38 @@ type stagedEntry struct {
 	stage string
 }
 
-// convergedFingerprint returns dest's fingerprint when dest already holds exactly what
-// promoting staged would leave there, and "" when the entry still needs a write. The
-// permission bits are compared alongside the fingerprint because a fingerprint covers
-// content only. A kit asset can change its executable bit without changing a byte.
-func convergedFingerprint(dest, staged string) string {
-	destInfo, err := os.Lstat(dest)
-	if err != nil {
-		return ""
-	}
-	stagedInfo, err := os.Lstat(staged)
-	if err != nil {
-		return ""
-	}
-	if stagedInfo.Mode()&os.ModeSymlink != 0 {
-		return convergedSymlinkFingerprint(dest, staged)
-	}
-	if destInfo.Mode()&os.ModeSymlink == 0 && destInfo.Mode().Perm() != stagedInfo.Mode().Perm() {
-		return ""
-	}
-	destPrint, err := fingerprintPath(dest)
-	if err != nil {
-		return ""
-	}
-	stagedPrint, err := fingerprintPath(staged)
-	if err != nil || destPrint != stagedPrint {
-		return ""
-	}
-	return destPrint
-}
-
-// convergedSymlinkFingerprint answers convergedFingerprint for a staged symlink, whose
-// own permission bits carry nothing to compare. An identical link at dest is not the only
-// converged shape. A repo may satisfy a whole adapter directory with one directory-level
-// symlink (.claude/commands -> ../.agents/commands). That symlink leaves dest resolving
-// through its parent to the very file the staged link names. Both shapes are converged,
-// because a reader of dest sees the same bytes either way. Refusing the second shape
-// would send an untouched repo into the symlink-parent refusal on every entry.
-func convergedSymlinkFingerprint(dest, staged string) string {
-	destPrint, err := fingerprintPath(dest)
-	if err != nil {
-		return ""
-	}
-	if stagedPrint, err := fingerprintPath(staged); err == nil && stagedPrint == destPrint {
-		return destPrint
-	}
-	target, err := os.Readlink(staged)
-	if err != nil {
-		return ""
-	}
-	// stageSymlink writes the link inside the transaction's stage directory, so a relative
-	// target only names its file once promoted: resolve it against dest's own directory.
-	if !filepath.IsAbs(target) {
-		target = filepath.Join(filepath.Dir(dest), target)
-	}
-	if !sameRegularContent(dest, target) {
-		return ""
-	}
-	return destPrint
-}
-
-func sameAdapterTarget(dest, staged string) bool {
-	target, err := os.Readlink(staged)
-	if err != nil {
-		return false
-	}
-	if !filepath.IsAbs(target) {
-		target = filepath.Join(filepath.Dir(dest), target)
-	}
-	destInfo, err := os.Stat(dest)
-	if err != nil {
-		return false
-	}
-	targetInfo, err := os.Stat(target)
-	return err == nil && destInfo.Mode().IsRegular() && targetInfo.Mode().IsRegular() && os.SameFile(destInfo, targetInfo)
-}
-
-// sameRegularContent reports whether two paths resolve to regular files holding the same
-// bytes. Each is stat'd through its links first, because a FIFO or device reached by
-// either path would block the read forever.
-func sameRegularContent(a, b string) bool {
-	for _, path := range []string{a, b} {
-		info, err := os.Stat(path)
-		if err != nil || !info.Mode().IsRegular() {
-			return false
-		}
-	}
-	first, err := os.ReadFile(a)
-	if err != nil {
-		return false
-	}
-	second, err := os.ReadFile(b)
-	return err == nil && bytes.Equal(first, second)
-}
-
-// ownedUnmodified reports whether dest still carries the exact bytes recorded for it in
-// the previous manifest. owned is that manifest's hash, and "" means unowned.
-func ownedUnmodified(dest, owned string) bool {
-	if owned == "" {
-		return false
-	}
-	fp, err := fingerprintPath(dest)
-	return err == nil && fp == owned
-}
-
 // transactionalLink stages and promotes plan into root as one transaction. It reports
 // whether anything on disk actually changed (the second return) alongside the usual
 // 0/1/2/3 result. bench setup's already-converged report reads the bool to distinguish
 // "converged, nothing to do" from "converged, wrote something". bench link ignores it.
 func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout, stderr io.Writer) (int, bool) {
+	return transactionalRepair(root, kit, mode, version, plan, stdout, stderr, nil)
+}
+
+func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdout, stderr io.Writer, repair *repairRun) (int, bool) {
+	lease, err := lockAdoption(root, plan)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1, false
+	}
+	defer lease.Close()
+	lease.repair = repair
 	old, err := ReadManifest(filepath.Join(root, ".bench", "link-manifest.tsv"))
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1, false
+	}
+	if repair != nil {
+		if err := validateRepairManifest(filepath.Join(root, ".bench", "link-manifest.tsv"), old); err != nil {
+			block, renderErr := renderVerdicts("conflicts", []lifecycleVerdict{{".bench/link-manifest.tsv", "modified-managed"}})
+			if renderErr != nil {
+				fmt.Fprintln(stderr, renderErr)
+			} else {
+				fmt.Fprint(stdout, block)
+			}
+			fmt.Fprintln(stderr, err)
+			return 1, false
+		}
 	}
 	accepted := make([]stagedEntry, 0, len(plan))
 	planned := make(map[string]bool, len(plan))
@@ -153,7 +71,9 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 	if claudeSpecial {
 		conflicts = append(conflicts, lifecycleVerdict{"CLAUDE.md", "project-owned"})
 	}
-	populateOriginHead(root)
+	if repair == nil {
+		populateOriginHead(root)
+	}
 	// The hooks directory is resolved through the reader before InspectPrePush, and before
 	// any file is staged, so an unresolved answer refuses the whole transaction rather than
 	// leaving InspectPrePush's own absent-state fallback silently skip the hook.
@@ -242,7 +162,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		// untouched copy of an older kit. It is rewritten rather than reported. Only a
 		// destination that answers to neither the manifest nor the incoming kit is someone's
 		// local edit to preserve.
-		if exists && !ownedUnmodified(dest, owned) {
+		if exists && !ownedUnmodified(dest, owned, staged, repair != nil) {
 			reason := "project-owned"
 			if owned != "" {
 				reason = "modified-managed"
@@ -265,7 +185,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 			}
 			rows[a.entry.rel] = fp
 		}
-		changes = append(changes, stagedChange{rel: a.entry.rel, stage: a.stage, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
+		changes = append(changes, stagedChange{rel: a.entry.rel, stage: a.stage})
 	}
 	// A dropped old row leaves only when it is still clean. Modified rows remain owned.
 	for _, row := range old.Rows() {
@@ -305,7 +225,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 				return 1, false
 			}
 			if fp == row.hash {
-				changes = append(changes, stagedChange{rel: row.rel, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
+				changes = append(changes, stagedChange{rel: row.rel})
 			} else {
 				rows[row.rel] = row.hash
 				conflicts = append(conflicts, lifecycleVerdict{row.rel, "kept-modified-removed"})
@@ -313,13 +233,13 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		}
 	}
 	if !agentsSpecial {
-		agents, err := stagedAgents(stage, root)
+		agents, err := stagedRepairAgents(stage, root, repair)
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1, false
 		}
 		if agents != "" {
-			changes = append(changes, stagedChange{rel: "AGENTS.md", stage: agents, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
+			changes = append(changes, stagedChange{rel: "AGENTS.md", stage: agents})
 		}
 	}
 	if !claudeSpecial {
@@ -331,13 +251,26 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		if managed {
 			fp, _ := fingerprintPath(claude)
 			rows["CLAUDE.md"] = fp
-			changes = append(changes, stagedChange{rel: "CLAUDE.md", stage: claude, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
+			changes = append(changes, stagedChange{rel: "CLAUDE.md", stage: claude})
 		}
 	}
 	hookStage, hookDirs, err := stageManagedPrePush(root, hook)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1, false
+	}
+	if repair != nil && hook.State == PrePushManaged {
+		if err := validateRepairHook(hook); err != nil {
+			_ = os.Remove(hookStage)
+			removeEmptyDirs(hookDirs)
+			block, err := renderVerdicts("conflicts", []lifecycleVerdict{{hook.Path, "modified-managed"}})
+			if err != nil {
+				fmt.Fprintln(stderr, err)
+			} else {
+				fmt.Fprint(stdout, block)
+			}
+			return 1, false
+		}
 	}
 	promoted := false
 	defer func() {
@@ -346,7 +279,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 			removeEmptyDirs(hookDirs)
 		}
 	}()
-	changes = append(changes, stagedChange{rel: "pre-push", dest: hook.Path, stage: hookStage, backup: hookStage + ".backup"})
+	changes = append(changes, stagedChange{rel: "pre-push", dest: hook.Path, stage: hookStage})
 	manifestRows := make([]manifestRow, 0, len(rows))
 	for rel, hash := range rows {
 		manifestRows = append(manifestRows, manifestRow{rel, hash})
@@ -357,7 +290,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		fmt.Fprintln(stderr, err)
 		return 1, false
 	}
-	changes = append(changes, stagedChange{rel: ".bench/link-manifest.tsv", stage: manifest, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
+	changes = append(changes, stagedChange{rel: ".bench/link-manifest.tsv", stage: manifest})
 	if len(conflicts) > 0 {
 		if _, err := renderVerdicts("conflicts", conflicts); err != nil {
 			fmt.Fprintln(stderr, err)
@@ -369,7 +302,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		fmt.Fprintln(stderr, err)
 		return 1, false
 	}
-	if err := promoteAll(root, changes); err != nil {
+	if err := promoteWithLease(root, changes, lease); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1, false
 	}

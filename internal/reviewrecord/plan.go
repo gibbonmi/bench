@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"slices"
 	"strings"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
@@ -103,7 +104,7 @@ func ReadPlan(root, tree, spec string) (Plan, error) {
 		inputs = append(inputs, data)
 		chunk := &plan.Chunks[owners[name]]
 		for _, row := range ticket.Covers {
-			if !contains(chunk.Rows, row) {
+			if !slices.Contains(chunk.Rows, row) {
 				chunk.Rows = append(chunk.Rows, row)
 			}
 		}
@@ -137,7 +138,7 @@ func requirementsValid(items []Requirement, owned []string, delegated bool) erro
 			}
 			continue
 		}
-		if !contains(owned, item.Ticket) {
+		if !slices.Contains(owned, item.Ticket) {
 			return fmt.Errorf("verification %s names ticket %q outside this chunk", item.ID, item.Ticket)
 		}
 		covered[item.Ticket] = true

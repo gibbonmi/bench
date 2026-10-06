@@ -48,7 +48,7 @@ func transact(root string, mode ReadMode, decide countedDecision, compensate Com
 	if err != nil {
 		return err
 	}
-	release, err := acquire(path + ".lock")
+	release, err := acquire(lockOf(path))
 	if err != nil {
 		return err
 	}
@@ -102,8 +102,11 @@ func readPathTolerant(path string) (Ledger, int, error) {
 		return Ledger{}, 0, fmt.Errorf("purge intent ledger: %w", err)
 	}
 	var rest struct {
-		Entries         []Entry          `json:"entries"`
-		CleanupReceipts []CleanupReceipt `json:"cleanup_receipts"`
+		Entries            []Entry             `json:"entries"`
+		CleanupReceipts    []CleanupReceipt    `json:"cleanup_receipts"`
+		CommitmentReceipts []CommitmentReceipt `json:"commitment_receipts"`
+		MilestoneReceipts  []MilestoneReceipt  `json:"milestone_receipts"`
+		Commitment         *CommitmentState    `json:"commitment,omitempty"`
 	}
 	if err := json.Unmarshal(data, &rest); err != nil {
 		return Ledger{}, 0, fmt.Errorf("purge intent ledger: %w", err)
@@ -122,10 +125,13 @@ func readPathTolerant(path string) (Ledger, int, error) {
 		}
 	}
 	ledger := Ledger{
-		Schema:          stored.Schema,
-		Entries:         rest.Entries,
-		Assignments:     kept,
-		CleanupReceipts: rest.CleanupReceipts,
+		Schema:             stored.Schema,
+		Entries:            rest.Entries,
+		Assignments:        kept,
+		CleanupReceipts:    rest.CleanupReceipts,
+		CommitmentReceipts: rest.CommitmentReceipts,
+		MilestoneReceipts:  rest.MilestoneReceipts,
+		Commitment:         rest.Commitment,
 	}
 	return ledger, len(stored.Assignments), nil
 }

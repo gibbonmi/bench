@@ -24,13 +24,11 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	worktrees, worktreeCount := markdownH2Sections(text, "Worktree closure")
 	delegation, delegationCount := markdownH2Sections(text, "Delegate the evidence")
 	occurrences, occurrenceCount := markdownH2Sections(text, "2. Drain occurrence evidence")
-	sequence, sequenceCount := markdownH2Sections(text, "7. Refresh the sequence")
 	batch, batchCount := markdownH2Sections(text, "8. Batch-propose, then commit once on green")
 	entry = collapseSpace(entry)
 	worktrees = collapseSpace(worktrees)
 	delegation = collapseSpace(delegation)
 	occurrences = collapseSpace(occurrences)
-	sequence = collapseSpace(sequence)
 	batch = collapseSpace(batch)
 	var diags []string
 	if entryCount != 1 || !strings.Contains(entry, "`context.schema = 4`") ||
@@ -89,8 +87,8 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	decisionsBeforeWriter := "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts."
 	treeVerification := "Verify that the tree stayed unchanged."
 	coordinatorOwnership := "Keep sealed capture retirement, the handoff, verification, and landing with the coordinator."
-	implementOverlap := "Retained implement-now work may run while other reads continue."
-	implementRouting := "Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`."
+	implementOverlap := "Implement-now delegates may run while other reads continue."
+	implementRouting := "Route their line through `craft-line` and keep their authorship under `.bench/BENCH.md`."
 	withImplementTiming := "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`."
 	withoutImplementTiming := "If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions."
 	singleWriter := "If tracked changes remain, the retained drain session authors the complete tracked batch."
@@ -180,26 +178,6 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 		diags = append(diags, "bench-drain does not retain the event-only occurrence contrast")
 	}
 
-	precedence := []string{
-		"Rank rows by severity.",
-		"choose actionable work over blocked work",
-		"apply literal dependencies, then explicit reviewer pricing.",
-		"rank by descending occurrence count.",
-		"existing reproduced defect-over-feature rule, then cheapest-first cost rule.",
-	}
-	previous := -1
-	if sequenceCount != 1 {
-		diags = append(diags, "bench-drain recurrence sequence precedence is unavailable")
-	} else {
-		for _, anchor := range precedence {
-			at := strings.Index(sequence, anchor)
-			if at < 0 || at <= previous {
-				diags = append(diags, "bench-drain recurrence sequence precedence is incomplete or out of order")
-				break
-			}
-			previous = at
-		}
-	}
 	return diags
 }
 
@@ -235,8 +213,8 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		{"decisions before writer", "Resolve duplicate incidents and reviewer decisions before retained batch authorship starts.", "Resolve duplicate incidents after retained batch authorship starts.", "bench-drain does not resolve cross-source decisions before batch writing"},
 		{"tree verification", "Verify that the tree stayed unchanged.", "Assume that the tree stayed unchanged.", "bench-drain does not verify the tree stayed unchanged after reading"},
 		{"coordinator ownership", "Keep sealed capture retirement, the handoff,\nverification, and landing with the coordinator.", "Delegate sealed capture retirement and landing.", "bench-drain does not retain coordinator ownership of local and landing work"},
-		{"implement-now overlap", "Retained implement-now work may run while other reads continue.", "Start implement-now work after every read finishes.", "bench-drain does not allow implement-now work to overlap remaining reads"},
-		{"implement-now routing", "Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`.", "Route implement-now work without craft-line or retained authorship.", "bench-drain does not route implement-now work through craft-line and retained authorship"},
+		{"implement-now overlap", "Implement-now delegates may run while other reads continue.", "Start implement-now work after every read finishes.", "bench-drain does not allow implement-now work to overlap remaining reads"},
+		{"implement-now routing", "Route their line through `craft-line` and keep their authorship under `.bench/BENCH.md`.", "Route implement-now work without craft-line or retained authorship.", "bench-drain does not route implement-now work through craft-line and retained authorship"},
 		{"implement-now landing timing", "If an implement-now item exists, create the batch worktree only after every such item lands green on `main`.", "Create the batch worktree before implement-now items land.", "bench-drain does not wait for every implement-now landing before batch creation"},
 		{"no-implement-now timing", "If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions.", "If no implement-now item exists, never create the batch worktree.", "bench-drain does not create the batch after reads when no implement-now item exists"},
 		{"single batch writer", "If tracked changes remain, the retained drain session authors the complete tracked batch.", "A later write delegate authors the complete tracked batch.", "bench-drain does not retain one conditional tracked batch author"},
@@ -257,7 +235,6 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		{"physical occurrence shape", "exactly one physical\n`Occurrence: <when/source> — <short situation>.` line", "one or more `Occurrence:` paragraphs", "bench-drain does not require one physical occurrence line per drained event"},
 		{"event-only boundary", "Occurrence lines contain\nevent evidence only.", "Occurrence lines contain event evidence and remedy derivation.", "bench-drain does not keep occurrence evidence separate from core remedies"},
 		{"contrastive example", "**Good — event-only evidence:** `Occurrence: 2026-08-15 gate build — primary-checkout preflight failed on a stale base.`", "**Good — remedy derivation:** `Occurrence: 2026-08-15 gate build — change preflight selection to fix the stale base.`", "bench-drain does not retain the event-only occurrence contrast"},
-		{"equal class", "apply literal dependencies, then explicit\nreviewer pricing. Only when all four stronger inputs tie, rank by descending\noccurrence count.", "rank by descending occurrence count before explicit reviewer pricing.", "bench-drain recurrence sequence precedence is incomplete or out of order"},
 	}
 	for _, mutation := range mutations {
 		t.Run(mutation.name, func(t *testing.T) {

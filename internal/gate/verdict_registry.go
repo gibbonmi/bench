@@ -4,6 +4,8 @@ import (
 	"errors"
 	"slices"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 type verdictRecordClass struct {
@@ -50,7 +52,7 @@ func validateLaneRecord(_ []byte, r verdictRecord, now time.Time) error {
 	if r.Lane == "" || (r.Outcome != lanePass && r.Outcome != laneFail) || !isContentAddress(r.RunBinary) {
 		return errors.New("invalid lane record")
 	}
-	if tm, err := strictRecordTime(r.RecordedAt); err != nil || tm.After(now) {
+	if _, err := recordTimeAt(r.RecordedAt, now); err != nil {
 		return errors.New("invalid lane record time")
 	}
 	return nil
@@ -73,17 +75,27 @@ func validatePendingRecord(_ []byte, r verdictRecord, now time.Time) error {
 	if r.State != Pending || r.Status != "" || r.RecordedAt != "" || r.StartedAt == "" || r.OwnerPID <= 0 {
 		return errors.New("invalid pending")
 	}
-	if tm, err := strictRecordTime(r.StartedAt); err != nil || tm.After(now) {
+	if _, err := recordTimeAt(r.StartedAt, now); err != nil {
 		return errors.New("invalid pending time")
 	}
 	return nil
+}
+
+// recordTimeAt parses a strict record time and refuses one that is ahead of now by more
+// than the bounds clock skew.
+func recordTimeAt(value string, now time.Time) (time.Time, error) {
+	tm, err := strictRecordTime(value)
+	if err != nil || tm.After(now.Add(bounds.RecordClockSkew)) {
+		return time.Time{}, errors.New("invalid record time")
+	}
+	return tm, nil
 }
 
 func validateReadyRecord(r verdictRecord, now time.Time) error {
 	if r.State != Ready || (r.Status != "green" && r.Status != "red" && r.Status != "timeout") || r.RecordedAt == "" || r.StartedAt != "" || r.OwnerPID != 0 {
 		return errors.New("invalid ready")
 	}
-	if tm, err := strictRecordTime(r.RecordedAt); err != nil || tm.After(now) {
+	if _, err := recordTimeAt(r.RecordedAt, now); err != nil {
 		return errors.New("invalid ready time")
 	}
 	return nil

@@ -3,15 +3,19 @@ package anchors
 // chunkChainAnchors pin the chunk chain and the record order that the implement and
 // review phases state, and the hardening cap that the bounded repair policy states.
 // The first row pins the build-entry route that sends a staleness-class preflight red
-// to the staleness pass before the chain starts. The `bench record` rows route each
-// completed review-record entry to the verb and forbid the retired hand-recording sentences.
+// to the staleness pass before the chain starts. The next two rows pin the implement
+// phase's pointer to the staleness-pass reference and the fixed charge that the
+// reference states. The `bench record` rows route each completed review-record entry to
+// the verb and forbid the retired hand-recording sentences.
 var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Require, Needle: "If every red row is a `*-closure` row, `fence-writes`, or `completion-plan`, the staleness pass below takes the red. Any other red stops the phase.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped or widened the staleness route for a red build preflight"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Declare the line, validate the tickets, route the venue", Needle: "charge the staleness pass that `" + stalenessPass + "` states.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped the staleness-pass charge pointer to its reference"},
+	{Group: AfterImplementSpec, File: stalenessPass, Kind: RequireInSection, Section: "The charge", Needle: "- Line: the mid tier, medium effort, one iteration.\n- Budget: 15 tool calls.", Diagnostic: stalenessPass + " dropped the mid-tier, medium-effort, 15-call staleness charge"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug>`.", Diagnostic: "chunk chain: build preflight runs through the worktree after each ticket commit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "The author commits the verification and probe record before the axis dispatch.", Diagnostic: "chunk chain: the probe record commits before the axis dispatch"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "Prepare the review charge from that record commit. The sequence is the author record commit, then the review charge, then the axis dispatch.", Diagnostic: "chunk chain: the review charge follows the author record commit and precedes the axis dispatch"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Build", Needle: "review charge before the author record commit", Diagnostic: "chunk chain: the Build section puts the review charge before the author record commit"},
-	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Plan commits land before the ticket merge, and a `main` merge lands only before the first chunk. Only record commits follow the chunk tip.", Diagnostic: "chunk chain: only record commits follow the chunk tip"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Plan commits land before the ticket merge, and a `main` merge lands only before the first chunk. Only record commits and comment-only corrections follow the chunk tip.", Diagnostic: "chunk chain: only record and comment-only commits follow the chunk tip"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "The reconciliation commit joins the review delta of the last chunk.", Diagnostic: "chunk chain: the reconciliation commit joins the last chunk delta"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "When the orchestrator freezes a chunk after its last ticket, it records the chunk entry with `bench record chunk`.", Diagnostic: "chunk chain: the orchestrator records the chunk entry at the freeze"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Each ticket author then writes its verification entries at that chunk source with `bench record verification`.", Diagnostic: "chunk chain: each ticket author records its verification at the chunk source"},
@@ -30,7 +34,9 @@ var chunkChainAnchors = []Anchor{
 }
 
 // implementPhase and reviewPhase are the phase files that state the chunk chain.
+// stalenessPass is the reference that owns the build-entry staleness charge.
 const (
 	implementPhase = ".agents/commands/bench-implement-spec.md"
 	reviewPhase    = ".agents/commands/bench-review-implementation.md"
+	stalenessPass  = ".agents/skills/bench-implement-spec/references/staleness-pass.md"
 )

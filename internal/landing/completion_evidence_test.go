@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -20,8 +21,8 @@ type completionFixture struct {
 	root, base string
 }
 
-func newCompletionFixture(t *testing.T) completionFixture {
-	return attachedCompletionFixture(t, recordtest.Attach)
+func newCompletionFixture(t *testing.T, prepare ...func(*recordtest.Fixture)) completionFixture {
+	return attachedCompletionFixture(t, recordtest.Attach, prepare...)
 }
 
 // attachedCompletionFixture builds a two-chunk landing fixture from either
@@ -29,7 +30,7 @@ func newCompletionFixture(t *testing.T) completionFixture {
 // chunk sequence. The version 1 and delegated landings share this one
 // sequence, so a change to the oracle or the build order cannot drift between
 // them.
-func attachedCompletionFixture(t *testing.T, attach func(testing.TB, string, int) *recordtest.Fixture) completionFixture {
+func attachedCompletionFixture(t *testing.T, attach func(testing.TB, string, int) *recordtest.Fixture, prepare ...func(*recordtest.Fixture)) completionFixture {
 	t.Helper()
 	f := attach(t, fixture(t), 2)
 	f.Write(".gitignore", ".logs/\n")
@@ -42,6 +43,9 @@ func attachedCompletionFixture(t *testing.T, attach func(testing.TB, string, int
 	source := filepath.Join(t.TempDir(), "source")
 	f.Git("worktree", "add", "-qb", "evidence-source", source, base)
 	f.Root = source
+	for _, apply := range prepare {
+		apply(f)
+	}
 	f.AddChunk()
 	f.Save()
 	f.Commit("retain first chunk")
@@ -71,12 +75,90 @@ func (f completionFixture) request(t *testing.T) ReviewedRequest {
 	}
 }
 
+// The reviewed landing binds the gate's completion oracle to a tickets-only close. The
+// real gate grades the exact close green, and it refuses an authorized tree that keeps
+// the closed folder, so the landing does not publish that tree.
+func TestLandingTicketsOnlyCompletion(t *testing.T) {
+	const closed = "specs/t"
+	for _, row := range []struct {
+		name, reason string
+		keep         bool
+	}{
+		{name: "exact-close"},
+		{name: "kept-folder", reason: "completion keeps closed " + closed + "/tickets/one.md", keep: true},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root := fixture(t)
+			write(t, root, closed+"/tickets/one.md", "# One\n")
+			g := testrepo.NewGateFixture(t.TempDir())
+			if err := g.Write(root, "exit 0\n", ""); err != nil {
+				t.Fatal(err)
+			}
+			git(t, root, "add", ".")
+			git(t, root, "commit", "-qm", "stage tickets and the landing oracle")
+			destination := git(t, root, "rev-parse", "HEAD")
+			sourceWorktree := filepath.Join(t.TempDir(), "source")
+			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			write(t, sourceWorktree, "reviewed", "source bytes\n")
+			git(t, sourceWorktree, "add", "reviewed")
+			git(t, sourceWorktree, "commit", "-qm", "reviewed work")
+			sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
+			if err != nil {
+				t.Fatal(err)
+			}
+			destinationFingerprint, err := CheckoutFingerprint(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			owner := New()
+			if row.keep {
+				owner.authorize = func(ctx context.Context, root, tree string, stdout, stderr io.Writer) authorization.Result {
+					kept, err := replaceTreeFile(root, tree, closed+"/tickets/one.md", []byte("# One\n"), 0o644)
+					if err != nil {
+						t.Fatal(err)
+					}
+					return authorization.AuthorizeWithWriters(ctx, root, kept, stdout, stderr)
+				}
+			}
+			_, err = owner.LandReviewed(t.Context(), ReviewedRequest{
+				Root: root, Destination: "refs/heads/main", DestinationBase: destination,
+				Source: "refs/heads/reviewed-source", SourceTip: git(t, sourceWorktree, "rev-parse", "HEAD"), ReviewBase: destination,
+				SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
+				ClosePath: closed, Message: "land the tickets-only close", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{},
+			})
+			if row.reason == "" {
+				if err != nil || git(t, root, "rev-parse", "main") == destination {
+					t.Fatalf("exact tickets-only close = %v, want a publication", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), row.reason) {
+				t.Fatalf("kept folder = %v, want a refusal naming %q", err, row.reason)
+			}
+			if got := git(t, root, "rev-parse", "main"); got != destination {
+				t.Fatalf("refused close moved main to %s", got)
+			}
+		})
+	}
+}
+
 func TestLandingCompletionEvidence(t *testing.T) {
 	cases := []struct {
 		name, reason string
 		change       func(*testing.T, completionFixture, *Owner)
 	}{
 		{"complete", "", func(*testing.T, completionFixture, *Owner) {}},
+		{"comment-only gap", "", func(t *testing.T, f completionFixture, _ *Owner) {
+			f.evidence.Write("comment_gap_test.go", "package fixture\nvar value = 1 // after\n")
+			f.evidence.Commit("correct reviewed comment")
+			digest, err := rr.SourceDigest(f.evidence.Root, f.evidence.Tree(), recordtest.Spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			f.evidence.Record.Completion.SourceDigest = digest
+			f.evidence.Record.Completion.Verification = f.evidence.Verification("corrected-final", digest, f.evidence.Plan.FinalVerification)
+			f.evidence.Save()
+		}},
 		{"missing reconciliation", "reconciliation E1", func(t *testing.T, f completionFixture, _ *Owner) {
 			delete(f.evidence.Record.Completion.Reconciliation, "E1")
 			f.evidence.Save()
@@ -138,7 +220,13 @@ func TestLandingCompletionEvidence(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newCompletionFixture(t)
+			var prepare []func(*recordtest.Fixture)
+			if tc.name == "comment-only gap" {
+				prepare = append(prepare, func(f *recordtest.Fixture) {
+					f.Write("comment_gap_test.go", "package fixture\nvar value = 1 // before\n")
+				})
+			}
+			f := newCompletionFixture(t, prepare...)
 			owner := New()
 			tc.change(t, f, &owner)
 			if f.evidence.Git("status", "--porcelain") != "" {

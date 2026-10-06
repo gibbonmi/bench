@@ -51,6 +51,9 @@ assignments; the file map, adapter contracts, and hook layers live below.
   heading line per row, with no bodies. `roadmap/` holds one detail owner per
   row, `roadmap/FT<n>.md`, carrying that row's body, `Occurrence:` ledger, and
   `Sources:` line.
+- `.bench/commitment.json` is the tracked delivery commitment: the milestones,
+  their ordered outcomes, and the verified delivery facts. `bench commitment`
+  reads and stages it, and `.bench/BENCH.md` states the commitment rule.
 - `.bench/bin/` is the local CLI copy `bench link` installs for hooks, so Stop
   and SessionStart do not depend on a global `bench` on PATH.
 - `.agents/commands/` contains portable Bench command phases.
@@ -147,6 +150,61 @@ Codex phase adapters installed by Bench:
 - `$bench-assess` → `.agents/commands/bench-assess.md`
 - `$bench-deepen` → `.agents/commands/bench-deepen.md`
 
+## Session compatibility
+
+Codex CLI and Desktop use the same repository agreement, skills, hooks, and Bench assignments.
+Their chats and user configuration homes remain independent.
+Bench does not copy credentials, preferences, or conversation history between them.
+The Windows desktop app uses its WSL2 agent for this workflow.
+Native Windows Bench execution is outside this qualification.
+Existing Linux and macOS contracts remain unchanged.
+
+### Check the active operation
+
+1. Identify the actual interface, repository, execution environment, active runtime, configuration home, and relevant policy sources.
+2. Keep an unavailable value unknown; a launcher version does not identify the active server.
+3. Run `bench doctor --compat codex-cli` or `bench doctor --compat codex-desktop` for the selected interface.
+4. Read the complete report through its spill path when the output is bounded.
+5. Follow its `normal-shell` and `repository-wrapper` capability actions in separate calls, in that order.
+6. Perform the remaining capability actions needed by the selected operation.
+
+The report owns the live-probe instructions for every capability.
+If no command can start, use the command-free recovery route below.
+
+A doctor report describes local inspection and pending live probes.
+A zero exit does not qualify the whole chat.
+A hook, integrated terminal, new subprocess, or elevated shell supplies diagnostic evidence only.
+Keep successful observations in the current chat's memory, with their operation, route, permission mode, and observed context.
+Do not write a reusable green certificate.
+
+Start, resume, runtime replacement, workspace change, and relevant policy change invalidate affected observations.
+When context cannot be compared, repeat the affected live probes before dependent work.
+A runtime version difference alone does not prove a capability failure.
+Report the blocked operation, failed check, and supported next action.
+Continue only work whose required capabilities are verified.
+
+### Repair managed integration
+
+When the report identifies an eligible managed repair, run the selected compatibility command with `--fix`.
+The repair preserves preimages and modified or foreign files.
+Read its recovery classifications before any action that requires reviewer authority.
+Use its recorded `--undo <repair-id>` action when restoration is needed.
+Then follow the report's `failed-interface-retest` capability action.
+A successful repair command does not supply this live result.
+
+### If no command can start
+
+Preserve the exact startup error and name the failing interface.
+Do not retry dependent mutations through an elevated shell or an external terminal.
+Use supported external diagnostics to inspect the failure without treating their success as recovery.
+
+Keep active work and its continuation evidence before requesting an app restart.
+Obtain explicit reviewer authorization before interrupting a process, changing trust or permissions, or editing private runtime files.
+No supported automatic upstream repair is established.
+If the supported recovery route is unavailable, report the affected work as unresolved.
+
+After an authorized recovery, repeat the active-operation procedure above in the failed chat.
+
 ## Command Notes
 
 Bench renders `bench help` from the Go `commandRegistry`; it is the executable
@@ -159,6 +217,25 @@ describe the hook and adapter plumbing.
 - Context commands expose current state, navigation, capture, and planning evidence.
 - Oracle commands inspect or enforce readiness from development through release.
 - Work commands own isolated execution, gated changes, and spec lifecycle operations.
+
+`bench status`, `bench roadmap`, and `bench dashboard` render one commitment
+outlook. The outlook names its state, the next eligible outcome, each blocked
+outcome with its reason, and the next command. Before adoption the state is
+`adoption-required`, the recommended sequence is unapproved input, and the next
+command is `bench commitment plan --input <file>`. The status board shows that
+row only when a staged spec waits. When the policy or the local runtime record
+does not read, the state is `unreadable`, and `bench commitment show` names the cause.
+
+The plan input is the proposed policy document. Its optional `continuations` key
+lists each already-authorized run that can finish. Each entry names the run's
+`assignment` and `request` digest from `bench commitment inventory`, and the
+`scope` paths on that run's branch. The plan identity binds this list. Approval
+records each listed run in the local intent record, and an unlisted run gets no
+continuation.
+
+An open continuation holds the default active slot. To start an
+outcome beside it, a parallel grant names the run's assignment in its own
+`continuations` list.
 
 `bench consumers` is the resolved-reference query for a Go symbol. With
 `--changed`, the same verb is the review blast over a frozen base and source

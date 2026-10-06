@@ -2,6 +2,7 @@ package adopt
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/compatibility"
 	"io"
 )
 
@@ -14,6 +15,7 @@ import (
 // doctor, is green.
 func finishSetup(stdout io.Writer, facts setupFacts, priorPartial bool) int {
 	red := reportDoctorRows(stdout)
+	fmt.Fprintln(stdout, compatibility.QualificationAction())
 	fmt.Fprintln(stdout, "reload your harness session so it picks up the converged AGENTS.md / CLAUDE.md instructions")
 	if facts.zeroSignal {
 		fmt.Fprintln(stdout, "next: configure .bench/gate.sh - replace the "+SentinelMarker+" sentinel with your project's real checks, then re-run bench setup")

@@ -24,7 +24,7 @@ Ownership fence: <exact repo-relative file or path prefix>
 Effort: <level and iteration cap>
 Focused suite: <exact command>
 Independent biting probe: <property, mutation kind, site, and expected red>
-Debug route: follow `.agents/commands/bench-debug.md`; a red-capable loop first, then the fix
+Debug route: start with `.agents/commands/bench-debug.md`; return the recorded cause
 Repair context: <fold targets and author context, each read by the coordinator before this charge names it>
 ```
 

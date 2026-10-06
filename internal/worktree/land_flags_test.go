@@ -167,7 +167,7 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 			tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 			calls := 0
 			j := defaultJoins()
-			j.landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
+			j.landReviewed = func(context.Context, landing.ReviewedRequest, landing.Admission) (landing.ReviewedResult, error) {
 				calls++
 				return landing.ReviewedResult{}, errors.New("unexpected landing")
 			}
@@ -266,7 +266,7 @@ func TestLandCommandRefusesDestinationAndSourceStateBeforeGate(t *testing.T) {
 			}
 			calls := 0
 			j := defaultJoins()
-			j.landReviewed = func(context.Context, landing.ReviewedRequest) (landing.ReviewedResult, error) {
+			j.landReviewed = func(context.Context, landing.ReviewedRequest, landing.Admission) (landing.ReviewedResult, error) {
 				calls++
 				return landing.ReviewedResult{}, errors.New("unexpected landing")
 			}

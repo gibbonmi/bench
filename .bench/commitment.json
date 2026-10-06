@@ -1,0 +1,213 @@
+{
+  "version": 1,
+  "milestones": [
+    {
+      "id": "quality-1",
+      "outcomes": [
+        {
+          "id": "ADR26",
+          "criteria": [
+            {
+              "id": "ADR26.adr",
+              "text": "ADR 0026 records the default class order, the explicit reviewer order that governs it, and the out-of-scope rules of the delivery commitment."
+            },
+            {
+              "id": "ADR26.retire",
+              "text": "The roadmap-delivery-commitment spec folder and its review record are retired through a spec-retire landing."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT389",
+              "path": "roadmap/FT389.md",
+              "identity": "sha256:a75c563407db1334fb21fc211ac62adba6612444e9b66591ef2eb29bbbc33a1a"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "adr-0026-retire-dc",
+                "path": "specs/adr-0026-retire-dc",
+                "identity": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774"
+              },
+              "obligations": [
+                "FT389"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "FT390",
+          "criteria": [
+            {
+              "id": "FT390.obligations",
+              "text": "A plan that binds a deliverable to an outcome with sources refuses an empty obligation list, or the completion landing refuses a completion that records no delivery fact."
+            },
+            {
+              "id": "FT390.settled",
+              "text": "A plan that settles or removes a deliverable succeeds when that deliverable is absent on main."
+            },
+            {
+              "id": "FT390.canonical",
+              "text": "The plan identity sorts its policy sources in one canonical order."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT390",
+              "path": "roadmap/FT390.md",
+              "identity": "sha256:21abf5134af02a40474f90a44698600bdaa78c1e6ad873b109b1f098533642e2"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "commitment-delivery-integrity",
+                "path": "specs/commitment-delivery-integrity/spec.md",
+                "identity": "sha256:69565705a0de2b96f5c627dfed09bcfdb9970d76d41d763ed4adfa90577d7044"
+              },
+              "obligations": [
+                "FT390"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "FT391",
+          "criteria": [
+            {
+              "id": "FT391.admit",
+              "text": "bench commit and a bench worktree land with --spec admit an unbound change that carries one tickets-only folder with exactly one ticket, when every production path stays inside that ticket's Writes line."
+            },
+            {
+              "id": "FT391.guards",
+              "text": "A light-path change still cannot change the commitment policy or a pinned roadmap row, and a spec-less landing of it refuses with the --spec route."
+            },
+            {
+              "id": "FT391.drain",
+              "text": "The operating guide and the drain dispatch each kept light-path fix to a fresh write delegate, whatever the active commitment is, and ADR 0028 records that the commitment gates spec implementations only."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT391",
+              "path": "roadmap/FT391.md",
+              "identity": "sha256:2af62a00f72899c536f35c860a09108cac4be53b3815ceedb959e64b48722528"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "light-path-commitment-exemption",
+                "path": "specs/light-path-commitment-exemption/spec.md",
+                "identity": "sha256:db0c428534da1bbf5098fcfcdf9043ade2496c9441584f646da4ec33472ab2d0"
+              },
+              "obligations": [
+                "FT391"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "FT376",
+          "criteria": [
+            {
+              "id": "FT376.trace",
+              "text": "Before the first review charge, the spec stage traces each pin row operator, each unexported entry read, and each derived expectation to its grader."
+            },
+            {
+              "id": "FT376.consolidation",
+              "text": "A spec that consolidates repeated rules maps each changed old-rule and new-rule cell to an acceptance row, a flagged addition, or a Won't handle line."
+            },
+            {
+              "id": "FT376.quantified",
+              "text": "Before the first review charge, the spec author checks every quantified obligation at each affected site and across all tickets."
+            },
+            {
+              "id": "FT376.callers",
+              "text": "The caller sweep runs bench consumers for each changed function, including unexported functions."
+            },
+            {
+              "id": "FT376.digests",
+              "text": "For each new workflow step, the spec author traces every write through the digests that later checkpoints compare."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT376",
+              "path": "roadmap/FT376.md",
+              "identity": "sha256:2d5a52f6bf9e764cf1511395b052a8447160c4680300cf1a2494d7ac300df4f4"
+            }
+          ]
+        },
+        {
+          "id": "FT373",
+          "criteria": [
+            {
+              "id": "FT373.check",
+              "text": "A gate check refuses production code that re-implements slices.Contains, slices.ContainsFunc, a maps.Copy loop, min, max, strings.Cut, strings.CutPrefix, or strings.CutSuffix."
+            },
+            {
+              "id": "FT373.sites",
+              "text": "No production site in the kept categories remains when the gate turns the check on."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT373",
+              "path": "roadmap/FT373.md",
+              "identity": "sha256:64628d70448b2d9fe32ccdc2466af3a69ad192d019d767954fa4acb8f86c9938"
+            }
+          ]
+        },
+        {
+          "id": "FT349",
+          "criteria": [
+            {
+              "id": "FT349.floor",
+              "text": "The ticket checkpoint refuses a commit whose checks omit root conformance, the tests of a package that the ticket Writes line derives, or the whole cmd/bench package when a public response or embed pattern changed."
+            },
+            {
+              "id": "FT349.planned",
+              "text": "The ticket checkpoint refuses a planned citation for a row that the committed ticket covers."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT349",
+              "path": "roadmap/FT349.md",
+              "identity": "sha256:f4f89dbf1f4de267d1877ad2a3eb9ba7c410bebc7df46214d3fc573e6b51a268"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "active_milestone": "quality-1",
+  "deliveries": [
+    {
+      "milestone": "quality-1",
+      "outcome": "ADR26",
+      "binding": "adr-0026-retire-dc",
+      "identity": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774",
+      "source": "a7a70e5df7c9abcaac19048ad745341463e9ef25",
+      "evidence": "git-tree:d4b56dcd585f6b8f4bf99ddcd16468738935d774"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT390",
+      "binding": "commitment-delivery-integrity",
+      "identity": "sha256:69565705a0de2b96f5c627dfed09bcfdb9970d76d41d763ed4adfa90577d7044",
+      "source": "6e0005d2e51b223e2359d035cf4c7be20ca74024",
+      "evidence": "2b110e11af722a05d5d267b27caa829abfcab4d5"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT391",
+      "binding": "light-path-commitment-exemption",
+      "identity": "sha256:db0c428534da1bbf5098fcfcdf9043ade2496c9441584f646da4ec33472ab2d0",
+      "source": "c3b86de85bdf315ebadf1e985378a392266513fa",
+      "evidence": "9eed569c65f08d02898704bf7532a0b4a0ecf567"
+    }
+  ]
+}

@@ -328,7 +328,7 @@ func TestRoadmapBoardDocument(t *testing.T) {
 	}
 	index, files := board(board11...)
 	roadmaptest.WriteSplitBoard(t, root, "# Roadmap\n\n"+index+"## Recommended sequence\n\n1. First item - /bench-shape-idea\n", files)
-	out, code := RoadmapCommand(nil)
+	out, code := RoadmapCommand(nil, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d; stdout=%q", code, out)
 	}
@@ -336,7 +336,7 @@ func TestRoadmapBoardDocument(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stdout = %q; decode: %v", out, err)
 	}
-	if want := []string{"roadmap", "board", "sequence", "drain", "help"}; !reflect.DeepEqual(document.Blocks, want) {
+	if want := []string{"roadmap", "board", "commitment_outlook", "commitment_blockers", "sequence", "drain", "help"}; !reflect.DeepEqual(document.Blocks, want) {
 		t.Fatalf("blocks = %q, want %q", document.Blocks, want)
 	}
 	roadmapRows, err := document.Rows("roadmap")
@@ -373,7 +373,7 @@ func TestRoadmapBoardRendersDetailFromRowFile(t *testing.T) {
 	root := newRepo(t)
 	body := "Blocked until the deploy is scheduled; the spec is `specs/foo/spec.md`.\nOccurrences: alpha-1, beta-2\n"
 	writeBoard(t, root, Row{"**FT1 — index title.**", body})
-	out, code := RoadmapCommand(nil)
+	out, code := RoadmapCommand(nil, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d; stdout=%q", code, out)
 	}
@@ -394,7 +394,7 @@ func TestRoadmapBoardRendersDetailFromRowFile(t *testing.T) {
 	if err := os.WriteFile(roadmapPath(t, root), []byte(""), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	out, code = RoadmapCommand(nil)
+	out, code = RoadmapCommand(nil, absentOutlook)
 	if code != 1 || !strings.Contains(out, "empty") {
 		t.Fatalf("empty ROADMAP.md = %q/%d, want exit 1 naming empty", out, code)
 	}
@@ -410,7 +410,7 @@ func TestRoadmapBoardRowBoundary(t *testing.T) {
 			}
 			index, files := board(fixture...)
 			roadmaptest.WriteSplitBoard(t, root, "# Roadmap\n\n## Recommended sequence\n\n"+index, files)
-			out, code := RoadmapCommand(nil)
+			out, code := RoadmapCommand(nil, absentOutlook)
 			if code != 0 {
 				t.Fatalf("exit = %d; stdout=%q", code, out)
 			}
@@ -433,7 +433,7 @@ func TestRoadmapBoardRowBoundary(t *testing.T) {
 func TestRoadmapBoardInputStates(t *testing.T) {
 	t.Run("absent", func(t *testing.T) {
 		newRepo(t)
-		out, code := RoadmapCommand(nil)
+		out, code := RoadmapCommand(nil, absentOutlook)
 		if code != 0 || !strings.Contains(out, "/bench-drain") {
 			t.Fatalf("absent = %q/%d", out, code)
 		}
@@ -458,7 +458,7 @@ func TestRoadmapBoardInputStates(t *testing.T) {
 			if err := os.WriteFile(roadmapPath(t, root), []byte(tc.content), 0o644); err != nil {
 				t.Fatal(err)
 			}
-			out, code := RoadmapCommand(nil)
+			out, code := RoadmapCommand(nil, absentOutlook)
 			if code != 1 || !strings.Contains(out, tc.state) {
 				t.Fatalf("%s = %q/%d", tc.name, out, code)
 			}
@@ -469,7 +469,7 @@ func TestRoadmapBoardInputStates(t *testing.T) {
 		if err := os.Mkdir(roadmapPath(t, root), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		out, code := RoadmapCommand(nil)
+		out, code := RoadmapCommand(nil, absentOutlook)
 		if code != 1 || !strings.Contains(out, "wrong-type") {
 			t.Fatalf("failed read = %q/%d", out, code)
 		}
@@ -479,9 +479,9 @@ func TestRoadmapBoardInputStates(t *testing.T) {
 func TestRoadmapUsesOneUsageAcrossForms(t *testing.T) {
 	want := "usage: bench roadmap | bench roadmap --context [--full] | bench roadmap --context --row <ID,...> | bench roadmap --flow\n"
 	for _, command := range []func() (string, int){
-		func() (string, int) { return RoadmapCommand([]string{"--help"}) },
+		func() (string, int) { return RoadmapCommand([]string{"--help"}, absentOutlook) },
 		func() (string, int) {
-			return ContextCommand([]string{"--help"}, func(string) GateCacheFact { return GateCacheFact{} })
+			return ContextCommand([]string{"--help"}, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
 		},
 	} {
 		out, code := command()
@@ -499,7 +499,7 @@ func TestRoadmapBoardRefusesControlByte(t *testing.T) {
 	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT1 — bad\x01 title.**\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	out, code := RoadmapCommand(nil)
+	out, code := RoadmapCommand(nil, absentOutlook)
 	if code != 1 || !strings.Contains(out, "error: unrepresentable TOON cell") {
 		t.Fatalf("control byte = %q/%d", out, code)
 	}
@@ -524,7 +524,7 @@ func TestRoadmapBoardPendingDrainDisclosesWhatNext(t *testing.T) {
 	if err := os.WriteFile(retro, []byte("evidence\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	out, code := RoadmapCommand(nil)
+	out, code := RoadmapCommand(nil, absentOutlook)
 	if code != 0 {
 		t.Fatalf("exit = %d; stdout=%q", code, out)
 	}

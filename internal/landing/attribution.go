@@ -47,6 +47,16 @@ func ResolveAttributedPaths(root, expected string, raw []string) ([]string, erro
 	return attributedPaths(root, expected, raw)
 }
 
+// CandidateTree composes the attributed working changes without modifying the real index.
+func CandidateTree(root, expected string, paths []string) (string, error) {
+	named, err := attributedPaths(root, expected, paths)
+	if err != nil {
+		return "", err
+	}
+	snapshot, err := compose(Request{Root: root, Expected: expected}, named)
+	return snapshot.tree, err
+}
+
 func repositoryPath(root, path string) (string, error) {
 	abs := path
 	if !filepath.IsAbs(abs) {
@@ -179,26 +189,6 @@ func reconcile(r Request, paths []string, snapshot composedSnapshot) error {
 		}
 		if untracked != "" {
 			return failed(errors.New("named path still has untracked content"))
-		}
-	}
-	return nil
-}
-
-// removeIndexTree drops every entry beneath rel from the prospective index, so the
-// published tree carries the deletion rather than the checkout carrying it afterwards.
-// The pathspec is literal and the removals name exact index paths, so a folder name
-// holding a space or a glob character resolves to itself.
-func removeIndexTree(root, idx, rel string) error {
-	listed, err := indexOutputRaw(root, idx, "ls-files", "-z", "--cached", "--", ":(literal)"+rel)
-	if err != nil {
-		return fmt.Errorf("list tracked entries under %q: %w", rel, err)
-	}
-	for _, path := range strings.Split(string(listed), "\x00") {
-		if path == "" {
-			continue
-		}
-		if err := indexRun(root, idx, "update-index", "--force-remove", "--", path); err != nil {
-			return fmt.Errorf("remove %q from prospective index: %w", path, err)
 		}
 	}
 	return nil

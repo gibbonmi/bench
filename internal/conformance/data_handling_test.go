@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/env"
 )
 
@@ -28,7 +29,13 @@ const (
 // row's Family prose. That mention must not stand in for a real Pattern-column row.
 var passlistTokenRe = regexp.MustCompile(`(?m)^\|\s*` + "`([A-Z][A-Z0-9_]*\\*?)`" + `\s*\|`)
 
-// checkDataHandlingDerivation asserts that DATA_HANDLING.md's variable listing and the
+// checkDataHandlingDerivation asserts that each machine-parseable listing in
+// DATA_HANDLING.md names exactly the set that its enforcement owner holds.
+func checkDataHandlingDerivation(root string) []string {
+	return append(checkPasslistDerivation(root), checkCommitmentRecordInventory(root)...)
+}
+
+// checkPasslistDerivation asserts that DATA_HANDLING.md's variable listing and the
 // internal/env passlist name exactly the same pattern set, in both directions. The
 // constants are the compiled-in enforcement values: env.AgentPasslist, which is
 // SharedBasics plus the agent additions.
@@ -42,7 +49,7 @@ var passlistTokenRe = regexp.MustCompile(`(?m)^\|\s*` + "`([A-Z][A-Z0-9_]*\\*?)`
 //
 // The check fails loudly, not vacuously, when the marked region is absent or empty. A doc
 // that dropped the listing cannot pass by carrying nothing to check.
-func checkDataHandlingDerivation(root string) []string {
+func checkPasslistDerivation(root string) []string {
 	doc := readIfExists(filepath.Join(root, "DATA_HANDLING.md"))
 	region, ok := passlistRegion(doc)
 	if !ok {
@@ -70,16 +77,19 @@ func checkDataHandlingDerivation(root string) []string {
 	return diags
 }
 
-func passlistRegion(doc string) (string, bool) {
-	i := strings.Index(doc, passlistBegin)
+func passlistRegion(doc string) (string, bool) { return markedRegion(doc, passlistBegin, passlistEnd) }
+
+// markedRegion returns the text between the begin and end markers of doc.
+func markedRegion(doc, begin, end string) (string, bool) {
+	i := strings.Index(doc, begin)
 	if i < 0 {
 		return "", false
 	}
-	j := strings.Index(doc, passlistEnd)
+	j := strings.Index(doc, end)
 	if j < 0 || j < i {
 		return "", false
 	}
-	return doc[i+len(passlistBegin) : j], true
+	return doc[i+len(begin) : j], true
 }
 
 func passlistTokens(region string) map[string]bool {
@@ -147,7 +157,7 @@ func controlEscaperPackages(root string) []string {
 }
 
 // TestDataHandlingDerivationBites is the recorded bite proof for
-// checkDataHandlingDerivation. A doc whose region lists every env.AgentPasslist pattern
+// checkPasslistDerivation. A doc whose region lists every env.AgentPasslist pattern
 // passes clean. Dropping one pattern fires a diagnostic naming exactly that pattern.
 // Removing the marked region fails loudly rather than passing vacuously. A doc pattern
 // the code doesn't admit fires the reverse diagnostic. A backtick-quoted mention in the
@@ -171,13 +181,13 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 		return b.String()
 	}
 
-	if diags := checkDataHandlingDerivation(writeDoc(t, region(env.AgentPasslist))); len(diags) != 0 {
+	if diags := checkPasslistDerivation(writeDoc(t, region(env.AgentPasslist))); len(diags) != 0 {
 		t.Fatalf("complete listing: want no diagnostics, got %v", diags)
 	}
 
 	dropped := env.AgentPasslist[len(env.AgentPasslist)-1]
 	partial := append([]string(nil), env.AgentPasslist[:len(env.AgentPasslist)-1]...)
-	diags := checkDataHandlingDerivation(writeDoc(t, region(partial)))
+	diags := checkPasslistDerivation(writeDoc(t, region(partial)))
 	want := fmt.Sprintf("internal/env pattern %q is not documented", dropped)
 	if !containsDiagnostic(diags, want) {
 		t.Fatalf("dropped pattern %q: want diagnostic %q, got %v", dropped, want, diags)
@@ -188,11 +198,11 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 		}
 	}
 
-	if diags := checkDataHandlingDerivation(writeDoc(t, "# no region here\n")); !containsDiagnostic(diags, "passlist derivation region missing") {
+	if diags := checkPasslistDerivation(writeDoc(t, "# no region here\n")); !containsDiagnostic(diags, "passlist derivation region missing") {
 		t.Fatalf("absent region: want a loud region-missing diagnostic, got %v", diags)
 	}
 	emptyRegion := passlistBegin + "\n\n" + passlistEnd + "\n"
-	if diags := checkDataHandlingDerivation(writeDoc(t, emptyRegion)); !containsDiagnostic(diags, "passlist derivation region empty") {
+	if diags := checkPasslistDerivation(writeDoc(t, emptyRegion)); !containsDiagnostic(diags, "passlist derivation region empty") {
 		t.Fatalf("empty region: want a loud region-empty diagnostic, got %v", diags)
 	}
 
@@ -201,7 +211,7 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 	// happens to be covered.
 	orphan := "FAKE_ORPHAN_VAR"
 	withOrphan := region(append(append([]string(nil), env.AgentPasslist...), orphan))
-	diags = checkDataHandlingDerivation(writeDoc(t, withOrphan))
+	diags = checkPasslistDerivation(writeDoc(t, withOrphan))
 	wantOrphan := fmt.Sprintf("documented pattern %q is not present in internal/env.AgentPasslist", orphan)
 	if !containsDiagnostic(diags, wantOrphan) {
 		t.Fatalf("orphan documented pattern %q: want diagnostic %q, got %v", orphan, wantOrphan, diags)
@@ -217,7 +227,7 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 	}
 	familyMention += fmt.Sprintf("| `%s` | fam (`%s` mentioned in prose, not a row) | doc |\n", partial[0], dropped)
 	familyMention += "\n" + passlistEnd + "\n"
-	diags = checkDataHandlingDerivation(writeDoc(t, familyMention))
+	diags = checkPasslistDerivation(writeDoc(t, familyMention))
 	if !containsDiagnostic(diags, want) {
 		t.Fatalf("Family-column prose mention of %q wrongly satisfied the Pattern-column check: %v", dropped, diags)
 	}
@@ -269,5 +279,44 @@ func TestSingleControlEscaperBites(t *testing.T) {
 	writePkg(t, none, "internal/shift", detectionBody)
 	if diags := checkSingleControlEscaper(none); !containsDiagnostic(diags, "has no owner") {
 		t.Fatalf("no escaper: want a no-owner diagnostic, got %v", diags)
+	}
+}
+
+// TestCommitmentDataInventory is the recorded bite proof for the commitment record listing
+// and its retention statement. The live inventory passes. A dropped row, a row for a field
+// that the ledger lacks, and a missing listing each raise their own diagnostic. Deleting the
+// local-retention sentence or the contents-boundary sentence raises its own anchor.
+func TestCommitmentDataInventory(t *testing.T) {
+	live := readIfExists(filepath.Join(NewHarness(t).KitRoot, "DATA_HANDLING.md"))
+	write := func(t *testing.T, body string) string {
+		t.Helper()
+		root := t.TempDir()
+		if err := os.WriteFile(filepath.Join(root, "DATA_HANDLING.md"), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return root
+	}
+	if diags := checkCommitmentRecordInventory(write(t, live)); len(diags) != 0 {
+		t.Fatalf("live inventory: %v", diags)
+	}
+	const blocker = "| `commitment.blockers.reason` | The one-line blocker reason that the worker wrote. |\n"
+	for _, tc := range []struct{ name, old, replacement, want string }{
+		{"dropped field", blocker, "", `DATA_HANDLING.md commitment record: ledger field "commitment.blockers.reason" is not documented`},
+		{"unknown field", blocker, blocker + "| `commitment.blockers.transcript` | A copied chat. |\n", `DATA_HANDLING.md commitment record: documented field "commitment.blockers.transcript" is not a ledger field`},
+		{"missing listing", "<!-- commitment-record:begin -->", "", "DATA_HANDLING.md commitment record region missing: expected the field listing between <!-- commitment-record:begin --> and <!-- commitment-record:end -->"},
+		{"local retention", "The records stay on the local machine.", "", "commitment guidance: data inventory dropped the local retention of commitment records"},
+		{"contents boundary", "They hold no transcript, prompt, objective text, environment value, or credential.", "", "commitment guidance: data inventory dropped the record contents boundary"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if count := strings.Count(live, tc.old); count != 1 {
+				t.Fatalf("live inventory holds %q %d times, want once", tc.old, count)
+			}
+			root := write(t, strings.Replace(live, tc.old, tc.replacement, 1))
+			got := append(checkCommitmentRecordInventory(root), anchors.EvaluatePath(root, "DATA_HANDLING.md").Diagnostics...)
+			if len(got) != 1 || got[0] != tc.want {
+				t.Fatalf("diagnostics = %q, want only %q", got, tc.want)
+			}
+			t.Logf("observed red: %s", tc.want)
+		})
 	}
 }

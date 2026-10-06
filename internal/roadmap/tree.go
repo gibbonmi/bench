@@ -58,6 +58,9 @@ func LoadTree(root string) Tree {
 // migration, and every reader that names a row's file go through it.
 func rowFilePath(id string) string { return RoadmapDir + "/" + id + ".md" }
 
+// RowFilePath is the repo-relative detail owner of one row ID for a caller outside this package.
+func RowFilePath(id string) string { return rowFilePath(id) }
+
 // Diagnostic is one integrity fault that ParseDocument found in the split board. It
 // carries its own path and reason, not a formatted string a caller would have to
 // re-parse. A legal basename may itself contain ": ", the string String returns. A reader
@@ -263,32 +266,18 @@ func anyNonBlank(lines []string) bool {
 // state throughout. A heading inside a fenced code block neither starts the section nor
 // ends it.
 func parseSequence(lines []string) (rows []SequenceRow, text string, hasSection bool) {
-	inSequence, inFence, sequenceStart, sequenceEnd := false, false, -1, len(lines)
-	for idx, line := range lines {
+	sequenceStart, sequenceEnd, hasSection := sequenceBounds(lines)
+	if sequenceStart < 0 {
+		return nil, "", hasSection
+	}
+	inFence := false
+	for _, line := range lines[sequenceStart+1 : sequenceEnd] {
 		trimmed := strings.TrimRight(line, " \t\r")
 		if strings.HasPrefix(trimmed, "```") {
 			inFence = !inFence
 			continue
 		}
 		if inFence {
-			continue
-		}
-		// Any unfenced `## ` heading, not only Recommended sequence, is roadmap structure. A
-		// document with sections is a working roadmap the reader recognizes, possibly one with
-		// nothing due yet. The reader never mistakes it for an unrelated document.
-		if strings.HasPrefix(trimmed, "## ") {
-			hasSection = true
-		}
-		if !inSequence && trimmed == "## Recommended sequence" {
-			inSequence = true
-			sequenceStart = idx
-			continue
-		}
-		if inSequence && strings.HasPrefix(trimmed, "## ") {
-			sequenceEnd = idx
-			break
-		}
-		if !inSequence {
 			continue
 		}
 		parts := strings.SplitN(line, ". ", 2)
@@ -305,11 +294,9 @@ func parseSequence(lines []string) (rows []SequenceRow, text string, hasSection 
 		}
 		rows = append(rows, SequenceRow{Rank: rank, Text: parts[1], Command: cmd})
 	}
-	if sequenceStart >= 0 {
-		text = strings.Join(lines[sequenceStart:sequenceEnd], "\n")
-		if !strings.HasSuffix(text, "\n") {
-			text += "\n"
-		}
+	text = strings.Join(lines[sequenceStart:sequenceEnd], "\n")
+	if !strings.HasSuffix(text, "\n") {
+		text += "\n"
 	}
 	return rows, text, hasSection
 }

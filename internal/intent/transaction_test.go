@@ -173,7 +173,7 @@ func TestLedgerTransactionRefusalPersistsNothingAndReleasesTheLock(t *testing.T)
 	if !bytes.Equal(before, after) {
 		t.Fatalf("a refused transaction changed the bytes\nbefore=%s\nafter=%s", before, after)
 	}
-	if _, err := os.Stat(path + ".lock"); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(lockOf(path)); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("lock file after a refusal: %v", err)
 	}
 }
@@ -223,7 +223,7 @@ func TestLedgerTransactionTerminalWriteFailureKeepsThePreviousBytes(t *testing.T
 	if !bytes.Equal(before, after) {
 		t.Fatalf("a failed write changed the bytes\nbefore=%s\nafter=%s", before, after)
 	}
-	if _, err := os.Stat(path + ".lock"); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(lockOf(path)); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("lock file after a failed write: %v", err)
 	}
 }

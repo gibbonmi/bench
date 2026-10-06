@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -97,7 +98,7 @@ func validateRun(root string, run RunEvidence) error {
 	}
 	want := PhaseNames(run.Mode)
 	if run.Scope == ScopeFocused {
-		if len(run.Phases) != 1 || !Contains(want, run.Phases[0].Name) {
+		if len(run.Phases) != 1 || !slices.Contains(want, run.Phases[0].Name) {
 			return errors.New("focused release evidence must contain one registered phase")
 		}
 	} else if len(run.Phases) != len(want) {
@@ -287,13 +288,4 @@ func TerminalStatus(results []Result) Status {
 		}
 	}
 	return status
-}
-
-func Contains(items []string, want string) bool {
-	for _, item := range items {
-		if item == want {
-			return true
-		}
-	}
-	return false
 }

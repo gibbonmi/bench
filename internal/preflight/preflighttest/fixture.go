@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
@@ -117,12 +118,7 @@ func FenceWrites(fence []string) []string {
 
 // WritesTicketDoc renders a conformant ticket that writes exactly writes and cites rows.
 func WritesTicketDoc(title string, writes []string, covers ...string) string {
-	return "# " + title + "\n\n" +
-		"Blocked by: none\n" +
-		"Writes: " + strings.Join(writes, ", ") + "\n" +
-		"Covers: " + strings.Join(covers, ", ") + "\n\n" +
-		"## What to build\n\nBuild it.\n\n" +
-		"## Acceptance\n\n- [ ] It is built.\n"
+	return commitmenttest.TicketBody(title, writes, covers...)
 }
 
 // PlanFence renders the bench-completion-plan section the checkpoint reader parses, as one
@@ -196,6 +192,7 @@ func SeedConformant(t *testing.T) (root, slug string) {
 	MustWriteFile(t, chargesource.DelegateSkill, "# Delegation skill\n")
 	MustWriteFile(t, chargesource.DelegateProcedure, "# Delegation procedure\n\nFocused suite: bench test --package ./internal/preflight\n")
 	MustWriteFile(t, chargesource.BuildPhase, "# Build phase\n\nRun root conformance before return.\n")
+	commitmenttest.SeedAdmission(t, root, "specs/"+slug+"/spec.md")
 	RunGit(t, "add", ".")
 	RunGit(t, "commit", "-q", "-m", "c0")
 	RunGit(t, "checkout", "-q", "-b", "feature")
@@ -232,7 +229,11 @@ func OwnedAssignment(t *testing.T, root, worktree string, state intent.Assignmen
 // ActiveAssignment registers one active assignment owning the tree at worktree.
 func ActiveAssignment(t *testing.T, root, worktree string) string {
 	t.Helper()
-	return OwnedAssignment(t, root, worktree, intent.StateActive)
+	id := OwnedAssignment(t, root, worktree, intent.StateActive)
+	if root == worktree {
+		admitFixture(t, root)
+	}
+	return id
 }
 
 // ChargeArgs activates root's assignment and returns the build charge arguments over the

@@ -265,9 +265,19 @@ func run(t testing.TB, root string, args ...string) {
 // the test when git exits non-zero.
 func Output(t testing.TB, root string, args ...string) string {
 	t.Helper()
+	out, err := Run(root, args...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+// Run runs git with args in root and returns its trimmed combined output. It returns
+// the failure instead of failing a test, so a goroutine can call it.
+func Run(root string, args ...string) (string, error) {
 	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput()
 	if err != nil {
-		t.Fatalf("git %s: %v: %s", strings.Join(args, " "), err, out)
+		return "", fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, out)
 	}
-	return strings.TrimSpace(string(out))
+	return strings.TrimSpace(string(out)), nil
 }

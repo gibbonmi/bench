@@ -24,7 +24,7 @@ the exact broker-owned status transform and this spec's review-record delta.
 If destination composition adds another change, include that change in the
 source and complete its review and verification before retrying landing.
 
-A spec changes the promotion broker source when its diff changes a Bench build input, and its landing prints `landing changes the promotion broker source`.
+A spec changes the promotion broker source when its diff changes a Bench build input.
 Before the first landing of such a spec, run `bench worktree build <target>` and then `bench worktree exec <target> -- ./dist/bench doctor`.
 This rehearsal checks the broker seal and manifest on the candidate binary before the landing depends on them.
 If a doctor row says that a landing would refuse, apply the remedy that the row names, even when the row reads `ok`.
@@ -81,9 +81,11 @@ Fold a delegate's zero to two CLI improvements into that same entry.
 For `n = 0`, state `census: 0 raw calls` in the close; a nonzero count never blocks a landing.
 The duty is advisory, so a nonzero count never reds the gate.
 
-Leave the roadmap and capture rows to
-`/bench-drain`; that phase owns the reconcile and the drain, and this duty
-never restates it. On a topic branch these duties defer by design: the rows
+Verified closure is part of delivery. The landing publication closes each
+roadmap row and sequence entry that the delivery satisfies; report that closure
+from the landing evidence. `/bench-drain` owns the capture drain and
+the reconcile of historical or residual rows, and this duty never restates it.
+On a topic branch these duties defer by design: the rows
 fire only on the default branch. The next default-branch session's
 SessionStart status re-surfaces them. State the deferral in the close instead
 of a silent skip.

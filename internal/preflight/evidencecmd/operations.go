@@ -5,6 +5,7 @@
 package evidencecmd
 
 import (
+	"slices"
 	"sort"
 	"strings"
 
@@ -18,6 +19,7 @@ type Kind int
 // Operation kinds. Each registered operation dispatches to exactly one kind.
 const (
 	KindVerdict Kind = iota
+	KindPlanOnly
 	KindProposal
 	KindPrepareEvidence
 	KindPrepareReviewEvidence
@@ -34,6 +36,7 @@ const (
 	FlagBase     = "--base"
 	FlagTip      = "--source-tip"
 	flagCharge   = "--charge"
+	flagPlanOnly = "--plan-only"
 	flagPropose  = "--propose-writes"
 	FlagTicket   = "--ticket"
 	flagQuota    = "--max-store-bytes"
@@ -61,6 +64,7 @@ var flagTable = []flagSpec{
 	{FlagBase, "<commit>"},
 	{FlagTip, "<commit>"},
 	{flagCharge, ""},
+	{flagPlanOnly, ""},
 	{flagPropose, ""},
 	{FlagTicket, "<basename>"},
 	{flagQuota, "<n>"},
@@ -100,6 +104,8 @@ var operations = []Operation{
 		description: "prepare one immutable review evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, optional: []string{FlagBase, FlagTip}, Kind: KindVerdict,
 		description: "build-entry checks that a spec's artifacts agree with the tree, one count line then the red checks only"},
+	{Mode: ModeBuild, selectors: []string{flagPlanOnly}, optional: []string{FlagBase, FlagTip}, Kind: KindPlanOnly, Bounded: true,
+		description: "validate the authored spec and tickets without delivery admission or a build charge"},
 	{Mode: ModeBuild, selectors: []string{flagCharge}, required: []string{FlagTicket, FlagBase, FlagTip}, optional: []string{flagQuota}, Kind: KindPrepareEvidence, Bounded: true,
 		description: "prepare one immutable build evidence artifact and print its bounded orientation"},
 	{Mode: ModeBuild, selectors: []string{flagPropose}, required: []string{FlagTicket, FlagBase, FlagTip}, Kind: KindProposal,
@@ -129,7 +135,7 @@ func operationSelectors() []string {
 	var names []string
 	for _, flag := range flagTable {
 		for _, op := range operations {
-			if contains(op.selectors, flag.name) {
+			if slices.Contains(op.selectors, flag.name) {
 				names = append(names, flag.name)
 				break
 			}
@@ -273,7 +279,7 @@ func Select(mode string, flags map[string]string) (Operation, string) {
 		}
 		allowed := append(append(append([]string{}, sameMode.selectors...), sameMode.required...), sameMode.optional...)
 		for _, name := range grammarFlagNames() {
-			if present(name) && !contains(allowed, name) {
+			if present(name) && !slices.Contains(allowed, name) {
 				return Operation{}, toon.Usage(Grammar.Cmd, name)
 			}
 		}
@@ -308,6 +314,9 @@ func SelectOperand(op Operation, positionals []string) (string, string) {
 
 func requirementLine(op Operation) string {
 	needs := append([]string{op.Mode}, op.required...)
+	if len(needs) == 1 {
+		return toon.Usage(Grammar.Cmd, strings.Join(op.selectors, " and ")+" requires "+needs[0])
+	}
 	list := strings.Join(needs[:len(needs)-1], ", ") + ", and " + needs[len(needs)-1]
 	if len(needs) == 2 {
 		list = needs[0] + " and " + needs[1]
@@ -335,7 +344,7 @@ func sameSet(a, b []string) bool {
 
 func subset(inner, outer []string) bool {
 	for _, value := range inner {
-		if !contains(outer, value) {
+		if !slices.Contains(outer, value) {
 			return false
 		}
 	}
@@ -345,18 +354,9 @@ func subset(inner, outer []string) bool {
 func without(values []string, drop ...string) []string {
 	var kept []string
 	for _, value := range values {
-		if !contains(drop, value) {
+		if !slices.Contains(drop, value) {
 			kept = append(kept, value)
 		}
 	}
 	return kept
-}
-
-func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
 }

@@ -5,8 +5,10 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 # /bench-implement-spec — do the work at the seams
 
 ## Entry orientation
-This is the implementation phase. It starts from an approved spec, or from a change small enough for the lighter-path threshold. It declares the line and works vertical slices at the pre-agreed seams. If there is no spec, the change must fall under that threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
+This is the implementation phase. It starts from an approved spec, or from a change small enough for the lighter-path threshold. It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams. If there is no spec, the change must fall under that threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
 If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
+
+A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.
 
 ## Exit handoff
 
@@ -16,7 +18,7 @@ Close by reporting the implemented stories, each acceptance row's coverage statu
 
 Declare the line before you touch code. `craft-line` owns the template, the tier decision, and the escalation ladder. After the write-spec-phase approval, create or retain one integration worktree at the reviewed graph commit; that commit is its frozen review base. Enter it and run `bench preflight build <slug>` before the first edit. If every red row is a `*-closure` row, `fence-writes`, or `completion-plan`, the staleness pass below takes the red. Any other red stops the phase.
 
-After that preflight, charge a read-only delegate on the mid tier to audit the spec and its tickets for staleness. The delegate audits against the current `main` tree and guidance under `craft-spec`'s current-code claim rules, and it returns its findings. Route each finding by `.bench/BENCH.md`'s spec-contradiction predicate. Commit the fixes on the integration source as the enabling plan commit of `.bench/BENCH.md`'s approved plan-expansion policy. This amendment corrects claims, citations, fences, landed work, and any preflight red that the pass took, and it does not reopen the approach. Before the version 2 plan amendment, the preflight reruns green, and only one delegated review round on the conditional review line confirms the amendment.
+After that preflight, charge the staleness pass that `.agents/skills/bench-implement-spec/references/staleness-pass.md` states. Route each returned contradiction by `.bench/BENCH.md`'s spec-contradiction predicate. Commit the fixes on the integration source as the enabling plan commit of `.bench/BENCH.md`'s approved plan-expansion policy. This amendment corrects claims, citations, fences, landed work, and any preflight red that the pass took, and it does not reopen the approach. Before the version 2 plan amendment, the preflight reruns green, and only one delegated review round on the conditional review line confirms the amendment.
 
 The reviewer approves the spec and the whole ticket graph once, in `/bench-write-spec`. A ticket inside that approved graph starts without a new approval stop. Run `bench preflight build <slug> --charge --ticket <ticket> --base <base> --source-tip <tip>` and read the prepared evidence identity it returns. Verify the fence, dependency completion, and expected source tip before the ticket's fresh author starts. Each ticket goes to a fresh author session under `.bench/BENCH.md`'s authorship rule. The author charge carries the ticket, its coverage rows, its `Writes:` fence, the evidence identity, and the declared line.
 
@@ -51,7 +53,7 @@ The author commits the verification and probe record before the axis dispatch. P
 
 ## Land
 
-Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings go to fresh repair sessions under `.bench/BENCH.md`'s repair rule, and each repair commits with current repair coverage. Start the successor only after that repair closes. Plan commits land before the ticket merge, and a `main` merge lands only before the first chunk. Only record commits follow the chunk tip. The reconciliation commit joins the review delta of the last chunk.
+Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings go to fresh repair sessions under `.bench/BENCH.md`'s repair rule, and each repair commits with current repair coverage. Start the successor only after that repair closes. Plan commits land before the ticket merge, and a `main` merge lands only before the first chunk. Only record commits and comment-only corrections follow the chunk tip. The reconciliation commit joins the review delta of the last chunk.
 
 Retain author verification and all three native review results in `reviews/<slug>.md`. When the orchestrator freezes a chunk after its last ticket, it records the chunk entry with `bench record chunk`. Each ticket author then writes its verification entries at that chunk source with `bench record verification`. A repair session also retains its ticket verification entries there, at the final source, before the checkpoint. Commit the artifact on its ordinary lane, then run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` before the successor.
 
@@ -68,6 +70,7 @@ Report the state: what is done, what remains, the coverage table, and what consu
 - Wrong tier: apply `craft-line`'s ladder.
 - Wrong spec: route to `/bench-write-spec` with the finding quoted.
 - Wrong scope: propose the split for the reviewer to decide.
+- Commitment refusal: report the decision that the refusal names; `.bench/BENCH.md` owns the commitment rule.
 
 ## `--full <spec>`
 

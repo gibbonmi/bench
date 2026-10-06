@@ -52,6 +52,30 @@ func TestChangedSubjectExplicitLiveAndFrozenPair(t *testing.T) {
 	}
 }
 
+func TestResolveSourceRangeCollectsExactCommittedDeletions(t *testing.T) {
+	root, base, _ := seedCompatibilityRepo(t)
+	runGit(t, "rm", "-q", "delete.txt")
+	runGit(t, "commit", "-q", "-m", "delete tracked path")
+	tip := runGit(t, "rev-parse", "HEAD")
+
+	source, kind, hint := ResolveSourceRange(root, base, tip)
+	if kind != "" {
+		t.Fatalf("ResolveSourceRange = (%q, %q)", kind, hint)
+	}
+	if len(source.DeletedPaths) != 1 || source.DeletedPaths[0] != "delete.txt" {
+		t.Fatalf("deleted paths = %v, want only delete.txt", source.DeletedPaths)
+	}
+	for _, path := range []string{"committed.txt", "tracked.txt", "delete.txt"} {
+		found := false
+		for _, committed := range source.CommittedPaths {
+			found = found || committed == path
+		}
+		if !found {
+			t.Errorf("committed paths = %v, want %s", source.CommittedPaths, path)
+		}
+	}
+}
+
 // The tip never comes from the checkout implicitly, and the pair never mixes with
 // --commit; a misuse of the grammar exits 2 with the usage line, and a bad value is a
 // structured error that blames the flag the caller got wrong.

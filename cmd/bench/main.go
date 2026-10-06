@@ -1,5 +1,4 @@
-// Command bench is the compiled core of the Bench kit. The shell CLI routes every
-// compiled subcommand through the production registry below.
+// Command bench routes compiled subcommands through the production registry.
 package main
 
 import (
@@ -11,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/consumers"
@@ -47,7 +47,6 @@ import (
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
-	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -98,6 +97,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "learning", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " \"<title>\" --what --right [--rule]", Description: "append one open entry to capture/learnings.md (the drain verdicts it)"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(roadmap.LearningCommand)},
 	{Name: "retro", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " <slug> (--body <markdown> | --scaffold)", Description: "draft, or validate and create, one primary-local implementation retrospective"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(roadmap.RetroCommand)},
 	{Name: "roadmap", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 9, Description: "show the top 10 roadmap rows + drain state"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(roadmapCommand)},
+	{Name: "commitment", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(commitmentHelpRows(10)...), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(commitmentCommand)},
 	{Name: "skills-index", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 7, Suffix: " [--check|--write]", Description: "print skills-index drift (default) or regenerate it"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(skillsindex.Command)},
 	{Name: "tree-hash", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(treeHash)},
 	{Name: "resolve-model", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: outputCommand(resolveModel)},
@@ -125,7 +125,7 @@ var commandRegistry = []commandDefinition{
 	), Bound: boundResponse, Leaves: worktreeLeaves, LeafUsage: usage.WorktreeUsage},
 	{Name: "resume-clean", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: resumeCleanCommand},
 	{Name: "session-inspect", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
-	{Name: "shift", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 38, Suffix: " [--refresh] \"<objective>\"", Gap: 1, Description: "gated loop in a pooled worktree; commit on green"}), Bound: boundResponse, Scope: scopeRepository, Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},
+	{Name: "shift", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 38, Suffix: " " + shift.Arguments(), Gap: 1, Description: "gated loop in a pooled worktree; commit on green"}), Bound: boundResponse, Scope: scopeRepository, Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "commit", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 39, Suffix: commit.HelpRowSuffix, Description: commit.LaneClause + ", then commit named paths on a pass"}), Bound: boundResponse, Scope: scopeTree, Run: commitChainCommand},
 	{Name: "record", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(recordHelpRows(40)...), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(recordCommand)},
 	{Name: "spec", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 41, Suffix: " retire <slug>", Description: "delete a merged spec + its review pickup (validated)"}, helpRow{Order: 42, Suffix: " history <slug>", Description: "retire/delete commits for a spec, newest first (TOON)"}, helpRow{Order: 42, Suffix: strings.TrimPrefix(spec.SelectedHistoryUsage, "bench spec"), Description: "selected histories with complete counts and recovery commands"}), Bound: boundResponse, Scope: scopeTree, Run: retireListingCommand(spec.Command)},
@@ -139,7 +139,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "setup", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 0, Suffix: " [--plan|--yes]", Description: "inspect, preview, and converge the current repository"}), Bound: boundExempt(boundReasonTerminal), Scope: scopeTree, Run: adoptCommand("setup")},
 	{Name: "link", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 1, Suffix: " [copy|symlink]", Description: "safely wire the kit into this repo for every harness"}), Bound: boundResponse, Scope: scopeTree, Run: adoptCommand("link")},
 	{Name: "init", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 2, Description: "scaffold .bench/gate.sh in the current repo"}), Bound: boundResponse, Scope: scopeTree, Run: adoptCommand("init")},
-	{Name: "doctor", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 24, Suffix: " [--fix]", Description: "report (and repair) the PATH shim under a node version manager"}), Bound: boundResponse, Scope: scopeRepository, Run: adoptCommand("doctor")},
+	{Name: "doctor", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 24, Suffix: adopt.DoctorHelpSuffix(), Description: "report shim health or inspect one Codex interface"}), Bound: boundResponse, Scope: scopeRepository, Run: adoptCommand("doctor")},
 	{Name: "unlink", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 3, Suffix: " [--dry-run]", Description: "remove the per-repo Bench footprint the manifest records"}), Bound: boundResponse, Scope: scopeTree, Run: adoptCommand("unlink")},
 	{Name: "upgrade", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 4, Suffix: " [--check] [--force]", Description: "plan and apply a relink onto the installed kit version"}), Bound: boundResponse, Scope: scopeTree, Run: adoptCommand("upgrade")},
 	{Name: "worktree-hook", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return harness.WorktreeCommand(args, c.Stdin, c.Stdout, c.Stderr) }},
@@ -170,14 +170,6 @@ func helpCommand(c Command, args []string) int {
 	}
 	fmt.Fprint(c.Stdout, renderCommandHelp())
 	return 0
-}
-
-func testCommand(args []string) (string, int) {
-	root, err := git.Root()
-	if err != nil {
-		return toon.NotInRepo() + "\n", 1
-	}
-	return testreport.Command(root, args)
 }
 
 // commandsGrammar is the declared argument shape usage.Parse enforces for `bench
@@ -244,7 +236,7 @@ var gatePhasesCommand = gate.PhasesCommand
 
 func roadmapCommand(args []string) (string, int) {
 	if len(args) == 0 || len(args) == 1 && helpArgument(args[0]) {
-		return roadmap.RoadmapCommand(args)
+		return roadmap.RoadmapCommand(args, commitmentOutlook)
 	}
 	// --flow is a mode selector like --context, so it is routed on its leading position
 	// and its own grammar reports any misuse that follows.
@@ -254,7 +246,7 @@ func roadmapCommand(args []string) (string, int) {
 	return roadmap.ContextCommand(args, func(root string) roadmap.GateCacheFact {
 		g := status.GateVerdict(root)
 		return roadmap.GateCacheFact{Present: g.Present, State: g.State, PendingStatus: g.PendingStatus, Status: g.Status, CachedTree: g.CachedTree, WorkTree: g.WorkTree, Timestamp: g.Timestamp, Stale: g.Stale, CacheBytes: g.CacheBytes}
-	})
+	}, commitmentOutlook)
 }
 
 // linesEnv resolves the repo's .bench/lines.env for the two binding consumers,

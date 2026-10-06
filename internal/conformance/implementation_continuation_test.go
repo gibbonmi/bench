@@ -92,7 +92,7 @@ func TestImplementationContinuation(t *testing.T) {
 		},
 		"implementation continuation: craft-line dropped the debug route": {
 			file: ".agents/skills/bench-craft-line/SKILL.md", section: "Retained implementation continuation",
-			needle: "After reassessment, the ticket author can invoke `$bench-debug`.",
+			needle: "[Debug integration](../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) owns the debug step of each repair.",
 		},
 		"implementation continuation: craft-delegate restored its copy of the diagnostic helper boundary that the operating guide owns": {
 			file: ".agents/skills/bench-craft-delegate/SKILL.md", section: "",
@@ -222,6 +222,10 @@ func TestImplementationContinuation(t *testing.T) {
 		"implementation continuation: bounded repair dropped evidence-only definition": {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
 			needle: "A review-record prose correction is evidence-only only when it changes no finding, source identity, observation, disposition, or verification claim.",
+		},
+		"implementation continuation: bounded repair dropped comment-only evidence": {
+			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",
+			needle: "A comment-only Go correction that the checkpoint accepts is evidence-only despite its source change, and the orchestrator commits it with no plan assignment.",
 		},
 		"implementation continuation: bounded repair counted evidence-only prose": {
 			file: ".agents/skills/bench-craft-line/references/bounded-repair-policy.md", section: "Classification and completion",

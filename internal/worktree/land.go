@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/census"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -195,15 +196,20 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	}
 	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
 	printCensusHeads(stderr, a.home, root, assignment.ID)
-	if notice := brokerChangeNotice(a.kit, root, assignment.Worktree, source.base, source.tip); notice != "" {
-		fmt.Fprintln(stderr, notice)
-	}
-	result, err := j.landReviewed(ctx, landing.ReviewedRequest{
+	// The release removes the source worktree, so the broker check reads it now and the
+	// notice prints after the effects report the refresh.
+	brokerChanged := brokerSourceChanged(assignment.Worktree, source.base, source.tip)
+	request := landing.ReviewedRequest{
 		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
 		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
 		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
 		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
+	}
+	result, err := j.landReviewed(ctx, request, commitmentAdmission{
+		store:  commitrepo.Store{Root: root},
+		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable()},
+		gap:    j.publicationGap,
 	})
 	if err != nil {
 		var conflict landing.ConflictError
@@ -218,6 +224,9 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	if err := authorization.AdvanceMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
 	}
+	if err := j.reconcileCommitment(root); err != nil {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "commitment", records)
+	}
 	if err := reconcileLandingDestination(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)
 	}
@@ -231,7 +240,38 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		}
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
-	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, records, stdout, stderr)
+	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, brokerChanged, records, stdout, stderr)
+}
+
+// commitmentAdmission is the installed broker's publication decision for one frozen
+// source assignment. It reads authority from the destination repository, never from the
+// candidate tree that it grades.
+type commitmentAdmission struct {
+	store  commitrepo.Store
+	source commitrepo.Publication
+	gap    func(string)
+}
+
+func (a commitmentAdmission) Check(tree string) error {
+	if err := a.store.AdmitPublication(a.source, tree); err != nil {
+		return fmt.Errorf("commitment: %w", err)
+	}
+	return nil
+}
+
+// Publish leaves a publication failure unwrapped, so compare-and-swap and recovery
+// refusals keep their own text. Only an admission refusal carries the commitment prefix.
+func (a commitmentAdmission) Publish(tree string, publish func() error) error {
+	ran := false
+	err := a.store.PublishAdmitted(a.source, tree, func() error {
+		a.gap(a.store.Root)
+		ran = true
+		return publish()
+	})
+	if ran || err == nil {
+		return err
+	}
+	return fmt.Errorf("commitment: %w", err)
 }
 
 // censusCount is the assignment's raw-call count for the landed record. An unreadable
@@ -260,23 +300,20 @@ func hasResumeFlag(args []string) bool {
 	return usage.FlagPresent(landGrammar, args, "--resume")
 }
 
-// brokerChangeNotice names the install step when the reviewed diff changes the
-// promotion broker's own build inputs. Source publication cannot replace the broker's
-// authority: the installed broker keeps landing until the release or repair path
-// installs the new one. An unresolvable input set reports nothing; the landing itself
-// stays under the installed owner either way. The install step it names is the
-// destination's own route, so the printed command runs where the operator stands.
-func brokerChangeNotice(kit, root, worktree, base, tip string) string {
+// brokerSourceChanged reports whether the reviewed diff in worktree changes the promotion
+// broker's own build inputs. An unresolvable input set reports false; the landing itself
+// stays under the installed owner either way.
+func brokerSourceChanged(worktree, base, tip string) bool {
 	if !freshness.DeclaresBuildInputs(worktree) {
-		return ""
+		return false
 	}
 	inputs, err := freshness.BuildInputs(worktree)
 	if err != nil {
-		return ""
+		return false
 	}
 	names, err := git.Output("-C", worktree, "diff", "--name-only", base, tip)
 	if err != nil {
-		return ""
+		return false
 	}
 	changed := map[string]struct{}{}
 	for _, name := range strings.Split(names, "\n") {
@@ -284,20 +321,29 @@ func brokerChangeNotice(kit, root, worktree, base, tip string) string {
 	}
 	for _, input := range inputs {
 		if _, ok := changed[input]; ok {
-			return "landing changes the promotion broker source; the installed broker keeps authority until " + brokerInstallStep(kit, root) + " publishes the new broker"
+			return true
 		}
 	}
-	return ""
+	return false
 }
 
-// brokerInstallStep names the route that installs the changed broker at root, where kit is
-// the kit value that the verb entry read. The kit's own source checkout carries no pin
-// manifest, so 'bench repair' refuses there; its route is the stamped rebuild and 'bench
-// doctor --fix'. The sentence comes from the one rebuild owner, never from a second copy
-// of the command here.
-func brokerInstallStep(kit, root string) string {
+// brokerChangeNotice names the install step that a broker-changing landing at root still
+// owes after its refresh effect reported refresh, where kit is the kit value that the verb
+// entry read. Source publication cannot replace the installed broker's authority.
+//
+// The kit's own source checkout carries no pin manifest, so 'bench repair' refuses there.
+// Its route is the stamped rebuild and 'bench doctor --fix', and the refresh effect is
+// that route, so the notice names it only after a failed refresh. Elsewhere the refresh
+// republishes the destination's executable but not the installed broker, so the notice
+// names 'bench repair' or the release install after every refresh result. The rebuild
+// command comes from the one rebuild owner, never from a second copy here.
+func brokerChangeNotice(kit, root, refresh string) string {
+	step := "'bench repair' or the release install"
 	if gate.KitSourceCheckoutAtKit(root, kit) {
-		return freshness.RebuildAction(root) + " with 'bench doctor --fix'"
+		if refresh != effectFailed {
+			return ""
+		}
+		step = freshness.RebuildAction(root) + " with 'bench doctor --fix'"
 	}
-	return "'bench repair' or the release install"
+	return "landing changes the promotion broker source; the installed broker keeps authority until " + step + " publishes the new broker"
 }

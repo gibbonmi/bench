@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	refreshop "github.com/gibbonmi/bench/internal/refresh"
@@ -109,11 +110,11 @@ func createShiftBranch(wt, timestamp string) (string, error) {
 // releases the worktree. Acquire, loop, and release run in one process, because lease
 // ownership is this process's pid. Every exit path resolves through finish, which emits
 // the shift_result TOON block and records the outcome on the intent entry.
-func Loop(objective string, stdout, stderr io.Writer) int {
-	return loop(objective, false, stdout, stderr)
+func Loop(outcomeID, objective string, stdout, stderr io.Writer) int {
+	return loop(outcomeID, objective, false, stdout, stderr)
 }
 
-func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
+func loop(outcomeID, objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 	if err := validateObjective(objectiveText); err != nil {
 		fmt.Fprintln(stderr, err)
 		return usage(stdout, stderr, err.Error())
@@ -148,6 +149,10 @@ func loop(objectiveText string, refresh bool, stdout, stderr io.Writer) int {
 	if dirty, _ := git.WorktreeDirty(mainRoot); dirty {
 		fmt.Fprintln(stderr, "working tree not clean; commit or move the change aside first")
 		return usage(stdout, stderr, "working tree not clean")
+	}
+	if err := (commitrepo.Store{Root: mainRoot}).ReadyOutcome(outcomeID); err != nil {
+		fmt.Fprintln(stderr, err)
+		return usage(stdout, stderr, err.Error())
 	}
 	startRef := refreshop.Start(mainRoot, refresh, stdout)
 	if startRef == "" {

@@ -130,7 +130,7 @@ func TestConcurrentWritersKeepEveryEntryAndStaleLockReclaims(t *testing.T) {
 		t.Fatalf("concurrent Read = %d entries, %v", len(got.Entries), err)
 	}
 	path, _ := Address(root)
-	if err := os.WriteFile(path+".lock", []byte("999999 1\n"), 0o600); err != nil {
+	if err := os.WriteFile(lockOf(path), []byte("999999 1\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := Upsert(root, Entry{Key: "reclaimed", Kind: KindWorktree, CreatedAt: time.Now().UTC()}); err != nil {
