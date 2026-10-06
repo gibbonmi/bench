@@ -30,7 +30,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Light staleness pass
 
-- Changed the spec staleness pass of `/bench-implement-spec` to one fixed, budgeted procedure in one reference file. Every orchestrator now sends the same light charge, and the pass returns only blocking contradictions.
+- Changed the spec staleness pass of `/bench-implement-spec` to a fan-out of cheap-tier, read-only delegates. One delegate audits the spec body, and each other delegate audits two or three tickets.
+- Changed the staleness amendment so that the orchestrator reviews the returns and decides each finding, including a behavioral one, without a reviewer stop. The delegated confirmation round is gone, and the preflight still reruns green.
 
 ### Review completion recording
 
