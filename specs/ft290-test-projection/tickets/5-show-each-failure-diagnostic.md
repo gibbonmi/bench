@@ -16,6 +16,11 @@ A package failure with no test name obeys the same rules over its package log.
 
 `Outcome.FailedTests` counts distinct failed tests, so the `bench probe` verdict row does not change under `--full`.
 
+`TestFullFailureDiagnostics` in `full_failure_test.go` pins the joined `--full` cell, so the new rows red it.
+Rewrite its `--full` expectations to one row for each line. Keep its line order, its no-ANSI intent, its default-preview assertion, and its `FailedTests` 3 assertion.
+
+A long `--full` result is longer than the response bound, so the dispatcher spills it. The spill file holds every row, and this ticket adds no spill code.
+
 ## Acceptance
 
 - [ ] A failed test with three lines prints one default row with `lines` 3.
@@ -23,3 +28,4 @@ A package failure with no test name obeys the same rules over its package log.
 - [ ] `--full` prints three rows for that test, and no cell holds an escaped newline.
 - [ ] A package failure with two log lines prints two `--full` rows with an empty `test` cell.
 - [ ] `Outcome.FailedTests` is 1 for that `--full` run.
+- [ ] `TestFullFailureDiagnostics` passes with its per-line `--full` expectations.
