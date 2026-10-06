@@ -1786,6 +1786,42 @@ axes follows the verification records.
           "requirement": "t4-bench",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "t5-prose-v2",
+          "performer": "claude:lpce_t5_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t5_r1",
+            "digest": "sha256:893d8131e060d7abd57cc9644d2f6791224eb26cc17ab7098ed10e74844f2f94",
+            "excerpt": "$ bench test --check prose\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,8da35501c6989832af19825f309ecc4eaeb90c90,false\n\n$ bench gate-prose . -- docs/adr/0028-the-commitment-gates-spec-implementations.md docs/adr/0023-each-ticket-gets-a-fresh-author.md\nexit: 0\nprose[2]{path,verdict}:\n  docs/adr/0028-the-commitment-gates-spec-implementations.md,pass\n  docs/adr/0023-each-ticket-gets-a-fresh-author.md,pass\n"
+          },
+          "requirement": "t5-prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-conformance-v2",
+          "performer": "claude:lpce_t5_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t5_r1",
+            "digest": "sha256:b1d95cd59a7c008424abade13d67753436f9c5bc3ed59f41f3078a3d70cd950c",
+            "excerpt": "$ bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,8da35501c6989832af19825f309ecc4eaeb90c90,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,46693\nfailures[0]{package,test,line}:\nskips[3]: capability skips (unix socket bind x2, character device privilege x1)\n"
+          },
+          "requirement": "t5-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
