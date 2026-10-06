@@ -171,7 +171,7 @@ constant. A pre-existing `"specs"` literal remains in `repository.go`.
 {
   "version": 2,
   "spec": "specs/light-path-commitment-exemption/spec.md",
-  "plan_digest": "sha256:243042bea22f138f7fcaa8fca30cc0032966a3d282cf7807390a2f7d99cdf034",
+  "plan_digest": "sha256:ac8accb47afc05527b1fdbfc696d0328387c9e4c4e7047113d5fc3ee0a60538e",
   "implementation_session": "",
   "chunks": [
     {
@@ -1499,6 +1499,34 @@ constant. A pre-existing `"specs"` literal remains in `repository.go`.
           ]
         }
       ]
+    },
+    {
+      "id": "LP-C2",
+      "base": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+      "tip": "dcdd92e58790e8bd0877b7dcdc314fd265cefcf5",
+      "plan_digest": "sha256:ac8accb47afc05527b1fdbfc696d0328387c9e4c4e7047113d5fc3ee0a60538e",
+      "source_digest": "40faa389e48ae6b70e30271ca671fc8728baa8f9",
+      "acceptance_rows": [
+        "LP34",
+        "LP35",
+        "LP36",
+        "LP37",
+        "LP38",
+        "LP39",
+        "LP40",
+        "LP41",
+        "LP42",
+        "LP43",
+        "LP44",
+        "LP45",
+        "LP46",
+        "LP54",
+        "LP55",
+        "LP47",
+        "LP48"
+      ],
+      "verification": [],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1530,6 +1558,15 @@ constant. A pre-existing `"specs"` literal remains in `repository.go`.
     {
       "from": "sha256:584a8ebce19d7359df5f5e38a70c0c11559d108fcd9416917d3a7a4fd3db0eb2",
       "to": "sha256:243042bea22f138f7fcaa8fca30cc0032966a3d282cf7807390a2f7d99cdf034",
+      "chunk_ids": {
+        "LP-C1": [
+          "LP-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:243042bea22f138f7fcaa8fca30cc0032966a3d282cf7807390a2f7d99cdf034",
+      "to": "sha256:ac8accb47afc05527b1fdbfc696d0328387c9e4c4e7047113d5fc3ee0a60538e",
       "chunk_ids": {
         "LP-C1": [
           "LP-C1"
