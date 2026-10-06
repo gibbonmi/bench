@@ -138,6 +138,18 @@
               "path": "roadmap/FT376.md",
               "identity": "sha256:2d5a52f6bf9e764cf1511395b052a8447160c4680300cf1a2494d7ac300df4f4"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "spec-stage-grader-trace",
+                "path": "specs/spec-stage-grader-trace/spec.md",
+                "identity": "sha256:dfb2ccaa9c6a76ed4e8f454358894ddaed5123fc1cb0d187623ab152b37bfa5e"
+              },
+              "obligations": [
+                "FT376"
+              ]
+            }
           ]
         },
         {
