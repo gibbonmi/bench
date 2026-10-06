@@ -24,7 +24,7 @@ type lightPathTicket struct {
 // lightPath grades a commit that readyFor refused as unbound. One qualifying ticket in tree
 // must cover every production path. A tree with no qualifying folder keeps unbound.
 func (store Store) lightPath(tree string, policy *commitment.Policy, production []string, unbound error) error {
-	found, err := store.lightPathTickets(tree, policy)
+	found, err := store.lightPathTickets(tree, lightPathRoot, policy)
 	if err != nil {
 		return err
 	}
@@ -36,24 +36,29 @@ func (store Store) lightPath(tree string, policy *commitment.Policy, production 
 
 // lightPathPublication grades a landing that readyFor refused as unbound. published.Tree
 // removes the delivered folder from tree, so the ticket of a delivery is read at its
-// reviewed source, and only the folder that the delivery names counts. A spec-less landing
-// is never light-path work. When tree holds a ticket that covers every production path,
-// its refusal names the --spec route for that ticket's folder.
+// reviewed source, and the reader lists only the folder that the delivery names. A
+// spec-less landing is never light-path work. When tree holds a ticket that covers every
+// production path, its refusal names the --spec route for that ticket's folder.
 func (store Store) lightPathPublication(tree string, policy *commitment.Policy, production []string, delivery *Delivery, unbound error) error {
-	read := tree
-	if delivery != nil {
-		read = delivery.Source
+	if delivery == nil {
+		found, err := store.lightPathTickets(tree, lightPathRoot, policy)
+		if err != nil {
+			return err
+		}
+		for _, ticket := range found {
+			if ticket.coversAll(production) {
+				return fmt.Errorf("%w; land the light-path change with --spec %q", unbound, ticket.slug)
+			}
+		}
+		return unbound
 	}
-	found, err := store.lightPathTickets(read, policy)
+	found, err := store.lightPathTickets(delivery.Source, delivery.Spec, policy)
 	if err != nil {
 		return err
 	}
 	for _, ticket := range found {
-		switch {
-		case delivery != nil && spec.ClosedFolderPath(ticket.slug) == delivery.Spec:
+		if spec.ClosedFolderPath(ticket.slug) == delivery.Spec {
 			return lightPathCover([]lightPathTicket{ticket}, production)
-		case delivery == nil && ticket.coversAll(production):
-			return fmt.Errorf("%w; land the light-path change with --spec %q", unbound, ticket.slug)
 		}
 	}
 	return unbound
@@ -93,20 +98,23 @@ type lightPathFolder struct {
 	irregular bool
 }
 
+// lightPathRoot is the parent of every light-path folder, and the scope that lists them all.
+const lightPathRoot = "specs"
+
 // lightPathTickets returns, in slug order, the ticket of each tickets-only folder of tree
-// that qualifies: exactly one regular tickets.Ext entry below tickets/, a ticket that
-// parses with no diagnostic, and no milestone of policy that approves the folder as a
-// deliverable. One listing of specs gives every folder, count, and mode.
-func (store Store) lightPathTickets(tree string, policy *commitment.Policy) ([]lightPathTicket, error) {
-	const root = "specs"
-	listing, err := git.Output("-C", store.Root, "ls-tree", "-r", "-z", tree, "--", root)
+// below scope that qualifies: exactly one regular tickets.Ext entry below tickets/, a
+// ticket that parses with no diagnostic, and no milestone of policy that approves the
+// folder as a deliverable. Scope is lightPathRoot or one folder below it, and it is a
+// literal path. One listing of scope gives every folder, count, and mode.
+func (store Store) lightPathTickets(tree, scope string, policy *commitment.Policy) ([]lightPathTicket, error) {
+	listing, err := git.Output("-C", store.Root, "--literal-pathspecs", "ls-tree", "-r", "-z", tree, "--", scope)
 	if err != nil {
 		return nil, fmt.Errorf("read light-path folders: %w", err)
 	}
 	folders := map[string]*lightPathFolder{}
 	for _, record := range strings.Split(listing, "\x00") {
 		metadata, name, listed := strings.Cut(record, "\t")
-		rest, inRoot := strings.CutPrefix(name, root+"/")
+		rest, inRoot := strings.CutPrefix(name, lightPathRoot+"/")
 		slug, inside, nested := strings.Cut(rest, "/")
 		if !listed || !inRoot || !nested {
 			continue

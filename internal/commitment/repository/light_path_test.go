@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
@@ -130,19 +131,28 @@ func TestLightPathCandidate(t *testing.T) {
 
 // Each row commits a light-path change in its own unbound assignment, or in the bound one,
 // and grades a publication of that commit. A row that closes its deliverable grades the
-// commit's tree less the folder, as the landing composes it. Every other row grades the
-// commit's tree whole. A row with no deliverable is a spec-less landing.
+// commit's tree less the folder and each folder that the row drops, as the landing composes
+// it. Every other row grades the commit's tree whole. A row with no deliverable is a
+// spec-less landing.
 func TestLightPathPublication(t *testing.T) {
 	root, bound := lightPathRepo(t)
 	for _, row := range []struct {
 		name, deliverable string
 		closes, bound     bool
+		drops             []string
 		steps             []func(*testing.T, string)
 		want, absent      string
 	}{
 		{name: "delivery-names-folder", deliverable: lightFolder, closes: true, steps: steps(ticket(lightTicket, "change.go"), write("change.go"))},
 		{name: "delivery-uncovered", deliverable: lightFolder, closes: true, steps: steps(ticket(lightTicket, "change.go"), write("change.go", "other.go")), want: `production path "other.go" is outside the Writes line of light-path ticket "` + lightTicket + `"`},
 		{name: "delivery-two-tickets", deliverable: lightFolder, closes: true, steps: steps(ticket(lightTicket, "change.go"), ticket(lightFolder+"/tickets/two.md", "change.go"), write("change.go")), want: unbound},
+		// Only the named folder grades, so a second folder that covers the path admits nothing.
+		{name: "delivery-beside-covering-folder", deliverable: lightFolder, closes: true, steps: steps(ticket(lightTicket, "other.go"), ticket("specs/second/tickets/one.md", "change.go"), write("change.go")), want: `production path "change.go" is outside the Writes line of light-path ticket "` + lightTicket + `"`},
+		// The source also holds an unrelated folder with an oversized ticket, which the composed
+		// tree lacks. The reader never reads that folder, so it changes nothing.
+		{name: "delivery-beside-unreadable-folder", deliverable: lightFolder, closes: true, drops: []string{"specs/big"}, steps: steps(ticket(lightTicket, "change.go"), write("change.go"), func(t *testing.T, worktree string) {
+			commitmenttest.Write(t, worktree, "specs/big/tickets/one.md", strings.Repeat("a", int(bounds.ControlRecordLimit)+1))
+		})},
 		{name: "spec-less", steps: steps(ticket(lightTicket, "change.go"), write("change.go")), want: `--deliverable <path>; land the light-path change with --spec "lp"`},
 		{name: "spec-less-spaced-slug", steps: steps(ticket("specs/a b/tickets/one.md", "change.go"), write("change.go")), want: `--spec "a b"`},
 		{name: "spec-less-uncovered", steps: steps(ticket(lightTicket, "change.go"), write("change.go", "other.go")), want: unbound, absent: "--spec"},
@@ -160,8 +170,10 @@ func TestLightPathPublication(t *testing.T) {
 			published := publication(t, root, worktree)
 			published.Source, published.Deliverable = gittest.Output(t, worktree, "rev-parse", "HEAD"), row.deliverable
 			if row.closes {
-				if err := os.RemoveAll(filepath.Join(worktree, filepath.FromSlash(row.deliverable))); err != nil {
-					t.Fatal(err)
+				for _, folder := range append([]string{row.deliverable}, row.drops...) {
+					if err := os.RemoveAll(filepath.Join(worktree, filepath.FromSlash(folder))); err != nil {
+						t.Fatal(err)
+					}
 				}
 				commitmenttest.Commit(t, worktree, "close "+row.deliverable)
 			}
