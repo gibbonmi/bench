@@ -113,7 +113,7 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 		return refusedOutcome(toon.Errorf("system check unavailable", "the system suite grades the kit checkout only")+"\n", 1)
 	}
 	if request.check == proseCheckName {
-		return runProseCheck(root)
+		return runProseCheck(root, request.full)
 	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()

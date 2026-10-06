@@ -289,6 +289,19 @@ func TestGrade(t *testing.T) {
 	}
 }
 
+// TestGradeReportsGradedSubjects grades that the tree grade answers its graded subjects,
+// and that an excluded file is not one of them.
+func TestGradeReportsGradedSubjects(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, ".bench/prose-exclusions", "skip.md planted fixture text\n")
+	write(t, root, "skip.md", longSentence())
+	write(t, root, "keep.md", "Short prose.\n")
+	got := GradeTree(root)
+	if strings.Join(got.Subjects, ",") != "keep.md" || len(got.Findings) != 0 {
+		t.Fatalf("GradeTree() = %+v, want the one subject keep.md and no finding", got)
+	}
+}
+
 // gitTrack makes root a git work tree and adds each repository-relative path rel to its
 // index. A path is tracked once the index holds it, so a row needs no commit.
 func gitTrack(t *testing.T, root string, rels ...string) {

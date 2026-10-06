@@ -3,6 +3,7 @@ package testreport
 import (
 	"context"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
@@ -13,6 +14,9 @@ import (
 )
 
 const proseCheckName = "prose"
+
+// ranNothingTitle is the error title of a named check that reached no evidence that it ran.
+const ranNothingTitle = "named check ran nothing"
 
 func unknownCheck(check string) string {
 	return "unknown check: " + check + "\n" + namedCheckInventory()
@@ -66,7 +70,7 @@ func runNamedCheck(ctx context.Context, root string, request focusedRequest, sel
 		return refusedOutcome(toon.RenderError(err)+"\n", 1)
 	}
 	if outcome.Kind == OutcomeNoTestRun {
-		return outcome, row + toon.Errorf("named check ran nothing", "no test emitted a run event") + "\n", 1
+		return outcome, row + toon.Errorf(ranNothingTitle, "no test emitted a run event") + "\n", 1
 	}
 	return outcome, row + out, code
 }
@@ -83,14 +87,33 @@ func runGoBackedCheck(ctx context.Context, root string, request focusedRequest, 
 	return runGoTest(ctx, selection.SourceRoot, request, argv, env)
 }
 
-// runProseCheck grades sentences rather than a Go test, so its outcome reads each
-// finding as a failure row and an empty grade as a pass.
-func runProseCheck(root string) (Outcome, string, int) {
-	findings := prose.Grade(root)
-	if len(findings) == 0 {
-		return Outcome{Kind: OutcomePassed}, "", 0
+// runProseCheck grades sentences rather than a Go test, so its check row counts graded
+// subjects and runs no test. Each finding or grader refusal line follows the row as a
+// failure, and a grade of no subject is no evidence that the check ran.
+func runProseCheck(root string, full bool) (Outcome, string, int) {
+	grade := prose.GradeTree(root)
+	row, err := checkRow(proseCheckName, 0, len(grade.Subjects))
+	if err != nil {
+		return refusedOutcome(toon.RenderError(err)+"\n", 1)
 	}
-	return Outcome{Kind: OutcomeFailed, FailedTests: len(findings)}, strings.Join(findings, "\n") + "\n", 1
+	if len(grade.Findings) > 0 {
+		return Outcome{Kind: OutcomeFailed, FailedTests: len(grade.Findings)}, row + strings.Join(grade.Findings, "\n") + "\n", 1
+	}
+	if len(grade.Subjects) == 0 {
+		return Outcome{Kind: OutcomeNoTestRun}, row + toon.Errorf(ranNothingTitle, "the prose grader graded no subject") + "\n", 1
+	}
+	if !full {
+		return Outcome{Kind: OutcomePassed}, row, 0
+	}
+	subjects := make([][]string, 0, len(grade.Subjects))
+	for _, path := range slices.Sorted(slices.Values(grade.Subjects)) {
+		subjects = append(subjects, []string{path})
+	}
+	table, err := toon.Table("subjects", []string{"path"}, subjects)
+	if err != nil {
+		return refusedOutcome(toon.RenderError(err)+"\n", 1)
+	}
+	return Outcome{Kind: OutcomePassed}, row + table, 0
 }
 
 // runSystemCheck runs the gate's system phase as a focused run. It reads the phase's
