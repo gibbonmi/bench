@@ -15,7 +15,9 @@ The `kind` cell reads the kind owner of ticket 3. The `families` cell counts the
 A fixture with no family adds nothing to the count. An absent `tests/canary` directory gives `families` 0 on each row.
 `--checks` accepts no other flag and no operand, selects no run binary, and starts no Go child.
 
-Complete the grammar text and the `bench help` row with the form `bench test --checks`, so that they equal the text in the spec.
+The table has about 45 rows, so the response bound always spills it at the CLI. The spill file holds every row. Each acceptance row grades the `Command` output, which the bound does not cut.
+
+Complete the grammar text and the `bench help` row with the form `bench test --checks`, so that they equal the text in the spec. The rendered help row keeps the registry's `--in` insertion.
 
 ## Acceptance
 
@@ -26,4 +28,4 @@ Complete the grammar text and the `bench help` row with the form `bench test --c
 - [ ] A fixture directly under `tests/canary` prints an empty `family` cell and adds nothing to `families`.
 - [ ] `--checks --full` and `--checks --check prose` exit 2 with usage.
 - [ ] Both faces write no canned `go` marker, and both give the empty answer for a tree with no `tests/canary` directory.
-- [ ] `bench help` and `bench test --help` hold the exact grammar text of the spec.
+- [ ] `bench help` holds the spec's grammar text with the `--in` insertion, and `bench test --help` starts with the grammar text unchanged.

@@ -16,6 +16,10 @@ A `--changed` result prints `packages[N]{package,status,elapsed_ms,tests_run,sel
 
 Each other form keeps the header of ticket 2.
 
+The selector returns a bare package list today, and its callers change with its return type. The empty-selection path builds a new report, so it also needs the cause input.
+`TestChangedNonGoSubjectRendersExplicitEmpty` checks only the `packages[0]` prefix today. Add an exact header assertion with the `selected_by` cell.
+The empty header names the empty selection, so print no separate marker.
+
 ## Acceptance
 
 - [ ] One changed Go file prints the cause `changed`.

@@ -13,6 +13,8 @@ One package variable supplies the absolute path of the running executable. `fres
 
 The `seal` value is `unsealed` when the seal is unreadable. A control character in the path or in the caller's check name prints escaped through `sanitize.Controls`.
 Move `TestUnknownNamedCheckReportsOperandAndInventory` to a new test file and rewrite its whole-output expectation.
+`internal/probe/refusal_test.go` checks only the refusal prefix and the `checks:` text, so it stays compatible.
+Under `--in`, the path is the executable of the target tree's child, because the tree target runs that tree's published executable. The refusal is a few lines, so the response bound never spills it.
 
 Use the glossary term **running executable** in each comment and message.
 

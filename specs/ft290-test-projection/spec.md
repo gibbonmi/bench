@@ -8,6 +8,8 @@ Decision source: `specs/ft290-test-projection/decisions/ft290-test-projection.md
 
 Verification log: 2 iteration(s) to accept — iteration one returned F1 to F14. Iteration two returned R1 to R6 on the repair delta. Both sets are folded. No review examined the R1 to R6 repair, because the cap was two iterations.
 
+Staleness amendment, 2026-10-06: five cheap-tier delegates audited the spec and the tickets against `main` at `dad3721f`. No planned behavior had shipped. The orchestrator folded each finding at `8fbbfc7b`. The decisions are in "Flagged additions" for reviewer veto.
+
 ## Problem
 
 An agent that runs `bench test` cannot read some facts from the output. A green
@@ -16,6 +18,10 @@ a package that ran no test. `bench test --check prose` prints nothing on green.
 The failures table shows one diagnostic line for each failed test, so the agent
 pays a second run with `--full`. One red in the system suite costs a whole
 re-run, because `--check` refuses `--run`.
+
+The response bound cuts a long `bench test` response to a head and a tail, and a
+spill file holds the whole rendered response. The spill holds no diagnostic line
+that the default mode hides, so the second `--full` run is still necessary.
 
 The unknown-check refusal lists a check set with no owner, so a stale
 executable gives a stale list with no attribution. `bench test --changed`
@@ -109,7 +115,9 @@ Reviewed exclusions:
 
 The `check` row is the first block of each named-check result that reached a
 verdict. The `kind` cell is `conformance`, `system`, or `prose`. One owner maps
-a check name to its kind, and the `--checks` table reads the same owner.
+a check name to its kind, and the `--checks` table reads the same owner. At the
+CLI, the tree-scoped dispatcher prints its `tree[1]{target,head,dirty}` lead
+block first. The `check` row is the first block of the `Command` output.
 
 The `tests_run` count is the count of distinct tests and subtests that emitted a
 run event. The report already holds this count for `Outcome.Ran`. A packages
@@ -123,10 +131,22 @@ runs` refusal wins, and the zero-rule line does not print. When a package of a
 named check does not compile, the outcome is a build failure. The compile
 diagnostic prints at exit 1, and the zero-rule line does not print.
 
+The zero rule reads the outcome kind `OutcomeNoTestRun`, not the count alone.
+The outcome owner returns that kind only when no failure exists. A failure with
+no run event therefore keeps its failure kind and its exit 1. `bench probe` already
+maps `OutcomeNoTestRun` to `invalid`, so the probe verdict stays defined.
+
 ### The prose result
 
 The prose grader gives the count of graded subjects and their paths beside its
-findings. A green result prints only the `check` row. `--full` adds a
+findings. A graded subject is a `.md` file that the walk collects and that the
+exclusion set of the grader does not exclude. When the root is the top of its
+git work tree, the walk collects tracked files only. The answer reuses the
+walk and the exclusion set in `internal/prose`, so the prose rule keeps one
+source. On this repository the subject list is long, so the response bound
+spills a `--full` result, and the spill file holds every path.
+
+A green result prints only the `check` row. `--full` adds a
 `subjects[N]{path}` table in sorted order. A red result prints the `check` row
 and then each finding line as it prints today. A grader refusal prints the
 `check` row with `subjects` 0, then the refusal diagnostics, and exits 1.
@@ -143,11 +163,18 @@ test name obeys the same rules over its package log.
 
 `Outcome.FailedTests` counts distinct failed tests. It does not count rows.
 
+A `--full` result with several diagnostic lines is longer than the response
+bound, so the dispatcher spills it, and the spill file holds every row. The
+default mode stays short, and its `lines` cell tells the caller when a `--full`
+run holds more.
+
 ### The system run pattern
 
 `--check system --run <regex>` appends `-run <regex>` after the system suite
-operands. `Request.Run()` returns the pattern for that request. The grammar
-refuses `--run` with each other named check before a Go child starts.
+operands. `Request.Run()` returns the pattern for that request. Today one case
+of `Request.Run()` returns `AllTests` for both the prose and the system check.
+Ticket 6 splits that case and keeps `AllTests` for the prose check. The
+grammar refuses `--run` with each other named check before a Go child starts.
 
 ### The refusal identity
 
@@ -173,7 +200,13 @@ unexported message names it. Ticket 8 exports one sentinel error from
 `internal/canary`, and `Fixtures` and `FixturePins` both use it. The face reads
 the sentinel through `errors.Is`. Each other inventory error refuses at exit 1
 with the inventory diagnostic. The face
-selects no run binary and starts no Go child.
+selects no run binary and starts no Go child, so its branch returns before the
+run binary selection of the focused request.
+
+`--checks` lists about 45 checks, and a large family gives a long `--fixtures`
+table. Each such response is longer than the response bound, so the dispatcher
+spills it, and the spill file holds every row. The faces need no spill code of
+their own. Each row grades the `Command` output, which the bound does not cut.
 
 `--checks` prints `checks[N]{name,kind,families}` in the order of the help
 list. The `families` cell counts the distinct family names in which the check
@@ -188,19 +221,22 @@ precedence is `go-metadata`, then `changed`, then `embed`, then
 dependency in sorted import-path order. The direct dependencies are the
 imports, the test imports, and the external test imports. Only a `--changed`
 result prints the `selected_by` cell, and an empty selection prints the same
-header with zero rows.
+header with zero rows. That header names the empty selection, so the result
+adds no separate marker.
 
 ### The structure budget
 
 The growth lane reds a file that is over its line budget and that gains a line.
-These fenced files are over the budget at `bcc5543f`: `internal/testreport/command.go`,
-`check_test.go`, `selection_test.go`, and `testreport_test.go` of
-`internal/testreport`, `cmd/bench/main.go`, and `cmd/bench/command_registry_test.go`.
-An edit to one of them keeps or lowers its line count. `internal/canary/inventory.go`
-is also over the budget, so ticket 8 does not grow it.
+These fenced files are over the budget at `8fbbfc7b`: `check_test.go` and
+`selection_test.go` of `internal/testreport`, `cmd/bench/main.go`, and
+`cmd/bench/command_registry_test.go`. An edit to one of them keeps or lowers its
+line count. `internal/canary/inventory.go` is also over the budget, so ticket 8
+does not grow it. `internal/testreport/command.go` and `testreport_test.go` are
+under the budget, with about 30 and 25 lines of room.
 
 Ticket 1 moves the named-check owner out of `command.go` into a new file, with
-no behavior change. Each new test goes in a new test file. An existing test
+no behavior change. Tickets 3 and 6 to 9 add more lines to `command.go` than its
+room, so the move comes first. Each new test goes in a new test file. An existing test
 that needs more lines moves to a new file in the same ticket.
 
 The `internal/testreport/` directory is already over its file-count budget, and
@@ -209,9 +245,17 @@ the directory debt grows and stays soft.
 
 ### The grammar
 
-The usage line and the `bench help` row both become this text:
+The `Cmd` and `Help` usage text of `internal/testreport` and the `Suffix` of the
+`test` help row both become this text:
 
 `bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures | bench test --checks`
+
+The `test` leaf is tree-scoped, so the registry inserts `[--in <label|primary>]`
+after the first `bench test` when it renders the `bench help` row. The rendered
+row is therefore this text with that insertion. The dispatcher removes `--in`
+before `testreport.Command` runs, so the usage text has no `--in`.
+`bench test --help` prints the usage text, then its `notes:` block, then the
+check list.
 
 `--checks` accepts no other flag and no operand. `--fixtures` requires
 `--check` and accepts no other flag. An unknown check with `--fixtures` gives
@@ -242,29 +286,41 @@ Stable chunk IDs: the first review round split TP-C1 into TP-C1a and TP-C1b. Tic
 The zero rule reds each named-check test whose canned `go` script emits no run
 event and expects exit 0. The fixture builders are `writeCheckGo` and the
 inline script of `TestNamedCheckRunsFromKitAgainstLinkedConsumer` in
-`internal/testreport/check_test.go`. `check_test.go` calls `writeCheckGo` at seven lines.
+`internal/testreport/check_test.go`. These tests call `writeCheckGo`:
 
-| line | test | expected exit |
-| --- | --- | --- |
-| 26 | `TestNamedCheckOwnsConformanceEnvironment` | 0 |
-| 156 | `TestFocusedRequestGrammarRefusals` | 2 |
-| 182 | `TestNamedCheckRefusalMatrix` | 2 |
-| 228 | `TestNamedCheckRefusesCorruptInheritedSelection` | 1 |
-| 293 | `TestNamedChecksWriteNoGateOwnedRecords` | 0 |
-| 352 | `TestSystemCheckOwnsTheGateEnvironment` | 0 |
-| 405 | `TestSystemCheckRefusesAForeignRoot` | 1 |
+| file | test | form | expected exit |
+| --- | --- | --- | --- |
+| `check_test.go` | `TestNamedCheckOwnsConformanceEnvironment` | named check | 0 |
+| `check_test.go` | `TestFocusedRequestGrammarRefusals` | named check | 2 |
+| `check_test.go` | `TestNamedCheckRefusalMatrix` | named check | 2 |
+| `check_test.go` | `TestNamedCheckRefusesCorruptInheritedSelection` | named check | 1 |
+| `check_test.go` | `TestNamedChecksWriteNoGateOwnedRecords` | named check | 0 |
+| `check_test.go` | `TestSystemCheckOwnsTheGateEnvironment` | named check | 0 |
+| `check_test.go` | `TestSystemCheckRefusesAForeignRoot` | named check | 1 |
+| `testreport_test.go` | `TestExplicitFocusedRunsWriteNoGateOwnedRecords` | `--check system` | 0 |
+| `environment_test.go` | `TestLinkedRunKeepsOperatorEnvironment` | package | 0 |
+| `selection_test.go` | `TestOrdinaryFocusedModesScrubConformanceEnvironment` | package and `--changed` | 0 |
 
-`internal/testreport/testreport_test.go` line 294 is one more caller, and its
-`--check system` run expects exit 0. The three exit 0 rows, that caller, and
-the inline script red under the zero rule. Ticket 3 adds a run event to
-`writeCheckGo` and to the inline script, inside their current lines.
+The named-check rows with exit 0 and the inline script red under the zero
+rule. The package and `--changed` rows keep exit 0 by TP6 and TP55. Ticket 3
+adds a run event to `writeCheckGo` and to the inline script, inside their
+current lines. `TestSystemCheckReportsAFailingSuite` uses `writeFailingCheckGo`,
+which emits a `fail` event and no run event. It keeps exit 1 and prints no
+zero-rule title.
 
-The header changes red the exact header matches in `outcome_test.go`,
-`testreport_test.go`, `selection_test.go`, `cancel_test.go`, and
-`check_test.go` of `internal/testreport`. `TestUnknownNamedCheckReportsOperandAndInventory`
-compares the whole refusal, so ticket 7 moves the test and rewrites its expectation.
-`internal/testreport/selection_facts_test.go` line 22 expects `AllTests` for
-the system check, and ticket 6 adds the pattern case beside it.
+The header changes red these exact header matches in `internal/testreport`:
+`outcome_test.go` (seven canned outputs), `testreport_test.go`, and the
+`check_test.go` test `TestSystemCheckReportsAFailingSuite`. `cancel_test.go`
+and `selection_test.go` match only a table prefix, and they do not red.
+`TestFullFailureDiagnostics` in `full_failure_test.go` pins the joined
+`--full` cell, so ticket 5 rewrites it to one row for each line. It keeps its
+order, its no-ANSI intent, its default-preview assertion, and its
+`FailedTests` 3 assertion.
+
+`TestUnknownNamedCheckReportsOperandAndInventory` compares the whole refusal,
+so ticket 7 moves the test and rewrites its expectation.
+`internal/testreport/selection_facts_test.go` expects `AllTests` for the system
+check, and ticket 6 adds the pattern case beside it.
 
 ### Seam diagram
 
@@ -291,7 +347,7 @@ the system check, and ticket 6 adds the pattern case beside it.
 | TP8 | 6 | A green prose run with `--full` adds `subjects[2]{path}:` with the two paths in sorted order | planned TestProseFullListsSubjects in internal/testreport, through `Command` over a temporary tree | A result that ignores `--full` prints no `subjects` table. |
 | TP9 | 7 | A prose run over a tree with zero graded subjects exits 1 and prints `subjects` 0 and the title `named check ran nothing` | planned TestProseZeroSubjectsExitsOne in internal/testreport, through `Command` over a temporary tree | The current code returns a pass for zero subjects. |
 | TP10 | 8 | A red prose run over two subjects prints the row `prose,prose,0,2` and then each finding line, at exit 1 | planned TestProseRedKeepsFindingsAfterCheckRow in internal/testreport, through `Command` over a temporary tree | A red path that skips the `check` row, or that drops a finding, fails the match. |
-| TP11 | 9 | A prose run over a tree with no `.bench/prose-exclusions` file prints `subjects` 0 and then the grader diagnostic at exit 1, and does not print the title `named check ran nothing` | planned TestProseGraderRefusalPrintsCheckRow in internal/testreport, through `Command` over a temporary tree | A refusal path with no `check` row fails the prefix match, and a zero rule that reads only `subjects` prints its title over the diagnostic. |
+| TP11 | 9 | A prose run over a tree that holds one `.md` file and no `.bench/prose-exclusions` file prints `subjects` 0 and then the grader diagnostic at exit 1, and does not print the title `named check ran nothing` | planned TestProseGraderRefusalPrintsCheckRow in internal/testreport, through `Command` over a temporary tree | A refusal path with no `check` row fails the prefix match, and a zero rule that reads only `subjects` prints its title over the diagnostic. |
 | TP12 | 6 | The prose grader returns the graded subject paths beside its findings for a tree with one excluded file and one graded file | planned TestGradeReportsGradedSubjects in internal/prose, through the prose grade entry | A count that includes the excluded file returns two paths. |
 | TP13 | 10 | A failed test with three diagnostic lines prints one default row with its first line and `lines` 3 under `failures[1]{package,test,line,lines}` | planned TestFailuresRowCountsLines in internal/testreport, through `Command` with canned events | The old header has no `lines` cell. |
 | TP14 | 10 | A failed test with no diagnostic prints `no diagnostic emitted` and `lines` 0 | planned TestFailuresRowWithNoDiagnosticCountsZero in internal/testreport, through `Command` with canned events | A count that reads the printed cell gives 1. |
@@ -325,7 +381,7 @@ the system check, and ticket 6 adds the pattern case beside it.
 | TP38 | 26 | A fixture directly under `tests/canary` prints an empty `family` cell and adds nothing to `families` | planned TestChecksFaceIgnoresEmptyFamily in internal/testreport, through `Command` over a temporary canary tree | A count of distinct values that includes the empty name prints 1. |
 | TP39 | 33 | Each of `--checks --full`, `--checks --check prose`, `--fixtures`, `--check prose --fixtures --full`, and `--check system --fixtures --run ^X$` exits 2 with usage | planned TestInventoryGrammarRefusals in internal/testreport, through `Command` with a canned `go` marker | A parser that ignores the extra flag runs a partial form. |
 | TP40 | 33 | `--check not-registered --fixtures` gives the unknown-check refusal at exit 2 | planned TestFixturesFaceUnknownCheck in internal/testreport, through `Command` | An empty table for an unknown name hides a typing error. |
-| TP50 | 34 | `bench help` and `bench test --help` each hold the exact grammar text of this spec | `cmd/bench/command_registry_test.go` (`TestTestHelpNamesOnlyRunnableFocusedForms`), through the help render and the help inventory golden | An old help row omits the new forms. |
+| TP50 | 34 | `bench help` holds the grammar text of this spec with the `--in` insertion that the registry renders, and `bench test --help` starts with the grammar text unchanged | `cmd/bench/command_registry_test.go` (`TestTestHelpNamesOnlyRunnableFocusedForms`), through the help render and the help inventory golden | An old help row omits the new forms. |
 | TP41 | 28 | A `--changed` run over one changed Go file prints `packages[1]{package,status,elapsed_ms,tests_run,selected_by}:` with the cause `changed` | planned TestChangedRowsCarrySelectedBy in internal/testreport, through `Command` with a canned `go list` and `go test` | The current header has no `selected_by` cell. |
 | TP42 | 29 | A package that changed and that imports a changed package prints `changed` | planned TestCauseChangedBeatsImports in internal/testreport, through the changed-package selector with a canned loader | A cause that the closure loop writes last prints `imports`. |
 | TP43 | 29 | A package with only a changed embed file prints `embed` | planned TestCauseEmbedOnly in internal/testreport, through the changed-package selector with a canned loader | A selector that folds embed into `changed` fails the cell. |
@@ -333,7 +389,7 @@ the system check, and ticket 6 adds the pattern case beside it.
 | TP45 | 30 | A package that imports only `example/c`, where `example/c` imports the changed `example/a`, prints `imports example/c` | planned TestCauseImportsNamesDirectDependency in internal/testreport, through the changed-package selector with a canned loader | A cause that names the root change prints `imports example/a`. |
 | TP46 | 31 | A changed `go.mod` and a changed Go file print `go-metadata` on each row, the changed package included | planned TestCauseGoMetadataWins in internal/testreport, through the changed-package selector with a canned loader | A precedence with `changed` first prints `changed` on one row. |
 | TP47 | 32 | A `--package` run prints the header `packages[1]{package,status,elapsed_ms,tests_run}` with no `selected_by` text | planned TestPackageFormHasNoSelectedBy in internal/testreport, through `Command` with canned events | One header for each form prints an empty cause cell. |
-| TP48 | 28 | A `--changed` run with no selected package prints `packages[0]{package,status,elapsed_ms,tests_run,selected_by}:` at exit 0 | `internal/testreport/selection_test.go` (`TestChangedNonGoSubjectRendersExplicitEmpty`), through the existing empty-selection test, with its header expectation changed in place | An empty report that keeps the old header differs from the populated one. |
+| TP48 | 28 | A `--changed` run with no selected package prints `packages[0]{package,status,elapsed_ms,tests_run,selected_by}:` at exit 0 | `internal/testreport/selection_test.go` (`TestChangedNonGoSubjectRendersExplicitEmpty`), through the existing empty-selection test, with an exact header assertion added | The test pins only the `packages[0]` prefix today, so the new exact header assertion is what reds an empty report that keeps the old header. |
 
 Not covered: story 35 — commit `4ff47076` shipped the behavior, and `TestRunPatternReportsCompilerDiagnostic` already grades it.
 Not covered: story 36 — `decisions/run-binary-provenance.md` owns the outcome, and its research is open.
@@ -428,6 +484,9 @@ in that order. Ticket 9 completes the text that TP50 compares.
 - The run binary provenance in a result: `decisions/run-binary-provenance.md` owns it. Estimate: 6 edits, 2 gate runs.
 - A `--run` filter inside a conformance check, which needs subtests in the root conformance test. Estimate: 12 edits, 3 gate runs.
 - The pinned paths of a fixture as a projection. Estimate: 4 edits, 1 gate run.
+- `bench test --list`, which lists the test names that a selection runs. The 2026-10-02 record-evidence occurrence asks for it, and the roadmap row keeps it outside this spec. Estimate: 8 edits, 2 gate runs.
+- A spill file that holds only a nested spill pointer, from the 2026-09-27 occurrence. The cause sits in the response-bound owner, not in this verb, and `capture/learnings.md` holds it for the drain.
+- A separate marker for an empty `--changed` selection. The `selected_by` header with zero rows names the empty selection.
 
 ## Further notes
 
@@ -452,19 +511,20 @@ in that order. Ticket 9 completes the text that TP50 compares.
 
 Readers of the rendered report and of the `testreport` interface:
 
-- `cmd/bench/main.go` line 185 calls `testreport.Command`, and line 109 holds the help row.
+- `cmd/bench/test_command.go` calls `testreport.Command`, and the `test` leaf in `cmd/bench/main.go` holds the help row.
 - `internal/probe/probe.go` appends the report text and reads `Outcome.FailedTests` and `Outcome.Ran`. `internal/probe/baseline.go` reads `Outcome.Kind`. `internal/probe/command.go` reads `ProbeNotes`. The probe refuses the `system` and `prose` checks, so only the conformance `check` row reaches it.
-- `internal/worktree/merge.go` line 101 prints the `--changed` output and reads only the exit code.
-- `internal/gate/lane_select.go` line 292 runs `test --check <name>` for each lane check and reads the exit code. A real conformance run has `tests_run` 1, so the zero rule does not red the lane.
-- `CHANGELOG.md` lines 191 and 192 name the old `packages` header. That entry is a historical record, and no row changes it.
-- `internal/anchors/registry_data.go` lines 419 and 420 pin the `phases` and the `failures[N]{phase,line}` tables of the gate. They do not pin a `bench test` table.
+- `internal/worktree/merge.go` prints the `--changed` output and reads only the exit code.
+- `internal/gate/lane_select.go` runs `test --check <name>` for each lane check and reads the exit code. A real conformance run has `tests_run` 1, so the zero rule does not red the lane.
+- A released `CHANGELOG.md` entry names the old `packages` header. That entry is a historical record, and no row changes it.
+- `internal/anchors/registry_retained_workflow.go` and `registry_data_test.go` pin the `failures[N]{phase,line}` table of the gate. They do not pin a `bench test` table.
+- The response bound of the `test` leaf projects every response of this verb. It cuts the CLI view only, and no row reads that view.
 - The sweep with `rg --hidden` found no other guidance file, script, or workflow file that names the two headers.
 
 Pinned literals that the grammar change moves:
 
-- `cmd/bench/main.go` line 109, the `Suffix` of the `test` help row.
-- `cmd/bench/command_registry_test.go` line 764, the whole grammar text, and line 771, the text `bench test [--full] --check <name>`, which the new grammar keeps.
-- `cmd/bench/help_inventory_test.go` line 84, the whole help row.
+- `cmd/bench/main.go`, the `Suffix` of the `test` help row.
+- `cmd/bench/command_registry_test.go` (`TestTestHelpNamesOnlyRunnableFocusedForms`), the whole rendered grammar text with `--in`, and the text `bench test [--full] --check <name>`, which the new grammar keeps.
+- `cmd/bench/help_inventory_test.go`, the whole rendered help row with `--in`.
 - `internal/testreport/command.go`, the `Cmd` and `Help` fields of the grammar.
 
 Pinned literals that stay: the anchor needles and canary fixtures that name
@@ -474,7 +534,7 @@ No row changes those bytes.
 
 Proof checklist:
 
-- Cited symbols: each symbol below resolves in the tree at `bcc5543f`.
+- Cited symbols: each symbol below resolves in the tree at `bcc5543f`, and the staleness pass confirmed each one again at `dad3721f`.
   - In `internal/testreport`: `Command`, `Prepare`, `Execute`, `Request.Run`, `Outcome.FailedTests`, `Outcome.Ran`, `selectRunBinary`, `namedChecks`, and `selectCurrentPackages`.
   - In `internal/canary`: `Fixtures`, `Select`, and `FixturePins`.
   - In other packages: `registry.CanaryFamilies`, `registry.Names`, `freshness.SealDigests`, `prose.Grade`, and `gate.SystemSuite`.
@@ -536,3 +596,19 @@ Each addition below is not in a ticket answer. The reviewer can veto each one.
 - The exit 1 render refusal for an unprintable fixture name, TP52.
 - The exit 0 answer for a `--changed` run with no run event, TP55.
 - The grammar rows TP39 and TP50, which derive from decisions #4, #7, and #9.
+
+Staleness amendment decisions, 2026-10-06. The orchestrator decided each one
+under the staleness pass, and the reviewer can veto each one:
+
+- `--checks`, a long `--fixtures` table, and a long `--full` result spill under
+  the response bound. The spill file holds every row, and the faces add no
+  spill code.
+- An empty `--changed` selection prints only the `selected_by` header with zero
+  rows, with no separate marker.
+- `bench test --list` and the nested spill pointer stay out of scope.
+- The zero rule reads `OutcomeNoTestRun`, so a failure with no run event keeps
+  its failure outcome.
+- A prose subject is a collected `.md` file that the exclusion set does not
+  exclude. The subject answer reuses the walk and the exclusion set inside the
+  ticket 4 fence.
+- TP50 compares the rendered help row with the registry's `--in` insertion.

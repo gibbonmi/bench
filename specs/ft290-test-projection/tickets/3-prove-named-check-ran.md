@@ -12,10 +12,12 @@ Print the row `check[1]{name,kind,tests_run,subjects}` as the first block of eac
 Add the one owner that maps a check name to its kind: `conformance`, `system`, or `prose`.
 
 A Go-backed check prints `subjects` 0.
-When `tests_run` is 0, print the `check` row and the error title `named check ran nothing`, and exit 1.
+When the outcome kind is `OutcomeNoTestRun`, print the `check` row and the error title `named check ran nothing`, and exit 1.
+Key the rule on that kind, not on `tests_run` 0 alone. A failure with no run event keeps its failure kind, so `TestSystemCheckReportsAFailingSuite` stays at exit 1 with no zero-rule title.
 
 A package run with no test keeps exit 0.
 Add a run event to each canned `go` builder that a named-check test uses, inside its current line.
+The spec's posture-change table lists every `writeCheckGo` caller by test name, and the package and `--changed` callers keep exit 0.
 
 This ticket supplies the `check` row producer and the kind owner that tickets 4, 6, and 9 read.
 
@@ -27,4 +29,5 @@ This ticket supplies the `check` row producer and the kind owner that tickets 4,
 - [ ] `--package chosen` with no run event exits 0.
 - [ ] A `--changed` run with no run event exits 0.
 - [ ] A named check gets a `build-fail` event, no run event, and a nonzero child exit. It prints the compile diagnostic at exit 1, without the zero-rule title.
+- [ ] `TestSystemCheckReportsAFailingSuite` keeps exit 1 and prints no zero-rule title.
 - [ ] The real `--check ordinary-build-census` run prints `tests_run` 1.
