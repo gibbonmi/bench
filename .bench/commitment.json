@@ -73,6 +73,42 @@
           ]
         },
         {
+          "id": "FT391",
+          "criteria": [
+            {
+              "id": "FT391.admit",
+              "text": "bench commit and a bench worktree land with --spec admit an unbound change that carries one tickets-only folder with exactly one ticket, when every production path stays inside that ticket's Writes line."
+            },
+            {
+              "id": "FT391.guards",
+              "text": "A light-path change still cannot change the commitment policy or a pinned roadmap row, and a spec-less landing of it refuses with the --spec route."
+            },
+            {
+              "id": "FT391.drain",
+              "text": "The operating guide and the drain dispatch each kept light-path fix to a fresh write delegate, whatever the active commitment is, and ADR 0028 records that the commitment gates spec implementations only."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT391",
+              "path": "roadmap/FT391.md",
+              "identity": "sha256:2af62a00f72899c536f35c860a09108cac4be53b3815ceedb959e64b48722528"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "light-path-commitment-exemption",
+                "path": "specs/light-path-commitment-exemption/spec.md",
+                "identity": "sha256:db0c428534da1bbf5098fcfcdf9043ade2496c9441584f646da4ec33472ab2d0"
+              },
+              "obligations": [
+                "FT391"
+              ]
+            }
+          ]
+        },
+        {
           "id": "FT376",
           "criteria": [
             {
@@ -101,22 +137,6 @@
               "id": "FT376",
               "path": "roadmap/FT376.md",
               "identity": "sha256:2d5a52f6bf9e764cf1511395b052a8447160c4680300cf1a2494d7ac300df4f4"
-            }
-          ]
-        },
-        {
-          "id": "FT391",
-          "criteria": [
-            {
-              "id": "FT391.shape",
-              "text": "A reviewed decision map for the hotfix lane records the qualifying change, the bookkeeping planning paths, the commitment rule exception, and the landing evidence."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT391",
-              "path": "roadmap/FT391.md",
-              "identity": "sha256:2af62a00f72899c536f35c860a09108cac4be53b3815ceedb959e64b48722528"
             }
           ]
         },
