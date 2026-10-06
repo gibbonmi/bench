@@ -182,9 +182,10 @@ Findings: 4. Worst issue: S6.
   The ADR states the tier and effort of the delegate, which the operating
   guide owns. The spec asks only for a fresh write delegate. The axis
   proposed `ask-user`, but the spec predicate settles the fix.
-- S6 (`auto-fix`, confidence 7): `internal/conformance/recurrence_maintenance_contract_test.go:110`.
+- S6 (`no-op`, confidence 7): `internal/conformance/recurrence_maintenance_contract_test.go:110`.
   The diagnostic still names retained authorship, but the pinned sentence
-  now routes delegates.
+  now routes delegates. Spec line 292 pins this exact diagnostic, so the
+  wording waits for reviewer veto.
 - S7 (`auto-fix`, confidence 6): `internal/anchors/registry_commitment.go:10`.
   The doc comment names only retired grants, but the family now also forbids
   retired restrictions.
@@ -213,14 +214,23 @@ Both prose budgets sit at their limits.
 
 ### LP-C2 repair state
 
-Repair cycle 1 of 2 is open. A fresh ticket 4 repair session takes S6 and
-S7. A fresh ticket 5 repair session then takes S5.
+Repair cycle 1 of 2 is consumed.
+
+- The fresh ticket 4 repair session found that spec line 292 (row LP55)
+  pins the exact diagnostic that S6 names. The current text obeys the
+  approved acceptance row, so S6 is `no-op` and waits for reviewer veto
+  with S8. The session closed S7 in commit `d2b9777b`.
+- The fresh ticket 5 repair session closed S5 in commit `023d79b3`. ADR 0028
+  now says only that the delegate works in its own bench worktree.
+
+The chunk is frozen again at `023d79b3`. A confirming round of all three
+axes follows the verification records.
 
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/light-path-commitment-exemption/spec.md",
-  "plan_digest": "sha256:ac8accb47afc05527b1fdbfc696d0328387c9e4c4e7047113d5fc3ee0a60538e",
+  "plan_digest": "sha256:f4633a893096475255dcd384d97de499d531e7418de2a318bf919badd99cc13c",
   "implementation_session": "",
   "chunks": [
     {
@@ -1552,9 +1562,9 @@ S7. A fresh ticket 5 repair session then takes S5.
     {
       "id": "LP-C2",
       "base": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
-      "tip": "dcdd92e58790e8bd0877b7dcdc314fd265cefcf5",
-      "plan_digest": "sha256:ac8accb47afc05527b1fdbfc696d0328387c9e4c4e7047113d5fc3ee0a60538e",
-      "source_digest": "40faa389e48ae6b70e30271ca671fc8728baa8f9",
+      "tip": "023d79b3b95a5b5d42fb890391bb6bca86d9a1a9",
+      "plan_digest": "sha256:f4633a893096475255dcd384d97de499d531e7418de2a318bf919badd99cc13c",
+      "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
       "acceptance_rows": [
         "LP34",
         "LP35",
@@ -1805,6 +1815,18 @@ S7. A fresh ticket 5 repair session then takes S5.
       "chunk_ids": {
         "LP-C1": [
           "LP-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ac8accb47afc05527b1fdbfc696d0328387c9e4c4e7047113d5fc3ee0a60538e",
+      "to": "sha256:f4633a893096475255dcd384d97de499d531e7418de2a318bf919badd99cc13c",
+      "chunk_ids": {
+        "LP-C1": [
+          "LP-C1"
+        ],
+        "LP-C2": [
+          "LP-C2"
         ]
       }
     }
