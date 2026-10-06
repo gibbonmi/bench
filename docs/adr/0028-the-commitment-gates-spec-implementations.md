@@ -18,7 +18,7 @@ The exemption applies while a spec outcome is active, so a light-path change nev
 - A tickets-only folder that a milestone approves as a deliverable is committed work. It keeps the binding rule and records its delivery fact.
 - A change that spans two tickets, or that writes a path outside its ticket, keeps the binding refusal.
 - A bound assignment keeps its current admission, whatever light-path folders its tree holds.
-- The drain dispatches each light-path fix that its verdicts keep to a fresh write delegate. The delegate runs on the mid tier at high effort, in its own bench worktree. The dispatch does not wait for the active commitment.
+- The drain dispatches each light-path fix that its verdicts keep to a fresh write delegate. The delegate works in its own bench worktree, apart from the main session. The dispatch does not wait for the active commitment.
 
 ## Considered options
 
