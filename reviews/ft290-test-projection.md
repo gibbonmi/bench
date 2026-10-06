@@ -2,7 +2,9 @@
 
 ## TP-C1a review pickup
 
-The TP-C1a review ran on the frozen pair `16970a22..068ab04a`. Each axis ran on sonnet at high effort, by the reviewer's direction. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t2_r1` and `claude:ft290_t3_r1` repaired the six targets at `3a97977c` and `d49b0697`, and the chunk tip is now `d49b0697`.
+The TP-C1a review ran on the frozen pair `16970a22..068ab04a`. Each axis ran on sonnet at high effort, by the reviewer's direction. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t2_r1` and `claude:ft290_t3_r1` repaired the six targets at `3a97977c` and `d49b0697`, and the chunk tip is now `d49b0697`. The confirming round of all three axes passed with zero findings, and each earlier silent mutation now bites.
+
+Advice from the confirming Coverage axis, with no finding ID: no test pins a nonzero `Ran` on the build-failed outcome, and no row requires one.
 
 The raw count is 7 findings, and the repair-target count is 6, because S1 has no repair target. Ticket 2 owns C3. Ticket 3 owns S2, S3, C1, C2, and C4, because its test file holds the second helper and most of the tags.
 
@@ -405,6 +407,72 @@ Count: 4. Worst issue: C1.
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1a-standards-c1",
+          "performer": "claude:ft290_c1a_standards_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1a_standards_c1",
+            "digest": "sha256:3618ad0088e61de3329274d3bf4f8ae69d8690845abab232b6e5ecf72378d575",
+            "excerpt": "axis=Standards findings=0 worst=none (confirming round, repair delta 068ab04a..d49b0697)\nS2 confirmed: commandOverEvents (tests_run_test.go:8-14) is the one canned-events helper; no namedCheckOverEvents remains; the interrupt test uses installSignallingGo, a different stub; twoTestsRunEvents is one shared stream.\nS3 confirmed: rg \"Coverage row TP\" internal has no hits; new comments state current behavior.\nS1 no-op confirmed; no binding rule contests it.\nAdvice: repeated want literal and argv across check-row tests is incidental test text.\nExamined: repair delta, outcome_test.go 100-229, craft-comments, rg for helper and tag patterns, --check-current at f05830c6. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "16970a226a4e36f2d3d1eee5b5e262f0c76de548",
+          "tip": "d49b069704efe603a84203bdeffa9614c4802c37",
+          "finding_ids": [],
+          "supersedes": [
+            "c1a-standards-r1"
+          ]
+        },
+        {
+          "id": "c1a-spec-c1",
+          "performer": "claude:ft290_c1a_spec_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1a_spec_c1",
+            "digest": "sha256:91f4ec2e2f4768c382535bef9aae98021df48a2cdc17505de59719207b2721c4",
+            "excerpt": "axis=Spec findings=0 worst=none (confirming round, repair delta 068ab04a..d49b0697)\nRepair is test-only: only check_row_test.go and tests_run_test.go change under internal/.\nAll ten TP-C1a rows keep a named test with unchanged assertions: TP1, TP2, TP47 in tests_run_test.go; TP3, TP4, TP5, TP6, TP51, TP55 in check_row_test.go; TP18 in check_test.go (ordinary-build-census,conformance,1,0).\nNew tests C1, C2, C3, C4a, C4b agree with spec \"The check row and the zero rule\" (spec.md:114-137).\nExamined: --check-current at f05830c6, repair delta, spec rows, outcome_test.go 195-264, production files by targeted rg. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "16970a226a4e36f2d3d1eee5b5e262f0c76de548",
+          "tip": "d49b069704efe603a84203bdeffa9614c4802c37",
+          "finding_ids": [],
+          "supersedes": [
+            "c1a-spec-r1"
+          ]
+        },
+        {
+          "id": "c1a-coverage-c1",
+          "performer": "claude:ft290_c1a_coverage_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1a_coverage_c1",
+            "digest": "sha256:62ffab055d65ec508a525bdcc049d80ba2a124a7c714300fe935d736331acd4a",
+            "excerpt": "axis=Coverage findings=0 worst=none (confirming round, repair delta 068ab04a..d49b0697)\nAll five earlier silent mutations now bite under --package ./internal/testreport, restored=yes each:\nC1 OutcomeFailed pass-through -> bit (TestNamedCheckFailurePrintsCheckRowFirst)\nC2 min(outcome.Ran, 1) -> bit (TestNamedCheckRowCountsEachRunTest)\nC3 drop e.Test != \"\" -> bit (TestPackagesRowIgnoresUnnamedRunEvent)\nC4a omit interrupt clause -> bit (TestNamedCheckInterruptKeepsItsBytes)\nC4b Ran==0 && !BuildFailed && !Passed -> bit (TestNamedCheckFailureWithNoRunEventIsNotRanNothing)\nNew-bypass probes on outcome.go: cross-package sum and Failed-arm Ran both bit; the shared helper hides no per-test difference.\nAdvice: Ran on the OutcomeBuildFailed arm (outcome.go:96) is unpinned with a nonzero value; no row requires it.\nExamined: --check-current at f05830c6, repair delta, named_check.go, outcome.go, testreport.go; 8 probes; git status clean before and after.\n"
+          },
+          "axis": "Coverage",
+          "base": "16970a226a4e36f2d3d1eee5b5e262f0c76de548",
+          "tip": "d49b069704efe603a84203bdeffa9614c4802c37",
+          "finding_ids": [],
+          "supersedes": [
+            "c1a-coverage-r1"
+          ]
         }
       ]
     }
