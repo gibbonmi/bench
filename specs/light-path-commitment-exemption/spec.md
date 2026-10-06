@@ -330,6 +330,7 @@ Each excluded edge takes a Won't handle line:
 - `internal/commitment/repository/light_path.go`
 - `internal/commitment/repository/light_path_test.go`
 - `internal/commitment/commitmenttest/`
+- `internal/preflight/preflighttest/fixture.go`
 - `internal/commit/commitment_test.go`
 - `internal/worktree/commitment_light_landing_test.go`
 - `internal/worktree/commitment_landing_fixture_test.go`
