@@ -9,7 +9,7 @@ const CommitmentDiagnosticPrefix = "commitment guidance: "
 
 // commitmentAnchors pin the canonical delivery commitment rule, each phase route to its
 // commands, and the light-path exemption. Each prohibition refuses one retired rule: a grant
-// that let a drain, a severity rank, or a later reconcile admit or displace work, or a
+// that let work start or displace the commitment outside the committed outcome, or a
 // restriction that held light-path work behind the active commitment.
 var commitmentAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: CommitmentRuleMarker, Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the canonical delivery commitment rule"},
