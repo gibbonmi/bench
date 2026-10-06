@@ -112,7 +112,7 @@ func TestNamedCheckRunsFromKitAgainstLinkedConsumer(t *testing.T) {
 	marker := filepath.Join(t.TempDir(), "environment")
 	goDir := t.TempDir()
 	goPath := filepath.Join(goDir, "go")
-	source := "#!/usr/bin/env bash\npwd > " + sanitize.ShellQuote(marker) + "\nenv >> " + sanitize.ShellQuote(marker) + "\nprintf '%s\\n' '{\"Action\":\"pass\",\"Package\":\"checkfixture\"}'\n"
+	source := "#!/usr/bin/env bash\npwd > " + sanitize.ShellQuote(marker) + "\nenv >> " + sanitize.ShellQuote(marker) + "\nprintf '%s\\n' '{\"Action\":\"run\",\"Package\":\"checkfixture\",\"Test\":\"TestCheck\"}' '{\"Action\":\"pass\",\"Package\":\"checkfixture\"}'\n"
 	writeGoStub(t, goPath, source)
 	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("BENCH_KIT", kit)
@@ -265,7 +265,7 @@ func TestNamedCheckRunsOnlyRegisteredDevScope(t *testing.T) {
 	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 
 	output, code := Command(root, []string{"--check", "ordinary-build-census"})
-	if code != 0 {
+	if code != 0 || !strings.HasPrefix(output, checkHeader+"  ordinary-build-census,conformance,1,0\n") {
 		t.Fatalf("named check = %d\n%s", code, output)
 	}
 	after, afterErr := os.ReadFile(sourceTiming)
@@ -324,7 +324,7 @@ func TestNamedChecksWriteNoGateOwnedRecords(t *testing.T) {
 
 func writeCheckGo(t *testing.T, path, marker string) {
 	t.Helper()
-	source := "#!/usr/bin/env bash\nenv > \"" + marker + "\"\nprintf 'argv=%s\\n' \"$*\" >> \"" + marker + "\"\nprintf '%s\\n' '{\"Action\":\"pass\",\"Package\":\"checkfixture\"}'\n"
+	source := "#!/usr/bin/env bash\nenv > \"" + marker + "\"\nprintf 'argv=%s\\n' \"$*\" >> \"" + marker + "\"\nprintf '%s\\n' '{\"Action\":\"run\",\"Package\":\"checkfixture\",\"Test\":\"TestCheck\"}' '{\"Action\":\"pass\",\"Package\":\"checkfixture\"}'\n"
 	writeGoStub(t, path, source)
 }
 
@@ -429,7 +429,7 @@ func TestSystemCheckReportsAFailingSuite(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("failing system check = %d, want 1\n%s", code, output)
 	}
-	if want := "packages[1]{package,status,elapsed_ms,tests_run}:\n  checkfixture,fail,0,0\n"; !strings.Contains(output, want) {
+	if want := "packages[1]{package,status,elapsed_ms,tests_run}:\n  checkfixture,fail,0,0\n"; !strings.Contains(output, want) || strings.Contains(output, "named check ran nothing") {
 		t.Fatalf("failing system check output = %q, want %q", output, want)
 	}
 }
