@@ -54,11 +54,12 @@ Findings: 4. Worst issue: C1.
 - C3 (`auto-fix`, confidence 8): `internal/commitment/repository/light_path.go:73`.
   The `uncovered-beside-span` row does not assert the ticket operand, so a
   mutation to the last qualifying ticket survives.
-- C4 (`ask-user`, confidence 6): `internal/commitment/repository/light_path.go:125`.
+- C4 (`no-op`, confidence 6): `internal/commitment/repository/light_path.go:125`.
   Spec line 86 admits a ticket with mode `100755`. `commitment.PlanningPath`
   makes an executable `.md` file a production path. A commit that carries an
   executable ticket is therefore refused as outside the ticket's own `Writes:`
-  line. The reviewer decides this behavior.
+  line. The axis proposed `ask-user`. The reviewer decided to keep the spec
+  with no repair, because the refusal is safe and the case is rare.
 
 Advice: `maps.FieldList` splits only on a comma and a space. A ticket over
 `bounds.ControlRecordLimit` returns the read error. No test covers the
@@ -67,8 +68,8 @@ spec-less route with two qualifying folders.
 ## LP-C1 repair state
 
 Repair cycle 1 of 2 is open. A fresh ticket 2 repair session takes S1, C1,
-and C3. A fresh ticket 3 repair session then takes P1 and C2. C4 waits for
-the reviewer decision.
+and C3. A fresh ticket 3 repair session then takes P1 and C2. The reviewer
+closed C4 with no repair.
 
 ```bench-review-record
 {
