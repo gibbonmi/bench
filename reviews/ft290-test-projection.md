@@ -33,7 +33,7 @@ Count: 4. Worst issue: C1.
 {
   "version": 2,
   "spec": "specs/ft290-test-projection/spec.md",
-  "plan_digest": "sha256:e7275892d011a725f88fd6f4f231059449f393bf693fbd5723403f2c7ded0c8e",
+  "plan_digest": "sha256:1a858540618fdb0d00d294ecff2d46ad3e367de73fba5e3107d2943004030bac",
   "implementation_session": "",
   "chunks": [
     {
@@ -562,6 +562,142 @@ Count: 4. Worst issue: C1.
           ]
         }
       ]
+    },
+    {
+      "id": "TP-C1b",
+      "base": "d49b069704efe603a84203bdeffa9614c4802c37",
+      "tip": "5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a",
+      "plan_digest": "sha256:1a858540618fdb0d00d294ecff2d46ad3e367de73fba5e3107d2943004030bac",
+      "source_digest": "9dda6bd8e26b08d40413e6ff3299191f6bb9f9ee",
+      "acceptance_rows": [
+        "TP7",
+        "TP8",
+        "TP9",
+        "TP10",
+        "TP11",
+        "TP12",
+        "TP13",
+        "TP14",
+        "TP15",
+        "TP16",
+        "TP17",
+        "TP49"
+      ],
+      "verification": [
+        {
+          "id": "t4-testreport-v1",
+          "performer": "claude:ft290_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9dda6bd8e26b08d40413e6ff3299191f6bb9f9ee",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t4",
+            "digest": "sha256:3fc87ffd1de421b63d19edd28f29306982a0c42f434f6cad30e95f04334cbbc7",
+            "excerpt": "$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\ntree: ft290-test-projection,5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a\nexit 0\n  github.com/gibbonmi/bench/internal/testreport,pass,30928,158\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-prose-v1",
+          "performer": "claude:ft290_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9dda6bd8e26b08d40413e6ff3299191f6bb9f9ee",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t4",
+            "digest": "sha256:36b7180cd6a3daab35153be458ab405dae97a847a133c70c2066b7b0a3b793b9",
+            "excerpt": "$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/prose\ntree: ft290-test-projection,5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a\nexit 0\n  github.com/gibbonmi/bench/internal/prose,pass,346,79\nfailures[0]{package,test,line,lines}:\n\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/prose/walk.go --omit $'\\t\\tif g.ex.excluded(rel) {\\n\\t\\t\\tcontinue\\n\\t\\t}\\n' --package ./internal/prose --run '^TestGradeReportsGradedSubjects$'\nexit 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/prose/walk.go,omit,failed,1,yes\n  github.com/gibbonmi/bench/internal/prose,fail,3,1\n  TestGradeReportsGradedSubjects: GradeTree() = {Subjects:[keep.md skip.md] Findings:[]}\n"
+          },
+          "requirement": "t4-prose",
+          "command": "bench test --package ./internal/prose",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omission at the subject answer in internal/prose/walk.go: omit the exclusion-set test, so that an excluded file counts as a subject. TestGradeReportsGradedSubjects must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t4",
+              "digest": "sha256:36b7180cd6a3daab35153be458ab405dae97a847a133c70c2066b7b0a3b793b9",
+              "excerpt": "$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/prose\ntree: ft290-test-projection,5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a\nexit 0\n  github.com/gibbonmi/bench/internal/prose,pass,346,79\nfailures[0]{package,test,line,lines}:\n\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/prose/walk.go --omit $'\\t\\tif g.ex.excluded(rel) {\\n\\t\\t\\tcontinue\\n\\t\\t}\\n' --package ./internal/prose --run '^TestGradeReportsGradedSubjects$'\nexit 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/prose/walk.go,omit,failed,1,yes\n  github.com/gibbonmi/bench/internal/prose,fail,3,1\n  TestGradeReportsGradedSubjects: GradeTree() = {Subjects:[keep.md skip.md] Findings:[]}\n"
+            }
+          }
+        },
+        {
+          "id": "t4-prose-mechanics-v1",
+          "performer": "claude:ft290_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9dda6bd8e26b08d40413e6ff3299191f6bb9f9ee",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t4",
+            "digest": "sha256:7c53cd950aebecd80e75ba6ce86c57d233de13316e88e9f430942a8f28979e94",
+            "excerpt": "$ bench worktree exec \"ft290-test-projection\" -- ./dist/bench test --check prose-mechanics\ntree: ft290-test-projection,5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a\nexit 0\ncheck[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\n  github.com/gibbonmi/bench/internal/conformance,pass,148,1\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t4-prose-mechanics",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-testreport-v1",
+          "performer": "claude:ft290_t5",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9dda6bd8e26b08d40413e6ff3299191f6bb9f9ee",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t5",
+            "digest": "sha256:1b97d55a5e0adcc7a2886f9aa168d8d4104003556c0e9f39c6c527e8bef95bcf",
+            "excerpt": "tip 5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a\nbench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\nexit 0, wall 30412 ms\n  github.com/gibbonmi/bench/internal/testreport,pass,30412,158\nfailures[0]{package,test,line,lines}:\n\nprobe: bench probe internal/testreport/outcome.go --swap \"failed++\" --with \"failed += len(f.rows(true))\" --package ./internal/testreport --run '^TestFullFailedTestsCountsTests$'\n  bit,internal/testreport/outcome.go,swap,failed,1,yes\nmutated run: testreport,fail,45,1 (exit 1); TestFullFailedTestsCountsTests: FailedTests:3, want 1\n"
+          },
+          "requirement": "t5-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the failed-test count: count the --full failures rows in place of the distinct failed tests for Outcome.FailedTests. TestFullFailedTestsCountsTests must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t5",
+              "digest": "sha256:1b97d55a5e0adcc7a2886f9aa168d8d4104003556c0e9f39c6c527e8bef95bcf",
+              "excerpt": "tip 5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a\nbench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\nexit 0, wall 30412 ms\n  github.com/gibbonmi/bench/internal/testreport,pass,30412,158\nfailures[0]{package,test,line,lines}:\n\nprobe: bench probe internal/testreport/outcome.go --swap \"failed++\" --with \"failed += len(f.rows(true))\" --package ./internal/testreport --run '^TestFullFailedTestsCountsTests$'\n  bit,internal/testreport/outcome.go,swap,failed,1,yes\nmutated run: testreport,fail,45,1 (exit 1); TestFullFailedTestsCountsTests: FailedTests:3, want 1\n"
+            }
+          }
+        },
+        {
+          "id": "t5-probe-v1",
+          "performer": "claude:ft290_t5",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9dda6bd8e26b08d40413e6ff3299191f6bb9f9ee",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t5",
+            "digest": "sha256:07cbe6c738b82de4c95fb3dc733a650fe62933ea9c2a64d90f54474cae933744",
+            "excerpt": "tip 5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a\nbench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/probe\nexit 0, wall 16241 ms\n  github.com/gibbonmi/bench/internal/probe,pass,16241,100\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "t5-probe",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -575,6 +711,15 @@ Count: 4. Worst issue: C1.
     {
       "from": "sha256:37523705f05ff5539429fd7c190772de817b553748203d244e9ad3900e2c0a57",
       "to": "sha256:e7275892d011a725f88fd6f4f231059449f393bf693fbd5723403f2c7ded0c8e",
+      "chunk_ids": {
+        "TP-C1a": [
+          "TP-C1a"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e7275892d011a725f88fd6f4f231059449f393bf693fbd5723403f2c7ded0c8e",
+      "to": "sha256:1a858540618fdb0d00d294ecff2d46ad3e367de73fba5e3107d2943004030bac",
       "chunk_ids": {
         "TP-C1a": [
           "TP-C1a"
