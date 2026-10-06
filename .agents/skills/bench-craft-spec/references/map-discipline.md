@@ -34,6 +34,13 @@ governs each current-code claim in the spec prose.
   - `Changed-function callers` lists every caller of each changed function.
   - `Copy survival`, when a new owner replaces copies, names a red-capable row that fails if any copy survives.
   - `Rendered-shape readers` cites the old-text needle and every hit per ticket, under the rendered-shape rule in [the slicing checks](../bench-craft-tickets/references/slicing-checks.md#slicing-rules).
+  - `Pin operators` quotes the comparison operator that the grader of each pin row applies.
+  - `Entry reads` lists each unexported read below an entry without an internal form, and names its grader. An internal form takes injected values in place of ambient reads.
+  - `Derived expectations` names the grader of each derived expectation. No expectation comes from the code under test.
+  - `Consolidated rules`, when a spec consolidates repeated rules, gives a consolidation table of each site's old rule and new rule. Each changed cell of the consolidation table maps to an acceptance row, a flagged addition, or a Won't handle line.
+  - `Quantified obligations` checks every quantified obligation at each affected site and across all tickets.
+  - `Workflow-step writes`, for each new workflow step, traces every write through the digests that later checkpoints compare.
+- The changed-function caller sweep runs `bench consumers` for each changed function, unexported functions included.
 - Each canary row and each conformance row traces to its executed root before the coverage map locks.
 - The reader sweep lists each named consumer of the decision fact.
 - The reader sweep lists each helper that a named consumer calls directly.

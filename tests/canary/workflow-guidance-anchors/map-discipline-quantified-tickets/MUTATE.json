@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "`Quantified obligations` checks every quantified obligation at each affected site and across all tickets.",
+    "new": "`Quantified obligations` checks every quantified obligation at each affected site."
+  }
+]

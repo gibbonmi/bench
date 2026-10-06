@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "`Entry reads` lists each unexported read below an entry without an internal form, and names its grader.",
+    "new": "`Entry reads` lists each unexported read below an entry without an internal form."
+  }
+]

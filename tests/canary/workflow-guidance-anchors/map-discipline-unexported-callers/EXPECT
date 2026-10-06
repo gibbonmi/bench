@@ -1,0 +1,1 @@
+map discipline: the caller sweep runs bench consumers on unexported functions too
