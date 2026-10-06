@@ -519,3 +519,13 @@ GT-C1 has 1 finding. The worst issue is P1.
 GT-C1 has 1 finding. The worst issue is C1.
 
 - C1, auto-fix as an in-scope plan expansion, confidence 7: N3 and N4 have no canary. A label-only N3 needle stays green in the anchors package and in the conformance package. Add one canary for each needle, with a coverage row each.
+
+## Repair state
+
+GT-C1 used 1 of its 2 repair cycles. Repair commit `cbf88bfb` closes S1, S2, and C1, and plan commit `c7238755` closes P1. The confirming round at `5e7e805a` passed on all three axes with no new finding.
+
+The confirming Coverage axis raised C3 about the probe excerpt. The repair author return refutes it, because that return lists the N4 probe with a bite and an exact restore.
+
+## Advice
+
+A needle that drops the leading "No" of N4 stays green under every canary. No spec row decides that negation edge.
