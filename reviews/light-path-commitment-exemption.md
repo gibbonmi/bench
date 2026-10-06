@@ -549,6 +549,89 @@ axes follows the verification records.
           "requirement": "t3-bench",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "t1-tickets-v2",
+          "performer": "claude:lpce_t1_s1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t1_s1",
+            "digest": "sha256:6156245077c40b97f96c15f8747c6376665fb1fc950b034a0d5adcd6a05f6732",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/tickets\nexit: 0\ntree: lpce-integration,b4a7a17e003be9026bae1bcd942e752df8678a6e,false\npackages: github.com/gibbonmi/bench/internal/tickets,pass,3\nfailures[0]\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/tickets/writes.go --swap 'strings.HasPrefix(path, entry+\"/\")' --with 'strings.HasPrefix(path, entry)' --package ./internal/tickets --run TestWritesEntryCover\nexit: 1\nprobe{verdict,subject,mutation,cause,failed_tests,restored}: bit,internal/tickets/writes.go,swap,failed,1,yes\npackages: github.com/gibbonmi/bench/internal/tickets,fail,2\nfailures: github.com/gibbonmi/bench/internal/tickets,TestWritesEntryCover,\"writes_test.go:30: Covers(\\\"internal/d\\\", \\\"internal/dx/a.go\\\") = true, want false\"\n"
+          },
+          "requirement": "t1-tickets",
+          "command": "bench test --package ./internal/tickets",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In tickets.Covers, drop the slash segment boundary so a bare string prefix covers. TestWritesEntryCover must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:lpce_t1_s1",
+              "digest": "sha256:6156245077c40b97f96c15f8747c6376665fb1fc950b034a0d5adcd6a05f6732",
+              "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/tickets\nexit: 0\ntree: lpce-integration,b4a7a17e003be9026bae1bcd942e752df8678a6e,false\npackages: github.com/gibbonmi/bench/internal/tickets,pass,3\nfailures[0]\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/tickets/writes.go --swap 'strings.HasPrefix(path, entry+\"/\")' --with 'strings.HasPrefix(path, entry)' --package ./internal/tickets --run TestWritesEntryCover\nexit: 1\nprobe{verdict,subject,mutation,cause,failed_tests,restored}: bit,internal/tickets/writes.go,swap,failed,1,yes\npackages: github.com/gibbonmi/bench/internal/tickets,fail,2\nfailures: github.com/gibbonmi/bench/internal/tickets,TestWritesEntryCover,\"writes_test.go:30: Covers(\\\"internal/d\\\", \\\"internal/dx/a.go\\\") = true, want false\"\n"
+            }
+          }
+        },
+        {
+          "id": "t1-preflight-v2",
+          "performer": "claude:lpce_t1_s1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t1_s1",
+            "digest": "sha256:de934464bfec765577f91358ffdeba1d9ee91bcd0c897ab9247df07c0f5126af",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/preflight\nexit: 0\ntree: lpce-integration,b4a7a17e003be9026bae1bcd942e752df8678a6e,false\npackages: github.com/gibbonmi/bench/internal/preflight,pass,20825\nfailures[0]\n"
+          },
+          "requirement": "t1-preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-commitment-repository-v2",
+          "performer": "claude:lpce_t1_s1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t1_s1",
+            "digest": "sha256:cf24a0f54aad1554abf982f3a302f847679664e93909bdb17d356e0ce0fa53d8",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/commitment/repository\nexit: 0\ntree: lpce-integration,b4a7a17e003be9026bae1bcd942e752df8678a6e,false\npackages: github.com/gibbonmi/bench/internal/commitment/repository,pass,4428\nfailures[0]\n"
+          },
+          "requirement": "t1-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-conformance-v2",
+          "performer": "claude:lpce_t1_s1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t1_s1",
+            "digest": "sha256:3d5359e85635b62ff2e662d21af400c18477e8afcc7b12b369bd0f1d0fc74f72",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/conformance\nexit: 0\ntree: lpce-integration,b4a7a17e003be9026bae1bcd942e752df8678a6e,false\npackages: github.com/gibbonmi/bench/internal/conformance,pass,41854\nfailures[0]\nskips[3]: capability skips (unix sockets unavailable; character device needs privilege)\n"
+          },
+          "requirement": "t1-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
