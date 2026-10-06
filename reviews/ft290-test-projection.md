@@ -2,7 +2,7 @@
 
 ## TP-C1a review pickup
 
-The TP-C1a review ran on the frozen pair `16970a22..068ab04a`. Each axis ran on sonnet at high effort, by the reviewer's direction. The chunk has used 0 of its 2 repair cycles.
+The TP-C1a review ran on the frozen pair `16970a22..068ab04a`. Each axis ran on sonnet at high effort, by the reviewer's direction. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t2_r1` and `claude:ft290_t3_r1` repaired the six targets at `3a97977c` and `d49b0697`, and the chunk tip is now `d49b0697`.
 
 The raw count is 7 findings, and the repair-target count is 6, because S1 has no repair target. Ticket 2 owns C3. Ticket 3 owns S2, S3, C1, C2, and C4, because its test file holds the second helper and most of the tags.
 
@@ -37,9 +37,9 @@ Count: 4. Worst issue: C1.
     {
       "id": "TP-C1a",
       "base": "16970a226a4e36f2d3d1eee5b5e262f0c76de548",
-      "tip": "068ab04a456b87e56655e0a500525322919efcc1",
-      "plan_digest": "sha256:37523705f05ff5539429fd7c190772de817b553748203d244e9ad3900e2c0a57",
-      "source_digest": "ce41587b1bc16e9ce6820db7d98c466c03b7e510",
+      "tip": "d49b069704efe603a84203bdeffa9614c4802c37",
+      "plan_digest": "sha256:e7275892d011a725f88fd6f4f231059449f393bf693fbd5723403f2c7ded0c8e",
+      "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
       "acceptance_rows": [
         "TP1",
         "TP2",
@@ -193,6 +193,147 @@ Count: 4. Worst issue: C1.
           "requirement": "t3-ordinary-build-census",
           "command": "bench test --check ordinary-build-census",
           "exit_code": 0
+        },
+        {
+          "id": "t2-testreport-r1",
+          "performer": "claude:ft290_t2_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t2_r1",
+            "digest": "sha256:bece0e23c5426cca695c3697314cf46846834e4a1299d3977dcf29818966113a",
+            "excerpt": "HEAD d49b069704efe603a84203bdeffa9614c4802c37\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,32025\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nexit 0\n\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/testreport.go --swap 'len(r.ranTests[pkg])' --with '0' --package ./internal/testreport --run '^TestPackagesRowCountsRunEvents$'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/testreport.go,swap,failed,1,yes\nfailures[1]: TestPackagesRowCountsRunEvents got \"canned,pass,250,0\", want \"canned,pass,250,2\"\nexit 0\n"
+          },
+          "requirement": "t2-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the packages-row producer: replace the tests_run count of distinct run events with the constant 0. TestPackagesRowCountsRunEvents must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t2_r1",
+              "digest": "sha256:bece0e23c5426cca695c3697314cf46846834e4a1299d3977dcf29818966113a",
+              "excerpt": "HEAD d49b069704efe603a84203bdeffa9614c4802c37\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,32025\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nexit 0\n\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/testreport.go --swap 'len(r.ranTests[pkg])' --with '0' --package ./internal/testreport --run '^TestPackagesRowCountsRunEvents$'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/testreport.go,swap,failed,1,yes\nfailures[1]: TestPackagesRowCountsRunEvents got \"canned,pass,250,0\", want \"canned,pass,250,2\"\nexit 0\n"
+            }
+          }
+        },
+        {
+          "id": "t2-probe-r1",
+          "performer": "claude:ft290_t2_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t2_r1",
+            "digest": "sha256:cfffc5a7ac8d0e3b9755400431c057bb167829c740a384fb5717f6b1e7138911",
+            "excerpt": "HEAD d49b069704efe603a84203bdeffa9614c4802c37\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/probe\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/probe,pass,14897\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\nexit 0\n"
+          },
+          "requirement": "t2-probe",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-testreport-r1",
+          "performer": "claude:ft290_t3_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t3_r1",
+            "digest": "sha256:e0d9420fecd55d07a18864422c9af76f74f08cb2c5082fdd77369643ed6eb4ed",
+            "excerpt": "HEAD d49b069704efe603a84203bdeffa9614c4802c37\n$ bench test --package ./internal/testreport\n  internal/testreport,pass,32646 ms; failures[0]; skips[0]; exit 0\n$ bench probe internal/testreport/named_check.go --omit '<OutcomeNoTestRun zero-rule branch>' --package ./internal/testreport --run '^TestNamedCheckRanNothingExitsOne$'\n  bit,internal/testreport/named_check.go,omit,failed,1,yes\n"
+          },
+          "requirement": "t3-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omission at the zero rule: omit the OutcomeNoTestRun branch that prints the named check ran nothing title and exits 1. TestNamedCheckRanNothingExitsOne must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t3_r1",
+              "digest": "sha256:e0d9420fecd55d07a18864422c9af76f74f08cb2c5082fdd77369643ed6eb4ed",
+              "excerpt": "HEAD d49b069704efe603a84203bdeffa9614c4802c37\n$ bench test --package ./internal/testreport\n  internal/testreport,pass,32646 ms; failures[0]; skips[0]; exit 0\n$ bench probe internal/testreport/named_check.go --omit '<OutcomeNoTestRun zero-rule branch>' --package ./internal/testreport --run '^TestNamedCheckRanNothingExitsOne$'\n  bit,internal/testreport/named_check.go,omit,failed,1,yes\n"
+            }
+          }
+        },
+        {
+          "id": "t3-probe-r1",
+          "performer": "claude:ft290_t3_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t3_r1",
+            "digest": "sha256:ee27b86a94af51c77ad31d0e5db4aa51a365c614496147bf011a33e6bbf0695a",
+            "excerpt": "HEAD d49b069704efe603a84203bdeffa9614c4802c37\n$ bench test --package ./internal/probe\n  internal/probe,pass,16206 ms; failures[0]; skips[0]; exit 0\n"
+          },
+          "requirement": "t3-probe",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-ordinary-build-census-r1",
+          "performer": "claude:ft290_t3_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t3_r1",
+            "digest": "sha256:74402d7e68ce7395cbaa1ed1c9118797331e609f99eeee476f7f567ddd1da76e",
+            "excerpt": "HEAD d49b069704efe603a84203bdeffa9614c4802c37\n$ bench test --check ordinary-build-census\n  internal/conformance,pass,282 ms; failures[0]; skips[0]; exit 0\n"
+          },
+          "requirement": "t3-ordinary-build-census",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-testreport-v2",
+          "performer": "claude:ft290_t1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "369008241fa2cf8fa5c91120bc1c6cfc7c5fcfeb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t1",
+            "digest": "sha256:5edc1f9c770198167e4579f3514aff0e78f849a4dc235bbbafed48e73551febb",
+            "excerpt": "source: d49b069704efe603a84203bdeffa9614c4802c37 (chunk TP-C1a, after review repair)\n$ bench test --package ./internal/testreport\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,33197\nfailures[0] skips[0]\n$ bench probe internal/testreport/named_check.go --omit ' + \"\\n\" + namedCheckInventory()' --package ./internal/testreport --run '^TestUnknownNamedCheckReportsOperandAndInventory$'\nexit 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/named_check.go,omit,failed,1,yes\nfailure: TestUnknownNamedCheckReportsOperandAndInventory check_test.go:217 (refusal lost the checks inventory)\n"
+          },
+          "requirement": "t1-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omission at the moved unknown-name branch of the named-check owner: omit the namedCheckInventory call in the unknown-check refusal with bench probe --omit. TestUnknownNamedCheckReportsOperandAndInventory must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t1",
+              "digest": "sha256:5edc1f9c770198167e4579f3514aff0e78f849a4dc235bbbafed48e73551febb",
+              "excerpt": "source: d49b069704efe603a84203bdeffa9614c4802c37 (chunk TP-C1a, after review repair)\n$ bench test --package ./internal/testreport\nexit 0\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/testreport,pass,33197\nfailures[0] skips[0]\n$ bench probe internal/testreport/named_check.go --omit ' + \"\\n\" + namedCheckInventory()' --package ./internal/testreport --run '^TestUnknownNamedCheckReportsOperandAndInventory$'\nexit 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/named_check.go,omit,failed,1,yes\nfailure: TestUnknownNamedCheckReportsOperandAndInventory check_test.go:217 (refusal lost the checks inventory)\n"
+            }
+          }
         }
       ],
       "reviews": [
