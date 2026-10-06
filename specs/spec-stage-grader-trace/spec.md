@@ -6,7 +6,7 @@ Roadmap: FT376
 
 Decision source: `roadmap/FT376.md`, a named reviewed artifact from drain `d-007c40a25f47`.
 
-Verification log: pending — the fable-high spec review runs after this draft.
+Verification log: 2 iteration(s) to accept — the fable-high spec review accepted with fixes in iteration 1. Its fixes were an unanchored gloss, two unbounded two-clause needles, an exact canary fence, and three wording nits. The sonnet-high ticket review accepted with fixes in iteration 1, for missing N1 and N6 probes and the fence-union sentence. It accepted in iteration 2, after the delegated consultant merged five tickets into one.
 
 ## Problem
 
