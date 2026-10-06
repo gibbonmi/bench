@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "No expectation comes from the code under test.",
+    "new": "No expectation comes from the code."
+  }
+]

@@ -2,7 +2,7 @@ package anchors
 
 import "testing"
 
-// These independent expectations make removal of a spec grader trace rule fail.
+// These independent expectations make removal of a grader-trace rule fail.
 func TestSpecGraderTraceAnchors(t *testing.T) {
 	const discipline = ".agents/skills/bench-craft-spec/references/map-discipline.md"
 	const section = "Before the map locks"
