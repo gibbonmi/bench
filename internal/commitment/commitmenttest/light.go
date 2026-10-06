@@ -34,16 +34,23 @@ func FolderIdentity(t testing.TB, root, folder string) string {
 	return commitrepo.TreeIdentity(gittest.Output(t, root, "write-tree", "--prefix="+folder+"/"))
 }
 
-// WriteLightTicket writes one grammatical ticket at path below root whose Writes line
-// lists writes. With no writes entry, the ticket has no Writes line, which is a grammar
-// fault. The caller commits.
+// WriteLightTicket writes the TicketBody ticket at path below root whose Writes line lists
+// writes. The caller commits.
 func WriteLightTicket(t testing.TB, root, path string, writes ...string) {
 	t.Helper()
-	body := "# Light-path fix\n\nBlocked by: none\n"
+	Write(t, root, path, TicketBody("Light-path fix", writes, "LP1"))
+}
+
+// TicketBody renders a grammatical ticket with title that writes exactly writes and cites
+// covers. With no writes entry, the ticket has no Writes line, which is a grammar fault.
+func TicketBody(title string, writes []string, covers ...string) string {
+	body := "# " + title + "\n\nBlocked by: none\n"
 	if len(writes) > 0 {
 		body += "Writes: " + strings.Join(writes, ", ") + "\n"
 	}
-	Write(t, root, path, body+"Covers: LP1\n\n## What to build\n\nFix the defect.\n\n## Acceptance\n\n- [ ] The defect is fixed.\n")
+	return body + "Covers: " + strings.Join(covers, ", ") + "\n\n" +
+		"## What to build\n\nBuild it.\n\n" +
+		"## Acceptance\n\n- [ ] It is built.\n"
 }
 
 // RemoveTickets deletes the tickets-only folder that WriteTickets wrote below root and

@@ -118,12 +118,7 @@ func FenceWrites(fence []string) []string {
 
 // WritesTicketDoc renders a conformant ticket that writes exactly writes and cites rows.
 func WritesTicketDoc(title string, writes []string, covers ...string) string {
-	return "# " + title + "\n\n" +
-		"Blocked by: none\n" +
-		"Writes: " + strings.Join(writes, ", ") + "\n" +
-		"Covers: " + strings.Join(covers, ", ") + "\n\n" +
-		"## What to build\n\nBuild it.\n\n" +
-		"## Acceptance\n\n- [ ] It is built.\n"
+	return commitmenttest.TicketBody(title, writes, covers...)
 }
 
 // PlanFence renders the bench-completion-plan section the checkpoint reader parses, as one

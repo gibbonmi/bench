@@ -71,8 +71,12 @@ func TestLightPathCandidate(t *testing.T) {
 		{name: "nested-second-ticket", steps: steps(ticket(lightTicket, "change.go"), ticket(lightFolder+"/tickets/sub/two.md", "change.go"), write("change.go")), want: unbound},
 		{name: "span", steps: steps(ticket("specs/lp1/tickets/one.md", "a.go"), ticket("specs/lp2/tickets/one.md", "b.go"), write("a.go", "b.go")), want: "production paths span more than one light-path ticket; a light-path change carries one ticket"},
 		// The uncovered path wins over the span.
-		{name: "uncovered-beside-span", steps: steps(ticket("specs/lp1/tickets/one.md", "a.go"), ticket("specs/lp2/tickets/one.md", "b.go"), write("a.go", "b.go", "c.go")), want: `production path "c.go"`},
+		{name: "uncovered-beside-span", steps: steps(ticket("specs/lp1/tickets/one.md", "a.go"), ticket("specs/lp2/tickets/one.md", "b.go"), write("a.go", "b.go", "c.go")), want: `production path "c.go" is outside the Writes line of light-path ticket "specs/lp1/tickets/one.md"`},
 		{name: "approved-folder", steps: steps(write("approved.go")), want: unbound},
+		// A folder that holds spec.md is a spec, not a tickets-only folder.
+		{name: "spec-folder", steps: steps(ticket(lightTicket, "change.go"), write("change.go"), func(t *testing.T, worktree string) {
+			commitmenttest.Write(t, worktree, lightFolder+"/spec.md", "# lp\n\nStatus: staged\n")
+		}), want: unbound},
 		{name: "no-writes-line", steps: steps(ticket(lightTicket), write("change.go")), want: unbound},
 		{name: "linked-ticket", steps: steps(write("change.go"), func(t *testing.T, worktree string) {
 			full := filepath.Join(worktree, filepath.FromSlash(lightTicket))
