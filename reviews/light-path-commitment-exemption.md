@@ -249,6 +249,13 @@ wait for reviewer veto against spec lines 292 and 148.
 Advice: row 49 defers closure to the drain, so it fits the corrected
 comment only when closure counts as part of the outcome.
 
+## Completion
+
+All 56 acceptance rows reconcile as covered. The LP-C1 Spec axis audited
+39 rows, and the LP-C2 Spec axis audited 17 rows. Eight final checks pass
+at `f146a785`. The coverage map is valid, and 36 rows carry no seam-cell
+citation, which is advisory.
+
 ```bench-review-record
 {
   "version": 2,
@@ -2007,11 +2014,213 @@ comment only when closure counts as part of the outcome.
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "d06be437b84ed39dc6f623a5135592776222f265",
+    "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+    "reconciliation": {
+      "LP1": "covered",
+      "LP10": "covered",
+      "LP11": "covered",
+      "LP12": "covered",
+      "LP13": "covered",
+      "LP14": "covered",
+      "LP15": "covered",
+      "LP16": "covered",
+      "LP17": "covered",
+      "LP18": "covered",
+      "LP19": "covered",
+      "LP2": "covered",
+      "LP20": "covered",
+      "LP21": "covered",
+      "LP22": "covered",
+      "LP23": "covered",
+      "LP24": "covered",
+      "LP25": "covered",
+      "LP26": "covered",
+      "LP27": "covered",
+      "LP28": "covered",
+      "LP29": "covered",
+      "LP3": "covered",
+      "LP30": "covered",
+      "LP31": "covered",
+      "LP32": "covered",
+      "LP33": "covered",
+      "LP34": "covered",
+      "LP35": "covered",
+      "LP36": "covered",
+      "LP37": "covered",
+      "LP38": "covered",
+      "LP39": "covered",
+      "LP4": "covered",
+      "LP40": "covered",
+      "LP41": "covered",
+      "LP42": "covered",
+      "LP43": "covered",
+      "LP44": "covered",
+      "LP45": "covered",
+      "LP46": "covered",
+      "LP47": "covered",
+      "LP48": "covered",
+      "LP49": "covered",
+      "LP5": "covered",
+      "LP50": "covered",
+      "LP51": "covered",
+      "LP52": "covered",
+      "LP53": "covered",
+      "LP54": "covered",
+      "LP55": "covered",
+      "LP56": "covered",
+      "LP6": "covered",
+      "LP7": "covered",
+      "LP8": "covered",
+      "LP9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage-check-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "d06be437b84ed39dc6f623a5135592776222f265",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:2ddd4af4c9ee3a07bbbfac44c21234063f5776cb9d50144b0e86ab5cb23f82bb",
+          "excerpt": "bench coverage --check specs/light-path-commitment-exemption/spec.md at f146a785: exit 0. ok: coverage map valid, 56 rows. Advisory: 36 rows have no seam-cell citation.\n"
+        },
+        "requirement": "coverage-check",
+        "command": "bench coverage --check specs/light-path-commitment-exemption/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-tickets-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "d06be437b84ed39dc6f623a5135592776222f265",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:ca028480a586432ee2ecff497fcc6ce13e43c14263e45e39a0eff1f9d356a866",
+          "excerpt": "bench test --package ./internal/tickets at f146a785: exit 0. pass, 3 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "tickets",
+        "command": "bench test --package ./internal/tickets",
+        "exit_code": 0
+      },
+      {
+        "id": "final-preflight-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "d06be437b84ed39dc6f623a5135592776222f265",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:64cf5eab7a9a70ed021355772dda60c324ed16dd236e04b789194909eabbcdd6",
+          "excerpt": "bench test --package ./internal/preflight at f146a785: exit 0. pass, 22931 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "preflight",
+        "command": "bench test --package ./internal/preflight",
+        "exit_code": 0
+      },
+      {
+        "id": "final-commitment-repository-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "d06be437b84ed39dc6f623a5135592776222f265",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:886c0b8db467d8b5464390ac2aa4ecdfa97ba2522c8f7f36025d7c430e4edec9",
+          "excerpt": "bench test --package ./internal/commitment/repository at f146a785: exit 0. pass, 4595 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "commitment-repository",
+        "command": "bench test --package ./internal/commitment/repository",
+        "exit_code": 0
+      },
+      {
+        "id": "final-commit-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "d06be437b84ed39dc6f623a5135592776222f265",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:5980317a9c9a257fa5d69028957e302dd8d0630cdb1951f76e9ff63e6de1c747",
+          "excerpt": "bench test --package ./internal/commit at f146a785: exit 0. pass, 7230 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "commit",
+        "command": "bench test --package ./internal/commit",
+        "exit_code": 0
+      },
+      {
+        "id": "final-worktree-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "d06be437b84ed39dc6f623a5135592776222f265",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:fea48a45e3e37de2e67dc6e3032bb191c2c7674d3bb8c4dfd094cfb183afa51a",
+          "excerpt": "bench test --package ./internal/worktree at f146a785: exit 0. pass, 74219 ms, 0 failures, 2 socket-capability skips.\n"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "d06be437b84ed39dc6f623a5135592776222f265",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:432ea250cee4263dc476960f09d9e901b5d9bce0c5dad016e6a8d5fb72921778",
+          "excerpt": "bench test --package ./internal/conformance at f146a785: exit 0. pass, 47573 ms, 0 failures, 3 socket and device capability skips.\n"
+        },
+        "requirement": "conformance",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-anchors-v1",
+        "performer": "claude:session_0128bLurgWw2evJv2LYjfDHH",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "d06be437b84ed39dc6f623a5135592776222f265",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_0128bLurgWw2evJv2LYjfDHH",
+          "digest": "sha256:d26d71a38be61b7c6ce59062cb3cc0cbe95f485abb9be958e5f711ae80fb5dbd",
+          "excerpt": "bench test --package ./internal/anchors at f146a785: exit 0. pass, 1082 ms, 0 failures, 0 skips.\n"
+        },
+        "requirement": "anchors",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
