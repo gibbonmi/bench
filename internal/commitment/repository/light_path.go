@@ -24,7 +24,7 @@ type lightPathTicket struct {
 // lightPath grades a commit that readyFor refused as unbound. One qualifying ticket in tree
 // must cover every production path. A tree with no qualifying folder keeps unbound.
 func (store Store) lightPath(tree string, policy *commitment.Policy, production []string, unbound error) error {
-	found, err := store.lightPathTickets(tree, lightPathRoot, policy)
+	found, err := store.lightPathTickets(tree, spec.SpecsDir, policy)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (store Store) lightPath(tree string, policy *commitment.Policy, production 
 // production path, its refusal names the --spec route for that ticket's folder.
 func (store Store) lightPathPublication(tree string, policy *commitment.Policy, production []string, delivery *Delivery, unbound error) error {
 	if delivery == nil {
-		found, err := store.lightPathTickets(tree, lightPathRoot, policy)
+		found, err := store.lightPathTickets(tree, spec.SpecsDir, policy)
 		if err != nil {
 			return err
 		}
@@ -98,14 +98,11 @@ type lightPathFolder struct {
 	irregular bool
 }
 
-// lightPathRoot is the parent of every light-path folder, and the scope that lists them all.
-const lightPathRoot = "specs"
-
 // lightPathTickets returns, in slug order, the ticket of each tickets-only folder of tree
 // below scope that qualifies: exactly one regular tickets.Ext entry below tickets/, a
 // ticket that parses with no diagnostic, and no milestone of policy that approves the
-// folder as a deliverable. Scope is lightPathRoot or one folder below it, and it is a
-// literal path. One listing of scope gives every folder, count, and mode.
+// folder as a deliverable. Scope is a literal path: spec.SpecsDir, or a path below it that
+// a delivery names. One listing of scope gives every folder, count, and mode.
 func (store Store) lightPathTickets(tree, scope string, policy *commitment.Policy) ([]lightPathTicket, error) {
 	listing, err := git.Output("-C", store.Root, "--literal-pathspecs", "ls-tree", "-r", "-z", tree, "--", scope)
 	if err != nil {
@@ -114,7 +111,7 @@ func (store Store) lightPathTickets(tree, scope string, policy *commitment.Polic
 	folders := map[string]*lightPathFolder{}
 	for _, record := range strings.Split(listing, "\x00") {
 		metadata, name, listed := strings.Cut(record, "\t")
-		rest, inRoot := strings.CutPrefix(name, lightPathRoot+"/")
+		rest, inRoot := strings.CutPrefix(name, spec.SpecsDir+"/")
 		slug, inside, nested := strings.Cut(rest, "/")
 		if !listed || !inRoot || !nested {
 			continue
