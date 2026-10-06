@@ -1703,6 +1703,89 @@ axes follows the verification records.
           "requirement": "t5-conformance",
           "command": "bench test --package ./internal/conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t4-conformance-v2",
+          "performer": "claude:lpce_t4_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t4_r1",
+            "digest": "sha256:309346d5936ee973fdb4f40eb44153f656f99f9f03fa60803872b56bd87098cc",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"08bc4cfa946bbee95a67f4398473b3b423560321\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,45938\nfailures[0]{package,test,line}:\nskips[3]: socket and character-device capability skips (environment)\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/anchors/registry_commitment.go --omit '<Writes-boundary RequireInSection row: \"Its production paths stay inside that ticket's `Writes:` line.\">' --package ./internal/conformance --run TestCommitmentGuidance\nprobe exit: 1\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/anchors/registry_commitment.go,omit,failed,1,yes\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_Writes_boundary,\"commitment_guidance_test.go:93: mutated .bench/BENCH.md raised [], want only \\\"commitment guidance: operating guide dropped the light-path Writes boundary\\\"\"\n"
+          },
+          "requirement": "t4-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In internal/anchors/registry_commitment.go, delete the require row for the light-path Writes boundary sentence. TestCommitmentGuidance must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:lpce_t4_r1",
+              "digest": "sha256:309346d5936ee973fdb4f40eb44153f656f99f9f03fa60803872b56bd87098cc",
+              "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"08bc4cfa946bbee95a67f4398473b3b423560321\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,45938\nfailures[0]{package,test,line}:\nskips[3]: socket and character-device capability skips (environment)\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/anchors/registry_commitment.go --omit '<Writes-boundary RequireInSection row: \"Its production paths stay inside that ticket's `Writes:` line.\">' --package ./internal/conformance --run TestCommitmentGuidance\nprobe exit: 1\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/anchors/registry_commitment.go,omit,failed,1,yes\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_Writes_boundary,\"commitment_guidance_test.go:93: mutated .bench/BENCH.md raised [], want only \\\"commitment guidance: operating guide dropped the light-path Writes boundary\\\"\"\n"
+            }
+          }
+        },
+        {
+          "id": "t4-anchors-v2",
+          "performer": "claude:lpce_t4_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t4_r1",
+            "digest": "sha256:ee473100774b044b1d0f2ce29ac849e70fc73f43ac8a5644e1f151a9d2740605",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/anchors\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"08bc4cfa946bbee95a67f4398473b3b423560321\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1136\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-prose-budgets-v2",
+          "performer": "claude:lpce_t4_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t4_r1",
+            "digest": "sha256:5ea4214a2ea8e42f04f144fb3e9eb8ea30e6755c7aa3a7f7b844103f8c7dd6ba",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --check guidance-prose-budgets\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"08bc4cfa946bbee95a67f4398473b3b423560321\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-prose-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-bench-v2",
+          "performer": "claude:lpce_t4_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t4_r1",
+            "digest": "sha256:45136987c6477ba65fd2f865928e3536603eb67b9e1edea87eb9bdd748fd5311",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./cmd/bench\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"08bc4cfa946bbee95a67f4398473b3b423560321\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14475\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
