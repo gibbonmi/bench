@@ -1608,6 +1608,42 @@ constant. A pre-existing `"specs"` literal remains in `repository.go`.
           "requirement": "t4-bench",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "t5-prose-v1",
+          "performer": "claude:lpce_t5",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "40faa389e48ae6b70e30271ca671fc8728baa8f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t5",
+            "digest": "sha256:0d5b7cd5b5b362d33def72173362bf78c5e6edc7ac9be86d74e4f143dddd7cfa",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --check prose\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,29537f516ec51bfe4a25b9051dbc3665875d7c81,false\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench gate-prose . -- docs/adr/0028-the-commitment-gates-spec-implementations.md docs/adr/0023-each-ticket-gets-a-fresh-author.md\nexit: 0\nprose[2]{path,verdict}:\n  docs/adr/0028-the-commitment-gates-spec-implementations.md,pass\n  docs/adr/0023-each-ticket-gets-a-fresh-author.md,pass\n"
+          },
+          "requirement": "t5-prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-conformance-v1",
+          "performer": "claude:lpce_t5",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "40faa389e48ae6b70e30271ca671fc8728baa8f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t5",
+            "digest": "sha256:f7f447c9ef83a5f45c2b6ad6a1e1c7df8ab11c6e433108d39f38fc4a7c35f87c",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,29537f516ec51bfe4a25b9051dbc3665875d7c81,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,45993\nfailures[0]{package,test,line}:\nskips[3]: environment capability skips (unix socket bind, character device privilege)\n"
+          },
+          "requirement": "t5-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
         }
       ],
       "reviews": []
