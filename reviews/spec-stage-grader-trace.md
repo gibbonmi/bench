@@ -480,11 +480,88 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+    "performer": "claude:ft376-orchestrator-20261006",
+    "reconciliation": {
+      "GT1": "covered",
+      "GT10": "covered",
+      "GT11": "covered",
+      "GT12": "covered",
+      "GT13": "covered",
+      "GT14": "covered",
+      "GT15": "covered",
+      "GT16": "covered",
+      "GT17": "covered",
+      "GT18": "covered",
+      "GT19": "covered",
+      "GT2": "covered",
+      "GT20": "covered",
+      "GT21": "covered",
+      "GT3": "covered",
+      "GT4": "covered",
+      "GT5": "covered",
+      "GT6": "covered",
+      "GT7": "covered",
+      "GT8": "covered",
+      "GT9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage-check-1",
+        "performer": "claude:ft376-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft376-orchestrator-20261006",
+          "digest": "sha256:8ec0c561e3a062d5b023566138fbec9aedfac31b3a4a0af781c333e944ac31db",
+          "excerpt": "ok: coverage map valid — 21 row(s)\n"
+        },
+        "requirement": "coverage-check",
+        "command": "bench coverage --check specs/spec-stage-grader-trace/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-anchors-1",
+        "performer": "claude:ft376-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft376-orchestrator-20261006",
+          "digest": "sha256:c58d272674c63b6bd78abd7a669923dd0f043a8a4ee6139139102a1b60b28361",
+          "excerpt": "github.com/gibbonmi/bench/internal/anchors,pass,1064\nfailures[0]\n"
+        },
+        "requirement": "anchors",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "final-docs-currency-workflow-1",
+        "performer": "claude:ft376-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:ft376-orchestrator-20261006",
+          "digest": "sha256:2cdcd34c88b52e92281f17e082d158672895e2f9ad0e1257a349f80079fd7765",
+          "excerpt": "github.com/gibbonmi/bench/internal/conformance,pass,1513 (check docs-currency-workflow)\nfailures[0]\n"
+        },
+        "requirement": "docs-currency-workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
