@@ -148,26 +148,26 @@ folds. Standards and Coverage found nothing.
 - P3 (`auto-fix`, confidence 9): spec line 93 still says that
   `internal/spec` needs no edit. Commit `7e0804d5` edits that package, and
   the spec fence lists the file. The finding is a non-behavioral spec
-  contradiction, so it consumes no repair cycle. The LP-C2 enabling plan
-  commit corrects the sentence, because a spec edit after the chunk tip
-  would move the frozen source.
+  contradiction, so it consumes no repair cycle. The checkpoint requires a
+  passing Spec result, so spec commit `caec9d72` corrects the sentence
+  inside LP-C1. The chunk is frozen again at `caec9d72`.
 
-Advice: spec line 92 names a folder, but a delivery can name a spec file.
-The same plan commit widens that wording.
+Advice: spec line 92 named a folder, but a delivery can name a spec file.
+Commit `caec9d72` widens that wording to a path.
 
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/light-path-commitment-exemption/spec.md",
-  "plan_digest": "sha256:584a8ebce19d7359df5f5e38a70c0c11559d108fcd9416917d3a7a4fd3db0eb2",
+  "plan_digest": "sha256:243042bea22f138f7fcaa8fca30cc0032966a3d282cf7807390a2f7d99cdf034",
   "implementation_session": "",
   "chunks": [
     {
       "id": "LP-C1",
       "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
-      "tip": "7e0804d59a4bb518bd6c859d0333ff2ad9ae5d62",
-      "plan_digest": "sha256:584a8ebce19d7359df5f5e38a70c0c11559d108fcd9416917d3a7a4fd3db0eb2",
-      "source_digest": "842e96e36ece273c2f1f37418ada7c2740c217d6",
+      "tip": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+      "plan_digest": "sha256:243042bea22f138f7fcaa8fca30cc0032966a3d282cf7807390a2f7d99cdf034",
+      "source_digest": "c83886b595845c55c414664fd7664fdd47f59726",
       "acceptance_rows": [
         "LP27",
         "LP28",
@@ -1194,6 +1194,15 @@ The same plan commit widens that wording.
     {
       "from": "sha256:ec4525fc97530b0be25d362a341778ea663b9f15214849522c765ff999535415",
       "to": "sha256:584a8ebce19d7359df5f5e38a70c0c11559d108fcd9416917d3a7a4fd3db0eb2",
+      "chunk_ids": {
+        "LP-C1": [
+          "LP-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:584a8ebce19d7359df5f5e38a70c0c11559d108fcd9416917d3a7a4fd3db0eb2",
+      "to": "sha256:243042bea22f138f7fcaa8fca30cc0032966a3d282cf7807390a2f7d99cdf034",
       "chunk_ids": {
         "LP-C1": [
           "LP-C1"
