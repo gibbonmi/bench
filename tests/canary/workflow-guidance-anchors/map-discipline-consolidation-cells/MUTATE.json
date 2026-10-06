@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "Each changed cell of the consolidation table maps to an acceptance row, a flagged addition, or a Won't handle line.",
+    "new": "Each changed cell of the consolidation table maps to an acceptance row."
+  }
+]

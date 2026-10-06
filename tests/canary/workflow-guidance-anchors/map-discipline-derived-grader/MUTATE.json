@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "`Derived expectations` names the grader of each derived expectation.",
+    "new": "`Derived expectations` names each derived expectation."
+  }
+]

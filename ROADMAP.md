@@ -24,8 +24,6 @@ and review cost that recent builds paid.
 
 **FT375 (MEDIUM) — the build preflight reports spec staleness, and the staleness pass audits only drift and red rows.**
 
-**FT376 (MEDIUM) — the spec stage traces each pinned check, entry read, and derived expectation to its grader before the first review.**
-
 **FT369 (MEDIUM) — the delegate charge and the slicing checks close the 2026-09-30 batch's fence and venue gaps.**
 
 **FT349 (MEDIUM) — the ticket checkpoint enforces the check floor and refuses a leftover `planned` citation.**
@@ -310,7 +308,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT376
-2. FT290
-3. FT373
-4. FT349
+1. FT290
+2. FT373
+3. FT349

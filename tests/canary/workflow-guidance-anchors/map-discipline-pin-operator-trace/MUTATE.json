@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "`Pin operators` quotes the comparison operator that the grader of each pin row applies.",
+    "new": "`Pin operators` lists each pin row."
+  }
+]

@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Spec grader trace
+
+- Added six classes to the pre-review proof checklist of the `craft-spec` map discipline: `Pin operators`, `Entry reads`, `Derived expectations`, `Consolidated rules`, `Quantified obligations`, and `Workflow-step writes`. Before the first review charge, a spec author traces each pinned check, entry read, and derived expectation to its grader. The author also maps each consolidated site rule and checks each quantified obligation at each site and across all tickets. For a new workflow step, the author traces each write through the compared digests.
+- Added a caller-sweep rule: the changed-function caller sweep runs `bench consumers` for each changed function, unexported functions included.
+
 ### Delivery commitment
 
 - Added `bench commitment` and the tracked `.bench/commitment.json` delivery commitment. Delivery starts only for the eligible committed outcome, and only an approved plan changes the committed work.

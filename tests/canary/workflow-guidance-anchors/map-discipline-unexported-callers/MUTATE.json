@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "The changed-function caller sweep runs `bench consumers` for each changed function, unexported functions included.",
+    "new": "The changed-function caller sweep runs `bench consumers` for each changed function."
+  }
+]

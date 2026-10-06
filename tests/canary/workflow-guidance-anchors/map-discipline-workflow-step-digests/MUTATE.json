@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "`Workflow-step writes`, for each new workflow step, traces every write through the digests that later checkpoints compare.",
+    "new": "`Workflow-step writes`, for each new workflow step, lists every write."
+  }
+]

@@ -1,0 +1,15 @@
+package anchors
+
+// specTraceAnchors pin the pre-review checklist classes that trace each spec row to its
+// grader, and the caller-sweep rule.
+var specTraceAnchors = []Anchor{
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "`Pin operators` quotes the comparison operator that the grader of each pin row applies.", Diagnostic: "map discipline: the pre-review checklist quotes each pin row's grader operator"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "`Entry reads` lists each unexported read below an entry without an internal form, and names its grader.", Diagnostic: "map discipline: the pre-review checklist traces each unexported entry read to its grader"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "`Derived expectations` names the grader of each derived expectation.", Diagnostic: "map discipline: the pre-review checklist names the grader of each derived expectation"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "No expectation comes from the code under test.", Diagnostic: "map discipline: no expectation comes from the code under test"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "`Consolidated rules`, when a spec consolidates repeated rules, gives a consolidation table of each site's old rule and new rule.", Diagnostic: "map discipline: a rule consolidation gives each site's old and new rule"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "Each changed cell of the consolidation table maps to an acceptance row, a flagged addition, or a Won't handle line.", Diagnostic: "map discipline: each changed consolidation cell takes a row, a flagged addition, or a Won't handle line"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "`Quantified obligations` checks every quantified obligation at each affected site and across all tickets.", Diagnostic: "map discipline: quantified obligations hold at each site and across all tickets"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "The changed-function caller sweep runs `bench consumers` for each changed function, unexported functions included.", Diagnostic: "map discipline: the caller sweep runs bench consumers on unexported functions too"},
+	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Section: "Before the map locks", Needle: "`Workflow-step writes`, for each new workflow step, traces every write through the digests that later checkpoints compare.", Diagnostic: "map discipline: a new workflow step traces its writes through checkpoint digests"},
+}

@@ -248,6 +248,14 @@
       "identity": "sha256:db0c428534da1bbf5098fcfcdf9043ade2496c9441584f646da4ec33472ab2d0",
       "source": "c3b86de85bdf315ebadf1e985378a392266513fa",
       "evidence": "9eed569c65f08d02898704bf7532a0b4a0ecf567"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT376",
+      "binding": "spec-stage-grader-trace",
+      "identity": "sha256:dfb2ccaa9c6a76ed4e8f454358894ddaed5123fc1cb0d187623ab152b37bfa5e",
+      "source": "459cc5608f10f79104dbb3b6f745e1038e4b16d3",
+      "evidence": "67c7335be6eff9abccbc07f163e99d64fa53d69e"
     }
   ]
 }
