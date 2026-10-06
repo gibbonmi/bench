@@ -1,5 +1,75 @@
 # Review outcomes
 
+## LP-C1 pickup
+
+The LP-C1 review covers the frozen pair `c3e58ed9..2c74b924`, with the chunk
+code tip at `04e27cea`. The reviewer directed the fable line at high effort
+for all three axes. The axes found 7 findings in total. These findings
+collapse into 4 repair targets and 1 reviewer question. The repairs start
+repair cycle 1 of 2.
+
+## Standards
+
+Findings: 2. Worst issue: S1.
+
+- S1 (`auto-fix`, confidence 8): `internal/commitment/commitmenttest/light.go:40`.
+  `WriteLightTicket` repeats the ticket body template that `WritesTicketDoc`
+  in `internal/preflight/preflighttest/fixture.go:120` owns. The axis proposed
+  `ask-user`, because the repair path is on no LP-C1 `Writes:` line. The
+  reviewer approved plan expansions for this run in advance, so a plan commit
+  adds the path to ticket 2 and the finding becomes `auto-fix`.
+- S2 (`no-op`, confidence 6): `internal/commitment/repository/light_path.go:108`.
+  The reader parses the `ls-tree -z` record by hand. Spec line 92 sets one
+  `ls-tree -r -z` read for the modes and the paths, and `git.ReadTreeFile`
+  gives no listing. The pattern stays a candidate for a later drain.
+
+Advice: the loop that asks whether any entry covers a path appears four
+times. `light_path.go:101` spells the `specs` root again.
+
+## Spec
+
+Findings: 1. Worst issue: P1.
+
+- P1 (`auto-fix`, confidence 6): `internal/commitment/repository/light_path.go:191`.
+  Spec line 99 states that publication mode reads only the folder that
+  `--spec` names. The code reads every tickets-only folder at the source and
+  then filters by slug. The axis proposed `no-op`, but the spec sentence is
+  exact and no cited source refutes the deviation, so the coordinator records
+  `auto-fix`. P1 and C2 share one repair.
+
+Advice: `tickets.Covers` admits a path that equals the entry plus a slash. A
+Git tree path never ends in a slash.
+
+## Coverage
+
+Findings: 4. Worst issue: C1.
+
+- C1 (`auto-fix`, confidence 9): `internal/commitment/repository/light_path.go:137`.
+  No test holds a folder with a `spec.md` and one ticket. A deletion of the
+  `spec.TicketsOnly` clause survives, and then a staged spec with one ticket
+  admits an unbound commit.
+- C2 (`auto-fix`, confidence 8): `internal/commitment/repository/light_path.go:53`.
+  Every publication test row holds one qualifying folder. A mutation that
+  grades every folder, or that drops the slug match, survives.
+- C3 (`auto-fix`, confidence 8): `internal/commitment/repository/light_path.go:73`.
+  The `uncovered-beside-span` row does not assert the ticket operand, so a
+  mutation to the last qualifying ticket survives.
+- C4 (`ask-user`, confidence 6): `internal/commitment/repository/light_path.go:125`.
+  Spec line 86 admits a ticket with mode `100755`. `commitment.PlanningPath`
+  makes an executable `.md` file a production path. A commit that carries an
+  executable ticket is therefore refused as outside the ticket's own `Writes:`
+  line. The reviewer decides this behavior.
+
+Advice: `maps.FieldList` splits only on a comma and a space. A ticket over
+`bounds.ControlRecordLimit` returns the read error. No test covers the
+spec-less route with two qualifying folders.
+
+## LP-C1 repair state
+
+Repair cycle 1 of 2 is open. A fresh ticket 2 repair session takes S1, C1,
+and C3. A fresh ticket 3 repair session then takes P1 and C2. C4 waits for
+the reviewer decision.
+
 ```bench-review-record
 {
   "version": 2,
@@ -305,7 +375,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "lp-c1-standards-r1",
+          "performer": "claude:lpce_c1_standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_standards",
+            "digest": "sha256:bf8076f4b91eff8a6f38ebac9d39da2351746f732cd04a9d65d3721b8623f56c",
+            "excerpt": "Standards axis — LP-C1 (light-path-commitment-exemption), fable/high, evidence sha256:f40e12d89678f168bd9c3c8b21180971b7f1cc66aaefb2f4c3a99a41d4252806 current at 2c74b924.\n\nS1 — medium — internal/commitment/commitmenttest/light.go:40-47 WriteLightTicket re-derives the grammatical ticket-body template that internal/preflight/preflighttest/fixture.go:120-127 WritesTicketDoc already owns. Breaks AGENTS.md \"one source per fact ... a fixture harness pasted N times\". preflighttest imports commitmenttest (fixture.go:17), so the one source belongs in commitmenttest with preflighttest delegating. Confidence 8. Disposition ask-user: the repair path internal/preflight/preflighttest/fixture.go is on no LP-C1 Writes line, so it needs a plan expansion. Command contribution: ticket 2 named a new helper without naming the existing template; the change is a Writes expansion.\n\nS2 — low — internal/commitment/repository/light_path.go:108,125 hand-parses the ls-tree -z record (mode, name), the same derivation as internal/git/tree.go:169-171; a pre-existing third parser is at internal/gate/tree_snapshot.go:147-151. Confidence 6. Disposition no-op (record for drain). Command contribution: none necessary.\n\nAdvice (no IDs): the any-entry-covers loop appears four times (candidate.go, closure.go, light_path.go, decision.go); light_path.go:101 const root = \"specs\" re-spells the parent spec owns; legacy segment predicates in gate and adopt stay outside the Writes grammar by domain.\n\nRead: craft-review SKILL.md; git diff c3e58ed9..2c74b924 (one collection); AGENTS.md, .bench/BENCH.md, projects/benchkit.md, craft-comments SKILL.md; tickets 1-3; targeted sources; consumers (10 touched=false rows).\nCount: 2. Worst: S1.\n"
+          },
+          "axis": "Standards",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "04e27ceae64de006cbfbdc6d940eef67f163efd3",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "lp-c1-spec-r1",
+          "performer": "claude:lpce_c1_spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_spec",
+            "digest": "sha256:1827c2152e5c9aa5558a903315252d0cf3547e3f90c6840f6f0bfdfe5b25ba99",
+            "excerpt": "Spec axis — LP-C1 (light-path-commitment-exemption), fable/high, evidence sha256:f40e12d89678f168bd9c3c8b21180971b7f1cc66aaefb2f4c3a99a41d4252806 current at 2c74b924.\n\nP1 — low — internal/commitment/repository/light_path.go:191-209 and :289-292; rows LP24/LP52; spec.md:99, :82, :111. Spec.md:99 says publication mode reads only the folder that the landing's --spec names. lightPathPublication instead reads every tickets-only folder at Delivery.Source, then filters by slug. Observable deviation: an oversized tickets.Ext blob in an unrelated one-ticket folder makes git.ReadTreeFile fail, and the landing returns that read error instead of the binding refusal. Confidence 6. Proposed disposition no-op. Command contribution: none necessary.\n\nAll other audited rows matched the spec predicate: refusal words byte-identical to spec.md:106-108; Writes-over-span order matches spec.md:110; errUnbound gating matches spec.md:80-84; guard order matches spec.md:84; qualify conditions match spec.md:85-86; preflight call-site rewrites are semantically identical. Fence: 838c8826, d9405cfc, 04e27cea touch only their tickets' Writes paths.\n\nAdvice (no IDs): tickets.Covers returns true for path == entry+\"/\", which git tree paths never produce; LP33 is Standards-owned.\n\nRead: craft-review SKILL.md; full frozen diff; spec.md; tickets 1-3; bench coverage; targeted sources. Rows audited: 39 (LP1-LP33, LP49-LP53, LP56).\nCount: 1. Worst: P1.\n"
+          },
+          "axis": "Spec",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "04e27ceae64de006cbfbdc6d940eef67f163efd3",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "lp-c1-coverage-r1",
+          "performer": "claude:lpce_c1_coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_coverage",
+            "digest": "sha256:99d329b706f94c5cfa26fb648d40b798355841c825ca399f68d545e84809c530",
+            "excerpt": "Coverage axis — LP-C1 (light-path-commitment-exemption), fable/high, evidence sha256:f40e12d89678f168bd9c3c8b21180971b7f1cc66aaefb2f4c3a99a41d4252806 current at 2c74b924.\n\nC1 — high — internal/commitment/repository/light_path.go:137. The !spec.TicketsOnly(...) guard has no test; no fixture holds a folder with both spec.md and one tickets/*.md. Surviving mutation: delete the TicketsOnly clause, and an unbound author with a one-ticket staged spec commits production inside that ticket's Writes with no binding. Spec line 85. Confidence 9. Disposition auto-fix (TestLightPathCandidate row: specs/lp/spec.md + tickets/one.md covering change.go, want unbound). Command contribution: none necessary.\n\nC2 — medium — light_path.go:53. Publication mode must grade only the --spec folder (spec line 99). Every TestLightPathPublication row has exactly one qualifying folder, so replacing []lightPathTicket{ticket} with found, or dropping the slug comparison, survives. Confidence 8. Disposition auto-fix (row: source holds lp covering other.go and second covering change.go, delivery lp, production change.go, want the Writes refusal naming lp's ticket). Command contribution: none necessary.\n\nC3 — low — light_path.go:73 (found[0].path). Spec line 106 pins the first qualifying ticket in folder order; uncovered-beside-span asserts only the production path. Mutation found[len(found)-1].path survives. Confidence 8. Disposition auto-fix (extend want with the ticket path). Command contribution: none necessary.\n\nC4 — low — light_path.go:125 accepts mode 100755 (spec line 86), but commitment.PlanningPath makes an executable .md a production path, so an executable ticket is refused as outside the Writes line of itself. Untested; nobody decided it. Confidence 6. Disposition ask-user. Command contribution: none necessary.\n\nAdvice (no IDs): maps.FieldList splits on \", \" only; a ticket over bounds.ControlRecordLimit surfaces the ReadTreeFile error; the spec-less route with two qualifying folders is untested.\n\nRead: diff c3e58ed9..2c74b924 (once); craft-review Coverage axis; projects/benchkit.md hostile checklist; bench coverage (56 rows); spec lines 40-200; consumers s28 (all touched=false rows walked); targeted sources. Tests run: bench test --package for ./internal/commitment/repository, ./internal/tickets, ./internal/preflight, ./internal/commit — all pass.\nCount: 4. Worst: C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "04e27ceae64de006cbfbdc6d940eef67f163efd3",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
