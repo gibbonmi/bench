@@ -239,6 +239,16 @@ found nothing.
   it is evidence-only and consumes no repair cycle. A fresh Standards axis
   reaffirms it.
 
+## LP-C2 close
+
+A fresh Standards axis checked all 16 forbid rows against the corrected
+comment and confirmed S9. LP-C2 consumed repair cycle 1 of 2. Every finding
+is closed: S5, S7, and S9 by repair, and S6 and S8 as `no-op`. S6 and S8
+wait for reviewer veto against spec lines 292 and 148.
+
+Advice: row 49 defers closure to the drain, so it fits the corrected
+comment only when closure counts as part of the outcome.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1969,6 +1979,28 @@ found nothing.
           "finding_ids": [],
           "supersedes": [
             "lp-c2-coverage-r1"
+          ]
+        },
+        {
+          "id": "lp-c2-standards-r3",
+          "performer": "claude:lpce_c2_standards_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c2_standards_r3",
+            "digest": "sha256:942bbb87f9a7e3848da65be33f134e44ed2eda961a19637c471c54b848f5dd63",
+            "excerpt": "Standards axis — LP-C2 S9 reaffirmation, fable/high, evidence sha256:c9d9ae7f72785ea7e5b299cff8008fa1e106da58504978f5869d1838ddc3c648 current at 1a29e0c1. Delta 023d79b3..592ce99f.\n\nFindings: none. Count 0.\nThe delta touches one // line at internal/anchors/registry_commitment.go:12; no code change.\nFold S9 confirmed: all 16 forbid rows (lines 39-54) checked. 39, 40, 42-48, 50, 53, 54 are grants (start or displace); 41, 51, 52 are light-path restrictions.\nRegister: timeless present, Go doc shape, no narration or provenance, density matches the file.\nAdvice (no ID; judgment, no-op): row 49 (deferred closure to /bench-drain) fits \"displace the commitment outside the committed outcome\" only when closure counts as part of the outcome.\nRead: craft-review and craft-comments skills, the diff, registry_commitment.go in full.\n"
+          },
+          "axis": "Standards",
+          "base": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "tip": "023d79b3b95a5b5d42fb890391bb6bca86d9a1a9",
+          "finding_ids": [],
+          "supersedes": [
+            "lp-c2-standards-r2"
           ]
         }
       ]
