@@ -14,6 +14,7 @@ import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/roadmap"
 )
 
@@ -119,6 +120,31 @@ func TestCommitmentTicketsOnlyClosure(t *testing.T) {
 				t.Fatalf("delivery claim retained = %t, want %t", got.claimed, partial)
 			}
 		})
+	}
+}
+
+// An unbound assignment lands its light-path change with --spec naming the change's folder.
+// The landing publishes the change, closes the folder, and records no delivery fact. A
+// spec-less landing of the same change refuses before publication and names the --spec
+// route.
+func TestCommitmentLightPathLanding(t *testing.T) {
+	t.Parallel()
+	request := "land-commitment-light-path"
+	f := lightLandingFixture(t, request)
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, f.tip, f.creation.Path)...))
+	if main := gitOutput(t, f.root, "rev-parse", "main"); r.exit == 0 || !strings.Contains(r.stdout, "--spec") || main != f.base {
+		t.Fatalf("spec-less light-path landing = (%d, %q, %q) with main %s, want a refusal that names --spec and leaves main at %s", r.exit, r.stdout, r.stderr, main, f.base)
+	}
+	r = runVerb(t, verbLand, f.call(ticketsOnlyLandArgs(request, f.base, f.tip, lightLandingSlug, f.creation.Path)...))
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	if r.exit != 0 || published == f.base || !strings.Contains(r.stdout, "published_commit="+published+",") {
+		t.Fatalf("light-path landing = (%d, %q, %q) with main %s, want main moved to the published commit", r.exit, r.stdout, r.stderr, published)
+	}
+	if folder := landing.ClosedFolderPath(lightLandingSlug); git.OK("-C", f.root, "cat-file", "-e", published+":"+folder) {
+		t.Fatalf("published tree kept %s", folder)
+	}
+	if before, after := gitOutput(t, f.root, "show", f.base+":"+commitment.PolicyPath), gitOutput(t, f.root, "show", published+":"+commitment.PolicyPath); after != before {
+		t.Fatalf("published policy = %q, want the base policy %q", after, before)
 	}
 }
 

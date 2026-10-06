@@ -13,8 +13,11 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-// lightTicket is the ticket path of the light-path folder that most rows write.
-const lightTicket = "specs/lp/tickets/one.md"
+// lightFolder is the light-path folder that most rows write, and lightTicket is its ticket.
+const (
+	lightFolder = "specs/lp"
+	lightTicket = lightFolder + "/tickets/one.md"
+)
 
 // approvedFolder is the one-ticket folder that the fixture's active milestone approves.
 const approvedFolder = "specs/approved"
@@ -51,26 +54,6 @@ func lightPathRepo(t *testing.T) (root, bound string) {
 // its refusal.
 func TestLightPathCandidate(t *testing.T) {
 	root, bound := lightPathRepo(t)
-	const unbound = "assignment has no current delivery binding"
-	write := func(paths ...string) func(*testing.T, string) {
-		return func(t *testing.T, worktree string) {
-			for _, path := range paths {
-				commitmenttest.Write(t, worktree, path, "package fixture\n")
-			}
-		}
-	}
-	ticket := func(path string, writes ...string) func(*testing.T, string) {
-		return func(t *testing.T, worktree string) { commitmenttest.WriteLightTicket(t, worktree, path, writes...) }
-	}
-	remove := func(paths ...string) func(*testing.T, string) {
-		return func(t *testing.T, worktree string) {
-			for _, path := range paths {
-				if err := os.Remove(filepath.Join(worktree, filepath.FromSlash(path))); err != nil {
-					t.Fatal(err)
-				}
-			}
-		}
-	}
 	for _, row := range []struct {
 		name  string
 		bound bool
@@ -84,8 +67,8 @@ func TestLightPathCandidate(t *testing.T) {
 		{name: "directory-sibling", steps: steps(ticket(lightTicket, "pkg"), write("pkgx/a.go")), want: `production path "pkgx/a.go" is outside the Writes line of light-path ticket "` + lightTicket + `"`},
 		// A retirement deletes its review record and adds its ADR.
 		{name: "retirement", steps: steps(ticket(lightTicket, commitmenttest.MilestoneRecord, "docs/adr/9999-x.md"), remove(commitmenttest.MilestoneRecord), write("docs/adr/9999-x.md"))},
-		{name: "second-ticket", steps: steps(ticket(lightTicket, "change.go"), ticket("specs/lp/tickets/two.md", "change.go"), write("change.go")), want: unbound},
-		{name: "nested-second-ticket", steps: steps(ticket(lightTicket, "change.go"), ticket("specs/lp/tickets/sub/two.md", "change.go"), write("change.go")), want: unbound},
+		{name: "second-ticket", steps: steps(ticket(lightTicket, "change.go"), ticket(lightFolder+"/tickets/two.md", "change.go"), write("change.go")), want: unbound},
+		{name: "nested-second-ticket", steps: steps(ticket(lightTicket, "change.go"), ticket(lightFolder+"/tickets/sub/two.md", "change.go"), write("change.go")), want: unbound},
 		{name: "span", steps: steps(ticket("specs/lp1/tickets/one.md", "a.go"), ticket("specs/lp2/tickets/one.md", "b.go"), write("a.go", "b.go")), want: "production paths span more than one light-path ticket; a light-path change carries one ticket"},
 		// The uncovered path wins over the span.
 		{name: "uncovered-beside-span", steps: steps(ticket("specs/lp1/tickets/one.md", "a.go"), ticket("specs/lp2/tickets/one.md", "b.go"), write("a.go", "b.go", "c.go")), want: `production path "c.go"`},
@@ -112,8 +95,8 @@ func TestLightPathCandidate(t *testing.T) {
 		{name: "unpinned-row-removal", steps: steps(ticket(lightTicket, "change.go"), write("change.go"), remove("roadmap/FT9.md"), func(t *testing.T, worktree string) {
 			commitmenttest.Write(t, worktree, "ROADMAP.md", commitmenttest.ClosureIndex())
 		})},
-		{name: "asset-beside-ticket", steps: steps(ticket(lightTicket, "change.go", "specs/lp/tickets/asset.txt"), write("change.go", "specs/lp/tickets/asset.txt"))},
-		{name: "asset-alone", steps: steps(write("specs/lp/tickets/asset.txt")), want: unbound},
+		{name: "asset-beside-ticket", steps: steps(ticket(lightTicket, "change.go", lightFolder+"/tickets/asset.txt"), write("change.go", lightFolder+"/tickets/asset.txt"))},
+		{name: "asset-alone", steps: steps(write(lightFolder + "/tickets/asset.txt")), want: unbound},
 		// The path holds a space and an ESC byte.
 		{name: "hostile-path", steps: steps(ticket(lightTicket, "change.go"), write("change.go", "bad \x1b.go")), want: `production path "bad \x1b.go"`},
 		{name: "bound-beside-uncovering-folder", bound: true, steps: steps(ticket(lightTicket, "other.go"), write("bound.go"))},
@@ -141,7 +124,85 @@ func TestLightPathCandidate(t *testing.T) {
 	}
 }
 
+// Each row commits a light-path change in its own unbound assignment, or in the bound one,
+// and grades a publication of that commit. A row that closes its deliverable grades the
+// commit's tree less the folder, as the landing composes it. Every other row grades the
+// commit's tree whole. A row with no deliverable is a spec-less landing.
+func TestLightPathPublication(t *testing.T) {
+	root, bound := lightPathRepo(t)
+	for _, row := range []struct {
+		name, deliverable string
+		closes, bound     bool
+		steps             []func(*testing.T, string)
+		want, absent      string
+	}{
+		{name: "delivery-names-folder", deliverable: lightFolder, closes: true, steps: steps(ticket(lightTicket, "change.go"), write("change.go"))},
+		{name: "delivery-uncovered", deliverable: lightFolder, closes: true, steps: steps(ticket(lightTicket, "change.go"), write("change.go", "other.go")), want: `production path "other.go" is outside the Writes line of light-path ticket "` + lightTicket + `"`},
+		{name: "delivery-two-tickets", deliverable: lightFolder, closes: true, steps: steps(ticket(lightTicket, "change.go"), ticket(lightFolder+"/tickets/two.md", "change.go"), write("change.go")), want: unbound},
+		{name: "spec-less", steps: steps(ticket(lightTicket, "change.go"), write("change.go")), want: `--deliverable <path>; land the light-path change with --spec "lp"`},
+		{name: "spec-less-spaced-slug", steps: steps(ticket("specs/a b/tickets/one.md", "change.go"), write("change.go")), want: `--spec "a b"`},
+		{name: "spec-less-uncovered", steps: steps(ticket(lightTicket, "change.go"), write("change.go", "other.go")), want: unbound, absent: "--spec"},
+		{name: "bound-spec-delivery", deliverable: commitmenttest.MilestoneSpec, bound: true, steps: steps(ticket(lightTicket, "other.go"), write("bound.go"))},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			worktree := bound
+			if !row.bound {
+				worktree = commitmenttest.Assignment(t, root, row.name)
+			}
+			for _, step := range row.steps {
+				step(t, worktree)
+			}
+			commitmenttest.Commit(t, worktree, row.name)
+			published := publication(t, root, worktree)
+			published.Source, published.Deliverable = gittest.Output(t, worktree, "rev-parse", "HEAD"), row.deliverable
+			if row.closes {
+				if err := os.RemoveAll(filepath.Join(worktree, filepath.FromSlash(row.deliverable))); err != nil {
+					t.Fatal(err)
+				}
+				commitmenttest.Commit(t, worktree, "close "+row.deliverable)
+			}
+			err := (commitrepo.Store{Root: root}).AdmitPublication(published, gittest.Output(t, worktree, "rev-parse", "HEAD^{tree}"))
+			if row.want == "" {
+				if err != nil {
+					t.Fatalf("AdmitPublication = %v, want admission", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), row.want) || (row.absent != "" && strings.Contains(err.Error(), row.absent)) {
+				t.Fatalf("AdmitPublication = %v, want a refusal naming %q and not %q", err, row.want, row.absent)
+			}
+		})
+	}
+}
+
+// unbound is the binding refusal that a candidate keeps when it is not light-path work.
+const unbound = "assignment has no current delivery binding"
+
 func steps(each ...func(*testing.T, string)) []func(*testing.T, string) { return each }
+
+// write writes each path as a production file.
+func write(paths ...string) func(*testing.T, string) {
+	return func(t *testing.T, worktree string) {
+		for _, path := range paths {
+			commitmenttest.Write(t, worktree, path, "package fixture\n")
+		}
+	}
+}
+
+// ticket writes one light-path ticket at path whose Writes line lists writes.
+func ticket(path string, writes ...string) func(*testing.T, string) {
+	return func(t *testing.T, worktree string) { commitmenttest.WriteLightTicket(t, worktree, path, writes...) }
+}
+
+func remove(paths ...string) func(*testing.T, string) {
+	return func(t *testing.T, worktree string) {
+		for _, path := range paths {
+			if err := os.Remove(filepath.Join(worktree, filepath.FromSlash(path))); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+}
 
 // listContinuation lists the legacy continuation of the assignment that owns worktree with
 // scope. The fixture's other records stay, so the bound claim holds.

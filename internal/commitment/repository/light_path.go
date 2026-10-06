@@ -14,15 +14,15 @@ import (
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
-// lightPathTicket is the one ticket of a qualifying light-path folder: its tree path and
-// the tree path that each of its Writes entries names.
+// lightPathTicket is the one ticket of a qualifying light-path folder: the folder slug, the
+// ticket's tree path, and the tree path that each of its Writes entries names.
 type lightPathTicket struct {
-	path   string
-	writes []string
+	slug, path string
+	writes     []string
 }
 
-// lightPath grades a candidate that readyFor refused as unbound. One qualifying ticket in
-// tree must cover every production path. A tree with no qualifying folder keeps unbound.
+// lightPath grades a commit that readyFor refused as unbound. One qualifying ticket in tree
+// must cover every production path. A tree with no qualifying folder keeps unbound.
 func (store Store) lightPath(tree string, policy *commitment.Policy, production []string, unbound error) error {
 	found, err := store.lightPathTickets(tree, policy)
 	if err != nil {
@@ -34,12 +34,37 @@ func (store Store) lightPath(tree string, policy *commitment.Policy, production 
 	return lightPathCover(found, production)
 }
 
+// lightPathPublication grades a landing that readyFor refused as unbound. published.Tree
+// removes the delivered folder from tree, so the ticket of a delivery is read at its
+// reviewed source, and only the folder that the delivery names counts. A spec-less landing
+// is never light-path work. When tree holds a ticket that covers every production path,
+// its refusal names the --spec route for that ticket's folder.
+func (store Store) lightPathPublication(tree string, policy *commitment.Policy, production []string, delivery *Delivery, unbound error) error {
+	read := tree
+	if delivery != nil {
+		read = delivery.Source
+	}
+	found, err := store.lightPathTickets(read, policy)
+	if err != nil {
+		return err
+	}
+	for _, ticket := range found {
+		switch {
+		case delivery != nil && spec.ClosedFolderPath(ticket.slug) == delivery.Spec:
+			return lightPathCover([]lightPathTicket{ticket}, production)
+		case delivery == nil && ticket.coversAll(production):
+			return fmt.Errorf("%w; land the light-path change with --spec %q", unbound, ticket.slug)
+		}
+	}
+	return unbound
+}
+
 // lightPathCover admits production when one ticket covers every path. A path that no
 // ticket covers is named against the first ticket. Only when each path has some cover
 // does the change span tickets.
 func lightPathCover(found []lightPathTicket, production []string) error {
 	for _, ticket := range found {
-		if !slices.ContainsFunc(production, func(p string) bool { return !ticket.covers(p) }) {
+		if ticket.coversAll(production) {
 			return nil
 		}
 	}
@@ -53,6 +78,10 @@ func lightPathCover(found []lightPathTicket, production []string) error {
 
 func (ticket lightPathTicket) covers(p string) bool {
 	return slices.ContainsFunc(ticket.writes, func(entry string) bool { return tickets.Covers(entry, p) })
+}
+
+func (ticket lightPathTicket) coversAll(production []string) bool {
+	return !slices.ContainsFunc(production, func(p string) bool { return !ticket.covers(p) })
 }
 
 // lightPathFolder is what one listing of specs/<slug> tells about its tickets: how many
@@ -117,7 +146,7 @@ func (store Store) lightPathTickets(tree string, policy *commitment.Policy) ([]l
 		if len(diagnostics) != 0 {
 			continue
 		}
-		ticket := lightPathTicket{path: folder.ticket}
+		ticket := lightPathTicket{slug: slug, path: folder.ticket}
 		for _, entry := range parsed.Writes {
 			written, _ := tickets.WritesPath(entry)
 			ticket.writes = append(ticket.writes, written)
