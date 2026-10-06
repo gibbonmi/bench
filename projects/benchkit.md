@@ -486,8 +486,8 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 
 | subject | limit |
 |---|---|
-| `.bench/BENCH.md` | 185 |
-| `.agents/commands/bench-implement-spec.md` | 81 |
+| `.bench/BENCH.md` | 188 |
+| `.agents/commands/bench-implement-spec.md` | 83 |
 | `.agents/commands/bench-write-spec.md` | 73 |
 | `.agents/commands/bench-debug.md` | 170 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |

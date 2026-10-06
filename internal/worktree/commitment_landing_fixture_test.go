@@ -14,6 +14,7 @@ import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
@@ -32,6 +33,25 @@ func closureLandingFixture(t *testing.T, request string, step func(*testrepo.Gat
 func seededClosureFixture(t *testing.T, request string, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string), fence ...string) landingFixture {
 	t.Helper()
 	return seededLandingFixture(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), true, step, seed, fence...)
+}
+
+// lightLandingSlug names the light-path folder that the source of lightLandingFixture carries.
+const lightLandingSlug = "lp"
+
+// lightLandingFixture is the spec-less landing fixture whose source is a second assignment
+// that request names. That assignment starts at the base with no delivery binding. It
+// commits one light-path ticket whose Writes line lists owned.txt, and owned.txt, which the
+// gate needs.
+func lightLandingFixture(t *testing.T, request string) landingFixture {
+	t.Helper()
+	f := specLessLandingFixture(t, request+"-bound")
+	f.creation = mustCreate(t, f.root, f.home, request, "light-path landing")
+	ticket := landing.ClosedFolderPath(lightLandingSlug) + "/tickets/one.md"
+	commitmenttest.WriteLightTicket(t, f.creation.Path, ticket, "owned.txt")
+	gitRun(t, f.creation.Path, "add", "--", ticket)
+	commitInWorktree(t, f.creation.Path, "owned.txt", "light-path bytes\n", "light-path change")
+	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	return f
 }
 
 // deliveryRoute is one real delivery route through the landing verb. seed writes its

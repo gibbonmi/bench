@@ -107,7 +107,7 @@ func pathsFromRows(rows [][]string) []string {
 func overlaps(left, right []string) bool {
 	for _, a := range left {
 		for _, b := range right {
-			if pathCovered(a, []string{b}) || pathCovered(b, []string{a}) {
+			if tickets.Covers(b, a) || tickets.Covers(a, b) {
 				return true
 			}
 		}

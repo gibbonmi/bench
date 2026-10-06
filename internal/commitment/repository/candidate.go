@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // AuthorizeCandidate grades the complete proposed tree against current default-branch authority.
@@ -22,15 +24,16 @@ func (store Store) AuthorizeCandidate(tree string) error {
 	if !owned {
 		return fmt.Errorf("commit requires an active owned assignment; run bench worktree create")
 	}
-	return store.authorizeCandidate(ledger, owner, tree, nil)
+	return store.authorizeCandidate(ledger, owner, tree, nil, false)
 }
 
 // authorizeCandidate grades tree for owner against one ledger snapshot. The caller supplies
 // the owner, so a publication decides for its frozen source assignment rather than for
 // whichever checkout holds the store root. Only a publication supplies a delivery, so only
 // a publication can carry the verified closure of its reviewed deliverable, and only when
-// owner has the authority to close that deliverable.
-func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignment, tree string, delivery *Delivery) error {
+// owner has the authority to close that deliverable. A publication with no delivery is a
+// spec-less landing.
+func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignment, tree string, delivery *Delivery, publication bool) error {
 	revision, err := store.sourceRevision()
 	if err != nil {
 		return err
@@ -91,7 +94,15 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 		}
 		return nil
 	}
-	return store.readyFor(ledger, owner, "", "")
+	// Each guard above already decided, so a light-path ticket waives only the binding.
+	err = store.readyFor(ledger, owner, "", "")
+	if !errors.Is(err, errUnbound) {
+		return err
+	}
+	if publication {
+		return store.lightPathPublication(tree, current, production, delivery, err)
+	}
+	return store.lightPath(tree, current, production, err)
 }
 
 func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *commitment.Policy, revision string) error {
@@ -218,10 +229,10 @@ func (store Store) planningPromotions(tree string, changes []git.TreeChange) ([]
 	return promotions, nil
 }
 
-// inScope reports whether path is one scope entry or lies below a scope directory.
+// inScope reports whether a scope entry covers path.
 func inScope(scope []string, path string) bool {
 	for _, entry := range scope {
-		if path == entry || strings.HasPrefix(path, entry+"/") {
+		if tickets.Covers(entry, path) {
 			return true
 		}
 	}

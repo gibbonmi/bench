@@ -69,7 +69,7 @@ Each read delegate returns these fields: proposed owner, classification, occurre
 
 Resolve duplicate incidents and reviewer decisions before retained batch authorship starts.
 Verify that the tree stayed unchanged. Keep sealed capture retirement, the handoff,
-verification, and landing with the coordinator. Retained implement-now work may run while other reads continue. Route its line through `craft-line` and keep its authorship under `.bench/BENCH.md`.
+verification, and landing with the coordinator. Implement-now delegates may run while other reads continue. Route their line through `craft-line` and keep their authorship under `.bench/BENCH.md`.
 
 If an implement-now item exists, create the batch worktree only after every such item lands green on `main`.
 If no implement-now item exists, create the batch worktree after all reads finish and the coordinator resolves duplicate incidents and reviewer decisions.
@@ -210,13 +210,13 @@ a raw `git add` standing in for `bench commit` — proves nothing about the
 accused path. Without the real repro, dismiss the entry as unreproduced or
 re-park it. A re-parked entry names the missing repro as its graduation trigger.
 
-Every drained item that a verdict keeps becomes uncommitted intake: a new row, or a merge into the row that already covers it.
-The commitment rule in `.bench/BENCH.md` decides whether intake starts; a drain approval never admits it.
-A drained light-path item is implement-now work only after `bench commitment approve` admits it and `bench commitment start` binds its worktree.
-Write its one ticket file. Implement that ticket in the retained session under `craft-line`. Verify the diff against the ticket's acceptance rows and the gate.
+Every kept item that needs a spec becomes uncommitted intake: a new row, or a merge into the row that already covers it.
+The commitment rule in `.bench/BENCH.md` decides whether spec intake starts; a drain approval never admits it.
+A drained light-path item needs no commitment: the drain dispatches it under the light-path fix rule in `.bench/BENCH.md`.
+The delegate writes the one ticket file, implements it, and lands it as the light-path row states. The coordinator verifies the done-claim against the ticket's acceptance rows and the gate.
 
-A learning entry with a light-path fix follows the learning-fix rule in `.bench/BENCH.md`.
-When the active committed outcome does not need that fix, its verdict records the fix as uncommitted intake.
+A learning entry with a light-path fix follows the light-path fix rule in `.bench/BENCH.md`.
+Its verdict closes the entry by implementation after the fix lands.
 
 ## 6. Classify every run; restructure on request
 

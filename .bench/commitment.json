@@ -200,6 +200,14 @@
       "identity": "sha256:69565705a0de2b96f5c627dfed09bcfdb9970d76d41d763ed4adfa90577d7044",
       "source": "6e0005d2e51b223e2359d035cf4c7be20ca74024",
       "evidence": "2b110e11af722a05d5d267b27caa829abfcab4d5"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT391",
+      "binding": "light-path-commitment-exemption",
+      "identity": "sha256:db0c428534da1bbf5098fcfcdf9043ade2496c9441584f646da4ec33472ab2d0",
+      "source": "c3b86de85bdf315ebadf1e985378a392266513fa",
+      "evidence": "9eed569c65f08d02898704bf7532a0b4a0ecf567"
     }
   ]
 }

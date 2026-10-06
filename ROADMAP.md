@@ -56,8 +56,6 @@ and review cost that recent builds paid.
 
 **FT304 (MEDIUM, decision required) — one shared projection supplies a useful roadmap and execution view.**
 
-**FT391 (HIGH, decision required) — a hotfix lane lands a small change at once, outside the roadmap row and commitment ceremony.**
-
 **FT387 (MEDIUM) — a verified harness path preserves complete tool output before it returns a bounded replacement.**
 
 **FT388 (LOW) — the session-context-efficiency coordinator closes when its overflow child lands.**
@@ -312,7 +310,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT391
-2. FT376
-3. FT373
-4. FT349
+1. FT376
+2. FT373
+3. FT349

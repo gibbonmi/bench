@@ -47,7 +47,7 @@ func (store Store) admitPublication(ledger intent.Ledger, source Publication, tr
 		if source.Deliverable != "" {
 			delivery = &Delivery{Spec: source.Deliverable, Source: source.Source}
 		}
-		return store.authorizeCandidate(ledger, owner, tree, delivery)
+		return store.authorizeCandidate(ledger, owner, tree, delivery, true)
 	}
 	return fmt.Errorf("publication assignment %q is not active with its presented request and worktree; run bench worktree create", source.Assignment)
 }

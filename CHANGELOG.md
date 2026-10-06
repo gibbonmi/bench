@@ -10,7 +10,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Added `bench commitment` and the tracked `.bench/commitment.json` delivery commitment. Delivery starts only for the eligible committed outcome, and only an approved plan changes the committed work.
 - Added the commitment outlook to `bench status`, `bench roadmap`, and `bench dashboard`. Each reader names the next eligible outcome, each blocked outcome, and the next command.
-- Changed `/bench-drain` so that drained work stays uncommitted intake. The drain no longer builds a light-path item by default, and it no longer ranks or rewrites the recommended sequence.
+- Changed `/bench-drain` so that drained work that needs a spec stays uncommitted intake. The drain no longer builds a light-path item in its own session, and it no longer ranks or rewrites the recommended sequence.
+- Changed `bench commit` and `bench worktree land` so that a light-path change needs no commitment. The change carries one tickets-only folder with exactly one ticket, its production paths stay inside that ticket's `Writes:` line, and it lands with that folder as `--spec`. `/bench-drain` dispatches each kept light-path fix to a fresh write delegate, whatever the active commitment is.
 - Changed `/bench-final-check` so that it reports the roadmap closure of a verified delivery landing instead of leaving that closure to a later drain.
 
 ### Comment-only evidence

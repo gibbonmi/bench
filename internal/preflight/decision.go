@@ -332,8 +332,7 @@ func authorizingEntries(f Facts) []string {
 
 // specFolder is the directory containing the resolved spec, empty when the
 // spec path carries no directory at all. The result is an ordinary fence
-// entry, so the segment-boundary rule below is the one that grades it,
-// never a second prefix rule.
+// entry, so tickets.Covers grades it, never a second prefix rule.
 func specFolder(specPath string) string {
 	i := strings.LastIndex(specPath, "/")
 	if i < 0 {
@@ -342,38 +341,16 @@ func specFolder(specPath string) string {
 	return specPath[:i]
 }
 
-// fenceAuthorizes reports whether path is covered by one of the spec's
-// declared fence entries: an exact match, or a `/`-separated prefix.
-// `internal/git` never authorizes `internal/git2`, only `internal/git`
-// itself or anything under `internal/git/`.
-//
-// A fence entry conventionally spelled with its own trailing slash (a
-// directory marker, e.g. `internal/preflight/`) takes the one `Writes:`
-// split, so the trailing slash is never itself an extra path segment.
+// fenceAuthorizes reports whether one of the spec's declared fence entries
+// covers path. Each fence entry takes the one `Writes:` split, so a trailing
+// directory slash is never itself an extra path segment.
 func fenceAuthorizes(path string, fences []string) bool {
 	for _, fence := range fences {
-		if entry, _ := splitWritesEntry(fence); pathCovered(path, []string{entry}) {
+		if entry, _ := tickets.WritesPath(fence); tickets.Covers(entry, path) {
 			return true
 		}
 	}
 	return false
-}
-
-// newMarker declares a `Writes:` entry as a path the ticket creates. An entry
-// carrying it is green whether or not the tree already holds the path, because
-// a blocker ticket may land the file first.
-const newMarker = "(new)"
-
-// splitWritesEntry separates one `Writes:` entry into the tree path it names
-// and whether it carries the (new) marker. A trailing `/` is a directory spelling,
-// not a path segment, so the split drops it. The gatherer's probes, the closures,
-// and the writes-resolve row read this one split, so no two of them can disagree.
-func splitWritesEntry(entry string) (path string, isNew bool) {
-	path = strings.TrimSpace(entry)
-	if isNew = strings.HasSuffix(path, newMarker); isNew {
-		path = strings.TrimSpace(strings.TrimSuffix(path, newMarker))
-	}
-	return strings.TrimSuffix(path, "/"), isNew
 }
 
 // ticketsParseCheck reports the ticket grammar itself: an absent required
@@ -403,7 +380,7 @@ func writesResolveCheck(f Facts) CheckResult {
 	seen := map[string]bool{}
 	for _, ticket := range f.Tickets {
 		for _, entry := range ticket.Writes {
-			path, isNew := splitWritesEntry(entry)
+			path, isNew := tickets.WritesPath(entry)
 			if isNew {
 				continue
 			}

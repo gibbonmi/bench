@@ -11,8 +11,8 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
-// specsDir is the one parent every spec folder is a direct child of.
-const specsDir = "specs"
+// SpecsDir is the one parent every spec folder is a direct child of.
+const SpecsDir = "specs"
 
 // TreeReader answers the two questions the tickets-only rule asks of one spec folder,
 // over whichever tree the caller reads: the working tree on the first run, or the source
@@ -87,13 +87,13 @@ func TicketsOnlyFolder(root, name string) bool {
 // The function takes the name verbatim, so spaces and glob characters in a folder
 // name resolve to that folder, not to a pattern.
 func TicketsOnlyFolderPath(root, name string) string {
-	return filepath.Join(root, specsDir, name)
+	return filepath.Join(root, SpecsDir, name)
 }
 
 // TicketsOnlyFolders returns every tickets-only slug under root's specs/, sorted. An
 // absent specs/ directory is an empty result, not a failure.
 func TicketsOnlyFolders(root string) ([]string, error) {
-	entries, err := os.ReadDir(filepath.Join(root, specsDir))
+	entries, err := os.ReadDir(filepath.Join(root, SpecsDir))
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
@@ -114,5 +114,5 @@ func TicketsOnlyFolders(root string) ([]string, error) {
 // reviewed landing's close consumes. Every caller names the folder through this one
 // spelling.
 func ClosedFolderPath(name string) string {
-	return specsDir + "/" + name
+	return SpecsDir + "/" + name
 }
