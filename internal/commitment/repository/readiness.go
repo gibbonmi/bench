@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -78,8 +79,12 @@ func (store Store) readyFor(ledger intent.Ledger, owner intent.Assignment, deliv
 		}
 		return nil
 	}
-	return fmt.Errorf("assignment has no current delivery binding; run bench commitment start --outcome <id> --request <request> --deliverable <path>")
+	return errUnbound
 }
+
+// errUnbound is the binding fault of readyFor: owner holds no current delivery binding.
+// Only this fault lets a commit grade its candidate as light-path work.
+var errUnbound = errors.New("assignment has no current delivery binding; run bench commitment start --outcome <id> --request <request> --deliverable <path>")
 
 // Inheritance checks the source assignment before a sibling acquires its worktree.
 func (store Store) Inheritance(assignment string) (*intent.DeliveryBinding, error) {

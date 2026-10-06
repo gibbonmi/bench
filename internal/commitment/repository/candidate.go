@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -92,7 +93,13 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 		}
 		return nil
 	}
-	return store.readyFor(ledger, owner, "", "")
+	// Each guard above already decided, so a light-path ticket waives only the binding. A
+	// publication that names a deliverable keeps the binding refusal.
+	err = store.readyFor(ledger, owner, "", "")
+	if delivery != nil || !errors.Is(err, errUnbound) {
+		return err
+	}
+	return store.lightPath(tree, current, production, err)
 }
 
 func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *commitment.Policy, revision string) error {

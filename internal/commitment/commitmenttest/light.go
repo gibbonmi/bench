@@ -3,6 +3,7 @@ package commitmenttest
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment"
@@ -22,8 +23,27 @@ const TicketsFolder = "specs/" + TicketsSlug
 func WriteTickets(t testing.TB, root string) string {
 	t.Helper()
 	Write(t, root, TicketsFolder+"/tickets/one.md", "Light path ticket.\n")
-	gittest.Output(t, root, "add", "--", TicketsFolder)
-	return commitrepo.TreeIdentity(gittest.Output(t, root, "write-tree", "--prefix="+TicketsFolder+"/"))
+	return FolderIdentity(t, root, TicketsFolder)
+}
+
+// FolderIdentity stages the tickets-only folder below root and returns the identity that
+// approves it: the folder's Git tree.
+func FolderIdentity(t testing.TB, root, folder string) string {
+	t.Helper()
+	gittest.Output(t, root, "add", "--", folder)
+	return commitrepo.TreeIdentity(gittest.Output(t, root, "write-tree", "--prefix="+folder+"/"))
+}
+
+// WriteLightTicket writes one grammatical ticket at path below root whose Writes line
+// lists writes. With no writes entry, the ticket has no Writes line, which is a grammar
+// fault. The caller commits.
+func WriteLightTicket(t testing.TB, root, path string, writes ...string) {
+	t.Helper()
+	body := "# Light-path fix\n\nBlocked by: none\n"
+	if len(writes) > 0 {
+		body += "Writes: " + strings.Join(writes, ", ") + "\n"
+	}
+	Write(t, root, path, body+"Covers: LP1\n\n## What to build\n\nFix the defect.\n\n## Acceptance\n\n- [ ] The defect is fixed.\n")
 }
 
 // RemoveTickets deletes the tickets-only folder that WriteTickets wrote below root and

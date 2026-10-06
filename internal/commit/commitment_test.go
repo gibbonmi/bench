@@ -217,6 +217,26 @@ func TestCommitmentCommitBeforeEffects(t *testing.T) {
 	}
 }
 
+// An unbound commit lands a production path inside the Writes line of its one light-path
+// ticket. A path outside that line refuses with the path, the ticket, and the start route.
+func TestCommitmentLightPathCommit(t *testing.T) {
+	root := planningCommitRepo(t)
+	const ticket = "specs/lp/tickets/one.md"
+	commitmenttest.WriteLightTicket(t, root, ticket, "change.go")
+	commitmenttest.Commit(t, root, "light-path ticket")
+	commitmenttest.Write(t, root, "change.go", "package example\n")
+	if code, out, errOut := runCommand(t, root, "-m", "light-path change", "--", "change.go"); code != 0 {
+		t.Fatalf("covered light-path commit = %d %s %s", code, out, errOut)
+	}
+	commitmenttest.Write(t, root, "other.go", "package example\n")
+	errOut := refuseCommit(t, root, "other.go")
+	for _, want := range []string{`"other.go"`, `"` + ticket + `"`, "bench commitment start"} {
+		if !strings.Contains(errOut, want) {
+			t.Fatalf("uncovered light-path commit stderr = %q, want %q", errOut, want)
+		}
+	}
+}
+
 func TestCommitmentPlanningOccurrence(t *testing.T) {
 	root := planningCommitRepo(t)
 	path := "roadmap/FT1.md"
