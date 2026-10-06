@@ -10,9 +10,9 @@
     {
       "id": "GT-C1",
       "base": "f7ef3cee4ed28920a16168ea6e900ce7c6e71af7",
-      "tip": "102144309646bffeba2b48b1168b4ce83341df76",
-      "plan_digest": "sha256:1b0cc417b91dfb0abeb241102024cfed076c5e5d4ead195f5d96e11b1f206846",
-      "source_digest": "034738cb6dce355d365eeb057f37f3bb1ebc7bca",
+      "tip": "cbf88bfb1b7c246f8be0f5a71202dd504a126ab1",
+      "plan_digest": "sha256:09dd264bc7810caa74745505ed5559bb38178dd4f7b327f44fc416a5395b3881",
+      "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
       "acceptance_rows": [
         "GT1",
         "GT2",
@@ -32,7 +32,9 @@
         "GT16",
         "GT17",
         "GT18",
-        "GT19"
+        "GT19",
+        "GT20",
+        "GT21"
       ],
       "verification": [
         {
@@ -232,6 +234,107 @@
             "ref": "claude-agent:ft376_t1",
             "digest": "sha256:ae37369aed739c1281b0a0feab6e811de11f3aa25948f8b6780c5dffc64985a9",
             "excerpt": "$ bench test --check docs-currency-workflow\ntree: FT376-build,102144309646bffeba2b48b1168b4ce83341df76\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,1459\nfailures[0]{package,test,line}:\nexit code 0\n"
+          },
+          "requirement": "t1-docs-currency-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-anchors-r1",
+          "performer": "claude:ft376_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft376_t1_r1",
+            "digest": "sha256:a1d73489bdb6a4d849ea7110d2e0b7425c825b48ccef5704938af411f55cd41c",
+            "excerpt": "bench test --package ./internal/anchors @ cbf88bfb\ngithub.com/gibbonmi/bench/internal/anchors,pass,1056\nfailures[0]\n"
+          },
+          "requirement": "t1-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-fixture-bites-r1",
+          "performer": "claude:ft376_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft376_t1_r1",
+            "digest": "sha256:426e981c8a38b9f39cce253bd48e5a0ea36e7a9129c9d9d41ff39abd8ee625f9",
+            "excerpt": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner @ cbf88bfb\ngithub.com/gibbonmi/bench/internal/conformance,pass,15922\nfailures[0]\nprobe N3 (needle shortened to \"`Derived expectations` names\"): verdict bit, restored yes; probed go test exit 1\nTestEveryRetainedFixtureBitesThroughRegisteredOwner/map-discipline-derived-grader: did not bite through owner docs-currency-workflow; want \"map discipline: the pre-review checklist names the grader of each derived expectation\"\n"
+          },
+          "requirement": "t1-fixture-bites",
+          "command": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Run the nine needle probes that the ticket's Acceptance names, one at a time: shorten that needle in specTraceAnchors as stated. TestEveryRetainedFixtureBitesThroughRegisteredOwner must fail on the named canary, TestSpecGraderTraceAnchors must stay green, and each restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft376_t1_r1",
+              "digest": "sha256:426e981c8a38b9f39cce253bd48e5a0ea36e7a9129c9d9d41ff39abd8ee625f9",
+              "excerpt": "bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner @ cbf88bfb\ngithub.com/gibbonmi/bench/internal/conformance,pass,15922\nfailures[0]\nprobe N3 (needle shortened to \"`Derived expectations` names\"): verdict bit, restored yes; probed go test exit 1\nTestEveryRetainedFixtureBitesThroughRegisteredOwner/map-discipline-derived-grader: did not bite through owner docs-currency-workflow; want \"map discipline: the pre-review checklist names the grader of each derived expectation\"\n"
+            }
+          }
+        },
+        {
+          "id": "t1-conformance-r1",
+          "performer": "claude:ft376_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft376_t1_r1",
+            "digest": "sha256:c100dab86d0d8ff99d0e795e3f10ee3e0c568bf6771778dd452ccc310abc87e2",
+            "excerpt": "bench test --package ./internal/conformance @ cbf88bfb\ngithub.com/gibbonmi/bench/internal/conformance,pass,40540\nfailures[0]\nskips[3]: capability skips (unix sockets, character device unavailable on this filesystem)\n"
+          },
+          "requirement": "t1-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-canary-fixture-compliance-r1",
+          "performer": "claude:ft376_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft376_t1_r1",
+            "digest": "sha256:bf8d1308910c5f49e8aa99baacadc3a7763cf66aafa1467847468277d6c4a008",
+            "excerpt": "bench test --check canary-fixture-compliance @ cbf88bfb\ngithub.com/gibbonmi/bench/internal/conformance,pass,4\nfailures[0]\n"
+          },
+          "requirement": "t1-canary-fixture-compliance",
+          "command": "bench test --check canary-fixture-compliance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-docs-currency-workflow-r1",
+          "performer": "claude:ft376_t1_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft376_t1_r1",
+            "digest": "sha256:9ab8112674262925e7a5c5e57b29f6bd78837062527ea64068950a93ad59e136",
+            "excerpt": "bench test --check docs-currency-workflow @ cbf88bfb\ngithub.com/gibbonmi/bench/internal/conformance,pass,1348\nfailures[0]\n"
           },
           "requirement": "t1-docs-currency-workflow",
           "command": "bench test --check docs-currency-workflow",
