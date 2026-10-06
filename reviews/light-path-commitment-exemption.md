@@ -117,32 +117,41 @@ Findings: 1. Worst issue: P2.
 
 Findings: 2. Worst issue: C5.
 
-- C5 (`auto-fix`, confidence 8): `internal/commitment/repository/light_path.go:110`.
-  No test pins `--literal-pathspecs`. A folder name can hold a glob
-  character, so a delivery for `l*` can list a sibling folder without the
-  flag.
+- C5 (`no-op`, confidence 8): `internal/commitment/repository/light_path.go:110`.
+  No test pins `--literal-pathspecs`. The axis said that a delivery for `l*`
+  can list a sibling folder without the flag. The repair session and the
+  coordinator refuted this on git 2.43.0. `ls-tree` turns off wildcard
+  matching, so it lists only the literal folder in both cases. No test can
+  make the flag bite.
 - C6 (`no-op`, confidence 7): `internal/commitment/repository/light_path.go:60`.
   A drop of the slug match is silent. With the one-folder scope, the match
   guards only a deliverable that no producer emits.
 
 ### LP-C1 repair cycle 2
 
-A fresh ticket 3 repair session takes S3, S4, and C5. This cycle is the last
-cycle that the bounded repair policy allows for LP-C1.
+Repair cycle 2 of 2 is consumed. A fresh ticket 3 repair session closed S3
+and S4 in commit `7e0804d5`. The light-path reader now reads the root from
+the exported `spec.SpecsDir`. The plan commit corrected spec line 92 for P2.
+The chunk is frozen again at `7e0804d5`.
+
+The repair session found a defect from before this chunk. The commit-tree
+reader runs `git show` on a path with no separator, so a folder name with a
+glob character never qualifies. The failure is closed, and the defect is
+parked as an idea.
 
 ```bench-review-record
 {
   "version": 2,
   "spec": "specs/light-path-commitment-exemption/spec.md",
-  "plan_digest": "sha256:ec4525fc97530b0be25d362a341778ea663b9f15214849522c765ff999535415",
+  "plan_digest": "sha256:584a8ebce19d7359df5f5e38a70c0c11559d108fcd9416917d3a7a4fd3db0eb2",
   "implementation_session": "",
   "chunks": [
     {
       "id": "LP-C1",
       "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
-      "tip": "498b419c05ae0a526356ff307d5018a4857daa6e",
-      "plan_digest": "sha256:ec4525fc97530b0be25d362a341778ea663b9f15214849522c765ff999535415",
-      "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+      "tip": "7e0804d59a4bb518bd6c859d0333ff2ad9ae5d62",
+      "plan_digest": "sha256:584a8ebce19d7359df5f5e38a70c0c11559d108fcd9416917d3a7a4fd3db0eb2",
+      "source_digest": "842e96e36ece273c2f1f37418ada7c2740c217d6",
       "acceptance_rows": [
         "LP27",
         "LP28",
@@ -843,6 +852,15 @@ cycle that the bounded repair policy allows for LP-C1.
     {
       "from": "sha256:ee3082fcb4249624afaa1ed7651a32d840d1a170a5551c067e42c4da56afe988",
       "to": "sha256:ec4525fc97530b0be25d362a341778ea663b9f15214849522c765ff999535415",
+      "chunk_ids": {
+        "LP-C1": [
+          "LP-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ec4525fc97530b0be25d362a341778ea663b9f15214849522c765ff999535415",
+      "to": "sha256:584a8ebce19d7359df5f5e38a70c0c11559d108fcd9416917d3a7a4fd3db0eb2",
       "chunk_ids": {
         "LP-C1": [
           "LP-C1"
