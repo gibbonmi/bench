@@ -466,6 +466,89 @@ axes follows the verification records.
           "requirement": "t2-bench",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "t3-commitment-repository-v2",
+          "performer": "claude:lpce_t3_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3_r1",
+            "digest": "sha256:c0a909acf8ecf050b595a6183626389da2dab98417fb5232a12826ca0f032b5e",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"047f4afd5dffb5b5167092d3602ffdc2503081da\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,4930\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover([]lightPathTicket{ticket}, production)' --with 'return unbound' --package ./internal/commitment/repository --run TestLightPathPublication\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,4,yes\nfailures[4]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-beside-covering-folder,\"light_path_test.go:188: AdmitPublication = assignment has no current delivery binding; ...\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-beside-unreadable-folder,\"light_path_test.go:183: AdmitPublication = assignment has no current delivery binding; ..., want admission\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-names-folder,\"light_path_test.go:183: AdmitPublication = assignment has no current delivery binding; ..., want admission\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-uncovered,\"light_path_test.go:188: AdmitPublication = assignment has no current delivery binding; ...\"\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'store.lightPathTickets(delivery.Source, delivery.Spec, policy)' --with 'store.lightPathTickets(delivery.Source, lightPathRoot, policy)' --package ./internal/commitment/repository --run TestLightPathPublication\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,1,yes\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-beside-unreadable-folder,\"light_path_test.go:183: AdmitPublication = read limit exceeded, want admission\"\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap '<lightPathTickets(delivery.Source, delivery.Spec, policy) ... lightPathCover([]lightPathTicket{ticket}, production)>' --with '<lightPathTickets(delivery.Source, lightPathRoot, policy) ... lightPathCover(found, production)>' --package ./internal/commitment/repository --run 'TestLightPathPublication/delivery-beside-covering-folder'\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,1,yes\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-beside-covering-folder,\"light_path_test.go:188: AdmitPublication = <nil>, want a refusal naming \\\"production path \\\\\\\"change.go\\\\\\\" is outside the Writes line of light-path ticket \\\\\\\"specs/lp/tickets/one.md\\\\\\\"\\\"\"\n"
+          },
+          "requirement": "t3-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In publication mode, return the readyFor refusal unchanged for a delivery that names a qualifying light-path folder. TestLightPathPublication must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:lpce_t3_r1",
+              "digest": "sha256:c0a909acf8ecf050b595a6183626389da2dab98417fb5232a12826ca0f032b5e",
+              "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"047f4afd5dffb5b5167092d3602ffdc2503081da\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,4930\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover([]lightPathTicket{ticket}, production)' --with 'return unbound' --package ./internal/commitment/repository --run TestLightPathPublication\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,4,yes\nfailures[4]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-beside-covering-folder,\"light_path_test.go:188: AdmitPublication = assignment has no current delivery binding; ...\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-beside-unreadable-folder,\"light_path_test.go:183: AdmitPublication = assignment has no current delivery binding; ..., want admission\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-names-folder,\"light_path_test.go:183: AdmitPublication = assignment has no current delivery binding; ..., want admission\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-uncovered,\"light_path_test.go:188: AdmitPublication = assignment has no current delivery binding; ...\"\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'store.lightPathTickets(delivery.Source, delivery.Spec, policy)' --with 'store.lightPathTickets(delivery.Source, lightPathRoot, policy)' --package ./internal/commitment/repository --run TestLightPathPublication\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,1,yes\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-beside-unreadable-folder,\"light_path_test.go:183: AdmitPublication = read limit exceeded, want admission\"\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap '<lightPathTickets(delivery.Source, delivery.Spec, policy) ... lightPathCover([]lightPathTicket{ticket}, production)>' --with '<lightPathTickets(delivery.Source, lightPathRoot, policy) ... lightPathCover(found, production)>' --package ./internal/commitment/repository --run 'TestLightPathPublication/delivery-beside-covering-folder'\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,1,yes\nfailures[1]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathPublication/delivery-beside-covering-folder,\"light_path_test.go:188: AdmitPublication = <nil>, want a refusal naming \\\"production path \\\\\\\"change.go\\\\\\\" is outside the Writes line of light-path ticket \\\\\\\"specs/lp/tickets/one.md\\\\\\\"\\\"\"\n"
+            }
+          }
+        },
+        {
+          "id": "t3-worktree-v2",
+          "performer": "claude:lpce_t3_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3_r1",
+            "digest": "sha256:fdd045a93a2423b66cf6df2af874823d3b8907082fd1fe0f95dc5c335241b647",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/worktree\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"047f4afd5dffb5b5167092d3602ffdc2503081da\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/worktree,pass,73258\nfailures[0]{package,test,line}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "t3-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-conformance-v2",
+          "performer": "claude:lpce_t3_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3_r1",
+            "digest": "sha256:6d2f266395ccea04a31c2e5776c060f48e3ba627f2db17cd2a37f77ea4d53eea",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"047f4afd5dffb5b5167092d3602ffdc2503081da\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,46162\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n"
+          },
+          "requirement": "t3-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-bench-v2",
+          "performer": "claude:lpce_t3_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "67d6860027d37df3f7c531ae690ec428151e5ead",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3_r1",
+            "digest": "sha256:8cc2dab498b72539c2d3a0126d53d3c89483e8276bc54ebc4c42310db7342262",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./cmd/bench\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,\"047f4afd5dffb5b5167092d3602ffdc2503081da\",false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15647\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
