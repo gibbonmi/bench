@@ -61,10 +61,9 @@ call in the same line is still not valid.
 
 Three predicates ride with them:
 
-- If you find a **non-behavioral spec contradiction**, follow the current
-  tree convention and flag it for reviewer veto. If the contradiction is
-  behavioral, ask. In the build-entry staleness pass, the orchestrator decides
-  a behavioral contradiction itself and flags it for reviewer veto.
+- If you find a **non-behavioral spec contradiction**, follow the current tree
+  convention and flag it for reviewer veto. Ask about a behavioral one, except
+  in the build-entry staleness pass, where the orchestrator decides and flags it.
 - If a build cannot meet an acceptance row, that is a **material acceptance
   shortfall**: the build exits and reports. It does not land a silent partial.
 - Under **owned-red convergence**, only diff-owned reds count toward
