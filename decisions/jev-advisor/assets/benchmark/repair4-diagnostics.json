@@ -1,0 +1,19 @@
+{
+  "finding": "SPEC-1",
+  "expected": "Seal the first interrupted task and stop before later adapters.",
+  "actual": {
+    "result": {
+      "trials": 4,
+      "quality": "ungraded",
+      "cost": "use bench assessment with adapter native evidence",
+      "ledger_sha256": "179b2751f7d6ab43da91d006a516e1653888d0c42566b8f4e565f4e0694d7203"
+    },
+    "trial_statuses": [
+      "invalid_write_fence",
+      "invalid_write_fence",
+      "invalid_write_fence",
+      "invalid_write_fence"
+    ]
+  },
+  "paid_calls": 0
+}

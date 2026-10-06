@@ -1,6 +1,9 @@
 # Jev skill-selection benchmark trial
 
-## Recommendation
+This report preserves the 2026-09-26 trial state and its original authority limits.
+The [topic handoff](../session-handoff.md) owns the current continuation; later cycle reports supersede this report for repair status.
+
+## Historical recommendation
 
 Keep the benchmark trial stopped until the reviewer decides on a sixth repair cycle.
 Two paid runs stopped on benchmark defects, not on Jev predictions.

@@ -1,0 +1,48 @@
+{
+  "commit": "2a591c4d2534448a142a1517e0b959d3f777aa77",
+  "outcome": "red",
+  "phase_results": [
+    {
+      "phase": "gofmt",
+      "exit": 0,
+      "elapsed_ms": 248
+    },
+    {
+      "phase": "vet",
+      "exit": 0,
+      "elapsed_ms": 2669
+    },
+    {
+      "phase": "test",
+      "exit": 0,
+      "elapsed_ms": 280122
+    },
+    {
+      "phase": "race",
+      "exit": 0,
+      "elapsed_ms": 3601
+    },
+    {
+      "phase": "system",
+      "exit": 0,
+      "elapsed_ms": 58603
+    },
+    {
+      "phase": "shellcheck",
+      "exit": 0,
+      "elapsed_ms": 108
+    }
+  ],
+  "checkout_guard_changes": [
+    "bin/bench-broker.manifest",
+    "dist/bench",
+    "dist/bench.seal"
+  ],
+  "source_change_by_author_during_run": false,
+  "cause_of_generated_artifact_changes": "unresolved",
+  "raw_evidence": "/home/mgibs/.bench/experiments/jev-research-recovery-20261003/cycle-six/repository-gate",
+  "sha256": {
+    "gate-20261003T104454.111091657Z-2125530.out": "b12ee6bcb8ff386bf7e9c3c2b903e2cae5f9ecb673313e207b41f354d77380f6",
+    "gate-20261003T104454.111091657Z-2125530.jsonl": "d20f23b6c1a1bab7ab876d1e652e198afabc6b4d556d885d568491dd6ebc10c4"
+  }
+}

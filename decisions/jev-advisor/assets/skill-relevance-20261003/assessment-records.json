@@ -1,0 +1,2444 @@
+{
+  "status": "recovered records; original predictions and labels unavailable",
+  "records": [
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-jev-assessment-prototype-mention",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-jev",
+      "task_id": "assessment-prototype-mention",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev"
+      },
+      "started_at": "2026-09-20T15:24:55.53029Z",
+      "ended_at": "2026-09-20T15:24:55.939623Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 5652,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 304,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev/usage"
+              }
+            },
+            "published_input_price_estimate_usd": {
+              "value": 0.00023738400000000002,
+              "reference": {
+                "producer": "Published TypeSafe rate times reported request input",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev/usage + https://docs.typesafe.ai/models.md retrieved 2026-09-20"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 0.409,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "jev-skill-v3-20260920-jev-assessment-prototype-mention",
+          "model": "jev-1.13.0",
+          "effort": "not-applicable",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev"
+          },
+          "started_at": "2026-09-20T15:24:55.53029Z",
+          "ended_at": "2026-09-20T15:24:55.939623Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "jev-skill-v3-20260920-jev-assessment-prototype-mention",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev/usage"
+              },
+              "usage": {
+                "unknown": [
+                  "Provider did not expose an input cache split."
+                ],
+                "output": 304,
+                "input_total": 5652,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#jev"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "accepted_negative_required": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#assessment-prototype-mention"
+          }
+        },
+        "accepted_positive_clear_extra": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#assessment-prototype-mention"
+          }
+        },
+        "uncertain_candidates": {
+          "value": 1,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#assessment-prototype-mention"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-jev-cache-fact-no-add",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-jev",
+      "task_id": "cache-fact-no-add",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev"
+      },
+      "started_at": "2026-09-20T15:23:35.05505Z",
+      "ended_at": "2026-09-20T15:23:35.473314Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 5678,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 304,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev/usage"
+              }
+            },
+            "published_input_price_estimate_usd": {
+              "value": 0.00023847600000000003,
+              "reference": {
+                "producer": "Published TypeSafe rate times reported request input",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev/usage + https://docs.typesafe.ai/models.md retrieved 2026-09-20"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 0.418,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "jev-skill-v3-20260920-jev-cache-fact-no-add",
+          "model": "jev-1.13.0",
+          "effort": "not-applicable",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev"
+          },
+          "started_at": "2026-09-20T15:23:35.05505Z",
+          "ended_at": "2026-09-20T15:23:35.473314Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "jev-skill-v3-20260920-jev-cache-fact-no-add",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev/usage"
+              },
+              "usage": {
+                "unknown": [
+                  "Provider did not expose an input cache split."
+                ],
+                "output": 304,
+                "input_total": 5678,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#jev"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "accepted_negative_required": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#cache-fact-no-add"
+          }
+        },
+        "accepted_positive_clear_extra": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#cache-fact-no-add"
+          }
+        },
+        "uncertain_candidates": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#cache-fact-no-add"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-jev-coverage-review-neighbor-triggers",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-jev",
+      "task_id": "coverage-review-neighbor-triggers",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev"
+      },
+      "started_at": "2026-09-20T15:25:52.030589Z",
+      "ended_at": "2026-09-20T15:25:52.446801Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 5060,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 270,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev/usage"
+              }
+            },
+            "published_input_price_estimate_usd": {
+              "value": 0.00021252,
+              "reference": {
+                "producer": "Published TypeSafe rate times reported request input",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev/usage + https://docs.typesafe.ai/models.md retrieved 2026-09-20"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 0.416,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "jev-skill-v3-20260920-jev-coverage-review-neighbor-triggers",
+          "model": "jev-1.13.0",
+          "effort": "not-applicable",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev"
+          },
+          "started_at": "2026-09-20T15:25:52.030589Z",
+          "ended_at": "2026-09-20T15:25:52.446801Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "jev-skill-v3-20260920-jev-coverage-review-neighbor-triggers",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev/usage"
+              },
+              "usage": {
+                "unknown": [
+                  "Provider did not expose an input cache split."
+                ],
+                "output": 270,
+                "input_total": 5060,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#jev"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "accepted_negative_required": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#coverage-review-neighbor-triggers"
+          }
+        },
+        "accepted_positive_clear_extra": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#coverage-review-neighbor-triggers"
+          }
+        },
+        "uncertain_candidates": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#coverage-review-neighbor-triggers"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-jev-final-check-approved-gate-action",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-jev",
+      "task_id": "final-check-approved-gate-action",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev"
+      },
+      "started_at": "2026-09-20T15:25:16.40954Z",
+      "ended_at": "2026-09-20T15:25:16.788547Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 4838,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 252,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev/usage"
+              }
+            },
+            "published_input_price_estimate_usd": {
+              "value": 0.00020319600000000002,
+              "reference": {
+                "producer": "Published TypeSafe rate times reported request input",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev/usage + https://docs.typesafe.ai/models.md retrieved 2026-09-20"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 0.379,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "jev-skill-v3-20260920-jev-final-check-approved-gate-action",
+          "model": "jev-1.13.0",
+          "effort": "not-applicable",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev"
+          },
+          "started_at": "2026-09-20T15:25:16.40954Z",
+          "ended_at": "2026-09-20T15:25:16.788547Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "jev-skill-v3-20260920-jev-final-check-approved-gate-action",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev/usage"
+              },
+              "usage": {
+                "unknown": [
+                  "Provider did not expose an input cache split."
+                ],
+                "output": 252,
+                "input_total": 4838,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#jev"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "accepted_negative_required": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#final-check-approved-gate-action"
+          }
+        },
+        "accepted_positive_clear_extra": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#final-check-approved-gate-action"
+          }
+        },
+        "uncertain_candidates": {
+          "value": 2,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#final-check-approved-gate-action"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-jev-fresh-consumers-dir-files",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-jev",
+      "task_id": "fresh-consumers-dir-files",
+      "holdout": true,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev"
+      },
+      "started_at": "2026-09-20T15:36:57.908256Z",
+      "ended_at": "2026-09-20T15:36:58.318519Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 4810,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 251,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev/usage"
+              }
+            },
+            "published_input_price_estimate_usd": {
+              "value": 0.00020202000000000002,
+              "reference": {
+                "producer": "Published TypeSafe rate times reported request input",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev/usage + https://docs.typesafe.ai/models.md retrieved 2026-09-20"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 0.41,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "jev-skill-v3-20260920-jev-fresh-consumers-dir-files",
+          "model": "jev-1.13.0",
+          "effort": "not-applicable",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev"
+          },
+          "started_at": "2026-09-20T15:36:57.908256Z",
+          "ended_at": "2026-09-20T15:36:58.318519Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "jev-skill-v3-20260920-jev-fresh-consumers-dir-files",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev/usage"
+              },
+              "usage": {
+                "unknown": [
+                  "Provider did not expose an input cache split."
+                ],
+                "output": 251,
+                "input_total": 4810,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#jev"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-manifest.json"
+        }
+      ],
+      "quality": {
+        "accepted_negative_required": {
+          "value": 1,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-consumers-dir-files"
+          }
+        },
+        "accepted_positive_clear_extra": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-consumers-dir-files"
+          }
+        },
+        "uncertain_candidates": {
+          "value": 2,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-consumers-dir-files"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-jev-fresh-prep-release-inventory",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-jev",
+      "task_id": "fresh-prep-release-inventory",
+      "holdout": true,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev"
+      },
+      "started_at": "2026-09-20T15:37:41.493894Z",
+      "ended_at": "2026-09-20T15:37:41.898366Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 5645,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 304,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev/usage"
+              }
+            },
+            "published_input_price_estimate_usd": {
+              "value": 0.00023709,
+              "reference": {
+                "producer": "Published TypeSafe rate times reported request input",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev/usage + https://docs.typesafe.ai/models.md retrieved 2026-09-20"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 0.404,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "jev-skill-v3-20260920-jev-fresh-prep-release-inventory",
+          "model": "jev-1.13.0",
+          "effort": "not-applicable",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev"
+          },
+          "started_at": "2026-09-20T15:37:41.493894Z",
+          "ended_at": "2026-09-20T15:37:41.898366Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "jev-skill-v3-20260920-jev-fresh-prep-release-inventory",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev/usage"
+              },
+              "usage": {
+                "unknown": [
+                  "Provider did not expose an input cache split."
+                ],
+                "output": 304,
+                "input_total": 5645,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#jev"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-manifest.json"
+        }
+      ],
+      "quality": {
+        "accepted_negative_required": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-prep-release-inventory"
+          }
+        },
+        "accepted_positive_clear_extra": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-prep-release-inventory"
+          }
+        },
+        "uncertain_candidates": {
+          "value": 1,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-prep-release-inventory"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-jev-fresh-skill-index-preview-spec",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-jev",
+      "task_id": "fresh-skill-index-preview-spec",
+      "holdout": true,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev"
+      },
+      "started_at": "2026-09-20T15:36:13.525816Z",
+      "ended_at": "2026-09-20T15:36:13.959325Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 4523,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 232,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev/usage"
+              }
+            },
+            "published_input_price_estimate_usd": {
+              "value": 0.00018996600000000002,
+              "reference": {
+                "producer": "Published TypeSafe rate times reported request input",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev/usage + https://docs.typesafe.ai/models.md retrieved 2026-09-20"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 0.434,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "jev-skill-v3-20260920-jev-fresh-skill-index-preview-spec",
+          "model": "jev-1.13.0",
+          "effort": "not-applicable",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev"
+          },
+          "started_at": "2026-09-20T15:36:13.525816Z",
+          "ended_at": "2026-09-20T15:36:13.959325Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "jev-skill-v3-20260920-jev-fresh-skill-index-preview-spec",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev/usage"
+              },
+              "usage": {
+                "unknown": [
+                  "Provider did not expose an input cache split."
+                ],
+                "output": 232,
+                "input_total": 4523,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#jev"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-manifest.json"
+        }
+      ],
+      "quality": {
+        "accepted_negative_required": {
+          "value": 1,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-skill-index-preview-spec"
+          }
+        },
+        "accepted_positive_clear_extra": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-skill-index-preview-spec"
+          }
+        },
+        "uncertain_candidates": {
+          "value": 3,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-skill-index-preview-spec"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-jev-handoff-explicit-domain-preservation",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-jev",
+      "task_id": "handoff-explicit-domain-preservation",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev"
+      },
+      "started_at": "2026-09-20T15:25:33.893279Z",
+      "ended_at": "2026-09-20T15:25:34.312067Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 5646,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 306,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev/usage"
+              }
+            },
+            "published_input_price_estimate_usd": {
+              "value": 0.000237132,
+              "reference": {
+                "producer": "Published TypeSafe rate times reported request input",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev/usage + https://docs.typesafe.ai/models.md retrieved 2026-09-20"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 0.419,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "jev-skill-v3-20260920-jev-handoff-explicit-domain-preservation",
+          "model": "jev-1.13.0",
+          "effort": "not-applicable",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev"
+          },
+          "started_at": "2026-09-20T15:25:33.893279Z",
+          "ended_at": "2026-09-20T15:25:34.312067Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "jev-skill-v3-20260920-jev-handoff-explicit-domain-preservation",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev/usage"
+              },
+              "usage": {
+                "unknown": [
+                  "Provider did not expose an input cache split."
+                ],
+                "output": 306,
+                "input_total": 5646,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#jev"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "accepted_negative_required": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#handoff-explicit-domain-preservation"
+          }
+        },
+        "accepted_positive_clear_extra": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#handoff-explicit-domain-preservation"
+          }
+        },
+        "uncertain_candidates": {
+          "value": 1,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#handoff-explicit-domain-preservation"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-jev-roadmap-flow-spec-multiple",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-jev",
+      "task_id": "roadmap-flow-spec-multiple",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev"
+      },
+      "started_at": "2026-09-20T15:24:19.330925Z",
+      "ended_at": "2026-09-20T15:24:19.789996Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 4219,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 217,
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev/usage"
+              }
+            },
+            "published_input_price_estimate_usd": {
+              "value": 0.00017719800000000002,
+              "reference": {
+                "producer": "Published TypeSafe rate times reported request input",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev/usage + https://docs.typesafe.ai/models.md retrieved 2026-09-20"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 0.459,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "jev-skill-v3-20260920-jev-roadmap-flow-spec-multiple",
+          "model": "jev-1.13.0",
+          "effort": "not-applicable",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev"
+          },
+          "started_at": "2026-09-20T15:24:19.330925Z",
+          "ended_at": "2026-09-20T15:24:19.789996Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "jev-skill-v3-20260920-jev-roadmap-flow-spec-multiple",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "TypeSafe HTTP API",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev/usage"
+              },
+              "usage": {
+                "unknown": [
+                  "Provider did not expose an input cache split."
+                ],
+                "output": 217,
+                "input_total": 4219,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#jev"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "accepted_negative_required": {
+          "value": 1,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#roadmap-flow-spec-multiple"
+          }
+        },
+        "accepted_positive_clear_extra": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#roadmap-flow-spec-multiple"
+          }
+        },
+        "uncertain_candidates": {
+          "value": 2,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#roadmap-flow-spec-multiple"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-native-assessment-prototype-mention",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-native",
+      "task_id": "assessment-prototype-mention",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#native"
+      },
+      "started_at": "2026-09-20T15:24:55.940407Z",
+      "ended_at": "2026-09-20T15:25:16.367799Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 19497,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#native/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 416,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#native/usage"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 18.57,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#native"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "01a0bf6b-a062-7f72-95eb-f7d2260d5269",
+          "model": "gpt-6-astra",
+          "effort": "xhigh",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#native"
+          },
+          "started_at": "2026-09-20T15:24:55.940407Z",
+          "ended_at": "2026-09-20T15:25:16.367799Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "01a0bf6b-a062-7f72-95eb-f7d2260d5269",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#native/usage"
+              },
+              "usage": {
+                "input_cached": 0,
+                "output": 416,
+                "input_total": 19497,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#native/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#native"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/assessment-prototype-mention-result.json#native"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "clear_extra_selections": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#assessment-prototype-mention"
+          }
+        },
+        "required_misses": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#assessment-prototype-mention"
+          }
+        },
+        "selected_disputed_labels": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#assessment-prototype-mention"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-native-cache-fact-no-add",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-native",
+      "task_id": "cache-fact-no-add",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#native"
+      },
+      "started_at": "2026-09-20T15:23:35.474075Z",
+      "ended_at": "2026-09-20T15:23:50.116456Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 19521,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#native/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 162,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#native/usage"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 14.642,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#native"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "01a0bf6a-6571-7c02-91f7-82ed698581e0",
+          "model": "gpt-6-astra",
+          "effort": "xhigh",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#native"
+          },
+          "started_at": "2026-09-20T15:23:35.474075Z",
+          "ended_at": "2026-09-20T15:23:50.116456Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "01a0bf6a-6571-7c02-91f7-82ed698581e0",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#native/usage"
+              },
+              "usage": {
+                "input_cached": 0,
+                "output": 162,
+                "input_total": 19521,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#native/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#native"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/cache-fact-no-add-result.json#native"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "clear_extra_selections": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#cache-fact-no-add"
+          }
+        },
+        "required_misses": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#cache-fact-no-add"
+          }
+        },
+        "selected_disputed_labels": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#cache-fact-no-add"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-native-coverage-review-neighbor-triggers",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-native",
+      "task_id": "coverage-review-neighbor-triggers",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#native"
+      },
+      "started_at": "2026-09-20T15:25:52.447471Z",
+      "ended_at": "2026-09-20T15:26:08.709607Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 18921,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#native/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 316,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#native/usage"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 16.262,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#native"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "01a0bf6c-7aa1-7bb3-bb0a-0e602c408eaf",
+          "model": "gpt-6-astra",
+          "effort": "xhigh",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#native"
+          },
+          "started_at": "2026-09-20T15:25:52.447471Z",
+          "ended_at": "2026-09-20T15:26:08.709607Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "01a0bf6c-7aa1-7bb3-bb0a-0e602c408eaf",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#native/usage"
+              },
+              "usage": {
+                "input_cached": 0,
+                "output": 316,
+                "input_total": 18921,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#native/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#native"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/coverage-review-neighbor-triggers-result.json#native"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "clear_extra_selections": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#coverage-review-neighbor-triggers"
+          }
+        },
+        "required_misses": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#coverage-review-neighbor-triggers"
+          }
+        },
+        "selected_disputed_labels": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#coverage-review-neighbor-triggers"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-native-final-check-approved-gate-action",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-native",
+      "task_id": "final-check-approved-gate-action",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#native"
+      },
+      "started_at": "2026-09-20T15:25:16.789112Z",
+      "ended_at": "2026-09-20T15:25:33.849757Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 18705,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#native/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 350,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#native/usage"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 17.061,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#native"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "01a0bf6b-efa7-7c01-bb10-8cf5a1b74446",
+          "model": "gpt-6-astra",
+          "effort": "xhigh",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#native"
+          },
+          "started_at": "2026-09-20T15:25:16.789112Z",
+          "ended_at": "2026-09-20T15:25:33.849757Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "01a0bf6b-efa7-7c01-bb10-8cf5a1b74446",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#native/usage"
+              },
+              "usage": {
+                "input_cached": 0,
+                "output": 350,
+                "input_total": 18705,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#native/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#native"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/final-check-approved-gate-action-result.json#native"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "clear_extra_selections": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#final-check-approved-gate-action"
+          }
+        },
+        "required_misses": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#final-check-approved-gate-action"
+          }
+        },
+        "selected_disputed_labels": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#final-check-approved-gate-action"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-native-fresh-consumers-dir-files",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-native",
+      "task_id": "fresh-consumers-dir-files",
+      "holdout": true,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#native"
+      },
+      "started_at": "2026-09-20T15:36:58.31907Z",
+      "ended_at": "2026-09-20T15:37:13.595088Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 18676,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#native/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 227,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#native/usage"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 13.426,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#native"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "01a0bf76-a533-78c1-a25c-a99d6f90a8c0",
+          "model": "gpt-6-astra",
+          "effort": "xhigh",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#native"
+          },
+          "started_at": "2026-09-20T15:36:58.31907Z",
+          "ended_at": "2026-09-20T15:37:13.595088Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "01a0bf76-a533-78c1-a25c-a99d6f90a8c0",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#native/usage"
+              },
+              "usage": {
+                "input_cached": 0,
+                "output": 227,
+                "input_total": 18676,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#native/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#native"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-consumers-dir-files-result.json#native"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-manifest.json"
+        }
+      ],
+      "quality": {
+        "clear_extra_selections": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-consumers-dir-files"
+          }
+        },
+        "required_misses": {
+          "value": 1,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-consumers-dir-files"
+          }
+        },
+        "selected_disputed_labels": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-consumers-dir-files"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-native-fresh-prep-release-inventory",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-native",
+      "task_id": "fresh-prep-release-inventory",
+      "holdout": true,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#native"
+      },
+      "started_at": "2026-09-20T15:37:41.898905Z",
+      "ended_at": "2026-09-20T15:37:53.688472Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 19488,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#native/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 173,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#native/usage"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 11.79,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#native"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "01a0bf77-4f5a-7c93-a68e-18d0121e3174",
+          "model": "gpt-6-astra",
+          "effort": "xhigh",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#native"
+          },
+          "started_at": "2026-09-20T15:37:41.898905Z",
+          "ended_at": "2026-09-20T15:37:53.688472Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "01a0bf77-4f5a-7c93-a68e-18d0121e3174",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#native/usage"
+              },
+              "usage": {
+                "input_cached": 0,
+                "output": 173,
+                "input_total": 19488,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#native/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#native"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-prep-release-inventory-result.json#native"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-manifest.json"
+        }
+      ],
+      "quality": {
+        "clear_extra_selections": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-prep-release-inventory"
+          }
+        },
+        "required_misses": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-prep-release-inventory"
+          }
+        },
+        "selected_disputed_labels": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-prep-release-inventory"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-native-fresh-skill-index-preview-spec",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-native",
+      "task_id": "fresh-skill-index-preview-spec",
+      "holdout": true,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#native"
+      },
+      "started_at": "2026-09-20T15:36:13.959863Z",
+      "ended_at": "2026-09-20T15:36:37.976368Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 18388,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#native/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 414,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#native/usage"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 22.18,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#native"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "01a0bf75-f893-7712-a4a2-c73d9ea58c95",
+          "model": "gpt-6-astra",
+          "effort": "xhigh",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#native"
+          },
+          "started_at": "2026-09-20T15:36:13.959863Z",
+          "ended_at": "2026-09-20T15:36:37.976368Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "01a0bf75-f893-7712-a4a2-c73d9ea58c95",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#native/usage"
+              },
+              "usage": {
+                "input_cached": 0,
+                "output": 414,
+                "input_total": 18388,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#native/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#native"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-skill-index-preview-spec-result.json#native"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/fresh-manifest.json"
+        }
+      ],
+      "quality": {
+        "clear_extra_selections": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-skill-index-preview-spec"
+          }
+        },
+        "required_misses": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-skill-index-preview-spec"
+          }
+        },
+        "selected_disputed_labels": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#fresh-skill-index-preview-spec"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-native-handoff-explicit-domain-preservation",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-native",
+      "task_id": "handoff-explicit-domain-preservation",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#native"
+      },
+      "started_at": "2026-09-20T15:25:34.312621Z",
+      "ended_at": "2026-09-20T15:25:51.989871Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 19396,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#native/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 305,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#native/usage"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 15.806,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#native"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "01a0bf6c-340d-7ed3-9352-d3dc0026dc1b",
+          "model": "gpt-6-astra",
+          "effort": "xhigh",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#native"
+          },
+          "started_at": "2026-09-20T15:25:34.312621Z",
+          "ended_at": "2026-09-20T15:25:51.989871Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "01a0bf6c-340d-7ed3-9352-d3dc0026dc1b",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#native/usage"
+              },
+              "usage": {
+                "input_cached": 0,
+                "output": 305,
+                "input_total": 19396,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#native/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#native"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/handoff-explicit-domain-preservation-result.json#native"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "clear_extra_selections": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#handoff-explicit-domain-preservation"
+          }
+        },
+        "required_misses": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#handoff-explicit-domain-preservation"
+          }
+        },
+        "selected_disputed_labels": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#handoff-explicit-domain-preservation"
+          }
+        }
+      }
+    },
+    {
+      "version": 1,
+      "run_id": "jev-skill-v3-20260920-native-roadmap-flow-spec-multiple",
+      "repo_key": "bench-2826441890",
+      "source": "e667581749f23b9d12243ef4c844b6694abf25c6",
+      "condition": "skill-policy-v3-native",
+      "task_id": "roadmap-flow-spec-multiple",
+      "holdout": false,
+      "time_reference": {
+        "producer": "skill-policy-v3 recorder",
+        "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#native"
+      },
+      "started_at": "2026-09-20T15:24:19.790578Z",
+      "ended_at": "2026-09-20T15:24:41.084286Z",
+      "state": "succeeded",
+      "attempts": [
+        {
+          "measures": {
+            "provider_input_tokens": {
+              "value": 18106,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#native/usage"
+              }
+            },
+            "provider_output_tokens": {
+              "value": 414,
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#native/usage"
+              }
+            },
+            "request_wall_seconds": {
+              "value": 19.438,
+              "reference": {
+                "producer": "skill-policy-v3 recorder",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#native"
+              }
+            }
+          },
+          "attempt_id": "request-1",
+          "chunk_id": "selection",
+          "role": "diagnostic",
+          "session_id": "01a0bf6b-1251-7d60-9314-e15fcaf20b07",
+          "model": "gpt-6-astra",
+          "effort": "xhigh",
+          "state": "succeeded",
+          "time_reference": {
+            "producer": "skill-policy-v3 recorder",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#native"
+          },
+          "started_at": "2026-09-20T15:24:19.790578Z",
+          "ended_at": "2026-09-20T15:24:41.084286Z",
+          "usage": [
+            {
+              "event_id": "response-usage",
+              "session_id": "01a0bf6b-1251-7d60-9314-e15fcaf20b07",
+              "epoch": 0,
+              "sequence": 0,
+              "mode": "delta",
+              "counter": "request-token-usage",
+              "reference": {
+                "producer": "Codex exec turn.completed",
+                "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#native/usage"
+              },
+              "usage": {
+                "input_cached": 0,
+                "output": 414,
+                "input_total": 18106,
+                "total_semantics": "inclusive"
+              }
+            }
+          ],
+          "cost": {
+            "actual": [
+              {
+                "kind": "provider",
+                "currency": "USD",
+                "reference": {
+                  "producer": "billing-unavailable",
+                  "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#native/actual_charge"
+                }
+              }
+            ]
+          },
+          "evidence": [
+            {
+              "producer": "skill-policy-v3 recorder",
+              "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#native"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "producer": "skill-policy-v3 recorder",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/roadmap-flow-spec-multiple-result.json#native"
+        },
+        {
+          "producer": "frozen-controlled-case-protocol",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        },
+        {
+          "producer": "case-freeze",
+          "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/manifest.json"
+        }
+      ],
+      "quality": {
+        "clear_extra_selections": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#roadmap-flow-spec-multiple"
+          }
+        },
+        "required_misses": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#roadmap-flow-spec-multiple"
+          }
+        },
+        "selected_disputed_labels": {
+          "value": 0,
+          "reference": {
+            "producer": "frozen-label scorer",
+            "native": "decisions/jev-advisor/assets/skill-policy-v3-20260920/summary.json#roadmap-flow-spec-multiple"
+          }
+        }
+      }
+    }
+  ]
+}
