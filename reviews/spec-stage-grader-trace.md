@@ -409,6 +409,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gtc1-standards-2",
+          "performer": "claude:ft376_gtc1_standards_c1",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft376_gtc1_standards_c1",
+            "digest": "sha256:c53a434df29afb460827c3b7872df6d4529e1ca9674520934ae1514d7f69fa23",
+            "excerpt": "Standards confirming round GT-C1: evidence current at 5e7e805a. S1 confirmed at CHANGELOG.md:11 (sentences of 20, 20, 20, 14 tokens). S2 confirmed at registry_spec_trace_test.go:5. New findings: none.\n"
+          },
+          "axis": "Standards",
+          "base": "f7ef3cee4ed28920a16168ea6e900ce7c6e71af7",
+          "tip": "cbf88bfb1b7c246f8be0f5a71202dd504a126ab1",
+          "finding_ids": [],
+          "supersedes": [
+            "gtc1-standards-1"
+          ]
+        },
+        {
+          "id": "gtc1-spec-2",
+          "performer": "claude:ft376_gtc1_spec_c1",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft376_gtc1_spec_c1",
+            "digest": "sha256:ed3641da3ce894aa83c98ba67b365e86243cc89433c66babe5f859382c172cd8",
+            "excerpt": "Spec confirming round GT-C1: evidence current at 5e7e805a. P1, C1-plan, and C1-repair confirmed byte for byte; GT20 and GT21 met; bench coverage lists 21 rows. New findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "f7ef3cee4ed28920a16168ea6e900ce7c6e71af7",
+          "tip": "cbf88bfb1b7c246f8be0f5a71202dd504a126ab1",
+          "finding_ids": [],
+          "supersedes": [
+            "gtc1-spec-1"
+          ]
+        },
+        {
+          "id": "gtc1-coverage-2",
+          "performer": "claude:ft376_gtc1_coverage_c1",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4affa549a021e86c73a59b637b16e28348224237",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft376_gtc1_coverage_c1",
+            "digest": "sha256:4d116587c402fd579821525b6c69d37dfe365a49cb4c1b9a455a0b34c333c526",
+            "excerpt": "Coverage confirming round GT-C1: evidence current at 5e7e805a. C1 confirmed: the label-only N3 probe now bites on map-discipline-derived-grader; the N3 row omission bites only that canary. Probes: bit, silent, bit; each restored.\nAdvice (no finding): a needle that drops the leading No stays green; no spec row decides that edge.\nC3 refuted: the repair author return enumerates the N4 probe with bit and an exact restore.\n"
+          },
+          "axis": "Coverage",
+          "base": "f7ef3cee4ed28920a16168ea6e900ce7c6e71af7",
+          "tip": "cbf88bfb1b7c246f8be0f5a71202dd504a126ab1",
+          "finding_ids": [],
+          "supersedes": [
+            "gtc1-coverage-1"
+          ]
         }
       ]
     }
