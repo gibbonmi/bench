@@ -691,6 +691,89 @@ parked as an idea.
           "requirement": "t1-conformance",
           "command": "bench test --package ./internal/conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t3-commitment-repository-v3",
+          "performer": "claude:lpce_t3_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "842e96e36ece273c2f1f37418ada7c2740c217d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3_r2",
+            "digest": "sha256:e5164cedde81c101bd5fe2c481098f87ca1a9f65ce6b35a9c59b2235c0608618",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/commitment/repository\nexit: 0\ntree: lpce-integration,9af58f7eb4a06dead8a0ba633ad3db53a2af7fe2,false\ngithub.com/gibbonmi/bench/internal/commitment/repository,pass,4670\nfailures[0]\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/spec\nexit: 0\ngithub.com/gibbonmi/bench/internal/spec,pass,1263\nfailures[0]\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover([]lightPathTicket{ticket}, production)' --with 'return unbound' --package ./internal/commitment/repository --run TestLightPathPublication\nexit: 0\nprobe{verdict,subject,mutation,cause,failed_tests,restored}: bit,internal/commitment/repository/light_path.go,swap,failed,4,yes\nfailed: TestLightPathPublication/delivery-beside-covering-folder, delivery-beside-unreadable-folder, delivery-names-folder, delivery-uncovered\n"
+          },
+          "requirement": "t3-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In publication mode, return the readyFor refusal unchanged for a delivery that names a qualifying light-path folder. TestLightPathPublication must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:lpce_t3_r2",
+              "digest": "sha256:e5164cedde81c101bd5fe2c481098f87ca1a9f65ce6b35a9c59b2235c0608618",
+              "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/commitment/repository\nexit: 0\ntree: lpce-integration,9af58f7eb4a06dead8a0ba633ad3db53a2af7fe2,false\ngithub.com/gibbonmi/bench/internal/commitment/repository,pass,4670\nfailures[0]\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/spec\nexit: 0\ngithub.com/gibbonmi/bench/internal/spec,pass,1263\nfailures[0]\n\n$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover([]lightPathTicket{ticket}, production)' --with 'return unbound' --package ./internal/commitment/repository --run TestLightPathPublication\nexit: 0\nprobe{verdict,subject,mutation,cause,failed_tests,restored}: bit,internal/commitment/repository/light_path.go,swap,failed,4,yes\nfailed: TestLightPathPublication/delivery-beside-covering-folder, delivery-beside-unreadable-folder, delivery-names-folder, delivery-uncovered\n"
+            }
+          }
+        },
+        {
+          "id": "t3-worktree-v3",
+          "performer": "claude:lpce_t3_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "842e96e36ece273c2f1f37418ada7c2740c217d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3_r2",
+            "digest": "sha256:ac47c12b81822a39732743269ca7e875919ded2edeed83203db1451f0c850a19",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/worktree\nexit: 0\ntree: lpce-integration,9af58f7eb4a06dead8a0ba633ad3db53a2af7fe2,false\ngithub.com/gibbonmi/bench/internal/worktree,pass,73785\nfailures[0]\nskips[2]: TestCleanLandedSpecialPathsRetainedWithoutOpening/socket, TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket (capability: unix sockets unavailable)\n"
+          },
+          "requirement": "t3-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-conformance-v3",
+          "performer": "claude:lpce_t3_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "842e96e36ece273c2f1f37418ada7c2740c217d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3_r2",
+            "digest": "sha256:4ab14a77b85abb541ab81b75ef14fac61296bcca669c64e4c6ca49e832eb5eb5",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./internal/conformance\nexit: 0\ntree: lpce-integration,9af58f7eb4a06dead8a0ba633ad3db53a2af7fe2,false\ngithub.com/gibbonmi/bench/internal/conformance,pass,43466\nfailures[0]\nskips[3]: socket and character_device capability skips\n"
+          },
+          "requirement": "t3-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-bench-v3",
+          "performer": "claude:lpce_t3_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "842e96e36ece273c2f1f37418ada7c2740c217d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t3_r2",
+            "digest": "sha256:8e5c7e6aaf5e200cee078c6173b2c74a5cd5fdbce19cf2003fee0081b0d99546",
+            "excerpt": "$ bench worktree exec 54ddba1f1f8b2ffc7dc96608ec5037f3 -- bench test --package ./cmd/bench\nexit: 0\ntree: lpce-integration,9af58f7eb4a06dead8a0ba633ad3db53a2af7fe2,false\ngithub.com/gibbonmi/bench/cmd/bench,pass,13987\nfailures[0]\n"
+          },
+          "requirement": "t3-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": [
