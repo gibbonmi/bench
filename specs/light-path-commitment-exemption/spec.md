@@ -89,8 +89,8 @@ Harder chunks: LP-C1.
 ### The tree reader
 
 - The new file `internal/commitment/repository/light_path.go` owns the read of every tickets-only folder in a Git tree. `tickets.Enumerate` reads the filesystem, and `spec.TicketsOnlyFolders` reads only the working tree, so neither serves a tree object.
-- The reader runs one `git ls-tree -r -z` in the read tree, after the precedent in `repository.go`. Commit mode lists `specs`, and publication mode lists only the folder that `--spec` names. That listing gives each entry's mode and path, so the folders, the ticket count, and the modes come from one read.
-- The reader confirms each folder through `spec.TicketsOnly(spec.CommitTree(root, tree), slug)`. The reader of `CommitTree` resolves `<tree>:<path>`, which Git accepts for a tree object, so `internal/spec` needs no edit.
+- The reader runs one `git ls-tree -r -z` in the read tree, after the precedent in `repository.go`. Commit mode lists `specs`, and publication mode lists only the path that `--spec` names. That listing gives each entry's mode and path, so the folders, the ticket count, and the modes come from one read.
+- The reader confirms each folder through `spec.TicketsOnly(spec.CommitTree(root, tree), slug)`. The reader of `CommitTree` resolves `<tree>:<path>`, which Git accepts for a tree object. The reader takes the specs root from the one constant that `internal/spec` exports.
 - The reader reads the one ticket through the bounded `git.ReadTreeFile` and parses it through `tickets.ParseTicket`.
 
 ### Commit and publication modes
