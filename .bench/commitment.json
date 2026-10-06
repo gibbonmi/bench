@@ -153,6 +153,34 @@
           ]
         },
         {
+          "id": "FT290",
+          "criteria": [
+            {
+              "id": "FT290.counts",
+              "text": "bench test reports a tests_run count for each package, and a named check that runs no test fails with a named rule."
+            },
+            {
+              "id": "FT290.diagnostics",
+              "text": "bench test prints one failures row for each diagnostic line, and the default mode states the hidden line count."
+            },
+            {
+              "id": "FT290.faces",
+              "text": "bench test --checks lists the check inventory, and bench test --check \u003cname\u003e --fixtures lists the fixture family of that check."
+            },
+            {
+              "id": "FT290.selection",
+              "text": "bench test --changed names the cause of each selected package, and the unknown-check refusal names the executable that it consulted."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT290",
+              "path": "roadmap/FT290.md",
+              "identity": "sha256:73f32277e7c176fa37b6596774811926e994aafbfffd6ad3f2e709968bef4131"
+            }
+          ]
+        },
+        {
           "id": "FT373",
           "criteria": [
             {
