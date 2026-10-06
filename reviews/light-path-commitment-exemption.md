@@ -167,6 +167,55 @@ C3, S3, S4, P2, and P3 by repair, and S2, C4, C5, and C6 as `no-op`.
 Advice: spec line 92 writes the literal `specs`, while line 93 names the
 constant. A pre-existing `"specs"` literal remains in `repository.go`.
 
+## LP-C2 pickup
+
+The LP-C2 review covers the frozen pair `caec9d72..29a536a0`, with the chunk
+code tip at `dcdd92e5`. The fable line at high effort ran all three axes.
+The axes found 4 findings. These findings collapse into 2 repair targets,
+which start LP-C2 repair cycle 1 of 2.
+
+### LP-C2 Standards
+
+Findings: 4. Worst issue: S6.
+
+- S5 (`auto-fix`, confidence 5): `docs/adr/0028-the-commitment-gates-spec-implementations.md:21`.
+  The ADR states the tier and effort of the delegate, which the operating
+  guide owns. The spec asks only for a fresh write delegate. The axis
+  proposed `ask-user`, but the spec predicate settles the fix.
+- S6 (`auto-fix`, confidence 7): `internal/conformance/recurrence_maintenance_contract_test.go:110`.
+  The diagnostic still names retained authorship, but the pinned sentence
+  now routes delegates.
+- S7 (`auto-fix`, confidence 6): `internal/anchors/registry_commitment.go:10`.
+  The doc comment names only retired grants, but the family now also forbids
+  retired restrictions.
+- S8 (`no-op`, confidence 5): `.bench/BENCH.md:187`. The sentence says that
+  a drain implements a light-path idea, where other sentences say that it
+  dispatches. Spec line 148 mandates the exact sentence, so this
+  non-behavioral contradiction waits for reviewer veto.
+
+### LP-C2 Spec
+
+Findings: 0. Worst issue: none. All 17 rows match the spec, and both
+tickets kept their fences.
+
+Advice: the ticket 5 author changed the last sentence of the light-path
+bullet in ADR 0023, not the last sentence of the file. Only that reading
+satisfies LP48, and it waits for reviewer veto. The two raised budget rows
+are the minimum that the required paragraphs need.
+
+### LP-C2 Coverage
+
+Findings: 0. Worst issue: none. Six probes bit and restored: LP37, LP41,
+LP42, LP44, LP45, and LP55.
+
+Advice: five guidance sentences carry no anchor row, as the spec decides.
+Both prose budgets sit at their limits.
+
+### LP-C2 repair state
+
+Repair cycle 1 of 2 is open. A fresh ticket 4 repair session takes S6 and
+S7. A fresh ticket 5 repair session then takes S5.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1646,7 +1695,73 @@ constant. A pre-existing `"specs"` literal remains in `repository.go`.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "lp-c2-standards-r1",
+          "performer": "claude:lpce_c2_standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "40faa389e48ae6b70e30271ca671fc8728baa8f9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c2_standards",
+            "digest": "sha256:1eceb7665530fcc98bd94975f1755de30c1e83c0b238fcebefc8a7f5c7e4c289",
+            "excerpt": "Standards axis — LP-C2 review, fable/high, evidence sha256:098c930ad1160e6f5181fcb192ae6bcdace0c1e10d7b8389a4815c8508b30f42 current at 29a536a0. Frozen pair caec9d72..29a536a0 (code tip dcdd92e5).\n\nS1 — low — docs/adr/0028-the-commitment-gates-spec-implementations.md:21. 'The delegate runs on the mid tier at high effort, in its own bench worktree' copies the tier binding that .bench/BENCH.md:149 owns. AGENTS.md one source per fact; craft-adr. Spec.md:182 and ticket 5 ask only for a fresh write delegate. Confidence 5. Proposed ask-user (ADR 0021 precedent mixed). Command: none necessary.\nS2 — low — internal/conformance/recurrence_maintenance_contract_test.go:110 and :287. Diagnostic still names retained authorship; the pinned sentence (:91) now routes delegates. craft-comments Aging; ste-prose one word for one thing. Confidence 7. auto-fix (reword; check canary EXPECT pins first). Command: none necessary.\nS3 — low — internal/anchors/registry_commitment.go:10-12. The doc comment covers only retired grants; the diff added forbid rows for retired restrictions. craft-comments Aging. Confidence 6. auto-fix (extend the clause). Command: none necessary.\nS4 — info — .bench/BENCH.md:187-188 'A drain implements a light-path idea' vs 'dispatches'/'delegates' elsewhere; spec.md:148 mandates the exact sentence; non-behavioral spec contradiction for reviewer veto. Confidence 5. no-op. Command: none necessary.\nAdvice: anchor/test independence exception satisfied (spec.md:178; ticket 4 probe red recorded); prose budgets at zero headroom; commitment_guidance_test.go:33 name 'ticket' no longer fits; bench-drain.md:216 restatement pre-dates the chunk.\nRead: full diff; craft-review, craft-adr, craft-comments skills; ste-prose.md; spec.md:126-184; tickets 4 and 5; ADR 0023; targeted test and registry lines.\nCount: 4. Worst: S2.\n"
+          },
+          "axis": "Standards",
+          "base": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "tip": "dcdd92e58790e8bd0877b7dcdc314fd265cefcf5",
+          "finding_ids": [
+            "S5",
+            "S6",
+            "S7",
+            "S8"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "lp-c2-spec-r1",
+          "performer": "claude:lpce_c2_spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "40faa389e48ae6b70e30271ca671fc8728baa8f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c2_spec",
+            "digest": "sha256:c1a6f9925b8afb338aa56df1ceaa314b79f521300eb349480f6b946f1399e4d6",
+            "excerpt": "Spec axis — LP-C2 review, fable/high, evidence sha256:098c930ad1160e6f5181fcb192ae6bcdace0c1e10d7b8389a4815c8508b30f42 current at 29a536a0. Frozen pair caec9d72..29a536a0 (code tip dcdd92e5).\n\nFindings: none. Every guidance sentence in spec Guidance text (spec.md:130-166) matches the tree byte for byte; every anchor needle and diagnostic matches the spec (rows LP34-LP46, LP54, LP55). Fences held: 583f71e8 and dcdd92e5 touch only their Writes paths.\nAdvice (no IDs; each refuted by the axis): ticket 4 wording puts twelve sentences in the anchors registry, but LP46/LP55 stay in the recurrence contract per spec.md:283,292 (one source); ticket 5 changed the last sentence of the ADR 0023 light-path bullet rather than the file's literal last sentence, the only reading that satisfies LP48 (flag for reviewer veto); budgets 185->188 and 81->83 are forced by the spec-required paragraphs (spec.md:389 permits the raise).\nRead: 17 rows audited (LP34-LP48, LP54, LP55); diff of 13 files; spec; tickets 4 and 5; ADR 0023; ADR 0028; budget table.\nCount: 0.\n"
+          },
+          "axis": "Spec",
+          "base": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "tip": "dcdd92e58790e8bd0877b7dcdc314fd265cefcf5",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "lp-c2-coverage-r1",
+          "performer": "claude:lpce_c2_coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "40faa389e48ae6b70e30271ca671fc8728baa8f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c2_coverage",
+            "digest": "sha256:df565764c30e328405742ed63e327114f1f9f97573aac6e12818beba1a0b7c58",
+            "excerpt": "Coverage axis — LP-C2 review, fable/high, evidence sha256:098c930ad1160e6f5181fcb192ae6bcdace0c1e10d7b8389a4815c8508b30f42 current at 29a536a0. Frozen pair caec9d72..29a536a0 (code tip dcdd92e5).\n\nFindings: none.\nProbes (tree clean after each): LP37 omit Writes-boundary row bit; LP44 omit implementation sentence bit; LP41 omit forbid row bit; LP42 splice retired fragment bit (14 red); LP45 omit delegated-route row bit (canary bites through owner); LP55 swap Route sentence bit (44 red). Cited: LP34-LP36, LP38-LP40, LP43, LP46, LP54 test cases.\nGreen: ./internal/conformance, ./internal/anchors, --check guidance-prose-budgets, --check prose. Retired-needle sweep: fragments only in forbid rows, test restore cases, spec, ticket 4.\nAdvice: five spec-unanchored sentences by design (spec.md:170 exactly twelve); spec.md:452 names a needle the route canary never held; budgets at limit; ADRs are review-owned.\nCount: 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "tip": "dcdd92e58790e8bd0877b7dcdc314fd265cefcf5",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
