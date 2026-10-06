@@ -178,6 +178,18 @@
               "path": "roadmap/FT290.md",
               "identity": "sha256:73f32277e7c176fa37b6596774811926e994aafbfffd6ad3f2e709968bef4131"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "ft290-test-projection",
+                "path": "specs/ft290-test-projection/spec.md",
+                "identity": "sha256:f5346a66659abbcee3641f48e19558a7980440b189f25cd22ef4e3ae7f59e327"
+              },
+              "obligations": [
+                "FT290"
+              ]
+            }
           ]
         },
         {
