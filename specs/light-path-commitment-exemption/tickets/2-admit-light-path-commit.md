@@ -1,7 +1,7 @@
 # 2. Admit an unbound light-path commit inside its ticket's Writes line
 
 Blocked by: 1-own-writes-grammar.md
-Writes: internal/commitment/repository/light_path.go (new), internal/commitment/repository/light_path_test.go (new), internal/commitment/repository/candidate.go, internal/commitment/repository/readiness.go, internal/commitment/commitmenttest/, internal/commit/commitment_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/commitment/repository/light_path.go (new), internal/commitment/repository/light_path_test.go (new), internal/commitment/repository/candidate.go, internal/commitment/repository/readiness.go, internal/commitment/commitmenttest/, internal/preflight/preflighttest/fixture.go, internal/commit/commitment_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: LP1, LP2, LP7, LP8, LP9, LP10, LP11, LP12, LP13, LP14, LP15, LP16, LP17, LP18, LP19, LP20, LP21, LP22, LP23, LP49, LP51, LP56
 
 ## What to build
