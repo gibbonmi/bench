@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // AuthorizeCandidate grades the complete proposed tree against current default-branch authority.
@@ -218,10 +219,10 @@ func (store Store) planningPromotions(tree string, changes []git.TreeChange) ([]
 	return promotions, nil
 }
 
-// inScope reports whether path is one scope entry or lies below a scope directory.
+// inScope reports whether a scope entry covers path.
 func inScope(scope []string, path string) bool {
 	for _, entry := range scope {
-		if path == entry || strings.HasPrefix(path, entry+"/") {
+		if tickets.Covers(entry, path) {
 			return true
 		}
 	}

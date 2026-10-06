@@ -6,8 +6,7 @@ import (
 )
 
 // BindingRow binds one package prefix to the files a ticket must co-name when
-// it writes into that package. The prefix matches a `Writes:` path exactly, or
-// at a `/` segment boundary, so `internal/toon` never claims `internal/toon2`.
+// it writes into that package. The prefix matches a `Writes:` path through Covers.
 type BindingRow struct {
 	// Prefix is the bound package, repo-relative and slash-spelled.
 	Prefix string
@@ -77,7 +76,7 @@ func Bindings() []BindingRow {
 func BoundFiles(path string) []string {
 	var files []string
 	for _, row := range bindings {
-		if !prefixCovers(row.Prefix, path) {
+		if !Covers(row.Prefix, path) {
 			continue
 		}
 		for _, file := range row.Files {
@@ -88,10 +87,4 @@ func BoundFiles(path string) []string {
 	}
 	sort.Strings(files)
 	return files
-}
-
-// prefixCovers reports whether prefix names path itself or a path under it. The
-// comparison is at a `/` segment boundary, never a bare string prefix.
-func prefixCovers(prefix, path string) bool {
-	return path == prefix || (len(path) > len(prefix)+1 && path[:len(prefix)] == prefix && path[len(prefix)] == '/')
 }

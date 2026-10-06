@@ -3,6 +3,7 @@ package preflight
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -58,7 +59,7 @@ func missingClosures(f Facts, kind closureKind) []closureRequirement {
 		owned := ownedPaths(ticket)
 		for _, entry := range ticket.Writes {
 			for _, path := range required[entry] {
-				if pathCovered(path, owned) {
+				if slices.ContainsFunc(owned, func(entry string) bool { return tickets.Covers(entry, path) }) {
 					continue
 				}
 				key := ticket.Name + "\x00" + entry + "\x00" + path + "\x00" + string(kind)
@@ -115,7 +116,7 @@ func closureMessages(requirements []closureRequirement) []string {
 // its system tag from its directory, so build preflight grades the kit pin before the
 // build creates the file.
 func (facts *ticketFacts) probe(root, entry string, pins, anchors map[string][]string) {
-	path, isNew := splitWritesEntry(entry)
+	path, isNew := tickets.WritesPath(entry)
 	facts.writes[entry] = treeHolds(root, path)
 	if pinning := pins[path]; len(pinning) > 0 {
 		facts.pins[entry] = pinning
@@ -141,7 +142,7 @@ func anchorFiles(anchors map[string][]string, path string) []string {
 	seen := map[string]bool{}
 	var files []string
 	for literal, holders := range anchors {
-		if !pathCovered(literal, []string{path}) {
+		if !tickets.Covers(path, literal) {
 			continue
 		}
 		for _, file := range holders {
@@ -173,19 +174,8 @@ func treeHolds(root, path string) bool {
 func ownedPaths(ticket tickets.Ticket) []string {
 	paths := make([]string, 0, len(ticket.Writes))
 	for _, entry := range ticket.Writes {
-		path, _ := splitWritesEntry(entry)
+		path, _ := tickets.WritesPath(entry)
 		paths = append(paths, path)
 	}
 	return paths
-}
-
-// pathCovered reports whether one required path is already named by the ticket,
-// either exactly or through a directory entry that contains it.
-func pathCovered(required string, owned []string) bool {
-	for _, path := range owned {
-		if required == path || strings.HasPrefix(required, path+"/") {
-			return true
-		}
-	}
-	return false
 }
