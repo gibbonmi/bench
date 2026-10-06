@@ -72,7 +72,7 @@ func (r commitTreeReader) FolderIsDirectory(name string) bool {
 // reachable failure is the missing path, and a repository this landing cannot read
 // refuses earlier.
 func (r commitTreeReader) SpecFileAbsent(name string) bool {
-	_, err := benchgit.Raw("-C", r.root, "show", r.commit+":"+ClosedFolderPath(name)+"/spec.md")
+	_, err := benchgit.Raw("-C", r.root, "show", r.commit+":"+ClosedFolderPath(name)+"/spec.md", "--")
 	return err != nil
 }
 
