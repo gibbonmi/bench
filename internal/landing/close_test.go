@@ -79,6 +79,10 @@ func TestTicketsOnlyInCommit(t *testing.T) {
 	write(t, root, "specs/tickets-only/tickets/one.md", "# One\n")
 	write(t, root, "specs/spec-backed/tickets/one.md", "# One\n")
 	write(t, root, "specs/spec-backed/spec.md", "Status: staged\n")
+	write(t, root, "specs/literal-*/tickets/one.md", "# One\n")
+	write(t, root, "specs/literal-match/spec.md", "Status: staged\n")
+	write(t, root, "specs/actual-*/tickets/one.md", "# One\n")
+	write(t, root, "specs/actual-*/spec.md", "Status: staged\n")
 	write(t, root, "specs/a-file", "a blob where a folder would be\n")
 	git(t, root, "add", ".")
 	git(t, root, "commit", "-qm", "specs")
@@ -91,6 +95,8 @@ func TestTicketsOnlyInCommit(t *testing.T) {
 	}{
 		{name: "tickets-only", want: true, why: "a committed folder holding no spec.md is a close"},
 		{name: "spec-backed", want: false, why: "a committed folder carrying spec.md takes the status flip"},
+		{name: "literal-*", want: true, why: "glob syntax in a slug is literal and an absent literal spec stays absent"},
+		{name: "actual-*", want: false, why: "a literal glob-named folder carrying spec.md takes the status flip"},
 		{name: "absent", want: false, why: "a slug naming no committed folder is not tickets-only"},
 		{name: "spec-backed/tickets", want: false, why: "not a direct child of specs/"},
 		{name: "a-file", want: false, why: "a committed blob at the folder path is a file in either reader"},
