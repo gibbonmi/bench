@@ -155,6 +155,18 @@ folds. Standards and Coverage found nothing.
 Advice: spec line 92 named a folder, but a delivery can name a spec file.
 Commit `caec9d72` widens that wording to a path.
 
+## LP-C1 close
+
+A fresh round of all three axes read the spec delta `7e0804d5..caec9d72`.
+The Spec axis confirmed P3, and no axis found a new finding. Every ticket
+author recorded its verification at `caec9d72`.
+
+LP-C1 consumed both repair cycles. Every finding is closed: S1, P1, C1, C2,
+C3, S3, S4, P2, and P3 by repair, and S2, C4, C5, and C6 as `no-op`.
+
+Advice: spec line 92 writes the literal `specs`, while line 93 names the
+constant. A pre-existing `"specs"` literal remains in `repository.go`.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1418,6 +1430,72 @@ Commit `caec9d72` widens that wording to a path.
           "finding_ids": [],
           "supersedes": [
             "lp-c1-coverage-r2"
+          ]
+        },
+        {
+          "id": "lp-c1-standards-r4",
+          "performer": "claude:lpce_c1_standards_r4",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "c83886b595845c55c414664fd7664fdd47f59726",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_standards_r4",
+            "digest": "sha256:4176b393ee643ee02397dc562ea484a3d728edf8336ace1dd5108d70523f3a8d",
+            "excerpt": "Standards axis — LP-C1 spec-correction confirming round, fable/high, evidence sha256:0a70e9c54f8d7ead6714c675ec6e2a50fabcde0bd7ac137052cca6bec488ab5d current at 818dd829. Delta 7e0804d5..caec9d72 (spec.md lines 92-93 only).\n\nFindings: none. Count 0.\nThe delta touches only spec.md lines 92-93 and no Go file. STE check on both changed sentences: active voice, present tense, articles present, 15 and 17 words. Pass.\nAdvice (no ID): spec.md:92 writes the literal specs while line 93 names the constant as the source; prose context, not a code duplication; judgment call, non-blocking.\nRead: git diff 7e0804d5 caec9d72 -- ':!reviews'; craft-review SKILL.md; ste-prose.md; internal/spec/tickets_only.go:15.\n"
+          },
+          "axis": "Standards",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "finding_ids": [],
+          "supersedes": [
+            "lp-c1-standards-r3"
+          ]
+        },
+        {
+          "id": "lp-c1-spec-r4",
+          "performer": "claude:lpce_c1_spec_r4",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "c83886b595845c55c414664fd7664fdd47f59726",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_spec_r4",
+            "digest": "sha256:f13a1db743dcfdcbd06974e9eeb9cce62f2b507edff325d8970a1a862ef794c4",
+            "excerpt": "Spec axis — LP-C1 spec-correction confirming round, fable/high, evidence sha256:0a70e9c54f8d7ead6714c675ec6e2a50fabcde0bd7ac137052cca6bec488ab5d current at 818dd829. Delta 7e0804d5..caec9d72 (spec.md lines 92-93 only).\n\nFindings: none. Count 0.\nFold P3 confirmed: spec.md:93 drops 'so internal/spec needs no edit' and names the exported constant; tickets_only.go:15 exports SpecsDir; light_path.go:27,44,114 consume it. Line 92 fold confirmed: publication mode lists only the path that --spec names; light_path.go:55 lists delivery.Spec. No acceptance row, fence, or other decision moves.\nAdvice (no ID): spec.md:99 still says folder that --spec names; consistent in meaning.\nRead: spec.md 84-99, tickets_only.go, light_path.go, craft-review SKILL.md.\n"
+          },
+          "axis": "Spec",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "finding_ids": [],
+          "supersedes": [
+            "lp-c1-spec-r3"
+          ]
+        },
+        {
+          "id": "lp-c1-coverage-r4",
+          "performer": "claude:lpce_c1_coverage_r4",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "c83886b595845c55c414664fd7664fdd47f59726",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c1_coverage_r4",
+            "digest": "sha256:3e69be137518e34fd0a6fc53f1052b48cec3368055e87d46262442ba0698e0bb",
+            "excerpt": "Coverage axis — LP-C1 spec-correction confirming round, fable/high, evidence sha256:0a70e9c54f8d7ead6714c675ec6e2a50fabcde0bd7ac137052cca6bec488ab5d current at 818dd829. Delta 7e0804d5..caec9d72 (spec.md lines 92-93 only).\n\nFindings: none. Count 0.\nNo code, test, acceptance row, or coverage-map row changed; no new untested behavior.\nbench coverage --check specs/light-path-commitment-exemption/spec.md: ok: coverage map valid — 56 row(s); 36 rows uncited (pre-existing, unchanged by this delta).\nRead: preflight evidence, craft-review SKILL.md Coverage charge, the non-reviews diff.\n"
+          },
+          "axis": "Coverage",
+          "base": "c3e58ed9829200d946dc16f2b11903ff67078cda",
+          "tip": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "finding_ids": [],
+          "supersedes": [
+            "lp-c1-coverage-r3"
           ]
         }
       ]
