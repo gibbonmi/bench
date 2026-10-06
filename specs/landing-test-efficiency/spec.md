@@ -4,7 +4,7 @@ Status: staged
 
 Decision source: Reviewer-confirmed current conversation, 2026-10-06.
 
-Verification log: 2 iteration(s) to accept the spec — Sol 6.1/high required composed sharing evidence, then accepted LTE46. Ticket review is pending.
+Verification log: 2 iteration(s) to accept the spec, then 1 iteration to accept the tickets. Sol 6.1/high reviewed both checkpoints.
 
 Implementation approval: pending. This spec does not change the delivery commitment or authorize implementation.
 
@@ -338,7 +338,7 @@ The author inspected source at `28511b1ef4919738a9997dc3ea51439a879cf162`. The t
 | Smaller adoption and repair fixtures | `repairtest/session_test.go`, `link_transaction_test.go`, `setup_prompt_test.go`, `link_plan_test.go` | LTE2–LTE17 |
 | Consolidate duplicate dispatch runs | `tier_test.go`, `checks_test.go`, `registry/registry.go` | LTE18–LTE20 |
 | Narrow isolated diagnostics | `fixture_bite_test.go`, `validity_checks_test.go`, executable bindings | LTE21–LTE24 |
-| Share source work | Four visitor files and their parse helpers | LTE25–LTE34 |
+| Share source work | Four visitor files and their parse helpers | LTE25–LTE34, LTE46 |
 | Preserve independent omissions | `check_bindings_test.go`, `TestConformanceMetaBites`, ordinary phase expectations | LTE32, LTE33 |
 | Avoid repeated checkout construction | `gate/engine.go`, `gate/authorization/authorization.go`, prospective artifact owner | LTE35–LTE44 |
 | Preserve crash and concurrent-owner behavior | `prospective_owner_test.go`, prospective artifact tests, system owner recovery | LTE41–LTE44 |
@@ -381,3 +381,16 @@ System verification uses the candidate `BENCH_KIT` and the selected run binary s
 ```bench-completion-plan
 {"version":1,"chunks":[{"id":"LTE-C1","tickets":["01-build-isolated-repair-kits.md"],"verification":[{"id":"fixture-owner","command":"bench test --package ./internal/adopt/adopttest"},{"id":"repair","command":"bench test --package ./internal/adopt/repairtest"},{"id":"repair-omissions","command":"bench test --package ./internal/adopt/repairtest","probe":"missing managed repair and lost undo identity"}]},{"id":"LTE-C2","tickets":["02-shrink-local-adoption-fixtures.md"],"verification":[{"id":"adoption","command":"bench test --package ./internal/adopt"},{"id":"seed-omission","command":"bench test --package ./internal/adopt","probe":"omit seeded gate input"}]},{"id":"LTE-C3","tickets":["03-consolidate-conformance-executions.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"dispatch-omissions","command":"bench test --package ./internal/conformance","probe":"omit execution, omit timing reset, and change order"}]},{"id":"LTE-C4","tickets":["04-share-source-observations-for-git-policy.md"],"verification":[{"id":"source-owner","command":"bench test --package ./internal/conformance/sourcefiles"},{"id":"git-and-bindings","command":"bench test --package ./internal/conformance"},{"id":"flag-omission","command":"bench test --package ./internal/conformance","probe":"omit one independently expected Git flag"}]},{"id":"LTE-C5","tickets":["05-share-the-architecture-source-scan.md"],"verification":[{"id":"architecture","command":"bench test --package ./internal/conformance"},{"id":"architecture-omissions","command":"bench test --package ./internal/conformance","probe":"restore a forbidden constructor and omit an ordinary phase"}]},{"id":"LTE-C6","tickets":["06-share-the-bounds-source-scan.md","07-share-skip-scans-and-prove-dispatch-reuse.md"],"verification":[{"id":"visitors","command":"bench test --package ./internal/conformance"},{"id":"sharing-omissions","command":"bench test --package ./internal/conformance","probe":"create per-binding snapshots and restore an old source walker"}]},{"id":"LTE-C7","tickets":["08-materialize-only-the-requested-tree.md"],"verification":[{"id":"materialization","command":"bench test --package ./internal/gate/prospectiveartifact"},{"id":"materialization-omissions","command":"bench test --package ./internal/gate/prospectiveartifact","probe":"materialize HEAD only and populate HEAD before the requested tree"}]},{"id":"LTE-C8","tickets":["09-retain-the-owner-through-authorization.md"],"verification":[{"id":"gate-owner","command":"bench test --package ./internal/gate"},{"id":"authorization","command":"bench test --package ./internal/gate/authorization"},{"id":"durable-reload","command":"bench test --package ./internal/gate/authorization","probe":"omit durable evidence reload"},{"id":"system","command":"bench test --check system"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/landing-test-efficiency/spec.md"},{"id":"adoption","command":"bench test --package ./internal/adopt"},{"id":"repair","command":"bench test --package ./internal/adopt/repairtest"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"gate-owner","command":"bench test --package ./internal/gate"},{"id":"artifacts","command":"bench test --package ./internal/gate/prospectiveartifact"},{"id":"authorization","command":"bench test --package ./internal/gate/authorization"},{"id":"system","command":"bench test --check system"}]}
 ```
+
+### Independent review results
+
+The invoking session authored the spec and all nine tickets. Sol 6.1/high supplied both independent reviews at the reviewer's request.
+Spec review required composed source-sharing evidence. The second pass accepted LTE46 and its named per-binding-snapshot and restored-walker mutations.
+
+Ticket review accepted `af685aeb768bd3083cf8cb89d70df90dfb2899fe` in one pass. It found no Standards, Spec, or Coverage findings.
+The review confirmed 46 uniquely assigned rows, 23 implementation paths, and five ordered pairs with shared writes.
+Planning preflight and all nine write proposals passed. All ten planning Markdown files passed the prose check.
+
+Existing timing records supplied the performance baseline. No separate benchmark ran.
+A required base update ran the full gate automatically and passed. Its source delta contained only commitment metadata.
+These planning reviews establish no implemented speedup. Implementation and delivery scheduling still require reviewer approval.
