@@ -171,13 +171,10 @@ harness measures, a deep raw-call census, and the session context-cost audit
 session evidence; it should amend or feed FT231 rather than create another token
 ledger.
 
-FT173 owns AXI query output and records that its four truncation policies have
-different caps, units, metadata, and `--full` behavior. Shared mechanics may be
-parameterized, while the policies stay with command domains
-(`decisions/byte-preserving-axi-foundation/ft173-axi-contract.md:118-140`).
-`bench worktree list` is explicitly in FT173's scope
-(`decisions/byte-preserving-axi-foundation/ft173-axi-contract.md:16-22`). Any
-default-schema or help-row change belongs there or in an explicit amendment.
+The current AXI contract lives in `.agents/skills/bench-craft-cli/SKILL.md`.
+Its output-ownership reference keeps domain semantics and resource policy with their existing owners.
+The approved query table includes `bench worktree list`.
+A default-schema or help-row change needs an explicit approved delta under that contract.
 
 FT100 owns always-loaded guidance weight and already requires evidence before
 cuts (`roadmap/FT100.md:1-25,30-55`). FT89 supplies the placement rule: a

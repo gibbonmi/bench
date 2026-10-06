@@ -6,9 +6,8 @@ index: building an agent-facing CLI
 
 # AXI — Agent eXperience Interface
 
-AXI is the output contract for a CLI an agent drives through the shell. It aims
-for accurate action at low token cost. Apply it per surface: a declared query may
-conform while operational siblings keep their own documented contract. Full spec:
+AXI is the output contract for a CLI an agent drives through the shell. It aims for accurate action at low token cost.
+Apply it per surface: a declared query may conform while operational siblings keep their own documented contract. Full spec:
 https://axi.md
 
 ## The principles
@@ -117,3 +116,5 @@ Keep polling, mutation, verification, approval, and publication as separate oper
 
 The project gate derives the approved set from the production command registry and compares both membership directions with the approved-query table.
 It also grades the ten ordered principles, output envelopes, help spellings, and executable behavior.
+
+For an output change, apply [output ownership and compatibility](references/output-ownership.md).

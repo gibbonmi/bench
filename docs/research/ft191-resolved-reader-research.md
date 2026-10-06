@@ -1,7 +1,7 @@
 # FT191 research: a resolved read surface for Bench
 
 Consumed by: the FT191 `/bench-write-spec` run, or an FT191 shaping map if the reviewer routes one first.
-Drift: re-verify after a change to `internal/outline/outline.go`, the FT173 AXI contract, `bench-craft-seams`, `bench-craft-review`, or `go.mod`.
+Drift: re-verify after a change to `internal/outline/outline.go`, the `craft-cli` AXI contract, `bench-craft-seams`, `bench-craft-review`, or `go.mod`.
 Retire when: FT191's spec stages, or the reviewer retires FT191.
 
 External citations carry the retrieval date 2026-08-28. Re-fetch a cited page
@@ -191,9 +191,9 @@ blessed seams. Restate the resolver's promise in its help text, the way
 
 The sibling is a new AXI query surface: TOON tables, definitive empty states,
 structured stdout errors, exit 0/1/2, and bounded output with `--full`. The
-FT173 contract leaves AXI widening as a reviewer decision
-(`decisions/byte-preserving-axi-foundation/ft173-axi-contract.md`, Out of
-scope). FT191's spec is where that decision lands.
+`craft-cli` contract limits conformance to its approved query table.
+FT287 owns proposals to widen that scope.
+The current table includes `bench consumers`, which is the query this research proposes.
 
 ## §3 Consumers by phase
 
