@@ -12,7 +12,7 @@ Verification log: pending — the fable-high spec review runs after this draft.
 
 A spec author writes coverage rows before the first review charge. `craft-spec` asks for the cheapest wrong answer for each row. No pre-review check traces a row through the code that grades it, so review finds the gap instead.
 
-Four reviews found this gap between 2026-10-02 and 2026-10-03:
+Four occurrences of this gap fell between 2026-10-02 and 2026-10-03:
 
 - The worktree-seam-reduction spec stage had four untraced rows. One row pinned a count, and its grader read the count as a floor.
 - In the same build, ticket WS51 and ticket 8 had a named probe that stayed silent until the test graded the refusal line.
@@ -23,7 +23,7 @@ The current pre-review proof checklist in `.agents/skills/bench-craft-spec/refer
 
 ## Solution
 
-The pre-review proof checklist in `map-discipline.md` gains six classes, and the `Before the map locks` section gains one caller-sweep rule. Each new sentence is an anchor needle. The gate reds when a needle leaves its section, and one canary for each weakened criterion shows that the gate bites.
+The pre-review proof checklist in `map-discipline.md` gains six classes, and the `Before the map locks` section gains one caller-sweep rule. Each new rule sentence is an anchor needle. The one unanchored new sentence is the gloss that defines an internal form. The gate reds when a needle leaves its section, and seven canaries show that the gate reds a weakened needle.
 
 The new classes make the author record, before the first review charge:
 
@@ -72,7 +72,7 @@ Harder chunks: none.
 
 12. As a kit maintainer, I want a conformant tree to raise no new diagnostic, so that the anchors cannot red good guidance.
 13. As a kit maintainer, I want the live kit to satisfy each new anchor, so that the gate grades the shipped text.
-14. As a kit maintainer, I want a canary for each weakened criterion, so that the gate shows that it reds a weakened sentence.
+14. As a kit maintainer, I want a canary for each needle that can lose a clause, so that the gate reds a weakened sentence.
 15. As a linked-repository user, I want a changelog entry for the new rules, so that the release notes show the change.
 
 ## Implementation decisions
@@ -82,7 +82,7 @@ Harder chunks: none.
 The `Before the map locks` section of `map-discipline.md` keeps every current sentence byte for byte. The fixed pre-review proof checklist gains six sub-bullets after `Rendered-shape readers`. Each sub-bullet stays on one physical line. The exact sentences are:
 
 - N1: "`Pin operators` quotes the comparison operator that the grader of each pin row applies."
-- N2: "`Entry reads` lists each unexported read below an entry that has no internal form, and it names the grader of that read." The same line adds the unanchored sentence "An internal form takes injected values in place of ambient reads."
+- N2: "`Entry reads` lists each unexported read below an entry without an internal form, and names its grader." The same line adds the unanchored gloss "An internal form takes injected values in place of ambient reads." The gloss defines a term and states no rule, so it is the one new sentence without an anchor.
 - N3 and N4 share one line: "`Derived expectations` names the grader of each derived expectation." and "No expectation comes from the code under test."
 - N5 and N6 share one line: "`Consolidated rules`, when a spec consolidates repeated rules, gives a consolidation table of each site's old rule and new rule." and "Each changed cell of the consolidation table maps to an acceptance row, a flagged addition, or a Won't handle line."
 - N7: "`Quantified obligations` checks every quantified obligation at each affected site and across all tickets."
@@ -94,7 +94,7 @@ A new top-level bullet follows the checklist, with N8: "The changed-function cal
 
 ### Anchor registry
 
-A new themed registry pair holds the nine anchors: `internal/anchors/registry_spec_trace.go` declares `specTraceAnchors`, and `registry_spec_trace_test.go` tests them. Each anchor has group `AfterImplementSpec`, kind `RequireInSection`, file `mapDiscipline`, and section `Before the map locks`. The file reuses the `mapDiscipline` constant from `registry_ticket_passes.go`, so the path keeps one source.
+A new themed registry pair holds the nine anchors: `internal/anchors/registry_spec_trace.go` declares `specTraceAnchors`, and `registry_spec_trace_test.go` tests them. Each anchor has group `AfterImplementSpec`, kind `RequireInSection`, file `mapDiscipline`, and section `Before the map locks`. The file reuses the `mapDiscipline` constant from `registry_ticket_passes.go`.
 
 The diagnostics are:
 
@@ -116,11 +116,13 @@ The test `TestSpecGraderTraceAnchors` writes its needles, sections, and diagnost
 
 ### Canaries
 
-Five new fixtures under `tests/canary/workflow-guidance-anchors/` each weaken one criterion. Each fixture has `BASE` with the line `.agents/skills/bench-craft-spec/references/map-discipline.md`, a `MUTATE.json` with one replacement, and an `EXPECT` that holds the diagnostic of the mutated needle.
+Seven new fixtures under `tests/canary/workflow-guidance-anchors/` each weaken one needle. N3 and N4 take no canary, because each one states a single clause. Each fixture has `BASE` with the line `.agents/skills/bench-craft-spec/references/map-discipline.md`, a `MUTATE.json` with one replacement, and an `EXPECT` that holds the diagnostic of the mutated needle.
 
 | fixture | old | new | EXPECT |
 | --- | --- | --- | --- |
 | `map-discipline-pin-operator-trace` | N1 | "`Pin operators` lists each pin row." | N1 diagnostic |
+| `map-discipline-entry-read-grader` | N2 | "`Entry reads` lists each unexported read below an entry without an internal form." | N2 diagnostic |
+| `map-discipline-consolidation-both-rules` | N5 | "`Consolidated rules`, when a spec consolidates repeated rules, gives a consolidation table of each site's new rule." | N5 diagnostic |
 | `map-discipline-consolidation-cells` | N6 | "Each changed cell of the consolidation table maps to an acceptance row." | N6 diagnostic |
 | `map-discipline-quantified-tickets` | N7 | "`Quantified obligations` checks every quantified obligation at each affected site." | N7 diagnostic |
 | `map-discipline-unexported-callers` | N8 | "The changed-function caller sweep runs `bench consumers` for each changed function." | N8 diagnostic |
@@ -136,7 +138,7 @@ Five new fixtures under `tests/canary/workflow-guidance-anchors/` each weaken on
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| GT-C1 / sliced after review | The pre-review checklist and the caller sweep carry the FT376 rules, and the gate holds each rule | GT1 to GT17 | `internal/anchors` package tests, `internal/conformance` fixture bites, and the `docs-currency-workflow` check | no |
+| GT-C1 / sliced after review | The pre-review checklist and the caller sweep carry the FT376 rules, and the gate holds each rule | GT1 to GT19 | `internal/anchors` package tests, `internal/conformance` fixture bites, and the `docs-currency-workflow` check | no |
 
 ## Testing decisions
 
@@ -175,10 +177,12 @@ Five new fixtures under `tests/canary/workflow-guidance-anchors/` each weaken on
 | GT15 | 14 | The `map-discipline-consolidation-cells` mutation raises the N6 diagnostic | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | An anchor that stops before the Won't handle arm stays green when that arm leaves. |
 | GT16 | 14 | The `map-discipline-workflow-step-digests` mutation raises the N9 diagnostic | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | An anchor on the class label alone stays green when the digest clause leaves. |
 | GT17 | 15 | The `## [Unreleased]` section of `CHANGELOG.md` holds a `### Spec grader trace` entry that names the six classes and the caller-sweep rule | review-owned | No check grades changelog content, so review reads the entry. |
+| GT18 | 14 | The `map-discipline-entry-read-grader` mutation raises the N2 diagnostic | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | An anchor that stops before `and names its grader` stays green when the grader clause leaves. |
+| GT19 | 14 | The `map-discipline-consolidation-both-rules` mutation raises the N5 diagnostic | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | An anchor on the table clause alone stays green when the old-rule column leaves. |
 
 ### Edge inventory
 
-The in-scope edges are a removed needle (GT1 to GT11) and a weakened needle (GT8, GT10, GT14 to GT16). The others are a conformant tree (GT12) and the live kit (GT13). A needle that moves to another section is a removed needle for its own section, so the section-scoped rows cover it.
+The in-scope edges are a removed needle (GT1 to GT11) and a weakened needle (GT8, GT10, GT14 to GT16, GT18, GT19). The others are a conformant tree (GT12) and the live kit (GT13). A needle that moves to another section is a removed needle for its own section, so the section-scoped rows cover it.
 
 The audience of each behavior is every repository that links the kit, because `map-discipline.md` ships to each one. The anchors and canaries serve this repository only. `map-discipline.md` is one file, so the absent-versus-empty directory pair does not apply. An absent file raises `section-scoped anchor file missing`, and the existing map-discipline anchors already cover that state.
 
@@ -203,7 +207,37 @@ The hostile-input classes of `projects/benchkit.md` do not reach this surface:
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_ticket_passes.go`
 - `internal/anchors/registry_ticket_passes_test.go`
-- `tests/canary/workflow-guidance-anchors/`
+- `tests/canary/workflow-guidance-anchors/map-discipline-consolidation-both-rules`
+- `tests/canary/workflow-guidance-anchors/map-discipline-consolidation-cells`
+- `tests/canary/workflow-guidance-anchors/map-discipline-entry-read-grader`
+- `tests/canary/workflow-guidance-anchors/map-discipline-pin-operator-trace`
+- `tests/canary/workflow-guidance-anchors/map-discipline-quantified-tickets`
+- `tests/canary/workflow-guidance-anchors/map-discipline-unexported-callers`
+- `tests/canary/workflow-guidance-anchors/map-discipline-workflow-step-digests`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
+- `tests/canary/workflow-guidance-anchors/craft-spec-transaction-failure-rows`
+- `tests/canary/workflow-guidance-anchors/craft-spec-two-audience-inventory`
+- `tests/canary/workflow-guidance-anchors/final-check-light-path-changelog-heading`
+- `tests/canary/workflow-guidance-anchors/map-discipline-addition-disposition`
+- `tests/canary/workflow-guidance-anchors/map-discipline-copy-survival-proof`
+- `tests/canary/workflow-guidance-anchors/map-discipline-either-side-rows`
+- `tests/canary/workflow-guidance-anchors/map-discipline-excluded-edge-caller`
+- `tests/canary/workflow-guidance-anchors/map-discipline-executed-root-trace`
+- `tests/canary/workflow-guidance-anchors/map-discipline-fixture-reachable-state`
+- `tests/canary/workflow-guidance-anchors/map-discipline-flagged-additions`
+- `tests/canary/workflow-guidance-anchors/map-discipline-moved-bytes-sweep`
+- `tests/canary/workflow-guidance-anchors/map-discipline-pre-review-proof`
+- `tests/canary/workflow-guidance-anchors/map-discipline-pre-review-source-consumers`
+- `tests/canary/workflow-guidance-anchors/map-discipline-promise-rows`
+- `tests/canary/workflow-guidance-anchors/map-discipline-quoted-operands`
+- `tests/canary/workflow-guidance-anchors/map-discipline-shipped-surface-claim`
+- `tests/canary/workflow-guidance-anchors/map-discipline-source-sentence-table`
+- `tests/canary/workflow-guidance-anchors/map-discipline-sweep-depth-bound`
+- `tests/canary/workflow-guidance-anchors/map-discipline-sweep-direct-helpers`
+- `tests/canary/workflow-guidance-anchors/map-discipline-sweep-named-consumers`
+- `tests/canary/workflow-guidance-anchors/map-discipline-sweep-reader-fence`
+- `tests/canary/workflow-guidance-anchors/reader-sweep-term`
 - `CHANGELOG.md`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
@@ -212,7 +246,7 @@ The hostile-input classes of `projects/benchkit.md` do not reach this surface:
 - `internal/conformance/subcommand_routing_table_test.go`
 - `reviews/spec-stage-grader-trace.md`
 
-Only `map-discipline.md`, the new registry pair, the one `registry` line in `registry_data.go`, the five new canary directories, and `CHANGELOG.md` take edits. The other paths are closure entries. The slicing checks require each anchor registry file that names `map-discipline.md`, and each fixture directory that pins it. The binding registry in `internal/tickets` binds `internal/anchors` to the five command-registry files. The ticket slicer refines this list into `Writes:` lines with `bench preflight build <slug> --propose-writes`.
+Only `map-discipline.md`, the new registry pair, the one `registry` line in `registry_data.go`, the seven new canary directories, and `CHANGELOG.md` take edits. The other paths are closure entries. The slicing checks require each anchor registry file that names `map-discipline.md`. They also require each fixture directory that pins an edited path: 21 fixtures pin `map-discipline.md`, and 3 pin `CHANGELOG.md`. The binding registry in `internal/tickets` binds `internal/anchors` to the five command-registry files. The ticket slicer refines this list into `Writes:` lines with `bench preflight build <slug> --propose-writes`.
 
 ## Out of scope
 
@@ -225,9 +259,9 @@ Only `map-discipline.md`, the new registry pair, the one `registry` line in `reg
 | source sentence (`roadmap/FT376.md`) | rows |
 | --- | --- |
 | "A pin row quotes its comparison operator." | GT1, GT14 |
-| "The reader sweep lists each unexported read below an entry without an internal form." | GT2 |
+| "The reader sweep lists each unexported read below an entry without an internal form." | GT2, GT18 |
 | "No expectation comes from the code under test." | GT3, GT4 |
-| "A spec that consolidates repeated rules includes a table of each site's old rule and new rule." | GT5 |
+| "A spec that consolidates repeated rules includes a table of each site's old rule and new rule." | GT5, GT19 |
 | "Each changed cell maps to an acceptance row, a flagged addition, or a Won't handle line." | GT6, GT15 |
 | "The author checks every quantified obligation at each affected site and across all tickets." | GT7, GT8 |
 | "The caller sweep uses `bench consumers` for each changed function, including unexported functions." | GT9, GT10 |
@@ -248,7 +282,7 @@ The commitment criteria in `.bench/commitment.json` restate these sentences. `FT
 ### Flagged additions
 
 - GT12 pins the conformant direction. The source does not name it, but the anchor harness proves both directions for each rule set.
-- GT14, GT15, and GT16 add canaries for criteria whose rows already have a removal test. They show that the gate reds a weakened sentence. The working agreement admits an independent expectation only when its red is demonstrated, and each canary is that demonstration.
+- GT14, GT15, GT16, GT18, and GT19 add canaries for needles whose rows already have a removal test. They show that the gate reds a weakened sentence. The working agreement admits an independent expectation only when its red is demonstrated, and each canary is that demonstration.
 - GT17 adds a changelog entry under the `craft-synthesis` rule for user-visible behavior.
 
 ### Reader sweep
@@ -272,7 +306,7 @@ The commitment criteria in `.bench/commitment.json` restate these sentences. `FT
 - `Entry reads`: none. The spec adds no entry and no ambient read.
 - `Derived expectations`: each expected diagnostic comes from the table above, and `TestSpecGraderTraceAnchors` restates it independently of the registry.
 - `Consolidated rules`: none. The spec consolidates no repeated rule.
-- `Quantified obligations`: "each new sentence is an anchor needle" holds for N1 to N9 in GT1 to GT11. "Each canary" holds for all five fixtures in GT8, GT10, and GT14 to GT16.
+- `Quantified obligations`: "each new rule sentence is an anchor needle" holds for N1 to N9 in GT1 to GT11. The internal-form gloss is the one excluded sentence. "A canary for each needle that can lose a clause" holds for N1, N2, and N5 to N9. Rows GT8, GT10, GT14 to GT16, GT18, and GT19 hold those canaries.
 - `Workflow-step writes`: none. The spec adds no workflow step.
 
 `bench anchors .agents/skills/bench-craft-spec/references/map-discipline.md` reported 31 anchors at `44882814`. No anchored sentence changes, so no anchor claim of this spec conflicts with that output.
