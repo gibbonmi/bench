@@ -28,7 +28,7 @@ var twoTestsRunEvents = []string{
 // and subtests of the package that emitted a run event. A repeated run event counts once.
 func TestPackagesRowCountsRunEvents(t *testing.T) {
 	output, code := commandOverEvents(t, t.TempDir(), []string{"--package", "./..."}, twoTestsRunEvents, 0)
-	want := "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,pass,250,2\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+	want := "packages[1]{package,status,elapsed_ms,tests_run}:\n  canned,pass,250,2\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
 	if output != want || code != 0 {
 		t.Fatalf("Command = (%d, %q), want (0, %q)", code, output, want)
 	}

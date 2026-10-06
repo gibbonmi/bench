@@ -247,7 +247,7 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	if incomplete := report.incompletePackages(); len(incomplete) != 0 {
 		return refusedOutcome(toon.Errorf("go test reported incomplete packages", strings.Join(incomplete, ", "))+"\n", 1)
 	}
-	outcome = report.outcome(request.full)
+	outcome = report.outcome()
 	if request.run != "" && outcome.Kind == OutcomeNoTestRun {
 		return Outcome{Kind: OutcomeNoTestRun}, toon.Errorf("go test reported no test runs", "run pattern matched no tests") + "\n", 1
 	}
@@ -280,7 +280,7 @@ func emptyReport(full bool) (Outcome, string, int) {
 	if err != nil {
 		return refusedOutcome(toon.RenderError(err)+"\n", 1)
 	}
-	return empty.outcome(full), out, 0
+	return empty.outcome(), out, 0
 }
 
 // packagePattern maps a bare directory-relative operand to a "./"-prefixed

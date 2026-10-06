@@ -164,12 +164,11 @@ func (r *report) render(full bool) (string, error) {
 		// counts, so they emit bare and stay integers on a round-trip.
 		packageRows = append(packageRows, []any{pkg, r.statuses[pkg], r.elapsedMS[pkg], len(r.ranTests[pkg])})
 	}
-	failures := r.failures(full)
 	packageBlock, err := toon.TableTyped("packages", []string{"package", "status", "elapsed_ms", "tests_run"}, packageRows)
 	if err != nil {
 		return "", err
 	}
-	failureBlock, err := toon.Table("failures", []string{"package", "test", "line"}, failures)
+	failureBlock, err := toon.TableTyped("failures", []string{"package", "test", "line", "lines"}, r.failures(full))
 	if err != nil {
 		return "", err
 	}
@@ -239,33 +238,57 @@ func goLocationOnly(reason string) bool {
 	return false
 }
 
-func (r *report) failures(full bool) [][]string {
-	rows := make([][]string, 0)
+// failure is one failed test, or a package failure with an empty test name, with the
+// diagnostic lines it emitted.
+type failure struct {
+	packageName string
+	test        string
+	lines       []string
+}
+
+// failed returns each failure sorted by package and then by test name.
+func (r *report) failed() []failure {
+	failed := make([]failure, 0)
 	for _, test := range r.tests {
 		if !test.failed || r.failedDescendant(test) && len(test.lines) == 0 {
 			continue
 		}
-		rows = append(rows, []string{test.packageName, test.test, failureCell(test.lines, full)})
+		failed = append(failed, failure{test.packageName, test.test, test.lines})
 	}
 	for pkg, status := range r.statuses {
 		if status == "fail" && r.packageFailure(pkg) {
-			rows = append(rows, []string{pkg, "", failureCell(r.packageLog[pkg], full)})
+			failed = append(failed, failure{pkg, "", r.packageLog[pkg]})
 		}
 	}
-	sort.Slice(rows, func(i, j int) bool {
-		return rows[i][0] < rows[j][0] || rows[i][0] == rows[j][0] && rows[i][1] < rows[j][1]
+	sort.Slice(failed, func(i, j int) bool {
+		return failed[i].packageName < failed[j].packageName || failed[i].packageName == failed[j].packageName && failed[i].test < failed[j].test
 	})
+	return failed
+}
+
+func (r *report) failures(full bool) [][]any {
+	rows := make([][]any, 0)
+	for _, f := range r.failed() {
+		rows = append(rows, f.rows(full)...)
+	}
 	return rows
 }
 
-func failureCell(lines []string, full bool) string {
-	if len(lines) == 0 {
-		return "no diagnostic emitted"
+// rows gives the first diagnostic line, or with full each line in emitted order. Each
+// row carries the count of all the lines.
+func (f failure) rows(full bool) [][]any {
+	if len(f.lines) == 0 {
+		return [][]any{{f.packageName, f.test, "no diagnostic emitted", 0}}
 	}
-	if full {
-		return diagnosticCell(strings.Join(lines, "\n"), true)
+	lines := f.lines
+	if !full {
+		lines = lines[:1]
 	}
-	return diagnosticCell(lines[0], false)
+	rows := make([][]any, 0, len(lines))
+	for _, line := range lines {
+		rows = append(rows, []any{f.packageName, f.test, diagnosticCell(line, full), len(f.lines)})
+	}
+	return rows
 }
 
 func diagnosticCell(line string, full bool) string {

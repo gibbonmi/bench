@@ -61,7 +61,7 @@ func TestNamedCheckFailureWithNoRunEventIsNotRanNothing(t *testing.T) {
 		`{"Action":"fail","Package":"canned","Test":"TestCanned","Elapsed":0.01}`,
 		`{"Action":"fail","Package":"canned","Elapsed":0.5}`,
 	}, 1)
-	failures := "failures[1]{package,test,line}:\n  canned,TestCanned,\"canned_test.go:9: boom\"\n"
+	failures := "failures[1]{package,test,line,lines}:\n  canned,TestCanned,\"canned_test.go:9: boom\",1\n"
 	if !strings.Contains(output, failures) || strings.Contains(output, "named check ran nothing") || code != 1 {
 		t.Fatalf("Command = (%d, %q), want (1, %q and no zero-rule title)", code, output, failures)
 	}
