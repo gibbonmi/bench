@@ -100,7 +100,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
 
-**FT284 (MEDIUM, decision required) — `bench spec retire` owns its roadmap retirement atomically.**
+**FT284 (MEDIUM, decision required) — spec retirement preserves durable decisions and repairs residual references.**
 
 **FT244 (LOW) — a standard scratch directory for worktree runs.**
 

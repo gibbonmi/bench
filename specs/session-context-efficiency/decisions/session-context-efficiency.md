@@ -47,7 +47,7 @@ Readiness authorizes spec authoring; ticket 9 retains the review checkpoint for 
 - Provider pricing or a composite dollar score without a reliable harness
   source; FT231 owns performance measurement.
 - A general rewrite of always-loaded guidance; FT100 owns guidance weight.
-- Replacing FT173's AXI contract or its command-owned truncation policies.
+- Replacing the AXI contract or the existing output-policy owners that `craft-cli` identifies.
 - Combining a mutation with a later verification, approval, or publication
   boundary solely to reduce the call count.
 
@@ -62,9 +62,9 @@ Readiness authorizes spec authoring; ticket 9 retains the review checkpoint for 
 - Path: `.agents/skills/bench-craft-cli/SKILL.md`
   Supports: minimal default schemas, explicit truncation, aggregates, and contextual disclosure.
   Drift: the AXI principles or approved Bench query set changes.
-- Path: `decisions/byte-preserving-axi-foundation/ft173-axi-contract.md`
-  Supports: the existing CLI output owner, consumer constraints, and command-local truncation policies.
-  Drift: FT173's destination or compatibility decisions change.
+- Path: `.agents/skills/bench-craft-cli/references/output-ownership.md`
+  Supports: command-domain ownership and the compatibility boundary for an approved output change.
+  Drift: output ownership or compatibility decisions change.
 - Path: `roadmap/FT89.md`
   Supports: placement of deterministic operations in the CLI and judgment in operating guidance.
   Drift: FT89 lands, retires, or changes its ownership rule.

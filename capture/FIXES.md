@@ -36,7 +36,7 @@ from this file. FT189 is the highest-ranked live fix.
 | 9 | FT169 | Applicable | No single sanctioned worktree landing command owns preservation, integration, and cleanup. Blocked by FT98. |
 | 10 | FT141 | Partial | The output-truncation guidance face is closed, but gate-pin red records still lack failing-phase inventory and stable attribution. |
 | 11 | FT178 | Applicable | Bare `bench worktree` remains human porcelain with behavior too implicit for automation. |
-| 12 | FT173 | Decision | An active assignment whose tree is missing receives misleading actions and no cleanup disclosure; choose the intended disclosure class before the light-path repair. |
+| 12 | FT254 | Decision | An active assignment whose tree is missing receives misleading actions and no cleanup disclosure; choose the intended disclosure class before the light-path repair. |
 | 13 | FT190 | Partial | Injected-port conformance covers only part of the interface inventory. Re-slice to uncovered packages and require a real-producer test or explicit exemption. |
 | 14 | FT92 | Applicable | Subject-drift attribution and shipped-input hygiene remain incomplete across consumers of retained and landed state. |
 | 15 | FT130 | Applicable | A capture write during an active lifecycle can invalidate the subject without a mechanical void-or-block response. |
