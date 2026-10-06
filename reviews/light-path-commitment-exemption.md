@@ -137,6 +137,89 @@
           "requirement": "t1-conformance",
           "command": "bench test --package ./internal/conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t2-commitment-repository-v1",
+          "performer": "claude:lpce_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t2",
+            "digest": "sha256:f1ef0ad844e30a995e9872b79175f0e6060b40917b90e90719c0d7dba8c48725",
+            "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,f516001e3e2c37538182ce5b3907a1d1af491703,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,3958\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n$ bench worktree exec lpce-integration -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover(found, production)' --with 'return nil' --package ./internal/commitment/repository --run TestLightPathCandidate\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,f516001e3e2c37538182ce5b3907a1d1af491703,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,TestLightPathCandidate,passed,21\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,1331\nfailures[4]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathCandidate/directory-sibling,\"light_path_test.go:121: AuthorizeCandidate = <nil>, want a refusal naming \\\"production path \\\\\\\\\\\"pkgx/a.go\\\\\\\\\\\" is outside the Writes line of light-path ticket \\\\\\\\\\\"specs/lp/tickets/one.md\\\\\\\\\\\"\\\"\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathCandidate/hostile-path,\"light_path_test.go:121: AuthorizeCandidate = <nil>, want a refusal naming \\\"production path \\\\\\\\\\\"bad \\\\\\\\\\\\\\\\x1b.go\\\\\\\\\\\"\\\"\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathCandidate/span,\"light_path_test.go:121: AuthorizeCandidate = <nil>, want a refusal naming \\\"production paths span more than one light-path ticket; a light-path change carries one ticket\\\"\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathCandidate/uncovered-beside-span,\"light_path_test.go:121: AuthorizeCandidate = <nil>, want a refusal naming \\\"production path \\\\\\\\\\\"c.go\\\\\\\\\\\"\\\"\"\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In the light-path predicate, admit a qualifying folder without the Writes cover of the production paths. TestLightPathCandidate must fail and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:lpce_t2",
+              "digest": "sha256:f1ef0ad844e30a995e9872b79175f0e6060b40917b90e90719c0d7dba8c48725",
+              "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./internal/commitment/repository\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,f516001e3e2c37538182ce5b3907a1d1af491703,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,3958\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n$ bench worktree exec lpce-integration -- bench probe internal/commitment/repository/light_path.go --swap 'return lightPathCover(found, production)' --with 'return nil' --package ./internal/commitment/repository --run TestLightPathCandidate\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,f516001e3e2c37538182ce5b3907a1d1af491703,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/light_path.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,TestLightPathCandidate,passed,21\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,1331\nfailures[4]{package,test,line}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathCandidate/directory-sibling,\"light_path_test.go:121: AuthorizeCandidate = <nil>, want a refusal naming \\\"production path \\\\\\\\\\\"pkgx/a.go\\\\\\\\\\\" is outside the Writes line of light-path ticket \\\\\\\\\\\"specs/lp/tickets/one.md\\\\\\\\\\\"\\\"\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathCandidate/hostile-path,\"light_path_test.go:121: AuthorizeCandidate = <nil>, want a refusal naming \\\"production path \\\\\\\\\\\"bad \\\\\\\\\\\\\\\\x1b.go\\\\\\\\\\\"\\\"\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathCandidate/span,\"light_path_test.go:121: AuthorizeCandidate = <nil>, want a refusal naming \\\"production paths span more than one light-path ticket; a light-path change carries one ticket\\\"\"\n  github.com/gibbonmi/bench/internal/commitment/repository,TestLightPathCandidate/uncovered-beside-span,\"light_path_test.go:121: AuthorizeCandidate = <nil>, want a refusal naming \\\"production path \\\\\\\\\\\"c.go\\\\\\\\\\\"\\\"\"\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t2-commit-v1",
+          "performer": "claude:lpce_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t2",
+            "digest": "sha256:952c5fbb797d390b92c2f82ea060a706e11701ebf5bb167be5ad4c10d3d412cd",
+            "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./internal/commit\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,f516001e3e2c37538182ce5b3907a1d1af491703,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/commit,pass,7334\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-commit",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-conformance-v1",
+          "performer": "claude:lpce_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t2",
+            "digest": "sha256:44230b227a51394b00f64413b3a9d10a6c6923277d3f825c2c79271d30e75d26",
+            "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./internal/conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,f516001e3e2c37538182ce5b3907a1d1af491703,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/internal/conformance,pass,42085\nfailures[0]{package,test,line}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/OAL3NZ/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket1868494371/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/OAL3NZ/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket606477011/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "t2-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-bench-v1",
+          "performer": "claude:lpce_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ff5bc42b47b0e6f460bbc37343e58de18c4a33d4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_t2",
+            "digest": "sha256:6537859daac3a21e56eef8c30b48a10212078d5cb0afca09f2b57670b964adba",
+            "excerpt": "$ bench worktree exec lpce-integration -- bench test --package ./cmd/bench\nexit: 0\ntree[1]{target,head,dirty}:\n  lpce-integration,f516001e3e2c37538182ce5b3907a1d1af491703,false\npackages[1]{package,status,elapsed_ms}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13239\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
         }
       ],
       "reviews": []
