@@ -238,7 +238,76 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gtc1-standards-1",
+          "performer": "claude:ft376_gtc1_standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "034738cb6dce355d365eeb057f37f3bb1ebc7bca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft376_gtc1_standards",
+            "digest": "sha256:d722b84598c61b47b7119360acd14ec974ed029a1658943cba6d9cac6441c556",
+            "excerpt": "Standards axis GT-C1: evidence current at 309924be. Findings: 3 (0 blocking, 3 advisory).\nS1 advisory CHANGELOG.md:11 third sentence is 32 words; ste-prose.md:17-18 bound 25; auto-fix; confidence 8.\nS2 advisory internal/anchors/registry_spec_trace_test.go:5 four-noun cluster; ste-prose.md:26; auto-fix; confidence 4.\nS3 advisory reviews/spec-stage-grader-trace.md probe excerpt shows N1 only; no-op if the author return enumerates seven; confidence 3.\n"
+          },
+          "axis": "Standards",
+          "base": "f7ef3cee4ed28920a16168ea6e900ce7c6e71af7",
+          "tip": "102144309646bffeba2b48b1168b4ce83341df76",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gtc1-spec-1",
+          "performer": "claude:ft376_gtc1_spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "034738cb6dce355d365eeb057f37f3bb1ebc7bca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft376_gtc1_spec",
+            "digest": "sha256:88a4a2b9ac36658c3814deddccacc0a2bd2db4a064d922c4cd3587d98e770ce5",
+            "excerpt": "Spec axis GT-C1: evidence current at 309924be. Findings: 1 advisory. GT1-GT16, GT18, GT19 met; GT17 review-owned-met.\nP1 advisory spec.md:141 chunk table tests cell omits t1-conformance that the plan at spec.md:146 adds; auto-fix; confidence 5.\n"
+          },
+          "axis": "Spec",
+          "base": "f7ef3cee4ed28920a16168ea6e900ce7c6e71af7",
+          "tip": "102144309646bffeba2b48b1168b4ce83341df76",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gtc1-coverage-1",
+          "performer": "claude:ft376_gtc1_coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "034738cb6dce355d365eeb057f37f3bb1ebc7bca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft376_gtc1_coverage",
+            "digest": "sha256:ce2cc1fdf366b8c54c0a53e9fd97f8eb694796047e14c40b04079727afe199fe",
+            "excerpt": "Coverage axis GT-C1: evidence current at 309924be. Findings: 1 advisory. Probes: 3 (silent, silent, bit), each restored.\nC1 advisory anchor_harness_test.go:161-173 with spec.md:119: N3 and N4 have no canary; a label-only N3 needle stays green in ./internal/anchors and ./internal/conformance (probes 1-2); confidence 7.\n"
+          },
+          "axis": "Coverage",
+          "base": "f7ef3cee4ed28920a16168ea6e900ce7c6e71af7",
+          "tip": "102144309646bffeba2b48b1168b4ce83341df76",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -250,3 +319,23 @@
   }
 }
 ```
+
+## Standards
+
+GT-C1 has 3 findings. The worst issue is S1.
+
+- S1, auto-fix, confidence 8: the third sentence of the `### Spec grader trace` entry at `CHANGELOG.md:11` has 32 words. The bound in `ste-prose.md` is 25 words, and the prose gate excludes `CHANGELOG.md`.
+- S2, auto-fix, confidence 4: the comment at `internal/anchors/registry_spec_trace_test.go:5` has a cluster of four nouns. The limit in `ste-prose.md` is three nouns.
+- S3, no-op, confidence 3: the probe excerpt shows only N1. The author return lists all seven named probes with their failing canaries and exact restores.
+
+## Spec
+
+GT-C1 has 1 finding. The worst issue is P1.
+
+- P1, auto-fix, confidence 5: the tests cell of the chunk table in `spec.md` omits `t1-conformance`, which the version 2 plan adds.
+
+## Coverage
+
+GT-C1 has 1 finding. The worst issue is C1.
+
+- C1, auto-fix as an in-scope plan expansion, confidence 7: N3 and N4 have no canary. A label-only N3 needle stays green in the anchors package and in the conformance package. Add one canary for each needle, with a coverage row each.
