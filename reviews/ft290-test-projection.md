@@ -101,6 +101,71 @@
           "requirement": "t2-probe",
           "command": "bench test --package ./internal/probe",
           "exit_code": 0
+        },
+        {
+          "id": "t3-testreport-v1",
+          "performer": "claude:ft290_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce41587b1bc16e9ce6820db7d98c466c03b7e510",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t3",
+            "digest": "sha256:b3860d001760ee40ed4f0058e8ee5b25e8c557c6288fd88224ff84a0e761f0c4",
+            "excerpt": "$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\ntree: ft290-test-projection,44d7ba54c598dcea0a1093cff6527896a31868b4,false\nexit 0\n  github.com/gibbonmi/bench/internal/testreport,pass,34523\nfailures[0]{package,test,line}:\n\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/named_check.go --omit $'if outcome.Kind == OutcomeNoTestRun {\\n\\t\\treturn outcome, row + toon.Errorf(\"named check ran nothing\", \"no test emitted a run event\") + \"\\\\n\", 1\\n\\t}' --package ./internal/testreport --run '^TestNamedCheckRanNothingExitsOne$'\nexit 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/named_check.go,omit,failed,1,yes\n"
+          },
+          "requirement": "t3-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omission at the zero rule: omit the OutcomeNoTestRun branch that prints the named check ran nothing title and exits 1. TestNamedCheckRanNothingExitsOne must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t3",
+              "digest": "sha256:b3860d001760ee40ed4f0058e8ee5b25e8c557c6288fd88224ff84a0e761f0c4",
+              "excerpt": "$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\ntree: ft290-test-projection,44d7ba54c598dcea0a1093cff6527896a31868b4,false\nexit 0\n  github.com/gibbonmi/bench/internal/testreport,pass,34523\nfailures[0]{package,test,line}:\n\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/named_check.go --omit $'if outcome.Kind == OutcomeNoTestRun {\\n\\t\\treturn outcome, row + toon.Errorf(\"named check ran nothing\", \"no test emitted a run event\") + \"\\\\n\", 1\\n\\t}' --package ./internal/testreport --run '^TestNamedCheckRanNothingExitsOne$'\nexit 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/named_check.go,omit,failed,1,yes\n"
+            }
+          }
+        },
+        {
+          "id": "t3-probe-v1",
+          "performer": "claude:ft290_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce41587b1bc16e9ce6820db7d98c466c03b7e510",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t3",
+            "digest": "sha256:d52f2bb7549f53ef86f2af436e5c403c73ef46ef433deffaee73d14116ba977b",
+            "excerpt": "$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/probe\ntree: ft290-test-projection,44d7ba54c598dcea0a1093cff6527896a31868b4,false\nexit 0\n  github.com/gibbonmi/bench/internal/probe,pass,16591\nfailures[0]{package,test,line}:\n"
+          },
+          "requirement": "t3-probe",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-ordinary-build-census-v1",
+          "performer": "claude:ft290_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce41587b1bc16e9ce6820db7d98c466c03b7e510",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t3",
+            "digest": "sha256:643625bb9af0a53371a74b1fc341fd60773b2a2da07bd3f2d13beaab641e43d2",
+            "excerpt": "$ bench worktree exec \"ft290-test-projection\" -- bench test --check ordinary-build-census\ntree: ft290-test-projection,44d7ba54c598dcea0a1093cff6527896a31868b4,false\nexit 0\n  github.com/gibbonmi/bench/internal/conformance,pass,276\nfailures[0]{package,test,line}:\n"
+          },
+          "requirement": "t3-ordinary-build-census",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
         }
       ],
       "reviews": []
