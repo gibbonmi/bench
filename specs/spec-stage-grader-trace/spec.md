@@ -138,7 +138,13 @@ Seven new fixtures under `tests/canary/workflow-guidance-anchors/` each weaken o
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| GT-C1 / sliced after review | The pre-review checklist and the caller sweep carry the FT376 rules, and the gate holds each rule | GT1 to GT19 | `internal/anchors` package tests, `internal/conformance` fixture bites, and the `docs-currency-workflow` check | no |
+| GT-C1 / `1-trace-pin-entry-and-expectation-graders.md`, `2-map-consolidated-site-rules.md`, `3-check-quantified-obligations.md`, `4-trace-workflow-step-writes.md`, `5-sweep-callers-with-bench-consumers.md` | The pre-review checklist and the caller sweep carry the FT376 rules, and the gate holds each rule | GT1, GT2, GT3, GT4, GT5, GT6, GT7, GT8, GT9, GT10, GT11, GT12, GT13, GT14, GT15, GT16, GT17, GT18, GT19 | `bench test --package ./internal/anchors`, `bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner`, `bench test --check canary-fixture-compliance`, `bench test --check docs-currency-workflow` | no |
+
+Each ticket delivers one FT376 commitment criterion and is one serial green checkpoint. Ticket 1 creates the registry pair, and each later ticket appends its anchors and its test rules to that pair. Each ticket also adds its sub-bullet after the sub-bullet of its predecessor, so the tickets run in the listed order. Ticket 5 completes the nine-rule set, so it owns the conformant-tree row, the live-kit row, and the changelog row. The registry pair is a data list that the existing anchor harness reads, not a new seam, so ticket 1 shares the one review chunk.
+
+```bench-completion-plan
+{"version":1,"chunks":[{"id":"GT-C1","tickets":["1-trace-pin-entry-and-expectation-graders.md","2-map-consolidated-site-rules.md","3-check-quantified-obligations.md","4-trace-workflow-step-writes.md","5-sweep-callers-with-bench-consumers.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"fixture-bites","command":"bench test --package ./internal/conformance --run TestEveryRetainedFixtureBitesThroughRegisteredOwner"},{"id":"canary-fixture-compliance","command":"bench test --check canary-fixture-compliance"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"}]}],"final_verification":[{"id":"coverage-check","command":"bench coverage --check specs/spec-stage-grader-trace/spec.md"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"docs-currency-workflow","command":"bench test --check docs-currency-workflow"}]}
+```
 
 ## Testing decisions
 
@@ -218,7 +224,6 @@ The hostile-input classes of `projects/benchkit.md` do not reach this surface:
 - `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 - `tests/canary/workflow-guidance-anchors/craft-spec-transaction-failure-rows`
 - `tests/canary/workflow-guidance-anchors/craft-spec-two-audience-inventory`
-- `tests/canary/workflow-guidance-anchors/final-check-light-path-changelog-heading`
 - `tests/canary/workflow-guidance-anchors/map-discipline-addition-disposition`
 - `tests/canary/workflow-guidance-anchors/map-discipline-copy-survival-proof`
 - `tests/canary/workflow-guidance-anchors/map-discipline-either-side-rows`
@@ -246,7 +251,9 @@ The hostile-input classes of `projects/benchkit.md` do not reach this surface:
 - `internal/conformance/subcommand_routing_table_test.go`
 - `reviews/spec-stage-grader-trace.md`
 
-Only `map-discipline.md`, the new registry pair, the one `registry` line in `registry_data.go`, the seven new canary directories, and `CHANGELOG.md` take edits. The other paths are closure entries. The slicing checks require each anchor registry file that names `map-discipline.md`. They also require each fixture directory that pins an edited path: 21 fixtures pin `map-discipline.md`, and 3 pin `CHANGELOG.md`. The binding registry in `internal/tickets` binds `internal/anchors` to the five command-registry files. The ticket slicer refines this list into `Writes:` lines with `bench preflight build <slug> --propose-writes`.
+Edits go only to the guidance file, the new registry pair, and one registry line in the anchor data file. The seven new canary directories and the changelog also take edits.
+
+The other paths are closure entries that build preflight requires. Each anchor registry file that names the guidance file is a closure entry. Each fixture directory that pins an edited path is a closure entry, and the fixture-closure row of build preflight enumerates those directories. The binding registry binds the anchors package to the five command-registry files. This list equals the union of the ticket write lines.
 
 ## Out of scope
 
