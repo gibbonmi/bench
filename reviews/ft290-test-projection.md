@@ -1,5 +1,32 @@
 # Review outcomes
 
+## TP-C1a review pickup
+
+The TP-C1a review ran on the frozen pair `16970a22..068ab04a`. Each axis ran on sonnet at high effort, by the reviewer's direction. The chunk has used 0 of its 2 repair cycles.
+
+The raw count is 7 findings, and the repair-target count is 6, because S1 has no repair target. Ticket 2 owns C3. Ticket 3 owns S2, S3, C1, C2, and C4, because its test file holds the second helper and most of the tags.
+
+### Standards
+
+Count: 3. Worst issue: S2.
+
+- S1, no-op, confidence 6. `named_check.go` keeps the `request.run` pass-through arm. The spec section that ticket 3 implements says "When `--run` is present and no test ran, the current `go test reported no test runs` refusal wins". The arm passes the `runGoTest` refusal through and derives no second copy of it. TP21 of ticket 6 reaches it.
+- S2, auto-fix, confidence 5. `tests_run_test.go` and `check_row_test.go` each define the same canned-events `Command` helper, and `TestPackageRunWithNoTestKeepsExitZero` repeats it inline. Keep one helper.
+- S3, auto-fix, confidence 5. The new test comments carry `(Coverage row TPn.)` tags, which are provenance under `craft-comments`. Delete the new tags.
+
+### Spec
+
+Count: 0. Worst issue: none. All ten TP-C1a rows are closed.
+
+### Coverage
+
+Count: 4. Worst issue: C1.
+
+- C1, auto-fix, confidence 6. No test pins the `check` row on an `OutcomeFailed` named-check result. Add a test over the canned failing set.
+- C2, auto-fix, confidence 6. Only streams with one run event pin the `tests_run` cell of the `check` row. Add a stream with two distinct run events.
+- C3, auto-fix, confidence 4. No test pins the `e.Test != ""` guard on run events, which the zero rule depends on. Add a package-level run event to a zero-rule stream.
+- C4, auto-fix, confidence 4. No test pins the interrupt pass-through arm or a failure with no run event. Add both tests.
+
 ```bench-review-record
 {
   "version": 2,
@@ -168,7 +195,77 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1a-standards-r1",
+          "performer": "claude:ft290_c1a_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ce41587b1bc16e9ce6820db7d98c466c03b7e510",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1a_standards",
+            "digest": "sha256:2699f31af56b947b58f7c9ffda61fc79a260bdd8d7339143e09018c9db74d5f0",
+            "excerpt": "axis=Standards findings=3 worst=S1\nS1 | auto-fix | conf 6 | internal/testreport/named_check.go:57,61 | `request.run != \"\" && outcome.Kind == OutcomeNoTestRun` in runNamedCheck is dead: parseFocusedRequest refuses --check with --run (command.go:71), and runGoTest owns the --run no-test refusal (command.go:251). One source per fact; Speculative Generality. | Delete the clause and the \"--run refusal\" comment phrase.\nS2 | auto-fix | conf 5 | tests_run_test.go:9-14 vs check_row_test.go:13-18,67-69,83-92 | Tickets 2 and 3 each wrote the same canned-events Command helper; TestPackageRunWithNoTestKeepsExitZero repeats the install pair inline. Fixture harness pasted N times. | Keep one helper taking root, args, events, exit.\nS3 | auto-fix | conf 5 | check_row_test.go:21,76; tests_run_test.go:18,52 | New \"(Coverage row TPn.)\" comment tags are provenance (craft-comments \"Treat an identifier as provenance\"). | Delete the parentheticals, or close as no-op if the convention is kept.\nAdvice: selection_facts.go:44 could derive the probe-target answer from namedCheckKind; header literal expectations have no recorded header-mutation red; ranTests is the single run-count source; namedCheckKind is the single kind owner.\nExamined: --check-current, git diff 16970a22..068ab04a, command.go, outcome.go, named_check.go, craft-comments, craft-review; no tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "16970a226a4e36f2d3d1eee5b5e262f0c76de548",
+          "tip": "068ab04a456b87e56655e0a500525322919efcc1",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c1a-spec-r1",
+          "performer": "claude:ft290_c1a_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ce41587b1bc16e9ce6820db7d98c466c03b7e510",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1a_spec",
+            "digest": "sha256:d37d1866926088809f6dff9c2e94df508774a295045713c2b460a696dbb33d7e",
+            "excerpt": "axis=Spec findings=0 worst=none\nAll ten TP-C1a rows closed by static read: TP1 TestPackagesRowCountsRunEvents, TP2 TestPackagesRowNoTestsCountsZero, TP3 TestNamedCheckPrintsCheckRowFirst, TP4 TestSystemCheckRowKind, TP5 TestNamedCheckRanNothingExitsOne, TP51 TestNamedCheckBuildFailureWinsOverZeroRule, TP6 TestPackageRunWithNoTestKeepsExitZero, TP55 TestChangedRunWithNoTestKeepsExitZero, TP47 TestPackageFormHasNoSelectedBy, TP18 TestNamedCheckRunsOnlyRegisteredDevScope (in place).\nTitle, check-row-first, OutcomeNoTestRun keying, no row before a verdict, and the --run refusal pass-through all match the spec. No scope creep; posture-change table fully applied.\nAdvice: no row grades the Refused/Interrupted arms of runNamedCheck; the --run pass-through arm is unreachable until ticket 6 (TP21), justified by the spec sentence; the plan edit is orchestrator record keeping.\nExamined: --check-current, bench coverage, full diff, spec sections, tickets 1-3, outcome.go, command.go, test helpers. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "16970a226a4e36f2d3d1eee5b5e262f0c76de548",
+          "tip": "068ab04a456b87e56655e0a500525322919efcc1",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1a-coverage-r1",
+          "performer": "claude:ft290_c1a_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ce41587b1bc16e9ce6820db7d98c466c03b7e510",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1a_coverage",
+            "digest": "sha256:b6a8dda42b078c807b965e8d4cc7773043281ffe63b2b38f926dbb18be20430c",
+            "excerpt": "axis=Coverage findings=4 worst=C1\nC1 | auto-fix | conf 6 | named_check.go:60-61; spec \"first block of each named-check result that reached a verdict\" | No test pins the check row on an OutcomeFailed result; adding OutcomeFailed to the passthrough arm probed silent. | Add a named-check test over the canned failing set asserting the check header and a tests_run 1 row as prefix, exit 1.\nC2 | auto-fix | conf 6 | named_check.go:62 | Only single-run-event streams pin the check-row tests_run cell; min(outcome.Ran, 1) probed silent. | Carry two distinct run events in TP3 or TP5 and assert line-routing,conformance,2,0.\nC3 | auto-fix | conf 4 | testreport.go:72 | The e.Test != \"\" guard on run events is unpinned; a package-level run event would defeat the zero rule; dropping the guard probed silent. | Add a package-level run event to the TP5 stream; assert exit 1, tests_run 0.\nC4 | auto-fix | conf 4 | named_check.go:60 | (a) Interrupt passthrough unpinned (removal probed silent); (b) a fail-with-no-run-event stream is unpinned (Ran==0 && !BuildFailed && !Passed swap probed silent). | Add an installSignallingGo named-check interrupt test asserting no check[ prefix; add a fail-without-run stream asserting failures, not the zero-rule title.\nCovered: TP55 and TP6 bit under a zero rule on every form; a per-package cap bit outcome tests.\nAdvice: an all-skipped named check prints tests_run 1 at exit 0 (matches the spec); the --run arm belongs to ticket 6 (TP21).\nExamined: delta 16970a22..068ab04a, spec rows and edge sections, tickets 1-3, outcome.go, testreport.go, command.go, environment.go, consumers; 9 bench probe calls, all restored yes; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "16970a226a4e36f2d3d1eee5b5e262f0c76de548",
+          "tip": "068ab04a456b87e56655e0a500525322919efcc1",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
