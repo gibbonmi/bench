@@ -1,7 +1,7 @@
 # 3. Publish an unbound light-path landing that names its folder
 
 Blocked by: 2-admit-light-path-commit.md
-Writes: internal/commitment/repository/light_path.go (new), internal/commitment/repository/light_path_test.go (new), internal/commitment/repository/candidate.go, internal/commitment/repository/publication.go, internal/commitment/commitmenttest/, internal/worktree/commitment_light_landing_test.go, internal/worktree/commitment_landing_fixture_test.go, internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/commitment/repository/light_path.go (new), internal/commitment/repository/light_path_test.go (new), internal/commitment/repository/candidate.go, internal/commitment/repository/publication.go, internal/spec/tickets_only.go, internal/commitment/commitmenttest/, internal/worktree/commitment_light_landing_test.go, internal/worktree/commitment_landing_fixture_test.go, internal/worktree/parallel_census_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: LP3, LP4, LP5, LP6, LP24, LP25, LP26, LP50, LP52, LP53
 
 ## What to build
