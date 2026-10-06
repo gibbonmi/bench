@@ -226,6 +226,19 @@ Repair cycle 1 of 2 is consumed.
 The chunk is frozen again at `023d79b3`. A confirming round of all three
 axes follows the verification records.
 
+### LP-C2 confirming round
+
+The confirming round read the repair delta `dcdd92e5..023d79b3` on the
+fable line at high effort. The axes confirmed S5 and S7. Spec and Coverage
+found nothing.
+
+- S9 (`auto-fix`, confidence 6): `internal/anchors/registry_commitment.go:11`.
+  The doc comment named only three holders of a retired grant, but two rows
+  refuse grants that the working phase held. The orchestrator corrected the
+  comment in commit `592ce99f`. This correction changes only a comment, so
+  it is evidence-only and consumes no repair cycle. A fresh Standards axis
+  reaffirms it.
+
 ```bench-review-record
 {
   "version": 2,
@@ -1889,6 +1902,74 @@ axes follows the verification records.
           "tip": "dcdd92e58790e8bd0877b7dcdc314fd265cefcf5",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "lp-c2-standards-r2",
+          "performer": "claude:lpce_c2_standards_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c2_standards_r2",
+            "digest": "sha256:e602f78dd956909695873a1ad0d7fbd64a77468e5df23eef7d94bed777ba2840",
+            "excerpt": "Standards axis — LP-C2 confirming round, fable/high, evidence sha256:5089de06b092d729c3a069a5d4257ca759cc81659f131289fc7b62a671f347c1 current at b35fad47. Repair delta dcdd92e5..023d79b3.\n\nS9 — minor — internal/anchors/registry_commitment.go:11-13. The grant clause names only a drain, a severity rank, or a later reconcile, but rows 50 and 53 refuse grants that the working phase itself held. craft-comments: what is true of the code as it stands. Confidence 6. auto-fix, not a block.\nFolds: S5 confirmed (ADR 0028:21 drops tier and effort; keeps fresh write delegate, own worktree, no wait; no path or code). S7 confirmed on the restriction half; the grant half carries S9. S6 and S8 not reopened.\nDuplicated knowledge in the repair delta: none introduced.\nAdvice: ADR 0023:19 and ADR 0028:21 both record the drain-to-fresh-delegate decision; pre-repair, reviewer call.\nRead: craft-review, craft-adr, craft-comments, ste-prose; ADR 0028; registry_commitment.go; BENCH.md:149-155.\nCount: 1. Worst: S9.\n"
+          },
+          "axis": "Standards",
+          "base": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "tip": "023d79b3b95a5b5d42fb890391bb6bca86d9a1a9",
+          "finding_ids": [
+            "S9"
+          ],
+          "supersedes": [
+            "lp-c2-standards-r1"
+          ]
+        },
+        {
+          "id": "lp-c2-spec-r2",
+          "performer": "claude:lpce_c2_spec_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c2_spec_r2",
+            "digest": "sha256:014cebf7d3e569e4073e9fe600faf2bc3195534a1804315567a69228c64cbccd",
+            "excerpt": "Spec axis — LP-C2 confirming round, fable/high, evidence sha256:5089de06b092d729c3a069a5d4257ca759cc81659f131289fc7b62a671f347c1 current at b35fad47. Repair delta dcdd92e5..023d79b3.\n\nFindings: none.\nChecks: ADR 0028 states every spec line 182 decision (ADR:7, :16, :17, :21; LP47 at spec :284); LP48 at ADR 0023:19 unchanged. d2b9777b changes only comment lines. Plan commits 8a544187 and 5a1efcff only add repair assignments. Fences held for d2b9777b (ticket 4) and 023d79b3 (ticket 5).\nAdvice: ADR:17 says through the outcome that pins it where spec:182 says through a plan; equivalent, pre-existing, confidence 3.\nCount: 0.\n"
+          },
+          "axis": "Spec",
+          "base": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "tip": "023d79b3b95a5b5d42fb890391bb6bca86d9a1a9",
+          "finding_ids": [],
+          "supersedes": [
+            "lp-c2-spec-r1"
+          ]
+        },
+        {
+          "id": "lp-c2-coverage-r2",
+          "performer": "claude:lpce_c2_coverage_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "4904c8bbde9a9c7d37577da2e04a5c3e7f629ab9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:lpce_c2_coverage_r2",
+            "digest": "sha256:8ee92bde0c0544e9a37d881575787e41f8e70ebd3545418d0773d6c633c4565c",
+            "excerpt": "Coverage axis — LP-C2 confirming round, fable/high, evidence sha256:5089de06b092d729c3a069a5d4257ca759cc81659f131289fc7b62a671f347c1 current at b35fad47. Repair delta dcdd92e5..023d79b3.\n\nFindings: none.\nThe delta changes a Go doc comment and one ADR bullet; no behavior, needle, or test surface.\nTests: ./internal/anchors pass; ./internal/conformance pass (3 capability skips); --check prose pass.\nCount: 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "caec9d72738215c7727b0bf2f32a24d109bf89a9",
+          "tip": "023d79b3b95a5b5d42fb890391bb6bca86d9a1a9",
+          "finding_ids": [],
+          "supersedes": [
+            "lp-c2-coverage-r1"
+          ]
         }
       ]
     }
