@@ -6,7 +6,7 @@ Decision source: Reviewer-confirmed current conversation, 2026-10-06.
 
 Verification log: 2 iteration(s) to accept the spec, then 1 iteration to accept the tickets. Sol 6.1/high reviewed both checkpoints.
 
-Implementation approval: pending. This spec does not change the delivery commitment or authorize implementation.
+Implementation approval: approved by the reviewer on 2026-10-06, including the nine-ticket breakdown and declared implementation line. Delivery scheduling remains separate.
 
 ## Problem
 
@@ -393,4 +393,5 @@ Planning preflight and all nine write proposals passed. All ten planning Markdow
 
 Existing timing records supplied the performance baseline. No separate benchmark ran.
 A required base update ran the full gate automatically and passed. Its source delta contained only commitment metadata.
-These planning reviews establish no implemented speedup. Implementation and delivery scheduling still require reviewer approval.
+
+These planning reviews establish no implemented speedup. The reviewer approved the spec and tickets on 2026-10-06. Delivery scheduling remains pending.
