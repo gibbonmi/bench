@@ -1,7 +1,7 @@
 # 10. Explain each changed selection
 
 Blocked by: 2-count-tests-run.md
-Writes: internal/testreport/
+Writes: internal/testreport/, decisions/run-binary-provenance.md, specs/ft290-test-projection/decisions/ft290-test-projection.md
 Covers: TP41, TP42, TP43, TP44, TP45, TP46, TP48
 
 ## What to build
