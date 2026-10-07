@@ -1,7 +1,7 @@
 # Route each commit refusal through the registry
 
 Blocked by: 08-route-the-commit-exit-3-to-the-reset-plan.md
-Writes: internal/refusalroute/registry.go (new), internal/commit/commit.go, internal/commit/refusal_route_test.go (new), internal/commit/dry_run_test.go, internal/commit/landing_test.go
+Writes: internal/refusalroute/registry.go (new), internal/commit/commit.go, internal/commit/refusal_route_test.go (new), internal/commit/dry_run_test.go, internal/commit/landing_test.go, internal/refusalroute/faces_commit.go (new)
 Covers: RR36, RR37, RR38
 
 ## What to build

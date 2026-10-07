@@ -1,7 +1,7 @@
 # Route the commitment policy refusals through faces
 
 Blocked by: 09-route-each-commit-refusal-through-the-registry.md, 10-route-each-checkpoint-refusal-by-its-cause.md
-Writes: internal/refusalroute/registry.go (new), internal/commitment/delivery.go, internal/commitment/repository/admission.go, internal/commitment/repository/candidate.go, internal/commitment/repository/continuation.go, internal/commitment/repository/publication.go, internal/commitment/repository/light_path.go, internal/commitment/repository/verification.go, internal/commitment/repository/readiness.go, internal/commitment/repository/publication_test.go, internal/commit/commit.go, internal/commit/refusal_route_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/refusalroute/registry.go (new), internal/commitment/delivery.go, internal/commitment/repository/admission.go, internal/commitment/repository/candidate.go, internal/commitment/repository/continuation.go, internal/commitment/repository/publication.go, internal/commitment/repository/light_path.go, internal/commitment/repository/verification.go, internal/commitment/repository/readiness.go, internal/commitment/repository/publication_test.go, internal/commit/commit.go, internal/commit/refusal_route_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/refusalroute/faces_commitment.go (new)
 Covers: RR61, RR62, RR63, RR64
 
 ## What to build

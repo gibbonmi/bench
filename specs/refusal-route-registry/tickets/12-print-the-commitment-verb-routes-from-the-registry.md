@@ -1,7 +1,7 @@
 # Print the commitment verb routes from the registry
 
 Blocked by: 11-route-the-commitment-policy-refusals-through-faces.md
-Writes: internal/refusalroute/registry.go (new), internal/commitment/commitcmd/command.go, internal/commitment/commitcmd/admission.go, internal/commitment/commitcmd/refusal_route_test.go (new), internal/commitment/verification_test.go, cmd/bench/commitment_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/refusalroute/registry.go (new), internal/commitment/commitcmd/command.go, internal/commitment/commitcmd/admission.go, internal/commitment/commitcmd/refusal_route_test.go (new), internal/commitment/verification_test.go, cmd/bench/commitment_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/refusalroute/faces_commitment.go (new)
 Covers: RR45, RR46, RR47, RR48
 
 ## What to build

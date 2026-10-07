@@ -129,6 +129,7 @@ Harder chunks: RR-C1b, RR-C3.
 A new leaf package `internal/refusalroute` owns the registry.
 It imports no write-verb package, so each verb package imports it with no cycle.
 It holds the one ordered face inventory, the route step types, the route renderer, and the `bench recovery` command.
+Each verb declares its faces in its own file of the package, and the registry composes them into the one ordered inventory.
 
 A face declares five facts:
 
@@ -980,6 +981,12 @@ The fail-closed refusals are the unregistered face (RR07) and each verb's `<verb
 The prospective build owns these exact paths:
 
 - `internal/refusalroute/registry.go`
+- `internal/refusalroute/faces_land.go`
+- `internal/refusalroute/faces_merge.go`
+- `internal/refusalroute/faces_reset.go`
+- `internal/refusalroute/faces_commit.go`
+- `internal/refusalroute/faces_gate.go`
+- `internal/refusalroute/faces_commitment.go`
 - `internal/refusalroute/route.go`
 - `internal/refusalroute/command.go`
 - `internal/refusalroute/registry_test.go`

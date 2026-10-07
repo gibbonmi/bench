@@ -1,7 +1,7 @@
 # Route each checkpoint refusal by its cause
 
 Blocked by: 09-route-each-commit-refusal-through-the-registry.md
-Writes: internal/refusalroute/registry.go (new), internal/gate/checkpoint.go, internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/complete_checkpoint.go, internal/gate/complete_checkpoint_test.go, internal/gate/run_outcomes_test.go, internal/gate/review_checkpoint_test.go, internal/gate/refusal_route_test.go (new)
+Writes: internal/refusalroute/registry.go (new), internal/gate/checkpoint.go, internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/complete_checkpoint.go, internal/gate/complete_checkpoint_test.go, internal/gate/run_outcomes_test.go, internal/gate/review_checkpoint_test.go, internal/gate/refusal_route_test.go (new), internal/refusalroute/faces_gate.go (new)
 Covers: RR39, RR40, RR41, RR42, RR43, RR44, RR66, RR68
 
 ## What to build
