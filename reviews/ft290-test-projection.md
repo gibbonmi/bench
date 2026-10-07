@@ -1,5 +1,32 @@
 # Review outcomes
 
+## TP-C2 review pickup
+
+The TP-C2 review ran on the frozen pair `71582c05..5fd1de93`. Each axis ran on sonnet at high effort. The chunk has used 0 of its 2 repair cycles.
+
+The raw count is 5 findings, and the repair-target count is 4, because S1 and C1 name one fix. Ticket 6 owns S1, S2, and C1. Ticket 7 owns S3 and C2.
+
+The orchestrator decided the two `ask-user` findings under the reviewer's auto-approval for spec and ticket expansions. Each decision stays open to reviewer veto.
+
+### Standards
+
+Count: 3. Worst issue: S1.
+
+- S1, auto-fix, confidence 7. The `Cmd` and `Help` fields in `command.go` hold the same usage line, typed twice. Keep one usage constant, and derive `Help` from it.
+- S2, ask-user, accepted, confidence 5. The `Suffix` of the `test` help row types the same grammar a third time. Derive it from the usage constant, so tickets 8 and 9 edit one owner. The rendered bytes do not change.
+- S3, auto-fix, confidence 5. A comment in `unknown_check_test.go` cites the spec as provenance. State what the rows grade.
+
+### Spec
+
+Count: 0. Worst issue: none. All nine TP-C2 rows are closed.
+
+### Coverage
+
+Count: 2. Worst issue: C1.
+
+- C1, auto-fix, confidence 6. No test pins the usage text, and a swap that drops the system run form stayed green. Add a test that pins the form in a usage refusal and in the help text.
+- C2, ask-user, accepted, confidence 5. No test reaches the branch where the running executable cannot be named. The spec now lists `executable: unknown` as a flagged addition. Add a test for that branch.
+
 ## TP-C1b review pickup
 
 The TP-C1b review ran on the frozen pair `d49b0697..5a1c3c3b`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t4_r1` and `claude:ft290_t5_r1` repaired the three targets at `fd6c3e07` and `71582c05`, and the chunk tip is now `71582c05`. The confirming round of all three axes passed with zero findings, and each earlier silent mutation now bites in its owning package.
@@ -1135,7 +1162,75 @@ Count: 4. Worst issue: C1.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-standards-r1",
+          "performer": "claude:ft290_c2_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "0c638fcc90b2ee1f59c92e3d99a1a27ee44ad04f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c2_standards",
+            "digest": "sha256:d2c8d4143d439d1d445a87dfdb5b635fddf76ef5d46ea7632aea9e3d5a2e1f43",
+            "excerpt": "axis=Standards findings=3 worst=S1 (TP-C2, 71582c05..5fd1de93)\nS1 | auto-fix | conf 7 | internal/testreport/command.go:24-25 | Cmd and Help hold the same usage line typed twice; no test pins either field's text, so dropping the new form from one passes. AGENTS.md one source per fact. | Declare one usage-line const; Help = \"usage: \" + const.\nS2 | ask-user | conf 5 | cmd/bench/main.go:106 vs internal/testreport/command.go:24 | The test help row Suffix retypes the same grammar minus the \"bench test\" prefix; nothing derives or cross-checks it. cmd/bench already imports testreport. | Reviewer decides whether Suffix derives from the exported usage const.\nS3 | auto-fix | conf 5 | internal/testreport/unknown_check_test.go:255-258 | \"the spec fixes the line order...\" is provenance under craft-comments. | State what the rows grade and drop \"the spec fixes\".\nAdvice: the system-name tests answer different questions; the seal read has one caller; the \"-run\", pattern pairs feed one argv builder; \"running executable\" is used correctly; the two cmd/bench pins overlap by spec mandate.\nExamined: --check-current, full chunk diff, tickets 6-7, spec 240-275 and 515-535, CONTEXT.md, craft-comments, smell baseline, freshness.SealDigests, usage.Grammar. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "71582c05f4028c1ed6a643f9747895251aed31a3",
+          "tip": "5fd1de93ac74d8d76d3562590fdec6f1c5e87466",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec-r1",
+          "performer": "claude:ft290_c2_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "0c638fcc90b2ee1f59c92e3d99a1a27ee44ad04f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c2_spec",
+            "digest": "sha256:1341a0455668aaa93fa7321c70b2bb873fa9e5a6045c63e85f45ce74e7b9e8e0",
+            "excerpt": "axis=Spec findings=0 worst=none (TP-C2, 71582c05..5fd1de93)\nAll nine rows closed: TP19 TestSystemRunPatternReachesGoArgv (-run after the suite operands); TP20 TestSystemRequestRunFact via Prepare (prose keeps AllTests); TP21 TestSystemRunPatternNoMatchRefusalWins (refusal before the zero-rule branch); TP22 TestNamedCheckRefusalMatrix; TP23 TestProseRefusesRunPattern; TP24 TestUnknownNamedCheckReportsOperandAndInventory in unknown_check_test.go; TP25, TP26, TP54 in unknown_check_test.go.\nRefusal order, the seal sources value or unsealed, and sanitize.Controls on the name and the path match \"The refusal identity\". The grammar equals the spec text minus the ticket 8 and 9 forms; --in appears only in the rendered pins.\nFlag 1: executable: unknown on an os.Executable failure contradicts no spec line; no row binds it.\nFlag 2: the TP24 seam edit names the file that holds the test.\nAdvice: list the executable: unknown literal under Flagged additions; the TP20 case sits in system_run_test.go, not beside AllTests in selection_facts_test.go (non-behavioral).\nExamined: coverage projection, the chunk diff, spec sections, tickets 6-7, command.go, named_check.go, selection_facts.go, freshness.go, sanitize.Controls. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "71582c05f4028c1ed6a643f9747895251aed31a3",
+          "tip": "5fd1de93ac74d8d76d3562590fdec6f1c5e87466",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage-r1",
+          "performer": "claude:ft290_c2_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "0c638fcc90b2ee1f59c92e3d99a1a27ee44ad04f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c2_coverage",
+            "digest": "sha256:a81810f58230e3dd9723a54ec7a5f78cf9723c7c77b24bb9cef163d2978a5026",
+            "excerpt": "axis=Coverage findings=2 worst=C1 (TP-C2, 71582c05..5fd1de93)\nC1 | auto-fix | conf 6 | internal/testreport/command.go:24-25; spec \"The grammar\" 248-251 | No test pins the Cmd or Help text: dropping the system run form from Cmd probed silent in ./internal/testreport and ./cmd/bench, and from Help silent in ./internal/testreport. Only the Suffix is pinned. | Add a testreport test whose independent expectation holds the system run form in a usage refusal and in the help text.\nC2 | ask-user | conf 5 | internal/testreport/named_check.go:31; spec \"The refusal identity\" 181-186 | The os.Executable failure branch prints executable: unknown; no test reaches it (swapping \"unknown\" for \"\" probed silent), and the spec names no fallback. | Reviewer decides the fallback word; then add a test with a failing runningExecutable asserting exit 2 and the whole refusal.\nBit (restored yes): --run allowed for line-routing; --run allowed for prose; the no-match pass-through omitted; the != system guard in Request.Run omitted; ^pattern$ rewrite; sources swapped for the executable digest; sanitize.Controls dropped on the path.\nLive: bench test ./cmd/bench passed (330 tests); ./dist/bench test --check system --run '^TestNoSuchSystemTest$' exit 1 with the no-runs refusal and no zero-rule title.\nAdvice: an invalid regex exits 1 with Go's text; the seal-sources test cannot tell a read value from a recomputed digest; --in primary uses the older child.\nExamined: chunk diff, spec rows TP19-TP26 and TP54, edge inventory, grammar, tickets 6-7, freshness, sanitize, gate.SystemSuite; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "71582c05f4028c1ed6a643f9747895251aed31a3",
+          "tip": "5fd1de93ac74d8d76d3562590fdec6f1c5e87466",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
