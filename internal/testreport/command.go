@@ -20,9 +20,12 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
+// Usage is the one owner of the bench test grammar line.
+const Usage = "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex>"
+
 var grammar = usage.Grammar{
-	Cmd:  "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex>",
-	Help: "usage: bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex>",
+	Cmd:  Usage,
+	Help: "usage: " + Usage,
 	Flags: []usage.Flag{
 		{Name: "--full"},
 		{Name: "--package", HasValue: true, NoEmptyValue: true},
