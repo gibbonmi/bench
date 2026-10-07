@@ -301,6 +301,42 @@ RR-C2 changes the authorization sentence that RR-C3 also prints.
 RR-C4 waits for the FT392 landing.
 RR-C6 comes last, because it turns red on any route that an earlier chunk has not moved.
 
+### Completion plan
+
+The version 1 plan records future implementation evidence.
+It claims no current implementation pass, red, or probe result.
+This plan is provisional, and the slice replaces it.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "RR-C1",
+      "tickets": [
+        "00-draft-closure.md"
+      ],
+      "verification": [
+        {
+          "id": "registry",
+          "command": "bench test --package ./internal/refusalroute"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "ordinary-integration",
+      "command": "bench test --package ./..."
+    },
+    {
+      "id": "coverage",
+      "command": "bench coverage --check refusal-route-registry"
+    }
+  ]
+}
+```
+
 ## Testing decisions
 
 The external behavior is the exit code and the printed route of each refused verb.
