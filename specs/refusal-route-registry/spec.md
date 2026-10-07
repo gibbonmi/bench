@@ -512,6 +512,35 @@ The prospective build owns these exact paths:
 - `.bench/BENCH-reference.md`
 - `CHANGELOG.md`
 - `reviews/refusal-route-registry.md`
+- `tests/canary/package-core-guard/unrouted-subcommand`
+- `tests/canary/docs-currency-token-diet/benchref-imported`
+- `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
+- `tests/canary/docs-currency-token-diet/benchref-section-duplicated`
+- `tests/canary/skills-index-command-adapters/adapter-inert-invocation-key`
+- `tests/canary/skills-index-command-adapters/command-invocation-disabled-against-policy`
+- `tests/canary/skills-index-command-adapters/dangling-index`
+- `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
+- `tests/canary/skills-index-command-adapters/missing-index-field`
+- `tests/canary/skills-index-command-adapters/stale-index-wording`
+- `tests/canary/skills-index-command-adapters/unindexed-skill`
+- `tests/canary/workflow-guidance-anchors/agents-handoff-section-rule`
+- `tests/canary/workflow-guidance-anchors/reference-agent-push-rule`
+- `tests/canary/workflow-guidance-anchors/reference-bench-operational-layer`
+- `tests/canary/workflow-guidance-anchors/reference-category-context`
+- `tests/canary/workflow-guidance-anchors/reference-category-oracle`
+- `tests/canary/workflow-guidance-anchors/reference-category-setup`
+- `tests/canary/workflow-guidance-anchors/reference-category-work`
+- `tests/canary/workflow-guidance-anchors/reference-gate-authority`
+- `tests/canary/workflow-guidance-anchors/reference-kit-only-ship`
+- `tests/canary/workflow-guidance-anchors/reference-no-path-fallback`
+- `tests/canary/workflow-guidance-anchors/reference-progressive-loading-term`
+- `tests/canary/workflow-guidance-anchors/reference-refusal-route-shape`
+- `tests/canary/workflow-guidance-anchors/reference-retro-capture-owner`
+- `tests/canary/workflow-guidance-anchors/reference-retro-drain-owner`
+- `tests/canary/workflow-guidance-anchors/reference-skills-guidance`
+- `tests/canary/workflow-guidance-anchors/reference-upgrade-route`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 
 This fence is provisional. The slice closes it with the closure that build preflight proposes.
 
