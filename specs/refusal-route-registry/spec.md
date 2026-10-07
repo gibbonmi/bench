@@ -833,7 +833,16 @@ The orchestrator records each author session before that author's dispatch.
           "native_ref": "claude-agent:ft393_t6"
         }
       ],
-      "07-route-each-reset-refusal-through-the-registry.md": [],
+      "07-route-each-reset-refusal-through-the-registry.md": [
+        {
+          "session": "claude:ft393_t7",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "4812b3923e4c247a28e9e09f743c0c404515bdf6",
+          "native_ref": "claude-agent:ft393_t7"
+        }
+      ],
       "08-route-the-commit-exit-3-to-the-reset-plan.md": [],
       "09-route-each-commit-refusal-through-the-registry.md": [],
       "10-route-each-checkpoint-refusal-by-its-cause.md": [],
