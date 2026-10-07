@@ -719,6 +719,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "2474d5c9285ff9026ec821210209356f496ba84a",
           "native_ref": "claude-agent:ft393_t1"
+        },
+        {
+          "session": "claude:ft393_t1_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "e66a113731b4f70de8e262972d5c04a9297a06c8",
+          "native_ref": "claude-agent:ft393_t1_repair1",
+          "predecessor": "claude:ft393_t1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 01 author session reported completion of the record commit 62bda9ae and has no live child",
+          "preserved": "e66a113731b4f70de8e262972d5c04a9297a06c8"
         }
       ],
       "02-move-the-landing-faces-into-the-shared-registry.md": [],
