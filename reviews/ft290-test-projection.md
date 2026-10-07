@@ -3356,13 +3356,79 @@ Count: 4. Worst issue: C1.
           "supersedes": [
             "c4-coverage-c2"
           ]
+        },
+        {
+          "id": "c4-standards-c4",
+          "performer": "claude:ft290_c4_standards_c4",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ecfdc5c53e450ca5ee81234b0bc52d65b56ed67f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_standards_c4",
+            "digest": "sha256:80d42ec0412298be35830542e3415637ac70dc141b4d041e70328cd9e745fdbb",
+            "excerpt": "axis=Standards findings=0 worst=none (fourth confirming round, d5e1378e..3bef2096, decision maps)\nS3 confirmed: the duplicated occurrence paragraph is gone; rg finds 2026-09-17 only in decisions/run-binary-provenance/tickets/1.md:8.\nS4 confirmed: Supports quotes spec.md:396 (\"Not covered: story 36\") and spec.md:489 (Out of scope); Drift covers both.\nS5 confirmed: the FT290 map's Supports names the destination and the ticket answers, which the source trace at spec.md:498-513 holds.\nOne source per fact and STE prose hold.\nExamined: --check-current at a6fcccbb, the delta, rg over decisions and the spec, spec.md 496-513. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "3bef209610784a3900c07e2caa6210f3b111abf9",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards-c3"
+          ]
+        },
+        {
+          "id": "c4-spec-c4",
+          "performer": "claude:ft290_c4_spec_c4",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ecfdc5c53e450ca5ee81234b0bc52d65b56ed67f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_spec_c4",
+            "digest": "sha256:907b34975f196d7350e38d588dbd285e969e4a251b0366825b8da6c33cd88801",
+            "excerpt": "axis=Spec findings=0 worst=none (fourth confirming round, d5e1378e..3bef2096, decision maps)\nNo decision changed: the provenance map loses its duplicated Notes paragraph and rewords its Sources entry; the FT290 map rewords one Supports clause.\nEach Supports clause is true: spec.md:396 and spec.md:489 name the provenance map; the source trace at spec.md:498-513 holds the destination and the ticket answers.\nThe 2026-09-17 occurrence survives the closure in decisions/run-binary-provenance/tickets/1.md:8; no map cites roadmap/FT290.md.\nBoth writes sit inside ticket 10's Writes line.\nExamined: --check-current at a6fcccbb, the delta, spec lines 104, 387-396, 487-513, both maps, the provenance ticket 1, ticket 10 Writes. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "3bef209610784a3900c07e2caa6210f3b111abf9",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-c3"
+          ]
+        },
+        {
+          "id": "c4-coverage-c4",
+          "performer": "claude:ft290_c4_coverage_c4",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ecfdc5c53e450ca5ee81234b0bc52d65b56ed67f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_coverage_c4",
+            "digest": "sha256:0754b41aad05d3a44504ee02f03bbe5dee6b01591a8310792dac24728868cffc",
+            "excerpt": "axis=Coverage findings=0 worst=none (fourth confirming round, d5e1378e..3bef2096, decision maps)\n./dist/bench test --check decision-map-integrity passed (tests_run 1).\nrg for roadmap/FT290.md over decisions and the spec's decisions finds nothing.\nProbe: swapping the provenance map's Sources Path for roadmap/FT290-gone.md under decision-map-integrity bit (TestRootConformance), restored yes.\nExamined: --check-current at a6fcccbb, the delta, the rg sweep, the Path lines, the probe; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "3bef209610784a3900c07e2caa6210f3b111abf9",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-coverage-c3"
+          ]
         }
       ]
     }
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+    "source_digest": "ecfdc5c53e450ca5ee81234b0bc52d65b56ed67f",
     "performer": "claude:ft290-orchestrator-20261006",
     "reconciliation": {
       "TP1": "covered",
@@ -3688,6 +3754,96 @@ Count: 4. Worst issue: C1.
           "ref": "claude-session:ft290-orchestrator-20261006",
           "digest": "sha256:e2dbc3a04fb853b0f733ae1010a0a94ae81e2650448acb73c35a6ce5eb17c4e6",
           "excerpt": "HEAD 4094d31f (code tip dc26a3623e7f23897be5bc2b85fb190da34a276f; record commits after it)\n$ bench test --package ./internal/canary\n  github.com/gibbonmi/bench/internal/canary,pass,17,27\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "canary",
+        "command": "bench test --package ./internal/canary",
+        "exit_code": 0
+      },
+      {
+        "id": "final-coverage-v4",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "ecfdc5c53e450ca5ee81234b0bc52d65b56ed67f",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:54017dc83decf75d9fa0a7d4398cc066d656a18492ac46227d05aaed36991924",
+          "excerpt": "HEAD a6fcccbb (code tip 3bef209610784a3900c07e2caa6210f3b111abf9; record commits after it)\n$ bench coverage --check specs/ft290-test-projection/spec.md\nok: coverage map valid — 56 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/ft290-test-projection/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-testreport-v4",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "ecfdc5c53e450ca5ee81234b0bc52d65b56ed67f",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:3629006b8dff5b6805c08ee3eed7ca902ab12a1f167ee16313021321884ace79",
+          "excerpt": "HEAD a6fcccbb (code tip 3bef209610784a3900c07e2caa6210f3b111abf9; record commits after it)\n$ bench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,33521,200\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "testreport",
+        "command": "bench test --package ./internal/testreport",
+        "exit_code": 0
+      },
+      {
+        "id": "final-cmd-v4",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "ecfdc5c53e450ca5ee81234b0bc52d65b56ed67f",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:aa5a38f4cb3c74a1b12a4a7a0ba86b5941e9134651dd84bbebca44c2eb8b3c39",
+          "excerpt": "HEAD a6fcccbb (code tip 3bef209610784a3900c07e2caa6210f3b111abf9; record commits after it)\n$ bench test --package ./cmd/bench\n  github.com/gibbonmi/bench/cmd/bench,pass,15534,330\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "cmd",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final-probe-v4",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "ecfdc5c53e450ca5ee81234b0bc52d65b56ed67f",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:2f6c0e8c297ccc4ed882fd90288971dce5f01edcf195bdf6cbae9cd418ca0387",
+          "excerpt": "HEAD a6fcccbb (code tip 3bef209610784a3900c07e2caa6210f3b111abf9; record commits after it)\n$ bench test --package ./internal/probe\n  github.com/gibbonmi/bench/internal/probe,pass,23127,100\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "probe",
+        "command": "bench test --package ./internal/probe",
+        "exit_code": 0
+      },
+      {
+        "id": "final-canary-v4",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "ecfdc5c53e450ca5ee81234b0bc52d65b56ed67f",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:bfcbc2c0ebfc0f172beae86486009e752d87448637884250ae41cc37a603952a",
+          "excerpt": "HEAD a6fcccbb (code tip 3bef209610784a3900c07e2caa6210f3b111abf9; record commits after it)\n$ bench test --package ./internal/canary\n  github.com/gibbonmi/bench/internal/canary,pass,17,27\nfailures[0]{package,test,line,lines}:\n"
         },
         "requirement": "canary",
         "command": "bench test --package ./internal/canary",
