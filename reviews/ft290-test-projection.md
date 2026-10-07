@@ -2,7 +2,9 @@
 
 ## TP-C1b review pickup
 
-The TP-C1b review ran on the frozen pair `d49b0697..5a1c3c3b`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t4_r1` and `claude:ft290_t5_r1` repaired the three targets at `fd6c3e07` and `71582c05`, and the chunk tip is now `71582c05`.
+The TP-C1b review ran on the frozen pair `d49b0697..5a1c3c3b`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t4_r1` and `claude:ft290_t5_r1` repaired the three targets at `fd6c3e07` and `71582c05`, and the chunk tip is now `71582c05`. The confirming round of all three axes passed with zero findings, and each earlier silent mutation now bites in its owning package.
+
+The confirming Coverage axis gave advice with no finding ID. The zero-subject prose test matches by prefix, so a suffix that only `--full` adds stays green. No row binds that case.
 
 The raw count is 3 findings, and the repair-target count is 3. Ticket 4 owns C1 and C2. Ticket 5 owns S1, because ticket 5 changed the unit of `Outcome.FailedTests`.
 
@@ -897,6 +899,72 @@ Count: 4. Worst issue: C1.
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1b-standards-c1",
+          "performer": "claude:ft290_c1b_standards_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6d30a8f09034e3ce40838dd97f09d8f380ddd8cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1b_standards_c1",
+            "digest": "sha256:62bc13f20068effecaa40c64f0228068257045b779c5e486f63188edf6693c34",
+            "excerpt": "axis=Standards findings=0 worst=none (confirming round, repair delta 5a1c3c3b..71582c05)\nS1 confirmed: outcome.go:12 names failed tests; the Outcome comment is wrapped and states FailedTests counts distinct failed tests; rg over internal/testreport comments finds none that treats a failures row as a failed test.\nNo duplicated knowledge: proseFailureModes is one source for the two mode argument lists; want is built once per test; the directory exclusion fixture row adds no second parser.\nVenue note: the one git diff of the repair delta ran from the primary checkout, which shares the object store; file reads used the worktree.\nExamined: --check-current at f616ed37, repair delta, outcome.go, named_check.go:88-117, prose/exclusions.go. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "d49b069704efe603a84203bdeffa9614c4802c37",
+          "tip": "71582c05f4028c1ed6a643f9747895251aed31a3",
+          "finding_ids": [],
+          "supersedes": [
+            "c1b-standards-r1"
+          ]
+        },
+        {
+          "id": "c1b-spec-c1",
+          "performer": "claude:ft290_c1b_spec_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6d30a8f09034e3ce40838dd97f09d8f380ddd8cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1b_spec_c1",
+            "digest": "sha256:4757498635fa503f7c6591462237595900e8396cb85be282f40fc2fc0fcb28a9",
+            "excerpt": "axis=Spec findings=0 worst=none (confirming round, repair delta 5a1c3c3b..71582c05)\nNo production behavior change: two test files plus comment-only text in outcome.go.\nAll twelve TP-C1b rows keep their named tests; TP9, TP10, TP11 now loop over both modes with unchanged assertions; TP12 adds a directory exclusion row.\nrunProseCheck returns the findings and zero-subject branches before it reads full, so the --full cases match spec \"The prose result\" (lines 149-152); the directory row matches exclusions.go:16 and spec lines 142-143.\nExamined: --check-current, repair delta, spec sections, named_check.go:70-131, exclusions.go, rg for test names. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "d49b069704efe603a84203bdeffa9614c4802c37",
+          "tip": "71582c05f4028c1ed6a643f9747895251aed31a3",
+          "finding_ids": [],
+          "supersedes": [
+            "c1b-spec-r1"
+          ]
+        },
+        {
+          "id": "c1b-coverage-c1",
+          "performer": "claude:ft290_c1b_coverage_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6d30a8f09034e3ce40838dd97f09d8f380ddd8cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1b_coverage_c1",
+            "digest": "sha256:f76ede4d6e043f327012e1704c1d1065065a52a8d7c0af880ad0047790e58158",
+            "excerpt": "axis=Coverage findings=0 worst=none (confirming round, repair delta 5a1c3c3b..71582c05)\nC1 replay (&& !full at named_check.go:99, --package ./internal/testreport): bit, 2 failures from the --full mode loop.\nC2 replay (g.ex.files[rel] at walk.go:60): bit in ./internal/prose (TestGradeReportsGradedSubjects); silent in ./internal/testreport, which owns no directory-row row (TP12 belongs to internal/prose).\nNew bypass: a --full-only suffix after the findings output bit; a --full-only suffix after the zero-subject error was silent because TP9 matches by prefix, and no row binds it.\nAdvice: make the zero-subject expectation an exact-bytes match in both modes.\nExamined: --check-current at f616ed37, repair delta, named_check.go, walk.go, prose_check_test.go, spec rows TP8-TP12; 5 probes, all restored yes; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "d49b069704efe603a84203bdeffa9614c4802c37",
+          "tip": "71582c05f4028c1ed6a643f9747895251aed31a3",
+          "finding_ids": [],
+          "supersedes": [
+            "c1b-coverage-r1"
+          ]
         }
       ]
     }
