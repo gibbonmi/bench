@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/gibbonmi/bench/internal/assessment"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"os"
 	"path/filepath"
@@ -223,6 +225,17 @@ func TestRecordRouteAnswersItsUsage(t *testing.T) {
 	var stdout bytes.Buffer
 	if code := (Command{Stdout: &stdout}).Run([]string{"record", "--help"}); code != 0 || want == "" || stdout.String() != want {
 		t.Fatalf("record --help = exit %d, stdout %q; want exit 0 and the recordcmd usage %q", code, stdout.String(), want)
+	}
+}
+
+// TestRecoveryRoutesThroughDispatch drives `bench recovery` through the command registry,
+// so a registry row whose handler is swapped or broken turns it red. The face count comes
+// from the registry; refusalroute grades the rows themselves.
+func TestRecoveryRoutesThroughDispatch(t *testing.T) {
+	result := runAXICommandAt(t, newAXIEnvelopeRepo(t), []string{"recovery"})
+	header := fmt.Sprintf("recovery[%d]{verb,face,authority,route}:\n", len(refusalroute.Inventory()))
+	if result.code != 0 || result.stderr != "" || !strings.HasPrefix(result.stdout, header) {
+		t.Fatalf("recovery = stdout=%q stderr=%q exit=%d, want stdout starting %q and exit 0", result.stdout, result.stderr, result.code, header)
 	}
 }
 
