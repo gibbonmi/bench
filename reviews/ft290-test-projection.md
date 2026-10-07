@@ -4,6 +4,10 @@
 
 The TP-C3 review ran on the frozen pair `21da7e2e..23c328db`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t8_r1` and `claude:ft290_t9_r1` repaired the six targets at `4f78c7b3` and `f04f5dd6`, and the chunk tip is now `f04f5dd6`.
 
+The confirming round passed on Standards and Spec. The Coverage axis found C4 in the repair delta, so the chunk starts its second and last repair cycle.
+
+- C4, auto-fix, confidence 7. `rootRecords` in `internal/canary/root.go` can return a real inventory error as an empty answer, and no test reaches that path. Story 24 says a wrong inventory never reads as empty. Ticket 8 owns the fix: add a test with one fixture name in two families that expects exit 1 and the diagnostic.
+
 The raw count is 6 findings, and the repair-target count is 6. Ticket 8 owns S1, C1, and the `fixtures_face_test.go` half of S2. Ticket 9 owns P1, C2, C3, and the `checks_face_test.go` half of S2. P1 and C2 name one fix.
 
 The orchestrator decided the three `ask-user` findings under the reviewer's auto-approval for spec, ticket, and repair expansions. Each decision stays open to reviewer veto.
@@ -2050,6 +2054,74 @@ Count: 4. Worst issue: C1.
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3-standards-c1",
+          "performer": "claude:ft290_c3_standards_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "dc1ee0f29f592caa2cdc7b2333880b1c463e7a81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_standards_c1",
+            "digest": "sha256:13dbe9bb981b7b2a8c7131df7926cd14be1407dcd367ae26b67d44122d69d076",
+            "excerpt": "axis=Standards findings=0 worst=none (confirming round, repair delta 23c328db..f04f5dd6)\nS1 confirmed: root.go Dir is the only production tests/canary join; rootRecords is the one ErrNoFixtures-means-empty rule (callers RootFixtures and FixturePins); fixturesOf is the one record-to-Fixture body and Fixtures wraps it; Inventory, FixturePins, UnboundConformanceFamilies, and both faces call the accessor; inventory.go shrank 415 to 400; decision.go untouched.\nS2 confirmed: each omission named in the fixtures_face_test.go and checks_face_test.go headers has a recorded probe red in the t8r1 and t9r1 excerpts.\nComments: the new doc comments state behavior with no provenance.\nAdvice: decision.go:44 repeats the empty message (outside the fence); some tests outside the delta still join tests/canary by hand; the Fixtures doc comment could name ErrNoFixtures.\nExamined: --check-current, repair delta, inventory.go, the two face test headers, rg sweeps, spec flagged additions, review pickup, probe excerpts. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "f04f5dd6fad737947218a5332874f40a43bc4bcc",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-r1"
+          ]
+        },
+        {
+          "id": "c3-spec-c1",
+          "performer": "claude:ft290_c3_spec_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "dc1ee0f29f592caa2cdc7b2333880b1c463e7a81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_spec_c1",
+            "digest": "sha256:5677e2c45d16d701050a042b36efeeaaddcbfc3a5787a5dbe8b4a367786d0ff0",
+            "excerpt": "axis=Spec findings=0 worst=none (confirming round, repair delta 23c328db..f04f5dd6)\nNo rendered-output change: Dir equals the old join; Fixtures routes through the moved loop and still returns ErrNoFixtures; FixturePins still returns an empty map and skips CHECK validation; RootFixtures returns an empty map where canaryInventory returned nil.\nAll 18 TP-C3 rows have named tests, TP56 TestChecksFaceRefusesInvalidInventory included; no assertion is weaker.\nTP56 matches story 24 and shares the --fixtures refusal path. The four new --checks refusals match spec line 260. Every written path is inside the fence.\nAdvice: the TP27 row text still describes two fixtures a and b; the repaired test is a stricter ten-row exact match.\nExamined: --check-current at 8d294b25, the repair delta, the spec and ticket diff, inventory.go, root.go, command.go, fixtures_face_test.go, spec rows TP27-TP56 and the fence list. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "f04f5dd6fad737947218a5332874f40a43bc4bcc",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-r1"
+          ]
+        },
+        {
+          "id": "c3-coverage-c1",
+          "performer": "claude:ft290_c3_coverage_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "dc1ee0f29f592caa2cdc7b2333880b1c463e7a81",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_coverage_c1",
+            "digest": "sha256:d15a7838d7b6f4d63f0d9630943ee5eb967e4b27b4addb08dfc8161e63d2b4ea",
+            "excerpt": "axis=Coverage findings=1 worst=C1 (confirming round, repair delta 23c328db..f04f5dd6)\nC1 | auto-fix | conf 7 | internal/canary/root.go:94-100 (rootRecords); story 24 | Swapping `return records, err` for `return records, nil` in rootRecords was silent in ./internal/canary and ./internal/testreport: a real discoverFixtures error (a fixture name in two families, an unreadable family dir, a marker read error) reads as an empty inventory. The refusal tests plant only an unknown CHECK, which fails in fixturesOf. | Add a test that plants one fixture name in two families and expects exit 1 with the \"multiple families\" diagnostic, or a canary-level RootFixtures error test.\nReplays bit (restored yes): the no-op sort comparator (twice), the name sort, the --checks refusal swap, and the --changed, --package, and --run allowlist swaps; --base is an equivalent mutant. New: a wrong Dir join bit in both packages; a skipped fixtureCheck error bit in testreport.\nExamined: --check-current, the repair delta, fixtures.go, command.go, root.go, inventory.go, fixtures_face_test.go, spec story lines; bench test ./internal/canary passed; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "f04f5dd6fad737947218a5332874f40a43bc4bcc",
+          "finding_ids": [
+            "C4"
+          ],
+          "supersedes": [
+            "c3-coverage-r1"
+          ]
         }
       ]
     }
