@@ -3,7 +3,6 @@ package gate
 import (
 	"bytes"
 	"os"
-	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -74,7 +73,7 @@ func TestReviewCheckpointCommentOnlyGap(t *testing.T) {
 				if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "Standards") {
 					t.Fatalf("unresolved finding accepted: %d %s", code, out)
 				}
-				if _, err := os.Stat(filepath.Join(f.Root, ".gate-run-count")); !os.IsNotExist(err) {
+				if _, err := os.Stat(runCountWitness.path(t, f.Root)); !os.IsNotExist(err) {
 					t.Fatalf("oracle ran before finding refusal: %v", err)
 				}
 			}
@@ -98,6 +97,7 @@ func TestReviewCheckpointCommentOnlyGap(t *testing.T) {
 				f.Record.Completion.SourceDigest = digest
 				f.Record.Completion.Verification = f.Verification("corrected-final", digest, f.Plan.FinalVerification)
 				f.Save()
+				f.Commit("retain corrected completion")
 				args = []string{f.Root, "--checkpoint", recordtest.Spec, "--complete"}
 			}
 			var out, diagnostic bytes.Buffer
@@ -184,7 +184,7 @@ func TestReviewCheckpointKeepsStrictEvidence(t *testing.T) {
 			if code == 0 || !strings.Contains(text, tc.reason) {
 				t.Fatalf("strict evidence = %d %s, want %s", code, text, tc.reason)
 			}
-			if _, err := os.Stat(filepath.Join(f.Root, ".gate-run-count")); !os.IsNotExist(err) {
+			if _, err := os.Stat(runCountWitness.path(t, f.Root)); !os.IsNotExist(err) {
 				t.Fatalf("oracle ran before evidence refusal: %v", err)
 			}
 		})

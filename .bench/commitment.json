@@ -206,6 +206,18 @@
               "path": "roadmap/FT392.md",
               "identity": "sha256:d5432f5de8095b777bfa66fa8c850c838b7cf0b28d13c3e0269fdc0cd3cfa002"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "complete-checkpoint-closure",
+                "path": "specs/complete-checkpoint-closure/spec.md",
+                "identity": "sha256:a68e81be37634973660401ef412523f05479dcfe3b4eb16be261ce172aeba89c"
+              },
+              "obligations": [
+                "FT392"
+              ]
+            }
           ]
         },
         {
@@ -312,6 +324,14 @@
       "identity": "sha256:f5346a66659abbcee3641f48e19558a7980440b189f25cd22ef4e3ae7f59e327",
       "source": "b9b24d23cdfb33a96eaa71f854b585b847f68036",
       "evidence": "9ff2bba30d37e65cd2305dab97e456fcb3089984"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT392",
+      "binding": "complete-checkpoint-closure",
+      "identity": "sha256:a68e81be37634973660401ef412523f05479dcfe3b4eb16be261ce172aeba89c",
+      "source": "923f9941e928f0145d2802707c5687848ccb7f08",
+      "evidence": "f3845250226dc8fe121017c67e788f62e50321ac"
     }
   ]
 }

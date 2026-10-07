@@ -89,7 +89,7 @@ func TestGateRunCancellationLeavesPendingForRecovery(t *testing.T) {
 	go func() {
 		finished <- Execute(ctx, root, &bytes.Buffer{}, &bytes.Buffer{})
 	}()
-	awaitGateMarker(t, filepath.Join(root, ".gate-record-during"))
+	awaitGateMarker(t, recordDuringWitness.path(t, root))
 	cancel()
 
 	var result Result
@@ -131,13 +131,13 @@ func TestGateRunRefusesInitialPendingPersistenceWhenCacheIsDirectory(t *testing.
 	if !strings.Contains(stderr.String(), "gate pending persistence failed") {
 		t.Fatalf("stderr = %q", stderr.String())
 	}
-	if _, err := os.Stat(filepath.Join(root, ".gate-run-count")); !os.IsNotExist(err) {
+	if _, err := os.Stat(runCountWitness.path(t, root)); !os.IsNotExist(err) {
 		if err == nil {
 			t.Fatal("oracle ran after initial pending persistence refusal")
 		}
 		t.Fatalf("run counter stat = %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".gate-record-during")); !os.IsNotExist(err) {
+	if _, err := os.Stat(recordDuringWitness.path(t, root)); !os.IsNotExist(err) {
 		if err == nil {
 			t.Fatal("oracle wrote a record witness after initial pending persistence refusal")
 		}
@@ -159,12 +159,12 @@ func TestGateRunRefusesOwnerPersistenceWhenOwnerPathIsDirectory(t *testing.T) {
 	if got := stderr.String(); got != "gate owner persistence failed\n" {
 		t.Fatalf("stderr = %q, want exact owner persistence diagnostic", got)
 	}
-	for _, path := range []string{".gate-run-count", ".gate-record-during"} {
-		if _, err := os.Stat(filepath.Join(root, path)); !os.IsNotExist(err) {
+	for _, witness := range []outcomeWitness{runCountWitness, recordDuringWitness} {
+		if _, err := os.Stat(witness.path(t, root)); !os.IsNotExist(err) {
 			if err == nil {
-				t.Fatalf("oracle wrote %s after owner persistence refusal", path)
+				t.Fatalf("oracle wrote %s after owner persistence refusal", witness)
 			}
-			t.Fatalf("oracle witness stat for %s = %v", path, err)
+			t.Fatalf("oracle witness stat for %s = %v", witness, err)
 		}
 	}
 }

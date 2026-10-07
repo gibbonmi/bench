@@ -289,7 +289,7 @@ func TestTimedOutProspectiveProducerLeavesNoBundle(t *testing.T) {
 	t.Cleanup(func() { gateTimeout = oldTimeout })
 
 	var stdout, stderr bytes.Buffer
-	result := executeTreeWithOwner(context.Background(), root, tree, &stdout, &stderr, inertProspectiveSelection)
+	result := executeTreeWithOwner(context.Background(), root, tree, &stdout, &stderr, nil, reuseFreshGreen, inertProspectiveSelection)
 	if result.ActionExit != 124 {
 		t.Fatalf("timed-out prospective result = %#v, stderr=%q", result, stderr.String())
 	}
@@ -307,7 +307,7 @@ func TestCancelledProspectiveProducerLeavesNoBundle(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	result := make(chan Result, 1)
 	go func() {
-		result <- executeTreeWithOwner(ctx, root, tree, &bytes.Buffer{}, &bytes.Buffer{}, inertProspectiveSelection)
+		result <- executeTreeWithOwner(ctx, root, tree, &bytes.Buffer{}, &bytes.Buffer{}, nil, reuseFreshGreen, inertProspectiveSelection)
 	}()
 	waitForProspectiveBarrier(t, ready, result)
 	cancel()
@@ -340,7 +340,7 @@ func TestProspectiveBuildRefusalLeavesNoBundle(t *testing.T) {
 	t.Cleanup(func() { prospectiveRunBinary = old })
 
 	var stderr bytes.Buffer
-	result := executeTreeWithOwner(context.Background(), root, tree, &bytes.Buffer{}, &stderr, nil)
+	result := executeTreeWithOwner(context.Background(), root, tree, &bytes.Buffer{}, &stderr, nil, reuseFreshGreen, nil)
 	if result.ActionExit == 0 || !strings.Contains(stderr.String(), "gate Bench executable unavailable") {
 		t.Fatalf("build-refused prospective result = %#v, stderr=%q", result, stderr.String())
 	}
@@ -359,7 +359,7 @@ func TestProspectiveBundleCloseRetainsInheritedBaselineBinary(t *testing.T) {
 	t.Cleanup(func() { prospectiveRunBinary = old })
 
 	var stderr bytes.Buffer
-	result := executeTreeWithOwner(context.Background(), root, tree, &bytes.Buffer{}, &stderr, nil)
+	result := executeTreeWithOwner(context.Background(), root, tree, &bytes.Buffer{}, &stderr, nil, reuseFreshGreen, nil)
 	if result.ActionExit != 0 {
 		t.Fatalf("inherited-binary prospective result = %#v, stderr=%q", result, stderr.String())
 	}
