@@ -43,13 +43,13 @@ func InspectTreeContext(ctx context.Context, root, tree string) EvidenceInspecti
 func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
 	ctx, finishSpan := beginGateSpan(ctx, root, "prospective")
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, "prospective")
-	result := executeTreeWithOwner(ctx, root, tree, stdout, stderr, nil)
+	result := executeTreeWithOwner(ctx, root, tree, stdout, stderr, nil, reuseFreshGreen, nil)
 	finishLog(result)
 	finishSpan(result)
 	return result
 }
 
-func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr io.Writer, owner runBinaryOwner) Result {
+func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, owner runBinaryOwner) Result {
 	artifacts, err := openProspectiveArtifacts(root, tree)
 	if err != nil {
 		fmt.Fprintln(stderr, "prospective gate subject unavailable")
@@ -61,7 +61,7 @@ func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr
 		owner = prospectiveRunBinaryOwnerAt(checkout, artifacts.Root())
 	}
 	evaluation := checkpointEvaluation(ctx, newProspectiveTreeEvaluation(checkout, root, tree))
-	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, nil, reuseFreshGreen, evaluation, owner, root)
+	return executeSubjectWithRunBinary(ctx, checkout, root, stdout, stderr, arm, mode, evaluation, owner, root)
 }
 
 // ValidateProjectGreen reports whether branch's current tip and marker have retained

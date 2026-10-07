@@ -69,7 +69,7 @@ func TestReviewCheckpoint(t *testing.T) {
 			if code == 0 || !strings.Contains(out, tc.reason) {
 				t.Fatalf("checkpoint accepted invalid evidence or lost reason: exit %d: %s", code, out)
 			}
-			if _, err := os.Stat(filepath.Join(f.Root, ".gate-run-count")); !os.IsNotExist(err) {
+			if _, err := os.Stat(runCountWitness.path(t, f.Root)); !os.IsNotExist(err) {
 				t.Fatalf("oracle ran before evidence refusal: %v", err)
 			}
 		})
