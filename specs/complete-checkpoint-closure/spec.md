@@ -194,7 +194,16 @@ The orchestrator adds each author session to the execution block before dispatch
     "orchestrator_session": "claude:ft392-orchestrator-20261007",
     "author_limit": 1,
     "assignments": {
-      "01-move-fixture-witnesses-to-the-common-directory.md": [],
+      "01-move-fixture-witnesses-to-the-common-directory.md": [
+        {
+          "session": "claude:ft392_t1",
+          "assignment": "0079f72d0b78f8b2c121fe7c0f37de04",
+          "model": "opus",
+          "effort": "high",
+          "source": "5aed15a98ff6a870b625dd5b3511155288e71abb",
+          "native_ref": "claude-agent:ft392_t1"
+        }
+      ],
       "02-grade-the-published-tree-at-the-complete-checkpoint.md": []
     }
   }
