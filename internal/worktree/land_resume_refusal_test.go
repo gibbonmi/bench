@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T) {
@@ -90,7 +91,7 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 				// caller's resume continuation behind it, so the route survives the
 				// interruption.
 				next, printed := landingFaceNext(stdout, tc.detail)
-				repair := landingRefusalFaceByName(faceResumeDestinationResidue).route("")
+				repair := landingRepair(faceResumeDestinationResidue, nil)
 				if !printed || !strings.HasPrefix(next, repair) || !strings.Contains(next, "bench worktree land --resume ") {
 					t.Fatalf("destructive-state route = (%q, %v), want %q ahead of the resume continuation", next, printed, repair)
 				}
@@ -112,19 +113,15 @@ func TestResumeLandCommandSourceRefusalNamesTheCallersResume(t *testing.T) {
 	t.Parallel()
 	request := "resume-source-not-clean"
 	f := publicLandingFixture(t, request, "", "")
-	broken := defaultJoins()
-	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
-	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
+	interruptedLanding(t, f, request, f.tip)
 	published := gitOutput(t, f.root, "rev-parse", "main")
-	mustWrite(t, filepath.Join(f.creation.Path, "scratch"), []byte("scratch\n"), 0o600)
+	landingFixtureFor(t, faceSourceNotClean).mutate(t, f.root, f.creation)
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 	r := runVerb(t, verbLand, f.callWith(defaultJoins(), args...))
 	resume := "bench worktree land --resume '" + published + "' --request <request> --base '" + f.base +
 		"' --source-tip '" + f.tip + "' --spec 'x' '" + f.creation.Path + "'"
-	want := landingRefusalFaceByName(faceSourceNotClean).route(resume)
-	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceSourceNotClean).detail)
+	want := landingRoute(faceSourceNotClean, resume, labelOf(f.creation))
+	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotClean))
 	if r.exit != 1 || !printed || next != want {
 		t.Fatalf("resume source refusal = (%d, %q, %q), want next %q", r.exit, r.stdout, r.stderr, want)
 	}

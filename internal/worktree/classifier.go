@@ -6,7 +6,6 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 	"io"
@@ -19,50 +18,6 @@ import (
 // CleanupAction and CleanupReason are the policy package's action and reason
 // types; internal/worktree/lifecyclepolicy owns their values and semantics.
 type CleanupAction = lifecyclepolicy.Action
-
-type refusal struct {
-	detail, observed, wanted, next string
-	paths                          []string
-}
-type refusalError struct{ refusal }
-
-func (r refusal) fields() string {
-	fields := []string{"detail=" + sanitize.Controls(r.detail)}
-	for _, pair := range [][2]string{{"observed", r.observed}, {"wanted", r.wanted}, {"next", r.next}} {
-		if pair[1] != "" {
-			fields = append(fields, pair[0]+"="+sanitize.Controls(pair[1]))
-		}
-	}
-	return strings.Join(fields, ",")
-}
-func (e refusalError) Error() string {
-	text := sanitize.Controls(e.detail)
-	if fields := strings.TrimPrefix(e.fields(), "detail="+sanitize.Controls(e.detail)); fields != "" {
-		text += "; " + strings.TrimPrefix(fields, ",")
-	}
-	if table := e.table(); table != "" {
-		text += "\n" + table
-	}
-	return text
-}
-func (r refusal) table() string {
-	if len(r.paths) == 0 {
-		return ""
-	}
-	shown := len(r.paths)
-	if shown > ignoredEntryLimit {
-		shown = ignoredEntryLimit
-	}
-	rows := make([][]string, 0, shown)
-	for _, path := range r.paths[:shown] {
-		rows = append(rows, []string{sanitize.Controls(path)})
-	}
-	out, err := toon.Table(refusalPathsTable, []string{"path"}, rows)
-	if err != nil {
-		return ""
-	}
-	return fmt.Sprintf("paths_total=%d\n%s", len(r.paths), out)
-}
 
 func renderCleanup(stdout io.Writer, plan CleanupPlan) error {
 	return renderCleanups(stdout, []CleanupPlan{plan})

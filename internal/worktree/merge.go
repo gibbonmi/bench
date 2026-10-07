@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -114,7 +115,7 @@ func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Re
 		// landing's own, up to the commit that records the resolution.
 		var conflict landing.ConflictError
 		if errors.As(err, &conflict) {
-			repair := conflictRepairPrefix(incoming, target.ID, target.Worktree)
+			repair := refusalroute.HandMerge(refusalroute.Facts{Values: conflictFacts(incoming, target.ID, target.Worktree)})
 			return landRefusalError(stdout, refusalError{refusal{detail: conflict.Error(), paths: conflict.Paths, next: repair}})
 		}
 		return landRefusalError(stdout, err)

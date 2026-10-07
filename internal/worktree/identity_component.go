@@ -55,9 +55,10 @@ func identityComponentByName(name string) identityComponent {
 // operator reads.
 func componentRefusal(name, assignment, observed, wanted string) refusalError {
 	return refusalError{refusal{
-		detail:   identityComponentByName(name).detail(assignment),
-		observed: observed,
-		wanted:   wanted,
+		detail:    identityComponentByName(name).detail(assignment),
+		observed:  observed,
+		wanted:    wanted,
+		component: name,
 	}}
 }
 

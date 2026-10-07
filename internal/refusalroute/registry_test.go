@@ -6,6 +6,26 @@ import (
 	"testing"
 )
 
+// TestRegistryFacesAreComplete walks the declared inventory. Each face must name one of
+// the six write verbs, so every per-verb walk reaches it; an authority, so the agent never
+// guesses who runs the route; and at least one route step, so no route prints empty. It
+// covers RR01, RR02, and RR03.
+func TestRegistryFacesAreComplete(t *testing.T) {
+	writeVerbs := []Verb{Commit, Merge, Reset, Land, Gate, Commitment}
+	authorities := []Authority{Agent, Reviewer}
+	for _, face := range inventory {
+		if !slices.Contains(writeVerbs, face.Verb) {
+			t.Errorf("face %q declares verb %q, want one of %q", face.Name, face.Verb, writeVerbs)
+		}
+		if !slices.Contains(authorities, face.Authority) {
+			t.Errorf("face %q declares authority %q, want one of %q", face.Name, face.Authority, authorities)
+		}
+		if len(face.Route) == 0 {
+			t.Errorf("face %q declares no route step", face.Name)
+		}
+	}
+}
+
 // TestRegistryFaceNamesAreUnique runs the uniqueness walk over the declared inventory and
 // over injected lists, so the walk both passes the real registry and bites on a
 // duplicate. It covers RR04.

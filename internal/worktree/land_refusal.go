@@ -1,4 +1,5 @@
-// Landing terminal receipts and refusal rendering: completion lines, next-step pointers, and refusal exits.
+// Landing terminal receipts and refusal rendering: completion lines, next-step pointers,
+// the refused record the worktree verbs print, and refusal exits.
 package worktree
 
 import (
@@ -11,15 +12,18 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree/landingpolicy"
 )
 
 func landedIncomplete(stdout io.Writer, result landing.ReviewedResult, specArg, path, assignment, step string, records int) int {
-	next := landingResumeNext(result, specArg, path, assignment)
+	resume := landingResumeNext(result, specArg, path, assignment)
+	next := refusalroute.New(faceLandIncomplete, refusalroute.Facts{Values: map[string]string{refusalroute.FactRerun: resume}}).Route
 	outcome := landingpolicy.Terminal(landingpolicy.TerminalFacts{FailedStep: step, Active: true})
-	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=%s,next=%s,census=%d}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, outcome.WorktreeState, sanitize.Controls(next), records)
+	fmt.Fprintf(stdout, "landed{source_base=%s,source_tip=%s,destination_base=%s,published_commit=%s,tree=%s,worktree=%s,%s=%s,census=%d}\n", result.SourceBase, result.SourceTip, result.DestinationBase, result.Commit, result.Tree, outcome.WorktreeState, refusalroute.NextField, sanitize.Controls(next), records)
 	return outcome.ExitCode
 }
 
@@ -57,37 +61,17 @@ func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment 
 	return atSourceWorktree(command, path, assignment)
 }
 
-// conflictRepairPrefix names the hand repair a composition conflict demands, up to the
-// commit that records the resolution: merge the incoming commit into the worktree, then
-// commit it. The landing and `bench worktree merge` refuse the same conflict, so both
-// name this one repair, and the landing appends its own review-and-re-run tail. Neither
-// verb composes the repair itself, so the merge step is raw Git and the value says so.
-func conflictRepairPrefix(incoming, assignment, path string) string {
-	merge := "git -C " + sanitize.ShellQuote(path) + " merge " + conflictCommitArg(incoming)
+// conflictFacts are the facts the hand merge of a composition conflict reads: the commit
+// to merge and the Git command addressed at the conflicted worktree. The landing and
+// `bench worktree merge` refuse the same conflict, so both read these. A path that is not
+// line-safe takes the assignment pointer form, because no quoting makes a control byte
+// pasteable.
+func conflictFacts(commit, assignment, path string) map[string]string {
+	checkoutGit := "git -C " + sanitize.ShellQuote(path)
 	if !lineSafe(path) {
-		merge = "bench worktree exec " + assignment + " -- git merge " + conflictCommitArg(incoming)
+		checkoutGit = "bench worktree exec " + assignment + " -- git"
 	}
-	return merge + " (bench worktree merge refuses this conflict; resolve it by hand); then bench commit"
-}
-
-// conflictCommitArg renders the commit a repair line names, and the placeholder that
-// stands in when the value is not line-safe.
-func conflictCommitArg(commit string) string {
-	if lineSafe(commit) {
-		return sanitize.ShellQuote(commit)
-	}
-	return "<full-destination-commit>"
-}
-
-// conflictContinuePrefix names the hand repair a source worktree that already holds a
-// pending merge demands. The merge is open, so a second merge is not the repair: the
-// operator resolves the conflicted paths and finishes the merge, which records the
-// resolution itself and needs no separate commit.
-func conflictContinuePrefix(assignment, path string) string {
-	if !lineSafe(path) {
-		return "bench worktree exec " + assignment + " -- git merge --continue (resolve the conflicted paths of the merge in progress first)"
-	}
-	return "git -C " + sanitize.ShellQuote(path) + " merge --continue (resolve the conflicted paths of the merge in progress first)"
+	return map[string]string{refusalroute.FactCheckoutGit: checkoutGit, refusalroute.FactConflictCommit: commit}
 }
 
 // sourceMergePending reports whether the source worktree holds a pending merge, which
@@ -105,14 +89,14 @@ func sourceMergePending(source string) bool {
 	return true
 }
 
-// landingConflictRefusal is the one constructor the conflict face travels through. It
-// reads the source worktree's merge state, chooses the hand repair that state demands,
-// and composes the re-run the repaired source takes. The registered face then puts the
-// review step and that re-run behind the repair, so no call site composes a route.
+// landingConflictRefusal is the one constructor the conflict faces travel through. It
+// reads the source worktree's merge state, which chooses the face, and composes the re-run
+// the repaired source takes. The registered face puts the review step and that re-run
+// behind the hand repair, so no call site composes a route.
 func landingConflictRefusal(conflict landing.ConflictError, destination, assignment, specArg, path, source string) refusalError {
-	repair := conflictRepairPrefix(destination, assignment, path)
+	face := faceCompositionConflict
 	if sourceMergePending(source) {
-		repair = conflictContinuePrefix(assignment, path)
+		face = faceCompositionConflictPending
 	}
 	// A spec-less landing re-runs spec-less, so it names no --spec at all rather than an
 	// empty value the grammar refuses.
@@ -123,15 +107,9 @@ func landingConflictRefusal(conflict landing.ConflictError, destination, assignm
 			specFlag = " --spec " + sanitize.ShellQuote(specArg)
 		}
 	}
-	rerun := atSourceWorktree("bench worktree land --request <request> --base "+conflictCommitArg(destination)+" --source-tip <repaired-source-tip>"+specFlag+" -m <message>", path, assignment)
-	return landingFaceRefusalOf(faceCompositionConflict, refusal{detail: conflict.Error(), paths: conflict.Paths, next: repair}, rerun)
-}
-
-// landingConflictNext is the one composition of the conflict route, in the order the
-// operator runs it. The hand repair comes first, the review of the new range next, and
-// the re-run of the landing with the repaired tip last.
-func landingConflictNext(repair, rerun string) string {
-	return repair + "; then /bench-review-implementation; then " + rerun
+	rerun := atSourceWorktree("bench worktree land --request <request>"+landingBaseFlag(destination)+" --source-tip <repaired-source-tip>"+specFlag+" -m <message>", path, assignment)
+	raised := refusal{detail: conflict.Error(), paths: conflict.Paths, values: conflictFacts(destination, assignment, path)}
+	return landingFaceRefusal(face, raised, rerun, "")
 }
 
 // atSourceWorktree addresses the source worktree a command's trailing positional
@@ -144,66 +122,21 @@ func atSourceWorktree(command, path, assignment string) string {
 	return "bench worktree exec " + assignment + " -- " + command + " ."
 }
 
-// The landing refusal face names. An operator reads a face's sentence in the record, so
-// the name and the registry entry are the same fact.
+// The landing refusal face names. The shared registry declares each face, and a raising
+// site names the face it raises.
 const (
-	faceDestinationNotClean  = "destination-not-clean"
-	faceDestinationCollision = "destination-collision"
-	faceSourceNotClean       = "source-not-clean"
-	faceSourceNotFenced      = "source-not-fenced"
-	faceSourceTipMismatch    = "source-tip-mismatch"
-	// The composition refuses after the preflight clears, so its face is declared here
-	// beside the preflight's.
-	faceCompositionConflict = "composition-conflict"
-	// The resume path refuses on its own destination and marker state, so those two
-	// faces are declared here beside the first run's.
-	faceResumeDestinationResidue = "resume-destination-residue"
-	faceResumeMarker             = "resume-marker"
+	faceDestinationNotClean        = "destination-not-clean"
+	faceDestinationCollision       = "destination-collision"
+	faceSourceNotClean             = "source-not-clean"
+	faceSourceNotFenced            = "source-not-fenced"
+	faceSourceTipMismatch          = "source-tip-mismatch"
+	faceCompositionConflict        = "composition-conflict"
+	faceCompositionConflictPending = "composition-conflict-pending"
+	faceResumeDestinationResidue   = "resume-destination-residue"
+	faceResumeMarker               = "resume-marker"
+	faceLandIncomplete             = "land-incomplete"
+	faceLandHandback               = "land-handback"
 )
-
-// landingStage names when in a landing one face prints, which decides the command its
-// route ends with. The registry is the one source of the answer, so the proofs and the
-// producing fixtures read it here rather than each restating it.
-type landingStage int
-
-const (
-	// stagePreflight is the first run's preflight. Its route ends with the caller's own
-	// re-run of the landing.
-	stagePreflight landingStage = iota
-	// stageComposition is the first run past its preflight. Its route ends with a re-run
-	// the operator points at a repaired source tip.
-	stageComposition
-	// stageResume is the resume path. Its route ends with the caller's own resume.
-	stageResume
-)
-
-// destinationCleanRepair is the repair a destination that carries uncommitted work
-// demands. The first run and the resume refuse on the same destination state, so both
-// faces name this one repair rather than each spelling it.
-func destinationCleanRepair(rerun string) string {
-	return "commit the destination's uncommitted work, or discard it; then " + rerun
-}
-
-// landingRefusalFace is one refusal the landing's preflight prints. detail is the
-// sentence, and repair composes the face's own repair ahead of the caller's re-run, from
-// the refusal's own observed values where the repair names them. The registry test walks the slice
-// and drives one producing fixture per entry, so a face added without a fixture, or with
-// an empty repair, turns the gate red.
-type landingRefusalFace struct {
-	name   string
-	detail string
-	stage  landingStage
-	repair func(rerun string, raised refusal) string
-}
-
-// route is the bare reading of a face's repair, which the proofs that pin a repair with no
-// observed values of its own read.
-func (f landingRefusalFace) route(rerun string) string { return f.repair(rerun, refusal{}) }
-
-// pathless adapts a repair that reads none of the refusal's observed values.
-func pathless(build func(rerun string) string) func(rerun string, raised refusal) string {
-	return func(rerun string, _ refusal) string { return build(rerun) }
-}
 
 // retargetSourceTip re-points the caller's own re-run at the source tip the landing read
 // in the tree, so a moved tip leaves exactly one command to run. The refusal carries the
@@ -217,125 +150,38 @@ func retargetSourceTip(rerun string, raised refusal) string {
 	return strings.Replace(rerun, landingSourceTipFlag(raised.observed), landingSourceTipFlag(raised.wanted), 1)
 }
 
-// landingRefusalFaces is the declared registry. It is the authoritative inventory of the
-// landing's refusal faces, so a later ticket adds its face here rather than composing a
-// route at the proof that fails.
-var landingRefusalFaces = []landingRefusalFace{
-	{
-		name:   faceDestinationNotClean,
-		detail: "landing destination is not clean",
-		repair: pathless(destinationCleanRepair),
-	},
-	{
-		// The paths are the operator's own files where the landing writes. Git refuses to
-		// overwrite an untracked one and overwrites an ignored one without a word, so the
-		// operator moves them before the landing runs.
-		name:   faceDestinationCollision,
-		detail: "landing destination has untracked or ignored files where the landing writes",
-		repair: pathless(func(rerun string) string {
-			return "move the refusal_paths entries out of the landing checkout; then " + rerun
-		}),
-	},
-	{
-		// The mismatch refusal already carries the tip the tree holds beside the one the
-		// caller named, so the route is the caller's own command re-pointed at the tip that
-		// works. The operator then has one exact next command for a moved tip.
-		name:   faceSourceTipMismatch,
-		detail: sourceTipMismatchDetail,
-		repair: retargetSourceTip,
-	},
-	{
-		name:   faceSourceNotClean,
-		detail: "reviewed source is not clean",
-		repair: pathless(func(rerun string) string {
-			return "commit the reviewed source's uncommitted work, or discard it; then " + rerun
-		}),
-	},
-	{
-		// The fence already authorizes a path that a fold of the default branch brings in
-		// unchanged, so every refused path is a write of the build, and the route keeps the
-		// caller's --base.
-		name:   faceSourceNotFenced,
-		detail: "reviewed source range or ownership fence is invalid",
-		repair: pathless(func(rerun string) string {
-			return "take the refusal_paths entries out of the reviewed range, or declare them under the spec's ## Ownership fences; then " + rerun
-		}),
-	},
-	{
-		// The composition names the conflicted paths in its own sentence, so the entry
-		// declares none and the constructor carries the observed one. The constructor
-		// reads the source worktree's merge state, so the hand repair that state demands
-		// arrives on the raised refusal and this face puts the route behind it.
-		name:   faceCompositionConflict,
-		stage:  stageComposition,
-		repair: func(rerun string, raised refusal) string { return landingConflictNext(raised.next, rerun) },
-	},
-	{
-		// The residue policy owns the sentence this face prints, so the entry declares
-		// none and the constructor carries the observed one.
-		name:   faceResumeDestinationResidue,
-		stage:  stageResume,
-		repair: pathless(destinationCleanRepair),
-	},
-	{
-		name:   faceResumeMarker,
-		stage:  stageResume,
-		detail: landingpolicy.MarkerRefusalDetail,
-		repair: pathless(func(rerun string) string {
-			return "run bench gate in the landing checkout to record its green marker; then " + rerun
-		}),
-	},
-}
-
-func landingRefusalFaceByName(name string) landingRefusalFace {
-	for _, face := range landingRefusalFaces {
-		if face.name == name {
-			return face
+// landingFaceOf names the registered face a refusal raised. A proof that raised a face
+// names it on the refusal. A proof that reads a cause outside this package states the
+// face's own sentence and then the cause, so a sentence that opens with a face's declared
+// one names that face too. A face whose sentence a policy owns matches no sentence here.
+func landingFaceOf(raised refusal) (string, bool) {
+	if raised.face != "" {
+		return raised.face, true
+	}
+	for _, face := range refusalroute.Faces(refusalroute.Land) {
+		if face.Sentence != "" && (face.Sentence == raised.detail || strings.HasPrefix(raised.detail, face.Sentence+": ")) {
+			return face.Name, true
 		}
 	}
-	// A name outside the registry is a programming fault in this package, not an operator
-	// condition. It surfaces as a refusal rather than a panic, because the landing must not
-	// abort a caller's session over its own bookkeeping.
-	return landingRefusalFace{
-		name:   name,
-		detail: "landing refusal face " + name + " is unregistered",
-		repair: pathless(func(rerun string) string { return rerun }),
-	}
+	return "", false
 }
 
-// landingFaceByDetail finds the registered face a refusal's own sentence names. A proof
-// that reads a cause outside this package states the face's sentence and then the cause,
-// so a sentence that opens with a face's own one names that face too. A face that
-// declares no sentence of its own matches nothing here, because its sentence comes from
-// the policy at the refusal rather than from the registry.
-func landingFaceByDetail(detail string) (landingRefusalFace, bool) {
-	for _, face := range landingRefusalFaces {
-		if face.detail != "" && (face.detail == detail || strings.HasPrefix(detail, face.detail+": ")) {
-			return face, true
-		}
+// landingFaceRefusal is the one constructor a landing face travels through. raised carries
+// what the proof observed: the sentence for a face whose sentence a policy owns, the paths,
+// and the values the face's route reads. rerun is a required argument, so no site prints a
+// face's repair without the caller's own re-run behind it. preface states a qualifier
+// ahead of the route's first step. A refusal that already states a sentence keeps it,
+// because that sentence carries the cause the face's declared one drops.
+func landingFaceRefusal(name string, raised refusal, rerun, preface string) refusalError {
+	if name == faceSourceTipMismatch {
+		rerun = retargetSourceTip(rerun, raised)
 	}
-	return landingRefusalFace{}, false
-}
-
-// landingFaceRefusal is the one constructor a registered face travels through. rerun is a
-// required argument, so no site can print a face's repair without the caller's own re-run
-// behind it. detail carries the observed sentence for a face whose sentence a policy
-// owns, and a face that declares its own sentence prints that one. The `refusal` struct
-// keeps its optional next field for the verbs outside this registry's reach.
-func landingFaceRefusal(name, detail, rerun string, paths []string) refusalError {
-	return landingFaceRefusalOf(name, refusal{detail: detail, paths: paths}, rerun)
-}
-
-// landingFaceRefusalOf renders one registered face over the refusal a proof already
-// raised, so the identities that refusal observed reach the route the face composes.
-func landingFaceRefusalOf(name string, raised refusal, rerun string) refusalError {
-	face := landingRefusalFaceByName(name)
-	// A refusal that already states a sentence keeps it, because that sentence carries
-	// the cause the face's declared one drops. The declared sentence fills an empty one.
-	if raised.detail == "" {
-		raised.detail = face.detail
+	values := map[string]string{refusalroute.FactRerun: rerun}
+	for slot, value := range raised.values {
+		values[slot] = value
 	}
-	raised.next = face.repair(rerun, raised)
+	built := refusalroute.New(name, refusalroute.Facts{Sentence: raised.detail, Paths: raised.paths, Preface: preface, Values: values})
+	raised.face, raised.detail, raised.next = name, built.Sentence, built.Route
 	return refusalError{raised}
 }
 
@@ -345,37 +191,39 @@ func landingFaceRefusalOf(name string, raised refusal, rerun string) refusalErro
 // same group. A refusal from a group that ran to its end carries no such sentence.
 const laterProofsSkipped = "later proofs in this group did not run"
 
-// skippedProofs states the short-circuit ahead of the route, so the route still ends with
-// the caller's own re-run. A refusal that names no route gains no sentence, because the
-// sentence qualifies a repair rather than standing as one.
-func skippedProofs(raised refusalError, shortCircuited bool) refusalError {
-	if !shortCircuited || raised.next == "" {
-		return raised
-	}
-	raised.next = laterProofsSkipped + "; " + raised.next
-	return raised
-}
-
-// landingFaceRoute attaches the caller's own re-run to a preflight refusal whose sentence
-// names a registered face. The route reads the flag values the caller passed, and the
-// preflight assembler is the one place that holds them, so the attachment happens there
-// rather than at the proof that failed. shortCircuited states whether this fault stopped
-// the later proofs of its own group, which the assembler knows and the proof does not. A
-// refusal outside the registry travels unchanged unless it already carries a route, which
-// the sentence then qualifies.
+// landingFaceRoute attaches the caller's own re-run to a landing refusal. The route reads
+// the flag values the caller passed, and the verb's assembler is the one place that holds
+// them, so the attachment happens there rather than at the proof that failed.
+// shortCircuited states whether this fault stopped the later proofs of its own group,
+// which the assembler knows and the proof does not; the face states it ahead of the route,
+// so the route still ends with the re-run.
+//
+// A refusal that names a registered face takes that face. A refusal that carries a route
+// of its own, or whose route an identity component owns, keeps it, and the skipped-proof
+// sentence qualifies a route it carries; a refusal that names no route gains no sentence,
+// because the sentence qualifies a repair rather than standing as one. Every other cause
+// has no route of its own, so it hands back to the reviewer under its own sentence.
 func landingFaceRoute(err error, rerun string, shortCircuited bool) error {
 	raised := refusal{detail: err.Error()}
 	var typed refusalError
 	if errors.As(err, &typed) {
 		raised = typed.refusal
 	}
-	if face, ok := landingFaceByDetail(raised.detail); ok {
-		return skippedProofs(landingFaceRefusalOf(face.name, raised, rerun), shortCircuited)
+	preface := ""
+	if shortCircuited {
+		preface = laterProofsSkipped
+	}
+	if name, ok := landingFaceOf(raised); ok {
+		return landingFaceRefusal(name, raised, rerun, preface)
+	}
+	if raised.next == "" && raised.component == "" {
+		return landingFaceRefusal(faceLandHandback, raised, rerun, preface)
 	}
 	if !shortCircuited || raised.next == "" {
 		return err
 	}
-	return skippedProofs(refusalError{raised}, true)
+	raised.next = laterProofsSkipped + "; " + raised.next
+	return refusalError{raised}
 }
 
 func landRefusal(stdout io.Writer, detail string) int {
@@ -391,4 +239,55 @@ func landRefusalError(stdout io.Writer, err error) int {
 	fmt.Fprintln(stdout, "refused{"+typed.fields()+"}")
 	fmt.Fprint(stdout, typed.table())
 	return 1
+}
+
+// refusal is one refused record. face names the registered face the refusing proof raised,
+// and values holds the facts that proof observed for the face's route, such as the label
+// of the assignment that owns the refusing tree. A refusal outside the registry leaves
+// both empty. component names the identity component that raised the refusal, because
+// that registry owns the component's route.
+type refusal struct {
+	detail, observed, wanted, next string
+	paths                          []string
+	face, component                string
+	values                         map[string]string
+}
+type refusalError struct{ refusal }
+
+func (r refusal) fields() string {
+	fields := []string{"detail=" + sanitize.Controls(r.detail)}
+	for _, pair := range [][2]string{{"observed", r.observed}, {"wanted", r.wanted}, {refusalroute.NextField, r.next}} {
+		if pair[1] != "" {
+			fields = append(fields, pair[0]+"="+sanitize.Controls(pair[1]))
+		}
+	}
+	return strings.Join(fields, ",")
+}
+func (e refusalError) Error() string {
+	text := sanitize.Controls(e.detail)
+	if fields := strings.TrimPrefix(e.fields(), "detail="+sanitize.Controls(e.detail)); fields != "" {
+		text += "; " + strings.TrimPrefix(fields, ",")
+	}
+	if table := e.table(); table != "" {
+		text += "\n" + table
+	}
+	return text
+}
+func (r refusal) table() string {
+	if len(r.paths) == 0 {
+		return ""
+	}
+	shown := len(r.paths)
+	if shown > ignoredEntryLimit {
+		shown = ignoredEntryLimit
+	}
+	rows := make([][]string, 0, shown)
+	for _, path := range r.paths[:shown] {
+		rows = append(rows, []string{sanitize.Controls(path)})
+	}
+	out, err := toon.Table(refusalPathsTable, []string{"path"}, rows)
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("paths_total=%d\n%s", len(r.paths), out)
 }

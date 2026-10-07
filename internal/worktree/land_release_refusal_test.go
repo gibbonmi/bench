@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"unicode"
+
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
@@ -22,7 +24,7 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	r := runVerb(t, verbLand, repoHome{root, home}.call(landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path)...))
 	// The route reads from the registry, so the face's repair keeps one source. The
 	// caller's own re-run rides behind it and this row does not pin it.
-	wantNext := "next=" + landingRefusalFaceByName(faceDestinationNotClean).route("")
+	wantNext := "next=" + landingRepair(faceDestinationNotClean, nil)
 	if r.exit != 1 || !strings.Contains(r.stdout, wantNext) || !strings.Contains(r.stdout, "paths_total=1") || !strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:") || !strings.Contains(r.stdout, "tracked.txt") || len(r.stderr) != 0 {
 		t.Fatalf("destination refusal = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
@@ -41,8 +43,8 @@ func TestLandCommandRefusalListsCollidingPaths(t *testing.T) {
 	mustWrite(t, filepath.Join(root, ".env"), []byte("SECRET=1\n"), 0o600)
 	mustWrite(t, filepath.Join(root, "notes.txt"), []byte("notes\n"), 0o600)
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceDestinationCollision).detail)
-	if r.exit != 1 || !printed || !strings.HasPrefix(next, landingRefusalFaceByName(faceDestinationCollision).route("")) ||
+	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceDestinationCollision))
+	if r.exit != 1 || !printed || !strings.HasPrefix(next, landingRepair(faceDestinationCollision, nil)) ||
 		!strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:\n  owned.txt\n") || strings.Contains(r.stdout, ".env") ||
 		strings.Contains(r.stdout, "notes.txt") || len(r.stderr) != 0 {
 		t.Fatalf("collision refusal = (%d, %q, %q), want owned.txt alone", r.exit, r.stdout, r.stderr)

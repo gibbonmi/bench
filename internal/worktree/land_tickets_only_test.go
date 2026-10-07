@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // WL8: a --spec naming a tickets-only folder closes that folder on the landing rather
@@ -71,8 +73,8 @@ func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
 	// face's own repair with the caller's own re-run behind it.
 	rerun := "bench worktree land --request '" + request + "' --base '" + f.base +
 		"' --source-tip '" + f.tip + "' --spec 'absent' -m <message> '" + f.creation.Path + "'"
-	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceSourceNotFenced).detail)
-	repair := landingRefusalFaceByName(faceSourceNotFenced).route(rerun)
+	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotFenced))
+	repair := landingRoute(faceSourceNotFenced, rerun, nil)
 	if !printed || next != repair {
 		t.Fatalf("absent spec folder next = %q (printed=%t) in %q, want %q", next, printed, r.stdout, repair)
 	}

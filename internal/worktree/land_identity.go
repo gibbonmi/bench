@@ -18,13 +18,14 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/worktree/landingpolicy"
 )
 
 // sourceTipMismatchDetail is the sentence the source-tip proof prints. The registry face
-// that routes it reads the same value, so the sentence and its route are one fact.
-const sourceTipMismatchDetail = "worktree source tip mismatch"
+// that routes it declares the sentence, so the sentence and its route are one fact.
+var sourceTipMismatchDetail = refusalroute.Sentence(faceSourceTipMismatch)
 
 type landingSourceFact struct {
 	base, tip, specPath string
@@ -79,7 +80,7 @@ func landingDestination(root string) (string, string, string, string, error) {
 	// The destination's moved paths are the operator's own work, so the face carries them
 	// beside its route: the table names what to commit or discard.
 	if len(dirty) > 0 {
-		return "", "", "", "", landingFaceRefusal(faceDestinationNotClean, "", "", dirty)
+		return "", "", "", "", landingFaceRefusal(faceDestinationNotClean, refusal{paths: dirty}, "", "")
 	}
 	fingerprint, err := landing.CheckoutFingerprint(root)
 	if err != nil {
@@ -109,7 +110,7 @@ func landingDestinationCollisions(root, sourceTip string) error {
 		}
 	}
 	if len(colliding) > 0 {
-		return landingFaceRefusal(faceDestinationCollision, "", "", colliding)
+		return landingFaceRefusal(faceDestinationCollision, refusal{paths: colliding}, "", "")
 	}
 	return nil
 }
@@ -185,8 +186,9 @@ func landingSource(j joins, root string, a intent.Assignment, base, requestedTip
 	}
 	// The hostile-source surface pins this refusal to one line, so the face carries its
 	// route and no paths: the source's own path names never reach the operator's terminal.
+	// The route commits at the assignment's own label.
 	if len(dirty) > 0 {
-		return landingSourceFact{}, landingFaceRefusal(faceSourceNotClean, "", "", nil)
+		return landingSourceFact{}, landingFaceRefusal(faceSourceNotClean, refusal{values: map[string]string{refusalroute.FactLabel: a.Label}}, "", "")
 	}
 	// A --spec naming a tickets-only folder is a close, not a staged spec. It names no
 	// ownership fence and carries no transition, so its range resolves and its proof
@@ -248,7 +250,7 @@ func landingSourceRange(j joins, worktree, slug, base, head string) (diff.Source
 		}
 		return resolved, detail, nil
 	}
-	detail := landingRefusalFaceByName(faceSourceNotFenced).detail
+	detail := refusalroute.Sentence(faceSourceNotFenced)
 	resolved, err := preflight.AuthorizeReviewedSource(worktree, slug, base)
 	if err != nil {
 		// The unfenced paths arrive typed, so they print as the refusal's own path table
@@ -256,7 +258,7 @@ func landingSourceRange(j joins, worktree, slug, base, head string) (diff.Source
 		// attaches this face's route there.
 		var unfenced preflight.UnauthorizedPathsError
 		if errors.As(err, &unfenced) && len(unfenced.Paths) > 0 {
-			return diff.SourceRange{}, detail, landingFaceRefusalOf(faceSourceNotFenced, refusal{paths: unfenced.Paths}, "")
+			return diff.SourceRange{}, detail, landingFaceRefusal(faceSourceNotFenced, refusal{paths: unfenced.Paths}, "", "")
 		}
 		return diff.SourceRange{}, detail, fmt.Errorf("%s: %s", detail, err)
 	}
