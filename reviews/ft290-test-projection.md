@@ -1,5 +1,28 @@
 # Review outcomes
 
+## TP-C1b review pickup
+
+The TP-C1b review ran on the frozen pair `d49b0697..5a1c3c3b`. Each axis ran on sonnet at high effort. The chunk has used 0 of its 2 repair cycles.
+
+The raw count is 3 findings, and the repair-target count is 3. Ticket 4 owns C1 and C2. Ticket 5 owns S1, because ticket 5 changed the unit of `Outcome.FailedTests`.
+
+### Standards
+
+Count: 1. Worst issue: S1.
+
+- S1, auto-fix, confidence 5. The `OutcomeFailed` doc comment in `outcome.go` still names a failing test row, but a `--full` row is now one diagnostic line. The edited `Outcome` comment is also one long line. Reword the comment and wrap it.
+
+### Spec
+
+Count: 0. Worst issue: none. All twelve TP-C1b rows are closed. No spec line contradicts the `OutcomeFailed` kind of a prose grader refusal.
+
+### Coverage
+
+Count: 2. Worst issue: C1.
+
+- C1, auto-fix, confidence 9. No test runs a red prose tree with `--full`, and a swap that drops the findings under `--full` stayed green. Add `--full` cases to the red, refusal, and zero-subject prose tests.
+- C2, auto-fix, confidence 8. The subject test uses only a file exclusion row, and a swap that ignores directory rows stayed green. This repository's exclusion file uses directory rows. Add a directory row and a file under it.
+
 ## TP-C1a review pickup
 
 The TP-C1a review ran on the frozen pair `16970a22..068ab04a`. Each axis ran on sonnet at high effort, by the reviewer's direction. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t2_r1` and `claude:ft290_t3_r1` repaired the six targets at `3a97977c` and `d49b0697`, and the chunk tip is now `d49b0697`. The confirming round of all three axes passed with zero findings, and each earlier silent mutation now bites.
@@ -697,7 +720,73 @@ Count: 4. Worst issue: C1.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1b-standards-r1",
+          "performer": "claude:ft290_c1b_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9dda6bd8e26b08d40413e6ff3299191f6bb9f9ee",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1b_standards",
+            "digest": "sha256:629df5879c1b98b2d29e345bd6035629552371d989803acf73b465286665f5de",
+            "excerpt": "axis=Standards findings=1 worst=S1 (TP-C1b, d49b0697..5a1c3c3b)\nS1 | auto-fix | conf 5 | internal/testreport/outcome.go:12, 24-25 | craft-comments Aging: the OutcomeFailed doc comment still says \"at least one failing test row\", but a --full row is now one diagnostic line and FailedTests counts distinct tests; the edited Outcome comment is one over-long line. | Reword line 12 to \"at least one failed test\" and re-wrap lines 24-27.\nRefuted duplication candidates: GradeTree reuses collect and the one exclusion owner; ranNothingTitle is the single title owner; report.failed() feeds both the rows and outcome(); no new canned-events helper; TP10/TP11 read the owner's text from prose.Grade with preconditions and exact whole-output matches.\nAdvice: a Grader method returning findings and graded could avoid a double exclusion call; failed()/failures() names are close.\nExamined: full diff, tickets 4-5, walk.go, subject.go, named_check.go, outcome.go, testreport.go, test helpers, AGENTS.md, BENCH.md, benchkit profile, craft-comments. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "d49b069704efe603a84203bdeffa9614c4802c37",
+          "tip": "5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c1b-spec-r1",
+          "performer": "claude:ft290_c1b_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9dda6bd8e26b08d40413e6ff3299191f6bb9f9ee",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1b_spec",
+            "digest": "sha256:8a6b12dfc322fcaf778a97dda5c65b59b11371cfb0292045b75b799d9cf71f79",
+            "excerpt": "axis=Spec findings=0 worst=none (TP-C1b, d49b0697..5a1c3c3b)\nAll twelve rows closed: TP7 TestProseGreenPrintsOnlyCheckRow, TP8 TestProseFullListsSubjects (walk order conflicts with sorted order), TP9 TestProseZeroSubjectsExitsOne, TP10 TestProseRedKeepsFindingsAfterCheckRow, TP11 TestProseGraderRefusalPrintsCheckRow, TP12 TestGradeReportsGradedSubjects, TP13-TP17 exact-match failures tests, TP49 TestFullFailedTestsCountsTests.\nprose.Grade = GradeTree(root).Findings keeps its zero-subject pass; its conformance caller is untouched; one walk and one exclusion test.\nTestFullFailureDiagnostics keeps order, no-ANSI intent, default preview, and FailedTests 3. No scope creep.\nOrchestrator flag: a grader refusal keeping OutcomeFailed contradicts no spec line; probe refuses prose, so no reader sees the kind.\nAdvice: no direct test of the tracked-only subject list through GradeTree; collect's own tests cover the walk.\nExamined: spec, tickets 4-5, the chunk diff, walk.go, full_failure_test.go, subject.go. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "d49b069704efe603a84203bdeffa9614c4802c37",
+          "tip": "5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1b-coverage-r1",
+          "performer": "claude:ft290_c1b_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9dda6bd8e26b08d40413e6ff3299191f6bb9f9ee",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c1b_coverage",
+            "digest": "sha256:e194843cc24cc9b51e31e1921f3b63ce33abe1b1fd746c3df5fb5c8f0dabff2b",
+            "excerpt": "axis=Coverage findings=2 worst=C1 (TP-C1b, d49b0697..5a1c3c3b)\nC1 | auto-fix | conf 9 | internal/testreport/named_check.go:305; TP10, story 8 | No test runs a red prose tree with --full. Swapping the findings branch to `len(grade.Findings) > 0 && !full` probed silent: a red --check prose --full run drops every finding and exits 0. TP9 and TP11 are default-only too. | Add --full cases to the red, refusal, and zero-subject prose tests.\nC2 | auto-fix | conf 8 | internal/prose/walk.go:60, walk_test.go:292; TP12 | TestGradeReportsGradedSubjects uses only a file-row exclusion. Swapping g.ex.excluded(rel) for g.ex.files[rel] probed silent in prose and testreport; this repo's .bench/prose-exclusions uses directory rows. | Add a directory-prefix exclusion row and a file under it to the fixture.\nCovered: the blank-line skip in decode and the zero-subject early return both bit.\nAdvice: a control byte in a .md path makes toon.Table refuse only under --full (unexercised); GradeTree evaluates the exclusion twice.\nExamined: chunk diff, spec rows TP7-TP17 and TP49, edge inventory, walk.go, subject.go, exclusions.go, testreport.go, named_check.go; bench test ./internal/probe passed; ./dist/bench --check prose (prose,prose,0,365) and prose-mechanics passed; 4 probes, all restored yes; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "d49b069704efe603a84203bdeffa9614c4802c37",
+          "tip": "5a1c3c3b8e1ffbbd04ff12c85e8d0dca56a6734a",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
