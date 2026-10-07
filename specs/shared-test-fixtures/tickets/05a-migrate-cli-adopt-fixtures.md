@@ -8,6 +8,9 @@ Covers: GF16, GF19, GF29, GF30
 
 Create CLI and adoption fixtures through the shared Git owner. Preserve hook-script input and explicit branch choices.
 
+Coordinate overlapping adoption fixtures with landing-test-efficiency. Prefer its minimal payload migration first, then refresh this ticket's caller inventory and affected fences.
+Use the approved amendment route if source drift requires new paths. Shared helpers alone establish no measured speed gain.
+
 Consume the accepted GF-C1 helper contract. Remove generic execution and identity copies in this package group.
 Keep meaningful fixture composition and policy-free public fixture facades. Classify each specialized probe by its actual operation before an edit.
 String literals containing example Go code remain data. No later ticket supplies behavior needed at this checkpoint.
