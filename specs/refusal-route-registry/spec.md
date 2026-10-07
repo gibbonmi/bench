@@ -822,7 +822,16 @@ The orchestrator records each author session before that author's dispatch.
           "native_ref": "claude-agent:ft393_t5"
         }
       ],
-      "06-give-the-red-source-fold-an-exit.md": [],
+      "06-give-the-red-source-fold-an-exit.md": [
+        {
+          "session": "claude:ft393_t6",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1fcfeef8aacc9b37ce51cc0566c053974337d2af",
+          "native_ref": "claude-agent:ft393_t6"
+        }
+      ],
       "07-route-each-reset-refusal-through-the-registry.md": [],
       "08-route-the-commit-exit-3-to-the-reset-plan.md": [],
       "09-route-each-commit-refusal-through-the-registry.md": [],
