@@ -170,7 +170,7 @@ func TestWorktreeRuleAnchorsRedOnRemoval(t *testing.T) {
 	rules := []anchorRule{
 		{file: ".bench/BENCH.md", needle: "**Every phase runs in a bench worktree and lands through `bench worktree land`.**", want: ".bench/BENCH.md Workflow section dropped the worktree rule; every phase runs in a bench worktree and lands through bench worktree land"},
 		{file: ".bench/BENCH-reference.md", needle: "The spec is optional on the landing and on its resume: a spec-less phase lands with no `--spec`.", want: ".bench/BENCH-reference.md landing paragraph dropped the optional spec; a spec-less phase lands with no --spec"},
-		{file: ".bench/BENCH-reference.md", needle: "Each landing refusal face constructs through the registry constructor, which takes the recovery route as a required argument.", want: ".bench/BENCH-reference.md dropped the landing refusal shape; every landing refusal face constructs through the registry constructor, which takes the recovery route as a required argument"},
+		{file: ".bench/BENCH-reference.md", needle: "Each landing refusal face constructs through the shared refusal-route registry, which serves every write verb.", want: ".bench/BENCH-reference.md dropped the landing refusal shape; every landing refusal face constructs through the shared refusal-route registry, which serves every write verb"},
 	}
 	// The two guides carry their own headings, so the worktree rule lands under Workflow
 	// and the reference needles land in the file body.

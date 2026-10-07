@@ -95,6 +95,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench learnings            open journal entries as a TOON table (date, title)
   bench maps [--in <label|primary>]  unresolved decision-map tickets as TOON (map, ticket, type, state)
   bench guards [--in <label|primary>]  every guard's deny surface as TOON (guard, boundary, denies)
+  bench recovery             the recovery matrix as TOON: each write-verb refusal face with its authority and route
   bench diff [--in <label|primary>]  review base + changed files as TOON (--full appends log + diff body; --base freezes source)
   bench harnesses [--in <label|primary>] [<harness> [--record <path> --format <source-id>]]  the harness record as TOON; one name prints that harness's cells; both flags observe one named session record
   bench assessment list | show <run-id> | record --input <file> | compare --plan <file> --runs <id,...>  store and inspect local workflow cost and quality

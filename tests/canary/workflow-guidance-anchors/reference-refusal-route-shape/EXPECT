@@ -1,1 +1,1 @@
-.bench/BENCH-reference.md dropped the landing refusal shape; every landing refusal face constructs through the registry constructor, which takes the recovery route as a required argument
+.bench/BENCH-reference.md dropped the landing refusal shape; every landing refusal face constructs through the shared refusal-route registry, which serves every write verb
