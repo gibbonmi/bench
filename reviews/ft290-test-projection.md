@@ -87,7 +87,7 @@ Count: 4. Worst issue: C1.
 {
   "version": 2,
   "spec": "specs/ft290-test-projection/spec.md",
-  "plan_digest": "sha256:90908c6e7bac9a90b47002f5c1f5c78d32305faf06f2717a13a33b682a7389cd",
+  "plan_digest": "sha256:b88f0a385e878e95fc42dee1716deaa73c232bdf8e43d03326931ccdbcb8cf7d",
   "implementation_session": "",
   "chunks": [
     {
@@ -1447,6 +1447,273 @@ Count: 4. Worst issue: C1.
           ]
         }
       ]
+    },
+    {
+      "id": "TP-C3",
+      "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+      "tip": "23c328db1eec38cc3031c0b9dd7a4157d547c74f",
+      "plan_digest": "sha256:b88f0a385e878e95fc42dee1716deaa73c232bdf8e43d03326931ccdbcb8cf7d",
+      "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+      "acceptance_rows": [
+        "TP27",
+        "TP28",
+        "TP29",
+        "TP30",
+        "TP33",
+        "TP40",
+        "TP52",
+        "TP53",
+        "TP31",
+        "TP32",
+        "TP34",
+        "TP35",
+        "TP36",
+        "TP37",
+        "TP38",
+        "TP39",
+        "TP50"
+      ],
+      "verification": [
+        {
+          "id": "t8-testreport-v1",
+          "performer": "claude:ft290_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t8",
+            "digest": "sha256:7d8737696abed3d4a4fb92e59122ab603d8c8f27b32f80eceaa9708f68ba870a",
+            "excerpt": "tip 23c328db1eec38cc3031c0b9dd7a4157d547c74f\n$ bench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,34292,186  failures[0] skips[0] exit 0\n$ bench probe internal/testreport/fixtures.go --swap \"if fixture.Check == check {\" --with \"if fixture.Family == check {\" --package ./internal/testreport --run ^TestFixturesFaceHonorsCheckMarker$\n  bit,internal/testreport/fixtures.go,swap,failed,1,yes  (mutated run: testreport fail,5,1; exit 1)\n"
+          },
+          "requirement": "t8-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the fixtures owner filter: compare the fixture family name in place of the owner that canary.Fixtures resolves. TestFixturesFaceHonorsCheckMarker must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t8",
+              "digest": "sha256:7d8737696abed3d4a4fb92e59122ab603d8c8f27b32f80eceaa9708f68ba870a",
+              "excerpt": "tip 23c328db1eec38cc3031c0b9dd7a4157d547c74f\n$ bench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,34292,186  failures[0] skips[0] exit 0\n$ bench probe internal/testreport/fixtures.go --swap \"if fixture.Check == check {\" --with \"if fixture.Family == check {\" --package ./internal/testreport --run ^TestFixturesFaceHonorsCheckMarker$\n  bit,internal/testreport/fixtures.go,swap,failed,1,yes  (mutated run: testreport fail,5,1; exit 1)\n"
+            }
+          }
+        },
+        {
+          "id": "t8-canary-v1",
+          "performer": "claude:ft290_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t8",
+            "digest": "sha256:f2dfa4bf49d0db84e87355e639c00ba154e84cbc3869dd158cdc5e301bfbc3d4",
+            "excerpt": "tip 23c328db1eec38cc3031c0b9dd7a4157d547c74f\n$ bench test --package ./internal/canary\n  github.com/gibbonmi/bench/internal/canary,pass,16,26  failures[0] exit 0\n"
+          },
+          "requirement": "t8-canary",
+          "command": "bench test --package ./internal/canary",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-cmd-v1",
+          "performer": "claude:ft290_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t8",
+            "digest": "sha256:bf83bcdee76b0f24ef8f37e311f9b497ffc1e9da44a68842fcf5d0d720807e5c",
+            "excerpt": "tip 23c328db1eec38cc3031c0b9dd7a4157d547c74f\n$ bench test --package ./cmd/bench\n  github.com/gibbonmi/bench/cmd/bench,pass,14784,330  failures[0] exit 0\n"
+          },
+          "requirement": "t8-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-ordinary-build-census-v1",
+          "performer": "claude:ft290_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t8",
+            "digest": "sha256:55cb8b9afa7b4f2770aa6918ba5b0db56debb3d56e3aeccebff0d0f62b7a3c15",
+            "excerpt": "tip 23c328db1eec38cc3031c0b9dd7a4157d547c74f\n$ ./dist/bench test --check ordinary-build-census\n  check: ordinary-build-census,conformance,1,0\n  internal/conformance,pass,310,1  exit 0\n"
+          },
+          "requirement": "t8-ordinary-build-census",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-axi-query-registry-v1",
+          "performer": "claude:ft290_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t8",
+            "digest": "sha256:dc6a37578a48a1acb63bf4363720baac2acd51da90dbdf2496d1ebb57fc0d095",
+            "excerpt": "tip 23c328db1eec38cc3031c0b9dd7a4157d547c74f\n$ ./dist/bench test --check axi-query-registry\n  check: axi-query-registry,conformance,1,0\n  internal/conformance,pass,5,1  exit 0\n"
+          },
+          "requirement": "t8-axi-query-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-subcommand-routing-v1",
+          "performer": "claude:ft290_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t8",
+            "digest": "sha256:49545ca1d4cf962618aee045b549aa41c71914a418586aba732c6714d2c7d13d",
+            "excerpt": "tip 23c328db1eec38cc3031c0b9dd7a4157d547c74f\n$ ./dist/bench test --check subcommand-routing\n  check: subcommand-routing,conformance,1,0\n  internal/conformance,pass,20,1  exit 0\n"
+          },
+          "requirement": "t8-subcommand-routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "t8-package-core-guard-v1",
+          "performer": "claude:ft290_t8",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t8",
+            "digest": "sha256:b7795db06425342069bc1ad1667e60d261f66224760c88a6cebf5e982ac56991",
+            "excerpt": "tip 23c328db1eec38cc3031c0b9dd7a4157d547c74f\n$ ./dist/bench test --check package-core-guard\n  check: package-core-guard,conformance,1,0\n  internal/conformance,pass,2379,1  exit 0\n"
+          },
+          "requirement": "t8-package-core-guard",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0
+        },
+        {
+          "id": "t9-testreport-v1",
+          "performer": "claude:ft290_t9",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t9",
+            "digest": "sha256:316a20c98a608a03f7e169f94f4d47f6ba23d7bb4454095d8d17ab34403fe45c",
+            "excerpt": "@23c328db (only reviews/ft290-test-projection.md modified)\n$ bench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,34741,186\nexit 0\n$ bench probe internal/testreport/fixtures.go --swap 'namedCheckKind(check), len(families)}' --with 'namedCheckKind(check), len(owned)}' --package ./internal/testreport --run '^TestChecksFaceCountsFamilies$'\n  bit,internal/testreport/fixtures.go,swap,failed,1,yes\n  TestChecksFaceCountsFamilies: package-core-guard families = \"3\"; want 2 (mutated run exit 1)\n"
+          },
+          "requirement": "t9-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the families cell: count the owned fixtures in place of the distinct non-empty family names. TestChecksFaceCountsFamilies must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t9",
+              "digest": "sha256:316a20c98a608a03f7e169f94f4d47f6ba23d7bb4454095d8d17ab34403fe45c",
+              "excerpt": "@23c328db (only reviews/ft290-test-projection.md modified)\n$ bench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,34741,186\nexit 0\n$ bench probe internal/testreport/fixtures.go --swap 'namedCheckKind(check), len(families)}' --with 'namedCheckKind(check), len(owned)}' --package ./internal/testreport --run '^TestChecksFaceCountsFamilies$'\n  bit,internal/testreport/fixtures.go,swap,failed,1,yes\n  TestChecksFaceCountsFamilies: package-core-guard families = \"3\"; want 2 (mutated run exit 1)\n"
+            }
+          }
+        },
+        {
+          "id": "t9-cmd-v1",
+          "performer": "claude:ft290_t9",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t9",
+            "digest": "sha256:16b60758a48580892e0b7d48eec7cc4048045ea2a636033a552b7e60c1c8d51b",
+            "excerpt": "@23c328db\n$ bench test --package ./cmd/bench\n  github.com/gibbonmi/bench/cmd/bench,pass,14384,330\nexit 0\n"
+          },
+          "requirement": "t9-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t9-axi-query-registry-v1",
+          "performer": "claude:ft290_t9",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t9",
+            "digest": "sha256:b2a04e42f3c28aa1a6b99eccab3c98129cc0b2c01e9836ca060fed483b2fe762",
+            "excerpt": "@23c328db, dist/bench rebuilt there\n$ ./dist/bench test --check axi-query-registry\n  axi-query-registry,conformance,1,0\n  github.com/gibbonmi/bench/internal/conformance,pass,7,1\nexit 0\n"
+          },
+          "requirement": "t9-axi-query-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "t9-subcommand-routing-v1",
+          "performer": "claude:ft290_t9",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t9",
+            "digest": "sha256:1c3a36a08809fcc4c85c42a0a29da9991a4635a0f9dc022708f25f8a0143a860",
+            "excerpt": "@23c328db, dist/bench rebuilt there\n$ ./dist/bench test --check subcommand-routing\n  subcommand-routing,conformance,1,0\n  github.com/gibbonmi/bench/internal/conformance,pass,21,1\nexit 0\n"
+          },
+          "requirement": "t9-subcommand-routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "t9-package-core-guard-v1",
+          "performer": "claude:ft290_t9",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t9",
+            "digest": "sha256:0299cc0f766501595a9dd88015cbdbce2e3f30dc5e88d23570bfc83d97d67b18",
+            "excerpt": "@23c328db, dist/bench rebuilt there\n$ ./dist/bench test --check package-core-guard\n  package-core-guard,conformance,1,0\n  github.com/gibbonmi/bench/internal/conformance,pass,2385,1\nexit 0\n"
+          },
+          "requirement": "t9-package-core-guard",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1547,6 +1814,21 @@ Count: 4. Worst issue: C1.
     {
       "from": "sha256:7eb209e7e947acc32004d2af598d3543421671facbc0e26ff0763c03db3e5f18",
       "to": "sha256:90908c6e7bac9a90b47002f5c1f5c78d32305faf06f2717a13a33b682a7389cd",
+      "chunk_ids": {
+        "TP-C1a": [
+          "TP-C1a"
+        ],
+        "TP-C1b": [
+          "TP-C1b"
+        ],
+        "TP-C2": [
+          "TP-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:90908c6e7bac9a90b47002f5c1f5c78d32305faf06f2717a13a33b682a7389cd",
+      "to": "sha256:b88f0a385e878e95fc42dee1716deaa73c232bdf8e43d03326931ccdbcb8cf7d",
       "chunk_ids": {
         "TP-C1a": [
           "TP-C1a"
