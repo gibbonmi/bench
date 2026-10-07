@@ -2,7 +2,7 @@
 
 ## TP-C2 review pickup
 
-The TP-C2 review ran on the frozen pair `71582c05..5fd1de93`. Each axis ran on sonnet at high effort. The chunk has used 0 of its 2 repair cycles.
+The TP-C2 review ran on the frozen pair `71582c05..5fd1de93`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t6_r1` and `claude:ft290_t7_r1` repaired the four targets at `f4a5a9c3` and `21da7e2e`, and the chunk tip is now `21da7e2e`. The ticket 6 repair took one fence expansion to `cmd/bench/test_command.go`.
 
 The raw count is 5 findings, and the repair-target count is 4, because S1 and C1 name one fix. Ticket 6 owns S1, S2, and C1. Ticket 7 owns S3 and C2.
 
@@ -998,9 +998,9 @@ Count: 4. Worst issue: C1.
     {
       "id": "TP-C2",
       "base": "71582c05f4028c1ed6a643f9747895251aed31a3",
-      "tip": "5fd1de93ac74d8d76d3562590fdec6f1c5e87466",
-      "plan_digest": "sha256:ff60b6deddfa6e8eb884659bb0537e1ad180758e8bfb59dc2ad6e61907227d4c",
-      "source_digest": "0c638fcc90b2ee1f59c92e3d99a1a27ee44ad04f",
+      "tip": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+      "plan_digest": "sha256:90908c6e7bac9a90b47002f5c1f5c78d32305faf06f2717a13a33b682a7389cd",
+      "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
       "acceptance_rows": [
         "TP19",
         "TP20",
@@ -1156,6 +1156,154 @@ Count: 4. Worst issue: C1.
             "ref": "claude-agent:ft290_t7",
             "digest": "sha256:b744bdf9c9a15e5d2cfd73e0160097a00344d332e17abaa14bc64fb6a739c2e3",
             "excerpt": "HEAD 5fd1de93ac74d8d76d3562590fdec6f1c5e87466 (only reviews/ft290-test-projection.md modified)\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/probe\nexit 0\n  github.com/gibbonmi/bench/internal/probe,pass,20300,100\nfailures[0] skips[0]\n"
+          },
+          "requirement": "t7-probe",
+          "command": "bench test --package ./internal/probe",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-testreport-r1",
+          "performer": "claude:ft290_t6_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t6_r1",
+            "digest": "sha256:38e8be03b39546028523ad02da6caf59361dc3029a55515793b9462140079d1b",
+            "excerpt": "HEAD 21da7e2e89fe107910def9543c3af0149fe9f2e0\nbench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,34030,169; failures[0]; exit 0\nbench probe internal/testreport/selection_facts.go --swap 'case r.focused.check == proseCheckName:' --with 'case r.focused.check == proseCheckName || r.focused.check == gate.SystemPhaseName:' --package ./internal/testreport --run '^TestSystemRequestRunFact$'\n  bit, failed_tests 1, restored yes; TestSystemRequestRunFact: Run() = \"all\", want \"^TestX$\"; mutated run exit 1\n"
+          },
+          "requirement": "t6-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at Request.Run(): return AllTests for the system request with a pattern, as the joined prose and system case did. TestSystemRequestRunFact must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t6_r1",
+              "digest": "sha256:38e8be03b39546028523ad02da6caf59361dc3029a55515793b9462140079d1b",
+              "excerpt": "HEAD 21da7e2e89fe107910def9543c3af0149fe9f2e0\nbench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,34030,169; failures[0]; exit 0\nbench probe internal/testreport/selection_facts.go --swap 'case r.focused.check == proseCheckName:' --with 'case r.focused.check == proseCheckName || r.focused.check == gate.SystemPhaseName:' --package ./internal/testreport --run '^TestSystemRequestRunFact$'\n  bit, failed_tests 1, restored yes; TestSystemRequestRunFact: Run() = \"all\", want \"^TestX$\"; mutated run exit 1\n"
+            }
+          }
+        },
+        {
+          "id": "t6-cmd-r1",
+          "performer": "claude:ft290_t6_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t6_r1",
+            "digest": "sha256:739660dced819d76d2238bd6996cfa09cdf7fea9f7f2efa02650118b1eb6dbd2",
+            "excerpt": "HEAD 21da7e2e89fe107910def9543c3af0149fe9f2e0\nbench test --package ./cmd/bench\n  github.com/gibbonmi/bench/cmd/bench,pass,16046,330; failures[0]; exit 0\n"
+          },
+          "requirement": "t6-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-axi-query-registry-r1",
+          "performer": "claude:ft290_t6_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t6_r1",
+            "digest": "sha256:ecd77a15b8222a5e7293bc75348c6e82733d6570c57671e806105b3575cbb3b6",
+            "excerpt": "HEAD 21da7e2e89fe107910def9543c3af0149fe9f2e0\n./dist/bench test --check axi-query-registry\n  check axi-query-registry,conformance,tests_run 1; conformance pass 6ms; failures[0]; exit 0\n"
+          },
+          "requirement": "t6-axi-query-registry",
+          "command": "bench test --check axi-query-registry",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-subcommand-routing-r1",
+          "performer": "claude:ft290_t6_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t6_r1",
+            "digest": "sha256:bc61cb8351a9ea392f751ba25f99c1c3c33bfa3b39da02ae70b9294d564897cb",
+            "excerpt": "HEAD 21da7e2e89fe107910def9543c3af0149fe9f2e0\n./dist/bench test --check subcommand-routing\n  check subcommand-routing,conformance,tests_run 1; conformance pass 24ms; failures[0]; exit 0\n"
+          },
+          "requirement": "t6-subcommand-routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-package-core-guard-r1",
+          "performer": "claude:ft290_t6_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t6_r1",
+            "digest": "sha256:5795a7a5eca4fb8db3fd4b70d54fc59ad8f47ed98b6c712527f58aceef0e71a8",
+            "excerpt": "HEAD 21da7e2e89fe107910def9543c3af0149fe9f2e0\n./dist/bench test --check package-core-guard\n  check package-core-guard,conformance,tests_run 1; conformance pass 2347ms; failures[0]; exit 0\n"
+          },
+          "requirement": "t6-package-core-guard",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0
+        },
+        {
+          "id": "t7-testreport-r1",
+          "performer": "claude:ft290_t7_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t7_r1",
+            "digest": "sha256:cb5e07bcf9e06128ec40e419d9383b7602c89de4a76593f884e1ca287c54d178",
+            "excerpt": "HEAD 21da7e2e89fe107910def9543c3af0149fe9f2e0 (only reviews/ft290-test-projection.md modified, other sessions)\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\ngithub.com/gibbonmi/bench/internal/testreport,pass,34234,169\nfailures[0] skips[0]\n\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/named_check.go --swap 'seal = sources' --with 'seal = \"unsealed\"; _ = sources' --package ./internal/testreport --run '^TestUnknownCheckNamesSealSources$'\nprobe: bit,internal/testreport/named_check.go,swap,failed,1,yes\npackage: internal/testreport,fail,168,1\nfailure: TestUnknownCheckNamesSealSources unknown_check_test.go:85 \"...\\nseal: unsealed\\n...\"\n"
+          },
+          "requirement": "t7-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the seal line of the unknown-check refusal: replace the source digest from freshness.SealDigests with the literal unsealed. TestUnknownCheckNamesSealSources must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t7_r1",
+              "digest": "sha256:cb5e07bcf9e06128ec40e419d9383b7602c89de4a76593f884e1ca287c54d178",
+              "excerpt": "HEAD 21da7e2e89fe107910def9543c3af0149fe9f2e0 (only reviews/ft290-test-projection.md modified, other sessions)\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\ngithub.com/gibbonmi/bench/internal/testreport,pass,34234,169\nfailures[0] skips[0]\n\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/named_check.go --swap 'seal = sources' --with 'seal = \"unsealed\"; _ = sources' --package ./internal/testreport --run '^TestUnknownCheckNamesSealSources$'\nprobe: bit,internal/testreport/named_check.go,swap,failed,1,yes\npackage: internal/testreport,fail,168,1\nfailure: TestUnknownCheckNamesSealSources unknown_check_test.go:85 \"...\\nseal: unsealed\\n...\"\n"
+            }
+          }
+        },
+        {
+          "id": "t7-probe-r1",
+          "performer": "claude:ft290_t7_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t7_r1",
+            "digest": "sha256:e4c50c15c914b7fa65ea5023c6a383f2fc252cadbbd88904bdd3b93dc2863350",
+            "excerpt": "HEAD 21da7e2e89fe107910def9543c3af0149fe9f2e0 (only reviews/ft290-test-projection.md modified, other sessions)\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/probe\ngithub.com/gibbonmi/bench/internal/probe,pass,17785,100\nfailures[0] skips[0]\n"
           },
           "requirement": "t7-probe",
           "command": "bench test --package ./internal/probe",
