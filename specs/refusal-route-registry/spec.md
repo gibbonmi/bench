@@ -201,6 +201,8 @@ These faces and routes are required.
 | land | `composition-conflict-pending` | reviewer | finish the merge in progress; then `/bench-review-implementation`; then the re-run |
 | land | `resume-destination-residue` | reviewer | commit or discard the destination's uncommitted work; then the resume |
 | land | `resume-marker` | agent | `bench gate --in primary`; then the resume |
+| land | `land-red` | agent | repair each failure that the gate reports in `<label>`; then `bench commit --in <label> -m <msg> -- <path>...`; then `/bench-review-implementation`; then the re-run |
+| land | `land-infrastructure` | agent | `bench doctor`; then the re-run |
 | merge | `merge-target-red` | agent | repair each failing check in `<label>`; then `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
 | merge | `merge-fold-red` | reviewer | the fold of `<from>` adds a red to `<label>`; decide who repairs a red that the fold of a moved `main` adds, the open FT342 question |
 | merge | `merge-target-not-clean` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
@@ -287,7 +289,14 @@ The reference guide already states that the reviewer does this merge with raw Gi
 
 Each cause in the pre-oracle funnel maps to its own face.
 The completion-evidence face keeps the route that `routedRefusal` prints today.
-The FT392 dirty-checkout refusal takes the `checkpoint-dirty-checkout` face.
+The complete checkpoint raises three refusals of its own in `executeCompleteCheckpoint`, through `operational`, outside the pre-oracle funnel:
+
+- the dirty-checkout refusal takes `checkpoint-dirty-checkout`
+- the `complete checkpoint source unavailable` refusals take `checkpoint-subject-unavailable`
+- the `complete checkpoint unavailable` refusal, the `published.Tree` compose error, takes `checkpoint-composition`
+
+The constant `cleanCheckoutRefusal` stays the one source of the dirty-checkout sentence.
+So the `checkpoint-dirty-checkout` face declares no sentence; it adds the route.
 A subject-capture fault that no other face claims takes `checkpoint-subject-unavailable`.
 The checkpoint no longer prints the fixed write-access help row.
 
@@ -296,17 +305,14 @@ The checkpoint no longer prints the fixed write-access help row.
 `landing.refusalMessage` keeps its prefix, its kind, and its explanation.
 It drops its inline action, because the face now carries the route.
 The merge's single infrastructure retry matches the typed kind, not the old sentence.
+The landing's own authorization red, raised in `LandReviewed`, takes `land-red` for a red kind and `land-infrastructure` for an infrastructure kind.
+So no landing red loses its route when the sentence drops its action.
 
 ### The FT392 dependency
 
-This spec depends on FT392 landing first.
-FT392 ticket 02 writes `internal/gate/gate.go`, `internal/gate/checkpoint.go`, `internal/gate/engine.go`, `internal/gate/complete_checkpoint.go`, and gate test files.
-It also writes `.bench/BENCH-reference.md`, `CHANGELOG.md`, and the anchor registry files.
-The gate chunk of this spec writes the same gate files, so the two fences overlap.
-The build starts only on a base that contains the FT392 landing.
-
-FT392 adds `internal/gate/complete_checkpoint.go` and `internal/gate/complete_checkpoint_test.go`, and the dirty-checkout refusal lives there.
-The fence names both paths, and the gate ticket marks them `(new)` until FT392 lands.
+This spec depends on the landed FT392 complete checkpoint.
+The spec's base, `120e2715`, contains that landing, and the gate faces route the refusals that FT392 added.
+The fence names `internal/gate/complete_checkpoint.go` and `internal/gate/complete_checkpoint_test.go`, because the dirty-checkout face changes them.
 
 ### The guard check
 
@@ -344,9 +350,9 @@ It reads only the compiled registry.
 | --- | --- | --- | --- | --- |
 | RR-C1a / 01-create-the-shared-refusal-route-registry.md | The shared registry seam: the face and step types, the renderer, and the one constructor | RR04-RR07, RR13 | `internal/refusalroute` | no |
 | RR-C1b / 02-move-the-landing-faces-into-the-shared-registry.md, 03-prove-each-agent-route-passes-the-wired-guards.md, 04-render-the-recovery-matrix-from-the-registry.md | The landing faces on the registry, the guard check, and `bench recovery` | RR01-RR03, RR08-RR12, RR14-RR20, RR51-RR54, RR58, RR60 | `internal/refusalroute`, `internal/conformance`, `internal/worktree` landing tests, `cmd/bench` | yes |
-| RR-C2 / 05-route-each-merge-refusal-through-the-registry.md, 06-give-the-red-source-fold-an-exit.md, 07-route-each-reset-refusal-through-the-registry.md | The merge and the reset print registry routes, and the red-source fold has an exit | RR21-RR31, RR55-RR57, RR59 | `internal/worktree` merge and reset tests, `internal/landing` | no |
+| RR-C2 / 05-route-each-merge-refusal-through-the-registry.md, 06-give-the-red-source-fold-an-exit.md, 07-route-each-reset-refusal-through-the-registry.md | The merge and the reset print registry routes, and the red-source fold has an exit | RR21-RR31, RR55-RR57, RR59, RR67 | `internal/worktree` merge and reset tests, `internal/landing` | no |
 | RR-C3 / 08-route-the-commit-exit-3-to-the-reset-plan.md, 09-route-each-commit-refusal-through-the-registry.md | The commit prints registry routes, and the exit 3 route is the reset plan | RR32-RR38 | `internal/commit`, `internal/worktree` | yes |
-| RR-C4 / 10-route-each-checkpoint-refusal-by-its-cause.md | The gate checkpoint prints the route of its cause | RR39-RR44 | `internal/gate` | no |
+| RR-C4 / 10-route-each-checkpoint-refusal-by-its-cause.md | The gate checkpoint prints the route of its cause | RR39-RR44, RR66, RR68 | `internal/gate` | no |
 | RR-C5 / 11-route-the-commitment-policy-refusals-through-faces.md, 12-print-the-commitment-verb-routes-from-the-registry.md | The commitment verb prints routes of the right authority | RR45-RR48, RR61-RR64 | `internal/commit`, `internal/commitment`, `internal/commitment/commitcmd`, `cmd/bench` | no |
 | RR-C6 / 13-refuse-a-route-literal-outside-the-registry.md | No write-verb source composes a route outside the registry | RR49-RR50, RR65 | `internal/conformance` | no |
 
@@ -359,7 +365,6 @@ RR-C1a comes first, because every later chunk raises its faces through the share
 Its chunk review closes before ticket 02 starts.
 RR-C2 changes the authorization sentence that RR-C3 also prints.
 
-RR-C4 starts only on a base that contains the FT392 landing.
 Ticket 11 in RR-C5 runs after RR-C3, because it adds its rows to the commit test file that ticket 08 creates.
 Each verb ticket adds its faces to the one registry file, so the tickets run in serial order.
 RR-C6 comes last, because it turns red on any route that an earlier chunk has not moved.
@@ -592,6 +597,7 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR28 | 25 | A fold with a dirty sibling prints a route that contains `bench commit --in ` and no `bench worktree exec` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | The current route prints the exec form that FT341 refuses |
 | RR29 | 13, 27 | Each merge face and each reset face has exactly one producing fixture that follows its route out of the face | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A merge or reset face with no fixture reaches an operator unproven |
 | RR30 | 26 | The `inherited` authorization refusal sentence equals `prospective authorization refused: inherited (the gate ran red on the composed tree and no green baseline attributes the red to this diff)` | `internal/landing/landing_reviewed_test.go` (`TestRefusalMessageNamesTheOperatorActionAndTheOpenReason`) | An inline action prints a second route beside the face's route |
+| RR67 | 26 | A landing whose composed tree grades red prints a `refused{` record whose `next=` contains `bench commit --in ` and ends with the caller's re-run | planned TestLandingRedRouteNamesTheRepair in internal/worktree/refusal_route_test.go | After the sentence drops its action, a landing red prints no route |
 | RR31 | 26 | The merge retries an empty-reason infrastructure refusal exactly once | `internal/worktree/merge_test.go` (`TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal`) | A retry that matches the old sentence never fires after the sentence changes |
 | RR32 | 28 | A commit exit 3 prints `next=` with the value `bench worktree reset --to <published-commit> <checkout>` for its published commit and its root | planned TestPublishedUnreconciledRouteIsTheResetPlan in internal/commit/refusal_route_test.go | This is the collision 8 restore repro: the current route is `git restore`, which the guard denies |
 | RR33 | 28 | A commit exit 3 `next=` value does not contain `git restore` | planned TestPublishedUnreconciledRouteIsTheResetPlan in internal/commit/refusal_route_test.go | A route that keeps the restore beside the reset still prints a denied step |
@@ -602,7 +608,9 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR38 | 30 | A commit in the primary checkout prints a `next=` route that contains `bench worktree create --request` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | A refusal that keeps its route only inside the sentence bypasses the registry |
 | RR39 | 31 | A checkpoint refusal for a missing completion record prints no `help[1]{cmd,why}` row | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | This is the FT330 defect: the fixed write-access row prints for every cause |
 | RR40 | 32 | A checkpoint refusal for a missing completion record prints `next=bench preflight review example` | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | The move to the registry drops the current evidence route |
-| RR41 | 33 | A complete checkpoint on a dirty assignment checkout prints a `next=` route that contains `bench commit --in ` and the assignment label | planned TestCheckpointFacesFollowTheirRoutes in internal/gate/refusal_route_test.go | The FT392 refusal names no typed route |
+| RR41 | 33 | A complete checkpoint with an uncommitted tracked edit prints `cleanCheckoutRefusal` and a `next=` route that contains `bench commit --in ` | `internal/gate/complete_checkpoint_test.go` (`TestCompleteCheckpointRefusesADirtyCheckout`) | The landed refusal names its recovery only in prose and prints no `next=` |
+| RR68 | 33 | A complete checkpoint on a dirty assignment checkout prints a `next=` route that contains the assignment label after `--in ` | planned TestCheckpointFacesFollowTheirRoutes in internal/gate/refusal_route_test.go | A route that keeps the `<label>` placeholder where an assignment owns the root makes the agent look up its own label |
+| RR66 | 31 | A complete checkpoint on a spec with no `Status: staged` line prints a `next=` value that starts with `reviewer: ` | `internal/gate/complete_checkpoint_test.go` (`TestCompleteCheckpointRefusesAnUntransformableSpec`) | The compose refusal prints through `operational` with no route today |
 | RR42 | 34 | A subject-capture fault prints `next=` with a route that contains `bench doctor` and `--fresh` | `internal/gate/run_outcomes_test.go` (`TestGateRunRetainsSubjectConstructionCause`) | The fallback keeps the write-access text for a fault that is not a write-access fault |
 | RR43 | 35 | A subject-capture fault prints no `help[1]{cmd,why}` row | `internal/gate/run_outcomes_test.go` (`TestGateRunRetainsSubjectConstructionCause`) | A route printed beside the old row gives two answers |
 | RR44 | 13, 14 | Each gate face has exactly one producing fixture that follows its route out of the face | planned TestCheckpointFacesFollowTheirRoutes in internal/gate/refusal_route_test.go | A gate face with no fixture reaches an operator unproven |
@@ -763,7 +771,7 @@ The prospective build owns these exact paths:
 This fence is the closure that the build preflight write proposal confirmed on the draft Writes line.
 It also holds two rendered-text readers that the reader sweep found.
 The two FT392 gate paths joined after the first proposal, and a second proposal at the folded tip listed no further path.
-The build entry reruns the proposal on the FT392 base.
+After the fold of `main` at `120e2715`, a third proposal listed no further path.
 The review pickup is `reviews/refusal-route-registry.md`.
 The planning author owns this spec folder during the spec phase.
 
@@ -813,11 +821,11 @@ Evidence status: source-backed proposal. No probe ran, and the phase commits no 
 | Every agent route passes the wired guards. | RR08-RR12, RR58, RR60 |
 | Each producing fixture follows its route out of the refused face. | RR15, RR24, RR29, RR35, RR36, RR44, RR48 |
 | The recovery matrix renders from the registry. | RR51-RR54 |
-| A checkpoint refusal names the recovery route of its cause (FT330). | RR39-RR43 |
+| A checkpoint refusal names the recovery route of its cause (FT330). | RR39-RR43, RR66, RR68 |
 
 ### Pre-review proof checklist
 
-- `Cited symbols`: `landingRefusalFaces`, `landingFaceRefusalOf`, `conflictRepairPrefix`, `conflictContinuePrefix`, `restoreNext`, `publicationRemainder`, `refusalMessage`, `refusalGuidance`, `routedRefusal`, `subjectUnavailableHelp`, `refusalNext`, `checkoutClean`, `mergeReconcileNext`, `retryEmptyReasonInfrastructureFold`, `gitguard.Classify`, `benchguard.Classify`, and `benchguard.PoolReference` resolve in the tree at a9506ce5.
+- `Cited symbols`: `landingRefusalFaces`, `landingFaceRefusalOf`, `conflictRepairPrefix`, `conflictContinuePrefix`, `restoreNext`, `publicationRemainder`, `refusalMessage`, `refusalGuidance`, `routedRefusal`, `subjectUnavailableHelp`, `refusalNext`, `checkoutClean`, `mergeReconcileNext`, `retryEmptyReasonInfrastructureFold`, `gitguard.Classify`, `benchguard.Classify`, and `benchguard.PoolReference` resolve in the tree at 120e2715.
 - `Import edges`: each write-verb package to `internal/refusalroute` is new, and `internal/refusalroute` imports none of them; `internal/conformance` to `internal/gitguard` is new, and both packages are leaves.
 - `Source-row clauses and occurrences`: two occurrences, the 2026-09-18 FT316 repro and the 2026-10-07 ft362 planning branch.
 - `Promised field labels`: `recovery[N]{verb,face,authority,route}`, `next=`, and `reviewer: `.
@@ -851,7 +859,9 @@ Evidence status: source-backed proposal. No probe ran, and the phase commits no 
 - `internal/worktree/merge.go:66-161`: the merge refusals and the conflict route.
 - `internal/commit/commit.go:196-238`: the exit 3 record and `restoreNext`.
 - `internal/landing/landing.go:283-315`: the authorization sentence and its inline action.
-- `internal/gate/run_transaction.go:43-58` and `internal/gate/gate.go:331-336`: the funnel and the fixed help row.
+- `internal/gate/run_transaction.go:42-58` and `internal/gate/gate.go:338-343`: the funnel and the fixed help row.
+- `internal/gate/complete_checkpoint.go:11-40`: `cleanCheckoutRefusal` and the three complete-checkpoint refusals.
+- `internal/landing/landing.go:251-252`: the landing's own authorization red.
 - `internal/gate/checkpoint.go:87-109`: the completion-evidence route.
 - `internal/commitment/commitcmd/command.go:336-344`: the commitment refusal table.
 - `internal/gitguard/gitguard.go:126-150` and `internal/benchguard/benchguard.go:101-120`, `internal/benchguard/pool.go:10-40`: the guard decisions.
