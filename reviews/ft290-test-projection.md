@@ -2,7 +2,7 @@
 
 ## TP-C4 review pickup
 
-The TP-C4 review ran on the frozen pair `6fdd27b3..77f521a9`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair session `claude:ft290_t10_r1` repaired the six targets at `6cba8898`, and the chunk tip is now `6cba8898`.
+The TP-C4 review ran on the frozen pair `6fdd27b3..77f521a9`. Each axis ran on sonnet at high effort. The chunk has used 2 of its 2 repair cycles; the second repaired C6 at `dc26a362`. The repair session `claude:ft290_t10_r1` repaired the six targets at `6cba8898`, and the chunk tip is now `6cba8898`.
 
 The confirming round of all three axes passed, and each earlier silent mutation now bites. The Coverage axis also reported C6, an inherited defect. A changed Go file in a sub-package that another package embeds selects only the embedding package. The chunk base holds the same branch, and the cause cell keeps the selected set unchanged by design. Under the fix-don't-park rule, the orchestrator routed C6 to `bench learning` and gave it no repair target in FT290.
 
@@ -2783,9 +2783,9 @@ Count: 4. Worst issue: C1.
     {
       "id": "TP-C4",
       "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
-      "tip": "899a012f8ec6e133247040bc701ea159681744e4",
-      "plan_digest": "sha256:7a4a089344744ae12b085fba8532ca6bd44d5a3810f5c8c386fec355947a3718",
-      "source_digest": "bc92c39c997f77d015a0df0327a045ed6a370d15",
+      "tip": "dc26a3623e7f23897be5bc2b85fb190da34a276f",
+      "plan_digest": "sha256:1c5894ac82bfcb966fd21e87d2edfd4c5b35b92acb2308e4c7c42ae2ed3b7ff7",
+      "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
       "acceptance_rows": [
         "TP41",
         "TP42",
@@ -2932,6 +2932,53 @@ Count: 4. Worst issue: C1.
             "ref": "claude-agent:ft290_t10_r1",
             "digest": "sha256:f4ee7db271c3cf7b9fe6de47ee6d4257d6918705047f15fd7c0ee51f36bad6cf",
             "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/worktree\nexit 0, wall 77.6s: github.com/gibbonmi/bench/internal/worktree,pass,75912,1305; failures[0]; skips[2] (socket subtests: unix sockets unavailable on this host)\n"
+          },
+          "requirement": "t10-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-testreport-r3",
+          "performer": "claude:ft290_t10_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t10_r2",
+            "digest": "sha256:01518b6339d130d7c9916bec414374700922d2425854fbb7a371f7b717286501",
+            "excerpt": "HEAD dc26a3623e7f23897be5bc2b85fb190da34a276f\nbench test --package ./internal/testreport\ngithub.com/gibbonmi/bench/internal/testreport,pass,36740,200 (failures 0, skips 0)\nprobe: causePrecedence -> {causeChanged, causeGoMetadata, causeEmbed} --run '^TestCauseGoMetadataWins$'\nverdict bit, failed_tests 1, restored yes\n"
+          },
+          "requirement": "t10-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the cause precedence: test the changed cause before the go-metadata cause. TestCauseGoMetadataWins must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t10_r2",
+              "digest": "sha256:01518b6339d130d7c9916bec414374700922d2425854fbb7a371f7b717286501",
+              "excerpt": "HEAD dc26a3623e7f23897be5bc2b85fb190da34a276f\nbench test --package ./internal/testreport\ngithub.com/gibbonmi/bench/internal/testreport,pass,36740,200 (failures 0, skips 0)\nprobe: causePrecedence -> {causeChanged, causeGoMetadata, causeEmbed} --run '^TestCauseGoMetadataWins$'\nverdict bit, failed_tests 1, restored yes\n"
+            }
+          }
+        },
+        {
+          "id": "t10-worktree-r3",
+          "performer": "claude:ft290_t10_r2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t10_r2",
+            "digest": "sha256:0da2b81eef9e05bee4b91296502322c425ed5e48ba20464916f07f30ffaed56a",
+            "excerpt": "HEAD dc26a3623e7f23897be5bc2b85fb190da34a276f\nbench test --package ./internal/worktree\ngithub.com/gibbonmi/bench/internal/worktree,pass,74979,1305 (failures 0; 2 environment socket skips)\n"
           },
           "requirement": "t10-worktree",
           "command": "bench test --package ./internal/worktree",
