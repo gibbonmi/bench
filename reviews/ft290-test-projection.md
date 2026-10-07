@@ -1,5 +1,34 @@
 # Review outcomes
 
+## TP-C3 review pickup
+
+The TP-C3 review ran on the frozen pair `21da7e2e..23c328db`. Each axis ran on sonnet at high effort. The chunk has used 0 of its 2 repair cycles.
+
+The raw count is 6 findings, and the repair-target count is 6. Ticket 8 owns S1, C1, and the `fixtures_face_test.go` half of S2. Ticket 9 owns P1, C2, C3, and the `checks_face_test.go` half of S2. P1 and C2 name one fix.
+
+The orchestrator decided the three `ask-user` findings under the reviewer's auto-approval for spec, ticket, and repair expansions. Each decision stays open to reviewer veto.
+
+### Standards
+
+Count: 2. Worst issue: S1.
+
+- S1, ask-user, accepted, confidence 5. The face adds a fifth join of the `tests/canary` root and a second rule that maps the no-fixtures error to an empty answer. Put one accessor in a new `internal/canary/root.go`, and let every caller use it. The ticket 8 fence grows by that file.
+- S2, auto-fix, confidence 4. The face test comments name omissions whose reds the record does not hold. Record a probe red for each named omission, or narrow each comment to the recorded reds.
+
+### Spec
+
+Count: 1. Worst issue: P1.
+
+- P1, ask-user, accepted, confidence 4. `--checks` exits 1 on an invalid canary inventory, and no row grades it. Keep the exit 1, because story 24 says a wrong inventory never reads as empty. The new row TP56 grades it.
+
+### Coverage
+
+Count: 3. Worst issue: C1.
+
+- C1, auto-fix, confidence 8. The sort test plants two fixtures of one family, so a missing sort or a sort by name can stay green. Plant enough fixtures across two families that name order and path order differ.
+- C2, auto-fix, confidence 7. No test runs `--checks` over an invalid inventory. Add the TP56 test.
+- C3, ask-user, accepted, confidence 4. No test refuses `--checks` with `--changed`, `--package`, `--base`, or `--run`. Add those refusals to the grammar refusal test.
+
 ## TP-C2 review pickup
 
 The TP-C2 review ran on the frozen pair `71582c05..5fd1de93`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t6_r1` and `claude:ft290_t7_r1` repaired the four targets at `f4a5a9c3` and `21da7e2e`, and the chunk tip is now `21da7e2e`. The ticket 6 repair took one fence expansion to `cmd/bench/test_command.go`. The confirming round of all three axes passed with zero findings, and each earlier silent mutation now bites.
@@ -1713,7 +1742,77 @@ Count: 4. Worst issue: C1.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3-standards-r1",
+          "performer": "claude:ft290_c3_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_standards",
+            "digest": "sha256:b92ed1f766af96ac16ebe3d7e5979012c22e0e51aea38a63c1944ae5cfc14f6a",
+            "excerpt": "axis=Standards findings=2 worst=S1 (TP-C3, 21da7e2e..23c328db)\nS1 | ask-user | conf 5 | internal/testreport/fixtures.go:19-20 vs internal/canary/inventory.go:46,56,135,160-161 | checkFixtures adds a fifth production join of root/tests/canary, the first outside internal/canary, and canaryInventory re-derives FixturePins' ErrNoFixtures-means-empty rule. AGENTS.md one source per fact. An accessor in a new internal/canary file fits without growing inventory.go. | Repair ticket 8 after a plan commit that adds the new canary file to its Writes, or the reviewer accepts the duplicate.\nS2 | auto-fix | conf 4 | fixtures_face_test.go:5-6; checks_face_test.go:8-10,123 | Header comments name omissions (absolute path, lost row, lost check, fixed kind, Usage edit) whose reds are not recorded; only the owner-filter and families-count probes are. | Record one probe red per named omission, or narrow the comments to the demonstrated reds.\nClean: one ownedFixtures filter; --checks reads namedChecks(); kind from namedCheckKind; exclusivity in parseFocusedRequest; TP34 parses --help, not the producer; no new dependency; no comment provenance.\nAdvice: decision.go:44 repeats the ErrNoFixtures text (outside the fence); TestInventoryFacesStartNoChild is near redundant; writeProseCheckFile name misleads.\nExamined: --check-current at ada702e2, the chunk diff, inventory.go, decision.go, named_check.go, command.go, spec 100-262 and 584-618, tickets 8-9, review record rows. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "23c328db1eec38cc3031c0b9dd7a4157d547c74f",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-spec-r1",
+          "performer": "claude:ft290_c3_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_spec",
+            "digest": "sha256:ef4cb3bb92a6cb22f7b027472ea05c8034539528ef550eed0673a6793956f289",
+            "excerpt": "axis=Spec findings=1 worst=P1 (TP-C3, 21da7e2e..23c328db)\nP1 | ask-user | conf 4 | internal/testreport/fixtures.go:345-347; spec \"The inventory faces\" 188-214, TP33, story 25 | --checks exits 1 with \"canary inventory invalid\" on a bad CHECK marker; no row grades it and story 25 says --checks runs at exit 0, so the spec reads two ways. | Reviewer decides: record exit 1 as intended with a test through ticket 9, or make --checks tolerate the error.\nAll 17 rows closed: TP27-TP30, TP33, TP52, TP53, TP40 in fixtures_face_test.go; TP31 via inventoryFace and TestInventoryFacesStartNoChild; TP32, TP34-TP38 in checks_face_test.go; TP39 TestInventoryGrammarRefusals; TP50 via the cmd/bench pins.\nUsage equals spec line 251; bench help renders it with --in after the first bench test only. ownedFixtures is the one owner; checksInventory reads namedChecks() and namedCheckKind. The sentinel, FixturePins errors.Is, the untouched Select literal, and the unchanged inventory.go line count match \"Fence disposition\".\nNotes: OutcomeNoTestRun on a listing contradicts no spec line, and no probe path reaches a face. Ticket 9's refactor of ticket 8 helpers is clean.\nAdvice: discoverFixtures maps any ReadDir failure to ErrNoFixtures (pre-existing); the inventory diagnostic prints raw paths; the two-row sort test catches a missing sort only half the time.\nExamined: the chunk diff, spec, tickets 8-9, command.go, named_check.go, outcome.go, fixtures.go, inventory.go, toon.go, probe consumers; ran ./dist/bench help, test --help, one --fixtures listing.\n"
+          },
+          "axis": "Spec",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "23c328db1eec38cc3031c0b9dd7a4157d547c74f",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-coverage-r1",
+          "performer": "claude:ft290_c3_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7ba315fbd51fb0e5d41094f4e0546f51d9aee1d7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_coverage",
+            "digest": "sha256:6bf8916b589f26a9a4b4b76c74d07b34e1469aca8179bece9ccd93b95fc65961",
+            "excerpt": "axis=Coverage findings=3 worst=C1 (TP-C3, 21da7e2e..23c328db)\nC1 | auto-fix | conf 8 | fixtures_face_test.go:41-52; spec TP27 \"sorted by path\" | Two same-family fixtures over a map: dropping the sort bit once and was silent once; swapping the sort key from path to name was silent. | Plant six or more fixtures across two families with one CHECK owner where name and path order differ.\nC2 | auto-fix | conf 7 | fixtures.go:343-347; spec 201-202, story 24 | No test runs --checks over an invalid inventory; swapping the refusal for found = nil was silent. | Add a --checks row over an unknown-CHECK fixture expecting exit 1 and \"names unknown check\".\nC3 | ask-user | conf 4 | command.go:72,75; TP39 | An allowlist bypass that lets --checks take --changed, --package, --base, or --run was silent. | Add those --checks refusals to TestInventoryGrammarRefusals.\nLive and correct: CHECK whitespace trimmed; empty CHECK exits 1; duplicate names exit 1; symlinks skipped; tab and newline escaped; U+007F raw; families counts.\nOpen (pre-existing): any ReadDir error maps to ErrNoFixtures, so a file or unreadable tests/canary reads as empty.\nExamined: --check-current at ada702e2, the chunk diff, spec, inventory.go, command.go, fixtures.go, named_check.go; bench test ./internal/canary passed; live --checks (45 rows) and --fixtures (27 rows); every probe restored; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "23c328db1eec38cc3031c0b9dd7a4157d547c74f",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
