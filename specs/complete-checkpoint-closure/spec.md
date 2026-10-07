@@ -108,11 +108,75 @@ So any landing that the gate accepts publishes exactly the tree that the checkpo
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| CC1 / tickets pending the delegated slice | The complete checkpoint grades the published tree of the committed source, and the reference guide states it | CC01-CC32 | `internal/gate` package tests, the `cmd/bench` gate route test, and the `internal/worktree` landing journey | yes |
+| CC1 / 01-move-fixture-witnesses-to-the-common-directory.md, 02-grade-the-published-tree-at-the-complete-checkpoint.md | The complete checkpoint grades the published tree of the committed source, and the reference guide states it | CC01-CC32 | `internal/gate` package tests, the `cmd/bench` gate route test, and the `internal/worktree` landing journey | yes |
 
 This is one behavior outcome with one review checkpoint.
-The reviewer directed that fresh delegates slice the tickets after the spec review.
-A natural first ticket moves the fixture witnesses to the Git common directory. CC25 and CC32 then keep the refusal assertions honest before the route changes.
+Ticket 1 moves the fixture witnesses to the Git common directory.
+CC25 and CC32 then keep the refusal assertions honest when ticket 2 changes the route.
+
+### Completion plan
+
+The version 1 plan records future implementation evidence.
+It claims no current implementation pass, red, or probe result.
+The orchestrator adds the required version 2 author sessions before dispatch.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "CC1",
+      "tickets": [
+        "01-move-fixture-witnesses-to-the-common-directory.md",
+        "02-grade-the-published-tree-at-the-complete-checkpoint.md"
+      ],
+      "verification": [
+        {
+          "id": "gate-package",
+          "command": "bench test --package ./internal/gate"
+        },
+        {
+          "id": "complete-checkpoint",
+          "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpoint|TestChunkCheckpointGradesTheCheckoutTree|TestReviewCheckpoint|TestCommitmentExactTransform'"
+        },
+        {
+          "id": "public-route",
+          "command": "bench test --package ./cmd/bench --run 'TestGateCheckpointRoute'"
+        },
+        {
+          "id": "landing-journey",
+          "command": "bench test --package ./internal/worktree --run 'TestLandCommandPublicRealGitJourney'"
+        },
+        {
+          "id": "route-omission-proof",
+          "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpoint'",
+          "probe": "Route --complete through the ordinary checkout evaluation. TestCompleteCheckpointGradesTheClosedTree must fail, then pass after source restoration."
+        },
+        {
+          "id": "clean-checkout-proof",
+          "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpointRefusesADirtyCheckout'",
+          "probe": "Remove the clean-checkout refusal, or exempt the review record from it. Each named refusal assertion must fail, then pass after source restoration."
+        },
+        {
+          "id": "witness-proof",
+          "command": "bench test --package ./internal/gate --run 'TestReviewCheckpointReuse|TestCompleteCheckpointEvidenceNamesThePublishedTree'",
+          "probe": "Point the witness helper and the fixture witnesses at the checkout. The CC25 and CC32 assertions must fail, then pass after source restoration."
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "ordinary-integration",
+      "command": "bench test --package ./..."
+    },
+    {
+      "id": "coverage",
+      "command": "bench coverage --check complete-checkpoint-closure"
+    }
+  ]
+}
+```
 
 ## Testing decisions
 
@@ -248,10 +312,40 @@ The prospective build owns these exact paths:
 - `internal/gate/run_failure_outcomes_test.go`
 - `.bench/BENCH-reference.md`
 - `CHANGELOG.md`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `tests/canary/docs-currency-token-diet/benchref-imported`
+- `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
+- `tests/canary/docs-currency-token-diet/benchref-section-duplicated`
+- `tests/canary/skills-index-command-adapters/adapter-inert-invocation-key`
+- `tests/canary/skills-index-command-adapters/command-invocation-disabled-against-policy`
+- `tests/canary/skills-index-command-adapters/dangling-index`
+- `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
+- `tests/canary/skills-index-command-adapters/missing-index-field`
+- `tests/canary/skills-index-command-adapters/stale-index-wording`
+- `tests/canary/skills-index-command-adapters/unindexed-skill`
+- `tests/canary/workflow-guidance-anchors/agents-handoff-section-rule`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
+- `tests/canary/workflow-guidance-anchors/reference-agent-push-rule`
+- `tests/canary/workflow-guidance-anchors/reference-bench-operational-layer`
+- `tests/canary/workflow-guidance-anchors/reference-category-context`
+- `tests/canary/workflow-guidance-anchors/reference-category-oracle`
+- `tests/canary/workflow-guidance-anchors/reference-category-setup`
+- `tests/canary/workflow-guidance-anchors/reference-category-work`
+- `tests/canary/workflow-guidance-anchors/reference-gate-authority`
+- `tests/canary/workflow-guidance-anchors/reference-kit-only-ship`
+- `tests/canary/workflow-guidance-anchors/reference-no-path-fallback`
+- `tests/canary/workflow-guidance-anchors/reference-progressive-loading-term`
+- `tests/canary/workflow-guidance-anchors/reference-refusal-route-shape`
+- `tests/canary/workflow-guidance-anchors/reference-retro-capture-owner`
+- `tests/canary/workflow-guidance-anchors/reference-retro-drain-owner`
+- `tests/canary/workflow-guidance-anchors/reference-skills-guidance`
+- `tests/canary/workflow-guidance-anchors/reference-upgrade-route`
 - `reviews/complete-checkpoint-closure.md`
 
-The fence is provisional until the delegated ticket slice.
-The slice sets each ticket's `Writes:` line and closes this list against it.
+The ticket slice closed this list: it equals the union of the ticket write lines and the review pickup.
 The coordinator owns the review pickup.
 The planning author owns this spec folder during the spec phase.
 
