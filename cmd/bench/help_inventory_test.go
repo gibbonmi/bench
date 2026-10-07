@@ -113,7 +113,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench preflight [--in <label|primary>] evidence-clean [--cursor <cursor>]  print one bounded page of the exact evidence deletion targets and its fingerprint
   bench preflight [--in <label|primary>] evidence-clean --apply <fingerprint>  delete exactly the targets one fingerprinted cleanup plan named
   bench repair-pilot activate | report [--full]  collect and report attributed repair evidence for an explicit local pilot
-  bench test [--in <label|primary>] [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>  run focused Go-test or named-check evidence as TOON; no gate verdict
+  bench test [--in <label|primary>] [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex>  run focused Go-test or named-check evidence as TOON; no gate verdict
   bench probe [--in <label|primary>] <file> (--swap <old> --with <new> | --omit <old>) (--package <expr> [--run <go-regex>] | --check <name>) [--full]  mutate one file once, run one focused test or check, restore the file, and report bit, silent, invalid, or restore-failed
   bench outline [--in <label|primary>] [path] [--full] [--production|--test]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
   bench consumers [--in <label|primary>] <qualified-symbol>... [--production|--test] [--full]  every resolved Go reference edge as TOON (symbol when several, file:line, via, enclosing); identifies edges, never blessed seams

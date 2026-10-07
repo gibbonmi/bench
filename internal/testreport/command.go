@@ -21,8 +21,8 @@ import (
 )
 
 var grammar = usage.Grammar{
-	Cmd:  "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>",
-	Help: "usage: bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>",
+	Cmd:  "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex>",
+	Help: "usage: bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex>",
 	Flags: []usage.Flag{
 		{Name: "--full"},
 		{Name: "--package", HasValue: true, NoEmptyValue: true},
@@ -68,7 +68,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if changed && explicit {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--changed"), 2
 	}
-	if hasCheck && (explicit || changed || parsed.Flags["--run"] != "") {
+	if hasCheck && (explicit || changed || parsed.Flags["--run"] != "" && check != gate.SystemPhaseName) {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--check"), 2
 	}
 	if (hasBase || hasSourceTip) && !changed {

@@ -122,6 +122,9 @@ func runProseCheck(root string, full bool) (Outcome, string, int) {
 // conformance scope.
 func runSystemCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
 	operands, suiteEnv := gate.SystemSuite(root)
+	if request.run != "" {
+		operands = append(operands, "-run", request.run)
+	}
 	env, err := selectedRunEnvironment(os.Environ(), selection)
 	if err != nil {
 		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
