@@ -2,7 +2,9 @@
 
 ## TP-C2 review pickup
 
-The TP-C2 review ran on the frozen pair `71582c05..5fd1de93`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t6_r1` and `claude:ft290_t7_r1` repaired the four targets at `f4a5a9c3` and `21da7e2e`, and the chunk tip is now `21da7e2e`. The ticket 6 repair took one fence expansion to `cmd/bench/test_command.go`.
+The TP-C2 review ran on the frozen pair `71582c05..5fd1de93`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t6_r1` and `claude:ft290_t7_r1` repaired the four targets at `f4a5a9c3` and `21da7e2e`, and the chunk tip is now `21da7e2e`. The ticket 6 repair took one fence expansion to `cmd/bench/test_command.go`. The confirming round of all three axes passed with zero findings, and each earlier silent mutation now bites.
+
+The confirming axes gave advice with no finding ID. `testHelpSuffix` has no comment on its trimmed prefix. No test pins the `usage: ` prefix of the help text. The repair author's excerpt holds the post-repair red of the usage literal.
 
 The raw count is 5 findings, and the repair-target count is 4, because S1 and C1 name one fix. Ticket 6 owns S1, S2, and C1. Ticket 7 owns S3 and C2.
 
@@ -1377,6 +1379,72 @@ Count: 4. Worst issue: C1.
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2-standards-c1",
+          "performer": "claude:ft290_c2_standards_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c2_standards_c1",
+            "digest": "sha256:d5c3bfc7e197b9c90d114cd763d6f5ff77f523530e4de720a077341c24785a44",
+            "excerpt": "axis=Standards findings=0 worst=none (confirming round, repair delta 5fd1de93..21da7e2e)\nS1 confirmed: command.go:23 holds one exported Usage; Cmd and Help derive from it.\nS2 confirmed: the test help row reads testHelpSuffix = strings.TrimPrefix(testreport.Usage, \"bench test\"); the removed literal matches, so rendered bytes are unchanged.\nS3 confirmed: the unknown_check_test.go header states what the rows grade, with no spec provenance.\nDuplication: the usage_text_test.go literal is an independent expectation under the AGENTS.md exception; its post-repair red is in the repair author's excerpt, which this axis did not read (conf 3, below the bar). checkInventory reads production namedChecks; answerRunningExecutable is the one swap owner.\nAdvice: testHelpSuffix has no comment explaining the trimmed prefix.\nExamined: repair delta via worktree exec, --check-current, named_check.go, rg sweeps, the review record, spec flagged additions. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "71582c05f4028c1ed6a643f9747895251aed31a3",
+          "tip": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r1"
+          ]
+        },
+        {
+          "id": "c2-spec-c1",
+          "performer": "claude:ft290_c2_spec_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c2_spec_c1",
+            "digest": "sha256:fa8f09bcf12840725351973b1bbe8613e4cafc63501fabf07636d54d2098f189",
+            "excerpt": "axis=Spec findings=0 worst=none (confirming round, repair delta 5fd1de93..21da7e2e)\nRendered bytes unchanged: Usage holds the old string; testHelpSuffix equals the old Suffix; Help equals the old Help; unknownCheck is outside the delta.\nAll nine TP-C2 rows keep their named tests; the unknown_check_test.go change is a helper extraction with no weaker assertion.\nUsage equals spec.md:251 minus the ticket 8 and 9 forms; --in appears only in the rendered pin.\nTestUnknownCheckNamesUnknownExecutable matches the Flagged additions line and \"The refusal identity\".\nThe fence expansion appears in ticket 6 Writes and the spec fence list; the usage constant is a flagged addition.\nAdvice: tickets 8 and 9 still say add the form to the grammar and the help row; one Usage edit now feeds both.\nExamined: --check-current at f3783290, repair delta, spec sections, tickets 6-9, named_check.go, command_registry_test.go:715-720. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "71582c05f4028c1ed6a643f9747895251aed31a3",
+          "tip": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r1"
+          ]
+        },
+        {
+          "id": "c2-coverage-c1",
+          "performer": "claude:ft290_c2_coverage_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "31efa65fe4d819a5f626b2f25f6fbad216d83e3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c2_coverage_c1",
+            "digest": "sha256:b55eb07249374b30ebb7a43ade1551f718324f28f9ca48da4f4d4e38ffb88c69",
+            "excerpt": "axis=Coverage findings=0 worst=none (confirming round, repair delta 5fd1de93..21da7e2e)\nReplays, no --run, all restored=yes:\nC1 drop the system form from Usage: bit in ./internal/testreport (TestUsageTextNamesSystemRunForm) and in ./cmd/bench (TestHelpInventoryIsComplete, TestTestHelpNamesOnlyRunnableFocusedForms).\nC1b Help-only drop: bit (TestUsageTextNamesSystemRunForm, --help case).\nC2 \"unknown\" swapped for \"\": bit (TestUnknownCheckNamesUnknownExecutable).\nNew bypass: a testHelpSuffix prefix mismatch bit both cmd/bench pins. A double space after \"usage:\" in Help was silent; cosmetic, no row binds it.\nExamined: --check-current at f3783290, repair delta, command.go, named_check.go, the cmd/bench pins; git status clean after every probe.\n"
+          },
+          "axis": "Coverage",
+          "base": "71582c05f4028c1ed6a643f9747895251aed31a3",
+          "tip": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-r1"
+          ]
         }
       ]
     }
