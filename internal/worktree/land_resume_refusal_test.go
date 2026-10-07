@@ -121,9 +121,7 @@ func TestResumeLandCommandSourceRefusalNamesTheCallersResume(t *testing.T) {
 	landingFixtureFor(t, faceSourceNotClean).mutate(t, f.root, f.creation)
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 	r := runVerb(t, verbLand, f.callWith(defaultJoins(), args...))
-	resume := "bench worktree land --resume '" + published + "' --request <request> --base '" + f.base +
-		"' --source-tip '" + f.tip + "' --spec 'x' '" + f.creation.Path + "'"
-	want := landingRoute(faceLandHandback, resume, nil)
+	want := landingRoute(faceLandHandback, resumeRerunOf(published, f.base, f.tip, f.creation.Path), nil)
 	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotClean))
 	if r.exit != 1 || !printed || next != want {
 		t.Fatalf("resume source refusal = (%d, %q, %q), want next %q", r.exit, r.stdout, r.stderr, want)
