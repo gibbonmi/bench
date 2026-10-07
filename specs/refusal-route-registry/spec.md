@@ -733,7 +733,16 @@ The orchestrator records each author session before that author's dispatch.
           "preserved": "e66a113731b4f70de8e262972d5c04a9297a06c8"
         }
       ],
-      "02-move-the-landing-faces-into-the-shared-registry.md": [],
+      "02-move-the-landing-faces-into-the-shared-registry.md": [
+        {
+          "session": "claude:ft393_t2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "90fa563633fcf6114ed714dfa480777cd36a176d",
+          "native_ref": "claude-agent:ft393_t2"
+        }
+      ],
       "03-prove-each-agent-route-passes-the-wired-guards.md": [],
       "04-render-the-recovery-matrix-from-the-registry.md": [],
       "05-route-each-merge-refusal-through-the-registry.md": [],
