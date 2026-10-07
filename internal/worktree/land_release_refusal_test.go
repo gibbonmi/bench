@@ -1,4 +1,6 @@
-// Release refusal tests for the landing command: destination and collision path tables in the refusal output.
+// Release refusal tests for the landing command: destination and collision path tables in
+// the refusal output, and the checkout lookup a route takes for a path that is not
+// line-safe.
 package worktree
 
 import (
@@ -165,4 +167,42 @@ func TestLandingDestinationAllowsUntrackedAndIgnoredFiles(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestUnsafePathRouteUsesThePlaceholder is RR58 and RR60. A source path that is not
+// line-safe cannot be pasted, and `bench worktree exec` refuses a Bench child, so the
+// preflight re-run and the incomplete landing's resume both look the path up by the
+// assignment id and print the checkout placeholder.
+func TestUnsafePathRouteUsesThePlaceholder(t *testing.T) {
+	t.Parallel()
+	unsafeFixture := func(t *testing.T, request string) landingFixture {
+		return publicLandingFixtureAtHome(t, request, "", "", filepath.Join(t.TempDir(), "bench\n\x1bhome"))
+	}
+	// requireCheckoutLookup fails t unless next looks the checkout up by the assignment
+	// id and names the checkout placeholder, with no exec wrapper around a Bench child.
+	requireCheckoutLookup := func(t *testing.T, kind, next string, printed bool, f landingFixture, stdout string) {
+		t.Helper()
+		lookup := "bench worktree path '" + f.creation.Assignment.ID + "'"
+		if !printed || !strings.Contains(next, "<checkout>") || !strings.Contains(next, lookup) || strings.Contains(next, "bench worktree exec") {
+			t.Fatalf("unsafe-path %s next = %q (printed=%t) in %q, want %q, <checkout>, and no bench worktree exec",
+				kind, next, printed, stdout, lookup)
+		}
+	}
+	t.Run("preflight re-run", func(t *testing.T) {
+		t.Parallel()
+		request := "unsafe-path-preflight"
+		f := unsafeFixture(t, request)
+		landingFixtureFor(t, faceSourceNotClean).mutate(t, f.root, f.creation)
+		r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+		next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotClean))
+		requireCheckoutLookup(t, "preflight", next, printed && r.exit == 1, f, r.stdout)
+	})
+	t.Run("incomplete resume", func(t *testing.T) {
+		t.Parallel()
+		request := "unsafe-path-incomplete"
+		f := unsafeFixture(t, request)
+		r := interruptedLanding(t, f, request, f.tip)
+		next, printed := landedNext(r.stdout)
+		requireCheckoutLookup(t, "resume", next, printed, f, r.stdout)
+	})
 }

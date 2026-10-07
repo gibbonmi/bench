@@ -3,7 +3,6 @@
 package worktree
 
 import (
-	"io"
 	"maps"
 	"path/filepath"
 	"strings"
@@ -19,9 +18,22 @@ const reviewerRoute = "reviewer: "
 // landingRoute renders a land face's route over the caller's re-run and the facts a
 // fixture observed, so a proof that pins a whole route reads the shared registry.
 func landingRoute(face, rerun string, values map[string]string) string {
+	return landingRouteAfter(face, "", rerun, values)
+}
+
+// landingRouteAfter is landingRoute with the preface the landing states ahead of the
+// route's first step, such as the skipped-proof sentence.
+func landingRouteAfter(face, preface, rerun string, values map[string]string) string {
 	facts := map[string]string{refusalroute.FactRerun: rerun}
 	maps.Copy(facts, values)
-	return refusalroute.New(face, refusalroute.Facts{Values: facts}).Route
+	return refusalroute.New(face, refusalroute.Facts{Preface: preface, Values: facts}).Route
+}
+
+// landArgsRerun is the caller's own re-run of a landing that ran with landArgs, spelled
+// from the same inputs.
+func landArgsRerun(request, base, tip, path string) string {
+	return "bench worktree land --request '" + request + "' --base '" + base + "' --source-tip '" + tip +
+		"' --spec 'x' -m <message> '" + path + "'"
 }
 
 // rerunMark stands in for the re-run where a proof reads only the repair ahead of it.
@@ -103,39 +115,29 @@ func TestConflictRepairIsAReviewerRoute(t *testing.T) {
 	}
 }
 
-// TestUnsafePathRouteUsesThePlaceholder is RR58 and RR60. A source path that is not
-// line-safe cannot be pasted, and FT341 refuses a Bench child under `bench worktree exec`,
-// so the preflight re-run and the incomplete landing's resume both look the path up by the
-// assignment id and print the checkout placeholder.
-func TestUnsafePathRouteUsesThePlaceholder(t *testing.T) {
+// TestReviewerLandFacesOpenWithTheMarker is RR18. The spec's face inventory gives each of
+// these land faces to the reviewer, so the route each producing fixture prints must open
+// with the reviewer marker. The list is the spec's, not the registry's, so a face the
+// registry hands to the agent turns this test red.
+func TestReviewerLandFacesOpenWithTheMarker(t *testing.T) {
 	t.Parallel()
-	unsafeFixture := func(t *testing.T, request string) landingFixture {
-		return publicLandingFixtureAtHome(t, request, "", "", filepath.Join(t.TempDir(), "bench\n\x1bhome"))
+	for _, face := range []string{
+		faceDestinationNotClean,
+		faceDestinationCollision,
+		faceCompositionConflict,
+		faceCompositionConflictPending,
+		faceResumeDestinationResidue,
+		faceResumeMarker,
+		faceLandHandback,
+	} {
+		t.Run(face, func(t *testing.T) {
+			t.Parallel()
+			produced := produceLandingFace(t, landingFixtureFor(t, face))
+			if !strings.HasPrefix(produced.next, reviewerRoute) {
+				t.Fatalf("%s next = %q in %q, want a value that opens with %q", face, produced.next, produced.r.stdout, reviewerRoute)
+			}
+		})
 	}
-	placeholds := func(t *testing.T, kind, next string, printed bool, f landingFixture, stdout string) {
-		t.Helper()
-		lookup := "bench worktree path '" + f.creation.Assignment.ID + "'"
-		if !printed || !strings.Contains(next, "<checkout>") || !strings.Contains(next, lookup) || strings.Contains(next, "bench worktree exec") {
-			t.Fatalf("unsafe-path %s next = %q (printed=%t) in %q, want %q and <checkout> and no bench worktree exec", kind, next, printed, stdout, lookup)
-		}
-	}
-	t.Run("preflight re-run", func(t *testing.T) {
-		t.Parallel()
-		request := "unsafe-path-preflight"
-		f := unsafeFixture(t, request)
-		landingFixtureFor(t, faceSourceNotClean).mutate(t, f.root, f.creation)
-		r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-		next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotClean))
-		placeholds(t, "preflight", next, printed && r.exit == 1, f, r.stdout)
-	})
-	t.Run("incomplete resume", func(t *testing.T) {
-		t.Parallel()
-		request := "unsafe-path-incomplete"
-		f := unsafeFixture(t, request)
-		r := interruptedLanding(t, f, request, f.tip)
-		next, printed := landedNext(r.stdout)
-		placeholds(t, "resume", next, printed, f, r.stdout)
-	})
 }
 
 // landingStage names when in a landing a fixture's face prints, which decides how the walk
@@ -159,9 +161,9 @@ const (
 // landingRefusalFixture produces exactly one landing face. mutate breaks the landing
 // fixture so that face is the one the landing prints. The registry walk requires one
 // fixture per land face of the shared registry, so a face added with no fixture turns
-// TestLandingRefusalRegistryHasAProducingFixture red. stage states how the walk drives the fixture: a resume fixture's mutation
-// runs against the published destination of an interrupted landing, not against the
-// first run.
+// TestLandingRefusalRegistryHasAProducingFixture red. stage states how the walk drives
+// the fixture: a resume fixture's mutation runs against the published destination of an
+// interrupted landing, not against the first run.
 type landingRefusalFixture struct {
 	face   string
 	stage  landingStage
@@ -333,32 +335,6 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			}},
 		},
 	}
-}
-
-// interruptedLanding runs the first landing with a release step that fails, so the
-// landing publishes and exits incomplete.
-func interruptedLanding(t *testing.T, f landingFixture, request, tip string) verbResult {
-	t.Helper()
-	broken := defaultJoins()
-	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
-	r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, tip, f.creation.Path)...))
-	if r.exit != 3 {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
-	return r
-}
-
-// landingFaceResume drives a resume fixture. It interrupts a landing at the release step,
-// applies the fixture's mutation to the published destination, and resumes.
-func landingFaceResume(t *testing.T, fixture landingRefusalFixture, f landingFixture) verbResult {
-	t.Helper()
-	request := "landing-face-" + fixture.face
-	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
-	interruptedLanding(t, f, request, tip)
-	published := gitOutput(t, f.root, "rev-parse", "main")
-	fixture.mutate(t, f.root, f.creation)
-	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", tip, "--spec", "x", f.creation.Path}
-	return runVerb(t, verbLand, f.callWith(defaultJoins(), args...))
 }
 
 // landingFaceNext reads the next= value out of the refused record whose detail names the

@@ -154,8 +154,7 @@ func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
 	// which land faces the preflight prints, so the walk covers each preflight face: the two
 	// this run raises are read from the printed record, and the rest from the route the
 	// face renders over the same re-run.
-	rerun := "bench worktree land --request '" + request + "' --base '" + f.base +
-		"' --source-tip '" + f.tip + "' --spec 'x' -m <message> '" + f.creation.Path + "'"
+	rerun := landArgsRerun(request, f.base, f.tip, f.creation.Path)
 	tail := "; then " + rerun
 	for _, fixture := range landingRefusalFixtures() {
 		if fixture.stage != stagePreflight {

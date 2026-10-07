@@ -1038,7 +1038,7 @@ func TestParallelCensusOnTheLiveTree(t *testing.T) {
 // The operand tests change the working directory because a relative or a
 // prefixed operand is what they grade. The pin is exact, so a fixture that binds
 // the process instead of its own home, or a test that leaves the set, turns it red.
-const worktreeSerialCeiling = 44
+const worktreeSerialCeiling = 45
 
 // TestSerialSetStaysBelowTheCeiling proves the serial set equals the ceiling.
 // (Coverage row WF18.)
@@ -1058,7 +1058,7 @@ func TestSerialSetStaysBelowTheCeiling(t *testing.T) {
 // cannot supply it, because a removal changes the live count and the expectation
 // together. One removal or merge turns the pin red. One addition also turns the
 // pin red, so the author raises the pin in the same change and it never drifts.
-const worktreeTestCount = 750
+const worktreeTestCount = 753
 
 // TestPackageTestCountPin proves no test is removed or merged for wall-clock.
 // It counts the census walk's facts, one for each top-level test. (Coverage row WF12.)

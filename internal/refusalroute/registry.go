@@ -94,8 +94,9 @@ var rerun = Command(Composed(FactRerun))
 // first run and the resume refuse on the same destination state, so both faces name it.
 var destinationClean = Instruction(Text("commit the destination's uncommitted work, or discard it"))
 
-// review sends a repaired source back through review before the landing re-runs.
-var review = Command(Text("/bench-review-implementation"))
+// review sends a repaired source back through review before the landing re-runs. The
+// review is a phase the agent runs, not a shell command, so the step is an instruction.
+var review = Instruction(Text("/bench-review-implementation"))
 
 // handMerge is the hand repair a composition conflict demands, up to the commit that
 // records the resolution. The landing and the merge refuse the same conflict, so both name
@@ -252,9 +253,9 @@ func Sentence(name string) string {
 func HandMerge(facts Facts) string { return Face{Route: handMerge}.Render(facts) }
 
 // AtCheckout renders a command whose last word is a checkout path that is not line-safe.
-// No quoting makes a control byte pasteable, and FT341 refuses a Bench child under
-// `bench worktree exec`, so the route looks the path up by the assignment id and runs the
-// command with the checkout placeholder. With no id there is nothing to look up, and the
+// No quoting makes a control byte pasteable, and `bench worktree exec` refuses a Bench
+// child, so the route looks the path up by the assignment id and runs the command with
+// the checkout placeholder. With no id there is nothing to look up, and the
 // command stands alone.
 func AtCheckout(command, id string) string {
 	route := []Step{atCheckout}

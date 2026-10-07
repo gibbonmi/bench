@@ -139,9 +139,7 @@ func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
 	checkout := gitOutput(t, f.root, "status", "--porcelain=v1", "--untracked-files=all")
 	// A forged receipt is a cause only the reviewer clears, so each record hands back with
 	// the caller's own resume behind the route.
-	resume := "bench worktree land --resume '" + published + "' --request <request> --base '" + f.base +
-		"' --source-tip '" + f.tip + "' --spec 'x' '" + f.creation.Path + "'"
-	handback := ",next=" + landingRoute(faceLandHandback, resume, nil) + "}\n"
+	handback := ",next=" + landingRoute(faceLandHandback, resumeRerunOf(published, f.base, f.tip, f.creation.Path), nil) + "}\n"
 	for _, tc := range []struct {
 		name, want string
 		mutate     func(*intent.CleanupReceipt)

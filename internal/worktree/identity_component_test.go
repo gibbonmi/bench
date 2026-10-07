@@ -133,6 +133,18 @@ func rewriteMarkerOwner(t *testing.T, path, owner string) {
 	mustWrite(t, markerFile, append(rewritten, '\n'), 0o600)
 }
 
+// landingComponentRecord is the whole refused record a landing prints for a component's
+// fixture. A component with a recovery command prints its own route. Every other component
+// hands back to the reviewer, and the identity proofs stop the later proofs of their group,
+// so the route states that ahead of its first step and ends with the caller's rerun.
+func landingComponentRecord(fixture identityComponentFixture, creation Creation, base, tip, rerun string) string {
+	record := fixture.want(creation, base, tip)
+	if !identityComponentByName(fixture.component).recovers {
+		record += ",next=" + landingRouteAfter(faceLandHandback, laterProofsSkipped, rerun, nil)
+	}
+	return "refused{" + record + "}\n"
+}
+
 // TestLandCommandNamesEachIdentityComponent is LR01 and LR04 through LR08: one broken
 // dimension per case, and the whole refused record the operator reads for it.
 func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
@@ -143,7 +155,8 @@ func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
 			f := publicLandingFixture(t, request, "", "")
 			fixture.mutate(t, f.root, f.creation)
 			r := runVerb(t, verbLand, f.call(landArgs(fixture.request(request), f.base, f.tip, f.creation.Path)...))
-			want := "refused{" + fixture.want(f.creation, f.base, f.tip) + "}\n"
+			rerun := landArgsRerun(fixture.request(request), f.base, f.tip, f.creation.Path)
+			want := landingComponentRecord(fixture, f.creation, f.base, f.tip, rerun)
 			if r.exit != 1 || r.stdout != want {
 				t.Fatalf("%s landing = (%d, %q, %q), want exit 1 and %q", fixture.component, r.exit, r.stdout, r.stderr, want)
 			}
@@ -163,7 +176,7 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 			fixture.mutate(t, f.root, f.creation)
 			args := []string{"--resume", published, "--request", fixture.request(request), "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 			r := runVerb(t, verbLand, f.call(args...))
-			want := "refused{" + fixture.want(f.creation, f.base, f.tip) + "}\n"
+			want := landingComponentRecord(fixture, f.creation, f.base, f.tip, resumeRerunOf(published, f.base, f.tip, f.creation.Path))
 			if r.exit != 1 || r.stdout != want {
 				t.Fatalf("%s resume = (%d, %q, %q), want exit 1 and %q", fixture.component, r.exit, r.stdout, r.stderr, want)
 			}
@@ -319,7 +332,8 @@ func identityComponentFixtureFor(t *testing.T, component string) identityCompone
 
 // TestLandCommandNamesTheEarlierComponentOfTwo covers the edge inventory row for two
 // components that fail inside one bundle. The registration precedes the lock in the
-// registry, so the registration sentence is the one the operator reads.
+// registry, so the registration sentence is the one the operator reads, and its route
+// hands back.
 func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 	t.Parallel()
 	request := "land-component-registration-and-lock"
@@ -328,7 +342,7 @@ func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 	registration.mutate(t, f.root, f.creation)
 	identityComponentFixtureFor(t, componentLock).mutate(t, f.root, f.creation)
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	want := "refused{" + registration.want(f.creation, f.base, f.tip) + "}\n"
+	want := landingComponentRecord(registration, f.creation, f.base, f.tip, landArgsRerun(request, f.base, f.tip, f.creation.Path))
 	if r.exit != 1 || r.stdout != want {
 		t.Fatalf("double-fault landing = (%d, %q, %q), want exit 1 and %q", r.exit, r.stdout, r.stderr, want)
 	}

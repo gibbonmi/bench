@@ -200,10 +200,9 @@ const laterProofsSkipped = "later proofs in this group did not run"
 // so the route still ends with the re-run.
 //
 // A refusal that names a registered face takes that face. A refusal that carries a route
-// of its own, or whose route an identity component owns, keeps it, and the skipped-proof
-// sentence qualifies a route it carries; a refusal that names no route gains no sentence,
-// because the sentence qualifies a repair rather than standing as one. Every other cause
-// has no route of its own, so it hands back to the reviewer under its own sentence.
+// of its own keeps it, and the skipped-proof sentence qualifies that route. Every other
+// cause, an identity component with no recovery command included, has no route of its
+// own, so it hands back to the reviewer under its own sentence.
 func landingFaceRoute(err error, rerun string, shortCircuited bool) error {
 	raised := refusal{detail: err.Error()}
 	var typed refusalError
@@ -217,10 +216,10 @@ func landingFaceRoute(err error, rerun string, shortCircuited bool) error {
 	if name, ok := landingFaceOf(raised); ok {
 		return landingFaceRefusal(name, raised, rerun, preface)
 	}
-	if raised.next == "" && raised.component == "" {
+	if raised.next == "" {
 		return landingFaceRefusal(faceLandHandback, raised, rerun, preface)
 	}
-	if !shortCircuited || raised.next == "" {
+	if !shortCircuited {
 		return err
 	}
 	raised.next = laterProofsSkipped + "; " + raised.next
@@ -245,12 +244,11 @@ func landRefusalError(stdout io.Writer, err error) int {
 // refusal is one refused record. face names the registered face the refusing proof raised,
 // and values holds the facts that proof observed for the face's route, such as the label
 // of the assignment that owns the refusing tree. A refusal outside the registry leaves
-// both empty. component names the identity component that raised the refusal, because
-// that registry owns the component's route.
+// both empty.
 type refusal struct {
 	detail, observed, wanted, next string
 	paths                          []string
-	face, component                string
+	face                           string
 	values                         map[string]string
 }
 type refusalError struct{ refusal }
