@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # name: check-agent-line
 # boundary: PreToolUse:Agent
-# denies: Agent delegation off the bound tier
-# why: invariant #2 forbids silent escalation; a delegate runs on a bound tier or not at all
-# This is a PreToolUse guard: a delegation must run on a bound tier. Invariant #2
+# denies: Agent delegation with an omitted model; warns on a model off the bound tiers
+# why: invariant #2 forbids silent escalation; an omitted model inherits the session's model
+# This is a PreToolUse guard: a delegation must declare its model. Invariant #2
 # requires the line — model, effort, token cap — declared before a long run, with no
-# silent escalation. This guard enforces the model half: an Agent-tool call on a model
-# outside the three bound tiers is denied at the boundary.
+# silent escalation. This guard enforces the model half: an Agent-tool call with no
+# model is denied at the boundary. A call on a model outside the three bound tiers is
+# a declared line that the reviewer may direct, so the guard warns and allows it.
 #
 # Threat model: an honest-mistake layer, like the git guard. It stops a well-meaning
-# agent from delegating onto an unbound model. It is not evasion-resistant. The binding
+# agent from delegating with no declared model. It is not evasion-resistant. The binding
 # lives in .bench/lines.env, the BENCH_<HARNESS>_<TIER> matrix. The narrative lives in
 # projects/<name>.md "Lines" and the craft-line skill.
 #

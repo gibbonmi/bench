@@ -18,8 +18,10 @@ func TestAgentLineVerdict(t *testing.T) {
 		// Enforcement is permissive across the whole matrix: a Claude session may name the
 		// tier a Codex delegate will run on.
 		{"other-column-allows", envelope("gpt-5.6-terra"), "claude", bound(fullBinding), 0, ""},
-		{"tier-name-denies", envelope("mid"), "claude", bound(fullBinding), 2, "is not a bound tier"},
-		{"unbound-model-denies", envelope("gpt-9"), "claude", bound(fullBinding), 2, "is not a bound tier"},
+		// A present model off every bound tier is a declared line the reviewer may direct, so
+		// it warns and allows.
+		{"tier-name-warns", envelope("mid"), "claude", bound(fullBinding), 0, "is not a bound tier"},
+		{"unbound-model-warns", envelope("gpt-9"), "claude", bound(fullBinding), 0, "is not a bound tier"},
 		{"malformed-stdin", []byte(`not json`), "claude", bound(fullBinding), 0, "not parseable as JSON"},
 		// Routed + a complete column for the asking harness: an omitted or whitespace-only
 		// model is the attack path the guard exists for. It silently inherits the session's
@@ -57,31 +59,31 @@ func TestAgentLineVerdict(t *testing.T) {
 	}
 }
 
-// TestAgentLineVerdictDenyMessage pins the denial in full for each asking harness. The
-// advice is the asking harness's own column AS PARSED, and no other family's tokens
-// ride along. The fixture's claude cells differ from this repo's, so a renderer
-// hard-coded to the live binding fails here.
-func TestAgentLineVerdictDenyMessage(t *testing.T) {
+// TestAgentLineVerdictUnboundWarning pins the unbound-model warning in full for each
+// asking harness. The advice is the asking harness's own column AS PARSED, and no other
+// family's tokens ride along. The fixture's claude cells differ from this repo's, so a
+// renderer hard-coded to the live binding fails here.
+func TestAgentLineVerdictUnboundWarning(t *testing.T) {
 	for _, tt := range []struct {
 		harness, want, absent string
 	}{
 		{
 			harness: "claude",
-			want: "DENIED: delegation model 'gpt-9' is not a bound tier; harness claude binds top=fable-5 mid=opus-4-8 " +
-				"cheap=sonnet-5 (see .bench/lines.env and the craft-line skill). Re-delegate on a bound tier or update the binding.",
+			want: "WARNING: check-agent-line: delegation model 'gpt-9' is not a bound tier; harness claude binds top=fable-5 mid=opus-4-8 " +
+				"cheap=sonnet-5 (see .bench/lines.env and the craft-line skill) — allowing delegation.",
 			absent: "gpt-5.6-sol",
 		},
 		{
 			harness: "codex",
-			want: "DENIED: delegation model 'gpt-9' is not a bound tier; harness codex binds top=gpt-5.6-sol mid=gpt-5.6-terra " +
-				"cheap=gpt-5.6-luna (see .bench/lines.env and the craft-line skill). Re-delegate on a bound tier or update the binding.",
+			want: "WARNING: check-agent-line: delegation model 'gpt-9' is not a bound tier; harness codex binds top=gpt-5.6-sol mid=gpt-5.6-terra " +
+				"cheap=gpt-5.6-luna (see .bench/lines.env and the craft-line skill) — allowing delegation.",
 			absent: "opus-4-8",
 		},
 	} {
 		t.Run(tt.harness, func(t *testing.T) {
 			exit, stderr := AgentLineVerdict(envelope("gpt-9"), tt.harness, bound(fullBinding))
-			if exit != 2 {
-				t.Fatalf("exit = %d, want 2 (stderr=%q)", exit, stderr)
+			if exit != 0 {
+				t.Fatalf("exit = %d, want 0 (stderr=%q)", exit, stderr)
 			}
 			if stderr != tt.want {
 				t.Errorf("stderr =\n%q\nwant\n%q", stderr, tt.want)
