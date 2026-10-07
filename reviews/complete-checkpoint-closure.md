@@ -226,7 +226,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "r-cc1-standards",
+          "performer": "claude:ft392_review_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "584eac658ba71f284cb17b3683d2b03d08f6bf33",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft392_review_standards",
+            "digest": "sha256:a1d042a67ed8cda45aea52613f1ad9823bb21c0a34d0abc35a334b672a37a553",
+            "excerpt": "Standards axis, chunk CC1, evidence sha256:793a47b2 current=true at 5f13265d. 3 findings; worst S1.\nS1 complete_checkpoint_test.go:198 respells the cleanCheckoutRefusal literal from complete_checkpoint.go:12; no recorded red needs the independence. auto-fix, confidence 6.\nS2 complete_checkpoint.go:17-18 comment claims the checkpoint and the landing cannot grade two different trees; landing.go:241 transforms the composition tree. auto-fix, confidence 6.\nS3 published.Tree plus WithCompletion pairing is hand-built at landing.go:241/249 and complete_checkpoint.go:35/39. ask-user, confidence 4.\n"
+          },
+          "axis": "Standards",
+          "base": "ea3e7867a6019c2ce11edbf16bae033aaba81a2f",
+          "tip": "1ee00ddfe063f207281768d2f5757b923ca95102",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-cc1-spec",
+          "performer": "claude:ft392_review_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "584eac658ba71f284cb17b3683d2b03d08f6bf33",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft392_review_spec",
+            "digest": "sha256:798ed75f19dc6e665eac1a12abd9aa1bf36edfe54128acf8f913b8f72ae1f4c1",
+            "excerpt": "Spec axis, chunk CC1, evidence sha256:793a47b2 current=true at 5f13265d. 0 findings.\nCC01-CC32 met. Clean refusal at complete_checkpoint.go:32 precedes compose (:35), grade (:39), and the stale-evidence refusal (checkpoint.go:145). gate.go:204 keeps notifyGateSignals and mode; engine.go:46 keeps ExecuteTree arguments; BENCH-reference.md:400 carries the CC28 sentence.\n"
+          },
+          "axis": "Spec",
+          "base": "ea3e7867a6019c2ce11edbf16bae033aaba81a2f",
+          "tip": "1ee00ddfe063f207281768d2f5757b923ca95102",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "r-cc1-coverage",
+          "performer": "claude:ft392_review_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "584eac658ba71f284cb17b3683d2b03d08f6bf33",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft392_review_coverage",
+            "digest": "sha256:a1712ffc9ae9a244c13a200cca879ae184f9b4c32305292c1c39df65e30a82aa",
+            "excerpt": "Coverage axis, chunk CC1, evidence sha256:793a47b2 current=true at 5f13265d. 1 finding; worst C1.\nC1 complete_checkpoint.go:63-69 clean check: no test pins that an ignored file passes (spec line 94). Probe refusing on ignored files: silent on ./internal/gate (397 tests) and on cmd/bench TestGateCheckpointRoute, restored yes. auto-fix, confidence 7.\nCC04 fixture probe red at complete_checkpoint_test.go:100; CC08 red at :173; CC10 red at :190; CC31 red at :145; all restored yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "ea3e7867a6019c2ce11edbf16bae033aaba81a2f",
+          "tip": "1ee00ddfe063f207281768d2f5757b923ca95102",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -238,3 +305,21 @@
   }
 }
 ```
+
+## Standards
+
+Chunk CC1 has 3 findings. The worst finding is S1.
+
+- S1 (auto-fix, confidence 6): `internal/gate/complete_checkpoint_test.go:198` spells the clean-checkout refusal text again. `internal/gate/complete_checkpoint.go:12` owns that text as `cleanCheckoutRefusal`. No recorded red needs an independent spelling, so the test must use the constant.
+- S2 (auto-fix, confidence 6): the comment at `internal/gate/complete_checkpoint.go:17-18` says that the checkpoint and the landing cannot grade two different trees. The landing transforms its composition tree at `internal/landing/landing.go:241`, so the claim is false when the destination moves. Remove the claim.
+- S3 (no-op, confidence 4): the pair of `published.Tree` and `WithCompletion` is built at `internal/landing/landing.go:241-249` and at `internal/gate/complete_checkpoint.go:35-39`. The closed reviewer decision keeps the landing unchanged, and `published.Tree` stays the one closure derivation. So no repair target remains in this spec.
+
+## Spec
+
+Chunk CC1 has 0 findings. Rows CC01 to CC32 are met.
+
+## Coverage
+
+Chunk CC1 has 1 finding. The worst finding is C1.
+
+- C1 (auto-fix, confidence 7): no test makes sure that an ignored file passes the clean-checkout check at `internal/gate/complete_checkpoint.go:63-69`. The spec decides that the working-tree hash excludes ignored files. A probe that refuses on each ignored file stayed silent on `./internal/gate` and on `TestGateCheckpointRoute`. Add an ignored-file case to `TestCompleteCheckpointRefusesADirtyCheckout` that expects exit 0.
