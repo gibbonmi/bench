@@ -159,8 +159,9 @@ func laneRecordsArgv(t *testing.T, record string) {
 }
 
 // TestBenchkitLaneRunsOnlyTheSelectedChecks is PL19. The fixture holds no `go.mod`, so
-// a selected `vet` or `build` reds the lane. The pass and the one recorded `gate-prose`
-// invocation together prove the Markdown change selected the prose check alone.
+// a selected `vet` or `build` reds the lane. The pass and the two recorded invocations,
+// `gate-prose` then the docs-currency check, prove the Markdown change selected those two
+// checks and no Go check.
 func TestBenchkitLaneRunsOnlyTheSelectedChecks(t *testing.T) {
 	root := outcomeFixture(t)
 	base := outcomeGit(t, root, "rev-parse", "HEAD^{commit}")
@@ -185,12 +186,12 @@ func TestBenchkitLaneRunsOnlyTheSelectedChecks(t *testing.T) {
 	if !result.Passed() {
 		t.Fatalf("lane %s on check %s: %s", result.Outcome, result.Check, result.Diagnostic)
 	}
-	if !reflect.DeepEqual(result.Checks, []string{"prose"}) || !reflect.DeepEqual(result.Classes, []string{"markdown"}) {
-		t.Fatalf("result checks %v classes %v, want [prose] and [markdown]", result.Checks, result.Classes)
+	if !reflect.DeepEqual(result.Checks, []string{"prose", "docs-currency-workflow"}) || !reflect.DeepEqual(result.Classes, []string{"markdown"}) {
+		t.Fatalf("result checks %v classes %v, want [prose docs-currency-workflow] and [markdown]", result.Checks, result.Classes)
 	}
 	invocations := strings.Split(strings.TrimSpace(string(outcomeRead(t, record))), "\n")
-	if len(invocations) != 1 || !strings.Contains(invocations[0], "gate-prose") {
-		t.Fatalf("recorded invocations = %v, want one gate-prose run", invocations)
+	if len(invocations) != 2 || !strings.Contains(invocations[0], "gate-prose") || !strings.Contains(invocations[1], "test --check docs-currency-workflow") {
+		t.Fatalf("recorded invocations = %v, want one gate-prose run and one docs-currency run", invocations)
 	}
 	if strings.Contains(strings.Join(invocations, " "), "gate-go") {
 		t.Errorf("recorded invocations = %v, want no gate-go run: gofmt was not selected", invocations)
@@ -246,7 +247,7 @@ func TestBenchkitLaneDocumentCheckFailsTheLane(t *testing.T) {
 	if result.Passed() || result.Check != check {
 		t.Fatalf("lane outcome %s on check %q, want a fail on %s", result.Outcome, result.Check, check)
 	}
-	if want := []string{"prose", check}; !reflect.DeepEqual(result.Checks, want) {
+	if want := []string{"prose", "docs-currency-workflow", check}; !reflect.DeepEqual(result.Checks, want) {
 		t.Errorf("lane checks = %v, want %v", result.Checks, want)
 	}
 }
