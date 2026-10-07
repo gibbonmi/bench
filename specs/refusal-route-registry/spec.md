@@ -771,7 +771,7 @@ The prospective build owns these exact paths:
 This fence is the closure that the build preflight write proposal confirmed on the draft Writes line.
 It also holds two rendered-text readers that the reader sweep found.
 The two FT392 gate paths joined after the first proposal, and a second proposal at the folded tip listed no further path.
-After the fold of `main` at `120e2715`, a third proposal listed no further path.
+After the fold of main at 120e2715, a third proposal listed no further path.
 The review pickup is `reviews/refusal-route-registry.md`.
 The planning author owns this spec folder during the spec phase.
 
