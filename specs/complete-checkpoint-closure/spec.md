@@ -312,6 +312,11 @@ The prospective build owns these exact paths:
 - `internal/gate/run_failure_outcomes_test.go`
 - `.bench/BENCH-reference.md`
 - `CHANGELOG.md`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_retained_workflow.go`
