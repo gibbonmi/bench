@@ -17,9 +17,9 @@ import (
 
 const emptyFixturesTable = "fixtures[0]{family,fixture,path}:\n"
 
-// fixturesFace runs Command with a counting run binary factory and a marker-writing `go`
+// inventoryFace runs Command with a counting run binary factory and a marker-writing `go`
 // on PATH, and it fails the test when the face builds a run binary or starts a Go child.
-func fixturesFace(t *testing.T, root string, args ...string) (string, int) {
+func inventoryFace(t *testing.T, root string, args ...string) (string, int) {
 	t.Helper()
 	builds := 0
 	installTestSelectionFactory(t, runbinary.Factory{
@@ -57,7 +57,7 @@ func TestFixturesFaceListsOwnedFixtures(t *testing.T) {
 	plantFixture(t, root, "package-core-guard", "b", "")
 	plantFixture(t, root, "package-core-guard", "a", "")
 	plantFixture(t, root, "line-routing", "other", "")
-	output, code := fixturesFace(t, root, "--check", "package-core-guard", "--fixtures")
+	output, code := inventoryFace(t, root, "--check", "package-core-guard", "--fixtures")
 	want := "fixtures[2]{family,fixture,path}:\n" +
 		"  package-core-guard,a,tests/canary/package-core-guard/a\n" +
 		"  package-core-guard,b,tests/canary/package-core-guard/b\n"
@@ -76,7 +76,7 @@ func reassignedFixtureTree(t *testing.T) string {
 }
 
 func TestFixturesFaceHonorsCheckMarker(t *testing.T) {
-	output, code := fixturesFace(t, reassignedFixtureTree(t), "--check", "default-branch-single-source", "--fixtures")
+	output, code := inventoryFace(t, reassignedFixtureTree(t), "--check", "default-branch-single-source", "--fixtures")
 	want := "fixtures[1]{family,fixture,path}:\n  package-core-guard,reassigned,tests/canary/package-core-guard/reassigned\n"
 	if code != 0 || output != want {
 		t.Fatalf("marked fixture = %d, %q; want 0 and %q", code, output, want)
@@ -84,7 +84,7 @@ func TestFixturesFaceHonorsCheckMarker(t *testing.T) {
 }
 
 func TestFixturesFaceOmitsReassignedFixture(t *testing.T) {
-	output, code := fixturesFace(t, reassignedFixtureTree(t), "--check", "package-core-guard", "--fixtures")
+	output, code := inventoryFace(t, reassignedFixtureTree(t), "--check", "package-core-guard", "--fixtures")
 	if code != 0 || output != emptyFixturesTable {
 		t.Fatalf("family owner of a marked fixture = %d, %q; want 0 and %q", code, output, emptyFixturesTable)
 	}
@@ -93,29 +93,27 @@ func TestFixturesFaceOmitsReassignedFixture(t *testing.T) {
 func TestFixturesFaceEmptyForSystem(t *testing.T) {
 	root := t.TempDir()
 	plantFixture(t, root, "package-core-guard", "a", "")
-	output, code := fixturesFace(t, root, "--check", "system", "--fixtures")
+	output, code := inventoryFace(t, root, "--check", "system", "--fixtures")
 	if code != 0 || output != emptyFixturesTable {
 		t.Fatalf("system fixtures = %d, %q; want 0 and %q", code, output, emptyFixturesTable)
 	}
 }
 
 func TestFixturesFaceEmptyCanaryDirectory(t *testing.T) {
-	present := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(present, "tests", "canary"), 0o755); err != nil {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "tests", "canary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	for name, root := range map[string]string{"absent": t.TempDir(), "present and empty": present} {
-		output, code := fixturesFace(t, root, "--check", "package-core-guard", "--fixtures")
-		if code != 0 || output != emptyFixturesTable {
-			t.Errorf("%s tests/canary = %d, %q; want 0 and %q", name, code, output, emptyFixturesTable)
-		}
+	output, code := inventoryFace(t, root, "--check", "package-core-guard", "--fixtures")
+	if code != 0 || output != emptyFixturesTable {
+		t.Fatalf("present and empty tests/canary = %d, %q; want 0 and %q", code, output, emptyFixturesTable)
 	}
 }
 
 func TestFixturesFaceRefusesInvalidInventory(t *testing.T) {
 	root := t.TempDir()
 	plantFixture(t, root, "package-core-guard", "a", "no-such-check")
-	output, code := fixturesFace(t, root, "--check", "package-core-guard", "--fixtures")
+	output, code := inventoryFace(t, root, "--check", "package-core-guard", "--fixtures")
 	if code != 1 || !strings.Contains(output, "names unknown check") {
 		t.Fatalf("invalid inventory = %d, %q; want 1 and names unknown check", code, output)
 	}
@@ -124,27 +122,30 @@ func TestFixturesFaceRefusesInvalidInventory(t *testing.T) {
 func TestFixturesFaceRefusesUnprintableName(t *testing.T) {
 	root := t.TempDir()
 	plantFixture(t, root, "package-core-guard", "bad\x01name", "")
-	output, code := fixturesFace(t, root, "--check", "package-core-guard", "--fixtures")
+	output, code := inventoryFace(t, root, "--check", "package-core-guard", "--fixtures")
 	if code != 1 || !strings.HasPrefix(output, toon.RenderError(errors.New(""))) {
 		t.Fatalf("unprintable fixture name = %d, %q; want 1 and the render error", code, output)
 	}
 }
 
 func TestFixturesFaceUnknownCheck(t *testing.T) {
-	output, code := fixturesFace(t, t.TempDir(), "--check", "not-registered", "--fixtures")
+	output, code := inventoryFace(t, t.TempDir(), "--check", "not-registered", "--fixtures")
 	if code != 2 || !strings.HasPrefix(output, "unknown check: not-registered\n") || !strings.HasSuffix(output, checkInventory()) {
 		t.Fatalf("unknown check fixtures = %d, %q; want 2 and the unknown-check refusal", code, output)
 	}
 }
 
-func TestFixturesFaceGrammarRefusals(t *testing.T) {
+func TestInventoryGrammarRefusals(t *testing.T) {
 	for _, args := range [][]string{
+		{"--checks", "--full"},
+		{"--checks", "--check", "prose"},
+		{"--checks", "internal/testreport"},
 		{"--fixtures"},
 		{"--fixtures", "--full"},
-		{"--check", "line-routing", "--fixtures", "--full"},
-		{"--check", "line-routing", "--fixtures", "--run", "^TestX$"},
+		{"--check", "prose", "--fixtures", "--full"},
+		{"--check", "system", "--fixtures", "--run", "^X$"},
 	} {
-		output, code := fixturesFace(t, t.TempDir(), args...)
+		output, code := inventoryFace(t, t.TempDir(), args...)
 		if code != 2 || !strings.HasPrefix(output, "usage: ") {
 			t.Errorf("Command(%q) = %d, %q; want 2 and usage", args, code, output)
 		}

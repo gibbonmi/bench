@@ -21,7 +21,7 @@ import (
 )
 
 // Usage is the one owner of the bench test grammar line.
-const Usage = "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures"
+const Usage = "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures | bench test --checks"
 
 var grammar = usage.Grammar{
 	Cmd:  Usage,
@@ -35,6 +35,7 @@ var grammar = usage.Grammar{
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
 		{Name: "--check", HasValue: true, NoEmptyValue: true},
 		{Name: "--fixtures"},
+		{Name: "--checks"},
 	},
 	MaxArgs: 1,
 }
@@ -53,6 +54,7 @@ type focusedRequest struct {
 	sourceTip   string
 	check       string
 	fixtures    bool
+	checks      bool
 }
 
 func parseFocusedRequest(root string, args []string) (focusedRequest, string, int) {
@@ -66,6 +68,10 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	base, hasBase := parsed.Flags["--base"]
 	sourceTip, hasSourceTip := parsed.Flags["--source-tip"]
 	_, fixtures := parsed.Flags["--fixtures"]
+	_, checks := parsed.Flags["--checks"]
+	if checks && (len(parsed.Flags) != 1 || len(parsed.Positionals) != 0) {
+		return focusedRequest{}, toon.Usage(grammar.Cmd, "--checks"), 2
+	}
 	if fixtures && (!hasCheck || len(parsed.Flags) != 2) {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--fixtures"), 2
 	}
@@ -107,6 +113,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 		sourceTip:   sourceTip,
 		check:       check,
 		fixtures:    fixtures,
+		checks:      checks,
 	}, "", 0
 }
 
@@ -119,6 +126,9 @@ func testGrammar() usage.Grammar {
 func runFocusedRequest(root string, request focusedRequest) (Outcome, string, int) {
 	if request.fixtures {
 		return checkFixtures(root, request.check)
+	}
+	if request.checks {
+		return checksInventory(root)
 	}
 	// The refusal precedes the run-owner selection, which builds a Bench executable with
 	// Go. A root the suite may not grade therefore starts no child at all.
