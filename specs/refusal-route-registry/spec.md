@@ -8,7 +8,7 @@ Decision source: named reviewed artifact `roadmap/FT393.md`, opened by drain d-6
 
 Audience: every repository that links the kit
 
-Verification log: 2 iteration(s), cap reached — iteration 2 found two blocking gaps, and the author folded them without a third review.
+Verification log: 2 iteration(s), cap reached — after the cap, a read-only fable/high consultation found four folds, and the reviewer approved them without a third review.
 
 ## Problem
 
@@ -152,6 +152,12 @@ It returns a typed refusal that carries the face, the sentence, the paths, and t
 An unknown face name returns the refusal `refusal face <name> is unregistered`, with a reviewer route.
 This keeps the landing's fail-soft rule for a bookkeeping fault.
 
+A raising site derives the `<label>` fact through `intent.AssignmentsOwning` over its own root.
+The landing and the merge already hold their assignment, and the commit and the gate resolve theirs at the refusal.
+When no assignment owns the root, the slot prints `<label>`.
+A tree-scoped step names its tree target, because `--in` counts only as the first argument after the verb.
+The `resume-marker` step is `bench gate --in primary`, because the marker belongs to the published landing on the primary checkout.
+
 ### Authority
 
 A face has agent authority when an agent can clear its cause with Bench verbs and its own file edits, inside its own worktree.
@@ -194,9 +200,9 @@ These faces and routes are required.
 | land | `composition-conflict` | reviewer | the hand merge of the destination commit; then `bench commit`; then `/bench-review-implementation`; then the re-run |
 | land | `composition-conflict-pending` | reviewer | finish the merge in progress; then `/bench-review-implementation`; then the re-run |
 | land | `resume-destination-residue` | reviewer | commit or discard the destination's uncommitted work; then the resume |
-| land | `resume-marker` | agent | `bench gate`; then the resume |
+| land | `resume-marker` | agent | `bench gate --in primary`; then the resume |
 | merge | `merge-target-red` | agent | repair each failing check in `<label>`; then `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
-| merge | `merge-fold-red` | reviewer | the fold of `<from>` reds `<label>`; decide the moved-`main` route under FT342 |
+| merge | `merge-fold-red` | reviewer | the fold of `<from>` adds a red to `<label>`; decide who repairs a red that the fold of a moved `main` adds, the open FT342 question |
 | merge | `merge-target-not-clean` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
 | merge | `merge-sibling-not-clean` | agent | `bench commit --in <sibling-label> -m <msg> -- <path>...`; then the re-run |
 | merge | `merge-conflict` | reviewer | the hand merge of the incoming commit; then `bench commit`; then the re-run |
@@ -211,7 +217,7 @@ These faces and routes are required.
 | commit | `commit-red` | agent | repair each failure that the run reports; then the re-run |
 | commit | `commit-infrastructure` | agent | `bench doctor`; then the re-run |
 | gate | `checkpoint-completion-evidence` | agent | `bench preflight review <slug>` |
-| gate | `checkpoint-dirty-checkout` | agent | `bench commit -m <msg> -- <path>...`; then the re-run |
+| gate | `checkpoint-dirty-checkout` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
 | gate | `checkpoint-composition` | reviewer | the delivery closure of the spec does not compose; hand back |
 | gate | `checkpoint-tip-moved` | agent | the re-run |
 | gate | `checkpoint-subject-unavailable` | agent | `bench doctor`; then the re-run with `--fresh` |
@@ -219,9 +225,32 @@ These faces and routes are required.
 | commitment | `commitment-plan-input` | agent | correct the input file; then the re-run |
 | commitment | `commitment-verify-evidence` | agent | `bench commitment verify --milestone <id> --evidence <file>` |
 | commitment | `commitment-decision` | reviewer | `bench commitment plan --input <file>` |
+| commitment | `commitment-unbound` | agent | `bench commitment start --outcome <id> --request <request> --deliverable <path>` |
+| commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then the re-run |
+| commitment | `commitment-run-unknown` | agent | `bench commitment inventory` |
 
 The `<verb>-handback` reviewer faces join this list for each verb.
 The `commitment-decision` face covers each start, block, plan, and approve refusal whose clear changes the active commitment.
+
+### The commitment route tails
+
+The commitment policy errors carry their route today as an inline tail, such as `; run bench commitment plan --input <file>`.
+Each such error becomes a typed error that names its face, and its sentence drops the tail.
+The verb that prints the error renders the face's route, so `bench commit` and `bench commitment` print one route from one source.
+No reader parses the tail text: `commitcmd.Outlook` replaces any projection error with `commitment.Unreadable()`.
+`bench preflight` prints the sentence beside its own recovery column, and that column does not change.
+
+These sites move to faces:
+
+- `commitment-needs-assignment`: the owned-assignment errors in `candidate.go`, `readiness.go`, and `publication.go`
+- `commitment-decision`: the adoption, protected-commitment, policy-approval, sequence, continuation, legacy-scope, and obligation errors in `admission.go`, `candidate.go`, `continuation.go`, `publication.go`, and `delivery.go`
+- `commitment-unbound`: `errUnbound` in `readiness.go`
+- `commitment-light-path-outside`: the light-path fence error in `light_path.go`
+- `commitment-run-unknown`: the unknown-run continuation error in `continuation.go`
+- `commitment-verify-evidence`: the missing verification receipt in `verification.go`
+
+A face's verb names the verb whose rule raises it, and another write verb can print it.
+So `bench commit` prints a commitment face when the commitment policy refuses its candidate.
 The reset table keeps each current route of the reset verb unchanged.
 
 ### The red-source fold (collision 5a)
@@ -298,7 +327,8 @@ The registry exports the one `next` label.
 The worktree `refusal` record printer, the commit help line, and the commitment verify success table compose their label from it.
 
 A conformance test scans the string literals in the production Go files of the write-verb packages.
-It refuses a literal outside `internal/refusalroute` that holds `next=`, `next[`, or the route joiner `; then `, or that equals `"next"`.
+It refuses a literal outside `internal/refusalroute` that holds `next=`, `next[`, `run bench `, or the route joiner `; then `, or that equals `"next"`.
+The scanned packages include `internal/commitment` and `internal/commitment/repository`.
 The test holds one reviewed allowlist of files whose routes serve a non-write verb.
 The allowlist holds `internal/worktree/path.go`, `internal/worktree/build.go`, and `internal/worktree/tree_target.go`, and each other entry needs a non-write caller.
 
@@ -312,12 +342,12 @@ It reads only the compiled registry.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| RR-C1 / to be sliced | The shared registry, the guard check, the landing faces on the registry, and `bench recovery` | RR01-RR20, RR51-RR54, RR58 | `internal/refusalroute`, `internal/conformance`, `internal/worktree` landing tests | yes |
+| RR-C1 / to be sliced | The shared registry, the guard check, the landing faces on the registry, and `bench recovery` | RR01-RR20, RR51-RR54, RR58, RR60 | `internal/refusalroute`, `internal/conformance`, `internal/worktree` landing tests | yes |
 | RR-C2 / to be sliced | The merge and the reset print registry routes, and the red-source fold has an exit | RR21-RR31, RR55-RR57, RR59 | `internal/worktree` merge and reset tests, `internal/landing` | no |
 | RR-C3 / to be sliced | The commit prints registry routes, and the exit 3 route is the reset plan | RR32-RR38 | `internal/commit`, `internal/worktree` | yes |
 | RR-C4 / to be sliced | The gate checkpoint prints the route of its cause | RR39-RR44 | `internal/gate` | no |
-| RR-C5 / to be sliced | The commitment verb prints routes of the right authority | RR45-RR48 | `internal/commitment/commitcmd`, `cmd/bench` | no |
-| RR-C6 / to be sliced | No write-verb source composes a route outside the registry | RR49-RR50 | `internal/conformance` | no |
+| RR-C5 / to be sliced | The commitment verb prints routes of the right authority | RR45-RR48, RR61-RR64 | `internal/commitment/commitcmd`, `cmd/bench` | no |
+| RR-C6 / to be sliced | No write-verb source composes a route outside the registry | RR49-RR50, RR65 | `internal/conformance` | no |
 
 RR-C1 comes first, because every later chunk raises its faces through the shared constructor.
 RR-C2 changes the authorization sentence that RR-C3 also prints.
@@ -421,6 +451,7 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR26 | 23 | A `lane fail` fold whose incoming commit adds the red to a lane-green target prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A merge that never grades the target alone gives every lane red the agent route, which loops |
 | RR55 | 23 | A `lane fail` fold whose target tip alone fails the lane prints a `next=` value that does not start with `reviewer: ` | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A merge that sends every lane red to the reviewer hands back a repair that is the agent's |
 | RR57 | 23 | An `inherited` fold whose target tip alone grades green prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A face map that reads `inherited` as a target red gives a fold red the agent route, which loops |
+| RR60 | 10 | An incomplete landing whose source path is not line-safe prints a resume route that contains `<checkout>` and no `bench worktree exec` | planned TestUnsafePathRouteUsesThePlaceholder in internal/worktree/refusal_route_test.go | The current resume pointer form runs a Bench child through exec, which FT341 refuses |
 | RR58 | 10 | A landing refusal whose source path is not line-safe prints an agent route that contains `<checkout>` and no `bench worktree exec` | planned TestUnsafePathRouteUsesThePlaceholder in internal/worktree/refusal_route_test.go | The current pointer form runs a Bench child through exec, which FT341 refuses, and the sample-only guard check misses it |
 | RR59 | 23 | An `inherited` fold whose target tip alone grades red prints a `next=` value that contains `bench commit --in ` and the target label | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A merge that grades the target only on `lane fail` sends a lane-less project's target red to the reviewer, and the collision 5a deadlock returns |
 | RR56 | 23 | A `candidate` gate-kind fold red prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A face map that ignores the gate kind's attribution gives a fold red the agent route |
@@ -438,13 +469,18 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR38 | 30 | A commit in the primary checkout prints a `next=` route that contains `bench worktree create --request` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | A refusal that keeps its route only inside the sentence bypasses the registry |
 | RR39 | 31 | A checkpoint refusal for a missing completion record prints no `help[1]{cmd,why}` row | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | This is the FT330 defect: the fixed write-access row prints for every cause |
 | RR40 | 32 | A checkpoint refusal for a missing completion record prints `next=bench preflight review example` | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | The move to the registry drops the current evidence route |
-| RR41 | 33 | A complete checkpoint on a dirty checkout prints a `next=` route that contains `bench commit -m <msg> -- <path>...` | planned TestCheckpointFacesFollowTheirRoutes in internal/gate/refusal_route_test.go | The FT392 refusal names no typed route |
+| RR41 | 33 | A complete checkpoint on a dirty assignment checkout prints a `next=` route that contains `bench commit --in ` and the assignment label | planned TestCheckpointFacesFollowTheirRoutes in internal/gate/refusal_route_test.go | The FT392 refusal names no typed route |
 | RR42 | 34 | A subject-capture fault prints `next=` with a route that contains `bench doctor` and `--fresh` | `internal/gate/run_outcomes_test.go` (`TestGateRunRetainsSubjectConstructionCause`) | The fallback keeps the write-access text for a fault that is not a write-access fault |
 | RR43 | 35 | A subject-capture fault prints no `help[1]{cmd,why}` row | `internal/gate/run_outcomes_test.go` (`TestGateRunRetainsSubjectConstructionCause`) | A route printed beside the old row gives two answers |
 | RR44 | 13, 14 | Each gate face has exactly one producing fixture that follows its route out of the face | planned TestCheckpointFacesFollowTheirRoutes in internal/gate/refusal_route_test.go | A gate face with no fixture reaches an operator unproven |
 | RR45 | 36 | A `bench commitment start` refusal for an outcome outside the active milestone prints a `next` cell that starts with `reviewer: ` | planned TestCommitmentFacesFollowTheirRoutes in internal/commitment/commitcmd/refusal_route_test.go | The current cell tells the agent to re-plan a commitment that only the reviewer changes |
 | RR46 | 37 | A `bench commitment start` refusal without an owned assignment prints a `next` cell that contains `bench worktree create --request` | planned TestCommitmentFacesFollowTheirRoutes in internal/commitment/commitcmd/refusal_route_test.go | The current cell prints the plan command for a cause that the agent clears |
 | RR47 | 37 | A `bench commitment verify` refusal keeps its `bench commitment verify --milestone` cell | `internal/commitment/verification_test.go` (`TestCommitmentUnmetCriterion`) | The move to the registry drops the current agent route |
+| RR61 | 37 | A commit from an assignment with no delivery binding prints a `next=` route that contains `bench commitment start --outcome` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The route stays only inside the sentence tail, outside the registry |
+| RR62 | 36 | A commit whose candidate changes the protected commitment prints a `next=` value that starts with `reviewer: ` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The tail tells the agent to re-plan a commitment that only the reviewer changes |
+| RR63 | 37 | A light-path commit with a path outside its ticket's `Writes:` line prints an agent route that names the ticket and not `bench commitment start` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The tail offers a commitment start for a fix that is one `Writes:` edit |
+| RR64 | 26 | The `assignment has no current delivery binding` refusal sentence does not contain `run bench` | `internal/commitment/repository/publication_test.go` (`TestAdmitPublicationClosureAuthority`) | A sentence that keeps its tail prints a second route beside the face's route |
+| RR65 | 39 | The bypass check reds a planted `; run bench` tail in an `internal/commitment/repository` production file | planned TestRouteBypassCheckBites in internal/conformance/refusal_route_bypass_test.go | A scan that skips the commitment packages lets a tail return |
 | RR48 | 13, 14 | Each commitment face has exactly one producing fixture that follows its route out of the face | planned TestCommitmentFacesFollowTheirRoutes in internal/commitment/commitcmd/refusal_route_test.go | A commitment face with no fixture reaches an operator unproven |
 | RR49 | 38 | The bypass check passes on the tree after every chunk lands | planned TestNoWriteVerbComposesARouteOutsideTheRegistry in internal/conformance/refusal_route_bypass_test.go | A hand-composed route left in a verb shows as a red |
 | RR50 | 39 | The bypass check reds a planted `next=` literal, and a planted `next[1]:` literal, in a write-verb production file | planned TestRouteBypassCheckBites in internal/conformance/refusal_route_bypass_test.go | A check that scans no file passes every tree |
@@ -460,7 +496,10 @@ Not covered: story 44 — the exit-2 grammar refusals keep their behavior, and t
 
 The hostile-input checklist applies to the facts that a route renders.
 A path fact can hold a space, a glob byte, or a control byte.
-An agent route for a path that is not line-safe prints the `<checkout>` placeholder, after a `bench worktree path <id>` step, and never the exec pointer form.
+
+An agent route for a value that is not line-safe prints that value's placeholder and never the exec pointer form.
+For a path, the route prints `<checkout>` after a `bench worktree path <id>` step.
+`landingResumeNext` and `atSourceWorktree` take this form, so the `land-incomplete` resume and each preflight re-run obey it.
 The renderer shell-quotes a line-safe value and prints the slot placeholder for a value that is not line-safe; RR34 grades the placeholder.
 A label fact comes from the assignment ledger, and the `--in` resolver refuses an ambiguous label under FT341.
 
@@ -474,10 +513,8 @@ The fail-closed refusals are the unregistered face (RR07) and each verb's `<verb
 - **Won't handle**: a fold that admits an inherited red — the decision source closes the merge policy, and `merge-target-red` routes the repair before the fold.
 - **Won't handle**: the exit-2 grammar refusals — the usage package owns their usage line, and `usage.Parse` keeps it.
 - **Won't handle**: the gate run-state refusals outside the checkpoint funnel — they serve every gate run, and `operational` keeps their reason line.
-- **Won't handle**: the inline route tails in commitment repository errors — `bench status` reads them, and the face prints the typed route beside them.
 - **Won't handle**: the non-write worktree verbs (`list`, `path`, `clean`, `release`, `build`) — the decision source names six write verbs, and `recoveryRoute` keeps their routes.
 - **Won't handle**: the exec arm of a reviewer conflict route for an unsafe path — the reviewer runs that step, and the check grades agent routes.
-- **Won't handle**: the exec resume form of `land-incomplete` for an unsafe spec operand — the other values are Git hashes, and FT341 owns the exec refusal.
 - **Won't handle**: a change to either wired guard — the closed decision forbids it, and the guard check reads the guards unchanged.
 
 ## Ownership fences
@@ -580,6 +617,15 @@ The prospective build owns these exact paths:
 - `internal/anchors/registry_retained_workflow.go`
 - `internal/worktree/merge_from_sha_test.go`
 - `internal/worktree/land_bench_home_test.go`
+- `internal/commitment/delivery.go`
+- `internal/commitment/repository/admission.go`
+- `internal/commitment/repository/candidate.go`
+- `internal/commitment/repository/continuation.go`
+- `internal/commitment/repository/publication.go`
+- `internal/commitment/repository/light_path.go`
+- `internal/commitment/repository/verification.go`
+- `internal/commitment/repository/readiness.go`
+- `internal/commitment/repository/publication_test.go`
 
 This fence is the closure that `bench preflight build refusal-route-registry --propose-writes` confirmed on the draft Writes line, plus two rendered-text readers that the reader sweep found.
 The two FT392 gate paths joined after the first proposal, and a second proposal at the folded tip listed no further path.
@@ -589,7 +635,6 @@ The planning author owns this spec folder during the spec phase.
 
 ## Out of scope
 
-- The inline route tails in commitment repository error sentences: 9 edits, 2 gate runs.
 - The gate run-state refusals outside the checkpoint funnel: 8 edits, 2 gate runs.
 - The routes of the non-write worktree verbs: 6 edits, 1 gate run.
 
@@ -630,8 +675,8 @@ Evidence status: source-backed proposal. No probe ran, and the phase commits no 
 | The destructive-git guard denies `git restore --worktree` after a `bench commit` exit 3. | RR32-RR35 |
 | One refusal-route registry serves every write verb. | RR01, RR14, RR29, RR36, RR44, RR48, RR49 |
 | Each face declares a typed route and its authority, agent or reviewer. | RR02, RR03, RR05, RR06 |
-| Every refusal goes through the registry. | RR49, RR50 |
-| Every agent route passes the wired guards. | RR08-RR12, RR58 |
+| Every refusal goes through the registry. | RR49, RR50, RR61-RR65 |
+| Every agent route passes the wired guards. | RR08-RR12, RR58, RR60 |
 | Each producing fixture follows its route out of the refused face. | RR15, RR24, RR29, RR35, RR36, RR44, RR48 |
 | The recovery matrix renders from the registry. | RR51-RR54 |
 | A checkpoint refusal names the recovery route of its cause (FT330). | RR39-RR43 |
