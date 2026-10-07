@@ -114,6 +114,16 @@ func TestCauseChangedBeatsEmbed(t *testing.T) {
 	assertCauses(t, selectCauses(t, []listedPackage{embed}, "e/f.go", "e/data.txt"), want)
 }
 
+// TestCauseEmbeddedGoFileSelectsItsPackage grades that a changed Go file that another
+// package embeds selects the embedder by the embed and its own package by the change, and
+// that the closure then reaches the dependents of its own package.
+func TestCauseEmbeddedGoFileSelectsItsPackage(t *testing.T) {
+	embedder := causePackage("p")
+	embedder.EmbedFiles = []string{"sub/s.go"}
+	got := selectCauses(t, []listedPackage{embedder, causePackage("p/sub"), causePackage("q", "example/p/sub")}, "p/sub/s.go")
+	assertCauses(t, got, changedSelection{"example/p": "embed", "example/p/sub": "changed", "example/q": "imports example/p/sub"})
+}
+
 // TestCauseImportsNamesDirectDependency grades that a package two import steps from the
 // change names its direct dependency, not the changed package.
 func TestCauseImportsNamesDirectDependency(t *testing.T) {

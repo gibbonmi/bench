@@ -211,8 +211,8 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 		}
 		if importPath, ok := byEmbed[input.path]; ok {
 			mark(importPath, causeEmbed)
-			if goPackage == importPath {
-				mark(importPath, causeChanged)
+			if inPackage {
+				mark(goPackage, causeChanged)
 			}
 			continue
 		}
