@@ -469,6 +469,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "r-cc1-standards-confirm",
+          "performer": "claude:ft392_confirm_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft392_confirm_standards",
+            "digest": "sha256:50b02d5b550de22c86dd19956c0ca75f9028a589e185b7362e85c8c055d6b894",
+            "excerpt": "Standards confirming round, chunk CC1, evidence sha256:e53fc44a current=true at ee5f1724; repair delta 00c12fef..c1c76ff0. 0 findings.\nS1 confirmed: complete_checkpoint_test.go:241-242 asserts on cleanCheckoutRefusal (complete_checkpoint.go:12). S2 confirmed: complete_checkpoint.go:16-18 states only what the code does. C1 confirmed: complete_checkpoint_test.go:203-209.\nAdvice (no ID): the absence check at complete_checkpoint_test.go:241 spells \"completion is incomplete or stale\", which reviewrecord/check.go:62 owns inline.\n"
+          },
+          "axis": "Standards",
+          "base": "ea3e7867a6019c2ce11edbf16bae033aaba81a2f",
+          "tip": "c1c76ff057669cb9407cbcb1b02ada1000ce926c",
+          "finding_ids": [],
+          "supersedes": [
+            "r-cc1-standards"
+          ]
+        },
+        {
+          "id": "r-cc1-spec-confirm",
+          "performer": "claude:ft392_confirm_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft392_confirm_spec",
+            "digest": "sha256:abc0290f304195e840afa131e47dcd6b435a578f819c3fd1258da07f1a47112d",
+            "excerpt": "Spec confirming round, chunk CC1, evidence sha256:e53fc44a current=true at ee5f1724; repair delta 00c12fef..c1c76ff0. 0 findings.\nS1, S2, C1 confirmed. The repair changes only comment lines 16-18 of complete_checkpoint.go; the ignored-file case matches spec.md:94; CC01-CC32 do not regress.\n"
+          },
+          "axis": "Spec",
+          "base": "ea3e7867a6019c2ce11edbf16bae033aaba81a2f",
+          "tip": "c1c76ff057669cb9407cbcb1b02ada1000ce926c",
+          "finding_ids": [],
+          "supersedes": [
+            "r-cc1-spec"
+          ]
+        },
+        {
+          "id": "r-cc1-coverage-confirm",
+          "performer": "claude:ft392_confirm_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft392_confirm_coverage",
+            "digest": "sha256:400a8c073c6968b21fe1423587f48e9fe5e829246f2e5265904c8904fd9b2e7a",
+            "excerpt": "Coverage confirming round, chunk CC1, evidence sha256:e53fc44a current=true at ee5f1724; repair delta 00c12fef..c1c76ff0. 0 findings.\nC1 probe (refuse on ignored files): bit, ignored_file failed at complete_checkpoint_test.go:207, restored yes.\nS1 probe (never refuse): bit, 4 failures at complete_checkpoint_test.go:242, restored yes. git status clean at finish.\n"
+          },
+          "axis": "Coverage",
+          "base": "ea3e7867a6019c2ce11edbf16bae033aaba81a2f",
+          "tip": "c1c76ff057669cb9407cbcb1b02ada1000ce926c",
+          "finding_ids": [],
+          "supersedes": [
+            "r-cc1-coverage"
+          ]
         }
       ]
     }
@@ -511,3 +577,13 @@ Chunk CC1 has 0 findings. Rows CC01 to CC32 are met.
 Chunk CC1 has 1 finding. The worst finding is C1.
 
 - C1 (auto-fix, confidence 7): no test makes sure that an ignored file passes the clean-checkout check at `internal/gate/complete_checkpoint.go:63-69`. The spec decides that the working-tree hash excludes ignored files. A probe that refuses on each ignored file stayed silent on `./internal/gate` and on `TestGateCheckpointRoute`. Add an ignored-file case to `TestCompleteCheckpointRefusesADirtyCheckout` that expects exit 0.
+
+## Repair state
+
+Chunk CC1 used 1 of its 2 repair cycles and its 1 hardening cycle. The repair session `claude:ft392_t2_repair1` fixed S1, S2, and C1 in one cycle. The confirming round of all three axes read the repair delta and found 0 findings. Each confirming result supersedes the first-round result of its axis.
+
+The record carries the repair plan amendment before the chunk update. An earlier record order put the chunk update first, and the chunk checkpoint refused it. The rebuilt record holds the same entries and excerpt digests.
+
+## Advice
+
+The absence check in `internal/gate/complete_checkpoint_test.go` spells the stale-evidence text, which `internal/reviewrecord/check.go` owns as an inline error. Two older tests use the same literal. This advice has no finding ID and goes to the drain.
