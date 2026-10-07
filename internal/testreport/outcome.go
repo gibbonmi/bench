@@ -9,7 +9,7 @@ type OutcomeKind string
 const (
 	// OutcomePassed is a run that ran at least one test and observed no failure.
 	OutcomePassed OutcomeKind = "passed"
-	// OutcomeFailed is a run with at least one failing test row.
+	// OutcomeFailed is a run with at least one failed test.
 	OutcomeFailed OutcomeKind = "failed"
 	// OutcomeBuildFailed is a package the run reported as failed with no failing test.
 	OutcomeBuildFailed OutcomeKind = "build-failed"
@@ -22,9 +22,10 @@ const (
 )
 
 // Outcome is the typed verdict beside the rendered report. FailedTests counts the
-// distinct failed tests, not the printed rows, so a caller cites the count without parsing the report. Ran counts
-// the distinct tests that emitted a run event, and it reads 0 when the run did not start,
-// so a caller can never read no execution as evidence.
+// distinct failed tests, not the printed rows, so a caller cites the count without
+// parsing the report. Ran counts the distinct tests that emitted a run event, and it
+// reads 0 when the run did not start, so a caller can never read no execution as
+// evidence.
 type Outcome struct {
 	Kind        OutcomeKind
 	FailedTests int
