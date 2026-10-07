@@ -371,13 +371,13 @@ RR-C6 comes last, because it turns red on any route that an earlier chunk has no
 
 ### Completion plan
 
-The version 1 plan records future implementation evidence.
+The version 2 plan records future implementation evidence.
 It claims no current implementation pass, red, or probe result.
-The orchestrator adds the required version 2 author sessions before dispatch.
+The orchestrator records each author session before that author's dispatch.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
   "chunks": [
     {
       "id": "RR-C1a",
@@ -386,8 +386,15 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "registry",
-          "command": "bench test --package ./internal/refusalroute"
+          "id": "t1-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "ticket": "01-create-the-shared-refusal-route-registry.md"
+        },
+        {
+          "id": "t1-renderer-proof",
+          "command": "bench test --package ./internal/refusalroute --run 'TestRouteRendering'",
+          "probe": "Make the renderer join the route steps with `, ` instead of `; then `. TestRouteRendering must fail, then pass after source restoration.",
+          "ticket": "01-create-the-shared-refusal-route-registry.md"
         }
       ]
     },
@@ -400,24 +407,82 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "registry",
-          "command": "bench test --package ./internal/refusalroute"
+          "id": "t2-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "ticket": "02-move-the-landing-faces-into-the-shared-registry.md"
         },
         {
-          "id": "guard-check",
-          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'"
+          "id": "t2-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "02-move-the-landing-faces-into-the-shared-registry.md"
         },
         {
-          "id": "landing-faces",
-          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'"
+          "id": "t2-landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestConflictRepairIsAReviewerRoute|TestLandCommandReportsEveryRefusalInOnePreflight'",
+          "ticket": "02-move-the-landing-faces-into-the-shared-registry.md"
         },
         {
-          "id": "worktree-package",
-          "command": "bench test --package ./internal/worktree"
+          "id": "t2-conflict-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'",
+          "probe": "Declare the `composition-conflict` face with the agent authority. TestConflictRepairIsAReviewerRoute must fail, then pass after source restoration.",
+          "ticket": "02-move-the-landing-faces-into-the-shared-registry.md"
         },
         {
-          "id": "recovery-verb",
-          "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'"
+          "id": "t3-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t3-guard-check",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t3-landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t3-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t3-guard-proof",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards'",
+          "probe": "Declare the first route step of the `source-not-clean` face as the command `git merge <commit>`. TestAgentRoutesPassTheWiredGuards must fail, then pass after source restoration.",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t4-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-guard-check",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-recovery-verb",
+          "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-recovery-proof",
+          "command": "bench test --package ./internal/refusalroute --run 'TestRecoveryListsEveryFace'",
+          "probe": "Make `bench recovery` skip the last registered face. TestRecoveryListsEveryFace must fail, then pass after source restoration.",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
         }
       ]
     },
@@ -430,16 +495,67 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "merge-routes",
-          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'"
+          "id": "t5-merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal|TestLandingRedRouteNamesTheRepair'",
+          "ticket": "05-route-each-merge-refusal-through-the-registry.md"
         },
         {
-          "id": "worktree-package",
-          "command": "bench test --package ./internal/worktree"
+          "id": "t5-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "05-route-each-merge-refusal-through-the-registry.md"
         },
         {
-          "id": "landing-package",
-          "command": "bench test --package ./internal/landing"
+          "id": "t5-landing-package",
+          "command": "bench test --package ./internal/landing",
+          "ticket": "05-route-each-merge-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t5-conflict-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'",
+          "probe": "Declare the `merge-conflict` face with the agent authority. TestConflictRepairIsAReviewerRoute must fail, then pass after source restoration.",
+          "ticket": "05-route-each-merge-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t6-merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'",
+          "ticket": "06-give-the-red-source-fold-an-exit.md"
+        },
+        {
+          "id": "t6-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "06-give-the-red-source-fold-an-exit.md"
+        },
+        {
+          "id": "t6-landing-package",
+          "command": "bench test --package ./internal/landing",
+          "ticket": "06-give-the-red-source-fold-an-exit.md"
+        },
+        {
+          "id": "t6-target-alone-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestRedSourceFoldNamesAnExit'",
+          "probe": "Make an `inherited` fold take the `merge-fold-red` face without the target-alone grade. TestRedSourceFoldNamesAnExit must fail, then pass after source restoration.",
+          "ticket": "06-give-the-red-source-fold-an-exit.md"
+        },
+        {
+          "id": "t7-merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'",
+          "ticket": "07-route-each-reset-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t7-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "07-route-each-reset-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t7-landing-package",
+          "command": "bench test --package ./internal/landing",
+          "ticket": "07-route-each-reset-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t7-walk-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'",
+          "probe": "Register one more reset face that no fixture produces. TestMergeFacesFollowTheirRoutes must fail, then pass after source restoration.",
+          "ticket": "07-route-each-reset-refusal-through-the-registry.md"
         }
       ]
     },
@@ -451,12 +567,36 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "commit-package",
-          "command": "bench test --package ./internal/commit"
+          "id": "t8-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "ticket": "08-route-the-commit-exit-3-to-the-reset-plan.md"
         },
         {
-          "id": "commit-exit-three",
-          "command": "bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'"
+          "id": "t8-commit-exit-three",
+          "command": "bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'",
+          "ticket": "08-route-the-commit-exit-3-to-the-reset-plan.md"
+        },
+        {
+          "id": "t8-reset-route-proof",
+          "command": "bench test --package ./internal/commit --run 'TestPublishedUnreconciledRouteIsTheResetPlan'",
+          "probe": "Give the `commit-published-unreconciled` face the old `git restore` route. TestPublishedUnreconciledRouteIsTheResetPlan must fail, then pass after source restoration.",
+          "ticket": "08-route-the-commit-exit-3-to-the-reset-plan.md"
+        },
+        {
+          "id": "t9-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "ticket": "09-route-each-commit-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t9-commit-exit-three",
+          "command": "bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'",
+          "ticket": "09-route-each-commit-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t9-red-route-proof",
+          "command": "bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'",
+          "probe": "Drop the re-run step from the `commit-red` route. TestCommitFacesFollowTheirRoutes must fail, then pass after source restoration.",
+          "ticket": "09-route-each-commit-refusal-through-the-registry.md"
         }
       ]
     },
@@ -467,12 +607,20 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "gate-package",
-          "command": "bench test --package ./internal/gate"
+          "id": "t10-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "ticket": "10-route-each-checkpoint-refusal-by-its-cause.md"
         },
         {
-          "id": "checkpoint-routes",
-          "command": "bench test --package ./internal/gate --run 'TestCheckpointFacesFollowTheirRoutes|TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'"
+          "id": "t10-checkpoint-routes",
+          "command": "bench test --package ./internal/gate --run 'TestCheckpointFacesFollowTheirRoutes|TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'",
+          "ticket": "10-route-each-checkpoint-refusal-by-its-cause.md"
+        },
+        {
+          "id": "t10-help-row-proof",
+          "command": "bench test --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'",
+          "probe": "Print the fixed write-access `help[1]{cmd,why}` row on the checkpoint refusal again. TestReviewCheckpointRefusalRoute must fail, then pass after source restoration.",
+          "ticket": "10-route-each-checkpoint-refusal-by-its-cause.md"
         }
       ]
     },
@@ -484,16 +632,41 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "commitment-packages",
-          "command": "bench test --package ./internal/commitment/..."
+          "id": "t11-commitment-packages",
+          "command": "bench test --package ./internal/commitment/...",
+          "ticket": "11-route-the-commitment-policy-refusals-through-faces.md"
         },
         {
-          "id": "commit-package",
-          "command": "bench test --package ./internal/commit"
+          "id": "t11-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "ticket": "11-route-the-commitment-policy-refusals-through-faces.md"
         },
         {
-          "id": "commitment-verb",
-          "command": "bench test --package ./cmd/bench --run 'TestCommitment'"
+          "id": "t11-authority-proof",
+          "command": "bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'",
+          "probe": "Give the protected-commitment refusal the `commitment-unbound` face. TestCommitFacesFollowTheirRoutes must fail, then pass after source restoration.",
+          "ticket": "11-route-the-commitment-policy-refusals-through-faces.md"
+        },
+        {
+          "id": "t12-commitment-packages",
+          "command": "bench test --package ./internal/commitment/...",
+          "ticket": "12-print-the-commitment-verb-routes-from-the-registry.md"
+        },
+        {
+          "id": "t12-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "ticket": "12-print-the-commitment-verb-routes-from-the-registry.md"
+        },
+        {
+          "id": "t12-commitment-verb",
+          "command": "bench test --package ./cmd/bench --run 'TestCommitment'",
+          "ticket": "12-print-the-commitment-verb-routes-from-the-registry.md"
+        },
+        {
+          "id": "t12-authority-proof",
+          "command": "bench test --package ./internal/commitment/commitcmd --run 'TestCommitmentFacesFollowTheirRoutes'",
+          "probe": "Give the outside-milestone start refusal the `commitment-needs-assignment` face. TestCommitmentFacesFollowTheirRoutes must fail, then pass after source restoration.",
+          "ticket": "12-print-the-commitment-verb-routes-from-the-registry.md"
         }
       ]
     },
@@ -504,12 +677,20 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "bypass-check",
-          "command": "bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'"
+          "id": "t13-bypass-check",
+          "command": "bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'",
+          "ticket": "13-refuse-a-route-literal-outside-the-registry.md"
         },
         {
-          "id": "conformance-package",
-          "command": "bench test --package ./internal/conformance"
+          "id": "t13-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "13-refuse-a-route-literal-outside-the-registry.md"
+        },
+        {
+          "id": "t13-scan-proof",
+          "command": "bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'",
+          "probe": "Remove `internal/commitment/repository` from the scanned packages of the bypass check. TestRouteBypassCheckBites must fail, then pass after source restoration.",
+          "ticket": "13-refuse-a-route-literal-outside-the-registry.md"
         }
       ]
     }
@@ -523,7 +704,28 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       "id": "coverage",
       "command": "bench coverage --check refusal-route-registry"
     }
-  ]
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft393-build-20261007",
+    "orchestrator_session": "claude:ft393-orchestrator-20261007",
+    "author_limit": 1,
+    "assignments": {
+      "01-create-the-shared-refusal-route-registry.md": [],
+      "02-move-the-landing-faces-into-the-shared-registry.md": [],
+      "03-prove-each-agent-route-passes-the-wired-guards.md": [],
+      "04-render-the-recovery-matrix-from-the-registry.md": [],
+      "05-route-each-merge-refusal-through-the-registry.md": [],
+      "06-give-the-red-source-fold-an-exit.md": [],
+      "07-route-each-reset-refusal-through-the-registry.md": [],
+      "08-route-the-commit-exit-3-to-the-reset-plan.md": [],
+      "09-route-each-commit-refusal-through-the-registry.md": [],
+      "10-route-each-checkpoint-refusal-by-its-cause.md": [],
+      "11-route-the-commitment-policy-refusals-through-faces.md": [],
+      "12-print-the-commitment-verb-routes-from-the-registry.md": [],
+      "13-refuse-a-route-literal-outside-the-registry.md": []
+    }
+  }
 }
 ```
 
