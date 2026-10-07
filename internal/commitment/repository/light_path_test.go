@@ -26,10 +26,22 @@ const approvedFolder = "specs/approved"
 // unpinnedRow is the board index line of FT9, a row that no outcome pins.
 const unpinnedRow = "**FT9 — C**\n\n"
 
+// retiredSpec and retiredTicket make up a delivered spec folder that no outcome pins, and
+// retiredRecord is its review record. executableRecord is the executable review record of
+// a spec that main does not hold. productionFile is a production file on main.
+const (
+	retiredSpec      = "specs/done/spec.md"
+	retiredTicket    = "specs/done/tickets/one.md"
+	retiredRecord    = "reviews/done.md"
+	executableRecord = "reviews/gone.md"
+	productionFile   = "tool.go"
+)
+
 // lightPathRepo commits on main the SeedClosure milestone over MilestoneSpec, its review
-// record, the unpinned row FT9, and a one-ticket folder that outcome B approves as a
-// deliverable. A second assignment then holds the active binding and claim of the delivery
-// outcome. It returns root and that bound worktree.
+// record, the unpinned row FT9, a one-ticket folder that outcome B approves as a
+// deliverable, the retired spec folder with its review record, and productionFile. A second
+// assignment then holds the active binding and claim of the delivery outcome. It returns
+// root and that bound worktree.
 func lightPathRepo(t *testing.T) (root, bound string) {
 	t.Helper()
 	root = gittest.RepoOnBranch(t, "main")
@@ -39,6 +51,14 @@ func lightPathRepo(t *testing.T) (root, bound string) {
 	commitmenttest.Write(t, root, "ROADMAP.md", strings.Replace(commitmenttest.ClosureIndex(), "## Recommended", unpinnedRow+"## Recommended", 1))
 	commitmenttest.Write(t, root, "roadmap/FT9.md", unpinnedRow+"Settle the C finding.\n")
 	commitmenttest.WriteLightTicket(t, root, approvedFolder+"/tickets/one.md", "approved.go")
+	commitmenttest.Write(t, root, retiredSpec, "# done\n\nStatus: implemented\n")
+	commitmenttest.Write(t, root, retiredTicket, "# One\n")
+	commitmenttest.Write(t, root, retiredRecord, "record\n")
+	commitmenttest.Write(t, root, productionFile, "package fixture\n")
+	commitmenttest.Write(t, root, executableRecord, "record\n")
+	if err := os.Chmod(filepath.Join(root, filepath.FromSlash(executableRecord)), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	identity := commitmenttest.FolderIdentity(t, root, approvedFolder)
 	commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
 		other := &policy.Milestones[0].Outcomes[1]
@@ -68,6 +88,17 @@ func TestLightPathCandidate(t *testing.T) {
 		{name: "directory-sibling", steps: steps(ticket(lightTicket, "pkg"), write("pkgx/a.go")), want: `production path "pkgx/a.go" is outside the Writes line of light-path ticket "` + lightTicket + `"`},
 		// A retirement deletes its review record and adds its ADR.
 		{name: "retirement", steps: steps(ticket(lightTicket, commitmenttest.MilestoneRecord, "docs/adr/9999-x.md"), remove(commitmenttest.MilestoneRecord), write("docs/adr/9999-x.md"))},
+		// A spec retirement deletes the spec folder and its review record together.
+		{name: "retired-spec-with-record", steps: steps(remove(retiredSpec, retiredTicket, retiredRecord))},
+		// A review record deletion is planning only when its spec folder is gone.
+		{name: "record-beside-spec", steps: steps(remove(retiredRecord)), want: unbound},
+		{name: "record-beside-tickets", steps: steps(remove(retiredSpec, retiredRecord)), want: unbound},
+		// A review record write stays production, with or without its spec folder.
+		{name: "record-edit", steps: steps(write(retiredRecord)), want: unbound},
+		{name: "record-edit-without-spec", steps: steps(remove(retiredSpec, retiredTicket), write(retiredRecord)), want: unbound},
+		// A deletion that is not a planning review record stays production.
+		{name: "production-deletion", steps: steps(remove(productionFile)), want: unbound},
+		{name: "executable-record-deletion", steps: steps(remove(executableRecord)), want: unbound},
 		{name: "second-ticket", steps: steps(ticket(lightTicket, "change.go"), ticket(lightFolder+"/tickets/two.md", "change.go"), write("change.go")), want: unbound},
 		{name: "nested-second-ticket", steps: steps(ticket(lightTicket, "change.go"), ticket(lightFolder+"/tickets/sub/two.md", "change.go"), write("change.go")), want: unbound},
 		{name: "span", steps: steps(ticket("specs/lp1/tickets/one.md", "a.go"), ticket("specs/lp2/tickets/one.md", "b.go"), write("a.go", "b.go")), want: "production paths span more than one light-path ticket; a light-path change carries one ticket"},
