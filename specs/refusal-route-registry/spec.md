@@ -40,7 +40,7 @@ A static check proves that no write-verb source composes a route outside the reg
 
 Line: `opus` / high.
 Implementation-line reason: the hardest chunk moves the landing's registry into a shared package and changes route text that many worktree tests pin. The spec fixes each face and its route, the seams follow the landing precedent, and each face has a red-capable producing fixture.
-Harder chunks: RR-C1, RR-C3.
+Harder chunks: RR-C1b, RR-C3.
 
 ### One registry declares every face
 
@@ -342,36 +342,169 @@ It reads only the compiled registry.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| RR-C1 / to be sliced | The shared registry, the guard check, the landing faces on the registry, and `bench recovery` | RR01-RR20, RR51-RR54, RR58, RR60 | `internal/refusalroute`, `internal/conformance`, `internal/worktree` landing tests | yes |
-| RR-C2 / to be sliced | The merge and the reset print registry routes, and the red-source fold has an exit | RR21-RR31, RR55-RR57, RR59 | `internal/worktree` merge and reset tests, `internal/landing` | no |
-| RR-C3 / to be sliced | The commit prints registry routes, and the exit 3 route is the reset plan | RR32-RR38 | `internal/commit`, `internal/worktree` | yes |
-| RR-C4 / to be sliced | The gate checkpoint prints the route of its cause | RR39-RR44 | `internal/gate` | no |
-| RR-C5 / to be sliced | The commitment verb prints routes of the right authority | RR45-RR48, RR61-RR64 | `internal/commitment/commitcmd`, `cmd/bench` | no |
-| RR-C6 / to be sliced | No write-verb source composes a route outside the registry | RR49-RR50, RR65 | `internal/conformance` | no |
+| RR-C1a / 01-create-the-shared-refusal-route-registry.md | The shared registry seam: the face and step types, the renderer, and the one constructor | RR04-RR07, RR13 | `internal/refusalroute` | no |
+| RR-C1b / 02-move-the-landing-faces-into-the-shared-registry.md, 03-prove-each-agent-route-passes-the-wired-guards.md, 04-render-the-recovery-matrix-from-the-registry.md | The landing faces on the registry, the guard check, and `bench recovery` | RR01-RR03, RR08-RR12, RR14-RR20, RR51-RR54, RR58, RR60 | `internal/refusalroute`, `internal/conformance`, `internal/worktree` landing tests, `cmd/bench` | yes |
+| RR-C2 / 05-route-each-merge-refusal-through-the-registry.md, 06-give-the-red-source-fold-an-exit.md, 07-route-each-reset-refusal-through-the-registry.md | The merge and the reset print registry routes, and the red-source fold has an exit | RR21-RR31, RR55-RR57, RR59 | `internal/worktree` merge and reset tests, `internal/landing` | no |
+| RR-C3 / 08-route-the-commit-exit-3-to-the-reset-plan.md, 09-route-each-commit-refusal-through-the-registry.md | The commit prints registry routes, and the exit 3 route is the reset plan | RR32-RR38 | `internal/commit`, `internal/worktree` | yes |
+| RR-C4 / 10-route-each-checkpoint-refusal-by-its-cause.md | The gate checkpoint prints the route of its cause | RR39-RR44 | `internal/gate` | no |
+| RR-C5 / 11-route-the-commitment-policy-refusals-through-faces.md, 12-print-the-commitment-verb-routes-from-the-registry.md | The commitment verb prints routes of the right authority | RR45-RR48, RR61-RR64 | `internal/commit`, `internal/commitment`, `internal/commitment/commitcmd`, `cmd/bench` | no |
+| RR-C6 / 13-refuse-a-route-literal-outside-the-registry.md | No write-verb source composes a route outside the registry | RR49-RR50, RR65 | `internal/conformance` | no |
 
-RR-C1 comes first, because every later chunk raises its faces through the shared constructor.
+The slice split RR-C1 into RR-C1a and RR-C1b.
+RR-C1a holds ticket 01, which creates the seam that every later ticket consumes, so it is its own small review chunk.
+RR-C1b holds tickets 02 to 04.
+The other chunk IDs did not change.
+
+RR-C1a comes first, because every later chunk raises its faces through the shared constructor.
+Its chunk review closes before ticket 02 starts.
 RR-C2 changes the authorization sentence that RR-C3 also prints.
+
+RR-C4 starts only on a base that contains the FT392 landing.
+Ticket 11 in RR-C5 runs after RR-C3, because it adds its rows to the commit test file that ticket 08 creates.
+Each verb ticket adds its faces to the one registry file, so the tickets run in serial order.
 RR-C6 comes last, because it turns red on any route that an earlier chunk has not moved.
 
 ### Completion plan
 
 The version 1 plan records future implementation evidence.
 It claims no current implementation pass, red, or probe result.
-This plan is provisional, and the slice replaces it.
+The orchestrator adds the required version 2 author sessions before dispatch.
 
 ```bench-completion-plan
 {
   "version": 1,
   "chunks": [
     {
-      "id": "RR-C1",
+      "id": "RR-C1a",
       "tickets": [
-        "00-draft-closure.md"
+        "01-create-the-shared-refusal-route-registry.md"
       ],
       "verification": [
         {
           "id": "registry",
           "command": "bench test --package ./internal/refusalroute"
+        }
+      ]
+    },
+    {
+      "id": "RR-C1b",
+      "tickets": [
+        "02-move-the-landing-faces-into-the-shared-registry.md",
+        "03-prove-each-agent-route-passes-the-wired-guards.md",
+        "04-render-the-recovery-matrix-from-the-registry.md"
+      ],
+      "verification": [
+        {
+          "id": "registry",
+          "command": "bench test --package ./internal/refusalroute"
+        },
+        {
+          "id": "guard-check",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'"
+        },
+        {
+          "id": "landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'"
+        },
+        {
+          "id": "worktree-package",
+          "command": "bench test --package ./internal/worktree"
+        },
+        {
+          "id": "recovery-verb",
+          "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'"
+        }
+      ]
+    },
+    {
+      "id": "RR-C2",
+      "tickets": [
+        "05-route-each-merge-refusal-through-the-registry.md",
+        "06-give-the-red-source-fold-an-exit.md",
+        "07-route-each-reset-refusal-through-the-registry.md"
+      ],
+      "verification": [
+        {
+          "id": "merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'"
+        },
+        {
+          "id": "worktree-package",
+          "command": "bench test --package ./internal/worktree"
+        },
+        {
+          "id": "landing-package",
+          "command": "bench test --package ./internal/landing"
+        }
+      ]
+    },
+    {
+      "id": "RR-C3",
+      "tickets": [
+        "08-route-the-commit-exit-3-to-the-reset-plan.md",
+        "09-route-each-commit-refusal-through-the-registry.md"
+      ],
+      "verification": [
+        {
+          "id": "commit-package",
+          "command": "bench test --package ./internal/commit"
+        },
+        {
+          "id": "commit-exit-three",
+          "command": "bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'"
+        }
+      ]
+    },
+    {
+      "id": "RR-C4",
+      "tickets": [
+        "10-route-each-checkpoint-refusal-by-its-cause.md"
+      ],
+      "verification": [
+        {
+          "id": "gate-package",
+          "command": "bench test --package ./internal/gate"
+        },
+        {
+          "id": "checkpoint-routes",
+          "command": "bench test --package ./internal/gate --run 'TestCheckpointFacesFollowTheirRoutes|TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'"
+        }
+      ]
+    },
+    {
+      "id": "RR-C5",
+      "tickets": [
+        "11-route-the-commitment-policy-refusals-through-faces.md",
+        "12-print-the-commitment-verb-routes-from-the-registry.md"
+      ],
+      "verification": [
+        {
+          "id": "commitment-packages",
+          "command": "bench test --package ./internal/commitment/..."
+        },
+        {
+          "id": "commit-package",
+          "command": "bench test --package ./internal/commit"
+        },
+        {
+          "id": "commitment-verb",
+          "command": "bench test --package ./cmd/bench --run 'TestCommitment'"
+        }
+      ]
+    },
+    {
+      "id": "RR-C6",
+      "tickets": [
+        "13-refuse-a-route-literal-outside-the-registry.md"
+      ],
+      "verification": [
+        {
+          "id": "bypass-check",
+          "command": "bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance"
         }
       ]
     }
@@ -627,7 +760,8 @@ The prospective build owns these exact paths:
 - `internal/commitment/repository/readiness.go`
 - `internal/commitment/repository/publication_test.go`
 
-This fence is the closure that `bench preflight build refusal-route-registry --propose-writes` confirmed on the draft Writes line, plus two rendered-text readers that the reader sweep found.
+This fence is the closure that the build preflight write proposal confirmed on the draft Writes line.
+It also holds two rendered-text readers that the reader sweep found.
 The two FT392 gate paths joined after the first proposal, and a second proposal at the folded tip listed no further path.
 The build entry reruns the proposal on the FT392 base.
 The review pickup is `reviews/refusal-route-registry.md`.
