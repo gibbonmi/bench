@@ -30,11 +30,9 @@ Follow `.bench/BENCH.md`'s ticket authorship and chunk-review policy. `craft-del
 
 ## Build
 
-Before each approved slice, identify its acceptance target and existing verification route.
-At an approved TDD seam, follow `craft-tdd` for its behavioral-red sequence, minimal compiled setup, and row classifications.
+Before each approved slice, identify its acceptance target and existing verification route. At an approved TDD seam, follow `craft-tdd` for its behavioral-red sequence, minimal compiled setup, and row classifications.
 
-A material action changes behavior, a verification target, or a premise that determines the next action. After each material action, rerun that route. Inspect the result before continuing.
-One material action can contain several related edits before the rerun. If a result contradicts the approved behavior or seam, stop. Route it through the wrong-spec path under "When the build stops short."
+A material action changes behavior, a verification target, or a premise that determines the next action. After each material action, rerun that route. Inspect the result before continuing. One material action can contain several related edits before the rerun. If a result contradicts the approved behavior or seam, stop. Route it through the wrong-spec path under "When the build stops short."
 
 Work approved tickets in dependency order inside their planned chunks. Use TDD only where `craft-tdd` marks the seam. When the spec carries a coverage map, seed the
 harness's native task list from `bench coverage <spec>`, whose `rows[N]{story,behavior,seam}` projection is one task per row. The spec and the ticket are final. Do not evaluate another approach. Implement the ticket as written, run its focused checks, then continue to the commit below.
@@ -78,6 +76,8 @@ This command orchestrates the fresh ticket authors, chunk reviews, the final lan
 
 A chunk delta can grow past its approved plan. It touches a path outside the tickets' `Writes:` fences, or it adds a ticket the plan does not list. Such a delta pauses to ask the reviewer before escalating tier.
 
-## `--delegate`
-
-`--delegate` extends a `--full` run with `.bench/BENCH.md`'s delegated run policy. It refuses without `--full`, an approved spec, or an approved ticket graph. Declare the configured model, effort, iteration cap, and author limit before the first dispatch. Record each assignment in the completion plan before you send that author's write charge. A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.
+A `--full` run accepts these options:
+- `--delegate` extends a `--full` run with `.bench/BENCH.md`'s delegated run policy. It refuses without `--full`, an approved spec, or an approved ticket graph. Declare the configured model, effort, iteration cap, and author limit before the first dispatch. Record each assignment in the completion plan before you send that author's write charge. A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.
+- `--reviewer <model> <effort>` sets the line of every review axis in the run.
+- `--consultant <model> <effort>` sets the line of every read-only diagnostic consultation in the run.
+- `--auto-approve` is the reviewer's approval, given in advance, for ticket fence expansions, spec and ticket expansions, and repair rounds past the bounded repair allowance. Under it, the orchestrator fixes a found defect at once and does not defer it.
