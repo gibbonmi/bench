@@ -545,6 +545,9 @@ The prospective build owns these exact paths:
 - `cmd/bench/command_registry_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_retained_workflow.go`
 
 This fence is provisional. The slice closes it with the closure that build preflight proposes.
 
