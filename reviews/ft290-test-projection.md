@@ -8,6 +8,12 @@ The confirming round of all three axes passed, and each earlier silent mutation 
 
 The reviewer then stated that `--auto-approve` prefers an immediate fix instead of a deferral. So C6 became a repair target, owned by ticket 10, in the chunk's second repair cycle. Before that repair, the source folded `main` twice. The first fold composed an unrelated spec staging. The second fold composed the light-path fix that lets the review preflight authorize folded paths.
 
+The C6 confirming round passed. The landing then went red, because the delivery closure deletes `roadmap/FT290.md` and two decision maps cited it. Under the reviewer's auto-approval, ticket 10's fence gained both maps, and the third repair cycle moved each citation at `d5e1378e`. The confirming round of that docs delta passed on Spec and Coverage. The Standards axis found three blockers, recorded as S3, S4, and S5, and the fourth repair cycle fixes them:
+
+- S3, auto-fix, confidence 7. The provenance map's new Notes paragraph restates the occurrence that its ticket #1 owns, and it adds an unsettled cause. Delete the paragraph.
+- S4, auto-fix, confidence 7. The provenance map's Sources entry names story 36, but the spec names the map on story 36's Not covered line and in Out of scope. Name those two lines.
+- S5, auto-fix, confidence 6. The FT290 map's Sources entry claims an occurrence record in the source trace. Name the destination and the ticket answers instead.
+
 The raw count is 7 findings, and the repair-target count is 6, because S2 and C4 name one fix. Ticket 10 owns every target.
 
 The orchestrator accepted the `ask-user` finding S1 under the reviewer's auto-approval for spec and ticket expansions, because spec line 219 fixes the cause order.
@@ -3232,6 +3238,76 @@ Count: 4. Worst issue: C1.
           "finding_ids": [],
           "supersedes": [
             "c4-coverage-c1"
+          ]
+        },
+        {
+          "id": "c4-standards-c3",
+          "performer": "claude:ft290_c4_standards_c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a17ff335f304f36ab74fb2da17eacf40c04c9580",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_standards_c3",
+            "digest": "sha256:daffd9ccfae5cedd49c4fddc031751531118650fc0702fbabeb9412dd1f3111d",
+            "excerpt": "axis=Standards findings=3 worst=S1 (third confirming round, dc26a362..d5e1378e, decision maps)\nS1 | auto-fix | conf 7 | decisions/run-binary-provenance.md:20-22 | The new Notes paragraph restates the 2026-09-17 occurrence that ticket #1 (decisions/run-binary-provenance/tickets/1.md:8-10) already owns, and adds an unsettled cause (\"because the worktree source was ahead of its sealed run binary\"). One source per fact. | Delete the Notes paragraph; ticket #1 owns the occurrence.\nS2 | auto-fix | conf 7 | decisions/run-binary-provenance.md:40-41 | The Sources entry says story 36 names the map; the map is named on the Not covered line for story 36 (spec.md:396) and the Out of scope line (spec.md:489). | Supports and Drift name those two lines.\nS3 | auto-fix | conf 6 | specs/ft290-test-projection/decisions/ft290-test-projection.md:62 | Supports claims an occurrence record in the source trace; the trace maps ticket answers and holds no occurrence. | Supports names the destination and the ticket answers behind tickets #1 to #9.\nAdvice: STE and invariant 3 pass; the Sources grammar is kept.\nExamined: --check-current at d553e633, the map diff, map-discipline.md, both maps, the provenance ticket 1, roadmap/FT290.md, spec lines, the shape-idea Sources rule. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "d5e1378e47b736651e2b8b828fc91c32364b56bc",
+          "finding_ids": [
+            "S3",
+            "S4",
+            "S5"
+          ],
+          "supersedes": [
+            "c4-standards-c2"
+          ]
+        },
+        {
+          "id": "c4-spec-c3",
+          "performer": "claude:ft290_c4_spec_c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a17ff335f304f36ab74fb2da17eacf40c04c9580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_spec_c3",
+            "digest": "sha256:78da6016cd51d9fe0de425210724a317b382301dba0e7dfd52dde8a258c7d0e4",
+            "excerpt": "axis=Spec findings=0 worst=none (third confirming round, dc26a362..d5e1378e, decision maps)\nNo decision changed: the provenance map gains one Notes sentence and a new Sources entry; the FT290 map changes only its Sources entry.\nThe Notes sentence keeps the date, build, cause, and effect of roadmap/FT290.md line 42.\nThe new source supports each clause: spec Out of scope (line 489), Not covered story 36 (line 396), and the source trace under Further notes.\nPlan commit afc3ddec added both maps to ticket 10 Writes, the fence list, a Flagged additions line, and the t10_r3 assignment.\nAdvice: story 36 itself does not name the map; its Not covered line and Out of scope do.\nExamined: --check-current at d553e633, the map diff, git show afc3ddec, roadmap/FT290.md, spec lines. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "d5e1378e47b736651e2b8b828fc91c32364b56bc",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-c2"
+          ]
+        },
+        {
+          "id": "c4-coverage-c3",
+          "performer": "claude:ft290_c4_coverage_c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a17ff335f304f36ab74fb2da17eacf40c04c9580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_coverage_c3",
+            "digest": "sha256:13178f20f7546fe17fc8319356262c4f1fbe7a05724a0e5984f06f29e387b083",
+            "excerpt": "axis=Coverage findings=0 worst=none (third confirming round, dc26a362..d5e1378e, decision maps)\nRemaining roadmap/FT290.md references: .bench/commitment.json:178 is the outcome source that the delivery consumes; docs/research/roadmap-review-2026-09-25.md:233 is an unvalidated historical link. ROADMAP.md names FT290 only on lines the closure edits. No Sources path or validated reference breaks.\nProbe: swapping the provenance map's new Sources path for roadmap/FT290-gone.md under decision-map-integrity bit, restored yes.\n./dist/bench test --check decision-map-integrity passed (tests_run 1); git status clean.\nAdvice: the FT290 map's Supports clause says the spec's source trace holds the occurrence record; the 2026-09-17 occurrence now lives in the provenance map.\nExamined: --check-current at d553e633, the map diff, the rg sweep, commitment.json, spec 494-620, internal/commitment/delivery.go.\n"
+          },
+          "axis": "Coverage",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "d5e1378e47b736651e2b8b828fc91c32364b56bc",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-coverage-c2"
           ]
         }
       ]
