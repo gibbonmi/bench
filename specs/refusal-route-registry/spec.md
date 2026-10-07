@@ -741,6 +741,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "90fa563633fcf6114ed714dfa480777cd36a176d",
           "native_ref": "claude-agent:ft393_t2"
+        },
+        {
+          "session": "claude:ft393_t2_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "5a0684de8441bd7b2b82e4e52bbef2d3e0e04fc5",
+          "native_ref": "claude-agent:ft393_t2_repair1",
+          "predecessor": "claude:ft393_t2",
+          "trigger": "user-directed",
+          "stopped": "the ticket 02 author session reported completion of its RR-C1b verification records and has no live child",
+          "preserved": "5a0684de8441bd7b2b82e4e52bbef2d3e0e04fc5"
         }
       ],
       "03-prove-each-agent-route-passes-the-wired-guards.md": [

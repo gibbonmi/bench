@@ -30,6 +30,7 @@ The merge exit 3 record prints its reset route through the `merge-published-unre
 The merge's single infrastructure retry matches the typed kind, not the old sentence.
 Change each test that reads the old inline action, so that it reads the new sentence.
 The landing maps the typed kind of its authorization red to `land-red` or `land-infrastructure`, so no landing red loses its route.
+Each other `landReviewed` error that no face claims hands back through `land-handback`, so no landing refusal prints without a route.
 Add `TestLandingRedRouteNamesTheRepair` in `internal/worktree/refusal_route_test.go`.
 
 Add `TestMergeFacesFollowTheirRoutes` in `internal/worktree/merge_route_test.go`.
@@ -44,4 +45,5 @@ The `merge-published-unreconciled` fixture is `TestMergeExitsThreeWhenTheReconci
 - [ ] The `inherited` authorization refusal sentence equals `prospective authorization refused: inherited (the gate ran red on the composed tree and no green baseline attributes the red to this diff)`.
 - [ ] The merge retries an empty-reason infrastructure refusal exactly once.
 - [ ] A landing whose composed tree grades red prints a `refused{` record whose `next=` contains `bench commit --in ` and ends with the caller's re-run.
+- [ ] A `landReviewed` error that no face claims prints a `next=` value that starts with `reviewer: `.
 - [ ] Each merge face that this ticket declares has one producing fixture that follows its route out of the face.
