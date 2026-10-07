@@ -23,7 +23,7 @@ func TestLandSuppliesTheDeclaredBenchHomeItself(t *testing.T) {
 		name, extra, refusal string
 	}{
 		{name: "derived"},
-		{name: "unsupplied", extra: "FT315_UNSUPPLIED", refusal: "infrastructure (declared environment unavailable: FT315_UNSUPPLIED); run bench doctor"},
+		{name: "unsupplied", extra: "FT315_UNSUPPLIED", refusal: "infrastructure (declared environment unavailable: FT315_UNSUPPLIED),next=bench doctor; then "},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			userHome := t.TempDir()

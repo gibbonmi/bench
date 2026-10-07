@@ -10,7 +10,9 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
@@ -316,24 +318,6 @@ func TestMergeRefusesAConflictingNonCapturePath(t *testing.T) {
 	}
 }
 
-// WM40: the conflict refusal names the hand repair in the order the operator runs it, up
-// to the commit that records the resolution. An empty next= leaves the operator to invent
-// the repair the landing already spells.
-func TestMergeConflictRefusalNamesTheHandRepair(t *testing.T) {
-	t.Parallel()
-	f := mergeFixture(t, "integration")
-	target := f.created[0]
-	commitInWorktree(t, target.Path, "tracked.txt", "target edit\n", "target edit")
-	incoming := commitOnDefault(t, f.root, "tracked.txt", "incoming edit\n")
-
-	r := runVerb(t, verbMerge, f.merge("--from", incoming, target.Assignment.ID))
-	wantNext := "next=git -C '" + target.Assignment.Worktree + "' merge '" + incoming +
-		"' (bench worktree merge refuses this conflict; resolve it by hand); then bench commit"
-	if r.exit != 1 || !strings.Contains(r.stdout, wantNext) {
-		t.Fatalf("conflict repair next = (%d, %q, %q), want %q", r.exit, r.stdout, r.stderr, wantNext)
-	}
-}
-
 // WM10: a conflicted `capture/learnings.md` composes as the union and the verb discloses
 // the side it took. A verb that bypasses the rule table refuses what the landing settles.
 func TestMergeSettlesAConflictedCaptureJournalAsTheUnion(t *testing.T) {
@@ -411,7 +395,7 @@ func TestMergeRefusesADirtyOrDetachedSibling(t *testing.T) {
 
 	r := runVerb(t, verbMerge, f.merge("--from", sibling.Assignment.Label, target.Assignment.ID))
 	requireMergeRefusal(t, r, "sibling checkout is not clean",
-		"next=bench worktree exec "+sibling.Assignment.ID+" -- bench commit", "sibling.txt")
+		"next=bench commit --in '"+sibling.Assignment.Label+"' ", "sibling.txt")
 	requireMergeUnchanged(t, f, target, previous)
 
 	gitRun(t, sibling.Path, "checkout", "-q", "--", "sibling.txt")
@@ -620,9 +604,12 @@ func TestMergeRefusesAFailingLaneCheck(t *testing.T) {
 
 // An operational refusal with no diagnosis is retried only after the focused
 // verification proves the unchanged range green. A second retry can hide a persistent
-// failure, while retrying a diagnosed refusal ignores the owning gate's attribution.
+// failure, while retrying a diagnosed refusal ignores the owning gate's attribution. The
+// retry reads the typed kind and reason, so a change to the refusal's sentence cannot stop
+// it (RR31), and an untyped error that spells the same sentence never retries.
 func TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal(t *testing.T) {
 	t.Parallel()
+	emptyReason := landing.AuthorizationRefusal{Result: authorization.Result{Kind: authorization.Infrastructure}}
 	for _, tc := range []struct {
 		name        string
 		first       error
@@ -632,33 +619,39 @@ func TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal(t *testing.T)
 	}{
 		{
 			name:        "green verification retries once",
-			first:       errors.New("prospective authorization refused: infrastructure; run bench doctor"),
+			first:       emptyReason,
 			verifyCode:  0,
 			wantRetries: 1,
 		},
 		{
 			name:        "reasoned infrastructure refusal does not retry",
-			first:       errors.New("prospective authorization refused: infrastructure (gate lock unavailable); run bench doctor"),
+			first:       landing.AuthorizationRefusal{Result: authorization.Result{Kind: authorization.Infrastructure, Reason: "gate lock unavailable"}},
 			verifyCode:  0,
 			wantRetries: 0,
 		},
 		{
 			name:        "diff-owned refusal does not retry",
-			first:       errors.New("prospective authorization refused: candidate (the gate ran red); fix the failures above"),
+			first:       landing.AuthorizationRefusal{Result: authorization.Result{Kind: authorization.Candidate}},
+			verifyCode:  0,
+			wantRetries: 0,
+		},
+		{
+			name:        "untyped infrastructure sentence does not retry",
+			first:       errors.New(emptyReason.Error()),
 			verifyCode:  0,
 			wantRetries: 0,
 		},
 		{
 			name:        "red verification does not retry",
-			first:       errors.New("prospective authorization refused: infrastructure; run bench doctor"),
+			first:       emptyReason,
 			verifyCode:  1,
 			wantRetries: 0,
 		},
 		{
 			name:        "second refusal does not retry again",
-			first:       errors.New("prospective authorization refused: infrastructure; run bench doctor"),
+			first:       emptyReason,
 			verifyCode:  0,
-			second:      errors.New("prospective authorization refused: infrastructure; run bench doctor"),
+			second:      emptyReason,
 			wantRetries: 1,
 		},
 	} {
@@ -717,7 +710,7 @@ func TestMergeRefusesACheckoutEditedDuringTheLane(t *testing.T) {
 	if r.exit != 1 || r.stderr != "" {
 		t.Fatalf("merge = (%d, %q), want exit 1 with stderr empty; stdout=%q", r.exit, r.stderr, r.stdout)
 	}
-	if !strings.Contains(r.stdout, "refused{detail=merge target checkout changed}") {
+	if !strings.Contains(r.stdout, "refused{detail=merge target checkout changed,") {
 		t.Fatalf("stdout = %q, want the fingerprint recheck's refusal", r.stdout)
 	}
 	if tip := gitOutput(t, f.root, "rev-parse", target.Assignment.Branch); tip != previous {
@@ -732,14 +725,13 @@ func TestMergeRefusesACheckoutEditedDuringTheLane(t *testing.T) {
 // published commit. A refusal-shaped exit hides that the ref moved.
 func TestMergeExitsThreeWhenTheReconcileFails(t *testing.T) {
 	t.Parallel()
-	f := mergeFixture(t, "integration")
+	// This is the merge-published-unreconciled face's producing fixture, which the merge
+	// route walk follows out of the face.
+	f, args := reconcileFailingMerge(t)
 	target := f.created[0]
-	commitInWorktree(t, target.Path, "target.txt", "target\n", "target work")
-	commitIndexLockLane(t, target.Path)
 	previous := gitOutput(t, target.Path, "rev-parse", "HEAD")
-	incoming := commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
 
-	r := runVerb(t, verbMerge, f.merge("--from", incoming, target.Assignment.ID))
+	r := runVerb(t, verbMerge, f.merge(args...))
 	if r.exit != 3 {
 		t.Fatalf("merge exit = %d, want 3; stdout=%q stderr=%q", r.exit, r.stdout, r.stderr)
 	}

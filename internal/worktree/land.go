@@ -20,6 +20,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 	"go.opentelemetry.io/otel/attribute"
@@ -206,7 +207,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		if errors.As(err, &conflict) {
 			return landRefusalError(stdout, landingConflictRefusal(conflict, destination, assignment.ID, parsed.Flags["--spec"], path, assignment.Worktree))
 		}
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, landingCompositionRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment))
 	}
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
@@ -231,6 +232,28 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
 	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, brokerChanged, records, stdout, stderr)
+}
+
+// landingCompositionRoute attaches a route to an error the composition and its
+// authorization returned. The kind the gate attributed picks the face of an authorization
+// refusal: the repair of a red commits in the source, so its re-run names the repaired tip,
+// and an infrastructure outcome re-runs the caller's own command after the diagnosis. Every
+// other error has no face of its own, so it hands back to the reviewer.
+func landingCompositionRoute(err error, request, base, tip, specArg, path string, a intent.Assignment) error {
+	rerun := landingRerun(request, base, tip, specArg, path, a.ID)
+	var refused landing.AuthorizationRefusal
+	if !errors.As(err, &refused) {
+		return landingFaceRoute(err, rerun, false)
+	}
+	raised := refusal{detail: err.Error()}
+	switch refused.Result.Kind {
+	case authorization.Infrastructure:
+		return landingFaceRefusal(faceLandInfrastructure, raised, rerun, "")
+	case authorization.Inherited, authorization.Candidate, authorization.LaneFail:
+		raised.values = map[string]string{refusalroute.FactLabel: a.Label}
+		return landingFaceRefusal(faceLandRed, raised, landingRerunAt(request, base, repairedSourceTipFlag, specArg, path, a.ID), "")
+	}
+	return landingFaceRoute(err, rerun, false)
 }
 
 // landingSourceProofs runs the first run's source proofs over a resolved assignment: the

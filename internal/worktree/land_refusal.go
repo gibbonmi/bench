@@ -130,6 +130,10 @@ const (
 	faceResumeMarker               = "resume-marker"
 	faceLandIncomplete             = "land-incomplete"
 	faceLandHandback               = "land-handback"
+	// The landing raises these two from the composed tree's authorization refusal, by the
+	// kind the gate attributed.
+	faceLandRed            = "land-red"
+	faceLandInfrastructure = "land-infrastructure"
 )
 
 // retargetSourceTip re-points the caller's own re-run at the source tip the landing read

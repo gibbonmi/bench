@@ -97,7 +97,7 @@ func (o Owner) Merge(ctx context.Context, r MergeRequest) (MergeResult, error) {
 	// The caller's root can be another checkout of the same repository, where no anchor of
 	// that lane points at the composed tree.
 	if got := o.authorize(ctx, r.Worktree, tree, r.Stdout, r.Stderr); !o.publishes.permits(got.Kind) {
-		return MergeResult{}, errors.New(refusalMessage(got))
+		return MergeResult{}, AuthorizationRefusal{got}
 	}
 	// Recheck both moving identities after the lane and before creating an otherwise
 	// unreachable object.

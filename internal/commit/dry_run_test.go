@@ -36,7 +36,7 @@ func TestDryRunRedReportsRefusalAndMovesNothing(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	want := "prospective authorization refused: inherited (the gate ran red on the composed tree and no green baseline attributes the red to this diff); run bench gate --fresh"
+	want := "prospective authorization refused: inherited (the gate ran red on the composed tree and no green baseline attributes the red to this diff)"
 	if !strings.Contains(stderr, want) {
 		t.Fatalf("stderr = %q, want the operator-facing inherited refusal %q", stderr, want)
 	}

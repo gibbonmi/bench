@@ -73,6 +73,10 @@ const (
 	FactRerun = "rerun"
 	// FactLabel is the label of the assignment that owns the refusing tree.
 	FactLabel = "label"
+	// FactSiblingLabel is the label of the sibling assignment whose tree a merge reads.
+	FactSiblingLabel = "sibling-label"
+	// FactResetPlan is the reset verb's plan command at the commit a verb published.
+	FactResetPlan = "reset-plan"
 	// FactCheckoutGit is the Git command addressed at the conflicted checkout.
 	FactCheckoutGit = "checkout-git"
 	// FactConflictCommit is the commit whose composition conflicted.
@@ -97,6 +101,20 @@ var destinationClean = Instruction(Text("commit the destination's uncommitted wo
 // review sends a repaired source back through review before the landing re-runs. The
 // review is a phase the agent runs, not a shell command, so the step is an instruction.
 var review = Instruction(Text("/bench-review-implementation"))
+
+// commitAt commits the operator's repair in the worktree that the named label fact
+// addresses. Every face whose repair is the agent's own commit names this one step.
+func commitAt(label string) Step {
+	return TreeCommand("bench commit", Fact(label), Text("-m"), Operator("msg"), Text("--"), Operators("path"))
+}
+
+// doctor diagnoses an infrastructure outcome ahead of the caller's re-run.
+var doctor = Command(Text("bench doctor"))
+
+// handback is the route of each verb's handback face: a cause that only the reviewer
+// clears and that has no reviewer step of its own. The refusal's own sentence names the
+// cause.
+var handback = []Step{Instruction(Text("clear the cause that the refusal names")), rerun}
 
 // handMerge is the hand repair a composition conflict demands, up to the commit that
 // records the resolution. The landing and the merge refuse the same conflict, so both name
@@ -150,11 +168,7 @@ var inventory = []Face{
 		Name:      "source-not-clean",
 		Sentence:  "reviewed source is not clean",
 		Authority: Agent,
-		Route: []Step{
-			TreeCommand("bench commit", Fact(FactLabel), Text("-m"), Operator("msg"), Text("--"), Operators("path")),
-			review,
-			rerun,
-		},
+		Route:     []Step{commitAt(FactLabel), review, rerun},
 	},
 	{
 		// The fence already authorizes a path that a fold of the default branch brings in
@@ -208,6 +222,28 @@ var inventory = []Face{
 		},
 	},
 	{
+		// The gate graded the composed tree red. The authorization policy owns the sentence.
+		// The repair commits in the source, so the source goes back through review, and the
+		// raising site points the re-run at the repaired tip.
+		Verb:      Land,
+		Name:      "land-red",
+		Authority: Agent,
+		Route: []Step{
+			Instruction(Text("repair each failure that the gate reports in"), Fact(FactLabel)),
+			commitAt(FactLabel),
+			review,
+			rerun,
+		},
+	},
+	{
+		// The gate stopped on an infrastructure outcome, so no failure is the diff's. The
+		// authorization policy owns the sentence.
+		Verb:      Land,
+		Name:      "land-infrastructure",
+		Authority: Agent,
+		Route:     []Step{doctor, rerun},
+	},
+	{
 		// The landing published, and a later step did not finish. The re-run is the
 		// caller's resume of that published landing.
 		Verb:      Land,
@@ -216,12 +252,57 @@ var inventory = []Face{
 		Route:     []Step{rerun},
 	},
 	{
-		// A landing cause that only the reviewer clears and that has no reviewer step of
-		// its own. The refusal's own sentence names the cause.
 		Verb:      Land,
 		Name:      "land-handback",
 		Authority: Reviewer,
-		Route:     []Step{Instruction(Text("clear the cause that the refusal names")), rerun},
+		Route:     handback,
+	},
+	{
+		// The reconcile after the publication resets the target checkout, so its own
+		// uncommitted work is committed first.
+		Verb:      Merge,
+		Name:      "merge-target-not-clean",
+		Sentence:  "merge target checkout is not clean",
+		Authority: Agent,
+		Route:     []Step{commitAt(FactLabel), rerun},
+	},
+	{
+		// A sibling contributes its committed branch tip alone, so its uncommitted work is
+		// committed in the sibling before the fold.
+		Verb:      Merge,
+		Name:      "merge-sibling-not-clean",
+		Sentence:  "sibling checkout is not clean",
+		Authority: Agent,
+		Route:     []Step{commitAt(FactSiblingLabel), rerun},
+	},
+	{
+		// The composition names the conflicted paths in its own sentence, so the face
+		// declares none.
+		Verb:      Merge,
+		Name:      "merge-conflict",
+		Authority: Reviewer,
+		Route:     append(append([]Step{}, handMerge...), rerun),
+	},
+	{
+		// The authorization policy owns the sentence.
+		Verb:      Merge,
+		Name:      "merge-infrastructure",
+		Authority: Agent,
+		Route:     []Step{doctor, rerun},
+	},
+	{
+		// The merge published, and the target checkout did not reconcile. The reset verb's
+		// plan at the published tip reconciles it under a preserved envelope.
+		Verb:      Merge,
+		Name:      "merge-published-unreconciled",
+		Authority: Agent,
+		Route:     []Step{Command(Composed(FactResetPlan))},
+	},
+	{
+		Verb:      Merge,
+		Name:      "merge-handback",
+		Authority: Reviewer,
+		Route:     handback,
 	},
 }
 
@@ -250,10 +331,6 @@ func Sentence(name string) string {
 	face, _ := faceNamed(inventory, name)
 	return face.Sentence
 }
-
-// HandMerge renders the hand merge of a composition conflict over the raising site's facts.
-// The merge verb prints it as the repair of its own conflict refusal.
-func HandMerge(facts Facts) string { return Face{Route: handMerge}.Render(facts) }
 
 // AtCheckout renders a command whose last word is a checkout path that is not line-safe.
 // No quoting makes a control byte pasteable, and `bench worktree exec` refuses a Bench

@@ -1,5 +1,6 @@
 // Refusal route follow tests for the landing: each face's producing fixture carries out
-// the route the landing printed, re-runs the landing, and the landing completes.
+// the route the landing printed, re-runs the landing, and the landing completes. The route
+// walk helpers here serve the merge walk too.
 package worktree
 
 import (
@@ -33,42 +34,80 @@ func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 			t.Parallel()
 			face := faces[fixture.face]
 			produced := produceLandingFace(t, fixture)
-			route, reviewer := strings.CutPrefix(produced.next, reviewerRoute)
-			if reviewer != (face.Authority == refusalroute.Reviewer) {
-				t.Fatalf("%s next = %q, want the reviewer marker exactly when the face is the reviewer's", fixture.face, produced.next)
-			}
+			var names []string
 			if fixture.names != nil {
-				for _, name := range fixture.names(produced.f) {
-					if !strings.Contains(route, name) {
-						t.Fatalf("%s next = %q, want it to name %q", fixture.face, produced.next, name)
-					}
-				}
+				names = fixture.names(produced.f)
 			}
-			route = strings.TrimPrefix(route, laterProofsSkipped+"; ")
-			steps := refusalroute.Steps(route)
-			if len(steps) != len(face.Route) {
-				t.Fatalf("%s next = %q prints %d steps, want the %d the face declares", fixture.face, produced.next, len(steps), len(face.Route))
+			steps := printedSteps(t, face, produced.next, laterProofsSkipped, names)
+			if fixture.clear != nil {
+				fixture.clear(t, produced.f)
 			}
 			fill := operatorFill(produced)
-			var last verbResult
-			for index, step := range face.Route {
-				carry, carried := fixture.carry[index]
-				switch {
-				case carried && face.Authority == refusalroute.Agent && step.IsCommand():
-					t.Fatalf("%s step %d is an agent command, which the walk runs verbatim; the fixture may not carry it", fixture.face, index+1)
-				case carried:
-					carry(t, produced.f)
-				case step.IsCommand():
-					last = runPrintedStep(t, wrapper, produced.f, fill(t, steps[index]))
-				default:
-					t.Fatalf("%s step %d %q is an instruction that the fixture does not carry out", fixture.face, index+1, steps[index])
-				}
+			carry := func(index int) (func(), bool) {
+				step, carried := fixture.carry[index]
+				return func() { step(t, produced.f) }, carried
 			}
+			last := followRoute(t, face, steps, carry, func(step string) verbResult {
+				return runPrintedStep(t, wrapper, produced.f.repoHome, fill(t, step))
+			})
 			if _, landed := landedField(last.stdout, "worktree"); last.exit != 0 || !landed {
 				t.Fatalf("%s re-run = (%d, %q, %q), want exit 0 and a landed record", fixture.face, last.exit, last.stdout, last.stderr)
 			}
 		})
 	}
+}
+
+// printedSteps checks one printed route against the face that printed it and returns its
+// steps. The reviewer marker opens the route exactly when the face is the reviewer's, the
+// route names each of names, and after the preface it prints the steps the face declares.
+func printedSteps(t *testing.T, face refusalroute.Face, next, preface string, names []string) []string {
+	t.Helper()
+	route, reviewer := strings.CutPrefix(next, reviewerRoute)
+	if reviewer != (face.Authority == refusalroute.Reviewer) {
+		t.Fatalf("%s next = %q, want the reviewer marker exactly when the face is the reviewer's", face.Name, next)
+	}
+	for _, name := range names {
+		if !strings.Contains(route, name) {
+			t.Fatalf("%s next = %q, want it to name %q", face.Name, next, name)
+		}
+	}
+	steps := refusalroute.Steps(strings.TrimPrefix(route, preface+"; "))
+	if len(steps) != len(face.Route) {
+		t.Fatalf("%s next = %q prints %d steps, want the %d the face declares", face.Name, next, len(steps), len(face.Route))
+	}
+	return steps
+}
+
+// followRoute carries out a printed route step by step and returns the result of the last
+// step it ran. carry answers the fixture's own means for one step, by the step's index in
+// the face's route: an instruction, or a step of a reviewer route. run runs every other
+// step verbatim. An agent command step always runs verbatim, so the route the agent reads
+// is the route the walk proves.
+func followRoute(t *testing.T, face refusalroute.Face, steps []string, carry func(index int) (func(), bool), run func(step string) verbResult) verbResult {
+	t.Helper()
+	var last verbResult
+	for index, step := range face.Route {
+		carried, ok := carry(index)
+		switch {
+		case ok && face.Authority == refusalroute.Agent && step.IsCommand():
+			t.Fatalf("%s step %d is an agent command, which the walk runs verbatim; the fixture may not carry it", face.Name, index+1)
+		case ok:
+			carried()
+		case step.IsCommand():
+			last = run(steps[index])
+		default:
+			t.Fatalf("%s step %d %q is an instruction that the fixture does not carry out", face.Name, index+1, steps[index])
+		}
+	}
+	return last
+}
+
+// diagnosticStep reports whether a printed step is `bench doctor`. Its exit reports the
+// health of the whole install, and a fixture repository is never a linked one, so a walk
+// runs the step verbatim and does not grade its exit. Every other Bench verb keeps the
+// exit-0 rule.
+func diagnosticStep(words []string) bool {
+	return len(words) == 2 && words[0] == "bench" && words[1] == "doctor"
 }
 
 // operatorFill fills the slots a printed route leaves to the operator, with the values the
@@ -79,19 +118,24 @@ func operatorFill(produced producedFace) func(t *testing.T, step string) string 
 	return func(t *testing.T, step string) string {
 		t.Helper()
 		source := produced.f.creation.Path
-		var paths []string
-		for _, path := range strings.Fields(gitOutput(t, source, "ls-files", "--modified", "--others", "--exclude-standard")) {
-			paths = append(paths, sanitize.ShellQuote(path))
-		}
 		tip := gitOutput(t, source, "rev-parse", "HEAD")
-		return strings.NewReplacer(
-			"<msg>", "'follow the refusal route'",
-			"<path>...", strings.Join(paths, " "),
+		return strings.NewReplacer(append(commitSlots(t, source),
 			"<message>", "'land the followed route'",
 			"<request>", sanitize.ShellQuote(produced.request),
 			repairedTipArg, sanitize.ShellQuote(tip),
-		).Replace(step)
+		)...).Replace(step)
 	}
+}
+
+// commitSlots are the replacement pairs for the operator slots of a printed commit step:
+// the message, and the uncommitted paths of the checkout the step commits in.
+func commitSlots(t *testing.T, checkout string) []string {
+	t.Helper()
+	var paths []string
+	for _, path := range strings.Fields(gitOutput(t, checkout, "ls-files", "--modified", "--others", "--exclude-standard")) {
+		paths = append(paths, sanitize.ShellQuote(path))
+	}
+	return []string{"<msg>", "'follow the refusal route'", "<path>...", strings.Join(paths, " ")}
 }
 
 // installedWrapper writes the wrapper an installed kit puts in front of the executable. It
@@ -115,10 +159,11 @@ func installedWrapper(t *testing.T, binary string) string {
 }
 
 // runPrintedStep runs one printed command step as the operator would paste it. A landing
-// runs in process at the fixture's home, and any other Bench verb runs from the destination
-// checkout behind the installed wrapper. The step must read as one simple command with no
-// placeholder left, and a Bench verb other than the landing must exit 0.
-func runPrintedStep(t *testing.T, wrapper string, f landingFixture, step string) verbResult {
+// runs in process at the fixture's home, and any other Bench verb runs from the fixture's
+// root checkout behind the installed wrapper. The step must read as one simple command with
+// no placeholder left, and a Bench verb other than the landing must exit 0, unless the step
+// is the diagnostic one.
+func runPrintedStep(t *testing.T, wrapper string, f repoHome, step string) verbResult {
 	t.Helper()
 	stream := shellcommand.Parse(step)
 	if stream.Unlexed || len(stream.Commands) != 1 || len(stream.Tokens) != stream.Commands[0].End-stream.Commands[0].Start {
@@ -136,7 +181,7 @@ func runPrintedStep(t *testing.T, wrapper string, f landingFixture, step string)
 	cmd.Dir, cmd.Env, cmd.Stdout, cmd.Stderr = f.root, journeyChildEnv(t, f.home), &stdout, &stderr
 	err := cmd.Run()
 	r := verbResult{exit: exitCode(err), stdout: stdout.String(), stderr: stderr.String()}
-	if r.exit != 0 {
+	if r.exit != 0 && !diagnosticStep(words) {
 		t.Fatalf("printed step %q = (%d, %q, %q), want exit 0; run error: %v", step, r.exit, r.stdout, r.stderr, err)
 	}
 	return r

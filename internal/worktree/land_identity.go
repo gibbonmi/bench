@@ -353,9 +353,11 @@ func checkoutStatusEntries(path string, modes ...string) ([]git.PorcelainEntry, 
 	return entries, nil
 }
 
-// checkoutClean is the unregistered form the verbs outside the landing refusal registry
-// use: the caller states the detail and the repair its own refusal carries.
-func checkoutClean(path, detail, next string) error {
+// checkoutClean refuses a checkout that holds uncommitted work under the registered face
+// the caller names, with the facts that face's route reads. next is the route a verb
+// outside the registry prints; a verb that routes the refusal through the registry prints
+// the face's route in its place.
+func checkoutClean(path, face string, values map[string]string, next string) error {
 	paths, err := checkoutDirtyPaths(path)
 	if err != nil {
 		return err
@@ -363,7 +365,7 @@ func checkoutClean(path, detail, next string) error {
 	if len(paths) == 0 {
 		return nil
 	}
-	return refusalError{refusal{detail: detail, next: next, paths: paths}}
+	return refusalError{refusal{detail: refusalroute.Sentence(face), next: next, paths: paths, face: face, values: values}}
 }
 
 // assignmentBranchCheckedOut reports the ref one assignment's checkout has attached, and
