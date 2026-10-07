@@ -541,6 +541,10 @@ The prospective build owns these exact paths:
 - `tests/canary/workflow-guidance-anchors/reference-upgrade-route`
 - `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
 - `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
 
 This fence is provisional. The slice closes it with the closure that build preflight proposes.
 
