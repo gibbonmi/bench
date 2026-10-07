@@ -46,36 +46,66 @@ func Fact(name string) Word { return Word{kind: wordFact, text: name} }
 // It renders as written, or as its placeholder when it is absent or not line-safe.
 func Composed(name string) Word { return Word{kind: wordComposed, text: name} }
 
-// Operator is a value the operator fills, such as the commit message. It always renders
-// as its placeholder.
+// Operator is a value the operator fills, such as the commit message. A printed route
+// renders it as its placeholder.
 func Operator(name string) Word { return Word{kind: wordOperator, text: name} }
 
 // Operators is a list of values the operator fills, such as the paths to commit.
 func Operators(name string) Word { return Word{kind: wordOperators, text: name} }
 
-func (w Word) render(values map[string]string) string {
-	value := values[w.text]
+// slotFill answers the value each slot reads. operators states whether the operator's own
+// slots read it too. The production fill leaves those slots as placeholders for the
+// operator; only a check that hands a step to a shell reader fills them, because the
+// reader takes a placeholder such as <msg> for a redirection.
+type slotFill struct {
+	value     func(slot string) string
+	operators bool
+}
+
+// factsFill is the production fill: it reads the raising site's facts.
+func factsFill(values map[string]string) slotFill {
+	return slotFill{value: func(slot string) string { return values[slot] }}
+}
+
+func (w Word) render(fill slotFill) string {
+	value := fill.value(w.text)
 	switch w.kind {
 	case wordText:
 		return w.text
 	case wordFact:
-		if value != "" && sanitize.LineSafe(value) {
-			return sanitize.ShellQuote(value)
-		}
+		return quoted(w.text, value)
 	case wordComposed:
 		return asWritten(w.text, value)
-	case wordOperators:
-		return placeholder(w.text) + "..."
+	case wordOperator, wordOperators:
+		if fill.operators {
+			return quoted(w.text, value)
+		}
+		if w.kind == wordOperators {
+			return placeholder(w.text) + "..."
+		}
 	}
 	return placeholder(w.text)
 }
 
+// quoted renders a value shell-quoted, or as its placeholder when the value is absent or
+// not line-safe.
+func quoted(name, value string) string {
+	if pasteable(value) {
+		return sanitize.ShellQuote(value)
+	}
+	return placeholder(name)
+}
+
 func asWritten(name, value string) string {
-	if value != "" && sanitize.LineSafe(value) {
+	if pasteable(value) {
 		return value
 	}
 	return placeholder(name)
 }
+
+// pasteable reports whether a value can stand in a printed route: present, and free of any
+// byte that would break the line.
+func pasteable(value string) bool { return value != "" && sanitize.LineSafe(value) }
 
 func placeholder(name string) string { return "<" + name + ">" }
 
@@ -100,22 +130,34 @@ func TreeCommand(verb string, target Word, words ...Word) Step {
 // Instruction is one imperative sentence for an action the agent does with its own tools.
 func Instruction(words ...Word) Step { return Step{words: words} }
 
-func (s Step) render(values map[string]string) string {
+// IsCommand reports whether the step runs as its words read, rather than an instruction
+// the agent carries out with its own tools.
+func (s Step) IsCommand() bool { return s.command }
+
+// Filled renders the step with every slot read from fill, the operator's slots included.
+// A check that hands the step to a shell reader renders it here, so no placeholder reaches
+// the reader.
+func (s Step) Filled(fill func(slot string) string) string {
+	return s.render(slotFill{value: fill, operators: true})
+}
+
+func (s Step) render(fill slotFill) string {
 	parts := make([]string, 0, len(s.words)+3)
 	if s.target != nil {
-		parts = append(parts, s.verb, treeTargetFlag, s.target.render(values))
+		parts = append(parts, s.verb, treeTargetFlag, s.target.render(fill))
 	}
 	for _, word := range s.words {
-		parts = append(parts, word.render(values))
+		parts = append(parts, word.render(fill))
 	}
 	return strings.Join(parts, " ")
 }
 
 // Render is the one rendering of a face's route over a raising site's facts.
 func (f Face) Render(facts Facts) string {
+	fill := factsFill(facts.Values)
 	steps := make([]string, 0, len(f.Route))
 	for _, step := range f.Route {
-		steps = append(steps, step.render(facts.Values))
+		steps = append(steps, step.render(fill))
 	}
 	route := strings.Join(steps, stepJoiner)
 	if facts.Preface != "" {

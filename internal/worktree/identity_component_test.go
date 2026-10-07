@@ -222,32 +222,7 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 	for _, fixture := range landingRefusalFixtures() {
 		t.Run(fixture.face, func(t *testing.T) {
 			t.Parallel()
-			request := "landing-face-" + fixture.face
-			f := publicLandingFixture(t, request, "", "")
-			if fixture.stage == stageIncomplete {
-				r := interruptedLanding(t, f, request, f.tip)
-				if next, printed := landedNext(r.stdout); !printed || next == "" {
-					t.Fatalf("face %s = (%d, %q, %q), want a landed record with a non-empty next= field", fixture.face, r.exit, r.stdout, r.stderr)
-				}
-				return
-			}
-			var r verbResult
-			if fixture.stage == stageResume {
-				r = landingFaceResume(t, fixture, f)
-			} else {
-				fixture.mutate(t, f.root, f.creation)
-				// A mutation may add a source commit, so the pinned tip is read after it. An
-				// unmoved source reads back the same commit the fixture created.
-				tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
-				if fixture.tip != nil {
-					tip = fixture.tip(t, f.creation)
-				}
-				r = runVerb(t, verbLand, f.call(landArgs(request, f.base, tip, f.creation.Path)...))
-			}
-			next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(fixture.face))
-			if r.exit != 1 || !printed || next == "" {
-				t.Fatalf("face %s = (%d, %q, %q), want exit 1 and a non-empty next= field", fixture.face, r.exit, r.stdout, r.stderr)
-			}
+			produceLandingFace(t, fixture)
 		})
 	}
 }

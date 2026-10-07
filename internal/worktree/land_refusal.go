@@ -48,7 +48,7 @@ func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment 
 	values := []string{result.Commit, result.SourceBase, result.SourceTip, specArg}
 	for _, value := range values {
 		if !lineSafe(value) {
-			return "bench worktree exec " + assignment + " -- bench worktree land --resume <full-published-commit> --request <request> --base <full-review-base> --source-tip <full-source-tip> --spec <spec> ."
+			return atSourceWorktree("bench worktree land --resume <full-published-commit> --request <request> --base <full-review-base> --source-tip <full-source-tip> --spec <spec>", path, assignment)
 		}
 	}
 	// A spec-less landing resumes spec-less, so the resume command it names carries no
@@ -113,13 +113,14 @@ func landingConflictRefusal(conflict landing.ConflictError, destination, assignm
 }
 
 // atSourceWorktree addresses the source worktree a command's trailing positional
-// names. A path that is not line-safe takes the pointer form every next= uses: the
-// assignment id addresses the worktree that the unpasteable path cannot.
+// names. A path that is not line-safe takes the registry's checkout form: the route looks
+// the path up by the assignment id, which an assignment that has not resolved yet leaves
+// empty, and the command names the checkout placeholder.
 func atSourceWorktree(command, path, assignment string) string {
 	if lineSafe(path) {
 		return command + " " + sanitize.ShellQuote(path)
 	}
-	return "bench worktree exec " + assignment + " -- " + command + " ."
+	return refusalroute.AtCheckout(command, assignment)
 }
 
 // The landing refusal face names. The shared registry declares each face, and a raising

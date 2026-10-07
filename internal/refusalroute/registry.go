@@ -3,7 +3,10 @@
 // through. It imports no write-verb package, so each write verb imports it with no cycle.
 package refusalroute
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // NextField is the one record label a write verb prints a refusal's route under.
 const NextField = "next"
@@ -74,6 +77,14 @@ const (
 	FactCheckoutGit = "checkout-git"
 	// FactConflictCommit is the commit whose composition conflicted.
 	FactConflictCommit = "full-destination-commit"
+	// FactAssignmentID is the id of the assignment that owns the checkout a step addresses.
+	FactAssignmentID = "id"
+	// FactCheckoutCommand is a command the raising site composed that takes a checkout
+	// path as its last word.
+	FactCheckoutCommand = "command"
+	// factCheckout is the checkout path. Only a path that is not line-safe takes the
+	// lookup route, so its slot prints the placeholder.
+	factCheckout = "checkout"
 )
 
 // rerun ends a route with the caller's own command, so one paste finishes the recovery.
@@ -94,6 +105,13 @@ var handMerge = []Step{
 	Command(Composed(FactCheckoutGit), Text("merge"), Fact(FactConflictCommit), Text("(bench worktree merge refuses this conflict; resolve it by hand)")),
 	Command(Text("bench commit")),
 }
+
+// pathLookup prints the checkout path of an assignment, which the operator puts in place
+// of the checkout placeholder.
+var pathLookup = Command(Text("bench worktree path"), Fact(FactAssignmentID))
+
+// atCheckout is a composed command addressed at a checkout through the checkout slot.
+var atCheckout = Command(Composed(FactCheckoutCommand), Fact(factCheckout))
 
 // inventory is the authoritative, ordered inventory of the write verbs' refusal faces. A
 // verb adds its face here rather than composing a route at the site that refuses.
@@ -175,12 +193,15 @@ var inventory = []Face{
 		Route:     []Step{destinationClean, rerun},
 	},
 	{
-		// The landing policy owns the sentence this face prints. The marker belongs to the
-		// published landing on the primary checkout, so the gate runs there.
+		// The landing policy owns the sentence this face prints. Only a landing on the
+		// primary checkout advances the green marker, so the repair is the reviewer's.
 		Verb:      Land,
 		Name:      "resume-marker",
-		Authority: Agent,
-		Route:     []Step{TreeCommand("bench gate", Text("primary")), rerun},
+		Authority: Reviewer,
+		Route: []Step{
+			Instruction(Text("land a green landing on main that covers the published commit, or restore main to it")),
+			rerun,
+		},
 	},
 	{
 		// The landing published, and a later step did not finish. The re-run is the
@@ -202,6 +223,10 @@ var inventory = []Face{
 
 // New is the one constructor a registered face travels through.
 func New(name string, facts Facts) Refusal { return newIn(inventory, name, facts) }
+
+// Inventory returns every registered face, in registry order. A check over all the faces
+// reads them here, so the check and the registry cannot drift.
+func Inventory() []Face { return slices.Clone(inventory) }
 
 // Faces returns the registered faces of one verb, in registry order. A walk over a verb's
 // faces reads them here, so the walk and the registry cannot drift.
@@ -225,6 +250,19 @@ func Sentence(name string) string {
 // HandMerge renders the hand merge of a composition conflict over the raising site's facts.
 // The merge verb prints it as the repair of its own conflict refusal.
 func HandMerge(facts Facts) string { return Face{Route: handMerge}.Render(facts) }
+
+// AtCheckout renders a command whose last word is a checkout path that is not line-safe.
+// No quoting makes a control byte pasteable, and FT341 refuses a Bench child under
+// `bench worktree exec`, so the route looks the path up by the assignment id and runs the
+// command with the checkout placeholder. With no id there is nothing to look up, and the
+// command stands alone.
+func AtCheckout(command, id string) string {
+	route := []Step{atCheckout}
+	if id != "" {
+		route = []Step{pathLookup, atCheckout}
+	}
+	return Face{Route: route}.Render(Facts{Values: map[string]string{FactCheckoutCommand: command, FactAssignmentID: id}})
+}
 
 // newIn is the constructor over an injectable inventory, so a test can supply its own faces.
 func newIn(faces []Face, name string, facts Facts) Refusal {

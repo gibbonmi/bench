@@ -6,8 +6,7 @@ import "github.com/gibbonmi/bench/internal/sanitize"
 
 // landingRerun is the caller's own re-run of the landing, with the flag values it passed.
 // Every landing-preflight route ends with it, so a repair does not cost the operator its
-// flags. An assignment that has not resolved yet has no id for the pointer form to
-// address, so the re-run names the operator's own worktree path instead.
+// flags.
 func landingRerun(request, base, tip, specArg, path, assignment string) string {
 	command := "bench worktree land --request " + landingRerunArg(request, "<request>") +
 		landingBaseFlag(base) +
@@ -15,14 +14,7 @@ func landingRerun(request, base, tip, specArg, path, assignment string) string {
 	if specArg != "" {
 		command += " --spec " + landingRerunArg(specArg, "<spec>")
 	}
-	command += " -m <message>"
-	if assignment != "" {
-		return atSourceWorktree(command, path, assignment)
-	}
-	if lineSafe(path) {
-		return command + " " + sanitize.ShellQuote(path)
-	}
-	return command + " <worktree-path>"
+	return atSourceWorktree(command+" -m <message>", path, assignment)
 }
 
 // landingSourceTipFlag is the one rendering of the re-run's --source-tip argument. The

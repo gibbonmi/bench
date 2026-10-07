@@ -338,8 +338,9 @@ func TestLandCommandConflictOnAControlBytePathRendersSanitized(t *testing.T) {
 	}
 }
 
-// Edge under WL18: a source worktree path that is not line-safe cannot be pasted, so
-// both repair steps that address it take the assignment pointer form.
+// Edge under WL18: a source worktree path that is not line-safe cannot be pasted, so the
+// reviewer's merge step takes the assignment pointer form and the re-run looks the path up
+// by the assignment id.
 func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
 	t.Parallel()
 	request := "land-surface-conflict-unsafe-path"
@@ -350,8 +351,8 @@ func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
 	r := runVerb(t, verbLand, f.processHomeCall(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	wantNext := "next=" + reviewerRoute + "bench worktree exec " + f.creation.Assignment.ID + " -- git merge '" + destination +
 		"' (bench worktree merge refuses this conflict; resolve it by hand); then bench commit; then /bench-review-implementation; then " +
-		"bench worktree exec " + f.creation.Assignment.ID + " -- bench worktree land --request <request> --base '" + destination +
-		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> .}"
+		"bench worktree path '" + f.creation.Assignment.ID + "'; then bench worktree land --request <request> --base '" + destination +
+		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> <checkout>}"
 	if r.exit != 1 || strings.ContainsRune(r.stdout, '\x1b') || !strings.Contains(r.stdout, wantNext) {
 		t.Fatalf("unsafe-path conflict next = (%d, %q, %q), want the pointer form %q", r.exit, r.stdout, r.stderr, wantNext)
 	}

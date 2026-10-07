@@ -37,19 +37,48 @@ func labelOf(creation Creation) map[string]string {
 	return map[string]string{refusalroute.FactLabel: creation.Assignment.Label}
 }
 
-// landedFaceNext runs a first landing over the face's producing fixture and returns the
-// next= value of the refused record whose sentence opens with detail.
-func landedFaceNext(t *testing.T, face, detail string) (landingFixture, verbResult, string) {
+// producedFace is what a landing printed for one face's producing fixture: the fixture,
+// the request it landed under, the run, and the next= value of the face's record.
+type producedFace struct {
+	f       landingFixture
+	request string
+	r       verbResult
+	next    string
+}
+
+// produceLandingFace drives one producing fixture through the landing at the stage it
+// declares and returns the face's next= value. It fails t unless the face printed a
+// non-empty route.
+func produceLandingFace(t *testing.T, fixture landingRefusalFixture) producedFace {
 	t.Helper()
-	request := "face-route-" + face
+	request := "landing-face-" + fixture.face
 	f := publicLandingFixture(t, request, "", "")
-	landingFixtureFor(t, face).mutate(t, f.root, f.creation)
-	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	next, printed := landingFaceNext(r.stdout, detail)
-	if r.exit != 1 || !printed {
-		t.Fatalf("%s landing = (%d, %q, %q), want exit 1 and the face's refused record", face, r.exit, r.stdout, r.stderr)
+	if fixture.stage == stageIncomplete {
+		r := interruptedLanding(t, f, request, f.tip)
+		next, printed := landedNext(r.stdout)
+		if !printed || next == "" {
+			t.Fatalf("face %s = (%d, %q, %q), want a landed record with a non-empty next= field", fixture.face, r.exit, r.stdout, r.stderr)
+		}
+		return producedFace{f: f, request: request, r: r, next: next}
 	}
-	return f, r, next
+	var r verbResult
+	if fixture.stage == stageResume {
+		r = landingFaceResume(t, fixture, f)
+	} else {
+		fixture.mutate(t, f.root, f.creation)
+		// A mutation may add a source commit, so the pinned tip is read after it. An
+		// unmoved source reads back the same commit the fixture created.
+		tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+		if fixture.tip != nil {
+			tip = fixture.tip(t, f.creation)
+		}
+		r = runVerb(t, verbLand, f.call(landArgs(request, f.base, tip, f.creation.Path)...))
+	}
+	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(fixture.face))
+	if r.exit != 1 || !printed || next == "" {
+		t.Fatalf("face %s = (%d, %q, %q), want exit 1 and a non-empty next= field", fixture.face, r.exit, r.stdout, r.stderr)
+	}
+	return producedFace{f: f, request: request, r: r, next: next}
 }
 
 // TestConflictRepairIsAReviewerRoute is RR16 and RR17. The hand merge of a composition
@@ -66,34 +95,46 @@ func TestConflictRepairIsAReviewerRoute(t *testing.T) {
 	} {
 		t.Run(tc.face, func(t *testing.T) {
 			t.Parallel()
-			_, r, next := landedFaceNext(t, tc.face, "composition conflict")
-			if !strings.HasPrefix(next, reviewerRoute) || !strings.Contains(next, tc.wantStep) {
-				t.Fatalf("%s next = %q in %q, want a value that opens with %q and names %q", tc.face, next, r.stdout, reviewerRoute, tc.wantStep)
+			produced := produceLandingFace(t, landingFixtureFor(t, tc.face))
+			if !strings.HasPrefix(produced.next, reviewerRoute) || !strings.Contains(produced.next, tc.wantStep) {
+				t.Fatalf("%s next = %q in %q, want a value that opens with %q and names %q", tc.face, produced.next, produced.r.stdout, reviewerRoute, tc.wantStep)
 			}
 		})
 	}
 }
 
-// TestLandingCleanlinessFacesRouteByAuthority is RR18 and RR19. A dirty destination is the
-// reviewer's own uncommitted work in the primary checkout, so its route hands back. A dirty
-// source is the agent's own work, so its route commits it through Bench at the source's
-// label rather than through a raw commit the guard denies.
-func TestLandingCleanlinessFacesRouteByAuthority(t *testing.T) {
+// TestUnsafePathRouteUsesThePlaceholder is RR58 and RR60. A source path that is not
+// line-safe cannot be pasted, and FT341 refuses a Bench child under `bench worktree exec`,
+// so the preflight re-run and the incomplete landing's resume both look the path up by the
+// assignment id and print the checkout placeholder.
+func TestUnsafePathRouteUsesThePlaceholder(t *testing.T) {
 	t.Parallel()
-	t.Run(faceDestinationNotClean, func(t *testing.T) {
-		t.Parallel()
-		_, r, next := landedFaceNext(t, faceDestinationNotClean, refusalroute.Sentence(faceDestinationNotClean))
-		if !strings.HasPrefix(next, reviewerRoute) {
-			t.Fatalf("dirty destination next = %q in %q, want a value that opens with %q", next, r.stdout, reviewerRoute)
+	unsafeFixture := func(t *testing.T, request string) landingFixture {
+		return publicLandingFixtureAtHome(t, request, "", "", filepath.Join(t.TempDir(), "bench\n\x1bhome"))
+	}
+	placeholds := func(t *testing.T, kind, next string, printed bool, f landingFixture, stdout string) {
+		t.Helper()
+		lookup := "bench worktree path '" + f.creation.Assignment.ID + "'"
+		if !printed || !strings.Contains(next, "<checkout>") || !strings.Contains(next, lookup) || strings.Contains(next, "bench worktree exec") {
+			t.Fatalf("unsafe-path %s next = %q (printed=%t) in %q, want %q and <checkout> and no bench worktree exec", kind, next, printed, stdout, lookup)
 		}
+	}
+	t.Run("preflight re-run", func(t *testing.T) {
+		t.Parallel()
+		request := "unsafe-path-preflight"
+		f := unsafeFixture(t, request)
+		landingFixtureFor(t, faceSourceNotClean).mutate(t, f.root, f.creation)
+		r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+		next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotClean))
+		placeholds(t, "preflight", next, printed && r.exit == 1, f, r.stdout)
 	})
-	t.Run(faceSourceNotClean, func(t *testing.T) {
+	t.Run("incomplete resume", func(t *testing.T) {
 		t.Parallel()
-		f, r, next := landedFaceNext(t, faceSourceNotClean, refusalroute.Sentence(faceSourceNotClean))
-		label := f.creation.Assignment.Label
-		if strings.HasPrefix(next, reviewerRoute) || !strings.Contains(next, "bench commit --in ") || !strings.Contains(next, label) {
-			t.Fatalf("dirty source next = %q in %q, want an agent route that names bench commit --in and the label %q", next, r.stdout, label)
-		}
+		request := "unsafe-path-incomplete"
+		f := unsafeFixture(t, request)
+		r := interruptedLanding(t, f, request, f.tip)
+		next, printed := landedNext(r.stdout)
+		placeholds(t, "resume", next, printed, f, r.stdout)
 	})
 }
 
@@ -129,6 +170,12 @@ type landingRefusalFixture struct {
 	// refuses on the caller's own tip needs a value other than the worktree's head, which
 	// the walk names by default.
 	tip func(t *testing.T, creation Creation) string
+	// carry carries out a printed route step by the fixture's own means, keyed by the
+	// step's index in the face's route: an instruction, or a step of a reviewer route.
+	// The follow walk runs every other step verbatim.
+	carry map[int]func(t *testing.T, f landingFixture)
+	// names states what the printed route must name, read from the fixture.
+	names func(f landingFixture) []string
 }
 
 // landingFixtureFor returns the one fixture that produces the named face, so a proof that
@@ -148,12 +195,30 @@ func landingRefusalFixtures() []landingRefusalFixture {
 	destinationConflict := func(t *testing.T, root string, _ Creation) {
 		commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
 	}
+	// The reviewer discards the destination's uncommitted edit.
+	discardDestination := func(t *testing.T, f landingFixture) { gitRun(t, f.root, "checkout", "--", "tracked.txt") }
+	// The reviewer's hand merge of the destination into the source, its resolution, and the
+	// commit that records it.
+	handMerge := func(t *testing.T, f landingFixture) {
+		merge := descendant(t, "git", "-C", f.creation.Path, "merge", "--no-commit", "main")
+		if out, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(out), "CONFLICT") {
+			t.Fatalf("hand merge = %v, %s; want the conflict", err, out)
+		}
+		mustWrite(t, filepath.Join(f.creation.Path, "owned.txt"), []byte("destination bytes\nreviewed repair\n"), 0o644)
+		gitRun(t, f.creation.Path, "add", "owned.txt")
+	}
+	commitResolution := func(t *testing.T, f landingFixture) {
+		gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "resolve the composition")
+	}
+	// The review of the repaired source refreshes its completion evidence.
+	review := func(t *testing.T, f landingFixture) { refreshLandingEvidence(t, f.creation.Path, f.base) }
 	return []landingRefusalFixture{
 		{
 			face: faceDestinationNotClean,
 			mutate: func(t *testing.T, root string, _ Creation) {
 				mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
 			},
+			carry: map[int]func(*testing.T, landingFixture){0: discardDestination},
 		},
 		{
 			// The reviewed source adds owned.txt, so an untracked file at that path stands
@@ -162,18 +227,33 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			mutate: func(t *testing.T, root string, _ Creation) {
 				mustWrite(t, filepath.Join(root, "owned.txt"), []byte("operator bytes\n"), 0o600)
 			},
+			carry: map[int]func(*testing.T, landingFixture){0: func(t *testing.T, f landingFixture) {
+				mustRemove(t, filepath.Join(f.root, "owned.txt"))
+			}},
 		},
 		{
+			// The dirty path is one the ticket writes, so the printed commit lands it. The
+			// project declares a commit lane in an ignored phase manifest, which leaves the
+			// source's status alone, so the printed commit has a lane to pass.
 			face: faceSourceNotClean,
 			mutate: func(t *testing.T, _ string, creation Creation) {
-				mustWrite(t, filepath.Join(creation.Path, "scratch"), []byte("scratch\n"), 0o600)
+				mustWrite(t, filepath.Join(creation.Path, "owned.txt"), []byte("uncommitted repair\n"), 0o644)
+				mustWrite(t, filepath.Join(creation.Path, ".bench", "phases.json"), []byte(`{"phases":[{"name":"build","argv":["true"]}],"lane":[{"name":"unit","argv":["true"]}]}`), 0o644)
+				exclude := filepath.Join(gitOutput(t, creation.Path, "rev-parse", "--path-format=absolute", "--git-common-dir"), "info", "exclude")
+				mustMkdirAll(t, filepath.Dir(exclude), 0o755)
+				mustWrite(t, exclude, []byte(".bench/phases.json\n"), 0o644)
 			},
+			names: func(f landingFixture) []string { return []string{"bench commit --in ", f.creation.Assignment.Label} },
 		},
 		{
 			face: faceSourceNotFenced,
 			mutate: func(t *testing.T, _ string, creation Creation) {
 				commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
 			},
+			carry: map[int]func(*testing.T, landingFixture){0: func(t *testing.T, f landingFixture) {
+				gitRun(t, f.creation.Path, "rm", "-q", "stray.txt")
+				gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "take the stray path out of the range")
+			}},
 		},
 		{
 			// The source moves past the tip the caller names, which is the state an
@@ -192,6 +272,7 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			face:   faceCompositionConflict,
 			stage:  stageComposition,
 			mutate: destinationConflict,
+			carry:  map[int]func(*testing.T, landingFixture){0: handMerge, 1: commitResolution, 2: review},
 		},
 		{
 			// The same conflict over a source that already holds a merge in progress.
@@ -202,6 +283,13 @@ func landingRefusalFixtures() []landingRefusalFixture {
 				admin := gitOutput(t, creation.Path, "rev-parse", "--absolute-git-dir")
 				mustWrite(t, filepath.Join(admin, "MERGE_HEAD"), []byte(gitOutput(t, root, "rev-parse", "HEAD")+"\n"), 0o644)
 			},
+			// The planted merge state records no merge Git can finish, so the reviewer
+			// clears it and finishes a real one.
+			carry: map[int]func(*testing.T, landingFixture){0: func(t *testing.T, f landingFixture) {
+				mustRemove(t, filepath.Join(gitOutput(t, f.creation.Path, "rev-parse", "--absolute-git-dir"), "MERGE_HEAD"))
+				handMerge(t, f)
+				commitResolution(t, f)
+			}, 1: review},
 		},
 		{
 			face:  faceResumeDestinationResidue,
@@ -209,6 +297,7 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			mutate: func(t *testing.T, root string, _ Creation) {
 				mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
 			},
+			carry: map[int]func(*testing.T, landingFixture){0: discardDestination},
 		},
 		{
 			face:  faceResumeMarker,
@@ -219,6 +308,11 @@ func landingRefusalFixtures() []landingRefusalFixture {
 				commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
 				gitRun(t, root, "update-ref", "-d", "refs/bench/green/main")
 			},
+			// The reviewer restores main to the published commit, the parent of the one
+			// movement the mutation added, so the resume advances the marker itself.
+			carry: map[int]func(*testing.T, landingFixture){0: func(t *testing.T, f landingFixture) {
+				gitRun(t, f.root, "reset", "--hard", "HEAD~1")
+			}},
 		},
 		{
 			// The walk interrupts the landing at its release step, so the fixture adds no
@@ -234,6 +328,9 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			mutate: func(t *testing.T, root string, _ Creation) {
 				gitRun(t, root, "checkout", "-q", "--detach")
 			},
+			carry: map[int]func(*testing.T, landingFixture){0: func(t *testing.T, f landingFixture) {
+				gitRun(t, f.root, "checkout", "-q", "main")
+			}},
 		},
 	}
 }
