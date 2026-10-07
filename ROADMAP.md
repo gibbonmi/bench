@@ -315,5 +315,7 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT373
-2. FT349
+1. FT392
+2. FT393
+3. FT373
+4. FT349

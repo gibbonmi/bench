@@ -193,6 +193,42 @@
           ]
         },
         {
+          "id": "FT392",
+          "criteria": [
+            {
+              "id": "FT392.closure",
+              "text": "bench gate --checkpoint \u003cspec\u003e --complete grades the tree that the landing publishes, composed through the landing's own delivery-closure transform, so a red that the closure creates refuses the checkpoint."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT392",
+              "path": "roadmap/FT392.md",
+              "identity": "sha256:d5432f5de8095b777bfa66fa8c850c838b7cf0b28d13c3e0269fdc0cd3cfa002"
+            }
+          ]
+        },
+        {
+          "id": "FT393",
+          "criteria": [
+            {
+              "id": "FT393.registry",
+              "text": "Every refusal of a write verb renders through one refusal-route registry, and each face declares a typed route and its agent or reviewer authority."
+            },
+            {
+              "id": "FT393.reachable",
+              "text": "A conformance check proves that every agent route passes the wired guards and that each producing fixture follows its route out of the refused face."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT393",
+              "path": "roadmap/FT393.md",
+              "identity": "sha256:9961a35c1c94fca5b8d0d7c32f7a18ac2050cdb48d0d2b1d2c2d5705acf941e7"
+            }
+          ]
+        },
+        {
           "id": "FT373",
           "criteria": [
             {
