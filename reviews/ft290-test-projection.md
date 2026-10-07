@@ -18,6 +18,8 @@ The reviewer stated that `--auto-approve` applies to repair rounds. Under that e
 
 The repair session `claude:ft290_t8_r3` repaired C5 at `6fdd27b3`, and the chunk tip is now `6fdd27b3`. The C4 swap now bites in `internal/canary` and `internal/testreport`. It stays silent in `internal/preflight`, whose wiring predates this chunk and sits outside the fence.
 
+The third confirming round of all three axes passed with zero findings. TP-C3 used 3 repair cycles: the 2 of its allowance and 1 extension.
+
 The raw count is 6 findings, and the repair-target count is 6. Ticket 8 owns S1, C1, and the `fixtures_face_test.go` half of S2. Ticket 9 owns P1, C2, C3, and the `checks_face_test.go` half of S2. P1 and C2 name one fix.
 
 The orchestrator decided the three `ask-user` findings under the reviewer's auto-approval for spec, ticket, and repair expansions. Each decision stays open to reviewer veto.
@@ -2675,6 +2677,72 @@ Count: 4. Worst issue: C1.
           ],
           "supersedes": [
             "c3-coverage-c1"
+          ]
+        },
+        {
+          "id": "c3-standards-c3",
+          "performer": "claude:ft290_c3_standards_c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "5ad995da69ee8098463b7b98f51bc4bcfc1caa82",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_standards_c3",
+            "digest": "sha256:9a62383ab4d6a7f88a777cba60310a86ed700147ebbd968b6885d043cff0bc64",
+            "excerpt": "axis=Standards findings=0 worst=none (third confirming round, repair delta 8159a136..6fdd27b3)\nThe delta adds only TestFixturePinsReturnsAnInventoryError in internal/canary/inventory_test.go. It reuses writeFixtureFile and Dir(root).\nThe substring \"appears in multiple families\" is an independent expectation against inventory.go:244; the rootRecords swap red is recorded in ft290/t8r3/t8-c5-red.txt.\nThe doc comment states the invariant with no history.\nExamined: --check-current at aacd222e, the delta, the surrounding test file, inventory.go:244, the red excerpt. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-c2"
+          ]
+        },
+        {
+          "id": "c3-spec-c3",
+          "performer": "claude:ft290_c3_spec_c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "5ad995da69ee8098463b7b98f51bc4bcfc1caa82",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_spec_c3",
+            "digest": "sha256:ea92e65f0e9a5ebdfec41b7f9d6dba11761acf85bbd10e559f602d87f6331179",
+            "excerpt": "axis=Spec findings=0 worst=none (third confirming round, repair delta 8159a136..6fdd27b3)\nThe delta is test-only: one new test in internal/canary/inventory_test.go.\nIt agrees with story 24 and \"Fence disposition\": rootRecords maps only ErrNoFixtures to empty, FixturePins returns any other error, and the absent-inventory test keeps the empty answer for the build preflight.\nNo TP-C3 row lost its test; the file is inside ticket 8's Writes fence.\nExamined: --check-current at aacd222e, the delta, spec story 24 and Fence disposition, ticket 8 Writes, root.go, inventory.go, inventory_test.go. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-c2"
+          ]
+        },
+        {
+          "id": "c3-coverage-c3",
+          "performer": "claude:ft290_c3_coverage_c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "5ad995da69ee8098463b7b98f51bc4bcfc1caa82",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_coverage_c3",
+            "digest": "sha256:0217f61a2c72e8e8a34e4c542053c09ce626fcd84b70541bbd24b4dfbd08c300",
+            "excerpt": "axis=Coverage findings=0 worst=none (third confirming round, repair delta 8159a136..6fdd27b3)\nC5 closed. The rootRecords swap `return records, err` -> `return records, nil` with no --run in ./internal/canary: bit, TestFixturePinsReturnsAnInventoryError (inventory_test.go:150), restored yes.\nThe wrapped-error bypass `errors.Is(err, ErrNoFixtures) || err != nil` in ./internal/canary: bit, same test, restored yes.\n./internal/preflight was not probed; the delta does not touch it.\nExamined: --check-current at aacd222e, the delta, root.go, two probes; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-c2"
           ]
         }
       ]
