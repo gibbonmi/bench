@@ -776,6 +776,18 @@ The orchestrator records each author session before that author's dispatch.
           "trigger": "user-directed",
           "stopped": "the ticket 03 author session reported completion of its RR-C1b verification records and has no live child",
           "preserved": "5a0a4f783b1237efba18757e1d6887a7887327e3"
+        },
+        {
+          "session": "claude:ft393_t3_repair2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1603d883702d9a90ad8559f4dbdbf4d27d686eae",
+          "native_ref": "claude-agent:ft393_t3_repair2",
+          "predecessor": "claude:ft393_t3_repair1",
+          "trigger": "user-directed",
+          "stopped": "the first ticket 03 repair session reported completion of its RR-C1b verification records and has no live child",
+          "preserved": "1603d883702d9a90ad8559f4dbdbf4d27d686eae"
         }
       ],
       "04-render-the-recovery-matrix-from-the-registry.md": [
@@ -862,11 +874,11 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR12 | 11 | The guard check reds an injected agent face whose route step is `git merge <commit>` | planned TestAgentRouteGuardCheckBites in internal/conformance/refusal_route_guard_test.go | A check that never classifies passes every route |
 | RR13 | 12 | A route step that runs a tree-scoped Bench verb at a worktree renders `--in <label>` | planned TestRouteRendering in internal/refusalroute/route_test.go | A renderer that keeps the exec form fails RR11 at the first real face |
 | RR14 | 13, 15 | Each land face in the registry has exactly one producing fixture, and each fixture produces a registered land face | `internal/worktree/identity_component_test.go` (`TestLandingRefusalRegistryHasAProducingFixture`) | A face moved without its fixture reaches an operator unproven |
-| RR15 | 14 | Each land fixture follows the printed route, reruns the landing, and the face's sentence no longer prints | planned TestLandingFacesFollowTheirRoutes in internal/worktree/refusal_route_test.go | A route that names the wrong repair leaves the face in place |
+| RR15 | 14 | Each land fixture follows the printed route, reruns the landing, and the face's sentence no longer prints | planned TestLandingFacesFollowTheirRoutes in internal/worktree/refusal_route_follow_test.go | A route that names the wrong repair leaves the face in place |
 | RR16 | 16 | The landing composition-conflict refusal prints a `next=` value that starts with `reviewer: ` | planned TestConflictRepairIsAReviewerRoute in internal/worktree/refusal_route_test.go | An agent route that prints `git merge` is the collision 8 denial |
 | RR17 | 16 | The landing composition-conflict-pending refusal prints a `next=` value that starts with `reviewer: ` | planned TestConflictRepairIsAReviewerRoute in internal/worktree/refusal_route_test.go | The pending-merge arm prints `git merge --continue`, which the guard denies |
-| RR18 | 17 | The landing destination-not-clean refusal prints a `next=` value that starts with `reviewer: ` | planned TestLandingFacesFollowTheirRoutes in internal/worktree/refusal_route_test.go | An agent route lets the agent discard the reviewer's primary-checkout work |
-| RR19 | 18 | The landing source-not-clean refusal prints a route that contains `bench commit --in ` and the source label | planned TestLandingFacesFollowTheirRoutes in internal/worktree/refusal_route_test.go | A route that names no commit command leaves the agent at a raw commit, which the guard denies |
+| RR18 | 17 | The landing destination-not-clean refusal prints a `next=` value that starts with `reviewer: ` | planned TestReviewerLandFacesOpenWithTheMarker in internal/worktree/refusal_route_test.go | An agent route lets the agent discard the reviewer's primary-checkout work |
+| RR19 | 18 | The landing source-not-clean refusal prints a route that contains `bench commit --in ` and the source label | planned TestLandingFacesFollowTheirRoutes in internal/worktree/refusal_route_follow_test.go | A route that names no commit command leaves the agent at a raw commit, which the guard denies |
 | RR20 | 19 | Each landing preflight route ends with the caller's own re-run | `internal/worktree/land_surface_test.go` (`TestLandCommandReportsEveryRefusalInOnePreflight`) | A face that drops the re-run leaves a second lookup |
 | RR21 | 20 | A fold of `main` into a target whose committed tip fails its lane prints a `refused{` record that contains `next=` | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | This is the collision 5a repro: the `lane fail` refusal prints no `next=` today |
 | RR22 | 21 | The target-red fold route contains `bench commit --in ` and the target label | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A route that reruns the fold alone loops on the same red |
@@ -876,8 +888,8 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR26 | 23 | A `lane fail` fold whose incoming commit adds the red to a lane-green target prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A merge that never grades the target alone gives every lane red the agent route, which loops |
 | RR55 | 23 | A `lane fail` fold whose target tip alone fails the lane prints a `next=` value that does not start with `reviewer: ` | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A merge that sends every lane red to the reviewer hands back a repair that is the agent's |
 | RR57 | 23 | An `inherited` fold whose target tip alone grades green prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A face map that reads `inherited` as a target red gives a fold red the agent route, which loops |
-| RR60 | 10 | An incomplete landing whose source path is not line-safe prints a resume route that contains `<checkout>` and no `bench worktree exec` | planned TestUnsafePathRouteUsesThePlaceholder in internal/worktree/refusal_route_test.go | The current resume pointer form runs a Bench child through exec, which FT341 refuses |
-| RR58 | 10 | A landing refusal whose source path is not line-safe prints an agent route that contains `<checkout>` and no `bench worktree exec` | planned TestUnsafePathRouteUsesThePlaceholder in internal/worktree/refusal_route_test.go | The current pointer form runs a Bench child through exec, which FT341 refuses, and the sample-only guard check misses it |
+| RR60 | 10 | An incomplete landing whose source path is not line-safe prints a resume route that contains `<checkout>` and no `bench worktree exec` | planned TestUnsafePathRouteUsesThePlaceholder in internal/worktree/land_release_refusal_test.go | The current resume pointer form runs a Bench child through exec, which FT341 refuses |
+| RR58 | 10 | A landing refusal whose source path is not line-safe prints an agent route that contains `<checkout>` and no `bench worktree exec` | planned TestUnsafePathRouteUsesThePlaceholder in internal/worktree/land_release_refusal_test.go | The current pointer form runs a Bench child through exec, which FT341 refuses, and the sample-only guard check misses it |
 | RR59 | 23 | An `inherited` fold whose target tip alone grades red prints a `next=` value that contains `bench commit --in ` and the target label | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A merge that grades the target only on `lane fail` sends a lane-less project's target red to the reviewer, and the collision 5a deadlock returns |
 | RR56 | 23 | A `candidate` gate-kind fold red prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A face map that ignores the gate kind's attribution gives a fold red the agent route |
 | RR27 | 24 | A merge composition conflict prints a `next=` value that starts with `reviewer: ` | planned TestConflictRepairIsAReviewerRoute in internal/worktree/refusal_route_test.go | The merge keeps printing the guard-denied `git merge` as an agent step |
