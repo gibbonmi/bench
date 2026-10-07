@@ -93,6 +93,10 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 			}
 		}
 	}
+	defaultTipPaths, defaultTipFailure := defaultTipEqualPaths(root, resolvedSource.Tip, changedPaths)
+	if defaultTipFailure != nil {
+		return Facts{}, defaultTipFailure
+	}
 	sealPresent, sealRefusal := binarySealFacts(root)
 
 	return withCompletionPlan(root, Facts{
@@ -110,6 +114,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		ExplicitSourceRange:   source != nil,
 		ChangedPaths:          changedPaths,
 		DeletedPaths:          resolvedSource.DeletedPaths,
+		DefaultTipPaths:       defaultTipPaths,
 		FenceEntries:          fenceEntries,
 		DeclaredRowIDs:        ids,
 		SpecTag:               specTag(ids),
@@ -381,29 +386,6 @@ func exprHoldsTag(expr constraint.Expr, tag string) bool {
 		return exprHoldsTag(typed.X, tag) || exprHoldsTag(typed.Y, tag)
 	}
 	return false
-}
-
-// baseCurrentFacts backs the base-current check: it resolves the default
-// branch and reports whether its tip is an ancestor of HEAD:
-// merge-base(default, HEAD) equal to rev-parse(default).
-//
-// The resolved name comes back with the two predicates, because the stale-base
-// remedy names that branch and git.ResolvedDefault is its one source.
-//
-// An unresolved default branch answers no name and both predicates false. The
-// check itself renders that as red without a separate bootstrap failure, since
-// map #7 names this a per-check red rather than a bootstrap precondition.
-func baseCurrentFacts(root string) (branch string, resolved, current bool) {
-	def, ok := git.ResolvedDefault(root)
-	if !ok {
-		return "", false, false
-	}
-	mergeBase, err1 := git.Output("merge-base", def, "HEAD")
-	tip, err2 := git.Output("rev-parse", def)
-	if err1 != nil || err2 != nil {
-		return def, true, false
-	}
-	return def, true, mergeBase == tip
 }
 
 // assignmentTarget is the id of the active assignment that owns this preflight

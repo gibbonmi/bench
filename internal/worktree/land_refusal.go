@@ -252,18 +252,14 @@ var landingRefusalFaces = []landingRefusalFace{
 		}),
 	},
 	{
-		// A source that folded a later default-branch commit carries the caller's base as
-		// observed and the folded merge base as wanted, so the route re-points --base at the
-		// commit that works. Any path still refused after that re-run is a real fence gap.
+		// The fence already authorizes a path that a fold of the default branch brings in
+		// unchanged, so every refused path is a write of the build, and the route keeps the
+		// caller's --base.
 		name:   faceSourceNotFenced,
 		detail: "reviewed source range or ownership fence is invalid",
-		repair: func(rerun string, raised refusal) string {
-			if raised.observed != "" && raised.wanted != "" {
-				return "the source folded a default-branch commit after --base; re-run at the folded merge base: " +
-					strings.Replace(rerun, landingBaseFlag(raised.observed), landingBaseFlag(raised.wanted), 1)
-			}
+		repair: pathless(func(rerun string) string {
 			return "take the refusal_paths entries out of the reviewed range, or declare them under the spec's ## Ownership fences; then " + rerun
-		},
+		}),
 	},
 	{
 		// The composition names the conflicted paths in its own sentence, so the entry
