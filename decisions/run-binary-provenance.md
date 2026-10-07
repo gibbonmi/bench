@@ -17,6 +17,10 @@ This map is the second half of the FT290 split. The first half is
 `specs/ft290-test-projection/decisions/ft290-test-projection.md`, and it owns the `check` row that a
 provenance fact can join.
 
+On 2026-09-17, a bounded-charge-evidence build graded stale tests through a
+named check, because the worktree source was ahead of its sealed run binary.
+Ticket #1 must reproduce this occurrence.
+
 A map-owned asset stays in the map's assets folder,
 decisions/run-binary-provenance/assets/.
 
@@ -32,9 +36,9 @@ decisions/run-binary-provenance/assets/.
 
 ## Sources
 
-- Path: `roadmap/FT290.md`
-  Supports: the 2026-09-17 occurrence that ticket #1 must reproduce.
-  Drift: a new occurrence or a body edit on the row.
+- Path: `specs/ft290-test-projection/spec.md`
+  Supports: story 36 and Out of scope name this map as the owner of the run binary provenance.
+  Drift: a change to story 36 or to the Out of scope line for this map.
 - Path: `internal/runbinary/runbinary.go`
   Supports: the entry state of ticket #1. `Own` builds from the source root. `Inherit` refuses a seal that does not agree with the source digest.
   Drift: a change to `ReuseOrOwn`, `Own`, `Inherit`, or `canonicalVerify`.
