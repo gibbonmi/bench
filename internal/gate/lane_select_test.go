@@ -172,7 +172,7 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL12 a Markdown file",
 			changes: []ComposedChange{laneChange("docs/note.md")},
-			checks:  []string{"prose"},
+			checks:  []string{"prose", "docs-currency-workflow"},
 			classes: []string{"markdown"},
 		},
 		{
@@ -196,7 +196,7 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL15 two classes take the union in declared order",
 			changes: []ComposedChange{laneChange("a.go"), laneChange("b.md")},
-			checks:  []string{"gofmt", "prose", "vet", "build", "structure"},
+			checks:  []string{"gofmt", "prose", "vet", "build", "structure", "docs-currency-workflow"},
 			classes: []string{"go-source", "markdown"},
 		},
 		{
@@ -239,25 +239,25 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "PL29 a roadmap detail file",
 			changes: []ComposedChange{laneChange("roadmap/FT1.md")},
-			checks:  []string{"prose", "roadmap-detail-integrity"},
+			checks:  []string{"prose", "docs-currency-workflow", "roadmap-detail-integrity"},
 			classes: []string{"markdown", "roadmap-board"},
 		},
 		{
 			name:    "PL29 the roadmap index",
 			changes: []ComposedChange{laneChange("ROADMAP.md")},
-			checks:  []string{"prose", "roadmap-detail-integrity"},
+			checks:  []string{"prose", "docs-currency-workflow", "roadmap-detail-integrity"},
 			classes: []string{"markdown", "roadmap-board"},
 		},
 		{
 			name:    "PL30 a spec-local decision map",
 			changes: []ComposedChange{laneChange("specs/x/decisions/map.md")},
-			checks:  []string{"prose", "decision-map-integrity"},
+			checks:  []string{"prose", "docs-currency-workflow", "decision-map-integrity"},
 			classes: []string{"markdown", "decision-documents"},
 		},
 		{
 			name:    "PL31 a pending retro",
 			changes: []ComposedChange{laneChange("capture/retros/x.md")},
-			checks:  []string{"prose", "retro-improvement-markers"},
+			checks:  []string{"prose", "docs-currency-workflow", "retro-improvement-markers"},
 			classes: []string{"markdown", "capture-retros"},
 		},
 		{
@@ -282,19 +282,19 @@ func TestSelectLaneByClass(t *testing.T) {
 		{
 			name:    "a directory prefix claims no sibling that shares its letters",
 			changes: []ComposedChange{laneChange("roadmapx/a.md")},
-			checks:  []string{"prose"},
+			checks:  []string{"prose", "docs-currency-workflow"},
 			classes: []string{"markdown"},
 		},
 		{
 			name:    "the roadmap index claims the repository root alone",
 			changes: []ComposedChange{laneChange("docs/ROADMAP.md")},
-			checks:  []string{"prose"},
+			checks:  []string{"prose", "docs-currency-workflow"},
 			classes: []string{"markdown"},
 		},
 		{
 			name:    "a decision tree under specs needs a slug between the two names",
 			changes: []ComposedChange{laneChange("specs/decisions/x.md")},
-			checks:  []string{"prose"},
+			checks:  []string{"prose", "docs-currency-workflow"},
 			classes: []string{"markdown"},
 		},
 		{
