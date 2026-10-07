@@ -2783,9 +2783,9 @@ Count: 4. Worst issue: C1.
     {
       "id": "TP-C4",
       "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
-      "tip": "dc26a3623e7f23897be5bc2b85fb190da34a276f",
-      "plan_digest": "sha256:1c5894ac82bfcb966fd21e87d2edfd4c5b35b92acb2308e4c7c42ae2ed3b7ff7",
-      "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+      "tip": "d5e1378e47b736651e2b8b828fc91c32364b56bc",
+      "plan_digest": "sha256:43eef97bdc3ce4c10a69d33427d06aab40ffa9e5a32cabcb5739a9e7e3392d6b",
+      "source_digest": "a17ff335f304f36ab74fb2da17eacf40c04c9580",
       "acceptance_rows": [
         "TP41",
         "TP42",
@@ -2979,6 +2979,53 @@ Count: 4. Worst issue: C1.
             "ref": "claude-agent:ft290_t10_r2",
             "digest": "sha256:0da2b81eef9e05bee4b91296502322c425ed5e48ba20464916f07f30ffaed56a",
             "excerpt": "HEAD dc26a3623e7f23897be5bc2b85fb190da34a276f\nbench test --package ./internal/worktree\ngithub.com/gibbonmi/bench/internal/worktree,pass,74979,1305 (failures 0; 2 environment socket skips)\n"
+          },
+          "requirement": "t10-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-testreport-r4",
+          "performer": "claude:ft290_t10_r3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a17ff335f304f36ab74fb2da17eacf40c04c9580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t10_r3",
+            "digest": "sha256:844b17cffeff7b02b74ed858d29bc0dcfb2a68e9762e8461e02df165e813a26d",
+            "excerpt": "HEAD d5e1378e47b736651e2b8b828fc91c32364b56bc (dirty: reviews/ft290-test-projection.md only)\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,37837,200\n  failures[0] skips[0]; exit 0; wall 41.0s\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/selection.go --swap \"var causePrecedence = []string{causeGoMetadata, causeChanged, causeEmbed}\" --with \"var causePrecedence = []string{causeChanged, causeGoMetadata, causeEmbed}\" --package ./internal/testreport --run '^TestCauseGoMetadataWins$'\nprobe: bit,internal/testreport/selection.go,swap,failed,1,yes\n  internal/testreport,fail,3,1\n  TestCauseGoMetadataWins: selection_cause_test.go:139: causes = map[example/a:changed example/b:go-metadata], want map[example/a:go-metadata example/b:go-metadata]\n"
+          },
+          "requirement": "t10-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the cause precedence: test the changed cause before the go-metadata cause. TestCauseGoMetadataWins must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t10_r3",
+              "digest": "sha256:844b17cffeff7b02b74ed858d29bc0dcfb2a68e9762e8461e02df165e813a26d",
+              "excerpt": "HEAD d5e1378e47b736651e2b8b828fc91c32364b56bc (dirty: reviews/ft290-test-projection.md only)\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,37837,200\n  failures[0] skips[0]; exit 0; wall 41.0s\n$ bench worktree exec \"ft290-test-projection\" -- bench probe internal/testreport/selection.go --swap \"var causePrecedence = []string{causeGoMetadata, causeChanged, causeEmbed}\" --with \"var causePrecedence = []string{causeChanged, causeGoMetadata, causeEmbed}\" --package ./internal/testreport --run '^TestCauseGoMetadataWins$'\nprobe: bit,internal/testreport/selection.go,swap,failed,1,yes\n  internal/testreport,fail,3,1\n  TestCauseGoMetadataWins: selection_cause_test.go:139: causes = map[example/a:changed example/b:go-metadata], want map[example/a:go-metadata example/b:go-metadata]\n"
+            }
+          }
+        },
+        {
+          "id": "t10-worktree-r4",
+          "performer": "claude:ft290_t10_r3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a17ff335f304f36ab74fb2da17eacf40c04c9580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t10_r3",
+            "digest": "sha256:20340877c8ebbc930aa3a891c32be9102307f141f8018a8d2b2d6f4141568af7",
+            "excerpt": "HEAD d5e1378e47b736651e2b8b828fc91c32364b56bc (dirty: reviews/ft290-test-projection.md only)\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/worktree\n  github.com/gibbonmi/bench/internal/worktree,pass,79670,1305\n  failures[0]; skips[2] (capability: unix sockets unavailable, socket subtests); exit 0; wall 84.8s\n"
           },
           "requirement": "t10-worktree",
           "command": "bench test --package ./internal/worktree",
