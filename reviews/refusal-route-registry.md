@@ -575,7 +575,87 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "r-c1b-standards",
+          "performer": "claude:ft393_c1b_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1b_standards",
+            "digest": "sha256:57fa0059cd8466b9d318bb373a5b835cd9b835d79b96a988286809f6e33e8fe5",
+            "excerpt": "RR-C1b Standards (claude:ft393_c1b_standards): evidence current=true. 6 findings, all advisory.\nC1b-S1 registry.go and refusal_route_test.go comments cite FT341 as provenance. auto-fix. conf 4\nC1b-S2 worktree tests re-spell the reviewer marker and the step joiner with no recorded red. ask-user. conf 5\nC1b-S3 refusal_route_test.go over-long comment line and the unclear name placeholds. auto-fix. conf 6\nC1b-S4 three ad-hoc parsers of the printed record layout in the worktree route tests. auto-fix. conf 4\nC1b-S5 landingFaceRefusal takes two adjacent same-type strings. auto-fix. conf 4\nC1b-S6 bench recovery takes the operational AXI exemption. ask-user. conf 3\nWorst: C1b-S2. Implementation command contributed to C1b-S6 and C1b-S2.\n"
+          },
+          "axis": "Standards",
+          "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "tip": "389cb337d7f198bb2925785dbfa1ab6e74e4a805",
+          "finding_ids": [
+            "C1b-S1",
+            "C1b-S2",
+            "C1b-S3",
+            "C1b-S4",
+            "C1b-S5",
+            "C1b-S6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c1b-spec",
+          "performer": "claude:ft393_c1b_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1b_spec",
+            "digest": "sha256:74ab85de428a59f0987d8535c50a02dbec7078e8d0538c9a89b3703159c1a8ac",
+            "excerpt": "RR-C1b Spec (claude:ft393_c1b_spec): evidence current=true. 3 findings, all advisory.\nC1b-P1 five identity-component landing refusals print no next= route. ask-user. conf 6\nC1b-P2 non-conflict landReviewed errors at land.go print no route and no ticket owns the remainder. ask-user. conf 5\nC1b-P3 RR18 has no independent reviewer-marker assertion. auto-fix. conf 7\nNo-op notes: the AXI exemption and the helpCommand move.\nWorst: C1b-P1. Implementation command contributed to C1b-P1 and C1b-P2.\n"
+          },
+          "axis": "Spec",
+          "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "tip": "389cb337d7f198bb2925785dbfa1ab6e74e4a805",
+          "finding_ids": [
+            "C1b-P1",
+            "C1b-P2",
+            "C1b-P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c1b-coverage",
+          "performer": "claude:ft393_c1b_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1b_coverage",
+            "digest": "sha256:e26683cd9360529be5d43ea442d9e20ab2a46f5a0a8d54e4446522b692396b6b",
+            "excerpt": "RR-C1b Coverage (claude:ft393_c1b_coverage): evidence current=true. 7 findings, 2 blocking.\nC1b-C1 blocking the unsafe-path bench worktree path step refuses for the same input class. ask-user. conf 8\nC1b-C2 blocking routeless identity-component refusals and land.go landReviewed errors. ask-user. conf 7\nC1b-C3 advisory the follow walk passes when a different refusal replaces the face. ask-user. conf 7\nC1b-C4 advisory the review step is a Command, which blocks the ticket 05 land-red fixture. ask-user. conf 6\nC1b-C5 advisory composed slots take the sample path in the guard check. no-op. conf 5\nC1b-C6 advisory the new handback sites have no next= assertion. auto-fix. conf 5\nC1b-C7 advisory no test dispatches bench recovery through cmd/bench. auto-fix. conf 5\nWorst: C1b-C1. Implementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "tip": "389cb337d7f198bb2925785dbfa1ab6e74e4a805",
+          "finding_ids": [
+            "C1b-C1",
+            "C1b-C2",
+            "C1b-C3",
+            "C1b-C4",
+            "C1b-C5",
+            "C1b-C6",
+            "C1b-C7"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -650,3 +730,44 @@ The axes retained this optional advice:
 
 - The `Fact` case and `asWritten` spell the same line-safe predicate.
 - A preface of only whitespace renders as written.
+
+## RR-C1b pickup
+
+The RR-C1b review returned 16 findings, and Coverage marked two of them blocking.
+The orchestrator also holds one known defect: `TestLandingFacesFollowTheirRoutes/source-not-clean` failed once and passed on a rerun at the same source.
+The findings collapse to 9 repair targets across tickets 02, 03, and 04, and one ticket 05 expansion.
+
+### Standards
+
+Count: 6. Worst issue: C1b-S2, the re-spelled marker and joiner with no recorded red.
+
+- C1b-S1, auto-fix, confidence 4: comments cite a feature identifier as provenance. Ticket 02 repair.
+- C1b-S2, auto-fix, confidence 5: the marker gets a recorded red through the C1b-P3 assertions, and the joiner gets one source. Tickets 02 and 03 repair.
+- C1b-S3, auto-fix, confidence 6: an over-long comment line and an unclear closure name in the landing route test. Ticket 02 repair.
+- C1b-S4, auto-fix, confidence 4: three test parsers of the printed record layout collapse to one. Ticket 03 repair.
+- C1b-S5, no-op, confidence 4: the parameter list is a preference with no binding requirement, so the axis keeps it as advice.
+- C1b-S6, no-op, confidence 3: all three axes judge the operational AXI exemption defensible, and it has precedent.
+
+### Spec
+
+Count: 3. Worst issue: C1b-P1, the routeless identity-component refusals.
+
+- C1b-P1, auto-fix, confidence 6: the five identity components without a recovery route hand back through `land-handback`. Ticket 02 repair.
+- C1b-P2, auto-fix, confidence 5: ticket 05 expands, so each remaining `landReviewed` error hands back through `land-handback`.
+- C1b-P3, auto-fix, confidence 7: each reviewer land face gets a literal marker assertion and a recorded probe. Ticket 02 repair.
+
+### Coverage
+
+Count: 7. Worst issue: C1b-C1, the unsafe-path lookup that refuses its own input class.
+
+- C1b-C1, no-op, confidence 8: Bench builds each pool path from hex and decimal segments, so the lookup guard is defensive. A consultation verified the pool path shape, and the spec decided the form.
+- C1b-C2, auto-fix, confidence 7: the same fix as C1b-P1 and C1b-P2.
+- C1b-C3, auto-fix, confidence 7: the follow walk proves that the rerun finishes, and the source reruns print the repaired source tip. Ticket 03 repair.
+- C1b-C4, auto-fix, confidence 6: the review step becomes an instruction, so the ticket 05 `land-red` fixture can follow it. Ticket 02 repair.
+- C1b-C5, no-op, confidence 5: the spec states the sample-path limit of the guard check.
+- C1b-C6, auto-fix, confidence 5: the newly faced handback sites get `next=` assertions. Ticket 02 repair.
+- C1b-C7, auto-fix, confidence 5: a test dispatches `bench recovery` through the command registry. Ticket 04 repair.
+
+### Known defect
+
+- The follow walk fails at random on the `source-not-clean` step, probably because a new wrapper script starts while it is still open for write. Ticket 03 repair.
