@@ -38,8 +38,6 @@ and review cost that recent builds paid.
 
 ## Delivery queue
 
-**FT290 (MEDIUM) — `bench test` projects a check's fixture family, a widened-set explanation, and a check inventory.**
-
 **FT215 (HIGH, decision required) — the path-aware lane closes its correctness edges before cost tuning.**
 
 **FT258 (HIGH, decision required) — `bench commit` derives a complete change set and preserves merge parents.**
@@ -308,6 +306,5 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT290
-2. FT373
-3. FT349
+1. FT373
+2. FT349

@@ -32,21 +32,36 @@ func IsSubjectName(name string) bool { return strings.HasSuffix(name, ".md") }
 //
 // Grade composes the same per-subject Grader that GradeNamed uses, so the exclusion list,
 // the byte classifier, and the finding render have one source.
-func Grade(root string) []string {
-	subjects, diags := collect(root)
+func Grade(root string) []string { return GradeTree(root).Findings }
+
+// TreeGrade is the answer of one whole-tree grade. Subjects holds each collected subject
+// that the exclusion set does not exclude, in walk order. A walk or exclusion refusal
+// grades no subject, so its diagnostics are the Findings of an empty Subjects list.
+type TreeGrade struct {
+	Subjects []string
+	Findings []string
+}
+
+// GradeTree walks root as Grade does and also answers the graded subjects.
+func GradeTree(root string) TreeGrade {
+	collected, diags := collect(root)
 	if len(diags) > 0 {
-		return diags
+		return TreeGrade{Findings: diags}
 	}
-	if len(subjects) == 0 {
-		return nil
+	if len(collected) == 0 {
+		return TreeGrade{}
 	}
 	g, exDiags := NewGrader(root)
 	if len(exDiags) > 0 {
-		return exDiags
+		return TreeGrade{Findings: exDiags}
 	}
-	var out []string
-	for _, rel := range subjects {
-		out = append(out, g.GradeSubject(rel)...)
+	var out TreeGrade
+	for _, rel := range collected {
+		if g.ex.excluded(rel) {
+			continue
+		}
+		out.Subjects = append(out.Subjects, rel)
+		out.Findings = append(out.Findings, g.GradeSubject(rel)...)
 	}
 	return out
 }

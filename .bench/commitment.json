@@ -268,6 +268,14 @@
       "identity": "sha256:dfb2ccaa9c6a76ed4e8f454358894ddaed5123fc1cb0d187623ab152b37bfa5e",
       "source": "459cc5608f10f79104dbb3b6f745e1038e4b16d3",
       "evidence": "67c7335be6eff9abccbc07f163e99d64fa53d69e"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT290",
+      "binding": "ft290-test-projection",
+      "identity": "sha256:f5346a66659abbcee3641f48e19558a7980440b189f25cd22ef4e3ae7f59e327",
+      "source": "b9b24d23cdfb33a96eaa71f854b585b847f68036",
+      "evidence": "9ff2bba30d37e65cd2305dab97e456fcb3089984"
     }
   ]
 }

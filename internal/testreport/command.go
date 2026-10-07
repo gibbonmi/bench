@@ -10,21 +10,22 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/diff"
 	benchenv "github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gocache"
-	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
+// Usage is the one owner of the bench test grammar line.
+const Usage = "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures | bench test --checks"
+
 var grammar = usage.Grammar{
-	Cmd:  "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>",
-	Help: "usage: bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name>",
+	Cmd:  Usage,
+	Help: "usage: " + Usage,
 	Flags: []usage.Flag{
 		{Name: "--full"},
 		{Name: "--package", HasValue: true, NoEmptyValue: true},
@@ -33,6 +34,8 @@ var grammar = usage.Grammar{
 		{Name: "--base", HasValue: true, NoEmptyValue: true},
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
 		{Name: "--check", HasValue: true, NoEmptyValue: true},
+		{Name: "--fixtures"},
+		{Name: "--checks"},
 	},
 	MaxArgs: 1,
 }
@@ -41,17 +44,18 @@ var selectRunBinary = runbinary.ReuseOrOwn
 
 const goChildGroupCancelled = "child process group cancelled"
 
-const proseCheckName = "prose"
-
 type focusedRequest struct {
 	packageExpr string
-	packages    []string
-	full        bool
-	run         string
-	changed     bool
-	base        string
-	sourceTip   string
-	check       string
+	// causes is the `--changed` selection; it is nil for every other form.
+	causes    changedSelection
+	full      bool
+	run       string
+	changed   bool
+	base      string
+	sourceTip string
+	check     string
+	fixtures  bool
+	checks    bool
 }
 
 func parseFocusedRequest(root string, args []string) (focusedRequest, string, int) {
@@ -64,6 +68,14 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	check, hasCheck := parsed.Flags["--check"]
 	base, hasBase := parsed.Flags["--base"]
 	sourceTip, hasSourceTip := parsed.Flags["--source-tip"]
+	_, fixtures := parsed.Flags["--fixtures"]
+	_, checks := parsed.Flags["--checks"]
+	if checks && (len(parsed.Flags) != 1 || len(parsed.Positionals) != 0) {
+		return focusedRequest{}, toon.Usage(grammar.Cmd, "--checks"), 2
+	}
+	if fixtures && (!hasCheck || len(parsed.Flags) != 2) {
+		return focusedRequest{}, toon.Usage(grammar.Cmd, "--fixtures"), 2
+	}
 	if len(parsed.Positionals) > 0 {
 		if explicit || changed || hasCheck {
 			return focusedRequest{}, toon.Usage(grammar.Cmd, parsed.Positionals[0]), 2
@@ -72,7 +84,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if changed && explicit {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--changed"), 2
 	}
-	if hasCheck && (explicit || changed || parsed.Flags["--run"] != "") {
+	if hasCheck && (explicit || changed || parsed.Flags["--run"] != "" && check != gate.SystemPhaseName) {
 		return focusedRequest{}, toon.Usage(grammar.Cmd, "--check"), 2
 	}
 	if (hasBase || hasSourceTip) && !changed {
@@ -101,6 +113,8 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 		base:        base,
 		sourceTip:   sourceTip,
 		check:       check,
+		fixtures:    fixtures,
+		checks:      checks,
 	}, "", 0
 }
 
@@ -110,36 +124,20 @@ func testGrammar() usage.Grammar {
 	return withInventory
 }
 
-func unknownCheck(check string) string {
-	return "unknown check: " + check + "\n" + namedCheckInventory()
-}
-
-func namedCheckInventory() string {
-	checks := namedChecks()
-	return "checks:\n  " + strings.Join(checks, "\n  ")
-}
-
-func namedChecks() []string {
-	return append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName)
-}
-
-func isNamedCheck(check string) bool {
-	for _, name := range namedChecks() {
-		if name == check {
-			return true
-		}
-	}
-	return false
-}
-
 func runFocusedRequest(root string, request focusedRequest) (Outcome, string, int) {
+	if request.fixtures {
+		return checkFixtures(root, request.check)
+	}
+	if request.checks {
+		return checksInventory(root)
+	}
 	// The refusal precedes the run-owner selection, which builds a Bench executable with
 	// Go. A root the suite may not grade therefore starts no child at all.
 	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {
 		return refusedOutcome(toon.Errorf("system check unavailable", "the system suite grades the kit checkout only")+"\n", 1)
 	}
 	if request.check == proseCheckName {
-		return runProseCheck(root)
+		return runProseCheck(root, request.full)
 	}
 	ctx, stop := subprocess.NotifyCancel(context.Background())
 	defer stop()
@@ -157,14 +155,14 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 		if err != nil {
 			return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 		}
-		packages, err := resolveChangedPackagesWithEnvironment(ctx, root, subject.Paths, changedEnv)
+		causes, err := resolveChangedPackagesWithEnvironment(ctx, root, subject.Paths, changedEnv)
 		if err != nil {
 			return refusedOutcome(toon.Errorf("changed selection failed", err.Error())+"\n", 1)
 		}
-		if len(packages) == 0 {
-			return emptyReport(request.full)
+		if len(causes) == 0 {
+			return emptyReport(request.full, causes)
 		}
-		request.packages = packages
+		request.causes = causes
 	}
 	if request.check != "" {
 		return runNamedCheck(ctx, root, request, selection)
@@ -173,8 +171,8 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	if request.run != "" {
 		operands = append(operands, "-run", request.run)
 	}
-	if len(request.packages) != 0 {
-		operands = append(operands, request.packages...)
+	if len(request.causes) != 0 {
+		operands = append(operands, request.causes.packages()...)
 	} else {
 		operands = append(operands, request.packageExpr)
 	}
@@ -183,41 +181,6 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
 	return runGoTest(ctx, root, request, focusedTestArgv(operands...), env)
-}
-
-func runNamedCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
-	if request.check == gate.SystemPhaseName {
-		return runSystemCheck(ctx, root, request, selection)
-	}
-	argv := focusedTestArgv("./internal/conformance", "-run", namedCheckRunPattern())
-	env, err := conformanceEnvironment(os.Environ(), root, request.check, selection)
-	if err != nil {
-		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
-	}
-	return runGoTest(ctx, selection.SourceRoot, request, argv, env)
-}
-
-// runProseCheck grades sentences rather than a Go test, so its outcome reads each
-// finding as a failure row and an empty grade as a pass.
-func runProseCheck(root string) (Outcome, string, int) {
-	findings := prose.Grade(root)
-	if len(findings) == 0 {
-		return Outcome{Kind: OutcomePassed}, "", 0
-	}
-	return Outcome{Kind: OutcomeFailed, FailedTests: len(findings)}, strings.Join(findings, "\n") + "\n", 1
-}
-
-// runSystemCheck runs the gate's system phase as a focused run. It reads the phase's
-// operands and environment from the gate's producer, and it sets no conformance
-// variable, because the system suite is a build-tagged package rather than a
-// conformance scope.
-func runSystemCheck(ctx context.Context, root string, request focusedRequest, selection *runbinary.Selection) (Outcome, string, int) {
-	operands, suiteEnv := gate.SystemSuite(root)
-	env, err := selectedRunEnvironment(os.Environ(), selection)
-	if err != nil {
-		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
-	}
-	return runGoTest(ctx, root, request, focusedTestArgv(operands...), append(env, suiteEnv...))
 }
 
 // focusedTestArgv is the `bench test` invocation over one operand list. It takes its
@@ -308,10 +271,11 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	if incomplete := report.incompletePackages(); len(incomplete) != 0 {
 		return refusedOutcome(toon.Errorf("go test reported incomplete packages", strings.Join(incomplete, ", "))+"\n", 1)
 	}
-	outcome = report.outcome(request.full)
+	outcome = report.outcome()
 	if request.run != "" && outcome.Kind == OutcomeNoTestRun {
 		return Outcome{Kind: OutcomeNoTestRun}, toon.Errorf("go test reported no test runs", "run pattern matched no tests") + "\n", 1
 	}
+	report.causes = request.causes
 	out, renderErr := report.render(request.full)
 	if renderErr != nil {
 		return refusedOutcome(toon.RenderError(renderErr)+"\n", 1)
@@ -335,13 +299,14 @@ func drainGoProcessGroup(pgid int) {
 	_ = syscall.Kill(-pgid, syscall.SIGKILL)
 }
 
-func emptyReport(full bool) (Outcome, string, int) {
+func emptyReport(full bool, causes changedSelection) (Outcome, string, int) {
 	empty := newReport()
+	empty.causes = causes
 	out, err := empty.render(full)
 	if err != nil {
 		return refusedOutcome(toon.RenderError(err)+"\n", 1)
 	}
-	return empty.outcome(full), out, 0
+	return empty.outcome(), out, 0
 }
 
 // packagePattern maps a bare directory-relative operand to a "./"-prefixed

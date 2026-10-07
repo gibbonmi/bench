@@ -139,6 +139,18 @@ func TestFixturePinsAnswersEmptyForAnInventorylessRoot(t *testing.T) {
 	}
 }
 
+// TestFixturePinsReturnsAnInventoryError keeps a malformed inventory a fault: only
+// an absent inventory answers empty.
+func TestFixturePinsReturnsAnInventoryError(t *testing.T) {
+	root := t.TempDir()
+	for _, family := range []string{"first-family", "second-family"} {
+		writeFixtureFile(t, filepath.Join(Dir(root), family, "twin", "EXPECT"), "twin diagnostic\n")
+	}
+	if _, err := FixturePins(root); err == nil || !strings.Contains(err.Error(), "appears in multiple families") {
+		t.Fatalf("FixturePins(duplicate name) error = %v, want the inventory diagnostic", err)
+	}
+}
+
 // TestPinnedPathsReadsOneFixtureInBaseThenMutationOrder holds the per-fixture
 // accessor to the order the materializer applies: the BASE list first, then the
 // MUTATE.json anchors. A caller that filters diagnostics by pin reads this

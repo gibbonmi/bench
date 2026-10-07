@@ -2,7 +2,7 @@
 
 Blocked by: 8-list-check-fixtures.md
 Writes: internal/testreport/, cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand
-Covers: TP31, TP32, TP34, TP35, TP36, TP37, TP38, TP39, TP50
+Covers: TP31, TP32, TP34, TP35, TP36, TP37, TP38, TP39, TP50, TP56
 
 ## What to build
 

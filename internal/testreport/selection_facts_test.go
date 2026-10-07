@@ -72,7 +72,7 @@ func TestOutcomeCountsTheDistinctTestsThatRan(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got := report.outcome(false).Ran; got != tc.ran {
+			if got := report.outcome().Ran; got != tc.ran {
 				t.Fatalf("Ran = %d, want %d", got, tc.ran)
 			}
 		})

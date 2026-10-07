@@ -37,13 +37,13 @@ func (r Request) Target() string {
 
 // Run answers the exact run pattern the focused run passes to Go, or AllTests when it
 // passes none. The named-check pattern comes from the one producer the argv reads, so a
-// caller is never told a pattern the run did not use. The prose grade starts no Go child
-// and the system suite passes no pattern, so both answer AllTests.
+// caller is never told a pattern the run did not use. The prose grade starts no Go child,
+// so it answers AllTests. The system suite passes the caller's pattern, or none.
 func (r Request) Run() string {
 	switch {
-	case r.focused.check == proseCheckName || r.focused.check == gate.SystemPhaseName:
+	case r.focused.check == proseCheckName:
 		return AllTests
-	case r.focused.check != "":
+	case r.focused.check != "" && r.focused.check != gate.SystemPhaseName:
 		return namedCheckRunPattern()
 	case r.focused.run != "":
 		return r.focused.run

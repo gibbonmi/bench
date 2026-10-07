@@ -19,7 +19,8 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-const absentHarnessMessage = "canary fixture inventory is empty"
+// ErrNoFixtures is the inventory error for a canary directory that is absent or holds no fixture.
+var ErrNoFixtures = errors.New("canary fixture inventory is empty")
 
 // CheckFileName names the marker that binds a fixture to a conformance check.
 const CheckFileName = "CHECK"
@@ -42,7 +43,7 @@ func IsConformanceFamily(dir string) bool {
 
 // UnboundConformanceFamilies reports family directories without a registry owner.
 func UnboundConformanceFamilies(kitRoot string) []string {
-	entries, err := os.ReadDir(filepath.Join(kitRoot, "tests", "canary"))
+	entries, err := os.ReadDir(Dir(kitRoot))
 	if err != nil {
 		return nil
 	}
@@ -52,7 +53,7 @@ func UnboundConformanceFamilies(kitRoot string) []string {
 		if !entry.IsDir() {
 			continue
 		}
-		familyDir := filepath.Join(kitRoot, "tests", "canary", name)
+		familyDir := filepath.Join(Dir(kitRoot), name)
 		holds, err := holdsExpect(familyDir)
 		if err != nil {
 			diagnostics = append(diagnostics, err.Error())
@@ -79,21 +80,7 @@ type fixtureRecord struct {
 
 // Fixtures returns the complete fixture inventory keyed by globally unique base name.
 func Fixtures(canaryDir string) (map[string]Fixture, error) {
-	records, err := discoverFixtures(canaryDir)
-	if err != nil {
-		return nil, err
-	}
-	result := make(map[string]Fixture, len(records))
-	for _, record := range records {
-		_, check, err := fixtureCheck(record.dir)
-		if err != nil {
-			return nil, err
-		}
-		result[filepath.Base(record.dir)] = Fixture{
-			Dir: record.dir, Family: record.family, Check: fixtureScope(record.family, check),
-		}
-	}
-	return result, nil
+	return fixturesOf(discoverFixtures(canaryDir))
 }
 
 var grammar = usage.Grammar{Cmd: "bench canary", Help: "usage: bench canary [root]", MaxArgs: 1}
@@ -131,7 +118,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 
 // Inventory returns the validated fixture inventory decision for root.
 func Inventory(root string) (Selection, error) {
-	found, err := Fixtures(filepath.Join(root, "tests", "canary"))
+	found, err := Fixtures(Dir(root))
 	if err != nil {
 		return Selection{}, err
 	}
@@ -156,11 +143,8 @@ func Inventory(root string) (Selection, error) {
 // that moves carries its pins with it. A root with no fixture inventory pins
 // nothing; that is an answer, not a fault.
 func FixturePins(root string) (map[string][]string, error) {
-	records, err := discoverFixtures(filepath.Join(root, "tests", "canary"))
+	records, err := rootRecords(root)
 	if err != nil {
-		if err.Error() == absentHarnessMessage {
-			return map[string][]string{}, nil
-		}
 		return nil, err
 	}
 	pins := map[string][]string{}
@@ -250,7 +234,7 @@ func pinnedPaths(root, fixture string) ([]string, error) {
 func discoverFixtures(dir string) ([]fixtureRecord, error) {
 	families, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, errors.New(absentHarnessMessage)
+		return nil, ErrNoFixtures
 	}
 	var result []fixtureRecord
 	seen := map[string]bool{}
@@ -292,7 +276,7 @@ func discoverFixtures(dir string) ([]fixtureRecord, error) {
 		}
 	}
 	if len(result) == 0 {
-		return nil, errors.New(absentHarnessMessage)
+		return nil, ErrNoFixtures
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].dir < result[j].dir })
 	return result, nil

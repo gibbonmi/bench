@@ -32,9 +32,9 @@ decisions/run-binary-provenance/assets/.
 
 ## Sources
 
-- Path: `roadmap/FT290.md`
-  Supports: the 2026-09-17 occurrence that ticket #1 must reproduce.
-  Drift: a new occurrence or a body edit on the row.
+- Path: `specs/ft290-test-projection/spec.md`
+  Supports: two lines name this map as the owner of the run binary provenance. They are the line "Not covered: story 36" and the Out of scope line "The run binary provenance in a result".
+  Drift: a change to either line.
 - Path: `internal/runbinary/runbinary.go`
   Supports: the entry state of ticket #1. `Own` builds from the source root. `Inherit` refuses a seal that does not agree with the source digest.
   Drift: a change to `ReuseOrOwn`, `Own`, `Inherit`, or `canonicalVerify`.

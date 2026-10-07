@@ -58,9 +58,9 @@ specs/ft290-test-projection/decisions/ft290-test-projection/assets/.
 
 ## Sources
 
-- Path: `roadmap/FT290.md`
-  Supports: the destination and the occurrence record behind tickets #1 to #9.
-  Drift: a new occurrence or a body edit on the row.
+- Path: `specs/ft290-test-projection/spec.md`
+  Supports: the destination and the ticket answers behind tickets #1 to #9, in the source trace under Further notes.
+  Drift: a change to the source trace or to the user stories.
 - Path: `internal/testreport/command.go`
   Supports: tickets #2, #5, and #9. The name check comes before the run binary selection. The prose check returns no output on green, and `--check` refuses `--run`.
   Drift: a change to `parseFocusedRequest`, `runProseCheck`, or `runNamedCheck`.
