@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/complete-checkpoint-closure/spec.md",
-  "plan_digest": "sha256:252e69174ce3424e55e73d397fdecf3a4a7df3ca029e597de1edea0e8d5661ac",
+  "plan_digest": "sha256:0cd15d2e700fa2603ac87fe1df65b5eb74a88ecc1bd5ea045a287b45c763e326",
   "implementation_session": "",
   "chunks": [
     {
@@ -224,183 +224,6 @@
               "excerpt": "tip 1ee00ddfe063f207281768d2f5757b923ca95102\nbench test --package ./internal/gate --run 'TestReviewCheckpointReuse|TestCompleteCheckpointEvidenceNamesThePublishedTree'\ngithub.com/gibbonmi/bench/internal/gate,pass,1130,2\nprobe: internal/gate/run_outcomes_test.go one swap: fixture witnesses checkout-relative and outcomeWitness.path returns the checkout root\nprobe[1]: bit,internal/gate/run_outcomes_test.go,swap,failed,2,yes\nfailed: TestCompleteCheckpointEvidenceNamesThePublishedTree complete_checkpoint_test.go:136 (.gate-record-during absent); TestReviewCheckpointReuse review_checkpoint_test.go:101 (2 runs)\n"
             }
           }
-        },
-        {
-          "id": "v-t1-gate-package-r1",
-          "performer": "claude:ft392_t1",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_t1",
-            "digest": "sha256:c39625233142325663b784d473391c1a5b6005524105e44256cbdf28985a2c64",
-            "excerpt": "tree[1]{target,head,dirty}:\n  complete-checkpoint-closure,c1c76ff057669cb9407cbcb1b02ada1000ce926c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,25125,398\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "requirement": "t1-gate-package",
-          "command": "bench test --package ./internal/gate",
-          "exit_code": 0
-        },
-        {
-          "id": "v-t2-gate-package-r1",
-          "performer": "claude:ft392_t2_repair1",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_t2_repair1",
-            "digest": "sha256:fb09845e594e164ff862b6410e1ed14d749446da47a500cb4ab5f2a327dd85ab",
-            "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./internal/gate\ngithub.com/gibbonmi/bench/internal/gate,pass,25074,398\n"
-          },
-          "requirement": "t2-gate-package",
-          "command": "bench test --package ./internal/gate",
-          "exit_code": 0
-        },
-        {
-          "id": "v-t2-complete-checkpoint-r1",
-          "performer": "claude:ft392_t2_repair1",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_t2_repair1",
-            "digest": "sha256:e722108e8e58524480640ac513a8e008e548f07f2cee96091037ea664912f09b",
-            "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./internal/gate --run 'TestCompleteCheckpoint|TestChunkCheckpointGradesTheCheckoutTree|TestReviewCheckpoint|TestCommitmentExactTransform'\ngithub.com/gibbonmi/bench/internal/gate,pass,6949,67\n"
-          },
-          "requirement": "t2-complete-checkpoint",
-          "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpoint|TestChunkCheckpointGradesTheCheckoutTree|TestReviewCheckpoint|TestCommitmentExactTransform'",
-          "exit_code": 0
-        },
-        {
-          "id": "v-t2-public-route-r1",
-          "performer": "claude:ft392_t2_repair1",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_t2_repair1",
-            "digest": "sha256:78deeae3e873489c9731109960a79a5ea51ef313ec02bc129852aef8bdeb2c3f",
-            "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./cmd/bench --run 'TestGateCheckpointRoute'\ngithub.com/gibbonmi/bench/cmd/bench,pass,411,1\n"
-          },
-          "requirement": "t2-public-route",
-          "command": "bench test --package ./cmd/bench --run 'TestGateCheckpointRoute'",
-          "exit_code": 0
-        },
-        {
-          "id": "v-t2-landing-journey-r1",
-          "performer": "claude:ft392_t2_repair1",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_t2_repair1",
-            "digest": "sha256:f552ac44438c8be54ba4b3fd4863e7fb208f7445124f0202ab0e22fd58dd0eaf",
-            "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./internal/worktree --run 'TestLandCommandPublicRealGitJourney'\ngithub.com/gibbonmi/bench/internal/worktree,pass,4723,7\n"
-          },
-          "requirement": "t2-landing-journey",
-          "command": "bench test --package ./internal/worktree --run 'TestLandCommandPublicRealGitJourney'",
-          "exit_code": 0
-        },
-        {
-          "id": "v-t2-route-omission-proof-r1",
-          "performer": "claude:ft392_t2_repair1",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_t2_repair1",
-            "digest": "sha256:621bb84dd354e7db0c32e3e6c002f70fce7d42b53c7631363cb7df0c005a5660",
-            "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./internal/gate --run 'TestCompleteCheckpoint'\ngithub.com/gibbonmi/bench/internal/gate,pass,2457,12\nprobe: internal/gate/gate.go swap 'if checkpoint.Complete {' -> 'if false {' (route --complete through the ordinary checkout evaluation)\nprobe[1]: bit,internal/gate/gate.go,swap,failed,9,yes\nmutated run: github.com/gibbonmi/bench/internal/gate,fail,1738,12\nfailed: TestCompleteCheckpointGradesTheClosedTree complete_checkpoint_test.go:105 (exit 0, want exit 9 and the citation), plus 8 other TestCompleteCheckpoint cases\nprobe exit code 1 is the failing go test exit, not a probe output field\n"
-          },
-          "requirement": "t2-route-omission-proof",
-          "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpoint'",
-          "exit_code": 0,
-          "probe": {
-            "mutation": "Route --complete through the ordinary checkout evaluation. TestCompleteCheckpointGradesTheClosedTree must fail, then pass after source restoration.",
-            "outcome": "bit",
-            "exit_code": 1,
-            "restore": "pass",
-            "native_ref": {
-              "ref": "claude-agent:ft392_t2_repair1",
-              "digest": "sha256:621bb84dd354e7db0c32e3e6c002f70fce7d42b53c7631363cb7df0c005a5660",
-              "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./internal/gate --run 'TestCompleteCheckpoint'\ngithub.com/gibbonmi/bench/internal/gate,pass,2457,12\nprobe: internal/gate/gate.go swap 'if checkpoint.Complete {' -> 'if false {' (route --complete through the ordinary checkout evaluation)\nprobe[1]: bit,internal/gate/gate.go,swap,failed,9,yes\nmutated run: github.com/gibbonmi/bench/internal/gate,fail,1738,12\nfailed: TestCompleteCheckpointGradesTheClosedTree complete_checkpoint_test.go:105 (exit 0, want exit 9 and the citation), plus 8 other TestCompleteCheckpoint cases\nprobe exit code 1 is the failing go test exit, not a probe output field\n"
-            }
-          }
-        },
-        {
-          "id": "v-t2-clean-checkout-proof-r1",
-          "performer": "claude:ft392_t2_repair1",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_t2_repair1",
-            "digest": "sha256:b9db3ddeaa45e2c3e547300ca87f12089aee32a7ba8e0a818f9f798bd0e566bb",
-            "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./internal/gate --run 'TestCompleteCheckpointRefusesADirtyCheckout'\ngithub.com/gibbonmi/bench/internal/gate,pass,411,6\nprobe: internal/gate/complete_checkpoint.go swap 'if working != sourceTree {' -> 'if working == \"\" && working != sourceTree {' (remove the clean-checkout refusal)\nprobe[1]: bit,internal/gate/complete_checkpoint.go,swap,failed,4,yes\nfailed: tracked_edit, untracked_file (exit 0); uncommitted_record, stale_evidence ('completion is incomplete or stale' instead of the clean-checkout refusal)\nrecord-exemption probe not rerun at this tip\nprobe exit code 1 is the failing go test exit, not a probe output field\n"
-          },
-          "requirement": "t2-clean-checkout-proof",
-          "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpointRefusesADirtyCheckout'",
-          "exit_code": 0,
-          "probe": {
-            "mutation": "Remove the clean-checkout refusal, or exempt the review record from it. Each named refusal assertion must fail, then pass after source restoration.",
-            "outcome": "bit",
-            "exit_code": 1,
-            "restore": "pass",
-            "native_ref": {
-              "ref": "claude-agent:ft392_t2_repair1",
-              "digest": "sha256:b9db3ddeaa45e2c3e547300ca87f12089aee32a7ba8e0a818f9f798bd0e566bb",
-              "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./internal/gate --run 'TestCompleteCheckpointRefusesADirtyCheckout'\ngithub.com/gibbonmi/bench/internal/gate,pass,411,6\nprobe: internal/gate/complete_checkpoint.go swap 'if working != sourceTree {' -> 'if working == \"\" && working != sourceTree {' (remove the clean-checkout refusal)\nprobe[1]: bit,internal/gate/complete_checkpoint.go,swap,failed,4,yes\nfailed: tracked_edit, untracked_file (exit 0); uncommitted_record, stale_evidence ('completion is incomplete or stale' instead of the clean-checkout refusal)\nrecord-exemption probe not rerun at this tip\nprobe exit code 1 is the failing go test exit, not a probe output field\n"
-            }
-          }
-        },
-        {
-          "id": "v-t2-witness-proof-r1",
-          "performer": "claude:ft392_t2_repair1",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_t2_repair1",
-            "digest": "sha256:4956323053c55f3ea8d7cc6bc0e186db9a8567631cc3e5904317e2dcd352b0c8",
-            "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./internal/gate --run 'TestReviewCheckpointReuse|TestCompleteCheckpointEvidenceNamesThePublishedTree'\ngithub.com/gibbonmi/bench/internal/gate,pass,1100,2\nprobe: internal/gate/run_outcomes_test.go one swap: fixture witnesses checkout-relative and outcomeWitness.path returns the checkout root\nprobe[1]: bit,internal/gate/run_outcomes_test.go,swap,failed,2,yes\nmutated run: github.com/gibbonmi/bench/internal/gate,fail,705,2\nfailed: TestCompleteCheckpointEvidenceNamesThePublishedTree complete_checkpoint_test.go:136 (.gate-record-during absent); TestReviewCheckpointReuse review_checkpoint_test.go:101 (2 runs)\nprobe exit code 1 is the failing go test exit, not a probe output field\n"
-          },
-          "requirement": "t2-witness-proof",
-          "command": "bench test --package ./internal/gate --run 'TestReviewCheckpointReuse|TestCompleteCheckpointEvidenceNamesThePublishedTree'",
-          "exit_code": 0,
-          "probe": {
-            "mutation": "Point the witness helper and the fixture witnesses at the checkout. The CC25 and CC32 assertions must fail, then pass after source restoration.",
-            "outcome": "bit",
-            "exit_code": 1,
-            "restore": "pass",
-            "native_ref": {
-              "ref": "claude-agent:ft392_t2_repair1",
-              "digest": "sha256:4956323053c55f3ea8d7cc6bc0e186db9a8567631cc3e5904317e2dcd352b0c8",
-              "excerpt": "tip c1c76ff057669cb9407cbcb1b02ada1000ce926c\nbench test --package ./internal/gate --run 'TestReviewCheckpointReuse|TestCompleteCheckpointEvidenceNamesThePublishedTree'\ngithub.com/gibbonmi/bench/internal/gate,pass,1100,2\nprobe: internal/gate/run_outcomes_test.go one swap: fixture witnesses checkout-relative and outcomeWitness.path returns the checkout root\nprobe[1]: bit,internal/gate/run_outcomes_test.go,swap,failed,2,yes\nmutated run: github.com/gibbonmi/bench/internal/gate,fail,705,2\nfailed: TestCompleteCheckpointEvidenceNamesThePublishedTree complete_checkpoint_test.go:136 (.gate-record-during absent); TestReviewCheckpointReuse review_checkpoint_test.go:101 (2 runs)\nprobe exit code 1 is the failing go test exit, not a probe output field\n"
-            }
-          }
         }
       ],
       "reviews": [
@@ -469,72 +292,6 @@
             "C1"
           ],
           "supersedes": []
-        },
-        {
-          "id": "r-cc1-standards-confirm",
-          "performer": "claude:ft392_confirm_standards",
-          "role": "independent-review",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_confirm_standards",
-            "digest": "sha256:50b02d5b550de22c86dd19956c0ca75f9028a589e185b7362e85c8c055d6b894",
-            "excerpt": "Standards confirming round, chunk CC1, evidence sha256:e53fc44a current=true at ee5f1724; repair delta 00c12fef..c1c76ff0. 0 findings.\nS1 confirmed: complete_checkpoint_test.go:241-242 asserts on cleanCheckoutRefusal (complete_checkpoint.go:12). S2 confirmed: complete_checkpoint.go:16-18 states only what the code does. C1 confirmed: complete_checkpoint_test.go:203-209.\nAdvice (no ID): the absence check at complete_checkpoint_test.go:241 spells \"completion is incomplete or stale\", which reviewrecord/check.go:62 owns inline.\n"
-          },
-          "axis": "Standards",
-          "base": "ea3e7867a6019c2ce11edbf16bae033aaba81a2f",
-          "tip": "c1c76ff057669cb9407cbcb1b02ada1000ce926c",
-          "finding_ids": [],
-          "supersedes": [
-            "r-cc1-standards"
-          ]
-        },
-        {
-          "id": "r-cc1-spec-confirm",
-          "performer": "claude:ft392_confirm_spec",
-          "role": "independent-review",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_confirm_spec",
-            "digest": "sha256:abc0290f304195e840afa131e47dcd6b435a578f819c3fd1258da07f1a47112d",
-            "excerpt": "Spec confirming round, chunk CC1, evidence sha256:e53fc44a current=true at ee5f1724; repair delta 00c12fef..c1c76ff0. 0 findings.\nS1, S2, C1 confirmed. The repair changes only comment lines 16-18 of complete_checkpoint.go; the ignored-file case matches spec.md:94; CC01-CC32 do not regress.\n"
-          },
-          "axis": "Spec",
-          "base": "ea3e7867a6019c2ce11edbf16bae033aaba81a2f",
-          "tip": "c1c76ff057669cb9407cbcb1b02ada1000ce926c",
-          "finding_ids": [],
-          "supersedes": [
-            "r-cc1-spec"
-          ]
-        },
-        {
-          "id": "r-cc1-coverage-confirm",
-          "performer": "claude:ft392_confirm_coverage",
-          "role": "independent-review",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:ft392_confirm_coverage",
-            "digest": "sha256:400a8c073c6968b21fe1423587f48e9fe5e829246f2e5265904c8904fd9b2e7a",
-            "excerpt": "Coverage confirming round, chunk CC1, evidence sha256:e53fc44a current=true at ee5f1724; repair delta 00c12fef..c1c76ff0. 0 findings.\nC1 probe (refuse on ignored files): bit, ignored_file failed at complete_checkpoint_test.go:207, restored yes.\nS1 probe (never refuse): bit, 4 failures at complete_checkpoint_test.go:242, restored yes. git status clean at finish.\n"
-          },
-          "axis": "Coverage",
-          "base": "ea3e7867a6019c2ce11edbf16bae033aaba81a2f",
-          "tip": "c1c76ff057669cb9407cbcb1b02ada1000ce926c",
-          "finding_ids": [],
-          "supersedes": [
-            "r-cc1-coverage"
-          ]
         }
       ]
     }
@@ -545,7 +302,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:252e69174ce3424e55e73d397fdecf3a4a7df3ca029e597de1edea0e8d5661ac",
+      "to": "sha256:0cd15d2e700fa2603ac87fe1df65b5eb74a88ecc1bd5ea045a287b45c763e326",
+      "chunk_ids": {
+        "CC1": [
+          "CC1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
@@ -566,11 +334,3 @@ Chunk CC1 has 0 findings. Rows CC01 to CC32 are met.
 Chunk CC1 has 1 finding. The worst finding is C1.
 
 - C1 (auto-fix, confidence 7): no test makes sure that an ignored file passes the clean-checkout check at `internal/gate/complete_checkpoint.go:63-69`. The spec decides that the working-tree hash excludes ignored files. A probe that refuses on each ignored file stayed silent on `./internal/gate` and on `TestGateCheckpointRoute`. Add an ignored-file case to `TestCompleteCheckpointRefusesADirtyCheckout` that expects exit 0.
-
-## Repair state
-
-Chunk CC1 used 1 of its 2 repair cycles and its 1 hardening cycle. The repair session `claude:ft392_t2_repair1` fixed S1, S2, and C1 in one cycle. The confirming round of all three axes read the repair delta and found 0 findings. Each confirming result supersedes the first-round result of its axis.
-
-## Advice
-
-The absence check in `internal/gate/complete_checkpoint_test.go` spells the stale-evidence text, which `internal/reviewrecord/check.go` owns as an inline error. Two older tests use the same literal. This advice has no finding ID and goes to the drain.
