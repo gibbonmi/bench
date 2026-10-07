@@ -2,7 +2,7 @@
 
 ## TP-C4 review pickup
 
-The TP-C4 review ran on the frozen pair `6fdd27b3..77f521a9`. Each axis ran on sonnet at high effort. The chunk has used 2 of its 2 repair cycles; the second repaired C6 at `dc26a362`. The repair session `claude:ft290_t10_r1` repaired the six targets at `6cba8898`, and the chunk tip is now `6cba8898`.
+The TP-C4 review ran on the frozen pair `6fdd27b3..77f521a9`. Each axis ran on sonnet at high effort. The chunk has used 2 of its 2 repair cycles; the second repaired C6 at `dc26a362`. The repair session `claude:ft290_t10_r1` repaired the six targets at `6cba8898`. The repair session `claude:ft290_t10_r2` repaired C6, and the chunk tip is now `dc26a362`.
 
 The confirming round of all three axes passed, and each earlier silent mutation now bites. The Coverage axis also reported C6, an inherited defect. A changed Go file in a sub-package that another package embeds selects only the embedding package. The chunk base holds the same branch, and the cause cell keeps the selected set unchanged by design. Under the fix-don't-park rule, the orchestrator routed C6 to `bench learning` and gave it no repair target in FT290.
 
