@@ -812,7 +812,16 @@ The orchestrator records each author session before that author's dispatch.
           "preserved": "c359944cda758e4b555be502836e29cb530511fd"
         }
       ],
-      "05-route-each-merge-refusal-through-the-registry.md": [],
+      "05-route-each-merge-refusal-through-the-registry.md": [
+        {
+          "session": "claude:ft393_t5",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "6affd5e5e85046b4b5bed7331cf92effb42f5eb7",
+          "native_ref": "claude-agent:ft393_t5"
+        }
+      ],
       "06-give-the-red-source-fold-an-exit.md": [],
       "07-route-each-reset-refusal-through-the-registry.md": [],
       "08-route-the-commit-exit-3-to-the-reset-plan.md": [],
