@@ -143,7 +143,7 @@ func TestLandCommandRefusesAReviewBaseThatIsNotAnAncestorOfTheDestination(t *tes
 	r.mustViaJoins(t)
 	// The expectation is spelled out here rather than read from landingBaseNotAncestorDetail,
 	// so a mutation of that constant turns this test red instead of passing silently.
-	const wantDetail = "review base is not an ancestor of the landing destination: --base takes the landing base, the default-branch tip the source folded, not the fold commit the review read"
+	const wantDetail = "review base is not an ancestor of the landing destination: --base takes a default-branch commit, such as the tip merged before the first chunk, not the fold commit the review read"
 	want := "detail=" + wantDetail + ",observed=" + f.fold + ",wanted=" + f.base
 	if r.exit != 1 || !strings.Contains(r.stdout, want) {
 		t.Fatalf("non-ancestor base = (%d, %q, %q), want a refusal carrying %q", r.exit, r.stdout, r.stderr, want)

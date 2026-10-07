@@ -256,42 +256,18 @@ func landingSourceRange(j joins, worktree, slug, base, head string) (diff.Source
 		// attaches this face's route there.
 		var unfenced preflight.UnauthorizedPathsError
 		if errors.As(err, &unfenced) && len(unfenced.Paths) > 0 {
-			raised := refusal{paths: unfenced.Paths}
-			if folded := foldedDefaultBase(worktree, base, head); folded != "" {
-				raised.observed, raised.wanted = base, folded
-			}
-			return diff.SourceRange{}, detail, landingFaceRefusalOf(faceSourceNotFenced, raised, "")
+			return diff.SourceRange{}, detail, landingFaceRefusalOf(faceSourceNotFenced, refusal{paths: unfenced.Paths}, "")
 		}
 		return diff.SourceRange{}, detail, fmt.Errorf("%s: %s", detail, err)
 	}
 	return resolved, detail, nil
 }
 
-// foldedDefaultBase is the default-branch commit the source folded after the caller's
-// base: the merge base of the source head and the default branch, when that commit
-// descends from base and differs from it. The default branch's own paths then read as
-// unfenced under the older base. Any fact the reader cannot establish answers "", so the
-// fence face keeps its generic route rather than guessing a base.
-func foldedDefaultBase(worktree, base, head string) string {
-	branch, ok := git.ResolvedDefault(worktree)
-	if !ok {
-		return ""
-	}
-	folded, err := git.Output("-C", worktree, "merge-base", head, branch)
-	if err != nil || folded == "" || folded == base {
-		return ""
-	}
-	if descends, err := authorization.IsAncestor(worktree, base, folded); err != nil || !descends {
-		return ""
-	}
-	return folded
-}
-
-// landingBaseNotAncestorDetail names the two commits `--base` can mean, because the
-// review reads the fold commit as its frozen base while the landing takes the
-// default-branch tip the source folded — a mismatch between the two is not a typo an
-// operator can fix without knowing which base the flag wants.
-const landingBaseNotAncestorDetail = "review base is not an ancestor of the landing destination: --base takes the landing base, the default-branch tip the source folded, not the fold commit the review read"
+// landingBaseNotAncestorDetail names the two commits `--base` can mean, because a review
+// can read a fold commit as its frozen base, while the landing takes a default-branch
+// commit. The detail names the base merged before the first chunk, because that base keeps
+// the whole build inside the range the landing authorizes.
+const landingBaseNotAncestorDetail = "review base is not an ancestor of the landing destination: --base takes a default-branch commit, such as the tip merged before the first chunk, not the fold commit the review read"
 
 func identityRefusal(observed, wanted, detail string) error {
 	return refusalError{refusal{detail: detail, observed: observed, wanted: wanted}}

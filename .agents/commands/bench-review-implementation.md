@@ -95,7 +95,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    The first chunk base is the `main` tip merged into the source. Each later chunk base is the accepted predecessor tip, so the range holds only that chunk's delta.
    A later plan commit is never a chunk base.
 
-   Merge `main` into the source only before the first chunk. A later chunk base holds the tree of the accepted predecessor tip, so the review chain refuses a `main` merge after the first chunk starts. The landing composes the `main` commits that arrive during the build. The review preflight counts each path that a merge brings in against the ownership fences.
+   Merge `main` into the source before the first chunk. A later chunk base holds the tree of the accepted predecessor tip, so the review chain refuses a `main` merge between two chunks. When `main` moves during the build, the source folds `main` with `bench worktree merge --from main <target>` before the completion landing. The fold joins the review delta of the last chunk. The review preflight authorizes each path that the fold brings in unchanged from the `main` tip. It counts each path that the build changed against the ownership fences.
 
 2. **Find the sources.** The spec source is `specs/<feature>/spec.md` for this
    work, or the path I give you. The standards sources are `AGENTS.md` and
@@ -239,7 +239,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
 
    A clean chunk review hands its frozen pair back to the orchestrator. The orchestrator starts the successor ticket's fresh author or performs final reconciliation. Only the reconciled final source proceeds to `bench worktree land`; `/bench-final-check` reports that landing's oracle.
 
-   The landing base is the `main` tip merged before the first chunk. `bench worktree land --base` takes that `main` tip, not a later chunk base.
+   The landing base is the `main` tip merged before the first chunk. `bench worktree land --base` takes that `main` tip after a fold too. A chunk base or the folded `main` tip narrows the range that the landing authorizes.
 
 ## Ordinary assessment evidence
 
