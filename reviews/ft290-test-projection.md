@@ -6,6 +6,8 @@ The TP-C4 review ran on the frozen pair `6fdd27b3..77f521a9`. Each axis ran on s
 
 The confirming round of all three axes passed, and each earlier silent mutation now bites. The Coverage axis also reported C6, an inherited defect. A changed Go file in a sub-package that another package embeds selects only the embedding package. The chunk base holds the same branch, and the cause cell keeps the selected set unchanged by design. Under the fix-don't-park rule, the orchestrator routed C6 to `bench learning` and gave it no repair target in FT290.
 
+The reviewer then stated that `--auto-approve` prefers an immediate fix instead of a deferral. So C6 became a repair target, owned by ticket 10, in the chunk's second repair cycle. Before that repair, the source folded `main` twice. The first fold composed an unrelated spec staging. The second fold composed the light-path fix that lets the review preflight authorize folded paths.
+
 The raw count is 7 findings, and the repair-target count is 6, because S2 and C4 name one fix. Ticket 10 owns every target.
 
 The orchestrator accepted the `ask-user` finding S1 under the reviewer's auto-approval for spec and ticket expansions, because spec line 219 fixes the cause order.
@@ -163,7 +165,7 @@ Count: 4. Worst issue: C1.
 {
   "version": 2,
   "spec": "specs/ft290-test-projection/spec.md",
-  "plan_digest": "sha256:7a4a089344744ae12b085fba8532ca6bd44d5a3810f5c8c386fec355947a3718",
+  "plan_digest": "sha256:1c5894ac82bfcb966fd21e87d2edfd4c5b35b92acb2308e4c7c42ae2ed3b7ff7",
   "implementation_session": "",
   "chunks": [
     {
@@ -3513,6 +3515,27 @@ Count: 4. Worst issue: C1.
     {
       "from": "sha256:41c029161651fcdbdb5acc64277b9806aa734bcce424f709fd5cba7e531d8ca3",
       "to": "sha256:7a4a089344744ae12b085fba8532ca6bd44d5a3810f5c8c386fec355947a3718",
+      "chunk_ids": {
+        "TP-C1a": [
+          "TP-C1a"
+        ],
+        "TP-C1b": [
+          "TP-C1b"
+        ],
+        "TP-C2": [
+          "TP-C2"
+        ],
+        "TP-C3": [
+          "TP-C3"
+        ],
+        "TP-C4": [
+          "TP-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:7a4a089344744ae12b085fba8532ca6bd44d5a3810f5c8c386fec355947a3718",
+      "to": "sha256:1c5894ac82bfcb966fd21e87d2edfd4c5b35b92acb2308e4c7c42ae2ed3b7ff7",
       "chunk_ids": {
         "TP-C1a": [
           "TP-C1a"
