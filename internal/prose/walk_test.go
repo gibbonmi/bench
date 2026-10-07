@@ -290,11 +290,12 @@ func TestGrade(t *testing.T) {
 }
 
 // TestGradeReportsGradedSubjects grades that the tree grade answers its graded subjects,
-// and that an excluded file is not one of them.
+// and that neither a file row nor a directory row's subject is one of them.
 func TestGradeReportsGradedSubjects(t *testing.T) {
 	root := t.TempDir()
-	write(t, root, ".bench/prose-exclusions", "skip.md planted fixture text\n")
+	write(t, root, ".bench/prose-exclusions", "skip.md planted fixture text\ndrafts/ planted fixture tree\n")
 	write(t, root, "skip.md", longSentence())
+	write(t, root, "drafts/skip.md", longSentence())
 	write(t, root, "keep.md", "Short prose.\n")
 	got := GradeTree(root)
 	if strings.Join(got.Subjects, ",") != "keep.md" || len(got.Findings) != 0 {

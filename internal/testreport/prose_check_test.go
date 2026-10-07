@@ -18,6 +18,10 @@ func cleanProseTree(t *testing.T) string {
 	return root
 }
 
+// proseFailureModes holds the default and `--full` argument lists. A failed prose run
+// prints the same bytes in both modes, because `--full` adds subjects only to a green run.
+var proseFailureModes = [][]string{{"--check", "prose"}, {"--full", "--check", "prose"}}
+
 // TestProseGreenPrintsOnlyCheckRow grades that a green prose run prints the check row
 // and nothing else.
 func TestProseGreenPrintsOnlyCheckRow(t *testing.T) {
@@ -37,21 +41,23 @@ func TestProseFullListsSubjects(t *testing.T) {
 	}
 }
 
-// TestProseZeroSubjectsExitsOne grades the zero rule for the prose check: a tree whose
-// only document is excluded graded nothing, so the run is no evidence.
+// TestProseZeroSubjectsExitsOne grades the zero rule for the prose check in both modes:
+// a tree whose only document is excluded graded nothing, so the run is no evidence.
 func TestProseZeroSubjectsExitsOne(t *testing.T) {
 	root := t.TempDir()
 	writeProseCheckFile(t, root, ".bench/prose-exclusions", "skip.md planted fixture text\n")
 	writeProseCheckFile(t, root, "skip.md", "Short prose.\n")
-	output, code := Command(root, []string{"--check", "prose"})
 	want := checkHeader + "  prose,prose,0,0\nerror: named check ran nothing"
-	if !strings.HasPrefix(output, want) || code != 1 {
-		t.Fatalf("Command = (%d, %q), want (1, prefix %q)", code, output, want)
+	for _, args := range proseFailureModes {
+		output, code := Command(root, args)
+		if !strings.HasPrefix(output, want) || code != 1 {
+			t.Fatalf("Command(%q) = (%d, %q), want (1, prefix %q)", args, code, output, want)
+		}
 	}
 }
 
-// TestProseRedKeepsFindingsAfterCheckRow grades that a red prose run prints the check row
-// and then each finding line of the grader.
+// TestProseRedKeepsFindingsAfterCheckRow grades that a red prose run in either mode prints
+// the check row and then each finding line of the grader.
 func TestProseRedKeepsFindingsAfterCheckRow(t *testing.T) {
 	root := t.TempDir()
 	writeProseCheckFile(t, root, ".bench/prose-exclusions", "")
@@ -61,15 +67,17 @@ func TestProseRedKeepsFindingsAfterCheckRow(t *testing.T) {
 	if len(findings) != 2 {
 		t.Fatalf("prose.Grade() = %q, want two findings", findings)
 	}
-	output, code := Command(root, []string{"--check", "prose"})
 	want := checkHeader + "  prose,prose,0,2\n" + strings.Join(findings, "\n") + "\n"
-	if output != want || code != 1 {
-		t.Fatalf("Command = (%d, %q), want (1, %q)", code, output, want)
+	for _, args := range proseFailureModes {
+		output, code := Command(root, args)
+		if output != want || code != 1 {
+			t.Fatalf("Command(%q) = (%d, %q), want (1, %q)", args, code, output, want)
+		}
 	}
 }
 
-// TestProseGraderRefusalPrintsCheckRow grades that a grader refusal prints the check row
-// with no subject, then the refusal diagnostic, and not the zero-rule title.
+// TestProseGraderRefusalPrintsCheckRow grades that a grader refusal in either mode prints
+// the check row with no subject, then the refusal diagnostic, and not the zero-rule title.
 func TestProseGraderRefusalPrintsCheckRow(t *testing.T) {
 	root := t.TempDir()
 	writeProseCheckFile(t, root, "only.md", "Short prose.\n")
@@ -77,9 +85,11 @@ func TestProseGraderRefusalPrintsCheckRow(t *testing.T) {
 	if len(diagnostics) != 1 {
 		t.Fatalf("prose.Grade() = %q, want one refusal diagnostic", diagnostics)
 	}
-	output, code := Command(root, []string{"--check", "prose"})
 	want := checkHeader + "  prose,prose,0,0\n" + diagnostics[0] + "\n"
-	if output != want || code != 1 {
-		t.Fatalf("Command = (%d, %q), want (1, %q)", code, output, want)
+	for _, args := range proseFailureModes {
+		output, code := Command(root, args)
+		if output != want || code != 1 {
+			t.Fatalf("Command(%q) = (%d, %q), want (1, %q)", args, code, output, want)
+		}
 	}
 }
