@@ -150,16 +150,20 @@ func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
 		t.Fatalf("two-refusal preflight = (%d, %q, %q), want both refusals named", r.exit, r.stdout, r.stderr)
 	}
 	// LRS3 and RR20: every landing-preflight route ends with the caller's own re-run, so a
-	// repair does not cost the operator the flags it passed. The producing fixtures state
-	// which land faces the preflight prints, so the walk covers each preflight face: the two
-	// this run raises are read from the printed record, and the rest from the route the
-	// face renders over the same re-run.
-	rerun := landArgsRerun(request, f.base, f.tip, f.creation.Path)
-	tail := "; then " + rerun
+	// repair does not cost the operator the flags it passed. A repair that commits in the
+	// source moves the tip, so that re-run names the repaired tip. The producing fixtures
+	// state which land faces the preflight prints, so the walk covers each preflight face:
+	// the two this run raises are read from the printed record, and the rest from the route
+	// the face renders over the same re-run.
 	for _, fixture := range landingRefusalFixtures() {
 		if fixture.stage != stagePreflight {
 			continue
 		}
+		rerun := landArgsRerun(request, f.base, f.tip, f.creation.Path)
+		if fixture.repairsSource {
+			rerun = landArgsRerunAt(request, f.base, repairedTipArg, f.creation.Path)
+		}
+		tail := "; then " + rerun
 		sentence := refusalroute.Sentence(fixture.face)
 		if next, printed := landingFaceNext(r.stdout, sentence); printed && sentence != "" {
 			if !strings.HasSuffix(next, tail) {
@@ -292,7 +296,7 @@ func TestLandCommandConflictRefusalNamesTheSourceRepair(t *testing.T) {
 	wantNext := "next=" + reviewerRoute + "git -C '" + f.creation.Path + "' merge '" + destination +
 		"' (bench worktree merge refuses this conflict; resolve it by hand); then bench commit; then /bench-review-implementation; then " +
 		"bench worktree land --request <request> --base '" + destination +
-		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> '" + f.creation.Path + "'}"
+		"' --source-tip " + repairedTipArg + " --spec 'x' -m <message> '" + f.creation.Path + "'}"
 	if r.exit != 1 || !strings.Contains(r.stdout, "composition conflict: textual") || !strings.Contains(r.stdout, wantNext) {
 		t.Fatalf("conflict repair next = (%d, %q, %q), want %q", r.exit, r.stdout, r.stderr, wantNext)
 	}
@@ -313,7 +317,7 @@ func TestLandCommandSpecLessConflictNextNamesNoSpec(t *testing.T) {
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	commitInWorktree(t, f.root, "ROADMAP.md", "board destination\n", "destination board")
 	r := runVerb(t, verbLand, f.processHomeCall(specLessLandArgs(request, f.base, tip, f.creation.Path)...))
-	if r.exit != 1 || !strings.Contains(r.stdout, " --source-tip <repaired-source-tip> -m <message> '") || strings.Contains(r.stdout, "--spec") {
+	if r.exit != 1 || !strings.Contains(r.stdout, " --source-tip "+repairedTipArg+" -m <message> '") || strings.Contains(r.stdout, "--spec") {
 		t.Fatalf("spec-less conflict next = (%d, %q, %q), want no --spec", r.exit, r.stdout, r.stderr)
 	}
 }
@@ -351,7 +355,7 @@ func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
 	wantNext := "next=" + reviewerRoute + "bench worktree exec " + f.creation.Assignment.ID + " -- git merge '" + destination +
 		"' (bench worktree merge refuses this conflict; resolve it by hand); then bench commit; then /bench-review-implementation; then " +
 		"bench worktree path '" + f.creation.Assignment.ID + "'; then bench worktree land --request <request> --base '" + destination +
-		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> <checkout>}"
+		"' --source-tip " + repairedTipArg + " --spec 'x' -m <message> <checkout>}"
 	if r.exit != 1 || strings.ContainsRune(r.stdout, '\x1b') || !strings.Contains(r.stdout, wantNext) {
 		t.Fatalf("unsafe-path conflict next = (%d, %q, %q), want the pointer form %q", r.exit, r.stdout, r.stderr, wantNext)
 	}
@@ -376,7 +380,7 @@ func TestLandCommandConflictNextPlaceholdsAnUnsafeSpec(t *testing.T) {
 	args := []string{"--request", request, "--base", f.base, "--source-tip", tip, "--spec", slug, "-m", "land", f.creation.Path}
 	r := runVerb(t, verbLand, f.processHomeCall(args...))
 	wantNext := "bench worktree land --request <request> --base '" + destination +
-		"' --source-tip <repaired-source-tip> --spec <spec> -m <message> '" + f.creation.Path + "'}"
+		"' --source-tip " + repairedTipArg + " --spec <spec> -m <message> '" + f.creation.Path + "'}"
 	if r.exit != 1 || !strings.Contains(r.stdout, "composition conflict: textual") || !strings.Contains(r.stdout, wantNext) {
 		t.Fatalf("unsafe-spec conflict next = (%d, %q, %q), want the placeholder form %q", r.exit, r.stdout, r.stderr, wantNext)
 	}

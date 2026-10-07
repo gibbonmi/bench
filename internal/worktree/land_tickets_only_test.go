@@ -70,9 +70,10 @@ func TestLandCommandAbsentSpecFolderKeepsTheUnreadableRefusal(t *testing.T) {
 		t.Fatalf("unreadable-spec refusal ran the gate: %v", err)
 	}
 	// LRS3: the fence face routes its wrapped cause too, so the operator reads the
-	// face's own repair with the caller's own re-run behind it.
+	// face's own repair with the caller's own re-run behind it. The repair commits in the
+	// source, so the re-run names the repaired tip.
 	rerun := "bench worktree land --request '" + request + "' --base '" + f.base +
-		"' --source-tip '" + f.tip + "' --spec 'absent' -m <message> '" + f.creation.Path + "'"
+		"' --source-tip " + repairedTipArg + " --spec 'absent' -m <message> '" + f.creation.Path + "'"
 	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotFenced))
 	repair := landingRoute(faceSourceNotFenced, rerun, nil)
 	if !printed || next != repair {

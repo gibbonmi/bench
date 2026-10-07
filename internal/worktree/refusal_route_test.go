@@ -32,9 +32,18 @@ func landingRouteAfter(face, preface, rerun string, values map[string]string) st
 // landArgsRerun is the caller's own re-run of a landing that ran with landArgs, spelled
 // from the same inputs.
 func landArgsRerun(request, base, tip, path string) string {
-	return "bench worktree land --request '" + request + "' --base '" + base + "' --source-tip '" + tip +
-		"' --spec 'x' -m <message> '" + path + "'"
+	return landArgsRerunAt(request, base, "'"+tip+"'", path)
 }
+
+// landArgsRerunAt is landArgsRerun with its --source-tip argument as the route prints it.
+func landArgsRerunAt(request, base, tipArg, path string) string {
+	return "bench worktree land --request '" + request + "' --base '" + base + "' --source-tip " + tipArg +
+		" --spec 'x' -m <message> '" + path + "'"
+}
+
+// repairedTipArg is the --source-tip argument of a re-run whose repair commits in the
+// source. The spec pins the slot, so the proofs spell it.
+const repairedTipArg = "<repaired-source-tip>"
 
 // rerunMark stands in for the re-run where a proof reads only the repair ahead of it.
 const rerunMark = "RERUN"
@@ -178,6 +187,9 @@ type landingRefusalFixture struct {
 	carry map[int]func(t *testing.T, f landingFixture)
 	// names states what the printed route must name, read from the fixture.
 	names func(f landingFixture) []string
+	// repairsSource states that the face's repair commits in the source, so its re-run
+	// names the repaired tip in place of the caller's.
+	repairsSource bool
 }
 
 // landingFixtureFor returns the one fixture that produces the named face, so a proof that
@@ -237,7 +249,8 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			// The dirty path is one the ticket writes, so the printed commit lands it. The
 			// project declares a commit lane in an ignored phase manifest, which leaves the
 			// source's status alone, so the printed commit has a lane to pass.
-			face: faceSourceNotClean,
+			face:          faceSourceNotClean,
+			repairsSource: true,
 			mutate: func(t *testing.T, _ string, creation Creation) {
 				mustWrite(t, filepath.Join(creation.Path, "owned.txt"), []byte("uncommitted repair\n"), 0o644)
 				mustWrite(t, filepath.Join(creation.Path, ".bench", "phases.json"), []byte(`{"phases":[{"name":"build","argv":["true"]}],"lane":[{"name":"unit","argv":["true"]}]}`), 0o644)
@@ -245,10 +258,17 @@ func landingRefusalFixtures() []landingRefusalFixture {
 				mustMkdirAll(t, filepath.Dir(exclude), 0o755)
 				mustWrite(t, exclude, []byte(".bench/phases.json\n"), 0o644)
 			},
+			// The commit lane is the walk's scaffold, so it leaves the source before the
+			// review. The release of the landed source then finds no ignored residue.
+			carry: map[int]func(*testing.T, landingFixture){1: func(t *testing.T, f landingFixture) {
+				mustRemove(t, filepath.Join(f.creation.Path, ".bench", "phases.json"))
+				review(t, f)
+			}},
 			names: func(f landingFixture) []string { return []string{"bench commit --in ", f.creation.Assignment.Label} },
 		},
 		{
-			face: faceSourceNotFenced,
+			face:          faceSourceNotFenced,
+			repairsSource: true,
 			mutate: func(t *testing.T, _ string, creation Creation) {
 				commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
 			},
@@ -259,10 +279,12 @@ func landingRefusalFixtures() []landingRefusalFixture {
 		},
 		{
 			// The source moves past the tip the caller names, which is the state an
-			// operator reaches when a review repair adds a commit.
+			// operator reaches when a review repair adds a commit. The review of that repair
+			// covers the moved source, and the unmoved destination's head is its review base.
 			face: faceSourceTipMismatch,
-			mutate: func(t *testing.T, _ string, creation Creation) {
+			mutate: func(t *testing.T, root string, creation Creation) {
 				commitInWorktree(t, creation.Path, "owned.txt", "moved\n", "source moved past the named tip")
+				refreshLandingEvidence(t, creation.Path, gitOutput(t, root, "rev-parse", "HEAD"))
 			},
 			tip: func(t *testing.T, creation Creation) string {
 				return gitOutput(t, creation.Path, "rev-parse", "HEAD~1")
@@ -338,33 +360,40 @@ func landingRefusalFixtures() []landingRefusalFixture {
 }
 
 // landingFaceNext reads the next= value out of the refused record whose detail names the
-// face. next= is the last field the formatter writes, so the value runs to the closing
-// brace. The second result reports whether the face printed at all.
+// face. next= is the last field of the refused record. The second result reports whether
+// the face printed at all.
 func landingFaceNext(stdout, detail string) (string, bool) {
-	for _, line := range strings.Split(stdout, "\n") {
-		if !strings.HasPrefix(line, "refused{detail="+detail) {
-			continue
-		}
-		_, next, found := strings.Cut(line, ",next=")
-		if !found {
-			return "", true
-		}
-		return strings.TrimSuffix(next, "}"), true
-	}
-	return "", false
+	return recordField(stdout, "refused{detail="+detail, refusalroute.NextField)
 }
 
-// landedNext reads the next= value out of the landed record of an incomplete landing. The
-// census field follows next=, so the value runs to that field.
+// landedNext reads the next= value out of the landed record of an incomplete landing.
 func landedNext(stdout string) (string, bool) {
-	_, rest, found := strings.Cut(stdout, "landed{")
-	if !found {
-		return "", false
-	}
-	_, next, found := strings.Cut(rest, ",next=")
-	if !found {
+	return landedField(stdout, refusalroute.NextField)
+}
+
+// landedField reads one field of the landed record. The census field is the record's last.
+func landedField(stdout, field string) (string, bool) {
+	return recordField(stdout, "landed{", field, "census")
+}
+
+// recordField is the one reader of the printed record layout. It reads field out of the
+// first line that opens with opening. A value can hold a comma, so the value runs to the
+// first of the later fields that the record prints after it, or to the closing brace. The
+// second result reports whether the record printed at all.
+func recordField(stdout, opening, field string, later ...string) (string, bool) {
+	for _, line := range strings.Split(stdout, "\n") {
+		if !strings.HasPrefix(line, opening) {
+			continue
+		}
+		for _, separator := range []string{"{", ","} {
+			if _, value, found := strings.Cut(line, separator+field+"="); found {
+				for _, label := range later {
+					value, _, _ = strings.Cut(value, ","+label+"=")
+				}
+				return strings.TrimSuffix(value, "}"), true
+			}
+		}
 		return "", true
 	}
-	next, _, _ = strings.Cut(next, ",census=")
-	return next, true
+	return "", false
 }

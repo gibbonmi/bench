@@ -108,9 +108,10 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 	}
 }
 
-// LRS5: a source-side face refuses on the resume too. The resume rebuilds the caller's
+// LRS5: a source-side refusal refuses on the resume too. The resume rebuilds the caller's
 // own continuation from the flags it passed, so the route ends with that resume rather
-// than with a first-run landing the operator must not repeat.
+// than with a first-run landing the operator must not repeat. A commit would move a dirty
+// source away from the published tip, so the dirty source takes land-handback.
 func TestResumeLandCommandSourceRefusalNamesTheCallersResume(t *testing.T) {
 	t.Parallel()
 	request := "resume-source-not-clean"
@@ -122,7 +123,7 @@ func TestResumeLandCommandSourceRefusalNamesTheCallersResume(t *testing.T) {
 	r := runVerb(t, verbLand, f.callWith(defaultJoins(), args...))
 	resume := "bench worktree land --resume '" + published + "' --request <request> --base '" + f.base +
 		"' --source-tip '" + f.tip + "' --spec 'x' '" + f.creation.Path + "'"
-	want := landingRoute(faceSourceNotClean, resume, labelOf(f.creation))
+	want := landingRoute(faceLandHandback, resume, nil)
 	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotClean))
 	if r.exit != 1 || !printed || next != want {
 		t.Fatalf("resume source refusal = (%d, %q, %q), want next %q", r.exit, r.stdout, r.stderr, want)

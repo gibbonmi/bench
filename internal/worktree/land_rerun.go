@@ -4,13 +4,24 @@ package worktree
 
 import "github.com/gibbonmi/bench/internal/sanitize"
 
+// repairedSourceTipFlag is the re-run's --source-tip argument after a repair that commits
+// in the source. The commit moves the tip the caller named, so the operator fills the tip
+// that its repair committed.
+const repairedSourceTipFlag = " --source-tip <repaired-source-tip>"
+
 // landingRerun is the caller's own re-run of the landing, with the flag values it passed.
 // Every landing-preflight route ends with it, so a repair does not cost the operator its
 // flags.
 func landingRerun(request, base, tip, specArg, path, assignment string) string {
+	return landingRerunAt(request, base, landingSourceTipFlag(tip), specArg, path, assignment)
+}
+
+// landingRerunAt is landingRerun with its --source-tip argument already rendered, so a
+// route whose repair moves the tip can name the repaired one.
+func landingRerunAt(request, base, tipFlag, specArg, path, assignment string) string {
 	command := "bench worktree land --request " + landingRerunArg(request, "<request>") +
 		landingBaseFlag(base) +
-		landingSourceTipFlag(tip)
+		tipFlag
 	if specArg != "" {
 		command += " --spec " + landingRerunArg(specArg, "<spec>")
 	}

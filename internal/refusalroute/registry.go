@@ -144,12 +144,15 @@ var inventory = []Face{
 		Route:     []Step{rerun},
 	},
 	{
+		// The commit moves the reviewed source, so the source goes back through review, and
+		// the raising site points the re-run at the repaired tip.
 		Verb:      Land,
 		Name:      "source-not-clean",
 		Sentence:  "reviewed source is not clean",
 		Authority: Agent,
 		Route: []Step{
 			TreeCommand("bench commit", Fact(FactLabel), Text("-m"), Operator("msg"), Text("--"), Operators("path")),
+			review,
 			rerun,
 		},
 	},

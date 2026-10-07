@@ -98,16 +98,9 @@ func landingConflictRefusal(conflict landing.ConflictError, destination, assignm
 	if sourceMergePending(source) {
 		face = faceCompositionConflictPending
 	}
-	// A spec-less landing re-runs spec-less, so it names no --spec at all rather than an
-	// empty value the grammar refuses.
-	specFlag := ""
-	if specArg != "" {
-		specFlag = " --spec <spec>"
-		if lineSafe(specArg) {
-			specFlag = " --spec " + sanitize.ShellQuote(specArg)
-		}
-	}
-	rerun := atSourceWorktree("bench worktree land --request <request>"+landingBaseFlag(destination)+" --source-tip <repaired-source-tip>"+specFlag+" -m <message>", path, assignment)
+	// The conflict route never prints the caller's request, so the re-run names its
+	// placeholder.
+	rerun := landingRerunAt("", destination, repairedSourceTipFlag, specArg, path, assignment)
 	raised := refusal{detail: conflict.Error(), paths: conflict.Paths, values: conflictFacts(destination, assignment, path)}
 	return landingFaceRefusal(face, raised, rerun, "")
 }
@@ -204,11 +197,7 @@ const laterProofsSkipped = "later proofs in this group did not run"
 // cause, an identity component with no recovery command included, has no route of its
 // own, so it hands back to the reviewer under its own sentence.
 func landingFaceRoute(err error, rerun string, shortCircuited bool) error {
-	raised := refusal{detail: err.Error()}
-	var typed refusalError
-	if errors.As(err, &typed) {
-		raised = typed.refusal
-	}
+	raised := raisedRefusal(err)
 	preface := ""
 	if shortCircuited {
 		preface = laterProofsSkipped
@@ -224,6 +213,27 @@ func landingFaceRoute(err error, rerun string, shortCircuited bool) error {
 	}
 	raised.next = laterProofsSkipped + "; " + raised.next
 	return refusalError{raised}
+}
+
+// raisedRefusal is the refused record an error carries: the typed refusal, or a refusal
+// whose sentence is the error's own.
+func raisedRefusal(err error) refusal {
+	var typed refusalError
+	if errors.As(err, &typed) {
+		return typed.refusal
+	}
+	return refusal{detail: err.Error()}
+}
+
+// landingSourceRoute attaches the caller's own re-run to a first-run source proof's
+// refusal. The repair of a source that is not clean or not fenced commits in the source,
+// which moves the tip the caller named, so that re-run names the repaired tip.
+func landingSourceRoute(err error, request, base, tip, specArg, path, assignment string) error {
+	tipFlag := landingSourceTipFlag(tip)
+	if name, _ := landingFaceOf(raisedRefusal(err)); name == faceSourceNotClean || name == faceSourceNotFenced {
+		tipFlag = repairedSourceTipFlag
+	}
+	return landingFaceRoute(err, landingRerunAt(request, base, tipFlag, specArg, path, assignment), false)
 }
 
 func landRefusal(stdout io.Writer, detail string) int {

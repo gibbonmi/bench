@@ -163,7 +163,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		refusals = append(refusals, landingFaceRoute(err, unassignedRerun, true))
 	} else if source, err = landingSourceProofs(j, root, assignment, base, tip, parsed.Flags["--spec"], destination); err != nil {
 		// The source proofs read the resolved assignment, so their route addresses it.
-		refusals = append(refusals, landingFaceRoute(err, landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID), false))
+		refusals = append(refusals, landingSourceRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID))
 	}
 	if len(refusals) > 0 {
 		for _, err := range refusals {

@@ -63,7 +63,7 @@ func TestLandCommandReauthorizeRecoveryPointsThroughUnsafePath(t *testing.T) {
 	mustWrite(t, filepath.Join(f.creation.Path, "scratch"), []byte("scratch\n"), 0o600)
 	r = runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
 	wantSource := "; then bench worktree path '" + f.creation.Assignment.ID + "'; then bench worktree land --request '" +
-		request + "' --base '" + f.base + "' --source-tip '" + f.tip + "' --spec 'x' -m <message> <checkout>}\n"
+		request + "' --base '" + f.base + "' --source-tip " + repairedTipArg + " --spec 'x' -m <message> <checkout>}\n"
 	unsafe = strings.ContainsRune(r.stdout, '\x1b') || strings.Count(r.stdout, "\n") != 1
 	if r.exit != 1 || unsafe || !strings.HasSuffix(r.stdout, wantSource) {
 		t.Fatalf("unsafe-path source refusal = (%d, %q, %q), want one safe record ending %q", r.exit, r.stdout, r.stderr, wantSource)

@@ -152,6 +152,10 @@ func (s Step) render(fill slotFill) string {
 	return strings.Join(parts, " ")
 }
 
+// Steps splits the steps of a rendered route, in route order. A check that carries out a
+// printed route step by step reads the steps here, so the check and Render share one joiner.
+func Steps(route string) []string { return strings.Split(route, stepJoiner) }
+
 // Render is the one rendering of a face's route over a raising site's facts.
 func (f Face) Render(facts Facts) string {
 	fill := factsFill(facts.Values)

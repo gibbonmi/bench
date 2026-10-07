@@ -1,5 +1,5 @@
 // Refusal route follow tests for the landing: each face's producing fixture carries out
-// the route the landing printed, re-runs the landing, and the face no longer prints.
+// the route the landing printed, re-runs the landing, and the landing completes.
 package worktree
 
 import (
@@ -14,18 +14,16 @@ import (
 	"github.com/gibbonmi/bench/internal/shellcommand"
 )
 
-// routeStepJoiner is the joiner the spec pins between two printed route steps.
-const routeStepJoiner = "; then "
-
 // TestLandingFacesFollowTheirRoutes is RR15, with RR18 and RR19 folded in. Each producing
 // fixture's printed route is carried out step by step: the fixture carries out the steps it
 // declares by its own means, and every other step, each agent command step included, runs
 // verbatim with only its operator slots filled. The last step re-runs the landing, and the
-// face's refused record no longer prints. A reviewer face's route opens with the reviewer
-// marker and an agent face's does not.
+// landing completes, so the route finishes the recovery rather than trading the face for
+// another refusal. A reviewer face's route opens with the reviewer marker and an agent
+// face's does not.
 func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 	t.Parallel()
-	binary := testRunBinary(t)
+	wrapper := installedWrapper(t, testRunBinary(t))
 	faces := map[string]refusalroute.Face{}
 	for _, face := range refusalroute.Faces(refusalroute.Land) {
 		faces[face.Name] = face
@@ -39,17 +37,18 @@ func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 			if reviewer != (face.Authority == refusalroute.Reviewer) {
 				t.Fatalf("%s next = %q, want the reviewer marker exactly when the face is the reviewer's", fixture.face, produced.next)
 			}
-			for _, name := range fixtureRouteNames(fixture, produced.f) {
-				if !strings.Contains(route, name) {
-					t.Fatalf("%s next = %q, want it to name %q", fixture.face, produced.next, name)
+			if fixture.names != nil {
+				for _, name := range fixture.names(produced.f) {
+					if !strings.Contains(route, name) {
+						t.Fatalf("%s next = %q, want it to name %q", fixture.face, produced.next, name)
+					}
 				}
 			}
 			route = strings.TrimPrefix(route, laterProofsSkipped+"; ")
-			steps := strings.Split(route, routeStepJoiner)
+			steps := refusalroute.Steps(route)
 			if len(steps) != len(face.Route) {
 				t.Fatalf("%s next = %q prints %d steps, want the %d the face declares", fixture.face, produced.next, len(steps), len(face.Route))
 			}
-			detail := refusedDetail(produced.r.stdout, refusalroute.Sentence(fixture.face))
 			fill := operatorFill(produced)
 			var last verbResult
 			for index, step := range face.Route {
@@ -60,50 +59,16 @@ func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 				case carried:
 					carry(t, produced.f)
 				case step.IsCommand():
-					last = runPrintedStep(t, binary, produced.f, fill(t, steps[index]))
+					last = runPrintedStep(t, wrapper, produced.f, fill(t, steps[index]))
 				default:
 					t.Fatalf("%s step %d %q is an instruction that the fixture does not carry out", fixture.face, index+1, steps[index])
 				}
 			}
-			if fixture.stage == stageIncomplete {
-				if last.exit != 0 || strings.Contains(last.stdout, "worktree=incomplete") {
-					t.Fatalf("%s resume = (%d, %q, %q), want the landing complete", fixture.face, last.exit, last.stdout, last.stderr)
-				}
-				return
-			}
-			if strings.Contains(last.stdout, "refused{detail="+detail) {
-				t.Fatalf("%s re-run = (%d, %q, %q), want the face's refusal %q gone", fixture.face, last.exit, last.stdout, last.stderr, detail)
+			if _, landed := landedField(last.stdout, "worktree"); last.exit != 0 || !landed {
+				t.Fatalf("%s re-run = (%d, %q, %q), want exit 0 and a landed record", fixture.face, last.exit, last.stdout, last.stderr)
 			}
 		})
 	}
-}
-
-// fixtureRouteNames is what a fixture's printed route must name, read from the fixture.
-func fixtureRouteNames(fixture landingRefusalFixture, f landingFixture) []string {
-	if fixture.names == nil {
-		return nil
-	}
-	return fixture.names(f)
-}
-
-// refusedDetail is the sentence that marks a face's refused record: the face's declared
-// sentence, or, for a face whose sentence a policy owns, the detail the record printed. That
-// detail runs to the first field after it.
-func refusedDetail(stdout, sentence string) string {
-	if sentence != "" {
-		return sentence
-	}
-	for _, line := range strings.Split(stdout, "\n") {
-		detail, found := strings.CutPrefix(line, "refused{detail=")
-		if !found {
-			continue
-		}
-		for _, field := range []string{",observed=", ",wanted=", ",next=", "}"} {
-			detail, _, _ = strings.Cut(detail, field)
-		}
-		return detail
-	}
-	return ""
 }
 
 // operatorFill fills the slots a printed route leaves to the operator, with the values the
@@ -124,7 +89,7 @@ func operatorFill(produced producedFace) func(t *testing.T, step string) string 
 			"<path>...", strings.Join(paths, " "),
 			"<message>", "'land the followed route'",
 			"<request>", sanitize.ShellQuote(produced.request),
-			"<repaired-source-tip>", sanitize.ShellQuote(tip),
+			repairedTipArg, sanitize.ShellQuote(tip),
 		).Replace(step)
 	}
 }
@@ -132,21 +97,28 @@ func operatorFill(produced producedFace) func(t *testing.T, step string) string 
 // installedWrapper writes the wrapper an installed kit puts in front of the executable. It
 // names a kit other than the fixture, so the fixture grades as a linked project, and it
 // names itself as the wrapper, so a tree-scoped call's child runs behind it too.
+//
+// A child process writes the wrapper, so this process never holds the file open for write.
+// A sibling test's fork inherits each descriptor this process holds until that child execs,
+// and an exec of a file that a descriptor still holds for write fails as text file busy.
 func installedWrapper(t *testing.T, binary string) string {
 	t.Helper()
 	wrapper := filepath.Join(t.TempDir(), "bench.sh")
 	script := "#!/bin/sh\nBENCH_KIT=" + sanitize.ShellQuote(t.TempDir()) + " " + env.WrapperEnv + "=" + sanitize.ShellQuote(wrapper) +
 		" exec " + sanitize.ShellQuote(binary) + " \"$@\"\n"
-	mustWrite(t, wrapper, []byte(script), 0o755)
+	write := descendant(t, "sh", "-c", `cat >"$1" && chmod 755 "$1"`, "sh", wrapper)
+	write.Stdin = strings.NewReader(script)
+	if out, err := write.CombinedOutput(); err != nil {
+		t.Fatalf("write the installed wrapper: %v, %s", err, out)
+	}
 	return wrapper
 }
 
 // runPrintedStep runs one printed command step as the operator would paste it. A landing
-// runs in process at the fixture's home, and any other Bench verb runs through the sealed
-// test-run executable from the destination checkout, behind a wrapper as an installed kit
-// runs it. The step must read as one simple command with no placeholder left, and a Bench
-// verb other than the landing must exit 0.
-func runPrintedStep(t *testing.T, binary string, f landingFixture, step string) verbResult {
+// runs in process at the fixture's home, and any other Bench verb runs from the destination
+// checkout behind the installed wrapper. The step must read as one simple command with no
+// placeholder left, and a Bench verb other than the landing must exit 0.
+func runPrintedStep(t *testing.T, wrapper string, f landingFixture, step string) verbResult {
 	t.Helper()
 	stream := shellcommand.Parse(step)
 	if stream.Unlexed || len(stream.Commands) != 1 || len(stream.Tokens) != stream.Commands[0].End-stream.Commands[0].Start {
@@ -160,11 +132,12 @@ func runPrintedStep(t *testing.T, binary string, f landingFixture, step string) 
 		return runVerb(t, verbLand, f.call(words[3:]...))
 	}
 	var stdout, stderr bytes.Buffer
-	cmd := descendant(t, installedWrapper(t, binary), words[1:]...)
+	cmd := descendant(t, wrapper, words[1:]...)
 	cmd.Dir, cmd.Env, cmd.Stdout, cmd.Stderr = f.root, journeyChildEnv(t, f.home), &stdout, &stderr
-	r := verbResult{exit: exitCode(cmd.Run()), stdout: stdout.String(), stderr: stderr.String()}
+	err := cmd.Run()
+	r := verbResult{exit: exitCode(err), stdout: stdout.String(), stderr: stderr.String()}
 	if r.exit != 0 {
-		t.Fatalf("printed step %q = (%d, %q, %q), want exit 0", step, r.exit, r.stdout, r.stderr)
+		t.Fatalf("printed step %q = (%d, %q, %q), want exit 0; run error: %v", step, r.exit, r.stdout, r.stderr, err)
 	}
 	return r
 }

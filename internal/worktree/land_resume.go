@@ -193,9 +193,20 @@ func resumeAssignment(j joins, root, path, request, tip, base, slug string) (a i
 	}
 	// The source proofs are the group's last stage, so their refusal stops no later proof.
 	if _, err := landingSource(j, root, a, base, tip, slug); err != nil {
-		return intent.Assignment{}, false, false, err
+		return intent.Assignment{}, false, false, resumeSourceRefusal(err)
 	}
 	return a, true, false, nil
+}
+
+// resumeSourceRefusal hands a dirty source back to the reviewer. The published landing pins
+// the source tip, and the commit that the source-not-clean route names moves the source away
+// from it, so no agent route finishes the resume. Every other source refusal keeps its face.
+func resumeSourceRefusal(err error) error {
+	raised := raisedRefusal(err)
+	if name, _ := landingFaceOf(raised); name != faceSourceNotClean {
+		return err
+	}
+	return landingFaceRefusal(faceLandHandback, raised, "", "")
 }
 
 func resumePublished(j joins, root, destination, value, base, source, slug string) (published, sourceBase, destinationBase, tree string, err error) {
