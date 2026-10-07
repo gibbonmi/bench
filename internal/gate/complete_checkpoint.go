@@ -13,9 +13,9 @@ const cleanCheckoutRefusal = "complete checkpoint requires a clean checkout: com
 
 // executeCompleteCheckpoint grades the tree that the landing publishes from HEAD of root.
 // The landing publishes only committed bytes, so an uncommitted change refuses before the
-// oracle runs, and the review record has no exemption. The published tree comes from the
-// landing's own transform and is graded under the landing's own completion obligation,
-// so the checkpoint and the landing cannot grade two different trees.
+// oracle runs, and the review record has no exemption. The landing's closure transform
+// applies to the HEAD tree, and the oracle grades the result under the completion
+// obligation for spec at HEAD.
 func executeCompleteCheckpoint(ctx context.Context, root, spec string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
 	tip, err := benchgit.ResolveCommit(root, "HEAD")
 	if err != nil {

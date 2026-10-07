@@ -195,12 +195,18 @@ func TestCompleteCheckpointLeavesTheCheckout(t *testing.T) {
 }
 
 func TestCompleteCheckpointRefusesADirtyCheckout(t *testing.T) {
-	const refusal = "complete checkpoint requires a clean checkout: commit or remove each uncommitted change"
 	completed := func(t *testing.T) *recordtest.Fixture {
 		f := checkpointFixture(t)
 		retainCompletion(f)
 		return f
 	}
+	t.Run("ignored file", func(t *testing.T) {
+		f := completed(t)
+		f.Write(".gate-local", "ignored\n")
+		if code, out := completeCheckpoint(t, f); code != 0 || strings.Contains(out, cleanCheckoutRefusal) {
+			t.Errorf("complete checkpoint with only an ignored file = (%d, %q), want exit 0", code, out)
+		}
+	})
 	for _, tc := range []struct {
 		name  string
 		dirty func(*testing.T) *recordtest.Fixture
@@ -232,8 +238,8 @@ func TestCompleteCheckpointRefusesADirtyCheckout(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			f := tc.dirty(t)
 			code, out := completeCheckpoint(t, f)
-			if code != 1 || !strings.Contains(out, refusal) || strings.Contains(out, "completion is incomplete or stale") {
-				t.Errorf("dirty complete checkpoint = (%d, %q), want exit 1 and only %q", code, out, refusal)
+			if code != 1 || !strings.Contains(out, cleanCheckoutRefusal) || strings.Contains(out, "completion is incomplete or stale") {
+				t.Errorf("dirty complete checkpoint = (%d, %q), want exit 1 and only %q", code, out, cleanCheckoutRefusal)
 			}
 			assertNoOracleRun(t, f)
 		})
