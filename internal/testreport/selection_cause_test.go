@@ -50,8 +50,9 @@ func TestCauseEmbedOnly(t *testing.T) {
 }
 
 // TestCauseImportsNamesFirstSortedDependency grades that a package that imports several
-// selected packages names the first in sorted import-path order. Each of the dependency
-// lists holds the first one late, so an order that the lists or a map give fails here.
+// selected packages names the first in sorted import-path order. Each case holds the
+// first one last in a different dependency list, so an order that the lists or a map
+// give fails here.
 func TestCauseImportsNamesFirstSortedDependency(t *testing.T) {
 	names := []string{"f", "d", "b", "e", "c", "a"}
 	packages := []listedPackage{}
@@ -60,14 +61,57 @@ func TestCauseImportsNamesFirstSortedDependency(t *testing.T) {
 		packages = append(packages, causePackage(name))
 		paths = append(paths, name+"/"+name+".go")
 	}
-	dependent := causePackage("z", "example/f", "example/d", "example/b")
-	dependent.TestImports = []string{"example/e", "example/c"}
-	dependent.XTestImports = []string{"example/a"}
-	for range 20 {
-		if got := selectCauses(t, append(packages, dependent), paths...)["example/z"]; got != "imports example/a" {
-			t.Fatalf("cause of example/z = %q, want %q", got, "imports example/a")
+	for _, lists := range [][3][]string{
+		{{"example/f", "example/d", "example/b"}, {"example/e", "example/c"}, {"example/a"}},
+		{{"example/f", "example/d", "example/b"}, {"example/e", "example/a"}, {"example/c"}},
+		{{"example/f", "example/d", "example/a"}, {"example/e", "example/c"}, {"example/b"}},
+	} {
+		dependent := causePackage("z", lists[0]...)
+		dependent.TestImports = lists[1]
+		dependent.XTestImports = lists[2]
+		for range 20 {
+			if got := selectCauses(t, append(packages, dependent), paths...)["example/z"]; got != "imports example/a" {
+				t.Fatalf("cause of example/z with lists %v = %q, want %q", lists, got, "imports example/a")
+			}
 		}
 	}
+}
+
+// TestCauseImportsSkipsUnselectedDependency grades that a package names a selected
+// dependency and not an unselected one that sorts first.
+func TestCauseImportsSkipsUnselectedDependency(t *testing.T) {
+	got := selectCauses(t, []listedPackage{causePackage("a"), causePackage("b", "bytes", "example/a")}, "a/a.go")
+	assertCauses(t, got, changedSelection{"example/a": "changed", "example/b": "imports example/a"})
+}
+
+// TestCauseImportsThroughTestImport grades that a package that only its tests connect to
+// the change names that test import.
+func TestCauseImportsThroughTestImport(t *testing.T) {
+	dependent := causePackage("b")
+	dependent.TestImports = []string{"example/a"}
+	got := selectCauses(t, []listedPackage{causePackage("a"), dependent}, "a/a.go")
+	assertCauses(t, got, changedSelection{"example/a": "changed", "example/b": "imports example/a"})
+}
+
+// TestCauseImportsSkipsOwnPath grades that a package whose external tests import the
+// package itself names its real dependency and not its own path.
+func TestCauseImportsSkipsOwnPath(t *testing.T) {
+	dependent := causePackage("m", "example/n")
+	dependent.XTestImports = []string{"example/m"}
+	got := selectCauses(t, []listedPackage{causePackage("n"), dependent}, "n/n.go")
+	assertCauses(t, got, changedSelection{"example/n": "changed", "example/m": "imports example/n"})
+}
+
+// TestCauseChangedBeatsEmbed grades that a package with a changed Go file and a changed
+// embed file names the change, in each path order, and also when the changed Go file is
+// one of the package's own embed files.
+func TestCauseChangedBeatsEmbed(t *testing.T) {
+	embed := causePackage("e")
+	embed.EmbedFiles = []string{"data.txt", "e.go"}
+	want := changedSelection{"example/e": "changed"}
+	assertCauses(t, selectCauses(t, []listedPackage{embed}, "e/e.go"), want)
+	assertCauses(t, selectCauses(t, []listedPackage{embed}, "e/data.txt", "e/f.go"), want)
+	assertCauses(t, selectCauses(t, []listedPackage{embed}, "e/f.go", "e/data.txt"), want)
 }
 
 // TestCauseImportsNamesDirectDependency grades that a package two import steps from the

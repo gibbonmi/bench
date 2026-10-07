@@ -111,7 +111,7 @@ func TestPackageRunWithNoTestKeepsExitZero(t *testing.T) {
 // TestChangedRunWithNoTestKeepsExitZero grades that a `--changed` run with no test keeps
 // exit 0, because the merge reads that exit as its retry signal.
 func TestChangedRunWithNoTestKeepsExitZero(t *testing.T) {
-	if output, code := changedCommandOverOnePackage(t); code != 0 {
+	if output, code := changedCommandOverOnePackage(t, false); code != 0 {
 		t.Fatalf("Command = (%d, %q), want exit 0", code, output)
 	}
 }

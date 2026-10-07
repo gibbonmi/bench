@@ -77,6 +77,7 @@ func resolveChangedPackagesWithLoader(ctx context.Context, root string, paths []
 		inputs = append(inputs, input)
 	}
 	if len(inputs) == 0 {
+		// A non-nil empty selection keeps the `selected_by` column in the empty report.
 		return changedSelection{}, nil
 	}
 	packages, err := load(ctx, root)
@@ -203,17 +204,23 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 			}
 			continue
 		}
+		isGo := strings.HasSuffix(input.path, ".go")
+		goPackage, inPackage := "", false
+		if isGo {
+			goPackage, inPackage = byDirectory[filepath.ToSlash(filepath.Dir(input.path))]
+		}
 		if importPath, ok := byEmbed[input.path]; ok {
 			mark(importPath, causeEmbed)
+			if goPackage == importPath {
+				mark(importPath, causeChanged)
+			}
 			continue
 		}
-		if strings.HasSuffix(input.path, ".go") {
-			importPath, ok := byDirectory[filepath.ToSlash(filepath.Dir(input.path))]
-			if !ok {
+		if isGo {
+			if !inPackage {
 				return nil, fmt.Errorf("changed Go path is not in a current package")
 			}
-			mark(importPath, causeChanged)
-			continue
+			mark(goPackage, causeChanged)
 		}
 	}
 	reverse := make(map[string][]string)
@@ -234,7 +241,8 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 		}
 	}
 	// A package that the closure added names its first selected direct dependency, so the
-	// cause does not depend on the order in which the closure reached the package.
+	// cause does not depend on the order in which the closure reached the package. The
+	// package's own path, which its external tests can import, is not a cause.
 	for importPath, cause := range selected {
 		if cause != "" {
 			continue
@@ -242,6 +250,9 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 		dependencies := directDependencies(byImport[importPath])
 		sort.Strings(dependencies)
 		for _, dependency := range dependencies {
+			if dependency == importPath {
+				continue
+			}
 			if _, ok := selected[dependency]; ok {
 				selected[importPath] = causeImports + dependency
 				break
