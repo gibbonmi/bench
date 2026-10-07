@@ -711,7 +711,16 @@ The orchestrator records each author session before that author's dispatch.
     "orchestrator_session": "claude:ft393-orchestrator-20261007",
     "author_limit": 1,
     "assignments": {
-      "01-create-the-shared-refusal-route-registry.md": [],
+      "01-create-the-shared-refusal-route-registry.md": [
+        {
+          "session": "claude:ft393_t1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "2474d5c9285ff9026ec821210209356f496ba84a",
+          "native_ref": "claude-agent:ft393_t1"
+        }
+      ],
       "02-move-the-landing-faces-into-the-shared-registry.md": [],
       "03-prove-each-agent-route-passes-the-wired-guards.md": [],
       "04-render-the-recovery-matrix-from-the-registry.md": [],
