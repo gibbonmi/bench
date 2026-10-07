@@ -753,7 +753,16 @@ The orchestrator records each author session before that author's dispatch.
           "native_ref": "claude-agent:ft393_t3"
         }
       ],
-      "04-render-the-recovery-matrix-from-the-registry.md": [],
+      "04-render-the-recovery-matrix-from-the-registry.md": [
+        {
+          "session": "claude:ft393_t4",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "f99f7bcd61e976c1434781e33913029eb31f1eb6",
+          "native_ref": "claude-agent:ft393_t4"
+        }
+      ],
       "05-route-each-merge-refusal-through-the-registry.md": [],
       "06-give-the-red-source-fold-an-exit.md": [],
       "07-route-each-reset-refusal-through-the-registry.md": [],
