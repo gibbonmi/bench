@@ -10,17 +10,28 @@ import (
 	"github.com/gibbonmi/bench/internal/treetarget/kittest"
 )
 
-// The refusal lines here are authored apart from unknownCheck: the spec fixes the line
-// order, the `unsealed` word, the seal's source digest, and the escape of a control
-// character. A missing or reordered line, the executable digest in the seal line, or a raw
-// control byte reds these rows.
+// The refusal lines here are authored apart from unknownCheck. These rows grade the line
+// order, the `unknown` and `unsealed` words, the seal's source digest, and the escape of a
+// control character. A missing or reordered line, the executable digest in the seal line,
+// or a raw control byte reds these rows.
 
 // useRunningExecutable makes path the running executable for the rest of the test.
 func useRunningExecutable(t *testing.T, path string) {
 	t.Helper()
+	answerRunningExecutable(t, func() (string, error) { return path, nil })
+}
+
+// answerRunningExecutable makes answer the running-executable lookup for the rest of the test.
+func answerRunningExecutable(t *testing.T, answer func() (string, error)) {
+	t.Helper()
 	previous := runningExecutable
-	runningExecutable = func() (string, error) { return path, nil }
+	runningExecutable = answer
 	t.Cleanup(func() { runningExecutable = previous })
+}
+
+// checkInventory is the check list that ends each refusal.
+func checkInventory() string {
+	return "checks:\n  " + strings.Join(namedChecks(), "\n  ") + "\n"
 }
 
 // unsealedExecutable writes a temporary running executable with no seal file beside it.
@@ -36,7 +47,7 @@ func unsealedExecutable(t *testing.T) string {
 func TestUnknownNamedCheckReportsOperandAndInventory(t *testing.T) {
 	executable := unsealedExecutable(t)
 	useRunningExecutable(t, executable)
-	inventory := "checks:\n  " + strings.Join(namedChecks(), "\n  ") + "\n"
+	inventory := checkInventory()
 	for _, unknown := range []string{"not-registered", "release-evidence-probe"} {
 		output, code := Command(t.TempDir(), []string{"--check", unknown})
 		if code != 2 {
@@ -90,6 +101,15 @@ func TestUnknownCheckPrintsUnsealed(t *testing.T) {
 				t.Fatalf("unreadable seal = %d, %q; want exit 2 and seal: unsealed", code, output)
 			}
 		})
+	}
+}
+
+func TestUnknownCheckNamesUnknownExecutable(t *testing.T) {
+	answerRunningExecutable(t, func() (string, error) { return "", os.ErrNotExist })
+	output, code := Command(t.TempDir(), []string{"--check", "not-registered"})
+	want := "unknown check: not-registered\nexecutable: unknown\nseal: unsealed\n" + checkInventory()
+	if code != 2 || output != want {
+		t.Fatalf("unnamed running executable = %d, %q; want exit 2 and %q", code, output, want)
 	}
 }
 
