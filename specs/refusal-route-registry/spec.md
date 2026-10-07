@@ -743,7 +743,16 @@ The orchestrator records each author session before that author's dispatch.
           "native_ref": "claude-agent:ft393_t2"
         }
       ],
-      "03-prove-each-agent-route-passes-the-wired-guards.md": [],
+      "03-prove-each-agent-route-passes-the-wired-guards.md": [
+        {
+          "session": "claude:ft393_t3",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1d22d3209f8d20710da4da8c7bdf1378a871969a",
+          "native_ref": "claude-agent:ft393_t3"
+        }
+      ],
       "04-render-the-recovery-matrix-from-the-registry.md": [],
       "05-route-each-merge-refusal-through-the-registry.md": [],
       "06-give-the-red-source-fold-an-exit.md": [],
