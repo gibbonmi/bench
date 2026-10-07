@@ -1332,6 +1332,72 @@
           "supersedes": [
             "r-c1b-coverage"
           ]
+        },
+        {
+          "id": "r-c1b-r2-standards",
+          "performer": "claude:ft393_c1b_r2_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ac008b53fa935a61f3420a225b1bd754995a7d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1b_r2_standards",
+            "digest": "sha256:052dd58446e465418fc627f8eeab3f0e954559b7e6c349ea6f06958e24849055",
+            "excerpt": "RR-C1b repair cycle 2 confirming round, Standards (claude:ft393_c1b_r2_standards): evidence current=true at d85e78e9. C1b-RS1 confirmed; C1b-RP1 and C1b-RC1 confirmed closed by the record correction. New findings: zero.\nImplementation command contribution: none.\nOptional advice: the resume form also appears in land_journey_test.go and an internal/systemtest file, both outside this delta.\n"
+          },
+          "axis": "Standards",
+          "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "tip": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c1b-r1-standards"
+          ]
+        },
+        {
+          "id": "r-c1b-r2-spec",
+          "performer": "claude:ft393_c1b_r2_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ac008b53fa935a61f3420a225b1bd754995a7d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1b_r2_spec",
+            "digest": "sha256:3b480e8b6544bb8a817e7a92594c9bdc9e01a51b9c0dbd995fa470b17902e5df",
+            "excerpt": "RR-C1b repair cycle 2 confirming round, Spec (claude:ft393_c1b_r2_spec): evidence current=true at d85e78e9. C1b-RS1 confirmed; C1b-RP1 and C1b-RC1 confirmed closed by the record correction. New findings: zero.\nImplementation command contribution: none.\nSpec also confirmed the corrected seam cells of RR15, RR18, RR19, RR58, RR60.\n"
+          },
+          "axis": "Spec",
+          "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "tip": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c1b-r1-spec"
+          ]
+        },
+        {
+          "id": "r-c1b-r2-coverage",
+          "performer": "claude:ft393_c1b_r2_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ac008b53fa935a61f3420a225b1bd754995a7d1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1b_r2_coverage",
+            "digest": "sha256:72c9b1efb8f27056be2d109e7b0f9f6a72ae8756dc8e7f066f1a7ef38c90fef7",
+            "excerpt": "RR-C1b repair cycle 2 confirming round, Coverage (claude:ft393_c1b_r2_coverage): evidence current=true at d85e78e9. C1b-RS1 confirmed; C1b-RP1 and C1b-RC1 confirmed closed by the record correction. New findings: zero.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "tip": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c1b-r1-coverage"
+          ]
         }
       ]
     }
@@ -1516,3 +1582,8 @@ The ticket 03 repair session ran the debug step and recorded this cause before i
 | C1b-RS1 | The cycle 1 repair added `resumeRerunOf` but left one resume test with its own inline rerun. | A probe that changes the helper form was silent before the fix and bit after it. |
 
 The repair commit 33ac2f98 closes C1b-RS1.
+
+### RR-C1b repair cycle 2 confirming round
+
+The confirming round confirmed C1b-RS1, C1b-RP1, and C1b-RC1 on all three axes and returned no new finding.
+The axes retained this optional advice: the resume form also appears in two test files outside this delta.
