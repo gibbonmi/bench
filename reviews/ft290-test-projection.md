@@ -10,6 +10,12 @@ The confirming round passed on Standards and Spec. The Coverage axis found C4 in
 
 The repair session `claude:ft290_t8_r2` repaired C4 at `8159a136`, and the chunk tip is now `8159a136`. The chunk has used 2 of its 2 repair cycles. The C4 swap now bites in `internal/testreport`, which serves the user-facing output, and it stays silent in `internal/canary`.
 
+The second confirming round passed on Standards and Spec. The Coverage axis found C5.
+
+- C5, auto-fix, confidence 8. `FixturePins` also calls `rootRecords`, and the build preflight reads its error. The C4 swap stays silent in `internal/canary` and `internal/preflight`, so a real inventory error there reads as an empty pin map. Ticket 8 owns the fix: add a canary test that expects `FixturePins` to return the error for one fixture name in two families.
+
+The reviewer stated that `--auto-approve` applies to repair rounds. Under that explicit statement, the orchestrator extends the TP-C3 allowance by one repair cycle for C5 only. The extension adds one repair round to the implementation retro.
+
 The raw count is 6 findings, and the repair-target count is 6. Ticket 8 owns S1, C1, and the `fixtures_face_test.go` half of S2. Ticket 9 owns P1, C2, C3, and the `checks_face_test.go` half of S2. P1 and C2 name one fix.
 
 The orchestrator decided the three `ask-user` findings under the reviewer's auto-approval for spec, ticket, and repair expansions. Each decision stays open to reviewer veto.
@@ -2361,6 +2367,74 @@ Count: 4. Worst issue: C1.
           ],
           "supersedes": [
             "c3-coverage-r1"
+          ]
+        },
+        {
+          "id": "c3-standards-c2",
+          "performer": "claude:ft290_c3_standards_c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "eabae1284bc39ceae2cacb4ff14effae6a95daec",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_standards_c2",
+            "digest": "sha256:317da44aa535ee5cd2cd2f1b1bdbd14b733ac0934d4ad86b983648d1c697a1df",
+            "excerpt": "axis=Standards findings=0 worst=none (second confirming round, repair delta f04f5dd6..8159a136)\nThe delta adds only internal/testreport/fixtures_duplicate_test.go. It reuses plantFixture and inventoryFace, so no harness is duplicated.\nThe expected fragment \"twin\" appears in multiple families repeats the inline fmt.Errorf at inventory.go:244, which has no shared constant; the C4 swap red is recorded in ft290/t8r2/c4-red.txt.\nThe test comment states the why; naming and structure match the neighboring face tests; no dependency or production code.\nAdvice: a red for a wording-only change of the diagnostic is not recorded.\nExamined: --check-current, the delta, fixtures_face_test.go:1-70, inventory.go:244, rg for \"multiple families\", the c4-red excerpt. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "8159a136023072cf42f4265f4b74cd932e539ac7",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-c1"
+          ]
+        },
+        {
+          "id": "c3-spec-c2",
+          "performer": "claude:ft290_c3_spec_c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "eabae1284bc39ceae2cacb4ff14effae6a95daec",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_spec_c2",
+            "digest": "sha256:75075ca39ac26501aa97dc7603c30c07a54ab410b3ebbdad628622db0757f294",
+            "excerpt": "axis=Spec findings=0 worst=none (second confirming round, repair delta f04f5dd6..8159a136)\nThe delta is one new test file; no production file or existing test changes.\nThe test plants one fixture name in two families and requires exit 1 with the inventory.go:244 diagnostic from both --checks and --fixtures, which matches story 24 and \"The inventory faces\". rootRecords returns that error, because only ErrNoFixtures maps to empty.\nNo TP-C3 row lost its test; the file sits inside ticket 8's internal/testreport/ fence.\nBinding note: this axis did not rerun --check-current; the delta read used the frozen pair.\nExamined: the delta, inventory.go 78-260, root.go, fixtures.go, the face tests, toon.Errorf, spec line 83, ticket 8. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "8159a136023072cf42f4265f4b74cd932e539ac7",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-c1"
+          ]
+        },
+        {
+          "id": "c3-coverage-c2",
+          "performer": "claude:ft290_c3_coverage_c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "eabae1284bc39ceae2cacb4ff14effae6a95daec",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c3_coverage_c2",
+            "digest": "sha256:b863aeef4e75a259232a6350187da790291bf53bef40bba2a7812970213b9892",
+            "excerpt": "axis=Coverage findings=1 worst=C5 (second confirming round, repair delta f04f5dd6..8159a136)\nC5 | auto-fix | conf 8 | internal/canary/root.go:26 (rootRecords); callers inventory.go:146 (FixturePins), internal/preflight/gather.go:297-299 | Swapping `return records, err` for `return records, nil` is silent in ./internal/canary (26 tests) and ./internal/preflight (353 tests): FixturePins would turn a real discoverFixtures error into an empty pin map, and the preflight would skip its \"fixture inventory not readable\" failure. No test asserts that path. | Add an internal/canary test that plants one fixture name in two families and asserts FixturePins returns the \"appears in multiple families\" error; re-probe the swap in ./internal/canary.\nC4 closed for the testreport faces: the swap bit in ./internal/testreport (TestInventoryFacesRefuseDuplicateFixtureName); a wrapped-error-as-empty bypass also bit there.\nCommand note: a repair of a shared helper should replay its mutation across every production caller.\nExamined: --check-current, the delta, root.go, inventory.go 70-300, gather.go 280-330, rg for callers and tests; four probes, all restored yes; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "21da7e2e89fe107910def9543c3af0149fe9f2e0",
+          "tip": "8159a136023072cf42f4265f4b74cd932e539ac7",
+          "finding_ids": [
+            "C5"
+          ],
+          "supersedes": [
+            "c3-coverage-c1"
           ]
         }
       ]
