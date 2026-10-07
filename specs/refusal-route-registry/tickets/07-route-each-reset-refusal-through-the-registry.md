@@ -1,7 +1,7 @@
 # Route each reset refusal through the registry
 
 Blocked by: 06-give-the-red-source-fold-an-exit.md
-Writes: internal/refusalroute/registry.go (new), internal/worktree/reset.go, internal/worktree/reset_apply.go, internal/worktree/reset_restore.go, internal/worktree/path.go, internal/worktree/merge_route_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/refusalroute/registry.go (new), internal/worktree/reset.go, internal/worktree/reset_apply.go, internal/worktree/reset_restore.go, internal/worktree/path.go, internal/worktree/merge_route_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go
 Covers: RR29
 
 ## What to build
