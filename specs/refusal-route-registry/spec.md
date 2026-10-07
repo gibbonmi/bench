@@ -156,7 +156,7 @@ A raising site derives the `<label>` fact through `intent.AssignmentsOwning` ove
 The landing and the merge already hold their assignment, and the commit and the gate resolve theirs at the refusal.
 When no assignment owns the root, the slot prints `<label>`.
 A tree-scoped step names its tree target, because `--in` counts only as the first argument after the verb.
-The `resume-marker` step is `bench gate --in primary`, because the marker belongs to the published landing on the primary checkout.
+The `resume-marker` face has reviewer authority, because only a landing on the primary checkout advances the green marker.
 
 ### Authority
 
@@ -200,7 +200,7 @@ These faces and routes are required.
 | land | `composition-conflict` | reviewer | the hand merge of the destination commit; then `bench commit`; then `/bench-review-implementation`; then the re-run |
 | land | `composition-conflict-pending` | reviewer | finish the merge in progress; then `/bench-review-implementation`; then the re-run |
 | land | `resume-destination-residue` | reviewer | commit or discard the destination's uncommitted work; then the resume |
-| land | `resume-marker` | agent | `bench gate --in primary`; then the resume |
+| land | `resume-marker` | reviewer | land a green landing on main that covers the published commit, or restore main to it; then the resume |
 | land | `land-red` | agent | repair each failure that the gate reports in `<label>`; then `bench commit --in <label> -m <msg> -- <path>...`; then `/bench-review-implementation`; then the re-run |
 | land | `land-infrastructure` | agent | `bench doctor`; then the re-run |
 | merge | `merge-target-red` | agent | repair each failing check in `<label>`; then `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
