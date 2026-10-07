@@ -40,7 +40,7 @@ func TestChangedPackageClosureAcrossAllGoEdges(t *testing.T) {
 		"changedfixture/testedge",
 		"changedfixture/xtestedge",
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !reflect.DeepEqual(got.packages(), want) {
 		t.Fatalf("selected packages = %v, want %v", got, want)
 	}
 }
@@ -58,7 +58,7 @@ func TestChangedPackageSelectionMetadataAndMixedUnion(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !reflect.DeepEqual(got, want) {
+			if !reflect.DeepEqual(got.packages(), want) {
 				t.Fatalf("selected packages = %v, want %v", got, want)
 			}
 		})
@@ -122,7 +122,7 @@ func TestChangedPackageSelectionRefusalMatrix(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(got, []string{"changedfixture/direct", "changedfixture/production", "changedfixture/testedge", "changedfixture/xtestedge"}) {
+	if !reflect.DeepEqual(got.packages(), []string{"changedfixture/direct", "changedfixture/production", "changedfixture/testedge", "changedfixture/xtestedge"}) {
 		t.Fatalf("deleted surviving-package selection = %v", got)
 	}
 	if err := os.Remove(filepath.Join(root, "embedprod", "input.txt")); err != nil {
@@ -176,7 +176,7 @@ func TestChangedSpaceAndGlobPathsReachResolverAndCommand(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if want := []string{"changedcommand/spaceglob"}; !reflect.DeepEqual(got, want) {
+			if want := []string{"changedcommand/spaceglob"}; !reflect.DeepEqual(got.packages(), want) {
 				t.Fatalf("selected packages = %v, want %v", got, want)
 			}
 		})
@@ -259,7 +259,7 @@ func TestChangedNonGoSubjectRendersExplicitEmpty(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("emptyReport code = %d\n%s", code, output)
 	}
-	for _, table := range []string{"packages[0]", "failures[0]", "skips[0]"} {
+	for _, table := range []string{"packages[0]{package,status,elapsed_ms,tests_run,selected_by}:\n", "failures[0]", "skips[0]"} {
 		if !strings.Contains(output, table) {
 			t.Fatalf("empty output = %q, want %q", output, table)
 		}
@@ -317,7 +317,7 @@ func TestChangedRenameHalvesSelectIndependently(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if want := []string{"changedcommand/changed"}; !reflect.DeepEqual(got, want) {
+			if want := []string{"changedcommand/changed"}; !reflect.DeepEqual(got.packages(), want) {
 				t.Fatalf("selected packages = %v, want %v", got, want)
 			}
 		})

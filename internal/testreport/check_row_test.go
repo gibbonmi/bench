@@ -1,8 +1,6 @@
 package testreport
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -113,16 +111,7 @@ func TestPackageRunWithNoTestKeepsExitZero(t *testing.T) {
 // TestChangedRunWithNoTestKeepsExitZero grades that a `--changed` run with no test keeps
 // exit 0, because the merge reads that exit as its retry signal.
 func TestChangedRunWithNoTestKeepsExitZero(t *testing.T) {
-	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
-	goDir := t.TempDir()
-	writeChangedSubjectGo(t, filepath.Join(goDir, "go"), filepath.Join(t.TempDir(), "list-environment"), filepath.Join(t.TempDir(), "test-environment"), []listedPackage{{
-		Dir:        filepath.Join(root, "changed"),
-		ImportPath: "changedcommand/changed",
-		Match:      []string{currentPackagePattern},
-	}}, "changedcommand/changed")
-	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	installCannedSelection(t)
-	if output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip}); code != 0 {
+	if output, code := changedCommandOverOnePackage(t); code != 0 {
 		t.Fatalf("Command = (%d, %q), want exit 0", code, output)
 	}
 }

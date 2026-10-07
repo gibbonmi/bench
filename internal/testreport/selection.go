@@ -32,17 +32,42 @@ type listedPackage struct {
 
 var listCurrentPackages = currentPackages
 
-func resolveChangedPackages(ctx context.Context, root string, paths []string) ([]string, error) {
+// changedSelection maps each selected import path to the one cause that selected it.
+type changedSelection map[string]string
+
+const (
+	causeGoMetadata = "go-metadata"
+	causeChanged    = "changed"
+	causeEmbed      = "embed"
+	// causeImports prefixes the import path of the dependency that selected the package.
+	causeImports = "imports "
+)
+
+// causePrecedence lists the direct causes from the strongest to the weakest. A package
+// that two inputs select keeps the stronger cause.
+var causePrecedence = []string{causeGoMetadata, causeChanged, causeEmbed}
+
+// packages returns the selected import paths in sorted order.
+func (s changedSelection) packages() []string {
+	result := make([]string, 0, len(s))
+	for importPath := range s {
+		result = append(result, importPath)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func resolveChangedPackages(ctx context.Context, root string, paths []string) (changedSelection, error) {
 	return resolveChangedPackagesWithLoader(ctx, root, paths, listCurrentPackages)
 }
 
-func resolveChangedPackagesWithEnvironment(ctx context.Context, root string, paths, env []string) ([]string, error) {
+func resolveChangedPackagesWithEnvironment(ctx context.Context, root string, paths, env []string) (changedSelection, error) {
 	return resolveChangedPackagesWithLoader(ctx, root, paths, func(ctx context.Context, root string) ([]listedPackage, error) {
 		return currentPackagesWithEnvironment(ctx, root, env)
 	})
 }
 
-func resolveChangedPackagesWithLoader(ctx context.Context, root string, paths []string, load func(context.Context, string) ([]listedPackage, error)) ([]string, error) {
+func resolveChangedPackagesWithLoader(ctx context.Context, root string, paths []string, load func(context.Context, string) ([]listedPackage, error)) (changedSelection, error) {
 	inputs := make([]changedPath, 0, len(paths))
 	for _, path := range paths {
 		input, err := inspectChangedPath(root, path)
@@ -52,7 +77,7 @@ func resolveChangedPackagesWithLoader(ctx context.Context, root string, paths []
 		inputs = append(inputs, input)
 	}
 	if len(inputs) == 0 {
-		return nil, nil
+		return changedSelection{}, nil
 	}
 	packages, err := load(ctx, root)
 	if err != nil {
@@ -143,7 +168,7 @@ func currentPackagesWithEnvironment(ctx context.Context, root string, env []stri
 	return packages, nil
 }
 
-func selectCurrentPackages(root string, packages []listedPackage, inputs []changedPath) ([]string, error) {
+func selectCurrentPackages(root string, packages []listedPackage, inputs []changedPath) (changedSelection, error) {
 	byDirectory := make(map[string]string, len(packages))
 	byEmbed := make(map[string]string)
 	byImport := make(map[string]listedPackage, len(packages))
@@ -159,11 +184,16 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 			byEmbed[filepath.ToSlash(filepath.Join(directory, name))] = pkg.ImportPath
 		}
 	}
-	selected := make(map[string]bool)
+	selected := changedSelection{}
+	mark := func(importPath, cause string) {
+		if current, ok := selected[importPath]; !ok || slices.Index(causePrecedence, cause) < slices.Index(causePrecedence, current) {
+			selected[importPath] = cause
+		}
+	}
 	for _, input := range inputs {
 		if isGoMetadata(input.path) {
 			for importPath := range byImport {
-				selected[importPath] = true
+				mark(importPath, causeGoMetadata)
 			}
 			continue
 		}
@@ -174,7 +204,7 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 			continue
 		}
 		if importPath, ok := byEmbed[input.path]; ok {
-			selected[importPath] = true
+			mark(importPath, causeEmbed)
 			continue
 		}
 		if strings.HasSuffix(input.path, ".go") {
@@ -182,13 +212,13 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 			if !ok {
 				return nil, fmt.Errorf("changed Go path is not in a current package")
 			}
-			selected[importPath] = true
+			mark(importPath, causeChanged)
 			continue
 		}
 	}
 	reverse := make(map[string][]string)
 	for _, pkg := range packages {
-		for _, dependency := range append(append(append([]string{}, pkg.Imports...), pkg.TestImports...), pkg.XTestImports...) {
+		for _, dependency := range directDependencies(pkg) {
 			reverse[dependency] = append(reverse[dependency], pkg.ImportPath)
 		}
 	}
@@ -196,19 +226,35 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 		changed = false
 		for selectedImport := range selected {
 			for _, dependent := range reverse[selectedImport] {
-				if !selected[dependent] {
-					selected[dependent] = true
+				if _, ok := selected[dependent]; !ok {
+					selected[dependent] = ""
 					changed = true
 				}
 			}
 		}
 	}
-	result := make([]string, 0, len(selected))
-	for importPath := range selected {
-		result = append(result, importPath)
+	// A package that the closure added names its first selected direct dependency, so the
+	// cause does not depend on the order in which the closure reached the package.
+	for importPath, cause := range selected {
+		if cause != "" {
+			continue
+		}
+		dependencies := directDependencies(byImport[importPath])
+		sort.Strings(dependencies)
+		for _, dependency := range dependencies {
+			if _, ok := selected[dependency]; ok {
+				selected[importPath] = causeImports + dependency
+				break
+			}
+		}
 	}
-	sort.Strings(result)
-	return result, nil
+	return selected, nil
+}
+
+// directDependencies returns the imports, the test imports, and the external test imports
+// of pkg in one new slice.
+func directDependencies(pkg listedPackage) []string {
+	return append(append(append([]string{}, pkg.Imports...), pkg.TestImports...), pkg.XTestImports...)
 }
 
 func isGoMetadata(path string) bool {

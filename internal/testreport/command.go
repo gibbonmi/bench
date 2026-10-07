@@ -46,15 +46,16 @@ const goChildGroupCancelled = "child process group cancelled"
 
 type focusedRequest struct {
 	packageExpr string
-	packages    []string
-	full        bool
-	run         string
-	changed     bool
-	base        string
-	sourceTip   string
-	check       string
-	fixtures    bool
-	checks      bool
+	// causes is the `--changed` selection; it is nil for every other form.
+	causes    changedSelection
+	full      bool
+	run       string
+	changed   bool
+	base      string
+	sourceTip string
+	check     string
+	fixtures  bool
+	checks    bool
 }
 
 func parseFocusedRequest(root string, args []string) (focusedRequest, string, int) {
@@ -154,14 +155,14 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 		if err != nil {
 			return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 		}
-		packages, err := resolveChangedPackagesWithEnvironment(ctx, root, subject.Paths, changedEnv)
+		causes, err := resolveChangedPackagesWithEnvironment(ctx, root, subject.Paths, changedEnv)
 		if err != nil {
 			return refusedOutcome(toon.Errorf("changed selection failed", err.Error())+"\n", 1)
 		}
-		if len(packages) == 0 {
-			return emptyReport(request.full)
+		if len(causes) == 0 {
+			return emptyReport(request.full, causes)
 		}
-		request.packages = packages
+		request.causes = causes
 	}
 	if request.check != "" {
 		return runNamedCheck(ctx, root, request, selection)
@@ -170,8 +171,8 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	if request.run != "" {
 		operands = append(operands, "-run", request.run)
 	}
-	if len(request.packages) != 0 {
-		operands = append(operands, request.packages...)
+	if len(request.causes) != 0 {
+		operands = append(operands, request.causes.packages()...)
 	} else {
 		operands = append(operands, request.packageExpr)
 	}
@@ -274,6 +275,7 @@ func runGoTest(ctx context.Context, root string, request focusedRequest, argv, e
 	if request.run != "" && outcome.Kind == OutcomeNoTestRun {
 		return Outcome{Kind: OutcomeNoTestRun}, toon.Errorf("go test reported no test runs", "run pattern matched no tests") + "\n", 1
 	}
+	report.causes = request.causes
 	out, renderErr := report.render(request.full)
 	if renderErr != nil {
 		return refusedOutcome(toon.RenderError(renderErr)+"\n", 1)
@@ -297,8 +299,9 @@ func drainGoProcessGroup(pgid int) {
 	_ = syscall.Kill(-pgid, syscall.SIGKILL)
 }
 
-func emptyReport(full bool) (Outcome, string, int) {
+func emptyReport(full bool, causes changedSelection) (Outcome, string, int) {
 	empty := newReport()
+	empty.causes = causes
 	out, err := empty.render(full)
 	if err != nil {
 		return refusedOutcome(toon.RenderError(err)+"\n", 1)

@@ -44,6 +44,9 @@ type report struct {
 	// so the packages row count, the count of tests that ran, and the fact that any ran
 	// are one observation.
 	ranTests map[string]map[string]bool
+	// causes is the `--changed` selection. A non-nil map, empty included, adds the
+	// `selected_by` cell to the packages table.
+	causes changedSelection
 }
 
 func newReport() *report {
@@ -158,13 +161,21 @@ func (r *report) render(full bool) (string, error) {
 		packages = append(packages, pkg)
 	}
 	sort.Strings(packages)
+	packageFields := []string{"package", "status", "elapsed_ms", "tests_run"}
+	if r.causes != nil {
+		packageFields = append(packageFields, "selected_by")
+	}
 	packageRows := make([][]any, 0, len(packages))
 	for _, pkg := range packages {
-		// The name and the status are strings the encoder escapes; the last two cells are
+		// The name and the status are strings the encoder escapes; the next two cells are
 		// counts, so they emit bare and stay integers on a round-trip.
-		packageRows = append(packageRows, []any{pkg, r.statuses[pkg], r.elapsedMS[pkg], len(r.ranTests[pkg])})
+		row := []any{pkg, r.statuses[pkg], r.elapsedMS[pkg], len(r.ranTests[pkg])}
+		if r.causes != nil {
+			row = append(row, r.causes[pkg])
+		}
+		packageRows = append(packageRows, row)
 	}
-	packageBlock, err := toon.TableTyped("packages", []string{"package", "status", "elapsed_ms", "tests_run"}, packageRows)
+	packageBlock, err := toon.TableTyped("packages", packageFields, packageRows)
 	if err != nil {
 		return "", err
 	}
