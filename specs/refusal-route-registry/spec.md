@@ -984,6 +984,8 @@ The prospective build owns these exact paths:
 - `internal/worktree/land_resume.go`
 - `internal/worktree/land_rerun.go`
 - `internal/worktree/merge.go`
+- `internal/worktree/merge_refusal.go`
+- `internal/worktree/land_refusal_fixture_test.go`
 - `internal/worktree/build.go`
 - `internal/worktree/reset.go`
 - `internal/worktree/reset_apply.go`
