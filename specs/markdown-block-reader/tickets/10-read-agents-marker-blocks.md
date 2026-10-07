@@ -6,10 +6,10 @@ Covers: MB57, MB58, MB61, MB70, MB86, MB87, MB91, MB97
 
 ## What to build
 
-Start this ticket only after `cli-desktop-consistency` lands on `main`, because
-that branch also writes `internal/adopt/marker.go`. Re-read `marker.go` and its
-callers at that tip before the first edit. That branch adds `stagedRepairAgents`
-as a caller.
+The `cli-desktop-consistency` prerequisite is satisfied at `37ac80b8`.
+Read `marker.go` and its current callers before the first edit. The
+`stagedRepairAgents` caller and its link-transaction path are present. Keep that
+repair path on the same marker scan and rewrite.
 
 Make `scanMarkers`, `RewriteAgentsBlock`, and `StripAgentsBlock` read the block
 reader's fence classes. Each one still finds a marker in the raw line text,
@@ -24,7 +24,7 @@ reader's line offsets, so each carriage return survives. The marker scan ignores
 the reader's frontmatter fault and reads each line as body, as it does today.
 
 The new rows go in `link_plan_test.go`. `TestRewriteAgentsBlockEdges` lives in
-`internal/adopt/adopt_test.go`, but that file is 802 lines, over the line cap.
+`internal/adopt/adopt_test.go`, but that file is over the line cap.
 `internal/adopt` is a crowded directory, so the ticket adds no file.
 
 ## Acceptance
@@ -39,5 +39,5 @@ The new rows go in `link_plan_test.go`. `TestRewriteAgentsBlockEdges` lives in
 - [ ] An AGENTS.md whose first line is an unclosed `---` rewrites as it does today, with no refusal.
 - [ ] `TestRewriteAgentsBlockEdges` stays green without an edit.
 - [ ] `RewriteAgentsBlock` of the live `AGENTS.md` gives the same bytes at the base and at the tip.
-- [ ] `internal/adopt/marker.go` holds no string literal with a run of three backticks. The sites today are lines 44, 100, and 146.
+- [ ] `internal/adopt/marker.go` holds no string literal with a run of three backticks.
 - [ ] No file in `Writes:` grows past 400 lines.

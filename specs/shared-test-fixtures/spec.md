@@ -8,11 +8,19 @@ Decision source: `roadmap/FT360.md`, the reviewed quality-survey artifact from d
 
 Verification log: 2 iteration(s) to accept each stage — GPT-6.1 Sol/high accepted the spec. GPT-5.6 Sol/high accepted the slices.
 
+Amendment source: `decisions/architecture-fixtures.md` and its resolved tickets 1–3, read in assignment `ft362-process-lifetime-map`. The original Decision source remains unchanged.
+
+Amendment verification: GF-SPEC-R1 independently accepted spec SHA-256 `d8798f213c9a6437dddb2d9e807e9f4d2f546d3bcfb26b09cb60d98123824558`, with no material Standards, Spec, or Coverage findings. Static confidence: 9.
+
+Ticket amendment: GPT-6.1 Sol/high amended existing tickets only after GF-SPEC-R1 acceptance. Independent GF-TICKETS-R1 accepted the amendment at static confidence 9; implementation approval remains pending.
+
 Implementation approval: pending. This planning phase does not authorize the successor build.
 
 ## Problem
 
-Generic fixture helpers repeat Git execution and default identities. The current `gittest` package exports `Output`, while its run helper remains private.
+Generic fixture helpers repeat Git execution and default identities. The current `gittest` package exports fatal `Output` and error-returning `Run`.
+The staged fatal `Run` proposal collides with that existing API.
+
 The Git portion of `testrepo` has another command loop and another identity. Callers also write their own reasons for unavailable FIFOs and symlinks.
 The source reads and candidate inventory below identify these copies. The old survey counts are historical evidence, not acceptance targets.
 
@@ -22,7 +30,7 @@ Tests use `gittest` for generic Git execution, commit creation, and the default 
 The capability owner formats unavailable-capability reasons. Callers retain the operation detail and the existing skip classification.
 
 This spec prepares work for the approved quality successor milestone. It does not start implementation or change the active delivery commitment.
-The implementation rechecks this inventory after the roadmap-delivery-commitment build lands. It includes new generic fixtures within the same approved outcome.
+The implementation refreshes the inventory against its approved source tip. It includes new generic fixtures within the same approved outcome.
 
 ## User stories
 
@@ -79,11 +87,18 @@ This direction keeps `internal/git` tests able to import `gittest` without a cyc
 
 ### Git helper contract
 
-Expose `Run(t, root, args...)` beside the existing `Output(t, root, args...)`.
-`Run` fails the test on a nonzero exit. `Output` preserves trimmed combined output and the existing error behavior.
+Preserve `Run(root, args...) (string, error)` and its existing callers. Successful calls return trimmed combined output.
+Failed calls return an empty string and a wrapped process error containing the Git arguments and combined output.
+Missing Git also returns an error. `Run` accepts no testing handle and never fails or skips a test directly.
+Goroutine callers retain their own error handling.
+
+Add `MustRun(t, root, args...)` for callers that need a fatal helper. It delegates to the error-returning owner and discards successful output.
+`MustRun` fails the calling test on nonzero exit or missing Git. Existing `Output(t, root, args...)` retains its delegation to `Run`.
+`Output` still fails the test on an error and returns trimmed combined output on success.
+
 Provide `OutputBytes(t, root, args...)` for untrimmed stdout. It does not combine stderr with successful stdout.
 
-One private execution owner implements these forms. Each public test helper calls `t.Helper()`.
+One private execution owner implements these forms without changing the exported `Run` contract. Each public helper accepting `testing.TB` calls `t.Helper()`.
 
 Expose `Commit(t, root, message, options...)`. It commits the current index and passes each additional commit option as its own argument.
 It does not stage files. Callers retain their existing `add` paths and flags, including the distinction between `-A` and forced additions.
@@ -94,7 +109,8 @@ Expose configuration and per-command identity arguments derived from those value
 `RepoOnBranch` and moved snapshot initialization use that identity. Generated fixture scripts obtain their default identity from the same owner.
 
 The helpers preserve ambient environment and current-directory behavior unless a caller already supplies an explicit root or environment.
-An empty root means the current working directory. A nonempty root uses an argv operand, never a shell interpolation.
+Existing `Run` and `Output` retain their root operand behavior, including passing an empty root to Git's `-C` option.
+For new helper forms, an empty root means the current working directory. A nonempty root uses an argv operand, never shell interpolation.
 Do not add global environment mutation, implicit configuration isolation, or production security guarantees.
 Tests that deliberately alter author, committer, timestamp, or Git configuration retain those inputs.
 
@@ -119,7 +135,8 @@ No transactional rollback promise is added for a failed copy.
 Before editing a candidate, classify the enclosing operation as a generic fixture, an intentional subject, or a specialized probe.
 Every generic command wrapper, default identity, and snapshot caller migrates. Domain-specific file setup can remain as composition around `gittest`.
 
-A wrapper that only renames `gittest.Run` or `Output` leaves unless it preserves an existing public fixture API.
+A wrapper that only renames `gittest.Run`, `MustRun`, or `Output` leaves unless it preserves an existing public fixture API.
+Error-returning fixture APIs keep their error handling; their calls must not become fatal `MustRun` or `Output` calls.
 An API-preserving wrapper contains no execution or identity policy of its own.
 
 Worktree `descendant` and the system `owner.runAt` remain the process authorities. Their Git wrappers retain transport, cleanup, and census behavior.
@@ -129,6 +146,9 @@ The preflight fast-import fixture retains its input stream and timestamps. Envir
 Git failure probes retain their expected nonzero status. Queries that authenticate the tested repository remain production-subject observations.
 
 These are operation-level exceptions. A file containing one exception does not exempt its unrelated fixture setup.
+
+Coordinate overlapping adoption fixtures with landing-test-efficiency. Prefer its minimal payload migration first, then refresh GF-C5A's caller inventory and affected fences.
+Shared helpers alone establish no measured speed gain.
 
 The ownership check records each retained specialized site by path and enclosing symbol, with its preserved contract.
 A new generic runner beside an allowed specialized symbol still fails. String literals containing example source are data.
@@ -178,7 +198,7 @@ The author rechecks the candidate sites before implementation. Source drift expa
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| GF-C1 / `01-share-git-fixture-owner.md` | Share generic Git commands and snapshots | GF1, GF2, GF3, GF4, GF5, GF6, GF7, GF8, GF9, GF11, GF12, GF13, GF14, GF15, GF20, GF32, GF33 | Completion-plan checks | yes |
+| GF-C1 / `01-share-git-fixture-owner.md` | Share generic Git commands and snapshots | GF1, GF2, GF3, GF4, GF5, GF6, GF7, GF8, GF9, GF11, GF12, GF13, GF14, GF15, GF20, GF32, GF33, GF34, GF35, GF36, GF37 | Completion-plan checks | yes |
 | GF-C2 / `02-migrate-raw-git-fixtures.md` | Migrate raw Git fixture callers | GF16, GF29, GF30 | Completion-plan checks | no |
 | GF-C3 / `03-migrate-leaf-fixtures.md` | Migrate leaf command fixtures | GF16, GF29, GF30 | Completion-plan checks | no |
 | GF-C4 / `04-migrate-workflow-readers.md` | Migrate workflow reader fixtures | GF16, GF29, GF30 | Completion-plan checks | no |
@@ -211,7 +231,8 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 
 ### Seam diagram
 
-    test setup -> gittest run/output/commit -> Git argv -> repository facts
+    test setup -> gittest MustRun/Output/Commit -> Git argv -> repository facts
+    error-handling caller -> gittest Run -> trimmed combined output or returned error
     snapshot caller -> gittest snapshot -> file membership and private commit
     unavailable host operation -> capability reason -> record -> skip
     source tree -> existing conformance owners -> duplicate-site diagnostic
@@ -220,11 +241,11 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| GF1 | 1 | A failed Git command fails its calling test | planned TestRunFailure in internal/gittest/commands_test.go | Ignoring the process error leaves the negative fixture green. |
+| GF1 | 1 | MustRun fails its calling test on a failed Git command | planned TestMustRunFailure in internal/gittest/commands_test.go | Ignoring the process error leaves the negative fixture green. |
 | GF2 | 2 | Output preserves trimmed combined output | planned TestOutputContract in internal/gittest/commands_test.go | A changed stream or trim rule changes the observed bytes. |
 | GF3 | 3 | OutputBytes preserves raw stdout with trailing whitespace and NUL bytes | planned TestOutputBytesContract in internal/gittest/commands_test.go | A TrimSpace or combined-output substitution changes the expected bytes. |
 | GF4 | 4 | A root with spaces and shell metacharacters reaches the intended repository | planned TestCommandArgv in internal/gittest/commands_test.go | Shell interpolation changes the target or creates a sentinel. |
-| GF5 | 5 | Missing Git fails the calling test | planned TestMissingGit in internal/gittest/commands_test.go | A skip or empty success cannot satisfy the failure observation. |
+| GF5 | 5 | Missing Git makes MustRun fail the calling test | planned TestMustRunMissingGit in internal/gittest/commands_test.go | A skip or empty success cannot satisfy the failure observation. |
 | GF6 | 6 | Commit preserves the supplied message and explicit empty-commit option | planned TestCommitContract in internal/gittest/commands_test.go | Dropping an argv element changes the repository result. |
 | GF7 | 7 | Commit leaves an unstaged sentinel outside the new commit | planned TestCommitDoesNotStage in internal/gittest/commands_test.go | Implicit add absorbs the sentinel. |
 | GF8 | 8 | RepoOnBranch and snapshots use the same canonical identity | planned TestFixtureIdentity in internal/gittest/commands_test.go | A second identity or personal global fallback differs. |
@@ -253,6 +274,10 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 | GF31 | 19 | Every migrated capability caller retains its baseline class | planned TestUnavailableCallerClasses in internal/conformance/skip_reason_owner_test.go | Changing a socket caller from FIFO to symlink fails the independent site expectation. |
 | GF32 | 6 | Commit without an empty-commit option fails on an unchanged index | planned TestCommitNoChanges in internal/gittest/commands_test.go | An injected allow-empty option makes the negative fixture succeed. |
 | GF33 | 7 | A refused no-change Commit preserves HEAD | planned TestCommitNoChanges in internal/gittest/commands_test.go | Creating an empty commit moves the observed ref. |
+| GF34 | 2 | Run retains root operands and returns trimmed combined output on success without a testing handle | planned TestRunOutputContract in internal/gittest/commands_test.go | A changed stream, trim rule, signature, or existing root operand behavior breaks the observed contract. |
+| GF35 | 1 | Run returns empty output and its wrapped command error to a calling goroutine | planned TestRunFailureReturn in internal/gittest/commands_test.go | Swallowing the error, losing command diagnostics, or terminating the goroutine prevents the channel result. |
+| GF36 | 5 | Missing Git makes Run return an error and empty output | planned TestRunMissingGit in internal/gittest/commands_test.go | A fatal call, skip, or empty success cannot return the required error. |
+| GF37 | 1 | Output delegates to Run and fails its calling test on nonzero exit or missing Git | planned TestOutputFailure in internal/gittest/commands_test.go | Swallowing a returned error leaves the negative fixture green. |
 
 ### Edge inventory
 
@@ -260,7 +285,8 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 | --- | --- |
 | Spaces, quotes, glob characters, and shell operators in paths | GF4 uses separate argv operands and a sentinel. |
 | Newlines, NUL delimiters, and trailing spaces in output | GF3 observes untrimmed stdout. GF2 retains the existing trimmed API. |
-| Missing executable or nonzero exit | GF1 and GF5 require a failed test, not a skip. |
+| Missing executable or nonzero exit | GF1, GF5, and GF37 require fatal wrappers to fail. GF35 and GF36 require Run to return errors. |
+| Error handling from a goroutine | GF35 observes the returned failure through a channel; Run cannot invoke test failure or skip. |
 | Empty versus absent file | GF11 and GF29 compare both snapshot inputs. |
 | Deleted source entry after enumeration | GF29 preserves the current skip of an absent source entry. |
 | FIFO, device, and socket snapshot entries | GF14 refuses nonregular entries before a read. |
@@ -517,6 +543,19 @@ GF14 uses this reachable input.
 
 No new production import or external dependency is required. ADR 0006 constrains independent expectations to demonstrated omission checks.
 
+The amendment author reread the exported `Run` and `Output` definitions at `37ac80b8adeff4ecbd57f3d813ff8937f2bcbc68`.
+`internal/gittest/gittest.go:277` owns error-returning `Run`; `Output` delegates at line 268.
+`internal/commitment/commitmenttest/repo.go:107` returns `Run` failures from its private `commit` function.
+Its exported `CommitPolicy` preserves the goroutine-safe error contract documented on that definition.
+
+A whole-tree hidden Go search and `bench consumers gittest.Run gittest.Output --full` enumerated readers without changing them.
+The sweep also checked this spec and its existing tickets for the conflicting fatal name.
+GF-SPEC-R1 accepted the corrected contract before the existing-ticket amendment. Their earlier slice acceptance applies to the original staged contract.
+
+The author read `internal/tickets/registry_data.go` and `internal/preflight/closure.go` before locking the existing ownership union.
+Clean-source prospective writes for `01-share-git-fixture-owner.md` reported no missing closure or ordering entries.
+The new contract tests use the already fenced `internal/gittest/commands_test.go`; no reader edit or fence expansion is required.
+
 ### Reader and writer sweep
 
 `inventory.json` is the candidate-site inventory. It names exact paths, enclosing symbols, source lines, and discovery categories.
@@ -528,7 +567,7 @@ Snapshot membership assertions remain in `TestKitCopyPreservesTheVisibleWorkingT
 The old capability prefixes are caller-authored `FIFOs unavailable`, `symlinks unavailable`, and their singular and filesystem-qualified variants.
 The candidate inventory includes direct error-only reasons, device details, and socket details in the same classified family.
 
-The ongoing roadmap-delivery-commitment build writes some future migration consumers. This phase writes none of those consumers.
+The current tree includes roadmap-delivery-commitment consumers of `Run` and `Output`. This amendment writes none of those consumers.
 Before implementation, refresh the inventory and expand affected ticket fences through the normal plan-amendment route.
 Shared scorecard changes require composition at phase close. Neither session may overwrite the other's observations.
 
@@ -536,7 +575,7 @@ Shared scorecard changes require composition at phase close. Neither session may
 
 | source clause | coverage |
 | --- | --- |
-| gittest exports one run, output, and commit form with the identity | GF1 to GF9, GF16, GF24, GF25, GF32, GF33 |
+| gittest owns execution, fatal wrappers, output, commits, and identity | GF1 to GF9, GF16, GF24, GF25, GF32 to GF37 |
 | The git half of testrepo folds into it | GF10 to GF15, GF20 |
 | The capability helper owns one skip message for each capability | GF21 to GF23, GF26, GF31, with the source's FIFO and symlink family |
 | Private runners and identities duplicate fixture knowledge | GF16 to GF19, GF24, GF25, GF28, GF29 |
@@ -547,7 +586,7 @@ Shared scorecard changes require composition at phase close. Neither session may
 - Import edges: go list confirmed the current graph. Remove gittest to testrepo before the move completes.
 - Source-row clauses and occurrences: The source-clause table covers FT360's outcome and its quality-survey occurrence.
 - Promised field labels: none. The existing capability fields retain their grammar.
-- Changed-function callers: inventory.json identifies candidates. The moved-export caller set is listed above.
+- Changed-function callers: inventory.json identifies candidates. The moved-export caller set is listed above; the preserved Run reader closure is recorded above.
 - Copy survival: GF24, GF25, and GF26 plant a surviving copy through the registered check.
 - Rendered-shape readers: The skip parser reads the remainder as Reason. Exact owner transport tests remain valid for the low-level API.
 - Restore and copy omissions: GF11 omits a visible untracked file. GF12 omits a dangling link. GF13 plants an excluded entry.
@@ -563,7 +602,11 @@ OutputBytes is necessary for existing raw-output callers. It is not a new public
 The caller-class fixture is an independent preservation expectation. Its recorded class-change red is required before acceptance.
 
 The terminal ownership checks make the source's copy-removal outcome observable. They reuse existing registered check routes.
-The spec review precedes slicing, and the slice review follows it, as the user requested.
+
+The spec review preceded slicing, and GF-TICKETS-R1 accepted the amended graph at checkpoint `5e51e10cbc11ab0deb21a2c0d1e7df9e3e75033a`.
+That independent Sol 6.1/high review found no material Standards, Spec, or Coverage findings.
+Clean-source preflight passed with fourteen green checks and two not-applicable checks.
+Both amended ticket proposals had no missing paths or ordering requirements.
 No implementation author is dispatched during this phase.
 
 ### Slice accounting
