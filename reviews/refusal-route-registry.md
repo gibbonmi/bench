@@ -1093,3 +1093,19 @@ RR-C1b consumed 1 of its 2 repair cycles.
 The ticket 02 repair 5a0a4f78, the ticket 03 repair c359944c, and the ticket 04 repair f4669147 close every auto-fix finding and the known defect.
 The ticket 03 repair also adds a review step and the repaired source tip to the `source-not-clean` route.
 It also hands back a dirty source on the resume path.
+
+## Diagnosed causes
+
+The repair charges of RR-C1a and RR-C1b did not run the debug step before each fix.
+The orchestrator records each diagnosed cause here from the repair returns, after the repairs.
+
+| finding | diagnosed cause | repro |
+|---|---|---|
+| C1a-P3, C1a-C3 | `Face.Render` joined the preface with no line-safe gate. | A preface with a control byte rendered raw. |
+| C1a-C1 | No test held an absent composed value. | A probe that drops the empty-value check survived. |
+| C1b-P1, C1b-C2 | The handback fallback skipped every refusal that named a component, and only the request component sets a route. | A probe that removes the fallback failed 14 tests. |
+| C1b-C4 | The review step was a command step, but a review is a phase and not a shell command. | The follow walk cannot run a command step whose head is not `bench`. |
+| C1b-P3 | The walk took the expected marker from the registry authority. | A probe that gives `destination-not-clean` agent authority stayed green before the fix. |
+| C1b-C3 | The source reruns kept the caller's tip, and the commit in the route moves the tip. | A probe that restores the caller tip made two reruns hit the tip mismatch. |
+| Known flake | A parallel fork kept the new wrapper script open for write, so its start failed with "text file busy". | A scratch program failed about 300 of 2000 starts. |
+| C1b-C7 | No test ran `bench recovery` through the command dispatch. | A probe that points the row at another handler stayed green before the fix. |
