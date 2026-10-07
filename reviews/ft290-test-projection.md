@@ -2781,9 +2781,9 @@ Count: 4. Worst issue: C1.
     {
       "id": "TP-C4",
       "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
-      "tip": "6cba8898aea8ffc80258200da3a4251dc5d1d3e4",
+      "tip": "899a012f8ec6e133247040bc701ea159681744e4",
       "plan_digest": "sha256:7a4a089344744ae12b085fba8532ca6bd44d5a3810f5c8c386fec355947a3718",
-      "source_digest": "d78a45065012f43727114cc0aaad1158eba65035",
+      "source_digest": "bc92c39c997f77d015a0df0327a045ed6a370d15",
       "acceptance_rows": [
         "TP41",
         "TP42",
@@ -2883,6 +2883,53 @@ Count: 4. Worst issue: C1.
             "ref": "claude-agent:ft290_t10_r1",
             "digest": "sha256:e91f5ba0f714180e621e1d431367bc1b167066078142153b8a3469d2c0ae26a7",
             "excerpt": "HEAD 6cba8898aea8ffc80258200da3a4251dc5d1d3e4\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/worktree\nexit 0, wall 78.3s: github.com/gibbonmi/bench/internal/worktree,pass,76461,1305; failures[0]; skips[2] (socket subtests: unix sockets unavailable on this host)\n"
+          },
+          "requirement": "t10-worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-testreport-r2",
+          "performer": "claude:ft290_t10_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bc92c39c997f77d015a0df0327a045ed6a370d15",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t10_r1",
+            "digest": "sha256:00dad8cc5f9a0cc2212dd757ca820a359da65bd4250b0a65c9a120b0e8896e25",
+            "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\nexit 0, wall 36.9s: github.com/gibbonmi/bench/internal/testreport,pass,35131,199; failures[0] skips[0]\n$ bench probe internal/testreport/selection.go --swap 'var causePrecedence = []string{causeGoMetadata, causeChanged, causeEmbed}' --with 'var causePrecedence = []string{causeChanged, causeGoMetadata, causeEmbed}' --package ./internal/testreport --run '^TestCauseGoMetadataWins$'\nprobe: bit, failed_tests=1, restored=yes; mutated run exit 1 (TestCauseGoMetadataWins: example/a:changed, want go-metadata)\n"
+          },
+          "requirement": "t10-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap at the cause precedence: test the changed cause before the go-metadata cause. TestCauseGoMetadataWins must fail, and the restore must be exact.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft290_t10_r1",
+              "digest": "sha256:00dad8cc5f9a0cc2212dd757ca820a359da65bd4250b0a65c9a120b0e8896e25",
+              "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/testreport\nexit 0, wall 36.9s: github.com/gibbonmi/bench/internal/testreport,pass,35131,199; failures[0] skips[0]\n$ bench probe internal/testreport/selection.go --swap 'var causePrecedence = []string{causeGoMetadata, causeChanged, causeEmbed}' --with 'var causePrecedence = []string{causeChanged, causeGoMetadata, causeEmbed}' --package ./internal/testreport --run '^TestCauseGoMetadataWins$'\nprobe: bit, failed_tests=1, restored=yes; mutated run exit 1 (TestCauseGoMetadataWins: example/a:changed, want go-metadata)\n"
+            }
+          }
+        },
+        {
+          "id": "t10-worktree-r2",
+          "performer": "claude:ft290_t10_r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bc92c39c997f77d015a0df0327a045ed6a370d15",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_t10_r1",
+            "digest": "sha256:f4ee7db271c3cf7b9fe6de47ee6d4257d6918705047f15fd7c0ee51f36bad6cf",
+            "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4\n$ bench worktree exec \"ft290-test-projection\" -- bench test --package ./internal/worktree\nexit 0, wall 77.6s: github.com/gibbonmi/bench/internal/worktree,pass,75912,1305; failures[0]; skips[2] (socket subtests: unix sockets unavailable on this host)\n"
           },
           "requirement": "t10-worktree",
           "command": "bench test --package ./internal/worktree",
@@ -3176,6 +3223,96 @@ Count: 4. Worst issue: C1.
           "ref": "claude-session:ft290-orchestrator-20261006",
           "digest": "sha256:3adceb9ade0da368e81573b71303f159634d1d0db7ed47f032c68fe24477b4b1",
           "excerpt": "HEAD 8d95e2003b4c98e01a0076eb742341f7fd557edc\n$ bench test --package ./internal/canary\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/canary,pass,16,27\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "canary",
+        "command": "bench test --package ./internal/canary",
+        "exit_code": 0
+      },
+      {
+        "id": "final-coverage-v2",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "bc92c39c997f77d015a0df0327a045ed6a370d15",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:776c6abfedda8eaa16bb7db2631915583a0af10bc697a6c742729035fe05ba01",
+          "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4 (main 37ac80b8 merged)\n$ bench coverage --check specs/ft290-test-projection/spec.md\nok: coverage map valid — 56 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/ft290-test-projection/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-testreport-v2",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "bc92c39c997f77d015a0df0327a045ed6a370d15",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:90d02e30436dff8341ea70303346e86b5843cd46b78ab11bce99197dd8e2ff44",
+          "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4 (main 37ac80b8 merged)\n$ bench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,34850,199\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "testreport",
+        "command": "bench test --package ./internal/testreport",
+        "exit_code": 0
+      },
+      {
+        "id": "final-cmd-v2",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "bc92c39c997f77d015a0df0327a045ed6a370d15",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:3653f76fe07d69fb1dec9a506e249e90f3fc9fb54dd895487fd1c89bff8a7677",
+          "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4 (main 37ac80b8 merged)\n$ bench test --package ./cmd/bench\n  github.com/gibbonmi/bench/cmd/bench,pass,14478,330\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "cmd",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final-probe-v2",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "bc92c39c997f77d015a0df0327a045ed6a370d15",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:696e692b638d52751f0b44a2d9674516a42d3a303ca2b87bf3c47b747ccc395b",
+          "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4 (main 37ac80b8 merged)\n$ bench test --package ./internal/probe\n  github.com/gibbonmi/bench/internal/probe,pass,16980,100\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "probe",
+        "command": "bench test --package ./internal/probe",
+        "exit_code": 0
+      },
+      {
+        "id": "final-canary-v2",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "bc92c39c997f77d015a0df0327a045ed6a370d15",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:5ad5285c272d7eb6270f86bda9e7bb85dadaa3fc140a1ac10f90ffe932a28c9c",
+          "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4 (main 37ac80b8 merged)\n$ bench test --package ./internal/canary\n  github.com/gibbonmi/bench/internal/canary,pass,17,27\nfailures[0]{package,test,line,lines}:\n"
         },
         "requirement": "canary",
         "command": "bench test --package ./internal/canary",
