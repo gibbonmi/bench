@@ -69,7 +69,82 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "r-c1a-standards",
+          "performer": "claude:ft393_c1a_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a27426ae564319fe1c7c3febe1c7b31b25c7bb5d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1a_standards",
+            "digest": "sha256:2831767803c2f52efaca917ac539da11d3dfd58f84de944017b8722bab9b7077",
+            "excerpt": "C1a Standards axis (claude:ft393_c1a_standards): evidence current=true. 4 findings, 0 blocking.\nC1a-S1 advisory route.go Step.command field set but unread; ticket 03 guard check owns the reader. no-op. conf 6\nC1a-S2 advisory registry.go uniqueNames is called only by tests; follows the approved design. no-op. conf 4\nC1a-S3 advisory registry_test.go/route_test.go comments cite acceptance rows; repo precedent. no-op. conf 4\nC1a-S4 advisory registry.go newIn has no doc comment naming the injectable-inventory seam. auto-fix. conf 3\nWorst: C1a-S1. Implementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "9c228393356ae35e4f940c2071d12e36d42ede7a",
+          "tip": "da295794f164bc5fd459a5ebc0a6ae5ac7e8b4ef",
+          "finding_ids": [
+            "C1a-S1",
+            "C1a-S2",
+            "C1a-S3",
+            "C1a-S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c1a-spec",
+          "performer": "claude:ft393_c1a_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a27426ae564319fe1c7c3febe1c7b31b25c7bb5d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1a_spec",
+            "digest": "sha256:058ddcb6555d40054c3a24b248e1e7f1a3f2d22144ad6ceb387c5ce6c2d2c46f",
+            "excerpt": "C1a Spec axis (claude:ft393_c1a_spec): evidence current=true. RR04, RR05, RR06, RR07, RR13 met. 3 findings, 0 blocking.\nC1a-P1 advisory route.go Operator/Operators never read Values; the guard check sample fill is ticket 03's seam. no-op. conf 6\nC1a-P2 advisory registry.go unregistered fallback discards the observed sentence; matches spec RR07. no-op. conf 3\nC1a-P3 advisory route.go Facts.Preface joined raw with no LineSafe gate, unlike Fact and Composed. auto-fix. conf 3\nWorst: C1a-P1. Implementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "9c228393356ae35e4f940c2071d12e36d42ede7a",
+          "tip": "da295794f164bc5fd459a5ebc0a6ae5ac7e8b4ef",
+          "finding_ids": [
+            "C1a-P1",
+            "C1a-P2",
+            "C1a-P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c1a-coverage",
+          "performer": "claude:ft393_c1a_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a27426ae564319fe1c7c3febe1c7b31b25c7bb5d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1a_coverage",
+            "digest": "sha256:3cb016ac8142fd780fdb6e5422aaa83fa52ad7ded8cc79142fd250888c7db837",
+            "excerpt": "C1a Coverage axis (claude:ft393_c1a_coverage): evidence current=true. 4 findings, 0 blocking.\nC1a-C1 advisory route.go wordComposed empty value untested; dropping value != \"\" survives. auto-fix. conf 7\nC1a-C2 advisory route.go Operator never supplied a Values entry in a test; ticket 03 owns the sample-fill seam. no-op. conf 5\nC1a-C3 advisory route.go Facts.Preface concatenated with no LineSafe check. auto-fix. conf 4\nC1a-C4 advisory registry.go empty-name and empty-sentence degenerate states untested and unspecified. no-op. conf 3\nWorst: C1a-C1. Implementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "9c228393356ae35e4f940c2071d12e36d42ede7a",
+          "tip": "da295794f164bc5fd459a5ebc0a6ae5ac7e8b4ef",
+          "finding_ids": [
+            "C1a-C1",
+            "C1a-C2",
+            "C1a-C3",
+            "C1a-C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -81,3 +156,33 @@
   }
 }
 ```
+
+## RR-C1a pickup
+
+The RR-C1a review returned 11 advisory findings and no blocking finding.
+The findings collapse to 3 repair targets.
+
+### Standards
+
+Count: 4. Worst issue: C1a-S1, the unread `Step.command` field.
+
+- C1a-S4, auto-fix, confidence 3: `internal/refusalroute/registry.go` `newIn` has no doc comment that names the injectable inventory seam.
+- C1a-S1, no-op, confidence 6: ticket 03 owns the reader of `Step.command`.
+- C1a-S2 and C1a-S3, no-op, confidence 4: each follows the approved design or the repository precedent.
+
+### Spec
+
+Count: 3. Worst issue: C1a-P1, the sample fill of an operator slot.
+
+- C1a-P3, auto-fix, confidence 3: `internal/refusalroute/route.go` `Face.Render` joins `Facts.Preface` with no line-safe gate. C1a-C3 names the same fix.
+- C1a-P1, no-op, confidence 6: ticket 03 owns the sample fill of the guard check.
+- C1a-P2, no-op, confidence 3: the unregistered sentence obeys RR07.
+
+### Coverage
+
+Count: 4. Worst issue: C1a-C1, the untested empty `Composed` value.
+
+- C1a-C1, auto-fix, confidence 7: `internal/refusalroute/route.go` has no test for an empty `Composed` value, so a mutation that drops the empty-value check survives.
+- C1a-C3, auto-fix, confidence 4: the same fix as C1a-P3.
+- C1a-C2, no-op, confidence 5: ticket 03 owns the sample fill of the guard check.
+- C1a-C4, no-op, confidence 3: the spec does not state the empty-name edge.
