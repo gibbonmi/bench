@@ -3120,13 +3120,79 @@ Count: 4. Worst issue: C1.
           "supersedes": [
             "c4-coverage-r1"
           ]
+        },
+        {
+          "id": "c4-standards-c2",
+          "performer": "claude:ft290_c4_standards_c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_standards_c2",
+            "digest": "sha256:02038237e67348511bbc38275e5beb63c254c8368c2501f70f78793079b3a480",
+            "excerpt": "axis=Standards findings=0 worst=none (second confirming round, 6cba8898..dc26a362, internal/testreport only)\nThe FT290 delta is a 2-line selection.go change plus TestCauseEmbeddedGoFileSelectsItsPackage. byDirectory stays the one directory derivation; goPackage and inPackage are computed once per path; mark and causePrecedence stay the one precedence.\nNo comment in internal/testreport states the old own-directory-only rule; the new test comment states the actual outcome.\nHand trace: p/sub/s.go marks example/p embed and example/p/sub changed; the closure adds example/q as imports example/p/sub.\nExamined: --check-current at 4094d31f, the delta, selection.go, selection_cause_test.go, rg for stale wording. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "dc26a3623e7f23897be5bc2b85fb190da34a276f",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards-c1"
+          ]
+        },
+        {
+          "id": "c4-spec-c2",
+          "performer": "claude:ft290_c4_spec_c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_spec_c2",
+            "digest": "sha256:41ac5d31ae267f957d116ea4370991ac5493e94c72f3fe32c731a8d0abfe4acf",
+            "excerpt": "axis=Spec findings=0 worst=none (second confirming round, 6cba8898..dc26a362)\nFolds: a diff of 4ca00c25 against dc26a362 over .agents, capture, internal/anchors, internal/gate, internal/preflight, internal/reviewrecord, internal/worktree, and specs/landing-test-efficiency was empty, so every non-FT290 path equals main.\nThe spec.md change is the plan JSON line that records claude:ft290_t10_r2.\nC6: selection.go:212-217 marks a changed Go file's own package changed when another package embeds it; mark keeps changed above embed, matching \"The cause cell\" and story 28; TestCauseEmbeddedGoFileSelectsItsPackage pins it.\nThe internal/testreport diff is additive; all TP-C4 tests are unchanged; dc26a362 writes only inside ticket 10's fence.\nExamined: --check-current at 4094d31f, the stat and testreport diffs, selection.go, selection_cause_test.go, the spec cause cell and stories 28-32, ticket 10, the main tree diffs. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "dc26a3623e7f23897be5bc2b85fb190da34a276f",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-c1"
+          ]
+        },
+        {
+          "id": "c4-coverage-c2",
+          "performer": "claude:ft290_c4_coverage_c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_coverage_c2",
+            "digest": "sha256:cf7cdf97d86f18a8fea9fd3370ab05a7e932d40ec99a1f63f82eb74d9e07c366",
+            "excerpt": "axis=Coverage findings=0 worst=none (second confirming round, 6cba8898..dc26a362, internal/testreport)\nAll seven probes bit with restored=yes, no --run, ./internal/testreport:\n(a) C6 silent mutation `if inPackage {` -> `if goPackage == importPath {`: bit (TestCauseEmbeddedGoFileSelectsItsPackage).\n(b1) mark importPath changed in place of goPackage: bit. (b2) `if true {` marking non-Go embed files changed: bit, 4 tests. (b3) embedder marked changed in place of embed: bit, 2 tests.\n(c) C1 selected-dependency check `if true {`: bit; C3 embed above changed: bit; C5 own-path skip removed: bit.\nbench test ./internal/worktree passed (1305 tests, 2 socket skips); git status clean.\nExamined: --check-current at 4094d31f, the testreport delta, selection.go in full.\n"
+          },
+          "axis": "Coverage",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "dc26a3623e7f23897be5bc2b85fb190da34a276f",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-coverage-c1"
+          ]
         }
       ]
     }
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "d78a45065012f43727114cc0aaad1158eba65035",
+    "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
     "performer": "claude:ft290-orchestrator-20261006",
     "reconciliation": {
       "TP1": "covered",
@@ -3362,6 +3428,96 @@ Count: 4. Worst issue: C1.
           "ref": "claude-session:ft290-orchestrator-20261006",
           "digest": "sha256:5ad5285c272d7eb6270f86bda9e7bb85dadaa3fc140a1ac10f90ffe932a28c9c",
           "excerpt": "HEAD 899a012f8ec6e133247040bc701ea159681744e4 (main 37ac80b8 merged)\n$ bench test --package ./internal/canary\n  github.com/gibbonmi/bench/internal/canary,pass,17,27\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "canary",
+        "command": "bench test --package ./internal/canary",
+        "exit_code": 0
+      },
+      {
+        "id": "final-coverage-v3",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:2bad21a3add159f25bde5de58d5322ed870333de9d859f65fc2071619c3994ee",
+          "excerpt": "HEAD 4094d31f (code tip dc26a3623e7f23897be5bc2b85fb190da34a276f; record commits after it)\n$ bench coverage --check specs/ft290-test-projection/spec.md\nok: coverage map valid — 56 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/ft290-test-projection/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-testreport-v3",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:9499cce03dc7a863bd5d695721a8711d9ed86634a284c4c101bdf3b7611065fd",
+          "excerpt": "HEAD 4094d31f (code tip dc26a3623e7f23897be5bc2b85fb190da34a276f; record commits after it)\n$ bench test --package ./internal/testreport\n  github.com/gibbonmi/bench/internal/testreport,pass,35474,200\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "testreport",
+        "command": "bench test --package ./internal/testreport",
+        "exit_code": 0
+      },
+      {
+        "id": "final-cmd-v3",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:17dcc4f2c85b53fe03188d49b166d332e3bd1a3c128488071a013d55d347ec9c",
+          "excerpt": "HEAD 4094d31f (code tip dc26a3623e7f23897be5bc2b85fb190da34a276f; record commits after it)\n$ bench test --package ./cmd/bench\n  github.com/gibbonmi/bench/cmd/bench,pass,17861,330\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "cmd",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final-probe-v3",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:c92770a25ef5034fc31b6ec0d38735d0cf713c8a83685f4e817ca955e997910e",
+          "excerpt": "HEAD 4094d31f (code tip dc26a3623e7f23897be5bc2b85fb190da34a276f; record commits after it)\n$ bench test --package ./internal/probe\n  github.com/gibbonmi/bench/internal/probe,pass,23114,100\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "probe",
+        "command": "bench test --package ./internal/probe",
+        "exit_code": 0
+      },
+      {
+        "id": "final-canary-v3",
+        "performer": "claude:ft290-orchestrator-20261006",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "2804659a6ba47363e3e29938e1121d215621dd13",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft290-orchestrator-20261006",
+          "digest": "sha256:e2dbc3a04fb853b0f733ae1010a0a94ae81e2650448acb73c35a6ce5eb17c4e6",
+          "excerpt": "HEAD 4094d31f (code tip dc26a3623e7f23897be5bc2b85fb190da34a276f; record commits after it)\n$ bench test --package ./internal/canary\n  github.com/gibbonmi/bench/internal/canary,pass,17,27\nfailures[0]{package,test,line,lines}:\n"
         },
         "requirement": "canary",
         "command": "bench test --package ./internal/canary",
