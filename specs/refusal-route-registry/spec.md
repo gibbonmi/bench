@@ -763,6 +763,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "1d22d3209f8d20710da4da8c7bdf1378a871969a",
           "native_ref": "claude-agent:ft393_t3"
+        },
+        {
+          "session": "claude:ft393_t3_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "5a0a4f783b1237efba18757e1d6887a7887327e3",
+          "native_ref": "claude-agent:ft393_t3_repair1",
+          "predecessor": "claude:ft393_t3",
+          "trigger": "user-directed",
+          "stopped": "the ticket 03 author session reported completion of its RR-C1b verification records and has no live child",
+          "preserved": "5a0a4f783b1237efba18757e1d6887a7887327e3"
         }
       ],
       "04-render-the-recovery-matrix-from-the-registry.md": [
