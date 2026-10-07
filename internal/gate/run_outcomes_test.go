@@ -121,7 +121,7 @@ func TestGateRunScriptWitnessesPendingRecord(t *testing.T) {
 		Tree     string `json:"tree"`
 		OwnerPID int    `json:"owner_pid"`
 	}
-	if err := json.Unmarshal(outcomeRead(t, filepath.Join(root, ".gate-record-during")), &copied); err != nil {
+	if err := json.Unmarshal(outcomeRead(t, recordDuringWitness.path(t, root)), &copied); err != nil {
 		t.Fatalf("parse script-witnessed record: %v", err)
 	}
 	inspection := Inspect(root)
@@ -227,12 +227,14 @@ func outcomeFixture(t *testing.T, configure ...func(*testrepo.GateFixture, strin
 	root := gittest.RepoOnBranch(t, "main")
 	outcomeWrite(t, root, ".gitignore", ".gate-*\n", 0o644)
 	f := testrepo.NewGateFixture(t.TempDir())
+	runCount := `"$common/` + string(runCountWitness) + `"`
+	recordDuring := `"$common/` + string(recordDuringWitness) + `"`
 	gateScript := `set -eu
+common=$(` + f.Command("git") + ` rev-parse --path-format=absolute --git-common-dir)
 count=0
-if [ -f .gate-run-count ]; then count=$(` + f.Command("cat") + ` .gate-run-count); fi
-printf '%s' "$((count + 1))" > .gate-run-count
-gitdir=$(` + f.Command("git") + ` rev-parse --absolute-git-dir)
-` + f.Command("cp") + ` "$gitdir/bench-last-gate" .gate-record-during
+if [ -f ` + runCount + ` ]; then count=$(` + f.Command("cat") + ` ` + runCount + `); fi
+printf '%s' "$((count + 1))" > ` + runCount + `
+` + f.Command("cp") + ` "$common/bench-last-gate" ` + recordDuring + `
 `
 	for _, configure := range configure {
 		gateScript = configure(f, gateScript)
@@ -257,8 +259,8 @@ func failureOutcomeFixture(t *testing.T) string {
   while [ ! -e .gate-release ]; do ` + sleep + ` 0.01; done
 fi
 if [ -e .gate-sleep ]; then ` + sleep + ` 5; fi
-if [ -e .gate-evidence-0500 ] || [ -e .gate-evidence-unwritable ]; then ` + chmod + ` 500 "$gitdir/bench-gate-evidence"; fi
-if [ -e .gate-gitdir-0500 ]; then ` + chmod + ` 500 "$gitdir"; fi
+if [ -e .gate-evidence-0500 ] || [ -e .gate-evidence-unwritable ]; then ` + chmod + ` 500 "$common/bench-gate-evidence"; fi
+if [ -e .gate-gitdir-0500 ]; then ` + chmod + ` 500 "$common"; fi
 `
 	})
 }
@@ -306,9 +308,24 @@ func outcomeRecord(t *testing.T, root string) []byte {
 
 func outcomeRuns(t *testing.T, root string) int {
 	t.Helper()
-	runs, err := strconv.Atoi(strings.TrimSpace(string(outcomeRead(t, filepath.Join(root, ".gate-run-count")))))
+	runs, err := strconv.Atoi(strings.TrimSpace(string(outcomeRead(t, runCountWitness.path(t, root)))))
 	if err != nil {
 		t.Fatal(err)
 	}
 	return runs
+}
+
+// outcomeWitness names a file that the outcomeFixture gate writes in the Git
+// common directory. A prospective run removes its private linked checkout, and
+// only the common directory keeps the witness after the run.
+type outcomeWitness string
+
+const (
+	runCountWitness     outcomeWitness = ".gate-run-count"
+	recordDuringWitness outcomeWitness = ".gate-record-during"
+)
+
+func (w outcomeWitness) path(t *testing.T, root string) string {
+	t.Helper()
+	return filepath.Join(outcomeGit(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), string(w))
 }
