@@ -925,6 +925,7 @@ The prospective build owns these exact paths:
 - `internal/worktree/classifier.go`
 - `internal/worktree/identity_component.go`
 - `internal/worktree/refusal_route_test.go`
+- `internal/worktree/refusal_route_follow_test.go`
 - `internal/worktree/merge_route_test.go`
 - `internal/worktree/commit_route_test.go`
 - `internal/worktree/identity_component_test.go`
