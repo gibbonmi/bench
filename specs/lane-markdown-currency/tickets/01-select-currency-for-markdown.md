@@ -1,7 +1,7 @@
 # Select the docs-currency check for every Markdown change
 
 Blocked by: none
-Writes: internal/gate/lane_select.go, internal/gate/lane_select_test.go, internal/gate/lane_test.go, projects/benchkit.md
+Writes: internal/gate/lane_select.go, internal/gate/lane_select_test.go, internal/gate/lane_run_test.go, internal/gate/lane_test.go, projects/benchkit.md
 Covers: none
 
 ## What to build
