@@ -16,11 +16,16 @@ findings in the owner details.
 ## Reviewer priority (2026-10-03)
 
 The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
-and review cost that recent builds paid.
+and review cost that recent builds paid. On 2026-10-07 the reviewer put FT392 and FT393
+ahead of FT373, because those rows repair the landing recovery paths.
+
+**FT392 (HIGH) — the complete checkpoint grades the tree that the landing publishes, through the delivery-closure transform.**
+
+**FT393 (HIGH) — every write-verb refusal names a typed recovery route from one refusal-route registry.**
 
 **FT373 (HIGH) — a gate check refuses production code that re-implements a standard-library function.**
 
-**FT293 (HIGH, decision required) — preflight closes each ticket's complete ownership fence.**
+**FT293 (HIGH) — preflight closes each ticket's complete ownership fence.**
 
 **FT375 (MEDIUM) — the build preflight reports spec staleness, and the staleness pass audits only drift and red rows.**
 
@@ -62,9 +67,9 @@ The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure
 light paths and the worktree-seam-reduction build landed cards 01, 03, 04, 06, and 07
 and the small cuts. The rows below hold the rest.
 
-**FT366 (MEDIUM, decision required) — hook input and shell-wrapper grammar have one owner.**
+**FT366 (MEDIUM) — hook input and shell-wrapper grammar have one owner.**
 
-**FT362 (MEDIUM, decision required) — `subprocess` owns the process-group run, and the profile claim matches the tree.**
+**FT362 (MEDIUM) — `subprocess` owns the process-group run, and the profile claim matches the tree.**
 
 **FT364 (MEDIUM, decision required) — the release machinery that no caller reaches is cut or parked.**
 
@@ -90,7 +95,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT344 (MEDIUM) — every rebuild remedy for a pool worktree names `bench worktree build` from one owner.**
 
-**FT354 (MEDIUM, decision required) — strict JSON, atomic replace, and shell quoting each have one owner.**
+**FT354 (MEDIUM) — strict JSON, atomic replace, and shell quoting each have one owner.**
 
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
 
@@ -112,11 +117,13 @@ and the small cuts. The rows below hold the rest.
 
 **FT371 (LOW, decision required) — a research probe runs the git behavior it studies in a scratch repository.**
 
+**FT335 (MEDIUM) — a `bench worktree merge` from the primary checkout grades the composed tree with the target's declared lane.**
+
 ## Planning, ownership, and review integrity
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
 
-**FT343 (MEDIUM, decision required) — production test seams have one decided policy that the injected-port audit enforces.**
+**FT343 (MEDIUM) — production test seams have one decided policy that the injected-port audit enforces.**
 
 **FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
 
@@ -154,6 +161,10 @@ and the small cuts. The rows below hold the rest.
 
 **FT386 (LOW, decision required) — the spec stage proposes a split above a row or ticket threshold.**
 
+**FT395 (LOW) — a spec-stage close lands its staged spec and states its outcome's deliverable binding.**
+
+**FT396 (LOW) — a phase that moves its work to a new worktree releases the superseded one.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -181,6 +192,8 @@ and the small cuts. The rows below hold the rest.
 **FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
 
 **FT383 (LOW) — the planning commit test reuses the protected policy fixture.**
+
+**FT394 (LOW) — `bench learning` links a landed fix to the open entry that it resolves.**
 
 ## Release qualification
 
@@ -226,10 +239,6 @@ qualification requirements are met.
 **FT327 (LOW, parked pending a repro) — each file that `bench doctor --fix` publishes is inside the destination build-output allowance.**
 
 **FT328 (MEDIUM, parked pending a repro) — a sandboxed evidence reader takes its shared lock without store write access.**
-
-**FT330 (LOW, parked pending a repro) — a `bench gate --checkpoint` refusal names the recovery route of its cause.**
-
-**FT335 (MEDIUM, parked pending a repro) — a `bench worktree merge` grades the composed tree with the target lane from any caller checkout.**
 
 **FT355 (MEDIUM, parked pending a repro) — the OTel crash system test reaps its child and removes its own home.**
 
