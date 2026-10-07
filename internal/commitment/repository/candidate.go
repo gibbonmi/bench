@@ -48,7 +48,13 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 	if err != nil {
 		return err
 	}
-	transition := predecessor != identity
+	reference := revision
+	if !publication {
+		reference = store.branchReference(revision, identity)
+	}
+	// A branch that keeps its merge base's policy proposes no transition, whatever main
+	// approved since then.
+	transition := reference == revision && predecessor != identity
 	if transition {
 		closed, err := store.closedPolicy(revision, candidate, delivery)
 		if err != nil {
@@ -63,14 +69,16 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 			return err
 		}
 	}
+	// A branch graded from its merge base keeps that base's protection, which is the policy
+	// it holds. Main's later protection applies when the landing grades the composed tree.
 	protected := current
-	if transition {
+	if transition || reference != revision {
 		protected = candidate
 	}
-	if err := store.protectedCandidate(protected, revision, tree, transition); err != nil {
+	if err := store.protectedCandidate(protected, reference, tree, transition); err != nil {
 		return fmt.Errorf("candidate changes protected commitment: %w; run bench commitment plan --input <file>", err)
 	}
-	changes, err := git.TreeChangesIncludingSubmodules(store.Root, revision, tree)
+	changes, err := git.TreeChangesIncludingSubmodules(store.Root, reference, tree)
 	if err != nil {
 		return err
 	}
@@ -108,6 +116,24 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 		return store.lightPathPublication(tree, current, production, delivery, err)
 	}
 	return store.lightPath(tree, current, production, err)
+}
+
+// branchReference names the commit that a commit candidate's own change is read from. The
+// candidate composes onto the checkout's HEAD, so the branch's change starts at the merge
+// base of HEAD and the default-branch tip, and each commit main made since then is main's.
+// A branch that changes the policy proposes a transition from the tip, so it grades against
+// the tip. A merge base that does not resolve, or a base policy that does not read, also
+// leaves the tip as the reference, which is the stricter grading.
+func (store Store) branchReference(revision, identity string) string {
+	out, err := git.Output("-C", store.Root, "merge-base", "HEAD", revision)
+	base := strings.TrimSpace(out)
+	if err != nil || base == "" || base == revision {
+		return revision
+	}
+	if _, inherited, err := store.policyAt(base); err != nil || inherited != identity {
+		return revision
+	}
+	return base
 }
 
 // retiredRecord reports whether change deletes the review record of a spec whose folder
