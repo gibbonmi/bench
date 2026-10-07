@@ -212,6 +212,18 @@ The orchestrator adds each author session to the execution block before dispatch
           "effort": "high",
           "source": "a659304e5bddce66124faa68d9505d0d1e52c1dd",
           "native_ref": "claude-agent:ft392_t2"
+        },
+        {
+          "session": "claude:ft392_t2_repair1",
+          "assignment": "0079f72d0b78f8b2c121fe7c0f37de04",
+          "model": "opus",
+          "effort": "high",
+          "source": "9f6c7b8d7d879ad54157ffad6946eb067af23a6f",
+          "native_ref": "claude-agent:ft392_t2_repair1",
+          "predecessor": "claude:ft392_t2",
+          "trigger": "user-directed",
+          "stopped": "the ticket 02 author session reported completion of the record commit 5f13265d and has no live child",
+          "preserved": "9f6c7b8d7d879ad54157ffad6946eb067af23a6f"
         }
       ]
     }
