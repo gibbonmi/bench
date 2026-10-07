@@ -19,7 +19,8 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-const absentHarnessMessage = "canary fixture inventory is empty"
+// ErrNoFixtures is the inventory error for a canary directory that is absent or holds no fixture.
+var ErrNoFixtures = errors.New("canary fixture inventory is empty")
 
 // CheckFileName names the marker that binds a fixture to a conformance check.
 const CheckFileName = "CHECK"
@@ -157,10 +158,9 @@ func Inventory(root string) (Selection, error) {
 // nothing; that is an answer, not a fault.
 func FixturePins(root string) (map[string][]string, error) {
 	records, err := discoverFixtures(filepath.Join(root, "tests", "canary"))
-	if err != nil {
-		if err.Error() == absentHarnessMessage {
-			return map[string][]string{}, nil
-		}
+	if errors.Is(err, ErrNoFixtures) {
+		return map[string][]string{}, nil
+	} else if err != nil {
 		return nil, err
 	}
 	pins := map[string][]string{}
@@ -250,7 +250,7 @@ func pinnedPaths(root, fixture string) ([]string, error) {
 func discoverFixtures(dir string) ([]fixtureRecord, error) {
 	families, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, errors.New(absentHarnessMessage)
+		return nil, ErrNoFixtures
 	}
 	var result []fixtureRecord
 	seen := map[string]bool{}
@@ -292,7 +292,7 @@ func discoverFixtures(dir string) ([]fixtureRecord, error) {
 		}
 	}
 	if len(result) == 0 {
-		return nil, errors.New(absentHarnessMessage)
+		return nil, ErrNoFixtures
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].dir < result[j].dir })
 	return result, nil

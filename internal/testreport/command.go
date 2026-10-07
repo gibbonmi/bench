@@ -21,7 +21,7 @@ import (
 )
 
 // Usage is the one owner of the bench test grammar line.
-const Usage = "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex>"
+const Usage = "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures"
 
 var grammar = usage.Grammar{
 	Cmd:  Usage,
@@ -34,6 +34,7 @@ var grammar = usage.Grammar{
 		{Name: "--base", HasValue: true, NoEmptyValue: true},
 		{Name: "--source-tip", HasValue: true, NoEmptyValue: true},
 		{Name: "--check", HasValue: true, NoEmptyValue: true},
+		{Name: "--fixtures"},
 	},
 	MaxArgs: 1,
 }
@@ -51,6 +52,7 @@ type focusedRequest struct {
 	base        string
 	sourceTip   string
 	check       string
+	fixtures    bool
 }
 
 func parseFocusedRequest(root string, args []string) (focusedRequest, string, int) {
@@ -63,6 +65,10 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	check, hasCheck := parsed.Flags["--check"]
 	base, hasBase := parsed.Flags["--base"]
 	sourceTip, hasSourceTip := parsed.Flags["--source-tip"]
+	_, fixtures := parsed.Flags["--fixtures"]
+	if fixtures && (!hasCheck || len(parsed.Flags) != 2) {
+		return focusedRequest{}, toon.Usage(grammar.Cmd, "--fixtures"), 2
+	}
 	if len(parsed.Positionals) > 0 {
 		if explicit || changed || hasCheck {
 			return focusedRequest{}, toon.Usage(grammar.Cmd, parsed.Positionals[0]), 2
@@ -100,6 +106,7 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 		base:        base,
 		sourceTip:   sourceTip,
 		check:       check,
+		fixtures:    fixtures,
 	}, "", 0
 }
 
@@ -110,6 +117,9 @@ func testGrammar() usage.Grammar {
 }
 
 func runFocusedRequest(root string, request focusedRequest) (Outcome, string, int) {
+	if request.fixtures {
+		return checkFixtures(root, request.check)
+	}
 	// The refusal precedes the run-owner selection, which builds a Bench executable with
 	// Go. A root the suite may not grade therefore starts no child at all.
 	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {

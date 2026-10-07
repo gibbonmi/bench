@@ -1,0 +1,152 @@
+package testreport
+
+import (
+	"context"
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/toon"
+)
+
+// The table bytes here are authored apart from the face, so a wrong owner, an absolute
+// path, or a lost row reds these rows.
+
+const emptyFixturesTable = "fixtures[0]{family,fixture,path}:\n"
+
+// fixturesFace runs Command with a counting run binary factory and a marker-writing `go`
+// on PATH, and it fails the test when the face builds a run binary or starts a Go child.
+func fixturesFace(t *testing.T, root string, args ...string) (string, int) {
+	t.Helper()
+	builds := 0
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build:    func(context.Context, string, string) error { builds++; return nil },
+		Verify:   func(string, string) error { return nil },
+	})
+	goDir := t.TempDir()
+	marker := filepath.Join(goDir, "go-ran")
+	writeCheckGo(t, filepath.Join(goDir, "go"), marker)
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	output, code := Command(root, args)
+	if builds != 0 {
+		t.Errorf("Command(%q) built %d run binaries, want none", args, builds)
+	}
+	if _, err := os.Stat(marker); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("Command(%q) started the canned go: %v", args, err)
+	}
+	return output, code
+}
+
+// plantFixture writes one fixture of family under root's tests/canary, in the shape of
+// the canary inventory tests. A non-empty check writes the CHECK marker.
+func plantFixture(t *testing.T, root, family, name, check string) {
+	t.Helper()
+	dir := "tests/canary/" + family + "/" + name
+	writeProseCheckFile(t, root, dir+"/EXPECT", "planted diagnostic\n")
+	if check != "" {
+		writeProseCheckFile(t, root, dir+"/CHECK", check+"\n")
+	}
+}
+
+func TestFixturesFaceListsOwnedFixtures(t *testing.T) {
+	root := t.TempDir()
+	plantFixture(t, root, "package-core-guard", "b", "")
+	plantFixture(t, root, "package-core-guard", "a", "")
+	plantFixture(t, root, "line-routing", "other", "")
+	output, code := fixturesFace(t, root, "--check", "package-core-guard", "--fixtures")
+	want := "fixtures[2]{family,fixture,path}:\n" +
+		"  package-core-guard,a,tests/canary/package-core-guard/a\n" +
+		"  package-core-guard,b,tests/canary/package-core-guard/b\n"
+	if code != 0 || output != want {
+		t.Fatalf("owned fixtures = %d, %q; want 0 and %q", code, output, want)
+	}
+}
+
+// reassignedFixtureTree holds one package-core-guard fixture whose CHECK marker names
+// default-branch-single-source.
+func reassignedFixtureTree(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	plantFixture(t, root, "package-core-guard", "reassigned", "default-branch-single-source")
+	return root
+}
+
+func TestFixturesFaceHonorsCheckMarker(t *testing.T) {
+	output, code := fixturesFace(t, reassignedFixtureTree(t), "--check", "default-branch-single-source", "--fixtures")
+	want := "fixtures[1]{family,fixture,path}:\n  package-core-guard,reassigned,tests/canary/package-core-guard/reassigned\n"
+	if code != 0 || output != want {
+		t.Fatalf("marked fixture = %d, %q; want 0 and %q", code, output, want)
+	}
+}
+
+func TestFixturesFaceOmitsReassignedFixture(t *testing.T) {
+	output, code := fixturesFace(t, reassignedFixtureTree(t), "--check", "package-core-guard", "--fixtures")
+	if code != 0 || output != emptyFixturesTable {
+		t.Fatalf("family owner of a marked fixture = %d, %q; want 0 and %q", code, output, emptyFixturesTable)
+	}
+}
+
+func TestFixturesFaceEmptyForSystem(t *testing.T) {
+	root := t.TempDir()
+	plantFixture(t, root, "package-core-guard", "a", "")
+	output, code := fixturesFace(t, root, "--check", "system", "--fixtures")
+	if code != 0 || output != emptyFixturesTable {
+		t.Fatalf("system fixtures = %d, %q; want 0 and %q", code, output, emptyFixturesTable)
+	}
+}
+
+func TestFixturesFaceEmptyCanaryDirectory(t *testing.T) {
+	present := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(present, "tests", "canary"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for name, root := range map[string]string{"absent": t.TempDir(), "present and empty": present} {
+		output, code := fixturesFace(t, root, "--check", "package-core-guard", "--fixtures")
+		if code != 0 || output != emptyFixturesTable {
+			t.Errorf("%s tests/canary = %d, %q; want 0 and %q", name, code, output, emptyFixturesTable)
+		}
+	}
+}
+
+func TestFixturesFaceRefusesInvalidInventory(t *testing.T) {
+	root := t.TempDir()
+	plantFixture(t, root, "package-core-guard", "a", "no-such-check")
+	output, code := fixturesFace(t, root, "--check", "package-core-guard", "--fixtures")
+	if code != 1 || !strings.Contains(output, "names unknown check") {
+		t.Fatalf("invalid inventory = %d, %q; want 1 and names unknown check", code, output)
+	}
+}
+
+func TestFixturesFaceRefusesUnprintableName(t *testing.T) {
+	root := t.TempDir()
+	plantFixture(t, root, "package-core-guard", "bad\x01name", "")
+	output, code := fixturesFace(t, root, "--check", "package-core-guard", "--fixtures")
+	if code != 1 || !strings.HasPrefix(output, toon.RenderError(errors.New(""))) {
+		t.Fatalf("unprintable fixture name = %d, %q; want 1 and the render error", code, output)
+	}
+}
+
+func TestFixturesFaceUnknownCheck(t *testing.T) {
+	output, code := fixturesFace(t, t.TempDir(), "--check", "not-registered", "--fixtures")
+	if code != 2 || !strings.HasPrefix(output, "unknown check: not-registered\n") || !strings.HasSuffix(output, checkInventory()) {
+		t.Fatalf("unknown check fixtures = %d, %q; want 2 and the unknown-check refusal", code, output)
+	}
+}
+
+func TestFixturesFaceGrammarRefusals(t *testing.T) {
+	for _, args := range [][]string{
+		{"--fixtures"},
+		{"--fixtures", "--full"},
+		{"--check", "line-routing", "--fixtures", "--full"},
+		{"--check", "line-routing", "--fixtures", "--run", "^TestX$"},
+	} {
+		output, code := fixturesFace(t, t.TempDir(), args...)
+		if code != 2 || !strings.HasPrefix(output, "usage: ") {
+			t.Errorf("Command(%q) = %d, %q; want 2 and usage", args, code, output)
+		}
+	}
+}
