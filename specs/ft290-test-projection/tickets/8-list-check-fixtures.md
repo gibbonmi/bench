@@ -1,7 +1,7 @@
 # 8. List the fixtures that a check owns
 
 Blocked by: 6-filter-system-suite.md
-Writes: internal/testreport/, internal/canary/inventory.go, internal/canary/inventory_test.go, cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand
+Writes: internal/testreport/, internal/canary/inventory.go, internal/canary/inventory_test.go, internal/canary/root.go (new), cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand
 Covers: TP27, TP28, TP29, TP30, TP33, TP40, TP52, TP53
 
 ## What to build
