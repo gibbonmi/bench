@@ -116,13 +116,14 @@ CC25 and CC32 then keep the refusal assertions honest when ticket 2 changes the 
 
 ### Completion plan
 
-The version 1 plan records future implementation evidence.
+The version 2 plan records future implementation evidence.
 It claims no current implementation pass, red, or probe result.
-The orchestrator adds the required version 2 author sessions before dispatch.
+Each chunk row names the ticket that owes it.
+The orchestrator adds each author session to the execution block before dispatch.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
   "chunks": [
     {
       "id": "CC1",
@@ -132,35 +133,47 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "gate-package",
-          "command": "bench test --package ./internal/gate"
+          "id": "t1-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "ticket": "01-move-fixture-witnesses-to-the-common-directory.md"
         },
         {
-          "id": "complete-checkpoint",
-          "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpoint|TestChunkCheckpointGradesTheCheckoutTree|TestReviewCheckpoint|TestCommitmentExactTransform'"
+          "id": "t2-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "ticket": "02-grade-the-published-tree-at-the-complete-checkpoint.md"
         },
         {
-          "id": "public-route",
-          "command": "bench test --package ./cmd/bench --run 'TestGateCheckpointRoute'"
+          "id": "t2-complete-checkpoint",
+          "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpoint|TestChunkCheckpointGradesTheCheckoutTree|TestReviewCheckpoint|TestCommitmentExactTransform'",
+          "ticket": "02-grade-the-published-tree-at-the-complete-checkpoint.md"
         },
         {
-          "id": "landing-journey",
-          "command": "bench test --package ./internal/worktree --run 'TestLandCommandPublicRealGitJourney'"
+          "id": "t2-public-route",
+          "command": "bench test --package ./cmd/bench --run 'TestGateCheckpointRoute'",
+          "ticket": "02-grade-the-published-tree-at-the-complete-checkpoint.md"
         },
         {
-          "id": "route-omission-proof",
+          "id": "t2-landing-journey",
+          "command": "bench test --package ./internal/worktree --run 'TestLandCommandPublicRealGitJourney'",
+          "ticket": "02-grade-the-published-tree-at-the-complete-checkpoint.md"
+        },
+        {
+          "id": "t2-route-omission-proof",
           "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpoint'",
-          "probe": "Route --complete through the ordinary checkout evaluation. TestCompleteCheckpointGradesTheClosedTree must fail, then pass after source restoration."
+          "probe": "Route --complete through the ordinary checkout evaluation. TestCompleteCheckpointGradesTheClosedTree must fail, then pass after source restoration.",
+          "ticket": "02-grade-the-published-tree-at-the-complete-checkpoint.md"
         },
         {
-          "id": "clean-checkout-proof",
+          "id": "t2-clean-checkout-proof",
           "command": "bench test --package ./internal/gate --run 'TestCompleteCheckpointRefusesADirtyCheckout'",
-          "probe": "Remove the clean-checkout refusal, or exempt the review record from it. Each named refusal assertion must fail, then pass after source restoration."
+          "probe": "Remove the clean-checkout refusal, or exempt the review record from it. Each named refusal assertion must fail, then pass after source restoration.",
+          "ticket": "02-grade-the-published-tree-at-the-complete-checkpoint.md"
         },
         {
-          "id": "witness-proof",
+          "id": "t2-witness-proof",
           "command": "bench test --package ./internal/gate --run 'TestReviewCheckpointReuse|TestCompleteCheckpointEvidenceNamesThePublishedTree'",
-          "probe": "Point the witness helper and the fixture witnesses at the checkout. The CC25 and CC32 assertions must fail, then pass after source restoration."
+          "probe": "Point the witness helper and the fixture witnesses at the checkout. The CC25 and CC32 assertions must fail, then pass after source restoration.",
+          "ticket": "02-grade-the-published-tree-at-the-complete-checkpoint.md"
         }
       ]
     }
@@ -174,7 +187,17 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       "id": "coverage",
       "command": "bench coverage --check complete-checkpoint-closure"
     }
-  ]
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft392-build-20261007",
+    "orchestrator_session": "claude:ft392-orchestrator-20261007",
+    "author_limit": 1,
+    "assignments": {
+      "01-move-fixture-witnesses-to-the-common-directory.md": [],
+      "02-grade-the-published-tree-at-the-complete-checkpoint.md": []
+    }
+  }
 }
 ```
 
