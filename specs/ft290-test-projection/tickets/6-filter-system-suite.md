@@ -1,7 +1,7 @@
 # 6. Filter the system suite with a run pattern
 
 Blocked by: 3-prove-named-check-ran.md
-Writes: internal/testreport/, cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand
+Writes: internal/testreport/, cmd/bench/main.go, cmd/bench/test_command.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/package-core-guard/unrouted-subcommand
 Covers: TP19, TP20, TP21, TP22, TP23
 
 ## What to build

@@ -453,6 +453,7 @@ An operand after `--checks` refuses through TP39's branch.
 - `internal/canary/inventory.go`
 - `internal/canary/inventory_test.go`
 - `cmd/bench/main.go`
+- `cmd/bench/test_command.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
