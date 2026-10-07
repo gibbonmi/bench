@@ -70,6 +70,7 @@ var inventory = []Face{}
 // New is the one constructor a registered face travels through.
 func New(name string, facts Facts) Refusal { return newIn(inventory, name, facts) }
 
+// newIn is the constructor over an injectable inventory, so a test can supply its own faces.
 func newIn(faces []Face, name string, facts Facts) Refusal {
 	face, ok := faceNamed(faces, name)
 	if !ok {

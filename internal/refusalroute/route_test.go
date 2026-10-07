@@ -63,6 +63,17 @@ func TestRouteRendering(t *testing.T) {
 			want:  "bench doctor; then <rerun>",
 		},
 		{
+			name: "an absent composed command prints its placeholder",
+			face: Face{Authority: Agent, Route: []Step{Command(Text("bench doctor")), Command(Composed("rerun"))}},
+			want: "bench doctor; then <rerun>",
+		},
+		{
+			name:  "a preface that is not line-safe prints its placeholder",
+			face:  Face{Authority: Agent, Route: []Step{Instruction(Text("repair the red"))}},
+			facts: Facts{Preface: "later proofs\x07 did not run"},
+			want:  "<preface>; repair the red",
+		},
+		{
 			name:  "a preface comes first after the reviewer marker",
 			face:  Face{Authority: Reviewer, Route: []Step{Instruction(Text("finish the merge in progress")), Command(Composed("rerun"))}},
 			facts: Facts{Preface: "later proofs in this group did not run", Values: map[string]string{"rerun": "bench worktree land"}},

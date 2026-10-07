@@ -13,6 +13,7 @@ const (
 	// prefaceJoiner separates the preface from the first step. The preface qualifies the
 	// route and is not a step to run, so it takes no "then".
 	prefaceJoiner = "; "
+	prefaceSlot   = "preface"
 	// treeTargetFlag addresses a tree-scoped Bench verb at a worktree. It counts only as
 	// the first argument after the verb.
 	treeTargetFlag = "--in"
@@ -62,13 +63,18 @@ func (w Word) render(values map[string]string) string {
 			return sanitize.ShellQuote(value)
 		}
 	case wordComposed:
-		if value != "" && sanitize.LineSafe(value) {
-			return value
-		}
+		return asWritten(w.text, value)
 	case wordOperators:
 		return placeholder(w.text) + "..."
 	}
 	return placeholder(w.text)
+}
+
+func asWritten(name, value string) string {
+	if value != "" && sanitize.LineSafe(value) {
+		return value
+	}
+	return placeholder(name)
 }
 
 func placeholder(name string) string { return "<" + name + ">" }
@@ -113,7 +119,7 @@ func (f Face) Render(facts Facts) string {
 	}
 	route := strings.Join(steps, stepJoiner)
 	if facts.Preface != "" {
-		route = facts.Preface + prefaceJoiner + route
+		route = asWritten(prefaceSlot, facts.Preface) + prefaceJoiner + route
 	}
 	if f.Authority == Reviewer {
 		route = reviewerMarker + route
