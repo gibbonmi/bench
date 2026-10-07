@@ -1,5 +1,34 @@
 # Review outcomes
 
+## TP-C4 review pickup
+
+The TP-C4 review ran on the frozen pair `6fdd27b3..77f521a9`. Each axis ran on sonnet at high effort. The chunk has used 0 of its 2 repair cycles.
+
+The raw count is 7 findings, and the repair-target count is 6, because S2 and C4 name one fix. Ticket 10 owns every target.
+
+The orchestrator accepted the `ask-user` finding S1 under the reviewer's auto-approval for spec and ticket expansions, because spec line 219 fixes the cause order.
+
+### Standards
+
+Count: 2. Worst issue: S2.
+
+- S1, ask-user, accepted, confidence 4. The per-path branch tests the embed set before the `.go` suffix, so a changed `.go` file that its package embeds is marked `embed`. The spec ranks `changed` above `embed`. Let the precedence list decide, and add a test.
+- S2, auto-fix, confidence 5. The `--changed` form is marked only by a non-nil cause map, and the line that keeps an empty selection non-nil has no comment. Add the comment. C4 adds the test.
+
+### Spec
+
+Count: 0. Worst issue: none. All seven TP-C4 rows are closed, and TP47 and TP55 still hold.
+
+### Coverage
+
+Count: 5. Worst issue: C1.
+
+- C1, auto-fix, confidence 9. No test proves that the `imports` cause skips a dependency outside the selection.
+- C2, auto-fix, confidence 9. No test reaches a package that the change selects only through a test import.
+- C3, auto-fix, confidence 8. No test changes a Go file and an embed file of one package, so the `changed` over `embed` order is unpinned.
+- C4, auto-fix, confidence 9. No test runs `--changed` over a diff with no changed path, so the empty `selected_by` header of the selector's own empty answer is unpinned.
+- C5, auto-fix, confidence 8. A package can name itself as its `imports` cause through its own external test import. Skip the package's own path, and add a test.
+
 ## TP-C3 review pickup
 
 The TP-C3 review ran on the frozen pair `21da7e2e..23c328db`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair sessions `claude:ft290_t8_r1` and `claude:ft290_t9_r1` repaired the six targets at `4f78c7b3` and `f04f5dd6`, and the chunk tip is now `f04f5dd6`.
@@ -2811,7 +2840,77 @@ Count: 4. Worst issue: C1.
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c4-standards-r1",
+          "performer": "claude:ft290_c4_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a5beb14542d061a26065127b66716e3bb70e948b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_standards",
+            "digest": "sha256:8629ec76df26674dd4335ed1a01ce3222c5eebf08c90bad6e4b3f250d434db77",
+            "excerpt": "axis=Standards findings=2 worst=S2 (TP-C4, 6fdd27b3..77f521a9)\nS1 | ask-user | conf 4 | internal/testreport/selection.go:206-216 vs 171-173 causePrecedence | The per-path branch tests byEmbed before the .go suffix, so a changed .go file that its package embeds is marked embed, while causePrecedence and spec line 219 rank changed above embed: two derivations of one order. The branch order predates the chunk; no test covers it. | Reorder the branches or state the rule in a comment; add one canned-loader test.\nS2 | auto-fix | conf 5 | selection.go:79-81; command.go:49-50; testreport.go:47-49,165,173 | The --changed form is signalled only by causes != nil; the non-nil empty return at selection.go:80 is unexplained, and the rule is read three ways (len == 0, len != 0, != nil). Restoring `return nil, nil` would drop the empty selected_by header unnoticed if no test reaches that branch. | Comment selection.go:80 or take an explicit bool from request.changed; keep the cell logic.\nClean: directDependencies is the one dependency derivation; causePrecedence is read only by mark; the cause literals are spec vocabulary; changedCommandOverOnePackage removes a copy.\nAdvice: comment the \"\" placeholder at selection.go:230; the closure and cause loops walk one relation in two directions by design; older fixture copies in selection_test.go predate the chunk.\nExamined: --check-current, the chunk diff, selection.go, command.go, selection_test.go, cancel_test.go, spec lines. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "77f521a96b59b779f674c0bd8cd77720ee5921ec",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c4-spec-r1",
+          "performer": "claude:ft290_c4_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a5beb14542d061a26065127b66716e3bb70e948b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_spec",
+            "digest": "sha256:d621ad62c79f4536eece35c43b599892e833cb03adbe8251384349b9ba90f584",
+            "excerpt": "axis=Spec findings=0 worst=none (TP-C4, 6fdd27b3..77f521a9)\nAll seven rows closed: TP41 TestChangedRowsCarrySelectedBy; TP42 via mark keeping the stronger cause; TP43 TestCauseEmbedOnly; TP44 sorted direct dependencies across imports, test imports, and external test imports, repeated 20 times; TP45 TestCauseImportsNamesDirectDependency; TP46 TestCauseGoMetadataWins in both orders; TP48 exact empty-selection header at selection_test.go:262.\nTP47 and TP55 still hold. No separate empty marker; merge.go reads only the exit code. No scope creep beyond ticket 10.\nAdvice: no Command-level rendering test for the imports cell; a package reported by go test but absent from causes would print an empty cell, which looks unreachable.\nExamined: --check-current at 3b4d9c09, the chunk diff, bench coverage, spec cause cell, out of scope, reader sweep, ticket 10, selection.go, command.go, testreport.go, toon.go, merge.go. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "77f521a96b59b779f674c0bd8cd77720ee5921ec",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4-coverage-r1",
+          "performer": "claude:ft290_c4_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a5beb14542d061a26065127b66716e3bb70e948b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_coverage",
+            "digest": "sha256:147711e4ae544c3ad35630e3aa3865325eee92ec65f8f0a0ccf9f042ddfca7e9",
+            "excerpt": "axis=Coverage findings=5 worst=C1 (TP-C4, 6fdd27b3..77f521a9)\nC1 | auto-fix | conf 9 | selection.go:245 | No test skips a non-selected dependency; swapping the selected check for `if true {` was silent. Real go list imports hold stdlib paths that sort first. | Add a test with one unselected dependency sorting first and one selected.\nC2 | auto-fix | conf 9 | selection_cause_test.go:66-81; selection.go:242 | Dropping TestImports from the cause list was silent; a package reached only through a test import would print an empty cell. | Add a test with the changed package only in TestImports.\nC3 | auto-fix | conf 8 | selection.go:173 | Swapping causePrecedence to put embed before changed was silent; no test changes a Go file and an embed file of one package. | Add that test in both path orders.\nC4 | auto-fix | conf 9 | selection.go:80 | Swapping `return changedSelection{}, nil` for `return nil, nil` was silent; a --changed run with no changed path is reachable. | Add a Command --changed test over an empty diff asserting the exact selected_by header at exit 0.\nC5 | auto-fix | conf 8 | selection.go:242-248 | go list puts the package under test in its own XTestImports, so a closure-added package can name itself as its cause; a probe on that shape printed `example/c:imports example/c`. | Skip the package's own path in the cause loop; add a test with an xtest self import.\nHeld: the --package leak probe and the len(causes) probe bit; bench test ./internal/worktree passed (1305 tests, 2 socket skips); no consumer parses the packages header.\nExamined: --check-current, the chunk diff, spec 216-225 and 386-393, ticket 10, selection.go, command.go, testreport.go, merge.go, diff/range.go, the cause tests; 8 probes, all restored yes; git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "77f521a96b59b779f674c0bd8cd77720ee5921ec",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
