@@ -957,6 +957,78 @@
             "C1b-C7"
           ],
           "supersedes": []
+        },
+        {
+          "id": "r-c1b-r1-standards",
+          "performer": "claude:ft393_c1b_r1_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "bebc4c2d296d0cb8f97e1236eaeaab4c94900f3b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1b_r1_standards",
+            "digest": "sha256:9f64bbc77a1e3d1e5633113ba40b7eeaee1af7f679b0aacd2b60267e95163020",
+            "excerpt": "RR-C1b confirming round, Standards (claude:ft393_c1b_r1_standards): evidence current=true. Every fold confirmed. 1 advisory finding.\nC1b-RS1 land_resume_refusal_test.go spells the resume rerun inline beside the new resumeRerunOf helper. auto-fix. conf 6\nOptional advice: the recovery header repeats in a cmd/bench test; the repaired-tip face set has a production and a fixture expectation.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Standards",
+          "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "tip": "f4669147db2ddf388fc9fdae06ba52f428870537",
+          "finding_ids": [
+            "C1b-RS1"
+          ],
+          "supersedes": [
+            "r-c1b-standards"
+          ]
+        },
+        {
+          "id": "r-c1b-r1-spec",
+          "performer": "claude:ft393_c1b_r1_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "bebc4c2d296d0cb8f97e1236eaeaab4c94900f3b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1b_r1_spec",
+            "digest": "sha256:a20b87ab0dc08656594a026d6b725a7648e5ed8f312b60455b820bcffc8fa4df",
+            "excerpt": "RR-C1b confirming round, Spec (claude:ft393_c1b_r1_spec): evidence current=true. Every fold confirmed except the recorded probe of C1b-P3. Rows RR01-RR03, RR08-RR20, RR51-RR54, RR58, RR60 stay met. The amended rows match the code.\nC1b-RP1 blocking the record shows no red for TestReviewerLandFacesOpenWithTheMarker. auto-fix. conf 6\nOptional advice: the seam cells of RR15, RR18, RR19, RR58, RR60 name the old test file.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Spec",
+          "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "tip": "f4669147db2ddf388fc9fdae06ba52f428870537",
+          "finding_ids": [
+            "C1b-RP1"
+          ],
+          "supersedes": [
+            "r-c1b-spec"
+          ]
+        },
+        {
+          "id": "r-c1b-r1-coverage",
+          "performer": "claude:ft393_c1b_r1_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "bebc4c2d296d0cb8f97e1236eaeaab4c94900f3b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1b_r1_coverage",
+            "digest": "sha256:deb735e970f753da7e20d2f4b255ec96eae602d269099fed2c5b9a9f863bf1bc",
+            "excerpt": "RR-C1b confirming round, Coverage (claude:ft393_c1b_r1_coverage): evidence current=true. Every fold confirmed; the follow walk can no longer pass on a replacement refusal; the flake fix holds. 1 advisory finding.\nC1b-RC1 advisory the record does not show the post-fix red of the reviewer-marker test. auto-fix. conf 5\nOptional advice: the RR18 seam cell; resume source-not-fenced keeps its agent route.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "tip": "f4669147db2ddf388fc9fdae06ba52f428870537",
+          "finding_ids": [
+            "C1b-RC1"
+          ],
+          "supersedes": [
+            "r-c1b-coverage"
+          ]
         }
       ]
     }
@@ -1105,7 +1177,16 @@ The orchestrator records each diagnosed cause here from the repair returns, afte
 | C1a-C1 | No test held an absent composed value. | A probe that drops the empty-value check survived. |
 | C1b-P1, C1b-C2 | The handback fallback skipped every refusal that named a component, and only the request component sets a route. | A probe that removes the fallback failed 14 tests. |
 | C1b-C4 | The review step was a command step, but a review is a phase and not a shell command. | The follow walk cannot run a command step whose head is not `bench`. |
-| C1b-P3 | The walk took the expected marker from the registry authority. | A probe that gives `destination-not-clean` agent authority stayed green before the fix. |
+| C1b-P3 | The walk took the expected marker from the registry authority. | A probe that gives `destination-not-clean` agent authority stayed green before the fix. After the fix, the ticket 02 repair session ran the same probe against `TestReviewerLandFacesOpenWithTheMarker`: the verdict was `bit`, the subtest `destination-not-clean` failed, and the restore passed. |
 | C1b-C3 | The source reruns kept the caller's tip, and the commit in the route moves the tip. | A probe that restores the caller tip made two reruns hit the tip mismatch. |
 | Known flake | A parallel fork kept the new wrapper script open for write, so its start failed with "text file busy". | A scratch program failed about 300 of 2000 starts. |
 | C1b-C7 | No test ran `bench recovery` through the command dispatch. | A probe that points the row at another handler stayed green before the fix. |
+
+## RR-C1b confirming round
+
+The confirming round confirmed every fold and returned three findings.
+
+- C1b-RP1 and C1b-RC1, evidence-only, confidence 6: the record did not show the red of the reviewer-marker test. The cause table now holds the probe result that the ticket 02 repair return reported.
+- C1b-RS1, auto-fix, confidence 6: a resume refusal test spells the resume rerun inline, beside the `resumeRerunOf` helper. Ticket 03 repair, cycle 2 of 2.
+
+The orchestrator also corrects the seam cells of RR15, RR18, RR19, RR58, and RR60 in the spec, because their tests moved files.
