@@ -195,7 +195,7 @@ These faces and routes are required.
 | land | `destination-not-clean` | reviewer | commit or discard the destination's uncommitted work; then the re-run |
 | land | `destination-collision` | reviewer | move the `refusal_paths` entries out of the landing checkout; then the re-run |
 | land | `source-tip-mismatch` | agent | the re-run, re-pointed at the source tip that the tree holds |
-| land | `source-not-clean` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
+| land | `source-not-clean` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then `/bench-review-implementation`; then the re-run at the repaired source tip |
 | land | `source-not-fenced` | agent | the current fence instruction; then the re-run |
 | land | `composition-conflict` | reviewer | the hand merge of the destination commit; then `bench commit`; then `/bench-review-implementation`; then the re-run |
 | land | `composition-conflict-pending` | reviewer | finish the merge in progress; then `/bench-review-implementation`; then the re-run |
@@ -232,6 +232,7 @@ These faces and routes are required.
 | commitment | `commitment-run-unknown` | agent | `bench commitment inventory` |
 
 The `<verb>-handback` reviewer faces join this list for each verb.
+On the resume path, a dirty source takes `land-handback`, because a commit there moves the source away from the published tip.
 The `commitment-decision` face covers each start, block, plan, and approve refusal whose clear changes the active commitment.
 
 ### The commitment route tails
