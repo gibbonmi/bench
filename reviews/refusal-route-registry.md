@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/refusal-route-registry/spec.md",
-  "plan_digest": "sha256:10d938cdde11624c65c40c632beebb04b986d194da031b1c8dd8d470d65aaa05",
+  "plan_digest": "sha256:798ef1ecdef294b8be9eb9af70ca2280e069e137efdb28b02071046d4f0f5132",
   "implementation_session": "",
   "chunks": [
     {
@@ -258,6 +258,324 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RR-C1b",
+      "base": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+      "tip": "389cb337d7f198bb2925785dbfa1ab6e74e4a805",
+      "plan_digest": "sha256:798ef1ecdef294b8be9eb9af70ca2280e069e137efdb28b02071046d4f0f5132",
+      "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+      "acceptance_rows": [
+        "RR01",
+        "RR02",
+        "RR03",
+        "RR14",
+        "RR16",
+        "RR17",
+        "RR18",
+        "RR19",
+        "RR20",
+        "RR08",
+        "RR09",
+        "RR10",
+        "RR11",
+        "RR12",
+        "RR15",
+        "RR58",
+        "RR60",
+        "RR51",
+        "RR52",
+        "RR53",
+        "RR54"
+      ],
+      "verification": [
+        {
+          "id": "v-t2-registry",
+          "performer": "claude:ft393_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t2",
+            "digest": "sha256:cd703ce3ea2316d4824af2e088ed8e1e7c83e92e1f72c33ed50891d67442fbbe",
+            "excerpt": "$ bench test --package ./internal/refusalroute\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,2,17\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t2-worktree-package",
+          "performer": "claude:ft393_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t2",
+            "digest": "sha256:3fe9622575e0b35898cb7d57c7ed1472eec1b5650539b627efd1cb188ee3496d",
+            "excerpt": "$ bench test --package ./internal/worktree\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,67211,1326\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"clean_landed_hostile_test.go:98: unix sockets unavailable: listen unix ... (280 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix ... (279 bytes)\"\n"
+          },
+          "requirement": "t2-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t2-landing-faces",
+          "performer": "claude:ft393_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t2",
+            "digest": "sha256:45041dc847c19e104043832b43ca2f895653858076b0f46ca1299a70c3f68c86",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestConflictRepairIsAReviewerRoute|TestLandCommandReportsEveryRefusalInOnePreflight'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1178,16\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestConflictRepairIsAReviewerRoute|TestLandCommandReportsEveryRefusalInOnePreflight'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t2-conflict-proof",
+          "performer": "claude:ft393_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t2",
+            "digest": "sha256:d048929fc93e6109cd84fc61fc5f5ccbfa3a3517aad9bf7f11df381e825e3b53",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,239,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nProbe: Declare the `composition-conflict` face with the agent authority.\n$ bench probe internal/refusalroute/registry.go --swap $'Name:      \"composition-conflict\",\\n\\t\\tAuthority: Reviewer,' --with $'Name:      \"composition-conflict\",\\n\\t\\tAuthority: Agent,' --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/registry.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,228,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestConflictRepairIsAReviewerRoute/composition-conflict,\"refusal_route_test.go:100: composition-conflict next = \\\"git -C '...' merge ... (1020 bytes)\",2\n"
+          },
+          "requirement": "t2-conflict-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Declare the `composition-conflict` face with the agent authority. TestConflictRepairIsAReviewerRoute must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t2",
+              "digest": "sha256:d048929fc93e6109cd84fc61fc5f5ccbfa3a3517aad9bf7f11df381e825e3b53",
+              "excerpt": "$ bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,239,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nProbe: Declare the `composition-conflict` face with the agent authority.\n$ bench probe internal/refusalroute/registry.go --swap $'Name:      \"composition-conflict\",\\n\\t\\tAuthority: Reviewer,' --with $'Name:      \"composition-conflict\",\\n\\t\\tAuthority: Agent,' --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/registry.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,228,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestConflictRepairIsAReviewerRoute/composition-conflict,\"refusal_route_test.go:100: composition-conflict next = \\\"git -C '...' merge ... (1020 bytes)\",2\n"
+            }
+          }
+        },
+        {
+          "id": "v-t3-registry",
+          "performer": "claude:ft393_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t3",
+            "digest": "sha256:9160e5eba21851b24fde2ede477f2394042fc9c0397f02c47b5ba128df3db00e",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/refusalroute\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,3,17\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t3-guard-check",
+          "performer": "claude:ft393_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t3",
+            "digest": "sha256:08b24dd6660403e8160e28bee8beb9e91f8953b936d3cf9417009d144a01c672",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,38,6\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-guard-check",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t3-landing-faces",
+          "performer": "claude:ft393_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t3",
+            "digest": "sha256:fafb516d496d28d3763c069d5cf5ac5a7944027ecd5669b925d58112b07d1cd9",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,3684,31\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t3-guard-proof",
+          "performer": "claude:ft393_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t3",
+            "digest": "sha256:b31d03fea8ca015a68d0b9161f8c02571ae790b1125ef7de4b5605fa56d40f5b",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/refusalroute/registry.go --swap 'TreeCommand(\"bench commit\", Fact(FactLabel), Text(\"-m\"), Operator(\"msg\"), Text(\"--\"), Operators(\"path\")),' --with 'Command(Text(\"git merge\"), Operator(\"commit\")),' --package ./internal/conformance --run TestAgentRoutesPassTheWiredGuards\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/registry.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestAgentRoutesPassTheWiredGuards,\"refusal_route_guard_test.go:111: face source-not-clean step 1 \\\"git merge '/bench-home/worktrees/pool/repository/assignment'\\\": gitguard denies git merge\",1\n"
+          },
+          "requirement": "t3-guard-proof",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Declare the first route step of the `source-not-clean` face as the command `git merge <commit>`. TestAgentRoutesPassTheWiredGuards must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t3",
+              "digest": "sha256:b31d03fea8ca015a68d0b9161f8c02571ae790b1125ef7de4b5605fa56d40f5b",
+              "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/refusalroute/registry.go --swap 'TreeCommand(\"bench commit\", Fact(FactLabel), Text(\"-m\"), Operator(\"msg\"), Text(\"--\"), Operators(\"path\")),' --with 'Command(Text(\"git merge\"), Operator(\"commit\")),' --package ./internal/conformance --run TestAgentRoutesPassTheWiredGuards\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/registry.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestAgentRoutesPassTheWiredGuards,\"refusal_route_guard_test.go:111: face source-not-clean step 1 \\\"git merge '/bench-home/worktrees/pool/repository/assignment'\\\": gitguard denies git merge\",1\n"
+            }
+          }
+        },
+        {
+          "id": "v-t4-registry",
+          "performer": "claude:ft393_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t4",
+            "digest": "sha256:c120ecc6e8ea7faca24759db727af69bb17873bb155a6f3565ebb754bc7a3e2a",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/refusalroute\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,2,17\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t4-guard-check",
+          "performer": "claude:ft393_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t4",
+            "digest": "sha256:08b24dd6660403e8160e28bee8beb9e91f8953b936d3cf9417009d144a01c672",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,38,6\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-guard-check",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t4-landing-faces",
+          "performer": "claude:ft393_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t4",
+            "digest": "sha256:9352434e0cb00e75fbdb07084e79faf245736c528df5798ea0b3453d845221d5",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,4033,31\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t4-worktree-package",
+          "performer": "claude:ft393_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t4",
+            "digest": "sha256:5c6194723ea01893f62fa5f3a17bb9f7142f8512c65ccb47e5cc2d90121e6f3a",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/worktree\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,66395,1326\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix ... (265 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix ... (278 bytes)\"\n"
+          },
+          "requirement": "t4-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t4-recovery-verb",
+          "performer": "claude:ft393_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t4",
+            "digest": "sha256:08db695d3f22ecb4d866344071f6826db6801919412b8726c03479658b720a40",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,4,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-recovery-verb",
+          "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t4-recovery-proof",
+          "performer": "claude:ft393_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a902a55e90d2758014cc49eaeb59e60f9ce7493f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t4",
+            "digest": "sha256:f2c64fd5bd7efe30157bcddf5b9d677942ba634757fdb59bd56cdadf15dffbcb",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/refusalroute --run 'TestRecoveryListsEveryFace'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,2,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/refusalroute/command.go --swap 'for _, face := range inventory {' --with 'for _, face := range inventory[:len(inventory)-1] {' --package ./internal/refusalroute --run 'TestRecoveryListsEveryFace'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/command.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/refusalroute,TestRecoveryListsEveryFace,\"command_test.go:25: stdout = \\\"recovery[10]{verb,face,authority,route}:... (1020 bytes)\",2\n"
+          },
+          "requirement": "t4-recovery-proof",
+          "command": "bench test --package ./internal/refusalroute --run 'TestRecoveryListsEveryFace'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make `bench recovery` skip the last registered face. TestRecoveryListsEveryFace must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t4",
+              "digest": "sha256:f2c64fd5bd7efe30157bcddf5b9d677942ba634757fdb59bd56cdadf15dffbcb",
+              "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/refusalroute --run 'TestRecoveryListsEveryFace'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,2,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/refusalroute/command.go --swap 'for _, face := range inventory {' --with 'for _, face := range inventory[:len(inventory)-1] {' --package ./internal/refusalroute --run 'TestRecoveryListsEveryFace'\ntree[1]{target,head,dirty}:\n  ft393-build,389cb337d7f198bb2925785dbfa1ab6e74e4a805,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/command.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/refusalroute,TestRecoveryListsEveryFace,\"command_test.go:25: stdout = \\\"recovery[10]{verb,face,authority,route}:... (1020 bytes)\",2\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -271,6 +589,15 @@
     {
       "from": "sha256:ce25426aa29127e407386b36ae00130d3db020f722da4e0e7639a45f75ae8a07",
       "to": "sha256:10d938cdde11624c65c40c632beebb04b986d194da031b1c8dd8d470d65aaa05",
+      "chunk_ids": {
+        "RR-C1a": [
+          "RR-C1a"
+        ]
+      }
+    },
+    {
+      "from": "sha256:10d938cdde11624c65c40c632beebb04b986d194da031b1c8dd8d470d65aaa05",
+      "to": "sha256:798ef1ecdef294b8be9eb9af70ca2280e069e137efdb28b02071046d4f0f5132",
       "chunk_ids": {
         "RR-C1a": [
           "RR-C1a"
