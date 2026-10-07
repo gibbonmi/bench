@@ -1,7 +1,6 @@
 package testreport
 
 import (
-	"errors"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -12,16 +11,6 @@ import (
 
 // invalidInventoryTitle is the error title of a canary inventory the inventory faces cannot read.
 const invalidInventoryTitle = "canary inventory invalid"
-
-// canaryInventory reads the canary inventory under root. An absent or empty canary
-// directory holds no fixture; that is an answer, not an error.
-func canaryInventory(root string) (map[string]canary.Fixture, error) {
-	found, err := canary.Fixtures(filepath.Join(root, "tests", "canary"))
-	if errors.Is(err, canary.ErrNoFixtures) {
-		return nil, nil
-	}
-	return found, err
-}
 
 // ownedFixtures answers, by fixture name, each fixture whose canary inventory owner is check.
 func ownedFixtures(found map[string]canary.Fixture, check string) map[string]canary.Fixture {
@@ -37,7 +26,7 @@ func ownedFixtures(found map[string]canary.Fixture, check string) map[string]can
 // checkFixtures lists each fixture that check owns, sorted by its repo-relative path. It
 // reads the inventory only, so it selects no run binary and starts no Go child.
 func checkFixtures(root, check string) (Outcome, string, int) {
-	found, err := canaryInventory(root)
+	found, err := canary.RootFixtures(root)
 	if err != nil {
 		return refusedOutcome(toon.Errorf(invalidInventoryTitle, err.Error())+"\n", 1)
 	}
@@ -61,7 +50,7 @@ func checkFixtures(root, check string) (Outcome, string, int) {
 // the count of distinct non-empty family names in which it owns a fixture. It reads the
 // inventory only, so it selects no run binary and starts no Go child.
 func checksInventory(root string) (Outcome, string, int) {
-	found, err := canaryInventory(root)
+	found, err := canary.RootFixtures(root)
 	if err != nil {
 		return refusedOutcome(toon.Errorf(invalidInventoryTitle, err.Error())+"\n", 1)
 	}

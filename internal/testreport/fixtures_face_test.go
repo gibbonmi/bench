@@ -54,13 +54,16 @@ func plantFixture(t *testing.T, root, family, name, check string) {
 
 func TestFixturesFaceListsOwnedFixtures(t *testing.T) {
 	root := t.TempDir()
-	plantFixture(t, root, "package-core-guard", "b", "")
-	plantFixture(t, root, "package-core-guard", "a", "")
+	// The marked line-routing fixture sorts first by path and last by name. With ten owned
+	// rows, an unsorted table matches only by a negligible chance.
+	plantFixture(t, root, "line-routing", "zz", "package-core-guard")
 	plantFixture(t, root, "line-routing", "other", "")
+	want := "fixtures[10]{family,fixture,path}:\n  line-routing,zz,tests/canary/line-routing/zz\n"
+	for _, name := range []string{"a", "c", "f", "h", "m", "q", "t", "x", "z"} {
+		plantFixture(t, root, "package-core-guard", name, "")
+		want += "  package-core-guard," + name + ",tests/canary/package-core-guard/" + name + "\n"
+	}
 	output, code := inventoryFace(t, root, "--check", "package-core-guard", "--fixtures")
-	want := "fixtures[2]{family,fixture,path}:\n" +
-		"  package-core-guard,a,tests/canary/package-core-guard/a\n" +
-		"  package-core-guard,b,tests/canary/package-core-guard/b\n"
 	if code != 0 || output != want {
 		t.Fatalf("owned fixtures = %d, %q; want 0 and %q", code, output, want)
 	}
