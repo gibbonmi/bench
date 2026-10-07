@@ -190,6 +190,72 @@
             "C1a-C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "r-c1a-r1-standards",
+          "performer": "claude:ft393_c1a_r1_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e516146765693ca135ae558a2f01d88b654f6a99",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1a_r1_standards",
+            "digest": "sha256:fec0cd4287f193d87225b38580e4841107ef6323fba907160a2cec1774f96d27",
+            "excerpt": "RR-C1a confirming round, Standards (claude:ft393_c1a_r1_standards): evidence current=true at 5537e2e7. Folds C1a-P3/C1a-C3, C1a-C1, C1a-S4 confirmed. New findings: zero.\nOptional advice (no id): the Fact case spells the same line-safe predicate that asWritten holds; prefaceSlot sits under the prefaceJoiner comment.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Standards",
+          "base": "9c228393356ae35e4f940c2071d12e36d42ede7a",
+          "tip": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c1a-standards"
+          ]
+        },
+        {
+          "id": "r-c1a-r1-spec",
+          "performer": "claude:ft393_c1a_r1_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e516146765693ca135ae558a2f01d88b654f6a99",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1a_r1_spec",
+            "digest": "sha256:3b468f5d86e24293381b752848257c80106517e937769720ee0d754f2900b8cd",
+            "excerpt": "RR-C1a confirming round, Spec (claude:ft393_c1a_r1_spec): evidence current=true at 5537e2e7. Folds C1a-P3/C1a-C3, C1a-C1, C1a-S4 confirmed. RR04-RR07 and RR13 unchanged and met; the preface gate obeys the Edge inventory. New findings: zero.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Spec",
+          "base": "9c228393356ae35e4f940c2071d12e36d42ede7a",
+          "tip": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c1a-spec"
+          ]
+        },
+        {
+          "id": "r-c1a-r1-coverage",
+          "performer": "claude:ft393_c1a_r1_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e516146765693ca135ae558a2f01d88b654f6a99",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c1a_r1_coverage",
+            "digest": "sha256:ade6d084520d6013ae88a1316b48e9bf8d102b0d70c1e2efe1e894cbd4023ccc",
+            "excerpt": "RR-C1a confirming round, Coverage (claude:ft393_c1a_r1_coverage): evidence current=true at 5537e2e7. Folds C1a-P3/C1a-C3, C1a-C1, C1a-S4 confirmed; each new case fails on its targeted mutation. New findings: zero.\nOptional advice (no id): a whitespace-only preface renders as written.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "9c228393356ae35e4f940c2071d12e36d42ede7a",
+          "tip": "5e6272170c81293be97bea4fa5b551b1d5dd6455",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c1a-coverage"
+          ]
         }
       ]
     }
@@ -249,3 +315,11 @@ Count: 4. Worst issue: C1a-C1, the untested empty `Composed` value.
 
 RR-C1a consumed 1 of its 2 repair cycles.
 The repair commit 5e627217 closes C1a-P3, C1a-C3, C1a-C1, and C1a-S4.
+
+### Confirming round
+
+The confirming round confirmed every fold on all three axes and returned no new finding.
+The axes retained this optional advice:
+
+- The `Fact` case and `asWritten` spell the same line-safe predicate.
+- A preface of only whitespace renders as written.
