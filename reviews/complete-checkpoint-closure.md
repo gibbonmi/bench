@@ -540,11 +540,81 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
+    "performer": "claude:ft392-orchestrator-20261007",
+    "reconciliation": {
+      "CC01": "covered",
+      "CC02": "covered",
+      "CC03": "covered",
+      "CC04": "covered",
+      "CC05": "covered",
+      "CC06": "covered",
+      "CC07": "covered",
+      "CC08": "covered",
+      "CC09": "covered",
+      "CC10": "covered",
+      "CC11": "covered",
+      "CC12": "covered",
+      "CC13": "covered",
+      "CC14": "covered",
+      "CC15": "covered",
+      "CC16": "covered",
+      "CC17": "covered",
+      "CC18": "covered",
+      "CC19": "covered",
+      "CC20": "covered",
+      "CC21": "covered",
+      "CC22": "covered",
+      "CC23": "covered",
+      "CC24": "covered",
+      "CC25": "covered",
+      "CC26": "covered",
+      "CC27": "covered",
+      "CC28": "covered",
+      "CC29": "covered",
+      "CC30": "covered",
+      "CC31": "covered",
+      "CC32": "covered"
+    },
+    "verification": [
+      {
+        "id": "v-final-ordinary-integration",
+        "performer": "claude:ft392-orchestrator-20261007",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft392-orchestrator-20261007",
+          "digest": "sha256:77e15cc720d0c43a9db43ea1c4af35f4b0a92a61bac98109123f28e4421a6b2b",
+          "excerpt": "bench test --package ./... at d6d3a6df: exit 0\ntree[1]{target,head,dirty}:\n  complete-checkpoint-closure,d6d3a6df89a64efd3eb66fc43eac76d9e09c355b,false\npackages[122]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench,pass,2,22\npackages[122] pass; capability skips only (fifo socket, privilege device)\n"
+        },
+        "requirement": "ordinary-integration",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "v-final-coverage",
+        "performer": "claude:ft392-orchestrator-20261007",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e72ea3f615d2c12f8f810c7e5e5159cdf3a0a396",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft392-orchestrator-20261007",
+          "digest": "sha256:ffcd6bc8e819206611422f6453941435c4fa5c679f8a3f627553f4de2be885dd",
+          "excerpt": "bench coverage --check complete-checkpoint-closure at d6d3a6df: exit 0\nok: coverage map valid — 32 row(s)\nuncited: 25 row(s) with no seam-cell citation — CC01, CC02, CC03, CC04, CC05, CC06, CC07, CC08, CC09, CC10, CC11, CC12, CC13, CC14, CC15, CC16, CC17, CC20, CC21, CC24, CC28, CC29, CC30, CC31, CC32\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check complete-checkpoint-closure",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
