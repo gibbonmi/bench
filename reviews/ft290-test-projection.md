@@ -4,6 +4,8 @@
 
 The TP-C4 review ran on the frozen pair `6fdd27b3..77f521a9`. Each axis ran on sonnet at high effort. The chunk has used 1 of its 2 repair cycles. The repair session `claude:ft290_t10_r1` repaired the six targets at `6cba8898`, and the chunk tip is now `6cba8898`.
 
+The confirming round of all three axes passed, and each earlier silent mutation now bites. The Coverage axis also reported C6, an inherited defect. A changed Go file in a sub-package that another package embeds selects only the embedding package. The chunk base holds the same branch, and the cause cell keeps the selected set unchanged by design. Under the fix-don't-park rule, the orchestrator routed C6 to `bench learning` and gave it no repair target in FT290.
+
 The raw count is 7 findings, and the repair-target count is 6, because S2 and C4 name one fix. Ticket 10 owns every target.
 
 The orchestrator accepted the `ask-user` finding S1 under the reviewer's auto-approval for spec and ticket expansions, because spec line 219 fixes the cause order.
@@ -2956,6 +2958,72 @@ Count: 4. Worst issue: C1.
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c4-standards-c1",
+          "performer": "claude:ft290_c4_standards_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d78a45065012f43727114cc0aaad1158eba65035",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_standards_c1",
+            "digest": "sha256:45e03e4a2caf41223815341de17aabb87fa8d51c2e5309c61b63abbd488d9f32",
+            "excerpt": "axis=Standards findings=0 worst=none (confirming round, repair delta 77f521a9..6cba8898)\nS1 confirmed: the per-path branch marks embed and then changed through the one mark closure, so causePrecedence alone decides; the selected set is unchanged; the directory package lookup is computed once per path.\nS2 confirmed: selection.go:80 states why the empty selection is non-nil, matching the testreport.go:47-49 contract and TestChangedEmptyDiffCarriesSelectedBy.\nNo duplicated knowledge: directDependencies stays the one list; the own-path skip filters it at its one consumer; the empty flag extends changedCommandOverOnePackage.\nAdvice: selection.go:201 recomputes the .go suffix test that isGo holds at line 207.\nExamined: --check-current at 2f08b08f, the repair delta, selection.go 55-274, testreport.go 40-54, changedCommandRepository. No tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "6cba8898aea8ffc80258200da3a4251dc5d1d3e4",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards-r1"
+          ]
+        },
+        {
+          "id": "c4-spec-c1",
+          "performer": "claude:ft290_c4_spec_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d78a45065012f43727114cc0aaad1158eba65035",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_spec_c1",
+            "digest": "sha256:53ed7149f9fea7420f696edef8bf7097ab43a1f4d0930d83b94ae5079e457cf5",
+            "excerpt": "axis=Spec findings=0 worst=none (confirming round, repair delta 77f521a9..6cba8898)\nS1: an embedded .go file of its own package marks changed through mark and causePrecedence (TestCauseChangedBeatsEmbed, both orders). C1: only a selected dependency is named (TestCauseImportsSkipsUnselectedDependency). C5: the own path is skipped (TestCauseImportsSkipsOwnPath). C2: directDependencies joins all three lists (TestCauseImportsThroughTestImport; the sorted-order test now covers each list). C4: an empty --changed diff prints the selected_by header at exit 0 (TestChangedEmptyDiffCarriesSelectedBy).\nThe selected set is unchanged; TP41-TP48, TP47, and TP55 keep their tests; every code write is inside ticket 10's fence.\nAdvice (pre-existing): a .go file that package P embeds from a subdirectory holding package Q marks only P.\nExamined: --check-current at 2f08b08f, the repair delta, spec \"The cause cell\" and rows, selection.go, command.go, diff/range.go, ticket Writes lines. No tests run.\n"
+          },
+          "axis": "Spec",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "6cba8898aea8ffc80258200da3a4251dc5d1d3e4",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-r1"
+          ]
+        },
+        {
+          "id": "c4-coverage-c1",
+          "performer": "claude:ft290_c4_coverage_c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d78a45065012f43727114cc0aaad1158eba65035",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft290_c4_coverage_c1",
+            "digest": "sha256:2b5ae76c042cdce72e7bb171afcd889c407ffb906ac9d745411caca13c1a2006",
+            "excerpt": "axis=Coverage findings=1 worst=C6 (confirming round, repair delta 77f521a9..6cba8898)\nC6 | inherited | conf 7 | internal/testreport/selection.go:212-218 | A changed .go file in package directory p/sub that package p embeds marks only p (embed) and never selects p/sub; widening the own-directory check to inPackage was silent. The same embed-then-continue branch exists at the chunk base (6fdd27b3 selection.go:176-178), so the under-selection predates FT290. | Mark the Go file's own listed package changed in the embed branch; add a sub-package test. Orchestrator disposition: inherited and outside the cause-cell scope; routed to bench learning under fix-don't-park.\nReplays, no --run, all restored yes: C1 bit (TestCauseImportsSkipsUnselectedDependency); C2 bit (4 failures); C3 bit (TestCauseChangedBeatsEmbed); C4 bit (TestChangedEmptyDiffCarriesSelectedBy); C5 bit (TestCauseImportsSkipsOwnPath); S1 bit (TestCauseChangedBeatsEmbed).\nbench test ./internal/worktree passed (1305 tests, 2 socket skips); git status clean.\nExamined: --check-current, the repair delta, selection.go, spec 205-235, the TP-C4 pickup; 7 probes.\n"
+          },
+          "axis": "Coverage",
+          "base": "6fdd27b3fc3ce791931004ad4202173766c1d66d",
+          "tip": "6cba8898aea8ffc80258200da3a4251dc5d1d3e4",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-coverage-r1"
+          ]
         }
       ]
     }
