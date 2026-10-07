@@ -8,7 +8,7 @@ Decision source: named reviewed artifact `roadmap/FT393.md`, opened by drain d-6
 
 Audience: every repository that links the kit
 
-Verification log: 2 iteration(s), cap reached — after the cap, a read-only fable/high consultation found four folds, and the reviewer approved them without a third review.
+Verification log: 2 iteration(s) to accept — the review reached its cap. A later read-only consultation found four folds, and the reviewer approved them.
 
 ## Problem
 
