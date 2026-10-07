@@ -246,10 +246,10 @@ func landingCompositionRoute(err error, request, base, tip, specArg, path string
 		return landingFaceRoute(err, rerun, false)
 	}
 	raised := refusal{detail: err.Error()}
-	switch refused.Result.Kind {
-	case authorization.Infrastructure:
+	switch {
+	case refused.Result.Kind == authorization.Infrastructure:
 		return landingFaceRefusal(faceLandInfrastructure, raised, rerun, "")
-	case authorization.Inherited, authorization.Candidate, authorization.LaneFail:
+	case landing.RedKind(refused.Result.Kind):
 		raised.values = map[string]string{refusalroute.FactLabel: a.Label}
 		return landingFaceRefusal(faceLandRed, raised, landingRerunAt(request, base, repairedSourceTipFlag, specArg, path, a.ID), "")
 	}

@@ -75,6 +75,8 @@ const (
 	FactLabel = "label"
 	// FactSiblingLabel is the label of the sibling assignment whose tree a merge reads.
 	FactSiblingLabel = "sibling-label"
+	// FactFrom is the incoming commit of a merge, as the caller spelled it.
+	FactFrom = "from"
 	// FactResetPlan is the reset verb's plan command at the commit a verb published.
 	FactResetPlan = "reset-plan"
 	// FactCheckoutGit is the Git command addressed at the conflicted checkout.
@@ -93,14 +95,6 @@ const (
 
 // rerun ends a route with the caller's own command, so one paste finishes the recovery.
 var rerun = Command(Composed(FactRerun))
-
-// destinationClean is the repair a destination that carries uncommitted work demands. The
-// first run and the resume refuse on the same destination state, so both faces name it.
-var destinationClean = Instruction(Text("commit the destination's uncommitted work, or discard it"))
-
-// review sends a repaired source back through review before the landing re-runs. The
-// review is a phase the agent runs, not a shell command, so the step is an instruction.
-var review = Instruction(Text("/bench-review-implementation"))
 
 // commitAt commits the operator's repair in the worktree that the named label fact
 // addresses. Every face whose repair is the agent's own commit names this one step.
@@ -132,179 +126,10 @@ var pathLookup = Command(Text("bench worktree path"), Fact(FactAssignmentID))
 // atCheckout is a composed command addressed at a checkout through the checkout slot.
 var atCheckout = Command(Composed(FactCheckoutCommand), Fact(factCheckout))
 
-// inventory is the authoritative, ordered inventory of the write verbs' refusal faces. A
-// verb adds its face here rather than composing a route at the site that refuses.
-var inventory = []Face{
-	{
-		Verb:      Land,
-		Name:      "destination-not-clean",
-		Sentence:  "landing destination is not clean",
-		Authority: Reviewer,
-		Route:     []Step{destinationClean, rerun},
-	},
-	{
-		// The paths are the operator's own files where the landing writes. Git refuses to
-		// overwrite an untracked one and overwrites an ignored one without a word, so the
-		// operator moves them before the landing runs.
-		Verb:      Land,
-		Name:      "destination-collision",
-		Sentence:  "landing destination has untracked or ignored files where the landing writes",
-		Authority: Reviewer,
-		Route:     []Step{Instruction(Text("move the refusal_paths entries out of the landing checkout")), rerun},
-	},
-	{
-		// The raising site re-points the caller's re-run at the source tip the tree holds,
-		// so a moved tip leaves exactly one command to run.
-		Verb:      Land,
-		Name:      "source-tip-mismatch",
-		Sentence:  "worktree source tip mismatch",
-		Authority: Agent,
-		Route:     []Step{rerun},
-	},
-	{
-		// The commit moves the reviewed source, so the source goes back through review, and
-		// the raising site points the re-run at the repaired tip.
-		Verb:      Land,
-		Name:      "source-not-clean",
-		Sentence:  "reviewed source is not clean",
-		Authority: Agent,
-		Route:     []Step{commitAt(FactLabel), review, rerun},
-	},
-	{
-		// The fence already authorizes a path that a fold of the default branch brings in
-		// unchanged, so every refused path is a write of the build, and the route keeps the
-		// caller's --base.
-		Verb:      Land,
-		Name:      "source-not-fenced",
-		Sentence:  "reviewed source range or ownership fence is invalid",
-		Authority: Agent,
-		Route: []Step{
-			Instruction(Text("take the refusal_paths entries out of the reviewed range, or declare them under the spec's ## Ownership fences")),
-			rerun,
-		},
-	},
-	{
-		// The composition names the conflicted paths in its own sentence, so the face
-		// declares none.
-		Verb:      Land,
-		Name:      "composition-conflict",
-		Authority: Reviewer,
-		Route:     append(append([]Step{}, handMerge...), review, rerun),
-	},
-	{
-		// The source already holds a merge in progress, so a second merge is not the
-		// repair: finishing the merge records the resolution and needs no separate commit.
-		Verb:      Land,
-		Name:      "composition-conflict-pending",
-		Authority: Reviewer,
-		Route: []Step{
-			Command(Composed(FactCheckoutGit), Text("merge --continue (resolve the conflicted paths of the merge in progress first)")),
-			review,
-			rerun,
-		},
-	},
-	{
-		// The residue policy owns the sentence this face prints.
-		Verb:      Land,
-		Name:      "resume-destination-residue",
-		Authority: Reviewer,
-		Route:     []Step{destinationClean, rerun},
-	},
-	{
-		// The landing policy owns the sentence this face prints. Only a landing on the
-		// primary checkout advances the green marker, so the repair is the reviewer's.
-		Verb:      Land,
-		Name:      "resume-marker",
-		Authority: Reviewer,
-		Route: []Step{
-			Instruction(Text("land a green landing on main that covers the published commit, or restore main to it")),
-			rerun,
-		},
-	},
-	{
-		// The gate graded the composed tree red. The authorization policy owns the sentence.
-		// The repair commits in the source, so the source goes back through review, and the
-		// raising site points the re-run at the repaired tip.
-		Verb:      Land,
-		Name:      "land-red",
-		Authority: Agent,
-		Route: []Step{
-			Instruction(Text("repair each failure that the gate reports in"), Fact(FactLabel)),
-			commitAt(FactLabel),
-			review,
-			rerun,
-		},
-	},
-	{
-		// The gate stopped on an infrastructure outcome, so no failure is the diff's. The
-		// authorization policy owns the sentence.
-		Verb:      Land,
-		Name:      "land-infrastructure",
-		Authority: Agent,
-		Route:     []Step{doctor, rerun},
-	},
-	{
-		// The landing published, and a later step did not finish. The re-run is the
-		// caller's resume of that published landing.
-		Verb:      Land,
-		Name:      "land-incomplete",
-		Authority: Agent,
-		Route:     []Step{rerun},
-	},
-	{
-		Verb:      Land,
-		Name:      "land-handback",
-		Authority: Reviewer,
-		Route:     handback,
-	},
-	{
-		// The reconcile after the publication resets the target checkout, so its own
-		// uncommitted work is committed first.
-		Verb:      Merge,
-		Name:      "merge-target-not-clean",
-		Sentence:  "merge target checkout is not clean",
-		Authority: Agent,
-		Route:     []Step{commitAt(FactLabel), rerun},
-	},
-	{
-		// A sibling contributes its committed branch tip alone, so its uncommitted work is
-		// committed in the sibling before the fold.
-		Verb:      Merge,
-		Name:      "merge-sibling-not-clean",
-		Sentence:  "sibling checkout is not clean",
-		Authority: Agent,
-		Route:     []Step{commitAt(FactSiblingLabel), rerun},
-	},
-	{
-		// The composition names the conflicted paths in its own sentence, so the face
-		// declares none.
-		Verb:      Merge,
-		Name:      "merge-conflict",
-		Authority: Reviewer,
-		Route:     append(append([]Step{}, handMerge...), rerun),
-	},
-	{
-		// The authorization policy owns the sentence.
-		Verb:      Merge,
-		Name:      "merge-infrastructure",
-		Authority: Agent,
-		Route:     []Step{doctor, rerun},
-	},
-	{
-		// The merge published, and the target checkout did not reconcile. The reset verb's
-		// plan at the published tip reconciles it under a preserved envelope.
-		Verb:      Merge,
-		Name:      "merge-published-unreconciled",
-		Authority: Agent,
-		Route:     []Step{Command(Composed(FactResetPlan))},
-	},
-	{
-		Verb:      Merge,
-		Name:      "merge-handback",
-		Authority: Reviewer,
-		Route:     handback,
-	},
-}
+// inventory is the authoritative, ordered inventory of the write verbs' refusal faces. Each
+// verb declares its faces in its own file of this package, and a verb adds its face there
+// rather than composing a route at the site that refuses. The verbs join in this order.
+var inventory = slices.Concat(landFaces, mergeFaces)
 
 // New is the one constructor a registered face travels through.
 func New(name string, facts Facts) Refusal { return newIn(inventory, name, facts) }

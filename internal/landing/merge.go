@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
@@ -119,6 +120,26 @@ func (o Owner) Merge(ctx context.Context, r MergeRequest) (MergeResult, error) {
 		return MergeResult{}, destinationUpdateFailure(r.Root, r.Branch, previous, err)
 	}
 	return MergeResult{Kind: kind, PreviousTip: previous, Tip: tip, Tree: tree, Resolved: resolved}, nil
+}
+
+// redKinds are the authorization kinds of a gate that ran red on a composed tree. The
+// landing and the merge each route a red by this one set.
+var redKinds = []authorization.Kind{authorization.Inherited, authorization.Candidate, authorization.LaneFail}
+
+// RedKind reports whether the gate ran red on the composed tree, as opposed to a pass or an
+// infrastructure outcome.
+func RedKind(kind authorization.Kind) bool { return slices.Contains(redKinds, kind) }
+
+// GradeTarget grades the target tip alone under the owner's authority. A merge reads it on
+// its refusal path, to tell a red that the target already holds from a red that the fold
+// adds. It publishes nothing, and it writes no output: the fold's own grade already printed
+// the failing check.
+func (o Owner) GradeTarget(ctx context.Context, r MergeRequest) authorization.Result {
+	tree, err := output(r.Root, "rev-parse", r.PreviousTip+"^{tree}")
+	if err != nil {
+		return authorization.Result{Kind: authorization.Infrastructure, Reason: "merge target tree is unreadable"}
+	}
+	return o.authorize(ctx, r.Worktree, tree, io.Discard, io.Discard)
 }
 
 func mergeTipUnmoved(root, branch, previous string) error {

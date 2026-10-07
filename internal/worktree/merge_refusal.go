@@ -3,16 +3,20 @@
 package worktree
 
 import (
+	"context"
 	"errors"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // The merge refusal face names. The shared registry declares each face, and a raising site
 // names the face it raises.
 const (
+	faceMergeTargetRed             = "merge-target-red"
+	faceMergeFoldRed               = "merge-fold-red"
 	faceMergeTargetNotClean        = "merge-target-not-clean"
 	faceMergeSiblingNotClean       = "merge-sibling-not-clean"
 	faceMergeConflict              = "merge-conflict"
@@ -44,6 +48,40 @@ func mergeFaceRoute(err error, rerun string) error {
 		raised.face = faceMergeHandback
 	}
 	return landingFaceRefusal(raised.face, raised, rerun, "")
+}
+
+// mergeRedRefusal picks the face of a fold that the gate ran red, by the red's cause, and
+// passes every other error through. Only the candidate kind attributes the red to the fold.
+// Neither an inherited kind nor a lane fail tells a target red from a fold red, so grade
+// then grades the target tip alone. A red target is the agent's own repair, and a green
+// target means that the fold adds the red, which FT342 decides.
+func mergeRedRefusal(err error, grade func() authorization.Result, spelling, label string) error {
+	var refused landing.AuthorizationRefusal
+	if !errors.As(err, &refused) || !landing.RedKind(refused.Result.Kind) {
+		return err
+	}
+	face := faceMergeFoldRed
+	if refused.Result.Kind != authorization.Candidate {
+		switch target := grade().Kind; {
+		case landing.RedKind(target):
+			face = faceMergeTargetRed
+		case target == authorization.Infrastructure:
+			face = faceMergeInfrastructure
+		}
+	}
+	return refusalError{refusal{detail: err.Error(), face: face, values: map[string]string{refusalroute.FactLabel: label, refusalroute.FactFrom: spelling}}}
+}
+
+// mergeTargetGrade grades the target tip alone with the lane that graded the fold, or with
+// the whole gate when the target declares no lane. The lane measures the target against
+// the incoming commit, so a selective lane selects each path where the two differ, and
+// that covers every path the fold changed.
+func mergeTargetGrade(kit string, request landing.MergeRequest) authorization.Result {
+	owner, err := mergeOwner(kit, request.Worktree, request.Incoming)
+	if err != nil {
+		return authorization.Result{Kind: authorization.Infrastructure}
+	}
+	return owner.GradeTarget(context.Background(), request)
 }
 
 // retryEmptyReasonInfrastructureFold retries a fold once when the gate refused it with an

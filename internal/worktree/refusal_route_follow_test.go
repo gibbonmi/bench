@@ -1,15 +1,20 @@
 // Refusal route follow tests for the landing: each face's producing fixture carries out
 // the route the landing printed, re-runs the landing, and the landing completes. The route
-// walk helpers here serve the merge walk too.
+// walk helpers here serve the merge walk too, with the merge fixture sets it builds on.
 package worktree
 
 import (
 	"bytes"
+	"context"
+	"io"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/env"
+	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/shellcommand"
@@ -136,6 +141,79 @@ func commitSlots(t *testing.T, checkout string) []string {
 		paths = append(paths, sanitize.ShellQuote(path))
 	}
 	return []string{"<msg>", "'follow the refusal route'", "<path>...", strings.Join(paths, " ")}
+}
+
+// mergeOperatorFill fills the slots a printed merge route leaves to the operator: the
+// commit slots of the assignment checkout that a commit step addresses.
+func mergeOperatorFill(t *testing.T, f mergeSet, step string) string {
+	t.Helper()
+	for _, created := range f.created {
+		if strings.Contains(step, " --in "+sanitize.ShellQuote(created.Assignment.Label)+" ") {
+			return strings.NewReplacer(commitSlots(t, created.Path)...).Replace(step)
+		}
+	}
+	return step
+}
+
+// admittedMergeFixture is the merge fixture whose assignments each hold a delivery
+// binding, so a printed `bench commit` in one of them passes the commitment policy.
+func admittedMergeFixture(t *testing.T, labels ...string) mergeSet {
+	t.Helper()
+	root := newWorktreeRepo(t)
+	mustMkdirAll(t, filepath.Join(root, filepath.Dir(closureSpec)), 0o755)
+	mustWrite(t, filepath.Join(root, closureSpec), []byte("# x\n\nStatus: staged\n"), 0o644)
+	commitmenttest.SeedAdmission(t, root, closureSpec)
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "approve the merge fixture delivery")
+	f := mergeSetAt(t, root, filepath.Join(t.TempDir(), "bench-home"))
+	for _, label := range labels {
+		created := mustCreate(t, f.root, f.home, "merge-"+label, label)
+		commitmenttest.Admit(t, created.Path, "merge-"+label, closureSpec)
+		f.created = append(f.created, created)
+	}
+	return f
+}
+
+// wholeGateMergeFixture is the merge fixture whose root declares no lane, so the whole gate
+// grades each fold. script is the gate's body, and the set holds one assignment.
+func wholeGateMergeFixture(t *testing.T, script string) mergeSet {
+	t.Helper()
+	root := newWorktreeRepo(t)
+	landingGateFixture(t).MustWrite(t, root, script+"\n", script+"\n")
+	gitRun(t, root, "add", ".bench")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the whole gate")
+	f := mergeSet{repoHome: repoHome{root: root, home: filepath.Join(t.TempDir(), "bench-home")}, joins: defaultJoins(), kit: t.TempDir()}
+	f.created = append(f.created, mustCreate(t, f.root, f.home, "merge-integration", "integration"))
+	return f
+}
+
+// The red-source fixtures grade one file: a tree that holds redFile is red, under the lane
+// and under the whole gate alike.
+const (
+	redFile       = "red.txt"
+	redFileAbsent = "[ ! -e " + redFile + " ]"
+)
+
+var redFileLane = gate.Phase{Name: "unit", Argv: []string{"sh", "-c", redFileAbsent + " || { echo " + redFile + " is present; exit 1; }"}}
+
+// markTargetGreen grades the target's own tip with the whole gate and advances the target
+// branch's project-green marker to it, as a landing advances main's.
+func markTargetGreen(t *testing.T, target Creation) {
+	t.Helper()
+	if r := gate.Execute(context.Background(), target.Path, io.Discard, io.Discard); r.ActionExit != 0 {
+		t.Fatalf("target gate = %+v, want green", r)
+	}
+	branch := strings.TrimPrefix(target.Assignment.Branch, "refs/heads/")
+	mustNoError(t, greenmarker.Advance(target.Path, branch, gitOutput(t, target.Path, "rev-parse", "HEAD"), ""))
+	if !gate.ValidateProjectGreen(target.Path, branch).ReusableGreen {
+		t.Fatal("the target tip carries no reusable project green")
+	}
+}
+
+// mergeTargetArgs are the arguments of a merge of incoming into the set's first
+// assignment.
+func mergeTargetArgs(f mergeSet, incoming string) []string {
+	return []string{"--from", incoming, f.created[0].Assignment.ID}
 }
 
 // installedWrapper writes the wrapper an installed kit puts in front of the executable. It

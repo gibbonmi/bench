@@ -120,6 +120,8 @@ func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Re
 		if errors.As(err, &conflict) {
 			err = refusalError{refusal{detail: conflict.Error(), paths: conflict.Paths, face: faceMergeConflict, values: conflictFacts(incoming, target.ID, target.Worktree)}}
 		}
+		// A red fold takes the face of its cause, which the target tip's own grade decides.
+		err = mergeRedRefusal(err, func() authorization.Result { return mergeTargetGrade(a.kit, request) }, spelling, target.Label)
 		return refuse(err)
 	}
 	if len(result.Resolved) > 0 {

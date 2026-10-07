@@ -3,21 +3,24 @@
 package worktree
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // mergeRefusalFixture produces exactly one merge face. build makes the merge set and
 // breaks it so the merge prints that face; it returns the set and the merge's arguments.
-// The registry walk requires one fixture per merge face, so a face added with no fixture
-// turns TestMergeFacesFollowTheirRoutes red.
+// The registry walk requires a fixture for each merge face, so a face added with no
+// fixture turns TestMergeFacesFollowTheirRoutes red.
 type mergeRefusalFixture struct {
-	face  string
+	face string
+	// cause names the cause of a face that more than one cause raises, so each cause has
+	// its own producing fixture.
+	cause string
 	build func(t *testing.T) (mergeSet, []string)
 	// exit is the exit the face prints at: 1 for a refusal, 3 for a published merge whose
 	// checkout did not reconcile.
@@ -75,10 +78,11 @@ func mergeFixtureFor(t *testing.T, face string) mergeRefusalFixture {
 	return mergeRefusalFixture{}
 }
 
-// TestMergeFacesFollowTheirRoutes is RR28 and RR29 for the merge faces. The registry is the
-// source of the merge's face set, so each merge face needs exactly one producing fixture.
-// Each fixture's printed route is carried out step by step, as the landing walk carries
-// out its own, and the merge then reruns to exit 0.
+// TestMergeFacesFollowTheirRoutes is RR28 and RR29 for the merge faces, and RR26, RR56, and
+// RR57 for the fold red. The registry is the source of the merge's face set, so each merge
+// face needs a producing fixture for each of its causes. Each fixture's printed route is
+// carried out step by step, as the landing walk carries out its own, and the merge then
+// reruns to exit 0.
 func TestMergeFacesFollowTheirRoutes(t *testing.T) {
 	t.Parallel()
 	faces := map[string]refusalroute.Face{}
@@ -87,13 +91,13 @@ func TestMergeFacesFollowTheirRoutes(t *testing.T) {
 	}
 	produced := map[string]bool{}
 	for _, fixture := range mergeRefusalFixtures() {
-		if produced[fixture.face] {
-			t.Fatalf("merge face %q has two producing fixtures", fixture.face)
+		if produced[fixture.face+"/"+fixture.cause] {
+			t.Fatalf("merge face %q has two producing fixtures for cause %q", fixture.face, fixture.cause)
 		}
 		if _, ok := faces[fixture.face]; !ok {
 			t.Fatalf("fixture %q produces no registered merge face", fixture.face)
 		}
-		produced[fixture.face] = true
+		produced[fixture.face], produced[fixture.face+"/"+fixture.cause] = true, true
 	}
 	for name := range faces {
 		if !produced[name] {
@@ -102,7 +106,7 @@ func TestMergeFacesFollowTheirRoutes(t *testing.T) {
 	}
 	wrapper := installedWrapper(t, testRunBinary(t))
 	for _, fixture := range mergeRefusalFixtures() {
-		t.Run(fixture.face, func(t *testing.T) {
+		t.Run(strings.TrimSuffix(fixture.face+"/"+fixture.cause, "/"), func(t *testing.T) {
 			t.Parallel()
 			face := faces[fixture.face]
 			p := produceMergeFace(t, fixture)
@@ -158,41 +162,82 @@ func TestMergeConflictRefusalNamesTheHandRepair(t *testing.T) {
 	}
 }
 
-// mergeOperatorFill fills the slots a printed merge route leaves to the operator: the
-// commit slots of the assignment checkout that a commit step addresses.
-func mergeOperatorFill(t *testing.T, f mergeSet, step string) string {
-	t.Helper()
-	for _, created := range f.created {
-		if strings.Contains(step, " --in "+sanitize.ShellQuote(created.Assignment.Label)+" ") {
-			return strings.NewReplacer(commitSlots(t, created.Path)...).Replace(step)
+// TestRedSourceFoldNamesAnExit is collision 5a: a red source folds a moved main. RR21-RR25
+// and RR55 follow the lane fail out: the target tip alone fails its lane, so the fold names
+// the target's own repair, and a fold into the target that the repair left dirty names the
+// commit. After the red file goes and the printed commit runs, the printed fold publishes.
+// RR59 is the same red under a whole gate, whose inherited kind attributes no red either.
+func TestRedSourceFoldNamesAnExit(t *testing.T) {
+	t.Parallel()
+	// requireTargetRed returns the steps of a fold refusal's route, which the agent runs:
+	// the commit in the target, and last the fold of main into the target again.
+	requireTargetRed := func(t *testing.T, r verbResult, target Creation) []string {
+		t.Helper()
+		next, printed := recordField(r.stdout, "refused{", refusalroute.NextField)
+		commit := "bench commit --in " + sanitize.ShellQuote(target.Assignment.Label) + " "
+		fold := "bench worktree merge --from " + sanitize.ShellQuote("main") + " " + sanitize.ShellQuote(target.Assignment.ID)
+		if r.exit != 1 || !printed || strings.HasPrefix(next, reviewerRoute) || !strings.Contains(next, commit) || !strings.HasSuffix(next, fold) {
+			t.Fatalf("red-source fold = (%d, %q), want an agent next= that commits with %q and ends with %q", r.exit, r.stdout, commit, fold)
 		}
+		return refusalroute.Steps(next)
 	}
-	return step
+	t.Run("lane fail", func(t *testing.T) {
+		t.Parallel()
+		f, args := mergeFixtureFor(t, faceMergeTargetRed).build(t)
+		target := f.created[0]
+		fold := runVerb(t, verbMerge, f.merge(args...))
+		requireMergeLaneRefusal(t, fold, "unit")
+		steps := requireTargetRed(t, fold, target)
+		// The operator starts the repair, so the target checkout is dirty.
+		mustRemove(t, filepath.Join(target.Path, redFile))
+		dirty := runVerb(t, verbMerge, f.merge(args...))
+		requireMergeRefusal(t, dirty, "not clean")
+		if next, _ := recordField(dirty.stdout, "refused{", refusalroute.NextField); !strings.Contains(next, "bench commit --in ") {
+			t.Fatalf("dirty fold next = %q, want the commit route", next)
+		}
+		wrapper := installedWrapper(t, testRunBinary(t))
+		runPrintedStep(t, wrapper, f.repoHome, mergeOperatorFill(t, f, steps[len(steps)-2]))
+		if r := runPrintedStep(t, wrapper, f.repoHome, steps[len(steps)-1]); !strings.Contains(r.stdout, "merged{") {
+			t.Fatalf("printed fold = %q, want a merged record", r.stdout)
+		}
+	})
+	t.Run("inherited", func(t *testing.T) {
+		t.Parallel()
+		f := wholeGateMergeFixture(t, redFileAbsent)
+		target := f.created[0]
+		commitInWorktree(t, target.Path, redFile, "red\n", "inherited red")
+		commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
+		requireTargetRed(t, runVerb(t, verbMerge, f.merge(mergeTargetArgs(f, "main")...)), target)
+	})
 }
 
-// admittedMergeFixture is the merge fixture whose assignments each hold a delivery
-// binding, so a printed `bench commit` in one of them passes the commitment policy.
-func admittedMergeFixture(t *testing.T, labels ...string) mergeSet {
-	t.Helper()
-	root := newWorktreeRepo(t)
-	mustMkdirAll(t, filepath.Join(root, filepath.Dir(closureSpec)), 0o755)
-	mustWrite(t, filepath.Join(root, closureSpec), []byte("# x\n\nStatus: staged\n"), 0o644)
-	commitmenttest.SeedAdmission(t, root, closureSpec)
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "approve the merge fixture delivery")
-	f := mergeSetAt(t, root, filepath.Join(t.TempDir(), "bench-home"))
-	for _, label := range labels {
-		created := mustCreate(t, f.root, f.home, "merge-"+label, label)
-		commitmenttest.Admit(t, created.Path, "merge-"+label, closureSpec)
-		f.created = append(f.created, created)
+// foldRedFixture produces the fold red of one red cause: main adds the red file to a target
+// whose tip alone grades green. target makes the target set, and it returns the set.
+func foldRedFixture(cause string, target func(t *testing.T) mergeSet) mergeRefusalFixture {
+	return mergeRefusalFixture{
+		face:  faceMergeFoldRed,
+		cause: cause,
+		exit:  1,
+		build: func(t *testing.T) (mergeSet, []string) {
+			f := target(t)
+			commitOnDefault(t, f.root, redFile, "red\n")
+			return f, mergeTargetArgs(f, "main")
+		},
+		names: func(f mergeSet) []string { return []string{"FT342", f.created[0].Assignment.Label} },
+		carry: map[int]func(*testing.T, mergeSet){
+			// The reviewer reads the cause: the target tip alone holds no red.
+			0: func(t *testing.T, f mergeSet) {
+				if _, err := os.Stat(filepath.Join(f.created[0].Path, redFile)); !os.IsNotExist(err) {
+					t.Fatalf("target holds %s: %v, want the red from main alone", redFile, err)
+				}
+			},
+			// The reviewer decides that main repairs the red it added.
+			1: func(t *testing.T, f mergeSet) {
+				gitRun(t, f.root, "rm", "-q", redFile)
+				gitRun(t, f.root, "commit", "-q", "-m", "repair the red main added")
+			},
+		},
 	}
-	return f
-}
-
-// mergeTargetArgs are the arguments of a merge of incoming into the set's first
-// assignment.
-func mergeTargetArgs(f mergeSet, incoming string) []string {
-	return []string{"--from", incoming, f.created[0].Assignment.ID}
 }
 
 func mergeRefusalFixtures() []mergeRefusalFixture {
@@ -200,6 +245,36 @@ func mergeRefusalFixtures() []mergeRefusalFixture {
 		return func(f mergeSet) []string { return []string{"bench commit --in ", f.created[index].Assignment.Label} }
 	}
 	return []mergeRefusalFixture{
+		{
+			// The target tip alone fails its lane, and main moves by a commit that adds no red.
+			face: faceMergeTargetRed,
+			exit: 1,
+			build: func(t *testing.T) (mergeSet, []string) {
+				f := admittedMergeFixture(t, "integration")
+				commitLaneManifest(t, f.created[0].Path, redFileLane)
+				commitInWorktree(t, f.created[0].Path, redFile, "red\n", "inherited red")
+				commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
+				return f, mergeTargetArgs(f, "main")
+			},
+			names: label(0),
+			// The operator's repair: the red file goes, and the printed commit records it.
+			carry: map[int]func(*testing.T, mergeSet){0: func(t *testing.T, f mergeSet) {
+				mustRemove(t, filepath.Join(f.created[0].Path, redFile))
+			}},
+		},
+		foldRedFixture("lane fail", func(t *testing.T) mergeSet {
+			f := mergeFixture(t, "integration")
+			commitLaneManifest(t, f.created[0].Path, redFileLane)
+			return f
+		}),
+		foldRedFixture("inherited", func(t *testing.T) mergeSet { return wholeGateMergeFixture(t, redFileAbsent) }),
+		// The target's own tip carries the project-green marker and its green evidence, so
+		// the gate attributes the fold's red to the fold.
+		foldRedFixture("candidate", func(t *testing.T) mergeSet {
+			f := wholeGateMergeFixture(t, redFileAbsent)
+			markTargetGreen(t, f.created[0])
+			return f
+		}),
 		{
 			face: faceMergeTargetNotClean,
 			exit: 1,
@@ -257,12 +332,7 @@ func mergeRefusalFixtures() []mergeRefusalFixture {
 			face: faceMergeInfrastructure,
 			exit: 1,
 			build: func(t *testing.T) (mergeSet, []string) {
-				root := newWorktreeRepo(t)
-				landingGateFixture(t).MustWrite(t, root, "set -eu\n", "set -eu\n")
-				gitRun(t, root, "add", ".bench")
-				gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the whole gate")
-				f := mergeSet{repoHome: repoHome{root: root, home: filepath.Join(t.TempDir(), "bench-home")}, joins: defaultJoins(), kit: t.TempDir()}
-				f.created = append(f.created, mustCreate(t, f.root, f.home, "merge-infrastructure", "integration"))
+				f := wholeGateMergeFixture(t, "set -eu")
 				commitInWorktree(t, f.created[0].Path, "target.txt", "target\n", "target work")
 				incoming := commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
 				blockGateLock(t, f.created[0].Path)
