@@ -56,7 +56,7 @@ Count: 4. Worst issue: C1.
 {
   "version": 2,
   "spec": "specs/ft290-test-projection/spec.md",
-  "plan_digest": "sha256:1a858540618fdb0d00d294ecff2d46ad3e367de73fba5e3107d2943004030bac",
+  "plan_digest": "sha256:0a578218a0d886a9acb001ee1ccf0168a84abd0b6589b1d3cd4de21a1337e123",
   "implementation_session": "",
   "chunks": [
     {
@@ -812,6 +812,18 @@ Count: 4. Worst issue: C1.
       "chunk_ids": {
         "TP-C1a": [
           "TP-C1a"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1a858540618fdb0d00d294ecff2d46ad3e367de73fba5e3107d2943004030bac",
+      "to": "sha256:0a578218a0d886a9acb001ee1ccf0168a84abd0b6589b1d3cd4de21a1337e123",
+      "chunk_ids": {
+        "TP-C1a": [
+          "TP-C1a"
+        ],
+        "TP-C1b": [
+          "TP-C1b"
         ]
       }
     }
