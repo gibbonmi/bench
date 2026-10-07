@@ -196,7 +196,7 @@ These faces and routes are required.
 | land | `destination-collision` | reviewer | move the `refusal_paths` entries out of the landing checkout; then the re-run |
 | land | `source-tip-mismatch` | agent | the re-run, re-pointed at the source tip that the tree holds |
 | land | `source-not-clean` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then `/bench-review-implementation`; then the re-run at the repaired source tip |
-| land | `source-not-fenced` | agent | the current fence instruction; then the re-run |
+| land | `source-not-fenced` | agent | the current fence instruction; then the re-run at the repaired source tip |
 | land | `composition-conflict` | reviewer | the hand merge of the destination commit; then `bench commit`; then `/bench-review-implementation`; then the re-run |
 | land | `composition-conflict-pending` | reviewer | finish the merge in progress; then `/bench-review-implementation`; then the re-run |
 | land | `resume-destination-residue` | reviewer | commit or discard the destination's uncommitted work; then the resume |
@@ -786,6 +786,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "f99f7bcd61e976c1434781e33913029eb31f1eb6",
           "native_ref": "claude-agent:ft393_t4"
+        },
+        {
+          "session": "claude:ft393_t4_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "c359944cda758e4b555be502836e29cb530511fd",
+          "native_ref": "claude-agent:ft393_t4_repair1",
+          "predecessor": "claude:ft393_t4",
+          "trigger": "user-directed",
+          "stopped": "the ticket 04 author session reported completion of its RR-C1b verification record commit 2dd0ec7e and has no live child",
+          "preserved": "c359944cda758e4b555be502836e29cb530511fd"
         }
       ],
       "05-route-each-merge-refusal-through-the-registry.md": [],
