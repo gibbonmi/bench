@@ -31,8 +31,8 @@ func landingSourceTipFlag(tip string) string {
 	return " --source-tip " + landingRerunArg(tip, "<full-source-tip>")
 }
 
-// landingBaseFlag is the one rendering of the re-run's --base argument. The fence face
-// swaps this exact text when the source folded a later default-branch commit.
+// landingBaseFlag is the one rendering of the re-run's --base argument, so a proof can
+// find the caller's base in a route.
 func landingBaseFlag(base string) string {
 	return " --base " + landingRerunArg(base, "<full-review-base>")
 }
