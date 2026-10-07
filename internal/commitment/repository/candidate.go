@@ -10,7 +10,9 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -78,6 +80,9 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 	}
 	var production []string
 	for _, change := range changes {
+		if store.retiredRecord(tree, change) {
+			continue
+		}
 		if !commitment.PlanningPath(change.Path, change.DstMode, promotions) || !commitment.PlanningPath(change.Path, change.SrcMode, promotions) {
 			production = append(production, change.Path)
 		}
@@ -103,6 +108,19 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 		return store.lightPathPublication(tree, current, production, delivery, err)
 	}
 	return store.lightPath(tree, current, production, err)
+}
+
+// retiredRecord reports whether change deletes the review record of a spec whose folder
+// tree no longer holds. That deletion is the planning half of a spec retirement. Any other
+// review record change stays a production change. The record path owner decides which
+// path is a review record, so a path that only resembles one stays production.
+func (store Store) retiredRecord(tree string, change git.TreeChange) bool {
+	if change.Status != "D" || change.SrcMode != commitment.PlanningMode {
+		return false
+	}
+	slug := spec.SlugOf(change.Path)
+	record, err := reviewrecord.RecordPath(spec.LiveSpecPath(slug))
+	return err == nil && record == change.Path && !spec.CommitTree(store.Root, tree).FolderIsDirectory(slug)
 }
 
 func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *commitment.Policy, revision string) error {
