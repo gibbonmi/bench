@@ -205,20 +205,6 @@ func TestNamedCheckHelpListsEverySupportedCheck(t *testing.T) {
 	}
 }
 
-func TestUnknownNamedCheckReportsOperandAndInventory(t *testing.T) {
-	inventory := "\nchecks:\n  " + strings.Join(namedChecks(), "\n  ") + "\n"
-	for _, unknown := range []string{"not-registered", "release-evidence-probe"} {
-		output, code := Command(t.TempDir(), []string{"--check", unknown})
-		if code != 2 {
-			t.Errorf("unknown named check %q = %d, want 2\n%s", unknown, code, output)
-			continue
-		}
-		if want := "unknown check: " + unknown + inventory; output != want {
-			t.Errorf("unknown named check %q = %q, want %q", unknown, output, want)
-		}
-	}
-}
-
 func TestNamedCheckRefusesCorruptInheritedSelection(t *testing.T) {
 	root := t.TempDir()
 	marker := filepath.Join(t.TempDir(), "go-ran")

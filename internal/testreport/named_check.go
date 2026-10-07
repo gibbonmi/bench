@@ -7,9 +7,11 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/runbinary"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -18,8 +20,24 @@ const proseCheckName = "prose"
 // ranNothingTitle is the error title of a named check that reached no evidence that it ran.
 const ranNothingTitle = "named check ran nothing"
 
+// runningExecutable answers the absolute path of the running executable. A test in the
+// same process sets it to name a temporary executable.
+var runningExecutable = os.Executable
+
+// unknownCheck names the caller's check, the running executable, and the source digest of
+// its seal before the check list, so the reader knows which running executable owns that
+// list. An unreadable seal prints as unsealed and never becomes the refusal.
 func unknownCheck(check string) string {
-	return "unknown check: " + check + "\n" + namedCheckInventory()
+	executable, seal := "unknown", "unsealed"
+	if path, err := runningExecutable(); err == nil {
+		executable = path
+		if sources, _, err := freshness.SealDigests(path); err == nil {
+			seal = sources
+		}
+	}
+	return "unknown check: " + sanitize.Controls(check) + "\n" +
+		"executable: " + sanitize.Controls(executable) + "\n" +
+		"seal: " + seal + "\n" + namedCheckInventory()
 }
 
 func namedCheckInventory() string {
