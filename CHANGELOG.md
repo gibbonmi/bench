@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Complete checkpoint closure
+
+- Changed `bench gate --checkpoint <spec> --complete` so that it grades the tree that the landing publishes from the committed source. That tree carries the implemented spec status and the delivery closure, so a red that the closure causes now stops the checkpoint before the landing.
+- Added a clean-checkout refusal to the complete checkpoint. A tracked edit, an untracked file, or an uncommitted review record refuses the checkpoint before the gate runs. Commit or remove each uncommitted change, then run the checkpoint again.
+- Added Git 2.31 as the minimum Git version. Bench uses `git rev-parse --path-format=absolute`, and Git 2.31 added that option.
+
 ### Spec grader trace
 
 - Added six classes to the pre-review proof checklist of the `craft-spec` map discipline: `Pin operators`, `Entry reads`, `Derived expectations`, `Consolidated rules`, `Quantified obligations`, and `Workflow-step writes`. Before the first review charge, a spec author traces each pinned check, entry read, and derived expectation to its grader. The author also maps each consolidated site rule and checks each quantified obligation at each site and across all tickets. For a new workflow step, the author traces each write through the compared digests.

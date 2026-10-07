@@ -180,7 +180,9 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 
 // RunCommand executes the gate-run plumbing command and records its completed verdict.
 // It uses the first non-flag argument as root, or the current repository root. --fresh
-// requires execution instead of reuse; it can appear on either side of root.
+// requires execution instead of reuse; it can appear on either side of root. A complete
+// checkpoint grades the tree that the landing publishes from the committed source; every
+// other run grades the checkout.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
 	root, mode, checkpoint, err := parseGateArgs(args, true)
 	if err != nil {
@@ -197,7 +199,12 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	ctx, finishSpan := beginGateSpan(WithCheckpoint(context.Background(), checkpoint), root, mode.String())
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, mode.String())
-	result := executeAfterAcquire(ctx, root, stdout, stderr, notifyGateSignals, mode)
+	var result Result
+	if checkpoint.Complete {
+		result = executeCompleteCheckpoint(ctx, root, checkpoint.Spec, stdout, stderr, notifyGateSignals, mode)
+	} else {
+		result = executeAfterAcquire(ctx, root, stdout, stderr, notifyGateSignals, mode)
+	}
 	finishLog(result)
 	finishSpan(result)
 	return result.ActionExit

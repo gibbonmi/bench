@@ -97,6 +97,7 @@ func TestReviewCheckpointCommentOnlyGap(t *testing.T) {
 				f.Record.Completion.SourceDigest = digest
 				f.Record.Completion.Verification = f.Verification("corrected-final", digest, f.Plan.FinalVerification)
 				f.Save()
+				f.Commit("retain corrected completion")
 				args = []string{f.Root, "--checkpoint", recordtest.Spec, "--complete"}
 			}
 			var out, diagnostic bytes.Buffer
