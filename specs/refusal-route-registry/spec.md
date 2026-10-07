@@ -265,6 +265,10 @@ FT392 ticket 02 writes `internal/gate/gate.go`, `internal/gate/checkpoint.go`, `
 The gate chunk of this spec writes the same gate files, so the two fences overlap.
 The build starts only on a base that contains the FT392 landing.
 
+FT392 adds `internal/gate/complete_checkpoint.go` and `internal/gate/complete_checkpoint_test.go`, and the dirty-checkout refusal lives there.
+Those two paths do not exist on this spec's base, so the fence omits them.
+The build-entry staleness pass adds them to the gate ticket and reruns `--propose-writes` on the FT392 base, as an in-scope plan expansion.
+
 ### The guard check
 
 A conformance test renders each agent route with sample facts.
@@ -548,8 +552,12 @@ The prospective build owns these exact paths:
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_retained_workflow.go`
+- `internal/worktree/merge_from_sha_test.go`
+- `internal/worktree/land_bench_home_test.go`
 
-This fence is provisional. The slice closes it with the closure that build preflight proposes.
+This fence is the closure that `bench preflight build refusal-route-registry --propose-writes` confirmed on the draft Writes line, plus two rendered-text readers that the reader sweep found.
+The review pickup is `reviews/refusal-route-registry.md`.
+The planning author owns this spec folder during the spec phase.
 
 ## Out of scope
 
@@ -621,7 +629,7 @@ Evidence status: source-backed proposal. No probe ran, and the phase commits no 
 - `internal/landing/landing.go` and `internal/landing/merge.go`: `refusalMessage` and its guidance.
 - `internal/gate/checkpoint.go`, `internal/gate/run_transaction.go`, and `internal/gate/gate.go`: the routed refusal, the funnel, and the fixed help row.
 - `internal/commitment/commitcmd/command.go`: `refusal` and `refusalNext`.
-- Tests that read the moved literals: `internal/commit/landing_test.go`, `internal/commit/dry_run_test.go`, `internal/landing/landing_reviewed_test.go`, `internal/worktree/merge_test.go`, `internal/worktree/land_surface_test.go`, `internal/worktree/land_journey_test.go`, `internal/gate/run_outcomes_test.go`, and `internal/gate/review_checkpoint_test.go`.
+- Tests that read the moved literals: `internal/commit/landing_test.go`, `internal/commit/dry_run_test.go`, `internal/landing/landing_reviewed_test.go`, `internal/worktree/merge_test.go`, `internal/worktree/merge_from_sha_test.go`, `internal/worktree/land_bench_home_test.go`, `internal/worktree/land_surface_test.go`, `internal/worktree/land_journey_test.go`, `internal/gate/run_outcomes_test.go`, and `internal/gate/review_checkpoint_test.go`.
 
 ### Primary sources
 
