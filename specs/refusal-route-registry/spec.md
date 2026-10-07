@@ -926,6 +926,8 @@ The prospective build owns these exact paths:
 - `internal/worktree/land_identity_test.go`
 - `internal/worktree/land_resume_refusal_test.go`
 - `internal/worktree/land_journey_test.go`
+- `internal/worktree/parallel_census_test.go`
+- `internal/worktree/land_resume_test.go`
 - `internal/worktree/merge_test.go`
 - `internal/landing/landing.go`
 - `internal/landing/merge.go`
