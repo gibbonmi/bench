@@ -3416,6 +3416,77 @@
             "C5-5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "r-c5-r1-standards",
+          "performer": "claude:ft393_c5_r1_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c5_r1_standards",
+            "digest": "sha256:c0926854e3054d22fbd0fce66b0bd009f9d78a2077c26882213a8ba2665d6379",
+            "excerpt": "RR-C5 confirming round, Standards (claude:ft393_c5_r1_standards): evidence current=true. All folds confirmed. 1 finding, blocking.\nC5-RS1 blocking internal/worktree/commitment_light_landing_test.go:169 repeats commitment_landing_fixture_test.go:49 (ClosedFolderPath(lightLandingSlug) + \"/tickets/one.md\"). auto-fix: hoist the value beside lightLandingSlug. conf 6\nConcern 1: merge and reset cannot reach a Raised commitment error; no defect. Concern 3: matches the Authority rule. Concern 4: the walk fills <msg> through operatorFill and runs each step verbatim.\nAdvice: landingFaceName and raisedRefusal decode Raised beside PrintedAfter; repairsSource restates which routes commit; commitcmd/refusal_route_test.go:261 cites a review id in a comment.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "tip": "6d8859cbcceb0c77de7d5176f3a5017a70220a83",
+          "finding_ids": [
+            "C5-RS1"
+          ],
+          "supersedes": [
+            "r-c5-standards"
+          ]
+        },
+        {
+          "id": "r-c5-r1-spec",
+          "performer": "claude:ft393_c5_r1_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c5_r1_spec",
+            "digest": "sha256:f45be9af90f56450e649065b72508896d43ad91bcb3f300359ae02a700ff330c",
+            "excerpt": "RR-C5 confirming round, Spec (claude:ft393_c5_r1_spec): evidence current=true. All 9 folds confirmed. Zero findings.\nConcern 1: only the landing runs commitment policy; merge and reset never reach a Raised commitment error. Concern 3: matches the Authority rule. Concern 4: the walk fills <msg> as an operator slot.\nAdvice: lightPathTicket repeats a fixture expression; the commitment.Admit errors at readiness.go:69 and :139 are untyped and print commitment-handback, outside the delta.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "tip": "6d8859cbcceb0c77de7d5176f3a5017a70220a83",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c5-spec"
+          ]
+        },
+        {
+          "id": "r-c5-r1-coverage",
+          "performer": "claude:ft393_c5_r1_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c5_r1_coverage",
+            "digest": "sha256:51f7c675003c52e142371bff64e74a0e4c8e1eb59657047c2b8fe9bf558e15fb",
+            "excerpt": "RR-C5 confirming round, Coverage (claude:ft393_c5_r1_coverage): evidence current=true. All folds confirmed except C5-P3. 2 findings, 1 blocking.\nC5-RC1 blocking internal/commitment/repository/repository.go:185,199,215: three of the four replan call sites (concurrent-approved predecessor, validateSources, listedRuns) have no face assertion; dropping replan there leaves the gate green. auto-fix: add rows in TestCommitmentCausesRaiseTheirFaces. conf 5\nC5-RC2 advisory commitment_light_landing_test.go:169 repeats commitment_landing_fixture_test.go:49. auto-fix. conf 4\nConcerns 1, 3, 4: no defect.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "tip": "6d8859cbcceb0c77de7d5176f3a5017a70220a83",
+          "finding_ids": [
+            "C5-RC1",
+            "C5-RC2"
+          ],
+          "supersedes": [
+            "r-c5-coverage"
+          ]
         }
       ]
     }
@@ -4034,3 +4105,13 @@ The repair sessions ran the debug step and stated these causes before their fixe
 
 The repair commits are 848a174e (ticket 11) and 267dcc2d (ticket 12).
 The ticket 11 repair made the light-path route one uniform route and added the agent faces `commitment-light-path-spec` and `commitment-light-path-span`.
+
+### RR-C5 confirming round
+
+The confirming round confirmed every fold except one part of C5-P3, and Spec returned zero findings.
+
+- C5-RC1, auto-fix, confidence 5: three approve raise sites have no face assertion. They are a concurrent predecessor, a changed source, and a changed listed run. Rows in `TestCommitmentCausesRaiseTheirFaces` hold each one. Ticket 12 repair, cycle 2.
+- C5-RS1 and C5-RC2, auto-fix, confidence 6: two landing tests spell the same light-path ticket path. One fixture value holds it. Ticket 11 repair, cycle 2.
+- The ticket 12 repair also removes a review id from a test comment, as the Standards advice notes.
+
+RR-C5 repair cycle 2 is the last cycle that the bounded repair policy allows without a reviewer extension.
