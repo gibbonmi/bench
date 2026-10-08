@@ -1,7 +1,7 @@
 package refusalroute
 
-// The commitment faces that the commitment policy raises. The policy raises them from two
-// packages, so each name has this one spelling.
+// The commitment faces. The commitment policy and the commitment verb raise them from
+// several packages, so each name has this one spelling.
 const (
 	CommitmentNeedsAssignment  = "commitment-needs-assignment"
 	CommitmentVerifyEvidence   = "commitment-verify-evidence"
@@ -9,10 +9,12 @@ const (
 	CommitmentUnbound          = "commitment-unbound"
 	CommitmentLightPathOutside = "commitment-light-path-outside"
 	CommitmentRunUnknown       = "commitment-run-unknown"
+	CommitmentPlanInput        = "commitment-plan-input"
+	CommitmentHandback         = "commitment-handback"
 )
 
-// commitmentFaces are the commitment policy's refusal faces, in registry order. The policy
-// supplies each sentence: the refusal names the cause it observed.
+// commitmentFaces are the commitment refusal faces, in registry order. The policy or the
+// verb supplies each sentence: the refusal names the cause it observed.
 var commitmentFaces = []Face{
 	{
 		// The policy decides for the one active assignment that owns the checkout, and the
@@ -62,6 +64,21 @@ var commitmentFaces = []Face{
 		Name:      CommitmentRunUnknown,
 		Authority: Agent,
 		Route:     []Step{Command(Text("bench commitment inventory"))},
+	},
+	{
+		// The plan input does not read or does not validate, and the caller corrects it.
+		Verb:      Commitment,
+		Name:      CommitmentPlanInput,
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("correct the input file")), rerun},
+	},
+	{
+		// A cause with no face of its own, such as a board that the default branch cannot
+		// read. Its clear is outside the agent's authority.
+		Verb:      Commitment,
+		Name:      CommitmentHandback,
+		Authority: Reviewer,
+		Route:     handback,
 	},
 }
 

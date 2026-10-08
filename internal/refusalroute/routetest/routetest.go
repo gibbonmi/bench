@@ -5,9 +5,11 @@
 package routetest
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/shellcommand"
 )
@@ -16,14 +18,30 @@ import (
 // spells it rather than read it from the renderer it grades.
 const ReviewerMarker = "reviewer: "
 
-// Fixtures requires a producing fixture for each cause of each face of verb, and a
-// registered face for each fixture. keys holds each fixture's face and cause, with an empty
-// cause for a face that one cause raises. It returns the verb's faces by name.
+// CandidateFaces are the commitment faces that only the authorization of a commit's
+// candidate raises. The commitment verb authorizes no candidate, so the commit walk proves
+// these faces, and the commitment walk proves every other commitment face.
+var CandidateFaces = []string{refusalroute.CommitmentUnbound, refusalroute.CommitmentLightPathOutside}
+
+// walked reports whether the walk of verb proves face: a face of verb's own, except that the
+// commit walk proves each candidate face in place of the commitment walk.
+func walked(verb refusalroute.Verb, face refusalroute.Face) bool {
+	if slices.Contains(CandidateFaces, face.Name) {
+		return verb == refusalroute.Commit
+	}
+	return face.Verb == verb
+}
+
+// Fixtures requires a producing fixture for each cause of each face that the walk of verb
+// proves, and such a face for each fixture. keys holds each fixture's face and cause, with
+// an empty cause for a face that one cause raises. It returns the proved faces by name.
 func Fixtures(t testing.TB, verb refusalroute.Verb, keys [][2]string) map[string]refusalroute.Face {
 	t.Helper()
 	faces := map[string]refusalroute.Face{}
-	for _, face := range refusalroute.Faces(verb) {
-		faces[face.Name] = face
+	for _, face := range refusalroute.Inventory() {
+		if walked(verb, face) {
+			faces[face.Name] = face
+		}
 	}
 	produced := map[string]bool{}
 	for _, key := range keys {
@@ -31,13 +49,13 @@ func Fixtures(t testing.TB, verb refusalroute.Verb, keys [][2]string) map[string
 			t.Fatalf("%s face %q has two producing fixtures for cause %q", verb, key[0], key[1])
 		}
 		if _, ok := faces[key[0]]; !ok {
-			t.Fatalf("fixture %q produces no registered %s face", key[0], verb)
+			t.Fatalf("fixture %q produces no face that the %s walk proves", key[0], verb)
 		}
 		produced[key[0]], produced[key[0]+"/"+key[1]] = true, true
 	}
 	for name := range faces {
 		if !produced[name] {
-			t.Errorf("registry %s face %q has no producing fixture", verb, name)
+			t.Errorf("face %q that the %s walk proves has no producing fixture", name, verb)
 		}
 	}
 	return faces
@@ -56,6 +74,39 @@ func Next(output string) (string, bool) {
 		return "", false
 	}
 	return routes[0], true
+}
+
+// NextCell is the route in the one row of the next table that output ends with, the table
+// the commitment verb prints. It reports false unless output prints exactly one such table,
+// and that table decodes to one row whose one cell is the route.
+func NextCell(output string) (string, bool) {
+	lines := strings.SplitAfter(output, "\n")
+	start := -1
+	for index, line := range lines {
+		if strings.HasPrefix(line, refusalroute.NextField+"[") {
+			if start >= 0 {
+				return "", false
+			}
+			start = index
+		}
+	}
+	if start < 0 {
+		return "", false
+	}
+	document, err := axitest.DecodeDocument(strings.Join(lines[start:], ""))
+	if err != nil || len(document.Blocks) != 1 {
+		return "", false
+	}
+	rows, err := document.Rows(refusalroute.NextField)
+	if err != nil || len(rows) != 1 {
+		return "", false
+	}
+	row, _ := rows[0].(map[string]any)
+	route, cell := row[refusalroute.NextColumn].(string)
+	if !cell || len(row) != 1 {
+		return "", false
+	}
+	return route, true
 }
 
 // Steps checks one printed route against the face that printed it and returns its steps.

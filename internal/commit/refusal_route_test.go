@@ -104,13 +104,14 @@ func callerCommit(label string, words ...string) string {
 }
 
 // TestCommitFacesFollowTheirRoutes is RR36 through RR38 and RR61 through RR63. The registry
-// is the source of the commit's face set, so each commit face needs a producing fixture.
-// The commit also prints the commitment faces that the commitment policy raises at its
-// candidate, so the walk looks those up beside the commit's own; the commitment verb's
-// walk requires their fixtures. Each fixture's printed route is carried out step by step:
-// an instruction by the fixture's own means, and each command step verbatim through the
-// verb's own entry. The commit then reruns out of the face: as the route's own last step,
-// or after a route that ends elsewhere.
+// is the source of the commit's face set, so each commit face needs a producing fixture, and
+// so does each candidate face, which only the commit's candidate raises. The commit also
+// prints the other commitment faces that the commitment policy raises at its candidate, so
+// the walk looks those up beside the commit's own; the commitment verb's walk requires
+// their fixtures. Each fixture's printed route is carried out step by step: an instruction
+// by the fixture's own means, and each command step verbatim through the verb's own entry.
+// The commit then reruns out of the face: as the route's own last step, or after a route
+// that ends elsewhere.
 func TestCommitFacesFollowTheirRoutes(t *testing.T) {
 	faces := map[string]refusalroute.Face{}
 	for _, face := range refusalroute.Faces(refusalroute.Commitment) {
@@ -118,7 +119,7 @@ func TestCommitFacesFollowTheirRoutes(t *testing.T) {
 	}
 	var keys [][2]string
 	for _, fixture := range commitFaceFixtures() {
-		if _, raised := faces[fixture.face]; !raised {
+		if _, other := faces[fixture.face]; !other || slices.Contains(routetest.CandidateFaces, fixture.face) {
 			keys = append(keys, [2]string{fixture.face, fixture.cause})
 		}
 	}

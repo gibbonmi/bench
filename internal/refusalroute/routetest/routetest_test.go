@@ -145,24 +145,87 @@ func TestDiagnosticIsTheBareDoctor(t *testing.T) {
 	}
 }
 
-func TestFixturesMatchTheRegistry(t *testing.T) {
-	var keys [][2]string
-	for _, face := range refusalroute.Faces(refusalroute.Commit) {
-		keys = append(keys, [2]string{face.Name, ""})
+// faceKeys are the fixture keys of the named faces, one cause each.
+func faceKeys(names ...string) [][2]string {
+	keys := make([][2]string, 0, len(names))
+	for _, name := range names {
+		keys = append(keys, [2]string{name, ""})
 	}
+	return keys
+}
+
+// faceNames are the names of the registered faces of verb.
+func faceNames(verb refusalroute.Verb) []string {
+	var names []string
+	for _, face := range refusalroute.Faces(verb) {
+		names = append(names, face.Name)
+	}
+	return names
+}
+
+func TestNextCellReadsTheOneRouteCell(t *testing.T) {
+	type read struct {
+		route string
+		one   bool
+	}
+	for output, want := range map[string]read{
+		"error: refused\nnext[1]{command}:\n  bench gate\n":                       {"bench gate", true},
+		"error: refused\nnext[1]{command}:\n  \"reviewer: bench gate; then x\"\n": {"reviewer: bench gate; then x", true},
+		"error: refused\n": {},
+		"next[1]{command}:\n  bench gate\nnext[1]{command}:\n  bench doctor\n": {},
+		"next[2]{command}:\n  bench gate\n  bench doctor\n":                    {},
+		"next[1]{command,why}:\n  bench gate,x\n":                              {},
+		"next[1]{route}:\n  bench gate\n":                                      {},
+		"next[1]{command}:\n  bench gate\nhelp[0]{cmd,why}:\n":                 {},
+	} {
+		if route, one := NextCell(output); route != want.route || one != want.one {
+			t.Errorf("NextCell(%q) = (%q, %v), want (%q, %v)", output, route, one, want.route, want.one)
+		}
+	}
+}
+
+// The candidate faces are commitment faces, and the commit walk proves them in place of the
+// commitment walk. So each walk's fixtures cover every commitment face once between them.
+func TestCandidateFacesMoveToTheCommitWalk(t *testing.T) {
+	commitment := faceNames(refusalroute.Commitment)
+	var own []string
+	for _, name := range commitment {
+		if !slices.Contains(CandidateFaces, name) {
+			own = append(own, name)
+		}
+	}
+	if len(own)+len(CandidateFaces) != len(commitment) {
+		t.Fatalf("candidate faces %q are not all commitment faces %q", CandidateFaces, commitment)
+	}
+	commit := slices.Concat(faceNames(refusalroute.Commit), CandidateFaces)
+	requireVerdict(t, "the commitment walk without the candidate faces", false, func(t testing.TB) { Fixtures(t, refusalroute.Commitment, faceKeys(own...)) })
+	requireVerdict(t, "the commitment walk with a candidate face", true, func(t testing.TB) {
+		Fixtures(t, refusalroute.Commitment, faceKeys(append(slices.Clone(own), CandidateFaces[0])...))
+	})
+	requireVerdict(t, "the commit walk with the candidate faces", false, func(t testing.TB) { Fixtures(t, refusalroute.Commit, faceKeys(commit...)) })
+	requireVerdict(t, "the commit walk without a candidate face", true, func(t testing.TB) {
+		Fixtures(t, refusalroute.Commit, faceKeys(commit[:len(commit)-1]...))
+	})
+	requireVerdict(t, "the commit walk with another commitment face", true, func(t testing.TB) {
+		Fixtures(t, refusalroute.Commit, faceKeys(append(slices.Clone(commit), own[0])...))
+	})
+}
+
+func TestFixturesMatchTheRegistry(t *testing.T) {
+	keys := faceKeys(faceNames(refusalroute.Gate)...)
 	var faces map[string]refusalroute.Face
-	requireVerdict(t, "a fixture for each face", false, func(t testing.TB) { faces = Fixtures(t, refusalroute.Commit, keys) })
+	requireVerdict(t, "a fixture for each face", false, func(t testing.TB) { faces = Fixtures(t, refusalroute.Gate, keys) })
 	if len(faces) != len(keys) {
-		t.Errorf("faces = %d, want the %d registered commit faces", len(faces), len(keys))
+		t.Errorf("faces = %d, want the %d registered gate faces", len(faces), len(keys))
 	}
 	requireVerdict(t, "a second cause of one face", false, func(t testing.TB) {
-		Fixtures(t, refusalroute.Commit, append(slices.Clone(keys), [2]string{keys[0][0], "second"}))
+		Fixtures(t, refusalroute.Gate, append(slices.Clone(keys), [2]string{keys[0][0], "second"}))
 	})
-	requireVerdict(t, "a face with no fixture", true, func(t testing.TB) { Fixtures(t, refusalroute.Commit, keys[1:]) })
+	requireVerdict(t, "a face with no fixture", true, func(t testing.TB) { Fixtures(t, refusalroute.Gate, keys[1:]) })
 	requireVerdict(t, "a fixture of no face", true, func(t testing.TB) {
-		Fixtures(t, refusalroute.Commit, append(slices.Clone(keys), [2]string{"no-such-face", ""}))
+		Fixtures(t, refusalroute.Gate, append(slices.Clone(keys), [2]string{"no-such-face", ""}))
 	})
 	requireVerdict(t, "two fixtures of one cause", true, func(t testing.TB) {
-		Fixtures(t, refusalroute.Commit, append(slices.Clone(keys), keys[0]))
+		Fixtures(t, refusalroute.Gate, append(slices.Clone(keys), keys[0]))
 	})
 }

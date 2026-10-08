@@ -3,6 +3,7 @@ package commitcmd
 
 import (
 	"fmt"
+	"maps"
 	"path/filepath"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -95,20 +97,20 @@ func Command(root string, args []string) (string, int) {
 	if root == "" {
 		return toon.NotInRepo() + "\n", 1
 	}
-	store := commitrepo.Store{Root: root}
+	store, c := commitrepo.Store{Root: root}, call{form: selected, flags: parsed.Flags}
 	switch selected.name {
 	case "start", "block", "unblock":
-		return admission(store, selected.name, parsed.Flags)
+		return admission(store, c)
 	case "show":
-		return show(store)
+		return show(store, c)
 	case "inventory":
-		return inventory(store)
+		return inventory(store, c)
 	case "plan":
-		return plan(store, parsed.Flags["--input"])
+		return plan(store, c)
 	case "approve":
-		return approve(store, parsed.Flags)
+		return approve(store, c)
 	case "verify":
-		return verify(store, selected, parsed.Flags)
+		return verify(store, c)
 	default:
 		panic("unreachable commitment form")
 	}
@@ -135,18 +137,18 @@ func usageText() string {
 	return strings.Join(lines, "\n") + "\n"
 }
 
-func show(store commitrepo.Store) (string, int) {
+func show(store commitrepo.Store, c call) (string, int) {
 	policy, exists, err := store.Policy()
 	if err != nil {
-		return refusal("show", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	outlook, err := store.Outlook()
 	if err != nil {
-		return refusal("show", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	next, err := outlookTables(withCommand(outlook))
 	if err != nil {
-		return refusal("show", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	if !exists {
 		out, _ := toon.Table("commitment", []string{"state", "active_milestone", "next_outcome"}, [][]string{{commitment.OutlookAdoptionRequired, "", ""}})
@@ -159,7 +161,7 @@ func show(store commitrepo.Store) (string, int) {
 	}
 	out, err := toon.Table("commitment", []string{"state", "active_milestone", "outcome"}, rows)
 	if err != nil {
-		return refusal("show", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	return out + "\n" + next, 0
 }
@@ -206,10 +208,10 @@ func outlookTables(outlook commitment.Outlook) (string, error) {
 	return next + "\n" + blockers + "\n", nil
 }
 
-func inventory(store commitrepo.Store) (string, int) {
+func inventory(store commitrepo.Store, c call) (string, int) {
 	items, err := store.Inventory()
 	if err != nil {
-		return refusal("inventory", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	rows := make([][]string, 0, len(items))
 	for _, item := range items {
@@ -217,7 +219,7 @@ func inventory(store commitrepo.Store) (string, int) {
 	}
 	out, err := toon.Table("commitment_inventory", []string{"kind", "id", "state", "identity", "scope"}, rows)
 	if err != nil {
-		return refusal("inventory", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	return out + "\n", 0
 }
@@ -231,18 +233,20 @@ func readInput(path string) ([]byte, error) {
 	return classified.Data, nil
 }
 
-func plan(store commitrepo.Store, path string) (string, int) {
-	data, err := readInput(path)
+// plan validates and records the proposal in the input file. A refusal that raises no face
+// of its own names the input, which the caller corrects.
+func plan(store commitrepo.Store, c call) (string, int) {
+	data, err := readInput(c.flags["--input"])
 	if err != nil {
-		return refusal("plan", err)
+		return c.refuse(refusalroute.CommitmentPlanInput, err, nil)
 	}
 	result, err := store.Plan(data)
 	if err != nil {
-		return refusal("plan", err)
+		return c.refuse(refusalroute.CommitmentPlanInput, err, nil)
 	}
 	planTable, err := toon.Table("commitment_plan", []string{"id", "predecessor", "proposal"}, [][]string{{result.ID, result.Predecessor, result.ProposalIdentity}})
 	if err != nil {
-		return refusal("plan", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	var rows [][]string
 	for _, item := range effectRows(result.Effects) {
@@ -250,61 +254,60 @@ func plan(store commitrepo.Store, path string) (string, int) {
 	}
 	effects, err := toon.Table("effects", []string{"kind", "outcome"}, rows)
 	if err != nil {
-		return refusal("plan", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	return planTable + "\n" + effects + "\n", 0
 }
 
-func approve(store commitrepo.Store, flags map[string]string) (string, int) {
+// approve stages the exact transition of one plan. The approval is a commitment change, so a
+// refusal that raises no face of its own is the reviewer's decision.
+func approve(store commitrepo.Store, c call) (string, int) {
 	primary, err := git.IsPrimaryCheckout(store.Root)
 	if err != nil {
-		return refusal("approve", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	if _, owned := intent.AssignmentForWorktree(store.Root); primary || !owned {
-		return refusalNext("approve", fmt.Errorf("an owned planning worktree is required"), "bench worktree create --request <request> --label <label>")
+		return c.refuse(refusalroute.CommitmentNeedsAssignment, fmt.Errorf("an owned planning worktree is required"), nil)
 	}
 
-	delayed, ok := operandSet(flags["--delayed"])
+	delayed, ok := operandSet(c.flags["--delayed"])
 	if !ok {
-		return refusal("approve", fmt.Errorf("invalid delayed operands %q", flags["--delayed"]))
+		return c.refuse(refusalroute.CommitmentDecision, fmt.Errorf("invalid delayed operands %q", c.flags["--delayed"]), nil)
 	}
-	removed, ok := operandSet(flags["--removed"])
+	removed, ok := operandSet(c.flags["--removed"])
 	if !ok {
-		return refusal("approve", fmt.Errorf("invalid removed operands %q", flags["--removed"]))
+		return c.refuse(refusalroute.CommitmentDecision, fmt.Errorf("invalid removed operands %q", c.flags["--removed"]), nil)
 	}
-	changed, err := store.Approve(flags["--plan"], flags["--decision"], delayed, removed)
+	changed, err := store.Approve(c.flags["--plan"], c.flags["--decision"], delayed, removed)
 	if err != nil {
-		return refusal("approve", err)
+		return c.refuse(refusalroute.CommitmentDecision, err, nil)
 	}
-	out, err := toon.Table("commitment_approval", []string{"plan", "decision", "changed"}, [][]string{{flags["--plan"], flags["--decision"], fmt.Sprint(changed)}})
+	out, err := toon.Table("commitment_approval", []string{"plan", "decision", "changed"}, [][]string{{c.flags["--plan"], c.flags["--decision"], fmt.Sprint(changed)}})
 	if err != nil {
-		return refusal("approve", err)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	return out + "\n", 0
 }
 
-// verify records a milestone verification receipt. A refusal names verify itself, because
-// the next action is corrected evidence; success names the completion proposal.
-func verify(store commitrepo.Store, selected form, flags map[string]string) (string, int) {
-	retry := selected.command()
-	data, err := readInput(flags["--evidence"])
+// verify records a milestone verification receipt. A refusal names verify of the same
+// milestone, because the next action is corrected evidence; success names the completion
+// proposal.
+func verify(store commitrepo.Store, c call) (string, int) {
+	milestone := map[string]string{refusalroute.FactMilestone: c.flags["--milestone"]}
+	data, err := readInput(c.flags["--evidence"])
 	if err != nil {
-		return refusalNext("verify", err, retry)
+		return c.refuse(refusalroute.CommitmentVerifyEvidence, err, milestone)
 	}
-	verification, err := store.Verify(flags["--milestone"], data)
+	verification, err := store.Verify(c.flags["--milestone"], data)
 	if err != nil {
-		return refusalNext("verify", err, retry)
+		return c.refuse(refusalroute.CommitmentVerifyEvidence, err, milestone)
 	}
 	out, err := toon.Table("commitment_verification", []string{"id", "milestone", "revision"}, [][]string{{verification.ID, verification.Milestone, verification.Revision}})
 	if err != nil {
-		return refusalNext("verify", err, retry)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	planForm, _ := selectForm("plan")
-	actions, err := toon.Table("next", []string{"command"}, [][]string{{planForm.command()}})
-	if err != nil {
-		return refusalNext("verify", err, retry)
-	}
-	return out + "\n" + actions + "\n", 0
+	return out + "\n" + nextTable(planForm.command()), 0
 }
 
 func operandSet(value string) ([]string, bool) {
@@ -333,12 +336,35 @@ func effectRows(effects commitment.Effects) [][]string {
 	return rows
 }
 
-func refusal(operation string, err error) (string, int) {
-	form, _ := selectForm("plan")
-	return refusalNext(operation, err, form.command())
+// call is one parsed commitment form: the form and the flag values that the caller passed.
+type call struct {
+	form  form
+	flags map[string]string
 }
 
-func refusalNext(operation string, err error, next string) (string, int) {
-	actions, _ := toon.Table("next", []string{"command"}, [][]string{{next}})
-	return toon.Errorf("bench commitment "+operation+" refused", err.Error()) + "\n" + actions + "\n", 1
+// rerun is the caller's own command, each flag value rendered by refusalroute.Arg under the
+// flag's placeholder.
+func (c call) rerun() string {
+	values := map[string]string{}
+	for _, flag := range c.form.flags {
+		values[flag.name] = refusalroute.Arg(strings.Trim(flag.placeholder, "<>"), c.flags[flag.name])
+	}
+	return "bench commitment" + c.form.suffixWith(values)
+}
+
+// refuse prints a refusal of the call: the cause, and in the next table the route of the face
+// that cause raised, or else of face. values are the facts that the call observed, and the
+// call's own re-run joins them.
+func (c call) refuse(face string, cause error, values map[string]string) (string, int) {
+	facts := map[string]string{refusalroute.FactRerun: c.rerun()}
+	maps.Copy(facts, values)
+	refusal := refusalroute.Printed(face, cause, facts)
+	return toon.Errorf("bench commitment "+c.form.name+" refused", refusal.Sentence) + "\n" + nextTable(refusal.Route), 1
+}
+
+// nextTable is the next table that names one command: a refusal's route, or the command that
+// follows a success. The registry owns the table's label and its column.
+func nextTable(command string) string {
+	table, _ := toon.Table(refusalroute.NextField, []string{refusalroute.NextColumn}, [][]string{{command}})
+	return table + "\n"
 }

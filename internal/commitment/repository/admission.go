@@ -17,7 +17,7 @@ func (store Store) Start(outcome, request, deliverable string) error {
 	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		owner, valid := requestedAssignment(ledger, store.Root, request)
 		if !valid {
-			return ledger, false, errors.New("start requires the active owned assignment and its exact request")
+			return ledger, false, refusalroute.Raised{Name: refusalroute.CommitmentNeedsAssignment, Err: errors.New("start requires the active owned assignment and its exact request")}
 		}
 		policy, err := store.admissionPolicy()
 		if err != nil {

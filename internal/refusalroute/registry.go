@@ -13,6 +13,10 @@ import (
 // NextField is the one record label a write verb prints a refusal's route under.
 const NextField = "next"
 
+// NextColumn is the one column of the NextField table that the commitment verb prints: a
+// refusal's route, or the command that follows a success.
+const NextColumn = "command"
+
 // Verb names the write verb whose rule raises a face. Another write verb can print the
 // face, so the verb states the owner of the rule and not the printer.
 type Verb string
