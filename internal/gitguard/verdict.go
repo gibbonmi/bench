@@ -333,12 +333,7 @@ func indexOf(args []string, s string) int {
 }
 
 func hasAny(args []string, opts ...string) bool {
-	for _, arg := range args {
-		if slices.Contains(opts, arg) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(args, func(arg string) bool { return slices.Contains(opts, arg) })
 }
 
 // anyShortFlagHas reports whether any short-flag cluster contains one of the given

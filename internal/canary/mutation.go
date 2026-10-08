@@ -185,8 +185,7 @@ func basePaths(root, basePath string) ([]string, error) {
 	var walk func([]byte) error
 	walk = func(data []byte) error {
 		for _, rel := range strings.Fields(string(data)) {
-			if after, ok := strings.CutPrefix(rel, "@"); ok {
-				include := after
+			if include, ok := strings.CutPrefix(rel, "@"); ok {
 				if !safeBasePath(include) {
 					return fmt.Errorf("invalid BASE include %q", include)
 				}

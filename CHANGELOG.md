@@ -8,7 +8,14 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Standard-library re-implementation check
 
-- Added the `stdlib-reimplementation` conformance check. It refuses each production Go site that writes by hand a function that the standard library supplies: a `slices.Contains` loop, a `maps.Copy` loop, a user-defined `min` or `max`, and a `strings.Cut`, `strings.CutPrefix`, or `strings.CutSuffix` pattern. The check ignores test files. The production sites that the check found now call the standard functions.
+- Added the `stdlib-reimplementation` conformance check. It refuses each production Go site that writes by hand a function that the standard library supplies. These are the sites that it refuses:
+  - a loop that `slices.Contains` or `slices.ContainsFunc` can replace
+  - a loop that copies map entries, which a `maps` function can replace
+  - a user-defined `min` or `max` function, and an `if` or `else` statement that the built-in `min` or `max` can replace
+  - a `strings.Index` call that `strings.Cut` can replace, also when the code uses only the index
+  - a `HasPrefix` or `HasSuffix` test with its trim, which `strings.CutPrefix` or `strings.CutSuffix` can replace
+
+  The check grades the root package and the packages below `cmd` and `internal`. It ignores test files. It does not grade a file that a build constraint excludes on the host. The production sites that the check found now call the standard functions.
 
 ### Next-outcome start
 

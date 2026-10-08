@@ -185,13 +185,9 @@ func parseDecisionMap(topic string, content []byte) (DecisionMap, []Diagnostic) 
 			}
 			continue
 		}
-		unsupported := false
 		if slices.Contains(canonicalDecisionMapSchema.unsupportedHeadings, line) {
 			diagnostics = append(diagnostics, Diagnostic{Message: "unsupported Handoff section"})
 			section = "Handoff"
-			unsupported = true
-		}
-		if unsupported {
 			continue
 		}
 		if match := inlineTicketHeading.FindStringSubmatch(line); match != nil {
