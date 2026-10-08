@@ -1,7 +1,7 @@
 # Derive the ticket check floor from the Writes line
 
 Blocked by: none
-Writes: internal/gate/phases.go, internal/testreport/floor.go (new), internal/testreport/floor_test.go (new), internal/testreport/selection.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go, internal/tickets/registry_data.go, internal/tickets/registry_data_test.go
+Writes: internal/gate/gate.go, internal/gate/phases.go, internal/testreport/floor.go (new), internal/testreport/floor_test.go (new), internal/testreport/selection.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go, internal/tickets/registry_data.go, internal/tickets/registry_data_test.go
 Covers: TF7, TF8, TF9, TF10, TF11, TF12, TF13, TF14, TF15, TF19, TF20, TF21, TF22, TF71
 
 ## What to build

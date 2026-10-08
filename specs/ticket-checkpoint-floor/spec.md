@@ -369,6 +369,7 @@ This fence is the exact union of the ticket Writes lines, plus the review pickup
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/coverage/planned_rows.go`
 - `internal/coverage/planned_rows_test.go`
+- `internal/gate/gate.go`
 - `internal/gate/phases.go`
 - `internal/preflight/check_floor.go`
 - `internal/preflight/check_floor_command_test.go`
