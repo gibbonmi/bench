@@ -1068,6 +1068,18 @@ The orchestrator records each author session before that author's dispatch.
           "trigger": "user-directed",
           "stopped": "the ticket 11 repair session passed the 300k context rule after its commit and has no live child",
           "preserved": "848a174e65dadbf399861e65ad684b36abbb1118"
+        },
+        {
+          "session": "claude:ft393_t11_repair2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1cc2675c90f84870f7aed6db324a2f8f41cc060d",
+          "native_ref": "claude-agent:ft393_t11_repair2",
+          "predecessor": "claude:ft393_t11_verify2",
+          "trigger": "user-directed",
+          "stopped": "the ticket 11 verification session reported its RR-C5 records and has no live child",
+          "preserved": "56fa6378ac8d453a3a396b09a092c0b381783967"
         }
       ],
       "12-print-the-commitment-verb-routes-from-the-registry.md": [
