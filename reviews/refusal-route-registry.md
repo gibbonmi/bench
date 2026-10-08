@@ -3635,6 +3635,72 @@
           "supersedes": [
             "r-c5-coverage"
           ]
+        },
+        {
+          "id": "r-c5-r2-standards",
+          "performer": "claude:ft393_c5_r2_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "07337837e69f8ecb8ab0dadcdf3fbeddab3de93f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c5_r2_standards",
+            "digest": "sha256:0092a732d75252b592d63c39b8cf1eaee5f784b27f414686be5044ba3d999088",
+            "excerpt": "RR-C5 cycle 2 confirming round, Standards (claude:ft393_c5_r2_standards): evidence current=true. C5-RC1, C5-RS1/C5-RC2, and the comment fix confirmed. Zero findings.\nConcern 1: approvalOf and Reworded are the single sources; one source per fact holds. Concern 2: the listed-run row reads the same lookup that production uses, and a failed lookup turns the row red.\nAdvice: two hand-written approve lists differ deliberately; the discarded ok at :307 could give a clearer failure.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "tip": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c5-r1-standards"
+          ]
+        },
+        {
+          "id": "r-c5-r2-spec",
+          "performer": "claude:ft393_c5_r2_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "07337837e69f8ecb8ab0dadcdf3fbeddab3de93f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c5_r2_spec",
+            "digest": "sha256:70b028ceaa1cfe415ba61d2a8218f35960bbd43105c96c67810418ec9ff9cfa6",
+            "excerpt": "RR-C5 cycle 2 confirming round, Spec (claude:ft393_c5_r2_spec): evidence current=true. C5-RC1, C5-RS1/C5-RC2, and the comment fix confirmed. Zero findings.\nEach of the four approve replan sites keeps commitment-decision and has its own row. Concern 1: one source per fact holds. Concern 2: the listed-run row proves the site at repository.go:215.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "tip": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c5-r1-spec"
+          ]
+        },
+        {
+          "id": "r-c5-r2-coverage",
+          "performer": "claude:ft393_c5_r2_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "07337837e69f8ecb8ab0dadcdf3fbeddab3de93f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c5_r2_coverage",
+            "digest": "sha256:82407e469e118782b35ec6ca754d7419ef5a915b457c44de991ab6f484b7b963",
+            "excerpt": "RR-C5 cycle 2 confirming round, Coverage (claude:ft393_c5_r2_coverage): evidence current=true. C5-RC1, C5-RS1/C5-RC2, and the comment fix confirmed. Zero findings.\nThe review record holds a silent-then-bit probe verdict at each approve replan site and for the hoisted ticket path. Concern 1: one source per fact holds. Concern 2: the listed-run row stays red-capable.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "tip": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c5-r1-coverage"
+          ]
         }
       ]
     }
