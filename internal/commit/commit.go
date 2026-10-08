@@ -16,7 +16,9 @@ import (
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/poolkey"
@@ -100,7 +102,7 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 	// by repository. A grammar answer reaches no repository and records nothing.
 	var measures commitMeasures
 	finishSpan := beginCommitSpan(root)
-	exit := commitAttributed(&measures, root, req.msg, req.paths, req.dryRun, stdout, stderr)
+	exit := commitAttributed(&measures, root, req, stdout, stderr)
 	finishSpan(exit, measures)
 	outcome.Published = measures.subject
 	return outcome, exit
@@ -109,15 +111,16 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 // commitAttributed is the verb's own work, with the span's measures written to measures
 // as each becomes known. The exit code it returns is the verb's, so the record and the
 // shell agree about the same commit.
-func commitAttributed(measures *commitMeasures, root, msg string, paths []string, dryRun bool, stdout, stderr io.Writer) int {
+func commitAttributed(measures *commitMeasures, root string, req request, stdout, stderr io.Writer) int {
+	// handback refuses a cause that no face of its own names.
+	handback := func(err error) int { return refuse(stderr, root, req, faceHandback, err.Error()) }
 	primary, err := git.IsPrimaryCheckout(root)
 	if err != nil {
-		fmt.Fprintln(stderr, toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree"))
-		return 1
+		return handback(errors.New("checkout identity is unknown"))
 	}
 	if primary {
 		fmt.Fprintln(stderr, usage.PrimaryCheckoutRefusal())
-		return 1
+		return refuse(stderr, root, req, facePrimaryCheckout, "")
 	}
 
 	// Capture publication identity before reading attributed content. A detached checkout
@@ -128,14 +131,12 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 	}
 	expectedBytes, expectedErr := git.Raw("-C", root, "rev-parse", "--verify", "HEAD^{commit}")
 	if expectedErr != nil {
-		fmt.Fprintln(stderr, "error: destination has no commit base")
-		return 1
+		return handback(errors.New("destination has no commit base"))
 	}
 
-	named, err := landing.ResolveAttributedPaths(root, strings.TrimSpace(string(expectedBytes)), paths)
+	named, err := landing.ResolveAttributedPaths(root, strings.TrimSpace(string(expectedBytes)), req.paths)
 	if err != nil {
-		fmt.Fprintf(stderr, "error: %v\n", err)
-		return 1
+		return handback(err)
 	}
 	candidate, err := landing.CandidateTree(root, strings.TrimSpace(string(expectedBytes)), named)
 	if err == nil {
@@ -154,14 +155,12 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 	// names the defect, because a lane nobody can read grades nothing.
 	lane, laneErr := gate.LaneForCommit(root)
 	if laneErr != nil {
-		fmt.Fprintf(stderr, "error: %v\n", laneErr)
-		return 1
+		return handback(laneErr)
 	}
-	if !dryRun {
+	if !req.dryRun {
 		formatted, formatErr := formatNamedGoFiles(root, named)
 		if formatErr != nil {
-			fmt.Fprintf(stderr, "error: format named Go files: %v\n", formatErr)
-			return 1
+			return handback(fmt.Errorf("format named Go files: %w", formatErr))
 		}
 		if len(formatted) > 0 {
 			shown := make([]string, len(formatted))
@@ -172,13 +171,13 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 		}
 	}
 	owner := landing.NewForLane(lane, strings.TrimSpace(string(expectedBytes)))
-	if dryRun {
-		if err := owner.DryRun(context.Background(), landing.Request{
-			Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
-			Message: msg, Paths: named, Stdout: stdout, Stderr: stderr,
-		}); err != nil {
-			fmt.Fprintf(stderr, "error: %v\n", err)
-			return 1
+	landingRequest := landing.Request{
+		Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
+		Message: req.msg, Paths: named, Stdout: stdout, Stderr: stderr,
+	}
+	if req.dryRun {
+		if err := owner.DryRun(context.Background(), landingRequest); err != nil {
+			return refuse(stderr, root, req, landingFace(err), err.Error())
 		}
 		// A lane pass is not green, and the lane already stated its own outcome, so the
 		// summary borrows neither the word nor a second verdict.
@@ -189,10 +188,7 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 		}
 		return 0
 	}
-	result, err := owner.Land(context.Background(), landing.Request{
-		Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
-		Message: msg, Paths: named, Stdout: stdout, Stderr: stderr,
-	})
+	result, err := owner.Land(context.Background(), landingRequest)
 	// A published commit identifies the subject, whether or not the checkout reconciled
 	// after it. A refusal published nothing and names no subject.
 	measures.subject = result.Commit
@@ -201,16 +197,63 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 		if errors.As(err, &remainder) {
 			return publicationRemainder(stdout, root, remainder)
 		}
-		fmt.Fprintf(stderr, "error: %v\n", err)
-		return 1
+		return refuse(stderr, root, req, landingFace(err), err.Error())
 	}
 	fmt.Fprintf(stdout, "committed %d path(s)\n", len(named))
 	return 0
 }
 
-// facePublishedUnreconciled is the face of a commit that published and left its checkout
-// behind. The shared registry declares it, and the exit 3 record names it.
-const facePublishedUnreconciled = "commit-published-unreconciled"
+// The commit's refusal faces. The shared registry declares each face, and a raising site
+// names the face it raises.
+const (
+	facePublishedUnreconciled = "commit-published-unreconciled"
+	facePrimaryCheckout       = "commit-primary-checkout"
+	faceRed                   = "commit-red"
+	faceInfrastructure        = "commit-infrastructure"
+	faceHandback              = "commit-handback"
+)
+
+// landingFace picks the face of a refusal that the landing owner returned. The kind that
+// the gate attributed picks the face of an authorization refusal, and every other refusal
+// hands back.
+func landingFace(err error) string {
+	var refused landing.AuthorizationRefusal
+	switch {
+	case !errors.As(err, &refused):
+	case refused.Result.Kind == authorization.Infrastructure:
+		return faceInfrastructure
+	case landing.RedKind(refused.Result.Kind):
+		return faceRed
+	}
+	return faceHandback
+}
+
+// refuse prints a refusal that published nothing, sentence and then the route of face on
+// its own next= line, and answers exit 1. The route re-runs the caller's own commit in the
+// worktree of the active assignment that owns root. With no owner, the zero owner's empty
+// label prints the label slot.
+func refuse(stderr io.Writer, root string, req request, face, sentence string) int {
+	owner, _ := intent.AssignmentForWorktree(root)
+	args := []string{}
+	if req.dryRun {
+		args = append(args, "--dry-run")
+	}
+	if req.preflightBuild != "" {
+		args = append(args, PreflightBuildFlag, refusalroute.Arg("slug", req.preflightBuild))
+	}
+	args = append(args, "-m", refusalroute.Arg("msg", req.msg), "--")
+	for _, path := range req.paths {
+		args = append(args, refusalroute.Arg("path", path))
+	}
+	refusal := refusalroute.New(face, refusalroute.Facts{Sentence: sentence, Values: map[string]string{
+		refusalroute.FactLabel: owner.Label, refusalroute.FactArguments: strings.Join(args, " "),
+	}})
+	if refusal.Sentence != "" {
+		fmt.Fprintln(stderr, "error: "+refusal.Sentence)
+	}
+	fmt.Fprintln(stderr, refusalroute.NextField+"="+refusal.Route)
+	return 1
+}
 
 // publicationRemainder reports the publication boundary the landing owner reached: the
 // commit exists and the checkout at root does not match it. The record uses the landing
@@ -243,7 +286,7 @@ var helpText = grammar.Help + "\n" +
 	"--dry-run: " + LaneClause + " on the exact composed snapshot and report the outcome; commit nothing\n" +
 	"exit 1: refused before publication; nothing was committed\n" +
 	"exit 2: grammar error\n" +
-	"exit 3: published; the checkout did not reconcile — paste next= to repair"
+	"exit 3: published; the checkout did not reconcile — paste " + refusalroute.NextField + "= to repair"
 
 var grammar = usage.Grammar{
 	Cmd:  "bench commit",

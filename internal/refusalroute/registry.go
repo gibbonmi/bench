@@ -98,7 +98,14 @@ const (
 	// FactPublishedCommit is the commit a verb published before its checkout failed to
 	// follow it.
 	FactPublishedCommit = "published-commit"
+	// FactArguments is the caller's own arguments after a tree target, each rendered by Arg.
+	FactArguments = "arguments"
 )
+
+// Arg renders one value of a command that a raising site composes: shell-quoted, or the
+// placeholder of slot when the value is absent or not line-safe. A composed command
+// renders its values here, so it and a route's own slots follow one rule.
+func Arg(slot, value string) string { return quoted(slot, value) }
 
 // rerun ends a route with the caller's own command, so one paste finishes the recovery.
 var rerun = Command(Composed(FactRerun))
@@ -112,10 +119,13 @@ func commitAt(label string) Step {
 // doctor diagnoses an infrastructure outcome ahead of the caller's re-run.
 var doctor = Command(Text("bench doctor"))
 
-// handback is the route of each verb's handback face: a cause that only the reviewer
-// clears and that has no reviewer step of its own. The refusal's own sentence names the
-// cause.
-var handback = []Step{Instruction(Text("clear the cause that the refusal names")), rerun}
+// clearCause is the reviewer's step of each verb's handback face: a cause that only the
+// reviewer clears and that has no reviewer step of its own. The refusal's own sentence
+// names the cause.
+var clearCause = Instruction(Text("clear the cause that the refusal names"))
+
+// handback is the route of each handback face whose verb re-runs as the caller wrote it.
+var handback = []Step{clearCause, rerun}
 
 // handMerge is the hand repair a composition conflict demands, up to the commit that
 // records the resolution. The landing and the merge refuse the same conflict, so both name

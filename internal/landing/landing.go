@@ -71,13 +71,11 @@ func (e *ReconcileError) Error() string {
 func (e *ReconcileError) Unwrap() error { return e.Err }
 
 // PublishedUnreconciledError is the publication boundary: the commit is published and
-// the checkout is not reconciled. It carries the published commit, the path that did not
-// reconcile, and every named path in the owner's sorted, deduplicated order, so a caller
-// reports the remainder and the repair without a second read.
+// the checkout is not reconciled. It carries the published commit and the path that did
+// not reconcile, so a caller reports the remainder without a second read.
 type PublishedUnreconciledError struct {
 	Commit string
 	Path   string
-	Paths  []string
 	Err    error
 }
 
@@ -176,7 +174,7 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 	}
 	if err := o.reconcile(r, paths, snapshot); err != nil {
 		var failed *ReconcileError
-		remainder := &PublishedUnreconciledError{Commit: commit, Paths: paths, Err: err}
+		remainder := &PublishedUnreconciledError{Commit: commit, Err: err}
 		if errors.As(err, &failed) {
 			remainder.Path = failed.Path
 		}

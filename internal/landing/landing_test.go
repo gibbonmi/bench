@@ -304,8 +304,8 @@ func TestLandReportsPublishedCommitWhenReconciliationFails(t *testing.T) {
 	if got.Base != base || got.Commit == "" || got.Tree == "" || git(t, root, "rev-parse", "HEAD") != got.Commit {
 		t.Fatal("published identity was not retained")
 	}
-	if remainder.Commit != got.Commit || !reflect.DeepEqual(remainder.Paths, []string{"named"}) {
-		t.Fatalf("remainder = %+v, want the published commit and its named paths", remainder)
+	if remainder.Commit != got.Commit {
+		t.Fatalf("remainder = %+v, want the published commit", remainder)
 	}
 }
 
@@ -339,9 +339,6 @@ func TestPublicationBoundaryNamesThePathTheReconcileFailedOn(t *testing.T) {
 	}
 	if remainder.Path != "b-second" {
 		t.Fatalf("Path = %q, want the second named path", remainder.Path)
-	}
-	if !reflect.DeepEqual(remainder.Paths, []string{"a-first", "b-second"}) {
-		t.Fatalf("Paths = %v, want the sorted named paths", remainder.Paths)
 	}
 }
 
