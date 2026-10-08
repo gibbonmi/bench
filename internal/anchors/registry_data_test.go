@@ -935,8 +935,8 @@ func TestCrossHarnessFalsificationAnchorsRedOnRemoval(t *testing.T) {
 			},
 			{
 				file:   recipes,
-				needle: "bench worktree exec <target> -- claude -p --model <id> --effort <level> \"<charge>\" <<'EOF'",
-				want:   ".agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md dropped the exec reviewer form with the empty quoted heredoc",
+				needle: "bench worktree exec <target> -- claude -p --model <id> --effort <level> <<'EOF'",
+				want:   ".agents/skills/bench-craft-delegate/references/cross-harness-reviewers.md dropped the exec reviewer form that carries the charge in a quoted heredoc",
 			},
 			{
 				file:    fullSpec,
