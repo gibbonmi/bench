@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -64,8 +66,11 @@ type commitSet struct{ primary, home, checkout string }
 // the commit prints that face. The registry walk requires a fixture for each commit face,
 // so a face added with no fixture turns TestCommitFacesFollowTheirRoutes red.
 type commitFaceFixture struct {
-	face  string
-	build func(t *testing.T) commitSet
+	// cause tells apart two fixtures of one face. flags are the caller's own flags ahead
+	// of commitArgs.
+	face, cause string
+	flags       []string
+	build       func(t *testing.T) commitSet
 	// exit is the exit the face prints at: 1 for a refusal, 3 for a published commit whose
 	// checkout did not reconcile.
 	exit int
@@ -90,6 +95,12 @@ type commitFaceFixture struct {
 // commitArgs are the caller's own arguments in every route fixture.
 var commitArgs = []string{"-m", "m", "--", "a.txt"}
 
+// callerCommit is the caller's own commit at the worktree that label addresses, as the
+// route that re-runs it prints it: label and words are in their printed form.
+func callerCommit(label string, words ...string) string {
+	return strings.Join(append([]string{"bench commit --in", label}, words...), " ")
+}
+
 // TestCommitFacesFollowTheirRoutes is RR36 through RR38. The registry is the source of the
 // commit's face set, so each commit face needs a producing fixture. Each fixture's printed
 // route is carried out step by step: an instruction by the fixture's own means, and each
@@ -98,11 +109,11 @@ var commitArgs = []string{"-m", "m", "--", "a.txt"}
 func TestCommitFacesFollowTheirRoutes(t *testing.T) {
 	var keys [][2]string
 	for _, fixture := range commitFaceFixtures() {
-		keys = append(keys, [2]string{fixture.face, ""})
+		keys = append(keys, [2]string{fixture.face, fixture.cause})
 	}
 	faces := routetest.Fixtures(t, refusalroute.Commit, keys)
 	for _, fixture := range commitFaceFixtures() {
-		t.Run(fixture.face, func(t *testing.T) { followCommitFace(t, faces[fixture.face], fixture) })
+		t.Run(fixture.face+"/"+fixture.cause, func(t *testing.T) { followCommitFace(t, faces[fixture.face], fixture) })
 	}
 }
 
@@ -110,7 +121,8 @@ func TestCommitFacesFollowTheirRoutes(t *testing.T) {
 // printed route, and the commit reruns out of the face.
 func followCommitFace(t *testing.T, face refusalroute.Face, fixture commitFaceFixture) {
 	f := fixture.build(t)
-	code, stdout, stderr := runCommand(t, f.checkout, commitArgs...)
+	args := slices.Concat(fixture.flags, commitArgs)
+	code, stdout, stderr := runCommand(t, f.checkout, args...)
 	next, printed := printedNext(stderr)
 	if fixture.exit == 3 {
 		_, fields, _ := recordFields(t, stdout)
@@ -133,14 +145,14 @@ func followCommitFace(t *testing.T, face refusalroute.Face, fixture commitFaceFi
 		}
 		return runRouteStep(t, f, step)
 	})
-	// A route that ends with the caller's own commit has rerun it, and the step published.
+	// A route that ends with the caller's own commit has rerun it, and the step exited 0.
 	if strings.HasPrefix(steps[len(steps)-1], "bench commit ") {
 		return
 	}
 	if fixture.after != nil {
 		f = fixture.after(t, f, last)
 	}
-	code, stdout, stderr = runCommand(t, f.checkout, commitArgs...)
+	code, stdout, stderr = runCommand(t, f.checkout, args...)
 	if fixture.settled != nil {
 		fixture.settled(t, f, code, stdout, stderr)
 	} else if code != 0 {
@@ -255,10 +267,33 @@ func adminPath(t *testing.T, checkout, name string) string {
 
 func commitFaceFixtures() []commitFaceFixture {
 	quoted := sanitize.ShellQuote
-	// callerCommit is the caller's own commit, at the worktree of label, that a route which
-	// re-runs it ends with.
-	callerCommit := func(label string) string {
-		return "bench commit --in " + quoted(label) + " -m " + quoted(commitArgs[1]) + " -- " + quoted(commitArgs[3])
+	// rerun is the fixtures' own commit at the worktree of label, with flags.
+	rerun := func(label string, flags ...string) string {
+		return callerCommit(quoted(label), slices.Concat(flags, []string{"-m", quoted(commitArgs[1]), "--", quoted(commitArgs[3])})...)
+	}
+	// red is a commit-red fixture: grade runs a check that reds on a.txt until the walk
+	// carries out the repair, and the caller passes flags.
+	red := func(cause string, flags []string, grade func(check string) func(*testing.T, string)) commitFaceFixture {
+		return commitFaceFixture{
+			face: faceRed, cause: cause, flags: flags, exit: 1,
+			build: func(t *testing.T) commitSet {
+				f := assignedCommitSet(t, faceRed, grade("! grep -qs red a.txt"))
+				mustWrite(t, filepath.Join(f.checkout, "a.txt"), "red\n", 0o644)
+				return f
+			},
+			suffix:   rerun(faceRed, flags...),
+			contains: "repair each failure",
+			carry: map[int]func(*testing.T, commitSet){0: func(t *testing.T, f commitSet) {
+				mustWrite(t, filepath.Join(f.checkout, "a.txt"), "fixed\n", 0o644)
+			}},
+		}
+	}
+	// laneCheck declares check as the checkout's one lane check, behind a gate that passes.
+	laneCheck := func(check string) func(*testing.T, string) {
+		return func(t *testing.T, root string) {
+			gateScript("exit 0")(t, root)
+			mustWrite(t, filepath.Join(root, ".bench", "phases.json"), `{"lane":[{"name":"check","argv":["sh","-c",`+strconv.Quote(check)+`]}]}`, 0o644)
+		}
 	}
 	return []commitFaceFixture{
 		{
@@ -308,25 +343,14 @@ func commitFaceFixtures() []commitFaceFixture {
 				return f
 			},
 		},
-		{
-			face: faceRed,
-			exit: 1,
-			build: func(t *testing.T) commitSet {
-				f := assignedCommitSet(t, faceRed, gateScript("! grep -qs red a.txt"))
-				mustWrite(t, filepath.Join(f.checkout, "a.txt"), "red\n", 0o644)
-				return f
-			},
-			suffix:   callerCommit(faceRed),
-			contains: "repair each failure",
-			carry: map[int]func(*testing.T, commitSet){0: func(t *testing.T, f commitSet) {
-				mustWrite(t, filepath.Join(f.checkout, "a.txt"), "fixed\n", 0o644)
-			}},
-		},
+		red("", nil, gateScript),
+		red("lane", nil, laneCheck),
+		red("dry run", []string{"--dry-run"}, gateScript),
 		{
 			// The gate cannot open its lock until the fixture frees it.
 			face:   faceInfrastructure,
 			exit:   1,
-			suffix: callerCommit(faceInfrastructure),
+			suffix: rerun(faceInfrastructure),
 			build: func(t *testing.T) commitSet {
 				f := assignedCommitSet(t, faceInfrastructure, gateScript("exit 0"))
 				mustMkdirAll(t, adminPath(t, f.checkout, "bench-gate.lock"))
@@ -335,11 +359,25 @@ func commitFaceFixtures() []commitFaceFixture {
 			clear: func(t *testing.T, f commitSet) { mustRemove(t, adminPath(t, f.checkout, "bench-gate.lock")) },
 		},
 		{
+			// The caller names a.txt before it writes the file, so the named path is absent.
+			face:   faceNamedPath,
+			exit:   1,
+			suffix: rerun(faceNamedPath),
+			build: func(t *testing.T) commitSet {
+				f := assignedCommitSet(t, faceNamedPath, gateScript("exit 0"))
+				mustRemove(t, filepath.Join(f.checkout, "a.txt"))
+				return f
+			},
+			carry: map[int]func(*testing.T, commitSet){0: func(t *testing.T, f commitSet) {
+				mustWrite(t, filepath.Join(f.checkout, "a.txt"), "changed\n", 0o644)
+			}},
+		},
+		{
 			// A lane declaration that the loader cannot read has no repair the commit can
 			// name, so it hands back. The reviewer withdraws the declaration.
 			face:   faceHandback,
 			exit:   1,
-			suffix: callerCommit(faceHandback),
+			suffix: rerun(faceHandback),
 			build: func(t *testing.T) commitSet {
 				f := assignedCommitSet(t, faceHandback, gateScript("exit 0"))
 				mustWrite(t, filepath.Join(f.checkout, ".bench", "phases.json"), `{"lane":[{"name":"fmt","argv":[]}]}`, 0o644)

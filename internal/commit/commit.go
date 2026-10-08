@@ -112,11 +112,10 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 // as each becomes known. The exit code it returns is the verb's, so the record and the
 // shell agree about the same commit.
 func commitAttributed(measures *commitMeasures, root string, req request, stdout, stderr io.Writer) int {
-	// handback refuses a cause that no face of its own names.
-	handback := func(err error) int { return refuse(stderr, root, req, faceHandback, err.Error()) }
+	refused := func(err error) int { return refuse(stderr, root, req, landingFace(err), err.Error()) }
 	primary, err := git.IsPrimaryCheckout(root)
 	if err != nil {
-		return handback(errors.New("checkout identity is unknown"))
+		return refused(errors.New("checkout identity is unknown"))
 	}
 	if primary {
 		fmt.Fprintln(stderr, usage.PrimaryCheckoutRefusal())
@@ -131,18 +130,18 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 	}
 	expectedBytes, expectedErr := git.Raw("-C", root, "rev-parse", "--verify", "HEAD^{commit}")
 	if expectedErr != nil {
-		return handback(errors.New("destination has no commit base"))
+		return refused(errors.New("destination has no commit base"))
 	}
 
 	named, err := landing.ResolveAttributedPaths(root, strings.TrimSpace(string(expectedBytes)), req.paths)
 	if err != nil {
-		return handback(err)
+		return refused(err)
 	}
 	candidate, err := landing.CandidateTree(root, strings.TrimSpace(string(expectedBytes)), named)
-	if err == nil {
-		err = (commitrepo.Store{Root: root}).AuthorizeCandidate(candidate)
-	}
 	if err != nil {
+		return refused(err)
+	}
+	if err := (commitrepo.Store{Root: root}).AuthorizeCandidate(candidate); err != nil {
 		fmt.Fprintf(stderr, "error: commitment: %v\n", err)
 		return 1
 	}
@@ -155,12 +154,12 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 	// names the defect, because a lane nobody can read grades nothing.
 	lane, laneErr := gate.LaneForCommit(root)
 	if laneErr != nil {
-		return handback(laneErr)
+		return refused(laneErr)
 	}
 	if !req.dryRun {
 		formatted, formatErr := formatNamedGoFiles(root, named)
 		if formatErr != nil {
-			return handback(fmt.Errorf("format named Go files: %w", formatErr))
+			return refused(fmt.Errorf("format named Go files: %w", formatErr))
 		}
 		if len(formatted) > 0 {
 			shown := make([]string, len(formatted))
@@ -177,7 +176,7 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 	}
 	if req.dryRun {
 		if err := owner.DryRun(context.Background(), landingRequest); err != nil {
-			return refuse(stderr, root, req, landingFace(err), err.Error())
+			return refused(err)
 		}
 		// A lane pass is not green, and the lane already stated its own outcome, so the
 		// summary borrows neither the word nor a second verdict.
@@ -197,28 +196,29 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 		if errors.As(err, &remainder) {
 			return publicationRemainder(stdout, root, remainder)
 		}
-		return refuse(stderr, root, req, landingFace(err), err.Error())
+		return refused(err)
 	}
 	fmt.Fprintf(stdout, "committed %d path(s)\n", len(named))
 	return 0
 }
 
-// The commit's refusal faces. The shared registry declares each face, and a raising site
-// names the face it raises.
+// The commit's refusal faces. The shared registry declares each face.
 const (
 	facePublishedUnreconciled = "commit-published-unreconciled"
 	facePrimaryCheckout       = "commit-primary-checkout"
 	faceRed                   = "commit-red"
 	faceInfrastructure        = "commit-infrastructure"
+	faceNamedPath             = "commit-named-path"
 	faceHandback              = "commit-handback"
 )
 
-// landingFace picks the face of a refusal that the landing owner returned. The kind that
-// the gate attributed picks the face of an authorization refusal, and every other refusal
-// hands back.
+// landingFace picks the face of a refusal by its type: a named path that the caller corrects,
+// the attributed kind of an authorization refusal, or else the handback.
 func landingFace(err error) string {
 	var refused landing.AuthorizationRefusal
 	switch {
+	case errors.As(err, new(landing.NamedPathError)):
+		return faceNamedPath
 	case !errors.As(err, &refused):
 	case refused.Result.Kind == authorization.Infrastructure:
 		return faceInfrastructure
@@ -382,7 +382,7 @@ func formatNamedGoFiles(root string, named []string) ([]string, error) {
 		}
 		formatted, formatErr := format.Source(body)
 		if formatErr != nil {
-			return nil, fmt.Errorf("%q: %w", path, formatErr)
+			return nil, landing.NamedPathError{Err: fmt.Errorf("%q: %w", path, formatErr)}
 		}
 		if !bytes.Equal(body, formatted) {
 			edits = append(edits, edit{path: path, body: formatted, mode: info.Mode().Perm()})

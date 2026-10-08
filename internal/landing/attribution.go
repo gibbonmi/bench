@@ -21,21 +21,29 @@ func validRequest(r Request) error {
 	return nil
 }
 
+// NamedPathError is a refusal that the caller clears by correcting a path it named, or the
+// file at that path. It carries the cause, so a caller routes the refusal by the type and
+// never by the sentence.
+type NamedPathError struct{ Err error }
+
+func (e NamedPathError) Error() string { return e.Err.Error() }
+func (e NamedPathError) Unwrap() error { return e.Err }
+
 func attributedPaths(root, expected string, raw []string) ([]string, error) {
 	if len(raw) == 0 {
-		return nil, errors.New("at least one path is required")
+		return nil, NamedPathError{errors.New("at least one path is required")}
 	}
 	paths := make([]string, 0, len(raw))
 	for _, p := range raw {
 		rel, err := repositoryPath(root, p)
 		if err != nil {
-			return nil, err
+			return nil, NamedPathError{err}
 		}
 		if rel == "." || rel == "" {
-			return nil, errors.New("repository root is not an attributed path")
+			return nil, NamedPathError{errors.New("repository root is not an attributed path")}
 		}
 		if err := safePath(root, expected, rel); err != nil {
-			return nil, err
+			return nil, NamedPathError{err}
 		}
 		paths = append(paths, rel)
 	}
@@ -145,7 +153,7 @@ func compose(r Request, paths []string) (composedSnapshot, error) {
 	for _, path := range paths {
 		if err := indexRun(r.Root, idx, "add", "-A", "--", ":(literal)"+path); err != nil {
 			if !trackedAt(r.Root, r.Expected, path) {
-				return composedSnapshot{}, fmt.Errorf("named path %q not found in worktree, index, or expected base", path)
+				return composedSnapshot{}, NamedPathError{fmt.Errorf("named path %q not found in worktree, index, or expected base", path)}
 			}
 			return composedSnapshot{}, fmt.Errorf("compose attributed path %q: %w", path, err)
 		}

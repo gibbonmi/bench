@@ -142,7 +142,7 @@ func (o Owner) composeAuthorized(ctx context.Context, r Request) ([]string, comp
 		return nil, composedSnapshot{}, fmt.Errorf("read expected base tree: %w", err)
 	}
 	if snapshot.tree == baseTree {
-		return nil, composedSnapshot{}, errors.New("nothing to commit")
+		return nil, composedSnapshot{}, NamedPathError{errors.New("nothing to commit")}
 	}
 	if got := o.authorize(ctx, r.Root, snapshot.tree, r.Stdout, r.Stderr); !o.publishes.permits(got.Kind) {
 		return nil, composedSnapshot{}, AuthorizationRefusal{got}

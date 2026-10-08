@@ -41,6 +41,17 @@ var commitFaces = []Face{
 		Route:     []Step{doctor, commitRerun},
 	},
 	{
+		// A named path or the file at it does not compose: the path is absent, escapes the
+		// repository, or names nothing to commit, or the Go file does not parse. The caller
+		// corrects the paths or the files in its own worktree. The landing owns the sentence.
+		Verb:      Commit,
+		Name:      "commit-named-path",
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("correct the paths or the files that the refusal names")), commitRerun},
+	},
+	{
+		// A cause outside the agent's authority, such as a lane declaration that the loader
+		// cannot read: a change to the gate's own checks is the reviewer's.
 		Verb:      Commit,
 		Name:      "commit-handback",
 		Authority: Reviewer,
