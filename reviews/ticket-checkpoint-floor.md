@@ -6,6 +6,8 @@ Chunk TF-C1 used repair cycle 1 of 2 for S1, S2, S3, and C1. C1 is the one harde
 
 Round 2 confirmed those folds and found S5. Chunk TF-C1 uses repair cycle 2 of 2 for S5 through a fresh repair session for ticket 01. No reviewer extension exists. Under `--auto-approve`, the reviewer approved a fence expansion in advance. Round 3 confirmed the fold of S5 with 0 findings on every axis, so TF-C1 closes with both repair cycles used and no open finding.
 
+Chunk TF-C2 uses repair cycle 1 of 2 for S1, S2, C1, C2, C3, C4, and C6 through a fresh repair session for ticket 02. C1, C2, and C6 are the one hardening cycle of TF-C2. S1 widens the ticket 02 fence by `internal/gate/phases.go` under the `--auto-approve` fence approval.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -22,6 +24,12 @@ TF-C1 round 2: 1 finding, worst S5. The folds of S1, S2, and S3 hold.
 
 TF-C1 round 3: 0 findings. The fold of S5 holds.
 
+TF-C2 round 1: 3 findings, worst S1.
+
+- S1 (auto-fix, confidence 6): `internal/testreport/floor.go:32` repeats the gate's rule that a root holds a regular `go.mod` file (`internal/gate/phases.go:115`).
+- S2 (auto-fix, confidence 5): `floor.go:59-69` and `selection.go:231-241` each spell the rule that maps a path to its direct package.
+- S3 (no-op, confidence 3): the floor does not clean an entry path. A `Writes:` entry is already a clean repository path.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
@@ -31,6 +39,10 @@ Advice: the TF2 test runs the `--full` form of the command. The bare form keeps 
 TF-C1 round 2: 0 findings. TF1 to TF5 hold.
 
 TF-C1 round 3: 0 findings. TF1 to TF5 hold.
+
+TF-C2 round 1: 0 blocking findings. Every TF-C2 row holds.
+
+Advice: P1, `go.work` and `go.work.sum` also add `./...` because the floor reuses the `--changed` metadata rule. The final report flags this widening for reviewer veto. P2, a `go.mod` entry leaves the embed flag false, and only the whole-suite command satisfies its element. P3, the author return holds the probe reds of TF21 and TF22.
 
 ## Coverage
 
@@ -43,6 +55,16 @@ Advice: the empty-kit clause has no caller that passes an empty kit.
 TF-C1 round 2: 0 findings. The fold of C1 holds.
 
 TF-C1 round 3: 0 findings. The callers of `installCannedSelection` keep their behavior.
+
+TF-C2 round 1: 5 findings, worst C1.
+
+- C1 (auto-fix, confidence 8): `floor.go:40-43` has no test for the package-index error. A probe that drops the error stays green.
+- C2 (auto-fix, confidence 7): `floor.go:36-39` has no floor test for the loader error.
+- C3 (auto-fix, confidence 9): TF12 tests `go.mod` only, and story 11 also names `go.sum`.
+- C4 (auto-fix, confidence 7): no test sets the embed flag through a directory entry, which story 15 requires.
+- C6 (auto-fix, confidence 8): the refusal of a package outside the repository in `selection.go:54` has no test.
+
+Advice: C5, a `go.mod` that is a directory or a link. The S1 repair makes the floor read the gate's rule, so the gate decides it.
 
 ```bench-review-record
 {
@@ -727,7 +749,77 @@ TF-C1 round 3: 0 findings. The callers of `installCannedSelection` keep their be
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-standards-r1",
+          "performer": "claude:ft349_c2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de79880a3a9ded9103cc4c9f40afcdc21c7d3c5e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c2_standards",
+            "digest": "sha256:f1bda59133e9b0beb5e57555680794f79081ac2ea191d34ada0cb692820a762b",
+            "excerpt": "Standards axis TF-C2 round 1 (opus/high), ticket diff 773775a3..b9bf693e. 3 findings, worst S1.\nS1 blocking floor.go:32 own go.mod regular-file check repeats the gate's unexported isRegularFile rule (internal/gate/phases.go:115, :343). auto-fix: export one gate predicate. conf 6.\nS2 advisory floor.go:59-69 and selection.go:231-241 each spell the path-to-direct-package rule; only the maps are shared. auto-fix: one packageIndex lookup. conf 5.\nS3 advisory floor does not Clean entries as selection.go:133 does. no-op. conf 3.\nisGoMetadata reuse for go.work: no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+          "tip": "b9bf693e55636a0ef9331cf9226e75f14862fcda",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec-r1",
+          "performer": "claude:ft349_c2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de79880a3a9ded9103cc4c9f40afcdc21c7d3c5e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c2_spec",
+            "digest": "sha256:1f55009a14a23d503a9181f9313c7ad4d8070a4ea0700128b8b46d2699391385",
+            "excerpt": "Spec axis TF-C2 round 1 (opus/high), ticket diff 773775a3..b9bf693e. All 14 rows and Request.Changed() implemented. 3 advisory findings, 0 blocking.\nP1 floor.go:55 isGoMetadata also maps go.work and go.work.sum to ./...; spec.md:134 names go.mod and go.sum. accept; flag for reviewer veto. no-op. conf 8.\nP2 floor.go:54-57 a go.mod entry leaves Embed false. no-op. conf 3.\nP3 no recorded probe red for TF21 and TF22 in the record. ask-user. conf 4.\n"
+          },
+          "axis": "Spec",
+          "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+          "tip": "b9bf693e55636a0ef9331cf9226e75f14862fcda",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage-r1",
+          "performer": "claude:ft349_c2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de79880a3a9ded9103cc4c9f40afcdc21c7d3c5e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c2_coverage",
+            "digest": "sha256:39e2d35353756cd520fdb39b5e53e88aa12532256f2665ac4acb85ea3e09ce4f",
+            "excerpt": "Coverage axis TF-C2 round 1 (opus/high), ticket diff 773775a3..b9bf693e. 6 probes, all silent, all restored=yes. 6 advisory findings; worst C1.\nC1 floor.go:40-43 newPackageIndex error swallowed -> silent. auto-fix: floor test with a package Dir outside root. conf 8.\nC2 floor.go:36-39 loader error swallowed -> silent. no-op if TF45 fails through WritesFloor, else auto-fix. conf 7.\nC3 floor.go:55 isGoMetadata -> entryPath == \"go.mod\" silent; TF12 tests go.mod only. auto-fix: add go.sum. conf 9.\nC4 floor.go:70-73 directory loop add -> selected[...]=true silent; embed flag for a directory entry untested. auto-fix. conf 7.\nC5 floor.go:32 IsRegular swap silent; go.mod directory or symlink undecided. ask-user. conf 6.\nC6 selection.go:54 outside-repository refusal untested (predates this change). auto-fix with C1. conf 8.\n"
+          },
+          "axis": "Coverage",
+          "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+          "tip": "b9bf693e55636a0ef9331cf9226e75f14862fcda",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
