@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Verb output fixes
+
+- Changed `bench gate-prose` so that a path on the prose exclusion list gets the verdict `excluded`, not `pass`. A pass row now means that the gate graded the path.
+- Changed `bench release --help` and `bench upgrade --help` so that each prints its usage line on stdout and exits 0. `bench upgrade` now refuses a repeated flag, such as `--check --check`, as a usage error.
+
 ### Platform assessment
 
 - Changed `/bench-assess` so that it holds the maintenance assessment method, which a Codex-only skill held before. The changes are:

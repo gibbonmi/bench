@@ -164,6 +164,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT400 (MEDIUM, decision required) — a ticket author near 300k context tokens finishes its ticket, and a fresh recorded session takes later work.**
 
+**FT403 (MEDIUM) — a review axis sweeps for each variant of a held finding and checks every registry of an extended family.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -195,6 +197,8 @@ and the small cuts. The rows below hold the rest.
 **FT394 (LOW) — `bench learning` links a landed fix to the open entry that it resolves.**
 
 **FT402 (MEDIUM, decision required) — the landing gate costs less time and keeps its failure detection.**
+
+**FT404 (LOW, decision required) — each conformance check states the scope that its detector grades.**
 
 ## Release qualification
 
