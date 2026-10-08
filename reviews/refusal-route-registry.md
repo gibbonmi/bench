@@ -2453,6 +2453,80 @@
             "C3-5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "r-c3-r1-standards",
+          "performer": "claude:ft393_c3_r1_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9b3f091957045d14435a1efab24b54f1f2b92f97",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c3_r1_standards",
+            "digest": "sha256:7cf8e67362461228260234cc9b9c9a625c9b69f2b2614df4f7006f844001cf38",
+            "excerpt": "RR-C3 confirming round, Standards (claude:ft393_c3_r1_standards): evidence current=true. C3-S1, C3-S2, C3-S4 confirmed. 2 findings, 1 blocking.\nC3-RS1 advisory internal/refusalroute/faces_commit.go:53-54: the malformed lane declaration stays in commit-handback under a comment rule (\"a change to the gate's own checks is the reviewer's\") that the spec Authority section does not state. ask-user: amend the spec or move the cause. conf 6\nC3-RS2 blocking internal/landing/gitexec.go:19 with internal/commit/commit.go:216-226: the compare-and-swap refusal says \"rerun the landing\" but routes to commit-handback; a rerun-only agent face is the clean fit. ask-user. conf 6\nConcern 3: not a gap. Concern 4: routetest reusable as it stands.\nAdvice: reviewerRoute forwarder; the carry closure repeats in four drivers; Words rejects \"<\"; mixed NamedPathError literal forms; table test placement.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "tip": "0d0e0c1f2d9319b69ccd954eba83374fa7747327",
+          "finding_ids": [
+            "C3-RS1",
+            "C3-RS2"
+          ],
+          "supersedes": [
+            "r-c3-standards"
+          ]
+        },
+        {
+          "id": "r-c3-r1-spec",
+          "performer": "claude:ft393_c3_r1_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9b3f091957045d14435a1efab24b54f1f2b92f97",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c3_r1_spec",
+            "digest": "sha256:6091acdb11e8683291e88664a785c6ace53305e7f2521aac44ded570f37644b8",
+            "excerpt": "RR-C3 confirming round, Spec (claude:ft393_c3_r1_spec): evidence current=true. All folds confirmed for named-path causes. 2 findings, 1 blocking.\nC3-RP1 blocking internal/landing/gitexec.go:19 with internal/commit/commit.go:228: the compare-and-swap refusal falls to the reviewer handback; the Authority rule makes it an agent cause; it has no typed signal. ask-user (face and type). conf 6\nC3-RP2 advisory spec.md:1060 and ticket 09 line 32: RR36 says exactly one producing fixture per face; commit-red now has three. auto-fix plan wording. conf 7\nAdvice: name gate-check edits in the Authority list; commit-named-path is absent from the face table; concern 3 not a gap; concern 4 routetest reusable.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "tip": "0d0e0c1f2d9319b69ccd954eba83374fa7747327",
+          "finding_ids": [
+            "C3-RP1",
+            "C3-RP2"
+          ],
+          "supersedes": [
+            "r-c3-spec"
+          ]
+        },
+        {
+          "id": "r-c3-r1-coverage",
+          "performer": "claude:ft393_c3_r1_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9b3f091957045d14435a1efab24b54f1f2b92f97",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c3_r1_coverage",
+            "digest": "sha256:29e10f8e695ad99d134109f47bc27d2ada5d01cb68de0ca34617711e6fb203dd",
+            "excerpt": "RR-C3 confirming round, Coverage (claude:ft393_c3_r1_coverage): evidence current=true. All folds confirmed for named paths. 1 finding, blocking.\nC3-RC1 blocking internal/landing/gitexec.go:19 and internal/commit/commit.go:219-228: the compare-and-swap refusal tells the caller to rerun, but its plain error routes to commit-handback; the spec Authority rule makes a cause that a Bench verb clears an agent cause (precedent checkpoint-tip-moved). No fixture covers it. ask-user (face choice). conf 6\nConcern 1: no finding; the gate invariant supports the malformed lane in handback; the spec should name the cause. advisory.\nConcern 4: routetest is reusable as it stands.\nAdvice: the wrap \"at least one path is required\" is unreachable through the commit and no mutation turns it red; spec.md:218-221 does not list commit-named-path.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "tip": "0d0e0c1f2d9319b69ccd954eba83374fa7747327",
+          "finding_ids": [
+            "C3-RC1"
+          ],
+          "supersedes": [
+            "r-c3-coverage"
+          ]
         }
       ]
     }
@@ -2836,3 +2910,14 @@ The repair sessions ran the debug step and stated these causes before their fixe
 | C3-5 | No fixture covered a commit that no assignment owns; the code already printed `<label>`. | A `bench probe` on the owner label. |
 
 The ticket 09 repair keeps the malformed lane declaration in `commit-handback`, because an agent edit of a gate check is the reviewer's call.
+
+### RR-C3 confirming round
+
+The confirming round confirmed every fold for the named-path causes, and it returned one blocking cause on all three axes.
+
+- C3-RC1, C3-RS2, C3-RP1, auto-fix, confidence 6: the compare-and-swap refusal of the landing commit tells the caller to rerun, but it routes to `commit-handback`. A rerun clears it inside the agent's own worktree, so it takes the agent face `commit-tip-moved` with the rerun route, as `checkpoint-tip-moved` does. The landing package gives it a typed signal. Ticket 09 repair, cycle 2.
+- C3-RS1, auto-fix, confidence 6: the spec Authority section now names an edit of a gate check, such as the lane declaration, as a reviewer cause. Plan correction, flagged for reviewer veto.
+- C3-RP2, auto-fix, confidence 7: RR36 and the ticket 09 row now say one producing fixture for each face and cause. Plan correction.
+
+The face table now lists `commit-named-path` and `commit-tip-moved`.
+RR-C3 repair cycle 2 is the last cycle that the bounded repair policy allows without a reviewer extension.
