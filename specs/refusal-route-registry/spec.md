@@ -232,7 +232,9 @@ These faces and routes are required.
 | commitment | `commitment-verify-evidence` | agent | `bench commitment verify --milestone <id> --evidence <file>` |
 | commitment | `commitment-decision` | reviewer | `bench commitment plan --input <file>` |
 | commitment | `commitment-unbound` | agent | `bench commitment start --outcome <id> --request <request> --deliverable <path>` |
-| commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then the printing verb's re-run that carries `<ticket>`: a commit names it among its paths, and a landing commits it first |
+| commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then `bench commit --in <label> -m <msg> -- <ticket>`; then the re-run at the repaired source |
+| commitment | `commitment-light-path-spec` | agent | the landing re-run with `--spec <slug>` |
+| commitment | `commitment-light-path-span` | agent | commit the paths of one light-path ticket at a time; then `bench commit --in <label> -m <msg> -- <path>...` |
 | commitment | `commitment-run-unknown` | agent | `bench commitment inventory` |
 | commitment | `commitment-handback` | reviewer | clear the cause that the refusal names; then the re-run |
 
@@ -1255,6 +1257,7 @@ The prospective build owns these exact paths:
 - `internal/commit/commitment_route_test.go`
 - `internal/commitment/commitmenttest/admission.go`
 - `internal/commitment/commitmenttest/repo.go`
+- `internal/worktree/land.go`
 - `internal/refusalroute/routetest/routetest_test.go`
 - `internal/landing/attribution.go`
 - `internal/landing/gitexec.go`
