@@ -2246,7 +2246,85 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "r-c3-standards",
+          "performer": "claude:ft393_c3_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "07c190e3138ef94b2670f6584dadfbc5aa70464e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c3_standards",
+            "digest": "sha256:0d0fb09c53fecd11c3e0aafec8737441ec98032b4a64b50549088e82f2ec38ef",
+            "excerpt": "RR-C3 Standards (claude:ft393_c3_standards): evidence current=true. 4 findings, 1 blocking.\nC3-S1 blocking internal/commit/refusal_route_test.go:99-221 repeats the worktree route-walk harness (marker split, step count, carry-or-run, simple-command check, doctor exemption); tickets 10-12 would add more copies. ask-user (new shared seam). conf 7\nC3-S2 advisory internal/worktree/land_rerun.go:43-50 landingRerunArg repeats the quote-or-placeholder rule that refusalroute.Arg exports. auto-fix with a plan commit. conf 7\nC3-S3 advisory usage.WorktreeCreate and faces_commit.go:26 derive the create command twice; the primary-checkout output names it twice. ask-user. conf 5\nC3-S4 advisory spec line 178 says next= is on the stderr refusal line; the code and RR37 print its own line. auto-fix the spec text. conf 6\nWorst: C3-S1. Implementation command contributed to C3-S1: the plan names no shared route-walk seam.\n"
+          },
+          "axis": "Standards",
+          "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "tip": "5f14753f5c9f20414b1da8c4e0a7e45074dd4093",
+          "finding_ids": [
+            "C3-S1",
+            "C3-S2",
+            "C3-S3",
+            "C3-S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c3-spec",
+          "performer": "claude:ft393_c3_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "07c190e3138ef94b2670f6584dadfbc5aa70464e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c3_spec",
+            "digest": "sha256:01cc07ad2af8eedbb580a5f6c2fd636b7bceec04b7abf97bf6016dbea827151f",
+            "excerpt": "RR-C3 Spec (claude:ft393_c3_spec): evidence current=true. Rows RR32 to RR38 each map to a test in the delta. 5 findings, 1 blocking.\nC3-P1 blocking internal/commit/commit.go:116-200 landingFace sends every non-authorization landing error to the reviewer handback, including causes an agent clears alone (a missing named path, untracked content, a Go format error). ask-user. conf 6\nC3-P2 advisory commit.go:122-123 and usage/worktree.go:65 the primary-checkout output names the create route twice, from two sources. ask-user. conf 6\nC3-P3 advisory internal/commit/refusal_route_test.go:471-571 re-implements the worktree route-walk helpers. auto-fix. conf 7\nC3-P4 advisory internal/worktree/land_rerun.go:45-50 landingRerunArg copies the rule that refusalroute.Arg exports. auto-fix. conf 6\nC3-P5 advisory commit.go:235-247 the rerun has no hostile-argument test (dry-run, preflight-build, multi-line message, control byte, no-assignment label). auto-fix. conf 7\nItem (b) next= on its own stderr line: no-op. Worst: C3-P1. Implementation command contributed to C3-P3.\n"
+          },
+          "axis": "Spec",
+          "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "tip": "5f14753f5c9f20414b1da8c4e0a7e45074dd4093",
+          "finding_ids": [
+            "C3-P1",
+            "C3-P2",
+            "C3-P3",
+            "C3-P4",
+            "C3-P5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c3-coverage",
+          "performer": "claude:ft393_c3_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "07c190e3138ef94b2670f6584dadfbc5aa70464e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c3_coverage",
+            "digest": "sha256:b499b0b5054bc0ae1e299f716e526908af12020d1f1e67d3377503387d31eac1",
+            "excerpt": "RR-C3 Coverage (claude:ft393_c3_coverage): evidence current=true. 5 findings, all advisory.\nC3-1 advisory internal/commit/commit.go:238-247 the rerun arms (--dry-run, --preflight-build, msg and path placeholders) have no fixture; all fixtures run -m m -- a.txt. auto-fix. conf 7\nC3-2 advisory commit.go:116-163 and landing/attribution.go agent-clearable causes route to the reviewer handback; no decision records it. ask-user. conf 5\nC3-3 advisory internal/commit/refusal_route_test.go:100-106 the walk keys on Faces(Commit) only; ticket 11 widens it. no-op. conf 6\nC3-4 advisory commit.go:219-228 no lane-red or dry-run red fixture reaches commit-red. auto-fix. conf 6\nC3-5 advisory commit.go:236 no fixture covers the no-assignment <label> placeholder. auto-fix. conf 5\nWorst: C3-2. Implementation command: no finding traced to it.\n"
+          },
+          "axis": "Coverage",
+          "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "tip": "5f14753f5c9f20414b1da8c4e0a7e45074dd4093",
+          "finding_ids": [
+            "C3-1",
+            "C3-2",
+            "C3-3",
+            "C3-4",
+            "C3-5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2557,3 +2635,39 @@ The confirming round asked for the red verdict after each fix (C2-RC1). The repa
 | C2-6 | The `case LeaseUnknown:` arm is removed. | `bit`: the release exited 0 |
 | C2-P4 | The absent arm of `planLandedAssignment` is disabled. | `bit`: the absent sibling stays active |
 | C2-P5 (list) | The help row reads the landed cell again. | `bit`, the leased landed row failed |
+
+## RR-C3 pickup
+
+The RR-C3 review returned 14 findings, and two of them are blocking.
+The findings collapse to repair targets in tickets 08 and 09, and to one plan correction.
+Each repair session runs the debug step and states the diagnosed cause before its fix.
+The ticket 08 repair runs first, because the ticket 09 repair builds on its shared walk.
+
+### Standards
+
+Count: 4. Worst issue: C3-S1, the route-walk harness that the commit tests repeat.
+
+- C3-S1, auto-fix, confidence 7: one shared test package, `internal/refusalroute/routetest`, holds the route walk, and the worktree and commit walks use it. Ticket 08 repair.
+- C3-S2, auto-fix, confidence 7: `landingRerunArg` uses `refusalroute.Arg` and keeps no copy of its rule. Ticket 08 repair.
+- C3-S3, no-op, confidence 5: the usage grammar and the face route are two facts, and the spec fixes that the face declares no sentence. Flagged for reviewer veto.
+- C3-S4, auto-fix, confidence 6: the spec states that the commit prints `next=` on its own stderr line after the refusal sentence. Plan correction.
+
+### Spec
+
+Count: 5. Worst issue: C3-P1, the agent-clearable causes that route to the reviewer.
+
+- C3-P1, auto-fix, confidence 6: each landing cause that an agent clears with its own edits takes an agent face, by the spec authority rule. The handback keeps only causes outside agent authority. Ticket 09 repair.
+- C3-P2, no-op, confidence 6: the same item as C3-S3.
+- C3-P3, auto-fix, confidence 7: the same target as C3-S1. Ticket 08 repair.
+- C3-P4, auto-fix, confidence 6: the same target as C3-S2. Ticket 08 repair.
+- C3-P5, auto-fix, confidence 7: hostile-argument rows hold the commit rerun. Ticket 09 repair.
+
+### Coverage
+
+Count: 5. Worst issue: C3-2, the same item as C3-P1.
+
+- C3-1, auto-fix, confidence 7: the same target as C3-P5, with rows for `--dry-run`, `--preflight-build`, a multi-line message, and an unsafe path. Ticket 09 repair.
+- C3-2, auto-fix, confidence 5: the same target as C3-P1. Ticket 09 repair.
+- C3-3, no-op, confidence 6: ticket 11 widens the commit walk to the commitment faces.
+- C3-4, auto-fix, confidence 6: a lane-red fixture and a dry-run red fixture reach `commit-red`. Ticket 09 repair.
+- C3-5, auto-fix, confidence 5: a fixture with no owning assignment prints the `<label>` placeholder. Ticket 09 repair.
