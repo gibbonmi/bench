@@ -2809,7 +2809,87 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "r-c4-standards",
+          "performer": "claude:ft393_c4_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8b17934c6d79e6c796068437f724283b0a90bee6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c4_standards",
+            "digest": "sha256:421220a21bcca72ee612f67991eebae4b73e6242254dd7ff8bfc104b63fd54d4",
+            "excerpt": "RR-C4 Standards (claude:ft393_c4_standards): evidence current=true. 6 findings, all advisory.\nC4-S1 advisory internal/gate/checkpoint.go:149: the forced --fresh rerun rule is derived in gate code and in the face comment and spec row. ask-user. conf 6\nC4-S2 advisory internal/gate/checkpoint.go:103-105,203: completionProofError wraps capture faults that its doc excludes; they route to the reviewer handback. ask-user. conf 7\nC4-S3 advisory internal/gate/refusal_route_test.go:612-617, run_outcomes_test.go:195-196: three copies of the next= line reader beside routetest. auto-fix. conf 6\nC4-S4 advisory internal/gate/checkpoint.go:158-172: a rerun with no arguments renders <arguments>, a placeholder the agent cannot fill. ask-user. conf 4\nC4-S5 advisory specs/native-record-operations/spec.md:176 cites the deleted gate.routedRefusal. ask-user. conf 6\nC4-S6 advisory gate test comments carry RR row ids; the tree convention is mixed. ask-user. conf 5\nWorst: C4-S2. Implementation command contributed to C4-S1 and C4-S3.\n"
+          },
+          "axis": "Standards",
+          "base": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+          "tip": "7879b23afb093bf754886394774b2193e4347968",
+          "finding_ids": [
+            "C4-S1",
+            "C4-S2",
+            "C4-S3",
+            "C4-S4",
+            "C4-S5",
+            "C4-S6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c4-spec",
+          "performer": "claude:ft393_c4_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8b17934c6d79e6c796068437f724283b0a90bee6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c4_spec",
+            "digest": "sha256:93a63a3dffa6833548a1e8e5711ff5f94bd535260cf2b3c4cfbd359ede8b7889",
+            "excerpt": "RR-C4 Spec (claude:ft393_c4_spec): evidence current=true. Rows RR39-RR44, RR66, RR68 each map to code and an assertion. 4 findings, all advisory.\nC4-P1 advisory internal/gate/checkpoint.go:198-200 with completion.go:37-44: completionProofError routes capture and read faults to gate-handback; spec line 306 gives them checkpoint-subject-unavailable. ask-user (completion.go outside the fence). conf 7\nC4-P2 advisory internal/gate/engine.go:55: the \"prospective gate subject unavailable\" refusal prints no next=; spec line 306 and story 34 apply. ask-user (engine.go outside the fence). conf 6\nC4-P3 advisory internal/refusalroute/faces_gate.go:14: Composed(FactSlug) prints a hostile slug unquoted; the edge inventory requires quoted path facts. ask-user. conf 6\nC4-P4 advisory internal/gate/checkpoint.go:114-126: refuse prints a gate next= inside land and commit authorization runs; story 35 asks for one route per refusal; pre-existing. ask-user. conf 6\nAuthor items (a) and (b): no-op. Worst: C4-P1. Implementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+          "tip": "7879b23afb093bf754886394774b2193e4347968",
+          "finding_ids": [
+            "C4-P1",
+            "C4-P2",
+            "C4-P3",
+            "C4-P4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c4-coverage",
+          "performer": "claude:ft393_c4_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8b17934c6d79e6c796068437f724283b0a90bee6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c4_coverage",
+            "digest": "sha256:fe519c28844995e2c22a9842fa1105df0f5cc4b8754cd82c265cfb295855f6db",
+            "excerpt": "RR-C4 Coverage (claude:ft393_c4_coverage): evidence current=true. Rows RR39-RR44, RR66, RR68 each map to a test that asserts the row text. 6 findings, 1 blocking.\nC4-1 advisory internal/refusalroute/faces_gate.go: the slug renders unquoted through Composed(FactSlug); no test renders a hostile slug, spec path, or chunk id. auto-fix. conf 7\nC4-2 blocking internal/gate/checkpoint.go:142-153: a funnel refusal inside a land or commit authorization run prints a gate next= (for a tickets-only landing, bench gate --in <label> <arguments>) that the caller does not run, before the caller's own route. ask-user. conf 6\nC4-3 advisory internal/gate/checkpoint.go:201-203: completionProofError routes capture faults to the reviewer handback; no test injects one. ask-user. conf 6\nC4-4 advisory internal/gate/engine.go:53-56: prospective gate subject unavailable prints no route; spec line 1147 may cover it. ask-user. conf 5\nC4-5 advisory internal/gate/checkpoint.go:149: the mode == forceRun term has no test. auto-fix. conf 6\nC4-6 advisory internal/gate/refusal_route_test.go:544: the handback and tip-moved walks pass with no repair. no-op. conf 4\nWorst: C4-2. Implementation command contributed to C4-2, C4-3, C4-4: a ticket that adds a printed route to a shared funnel needs a consumer sweep of its callers.\n"
+          },
+          "axis": "Coverage",
+          "base": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+          "tip": "7879b23afb093bf754886394774b2193e4347968",
+          "finding_ids": [
+            "C4-1",
+            "C4-2",
+            "C4-3",
+            "C4-4",
+            "C4-5",
+            "C4-6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3249,3 +3329,40 @@ The repair session ran the debug step and stated this cause before its fix.
 | C3-RC1, C3-RS2, C3-RP1 | `destinationUpdateFailure` returned the compare-and-swap refusal as an untyped error, so `landingFace` had no type to select and the refusal fell to `commit-handback`. | The `commit-tip-moved` walk fixture printed the reviewer handback route before the fix. |
 
 A `bench probe` that removed the typed wrap after the fix returned `bit`: the fixture printed the reviewer handback route again.
+
+## RR-C4 pickup
+
+The RR-C4 review returned 16 findings, and Coverage marked one of them blocking.
+The findings collapse to repair targets in ticket 10 and to two plan corrections.
+The repair session runs the debug step and states the diagnosed cause before its fix.
+
+### Standards
+
+Count: 6. Worst issue: C4-S2, the capture faults that route to the reviewer handback.
+
+- C4-S1, no-op, confidence 6: the raising site owns the forced `--fresh` rerun. The registry has no optional word.
+- C4-S2, auto-fix, confidence 7: `completionTree` splits capture and read faults from proof faults, and only a proof fault takes `gate-handback`. Ticket 10 repair.
+- C4-S3, auto-fix, confidence 6: `routetest` owns the `next=` line reader, and the gate and commit tests use it. Ticket 10 repair.
+- C4-S4, auto-fix, confidence 4: no route prints the `<arguments>` placeholder for a rerun that has no arguments. Ticket 10 repair, with C4-2.
+- C4-S5, no-op, confidence 6: the staged native-record-operations spec cites a deleted symbol; its own staleness pass corrects the citation. A learning records it.
+- C4-S6, auto-fix, confidence 5: the new gate test comments drop the spec row ids. Ticket 10 repair.
+
+### Spec
+
+Count: 4. Worst issue: C4-P1, the same cause as C4-S2.
+
+- C4-P1, auto-fix, confidence 7: the same target as C4-S2. Ticket 10 repair.
+- C4-P2, no-op, confidence 6: the engine refusal serves every gate run. The spec won't-handle row for run-state refusals covers it.
+- C4-P3, auto-fix, confidence 6: the slug renders through a quoted fact, and RR40 now reads `next=bench preflight review 'example'`. Ticket 10 repair and plan correction.
+- C4-P4, auto-fix, confidence 6: the same target as C4-2. Ticket 10 repair.
+
+### Coverage
+
+Count: 6. Worst issue: C4-2, the gate route inside a land or commit authorization run.
+
+- C4-1, auto-fix, confidence 7: the same target as C4-P3, with fixtures for a hostile slug, spec path, and chunk id. Ticket 10 repair.
+- C4-2, auto-fix, confidence 6: a funnel refusal inside a land or commit run prints no gate route. The calling verb prints the one route (story 35). A test drives such a run and counts one `next=` line. Ticket 10 repair.
+- C4-3, auto-fix, confidence 6: the same target as C4-S2, with a test that injects a capture fault. Ticket 10 repair.
+- C4-4, no-op, confidence 5: the same item as C4-P2.
+- C4-5, auto-fix, confidence 6: a fixture runs a refused `--fresh` checkpoint and holds `--fresh` in the rerun. Ticket 10 repair.
+- C4-6, no-op, confidence 4: the handback and tip-moved walks need no repair step by their nature.
