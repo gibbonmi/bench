@@ -1,7 +1,7 @@
 # Route each checkpoint refusal by its cause
 
 Blocked by: 09-route-each-commit-refusal-through-the-registry.md
-Writes: internal/refusalroute/registry.go (new), internal/gate/checkpoint.go, internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/complete_checkpoint.go, internal/gate/complete_checkpoint_test.go, internal/gate/run_outcomes_test.go, internal/gate/review_checkpoint_test.go, internal/gate/refusal_route_test.go (new), internal/refusalroute/faces_gate.go (new)
+Writes: internal/refusalroute/registry.go (new), internal/gate/checkpoint.go, internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/complete_checkpoint.go, internal/gate/complete_checkpoint_test.go, internal/gate/run_outcomes_test.go, internal/gate/review_checkpoint_test.go, internal/gate/refusal_route_test.go (new), internal/refusalroute/faces_gate.go (new), internal/gate/completion.go, internal/gate/engine.go, internal/gate/authorization/authorization.go, internal/refusalroute/routetest/routetest.go, internal/refusalroute/routetest/routetest_test.go, internal/commit/refusal_route_test.go
 Covers: RR39, RR40, RR41, RR42, RR43, RR44, RR66, RR68
 
 ## What to build
@@ -33,7 +33,7 @@ The walk test uses the shared route walk in `internal/refusalroute/routetest` an
 
 ## Acceptance
 
-- [ ] A checkpoint refusal for a missing completion record prints `next=bench preflight review example` and no `help[1]{cmd,why}` row.
+- [ ] A checkpoint refusal for a missing completion record prints `next=bench preflight review 'example'` and no `help[1]{cmd,why}` row.
 - [ ] A complete checkpoint with an uncommitted tracked edit prints `cleanCheckoutRefusal` and a `next=` route that contains `bench commit --in `.
 - [ ] A complete checkpoint on a dirty assignment checkout prints a `next=` route that contains the assignment label after `--in `.
 - [ ] A complete checkpoint on a spec with no `Status: staged` line prints a `next=` value that starts with `reviewer: `.

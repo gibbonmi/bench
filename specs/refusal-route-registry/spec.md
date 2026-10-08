@@ -1007,6 +1007,18 @@ The orchestrator records each author session before that author's dispatch.
           "trigger": "user-directed",
           "stopped": "the ticket 10 author passed the 300k context rule after its commit and has no live child",
           "preserved": "c53a2da583101247595f4d6806f6df5d68be9609"
+        },
+        {
+          "session": "claude:ft393_t10_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "61952037e487cb3aeea87b5055d4ac0193fb824a",
+          "native_ref": "claude-agent:ft393_t10_repair1",
+          "predecessor": "claude:ft393_t10b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 10 verification session reported its RR-C4 records and has no live child",
+          "preserved": "429a3d8af4ac5aa227cd705085ef138c58247aac"
         }
       ],
       "11-route-the-commitment-policy-refusals-through-faces.md": [],
@@ -1097,7 +1109,7 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR37 | 30 | A red commit refusal prints a `next=` line on stderr whose route ends with the caller's commit command | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The current `inherited` refusal prints only `run bench gate --fresh`, which re-grades the same red |
 | RR38 | 30 | A commit in the primary checkout prints a `next=` route that contains `bench worktree create --request` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | A refusal that keeps its route only inside the sentence bypasses the registry |
 | RR39 | 31 | A checkpoint refusal for a missing completion record prints no `help[1]{cmd,why}` row | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | This is the FT330 defect: the fixed write-access row prints for every cause |
-| RR40 | 32 | A checkpoint refusal for a missing completion record prints `next=bench preflight review example` | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | The move to the registry drops the current evidence route |
+| RR40 | 32 | A checkpoint refusal for a missing completion record prints `next=bench preflight review 'example'` | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | The move to the registry drops the current evidence route |
 | RR41 | 33 | A complete checkpoint with an uncommitted tracked edit prints `cleanCheckoutRefusal` and a `next=` route that contains `bench commit --in ` | `internal/gate/complete_checkpoint_test.go` (`TestCompleteCheckpointRefusesADirtyCheckout`) | The landed refusal names its recovery only in prose and prints no `next=` |
 | RR68 | 33 | A complete checkpoint on a dirty assignment checkout prints a `next=` route that contains the assignment label after `--in ` | planned TestCheckpointFacesFollowTheirRoutes in internal/gate/refusal_route_test.go | A route that keeps the `<label>` placeholder where an assignment owns the root makes the agent look up its own label |
 | RR66 | 31 | A complete checkpoint on a spec with no `Status: staged` line prints a `next=` value that starts with `reviewer: ` | `internal/gate/complete_checkpoint_test.go` (`TestCompleteCheckpointRefusesAnUntransformableSpec`) | The compose refusal prints through `operational` with no route today |
@@ -1189,6 +1201,9 @@ The prospective build owns these exact paths:
 - `internal/worktree/list_actions_test.go`
 - `internal/landing/landing_test.go`
 - `internal/refusalroute/routetest/routetest.go`
+- `internal/gate/completion.go`
+- `internal/gate/engine.go`
+- `internal/gate/authorization/authorization.go`
 - `internal/refusalroute/routetest/routetest_test.go`
 - `internal/landing/attribution.go`
 - `internal/landing/gitexec.go`
