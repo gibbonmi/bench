@@ -1031,7 +1031,16 @@ The orchestrator records each author session before that author's dispatch.
           "native_ref": "claude-agent:ft393_t11"
         }
       ],
-      "12-print-the-commitment-verb-routes-from-the-registry.md": [],
+      "12-print-the-commitment-verb-routes-from-the-registry.md": [
+        {
+          "session": "claude:ft393_t12",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "4cf6e4721b89fbcc06fdff9254442f3d95f18434",
+          "native_ref": "claude-agent:ft393_t12"
+        }
+      ],
       "13-refuse-a-route-literal-outside-the-registry.md": []
     }
   }
