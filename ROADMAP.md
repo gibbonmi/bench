@@ -150,8 +150,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT381 (MEDIUM, decision required) — a delegated full run has decided risk classes, repair routing, and author-replacement records.**
 
-**FT378 (MEDIUM, decision required) — known issues and their workarounds have one tracked owner that each delegate charge reads.**
-
 **FT384 (MEDIUM, decision required) — legacy closure and the production path check share one scope matcher.**
 
 **FT386 (LOW, decision required) — the spec stage proposes a split above a row or ticket threshold.**
