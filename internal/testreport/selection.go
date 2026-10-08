@@ -25,9 +25,43 @@ type listedPackage struct {
 	Imports         []string
 	TestImports     []string
 	XTestImports    []string
+	EmbedPatterns   []string
 	EmbedFiles      []string
 	TestEmbedFiles  []string
 	XTestEmbedFiles []string
+}
+
+// packageIndex is the one path-to-package map of the current package graph. The
+// `--changed` selection and the ticket floor both read it.
+type packageIndex struct {
+	// byDirectory maps a slash-spelled directory, relative to the root, to its import path.
+	byDirectory map[string]string
+	// byEmbed maps a slash-spelled embed file of any class, relative to the root, to the
+	// import path of its owner.
+	byEmbed map[string]string
+	// byImport maps an import path to its package, which holds its embed patterns.
+	byImport map[string]listedPackage
+}
+
+func newPackageIndex(root string, packages []listedPackage) (packageIndex, error) {
+	index := packageIndex{
+		byDirectory: make(map[string]string, len(packages)),
+		byEmbed:     make(map[string]string),
+		byImport:    make(map[string]listedPackage, len(packages)),
+	}
+	for _, pkg := range packages {
+		directory, err := filepath.Rel(root, pkg.Dir)
+		if err != nil || directory == ".." || strings.HasPrefix(directory, ".."+string(filepath.Separator)) {
+			return packageIndex{}, fmt.Errorf("go list returned a package outside the repository")
+		}
+		directory = filepath.ToSlash(directory)
+		index.byDirectory[directory] = pkg.ImportPath
+		index.byImport[pkg.ImportPath] = pkg
+		for _, name := range append(append(append([]string{}, pkg.EmbedFiles...), pkg.TestEmbedFiles...), pkg.XTestEmbedFiles...) {
+			index.byEmbed[filepath.ToSlash(filepath.Join(directory, name))] = pkg.ImportPath
+		}
+	}
+	return index, nil
 }
 
 var listCurrentPackages = currentPackages
@@ -170,21 +204,11 @@ func currentPackagesWithEnvironment(ctx context.Context, root string, env []stri
 }
 
 func selectCurrentPackages(root string, packages []listedPackage, inputs []changedPath) (changedSelection, error) {
-	byDirectory := make(map[string]string, len(packages))
-	byEmbed := make(map[string]string)
-	byImport := make(map[string]listedPackage, len(packages))
-	for _, pkg := range packages {
-		directory, err := filepath.Rel(root, pkg.Dir)
-		if err != nil || directory == ".." || strings.HasPrefix(directory, ".."+string(filepath.Separator)) {
-			return nil, fmt.Errorf("go list returned a package outside the repository")
-		}
-		directory = filepath.ToSlash(directory)
-		byDirectory[directory] = pkg.ImportPath
-		byImport[pkg.ImportPath] = pkg
-		for _, name := range append(append(append([]string{}, pkg.EmbedFiles...), pkg.TestEmbedFiles...), pkg.XTestEmbedFiles...) {
-			byEmbed[filepath.ToSlash(filepath.Join(directory, name))] = pkg.ImportPath
-		}
+	index, err := newPackageIndex(root, packages)
+	if err != nil {
+		return nil, err
 	}
+	byDirectory, byEmbed, byImport := index.byDirectory, index.byEmbed, index.byImport
 	selected := changedSelection{}
 	mark := func(importPath, cause string) {
 		if current, ok := selected[importPath]; !ok || slices.Index(causePrecedence, cause) < slices.Index(causePrecedence, current) {

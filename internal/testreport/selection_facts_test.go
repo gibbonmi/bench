@@ -37,6 +37,27 @@ func TestSelectionFactsNameTheRun(t *testing.T) {
 	}
 }
 
+// TestSelectionFactsNameTheChangedForm grades the accessor that tells the two forms apart
+// whose target is `./...`: the `--changed` form and the whole-suite package form.
+func TestSelectionFactsNameTheChangedForm(t *testing.T) {
+	root := t.TempDir()
+	for _, tc := range []struct {
+		args    []string
+		changed bool
+	}{
+		{[]string{"--changed"}, true},
+		{[]string{"--package", "./..."}, false},
+	} {
+		request, line, code := Prepare(root, tc.args)
+		if line != "" {
+			t.Fatalf("Prepare refused %v: (%d, %q)", tc.args, code, line)
+		}
+		if request.Changed() != tc.changed {
+			t.Fatalf("Changed() of %v = %t, want %t", tc.args, request.Changed(), tc.changed)
+		}
+	}
+}
+
 // rootConformanceTestName is the test a named conformance check runs, spelled here
 // independently of the producer. A producer that names another test reds this row.
 const rootConformanceTestName = "TestRootConformance"
