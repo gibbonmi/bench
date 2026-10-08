@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/refusal-route-registry/spec.md",
-  "plan_digest": "sha256:e166a451a383d0283fa3900f6f5235865871073c2309c612da653aedbda321e7",
+  "plan_digest": "sha256:5215138d2defc8d244970b1430ec265a3888fdd20280730d0d23744e3b900f52",
   "implementation_session": "",
   "chunks": [
     {
@@ -3025,9 +3025,9 @@
     {
       "id": "RR-C5",
       "base": "819154c6b9007e7c9019e19287f228a51462e02c",
-      "tip": "84299ea434da34fd1654d918ed446ccd2164fcea",
-      "plan_digest": "sha256:e166a451a383d0283fa3900f6f5235865871073c2309c612da653aedbda321e7",
-      "source_digest": "637552b850963de892372242d5b7e11c100fda7a",
+      "tip": "6d8859cbcceb0c77de7d5176f3a5017a70220a83",
+      "plan_digest": "sha256:5215138d2defc8d244970b1430ec265a3888fdd20280730d0d23744e3b900f52",
+      "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
       "acceptance_rows": [
         "RR61",
         "RR62",
@@ -3184,6 +3184,154 @@
               "ref": "claude-agent:ft393_t11b",
               "digest": "sha256:9acf2f35cf2aaea0301250ab05084c100d42abbba2a616c3c74b15c4b9324284",
               "excerpt": "$ bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,84299ea434da34fd1654d918ed446ccd2164fcea,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,3183,14\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/commitment/repository/candidate.go --swap 'refusalroute.CommitmentDecision, Err: fmt.Errorf(\"candidate changes protected commitment' --with 'refusalroute.CommitmentUnbound, Err: fmt.Errorf(\"candidate changes protected commitment' --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/candidate.go,swap,failed,1,yes\n"
+            }
+          }
+        },
+        {
+          "id": "v-t12-commitment-packages-r1",
+          "performer": "claude:ft393_t12_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t12_repair1",
+            "digest": "sha256:c85698c0731c99685c4e7f9f8bafa6f6642d9c8059253326b3177dcc1bf9c753",
+            "excerpt": "$ bench test --package ./internal/commitment/...\ntree[1]{target,head,dirty}:\n  ft393-build,6d8859cbcceb0c77de7d5176f3a5017a70220a83,true\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment,pass,6282,160\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,838,16\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,5403,92\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t12-commitment-packages",
+          "command": "bench test --package ./internal/commitment/...",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t12-commit-package-r1",
+          "performer": "claude:ft393_t12_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t12_repair1",
+            "digest": "sha256:989c5765a0613b9c01fce7e38989f67f52cb3f39ed9257c45c137568c6c3327a",
+            "excerpt": "$ bench test --package ./internal/commit\ntree[1]{target,head,dirty}:\n  ft393-build,6d8859cbcceb0c77de7d5176f3a5017a70220a83,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,11446,109\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t12-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t12-commitment-verb-r1",
+          "performer": "claude:ft393_t12_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t12_repair1",
+            "digest": "sha256:259fe2c2b621b6bf13f893615b99c2209fc6131884006bd0dfb40b8f52ed17b2",
+            "excerpt": "$ bench test --package ./cmd/bench --run 'TestCommitment'\ntree[1]{target,head,dirty}:\n  ft393-build,6d8859cbcceb0c77de7d5176f3a5017a70220a83,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,458,6\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t12-commitment-verb",
+          "command": "bench test --package ./cmd/bench --run 'TestCommitment'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t12-authority-proof-r1",
+          "performer": "claude:ft393_t12_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t12_repair1",
+            "digest": "sha256:47566693cacb9231f86943b13cea21d1bb99401b1c2732554d7be6a8bbd70afd",
+            "excerpt": "$ bench test --package ./internal/commitment/commitcmd --run 'TestCommitmentFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,6d8859cbcceb0c77de7d5176f3a5017a70220a83,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,491,9\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/commitment/repository/admission.go --swap 'return outcome, refusalroute.Raised{Name: refusalroute.CommitmentDecision' --with 'return outcome, refusalroute.Raised{Name: refusalroute.CommitmentNeedsAssignment' --package ./internal/commitment/commitcmd --run 'TestCommitmentFacesFollowTheirRoutes'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/admission.go,swap,failed,1,yes\n"
+          },
+          "requirement": "t12-authority-proof",
+          "command": "bench test --package ./internal/commitment/commitcmd --run 'TestCommitmentFacesFollowTheirRoutes'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Give the outside-milestone start refusal the `commitment-needs-assignment` face. TestCommitmentFacesFollowTheirRoutes must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t12_repair1",
+              "digest": "sha256:47566693cacb9231f86943b13cea21d1bb99401b1c2732554d7be6a8bbd70afd",
+              "excerpt": "$ bench test --package ./internal/commitment/commitcmd --run 'TestCommitmentFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,6d8859cbcceb0c77de7d5176f3a5017a70220a83,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,491,9\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/commitment/repository/admission.go --swap 'return outcome, refusalroute.Raised{Name: refusalroute.CommitmentDecision' --with 'return outcome, refusalroute.Raised{Name: refusalroute.CommitmentNeedsAssignment' --package ./internal/commitment/commitcmd --run 'TestCommitmentFacesFollowTheirRoutes'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/admission.go,swap,failed,1,yes\n"
+            }
+          }
+        },
+        {
+          "id": "v-t11-commitment-packages-r1",
+          "performer": "claude:ft393_t11_verify2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t11_verify2",
+            "digest": "sha256:12343ea3305d1fe50bf465e50d900acee3518af61948f922cfd91e67ae83cdea",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/commitment/...\ntree[1]{target,head,dirty}:\n  ft393-build,6d8859cbcceb0c77de7d5176f3a5017a70220a83,true\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment,pass,6221,160\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,827,16\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,5455,92\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t11-commitment-packages",
+          "command": "bench test --package ./internal/commitment/...",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t11-commit-package-r1",
+          "performer": "claude:ft393_t11_verify2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t11_verify2",
+            "digest": "sha256:cee8f52745adc62d51e4b6e9eb83b50d743fe0f5e22a0268bf1ef65783890708",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/commit\ntree[1]{target,head,dirty}:\n  ft393-build,6d8859cbcceb0c77de7d5176f3a5017a70220a83,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,11366,109\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t11-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t11-authority-proof-r1",
+          "performer": "claude:ft393_t11_verify2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d618eca836958d6d0879f6b4257a6fd2927abf49",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t11_verify2",
+            "digest": "sha256:029a0b672165b87afd93540f1a905a6860be52f2ddc65a59d9dc00e5037e1a0b",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,6d8859cbcceb0c77de7d5176f3a5017a70220a83,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,3704,15\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nprobe: Give the protected-commitment refusal the `commitment-unbound` face\n$ bench worktree exec ft393-build -- bench probe internal/commitment/repository/candidate.go --swap 'refusalroute.CommitmentDecision, Err: fmt.Errorf(\"candidate changes protected commitment' --with 'refusalroute.CommitmentUnbound, Err: fmt.Errorf(\"candidate changes protected commitment' --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/candidate.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commit,TestCommitFacesFollowTheirRoutes/commitment-decision/,\"refusal_route_test.go:145: face commitment-decision = (1, \\\"\\\", \\\"error: commitment: candidate changes protected commitment: protected recommended sequence changed\\\\\\\\nnext=bench commitment start --outcome <id> --request <request> --deliverable <… (367 bytes)\",1\n"
+          },
+          "requirement": "t11-authority-proof",
+          "command": "bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Give the protected-commitment refusal the `commitment-unbound` face. TestCommitFacesFollowTheirRoutes must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t11_verify2",
+              "digest": "sha256:029a0b672165b87afd93540f1a905a6860be52f2ddc65a59d9dc00e5037e1a0b",
+              "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,6d8859cbcceb0c77de7d5176f3a5017a70220a83,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,3704,15\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nprobe: Give the protected-commitment refusal the `commitment-unbound` face\n$ bench worktree exec ft393-build -- bench probe internal/commitment/repository/candidate.go --swap 'refusalroute.CommitmentDecision, Err: fmt.Errorf(\"candidate changes protected commitment' --with 'refusalroute.CommitmentUnbound, Err: fmt.Errorf(\"candidate changes protected commitment' --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/candidate.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commit,TestCommitFacesFollowTheirRoutes/commitment-decision/,\"refusal_route_test.go:145: face commitment-decision = (1, \\\"\\\", \\\"error: commitment: candidate changes protected commitment: protected recommended sequence changed\\\\\\\\nnext=bench commitment start --outcome <id> --request <request> --deliverable <… (367 bytes)\",1\n"
             }
           }
         }
@@ -3457,6 +3605,30 @@
         ],
         "RR-C4": [
           "RR-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e166a451a383d0283fa3900f6f5235865871073c2309c612da653aedbda321e7",
+      "to": "sha256:5215138d2defc8d244970b1430ec265a3888fdd20280730d0d23744e3b900f52",
+      "chunk_ids": {
+        "RR-C1a": [
+          "RR-C1a"
+        ],
+        "RR-C1b": [
+          "RR-C1b"
+        ],
+        "RR-C2": [
+          "RR-C2"
+        ],
+        "RR-C3": [
+          "RR-C3"
+        ],
+        "RR-C4": [
+          "RR-C4"
+        ],
+        "RR-C5": [
+          "RR-C5"
         ]
       }
     }
@@ -3842,3 +4014,23 @@ Count: 5. Worst issue: C5-1, the same cause as C5-S1.
 - C5-3, auto-fix, confidence 5: a fixture gives `verify` a milestone with a space and one that is not line-safe. Ticket 12 repair.
 - C5-4, auto-fix, confidence 4: the same target as C5-P2 for the span error. The fail-closed handback covers the other causes.
 - C5-5, no-op, confidence 6: concerns (b), (c), and (e) need no change beyond C5-S3.
+
+### RR-C5 repair cycle 1
+
+RR-C5 consumed 1 of its 2 repair cycles.
+The repair sessions ran the debug step and stated these causes before their fixes.
+
+| finding | diagnosed cause | repro |
+|---|---|---|
+| C5-S1, C5-P1, C5-1 | The light-path route appended the ticket to the rerun of whichever verb printed it, but the landing takes one positional and reran at the caller's own source tip with no label. | A landing fixture printed a last step that exited 2 with an unknown argument. |
+| C5-S2 | The light-path refusal wrapped the unbound face with a `--spec` tail, so one refusal printed two routes. | A spec-less landing printed the tail beside the unbound route. |
+| C5-P2, C5-4 | The span error was untyped, so the commit printed the reviewer handback. | A commit of two paths under two tickets printed the reviewer route. |
+| C5-P7 | `raisedRefusal` re-implemented `refusalroute.Printed` for the landing. | A read of `land_refusal.go`. |
+| C5-S4 | The commit walk recomputed the walk-membership rule that `routetest` owns. | A read of the commit walk. |
+| C5-2 | The reviewer marker of `commitment-decision` had no independent expectation. | A read of the commit fixture. |
+| C5-P3 | The commitment verb used `commitment-decision` as its call-site fallback, and the repository decision causes were untyped, so the fallback stood in for their face and caught untyped verb errors. The approve plan-drift refusals were untyped too. | The walk fixture for an untyped verb error printed the decision route; a probe of the approve fallback switch was `silent` before the new rows. |
+| C5-S3, C5-P6 | `commitmenttest` had no shared owner for the adoption wire shape or the legacy-run setup. | A `bench probe` on the shared helper now turns both packages red. |
+| C5-3 | No fixture gave `verify` a milestone that needs quoting or is not line-safe. | Two `bench probe` runs on the route quoting returned `bit` after the new rows. |
+
+The repair commits are 848a174e (ticket 11) and 267dcc2d (ticket 12).
+The ticket 11 repair made the light-path route one uniform route and added the agent faces `commitment-light-path-spec` and `commitment-light-path-span`.
