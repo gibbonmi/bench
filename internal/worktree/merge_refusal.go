@@ -52,9 +52,10 @@ func mergeFaceRoute(err error, rerun string) error {
 
 // mergeRedRefusal picks the face of a fold that the gate ran red, by the red's cause, and
 // passes every other error through. Only the candidate kind attributes the red to the fold.
-// Neither an inherited kind nor a lane fail tells a target red from a fold red, so grade
-// then grades the target tip alone. A red target is the agent's own repair, and a green
-// target means that the fold adds the red, which FT342 decides.
+// Neither an inherited kind nor a lane fail tells a target red from a fold red, so the face
+// then follows the grade of the target tip alone. A red target is the agent's own repair,
+// a grade that infrastructure stopped takes the infrastructure face, and a green target
+// means that the fold adds the red, which FT342 decides.
 func mergeRedRefusal(err error, grade func() authorization.Result, spelling, label string) error {
 	var refused landing.AuthorizationRefusal
 	if !errors.As(err, &refused) || !landing.RedKind(refused.Result.Kind) {

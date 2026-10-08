@@ -180,19 +180,16 @@ func admittedMergeFixture(t *testing.T, labels ...string) mergeSet {
 // grades each fold. script is the gate's body, and the set holds one assignment.
 func wholeGateMergeFixture(t *testing.T, script string) mergeSet {
 	t.Helper()
-	root := newWorktreeRepo(t)
-	landingGateFixture(t).MustWrite(t, root, script+"\n", script+"\n")
-	gitRun(t, root, "add", ".bench")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the whole gate")
-	f := mergeSet{repoHome: repoHome{root: root, home: filepath.Join(t.TempDir(), "bench-home")}, joins: defaultJoins(), kit: t.TempDir()}
+	f := mergeSetOver(t, newWorktreeRepo(t), filepath.Join(t.TempDir(), "bench-home"))
+	commitWholeGate(t, f.root, script)
 	f.created = append(f.created, mustCreate(t, f.root, f.home, "merge-integration", "integration"))
 	return f
 }
 
 // The red-source fixtures grade one file: a tree that holds redFile is red, under the lane
-// and under the whole gate alike.
+// and under the whole gate alike. It is Markdown, so a lane over the named Markdown names it.
 const (
-	redFile       = "red.txt"
+	redFile       = "red.md"
 	redFileAbsent = "[ ! -e " + redFile + " ]"
 )
 

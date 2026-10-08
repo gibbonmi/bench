@@ -250,10 +250,7 @@ func foldRedFixture(cause string, target func(t *testing.T) mergeSet) mergeRefus
 }
 
 func mergeRefusalFixtures() []mergeRefusalFixture {
-	label := func(index int) func(f mergeSet) []string {
-		return func(f mergeSet) []string { return []string{"bench commit --in ", f.created[index].Assignment.Label} }
-	}
-	return []mergeRefusalFixture{
+	return append([]mergeRefusalFixture{
 		{
 			// The target tip alone fails its lane, and main moves by a commit that adds no red.
 			face: faceMergeTargetRed,
@@ -265,7 +262,7 @@ func mergeRefusalFixtures() []mergeRefusalFixture {
 				commitOnDefault(t, f.root, "incoming.txt", "incoming\n")
 				return f, mergeTargetArgs(f, "main")
 			},
-			names: label(0),
+			names: commitRouteNames(0),
 			// The operator's repair: the red file goes, and the printed commit records it.
 			carry: map[int]func(*testing.T, mergeSet){0: func(t *testing.T, f mergeSet) {
 				mustRemove(t, filepath.Join(f.created[0].Path, redFile))
@@ -293,7 +290,7 @@ func mergeRefusalFixtures() []mergeRefusalFixture {
 				mustWrite(t, filepath.Join(f.created[0].Path, "target-work.txt"), []byte("uncommitted\n"), 0o644)
 				return f, mergeTargetArgs(f, incoming)
 			},
-			names: label(0),
+			names: commitRouteNames(0),
 		},
 		{
 			face: faceMergeSiblingNotClean,
@@ -305,7 +302,7 @@ func mergeRefusalFixtures() []mergeRefusalFixture {
 				mustWrite(t, filepath.Join(sibling.Path, "sibling.txt"), []byte("uncommitted\n"), 0o644)
 				return f, mergeTargetArgs(f, sibling.Assignment.Label)
 			},
-			names:  label(1),
+			names:  commitRouteNames(1),
 			absent: func(mergeSet) []string { return []string{"bench worktree exec"} },
 		},
 		{
@@ -366,7 +363,7 @@ func mergeRefusalFixtures() []mergeRefusalFixture {
 				gitRun(t, f.created[0].Path, "checkout", "-q", strings.TrimPrefix(f.created[0].Assignment.Branch, "refs/heads/"))
 			}},
 		},
-	}
+	}, targetGradeFixtures()...)
 }
 
 // applyResetPlan runs the apply that a printed reset plan names, which the operator runs

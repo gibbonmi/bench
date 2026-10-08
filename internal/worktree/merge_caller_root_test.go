@@ -13,14 +13,21 @@ import (
 )
 
 // mergeSetAt commits a manifest lane that appends to a tally file on root's checked-out
-// branch, and answers the merge set over root. The merge resolves its lane from the
-// target's manifest only under a kit apart from the target, so the set holds its own kit.
-// A lane that ran leaves a byte in the tally, and one that did not leaves no file.
+// branch, and answers the merge set over root. A lane that ran leaves a byte in the tally,
+// and one that did not leaves no file.
 func mergeSetAt(t *testing.T, root, home string) mergeSet {
 	t.Helper()
-	tally := filepath.Join(t.TempDir(), "lane-tally")
-	commitLaneManifest(t, root, gate.Phase{Name: "unit", Argv: []string{"sh", "-c", "printf g >> " + sanitize.ShellQuote(tally)}})
-	return mergeSet{repoHome: repoHome{root: root, home: home}, joins: defaultJoins(), kit: t.TempDir(), tally: tally}
+	f := mergeSetOver(t, root, home)
+	f.tally = filepath.Join(t.TempDir(), "lane-tally")
+	commitLaneManifest(t, root, gate.Phase{Name: "unit", Argv: []string{"sh", "-c", "printf g >> " + sanitize.ShellQuote(f.tally)}})
+	return f
+}
+
+// mergeSetOver answers the merge set over root and commits nothing. The merge resolves its
+// lane from the target's manifest only under a kit apart from the target, so the set holds
+// its own kit.
+func mergeSetOver(t *testing.T, root, home string) mergeSet {
+	return mergeSet{repoHome: repoHome{root: root, home: home}, joins: defaultJoins(), kit: t.TempDir()}
 }
 
 // commitLaneManifest commits a phase manifest at dir whose lane declares check alone.
