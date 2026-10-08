@@ -105,12 +105,19 @@ func NewGraderFromIndex(src IndexSource) (*Grader, []string) {
 	return &Grader{ex: ex}, nil
 }
 
+// Excludes reports whether the exclusion policy keeps the repository-relative path rel out
+// of the grade, which is the decision every grade entry point applies. A caller that
+// reports a verdict for each subject reads that decision here.
+func (g *Grader) Excludes(rel string) bool {
+	return g.ex.excluded(rel)
+}
+
 // GradeBytes grades caller-supplied bytes as the subject at the repository-relative path
 // rel. A staged grade reads the index blob, so the subject never comes from a file the
 // grader could open itself. It returns nil for a subject that is excluded, empty, or
 // clean.
 func (g *Grader) GradeBytes(rel string, data []byte) []NamedResult {
-	if g.ex.excluded(rel) || len(data) == 0 {
+	if g.Excludes(rel) || len(data) == 0 {
 		return nil
 	}
 	return gradeDocument(rel, data)
@@ -119,7 +126,7 @@ func (g *Grader) GradeBytes(rel string, data []byte) []NamedResult {
 // GradeSubject grades one repository-relative path and returns its findings. It returns
 // nil for a subject that is excluded, empty, or clean.
 func (g *Grader) GradeSubject(rel string) []string {
-	if g.ex.excluded(rel) {
+	if g.Excludes(rel) {
 		return nil
 	}
 	return renderStripped(g.gradeSubjectResults(rel))
@@ -131,32 +138,37 @@ func (g *Grader) GradeSubject(rel string) []string {
 // what it commits, not what it once named. A symbolic link is not followed and is not
 // graded, matching the whole-tree walk's own rule for a linked directory.
 func GradeNamed(root string, rels []string) []string {
-	return renderStripped(GradeNamedResults(root, rels))
+	results, _ := GradeNamedResults(root, rels)
+	return renderStripped(results)
 }
 
 // GradeNamedResults grades caller-selected paths and exposes each prose finding as
-// fields. Refusal diagnostics remain prose-owned rendered results.
-func GradeNamedResults(root string, rels []string) []NamedResult {
+// fields. Refusal diagnostics remain prose-owned rendered results. The returned set holds
+// each path that the exclusion policy keeps out of the grade, so a caller can tell an
+// excluded path from a graded clean one.
+func GradeNamedResults(root string, rels []string) ([]NamedResult, map[string]bool) {
 	g, diags := NewGrader(root)
 	if len(diags) > 0 {
 		out := make([]NamedResult, 0, len(diags))
 		for _, diagnostic := range diags {
 			out = append(out, NamedResult{diagnostic: diagnostic})
 		}
-		return out
+		return out, nil
 	}
 	var out []NamedResult
+	excluded := map[string]bool{}
 	for _, rel := range rels {
 		info, err := os.Lstat(filepath.Join(root, filepath.FromSlash(rel)))
 		if err != nil || info.Mode()&os.ModeSymlink != 0 {
 			continue
 		}
-		if g.ex.excluded(rel) {
+		if g.Excludes(rel) {
+			excluded[rel] = true
 			continue
 		}
 		out = append(out, g.gradeSubjectResults(rel)...)
 	}
-	return out
+	return out, excluded
 }
 
 func (g *Grader) gradeSubjectResults(rel string) []NamedResult {
