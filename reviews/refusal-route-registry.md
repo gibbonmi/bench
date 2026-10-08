@@ -3782,7 +3782,80 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "r-c6-standards",
+          "performer": "claude:ft393_c6_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "72a5ffb8f921f9e1b34b3f758a8db0378a2e0361",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c6_standards",
+            "digest": "sha256:622c26df9b4f1c6e14dda384b66dfb51a5c1e08e9667b1e0fe32d3fecb8f5a89",
+            "excerpt": "RR-C6 Standards (claude:ft393_c6_standards): evidence current=true. 3 findings, all advisory.\nC6-S1 advisory internal/conformance/refusal_route_bypass_test.go:43: the \"; then \" needle re-spells the unexported stepJoiner; no plant holds it, so deleting it leaves every test green; reviewer record C1b-S2 chose one source for the same joiner. ask-user: export the joiner or plant and record a red. conf 6\nC6-S2 advisory refusal_route_bypass_test.go:47-57: the package list is a hard-coded second statement of the write-verb packages; no omitted package composes a route today. no-op now. conf 3\nC6-S3 advisory refusal_route_bypass_test.go:107,115: doc comments name spec rows, as sibling tests do. no-op. conf 3\nConcerns (c), (d): no finding. Worst: C6-S1. Implementation command contributed to C6-S1.\n"
+          },
+          "axis": "Standards",
+          "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "tip": "c64b7a6e17b32a8f6c70680ab029be8950dc6ccc",
+          "finding_ids": [
+            "C6-S1",
+            "C6-S2",
+            "C6-S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c6-spec",
+          "performer": "claude:ft393_c6_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "72a5ffb8f921f9e1b34b3f758a8db0378a2e0361",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c6_spec",
+            "digest": "sha256:76eb676c03c0b1373ca6df50ea09fd066aa2b6762b918c5702dbe4c1a81b152a",
+            "excerpt": "RR-C6 Spec (claude:ft393_c6_spec): evidence current=true. RR49, RR50, RR65 implemented as stated; the CHANGELOG matches. 2 findings, both advisory.\nC6-P1 advisory internal/conformance/refusal_route_bypass_test.go:70,148-154: the \"; then \" needle repeats the unexported stepJoiner and has no planted literal or recorded red; deleting it leaves both tests green. auto-fix: export the joiner or add a plant. conf 6\nC6-P2 advisory refusal_route_bypass_test.go:47-57: the scanned list is a fixed hand list; a new write-verb subpackage goes unscanned with no red; no omitted package composes a route today. ask-user, no-op reasonable. conf 4\nConcerns (b), (c), (d): no finding.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "tip": "c64b7a6e17b32a8f6c70680ab029be8950dc6ccc",
+          "finding_ids": [
+            "C6-P1",
+            "C6-P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c6-coverage",
+          "performer": "claude:ft393_c6_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "72a5ffb8f921f9e1b34b3f758a8db0378a2e0361",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c6_coverage",
+            "digest": "sha256:c4e2739b873ebd4b2ea2a7484fa98e172727ce91b22fb53fccf5bf6a944fd905",
+            "excerpt": "RR-C6 Coverage (claude:ft393_c6_coverage): evidence current=true. 4 findings, all advisory.\nC6-1 advisory internal/conformance/refusal_route_bypass_test.go:43: the \"; then \" needle has no planted literal, and its spelling repeats the unexported stepJoiner. auto-fix: a plant and a Steps assertion. conf 7\nC6-2 advisory refusal_route_bypass_test.go:121-127: plants exist in only five of the nine listed packages; dropping internal/commitment from the list stays green. auto-fix: one plant for each listed package. conf 6\nC6-3 advisory refusal_route_bypass_test.go:34-38: commit, gate, and commitment are tree-scoped verbs, so bench commit --in <bad> reaches printTargetRefusal and prints a hand-built next= in path.go; the allowlist premise and the won't-handle list do not cover this caller. ask-user. conf 5\nC6-4 advisory: the manual list skips subdirectories; none of the omitted packages holds a needle today. no-op. conf 3\nWorst: C6-3. Implementation command: none known.\n"
+          },
+          "axis": "Coverage",
+          "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "tip": "c64b7a6e17b32a8f6c70680ab029be8950dc6ccc",
+          "finding_ids": [
+            "C6-1",
+            "C6-2",
+            "C6-3",
+            "C6-4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -4467,3 +4540,15 @@ The repair sessions ran the debug step and stated these causes before their fixe
 |---|---|---|
 | C5-RC1 | No fixture reached three of the four approve raise sites through `bench commitment approve`, so removing the raise at any of them left every test green. | A `bench probe` at each site returned `silent` before the new rows and `bit` after them. |
 | C5-RS1, C5-RC2 | The light-path landing ticket path had two sources in two test files, so a change to one broke the outside-route walk. | A `bench probe` that changed one source turned the walk red. |
+
+## RR-C6 pickup
+
+The RR-C6 review returned 9 findings, all advisory.
+The findings collapse to repair targets in ticket 13 and to one plan correction.
+The repair session runs the debug step and states the diagnosed cause before its fix.
+
+- C6-S1, C6-P1, C6-1, auto-fix, confidence 7: the bypass check reads the step joiner that `refusalroute` exports, and a planted `; then ` literal turns the check red. The reviewer chose one source for this joiner in RR-C1b. Ticket 13 repair.
+- C6-2, auto-fix, confidence 6: the bite test plants one literal in each scanned package, so a package dropped from the list turns it red. Ticket 13 repair.
+- C6-3, plan correction, confidence 5: the shared `--in` tree-target refusal serves read and write verbs. A won't-handle row now names it, and the allowlist sentence names its reason. Flagged for reviewer veto. The test comment states the same reason. Ticket 13 repair.
+- C6-S2, C6-P2, C6-4, no-op, confidence 4: no omitted package composes a route today, and the spec does not pin the list.
+- C6-S3, no-op, confidence 3: the spec row ids in the doc comments follow the sibling tests.
