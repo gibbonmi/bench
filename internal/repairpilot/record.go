@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/assessment"
@@ -257,12 +258,7 @@ func supportedConclusion(value progressConclusion) bool {
 }
 
 func validProgressLabel(value string) bool {
-	for _, label := range progressLabels {
-		if value == label {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(progressLabels, value)
 }
 
 func validOwnership(value string) bool {

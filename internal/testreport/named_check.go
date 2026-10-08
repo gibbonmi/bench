@@ -50,12 +50,7 @@ func namedChecks() []string {
 }
 
 func isNamedCheck(check string) bool {
-	for _, name := range namedChecks() {
-		if name == check {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(namedChecks(), check)
 }
 
 // namedCheckKind is the one owner of the kind cell: the system suite, the prose

@@ -140,14 +140,14 @@ func pushDestination(spec string, chk Checker) (string, bool) {
 	if dest == "HEAD" || dest == "@" {
 		return chk.checkedOut()
 	}
-	if strings.HasPrefix(dest, "refs/heads/") {
-		return strings.TrimPrefix(dest, "refs/heads/"), true
+	if after, ok := strings.CutPrefix(dest, "refs/heads/"); ok {
+		return after, true
 	}
 	if strings.HasPrefix(dest, "refs/") {
 		return "", true
 	}
-	if strings.HasPrefix(dest, "heads/") {
-		return strings.TrimPrefix(dest, "heads/"), true
+	if after, ok := strings.CutPrefix(dest, "heads/"); ok {
+		return after, true
 	}
 	return dest, true
 }

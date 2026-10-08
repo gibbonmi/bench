@@ -443,8 +443,8 @@ func mergeEnv(base, overrides []string) []string {
 }
 
 func envKey(entry string) string {
-	if idx := strings.Index(entry, "="); idx >= 0 {
-		return entry[:idx]
+	if before, _, ok := strings.Cut(entry, "="); ok {
+		return before
 	}
 	return entry
 }

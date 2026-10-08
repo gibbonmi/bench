@@ -106,8 +106,8 @@ func discoveredExecutable(result bounds.ProcessResult) (string, bool) {
 		return "", false
 	}
 	line := string(result.Output)
-	if strings.HasSuffix(line, "\n") {
-		line = strings.TrimSuffix(line, "\n")
+	if before, ok := strings.CutSuffix(line, "\n"); ok {
+		line = before
 	}
 	if line == "" || !utf8.ValidString(line) || !filepath.IsAbs(line) {
 		return "", false

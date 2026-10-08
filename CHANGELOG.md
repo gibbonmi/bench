@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Standard-library re-implementation check
+
+- Added the `stdlib-reimplementation` conformance check. It refuses each production Go site that writes by hand a function that the standard library supplies: a `slices.Contains` loop, a `maps.Copy` loop, a user-defined `min` or `max`, and a `strings.Cut`, `strings.CutPrefix`, or `strings.CutSuffix` pattern. The check ignores test files. The production sites that the check found now call the standard functions.
+
 ### Next-outcome start
 
 - Changed the phase close so that the agent starts the next eligible outcome itself and hands the reviewer no `bench` command. When a `Next: ticket` outcome has no deliverable, the agent writes and lands the ticket folder, binds it, and then starts the outcome. A reorder or a new admission still needs the reviewer's direction.

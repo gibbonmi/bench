@@ -162,11 +162,11 @@ func parseIndexEntries(raw []byte) ([]indexEntry, bool, error) {
 		if len(record) == 0 {
 			continue
 		}
-		tab := bytes.IndexByte(record, '\t')
-		if tab < 0 {
+		before, after, ok := bytes.Cut(record, []byte{'\t'})
+		if !ok {
 			return nil, false, errors.New("malformed staged index entry")
 		}
-		fields := strings.Fields(string(record[:tab]))
+		fields := strings.Fields(string(before))
 		if len(fields) != 3 {
 			return nil, false, errors.New("malformed staged index metadata")
 		}
@@ -175,7 +175,7 @@ func parseIndexEntries(raw []byte) ([]indexEntry, bool, error) {
 			return nil, false, err
 		}
 		conflicted = conflicted || stage != 0
-		entries = append(entries, indexEntry{mode: fields[0], oid: fields[1], stage: stage, path: string(record[tab+1:])})
+		entries = append(entries, indexEntry{mode: fields[0], oid: fields[1], stage: stage, path: string(after)})
 	}
 	return entries, conflicted, nil
 }

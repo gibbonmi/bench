@@ -46,4 +46,5 @@ var Checks = []Check{
 	{Name: "harness-record", Implementation: "checkHarnessRecord", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "ticket-grammar", Implementation: "checkTicketGrammar", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "claude-agent-definitions", Implementation: "checkClaudeAgentDefinitions", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "stdlib-reimplementation", Implementation: "checkStdlibReimplementation", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 }

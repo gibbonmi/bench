@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"syscall"
 
@@ -152,8 +153,8 @@ func ShimContent(target string) string {
 
 func ShimTarget(content string) string {
 	for _, line := range strings.Split(content, "\n") {
-		if strings.HasPrefix(line, "# bench-target: ") {
-			return strings.TrimPrefix(line, "# bench-target: ")
+		if after, ok := strings.CutPrefix(line, "# bench-target: "); ok {
+			return after
 		}
 	}
 	return ""
@@ -436,10 +437,8 @@ func isExecutable(path string) bool {
 }
 
 func doctorPathNotice(stdout io.Writer, env DoctorEnv, dir string) {
-	for _, p := range filepath.SplitList(env.Path) {
-		if p == dir {
-			return
-		}
+	if slices.Contains(filepath.SplitList(env.Path), dir) {
+		return
 	}
 	fmt.Fprintf(stdout, "  note: %s is not on PATH - add it, then restart your shell:\n", dir)
 	switch filepath.Base(firstNonEmpty(env.Shell, "/bin/sh")) {

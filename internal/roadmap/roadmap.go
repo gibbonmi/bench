@@ -166,10 +166,7 @@ func RoadmapCommand(args []string, outlook OutlookSource) (string, int) {
 }
 
 func renderRoadmapBoard(doc Document, diagnostics []Diagnostic, drain Drain, absent bool, dirState bounds.FileState, outlook commitment.Outlook) (string, int) {
-	rowsShown := len(doc.Rows)
-	if rowsShown > 10 {
-		rowsShown = 10
-	}
+	rowsShown := min(len(doc.Rows), 10)
 	roadmapRows := make([][]any, rowsShown)
 	for i := range roadmapRows {
 		r := doc.Rows[i]

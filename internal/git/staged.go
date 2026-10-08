@@ -182,15 +182,15 @@ func parseIndexEntriesZ(raw []byte) ([]IndexEntry, error) {
 		}
 		record := raw[offset : offset+end]
 		offset += end + 1
-		tab := bytes.IndexByte(record, '\t')
-		if tab < 0 {
+		before, after, ok := bytes.Cut(record, []byte{'\t'})
+		if !ok {
 			return nil, errors.New("malformed index listing")
 		}
-		fields := strings.Fields(string(record[:tab]))
+		fields := strings.Fields(string(before))
 		if len(fields) != 3 {
 			return nil, errors.New("malformed index listing")
 		}
-		entries = append(entries, IndexEntry{Mode: fields[0], Path: string(record[tab+1:])})
+		entries = append(entries, IndexEntry{Mode: fields[0], Path: string(after)})
 	}
 	return entries, nil
 }

@@ -31,8 +31,8 @@ func loadBudgets(path string) (map[string]int, []string) {
 	}
 	for _, line := range strings.Split(string(content), "\n") {
 		stripped := line
-		if i := strings.IndexByte(line, '#'); i >= 0 {
-			stripped = line[:i]
+		if before, _, ok := strings.Cut(line, "#"); ok {
+			stripped = before
 		}
 		fields := strings.Fields(stripped)
 		if len(fields) == 0 {
@@ -75,8 +75,8 @@ func loadAccepts(path string) (map[string]string, []string, error) {
 	}
 	for _, line := range strings.Split(string(content), "\n") {
 		stripped := line
-		if i := strings.IndexByte(line, '#'); i >= 0 {
-			stripped = line[:i]
+		if before, _, ok := strings.Cut(line, "#"); ok {
+			stripped = before
 		}
 		trimmed := strings.TrimLeft(stripped, " \t")
 		if trimmed == "" {

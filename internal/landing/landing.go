@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/diff"
@@ -102,12 +103,7 @@ type Owner struct {
 type acceptedKinds []authorization.Kind
 
 func (k acceptedKinds) permits(kind authorization.Kind) bool {
-	for _, accepted := range k {
-		if kind == accepted {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(k, kind)
 }
 
 // New returns the production landing owner. The prospective landing of a worktree commit

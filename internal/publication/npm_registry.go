@@ -139,7 +139,7 @@ func compareSemver(a, b string) int {
 }
 
 func semverParts(v string) [3]int {
-	core := strings.SplitN(v, "-", 2)[0]
+	core, _, _ := strings.Cut(v, "-")
 	fields := strings.SplitN(core, ".", 3)
 	var out [3]int
 	for i := 0; i < 3 && i < len(fields); i++ {
