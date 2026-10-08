@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/refusal-route-registry/spec.md",
-  "plan_digest": "sha256:f0639cf27495f50d19843b401bf84eab059aa614e05f76f81c98dc485790924b",
+  "plan_digest": "sha256:43985cc5492c46ba00fc0a2dfe29aaeda496478ea800c97bdfe4e22ba1b89720",
   "implementation_session": "",
   "chunks": [
     {
@@ -1400,6 +1400,283 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RR-C2",
+      "base": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+      "tip": "b91c696ce74e984b6cdd93d6d8758b35b61be62c",
+      "plan_digest": "sha256:43985cc5492c46ba00fc0a2dfe29aaeda496478ea800c97bdfe4e22ba1b89720",
+      "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+      "acceptance_rows": [
+        "RR27",
+        "RR28",
+        "RR30",
+        "RR31",
+        "RR67",
+        "RR21",
+        "RR22",
+        "RR23",
+        "RR24",
+        "RR25",
+        "RR26",
+        "RR55",
+        "RR56",
+        "RR57",
+        "RR59",
+        "RR29"
+      ],
+      "verification": [
+        {
+          "id": "v-t5-merge-routes",
+          "performer": "claude:ft393_t5b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t5b",
+            "digest": "sha256:7ab8b523e202b8147cadba1019817970d4e6625f4ac50d9d19e79d44520d5cd2",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal|TestLandingRedRouteNamesTheRepair'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1373,27\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal|TestLandingRedRouteNamesTheRepair'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t5-worktree-package",
+          "performer": "claude:ft393_t5b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t5b",
+            "digest": "sha256:64ee435dd5a93068b1860fdec834884e02c5050978f06f2193f7d24d567f3443",
+            "excerpt": "$ bench test --package ./internal/worktree\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,76384,1368\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: ...\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: ...\"\n"
+          },
+          "requirement": "t5-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t5-landing-package",
+          "performer": "claude:ft393_t5b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t5b",
+            "digest": "sha256:4e3a543ffc68cfecc86ed7ac819c1e59f1dec71b4fe81905490e511ef5fda02a",
+            "excerpt": "$ bench test --package ./internal/landing\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,8898,188\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t5-landing-package",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t5-conflict-proof",
+          "performer": "claude:ft393_t5b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t5b",
+            "digest": "sha256:ba301f9b849b87172ef49ee9c6f3c0f78cb1db6a0b48948b405ba86e289071ec",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,236,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nprobe: Declare the `merge-conflict` face with the agent authority\n$ bench probe internal/refusalroute/faces_merge.go --swap $'\"merge-conflict\",\\n\\t\\tAuthority: Reviewer,' --with $'\"merge-conflict\",\\n\\t\\tAuthority: Agent,' --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/faces_merge.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestConflictRepairIsAReviewerRoute/merge-conflict,\"refusal_route_test.go:132: merge-conflict next = \\\"git -C '...' me… (1020 bytes)\",2\n"
+          },
+          "requirement": "t5-conflict-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Declare the `merge-conflict` face with the agent authority. TestConflictRepairIsAReviewerRoute must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t5b",
+              "digest": "sha256:ba301f9b849b87172ef49ee9c6f3c0f78cb1db6a0b48948b405ba86e289071ec",
+              "excerpt": "$ bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,236,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nprobe: Declare the `merge-conflict` face with the agent authority\n$ bench probe internal/refusalroute/faces_merge.go --swap $'\"merge-conflict\",\\n\\t\\tAuthority: Reviewer,' --with $'\"merge-conflict\",\\n\\t\\tAuthority: Agent,' --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/faces_merge.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestConflictRepairIsAReviewerRoute/merge-conflict,\"refusal_route_test.go:132: merge-conflict next = \\\"git -C '...' me… (1020 bytes)\",2\n"
+            }
+          }
+        },
+        {
+          "id": "v-t6-merge-routes",
+          "performer": "claude:ft393_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t6",
+            "digest": "sha256:662fb97c57e7c93c2d889f229bfd6ba5f5d73543562b6de31a7507a86546a5d8",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1831,29\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t6-worktree-package",
+          "performer": "claude:ft393_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t6",
+            "digest": "sha256:b14a96ddb4136c90a00d3773c1b9098fb68de4fe37edc6de535127d80935447c",
+            "excerpt": "$ bench test --package ./internal/worktree\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,76350,1368\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable\"\n"
+          },
+          "requirement": "t6-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t6-landing-package",
+          "performer": "claude:ft393_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t6",
+            "digest": "sha256:0fffc4a37124b2f94c25f8692fe8f884a8d8be584949f8b932173ba024606a6b",
+            "excerpt": "$ bench test --package ./internal/landing\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,8830,188\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t6-landing-package",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t6-target-alone-proof",
+          "performer": "claude:ft393_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t6",
+            "digest": "sha256:0436cefdc1c2544e6c0e597b73deacd5c74a29571665815b5adc814a4612d92f",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestRedSourceFoldNamesAnExit'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,669,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n$ bench probe internal/worktree/merge_refusal.go --swap 'if refused.Result.Kind != authorization.Candidate {' --with 'if refused.Result.Kind == authorization.LaneFail {' --package ./internal/worktree --run 'TestRedSourceFoldNamesAnExit'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/merge_refusal.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestRedSourceFoldNamesAnExit/inherited,\"merge_route_test.go:206: red-source fold = (1, refused{detail=prospective authorization refused: inherited ...,next=reviewer: the fold of 'main' adds…)\",1\n"
+          },
+          "requirement": "t6-target-alone-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestRedSourceFoldNamesAnExit'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make an `inherited` fold take the `merge-fold-red` face without the target-alone grade. TestRedSourceFoldNamesAnExit must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t6",
+              "digest": "sha256:0436cefdc1c2544e6c0e597b73deacd5c74a29571665815b5adc814a4612d92f",
+              "excerpt": "$ bench test --package ./internal/worktree --run 'TestRedSourceFoldNamesAnExit'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,669,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n$ bench probe internal/worktree/merge_refusal.go --swap 'if refused.Result.Kind != authorization.Candidate {' --with 'if refused.Result.Kind == authorization.LaneFail {' --package ./internal/worktree --run 'TestRedSourceFoldNamesAnExit'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/worktree/merge_refusal.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestRedSourceFoldNamesAnExit/inherited,\"merge_route_test.go:206: red-source fold = (1, refused{detail=prospective authorization refused: inherited ...,next=reviewer: the fold of 'main' adds…)\",1\n"
+            }
+          }
+        },
+        {
+          "id": "v-t7-merge-routes",
+          "performer": "claude:ft393_t7b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t7b",
+            "digest": "sha256:3ef7aa0c18bbe6e17ad7358ec14d1c7e193a3f0ca49555872e6e12c918986bf6",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1722,29\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t7-worktree-package",
+          "performer": "claude:ft393_t7b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t7b",
+            "digest": "sha256:e4128beab462af0ac973fda79472d497e3b2c0b4fed44d7cd10907422d82f2ca",
+            "excerpt": "$ bench test --package ./internal/worktree\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,75585,1368\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanLandedSpecialPathsRetainedWithoutOpening/socket,\"capability: fifo: unix sockets unavailable: listen unix ... (266 bytes)\"\n  github.com/gibbonmi/bench/internal/worktree,TestLandedConsumersRejectSpecialGitMetadataBeforePlanning/socket,\"capability: fifo: unix sockets unavailable: listen unix ... (279 bytes)\"\n"
+          },
+          "requirement": "t7-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t7-landing-package",
+          "performer": "claude:ft393_t7b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t7b",
+            "digest": "sha256:83c0277bc415b2c99e04de6cf90ab1afa3fb8f7b8f595c256e8c93b207a8eee9",
+            "excerpt": "$ bench test --package ./internal/landing\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,8344,188\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t7-landing-package",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t7-walk-proof",
+          "performer": "claude:ft393_t7b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t7b",
+            "digest": "sha256:c4ff0ee511c3ddbfbcd0012a426704d97a1209f2ab6cf390fd31428286a79de8",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1628,15\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/refusalroute/faces_reset.go --swap \"var resetFaces = []Face{\" --with \"var resetFaces = []Face{{Verb: Reset, Name: \\\"reset-unproduced\\\", Sentence: \\\"unproduced reset\\\", Authority: Reviewer, Route: handback},\" --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/faces_reset.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,1329,15\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestMergeFacesFollowTheirRoutes,\"merge_route_test.go:96: registry reset face \\\"reset-unproduced\\\" has no producing fixture\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t7-walk-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Register one more reset face that no fixture produces. TestMergeFacesFollowTheirRoutes must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t7b",
+              "digest": "sha256:c4ff0ee511c3ddbfbcd0012a426704d97a1209f2ab6cf390fd31428286a79de8",
+              "excerpt": "$ bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1628,15\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/refusalroute/faces_reset.go --swap \"var resetFaces = []Face{\" --with \"var resetFaces = []Face{{Verb: Reset, Name: \\\"reset-unproduced\\\", Sentence: \\\"unproduced reset\\\", Authority: Reviewer, Route: handback},\" --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,b91c696ce74e984b6cdd93d6d8758b35b61be62c,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/faces_reset.go,swap,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,1329,15\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestMergeFacesFollowTheirRoutes,\"merge_route_test.go:96: registry reset face \\\"reset-unproduced\\\" has no producing fixture\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1443,6 +1720,18 @@
     {
       "from": "sha256:1958801be24bda9d85bc5db93b391183c898455fb52adc9154b785f6f4a8d984",
       "to": "sha256:f0639cf27495f50d19843b401bf84eab059aa614e05f76f81c98dc485790924b",
+      "chunk_ids": {
+        "RR-C1a": [
+          "RR-C1a"
+        ],
+        "RR-C1b": [
+          "RR-C1b"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f0639cf27495f50d19843b401bf84eab059aa614e05f76f81c98dc485790924b",
+      "to": "sha256:43985cc5492c46ba00fc0a2dfe29aaeda496478ea800c97bdfe4e22ba1b89720",
       "chunk_ids": {
         "RR-C1a": [
           "RR-C1a"
