@@ -6,15 +6,15 @@ Covers: TF7, TF8, TF9, TF10, TF11, TF12, TF13, TF14, TF15, TF19, TF20, TF21, TF2
 
 ## What to build
 
-`internal/testreport` exports one floor function. The function takes the `Writes:` entries of one ticket. It returns the directory-relative patterns of the packages that the ticket writes directly, the embed flag, and the loader error. The spec section "Floor derivation" owns the entry rules, and this ticket implements them unchanged.
+`internal/testreport` exports the floor function `WritesFloor(ctx context.Context, root string, entries []string) (Floor, error)` in `floor.go`. The `entries` are the raw `Writes:` entries of one ticket, as `tickets.Ticket.Writes` holds them, `(new)` markers included. `Floor` holds `Packages []string`, the directory-relative package patterns in sorted order, and `Embed bool`, the embed flag. The error is the loader error. The spec section "Floor derivation" owns the entry rules, and this ticket implements them unchanged.
 
 The floor and the `--changed` selection share one package index built from `go list -json -test ./...`. The index maps a directory to its package, an embed file to its owner, and a package to its embed patterns. The listed package record gains the embed patterns that `go list` reports. Keep the signature of `selectCurrentPackages`, so `selection_test.go` and `selection_cause_test.go` stay unedited. The file `selection_test.go` holds 604 lines and has no structure grant.
 
 The floor splits each entry with `tickets.WritesPath` and matches a directory entry with `tickets.Covers`. Each element is the pattern that `packagePattern` gives the package directory, so the root package is `./.`. A root without `go.mod` returns an empty floor and calls no loader. The tests inject canned package records through the loader seam, as `resolveChangedPackagesWithLoader` does.
 
-`Request` gains one accessor that reports the `--changed` flag. The `--changed` form reports the target `./...`, so a reader without this accessor cannot tell the two forms apart. TF-C3 reads the accessor and writes no file in `internal/testreport`.
+`Request` gains the accessor `func (r Request) Changed() bool` in `selection_facts.go`, which reports the `--changed` flag. The `--changed` form reports the target `./...`, so a reader without this accessor cannot tell the two forms apart. TF-C3 reads the accessor and writes no file in `internal/testreport`.
 
-`internal/tickets` exports one predicate that answers whether a path sits under a bound command package. The predicate reads the binding rows whose files are the command registry set, so no second list of command packages exists.
+`internal/tickets` exports the predicate `CommandPackage(path string) bool` in `registry_data.go`. It answers whether a path sits under a bound command package, through `Covers`. The predicate reads the binding rows whose files are the command registry set, so no second list of command packages exists.
 
 At the ticket commit, rewrite the `planned` seam cell of each covered row into the citation form.
 
@@ -31,7 +31,7 @@ At the ticket commit, rewrite the `planned` seam cell of each covered row into t
 - [ ] TF15: The tickets predicate answers true for a path under a bound command package, and false for a path under the `internal/toon` row.
 - [ ] TF19: A root without `go.mod` gives an empty package floor and calls no loader.
 - [ ] TF20: The floor and the `--changed` selection give the same direct package for one canned path.
-- [ ] TF21: `TestCauseEmbedOnly` stays green after the index is shared.
-- [ ] TF22: `TestCauseChangedBeatsImports` stays green after the index is shared.
+- [ ] TF21: `TestCauseEmbedOnly` stays green after the index is shared. Its red comes from a mutation probe, not from absence: omit `EmbedFiles` from the shared index's embed map, and the test turns red.
+- [ ] TF22: `TestCauseChangedBeatsImports` stays green after the index is shared. Its red comes from a mutation probe, not from absence: let the imports-cause pass overwrite a direct cause, and the test turns red.
 - [ ] TF71: An absent `(new)` embed file adds no package and returns no error.
 - [ ] The `--changed` accessor answers true for a `bench test --changed` request and false for a `bench test --package` request.

@@ -14,6 +14,12 @@ The guidance states the floor, the planned-cell rewrite, and the one root confor
 - Delegation discipline names `bench test --check root-conformance` as the root conformance pass, and it keeps its anchored sentence.
 - The build-entry route sentence on line 19 adds `check-floor` to the reds that the staleness pass takes.
 
+Each statement describes a behavior that a blocker ticket produces:
+
+- Ticket 01 produces the `bench test --check root-conformance` command that the delegation sentence names.
+- Ticket 03 produces the `check-floor` row that the floor sentence and the route sentence name.
+- Ticket 04 produces the chunk freeze refusal that makes the TF61 planned-cell rewrite sentence true.
+
 `.agents/commands/bench-implement-spec.md` holds 83 lines against its budget of 83. Each new sentence joins an existing paragraph line, so the file stays at 83 lines.
 
 Each new sentence gets one anchor and one `workflow-guidance-anchors` canary that `docs-currency-workflow` grades. `internal/anchors/registry_data.go` holds 479 lines and has no structure grant. So the four new anchors go into `registry_check_floor.go`, and the new family joins the registry on the existing join line of `registry_data.go`. The route change updates the needle in `registry_chunk_chain.go` and the `old` text of the `implement-spec-red-preflight-route` canary. The other anchor registry files and the command registry files are closure entries, and this ticket expects no edit in them.
@@ -26,5 +32,5 @@ At the ticket commit, rewrite the seam cell of TF60 to TF63 and TF65 to cite `in
 - [ ] TF61: The implement-spec guidance holds the anchored planned-cell rewrite sentence, and its canary mutation reds `docs-currency-workflow`.
 - [ ] TF62: Map discipline holds the anchored marker-lifetime sentence, and its canary mutation reds `docs-currency-workflow`.
 - [ ] TF63: Delegation discipline holds the anchored root-conformance command sentence, and its canary mutation reds `docs-currency-workflow`.
-- [ ] TF64: The existing `delegate-root-conformance-pass` canary bites through `docs-currency-workflow` after the guidance edit.
+- [ ] TF64: The existing `delegate-root-conformance-pass` canary bites through `docs-currency-workflow` after the guidance edit. Its red comes from a mutation probe, not from absence: change one word of the `old` text in that canary's `MUTATE.json`, and `TestEveryRetainedFixtureBitesThroughRegisteredOwner` turns red.
 - [ ] TF65: The build-entry route sentence names `check-floor` among the reds that the staleness pass takes, and the updated `implement-spec-red-preflight-route` canary bites.
