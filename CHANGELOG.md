@@ -6,6 +6,16 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Refusal recovery routes
+
+- Added one shared refusal-route registry for the write verbs: `bench commit`, `bench worktree merge`, `bench worktree reset`, `bench worktree land`, the `bench gate` checkpoint, and `bench commitment`. Each refusal of these verbs now prints one recovery route from the registry. The commitment verb prints the route in its `next[1]{command}` table, and each other verb prints it on a `next=` line.
+- Added an authority to each route. An agent route names the Bench commands and the file edits that the agent does in its own worktree. A reviewer route starts with `reviewer: `, and the agent stops and hands back. A composition conflict and a change to the active commitment take a reviewer route.
+- Added `bench recovery`. It prints `recovery[N]{verb,face,authority,route}`, with one row for each registered refusal, in registry order.
+- Changed the merge so that a fold onto a red target has an exit. When the target tip alone fails its lane, the route tells the agent to repair the target, commit it, and run the fold again. When the fold adds the red, the route goes to the reviewer.
+- Changed the exit 3 route of `bench commit` to the reset plan at the published commit: `bench worktree reset --to <published-commit> <checkout>`. The old route printed `git restore`, and the destructive-git guard refuses that command.
+- Changed the checkpoint refusal of `bench gate` so that it prints the route of its cause, and it no longer prints the fixed write-access help row. A missing completion record routes to `bench preflight review`. A dirty checkout routes to `bench commit --in` and then the rerun. A subject-capture fault routes to `bench doctor` and then a rerun with `--fresh`. A delivery closure that does not compose routes to the reviewer.
+- Changed the commitment policy refusals so that their sentences do not end with a `run bench` tail. The verb that prints the refusal prints the route.
+
 ### Complete checkpoint closure
 
 - Changed `bench gate --checkpoint <spec> --complete` so that it grades the tree that the landing publishes from the committed source. That tree carries the implemented spec status and the delivery closure, so a red that the closure causes now stops the checkpoint before the landing.
