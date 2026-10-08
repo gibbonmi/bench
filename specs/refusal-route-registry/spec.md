@@ -232,7 +232,7 @@ These faces and routes are required.
 | commitment | `commitment-verify-evidence` | agent | `bench commitment verify --milestone <id> --evidence <file>` |
 | commitment | `commitment-decision` | reviewer | `bench commitment plan --input <file>` |
 | commitment | `commitment-unbound` | agent | `bench commitment start --outcome <id> --request <request> --deliverable <path>` |
-| commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then the re-run with `<ticket>` among its paths |
+| commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then the printing verb's re-run that carries `<ticket>`: a commit names it among its paths, and a landing commits it first |
 | commitment | `commitment-run-unknown` | agent | `bench commitment inventory` |
 | commitment | `commitment-handback` | reviewer | clear the cause that the refusal names; then the re-run |
 
@@ -1042,6 +1042,18 @@ The orchestrator records each author session before that author's dispatch.
           "trigger": "user-directed",
           "stopped": "the ticket 11 author passed the 300k context rule after its commit and has no live child",
           "preserved": "4cf6e4721b89fbcc06fdff9254442f3d95f18434"
+        },
+        {
+          "session": "claude:ft393_t11_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "a71c4466f83e447457d21f91009318ede5bc283b",
+          "native_ref": "claude-agent:ft393_t11_repair1",
+          "predecessor": "claude:ft393_t11b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 11 verification session reported its RR-C5 records and has no live child",
+          "preserved": "048702bb1a57c0f3cbdb320a307aecfb2ee66892"
         }
       ],
       "12-print-the-commitment-verb-routes-from-the-registry.md": [
@@ -1241,6 +1253,8 @@ The prospective build owns these exact paths:
 - `internal/commit/assessment_span_test.go`
 - `internal/commit/commit_test.go`
 - `internal/commit/commitment_route_test.go`
+- `internal/commitment/commitmenttest/admission.go`
+- `internal/commitment/commitmenttest/repo.go`
 - `internal/refusalroute/routetest/routetest_test.go`
 - `internal/landing/attribution.go`
 - `internal/landing/gitexec.go`
