@@ -90,7 +90,7 @@ TF-C2 round 3: 0 findings. Each behavior of the absent-path branch keeps its tes
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:99c7e75dc8b84d59453aebb7a6f005427886cf77a0ba1acfc7b5777e2f20f915",
+  "plan_digest": "sha256:d79cccef3b381e3136c16f57d404031671992d002cca1e410a9641c33c4d5118",
   "implementation_session": "",
   "chunks": [
     {
@@ -1297,6 +1297,18 @@ TF-C2 round 3: 0 findings. Each behavior of the absent-path branch keeps its tes
     {
       "from": "sha256:49fe6d5754b5458940bd3f566e3078842dbb4d355f4c67cfdd5f20258048c140",
       "to": "sha256:99c7e75dc8b84d59453aebb7a6f005427886cf77a0ba1acfc7b5777e2f20f915",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ],
+        "TF-C2": [
+          "TF-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:99c7e75dc8b84d59453aebb7a6f005427886cf77a0ba1acfc7b5777e2f20f915",
+      "to": "sha256:d79cccef3b381e3136c16f57d404031671992d002cca1e410a9641c33c4d5118",
       "chunk_ids": {
         "TF-C1": [
           "TF-C1"
