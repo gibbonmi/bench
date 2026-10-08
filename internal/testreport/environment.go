@@ -29,6 +29,17 @@ func conformanceEnvironment(base []string, root, scope string, selection *runbin
 	return env, nil
 }
 
+// conformanceScope answers the conformance scope of a named check. The root-conformance
+// check passes the empty scope, which runs every registered dev-tier check, because the
+// entry test refuses a scope that names no registered check. Every other check is its
+// own scope.
+func conformanceScope(check string) string {
+	if check == rootConformanceCheckName {
+		return ""
+	}
+	return check
+}
+
 func environmentValue(env []string, name string) string {
 	prefix := name + "="
 	for i := len(env) - 1; i >= 0; i-- {

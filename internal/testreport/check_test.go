@@ -235,14 +235,7 @@ func TestNamedCheckRunsOnlyRegisteredDevScope(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	selection, err := runbinary.Own(context.Background(), root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = selection.Close() })
-	previous := selectRunBinary
-	selectRunBinary = func(context.Context, string) (*runbinary.Selection, error) { return selection, nil }
-	t.Cleanup(func() { selectRunBinary = previous })
+	installOwnedSelection(t, root)
 
 	timingRoot := t.TempDir()
 	runChangedGit(t, timingRoot, "init", "-q")

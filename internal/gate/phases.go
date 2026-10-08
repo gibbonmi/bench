@@ -127,25 +127,29 @@ func goModuleToolchain(root string) (bool, error) {
 // scheduling inside the one ordinary test driver. This is what makes that driver
 // grade the live tree rather than only the fixtures.
 //
-// It materializes on the same terms as the race and system phases. It requires the
-// graded root to be the kit, and requires that kit to actually declare the entry
-// test. So a linked repo, or a root whose package path merely collides, never
+// It materializes only where RootConformanceRuns answers true, so a linked repo never
 // inherits a variable its test binaries cannot honor.
 //
 // The tier is pinned rather than left to its unset default. The phase inherits the
 // operator's environment, and an ambient ship tier would otherwise widen what the dev
 // gate grades.
 func rootConformanceEnv(root, kit string) []string {
-	if !sameDirectory(root, kit) {
-		return nil
-	}
-	if !declaresTest(filepath.Join(root, filepath.FromSlash(conformancePackagePath)), registry.RootConformanceTest) {
+	if !RootConformanceRuns(root, kit) {
 		return nil
 	}
 	return []string{
 		registry.ConformanceRootEnv + "=" + root,
 		registry.ConformanceTierEnv + "=" + string(registry.Dev),
 	}
+}
+
+// RootConformanceRuns reports whether root conformance applies to root. It applies on
+// the same terms as the race and system phases: root is the kit, and that kit declares
+// the entry test. So a linked repo, or a root whose package path merely collides, never
+// runs it. An empty kit means root itself.
+func RootConformanceRuns(root, kit string) bool {
+	return sameDirectory(root, kitRootAt(root, kit)) &&
+		declaresTest(filepath.Join(root, filepath.FromSlash(conformancePackagePath)), registry.RootConformanceTest)
 }
 
 // conformancePackagePath is where the entry test lives inside the kit, relative to the

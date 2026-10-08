@@ -17,6 +17,14 @@ import (
 
 const proseCheckName = "prose"
 
+// rootConformanceCheckName names the unscoped run of the root conformance test, which
+// grades every registered dev-tier check.
+const rootConformanceCheckName = "root-conformance"
+
+// rootConformanceUnavailable is the error title of a root-conformance run over a root
+// where the gate does not run root conformance.
+const rootConformanceUnavailable = "root conformance unavailable"
+
 // ranNothingTitle is the error title of a named check that reached no evidence that it ran.
 const ranNothingTitle = "named check ran nothing"
 
@@ -46,7 +54,7 @@ func namedCheckInventory() string {
 }
 
 func namedChecks() []string {
-	return append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName)
+	return append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName, rootConformanceCheckName)
 }
 
 func isNamedCheck(check string) bool {
@@ -54,7 +62,7 @@ func isNamedCheck(check string) bool {
 }
 
 // namedCheckKind is the one owner of the kind cell: the system suite, the prose
-// grader, or a conformance scope of the root conformance test.
+// grader, or a run of the root conformance test, scoped or unscoped.
 func namedCheckKind(check string) string {
 	switch check {
 	case gate.SystemPhaseName:
@@ -93,7 +101,7 @@ func runGoBackedCheck(ctx context.Context, root string, request focusedRequest, 
 		return runSystemCheck(ctx, root, request, selection)
 	}
 	argv := focusedTestArgv("./internal/conformance", "-run", namedCheckRunPattern())
-	env, err := conformanceEnvironment(os.Environ(), root, request.check, selection)
+	env, err := conformanceEnvironment(os.Environ(), root, conformanceScope(request.check), selection)
 	if err != nil {
 		return refusedOutcome(toon.Errorf("go test failed to start", err.Error())+"\n", 1)
 	}
