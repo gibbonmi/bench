@@ -241,6 +241,10 @@ func TestCompleteCheckpointRefusesADirtyCheckout(t *testing.T) {
 			if code != 1 || !strings.Contains(out, cleanCheckoutRefusal) || strings.Contains(out, "completion is incomplete or stale") {
 				t.Errorf("dirty complete checkpoint = (%d, %q), want exit 1 and only %q", code, out, cleanCheckoutRefusal)
 			}
+			// RR41: the refusal names the commit that cleans the checkout.
+			if !strings.Contains(out, "\nnext=bench commit --in ") {
+				t.Errorf("dirty complete checkpoint = %q, want a next= route that commits the checkout", out)
+			}
 			assertNoOracleRun(t, f)
 		})
 	}
@@ -254,6 +258,10 @@ func TestCompleteCheckpointRefusesAnUntransformableSpec(t *testing.T) {
 	code, out := completeCheckpoint(t, f)
 	if code != 1 || !strings.Contains(out, "spec has no Status: staged line") {
 		t.Errorf("complete checkpoint on a spec with no staged status = (%d, %q), want exit 1 and the transform reason", code, out)
+	}
+	// RR66: the spec status is the reviewer's, so the route hands back.
+	if !strings.Contains(out, "\nnext=reviewer: ") {
+		t.Errorf("complete checkpoint on a spec with no staged status = %q, want a next= reviewer route", out)
 	}
 	assertNoOracleRun(t, f)
 }

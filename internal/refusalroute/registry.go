@@ -100,6 +100,8 @@ const (
 	FactPublishedCommit = "published-commit"
 	// FactArguments is the caller's own arguments after a tree target, each rendered by Arg.
 	FactArguments = "arguments"
+	// FactSlug is the slug of the spec whose evidence a route reads.
+	FactSlug = "slug"
 )
 
 // Arg renders one value of a command that a raising site composes: shell-quoted, or the
@@ -146,7 +148,7 @@ var atCheckout = Command(Composed(FactCheckoutCommand), Fact(FactCheckout))
 // inventory is the authoritative, ordered inventory of the write verbs' refusal faces. Each
 // verb declares its faces in its own file of this package, and a verb adds its face there
 // rather than composing a route at the site that refuses. The verbs join in this order.
-var inventory = slices.Concat(landFaces, mergeFaces, resetFaces, commitFaces)
+var inventory = slices.Concat(landFaces, mergeFaces, resetFaces, commitFaces, gateFaces)
 
 // New is the one constructor a registered face travels through.
 func New(name string, facts Facts) Refusal { return newIn(inventory, name, facts) }

@@ -3,6 +3,7 @@ package gate
 import (
 	"bytes"
 	"context"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,6 +30,27 @@ func attachedCheckpointFixture(t *testing.T, attach func(testing.TB, string, int
 	f.Save()
 	f.Commit("retain review evidence")
 	return f
+}
+
+// The checkpoint route walk runs in the external test package, because the steps it runs
+// verbatim reach packages that import this one. These names hand it the checkpoint
+// fixtures and the one run seam that no public entry reaches.
+var (
+	AttachedCheckpointFixture = attachedCheckpointFixture
+	RetainCompletion          = retainCompletion
+)
+
+// RunCheckpointArmed runs the checkpoint that args select at root, and calls arm once the run
+// holds its execution lock: after it accepts its subject and before it validates that
+// subject. It answers the exit.
+func RunCheckpointArmed(t *testing.T, root string, args []string, arm func(), stderr io.Writer) int {
+	t.Helper()
+	_, mode, checkpoint, err := parseGateArgs(args, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	armed := func(ctx context.Context) (context.Context, func()) { arm(); return ctx, func() {} }
+	return executeAfterAcquire(WithCheckpoint(context.Background(), checkpoint), root, io.Discard, stderr, armed, mode).ActionExit
 }
 
 func runCheckpoint(t *testing.T, f *recordtest.Fixture) (int, string) {
@@ -184,11 +206,11 @@ func TestReviewCheckpointMissingRecord(t *testing.T) {
 	}
 }
 
-// TestReviewCheckpointRefusalRoute grades the one refusal a single read answers.
-// The checkpoint cannot show what the completion evidence lacks, and `bench
-// preflight review <slug>` reports the plan row and the record state. So that
-// refusal names the read. Every other refusal, and an accepted checkpoint, carry
-// no route, because a route that names no state-derived action is a false path.
+// TestReviewCheckpointRefusalRoute is RR39 and RR40. The checkpoint cannot show what
+// the completion evidence lacks, and `bench preflight review <slug>` reports the plan
+// row and the record state. So that refusal names the read, and only the read: the
+// fixed write-access help row names no cause of this refusal. An accepted checkpoint
+// carries no route.
 func TestReviewCheckpointRefusalRoute(t *testing.T) {
 	const route = "next=bench preflight review example"
 	for _, tc := range []struct {
@@ -211,6 +233,9 @@ func TestReviewCheckpointRefusalRoute(t *testing.T) {
 			code, out := runCheckpoint(t, f)
 			if code == 0 || !strings.Contains(out, tc.reason) || !strings.Contains(out, route+"\n") {
 				t.Fatalf("refusal lost its reason or its route: %d %s", code, out)
+			}
+			if strings.Contains(out, "help[1]{cmd,why}") {
+				t.Fatalf("refusal printed a help row beside its route: %s", out)
 			}
 		})
 	}

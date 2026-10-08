@@ -42,19 +42,7 @@ func productionRunBinaryOwner() runBinaryOwner {
 func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation, owner runBinaryOwner, baseline string) Result {
 	plan, err := evaluation.acceptPre()
 	if err != nil {
-		refusal := operational(storageRoot, 0, stderr, fmt.Sprintf("gate subject unavailable: %v", err))
-		help, helpErr := subjectUnavailableHelp()
-		if helpErr == nil {
-			fmt.Fprint(stdout, help)
-		}
-		// The route prints under the reason, the shape every routed refusal uses.
-		// The spec-path grammar rejects a control byte, so the line needs no second
-		// sanitizer here.
-		var routed routeError
-		if errors.As(err, &routed) {
-			fmt.Fprintln(stderr, "next="+routed.next)
-		}
-		return refusal
+		return refuse(ctx, storageRoot, stderr, mode, funnelFace(err), fmt.Sprintf("gate subject unavailable: %v", err))
 	}
 	var declaredPaths []string
 	if m, _, reason := loadManifest(runtimeRoot); reason == "" {
@@ -106,6 +94,9 @@ func executeSubjectWithRunBinary(ctx context.Context, runtimeRoot, storageRoot s
 		return operational(storageRoot, 0, stderr, "gate owner persistence failed")
 	}
 	underLock, err := evaluation.validatePre()
+	if errors.Is(err, errCheckpointTipMoved) {
+		return refuse(ctx, storageRoot, stderr, mode, faceTipMoved, "gate subject changed before execution: "+err.Error())
+	}
 	if err != nil || !sameSubject(plan, underLock) {
 		return operational(storageRoot, 0, stderr, "gate subject changed before execution")
 	}
