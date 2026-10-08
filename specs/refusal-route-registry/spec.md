@@ -1021,7 +1021,16 @@ The orchestrator records each author session before that author's dispatch.
           "preserved": "429a3d8af4ac5aa227cd705085ef138c58247aac"
         }
       ],
-      "11-route-the-commitment-policy-refusals-through-faces.md": [],
+      "11-route-the-commitment-policy-refusals-through-faces.md": [
+        {
+          "session": "claude:ft393_t11",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "e2991ccf285f97e8bdc05f30eb2c7419ce8b63fb",
+          "native_ref": "claude-agent:ft393_t11"
+        }
+      ],
       "12-print-the-commitment-verb-routes-from-the-registry.md": [],
       "13-refuse-a-route-literal-outside-the-registry.md": []
     }
