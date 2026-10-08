@@ -256,6 +256,7 @@ These sites move to faces:
 A face's verb names the verb whose rule raises it, and another write verb can print it.
 So `bench commit` prints a commitment face when the commitment policy refuses its candidate.
 The reset table keeps each current route of the reset verb unchanged.
+The missing-tree route clears its cause: `bench worktree clean --landed` retires a landed assignment whose tree is missing, and `bench worktree release` releases an unlanded one (reviewer decision 2026-10-07).
 
 ### The red-source fold (collision 5a)
 
@@ -1015,6 +1016,15 @@ The prospective build owns these exact paths:
 - `internal/worktree/reset.go`
 - `internal/worktree/reset_apply.go`
 - `internal/worktree/reset_restore.go`
+- `internal/worktree/reset_restore_refusal_test.go`
+- `internal/worktree/reset_apply_test.go`
+- `internal/worktree/missing_tree_recovery_test.go`
+- `internal/worktree/lifecycle_test.go`
+- `internal/worktree/worktree_test.go`
+- `internal/worktree/lifecycle.go`
+- `internal/worktree/worktree.go`
+- `internal/worktree/clean_landed_test.go`
+- `internal/worktree/clean_landed.go`
 - `internal/worktree/path.go`
 - `internal/worktree/classifier.go`
 - `internal/worktree/identity_component.go`
