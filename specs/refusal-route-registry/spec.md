@@ -234,6 +234,7 @@ These faces and routes are required.
 | commitment | `commitment-unbound` | agent | `bench commitment start --outcome <id> --request <request> --deliverable <path>` |
 | commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then the re-run with `<ticket>` among its paths |
 | commitment | `commitment-run-unknown` | agent | `bench commitment inventory` |
+| commitment | `commitment-handback` | reviewer | clear the cause that the refusal names; then the re-run |
 
 The `<verb>-handback` reviewer faces join this list for each verb.
 On the resume path, a dirty source takes `land-handback`, because a commit there moves the source away from the published tip.
@@ -1029,6 +1030,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "e2991ccf285f97e8bdc05f30eb2c7419ce8b63fb",
           "native_ref": "claude-agent:ft393_t11"
+        },
+        {
+          "session": "claude:ft393_t11b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "68bb6f06b232121d01f1fd19d574e80507688293",
+          "native_ref": "claude-agent:ft393_t11b",
+          "predecessor": "claude:ft393_t11",
+          "trigger": "user-directed",
+          "stopped": "the ticket 11 author passed the 300k context rule after its commit and has no live child",
+          "preserved": "4cf6e4721b89fbcc06fdff9254442f3d95f18434"
         }
       ],
       "12-print-the-commitment-verb-routes-from-the-registry.md": [
