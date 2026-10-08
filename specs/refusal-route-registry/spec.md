@@ -822,6 +822,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "6affd5e5e85046b4b5bed7331cf92effb42f5eb7",
           "native_ref": "claude-agent:ft393_t5"
+        },
+        {
+          "session": "claude:ft393_t5b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "01a59319d73960148284929697ff4fc542f9f898",
+          "native_ref": "claude-agent:ft393_t5b",
+          "predecessor": "claude:ft393_t5",
+          "trigger": "user-directed",
+          "stopped": "the ticket 05 author session committed 1fcfeef8, has no live child, and carries about 419k tokens of context; the reviewer's standing rule transfers work past about 300k tokens",
+          "preserved": "1fcfeef8aacc9b37ce51cc0566c053974337d2af"
         }
       ],
       "06-give-the-red-source-fold-an-exit.md": [
