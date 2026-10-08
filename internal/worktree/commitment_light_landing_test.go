@@ -5,6 +5,7 @@ package worktree
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -15,6 +16,8 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/roadmap"
 )
 
@@ -126,9 +129,13 @@ func TestCommitmentTicketsOnlyClosure(t *testing.T) {
 // An unbound assignment lands its light-path change with --spec naming the change's folder.
 // The landing publishes the change, closes the folder, and records no delivery fact. A
 // spec-less landing of the same change refuses before publication and names the --spec
-// route.
+// route. A landing whose change has a path outside the ticket follows its printed route.
 func TestCommitmentLightPathLanding(t *testing.T) {
 	t.Parallel()
+	t.Run("outside-route", func(t *testing.T) {
+		t.Parallel()
+		followLightPathOutsideLanding(t)
+	})
 	request := "land-commitment-light-path"
 	f := lightLandingFixture(t, request)
 	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, f.tip, f.creation.Path)...))
@@ -145,6 +152,93 @@ func TestCommitmentLightPathLanding(t *testing.T) {
 	}
 	if before, after := gitOutput(t, f.root, "show", f.base+":"+commitment.PolicyPath), gitOutput(t, f.root, "show", published+":"+commitment.PolicyPath); after != before {
 		t.Fatalf("published policy = %q, want the base policy %q", after, before)
+	}
+}
+
+// lightPathLandingFixture produces one commitment face that a light-path landing prints.
+// build makes the light-path landing fixture and returns the arguments of the landing that
+// the face refuses. carry carries out a printed instruction, keyed by the step's index in
+// the face's route.
+type lightPathLandingFixture struct {
+	face  string
+	build func(t *testing.T, request string) (landingFixture, []string)
+	carry map[int]func(t *testing.T, f landingFixture)
+}
+
+// lightPathTicket is the ticket of the light-path landing fixture's folder.
+var lightPathTicket = landing.ClosedFolderPath(lightLandingSlug) + "/tickets/one.md"
+
+// lightPathLandingFixtures are the fixtures of the publication faces, which the landing walk
+// proves.
+func lightPathLandingFixtures() []lightPathLandingFixture {
+	return []lightPathLandingFixture{{
+		// The ticket covers the change, and the caller lands it with no --spec.
+		face: refusalroute.CommitmentLightPathSpec,
+		build: func(t *testing.T, request string) (landingFixture, []string) {
+			f := lightLandingFixture(t, request)
+			return f, specLessLandArgs(request, f.base, f.tip, f.creation.Path)
+		},
+	}}
+}
+
+// lightPathOutsideLanding is the landing fixture of commitment-light-path-outside: the source
+// also commits extra.txt, which the ticket's Writes line does not list. The walk widens the
+// line and gives the printed commit of the ticket a lane to pass.
+func lightPathOutsideLanding() lightPathLandingFixture {
+	return lightPathLandingFixture{
+		face: refusalroute.CommitmentLightPathOutside,
+		build: func(t *testing.T, request string) (landingFixture, []string) {
+			f := lightLandingFixture(t, request)
+			commitInWorktree(t, f.creation.Path, "extra.txt", "outside the ticket\n", "outside the ticket")
+			f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+			return f, ticketsOnlyLandArgs(request, f.base, f.tip, lightLandingSlug, f.creation.Path)
+		},
+		carry: map[int]func(*testing.T, landingFixture){0: func(t *testing.T, f landingFixture) {
+			commitmenttest.WriteLightTicket(t, f.creation.Path, lightPathTicket, "owned.txt", "extra.txt")
+			plantSourceCommitLane(t, f.creation)
+		}},
+	}
+}
+
+// followLightPathOutsideLanding is the landing arm of RR63. The landing prints the
+// light-path route in the shape its own grammar takes: the ticket commits first, and the
+// re-run names the repaired source tip. The walk follows the route verbatim to a clean
+// landing.
+func followLightPathOutsideLanding(t *testing.T) {
+	for _, face := range refusalroute.Faces(refusalroute.Commitment) {
+		if face.Name == refusalroute.CommitmentLightPathOutside {
+			followLightPathLanding(t, installedWrapper(t, testRunBinary(t)), face, lightPathOutsideLanding())
+			return
+		}
+	}
+	t.Fatalf("the registry declares no face %q", refusalroute.CommitmentLightPathOutside)
+}
+
+// followLightPathLanding drives one light-path fixture: the landing prints one route and a
+// sentence that holds no route, the walk carries out that route, and its last step lands.
+func followLightPathLanding(t *testing.T, wrapper string, face refusalroute.Face, fixture lightPathLandingFixture) {
+	request := "light-path-" + face.Name
+	f, args := fixture.build(t, request)
+	r := runVerb(t, verbLand, f.call(args...))
+	detail, _ := recordField(r.stdout, "refused{", "detail", refusalroute.NextField)
+	next, printed := recordField(r.stdout, "refused{", refusalroute.NextField)
+	if r.exit != 1 || !printed || strings.Count(r.stdout, refusalroute.NextField+"=") != 1 || strings.Contains(detail, "bench ") || strings.Contains(detail, " --") {
+		t.Fatalf("%s landing = (%d, %q, %q), want exit 1, one next= route, and a sentence with no route", face.Name, r.exit, r.stdout, r.stderr)
+	}
+	steps := routetest.Steps(t, face, next, "", nil)
+	fill := operatorFill(producedFace{f: f, request: request})
+	carry := func(index int) (func(), bool) {
+		step, carried := fixture.carry[index]
+		return func() { step(t, f) }, carried
+	}
+	last := routetest.Follow(t, face, steps, carry, func(step string) verbResult {
+		ran := runPrintedStep(t, wrapper, f.repoHome, fill(t, step))
+		// The commit lane is the walk's scaffold, so it leaves the source before the landing.
+		mustRemove(t, filepath.Join(f.creation.Path, ".bench", "phases.json"))
+		return ran
+	})
+	if _, landed := landedField(last.stdout, "worktree"); last.exit != 0 || !landed {
+		t.Fatalf("%s re-run = (%d, %q, %q), want exit 0 and a landed record", face.Name, last.exit, last.stdout, last.stderr)
 	}
 }
 

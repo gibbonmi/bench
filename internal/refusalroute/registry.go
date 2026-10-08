@@ -89,7 +89,13 @@ func (r Raised) Unwrap() error { return r.Err }
 // them. The sentence is the cause's whole message, so the context that wraps a raised
 // refusal stays; a nil cause keeps the face's declared sentence.
 func Printed(face string, cause error, values map[string]string) Refusal {
-	facts := Facts{Values: map[string]string{}}
+	return PrintedAfter(face, "", cause, values)
+}
+
+// PrintedAfter is Printed with a preface that the route states ahead of its first step,
+// such as the landing's skipped-proof sentence.
+func PrintedAfter(face, preface string, cause error, values map[string]string) Refusal {
+	facts := Facts{Preface: preface, Values: map[string]string{}}
 	maps.Copy(facts.Values, values)
 	if cause != nil {
 		facts.Sentence = cause.Error()
@@ -136,7 +142,8 @@ const (
 	FactPublishedCommit = "published-commit"
 	// FactArguments is the caller's own arguments after a tree target, each rendered by Arg.
 	FactArguments = "arguments"
-	// FactSlug is the slug of the spec whose evidence a route reads.
+	// FactSlug is the slug of the spec whose evidence a route reads, or of the folder that a
+	// landing's --spec names.
 	FactSlug = "slug"
 	// FactTicket is the path of the light-path ticket whose Writes line a route edits.
 	FactTicket = "ticket"
@@ -156,8 +163,12 @@ var rerun = Command(Composed(FactRerun))
 
 // commitAt commits the operator's repair in the worktree that the named label fact
 // addresses. Every face whose repair is the agent's own commit names this one step.
-func commitAt(label string) Step {
-	return TreeCommand("bench commit", Fact(label), Text("-m"), Operator("msg"), Text("--"), Operators("path"))
+func commitAt(label string) Step { return commitPathsAt(label, Operators("path")) }
+
+// commitPathsAt is commitAt over the paths that paths names, for a repair whose paths the
+// raising site already knows.
+func commitPathsAt(label string, paths Word) Step {
+	return TreeCommand("bench commit", Fact(label), Text("-m"), Operator("msg"), Text("--"), paths)
 }
 
 // doctor diagnoses an infrastructure outcome ahead of the caller's re-run.

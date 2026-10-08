@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -87,6 +88,7 @@ func commitmentFaceFixtures(rerun func(label string, flags ...string) string) []
 					mustWrite(t, filepath.Join(root, "ROADMAP.md"), "# Roadmap\n\n## Recommended sequence\n\n1. "+commitmenttest.DeliveryOutcome+"\n", 0o644)
 				})
 			},
+			prefix:   routetest.ReviewerMarker,
 			contains: "bench commitment plan --input ",
 			carry: map[int]func(*testing.T, commitSet){0: func(t *testing.T, f commitSet) {
 				runGit(t, f.checkout, "rm", "-q", "ROADMAP.md")
@@ -95,14 +97,15 @@ func commitmentFaceFixtures(rerun func(label string, flags ...string) string) []
 		},
 		lightPathFixture("", spaced, sanitize.ShellQuote(spaced), rerun),
 		lightPathFixture("ticket that is not line-safe", unsafe, "<"+refusalroute.FactTicket+">", rerun),
+		lightPathSpanFixture(),
 	}
 }
 
 // lightPathFixture is a commitment-light-path-outside fixture: the checkout's one committed
 // light-path ticket, at ticket, lists b.txt and not the caller's a.txt. The route names the
-// ticket as named. The walk widens the Writes line, and the route's re-run, with the
-// ticket among its paths, then publishes. A ticket that prints its placeholder is the
-// value the operator holds.
+// ticket as named. The walk widens the Writes line, the route commits the ticket, and the
+// caller's own re-run then publishes. A ticket that prints its placeholder is the value the
+// operator holds.
 func lightPathFixture(cause, ticket, named string, rerun func(label string, flags ...string) string) commitFaceFixture {
 	label := refusalroute.CommitmentLightPathOutside
 	return commitFaceFixture{
@@ -113,12 +116,36 @@ func lightPathFixture(cause, ticket, named string, rerun func(label string, flag
 				commitmenttest.WriteLightTicket(t, root, ticket, "b.txt")
 			})
 		},
-		contains: " line of " + named,
-		suffix:   rerun(label) + " " + named,
+		contains: " line of " + named + "; then " + callerCommit(sanitize.ShellQuote(label), "-m", "<msg>", "--", named) + "; then ",
+		suffix:   rerun(label),
 		absent:   "bench commitment start",
 		carry: map[int]func(*testing.T, commitSet){0: func(t *testing.T, f commitSet) {
 			commitmenttest.WriteLightTicket(t, f.checkout, ticket, "b.txt", "a.txt")
 		}},
-		slots: []string{named, sanitize.ShellQuote(ticket)},
+		slots: []string{named, sanitize.ShellQuote(ticket), "<msg>", "'widen the ticket'"},
+	}
+}
+
+// lightPathSpanFixture is the commitment-light-path-span fixture: the caller commits a.txt
+// and b.txt, and each has its own light-path ticket. The operator commits the path of one
+// ticket, a.txt, which the printed commit carries out, so the instruction needs no step of
+// its own.
+func lightPathSpanFixture() commitFaceFixture {
+	label := refusalroute.CommitmentLightPathSpan
+	return commitFaceFixture{
+		face: label, exit: 1, paths: []string{"b.txt"},
+		build: func(t *testing.T) commitSet {
+			f := unboundCommitSet(t, label, func(t *testing.T, root string) {
+				gateScript("exit 0")(t, root)
+				commitmenttest.WriteLightTicket(t, root, "specs/one/tickets/one.md", "a.txt")
+				commitmenttest.WriteLightTicket(t, root, "specs/two/tickets/one.md", "b.txt")
+			})
+			mustWrite(t, filepath.Join(f.checkout, "b.txt"), "b\n", 0o644)
+			return f
+		},
+		suffix: callerCommit(sanitize.ShellQuote(label), "-m", "<msg>", "--", "<path>..."),
+		absent: routetest.ReviewerMarker,
+		carry:  map[int]func(*testing.T, commitSet){0: func(*testing.T, commitSet) {}},
+		slots:  []string{"<msg>", "'one ticket'", "<path>...", "'a.txt'"},
 	}
 }

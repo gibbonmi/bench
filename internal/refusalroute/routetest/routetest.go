@@ -18,16 +18,24 @@ import (
 // spells it rather than read it from the renderer it grades.
 const ReviewerMarker = "reviewer: "
 
-// CandidateFaces are the commitment faces that only the authorization of a commit's
-// candidate raises. The commitment verb authorizes no candidate, so the commit walk proves
-// these faces, and the commitment walk proves every other commitment face.
-var CandidateFaces = []string{refusalroute.CommitmentUnbound, refusalroute.CommitmentLightPathOutside}
+// CandidateFaces are the commitment faces that the authorization of a commit's candidate
+// raises. The commitment verb authorizes no candidate, so the commit walk proves these
+// faces.
+var CandidateFaces = []string{refusalroute.CommitmentUnbound, refusalroute.CommitmentLightPathOutside, refusalroute.CommitmentLightPathSpan}
 
-// walked reports whether the walk of verb proves face: a face of verb's own, except that the
-// commit walk proves each candidate face in place of the commitment walk.
-func walked(verb refusalroute.Verb, face refusalroute.Face) bool {
-	if slices.Contains(CandidateFaces, face.Name) {
+// PublicationFaces are the commitment faces that only the authorization of a landing's
+// publication raises, so the landing walk proves them.
+var PublicationFaces = []string{refusalroute.CommitmentLightPathSpec}
+
+// Walked reports whether the walk of verb proves face: a face of verb's own, except that the
+// commit walk proves each candidate face and the landing walk each publication face, in
+// place of the commitment walk. So exactly one walk proves each face.
+func Walked(verb refusalroute.Verb, face refusalroute.Face) bool {
+	switch {
+	case slices.Contains(CandidateFaces, face.Name):
 		return verb == refusalroute.Commit
+	case slices.Contains(PublicationFaces, face.Name):
+		return verb == refusalroute.Land
 	}
 	return face.Verb == verb
 }
@@ -39,7 +47,7 @@ func Fixtures(t testing.TB, verb refusalroute.Verb, keys [][2]string) map[string
 	t.Helper()
 	faces := map[string]refusalroute.Face{}
 	for _, face := range refusalroute.Inventory() {
-		if walked(verb, face) {
+		if Walked(verb, face) {
 			faces[face.Name] = face
 		}
 	}

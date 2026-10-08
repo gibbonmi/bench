@@ -236,24 +236,26 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 
 // landingCompositionRoute attaches a route to an error the composition and its
 // authorization returned. The kind the gate attributed picks the face of an authorization
-// refusal: the repair of a red commits in the source, so its re-run names the repaired tip,
-// and an infrastructure outcome re-runs the caller's own command after the diagnosis. Every
-// other error has no face of its own, so it hands back to the reviewer.
+// refusal: a red or an infrastructure outcome. A policy that refused the composed tree
+// raised its own face. Every other error has no face of its own, so it hands back to the
+// reviewer. A face whose repair commits in the source re-runs at the repaired tip, and the
+// source assignment's label addresses that commit.
 func landingCompositionRoute(err error, request, base, tip, specArg, path string, a intent.Assignment) error {
-	rerun := landingRerun(request, base, tip, specArg, path, a.ID)
 	var refused landing.AuthorizationRefusal
-	if !errors.As(err, &refused) {
-		return landingFaceRoute(err, rerun, false)
+	if errors.As(err, &refused) {
+		switch {
+		case refused.Result.Kind == authorization.Infrastructure:
+			err = refusalError{refusal{detail: err.Error(), face: faceLandInfrastructure}}
+		case landing.RedKind(refused.Result.Kind):
+			err = refusalError{refusal{detail: err.Error(), face: faceLandRed}}
+		}
 	}
-	raised := refusal{detail: err.Error()}
-	switch {
-	case refused.Result.Kind == authorization.Infrastructure:
-		return landingFaceRefusal(faceLandInfrastructure, raised, rerun, "")
-	case landing.RedKind(refused.Result.Kind):
-		raised.values = map[string]string{refusalroute.FactLabel: a.Label}
-		return landingFaceRefusal(faceLandRed, raised, landingRerunAt(request, base, repairedSourceTipFlag, specArg, path, a.ID), "")
+	tipFlag := landingSourceTipFlag(tip)
+	if repairsSource(landingFaceName(err)) {
+		tipFlag = repairedSourceTipFlag
 	}
-	return landingFaceRoute(err, rerun, false)
+	values := map[string]string{refusalroute.FactRerun: landingRerunAt(request, base, tipFlag, specArg, path, a.ID), refusalroute.FactLabel: a.Label}
+	return landingFaceRouteWith(err, values, false)
 }
 
 // landingSourceProofs runs the first run's source proofs over a resolved assignment: the

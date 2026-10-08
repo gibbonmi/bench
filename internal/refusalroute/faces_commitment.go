@@ -8,6 +8,8 @@ const (
 	CommitmentDecision         = "commitment-decision"
 	CommitmentUnbound          = "commitment-unbound"
 	CommitmentLightPathOutside = "commitment-light-path-outside"
+	CommitmentLightPathSpec    = "commitment-light-path-spec"
+	CommitmentLightPathSpan    = "commitment-light-path-span"
 	CommitmentRunUnknown       = "commitment-run-unknown"
 	CommitmentPlanInput        = "commitment-plan-input"
 	CommitmentHandback         = "commitment-handback"
@@ -50,12 +52,32 @@ var commitmentFaces = []Face{
 	},
 	{
 		// A light-path change carries one ticket, so a path outside its Writes line is one
-		// edit of that line. The policy reads the ticket from the candidate, so the printing
-		// verb's own re-run names the ticket after its paths.
+		// edit of that line. The policy reads the ticket from the committed tree, so the edit
+		// commits before the re-run. A landing's re-run then names the repaired source tip.
 		Verb:      Commitment,
 		Name:      CommitmentLightPathOutside,
 		Authority: Agent,
-		Route:     []Step{Instruction(Text("add the path to the Writes: line of"), Fact(FactTicket)), Command(Composed(FactRerun), Fact(FactTicket))},
+		Route: []Step{
+			Instruction(Text("add the path to the Writes: line of"), Fact(FactTicket)),
+			commitPathsAt(FactLabel, Fact(FactTicket)),
+			rerun,
+		},
+	},
+	{
+		// A spec-less landing closes no folder, so the light-path change that one ticket
+		// covers lands under that ticket's folder.
+		Verb:      Commitment,
+		Name:      CommitmentLightPathSpec,
+		Authority: Agent,
+		Route:     []Step{Command(Composed(FactRerun), Text("--spec"), Fact(FactSlug))},
+	},
+	{
+		// Each path has a light-path ticket, and no one ticket covers them all. A commit of
+		// the paths of one ticket is the light-path commit that the policy admits.
+		Verb:      Commitment,
+		Name:      CommitmentLightPathSpan,
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("commit the paths of one light-path ticket at a time")), commitAt(FactLabel)},
 	},
 	{
 		// A plan lists a run that the ledger does not hold, and the inventory lists the runs

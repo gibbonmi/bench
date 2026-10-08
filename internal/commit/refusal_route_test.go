@@ -5,7 +5,6 @@ package commit
 import (
 	"bytes"
 	"io"
-	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -75,9 +74,11 @@ type commitFaceFixture struct {
 	// exit is the exit the face prints at: 1 for a refusal, 3 for a published commit whose
 	// checkout did not reconcile.
 	exit int
-	// contains and suffix state what the printed route must hold and end with, and absent
-	// what the refusal must not print at all.
-	contains, suffix, absent string
+	// paths are the caller's own paths after a.txt.
+	paths []string
+	// prefix, contains, and suffix state what the printed route must open with, hold, and
+	// end with, and absent what the refusal must not print at all.
+	prefix, contains, suffix, absent string
 	// clear removes the fixture's own fault scaffolding once the face printed, which no
 	// operator's tree holds, so the route repairs only the cause the face names.
 	clear func(t *testing.T, f commitSet)
@@ -107,23 +108,23 @@ func callerCommit(label string, words ...string) string {
 // is the source of the commit's face set, so each commit face needs a producing fixture, and
 // so does each candidate face, which only the commit's candidate raises. The commit also
 // prints the other commitment faces that the commitment policy raises at its candidate, so
-// the walk looks those up beside the commit's own; the commitment verb's walk requires
-// their fixtures. Each fixture's printed route is carried out step by step: an instruction
-// by the fixture's own means, and each command step verbatim through the verb's own entry.
-// The commit then reruns out of the face: as the route's own last step, or after a route
-// that ends elsewhere.
+// the walk follows those too; the walk that routetest names for each requires its fixture.
+// Each fixture's printed route is carried out step by step: an instruction by the fixture's
+// own means, and each command step verbatim through the verb's own entry. The commit then
+// reruns out of the face: as the route's own last step, or after a route that ends
+// elsewhere.
 func TestCommitFacesFollowTheirRoutes(t *testing.T) {
 	faces := map[string]refusalroute.Face{}
-	for _, face := range refusalroute.Faces(refusalroute.Commitment) {
+	for _, face := range refusalroute.Inventory() {
 		faces[face.Name] = face
 	}
 	var keys [][2]string
 	for _, fixture := range commitFaceFixtures() {
-		if _, other := faces[fixture.face]; !other || slices.Contains(routetest.CandidateFaces, fixture.face) {
+		if routetest.Walked(refusalroute.Commit, faces[fixture.face]) {
 			keys = append(keys, [2]string{fixture.face, fixture.cause})
 		}
 	}
-	maps.Copy(faces, routetest.Fixtures(t, refusalroute.Commit, keys))
+	routetest.Fixtures(t, refusalroute.Commit, keys)
 	for _, fixture := range commitFaceFixtures() {
 		t.Run(fixture.face+"/"+fixture.cause, func(t *testing.T) { followCommitFace(t, faces[fixture.face], fixture) })
 	}
@@ -133,15 +134,15 @@ func TestCommitFacesFollowTheirRoutes(t *testing.T) {
 // printed route, and the commit reruns out of the face.
 func followCommitFace(t *testing.T, face refusalroute.Face, fixture commitFaceFixture) {
 	f := fixture.build(t)
-	args := slices.Concat(fixture.flags, commitArgs)
+	args := slices.Concat(fixture.flags, commitArgs, fixture.paths)
 	code, stdout, stderr := runCommand(t, f.checkout, args...)
 	next, printed := printedNext(stderr)
 	if fixture.exit == 3 {
 		_, fields, _ := recordFields(t, stdout)
 		next, printed = fields[refusalroute.NextField], true
 	}
-	if code != fixture.exit || !printed || !strings.Contains(next, fixture.contains) || !strings.HasSuffix(next, fixture.suffix) {
-		t.Fatalf("face %s = (%d, %q, %q), want exit %d and a next= route that holds %q and ends with %q", face.Name, code, stdout, stderr, fixture.exit, fixture.contains, fixture.suffix)
+	if code != fixture.exit || !printed || !strings.HasPrefix(next, fixture.prefix) || !strings.Contains(next, fixture.contains) || !strings.HasSuffix(next, fixture.suffix) {
+		t.Fatalf("face %s = (%d, %q, %q), want exit %d and a next= route that opens with %q, holds %q, and ends with %q", face.Name, code, stdout, stderr, fixture.exit, fixture.prefix, fixture.contains, fixture.suffix)
 	}
 	if fixture.absent != "" && strings.Contains(stderr, fixture.absent) {
 		t.Fatalf("face %s stderr = %q, want no %q", face.Name, stderr, fixture.absent)

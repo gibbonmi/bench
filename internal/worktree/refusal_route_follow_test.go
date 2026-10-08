@@ -28,13 +28,24 @@ import (
 // verbatim with only its operator slots filled. The last step re-runs the landing, and the
 // landing completes, so the route finishes the recovery rather than trading the face for
 // another refusal. A reviewer face's route opens with the reviewer marker and an agent
-// face's does not.
+// face's does not. The landing walk also proves each publication face, which a light-path
+// landing prints.
 func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 	t.Parallel()
 	wrapper := installedWrapper(t, testRunBinary(t))
-	faces := map[string]refusalroute.Face{}
-	for _, face := range refusalroute.Faces(refusalroute.Land) {
-		faces[face.Name] = face
+	var keys [][2]string
+	for _, fixture := range landingRefusalFixtures() {
+		keys = append(keys, [2]string{fixture.face, ""})
+	}
+	for _, fixture := range lightPathLandingFixtures() {
+		keys = append(keys, [2]string{fixture.face, ""})
+	}
+	faces := routetest.Fixtures(t, refusalroute.Land, keys)
+	for _, fixture := range lightPathLandingFixtures() {
+		t.Run(fixture.face, func(t *testing.T) {
+			t.Parallel()
+			followLightPathLanding(t, wrapper, faces[fixture.face], fixture)
+		})
 	}
 	for _, fixture := range landingRefusalFixtures() {
 		t.Run(fixture.face, func(t *testing.T) {

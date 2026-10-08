@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // lightFolder is the light-path folder that most rows write, and lightTicket is its ticket.
@@ -173,6 +175,9 @@ func TestLightPathPublication(t *testing.T) {
 		drops             []string
 		steps             []func(*testing.T, string)
 		want, absent      string
+		// slug is the folder that a refusal raising the spec-less face names, and no
+		// other refusal raises that face.
+		slug string
 	}{
 		{name: "delivery-names-folder", deliverable: lightFolder, closes: true, steps: steps(ticket(lightTicket, "change.go"), write("change.go"))},
 		{name: "delivery-uncovered", deliverable: lightFolder, closes: true, steps: steps(ticket(lightTicket, "change.go"), write("change.go", "other.go")), want: `production path "other.go" is outside the Writes line of light-path ticket "` + lightTicket + `"`},
@@ -184,8 +189,10 @@ func TestLightPathPublication(t *testing.T) {
 		{name: "delivery-beside-unreadable-folder", deliverable: lightFolder, closes: true, drops: []string{"specs/big"}, steps: steps(ticket(lightTicket, "change.go"), write("change.go"), func(t *testing.T, worktree string) {
 			commitmenttest.Write(t, worktree, "specs/big/tickets/one.md", strings.Repeat("a", int(bounds.ControlRecordLimit)+1))
 		})},
-		{name: "spec-less", steps: steps(ticket(lightTicket, "change.go"), write("change.go")), want: unbound + `; land the light-path change with --spec "lp"`},
-		{name: "spec-less-spaced-slug", steps: steps(ticket("specs/a b/tickets/one.md", "change.go"), write("change.go")), want: `--spec "a b"`},
+		// A spec-less landing that one ticket covers raises the face that lands under the
+		// ticket's folder, and its sentence holds no route.
+		{name: "spec-less", steps: steps(ticket(lightTicket, "change.go"), write("change.go")), want: unbound, absent: "--spec", slug: "lp"},
+		{name: "spec-less-spaced-slug", steps: steps(ticket("specs/a b/tickets/one.md", "change.go"), write("change.go")), want: `"specs/a b/tickets/one.md"`, absent: "--spec", slug: "a b"},
 		{name: "spec-less-uncovered", steps: steps(ticket(lightTicket, "change.go"), write("change.go", "other.go")), want: unbound, absent: "--spec"},
 		{name: "bound-spec-delivery", deliverable: commitmenttest.MilestoneSpec, bound: true, steps: steps(ticket(lightTicket, "other.go"), write("bound.go"))},
 	} {
@@ -217,6 +224,11 @@ func TestLightPathPublication(t *testing.T) {
 			}
 			if err == nil || !strings.Contains(err.Error(), row.want) || (row.absent != "" && strings.Contains(err.Error(), row.absent)) {
 				t.Fatalf("AdmitPublication = %v, want a refusal naming %q and not %q", err, row.want, row.absent)
+			}
+			var raised refusalroute.Raised
+			spec := errors.As(err, &raised) && raised.Name == refusalroute.CommitmentLightPathSpec
+			if spec != (row.slug != "") || raised.Values[refusalroute.FactSlug] != row.slug {
+				t.Fatalf("AdmitPublication raised %+v, want the spec-less face exactly when the row names the folder %q", raised, row.slug)
 			}
 		})
 	}

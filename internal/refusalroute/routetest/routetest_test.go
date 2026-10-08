@@ -184,19 +184,46 @@ func TestNextCellReadsTheOneRouteCell(t *testing.T) {
 	}
 }
 
-// The candidate faces are commitment faces, and the commit walk proves them in place of the
-// commitment walk. So each walk's fixtures cover every commitment face once between them.
-func TestCandidateFacesMoveToTheCommitWalk(t *testing.T) {
+// The candidate and publication faces are commitment faces, and the commit walk and the
+// landing walk prove them in place of the commitment walk. So each walk's fixtures cover
+// every commitment face once between them, and exactly one walk proves each face.
+func TestMovedFacesHaveOneWalk(t *testing.T) {
 	commitment := faceNames(refusalroute.Commitment)
+	moved := slices.Concat(CandidateFaces, PublicationFaces)
 	var own []string
 	for _, name := range commitment {
-		if !slices.Contains(CandidateFaces, name) {
+		if !slices.Contains(moved, name) {
 			own = append(own, name)
 		}
 	}
-	if len(own)+len(CandidateFaces) != len(commitment) {
-		t.Fatalf("candidate faces %q are not all commitment faces %q", CandidateFaces, commitment)
+	if len(own)+len(moved) != len(commitment) {
+		t.Fatalf("moved faces %q are not all distinct commitment faces %q", moved, commitment)
 	}
+	var verbs []refusalroute.Verb
+	for _, face := range refusalroute.Inventory() {
+		if !slices.Contains(verbs, face.Verb) {
+			verbs = append(verbs, face.Verb)
+		}
+	}
+	for _, face := range refusalroute.Inventory() {
+		var walks []refusalroute.Verb
+		for _, verb := range verbs {
+			if Walked(verb, face) {
+				walks = append(walks, verb)
+			}
+		}
+		if len(walks) != 1 {
+			t.Errorf("face %q is proved by the walks %q, want exactly one", face.Name, walks)
+		}
+	}
+	land := slices.Concat(faceNames(refusalroute.Land), PublicationFaces)
+	requireVerdict(t, "the landing walk with the publication faces", false, func(t testing.TB) { Fixtures(t, refusalroute.Land, faceKeys(land...)) })
+	requireVerdict(t, "the landing walk without a publication face", true, func(t testing.TB) {
+		Fixtures(t, refusalroute.Land, faceKeys(land[:len(land)-1]...))
+	})
+	requireVerdict(t, "the commitment walk with a publication face", true, func(t testing.TB) {
+		Fixtures(t, refusalroute.Commitment, faceKeys(append(slices.Clone(own), PublicationFaces[0])...))
+	})
 	commit := slices.Concat(faceNames(refusalroute.Commit), CandidateFaces)
 	requireVerdict(t, "the commitment walk without the candidate faces", false, func(t testing.TB) { Fixtures(t, refusalroute.Commitment, faceKeys(own...)) })
 	requireVerdict(t, "the commitment walk with a candidate face", true, func(t testing.TB) {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -174,10 +175,11 @@ func landingFaceRefusal(name string, raised refusal, rerun, preface string) refu
 	if name == faceSourceTipMismatch {
 		rerun = retargetSourceTip(rerun, raised)
 	}
-	values := map[string]string{refusalroute.FactRerun: rerun}
-	for slot, value := range raised.values {
-		values[slot] = value
+	values := maps.Clone(raised.values)
+	if values == nil {
+		values = map[string]string{}
 	}
+	values[refusalroute.FactRerun] = rerun
 	built := refusalroute.New(name, refusalroute.Facts{Sentence: raised.detail, Paths: raised.paths, Preface: preface, Values: values})
 	raised.face, raised.detail, raised.next = name, built.Sentence, built.Route
 	return refusalError{raised}
@@ -197,20 +199,39 @@ const laterProofsSkipped = "later proofs in this group did not run"
 // so the route still ends with the re-run.
 //
 // A refusal that names a registered face takes that face. A refusal that carries a route
-// of its own keeps it, and the skipped-proof sentence qualifies that route. Every other
-// cause, an identity component with no recovery command included, has no route of its
-// own, so it hands back to the reviewer under its own sentence.
+// of its own keeps it, and the skipped-proof sentence qualifies that route. A cause from
+// outside this package prints through the registry's own rule: the face that its policy
+// raised. Every other cause, an identity component with no recovery command included, has
+// no route of its own, so it hands back to the reviewer under its own sentence.
 func landingFaceRoute(err error, rerun string, shortCircuited bool) error {
-	raised := raisedRefusal(err)
+	return landingFaceRouteWith(err, map[string]string{refusalroute.FactRerun: rerun}, shortCircuited)
+}
+
+// landingFaceRouteWith is landingFaceRoute over the landing's whole facts: the re-run, and
+// any other fact that a face's route reads, such as the label of the source assignment.
+func landingFaceRouteWith(err error, values map[string]string, shortCircuited bool) error {
 	preface := ""
 	if shortCircuited {
 		preface = laterProofsSkipped
 	}
+	raised := refusal{detail: err.Error()}
+	var typed refusalError
+	typedErr := errors.As(err, &typed)
+	if typedErr {
+		raised = typed.refusal
+	}
+	joined := maps.Clone(values)
+	maps.Copy(joined, raised.values)
+	raised.values = joined
 	if name, ok := landingFaceOf(raised); ok {
-		return landingFaceRefusal(name, raised, rerun, preface)
+		return landingFaceRefusal(name, raised, values[refusalroute.FactRerun], preface)
+	}
+	if !typedErr {
+		built := refusalroute.PrintedAfter(faceLandHandback, preface, err, values)
+		return refusalError{refusal{detail: built.Sentence, paths: built.Paths, face: built.Face.Name, next: built.Route}}
 	}
 	if raised.next == "" {
-		return landingFaceRefusal(faceLandHandback, raised, rerun, preface)
+		return landingFaceRefusal(faceLandHandback, raised, values[refusalroute.FactRerun], preface)
 	}
 	if !shortCircuited {
 		return err
@@ -233,12 +254,27 @@ func raisedRefusal(err error) refusal {
 	return refusal{detail: err.Error()}
 }
 
+// landingFaceName names the registered face that err raises.
+func landingFaceName(err error) string {
+	name, _ := landingFaceOf(raisedRefusal(err))
+	return name
+}
+
+// repairsSource reports whether the route of the named face commits in the source. That
+// commit moves the tip the caller named, so the face's re-run names the repaired tip.
+func repairsSource(name string) bool {
+	switch name {
+	case faceSourceNotClean, faceSourceNotFenced, faceLandRed, refusalroute.CommitmentLightPathOutside:
+		return true
+	}
+	return false
+}
+
 // landingSourceRoute attaches the caller's own re-run to a first-run source proof's
-// refusal. The repair of a source that is not clean or not fenced commits in the source,
-// which moves the tip the caller named, so that re-run names the repaired tip.
+// refusal. The re-run of a repair that commits in the source names the repaired tip.
 func landingSourceRoute(err error, request, base, tip, specArg, path, assignment string) error {
 	tipFlag := landingSourceTipFlag(tip)
-	if name, _ := landingFaceOf(raisedRefusal(err)); name == faceSourceNotClean || name == faceSourceNotFenced {
+	if repairsSource(landingFaceName(err)) {
 		tipFlag = repairedSourceTipFlag
 	}
 	return landingFaceRoute(err, landingRerunAt(request, base, tipFlag, specArg, path, assignment), false)

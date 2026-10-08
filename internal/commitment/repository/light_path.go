@@ -39,7 +39,7 @@ func (store Store) lightPath(tree string, policy *commitment.Policy, production 
 // removes the delivered folder from tree, so the ticket of a delivery is read at its
 // reviewed source, and the reader lists only the folder that the delivery names. A
 // spec-less landing is never light-path work. When tree holds a ticket that covers every
-// production path, its refusal names the --spec route for that ticket's folder.
+// production path, the refusal raises the face that lands under that ticket's folder.
 func (store Store) lightPathPublication(tree string, policy *commitment.Policy, production []string, delivery *Delivery, unbound error) error {
 	if delivery == nil {
 		found, err := store.lightPathTickets(tree, spec.SpecsDir, policy)
@@ -48,7 +48,11 @@ func (store Store) lightPathPublication(tree string, policy *commitment.Policy, 
 		}
 		for _, ticket := range found {
 			if ticket.coversAll(production) {
-				return fmt.Errorf("%w; land the light-path change with --spec %q", unbound, ticket.slug)
+				return refusalroute.Raised{
+					Name:   refusalroute.CommitmentLightPathSpec,
+					Err:    fmt.Errorf("%v, and the spec-less landing names no folder for light-path ticket %q", unbound, ticket.path),
+					Values: map[string]string{refusalroute.FactSlug: ticket.slug},
+				}
 			}
 		}
 		return unbound
@@ -83,7 +87,7 @@ func lightPathCover(found []lightPathTicket, production []string) error {
 			}
 		}
 	}
-	return errors.New("production paths span more than one light-path ticket; a light-path change carries one ticket")
+	return refusalroute.Raised{Name: refusalroute.CommitmentLightPathSpan, Err: errors.New("production paths span more than one light-path ticket; a light-path change carries one ticket")}
 }
 
 func (ticket lightPathTicket) covers(p string) bool {
