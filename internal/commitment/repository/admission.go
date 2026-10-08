@@ -23,7 +23,7 @@ func (store Store) Start(outcome, request, deliverable string) error {
 		if err != nil {
 			return ledger, false, err
 		}
-		selected, err := commitment.ActiveOutcome(policy, outcome)
+		selected, err := activeOutcome(policy, outcome)
 		if err != nil {
 			return ledger, false, err
 		}
@@ -36,7 +36,7 @@ func (store Store) Start(outcome, request, deliverable string) error {
 			}
 		}
 		if source == nil {
-			return ledger, false, fmt.Errorf("deliverable %q is not approved for outcome %q", deliverable, outcome)
+			return ledger, false, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: fmt.Errorf("deliverable %q is not approved for outcome %q", deliverable, outcome)}
 		}
 		if err := store.validateDeliverable(*source); err != nil {
 			return ledger, false, err
@@ -44,7 +44,9 @@ func (store Store) Start(outcome, request, deliverable string) error {
 		binding := intent.DeliveryBinding{Assignment: owner.ID, Request: owner.Request, Milestone: policy.ActiveMilestone, Outcome: outcome, Deliverable: deliverable, Identity: source.Identity}
 		next, err := commitment.Admit(policy, runtimeState(ledger), binding)
 		if err != nil {
-			return ledger, false, err
+			// Each admission refusal, such as a delivered, blocked, dependent, displacing, or
+			// out-of-order outcome, clears only by a change to the commitment's policy or state.
+			return ledger, false, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: err}
 		}
 		return withRuntime(ledger, next)
 	}, nil)
@@ -64,6 +66,9 @@ func (store Store) setBlocker(outcome, reason string, blocked bool) error {
 		if err != nil {
 			return ledger, false, err
 		}
+		if _, err := activeOutcome(policy, outcome); err != nil {
+			return ledger, false, err
+		}
 		next, err := commitment.SetBlocker(policy, runtimeState(ledger), outcome, reason, blocked)
 		if err != nil {
 			return ledger, false, err
@@ -81,9 +86,30 @@ func (store Store) admissionPolicy() (commitment.Policy, error) {
 		return policy, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: errors.New("commitment adoption required")}
 	}
 	if strings.TrimSpace(policy.ActiveMilestone) == "" {
-		return policy, errors.New("no milestone is active")
+		return policy, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: errors.New("no milestone is active")}
 	}
 	return policy, nil
+}
+
+// activeOutcome resolves an outcome in the active milestone. Only a commitment change adds
+// an outcome to the milestone, so an outcome outside it is the reviewer's decision.
+func activeOutcome(policy commitment.Policy, id string) (commitment.Outcome, error) {
+	outcome, err := commitment.ActiveOutcome(policy, id)
+	if err != nil {
+		return outcome, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: err}
+	}
+	return outcome, nil
+}
+
+// replan is an approval refusal whose plan no longer matches the commitment, such as a moved
+// predecessor, a changed source, or a listed run that changed. Only a new plan clears it, a
+// commitment change, so it raises the decision face unless the cause raises its own.
+func replan(err error) error {
+	var raised refusalroute.Raised
+	if errors.As(err, &raised) {
+		return err
+	}
+	return refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: err}
 }
 
 // runtimeState is the commitment state that every decision reads. A continuation lasts

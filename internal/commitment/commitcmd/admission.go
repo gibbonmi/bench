@@ -6,9 +6,8 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// admission starts, blocks, or unblocks one outcome. A refusal that raises no face of its own
-// is cleared by a change to the active commitment, such as an outcome that the active
-// milestone does not hold, so it is the reviewer's decision.
+// admission starts, blocks, or unblocks one outcome. The store raises the face of each cause
+// it decides, and a refusal that raises no face hands back to the reviewer.
 func admission(store repository.Store, c call) (string, int) {
 	var err error
 	switch c.form.name {
@@ -20,7 +19,7 @@ func admission(store repository.Store, c call) (string, int) {
 		err = store.Unblock(c.flags["--outcome"])
 	}
 	if err != nil {
-		return c.refuse(refusalroute.CommitmentDecision, err, nil)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	out, err := toon.Table("commitment_admission", []string{"operation", "outcome"}, [][]string{{c.form.name, c.flags["--outcome"]}})
 	if err != nil {

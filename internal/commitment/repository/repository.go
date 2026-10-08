@@ -182,7 +182,7 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 					return ledger, false, fmt.Errorf("commitment receipt %q: %w", other.Plan, err)
 				}
 				if approved.Predecessor == plan.Predecessor && approved.ProposalIdentity != plan.ProposalIdentity {
-					return ledger, false, fmt.Errorf("commitment approval refused: predecessor changed from %s to %s", plan.Predecessor, approved.ProposalIdentity)
+					return ledger, false, replan(fmt.Errorf("commitment approval refused: predecessor changed from %s to %s", plan.Predecessor, approved.ProposalIdentity))
 				}
 			}
 			current, predecessor, err := store.defaultPolicy()
@@ -190,13 +190,13 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 				return ledger, false, err
 			}
 			if predecessor != plan.Predecessor && !(receipt.Approved && predecessor == plan.ProposalIdentity) {
-				return ledger, false, fmt.Errorf("commitment approval refused: predecessor changed from %s to %s", plan.Predecessor, predecessor)
+				return ledger, false, replan(fmt.Errorf("commitment approval refused: predecessor changed from %s to %s", plan.Predecessor, predecessor))
 			}
 			if !sameSet(delayed, plan.Effects.Delayed) || !sameSet(removed, plan.Effects.Removed) {
 				return ledger, false, errors.New("commitment approval refused: delayed or removed operands do not match the plan")
 			}
 			if err := store.validateSources(plan.Sources); err != nil {
-				return ledger, false, err
+				return ledger, false, replan(err)
 			}
 			if receipt.Approved {
 				if receipt.Decision != decision {
@@ -212,7 +212,7 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 				return ledger, false, err
 			}
 			if err := store.listedRuns(ledger, current, plan.Continuations); err != nil {
-				return ledger, false, err
+				return ledger, false, replan(err)
 			}
 			restore, err = store.stage(plan)
 			if err != nil {

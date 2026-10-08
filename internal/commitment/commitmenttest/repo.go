@@ -18,12 +18,13 @@ func Repo(t testing.TB, policy commitment.Policy) string {
 	t.Helper()
 	root := gittest.RepoOnBranch(t, "main")
 	WritePolicy(t, root, policy)
-	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte("# Roadmap\n\n## Recommended sequence\n\n1. old\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	Write(t, root, "ROADMAP.md", oldBoard)
 	Commit(t, root, "initial")
 	return root
 }
+
+// oldBoard is the board of a fixture that predates its policy: one row in its sequence.
+const oldBoard = "# Roadmap\n\n## Recommended sequence\n\n1. old\n"
 
 // StagedBody is the staged spec that Staged approves for each outcome.
 const StagedBody = "# Delivery\n\nStatus: staged\n"

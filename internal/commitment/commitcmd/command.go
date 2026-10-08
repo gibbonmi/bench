@@ -259,8 +259,8 @@ func plan(store commitrepo.Store, c call) (string, int) {
 	return planTable + "\n" + effects + "\n", 0
 }
 
-// approve stages the exact transition of one plan. The approval is a commitment change, so a
-// refusal that raises no face of its own is the reviewer's decision.
+// approve stages the exact transition of one plan. The store raises the face of each cause it
+// decides, and a refusal that raises no face hands back to the reviewer.
 func approve(store commitrepo.Store, c call) (string, int) {
 	primary, err := git.IsPrimaryCheckout(store.Root)
 	if err != nil {
@@ -272,15 +272,15 @@ func approve(store commitrepo.Store, c call) (string, int) {
 
 	delayed, ok := operandSet(c.flags["--delayed"])
 	if !ok {
-		return c.refuse(refusalroute.CommitmentDecision, fmt.Errorf("invalid delayed operands %q", c.flags["--delayed"]), nil)
+		return c.refuse(refusalroute.CommitmentHandback, fmt.Errorf("invalid delayed operands %q", c.flags["--delayed"]), nil)
 	}
 	removed, ok := operandSet(c.flags["--removed"])
 	if !ok {
-		return c.refuse(refusalroute.CommitmentDecision, fmt.Errorf("invalid removed operands %q", c.flags["--removed"]), nil)
+		return c.refuse(refusalroute.CommitmentHandback, fmt.Errorf("invalid removed operands %q", c.flags["--removed"]), nil)
 	}
 	changed, err := store.Approve(c.flags["--plan"], c.flags["--decision"], delayed, removed)
 	if err != nil {
-		return c.refuse(refusalroute.CommitmentDecision, err, nil)
+		return c.refuse(refusalroute.CommitmentHandback, err, nil)
 	}
 	out, err := toon.Table("commitment_approval", []string{"plan", "decision", "changed"}, [][]string{{c.flags["--plan"], c.flags["--decision"], fmt.Sprint(changed)}})
 	if err != nil {

@@ -1,7 +1,6 @@
 package repository_test
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -147,39 +146,17 @@ func TestAdmitPublicationClosureAuthority(t *testing.T) {
 	}
 }
 
-// continuationInput is the plan input: one adoption policy and its listed runs.
-type continuationInput struct {
-	commitment.Policy
-	Continuations []intent.LegacyContinuation `json:"continuations,omitempty"`
-}
-
 // continuationRepo has no policy and two runs. Only the legacy run's branch holds
-// owned.txt, its existing scope.
-func continuationRepo(t *testing.T) (root string, legacy, other intent.Assignment, input continuationInput) {
+// its existing scope, and the input lists the legacy run.
+func continuationRepo(t *testing.T) (root string, legacy, other intent.Assignment, input commitmenttest.Adoption) {
 	t.Helper()
-	root = gittest.RepoOnBranch(t, "main")
-	commitmenttest.Write(t, root, "ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. old\n")
-	commitmenttest.Commit(t, root, "board")
-	legacyPath := commitmenttest.Assignment(t, root, "legacy")
-	commitmenttest.Write(t, legacyPath, "owned.txt", "owned\n")
-	commitmenttest.Commit(t, legacyPath, "legacy scope")
+	root, legacyPath := commitmenttest.Legacy(t)
 	otherPath := commitmenttest.Assignment(t, root, "other")
 	legacyRun := publication(t, root, legacyPath)
 	otherRun := publication(t, root, otherPath)
 	legacy = intent.Assignment{ID: legacyRun.Assignment, Request: legacyRun.Request}
 	other = intent.Assignment{ID: otherRun.Assignment, Request: otherRun.Request, Worktree: otherRun.Worktree}
-	input.Policy = commitment.Policy{Version: 1, ActiveMilestone: "M1", Milestones: []commitment.Milestone{{ID: "M1", Outcomes: []commitment.Outcome{{ID: "A", Criteria: []commitment.Criterion{{ID: "A.done", Text: "The outcome is delivered."}}}}}}}
-	input.Continuations = []intent.LegacyContinuation{{Assignment: legacy.ID, Request: legacy.Request, Scope: []string{"owned.txt"}}}
-	return root, legacy, other, input
-}
-
-func encodeInput(t *testing.T, input continuationInput) []byte {
-	t.Helper()
-	data, err := json.Marshal(input)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return data
+	return root, legacy, other, commitmenttest.LegacyAdoption(legacy.ID)
 }
 
 // Approval records a continuation for exactly the listed run, with its assignment,
@@ -189,19 +166,19 @@ func encodeInput(t *testing.T, input continuationInput) []byte {
 func TestCommitmentContinuationApproval(t *testing.T) {
 	root, legacy, other, input := continuationRepo(t)
 	store := commitrepo.Store{Root: root}
-	plan, err := store.Plan(encodeInput(t, input))
+	plan, err := store.Plan(input.Encode(t))
 	if err != nil {
 		t.Fatalf("Plan = %v, want the listed run accepted", err)
 	}
 	bare := input
 	bare.Continuations = nil
-	unlisted, err := store.Plan(encodeInput(t, bare))
+	unlisted, err := store.Plan(bare.Encode(t))
 	if err != nil || unlisted.ID == plan.ID {
 		t.Fatalf("plan without the list = %s, %v; want an identity other than %s", unlisted.ID, err, plan.ID)
 	}
 	rescoped := input
 	rescoped.Continuations = []intent.LegacyContinuation{{Assignment: legacy.ID, Request: legacy.Request, Scope: []string{"ROADMAP.md"}}}
-	changed, err := store.Plan(encodeInput(t, rescoped))
+	changed, err := store.Plan(rescoped.Encode(t))
 	if err != nil || changed.ID == plan.ID || changed.ID == unlisted.ID {
 		t.Fatalf("plan with another scope = %s, %v; want an identity other than %s and %s", changed.ID, err, plan.ID, unlisted.ID)
 	}
@@ -212,7 +189,7 @@ func TestCommitmentContinuationApproval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []intent.LegacyContinuation{{Assignment: legacy.ID, Request: legacy.Request, Scope: []string{"owned.txt"}}}
+	want := []intent.LegacyContinuation{{Assignment: legacy.ID, Request: legacy.Request, Scope: []string{commitmenttest.LegacyScope}}}
 	if ledger.Commitment == nil || !reflect.DeepEqual(ledger.Commitment.Continuations, want) {
 		t.Fatalf("stored continuations = %+v, want %+v", ledger.Commitment, want)
 	}
@@ -241,33 +218,33 @@ func TestCommitmentContinuationApproval(t *testing.T) {
 	}
 	for _, row := range []struct {
 		name  string
-		setup func(t *testing.T, root string, input continuationInput)
-		edit  func(*intent.LegacyContinuation, *continuationInput)
+		setup func(t *testing.T, root string, input commitmenttest.Adoption)
+		edit  func(*intent.LegacyContinuation, *commitmenttest.Adoption)
 		want  string
 	}{
-		{name: "after-adoption", setup: func(t *testing.T, root string, input continuationInput) {
+		{name: "after-adoption", setup: func(t *testing.T, root string, input commitmenttest.Adoption) {
 			if err := commitmenttest.CommitPolicy(root, input.Policy, "adopt the policy"); err != nil {
 				t.Fatal(err)
 			}
 		}, want: "a policy is published, so only the initial adoption lists runs"},
-		{name: "run-complete", setup: func(t *testing.T, root string, _ continuationInput) {
-			moveAssignment(t, root, intent.RequestDigest("legacy"), intent.StateComplete)
+		{name: "run-complete", setup: func(t *testing.T, root string, _ commitmenttest.Adoption) {
+			moveAssignment(t, root, intent.RequestDigest(commitmenttest.LegacyRun), intent.StateComplete)
 		}, want: "run %q is not active"},
-		{name: "run-cleanup-pending", setup: func(t *testing.T, root string, _ continuationInput) {
-			moveAssignment(t, root, intent.RequestDigest("legacy"), intent.StateCleanupPending)
+		{name: "run-cleanup-pending", setup: func(t *testing.T, root string, _ commitmenttest.Adoption) {
+			moveAssignment(t, root, intent.RequestDigest(commitmenttest.LegacyRun), intent.StateCleanupPending)
 		}, want: "run %q is not active"},
-		{name: "run-recovered", setup: func(t *testing.T, root string, _ continuationInput) {
-			rewriteAssignment(t, root, intent.RequestDigest("legacy"), recovered)
+		{name: "run-recovered", setup: func(t *testing.T, root string, _ commitmenttest.Adoption) {
+			rewriteAssignment(t, root, intent.RequestDigest(commitmenttest.LegacyRun), recovered)
 		}, want: "run %q is not active"},
-		{name: "branch-unreadable", setup: func(t *testing.T, root string, _ continuationInput) {
-			run := rewriteAssignment(t, root, intent.RequestDigest("legacy"), func(*intent.Assignment) {})
+		{name: "branch-unreadable", setup: func(t *testing.T, root string, _ commitmenttest.Adoption) {
+			run := rewriteAssignment(t, root, intent.RequestDigest(commitmenttest.LegacyRun), func(*intent.Assignment) {})
 			gittest.Output(t, root, "update-ref", "-d", "refs/heads/"+strings.TrimPrefix(run.Branch, "refs/heads/"))
 		}, want: "cannot read the branch of run"},
-		{name: "unknown-run", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Assignment = strings.Repeat("d", 32) }, want: "is unknown"},
-		{name: "other-request", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Request = other.Request }, want: "request does not match run"},
-		{name: "empty-scope", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Scope = nil }, want: "invalid legacy continuation for assignment"},
-		{name: "scope-outside-run", edit: func(c *intent.LegacyContinuation, _ *continuationInput) { c.Scope = []string{"absent.txt"} }, want: `scope "absent.txt" is outside run`},
-		{name: "duplicate-run", edit: func(c *intent.LegacyContinuation, input *continuationInput) {
+		{name: "unknown-run", edit: func(c *intent.LegacyContinuation, _ *commitmenttest.Adoption) { c.Assignment = strings.Repeat("d", 32) }, want: "is unknown"},
+		{name: "other-request", edit: func(c *intent.LegacyContinuation, _ *commitmenttest.Adoption) { c.Request = other.Request }, want: "request does not match run"},
+		{name: "empty-scope", edit: func(c *intent.LegacyContinuation, _ *commitmenttest.Adoption) { c.Scope = nil }, want: "invalid legacy continuation for assignment"},
+		{name: "scope-outside-run", edit: func(c *intent.LegacyContinuation, _ *commitmenttest.Adoption) { c.Scope = []string{"absent.txt"} }, want: `scope "absent.txt" is outside run`},
+		{name: "duplicate-run", edit: func(c *intent.LegacyContinuation, input *commitmenttest.Adoption) {
 			input.Continuations = append(input.Continuations, *c)
 		}, want: "invalid legacy continuation for assignment"},
 	} {
@@ -284,7 +261,7 @@ func TestCommitmentContinuationApproval(t *testing.T) {
 				want = fmt.Sprintf(want, input.Continuations[0].Assignment)
 			}
 			before := commitmenttest.MilestoneState(t, root, root)
-			_, err := (commitrepo.Store{Root: root}).Plan(encodeInput(t, input))
+			_, err := (commitrepo.Store{Root: root}).Plan(input.Encode(t))
 			if err == nil || !strings.Contains(err.Error(), want) || commitmenttest.MilestoneState(t, root, root) != before {
 				t.Fatalf("Plan = %v, want a refusal naming %q that writes nothing", err, want)
 			}
@@ -305,7 +282,7 @@ func TestCommitmentContinuationApproval(t *testing.T) {
 		t.Run(row.name, func(t *testing.T) {
 			root, legacy, _, input := continuationRepo(t)
 			store := commitrepo.Store{Root: root}
-			plan, err := store.Plan(encodeInput(t, input))
+			plan, err := store.Plan(input.Encode(t))
 			if err != nil {
 				t.Fatal(err)
 			}

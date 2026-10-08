@@ -4,7 +4,6 @@ package commitcmd_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -127,6 +126,10 @@ func runRouteStep(t *testing.T, f commitmentSet, step string) string {
 	return stdout.String()
 }
 
+// decisionRoute is the command that the commitment-decision route names, as the spec's face
+// table states it.
+const decisionRoute = "bench commitment plan --input "
+
 // start is the verb's start of outcome for request with deliverable.
 func start(outcome, request, deliverable string) []string {
 	return []string{"start", "--outcome", outcome, "--request", request, "--deliverable", deliverable}
@@ -185,7 +188,7 @@ func commitmentFaceFixtures() []commitmentFaceFixture {
 				return commitmentSet{root: root, dir: commitmenttest.Assignment(t, root, "decision"), args: start("Z", "decision", "specs/Z/spec.md")}
 			},
 			prefix:   routetest.ReviewerMarker,
-			contains: "bench commitment plan --input ",
+			contains: decisionRoute,
 			carry: map[int]func(*testing.T, commitmentSet){0: func(t *testing.T, f commitmentSet) {
 				gittest.Output(t, f.root, "revert", "--no-edit", "HEAD")
 			}},
@@ -206,7 +209,7 @@ func commitmentFaceFixtures() []commitmentFaceFixture {
 					t.Fatal(err)
 				}
 				for _, row := range rows {
-					if fields := row.(map[string]any); fields["kind"] == "run" && fields["identity"] == intent.RequestDigest(legacyRun) {
+					if fields := row.(map[string]any); fields["kind"] == "run" && fields["identity"] == intent.RequestDigest(commitmenttest.LegacyRun) {
 						writeAdoption(t, f.input, fields["id"].(string))
 						return f
 					}
@@ -234,7 +237,98 @@ func commitmentFaceFixtures() []commitmentFaceFixture {
 				commitmenttest.Commit(t, f.root, "add the detail")
 			}},
 		},
+		{
+			// The blocker reason spans two lines, a verb error that raises no face, so the
+			// refusal fails closed to the reviewer. The cause is the operand itself, and its
+			// re-run prints the reason's placeholder, which the reviewer fills with one line.
+			face: refusalroute.CommitmentHandback, cause: "untyped verb error",
+			build: func(t *testing.T) commitmentSet {
+				root := commitmenttest.Staged(t, "A")
+				return commitmentSet{root: root, dir: root, args: block("A", "two\nlines")}
+			},
+			prefix:   routetest.ReviewerMarker,
+			contains: "; then bench commitment block --outcome " + quoted("A") + " --reason <text>",
+			carry:    map[int]func(*testing.T, commitmentSet){0: func(*testing.T, commitmentSet) {}},
+			fill:     func(*testing.T, commitmentSet) []string { return []string{"<text>", quoted(oneLine)} },
+			after: func(_ *testing.T, f commitmentSet, _ string) commitmentSet {
+				f.args = block("A", oneLine)
+				return f
+			},
+		},
 	}
+}
+
+// C5-P3: each start or approval cause that only a commitment change clears raises the
+// decision face at its source. An approval operand that does not parse, or a plan id that no
+// receipt holds, raises no face, so it hands back.
+// The walk proves each face's route, so this test reads only which face each cause prints.
+func TestCommitmentCausesRaiseTheirFaces(t *testing.T) {
+	faces := map[string]refusalroute.Face{}
+	for _, face := range refusalroute.Faces(refusalroute.Commitment) {
+		faces[face.Name] = face
+	}
+	decision, approval := []string{decisionRoute}, []string{"; then bench commitment approve "}
+	for _, row := range []struct {
+		name, face string
+		names      []string
+		set        func(t *testing.T, root string) (dir string, args []string)
+	}{
+		{"unapproved deliverable", refusalroute.CommitmentDecision, decision, func(t *testing.T, root string) (string, []string) {
+			return commitmenttest.Assignment(t, root, "decision"), start("A", "decision", "specs/B/spec.md")
+		}},
+		{"precedes", refusalroute.CommitmentDecision, decision, func(t *testing.T, root string) (string, []string) {
+			return commitmenttest.Assignment(t, root, "decision"), start("B", "decision", "specs/B/spec.md")
+		}},
+		{"no active milestone", refusalroute.CommitmentDecision, decision, func(t *testing.T, root string) (string, []string) {
+			commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) { policy.ActiveMilestone = "" })
+			commitmenttest.Commit(t, root, "no active milestone")
+			return commitmenttest.Assignment(t, root, "decision"), start("A", "decision", "specs/A/spec.md")
+		}},
+		{"approval after the policy moved", refusalroute.CommitmentDecision, decision, func(t *testing.T, root string) (string, []string) {
+			store := commitrepo.Store{Root: root}
+			policy, _, err := store.Policy()
+			if err != nil {
+				t.Fatal(err)
+			}
+			policy.Milestones[0].Outcomes[0].Criteria[0].Text = "The outcome is delivered and read."
+			data, err := commitment.Bytes(policy)
+			if err != nil {
+				t.Fatal(err)
+			}
+			plan, err := store.Plan(data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) { policy.Milestones[0].Outcomes[1].Criteria[0].Text = "B moved." })
+			commitmenttest.Commit(t, root, "move the policy past the plan")
+			return commitmenttest.Planning(t, root), []string{"approve", "--plan", plan.ID, "--decision", "d", "--delayed", "none", "--removed", "none"}
+		}},
+		{"approval operand", refusalroute.CommitmentHandback, approval, func(t *testing.T, root string) (string, []string) {
+			return commitmenttest.Planning(t, root), []string{"approve", "--plan", "p", "--decision", "d", "--delayed", " A", "--removed", "none"}
+		}},
+		{"unknown plan", refusalroute.CommitmentHandback, approval, func(t *testing.T, root string) (string, []string) {
+			return commitmenttest.Planning(t, root), []string{"approve", "--plan", "p", "--decision", "d", "--delayed", "none", "--removed", "none"}
+		}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Setenv("BENCH_HOME", t.TempDir())
+			dir, args := row.set(t, commitmenttest.Staged(t, "A", "B"))
+			out, code := commitcmd.Command(dir, args)
+			next, printed := routetest.NextCell(out)
+			if code != 1 || !printed {
+				t.Fatalf("%s = (%d, %q), want exit 1 and one next cell", row.name, code, out)
+			}
+			routetest.Steps(t, faces[row.face], next, "", row.names)
+		})
+	}
+}
+
+// oneLine is the blocker reason that the reviewer fills in.
+const oneLine = "waits on review"
+
+// block is the verb's block of outcome for reason.
+func block(outcome, reason string) []string {
+	return []string{"block", "--outcome", outcome, "--reason", reason}
 }
 
 // planInputFixture is a commitment-plan-input fixture: the input file at name does not
@@ -269,39 +363,19 @@ func planInputFixture(cause, name string, named func(string) string) commitmentF
 	}
 }
 
-// legacyRun is the request of the run that the run-unknown fixture's adoption lists.
-const legacyRun = "legacy"
-
-// unknownRunSet is the run-unknown fixture: a repository with no policy and one run whose
-// branch holds owned.txt, and an adoption that lists the run under an id the ledger does not
-// hold.
+// unknownRunSet is the run-unknown fixture: the legacy repository, and an adoption that lists
+// its run under an id the ledger does not hold.
 func unknownRunSet(t *testing.T) commitmentSet {
-	root := gittest.RepoOnBranch(t, "main")
-	commitmenttest.Write(t, root, "ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. old\n")
-	commitmenttest.Commit(t, root, "board")
-	legacy := commitmenttest.Assignment(t, root, legacyRun)
-	commitmenttest.Write(t, legacy, "owned.txt", "owned\n")
-	commitmenttest.Commit(t, legacy, "legacy scope")
+	root, _ := commitmenttest.Legacy(t)
 	input := filepath.Join(t.TempDir(), "adoption.json")
 	writeAdoption(t, input, strings.Repeat("d", 32))
 	return commitmentSet{root: root, dir: root, input: input, args: []string{"plan", "--input", input}}
 }
 
-// writeAdoption writes at path the adoption proposal that lists the legacy run under the id
-// run, with owned.txt as its scope.
+// writeAdoption writes at path the legacy adoption that lists the legacy run under the id run.
 func writeAdoption(t *testing.T, path, run string) {
 	t.Helper()
-	policy := commitment.Policy{Version: 1, ActiveMilestone: "M1", Milestones: []commitment.Milestone{{ID: "M1", Outcomes: []commitment.Outcome{{ID: "A", Criteria: []commitment.Criterion{{ID: "A.done", Text: "The outcome is delivered."}}}}}}}
-	data, err := json.Marshal(struct {
-		commitment.Policy
-		Continuations []intent.LegacyContinuation `json:"continuations"`
-	}{policy, []intent.LegacyContinuation{{Assignment: run, Request: intent.RequestDigest(legacyRun), Scope: []string{"owned.txt"}}}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	commitmenttest.Write(t, filepath.Dir(path), filepath.Base(path), string(commitmenttest.LegacyAdoption(run).Encode(t)))
 }
 
 // copyFile replaces the file at to with the content of the file at from.
