@@ -258,10 +258,9 @@ func commitmentFaceFixtures() []commitmentFaceFixture {
 	}
 }
 
-// C5-P3: each start or approval cause that only a commitment change clears raises the
-// decision face at its source. An approval operand that does not parse, or a plan id that no
-// receipt holds, raises no face, so it hands back.
-// The walk proves each face's route, so this test reads only which face each cause prints.
+// Each start or approval cause that only a commitment change clears raises the decision face
+// at its source. An unparsed approval operand or an unknown plan id hands back. The walk
+// proves each route, so this test reads only which face each cause prints.
 func TestCommitmentCausesRaiseTheirFaces(t *testing.T) {
 	faces := map[string]refusalroute.Face{}
 	for _, face := range refusalroute.Faces(refusalroute.Commitment) {
@@ -284,24 +283,32 @@ func TestCommitmentCausesRaiseTheirFaces(t *testing.T) {
 			commitmenttest.Commit(t, root, "no active milestone")
 			return commitmenttest.Assignment(t, root, "decision"), start("A", "decision", "specs/A/spec.md")
 		}},
+		{"approval after another approval", refusalroute.CommitmentDecision, decision, func(t *testing.T, root string) (string, []string) {
+			dir, first, args := commitmenttest.Planning(t, root), approvalOf(t, root, commitmenttest.Reworded(t, root, "A is read.")), approvalOf(t, root, commitmenttest.Reworded(t, root, "A is kept."))
+			if out, code := commitcmd.Command(dir, first); code != 0 {
+				t.Fatalf("first approval = (%d, %q), want exit 0", code, out)
+			}
+			return dir, args
+		}},
 		{"approval after the policy moved", refusalroute.CommitmentDecision, decision, func(t *testing.T, root string) (string, []string) {
-			store := commitrepo.Store{Root: root}
-			policy, _, err := store.Policy()
-			if err != nil {
-				t.Fatal(err)
-			}
-			policy.Milestones[0].Outcomes[0].Criteria[0].Text = "The outcome is delivered and read."
-			data, err := commitment.Bytes(policy)
-			if err != nil {
-				t.Fatal(err)
-			}
-			plan, err := store.Plan(data)
-			if err != nil {
-				t.Fatal(err)
-			}
+			args := approvalOf(t, root, commitmenttest.Reworded(t, root, "A is read."))
 			commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) { policy.Milestones[0].Outcomes[1].Criteria[0].Text = "B moved." })
 			commitmenttest.Commit(t, root, "move the policy past the plan")
-			return commitmenttest.Planning(t, root), []string{"approve", "--plan", plan.ID, "--decision", "d", "--delayed", "none", "--removed", "none"}
+			return commitmenttest.Planning(t, root), args
+		}},
+		{"approval after a bound source changed", refusalroute.CommitmentDecision, decision, func(t *testing.T, root string) (string, []string) {
+			args := approvalOf(t, root, commitmenttest.Reworded(t, root, "A is read."))
+			commitmenttest.Write(t, root, "specs/B/spec.md", commitmenttest.StagedBody+"\nB changed.\n")
+			commitmenttest.Commit(t, root, "change a bound source past the plan")
+			return commitmenttest.Planning(t, root), args
+		}},
+		{"approval after a listed run changed", refusalroute.CommitmentDecision, decision, func(t *testing.T, _ string) (string, []string) {
+			root, run := commitmenttest.Legacy(t)
+			owner, _ := intent.AssignmentForWorktree(run)
+			args := approvalOf(t, root, commitmenttest.LegacyAdoption(owner.ID).Encode(t))
+			gittest.Output(t, run, "rm", "-q", commitmenttest.LegacyScope)
+			commitmenttest.Commit(t, run, "drop the listed scope past the plan")
+			return run, args
 		}},
 		{"approval operand", refusalroute.CommitmentHandback, approval, func(t *testing.T, root string) (string, []string) {
 			return commitmenttest.Planning(t, root), []string{"approve", "--plan", "p", "--decision", "d", "--delayed", " A", "--removed", "none"}
@@ -321,6 +328,16 @@ func TestCommitmentCausesRaiseTheirFaces(t *testing.T) {
 			routetest.Steps(t, faces[row.face], next, "", row.names)
 		})
 	}
+}
+
+// approvalOf plans input in root and returns the verb's approval of that plan.
+func approvalOf(t *testing.T, root string, input []byte) []string {
+	t.Helper()
+	plan, err := (commitrepo.Store{Root: root}).Plan(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return []string{"approve", "--plan", plan.ID, "--decision", "d", "--delayed", "none", "--removed", "none"}
 }
 
 // oneLine is the blocker reason that the reviewer fills in.
@@ -348,16 +365,7 @@ func planInputFixture(cause, name string, named func(string) string) commitmentF
 			return []string{"; then bench commitment plan --input " + named(f.input)}
 		},
 		carry: map[int]func(*testing.T, commitmentSet){0: func(t *testing.T, f commitmentSet) {
-			policy, _, err := (commitrepo.Store{Root: f.root}).Policy()
-			if err != nil {
-				t.Fatal(err)
-			}
-			policy.Milestones[0].Outcomes[0].Criteria[0].Text = "The outcome is delivered and read."
-			data, err := commitment.Bytes(policy)
-			if err != nil {
-				t.Fatal(err)
-			}
-			commitmenttest.Write(t, filepath.Dir(f.input), filepath.Base(f.input), string(data))
+			commitmenttest.Write(t, filepath.Dir(f.input), filepath.Base(f.input), string(commitmenttest.Reworded(t, f.root, "The outcome is delivered and read.")))
 		}},
 		fill: func(_ *testing.T, f commitmentSet) []string { return []string{"<file>", sanitize.ShellQuote(f.input)} },
 	}

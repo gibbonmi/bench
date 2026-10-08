@@ -29,6 +29,22 @@ func SeedAdmission(t testing.TB, root, deliverable string) {
 	WritePolicy(t, root, commitment.Policy{Version: 1, ActiveMilestone: "fixture", Milestones: []commitment.Milestone{{ID: "fixture", Outcomes: []commitment.Outcome{outcome}}}})
 }
 
+// Reworded is plan input that changes only the text of the first criterion in the policy
+// that root's default branch holds, to text.
+func Reworded(t testing.TB, root, text string) []byte {
+	t.Helper()
+	policy, _, err := (commitrepo.Store{Root: root}).Policy()
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy.Milestones[0].Outcomes[0].Criteria[0].Text = text
+	data, err := commitment.Bytes(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}
+
 // LegacyRun is the request of the one run that Legacy creates, and LegacyScope is the
 // path that the run's branch holds, its existing scope.
 const (
