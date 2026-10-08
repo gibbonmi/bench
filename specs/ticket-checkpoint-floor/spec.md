@@ -395,6 +395,7 @@ This fence is the exact union of the ticket Writes lines, plus the review pickup
 - `internal/testreport/floor.go`
 - `internal/testreport/floor_test.go`
 - `internal/testreport/named_check.go`
+- `internal/testreport/outcome_test.go`
 - `internal/testreport/root_conformance_test.go`
 - `internal/testreport/selection.go`
 - `internal/testreport/selection_facts.go`

@@ -1,7 +1,7 @@
 # Name the root conformance check
 
 Blocked by: none
-Writes: internal/gate/phases.go, internal/testreport/check_test.go, internal/testreport/checks_face_test.go, internal/testreport/command.go, internal/testreport/environment.go, internal/testreport/named_check.go, internal/testreport/root_conformance_test.go (new)
+Writes: internal/gate/phases.go, internal/testreport/check_test.go, internal/testreport/checks_face_test.go, internal/testreport/command.go, internal/testreport/environment.go, internal/testreport/named_check.go, internal/testreport/outcome_test.go, internal/testreport/root_conformance_test.go (new)
 Covers: TF1, TF2, TF3, TF4, TF5
 
 ## What to build
