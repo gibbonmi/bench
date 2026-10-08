@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/refusal-route-registry/spec.md",
-  "plan_digest": "sha256:129cae8ef3792d9ae5a007ed37c6d3df9bb3b1712d5c4b452690b42fe42b87f6",
+  "plan_digest": "sha256:3ae2907dd73b212ed47dc6c3e373191338817deaa79e8f1aa1456e865b45dae6",
   "implementation_session": "",
   "chunks": [
     {
@@ -2725,6 +2725,91 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RR-C4",
+      "base": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+      "tip": "7879b23afb093bf754886394774b2193e4347968",
+      "plan_digest": "sha256:3ae2907dd73b212ed47dc6c3e373191338817deaa79e8f1aa1456e865b45dae6",
+      "source_digest": "8b17934c6d79e6c796068437f724283b0a90bee6",
+      "acceptance_rows": [
+        "RR39",
+        "RR40",
+        "RR41",
+        "RR42",
+        "RR43",
+        "RR44",
+        "RR66",
+        "RR68"
+      ],
+      "verification": [
+        {
+          "id": "v-t10-gate-package",
+          "performer": "claude:ft393_t10b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b17934c6d79e6c796068437f724283b0a90bee6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t10b",
+            "digest": "sha256:efcb5b09cb5a08f36008b122e778682e541eb46032afb6915abe02854ad88d65",
+            "excerpt": "$ bench test --package ./internal/gate\ntree[1]{target,head,dirty}:\n  ft393-build,7879b23afb093bf754886394774b2193e4347968,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,26683,408\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t10-checkpoint-routes",
+          "performer": "claude:ft393_t10b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b17934c6d79e6c796068437f724283b0a90bee6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t10b",
+            "digest": "sha256:8b9b4f040133e8abbbe3fc948b8376da55123e5a86d12139d314f64f1ce9d281",
+            "excerpt": "$ bench test --package ./internal/gate --run 'TestCheckpointFacesFollowTheirRoutes|TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\ntree[1]{target,head,dirty}:\n  ft393-build,7879b23afb093bf754886394774b2193e4347968,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,1664,12\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-checkpoint-routes",
+          "command": "bench test --package ./internal/gate --run 'TestCheckpointFacesFollowTheirRoutes|TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t10-help-row-proof",
+          "performer": "claude:ft393_t10b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b17934c6d79e6c796068437f724283b0a90bee6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t10b",
+            "digest": "sha256:6bc5397fbb60102a87b7587c7109331a39f832b95629d9a56be7b05d214cce1e",
+            "excerpt": "$ bench test --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\ntree[1]{target,head,dirty}:\n  ft393-build,7879b23afb093bf754886394774b2193e4347968,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,260,5\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nProbe: Print the fixed write-access `help[1]{cmd,why}` row on the checkpoint refusal again\n$ bench probe internal/gate/run_transaction.go --swap 'return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --with 'fmt.Fprint(stdout, \"help[1]{cmd,why}:\\n  bench gate --fresh,retry after restoring repository write access\\n\"); return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/run_transaction.go,swap,failed,3,yes\n"
+          },
+          "requirement": "t10-help-row-proof",
+          "command": "bench test --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Print the fixed write-access `help[1]{cmd,why}` row on the checkpoint refusal again. TestReviewCheckpointRefusalRoute must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t10b",
+              "digest": "sha256:6bc5397fbb60102a87b7587c7109331a39f832b95629d9a56be7b05d214cce1e",
+              "excerpt": "$ bench test --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\ntree[1]{target,head,dirty}:\n  ft393-build,7879b23afb093bf754886394774b2193e4347968,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,260,5\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nProbe: Print the fixed write-access `help[1]{cmd,why}` row on the checkpoint refusal again\n$ bench probe internal/gate/run_transaction.go --swap 'return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --with 'fmt.Fprint(stdout, \"help[1]{cmd,why}:\\n  bench gate --fresh,retry after restoring repository write access\\n\"); return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/run_transaction.go,swap,failed,3,yes\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2840,6 +2925,24 @@
     {
       "from": "sha256:e6df2b3ac2271259efedd93c96a79966b915548e2cd37747833ccc21905b1260",
       "to": "sha256:129cae8ef3792d9ae5a007ed37c6d3df9bb3b1712d5c4b452690b42fe42b87f6",
+      "chunk_ids": {
+        "RR-C1a": [
+          "RR-C1a"
+        ],
+        "RR-C1b": [
+          "RR-C1b"
+        ],
+        "RR-C2": [
+          "RR-C2"
+        ],
+        "RR-C3": [
+          "RR-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:129cae8ef3792d9ae5a007ed37c6d3df9bb3b1712d5c4b452690b42fe42b87f6",
+      "to": "sha256:3ae2907dd73b212ed47dc6c3e373191338817deaa79e8f1aa1456e865b45dae6",
       "chunk_ids": {
         "RR-C1a": [
           "RR-C1a"
