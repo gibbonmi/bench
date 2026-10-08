@@ -1,7 +1,7 @@
 # Add the known-issue table and point delegate charges at it
 
 Blocked by: none
-Writes: docs/known-issues.md (new), .agents/skills/bench-craft-delegate/SKILL.md, ROADMAP.md, roadmap/FT378.md
+Writes: docs/known-issues.md (new), .agents/skills/bench-craft-delegate/SKILL.md, ROADMAP.md, roadmap/FT378.md, roadmap/FT369.md
 Covers: none
 
 ## What to build
