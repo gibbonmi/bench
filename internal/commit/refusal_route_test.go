@@ -160,15 +160,8 @@ func followCommitFace(t *testing.T, face refusalroute.Face, fixture commitFaceFi
 	}
 }
 
-// printedNext is the route of a refusal's next= line on stderr.
-func printedNext(stderr string) (string, bool) {
-	for _, line := range strings.Split(stderr, "\n") {
-		if next, ok := strings.CutPrefix(line, refusalroute.NextField+"="); ok {
-			return next, true
-		}
-	}
-	return "", false
-}
+// printedNext is the shared reader of a refusal's one next= line.
+var printedNext = routetest.Next
 
 // runRouteStep runs one printed command step in process, the way the CLI dispatches it: a
 // commit at the worktree that its tree target names, and any other verb at the caller's

@@ -15,6 +15,7 @@ import (
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
@@ -184,17 +185,16 @@ func TestGateRunRetainsSubjectConstructionCause(t *testing.T) {
 	cause := errors.New("sentinel subject construction failure")
 	var stdout, stderr bytes.Buffer
 
-	result := executeSubjectWithRunBinary(context.Background(), root, root, &stdout, &stderr, nil, forceRun, failedAcceptEvaluation{err: cause}, nil, "")
+	result := executeSubjectWithRunBinary(asVerb(context.Background()), root, root, &stdout, &stderr, nil, forceRun, failedAcceptEvaluation{err: cause}, nil, "")
 	if result.ActionExit != 1 {
 		t.Fatalf("result = %#v, want action exit 1", result)
 	}
 	if got := stderr.String(); !strings.Contains(got, "gate subject unavailable") || !strings.Contains(got, cause.Error()) {
 		t.Fatalf("stderr = %q, want the subject diagnostic and cause %q", got, cause)
 	}
-	// RR42 and RR43: the fault names the diagnosis and a fresh rerun, and only that route.
-	_, next, _ := strings.Cut(stderr.String(), "\nnext=")
-	next, _, _ = strings.Cut(next, "\n")
-	if !strings.HasPrefix(next, "bench doctor; then ") || !strings.Contains(next, " --fresh") {
+	// The fault names the diagnosis and a fresh rerun, and only that route.
+	next, one := routetest.Next(stderr.String())
+	if !one || !strings.HasPrefix(next, "bench doctor; then ") || !strings.Contains(next, " --fresh") {
 		t.Fatalf("stderr = %q, want a next= route that runs bench doctor and then a --fresh rerun", stderr.String())
 	}
 	if got := stdout.String(); strings.Contains(got, "help[1]{cmd,why}") {

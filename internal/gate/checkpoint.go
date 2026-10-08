@@ -22,11 +22,17 @@ type Checkpoint struct {
 	Complete    bool
 }
 type checkpointKey struct{}
+type verbKey struct{}
 
 // WithCheckpoint carries the obligation through the existing gate execution owner.
 func WithCheckpoint(ctx context.Context, checkpoint Checkpoint) context.Context {
 	return context.WithValue(ctx, checkpointKey{}, checkpoint)
 }
+
+// asVerb marks a run that the gate verb itself runs. Only that run prints the gate's route.
+// Another caller, such as the authorization run of a landing or a commit, prints its own
+// route for the refusal that the run returns, so one route prints per refusal.
+func asVerb(ctx context.Context) context.Context { return context.WithValue(ctx, verbKey{}, true) }
 
 func checkpointEvaluation(ctx context.Context, evaluation *gateEvaluation) *gateEvaluation {
 	evaluation.checkpoint, _ = ctx.Value(checkpointKey{}).(Checkpoint)
@@ -101,7 +107,8 @@ type (
 	// evidenceError is a completion-evidence refusal.
 	evidenceError struct{ err error }
 	// completionProofError is a completion whose graded tree is not the exact transform of
-	// its reviewed source.
+	// its reviewed source. A fault that captures or reads either tree proves nothing about
+	// the transform, so it is not a proof fault.
 	completionProofError struct{ err error }
 )
 
@@ -136,10 +143,13 @@ func funnelFace(err error) string {
 	return faceSubjectUnavailable
 }
 
-// refuse prints a refusal's reason and then the route of face on its own next= line. The
-// route reruns the caller's gate in the worktree of the active assignment that owns root;
-// with no owner, the label prints its slot.
+// refuse prints a refusal's reason. In a run of the gate verb, the route of face follows on
+// its own next= line. The route reruns the caller's gate in the worktree of the active
+// assignment that owns root; with no owner, the label prints its slot.
 func refuse(ctx context.Context, root string, stderr io.Writer, mode runMode, face, reason string) Result {
+	if verb, _ := ctx.Value(verbKey{}).(bool); !verb {
+		return operational(root, 0, stderr, reason)
+	}
 	checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint)
 	owner, _ := intent.AssignmentForWorktree(root)
 	slug, _ := reviewrecord.Slug(checkpoint.Spec)
@@ -200,7 +210,7 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	if e.completionSource != "" {
 		sourceTree, err = e.completionTree(generation)
 		if err != nil {
-			return subject{}, completionProofError{err}
+			return subject{}, err
 		}
 	}
 	// A tickets-only close has no completion record; its completion tree is its evidence.

@@ -43,6 +43,21 @@ func Fixtures(t testing.TB, verb refusalroute.Verb, keys [][2]string) map[string
 	return faces
 }
 
+// Next is the route of the next= line that output prints. It reports false unless output
+// prints exactly one such line, because a refusal prints one route.
+func Next(output string) (string, bool) {
+	var routes []string
+	for _, line := range strings.Split(output, "\n") {
+		if route, ok := strings.CutPrefix(line, refusalroute.NextField+"="); ok {
+			routes = append(routes, route)
+		}
+	}
+	if len(routes) != 1 {
+		return "", false
+	}
+	return routes[0], true
+}
+
 // Steps checks one printed route against the face that printed it and returns its steps.
 // The reviewer marker opens the route exactly when the face is the reviewer's, the route
 // names each of names, and after the preface it prints the steps the face declares.

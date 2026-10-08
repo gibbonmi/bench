@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/landing/published"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -241,11 +242,59 @@ func TestCompleteCheckpointRefusesADirtyCheckout(t *testing.T) {
 			if code != 1 || !strings.Contains(out, cleanCheckoutRefusal) || strings.Contains(out, "completion is incomplete or stale") {
 				t.Errorf("dirty complete checkpoint = (%d, %q), want exit 1 and only %q", code, out, cleanCheckoutRefusal)
 			}
-			// RR41: the refusal names the commit that cleans the checkout.
+			// The refusal names the commit that cleans the checkout.
 			if !strings.Contains(out, "\nnext=bench commit --in ") {
 				t.Errorf("dirty complete checkpoint = %q, want a next= route that commits the checkout", out)
 			}
 			assertNoOracleRun(t, f)
+		})
+	}
+	// A fresh caller's rerun stays fresh, though the face does not force it.
+	t.Run("fresh caller", func(t *testing.T) {
+		f := completed(t)
+		f.Write("tracked.txt", "edited\n")
+		_, out := completeCheckpoint(t, f, "--fresh")
+		if next, one := routetest.Next(out); !one || !strings.Contains(next, " --fresh") {
+			t.Errorf("dirty fresh complete checkpoint = %q, want a next= rerun that keeps --fresh", out)
+		}
+	})
+}
+
+// TestCompletionFaultsRouteByTheirCause grades a completion whose reviewed source cannot be
+// read, and a completion that is not the transform of its source. The read fault captured no
+// subject, so it names the diagnosis and a fresh rerun; only the proof fault hands back.
+func TestCompletionFaultsRouteByTheirCause(t *testing.T) {
+	for _, tc := range []struct {
+		name, route string
+		graded      func(*recordtest.Fixture) string
+	}{
+		{"unreadable source", "bench doctor; then ", func(f *recordtest.Fixture) string {
+			tree, err := published.Tree(f.Root, f.Tree(), recordtest.Spec, f.Tip())
+			if err != nil {
+				f.T.Fatalf("closure transform: %v", err)
+			}
+			// Once the transform is composed, HEAD moves past the source spec and its
+			// object goes missing.
+			object := f.Git("rev-parse", f.Tip()+":"+recordtest.Spec)
+			f.Write(recordtest.Spec, "# Moved\n")
+			f.Commit("move past the source spec")
+			if err := os.Remove(filepath.Join(f.Root, ".git", "objects", object[:2], object[2:])); err != nil {
+				f.T.Fatal(err)
+			}
+			return tree
+		}},
+		{"source graded as its completion", routetest.ReviewerMarker, func(f *recordtest.Fixture) string { return f.Tree() }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := checkpointFixture(t)
+			retainCompletion(f)
+			source := f.Tip()
+			graded := tc.graded(f)
+			var stderr bytes.Buffer
+			code := RunCompletionTree(f.Root, recordtest.Spec, source, graded, &stderr)
+			if next, one := routetest.Next(stderr.String()); code == 0 || !one || !strings.HasPrefix(next, tc.route) {
+				t.Fatalf("completion = (%d, %q), want one next= route that starts with %q", code, stderr.String(), tc.route)
+			}
 		})
 	}
 }
@@ -259,7 +308,7 @@ func TestCompleteCheckpointRefusesAnUntransformableSpec(t *testing.T) {
 	if code != 1 || !strings.Contains(out, "spec has no Status: staged line") {
 		t.Errorf("complete checkpoint on a spec with no staged status = (%d, %q), want exit 1 and the transform reason", code, out)
 	}
-	// RR66: the spec status is the reviewer's, so the route hands back.
+	// The spec status is the reviewer's, so the route hands back.
 	if !strings.Contains(out, "\nnext=reviewer: ") {
 		t.Errorf("complete checkpoint on a spec with no staged status = %q, want a next= reviewer route", out)
 	}

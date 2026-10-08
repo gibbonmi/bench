@@ -196,7 +196,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	ctx, finishSpan := beginGateSpan(WithCheckpoint(context.Background(), checkpoint), root, mode.String())
+	ctx, finishSpan := beginGateSpan(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, mode.String())
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, mode.String())
 	var result Result
 	if checkpoint.Complete {

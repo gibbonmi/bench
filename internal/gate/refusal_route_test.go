@@ -6,7 +6,6 @@ package gate_test
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"os"
 	"path/filepath"
@@ -31,6 +30,28 @@ var (
 	chunkArgs    = []string{"--checkpoint", recordtest.Spec, "--chunk", "1"}
 	completeArgs = []string{"--checkpoint", recordtest.Spec, "--complete"}
 )
+
+// argumentsSlot is the placeholder of a rerun whose arguments the route lacks.
+var argumentsSlot = "<" + refusalroute.FactArguments + ">"
+
+// TestAuthorizationRunPrintsTheCallersRoute drives a commit whose authorization run refuses
+// in the checkpoint funnel. The commit runs no gate verb, so the gate prints no route of its
+// own, and the refusal prints the one route that the commit names.
+func TestAuthorizationRunPrintsTheCallersRoute(t *testing.T) {
+	set := dirtyFixture("").build(t)
+	// The gate declares a home that the build cache derivation refuses, so the run
+	// captures no subject.
+	inputs := string(readFile(t, set.f.Root, ".bench/gate-inputs.json"))
+	set.f.Write(".bench/gate-inputs.json", strings.Replace(inputs, `"environment":[]`, `"environment":["HOME"]`, 1))
+	t.Setenv("HOME", "relative")
+	t.Chdir(set.f.Root)
+	var stdout, stderr bytes.Buffer
+	_, code := commit.Run([]string{"-m", "record", "--", ".bench/gate-inputs.json"}, &stdout, &stderr)
+	next, one := routetest.Next(stderr.String())
+	if code == 0 || !one || !strings.HasPrefix(next, "bench doctor; then bench commit --in ") || strings.Contains(stderr.String(), argumentsSlot) {
+		t.Fatalf("commit = (%d, %q), want one next= route, the commit's own", code, stderr.String())
+	}
+}
 
 // gateSet is one checkpoint route fixture: the review fixture whose checkout the checkpoint
 // grades, and the label of the active assignment that owns that checkout.
@@ -64,8 +85,8 @@ type gateFaceFixture struct {
 	after func(t *testing.T, set gateSet)
 }
 
-// TestCheckpointFacesFollowTheirRoutes is RR44 and RR68. The registry is the source of the
-// gate's face set, so each gate face needs a producing fixture. Each fixture's printed route
+// TestCheckpointFacesFollowTheirRoutes walks the gate's faces. The registry is the source of
+// the gate's face set, so each gate face needs a producing fixture. Each fixture's printed route
 // is carried out step by step: an instruction by the fixture's own means, and each command
 // step verbatim through the verb's own entry. The checkpoint then reruns out of the face:
 // as the route's own last step, or after a route that ends elsewhere.
@@ -93,7 +114,7 @@ func TestCheckpointRouteRendersTheLedgerLabel(t *testing.T) {
 			set.f.Write("tracked.txt", "edited\n")
 			var stderr bytes.Buffer
 			gate.RunCommand(append([]string{set.f.Root}, completeArgs...), io.Discard, &stderr)
-			next, printed := printedRoute(stderr.String())
+			next, printed := routetest.Next(stderr.String())
 			if !printed || !strings.HasPrefix(next, "bench commit --in "+tc.want+" ") || strings.ContainsRune(next, '\x1b') {
 				t.Fatalf("stderr = %q, want a next= route that addresses the worktree as %q", stderr.String(), tc.want)
 			}
@@ -112,9 +133,9 @@ func followGateFace(t *testing.T, face refusalroute.Face, fixture gateFaceFixtur
 	} else {
 		code = gate.RunCommand(append([]string{set.f.Root}, fixture.args...), &stdout, &stderr)
 	}
-	next, printed := printedRoute(stderr.String())
-	if code == 0 || !printed || !strings.Contains(next, fixture.contains) {
-		t.Fatalf("face %s = (%d, %q), want a refusal whose next= route holds %q", face.Name, code, stderr.String(), fixture.contains)
+	next, printed := routetest.Next(stderr.String())
+	if code == 0 || !printed || !strings.Contains(next, fixture.contains) || strings.Contains(next, argumentsSlot) {
+		t.Fatalf("face %s = (%d, %q), want a refusal whose next= route holds %q and every argument of the rerun", face.Name, code, stderr.String(), fixture.contains)
 	}
 	steps := routetest.Steps(t, face, next, "", nil)
 	if fixture.clear != nil {
@@ -245,8 +266,7 @@ func gateFaceFixtures() []gateFaceFixture {
 			contains: routetest.ReviewerMarker,
 			build:    func(t *testing.T) gateSet { return assigned(t, "gate-handback", true) },
 			refuse: func(_ *testing.T, set gateSet, stderr io.Writer) int {
-				ctx := gate.WithCompletion(context.Background(), recordtest.Spec, set.f.Tip())
-				return gate.ExecuteTree(ctx, set.f.Root, set.f.Tree(), io.Discard, stderr).ActionExit
+				return gate.RunCompletionTree(set.f.Root, recordtest.Spec, set.f.Tip(), set.f.Tree(), stderr)
 			},
 			carry: map[int]func(*testing.T, gateSet){0: func(*testing.T, gateSet) {}},
 		},
@@ -314,13 +334,6 @@ func linkedAttach(t testing.TB, root string, count int) *recordtest.Fixture {
 	linked.Root = filepath.Join(t.TempDir(), "linked")
 	f.Git("worktree", "add", "-q", "-b", "assignment", linked.Root)
 	return &linked
-}
-
-// printedRoute is the route of a refusal's next= line on stderr.
-func printedRoute(stderr string) (string, bool) {
-	_, next, printed := strings.Cut(stderr, "\n"+refusalroute.NextField+"=")
-	next, _, _ = strings.Cut(next, "\n")
-	return next, printed
 }
 
 func readFile(t testing.TB, root, path string) []byte {

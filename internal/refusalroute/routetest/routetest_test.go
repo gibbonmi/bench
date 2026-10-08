@@ -59,6 +59,26 @@ var (
 	command      = refusalroute.Command(refusalroute.Text("bench gate"))
 )
 
+func TestNextReadsTheOneRouteLine(t *testing.T) {
+	type read struct {
+		route string
+		one   bool
+	}
+	for output, want := range map[string]read{
+		"error: refused\nnext=bench gate\n":      {"bench gate", true},
+		"next=bench gate":                        {"bench gate", true},
+		"error: refused\n":                       {},
+		"next=bench doctor\nnext=bench gate\n":   {},
+		"refused{reason=x,next=bench gate}\n":    {},
+		"error: refused\n next=bench gate\n":     {},
+		"error: refused\nnext=\nnext=bench gate": {},
+	} {
+		if route, one := Next(output); route != want.route || one != want.one {
+			t.Errorf("Next(%q) = (%q, %v), want (%q, %v)", output, route, one, want.route, want.one)
+		}
+	}
+}
+
 func TestStepsSplitsTheMarkerAndCountsTheSteps(t *testing.T) {
 	steps := []string{"repair the cause", "bench gate"}
 	agent, reviewer := steps[0]+"; then "+steps[1], ReviewerMarker+steps[0]+"; then "+steps[1]

@@ -11,11 +11,11 @@ var gateFaces = []Face{
 	{
 		// The checkpoint cannot show what the completion evidence lacks, and one read
 		// reports the plan row and the record state. The slug comes from the spec-path
-		// grammar's one owner, and the route prints it as the grammar holds it.
+		// grammar's one owner.
 		Verb:      Gate,
 		Name:      "checkpoint-completion-evidence",
 		Authority: Agent,
-		Route:     []Step{Command(Text("bench preflight review"), Composed(FactSlug))},
+		Route:     []Step{Command(Text("bench preflight review"), Fact(FactSlug))},
 	},
 	{
 		// The landing publishes only committed bytes, so the caller commits its own
