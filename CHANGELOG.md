@@ -6,6 +6,18 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Platform assessment
+
+- Changed `/bench-assess` so that it holds the maintenance assessment method, which a Codex-only skill held before. The changes are:
+  - A run records its source pin at entry.
+  - The tests area assesses test cost through test purpose, and a speed gain inside the run-to-run spread counts as no change.
+  - Each finding separates mechanism, inference, and reproduction. A removal finding names its consumers inside and outside the tree.
+  - Each finding maps to its existing owner with an overlap class.
+  - The assessment proposes a disposition for each active roadmap row.
+  - Planning follow-through runs only on request. It hands off to `/bench-shape-idea` and `/bench-write-spec` and reports the exact state of each outcome.
+
+  The phase still replaces the root `ASSESSMENT.md` and edits no roadmap row.
+
 ### Standard-library re-implementation check
 
 - Added the `stdlib-reimplementation` conformance check. It refuses each production Go site that writes by hand a function that the standard library supplies. These are the sites that it refuses:
