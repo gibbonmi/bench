@@ -1,4 +1,6 @@
-// Resume refusal tests: destructive destination state, a non-ancestor review base, a stale marker, and an evicted receipt.
+// Resume refusal tests: destructive destination state, a non-ancestor review base, a stale
+// marker, an evicted receipt, and the handback of a cause no landing route repairs. The
+// interrupted landing a resume starts from is built here too.
 package worktree
 
 import (
@@ -11,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T) {
@@ -90,7 +93,7 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 				// caller's resume continuation behind it, so the route survives the
 				// interruption.
 				next, printed := landingFaceNext(stdout, tc.detail)
-				repair := landingRefusalFaceByName(faceResumeDestinationResidue).route("")
+				repair := landingRepair(faceResumeDestinationResidue, nil)
 				if !printed || !strings.HasPrefix(next, repair) || !strings.Contains(next, "bench worktree land --resume ") {
 					t.Fatalf("destructive-state route = (%q, %v), want %q ahead of the resume continuation", next, printed, repair)
 				}
@@ -105,26 +108,21 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 	}
 }
 
-// LRS5: a source-side face refuses on the resume too. The resume rebuilds the caller's
+// LRS5: a source-side refusal refuses on the resume too. The resume rebuilds the caller's
 // own continuation from the flags it passed, so the route ends with that resume rather
-// than with a first-run landing the operator must not repeat.
+// than with a first-run landing the operator must not repeat. A commit would move a dirty
+// source away from the published tip, so the dirty source takes land-handback.
 func TestResumeLandCommandSourceRefusalNamesTheCallersResume(t *testing.T) {
 	t.Parallel()
 	request := "resume-source-not-clean"
 	f := publicLandingFixture(t, request, "", "")
-	broken := defaultJoins()
-	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
-	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, f.tip, f.creation.Path)...)); r.exit != 3 {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
+	interruptedLanding(t, f, request, f.tip)
 	published := gitOutput(t, f.root, "rev-parse", "main")
-	mustWrite(t, filepath.Join(f.creation.Path, "scratch"), []byte("scratch\n"), 0o600)
+	landingFixtureFor(t, faceSourceNotClean).mutate(t, f.root, f.creation)
 	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 	r := runVerb(t, verbLand, f.callWith(defaultJoins(), args...))
-	resume := "bench worktree land --resume '" + published + "' --request <request> --base '" + f.base +
-		"' --source-tip '" + f.tip + "' --spec 'x' '" + f.creation.Path + "'"
-	want := landingRefusalFaceByName(faceSourceNotClean).route(resume)
-	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceSourceNotClean).detail)
+	want := landingRoute(faceLandHandback, resumeRerunOf(published, f.base, f.tip, f.creation.Path), nil)
+	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotClean))
 	if r.exit != 1 || !printed || next != want {
 		t.Fatalf("resume source refusal = (%d, %q, %q), want next %q", r.exit, r.stdout, r.stderr, want)
 	}
@@ -293,4 +291,81 @@ func resumeWorktreeBytes(t *testing.T, root string) string {
 		t.Fatal(err)
 	}
 	return snapshot.String()
+}
+
+// resumeRerunOf is the caller's own resume of a landing that published published, as a
+// resume that names the spec x prints it before its assignment resolves.
+func resumeRerunOf(published, base, tip, path string) string {
+	return "bench worktree land --resume '" + published + "' --request <request> --base '" + base +
+		"' --source-tip '" + tip + "' --spec 'x' '" + path + "'"
+}
+
+// interruptedLanding runs the first landing with a release step that fails, so the
+// landing publishes and exits incomplete.
+func interruptedLanding(t *testing.T, f landingFixture, request, tip string) verbResult {
+	t.Helper()
+	broken := defaultJoins()
+	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
+	r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, tip, f.creation.Path)...))
+	if r.exit != 3 {
+		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
+	}
+	return r
+}
+
+// landingFaceResume drives a resume fixture. It interrupts a landing at the release step,
+// applies the fixture's mutation to the published destination, and resumes.
+func landingFaceResume(t *testing.T, fixture landingRefusalFixture, f landingFixture) verbResult {
+	t.Helper()
+	request := "landing-face-" + fixture.face
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	interruptedLanding(t, f, request, tip)
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	fixture.mutate(t, f.root, f.creation)
+	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", tip, "--spec", "x", f.creation.Path}
+	return runVerb(t, verbLand, f.callWith(defaultJoins(), args...))
+}
+
+// requireHandback fails t unless the refused record whose detail opens with sentence
+// prints a route that opens with the reviewer marker.
+func requireHandback(t *testing.T, r verbResult, sentence string) {
+	t.Helper()
+	next, printed := landingFaceNext(r.stdout, sentence)
+	if r.exit != 1 || !printed || !strings.HasPrefix(next, reviewerRoute) {
+		t.Fatalf("%q refusal = (%d, %q, %q), want exit 1 and a next= that opens with %q", sentence, r.exit, r.stdout, r.stderr, reviewerRoute)
+	}
+}
+
+// TestLandingHandsBackAPathWithNoCanonicalForm is a land-handback site. A relative operand
+// resolves against the working directory, and a removed working directory leaves it no
+// canonical form. No Bench verb restores the directory, so the first run and the resume
+// both hand the refusal back.
+func TestLandingHandsBackAPathWithNoCanonicalForm(t *testing.T) {
+	gone := filepath.Join(t.TempDir(), "gone")
+	mustMkdirAll(t, gone, 0o755)
+	chdir(t, gone)
+	mustRemove(t, gone)
+	root, home, tip := t.TempDir(), t.TempDir(), strings.Repeat("a", 40)
+	for name, args := range map[string][]string{
+		"first run": landArgs("no-canonical-path", tip, tip, "worktree"),
+		"resume":    {"--resume", tip, "--request", "no-canonical-path", "--base", tip, "--source-tip", tip, "--spec", "x", "worktree"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			requireHandback(t, runVerb(t, verbLand, verbCall{root: root, home: home, args: args}), "worktree path is not canonical")
+		})
+	}
+}
+
+// TestResumeHandsBackADetachedDestination is a land-handback site on the resume path. The
+// resume reads the destination's identity before it reads the publication, and a detached
+// landing checkout is the primary checkout's own state, which only the reviewer clears.
+func TestResumeHandsBackADetachedDestination(t *testing.T) {
+	t.Parallel()
+	request := "resume-detached-destination"
+	f := publicLandingFixture(t, request, "", "")
+	interruptedLanding(t, f, request, f.tip)
+	published := gitOutput(t, f.root, "rev-parse", "main")
+	gitRun(t, f.root, "checkout", "-q", "--detach")
+	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
+	requireHandback(t, runVerb(t, verbLand, f.call(args...)), "landing checkout is not attached to the default branch")
 }

@@ -10,13 +10,22 @@ import (
 )
 
 func updateRef(root, ref, new, old string) error { return run(root, "update-ref", ref, new, old) }
+
+// TipMovedError is the compare-and-swap refusal of a destination that moved between the
+// read and the update. A rerun recomposes onto the moved destination, so a caller routes
+// the refusal by the type and never by the sentence.
+type TipMovedError struct{ Err error }
+
+func (e TipMovedError) Error() string { return e.Err.Error() }
+func (e TipMovedError) Unwrap() error { return e.Err }
+
 func destinationUpdateFailure(root, ref, expected string, updateErr error) error {
 	actual, err := benchgit.ResolveCommit(root, ref)
 	if err != nil {
 		return fmt.Errorf("read destination after failed ref update: %w", err)
 	}
 	if actual != expected {
-		return fmt.Errorf("destination compare-and-swap refused; rerun the landing to recompose onto the moved destination: %w", updateErr)
+		return TipMovedError{fmt.Errorf("destination compare-and-swap refused; rerun the landing to recompose onto the moved destination: %w", updateErr)}
 	}
 	return updateErr
 }

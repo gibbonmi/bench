@@ -3,13 +3,18 @@ package gate
 import (
 	"bytes"
 	"context"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 func checkpointFixture(t *testing.T) *recordtest.Fixture {
@@ -29,6 +34,34 @@ func attachedCheckpointFixture(t *testing.T, attach func(testing.TB, string, int
 	f.Save()
 	f.Commit("retain review evidence")
 	return f
+}
+
+// The checkpoint route walk runs in the external test package, because the steps it runs
+// verbatim reach packages that import this one. These names hand it the checkpoint
+// fixtures and the one run seam that no public entry reaches.
+var (
+	AttachedCheckpointFixture = attachedCheckpointFixture
+	RetainCompletion          = retainCompletion
+)
+
+// RunCheckpointArmed runs the checkpoint that args select at root, and calls arm once the run
+// holds its execution lock: after it accepts its subject and before it validates that
+// subject. It answers the exit.
+func RunCheckpointArmed(t *testing.T, root string, args []string, arm func(), stderr io.Writer) int {
+	t.Helper()
+	_, mode, checkpoint, err := parseGateArgs(args, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	armed := func(ctx context.Context) (context.Context, func()) { arm(); return ctx, func() {} }
+	return executeAfterAcquire(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, io.Discard, stderr, armed, mode).ActionExit
+}
+
+// RunCompletionTree grades tree as the gate verb grades a complete checkpoint of spec at tip,
+// so a fixture can grade a tree that is not the transform of that source. It answers the exit.
+func RunCompletionTree(root, spec, tip, tree string, stderr io.Writer) int {
+	ctx := asVerb(WithCompletion(context.Background(), spec, tip))
+	return executeTreeWithOwner(ctx, root, tree, io.Discard, stderr, nil, reuseFreshGreen, nil).ActionExit
 }
 
 func runCheckpoint(t *testing.T, f *recordtest.Fixture) (int, string) {
@@ -184,13 +217,12 @@ func TestReviewCheckpointMissingRecord(t *testing.T) {
 	}
 }
 
-// TestReviewCheckpointRefusalRoute grades the one refusal a single read answers.
-// The checkpoint cannot show what the completion evidence lacks, and `bench
-// preflight review <slug>` reports the plan row and the record state. So that
-// refusal names the read. Every other refusal, and an accepted checkpoint, carry
-// no route, because a route that names no state-derived action is a false path.
+// TestReviewCheckpointRefusalRoute: the checkpoint cannot show what the completion
+// evidence lacks, and `bench preflight review <slug>` reports the plan row and the record
+// state. So that refusal names the read, and only the read: the fixed write-access help
+// row names no cause of this refusal. An accepted checkpoint carries no route.
 func TestReviewCheckpointRefusalRoute(t *testing.T) {
-	const route = "next=bench preflight review example"
+	const route = "next=bench preflight review 'example'"
 	for _, tc := range []struct {
 		name, reason string
 		change       func(*recordtest.Fixture)
@@ -212,6 +244,9 @@ func TestReviewCheckpointRefusalRoute(t *testing.T) {
 			if code == 0 || !strings.Contains(out, tc.reason) || !strings.Contains(out, route+"\n") {
 				t.Fatalf("refusal lost its reason or its route: %d %s", code, out)
 			}
+			if strings.Contains(out, "help[1]{cmd,why}") {
+				t.Fatalf("refusal printed a help row beside its route: %s", out)
+			}
 		})
 	}
 
@@ -222,6 +257,37 @@ func TestReviewCheckpointRefusalRoute(t *testing.T) {
 			t.Fatalf("accepted checkpoint carried a route: %d %s", code, out)
 		}
 	})
+}
+
+// TestCheckpointRouteRendersHostileFacts drives the funnel over a slug, a spec path, and a
+// chunk id that hold a space or a byte that is not line-safe. A value with a space prints
+// shell-quoted, and a value that is not line-safe prints its slot, so no raw value reaches
+// the route line.
+func TestCheckpointRouteRendersHostileFacts(t *testing.T) {
+	const spaced, unsafe = "specs/a b/spec.md", "specs/a\u0085b/spec.md"
+	evidence, capture := evidenceError{errors.New("evidence")}, errors.New("capture")
+	quote := sanitize.ShellQuote
+	for _, tc := range []struct {
+		name       string
+		cause      error
+		checkpoint Checkpoint
+		want       string
+	}{
+		{"spaced slug", evidence, Checkpoint{Spec: spaced, Chunk: "1"}, "bench preflight review " + quote("a b")},
+		{"unsafe slug", evidence, Checkpoint{Spec: unsafe, Chunk: "1"}, "bench preflight review <" + refusalroute.FactSlug + ">"},
+		{"spaced spec path and chunk", capture, Checkpoint{Spec: spaced, Chunk: "c 1"}, " --checkpoint " + quote(spaced) + " --chunk " + quote("c 1")},
+		{"unsafe spec path and chunk", capture, Checkpoint{Spec: unsafe, Chunk: "c\u00851"}, " --checkpoint <spec-path> --chunk <id>"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := outcomeFixture(t)
+			var stderr bytes.Buffer
+			ctx := asVerb(WithCheckpoint(context.Background(), tc.checkpoint))
+			executeSubjectWithRunBinary(ctx, root, root, io.Discard, &stderr, nil, reuseFreshGreen, failedAcceptEvaluation{err: tc.cause}, nil, "")
+			if next, one := routetest.Next(stderr.String()); !one || !strings.HasSuffix(next, tc.want) || !sanitize.LineSafe(next) {
+				t.Fatalf("stderr = %q, want one line-safe next= route that ends with %q", stderr.String(), tc.want)
+			}
+		})
+	}
 }
 
 func TestReviewCheckpointFindingAndReviewIdentity(t *testing.T) {

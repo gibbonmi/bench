@@ -35,31 +35,32 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 	}
 	path, err := canonicalPath(parsed.Positionals[0])
 	if err != nil {
-		return landRefusal(stdout, "worktree path is not canonical")
+		return landRefusalError(stdout, landingFaceRoute(errors.New("worktree path is not canonical"), resumeRerun(parsed.Flags, parsed.Positionals[0], ""), false))
 	}
 	for _, flag := range []string{"--resume", "--base", "--source-tip"} {
 		parsed.Flags[flag] = expandIdentity(root, parsed.Flags[flag])
 	}
+	// Until the assignment resolves, the continuation each refusal names addresses the
+	// caller's own worktree path.
+	unassignedResume := resumeRerun(parsed.Flags, path, "")
 	destination, branch, marker, err := landingDestinationIdentity(root)
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, landingFaceRoute(err, unassignedResume, false))
 	}
 	published, sourceBase, destinationBase, tree, err := resumePublished(j, root, destination, parsed.Flags["--resume"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"])
 	if err != nil {
-		return landRefusalError(stdout, err)
+		return landRefusalError(stdout, landingFaceRoute(err, unassignedResume, false))
 	}
 	result := landing.ReviewedResult{SourceBase: sourceBase, SourceTip: parsed.Flags["--source-tip"], DestinationBase: destinationBase, Commit: published, Tree: tree}
 	assignment, active, skipped, err := resumeAssignment(j, root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], landingSlug(parsed.Flags["--spec"]))
 	if err != nil {
-		// The assignment has not resolved yet, so the continuation this refusal names
-		// addresses the caller's own worktree path.
-		return landRefusalError(stdout, landingFaceRoute(err, resumeRerun(parsed.Flags, path, ""), skipped))
+		return landRefusalError(stdout, landingFaceRoute(err, unassignedResume, skipped))
 	}
 	assignmentID := assignment.ID
 	if !active {
 		receipt, err := terminalResumeReceipt(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
 		if err != nil {
-			return landRefusalError(stdout, err)
+			return landRefusalError(stdout, landingFaceRoute(err, unassignedResume, false))
 		}
 		assignmentID = receipt.Tracked
 	}
@@ -74,7 +75,7 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 	// The residue policy owns the sentence, and the same guard runs inside the
 	// reconcile step, where no operator reads it. So the face is put on here.
 	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
-		return landRefusalError(stdout, landingFaceRefusal(faceResumeDestinationResidue, err.Error(), rerun, nil))
+		return landRefusalError(stdout, landingFaceRefusal(faceResumeDestinationResidue, refusal{detail: err.Error()}, rerun, ""))
 	}
 	switch landingpolicy.ResumeMarker(resumeMarkerFacts(root, destination, published, marker)) {
 	case landingpolicy.MarkerAdvance:
@@ -82,7 +83,8 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker", records)
 		}
 	case landingpolicy.MarkerRefuse:
-		return landRefusalError(stdout, landingFaceRefusal(faceResumeMarker, "", rerun, nil))
+		// The landing policy owns the marker sentence, so the face carries the policy's own.
+		return landRefusalError(stdout, landingFaceRefusal(faceResumeMarker, refusal{detail: landingpolicy.MarkerRefusalDetail}, rerun, ""))
 	}
 	if err := j.reconcileCommitment(root); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "commitment", records)
@@ -191,9 +193,20 @@ func resumeAssignment(j joins, root, path, request, tip, base, slug string) (a i
 	}
 	// The source proofs are the group's last stage, so their refusal stops no later proof.
 	if _, err := landingSource(j, root, a, base, tip, slug); err != nil {
-		return intent.Assignment{}, false, false, err
+		return intent.Assignment{}, false, false, resumeSourceRefusal(err)
 	}
 	return a, true, false, nil
+}
+
+// resumeSourceRefusal hands a dirty source back to the reviewer. The published landing pins
+// the source tip, and the commit that the source-not-clean route names moves the source away
+// from it, so no agent route finishes the resume. Every other source refusal keeps its face.
+func resumeSourceRefusal(err error) error {
+	raised := raisedRefusal(err)
+	if name, _ := landingFaceOf(raised); name != faceSourceNotClean {
+		return err
+	}
+	return landingFaceRefusal(faceLandHandback, raised, "", "")
 }
 
 func resumePublished(j joins, root, destination, value, base, source, slug string) (published, sourceBase, destinationBase, tree string, err error) {

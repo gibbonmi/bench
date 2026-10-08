@@ -9,6 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // listedRuns checks each run that a plan lists against the published policy and the run
@@ -18,12 +19,12 @@ import (
 // the run does not hold. Plan and approval both ask it.
 func (store Store) listedRuns(ledger intent.Ledger, current *commitment.Policy, continuations []intent.LegacyContinuation) error {
 	if len(continuations) != 0 && current != nil {
-		return errors.New("commitment continuation refused: a policy is published, so only the initial adoption lists runs; remove the continuations and run bench commitment plan --input <file>")
+		return refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: errors.New("commitment continuation refused: a policy is published, so only the initial adoption lists runs")}
 	}
 	for _, continuation := range continuations {
 		index := slices.IndexFunc(ledger.Assignments, func(run intent.Assignment) bool { return run.ID == continuation.Assignment })
 		if index < 0 {
-			return fmt.Errorf("commitment continuation refused: run %q is unknown; run bench commitment inventory", continuation.Assignment)
+			return refusalroute.Raised{Name: refusalroute.CommitmentRunUnknown, Err: fmt.Errorf("commitment continuation refused: run %q is unknown", continuation.Assignment)}
 		}
 		run := ledger.Assignments[index]
 		if run.State != intent.StateActive {

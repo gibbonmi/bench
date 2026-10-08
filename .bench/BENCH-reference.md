@@ -288,10 +288,11 @@ An abbreviated commit identity expands to the exact commit
 before any proof runs. One preflight prints every refusal the caller must
 clear, and each refusal names its paths.
 
-Each landing refusal face constructs through the registry constructor, which
-takes the recovery route as a required argument. Therefore each landing refusal
-prints one exact next command. It also prints its failed paths when its own
-face reads them.
+Each landing refusal face constructs through the shared refusal-route registry,
+which serves every write verb. The registry declares the route of each face, so
+each landing refusal prints one exact next command. It also prints its failed
+paths when its own face reads them. `bench recovery` prints the recovery
+matrix: each registered face with its verb, its authority, and its route.
 
 A conflicted `capture/` path composes by a rule table with three verbs:
 `source`, `destination`, and `union`. `capture/session-handoff.md` takes

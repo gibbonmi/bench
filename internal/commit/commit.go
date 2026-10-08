@@ -16,10 +16,13 @@ import (
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -99,7 +102,7 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 	// by repository. A grammar answer reaches no repository and records nothing.
 	var measures commitMeasures
 	finishSpan := beginCommitSpan(root)
-	exit := commitAttributed(&measures, root, req.msg, req.paths, req.dryRun, stdout, stderr)
+	exit := commitAttributed(&measures, root, req, stdout, stderr)
 	finishSpan(exit, measures)
 	outcome.Published = measures.subject
 	return outcome, exit
@@ -108,15 +111,15 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 // commitAttributed is the verb's own work, with the span's measures written to measures
 // as each becomes known. The exit code it returns is the verb's, so the record and the
 // shell agree about the same commit.
-func commitAttributed(measures *commitMeasures, root, msg string, paths []string, dryRun bool, stdout, stderr io.Writer) int {
+func commitAttributed(measures *commitMeasures, root string, req request, stdout, stderr io.Writer) int {
+	refused := func(err error) int { return refuse(stderr, root, req, landingFace(err), err) }
 	primary, err := git.IsPrimaryCheckout(root)
 	if err != nil {
-		fmt.Fprintln(stderr, toon.Errorf("checkout identity is unknown", "repair Git metadata, then retry from a Bench worktree"))
-		return 1
+		return refused(errors.New("checkout identity is unknown"))
 	}
 	if primary {
 		fmt.Fprintln(stderr, usage.PrimaryCheckoutRefusal())
-		return 1
+		return refuse(stderr, root, req, facePrimaryCheckout, nil)
 	}
 
 	// Capture publication identity before reading attributed content. A detached checkout
@@ -127,57 +130,50 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 	}
 	expectedBytes, expectedErr := git.Raw("-C", root, "rev-parse", "--verify", "HEAD^{commit}")
 	if expectedErr != nil {
-		fmt.Fprintln(stderr, "error: destination has no commit base")
-		return 1
+		return refused(errors.New("destination has no commit base"))
 	}
 
-	named, err := landing.ResolveAttributedPaths(root, strings.TrimSpace(string(expectedBytes)), paths)
+	named, err := landing.ResolveAttributedPaths(root, strings.TrimSpace(string(expectedBytes)), req.paths)
 	if err != nil {
-		fmt.Fprintf(stderr, "error: %v\n", err)
-		return 1
+		return refused(err)
 	}
 	candidate, err := landing.CandidateTree(root, strings.TrimSpace(string(expectedBytes)), named)
-	if err == nil {
-		err = (commitrepo.Store{Root: root}).AuthorizeCandidate(candidate)
-	}
 	if err != nil {
-		fmt.Fprintf(stderr, "error: commitment: %v\n", err)
-		return 1
+		return refused(err)
+	}
+	if err := (commitrepo.Store{Root: root}).AuthorizeCandidate(candidate); err != nil {
+		return refused(fmt.Errorf("commitment: %w", err))
 	}
 	// The composed path count is the attributed set the commit publishes. It is counted
 	// where the list already exists, so no second counter derives the same fact.
-	measures.pathCount = len(named)
-	measures.counted = true
+	measures.pathCount, measures.counted = len(named), true
 	// The lane is resolved before anything is graded. A declared lane replaces the
 	// whole-project gate for this commit; a malformed declaration refuses the run and
 	// names the defect, because a lane nobody can read grades nothing.
 	lane, laneErr := gate.LaneForCommit(root)
 	if laneErr != nil {
-		fmt.Fprintf(stderr, "error: %v\n", laneErr)
-		return 1
+		return refused(laneErr)
 	}
-	if !dryRun {
+	if !req.dryRun {
 		formatted, formatErr := formatNamedGoFiles(root, named)
 		if formatErr != nil {
-			fmt.Fprintf(stderr, "error: format named Go files: %v\n", formatErr)
-			return 1
+			return refused(fmt.Errorf("format named Go files: %w", formatErr))
 		}
 		if len(formatted) > 0 {
-			shown := make([]string, len(formatted))
 			for i, path := range formatted {
-				shown[i] = sanitize.Controls(path)
+				formatted[i] = sanitize.Controls(path)
 			}
-			fmt.Fprintf(stdout, "formatted Go paths: %s\n", strings.Join(shown, " "))
+			fmt.Fprintf(stdout, "formatted Go paths: %s\n", strings.Join(formatted, " "))
 		}
 	}
 	owner := landing.NewForLane(lane, strings.TrimSpace(string(expectedBytes)))
-	if dryRun {
-		if err := owner.DryRun(context.Background(), landing.Request{
-			Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
-			Message: msg, Paths: named, Stdout: stdout, Stderr: stderr,
-		}); err != nil {
-			fmt.Fprintf(stderr, "error: %v\n", err)
-			return 1
+	landingRequest := landing.Request{
+		Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
+		Message: req.msg, Paths: named, Stdout: stdout, Stderr: stderr,
+	}
+	if req.dryRun {
+		if err := owner.DryRun(context.Background(), landingRequest); err != nil {
+			return refused(err)
 		}
 		// A lane pass is not green, and the lane already stated its own outcome, so the
 		// summary borrows neither the word nor a second verdict.
@@ -188,53 +184,91 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 		}
 		return 0
 	}
-	result, err := owner.Land(context.Background(), landing.Request{
-		Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
-		Message: msg, Paths: named, Stdout: stdout, Stderr: stderr,
-	})
+	result, err := owner.Land(context.Background(), landingRequest)
 	// A published commit identifies the subject, whether or not the checkout reconciled
 	// after it. A refusal published nothing and names no subject.
 	measures.subject = result.Commit
 	if err != nil {
 		var remainder *landing.PublishedUnreconciledError
 		if errors.As(err, &remainder) {
-			return publicationRemainder(stdout, remainder)
+			return publicationRemainder(stdout, root, remainder)
 		}
-		fmt.Fprintf(stderr, "error: %v\n", err)
-		return 1
+		return refused(err)
 	}
 	fmt.Fprintf(stdout, "committed %d path(s)\n", len(named))
 	return 0
 }
 
-// publicationRemainder reports the publication boundary the landing owner reached: the
-// commit exists and the checkout does not match it. The record uses the landing verb's
-// name{key=value,...} grammar, and its exit code separates this outcome from a refusal
-// that published nothing.
-func publicationRemainder(stdout io.Writer, remainder *landing.PublishedUnreconciledError) int {
-	fmt.Fprintf(stdout, "committed{published_commit=%s,path=%s,next=%s}\n",
-		remainder.Commit, sanitize.Controls(remainder.Path), restoreNext(remainder.Commit, remainder.Paths))
-	return 3
+// The commit's refusal faces. The shared registry declares each face.
+const (
+	facePublishedUnreconciled = "commit-published-unreconciled"
+	facePrimaryCheckout       = "commit-primary-checkout"
+	faceRed                   = "commit-red"
+	faceInfrastructure        = "commit-infrastructure"
+	faceNamedPath             = "commit-named-path"
+	faceTipMoved              = "commit-tip-moved"
+	faceHandback              = "commit-handback"
+)
+
+// landingFace picks the face of a refusal by its type: a named path that the caller corrects,
+// a moved tip, the attributed kind of an authorization refusal, or else the handback.
+func landingFace(err error) string {
+	var refused landing.AuthorizationRefusal
+	switch {
+	case errors.As(err, new(landing.NamedPathError)):
+		return faceNamedPath
+	case errors.As(err, new(landing.TipMovedError)):
+		return faceTipMoved
+	case !errors.As(err, &refused):
+	case refused.Result.Kind == authorization.Infrastructure:
+		return faceInfrastructure
+	case landing.RedKind(refused.Result.Kind):
+		return faceRed
+	}
+	return faceHandback
 }
 
-// restoreNext names the one restore that reconciles every named path against the
-// published commit. The restore is idempotent, so it covers the paths that already
-// reconciled as well as the remainder. A path that is not line-safe takes the landing
-// verb's pointer form: quoting would still emit the raw byte into a line-structured
-// record, and escaping would name a path that does not exist.
-//
-// The value is line-safe by construction, so it reaches the record unescaped; the
-// sanitizer's backslash escaping would break the quoting a reader pastes.
-func restoreNext(commit string, paths []string) string {
-	command := "git restore --source=" + commit + " --staged --worktree --"
-	quoted := make([]string, 0, len(paths))
-	for _, path := range paths {
-		if !sanitize.LineSafe(path) {
-			return command + " <named-paths>"
-		}
-		quoted = append(quoted, sanitize.ShellQuote(path))
+// refuse prints a refusal that published nothing, cause and then on its own next= line the
+// route of the face that cause raised, or else of face, and answers exit 1. The route re-runs
+// the caller's commit in the worktree of the active assignment that owns root; with no owner,
+// the zero owner's empty label prints the slot.
+func refuse(stderr io.Writer, root string, req request, face string, cause error) int {
+	owner, _ := intent.AssignmentForWorktree(root)
+	args := []string{}
+	if req.dryRun {
+		args = append(args, "--dry-run")
 	}
-	return command + " " + strings.Join(quoted, " ")
+	if req.preflightBuild != "" {
+		args = append(args, PreflightBuildFlag, refusalroute.Arg("slug", req.preflightBuild))
+	}
+	args = append(args, "-m", refusalroute.Arg("msg", req.msg), "--")
+	for _, path := range req.paths {
+		args = append(args, refusalroute.Arg("path", path))
+	}
+	values := map[string]string{refusalroute.FactLabel: owner.Label, refusalroute.FactArguments: strings.Join(args, " ")}
+	values[refusalroute.FactRerun] = refusalroute.CommitRerun(values)
+	refusal := refusalroute.Printed(face, cause, values)
+	if refusal.Sentence != "" {
+		fmt.Fprintln(stderr, "error: "+refusal.Sentence)
+	}
+	fmt.Fprintln(stderr, refusalroute.NextField+"="+refusal.Route)
+	return 1
+}
+
+// publicationRemainder reports the publication boundary the landing owner reached: the
+// commit exists and the checkout at root does not match it. The record uses the landing
+// verb's name{key=value,...} grammar, and its exit code separates this outcome from a
+// refusal that published nothing.
+//
+// The route is line-safe by construction, so it reaches the record unescaped; the
+// sanitizer's backslash escaping would break the quoting a reader pastes.
+func publicationRemainder(stdout io.Writer, root string, remainder *landing.PublishedUnreconciledError) int {
+	next := refusalroute.New(facePublishedUnreconciled, refusalroute.Facts{Values: map[string]string{
+		refusalroute.FactPublishedCommit: remainder.Commit, refusalroute.FactCheckout: root,
+	}}).Route
+	fmt.Fprintf(stdout, "committed{published_commit=%s,path=%s,%s=%s}\n",
+		remainder.Commit, sanitize.Controls(remainder.Path), refusalroute.NextField, next)
+	return 3
 }
 
 // LaneClause names what a commit grades: the declared lane, or the gate when the
@@ -252,7 +286,7 @@ var helpText = grammar.Help + "\n" +
 	"--dry-run: " + LaneClause + " on the exact composed snapshot and report the outcome; commit nothing\n" +
 	"exit 1: refused before publication; nothing was committed\n" +
 	"exit 2: grammar error\n" +
-	"exit 3: published; the checkout did not reconcile — paste next= to repair"
+	"exit 3: published; the checkout did not reconcile — paste " + refusalroute.NextField + "= to repair"
 
 var grammar = usage.Grammar{
 	Cmd:  "bench commit",
@@ -348,7 +382,7 @@ func formatNamedGoFiles(root string, named []string) ([]string, error) {
 		}
 		formatted, formatErr := format.Source(body)
 		if formatErr != nil {
-			return nil, fmt.Errorf("%q: %w", path, formatErr)
+			return nil, landing.NamedPathError{Err: fmt.Errorf("%q: %w", path, formatErr)}
 		}
 		if !bytes.Equal(body, formatted) {
 			edits = append(edits, edit{path: path, body: formatted, mode: info.Mode().Perm()})

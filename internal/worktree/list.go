@@ -41,6 +41,10 @@ type listRow struct {
 	// carries the address the table cell does not.
 	orphanPath     string
 	assignmentPath string
+	// cleanLanded reports that the clean of the landed set retires an assignment whose
+	// tree is missing. The landed cell proves only the branch ancestry, so the row carries
+	// the proof that the missing-tree refusal reads.
+	cleanLanded bool
 }
 
 // ListCommand implements the read-only AXI worktree population query.
@@ -74,7 +78,11 @@ func ListCommand(root, _ string, args []string) (string, int) {
 	assignedPaths := make(map[string]bool, len(assignments))
 	for _, assignment := range assignments {
 		assignedPaths[assignment.Worktree] = true
-		rows = append(rows, listRow{values: listAssignmentRow(j, root, assignment, def, defaultResolved), assignmentPath: assignment.Worktree})
+		row := listRow{values: listAssignmentRow(j, root, assignment, def, defaultResolved), assignmentPath: assignment.Worktree}
+		if row.values[listTreeCell] == "missing" {
+			row.cleanLanded = missingTreeLanded(root, assignment)
+		}
+		rows = append(rows, row)
 	}
 	mainRoot := canonicalRoot(root)
 	for _, registration := range registrations {
@@ -165,7 +173,7 @@ func actionsForRows(rows []listRow) []axi.Action {
 			// path and exec actions both enter the tree, so neither can succeed on it.
 			if len(row.values) > listTreeCell && row.values[listTreeCell] == "missing" {
 				request, _ := row.values[listRequestCell].(string)
-				actions = append(actions, recoverMissingTree(rowLanded(row), request, row.assignmentPath).action())
+				actions = append(actions, recoverMissingTree(row.cleanLanded, request, row.assignmentPath).action())
 				continue
 			}
 			actions = append(actions,
@@ -187,13 +195,6 @@ const (
 	listTreeCell    = 5
 	listLandedCell  = 7
 )
-
-// rowLanded reports the landedness the row itself discloses. A cell the query could not
-// prove reads `unknown`, and an unproven record keeps the release route, because only a
-// proven landing licenses the batch clean.
-func rowLanded(row listRow) bool {
-	return len(row.values) > listLandedCell && row.values[listLandedCell] == true
-}
 
 // rowUnlanded reports a branch the row proves unlanded. An `unknown` cell proves neither
 // outcome, so that row keeps the release route.

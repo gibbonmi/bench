@@ -93,7 +93,7 @@ func TestMergeRefusesADirtyOrDetachedSiblingBySha(t *testing.T) {
 
 	r := runVerb(t, verbMerge, f.merge("--from", siblingTip, target.Assignment.ID))
 	requireMergeRefusal(t, r, "sibling checkout is not clean",
-		"next=bench worktree exec "+sibling.Assignment.ID+" -- bench commit", "sibling.txt")
+		"next=bench commit --in '"+sibling.Assignment.Label+"' ", "sibling.txt")
 	requireMergeUnchanged(t, f, target, previous)
 
 	gitRun(t, sibling.Path, "checkout", "-q", "--", "sibling.txt")

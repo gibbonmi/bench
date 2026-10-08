@@ -1,36 +1,41 @@
 package worktree
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
-func applyReset(j joins, root, home string, plan resetPlan, fingerprint string, stdout io.Writer) (exit int) {
+// applyReset applies a plan whose fingerprint the caller read. refuse prints each refusal
+// with the route of its face.
+func applyReset(j joins, root, home string, plan resetPlan, fingerprint string, stdout io.Writer, refuse func(error) int) (exit int) {
 	finish := beginVerbSpan(home, root, otelResetSeam)
 	defer func() { finish(exit, plan.assignment.ID) }()
 	unlock, err := lockCleanupRegistration(j, root, plan.assignment.Worktree)
 	if err != nil {
-		return landRefusalError(stdout, err)
+		return refuse(err)
 	}
 	defer unlock()
 	plan, err = planReset(root, plan.assignment.ID, plan.checkpoint, plan.envelope)
 	if err != nil {
-		return landRefusalError(stdout, err)
+		return refuse(err)
 	}
 	if plan.action == "none" || fingerprint != plan.fingerprint {
-		return landRefusalError(stdout, refusalError{refusal{detail: "reset plan is stale", wanted: plan.fingerprint, next: resetPlanCommand(plan)}})
+		stale := refusal{wanted: plan.fingerprint, values: map[string]string{refusalroute.FactResetPlan: resetPlanCommand(plan)}}
+		return refuse(landingFaceRefusal(faceResetPlanStale, stale, "", ""))
 	}
 	envelope := intent.Recovery{Ref: "none"}
 	if plan.preserve == "envelope" {
 		envelope, err = j.resetEnvelope(root, plan)
 		if err != nil {
-			return landRefusalError(stdout, err)
+			return refuse(err)
 		}
 		if _, ok := resetEnvelopeValid(root, envelope); !ok {
-			return landRefusal(stdout, "reset envelope failed verification")
+			return refuse(errors.New("reset envelope failed verification"))
 		}
 	}
 	movePlan := plan
@@ -89,16 +94,16 @@ func resetResult(stdout io.Writer, plan resetPlan, preserved string, code int) i
 		restore = resetCommand("--restore", preserved, plan.assignment.ID)
 	}
 	if code == 3 {
-		next = ",next=" + resetPlanCommand(plan)
+		next = "," + refusalroute.NextField + "=" + resetPlanCommand(plan)
 		if restore != "none" {
-			next = ",next=" + restore
+			next = "," + refusalroute.NextField + "=" + restore
 		}
 	}
 	ref := plan.assignment.Branch
 	if plan.mode == "restore" && plan.manifest.Base != plan.manifest.Tip {
 		ref = "detached"
 		if code == 0 {
-			next = ",next=" + resetCommand("--to", plan.manifest.Tip, plan.assignment.ID)
+			next = "," + refusalroute.NextField + "=" + resetCommand("--to", plan.manifest.Tip, plan.assignment.ID)
 		}
 	}
 	fmt.Fprintf(stdout, "reset{worktree=%s,mode=%s,checkpoint=%s,previous=%s,ref=%s,preserved=%s,restore=%s%s}\n", plan.assignment.ID, plan.mode, plan.checkpoint, plan.head, ref, preserved, restore, next)

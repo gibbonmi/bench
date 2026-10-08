@@ -332,10 +332,10 @@ func lockCleanupPersistence(j joins, repo, target string) (func(), error) {
 	return lockCleanupFile(j, file, target)
 }
 
-// releaseLeftover completes a release-leftover plan: the registration and the ledger entry
-// go, the bytes at the leftover path stay. It never reaches the removal steps below.
-// `git worktree remove` deletes the tree it is pointed at, which is the one thing this
-// plan exists to avoid.
+// releaseLeftover completes a release-leftover plan: the registration, the ledger entry, and
+// a landed branch the plan names go, and the bytes at the leftover path stay. It never
+// reaches the removal steps below. `git worktree remove` deletes the tree it is pointed at,
+// which is the one thing this plan exists to avoid.
 func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
 	assignment := *plan.assignment
 	if len(assignment.Recovery) > 0 {
@@ -364,6 +364,9 @@ func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) erro
 	if err := hit(fault, StepRemoval); err != nil {
 		return plan, err
 	}
+	if err := deletePlannedBranch(root, plan, checkpoint, fault); err != nil {
+		return plan, err
+	}
 	assignment.State = intent.StateComplete
 	if len(assignment.Recovery) > 0 {
 		assignment.State = intent.StateRecovered
@@ -382,8 +385,8 @@ func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) erro
 // one registered worktree, which is what stops git registering it. This is the scoped form
 // of `git worktree prune`: prune decides for every prunable registration at once. An
 // abandon answers for one target, so a stranger's stale entry is never swept along with
-// it. Only a target with no git metadata entry reaches here, so the administration
-// directory it names is already dangling.
+// it. Only a target with no git metadata entry reaches here, so its administration
+// directory is dangling, or Git already pruned it, the pool included, and nothing is left.
 func releaseRegistration(root, target string) error {
 	common, err := git.CommonDir(root)
 	if err != nil {
@@ -391,7 +394,7 @@ func releaseRegistration(root, target string) error {
 	}
 	pool := filepath.Join(filepath.Clean(common), "worktrees")
 	entries, err := os.ReadDir(pool)
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("read private worktree administration pool: %w", err)
 	}
 	admin := ""
@@ -418,7 +421,7 @@ func releaseRegistration(root, target string) error {
 		admin = candidate
 	}
 	if admin == "" {
-		return errors.New("target has no private administration directory to release")
+		return nil
 	}
 	return os.RemoveAll(admin)
 }
@@ -589,16 +592,8 @@ func retireCheckout(j joins, a ambient, root string, plan CleanupPlan, checkpoin
 	if err := hit(fault, StepRemoval); err != nil {
 		return plan, err
 	}
-	if plan.deleteBranch {
-		if err := git.DeleteBranchExact(root, plan.branchRef, plan.branchOID); err != nil {
-			return plan, fmt.Errorf("delete exact landed branch: %w", err)
-		}
-		if err := checkpoint(intent.ReceiptPhaseBranch); err != nil {
-			return plan, err
-		}
-		if err := hit(fault, StepBranch); err != nil {
-			return plan, err
-		}
+	if err := deletePlannedBranch(root, plan, checkpoint, fault); err != nil {
+		return plan, err
 	}
 	if recovered != nil {
 		recovered.State = intent.StateRecovered

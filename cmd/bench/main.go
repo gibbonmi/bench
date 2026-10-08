@@ -36,6 +36,7 @@ import (
 	"github.com/gibbonmi/bench/internal/preprelease"
 	"github.com/gibbonmi/bench/internal/probe"
 	"github.com/gibbonmi/bench/internal/publication"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/releasepreflight"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmapflow"
@@ -71,6 +72,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "learnings", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 16, Description: "open journal entries as a TOON table (date, title)"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(learnings.Command)},
 	{Name: "maps", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 17, Description: "unresolved decision-map tickets as TOON (map, ticket, type, state)"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(maps.Command)},
 	{Name: "guards", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 18, Description: "every guard's deny surface as TOON (guard, boundary, denies)"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(guards.Command)},
+	{Name: "recovery", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 18, Description: "the recovery matrix as TOON: each write-verb refusal face with its authority and route"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(refusalroute.RecoveryCommand)},
 	{Name: "diff", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 19, Description: "review base + changed files as TOON (--full appends log + diff body; --base freezes source)"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(diff.Command)},
 	{Name: "harnesses", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 19, Suffix: " [<harness> [--record <path> --format <source-id>]]", Description: "the harness record as TOON; one name prints that harness's cells; both flags observe one named session record"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(harnesses.Command)},
 	{Name: "preflight", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(preflightHelpRows(21)...), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(preflight.CommandWithVersion(version))},
@@ -160,15 +162,6 @@ var commandRegistry = []commandDefinition{
 
 func versionCommand(c Command, _ []string) int {
 	fmt.Fprintln(c.Stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
-	return 0
-}
-
-func helpCommand(c Command, args []string) int {
-	if len(args) != 0 {
-		fmt.Fprintln(c.Stdout, toon.Usage("bench help", args[0]))
-		return 2
-	}
-	fmt.Fprint(c.Stdout, renderCommandHelp())
 	return 0
 }
 

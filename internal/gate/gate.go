@@ -22,7 +22,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/env"
@@ -197,7 +196,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	ctx, finishSpan := beginGateSpan(WithCheckpoint(context.Background(), checkpoint), root, mode.String())
+	ctx, finishSpan := beginGateSpan(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, mode.String())
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, mode.String())
 	var result Result
 	if checkpoint.Complete {
@@ -211,7 +210,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 }
 
 // CommandUsage is the public grammar shared with the CLI inventory.
-const CommandUsage = "usage: bench gate [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]"
+const CommandUsage = "usage: bench gate [" + flagFresh + "] [" + flagCheckpoint + " <spec-path> (" + flagChunk + " <id> | " + flagComplete + ")]"
 
 // Command validates the public grammar before entering the gate owner.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
@@ -333,13 +332,6 @@ func operational(root string, gateExit int, stderr io.Writer, msg string) Result
 	inspection.ReusableGreen = false
 	inspection.Reason = msg
 	return Result{GateExit: gateExit, ActionExit: 1, Inspection: inspection}
-}
-
-func subjectUnavailableHelp() (string, error) {
-	return axi.RenderHelp([]axi.Action{axi.ExecutableInvocation(
-		"retry after restoring repository write access",
-		axi.KnownArgument("gate"), axi.KnownArgument("--fresh"),
-	)})
 }
 
 func gateLockPath(gitdir string) string { return filepath.Join(gitdir, "bench-gate.lock") }

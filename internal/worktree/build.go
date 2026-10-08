@@ -100,7 +100,7 @@ func buildExitCode(err error) int {
 }
 
 // buildExecNext names the command that runs what the build produced. A label that is not
-// line-safe gives way to the assignment id, by the conflictRepairPrefix precedent, because
+// line-safe gives way to the assignment id, by the conflictFacts precedent, because
 // no quoting makes a control byte pasteable.
 func buildExecNext(assignment intent.Assignment) string {
 	address := assignment.ID

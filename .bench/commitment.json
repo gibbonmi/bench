@@ -344,6 +344,14 @@
       "identity": "sha256:a68e81be37634973660401ef412523f05479dcfe3b4eb16be261ce172aeba89c",
       "source": "923f9941e928f0145d2802707c5687848ccb7f08",
       "evidence": "f3845250226dc8fe121017c67e788f62e50321ac"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT393",
+      "binding": "refusal-route-registry",
+      "identity": "sha256:ce5bb9385d4777136da79ab609e1be197fcc035569e23f3b73dd0e389c62d61d",
+      "source": "0b3dabc01e5ba5fc92cef910ea5cad5c9ca81194",
+      "evidence": "c9c0557ae4210c9a350a61aa06f16dc0ddb45ff5"
     }
   ]
 }

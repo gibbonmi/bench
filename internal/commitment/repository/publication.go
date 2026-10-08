@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // Publication is the source assignment identity a landing froze before its gate, with
@@ -49,7 +50,7 @@ func (store Store) admitPublication(ledger intent.Ledger, source Publication, tr
 		}
 		return store.authorizeCandidate(ledger, owner, tree, delivery, true)
 	}
-	return fmt.Errorf("publication assignment %q is not active with its presented request and worktree; run bench worktree create", source.Assignment)
+	return refusalroute.Raised{Name: refusalroute.CommitmentNeedsAssignment, Err: fmt.Errorf("publication assignment %q is not active with its presented request and worktree", source.Assignment)}
 }
 
 // closureAuthority refuses the verified closure of the deliverable at path unless owner
@@ -68,5 +69,5 @@ func (store Store) closureAuthority(ledger intent.Ledger, owner intent.Assignmen
 
 // scopeRefusal is the refusal of a path that a listed legacy scope does not authorize.
 func scopeRefusal(path string) error {
-	return fmt.Errorf("legacy continuation scope excludes %q; run bench commitment plan --input <file>", path)
+	return refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: fmt.Errorf("legacy continuation scope excludes %q", path)}
 }

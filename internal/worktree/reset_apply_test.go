@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/otelrecord"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 func TestResetApplyRefusesAConsumedFingerprint(t *testing.T) {
@@ -240,7 +241,10 @@ func TestResetRefusesAnIgnoredCollision(t *testing.T) {
 	}
 	head := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	result := runVerb(t, verbReset, f.call("--to", checkpoint, f.creation.Assignment.ID))
-	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "refused{detail=ignored content would be overwritten}"), "collision plan = %d %s %s", result.exit, result.stdout, result.stderr)
+	// The reset names no repair of its own for the collision, so it hands back, and the
+	// route ends with the caller's own plan.
+	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "refused{detail=ignored content would be overwritten,next=reviewer: ") &&
+		strings.Contains(result.stdout, "; then bench worktree reset --to "+sanitize.ShellQuote(checkpoint)+" "+sanitize.ShellQuote(f.creation.Assignment.ID)+"}\n"), "collision plan = %d %s %s", result.exit, result.stdout, result.stderr)
 	requireTest(t, strings.Contains(result.stdout, refusalPathsTable+"[3]{path}:\n  build/inner\n  out\n  output\n"), "collision paths = %s", result.stdout)
 	for path, body := range ignored {
 		got, err := os.ReadFile(filepath.Join(f.creation.Path, path))

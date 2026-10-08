@@ -19,8 +19,6 @@ The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slic
 and review cost that recent builds paid. On 2026-10-07 the reviewer put FT392 and FT393
 ahead of FT373, because those rows repair the landing recovery paths.
 
-**FT393 (HIGH) — every write-verb refusal names a typed recovery route from one refusal-route registry.**
-
 **FT373 (HIGH) — a gate check refuses production code that re-implements a standard-library function.**
 
 **FT293 (HIGH) — preflight closes each ticket's complete ownership fence.**
@@ -313,6 +311,5 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT393
-2. FT373
-3. FT349
+1. FT373
+2. FT349

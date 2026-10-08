@@ -1,6 +1,7 @@
 package commitmenttest
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"slices"
@@ -26,6 +27,65 @@ func SeedAdmission(t testing.TB, root, deliverable string) {
 	source := commitment.SourceBinding{ID: "spec", Path: deliverable, Identity: commitment.Identity(data)}
 	outcome := commitment.Outcome{ID: DeliveryOutcome, Criteria: []commitment.Criterion{{ID: "accepted", Text: "The fixture delivery is accepted."}}, Sources: []commitment.SourceBinding{}, Deliverables: []commitment.DeliveryBinding{{Source: source}}}
 	WritePolicy(t, root, commitment.Policy{Version: 1, ActiveMilestone: "fixture", Milestones: []commitment.Milestone{{ID: "fixture", Outcomes: []commitment.Outcome{outcome}}}})
+}
+
+// Reworded is plan input that changes only the text of the first criterion in the policy
+// that root's default branch holds, to text.
+func Reworded(t testing.TB, root, text string) []byte {
+	t.Helper()
+	policy, _, err := (commitrepo.Store{Root: root}).Policy()
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy.Milestones[0].Outcomes[0].Criteria[0].Text = text
+	data, err := commitment.Bytes(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}
+
+// LegacyRun is the request of the one run that Legacy creates, and LegacyScope is the
+// path that the run's branch holds, its existing scope.
+const (
+	LegacyRun   = "legacy"
+	LegacyScope = "owned.txt"
+)
+
+// Legacy creates a repository with no policy, whose board lists one row, and one run
+// whose branch holds LegacyScope. It returns the root and the run's checkout.
+func Legacy(t testing.TB) (root, run string) {
+	t.Helper()
+	root = gittest.RepoOnBranch(t, "main")
+	Write(t, root, "ROADMAP.md", oldBoard)
+	Commit(t, root, "board")
+	run = Assignment(t, root, LegacyRun)
+	Write(t, run, LegacyScope, "owned\n")
+	Commit(t, run, "legacy scope")
+	return root, run
+}
+
+// Adoption is the plan input of an initial adoption: one policy and the runs it lists.
+type Adoption struct {
+	commitment.Policy
+	Continuations []intent.LegacyContinuation `json:"continuations,omitempty"`
+}
+
+// LegacyAdoption is the adoption whose active milestone M1 holds outcome A and that lists
+// the Legacy run under the id run, with LegacyScope as its scope.
+func LegacyAdoption(run string) Adoption {
+	policy := commitment.Policy{Version: 1, ActiveMilestone: "M1", Milestones: []commitment.Milestone{{ID: "M1", Outcomes: []commitment.Outcome{{ID: "A", Criteria: []commitment.Criterion{{ID: "A.done", Text: "The outcome is delivered."}}}}}}}
+	return Adoption{policy, []intent.LegacyContinuation{{Assignment: run, Request: intent.RequestDigest(LegacyRun), Scope: []string{LegacyScope}}}}
+}
+
+// Encode is the adoption as plan input.
+func (adoption Adoption) Encode(t testing.TB) []byte {
+	t.Helper()
+	data, err := json.Marshal(adoption)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 // Register records an active assignment for a command fixture that owns its checkout directly.

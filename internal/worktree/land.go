@@ -20,6 +20,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 	"go.opentelemetry.io/otel/attribute"
@@ -132,9 +133,11 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		fmt.Fprintln(stderr, line)
 		return code
 	}
-	path, err := canonicalPath(resolveVerbOperand(root, parsed.Positionals[0]))
+	operand := resolveVerbOperand(root, parsed.Positionals[0])
+	path, err := canonicalPath(operand)
 	if err != nil {
-		return landRefusal(stdout, "worktree path is not canonical")
+		rerun := landingRerun(parsed.Flags["--request"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"], operand, "")
+		return landRefusalError(stdout, landingFaceRoute(errors.New("worktree path is not canonical"), rerun, false))
 	}
 	base := expandIdentity(root, parsed.Flags["--base"])
 	tip := expandIdentity(root, parsed.Flags["--source-tip"])
@@ -159,21 +162,9 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	assignment, err := landingAssignment(j, root, path, parsed.Flags["--request"], base, tip)
 	if err != nil {
 		refusals = append(refusals, landingFaceRoute(err, unassignedRerun, true))
-	} else if source, err = landingSource(j, root, assignment, base, tip, parsed.Flags["--spec"]); err != nil {
-		refusals = append(refusals, landingFaceRoute(err, landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID), false))
-	} else if !git.OK("-C", root, "merge-base", "--is-ancestor", assignment.Start, source.base) {
-		// The review base binds to the assignment's recorded start or to a descendant
-		// of it. The destination advances while an assignment is open, so a landing
-		// rebases forward and names the moved base; a base behind the recorded start
-		// instead grades a range the assignment never authorized. `--is-ancestor`
-		// accepts the recorded start itself, which is the unmoved case.
-		refusals = append(refusals, identityRefusal(source.base, assignment.Start, reviewedRangeDetail))
-	} else if destination != "" && !git.OK("-C", root, "merge-base", "--is-ancestor", source.base, destination) {
-		// The review base binds before composition: a base outside the destination's
-		// history grades a range the destination never reviewed against.
-		refusals = append(refusals, identityRefusal(source.base, destination, landingBaseNotAncestorDetail))
-	} else if err := landingDestinationCollisions(root, source.tip); err != nil {
-		refusals = append(refusals, landingFaceRoute(err, landingRerun(parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID), false))
+	} else if source, err = landingSourceProofs(j, root, assignment, base, tip, parsed.Flags["--spec"], destination); err != nil {
+		// The source proofs read the resolved assignment, so their route addresses it.
+		refusals = append(refusals, landingSourceRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID))
 	}
 	if len(refusals) > 0 {
 		for _, err := range refusals {
@@ -216,7 +207,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		if errors.As(err, &conflict) {
 			return landRefusalError(stdout, landingConflictRefusal(conflict, destination, assignment.ID, parsed.Flags["--spec"], path, assignment.Worktree))
 		}
-		return landRefusal(stdout, err.Error())
+		return landRefusalError(stdout, landingCompositionRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment))
 	}
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
@@ -241,6 +232,57 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
 	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, brokerChanged, records, stdout, stderr)
+}
+
+// landingCompositionRoute attaches a route to an error the composition and its
+// authorization returned. The kind the gate attributed picks the face of an authorization
+// refusal: a red or an infrastructure outcome. A policy that refused the composed tree
+// raised its own face. Every other error has no face of its own, so it hands back to the
+// reviewer. A face whose repair commits in the source re-runs at the repaired tip, and the
+// source assignment's label addresses that commit.
+func landingCompositionRoute(err error, request, base, tip, specArg, path string, a intent.Assignment) error {
+	var refused landing.AuthorizationRefusal
+	if errors.As(err, &refused) {
+		switch {
+		case refused.Result.Kind == authorization.Infrastructure:
+			err = refusalError{refusal{detail: err.Error(), face: faceLandInfrastructure}}
+		case landing.RedKind(refused.Result.Kind):
+			err = refusalError{refusal{detail: err.Error(), face: faceLandRed}}
+		}
+	}
+	tipFlag := landingSourceTipFlag(tip)
+	if repairsSource(landingFaceName(err)) {
+		tipFlag = repairedSourceTipFlag
+	}
+	values := map[string]string{refusalroute.FactRerun: landingRerunAt(request, base, tipFlag, specArg, path, a.ID), refusalroute.FactLabel: a.Label}
+	return landingFaceRouteWith(err, values, false)
+}
+
+// landingSourceProofs runs the first run's source proofs over a resolved assignment: the
+// source itself, the review base's binding, and the destination's collisions with the
+// source tree. The first fault stops the rest.
+func landingSourceProofs(j joins, root string, assignment intent.Assignment, base, tip, specArg, destination string) (landingSourceFact, error) {
+	source, err := landingSource(j, root, assignment, base, tip, specArg)
+	if err != nil {
+		return landingSourceFact{}, err
+	}
+	// The review base binds to the assignment's recorded start or to a descendant of it.
+	// The destination advances while an assignment is open, so a landing rebases forward
+	// and names the moved base; a base behind the recorded start instead grades a range the
+	// assignment never authorized. `--is-ancestor` accepts the recorded start itself, which
+	// is the unmoved case.
+	if !git.OK("-C", root, "merge-base", "--is-ancestor", assignment.Start, source.base) {
+		return landingSourceFact{}, identityRefusal(source.base, assignment.Start, reviewedRangeDetail)
+	}
+	// The review base binds before composition: a base outside the destination's history
+	// grades a range the destination never reviewed against.
+	if destination != "" && !git.OK("-C", root, "merge-base", "--is-ancestor", source.base, destination) {
+		return landingSourceFact{}, identityRefusal(source.base, destination, landingBaseNotAncestorDetail)
+	}
+	if err := landingDestinationCollisions(root, source.tip); err != nil {
+		return landingSourceFact{}, err
+	}
+	return source, nil
 }
 
 // commitmentAdmission is the installed broker's publication decision for one frozen

@@ -347,6 +347,15 @@ func commandByName(name string) (commandDefinition, bool) {
 	return commandDefinition{}, false
 }
 
+func helpCommand(c Command, args []string) int {
+	if len(args) != 0 {
+		fmt.Fprintln(c.Stdout, toon.Usage("bench help", args[0]))
+		return 2
+	}
+	fmt.Fprint(c.Stdout, renderCommandHelp())
+	return 0
+}
+
 const helpInventoryTitle = "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
 
 func renderCommandHelp() string {

@@ -77,49 +77,61 @@ func planLandedSet(j joins, root string, options CleanupOptions, scope string) (
 // Automatic cleanup also needs a commit after the assignment start. An empty
 // sibling created during the landing has no contribution for that landing to retire.
 func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions, scope string) (landedCleanupRow, bool) {
-	if assignment.State != intent.StateActive || assignment.Branch == "" {
-		return landedCleanupRow{}, false
-	}
-	branch := strings.TrimPrefix(assignment.Branch, "refs/heads/")
-	landed, byContent, proofErr := git.LandedInDefault(root, branch, defaultRef)
-	if proofErr != nil || !landed {
+	headOID, landed := landedSelected(root, assignment, defaultRef, lease)
+	if !landed {
 		return landedCleanupRow{}, false
 	}
 	if scope != "" {
-		before, _, scopeErr := git.LandedInDefault(root, branch, scope)
-		if scopeErr != nil || before {
+		before, _, scopeErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), scope)
+		startOID, startErr := git.ResolveCommit(root, assignment.Start)
+		if scopeErr != nil || before || startErr != nil || startOID == headOID || !git.OK("-C", root, "merge-base", "--is-ancestor", startOID, headOID) {
 			return landedCleanupRow{}, false
 		}
 	}
 	if lease == "" {
 		lease = "none"
 	}
-	classifierPlan := CleanupPlan{Target: root, landedTyped: lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessProven, Landed: true, ByContent: byContent}}
-	if lease == string(LeaseLive) {
-		classifierPlan.ReasonCode = ReasonLiveLease
-	}
-	if !assignmentLanded(assignment, classifierPlan) {
-		return landedCleanupRow{}, false
-	}
-	headOID, oidErr := git.ResolveCommit(root, assignment.Branch)
-	if oidErr != nil {
-		return landedCleanupRow{}, false
-	}
-	if scope != "" {
-		startOID, startErr := git.ResolveCommit(root, assignment.Start)
-		if startErr != nil || startOID == headOID || !git.OK("-C", root, "merge-base", "--is-ancestor", startOID, headOID) {
-			return landedCleanupRow{}, false
-		}
-	}
 	plan := planLandedAssignment(j, root, assignment, options)
 	plan.Assignment = assignment.ID
 	return landedCleanupRow{assignment: assignment, plan: plan, headOID: headOID, lease: lease}, true
 }
 
+// landedSelected is the selector's unscoped proof: the active record's branch is in the
+// default branch, no live lease holds it, and it answers the branch's commit. The
+// missing-tree refusal reads it too, so its landed route names what `clean --landed` selects.
+func landedSelected(root string, assignment intent.Assignment, defaultRef, lease string) (string, bool) {
+	if assignment.State != intent.StateActive || assignment.Branch == "" {
+		return "", false
+	}
+	landed, byContent, proofErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), defaultRef)
+	if proofErr != nil || !landed {
+		return "", false
+	}
+	classifierPlan := CleanupPlan{Target: root, landedTyped: lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessProven, Landed: true, ByContent: byContent}}
+	if lease == string(LeaseLive) {
+		classifierPlan.ReasonCode = ReasonLiveLease
+	}
+	if !assignmentLanded(assignment, classifierPlan) {
+		return "", false
+	}
+	headOID, oidErr := git.ResolveCommit(root, assignment.Branch)
+	return headOID, oidErr == nil
+}
+
+// planLandedAssignment plans one assignment's retirement. Its precondition is a landed proof:
+// the plan of a gone tree deletes the branch and claims no landedness for a caller to read.
 func planLandedAssignment(j joins, root string, assignment intent.Assignment, options CleanupOptions) CleanupPlan {
 	// Only the checkout shape licenses the explicit planner. It invokes git against the
 	// target, which can block forever when a ledger path has decayed into a FIFO or socket.
 	shape, shapeErr := ClassifyPathShape(assignment.Worktree)
+	if shapeErr == nil && shape == ShapeAbsent {
+		// The branch already sits in the default branch, so the release deletes it at the
+		// commit it holds, as the retirement of a present landed checkout does.
+		plan := missingTreeRelease(assignment)
+		oid, oidErr := git.ResolveCommit(root, assignment.Branch)
+		plan.deleteBranch, plan.branchRef, plan.branchOID = oidErr == nil, assignment.Branch, oid
+		return plan
+	}
 	if shapeErr != nil || shape != ShapeCheckoutDirectory {
 		detail := "assignment path shape is " + string(shape)
 		if shapeErr != nil {
@@ -138,6 +150,22 @@ func planLandedAssignment(j joins, root string, assignment intent.Assignment, op
 		return plan
 	}
 	return retainForLandedPreservation(plan)
+}
+
+// missingTreeRelease is the plan of an assignment whose tree is gone. No bytes at the path
+// answer for a checkout, so the plan releases the registration and the ledger entry and
+// removes nothing; the branch stays unless the caller proves it landed. Its fingerprint is
+// the owned registration's, which the cleanup receipt records.
+func missingTreeRelease(assignment intent.Assignment) CleanupPlan {
+	plan := CleanupPlan{Target: assignment.Worktree, Action: actionReleaseLeftover, Assignment: assignment.ID, Recovery: "none", Tracked: "unknown", ignoredSummary: "none", leftover: assignment.Worktree}
+	plan.assignment, plan.owned = &assignment, true
+	return automaticFingerprint(plan)
+}
+
+// landedApplies reports whether the apply of the landed set carries out a row: a removal,
+// or the release of a landed assignment whose tree is gone.
+func landedApplies(action CleanupAction) bool {
+	return action.Removes() || action == actionReleaseLeftover
 }
 
 // retainForLandedPreservation is the landed-set's single site for the preservation
@@ -242,7 +270,7 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 	}
 	actions := make([]axi.Action, 0, len(set.rows)+1)
 	for _, row := range set.rows {
-		if row.plan.Action.Removes() {
+		if landedApplies(row.plan.Action) {
 			// The apply command is the re-plan command plus the digest this plan authorizes.
 			arguments := append(landedReplan(options), axi.KnownArgument("--apply"), axi.KnownArgument(set.fingerprint))
 			actions = append(actions, axi.ExecutableInvocation("apply the landed worktree plan", arguments...))
@@ -336,7 +364,7 @@ func applyLandedSet(j joins, a ambient, root string, set landedCleanupSet, optio
 		return preflightOutcomes(plans, landedRowPlans(set.rows), offender, err), err
 	}
 	for i, planned := range set.rows {
-		if !planned.plan.Action.Removes() {
+		if !landedApplies(planned.plan.Action) {
 			plans = append(plans, planned.plan)
 			continue
 		}

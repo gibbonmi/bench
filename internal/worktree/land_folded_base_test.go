@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // TestLandFenceRefusalOverAFoldedSourceKeepsTheCallerBase grades the fence face over a
@@ -24,15 +26,14 @@ func TestLandFenceRefusalOverAFoldedSourceKeepsTheCallerBase(t *testing.T) {
 	commitInWorktree(t, f.creation.Path, "stray.txt", "stray\n", "out of fence")
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, tip, f.creation.Path)...))
-	face := landingRefusalFaceByName(faceSourceNotFenced)
-	next, printed := landingFaceNext(r.stdout, face.detail)
+	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotFenced))
 	if r.exit != 1 || !printed {
 		t.Fatalf("folded-source landing = (%d, %q, %q), want the fence refusal", r.exit, r.stdout, r.stderr)
 	}
 	if !strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:\n  stray.txt\n") {
 		t.Fatalf("fence refusal = %q, want only the build's stray.txt in refusal_paths", r.stdout)
 	}
-	if !strings.HasPrefix(next, face.route("")) || !strings.Contains(next, landingBaseFlag(f.base)) || strings.Contains(next, landingBaseFlag(destination)) {
+	if !strings.HasPrefix(next, landingRepair(faceSourceNotFenced, nil)) || !strings.Contains(next, landingBaseFlag(f.base)) || strings.Contains(next, landingBaseFlag(destination)) {
 		t.Fatalf("fence route = %q, want the fence repair at the caller's --base %s", next, f.base)
 	}
 }

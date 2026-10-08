@@ -58,12 +58,12 @@ func TestLandCommandReauthorizeRecoveryPointsThroughUnsafePath(t *testing.T) {
 	if r.exit != 1 || unsafe || !strings.HasSuffix(r.stdout, wantNext) {
 		t.Fatalf("unsafe-path recovery = (%d, %q, %q), want one safe record ending %q", r.exit, r.stdout, r.stderr, wantNext)
 	}
-	// LRS21: a landing-preflight face at the same unsafe path takes the same pointer form,
-	// so no route quotes a path the operator cannot paste.
+	// LRS21: a landing-preflight face at the same unsafe path looks the path up by the
+	// assignment id, so no route quotes a path the operator cannot paste.
 	mustWrite(t, filepath.Join(f.creation.Path, "scratch"), []byte("scratch\n"), 0o600)
 	r = runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	wantSource := "; then bench worktree exec " + f.creation.Assignment.ID + " -- bench worktree land --request '" +
-		request + "' --base '" + f.base + "' --source-tip '" + f.tip + "' --spec 'x' -m <message> .}\n"
+	wantSource := "; then bench worktree path '" + f.creation.Assignment.ID + "'; then bench worktree land --request '" +
+		request + "' --base '" + f.base + "' --source-tip " + repairedTipArg + " --spec 'x' -m <message> <checkout>}\n"
 	unsafe = strings.ContainsRune(r.stdout, '\x1b') || strings.Count(r.stdout, "\n") != 1
 	if r.exit != 1 || unsafe || !strings.HasSuffix(r.stdout, wantSource) {
 		t.Fatalf("unsafe-path source refusal = (%d, %q, %q), want one safe record ending %q", r.exit, r.stdout, r.stderr, wantSource)

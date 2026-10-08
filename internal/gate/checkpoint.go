@@ -7,9 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
@@ -19,11 +22,17 @@ type Checkpoint struct {
 	Complete    bool
 }
 type checkpointKey struct{}
+type verbKey struct{}
 
 // WithCheckpoint carries the obligation through the existing gate execution owner.
 func WithCheckpoint(ctx context.Context, checkpoint Checkpoint) context.Context {
 	return context.WithValue(ctx, checkpointKey{}, checkpoint)
 }
+
+// asVerb marks a run that the gate verb itself runs. Only that run prints the gate's route.
+// Another caller, such as the authorization run of a landing or a commit, prints its own
+// route for the refusal that the run returns, so one route prints per refusal.
+func asVerb(ctx context.Context) context.Context { return context.WithValue(ctx, verbKey{}, true) }
 
 func checkpointEvaluation(ctx context.Context, evaluation *gateEvaluation) *gateEvaluation {
 	evaluation.checkpoint, _ = ctx.Value(checkpointKey{}).(Checkpoint)
@@ -48,6 +57,14 @@ func (checkpoint Checkpoint) validate() error {
 	return nil
 }
 
+// The gate's flags. The parser, the usage line, and a route's rerun read these spellings.
+const (
+	flagFresh      = "--fresh"
+	flagCheckpoint = "--checkpoint"
+	flagChunk      = "--chunk"
+	flagComplete   = "--complete"
+)
+
 func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, error) {
 	root, mode, checkpoint := "", reuseFreshGreen, Checkpoint{}
 	seen := map[string]bool{}
@@ -60,19 +77,19 @@ func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, e
 			seen[arg] = true
 		}
 		switch arg {
-		case "--fresh":
+		case flagFresh:
 			mode = forceRun
-		case "--checkpoint", "--chunk":
+		case flagCheckpoint, flagChunk:
 			i++
 			if i == len(args) || args[i] == "" || strings.HasPrefix(args[i], "--") {
 				return "", mode, checkpoint, errors.New("missing checkpoint value")
 			}
-			if arg == "--checkpoint" {
+			if arg == flagCheckpoint {
 				checkpoint.Spec = args[i]
 			} else {
 				checkpoint.Chunk = args[i]
 			}
-		case "--complete":
+		case flagComplete:
 			checkpoint.Complete = true
 		default:
 			if !plumbing || root != "" || strings.HasPrefix(arg, "-") {
@@ -84,28 +101,84 @@ func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, e
 	return root, mode, checkpoint, checkpoint.validate()
 }
 
-// routeError is a refusal that carries the harness-native read which answers it.
-// The refusal printer adds that route under the reason. Only the completion-
-// evidence refusal builds one: the checkpoint cannot show what the evidence
-// lacks, and one read reports it.
-type routeError struct {
-	next string
-	err  error
+// The checkpoint causes that the funnel before the oracle routes by type. Every other
+// fault there captured no subject.
+type (
+	// evidenceError is a completion-evidence refusal.
+	evidenceError struct{ err error }
+	// completionProofError is a completion whose graded tree is not the exact transform of
+	// its reviewed source. A fault that captures or reads either tree proves nothing about
+	// the transform, so it is not a proof fault.
+	completionProofError struct{ err error }
+)
+
+func (e evidenceError) Error() string        { return e.err.Error() }
+func (e evidenceError) Unwrap() error        { return e.err }
+func (e completionProofError) Error() string { return e.err.Error() }
+func (e completionProofError) Unwrap() error { return e.err }
+
+// errCheckpointTipMoved is a source tip that moved after the run accepted its subject.
+var errCheckpointTipMoved = errors.New("checkpoint source tip changed")
+
+// The checkpoint's refusal faces. The shared registry declares each face.
+const (
+	faceCompletionEvidence = "checkpoint-completion-evidence"
+	faceDirtyCheckout      = "checkpoint-dirty-checkout"
+	faceComposition        = "checkpoint-composition"
+	faceTipMoved           = "checkpoint-tip-moved"
+	faceSubjectUnavailable = "checkpoint-subject-unavailable"
+	faceHandback           = "gate-handback"
+)
+
+// funnelFace picks the face of a refusal before the oracle by the type of its cause.
+func funnelFace(err error) string {
+	switch {
+	case errors.As(err, new(evidenceError)):
+		return faceCompletionEvidence
+	case errors.Is(err, errCheckpointTipMoved):
+		return faceTipMoved
+	case errors.As(err, new(completionProofError)):
+		return faceHandback
+	}
+	return faceSubjectUnavailable
 }
 
-func (e routeError) Error() string { return e.err.Error() }
-func (e routeError) Unwrap() error { return e.err }
-
-// routedRefusal routes the completion-evidence refusal to the preflight review
-// read. The slug comes from the spec-path grammar's one owner, so the route can
-// never name a spec the checkpoint did not open. A spec whose slug does not
-// resolve carries no route; validate already refused that path upstream.
-func routedRefusal(spec string, err error) error {
-	slug, slugErr := reviewrecord.Slug(spec)
-	if slugErr != nil {
-		return err
+// refuse prints a refusal's reason. In a run of the gate verb, the route of face follows on
+// its own next= line. The route reruns the caller's gate in the worktree of the active
+// assignment that owns root; with no owner, the label prints its slot.
+func refuse(ctx context.Context, root string, stderr io.Writer, mode runMode, face, reason string) Result {
+	if verb, _ := ctx.Value(verbKey{}).(bool); !verb {
+		return operational(root, 0, stderr, reason)
 	}
-	return routeError{next: "bench preflight review " + slug, err: err}
+	checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint)
+	owner, _ := intent.AssignmentForWorktree(root)
+	slug, _ := reviewrecord.Slug(checkpoint.Spec)
+	refusal := refusalroute.New(face, refusalroute.Facts{Sentence: reason, Values: map[string]string{
+		refusalroute.FactLabel:     owner.Label,
+		refusalroute.FactSlug:      slug,
+		refusalroute.FactArguments: rerunArguments(checkpoint, mode == forceRun || face == faceSubjectUnavailable),
+	}})
+	result := operational(root, 0, stderr, refusal.Sentence)
+	fmt.Fprintln(stderr, refusalroute.NextField+"="+refusal.Route)
+	return result
+}
+
+// rerunArguments composes the caller's gate arguments, each value rendered by Arg. A fresh
+// rerun names --fresh.
+func rerunArguments(checkpoint Checkpoint, fresh bool) string {
+	var args []string
+	if fresh {
+		args = append(args, flagFresh)
+	}
+	if checkpoint.Spec != "" {
+		args = append(args, flagCheckpoint, refusalroute.Arg("spec-path", checkpoint.Spec))
+		if checkpoint.Complete {
+			args = append(args, flagComplete)
+		} else {
+			args = append(args, flagChunk, refusalroute.Arg("id", checkpoint.Chunk))
+		}
+	}
+	return strings.Join(args, " ")
 }
 
 func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subject) (subject, error) {
@@ -122,7 +195,7 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	if e.completionSource != "" {
 		tip, err = benchgit.ResolveCommit(e.identityRoot, e.completionSource)
 		if err == nil && (!e.prospective || !e.completing() || tip != e.completionSource) {
-			return subject{}, errors.New("invalid prospective completion source")
+			return subject{}, completionProofError{errors.New("invalid prospective completion source")}
 		}
 	}
 	if err != nil {
@@ -131,7 +204,7 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	if e.checkpointTip == "" {
 		e.checkpointTip = tip
 	} else if e.checkpointTip != tip {
-		return subject{}, errors.New("checkpoint source tip changed")
+		return subject{}, errCheckpointTipMoved
 	}
 	sourceTree := generation.tree
 	if e.completionSource != "" {
@@ -143,7 +216,7 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	// A tickets-only close has no completion record; its completion tree is its evidence.
 	if e.checkpoint.Spec != "" {
 		if err := reviewrecord.CheckTrees(e.identityRoot, sourceTree, generation.tree, tip, e.checkpoint.Spec, e.checkpoint.Chunk, e.checkpoint.Complete); err != nil {
-			return subject{}, routedRefusal(e.checkpoint.Spec, fmt.Errorf("completion evidence: %w", err))
+			return subject{}, evidenceError{fmt.Errorf("completion evidence: %w", err)}
 		}
 	}
 	purpose, _ := json.Marshal(e.checkpoint)

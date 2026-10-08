@@ -375,10 +375,9 @@ func TestLandReviewedSpecStateTableRefusesBeforeAuthorization(t *testing.T) {
 	}
 }
 
-// The refusal every authorization caller prints keeps the kind the two prefix tests read
-// and states what the attribution means and what to run next. An infrastructure refusal
-// carries the gate's own reason when the gate named one, and the kind alone when it did
-// not.
+// The authorization refusal keeps the kind the two prefix tests read and says what it
+// means, with no action: the printing verb's face carries the route (RR30). An
+// infrastructure refusal carries the gate's own reason, or the kind alone without one.
 func TestRefusalMessageNamesTheOperatorActionAndTheOpenReason(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -386,13 +385,13 @@ func TestRefusalMessageNamesTheOperatorActionAndTheOpenReason(t *testing.T) {
 		want   string
 	}{
 		{"inherited", authorization.Result{Kind: authorization.Inherited},
-			"prospective authorization refused: inherited (the gate ran red on the composed tree and no green baseline attributes the red to this diff); run bench gate --fresh"},
+			"prospective authorization refused: inherited (the gate ran red on the composed tree and no green baseline attributes the red to this diff)"},
 		{"candidate", authorization.Result{Kind: authorization.Candidate},
-			"prospective authorization refused: candidate (the gate ran red on the composed tree and the green baseline attributes the red to this diff); fix the failures above"},
+			"prospective authorization refused: candidate (the gate ran red on the composed tree and the green baseline attributes the red to this diff)"},
 		{"infrastructure with reason", authorization.Result{Kind: authorization.Infrastructure, Reason: "declared environment unavailable"},
-			"prospective authorization refused: infrastructure (declared environment unavailable); run bench doctor"},
+			"prospective authorization refused: infrastructure (declared environment unavailable)"},
 		{"infrastructure without reason", authorization.Result{Kind: authorization.Infrastructure},
-			"prospective authorization refused: infrastructure; run bench doctor"},
+			"prospective authorization refused: infrastructure"},
 		{"lane fail", authorization.Result{Kind: authorization.LaneFail},
 			"prospective authorization refused: lane fail"},
 	} {

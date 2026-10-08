@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -91,13 +92,43 @@ func resolveAssignmentIn(root, target string, accepts func(intent.AssignmentStat
 }
 
 // missingTreeRefusal names the fact the operator can act on and the one verb that clears
-// the record, so a retained assignment whose tree is gone is never a dead end. The
-// landedness comes from the branch, because a tree that is gone proves nothing.
+// the record, so a retained assignment whose tree is gone is never a dead end. Every verb
+// that resolves the assignment raises the reset face, so the sentence and the route have
+// one source.
 func missingTreeRefusal(root string, assignment intent.Assignment) error {
-	def, defaultResolved := git.ResolvedDefault(root)
-	landed := listLanded(root, assignment.Branch, def, defaultResolved) == true
-	recovery := recoverMissingTree(landed, assignment.RequestToken, assignment.Worktree)
-	return refusalError{refusal{detail: "worktree tree is missing", next: recovery.line()}}
+	return landingFaceRefusal(faceResetTreeMissing, refusal{values: map[string]string{refusalroute.FactRecovery: missingTreeRoute(root, assignment)}}, "", "")
+}
+
+// missingTreeLanded reports whether a missing tree leaves with the clean of the landed set.
+// A tree that is gone proves nothing, so the landed selector's own proof decides. The
+// refusal and the `list` help row both read it, so neither names a clean that skips the
+// assignment.
+func missingTreeLanded(root string, assignment intent.Assignment) bool {
+	defaultRef, resolved := git.ResolvedDefault(root)
+	if !resolved {
+		return false
+	}
+	leases, err := assignmentLeaseStates(root)
+	if err != nil {
+		return false
+	}
+	_, landed := landedSelected(root, assignment, defaultRef, leases[assignment.OwnerID])
+	return landed
+}
+
+// missingTreeRoute is the recovery the missing-tree face prints. A value that is not
+// line-safe prints its slot placeholder, so the release keeps its command words.
+func missingTreeRoute(root string, assignment intent.Assignment) string {
+	request := assignment.RequestToken
+	if !lineSafe(request) {
+		request = "<request>"
+	}
+	route := recoverMissingTree(missingTreeLanded(root, assignment), request, assignment.Worktree)
+	if route.path == "" || lineSafe(route.path) {
+		return route.line()
+	}
+	route.path = ""
+	return refusalroute.AtCheckout(route.line(), "")
 }
 
 // errTargetControls refuses a target that no output line can carry. The refusal names no

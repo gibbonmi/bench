@@ -6,6 +6,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"slices"
 )
 
@@ -21,7 +22,7 @@ func (store Store) Ready(deliverable string) error {
 func (store Store) ready(ledger intent.Ledger, deliverable, outcomeID string) error {
 	owner, owned := activeOwner(ledger, store.Root)
 	if !owned {
-		return fmt.Errorf("delivery requires an active owned assignment; run bench worktree create")
+		return refusalroute.Raised{Name: refusalroute.CommitmentNeedsAssignment, Err: errors.New("delivery requires an active owned assignment")}
 	}
 	return store.readyFor(ledger, owner, deliverable, outcomeID)
 }
@@ -79,12 +80,12 @@ func (store Store) readyFor(ledger intent.Ledger, owner intent.Assignment, deliv
 		}
 		return nil
 	}
-	return errUnbound
+	return refusalroute.Raised{Name: refusalroute.CommitmentUnbound, Err: errUnbound}
 }
 
 // errUnbound is the binding fault of readyFor: owner holds no current delivery binding.
 // Only this fault lets a commit grade its candidate as light-path work.
-var errUnbound = errors.New("assignment has no current delivery binding; run bench commitment start --outcome <id> --request <request> --deliverable <path>")
+var errUnbound = errors.New("assignment has no current delivery binding")
 
 // Inheritance checks the source assignment before a sibling acquires its worktree.
 func (store Store) Inheritance(assignment string) (*intent.DeliveryBinding, error) {

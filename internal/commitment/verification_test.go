@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 const active = commitmenttest.ClosureMilestone
@@ -28,16 +31,26 @@ func verifyCommand(root, milestone, evidence string) (string, int) {
 }
 
 // refusesVerification proves that verification of milestone refuses the evidence that
-// edit produces, names each want fragment, and keeps the milestone state.
+// edit produces, names each want fragment, and keeps the milestone state. RR47: the next
+// cell keeps the verification of the same milestone, with the evidence the operator corrects.
+// A milestone that is not line-safe prints the grammar's <id>.
 func refusesVerification(t *testing.T, root, milestone string, edit func(*commitment.MilestoneEvidence), want ...string) {
 	t.Helper()
 	evidence := commitmenttest.Evidence(t, root, edit)
 	before := commitmenttest.MilestoneState(t, root)
 	out, code := verifyCommand(root, milestone, evidence)
-	for _, fragment := range append(want, "bench commitment verify --milestone <id> --evidence <file>") {
+	for _, fragment := range want {
 		if code != 1 || !strings.Contains(out, fragment) {
 			t.Fatalf("verify = (%q, %d), want a refusal naming %q", out, code, fragment)
 		}
+	}
+	named := "<id>"
+	if sanitize.LineSafe(milestone) {
+		named = sanitize.ShellQuote(milestone)
+	}
+	retry := "bench commitment verify --milestone " + named + " --evidence <file>"
+	if next, printed := routetest.NextCell(out); !printed || next != retry {
+		t.Fatalf("verify = %q, want the next cell %q", out, retry)
 	}
 	if commitmenttest.MilestoneState(t, root) != before {
 		t.Fatal("refused verification changed the milestone state")
@@ -137,6 +150,15 @@ func TestCommitmentEmptyRowsNotComplete(t *testing.T) {
 	t.Run("no-verification-receipt", func(t *testing.T) {
 		refusesCompletion(t, root, completionProposal(t, root, "sha256:unverified", nil), "has no verification receipt")
 	})
+}
+
+// RR47: the verification of a milestone that no policy holds refuses. Its next cell names a
+// milestone with a space shell-quoted, and a milestone that is not line-safe as <id>.
+func TestCommitmentVerifyNamesTheMilestoneSafely(t *testing.T) {
+	root := deliveredMilestone(t)
+	for _, milestone := range []string{"M 1", "M\x1b1"} {
+		t.Run(strconv.Quote(milestone), func(t *testing.T) { refusesVerification(t, root, milestone, nil, "is not the active milestone") })
+	}
 }
 
 // One unmet criterion refuses verification although the green gate evidence resolves.

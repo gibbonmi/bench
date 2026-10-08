@@ -8,15 +8,14 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io"
 	"os"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // identityComponentFixture produces exactly one component's refusal. mutate breaks one
@@ -134,6 +133,18 @@ func rewriteMarkerOwner(t *testing.T, path, owner string) {
 	mustWrite(t, markerFile, append(rewritten, '\n'), 0o600)
 }
 
+// landingComponentRecord is the whole refused record a landing prints for a component's
+// fixture. A component with a recovery command prints its own route. Every other component
+// hands back to the reviewer, and the identity proofs stop the later proofs of their group,
+// so the route states that ahead of its first step and ends with the caller's rerun.
+func landingComponentRecord(fixture identityComponentFixture, creation Creation, base, tip, rerun string) string {
+	record := fixture.want(creation, base, tip)
+	if !identityComponentByName(fixture.component).recovers {
+		record += ",next=" + landingRouteAfter(faceLandHandback, laterProofsSkipped, rerun, nil)
+	}
+	return "refused{" + record + "}\n"
+}
+
 // TestLandCommandNamesEachIdentityComponent is LR01 and LR04 through LR08: one broken
 // dimension per case, and the whole refused record the operator reads for it.
 func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
@@ -144,7 +155,8 @@ func TestLandCommandNamesEachIdentityComponent(t *testing.T) {
 			f := publicLandingFixture(t, request, "", "")
 			fixture.mutate(t, f.root, f.creation)
 			r := runVerb(t, verbLand, f.call(landArgs(fixture.request(request), f.base, f.tip, f.creation.Path)...))
-			want := "refused{" + fixture.want(f.creation, f.base, f.tip) + "}\n"
+			rerun := landArgsRerun(fixture.request(request), f.base, f.tip, f.creation.Path)
+			want := landingComponentRecord(fixture, f.creation, f.base, f.tip, rerun)
 			if r.exit != 1 || r.stdout != want {
 				t.Fatalf("%s landing = (%d, %q, %q), want exit 1 and %q", fixture.component, r.exit, r.stdout, r.stderr, want)
 			}
@@ -164,7 +176,7 @@ func TestResumeLandCommandNamesEachIdentityComponent(t *testing.T) {
 			fixture.mutate(t, f.root, f.creation)
 			args := []string{"--resume", published, "--request", fixture.request(request), "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path}
 			r := runVerb(t, verbLand, f.call(args...))
-			want := "refused{" + fixture.want(f.creation, f.base, f.tip) + "}\n"
+			want := landingComponentRecord(fixture, f.creation, f.base, f.tip, resumeRerunOf(published, f.base, f.tip, f.creation.Path))
 			if r.exit != 1 || r.stdout != want {
 				t.Fatalf("%s resume = (%d, %q, %q), want exit 1 and %q", fixture.component, r.exit, r.stdout, r.stderr, want)
 			}
@@ -198,124 +210,10 @@ func TestIdentityComponentRegistryHasAProducingFixture(t *testing.T) {
 	}
 }
 
-// landingRefusalFixture produces exactly one landing refusal face. mutate breaks the
-// landing fixture so that face is the one the preflight prints. The registry walk requires
-// one fixture per declared face, so a face added with no fixture turns this file red.
-// The registry states which faces the resume prints, so the fixture reads the stage
-// there rather than restating it: a resume fixture's mutation runs against the published
-// destination of an interrupted landing, not against the first run.
-type landingRefusalFixture struct {
-	face   string
-	mutate func(t *testing.T, root string, creation Creation)
-	// tip states the source tip the run names, read after the mutation. A face that
-	// refuses on the caller's own tip needs a value other than the worktree's head, which
-	// the walk names by default.
-	tip func(t *testing.T, creation Creation) string
-}
-
-func landingRefusalFixtures() []landingRefusalFixture {
-	return []landingRefusalFixture{
-		{
-			face: faceDestinationNotClean,
-			mutate: func(t *testing.T, root string, _ Creation) {
-				mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
-			},
-		},
-		{
-			// The reviewed source adds owned.txt, so an untracked file at that path stands
-			// where the landing writes.
-			face: faceDestinationCollision,
-			mutate: func(t *testing.T, root string, _ Creation) {
-				mustWrite(t, filepath.Join(root, "owned.txt"), []byte("operator bytes\n"), 0o600)
-			},
-		},
-		{
-			face: faceSourceNotClean,
-			mutate: func(t *testing.T, _ string, creation Creation) {
-				mustWrite(t, filepath.Join(creation.Path, "scratch"), []byte("scratch\n"), 0o600)
-			},
-		},
-		{
-			face: faceSourceNotFenced,
-			mutate: func(t *testing.T, _ string, creation Creation) {
-				commitInWorktree(t, creation.Path, "stray.txt", "stray\n", "out of fence")
-			},
-		},
-		{
-			// The source moves past the tip the caller names, which is the state an
-			// operator reaches when a review repair adds a commit.
-			face: faceSourceTipMismatch,
-			mutate: func(t *testing.T, _ string, creation Creation) {
-				commitInWorktree(t, creation.Path, "owned.txt", "moved\n", "source moved past the named tip")
-			},
-			tip: func(t *testing.T, creation Creation) string {
-				return gitOutput(t, creation.Path, "rev-parse", "HEAD~1")
-			},
-		},
-		{
-			// The destination moves onto a commit the reviewed source also changed, which
-			// is the state a composition conflict outside the rule table reaches.
-			face: faceCompositionConflict,
-			mutate: func(t *testing.T, root string, _ Creation) {
-				commitInWorktree(t, root, "owned.txt", "destination bytes\n", "destination conflict")
-			},
-		},
-		{
-			face: faceResumeDestinationResidue,
-			mutate: func(t *testing.T, root string, _ Creation) {
-				mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644)
-			},
-		},
-		{
-			face: faceResumeMarker,
-			mutate: func(t *testing.T, root string, _ Creation) {
-				// The marker refuses only once the destination has moved past the
-				// published landing, so the mutation moves it and then drops the marker.
-				commitInWorktree(t, root, "destination-after-publication", "forward\n", "destination movement")
-				gitRun(t, root, "update-ref", "-d", "refs/bench/green/main")
-			},
-		},
-	}
-}
-
-// landingFaceResume drives a resume fixture. It interrupts a landing at the release step,
-// applies the fixture's mutation to the published destination, and resumes.
-func landingFaceResume(t *testing.T, fixture landingRefusalFixture, f landingFixture) verbResult {
-	t.Helper()
-	request := "landing-face-" + fixture.face
-	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
-	broken := defaultJoins()
-	broken.releaseLandingAssignment = func(joins, ambient, string, []string, io.Writer, io.Writer) int { return 1 }
-	if r := runVerb(t, verbLand, f.callWith(broken, landArgs(request, f.base, tip, f.creation.Path)...)); r.exit != 3 {
-		t.Fatalf("interrupted landing = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
-	}
-	published := gitOutput(t, f.root, "rev-parse", "main")
-	fixture.mutate(t, f.root, f.creation)
-	args := []string{"--resume", published, "--request", request, "--base", f.base, "--source-tip", tip, "--spec", "x", f.creation.Path}
-	return runVerb(t, verbLand, f.callWith(defaultJoins(), args...))
-}
-
-// landingFaceNext reads the next= value out of the refused record whose detail names the
-// face. next= is the last field the formatter writes, so the value runs to the closing
-// brace. The second result reports whether the face printed at all.
-func landingFaceNext(stdout, detail string) (string, bool) {
-	for _, line := range strings.Split(stdout, "\n") {
-		if !strings.HasPrefix(line, "refused{detail="+detail) {
-			continue
-		}
-		_, next, found := strings.Cut(line, ",next=")
-		if !found {
-			return "", true
-		}
-		return strings.TrimSuffix(next, "}"), true
-	}
-	return "", false
-}
-
-// TestLandingRefusalRegistryHasAProducingFixture is LRS1 and LRS2. The registry is the
-// source of the landing's face set, so a face added without a fixture reds here rather
-// than reaching an operator unproven, and a face whose route string is empty reds on the
-// value its fixture prints.
+// TestLandingRefusalRegistryHasAProducingFixture is LRS1, LRS2, and RR14. The shared
+// registry is the source of the landing's face set, so a land face added without a fixture
+// reds here rather than reaching an operator unproven, and a face whose route string is
+// empty reds on the value its fixture prints.
 func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 	t.Parallel()
 	produced := map[string]bool{}
@@ -325,37 +223,19 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 		}
 		produced[fixture.face] = true
 	}
-	for _, face := range landingRefusalFaces {
-		if !produced[face.name] {
-			t.Errorf("registry face %q has no producing fixture", face.name)
+	for _, face := range refusalroute.Faces(refusalroute.Land) {
+		if !produced[face.Name] {
+			t.Errorf("registry face %q has no producing fixture", face.Name)
 		}
-		delete(produced, face.name)
+		delete(produced, face.Name)
 	}
 	for name := range produced {
-		t.Errorf("fixture %q produces no registered face", name)
+		t.Errorf("fixture %q produces no registered land face", name)
 	}
 	for _, fixture := range landingRefusalFixtures() {
 		t.Run(fixture.face, func(t *testing.T) {
 			t.Parallel()
-			request := "landing-face-" + fixture.face
-			f := publicLandingFixture(t, request, "", "")
-			var r verbResult
-			if landingRefusalFaceByName(fixture.face).stage == stageResume {
-				r = landingFaceResume(t, fixture, f)
-			} else {
-				fixture.mutate(t, f.root, f.creation)
-				// A mutation may add a source commit, so the pinned tip is read after it. An
-				// unmoved source reads back the same commit the fixture created.
-				tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
-				if fixture.tip != nil {
-					tip = fixture.tip(t, f.creation)
-				}
-				r = runVerb(t, verbLand, f.call(landArgs(request, f.base, tip, f.creation.Path)...))
-			}
-			next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(fixture.face).detail)
-			if r.exit != 1 || !printed || next == "" {
-				t.Fatalf("face %s = (%d, %q, %q), want exit 1 and a non-empty next= field", fixture.face, r.exit, r.stdout, r.stderr)
-			}
+			produceLandingFace(t, fixture)
 		})
 	}
 }
@@ -452,7 +332,8 @@ func identityComponentFixtureFor(t *testing.T, component string) identityCompone
 
 // TestLandCommandNamesTheEarlierComponentOfTwo covers the edge inventory row for two
 // components that fail inside one bundle. The registration precedes the lock in the
-// registry, so the registration sentence is the one the operator reads.
+// registry, so the registration sentence is the one the operator reads, and its route
+// hands back.
 func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 	t.Parallel()
 	request := "land-component-registration-and-lock"
@@ -461,7 +342,7 @@ func TestLandCommandNamesTheEarlierComponentOfTwo(t *testing.T) {
 	registration.mutate(t, f.root, f.creation)
 	identityComponentFixtureFor(t, componentLock).mutate(t, f.root, f.creation)
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	want := "refused{" + registration.want(f.creation, f.base, f.tip) + "}\n"
+	want := landingComponentRecord(registration, f.creation, f.base, f.tip, landArgsRerun(request, f.base, f.tip, f.creation.Path))
 	if r.exit != 1 || r.stdout != want {
 		t.Fatalf("double-fault landing = (%d, %q, %q), want exit 1 and %q", r.exit, r.stdout, r.stderr, want)
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // Verify checks the evidence document input for milestone against the default-branch
@@ -77,7 +78,11 @@ func verifiedCompletions(ledger intent.Ledger, current *commitment.Policy, prede
 	for _, completion := range added {
 		index := slices.IndexFunc(ledger.MilestoneReceipts, func(receipt intent.MilestoneReceipt) bool { return receipt.ID == completion.Verification })
 		if index < 0 {
-			return fmt.Errorf("completion of milestone %q has no verification receipt %q; run bench commitment verify --milestone %s --evidence <file>", completion.Milestone, completion.Verification, completion.Milestone)
+			return refusalroute.Raised{
+				Name:   refusalroute.CommitmentVerifyEvidence,
+				Err:    fmt.Errorf("completion of milestone %q has no verification receipt %q", completion.Milestone, completion.Verification),
+				Values: map[string]string{refusalroute.FactMilestone: completion.Milestone},
+			}
 		}
 		var verification commitment.Verification
 		if err := jsonfile.DecodeDocument([]byte(ledger.MilestoneReceipts[index].Payload), &verification); err != nil {

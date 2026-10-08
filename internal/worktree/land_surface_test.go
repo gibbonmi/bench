@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // The FT169 landing surface: one reviewed source must not pay six refusal
@@ -147,25 +149,30 @@ func TestLandCommandReportsEveryRefusalInOnePreflight(t *testing.T) {
 	if r.exit != 1 || !strings.Contains(r.stdout, "landing destination is not clean") || !strings.Contains(r.stdout, "reviewed source is not clean") {
 		t.Fatalf("two-refusal preflight = (%d, %q, %q), want both refusals named", r.exit, r.stdout, r.stderr)
 	}
-	// LRS3: every landing-preflight route ends with the caller's own re-run, so a repair
-	// does not cost the operator the flags it passed. The registry is the face set, so the
-	// walk covers each preflight face: the two this run raises are read from the printed
-	// record, and the rest from the route the face composes over the same re-run.
-	rerun := "bench worktree land --request '" + request + "' --base '" + f.base +
-		"' --source-tip '" + f.tip + "' --spec 'x' -m <message> '" + f.creation.Path + "'"
-	tail := "; then " + rerun
-	for _, face := range landingRefusalFaces {
-		if face.stage != stagePreflight {
+	// LRS3 and RR20: every landing-preflight route ends with the caller's own re-run, so a
+	// repair does not cost the operator the flags it passed. A repair that commits in the
+	// source moves the tip, so that re-run names the repaired tip. The producing fixtures
+	// state which land faces the preflight prints, so the walk covers each preflight face:
+	// the two this run raises are read from the printed record, and the rest from the route
+	// the face renders over the same re-run.
+	for _, fixture := range landingRefusalFixtures() {
+		if fixture.stage != stagePreflight {
 			continue
 		}
-		if next, printed := landingFaceNext(r.stdout, face.detail); printed {
+		rerun := landArgsRerun(request, f.base, f.tip, f.creation.Path)
+		if fixture.repairsSource {
+			rerun = landArgsRerunAt(request, f.base, repairedTipArg, f.creation.Path)
+		}
+		tail := "; then " + rerun
+		sentence := refusalroute.Sentence(fixture.face)
+		if next, printed := landingFaceNext(r.stdout, sentence); printed && sentence != "" {
 			if !strings.HasSuffix(next, tail) {
-				t.Fatalf("%s next = %q in %q, want a repair ending %q", face.name, next, r.stdout, tail)
+				t.Fatalf("%s next = %q in %q, want a repair ending %q", fixture.face, next, r.stdout, tail)
 			}
 			continue
 		}
-		if route := face.route(rerun); !strings.HasSuffix(route, rerun) {
-			t.Fatalf("%s route = %q, want it to end with the caller's own re-run %q", face.name, route, rerun)
+		if route := landingRoute(fixture.face, rerun, nil); !strings.HasSuffix(route, rerun) {
+			t.Fatalf("%s route = %q, want it to end with the caller's own re-run %q", fixture.face, route, rerun)
 		}
 	}
 }
@@ -186,7 +193,7 @@ func TestLandCommandReportsIdentityAndDestinationInOnePreflight(t *testing.T) {
 	}
 	// LRS20: the destination proof refuses before the assignment resolves, so its re-run
 	// addresses the operator's own worktree path rather than an assignment id.
-	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceDestinationNotClean).detail)
+	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceDestinationNotClean))
 	if !printed || strings.Contains(next, "bench worktree exec") || !strings.HasSuffix(next, " '"+f.creation.Path+"'") {
 		t.Fatalf("destination next = %q (printed=%t) in %q, want a re-run ending with the operator's own path", next, printed, r.stdout)
 	}
@@ -286,10 +293,10 @@ func TestLandCommandConflictRefusalNamesTheSourceRepair(t *testing.T) {
 	commitInWorktree(t, f.root, "owned.txt", "destination bytes\n", "destination conflict")
 	destination := gitOutput(t, f.root, "rev-parse", "HEAD")
 	r := runVerb(t, verbLand, f.processHomeCall(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	wantNext := "next=git -C '" + f.creation.Path + "' merge '" + destination +
+	wantNext := "next=" + reviewerRoute + "git -C '" + f.creation.Path + "' merge '" + destination +
 		"' (bench worktree merge refuses this conflict; resolve it by hand); then bench commit; then /bench-review-implementation; then " +
 		"bench worktree land --request <request> --base '" + destination +
-		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> '" + f.creation.Path + "'}"
+		"' --source-tip " + repairedTipArg + " --spec 'x' -m <message> '" + f.creation.Path + "'}"
 	if r.exit != 1 || !strings.Contains(r.stdout, "composition conflict: textual") || !strings.Contains(r.stdout, wantNext) {
 		t.Fatalf("conflict repair next = (%d, %q, %q), want %q", r.exit, r.stdout, r.stderr, wantNext)
 	}
@@ -310,7 +317,7 @@ func TestLandCommandSpecLessConflictNextNamesNoSpec(t *testing.T) {
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	commitInWorktree(t, f.root, "ROADMAP.md", "board destination\n", "destination board")
 	r := runVerb(t, verbLand, f.processHomeCall(specLessLandArgs(request, f.base, tip, f.creation.Path)...))
-	if r.exit != 1 || !strings.Contains(r.stdout, " --source-tip <repaired-source-tip> -m <message> '") || strings.Contains(r.stdout, "--spec") {
+	if r.exit != 1 || !strings.Contains(r.stdout, " --source-tip "+repairedTipArg+" -m <message> '") || strings.Contains(r.stdout, "--spec") {
 		t.Fatalf("spec-less conflict next = (%d, %q, %q), want no --spec", r.exit, r.stdout, r.stderr)
 	}
 }
@@ -334,8 +341,9 @@ func TestLandCommandConflictOnAControlBytePathRendersSanitized(t *testing.T) {
 	}
 }
 
-// Edge under WL18: a source worktree path that is not line-safe cannot be pasted, so
-// both repair steps that address it take the assignment pointer form.
+// Edge under WL18: a source worktree path that is not line-safe cannot be pasted, so the
+// reviewer's merge step takes the assignment pointer form and the re-run looks the path up
+// by the assignment id.
 func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
 	t.Parallel()
 	request := "land-surface-conflict-unsafe-path"
@@ -344,10 +352,10 @@ func TestLandCommandConflictNextPointsThroughUnsafePath(t *testing.T) {
 	commitInWorktree(t, f.root, "owned.txt", "destination bytes\n", "destination conflict")
 	destination := gitOutput(t, f.root, "rev-parse", "HEAD")
 	r := runVerb(t, verbLand, f.processHomeCall(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	wantNext := "next=bench worktree exec " + f.creation.Assignment.ID + " -- git merge '" + destination +
+	wantNext := "next=" + reviewerRoute + "bench worktree exec " + f.creation.Assignment.ID + " -- git merge '" + destination +
 		"' (bench worktree merge refuses this conflict; resolve it by hand); then bench commit; then /bench-review-implementation; then " +
-		"bench worktree exec " + f.creation.Assignment.ID + " -- bench worktree land --request <request> --base '" + destination +
-		"' --source-tip <repaired-source-tip> --spec 'x' -m <message> .}"
+		"bench worktree path '" + f.creation.Assignment.ID + "'; then bench worktree land --request <request> --base '" + destination +
+		"' --source-tip " + repairedTipArg + " --spec 'x' -m <message> <checkout>}"
 	if r.exit != 1 || strings.ContainsRune(r.stdout, '\x1b') || !strings.Contains(r.stdout, wantNext) {
 		t.Fatalf("unsafe-path conflict next = (%d, %q, %q), want the pointer form %q", r.exit, r.stdout, r.stderr, wantNext)
 	}
@@ -372,7 +380,7 @@ func TestLandCommandConflictNextPlaceholdsAnUnsafeSpec(t *testing.T) {
 	args := []string{"--request", request, "--base", f.base, "--source-tip", tip, "--spec", slug, "-m", "land", f.creation.Path}
 	r := runVerb(t, verbLand, f.processHomeCall(args...))
 	wantNext := "bench worktree land --request <request> --base '" + destination +
-		"' --source-tip <repaired-source-tip> --spec <spec> -m <message> '" + f.creation.Path + "'}"
+		"' --source-tip " + repairedTipArg + " --spec <spec> -m <message> '" + f.creation.Path + "'}"
 	if r.exit != 1 || !strings.Contains(r.stdout, "composition conflict: textual") || !strings.Contains(r.stdout, wantNext) {
 		t.Fatalf("unsafe-spec conflict next = (%d, %q, %q), want the placeholder form %q", r.exit, r.stdout, r.stderr, wantNext)
 	}

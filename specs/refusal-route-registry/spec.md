@@ -1,6 +1,6 @@
 # Every write-verb refusal names a typed recovery route
 
-Status: staged
+Status: implemented
 
 Roadmap: FT393
 
@@ -129,6 +129,7 @@ Harder chunks: RR-C1b, RR-C3.
 A new leaf package `internal/refusalroute` owns the registry.
 It imports no write-verb package, so each verb package imports it with no cycle.
 It holds the one ordered face inventory, the route step types, the route renderer, and the `bench recovery` command.
+Each verb declares its faces in its own file of the package, and the registry composes them into the one ordered inventory.
 
 A face declares five facts:
 
@@ -156,7 +157,7 @@ A raising site derives the `<label>` fact through `intent.AssignmentsOwning` ove
 The landing and the merge already hold their assignment, and the commit and the gate resolve theirs at the refusal.
 When no assignment owns the root, the slot prints `<label>`.
 A tree-scoped step names its tree target, because `--in` counts only as the first argument after the verb.
-The `resume-marker` step is `bench gate --in primary`, because the marker belongs to the published landing on the primary checkout.
+The `resume-marker` face has reviewer authority, because only a landing on the primary checkout advances the green marker.
 
 ### Authority
 
@@ -167,6 +168,7 @@ A face has reviewer authority when the clear needs one of these:
 - a change to the primary checkout
 - a commitment change
 - a decision that FT342 owns
+- an edit of a gate check, such as the lane declaration
 
 The destructive-git guard already states that the merge and any history rewrite are the reviewer's, so the conflict faces take reviewer authority.
 
@@ -174,7 +176,7 @@ The destructive-git guard already states that the merge and any history rewrite 
 
 Each verb keeps its output shape.
 The landing, the merge, and the reset print `next=<route>` in the `refused{...}` record.
-The commit prints `next=<route>` on its stderr refusal line, and its exit 3 record keeps `committed{published_commit=…,path=…,next=…}`.
+The commit prints `next=<route>` on its own stderr line after the refusal sentence, and its exit 3 record keeps `committed{published_commit=…,path=…,next=…}`.
 The gate checkpoint prints `next=<route>` on stderr after its reason, and it no longer prints the fixed `help[1]{cmd,why}` row.
 The commitment verb keeps its `next[1]{command}` table, and the cell holds the face's route.
 
@@ -195,12 +197,12 @@ These faces and routes are required.
 | land | `destination-not-clean` | reviewer | commit or discard the destination's uncommitted work; then the re-run |
 | land | `destination-collision` | reviewer | move the `refusal_paths` entries out of the landing checkout; then the re-run |
 | land | `source-tip-mismatch` | agent | the re-run, re-pointed at the source tip that the tree holds |
-| land | `source-not-clean` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
-| land | `source-not-fenced` | agent | the current fence instruction; then the re-run |
+| land | `source-not-clean` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then `/bench-review-implementation`; then the re-run at the repaired source tip |
+| land | `source-not-fenced` | agent | the current fence instruction; then the re-run at the repaired source tip |
 | land | `composition-conflict` | reviewer | the hand merge of the destination commit; then `bench commit`; then `/bench-review-implementation`; then the re-run |
 | land | `composition-conflict-pending` | reviewer | finish the merge in progress; then `/bench-review-implementation`; then the re-run |
 | land | `resume-destination-residue` | reviewer | commit or discard the destination's uncommitted work; then the resume |
-| land | `resume-marker` | agent | `bench gate --in primary`; then the resume |
+| land | `resume-marker` | reviewer | land a green landing on main that covers the published commit, or restore main to it; then the resume |
 | land | `land-red` | agent | repair each failure that the gate reports in `<label>`; then `bench commit --in <label> -m <msg> -- <path>...`; then `/bench-review-implementation`; then the re-run |
 | land | `land-infrastructure` | agent | `bench doctor`; then the re-run |
 | merge | `merge-target-red` | agent | repair each failing check in `<label>`; then `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
@@ -218,6 +220,8 @@ These faces and routes are required.
 | commit | `commit-primary-checkout` | agent | `bench worktree create --request <opaque-id> --label <work-item>` |
 | commit | `commit-red` | agent | repair each failure that the run reports; then the re-run |
 | commit | `commit-infrastructure` | agent | `bench doctor`; then the re-run |
+| commit | `commit-named-path` | agent | correct the paths or the files that the refusal names; then the re-run |
+| commit | `commit-tip-moved` | agent | the re-run |
 | gate | `checkpoint-completion-evidence` | agent | `bench preflight review <slug>` |
 | gate | `checkpoint-dirty-checkout` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
 | gate | `checkpoint-composition` | reviewer | the delivery closure of the spec does not compose; hand back |
@@ -228,10 +232,14 @@ These faces and routes are required.
 | commitment | `commitment-verify-evidence` | agent | `bench commitment verify --milestone <id> --evidence <file>` |
 | commitment | `commitment-decision` | reviewer | `bench commitment plan --input <file>` |
 | commitment | `commitment-unbound` | agent | `bench commitment start --outcome <id> --request <request> --deliverable <path>` |
-| commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then the re-run |
+| commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then `bench commit --in <label> -m <msg> -- <ticket>`; then the re-run at the repaired source |
+| commitment | `commitment-light-path-spec` | agent | the landing re-run with `--spec <slug>` |
+| commitment | `commitment-light-path-span` | agent | commit the paths of one light-path ticket at a time; then `bench commit --in <label> -m <msg> -- <path>...` |
 | commitment | `commitment-run-unknown` | agent | `bench commitment inventory` |
+| commitment | `commitment-handback` | reviewer | clear the cause that the refusal names; then the re-run |
 
 The `<verb>-handback` reviewer faces join this list for each verb.
+On the resume path, a dirty source takes `land-handback`, because a commit there moves the source away from the published tip.
 The `commitment-decision` face covers each start, block, plan, and approve refusal whose clear changes the active commitment.
 
 ### The commitment route tails
@@ -244,7 +252,7 @@ No reader parses the tail text: `commitcmd.Outlook` replaces any projection erro
 
 These sites move to faces:
 
-- `commitment-needs-assignment`: the owned-assignment errors in `candidate.go`, `readiness.go`, and `publication.go`
+- `commitment-needs-assignment`: the owned-assignment errors in `candidate.go`, `readiness.go`, `publication.go`, and the start ownership refusal in `admission.go`
 - `commitment-decision`: the adoption, protected-commitment, policy-approval, sequence, continuation, legacy-scope, and obligation errors in `admission.go`, `candidate.go`, `continuation.go`, `publication.go`, and `delivery.go`
 - `commitment-unbound`: `errUnbound` in `readiness.go`
 - `commitment-light-path-outside`: the light-path fence error in `light_path.go`
@@ -254,6 +262,7 @@ These sites move to faces:
 A face's verb names the verb whose rule raises it, and another write verb can print it.
 So `bench commit` prints a commitment face when the commitment policy refuses its candidate.
 The reset table keeps each current route of the reset verb unchanged.
+The missing-tree route clears its cause: `bench worktree clean --landed` retires a landed assignment whose tree is missing, and `bench worktree release` releases an unlanded one (reviewer decision 2026-10-07).
 
 ### The red-source fold (collision 5a)
 
@@ -336,7 +345,7 @@ A conformance test scans the string literals in the production Go files of the w
 It refuses a literal outside `internal/refusalroute` that holds `next=`, `next[`, `run bench `, or the route joiner `; then `, or that equals `"next"`.
 The scanned packages include `internal/commitment` and `internal/commitment/repository`.
 The test holds one reviewed allowlist of files whose routes serve a non-write verb.
-The allowlist holds `internal/worktree/path.go`, `internal/worktree/build.go`, and `internal/worktree/tree_target.go`, and each other entry needs a non-write caller.
+The allowlist holds `internal/worktree/path.go`, `internal/worktree/build.go`, and `internal/worktree/tree_target.go`. The first serves the shared `--in` tree-target refusal, and each other entry needs a non-write caller.
 
 ### The recovery matrix
 
@@ -371,13 +380,13 @@ RR-C6 comes last, because it turns red on any route that an earlier chunk has no
 
 ### Completion plan
 
-The version 1 plan records future implementation evidence.
+The version 2 plan records future implementation evidence.
 It claims no current implementation pass, red, or probe result.
-The orchestrator adds the required version 2 author sessions before dispatch.
+The orchestrator records each author session before that author's dispatch.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
   "chunks": [
     {
       "id": "RR-C1a",
@@ -386,8 +395,15 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "registry",
-          "command": "bench test --package ./internal/refusalroute"
+          "id": "t1-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "ticket": "01-create-the-shared-refusal-route-registry.md"
+        },
+        {
+          "id": "t1-renderer-proof",
+          "command": "bench test --package ./internal/refusalroute --run 'TestRouteRendering'",
+          "probe": "Make the renderer join the route steps with `, ` instead of `; then `. TestRouteRendering must fail, then pass after source restoration.",
+          "ticket": "01-create-the-shared-refusal-route-registry.md"
         }
       ]
     },
@@ -400,24 +416,82 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "registry",
-          "command": "bench test --package ./internal/refusalroute"
+          "id": "t2-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "ticket": "02-move-the-landing-faces-into-the-shared-registry.md"
         },
         {
-          "id": "guard-check",
-          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'"
+          "id": "t2-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "02-move-the-landing-faces-into-the-shared-registry.md"
         },
         {
-          "id": "landing-faces",
-          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'"
+          "id": "t2-landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestConflictRepairIsAReviewerRoute|TestLandCommandReportsEveryRefusalInOnePreflight'",
+          "ticket": "02-move-the-landing-faces-into-the-shared-registry.md"
         },
         {
-          "id": "worktree-package",
-          "command": "bench test --package ./internal/worktree"
+          "id": "t2-conflict-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'",
+          "probe": "Declare the `composition-conflict` face with the agent authority. TestConflictRepairIsAReviewerRoute must fail, then pass after source restoration.",
+          "ticket": "02-move-the-landing-faces-into-the-shared-registry.md"
         },
         {
-          "id": "recovery-verb",
-          "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'"
+          "id": "t3-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t3-guard-check",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t3-landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t3-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t3-guard-proof",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards'",
+          "probe": "Declare the first route step of the `source-not-clean` face as the command `git merge <commit>`. TestAgentRoutesPassTheWiredGuards must fail, then pass after source restoration.",
+          "ticket": "03-prove-each-agent-route-passes-the-wired-guards.md"
+        },
+        {
+          "id": "t4-registry",
+          "command": "bench test --package ./internal/refusalroute",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-guard-check",
+          "command": "bench test --package ./internal/conformance --run 'TestAgentRoutesPassTheWiredGuards|TestAgentRouteGuardCheckBites'",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-landing-faces",
+          "command": "bench test --package ./internal/worktree --run 'TestLandingRefusalRegistryHasAProducingFixture|TestLandingFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestUnsafePathRouteUsesThePlaceholder|TestLandCommandReportsEveryRefusalInOnePreflight'",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-recovery-verb",
+          "command": "bench test --package ./cmd/bench --run 'TestHelpInventoryIsComplete'",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
+        },
+        {
+          "id": "t4-recovery-proof",
+          "command": "bench test --package ./internal/refusalroute --run 'TestRecoveryListsEveryFace'",
+          "probe": "Make `bench recovery` skip the last registered face. TestRecoveryListsEveryFace must fail, then pass after source restoration.",
+          "ticket": "04-render-the-recovery-matrix-from-the-registry.md"
         }
       ]
     },
@@ -430,16 +504,67 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "merge-routes",
-          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'"
+          "id": "t5-merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal|TestLandingRedRouteNamesTheRepair'",
+          "ticket": "05-route-each-merge-refusal-through-the-registry.md"
         },
         {
-          "id": "worktree-package",
-          "command": "bench test --package ./internal/worktree"
+          "id": "t5-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "05-route-each-merge-refusal-through-the-registry.md"
         },
         {
-          "id": "landing-package",
-          "command": "bench test --package ./internal/landing"
+          "id": "t5-landing-package",
+          "command": "bench test --package ./internal/landing",
+          "ticket": "05-route-each-merge-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t5-conflict-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestConflictRepairIsAReviewerRoute'",
+          "probe": "Declare the `merge-conflict` face with the agent authority. TestConflictRepairIsAReviewerRoute must fail, then pass after source restoration.",
+          "ticket": "05-route-each-merge-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t6-merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'",
+          "ticket": "06-give-the-red-source-fold-an-exit.md"
+        },
+        {
+          "id": "t6-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "06-give-the-red-source-fold-an-exit.md"
+        },
+        {
+          "id": "t6-landing-package",
+          "command": "bench test --package ./internal/landing",
+          "ticket": "06-give-the-red-source-fold-an-exit.md"
+        },
+        {
+          "id": "t6-target-alone-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestRedSourceFoldNamesAnExit'",
+          "probe": "Make an `inherited` fold take the `merge-fold-red` face without the target-alone grade. TestRedSourceFoldNamesAnExit must fail, then pass after source restoration.",
+          "ticket": "06-give-the-red-source-fold-an-exit.md"
+        },
+        {
+          "id": "t7-merge-routes",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes|TestRedSourceFoldNamesAnExit|TestConflictRepairIsAReviewerRoute|TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal'",
+          "ticket": "07-route-each-reset-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t7-worktree-package",
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "07-route-each-reset-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t7-landing-package",
+          "command": "bench test --package ./internal/landing",
+          "ticket": "07-route-each-reset-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t7-walk-proof",
+          "command": "bench test --package ./internal/worktree --run 'TestMergeFacesFollowTheirRoutes'",
+          "probe": "Register one more reset face that no fixture produces. TestMergeFacesFollowTheirRoutes must fail, then pass after source restoration.",
+          "ticket": "07-route-each-reset-refusal-through-the-registry.md"
         }
       ]
     },
@@ -451,12 +576,36 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "commit-package",
-          "command": "bench test --package ./internal/commit"
+          "id": "t8-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "ticket": "08-route-the-commit-exit-3-to-the-reset-plan.md"
         },
         {
-          "id": "commit-exit-three",
-          "command": "bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'"
+          "id": "t8-commit-exit-three",
+          "command": "bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'",
+          "ticket": "08-route-the-commit-exit-3-to-the-reset-plan.md"
+        },
+        {
+          "id": "t8-reset-route-proof",
+          "command": "bench test --package ./internal/commit --run 'TestPublishedUnreconciledRouteIsTheResetPlan'",
+          "probe": "Give the `commit-published-unreconciled` face the old `git restore` route. TestPublishedUnreconciledRouteIsTheResetPlan must fail, then pass after source restoration.",
+          "ticket": "08-route-the-commit-exit-3-to-the-reset-plan.md"
+        },
+        {
+          "id": "t9-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "ticket": "09-route-each-commit-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t9-commit-exit-three",
+          "command": "bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'",
+          "ticket": "09-route-each-commit-refusal-through-the-registry.md"
+        },
+        {
+          "id": "t9-red-route-proof",
+          "command": "bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'",
+          "probe": "Drop the re-run step from the `commit-red` route. TestCommitFacesFollowTheirRoutes must fail, then pass after source restoration.",
+          "ticket": "09-route-each-commit-refusal-through-the-registry.md"
         }
       ]
     },
@@ -467,12 +616,20 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "gate-package",
-          "command": "bench test --package ./internal/gate"
+          "id": "t10-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "ticket": "10-route-each-checkpoint-refusal-by-its-cause.md"
         },
         {
-          "id": "checkpoint-routes",
-          "command": "bench test --package ./internal/gate --run 'TestCheckpointFacesFollowTheirRoutes|TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'"
+          "id": "t10-checkpoint-routes",
+          "command": "bench test --package ./internal/gate --run 'TestCheckpointFacesFollowTheirRoutes|TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'",
+          "ticket": "10-route-each-checkpoint-refusal-by-its-cause.md"
+        },
+        {
+          "id": "t10-help-row-proof",
+          "command": "bench test --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'",
+          "probe": "Print the fixed write-access `help[1]{cmd,why}` row on the checkpoint refusal again. TestReviewCheckpointRefusalRoute must fail, then pass after source restoration.",
+          "ticket": "10-route-each-checkpoint-refusal-by-its-cause.md"
         }
       ]
     },
@@ -484,16 +641,41 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "commitment-packages",
-          "command": "bench test --package ./internal/commitment/..."
+          "id": "t11-commitment-packages",
+          "command": "bench test --package ./internal/commitment/...",
+          "ticket": "11-route-the-commitment-policy-refusals-through-faces.md"
         },
         {
-          "id": "commit-package",
-          "command": "bench test --package ./internal/commit"
+          "id": "t11-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "ticket": "11-route-the-commitment-policy-refusals-through-faces.md"
         },
         {
-          "id": "commitment-verb",
-          "command": "bench test --package ./cmd/bench --run 'TestCommitment'"
+          "id": "t11-authority-proof",
+          "command": "bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'",
+          "probe": "Give the protected-commitment refusal the `commitment-unbound` face. TestCommitFacesFollowTheirRoutes must fail, then pass after source restoration.",
+          "ticket": "11-route-the-commitment-policy-refusals-through-faces.md"
+        },
+        {
+          "id": "t12-commitment-packages",
+          "command": "bench test --package ./internal/commitment/...",
+          "ticket": "12-print-the-commitment-verb-routes-from-the-registry.md"
+        },
+        {
+          "id": "t12-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "ticket": "12-print-the-commitment-verb-routes-from-the-registry.md"
+        },
+        {
+          "id": "t12-commitment-verb",
+          "command": "bench test --package ./cmd/bench --run 'TestCommitment'",
+          "ticket": "12-print-the-commitment-verb-routes-from-the-registry.md"
+        },
+        {
+          "id": "t12-authority-proof",
+          "command": "bench test --package ./internal/commitment/commitcmd --run 'TestCommitmentFacesFollowTheirRoutes'",
+          "probe": "Give the outside-milestone start refusal the `commitment-needs-assignment` face. TestCommitmentFacesFollowTheirRoutes must fail, then pass after source restoration.",
+          "ticket": "12-print-the-commitment-verb-routes-from-the-registry.md"
         }
       ]
     },
@@ -504,12 +686,20 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       ],
       "verification": [
         {
-          "id": "bypass-check",
-          "command": "bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'"
+          "id": "t13-bypass-check",
+          "command": "bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'",
+          "ticket": "13-refuse-a-route-literal-outside-the-registry.md"
         },
         {
-          "id": "conformance-package",
-          "command": "bench test --package ./internal/conformance"
+          "id": "t13-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "13-refuse-a-route-literal-outside-the-registry.md"
+        },
+        {
+          "id": "t13-scan-proof",
+          "command": "bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'",
+          "probe": "Remove `internal/commitment/repository` from the scanned packages of the bypass check. TestRouteBypassCheckBites must fail, then pass after source restoration.",
+          "ticket": "13-refuse-a-route-literal-outside-the-registry.md"
         }
       ]
     }
@@ -523,7 +713,433 @@ The orchestrator adds the required version 2 author sessions before dispatch.
       "id": "coverage",
       "command": "bench coverage --check refusal-route-registry"
     }
-  ]
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft393-build-20261007",
+    "orchestrator_session": "claude:ft393-orchestrator-20261007",
+    "author_limit": 1,
+    "assignments": {
+      "01-create-the-shared-refusal-route-registry.md": [
+        {
+          "session": "claude:ft393_t1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "2474d5c9285ff9026ec821210209356f496ba84a",
+          "native_ref": "claude-agent:ft393_t1"
+        },
+        {
+          "session": "claude:ft393_t1_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "e66a113731b4f70de8e262972d5c04a9297a06c8",
+          "native_ref": "claude-agent:ft393_t1_repair1",
+          "predecessor": "claude:ft393_t1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 01 author session reported completion of the record commit 62bda9ae and has no live child",
+          "preserved": "e66a113731b4f70de8e262972d5c04a9297a06c8"
+        }
+      ],
+      "02-move-the-landing-faces-into-the-shared-registry.md": [
+        {
+          "session": "claude:ft393_t2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "90fa563633fcf6114ed714dfa480777cd36a176d",
+          "native_ref": "claude-agent:ft393_t2"
+        },
+        {
+          "session": "claude:ft393_t2_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "5a0684de8441bd7b2b82e4e52bbef2d3e0e04fc5",
+          "native_ref": "claude-agent:ft393_t2_repair1",
+          "predecessor": "claude:ft393_t2",
+          "trigger": "user-directed",
+          "stopped": "the ticket 02 author session reported completion of its RR-C1b verification records and has no live child",
+          "preserved": "5a0684de8441bd7b2b82e4e52bbef2d3e0e04fc5"
+        }
+      ],
+      "03-prove-each-agent-route-passes-the-wired-guards.md": [
+        {
+          "session": "claude:ft393_t3",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1d22d3209f8d20710da4da8c7bdf1378a871969a",
+          "native_ref": "claude-agent:ft393_t3"
+        },
+        {
+          "session": "claude:ft393_t3_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "5a0a4f783b1237efba18757e1d6887a7887327e3",
+          "native_ref": "claude-agent:ft393_t3_repair1",
+          "predecessor": "claude:ft393_t3",
+          "trigger": "user-directed",
+          "stopped": "the ticket 03 author session reported completion of its RR-C1b verification records and has no live child",
+          "preserved": "5a0a4f783b1237efba18757e1d6887a7887327e3"
+        },
+        {
+          "session": "claude:ft393_t3_repair2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1603d883702d9a90ad8559f4dbdbf4d27d686eae",
+          "native_ref": "claude-agent:ft393_t3_repair2",
+          "predecessor": "claude:ft393_t3_repair1",
+          "trigger": "user-directed",
+          "stopped": "the first ticket 03 repair session reported completion of its RR-C1b verification records and has no live child",
+          "preserved": "1603d883702d9a90ad8559f4dbdbf4d27d686eae"
+        }
+      ],
+      "04-render-the-recovery-matrix-from-the-registry.md": [
+        {
+          "session": "claude:ft393_t4",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "f99f7bcd61e976c1434781e33913029eb31f1eb6",
+          "native_ref": "claude-agent:ft393_t4"
+        },
+        {
+          "session": "claude:ft393_t4_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "c359944cda758e4b555be502836e29cb530511fd",
+          "native_ref": "claude-agent:ft393_t4_repair1",
+          "predecessor": "claude:ft393_t4",
+          "trigger": "user-directed",
+          "stopped": "the ticket 04 author session reported completion of its RR-C1b verification record commit 2dd0ec7e and has no live child",
+          "preserved": "c359944cda758e4b555be502836e29cb530511fd"
+        }
+      ],
+      "05-route-each-merge-refusal-through-the-registry.md": [
+        {
+          "session": "claude:ft393_t5",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "6affd5e5e85046b4b5bed7331cf92effb42f5eb7",
+          "native_ref": "claude-agent:ft393_t5"
+        },
+        {
+          "session": "claude:ft393_t5b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "01a59319d73960148284929697ff4fc542f9f898",
+          "native_ref": "claude-agent:ft393_t5b",
+          "predecessor": "claude:ft393_t5",
+          "trigger": "user-directed",
+          "stopped": "the ticket 05 author session committed 1fcfeef8, has no live child, and carries about 419k tokens of context; the reviewer's standing rule transfers work past about 300k tokens",
+          "preserved": "1fcfeef8aacc9b37ce51cc0566c053974337d2af"
+        },
+        {
+          "session": "claude:ft393_t5_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "f932db29f82ba07271a8e11c8ac5ea011b0aa3ab",
+          "native_ref": "claude-agent:ft393_t5_repair1",
+          "predecessor": "claude:ft393_t5b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 05 verification session reported its RR-C2 records and has no live child",
+          "preserved": "f932db29f82ba07271a8e11c8ac5ea011b0aa3ab"
+        }
+      ],
+      "06-give-the-red-source-fold-an-exit.md": [
+        {
+          "session": "claude:ft393_t6",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1fcfeef8aacc9b37ce51cc0566c053974337d2af",
+          "native_ref": "claude-agent:ft393_t6"
+        },
+        {
+          "session": "claude:ft393_t6_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "eadc1b23a9247fef6e2ef3bd567eff24050b6726",
+          "native_ref": "claude-agent:ft393_t6_repair1",
+          "predecessor": "claude:ft393_t6",
+          "trigger": "user-directed",
+          "stopped": "the ticket 06 author reached the context limit and has no live child",
+          "preserved": "f932db29f82ba07271a8e11c8ac5ea011b0aa3ab"
+        }
+      ],
+      "07-route-each-reset-refusal-through-the-registry.md": [
+        {
+          "session": "claude:ft393_t7",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "4812b3923e4c247a28e9e09f743c0c404515bdf6",
+          "native_ref": "claude-agent:ft393_t7"
+        },
+        {
+          "session": "claude:ft393_t7b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "a54fe8fca1910d7834bbc6c47c65d09ba6318e81",
+          "native_ref": "claude-agent:ft393_t7b",
+          "predecessor": "claude:ft393_t7",
+          "trigger": "user-directed",
+          "stopped": "the ticket 07 author session returned a blocked report at about 318k tokens of context and has no live child; the reviewer directed a fresh author",
+          "preserved": "a54fe8fca1910d7834bbc6c47c65d09ba6318e81"
+        },
+        {
+          "session": "claude:ft393_t7_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "e686bbda27b1db9256b38d1eb8502ecefc21b2a2",
+          "native_ref": "claude-agent:ft393_t7_repair1",
+          "predecessor": "claude:ft393_t7b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 07 successor reported its RR-C2 records and has no live child",
+          "preserved": "f932db29f82ba07271a8e11c8ac5ea011b0aa3ab"
+        },
+        {
+          "session": "claude:ft393_t7_repair1b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "d0c8c4955b07af76bcbc4e007a9b94c3714e6e96",
+          "native_ref": "claude-agent:ft393_t7_repair1b",
+          "predecessor": "claude:ft393_t7_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 07 repair session neared the 300k context rule after its commit and has no live child",
+          "preserved": "d0c8c4955b07af76bcbc4e007a9b94c3714e6e96"
+        }
+      ],
+      "08-route-the-commit-exit-3-to-the-reset-plan.md": [
+        {
+          "session": "claude:ft393_t8",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "f97dcb703cb5e304115e9b475385b6aae99a405b",
+          "native_ref": "claude-agent:ft393_t8"
+        },
+        {
+          "session": "claude:ft393_t8_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "ba5d8921e4de62d64f4046ad1fef241f51b446b8",
+          "native_ref": "claude-agent:ft393_t8_repair1",
+          "predecessor": "claude:ft393_t8",
+          "trigger": "user-directed",
+          "stopped": "the ticket 08 author reported its RR-C3 records and has no live child",
+          "preserved": "ba5d8921e4de62d64f4046ad1fef241f51b446b8"
+        }
+      ],
+      "09-route-each-commit-refusal-through-the-registry.md": [
+        {
+          "session": "claude:ft393_t9",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "a62b2929153f8a1cf00a3c7cccba2b2fece0d861",
+          "native_ref": "claude-agent:ft393_t9"
+        },
+        {
+          "session": "claude:ft393_t9b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "7d86d4697932a09f683f0ecf33ecacadda1c10b6",
+          "native_ref": "claude-agent:ft393_t9b",
+          "predecessor": "claude:ft393_t9",
+          "trigger": "user-directed",
+          "stopped": "the ticket 09 author neared the 300k context rule after its commit and has no live child",
+          "preserved": "7d86d4697932a09f683f0ecf33ecacadda1c10b6"
+        },
+        {
+          "session": "claude:ft393_t9_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "12c022023b8fe3062920e03adfdba79bb0dd30a1",
+          "native_ref": "claude-agent:ft393_t9_repair1",
+          "predecessor": "claude:ft393_t9b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 09 verification session reported its RR-C3 records and has no live child",
+          "preserved": "ba5d8921e4de62d64f4046ad1fef241f51b446b8"
+        },
+        {
+          "session": "claude:ft393_t9_repair2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "4ddf054e5d72a88d3c75df034de47e7629f9e07f",
+          "native_ref": "claude-agent:ft393_t9_repair2",
+          "predecessor": "claude:ft393_t9_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 09 repair session reported its RR-C3 records and has no live child",
+          "preserved": "eb02867a4f5d139439fa9532ff05ae5cb889a537"
+        }
+      ],
+      "10-route-each-checkpoint-refusal-by-its-cause.md": [
+        {
+          "session": "claude:ft393_t10",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "4abc3cc84ba09b72fc56796fa2e20ea42ea4dbcb",
+          "native_ref": "claude-agent:ft393_t10"
+        },
+        {
+          "session": "claude:ft393_t10b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "c53a2da583101247595f4d6806f6df5d68be9609",
+          "native_ref": "claude-agent:ft393_t10b",
+          "predecessor": "claude:ft393_t10",
+          "trigger": "user-directed",
+          "stopped": "the ticket 10 author passed the 300k context rule after its commit and has no live child",
+          "preserved": "c53a2da583101247595f4d6806f6df5d68be9609"
+        },
+        {
+          "session": "claude:ft393_t10_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "61952037e487cb3aeea87b5055d4ac0193fb824a",
+          "native_ref": "claude-agent:ft393_t10_repair1",
+          "predecessor": "claude:ft393_t10b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 10 verification session reported its RR-C4 records and has no live child",
+          "preserved": "429a3d8af4ac5aa227cd705085ef138c58247aac"
+        }
+      ],
+      "11-route-the-commitment-policy-refusals-through-faces.md": [
+        {
+          "session": "claude:ft393_t11",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "e2991ccf285f97e8bdc05f30eb2c7419ce8b63fb",
+          "native_ref": "claude-agent:ft393_t11"
+        },
+        {
+          "session": "claude:ft393_t11b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "68bb6f06b232121d01f1fd19d574e80507688293",
+          "native_ref": "claude-agent:ft393_t11b",
+          "predecessor": "claude:ft393_t11",
+          "trigger": "user-directed",
+          "stopped": "the ticket 11 author passed the 300k context rule after its commit and has no live child",
+          "preserved": "4cf6e4721b89fbcc06fdff9254442f3d95f18434"
+        },
+        {
+          "session": "claude:ft393_t11_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "a71c4466f83e447457d21f91009318ede5bc283b",
+          "native_ref": "claude-agent:ft393_t11_repair1",
+          "predecessor": "claude:ft393_t11b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 11 verification session reported its RR-C5 records and has no live child",
+          "preserved": "048702bb1a57c0f3cbdb320a307aecfb2ee66892"
+        },
+        {
+          "session": "claude:ft393_t11_verify2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "267dcc2d0be9929c2ecb5df7cd6cd629dc9de283",
+          "native_ref": "claude-agent:ft393_t11_verify2",
+          "predecessor": "claude:ft393_t11_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 11 repair session passed the 300k context rule after its commit and has no live child",
+          "preserved": "848a174e65dadbf399861e65ad684b36abbb1118"
+        },
+        {
+          "session": "claude:ft393_t11_repair2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1cc2675c90f84870f7aed6db324a2f8f41cc060d",
+          "native_ref": "claude-agent:ft393_t11_repair2",
+          "predecessor": "claude:ft393_t11_verify2",
+          "trigger": "user-directed",
+          "stopped": "the ticket 11 verification session reported its RR-C5 records and has no live child",
+          "preserved": "56fa6378ac8d453a3a396b09a092c0b381783967"
+        }
+      ],
+      "12-print-the-commitment-verb-routes-from-the-registry.md": [
+        {
+          "session": "claude:ft393_t12",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "4cf6e4721b89fbcc06fdff9254442f3d95f18434",
+          "native_ref": "claude-agent:ft393_t12"
+        },
+        {
+          "session": "claude:ft393_t12_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "848a174e65dadbf399861e65ad684b36abbb1118",
+          "native_ref": "claude-agent:ft393_t12_repair1",
+          "predecessor": "claude:ft393_t12",
+          "trigger": "user-directed",
+          "stopped": "the ticket 12 author reported its RR-C5 records and has no live child",
+          "preserved": "048702bb1a57c0f3cbdb320a307aecfb2ee66892"
+        },
+        {
+          "session": "claude:ft393_t12_repair2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "cf88bc0eff5849adf8872088ec772e97a1af51c8",
+          "native_ref": "claude-agent:ft393_t12_repair2",
+          "predecessor": "claude:ft393_t12_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 12 repair session reported its RR-C5 records and has no live child",
+          "preserved": "56fa6378ac8d453a3a396b09a092c0b381783967"
+        }
+      ],
+      "13-refuse-a-route-literal-outside-the-registry.md": [
+        {
+          "session": "claude:ft393_t13",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "b5f2e97b5a30599ae9ca3a582cf38fceb2bfebea",
+          "native_ref": "claude-agent:ft393_t13"
+        },
+        {
+          "session": "claude:ft393_t13_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1cf8c2eb79e414084ecaacb7fcc5d44d0f619b4a",
+          "native_ref": "claude-agent:ft393_t13_repair1",
+          "predecessor": "claude:ft393_t13",
+          "trigger": "user-directed",
+          "stopped": "the ticket 13 author reported its RR-C6 records and has no live child",
+          "preserved": "ef502ec90aea9e07fe0232b50866147ea28648b0"
+        }
+      ]
+    }
+  }
 }
 ```
 
@@ -561,72 +1177,72 @@ Each new expectation derives from the fixture inputs and the registry's declared
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| RR01 | 1, 2 | Every registered face declares a verb from the six write verbs | planned TestRegistryFacesAreComplete in internal/refusalroute/registry_test.go | A face with an empty or unknown verb escapes every per-verb walk |
-| RR02 | 2 | Every registered face declares the authority `agent` or `reviewer` | planned TestRegistryFacesAreComplete in internal/refusalroute/registry_test.go | A face with no authority leaves the agent to guess |
-| RR03 | 5 | Every registered face declares at least one route step | planned TestRegistryFacesAreComplete in internal/refusalroute/registry_test.go | A face with no step prints an empty route |
-| RR04 | 6 | The registry walk fails when two faces share one name | planned TestRegistryFaceNamesAreUnique in internal/refusalroute/registry_test.go | A duplicate name lets the lookup return the wrong face |
-| RR05 | 3 | A rendered reviewer route starts with `reviewer: ` | planned TestRouteRendering in internal/refusalroute/route_test.go | A reviewer route without the marker reads as an agent command |
-| RR06 | 4 | A rendered agent route joins its steps with `; then ` in declared order | planned TestRouteRendering in internal/refusalroute/route_test.go | A renderer that sorts or drops steps prints a route in the wrong order |
-| RR07 | 7 | The constructor for an unknown face name returns `refusal face <name> is unregistered` with a reviewer route | planned TestUnregisteredFaceRefusesWithAReviewerRoute in internal/refusalroute/registry_test.go | A panic or an empty route aborts the operator's session |
-| RR08 | 8 | Every agent route, rendered with sample facts, gets the empty label from `gitguard.Classify` for each command step | planned TestAgentRoutesPassTheWiredGuards in internal/conformance/refusal_route_guard_test.go | A printed `git merge` or `git restore` path step passes unseen |
-| RR09 | 9 | Every agent route command step, with every slot filled by a sample value, gets `Blocked == false` from `benchguard.Classify` | planned TestAgentRoutesPassTheWiredGuards in internal/conformance/refusal_route_guard_test.go | A step that chains a second Bench call passes unseen |
-| RR10 | 9 | Every agent route command step gets the empty string from `benchguard.PoolReference` with a pool-path sample | planned TestAgentRoutesPassTheWiredGuards in internal/conformance/refusal_route_guard_test.go | A `cd` or `git -C` into the pool passes unseen |
-| RR11 | 10 | The guard check refuses an agent step that runs `bench worktree exec <target> -- bench <verb>` | planned TestAgentRoutesPassTheWiredGuards in internal/conformance/refusal_route_guard_test.go | An exec route survives today and breaks when FT341 refuses it |
-| RR12 | 11 | The guard check reds an injected agent face whose route step is `git merge <commit>` | planned TestAgentRouteGuardCheckBites in internal/conformance/refusal_route_guard_test.go | A check that never classifies passes every route |
-| RR13 | 12 | A route step that runs a tree-scoped Bench verb at a worktree renders `--in <label>` | planned TestRouteRendering in internal/refusalroute/route_test.go | A renderer that keeps the exec form fails RR11 at the first real face |
+| RR01 | 1, 2 | Every registered face declares a verb from the six write verbs | `internal/refusalroute/registry_test.go` (`TestRegistryFacesAreComplete`) | A face with an empty or unknown verb escapes every per-verb walk |
+| RR02 | 2 | Every registered face declares the authority `agent` or `reviewer` | `internal/refusalroute/registry_test.go` (`TestRegistryFacesAreComplete`) | A face with no authority leaves the agent to guess |
+| RR03 | 5 | Every registered face declares at least one route step | `internal/refusalroute/registry_test.go` (`TestRegistryFacesAreComplete`) | A face with no step prints an empty route |
+| RR04 | 6 | The registry walk fails when two faces share one name | `internal/refusalroute/registry_test.go` (`TestRegistryFaceNamesAreUnique`) | A duplicate name lets the lookup return the wrong face |
+| RR05 | 3 | A rendered reviewer route starts with `reviewer: ` | `internal/refusalroute/route_test.go` (`TestRouteRendering`) | A reviewer route without the marker reads as an agent command |
+| RR06 | 4 | A rendered agent route joins its steps with `; then ` in declared order | `internal/refusalroute/route_test.go` (`TestRouteRendering`) | A renderer that sorts or drops steps prints a route in the wrong order |
+| RR07 | 7 | The constructor for an unknown face name returns `refusal face <name> is unregistered` with a reviewer route | `internal/refusalroute/registry_test.go` (`TestUnregisteredFaceRefusesWithAReviewerRoute`) | A panic or an empty route aborts the operator's session |
+| RR08 | 8 | Every agent route, rendered with sample facts, gets the empty label from `gitguard.Classify` for each command step | `internal/conformance/refusal_route_guard_test.go` (`TestAgentRoutesPassTheWiredGuards`) | A printed `git merge` or `git restore` path step passes unseen |
+| RR09 | 9 | Every agent route command step, with every slot filled by a sample value, gets `Blocked == false` from `benchguard.Classify` | `internal/conformance/refusal_route_guard_test.go` (`TestAgentRoutesPassTheWiredGuards`) | A step that chains a second Bench call passes unseen |
+| RR10 | 9 | Every agent route command step gets the empty string from `benchguard.PoolReference` with a pool-path sample | `internal/conformance/refusal_route_guard_test.go` (`TestAgentRoutesPassTheWiredGuards`) | A `cd` or `git -C` into the pool passes unseen |
+| RR11 | 10 | The guard check refuses an agent step that runs `bench worktree exec <target> -- bench <verb>` | `internal/conformance/refusal_route_guard_test.go` (`TestAgentRoutesPassTheWiredGuards`) | An exec route survives today and breaks when FT341 refuses it |
+| RR12 | 11 | The guard check reds an injected agent face whose route step is `git merge <commit>` | `internal/conformance/refusal_route_guard_test.go` (`TestAgentRouteGuardCheckBites`) | A check that never classifies passes every route |
+| RR13 | 12 | A route step that runs a tree-scoped Bench verb at a worktree renders `--in <label>` | `internal/refusalroute/route_test.go` (`TestRouteRendering`) | A renderer that keeps the exec form fails RR11 at the first real face |
 | RR14 | 13, 15 | Each land face in the registry has exactly one producing fixture, and each fixture produces a registered land face | `internal/worktree/identity_component_test.go` (`TestLandingRefusalRegistryHasAProducingFixture`) | A face moved without its fixture reaches an operator unproven |
-| RR15 | 14 | Each land fixture follows the printed route, reruns the landing, and the face's sentence no longer prints | planned TestLandingFacesFollowTheirRoutes in internal/worktree/refusal_route_test.go | A route that names the wrong repair leaves the face in place |
-| RR16 | 16 | The landing composition-conflict refusal prints a `next=` value that starts with `reviewer: ` | planned TestConflictRepairIsAReviewerRoute in internal/worktree/refusal_route_test.go | An agent route that prints `git merge` is the collision 8 denial |
-| RR17 | 16 | The landing composition-conflict-pending refusal prints a `next=` value that starts with `reviewer: ` | planned TestConflictRepairIsAReviewerRoute in internal/worktree/refusal_route_test.go | The pending-merge arm prints `git merge --continue`, which the guard denies |
-| RR18 | 17 | The landing destination-not-clean refusal prints a `next=` value that starts with `reviewer: ` | planned TestLandingFacesFollowTheirRoutes in internal/worktree/refusal_route_test.go | An agent route lets the agent discard the reviewer's primary-checkout work |
-| RR19 | 18 | The landing source-not-clean refusal prints a route that contains `bench commit --in ` and the source label | planned TestLandingFacesFollowTheirRoutes in internal/worktree/refusal_route_test.go | A route that names no commit command leaves the agent at a raw commit, which the guard denies |
+| RR15 | 14 | Each land fixture follows the printed route, reruns the landing, and the face's sentence no longer prints | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A route that names the wrong repair leaves the face in place |
+| RR16 | 16 | The landing composition-conflict refusal prints a `next=` value that starts with `reviewer: ` | `internal/worktree/refusal_route_test.go` (`TestConflictRepairIsAReviewerRoute`) | An agent route that prints `git merge` is the collision 8 denial |
+| RR17 | 16 | The landing composition-conflict-pending refusal prints a `next=` value that starts with `reviewer: ` | `internal/worktree/refusal_route_test.go` (`TestConflictRepairIsAReviewerRoute`) | The pending-merge arm prints `git merge --continue`, which the guard denies |
+| RR18 | 17 | The landing destination-not-clean refusal prints a `next=` value that starts with `reviewer: ` | `internal/worktree/refusal_route_test.go` (`TestReviewerLandFacesOpenWithTheMarker`) | An agent route lets the agent discard the reviewer's primary-checkout work |
+| RR19 | 18 | The landing source-not-clean refusal prints a route that contains `bench commit --in ` and the source label | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A route that names no commit command leaves the agent at a raw commit, which the guard denies |
 | RR20 | 19 | Each landing preflight route ends with the caller's own re-run | `internal/worktree/land_surface_test.go` (`TestLandCommandReportsEveryRefusalInOnePreflight`) | A face that drops the re-run leaves a second lookup |
-| RR21 | 20 | A fold of `main` into a target whose committed tip fails its lane prints a `refused{` record that contains `next=` | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | This is the collision 5a repro: the `lane fail` refusal prints no `next=` today |
-| RR22 | 21 | The target-red fold route contains `bench commit --in ` and the target label | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A route that reruns the fold alone loops on the same red |
-| RR23 | 21 | The target-red fold route ends with `bench worktree merge --from ` and the incoming spelling and the target | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A route that stops at the commit leaves the fold undone |
-| RR24 | 21 | After the fixture removes the red file and runs the printed commit step, the printed fold step exits 0 | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A route whose steps do not clear the red keeps the deadlock |
-| RR25 | 22 | A fold into a dirty target prints a `refused{` record whose `next=` contains `bench commit --in ` | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | This is the second refusal of the collision 5a repro, with no `next=` today |
-| RR26 | 23 | A `lane fail` fold whose incoming commit adds the red to a lane-green target prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A merge that never grades the target alone gives every lane red the agent route, which loops |
-| RR55 | 23 | A `lane fail` fold whose target tip alone fails the lane prints a `next=` value that does not start with `reviewer: ` | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A merge that sends every lane red to the reviewer hands back a repair that is the agent's |
-| RR57 | 23 | An `inherited` fold whose target tip alone grades green prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A face map that reads `inherited` as a target red gives a fold red the agent route, which loops |
-| RR60 | 10 | An incomplete landing whose source path is not line-safe prints a resume route that contains `<checkout>` and no `bench worktree exec` | planned TestUnsafePathRouteUsesThePlaceholder in internal/worktree/refusal_route_test.go | The current resume pointer form runs a Bench child through exec, which FT341 refuses |
-| RR58 | 10 | A landing refusal whose source path is not line-safe prints an agent route that contains `<checkout>` and no `bench worktree exec` | planned TestUnsafePathRouteUsesThePlaceholder in internal/worktree/refusal_route_test.go | The current pointer form runs a Bench child through exec, which FT341 refuses, and the sample-only guard check misses it |
-| RR59 | 23 | An `inherited` fold whose target tip alone grades red prints a `next=` value that contains `bench commit --in ` and the target label | planned TestRedSourceFoldNamesAnExit in internal/worktree/merge_route_test.go | A merge that grades the target only on `lane fail` sends a lane-less project's target red to the reviewer, and the collision 5a deadlock returns |
-| RR56 | 23 | A `candidate` gate-kind fold red prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A face map that ignores the gate kind's attribution gives a fold red the agent route |
-| RR27 | 24 | A merge composition conflict prints a `next=` value that starts with `reviewer: ` | planned TestConflictRepairIsAReviewerRoute in internal/worktree/refusal_route_test.go | The merge keeps printing the guard-denied `git merge` as an agent step |
-| RR28 | 25 | A fold with a dirty sibling prints a route that contains `bench commit --in ` and no `bench worktree exec` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | The current route prints the exec form that FT341 refuses |
-| RR29 | 13, 27 | Each merge face and each reset face has exactly one producing fixture that follows its route out of the face | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A merge or reset face with no fixture reaches an operator unproven |
+| RR21 | 20 | A fold of `main` into a target whose committed tip fails its lane prints a `refused{` record that contains `next=` | `internal/worktree/merge_route_test.go` (`TestRedSourceFoldNamesAnExit`) | This is the collision 5a repro: the `lane fail` refusal prints no `next=` today |
+| RR22 | 21 | The target-red fold route contains `bench commit --in ` and the target label | `internal/worktree/merge_route_test.go` (`TestRedSourceFoldNamesAnExit`) | A route that reruns the fold alone loops on the same red |
+| RR23 | 21 | The target-red fold route ends with `bench worktree merge --from ` and the incoming spelling and the target | `internal/worktree/merge_route_test.go` (`TestRedSourceFoldNamesAnExit`) | A route that stops at the commit leaves the fold undone |
+| RR24 | 21 | After the fixture removes the red file and runs the printed commit step, the printed fold step exits 0 | `internal/worktree/merge_route_test.go` (`TestRedSourceFoldNamesAnExit`) | A route whose steps do not clear the red keeps the deadlock |
+| RR25 | 22 | A fold into a dirty target prints a `refused{` record whose `next=` contains `bench commit --in ` | `internal/worktree/merge_route_test.go` (`TestRedSourceFoldNamesAnExit`) | This is the second refusal of the collision 5a repro, with no `next=` today |
+| RR26 | 23 | A `lane fail` fold whose incoming commit adds the red to a lane-green target prints a `next=` value that starts with `reviewer: ` | `internal/worktree/merge_route_test.go` (`TestMergeFacesFollowTheirRoutes`) | A merge that never grades the target alone gives every lane red the agent route, which loops |
+| RR55 | 23 | A `lane fail` fold whose target tip alone fails the lane prints a `next=` value that does not start with `reviewer: ` | `internal/worktree/merge_route_test.go` (`TestRedSourceFoldNamesAnExit`) | A merge that sends every lane red to the reviewer hands back a repair that is the agent's |
+| RR57 | 23 | An `inherited` fold whose target tip alone grades green prints a `next=` value that starts with `reviewer: ` | `internal/worktree/merge_route_test.go` (`TestMergeFacesFollowTheirRoutes`) | A face map that reads `inherited` as a target red gives a fold red the agent route, which loops |
+| RR60 | 10 | An incomplete landing whose source path is not line-safe prints a resume route that contains `<checkout>` and no `bench worktree exec` | `internal/worktree/land_release_refusal_test.go` (`TestUnsafePathRouteUsesThePlaceholder`) | The current resume pointer form runs a Bench child through exec, which FT341 refuses |
+| RR58 | 10 | A landing refusal whose source path is not line-safe prints an agent route that contains `<checkout>` and no `bench worktree exec` | `internal/worktree/land_release_refusal_test.go` (`TestUnsafePathRouteUsesThePlaceholder`) | The current pointer form runs a Bench child through exec, which FT341 refuses, and the sample-only guard check misses it |
+| RR59 | 23 | An `inherited` fold whose target tip alone grades red prints a `next=` value that contains `bench commit --in ` and the target label | `internal/worktree/merge_route_test.go` (`TestRedSourceFoldNamesAnExit`) | A merge that grades the target only on `lane fail` sends a lane-less project's target red to the reviewer, and the collision 5a deadlock returns |
+| RR56 | 23 | A `candidate` gate-kind fold red prints a `next=` value that starts with `reviewer: ` | `internal/worktree/merge_route_test.go` (`TestMergeFacesFollowTheirRoutes`) | A face map that ignores the gate kind's attribution gives a fold red the agent route |
+| RR27 | 24 | A merge composition conflict prints a `next=` value that starts with `reviewer: ` | `internal/worktree/refusal_route_test.go` (`TestConflictRepairIsAReviewerRoute`) | The merge keeps printing the guard-denied `git merge` as an agent step |
+| RR28 | 25 | A fold with a dirty sibling prints a route that contains `bench commit --in ` and no `bench worktree exec` | `internal/worktree/merge_route_test.go` (`TestMergeFacesFollowTheirRoutes`) | The current route prints the exec form that FT341 refuses |
+| RR29 | 13, 27 | Each merge face and each reset face has exactly one producing fixture for each declared cause, and each fixture follows its route out of the face | `internal/worktree/merge_route_test.go` (`TestMergeFacesFollowTheirRoutes`) | A merge or reset face with no fixture reaches an operator unproven |
 | RR30 | 26 | The `inherited` authorization refusal sentence equals `prospective authorization refused: inherited (the gate ran red on the composed tree and no green baseline attributes the red to this diff)` | `internal/landing/landing_reviewed_test.go` (`TestRefusalMessageNamesTheOperatorActionAndTheOpenReason`) | An inline action prints a second route beside the face's route |
-| RR67 | 26 | A landing whose composed tree grades red prints a `refused{` record whose `next=` contains `bench commit --in ` and ends with the caller's re-run | planned TestLandingRedRouteNamesTheRepair in internal/worktree/refusal_route_test.go | After the sentence drops its action, a landing red prints no route |
+| RR67 | 26 | A landing whose composed tree grades red prints a `refused{` record whose `next=` contains `bench commit --in ` and ends with the caller's re-run | `internal/worktree/refusal_route_test.go` (`TestLandingRedRouteNamesTheRepair`) | After the sentence drops its action, a landing red prints no route |
 | RR31 | 26 | The merge retries an empty-reason infrastructure refusal exactly once | `internal/worktree/merge_test.go` (`TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal`) | A retry that matches the old sentence never fires after the sentence changes |
-| RR32 | 28 | A commit exit 3 prints `next=` with the value `bench worktree reset --to <published-commit> <checkout>` for its published commit and its root | planned TestPublishedUnreconciledRouteIsTheResetPlan in internal/commit/refusal_route_test.go | This is the collision 8 restore repro: the current route is `git restore`, which the guard denies |
-| RR33 | 28 | A commit exit 3 `next=` value does not contain `git restore` | planned TestPublishedUnreconciledRouteIsTheResetPlan in internal/commit/refusal_route_test.go | A route that keeps the restore beside the reset still prints a denied step |
-| RR34 | 28 | A commit exit 3 on a root path that is not line-safe prints the placeholder `<checkout>` | planned TestPublishedUnreconciledRouteIsTheResetPlan in internal/commit/refusal_route_test.go | A raw control byte reaches the line-structured record |
-| RR35 | 29 | After a commit exit 3 in an assignment worktree, the printed reset plan and its `--apply` leave `git status --porcelain` empty at the published commit | planned TestCommitExitThreeRouteReconcilesTheCheckout in internal/worktree/commit_route_test.go | A reset route that does not reconcile leaves the exit 3 state |
-| RR36 | 30 | Each commit face has exactly one producing fixture that follows its route out of the face | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | A commit face with no fixture reaches an operator unproven |
-| RR37 | 30 | A red commit refusal prints a `next=` line on stderr whose route ends with the caller's commit command | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The current `inherited` refusal prints only `run bench gate --fresh`, which re-grades the same red |
-| RR38 | 30 | A commit in the primary checkout prints a `next=` route that contains `bench worktree create --request` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | A refusal that keeps its route only inside the sentence bypasses the registry |
+| RR32 | 28 | A commit exit 3 prints `next=` with the value `bench worktree reset --to <published-commit> <checkout>` for its published commit and its root | `internal/commit/refusal_route_test.go` (`TestPublishedUnreconciledRouteIsTheResetPlan`) | This is the collision 8 restore repro: the current route is `git restore`, which the guard denies |
+| RR33 | 28 | A commit exit 3 `next=` value does not contain `git restore` | `internal/commit/refusal_route_test.go` (`TestPublishedUnreconciledRouteIsTheResetPlan`) | A route that keeps the restore beside the reset still prints a denied step |
+| RR34 | 28 | A commit exit 3 on a root path that is not line-safe prints the placeholder `<checkout>` | `internal/commit/refusal_route_test.go` (`TestPublishedUnreconciledRouteIsTheResetPlan`) | A raw control byte reaches the line-structured record |
+| RR35 | 29 | After a commit exit 3 in an assignment worktree, the printed reset plan and its `--apply` leave `git status --porcelain` empty at the published commit | `internal/worktree/commit_route_test.go` (`TestCommitExitThreeRouteReconcilesTheCheckout`) | A reset route that does not reconcile leaves the exit 3 state |
+| RR36 | 30 | Each commit face has exactly one producing fixture for each declared cause, and each fixture follows its route out of the face | `internal/commit/refusal_route_test.go` (`TestCommitFacesFollowTheirRoutes`) | A commit face with no fixture reaches an operator unproven |
+| RR37 | 30 | A red commit refusal prints a `next=` line on stderr whose route ends with the caller's commit command | `internal/commit/refusal_route_test.go` (`TestCommitFacesFollowTheirRoutes`) | The current `inherited` refusal prints only `run bench gate --fresh`, which re-grades the same red |
+| RR38 | 30 | A commit in the primary checkout prints a `next=` route that contains `bench worktree create --request` | `internal/commit/refusal_route_test.go` (`TestCommitFacesFollowTheirRoutes`) | A refusal that keeps its route only inside the sentence bypasses the registry |
 | RR39 | 31 | A checkpoint refusal for a missing completion record prints no `help[1]{cmd,why}` row | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | This is the FT330 defect: the fixed write-access row prints for every cause |
-| RR40 | 32 | A checkpoint refusal for a missing completion record prints `next=bench preflight review example` | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | The move to the registry drops the current evidence route |
+| RR40 | 32 | A checkpoint refusal for a missing completion record prints `next=bench preflight review 'example'` | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | The move to the registry drops the current evidence route |
 | RR41 | 33 | A complete checkpoint with an uncommitted tracked edit prints `cleanCheckoutRefusal` and a `next=` route that contains `bench commit --in ` | `internal/gate/complete_checkpoint_test.go` (`TestCompleteCheckpointRefusesADirtyCheckout`) | The landed refusal names its recovery only in prose and prints no `next=` |
-| RR68 | 33 | A complete checkpoint on a dirty assignment checkout prints a `next=` route that contains the assignment label after `--in ` | planned TestCheckpointFacesFollowTheirRoutes in internal/gate/refusal_route_test.go | A route that keeps the `<label>` placeholder where an assignment owns the root makes the agent look up its own label |
+| RR68 | 33 | A complete checkpoint on a dirty assignment checkout prints a `next=` route that contains the assignment label after `--in ` | `internal/gate/refusal_route_test.go` (`TestCheckpointFacesFollowTheirRoutes`) | A route that keeps the `<label>` placeholder where an assignment owns the root makes the agent look up its own label |
 | RR66 | 31 | A complete checkpoint on a spec with no `Status: staged` line prints a `next=` value that starts with `reviewer: ` | `internal/gate/complete_checkpoint_test.go` (`TestCompleteCheckpointRefusesAnUntransformableSpec`) | The compose refusal prints through `operational` with no route today |
 | RR42 | 34 | A subject-capture fault prints `next=` with a route that contains `bench doctor` and `--fresh` | `internal/gate/run_outcomes_test.go` (`TestGateRunRetainsSubjectConstructionCause`) | The fallback keeps the write-access text for a fault that is not a write-access fault |
 | RR43 | 35 | A subject-capture fault prints no `help[1]{cmd,why}` row | `internal/gate/run_outcomes_test.go` (`TestGateRunRetainsSubjectConstructionCause`) | A route printed beside the old row gives two answers |
-| RR44 | 13, 14 | Each gate face has exactly one producing fixture that follows its route out of the face | planned TestCheckpointFacesFollowTheirRoutes in internal/gate/refusal_route_test.go | A gate face with no fixture reaches an operator unproven |
-| RR45 | 36 | A `bench commitment start` refusal for an outcome outside the active milestone prints a `next` cell that starts with `reviewer: ` | planned TestCommitmentFacesFollowTheirRoutes in internal/commitment/commitcmd/refusal_route_test.go | The current cell tells the agent to re-plan a commitment that only the reviewer changes |
-| RR46 | 37 | A `bench commitment start` refusal without an owned assignment prints a `next` cell that contains `bench worktree create --request` | planned TestCommitmentFacesFollowTheirRoutes in internal/commitment/commitcmd/refusal_route_test.go | The current cell prints the plan command for a cause that the agent clears |
+| RR44 | 13, 14 | Each gate face has exactly one producing fixture that follows its route out of the face | `internal/gate/refusal_route_test.go` (`TestCheckpointFacesFollowTheirRoutes`) | A gate face with no fixture reaches an operator unproven |
+| RR45 | 36 | A `bench commitment start` refusal for an outcome outside the active milestone prints a `next` cell that starts with `reviewer: ` | `internal/commitment/commitcmd/refusal_route_test.go` (`TestCommitmentFacesFollowTheirRoutes`) | The current cell tells the agent to re-plan a commitment that only the reviewer changes |
+| RR46 | 37 | A `bench commitment start` refusal without an owned assignment prints a `next` cell that contains `bench worktree create --request` | `internal/commitment/commitcmd/refusal_route_test.go` (`TestCommitmentFacesFollowTheirRoutes`) | The current cell prints the plan command for a cause that the agent clears |
 | RR47 | 37 | A `bench commitment verify` refusal keeps its `bench commitment verify --milestone` cell | `internal/commitment/verification_test.go` (`TestCommitmentUnmetCriterion`) | The move to the registry drops the current agent route |
-| RR61 | 37 | A commit from an assignment with no delivery binding prints a `next=` route that contains `bench commitment start --outcome` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The route stays only inside the sentence tail, outside the registry |
-| RR62 | 36 | A commit whose candidate changes the protected commitment prints a `next=` value that starts with `reviewer: ` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The tail tells the agent to re-plan a commitment that only the reviewer changes |
-| RR63 | 37 | A light-path commit with a path outside its ticket's `Writes:` line prints an agent route that names the ticket and not `bench commitment start` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The tail offers a commitment start for a fix that is one `Writes:` edit |
+| RR61 | 37 | A commit from an assignment with no delivery binding prints a `next=` route that contains `bench commitment start --outcome` | `internal/commit/refusal_route_test.go` (`TestCommitFacesFollowTheirRoutes`) | The route stays only inside the sentence tail, outside the registry |
+| RR62 | 36 | A commit whose candidate changes the protected commitment prints a `next=` value that starts with `reviewer: ` | `internal/commit/refusal_route_test.go` (`TestCommitFacesFollowTheirRoutes`) | The tail tells the agent to re-plan a commitment that only the reviewer changes |
+| RR63 | 37 | A light-path commit with a path outside its ticket's `Writes:` line prints an agent route that names the ticket and not `bench commitment start` | `internal/commit/refusal_route_test.go` (`TestCommitFacesFollowTheirRoutes`) | The tail offers a commitment start for a fix that is one `Writes:` edit |
 | RR64 | 26 | The `assignment has no current delivery binding` refusal sentence does not contain `run bench` | `internal/commitment/repository/publication_test.go` (`TestAdmitPublicationClosureAuthority`) | A sentence that keeps its tail prints a second route beside the face's route |
-| RR65 | 39 | The bypass check reds a planted `; run bench` tail in an `internal/commitment/repository` production file | planned TestRouteBypassCheckBites in internal/conformance/refusal_route_bypass_test.go | A scan that skips the commitment packages lets a tail return |
-| RR48 | 13, 14 | Each commitment face has exactly one producing fixture that follows its route out of the face | planned TestCommitmentFacesFollowTheirRoutes in internal/commitment/commitcmd/refusal_route_test.go | A commitment face with no fixture reaches an operator unproven |
-| RR49 | 38 | The bypass check passes on the tree after every chunk lands | planned TestNoWriteVerbComposesARouteOutsideTheRegistry in internal/conformance/refusal_route_bypass_test.go | A hand-composed route left in a verb shows as a red |
-| RR50 | 39 | The bypass check reds a planted `next=` literal, and a planted `next[1]:` literal, in a write-verb production file | planned TestRouteBypassCheckBites in internal/conformance/refusal_route_bypass_test.go | A check that scans no file passes every tree |
-| RR51 | 40 | `bench recovery` prints `recovery[N]{verb,face,authority,route}` and exits 0 | planned TestRecoveryListsEveryFace in internal/refusalroute/command_test.go | A missing header breaks the TOON contract |
-| RR52 | 41 | `bench recovery` prints exactly one row for each registered face, in registry order | planned TestRecoveryListsEveryFace in internal/refusalroute/command_test.go | A hand-kept matrix drifts from the registry |
+| RR65 | 39 | The bypass check reds a planted `; run bench` tail in an `internal/commitment/repository` production file | `internal/conformance/refusal_route_bypass_test.go` (`TestRouteBypassCheckBites`) | A scan that skips the commitment packages lets a tail return |
+| RR48 | 13, 14 | Each commitment face has exactly one producing fixture for each declared cause, and each fixture follows its route out of the face | `internal/commitment/commitcmd/refusal_route_test.go` (`TestCommitmentFacesFollowTheirRoutes`); `internal/commit/refusal_route_test.go` (`TestCommitFacesFollowTheirRoutes`) | A commitment face with no fixture reaches an operator unproven |
+| RR49 | 38 | The bypass check passes on the tree after every chunk lands | `internal/conformance/refusal_route_bypass_test.go` (`TestNoWriteVerbComposesARouteOutsideTheRegistry`) | A hand-composed route left in a verb shows as a red |
+| RR50 | 39 | The bypass check reds a planted `next=` literal, and a planted `next[1]:` literal, in a write-verb production file | `internal/conformance/refusal_route_bypass_test.go` (`TestRouteBypassCheckBites`) | A check that scans no file passes every tree |
+| RR51 | 40 | `bench recovery` prints `recovery[N]{verb,face,authority,route}` and exits 0 | `internal/refusalroute/command_test.go` (`TestRecoveryListsEveryFace`) | A missing header breaks the TOON contract |
+| RR52 | 41 | `bench recovery` prints exactly one row for each registered face, in registry order | `internal/refusalroute/command_test.go` (`TestRecoveryListsEveryFace`) | A hand-kept matrix drifts from the registry |
 | RR53 | 40 | `bench help` lists `bench recovery` | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | An unlisted verb is a dead key |
 | RR54 | 42 | The reference guide names `bench recovery` as the recovery matrix | review-owned | No gate check reads this prose |
 
@@ -640,6 +1256,7 @@ A path fact can hold a space, a glob byte, or a control byte.
 
 An agent route for a value that is not line-safe prints that value's placeholder and never the exec pointer form.
 For a path, the route prints `<checkout>` after a `bench worktree path <id>` step.
+A missing tree is the exception: its `bench worktree path <id>` step refuses, so its route prints the command with `<checkout>` and no path step.
 `landingResumeNext` and `atSourceWorktree` take this form, so the `land-incomplete` resume and each preflight re-run obey it.
 The renderer shell-quotes a line-safe value and prints the slot placeholder for a value that is not line-safe; RR34 grades the placeholder.
 A label fact comes from the assignment ledger, and the `--in` resolver refuses an ambiguous label under FT341.
@@ -654,6 +1271,7 @@ The fail-closed refusals are the unregistered face (RR07) and each verb's `<verb
 - **Won't handle**: a fold that admits an inherited red — the decision source closes the merge policy, and `merge-target-red` routes the repair before the fold.
 - **Won't handle**: the exit-2 grammar refusals — the usage package owns their usage line, and `usage.Parse` keeps it.
 - **Won't handle**: the gate run-state refusals outside the checkpoint funnel — they serve every gate run, and `operational` keeps their reason line.
+- **Won't handle**: the `--in` tree-target refusal — it serves every tree-scoped verb, read and write, and `printTargetRefusal` keeps its route.
 - **Won't handle**: the non-write worktree verbs (`list`, `path`, `clean`, `release`, `build`) — the decision source names six write verbs, and `recoveryRoute` keeps their routes.
 - **Won't handle**: the exec arm of a reviewer conflict route for an unsafe path — the reviewer runs that step, and the check grades agent routes.
 - **Won't handle**: a change to either wired guard — the closed decision forbids it, and the guard check reads the guards unchanged.
@@ -663,6 +1281,12 @@ The fail-closed refusals are the unregistered face (RR07) and each verb's `<verb
 The prospective build owns these exact paths:
 
 - `internal/refusalroute/registry.go`
+- `internal/refusalroute/faces_land.go`
+- `internal/refusalroute/faces_merge.go`
+- `internal/refusalroute/faces_reset.go`
+- `internal/refusalroute/faces_commit.go`
+- `internal/refusalroute/faces_gate.go`
+- `internal/refusalroute/faces_commitment.go`
 - `internal/refusalroute/route.go`
 - `internal/refusalroute/command.go`
 - `internal/refusalroute/registry_test.go`
@@ -676,14 +1300,50 @@ The prospective build owns these exact paths:
 - `internal/worktree/land_resume.go`
 - `internal/worktree/land_rerun.go`
 - `internal/worktree/merge.go`
+- `internal/worktree/merge_refusal.go`
+- `internal/worktree/land_refusal_fixture_test.go`
 - `internal/worktree/build.go`
 - `internal/worktree/reset.go`
 - `internal/worktree/reset_apply.go`
 - `internal/worktree/reset_restore.go`
+- `internal/worktree/ownership.go`
+- `internal/worktree/reset_restore_refusal_test.go`
+- `internal/worktree/reset_apply_test.go`
+- `internal/worktree/missing_tree_recovery_test.go`
+- `internal/worktree/merge_target_grade_test.go`
+- `internal/worktree/merge_caller_root_test.go`
+- `internal/worktree/list.go`
+- `internal/worktree/list_actions_test.go`
+- `internal/landing/landing_test.go`
+- `internal/refusalroute/routetest/routetest.go`
+- `internal/gate/completion.go`
+- `internal/gate/engine.go`
+- `internal/gate/authorization/authorization.go`
+- `internal/commitment/repository/light_path_test.go`
+- `internal/commit/commitment_test.go`
+- `internal/worktree/commitment_light_landing_test.go`
+- `internal/commit/assessment_span_test.go`
+- `internal/commit/commit_test.go`
+- `internal/commit/commitment_route_test.go`
+- `internal/commitment/commitmenttest/admission.go`
+- `internal/commitment/commitmenttest/repo.go`
+- `internal/commitment/repository/repository.go`
+- `internal/worktree/commitment_landing_fixture_test.go`
+- `internal/worktree/land.go`
+- `internal/refusalroute/routetest/routetest_test.go`
+- `internal/landing/attribution.go`
+- `internal/landing/gitexec.go`
+- `internal/worktree/lifecycle_test.go`
+- `internal/worktree/worktree_test.go`
+- `internal/worktree/lifecycle.go`
+- `internal/worktree/worktree.go`
+- `internal/worktree/clean_landed_test.go`
+- `internal/worktree/clean_landed.go`
 - `internal/worktree/path.go`
 - `internal/worktree/classifier.go`
 - `internal/worktree/identity_component.go`
 - `internal/worktree/refusal_route_test.go`
+- `internal/worktree/refusal_route_follow_test.go`
 - `internal/worktree/merge_route_test.go`
 - `internal/worktree/commit_route_test.go`
 - `internal/worktree/identity_component_test.go`
@@ -694,6 +1354,9 @@ The prospective build owns these exact paths:
 - `internal/worktree/land_identity_test.go`
 - `internal/worktree/land_resume_refusal_test.go`
 - `internal/worktree/land_journey_test.go`
+- `internal/worktree/parallel_census_test.go`
+- `internal/worktree/land_resume_test.go`
+- `internal/worktree/land_reauthorization_test.go`
 - `internal/worktree/merge_test.go`
 - `internal/landing/landing.go`
 - `internal/landing/merge.go`

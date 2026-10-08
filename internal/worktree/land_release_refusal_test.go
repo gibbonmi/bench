@@ -1,4 +1,6 @@
-// Release refusal tests for the landing command: destination and collision path tables in the refusal output.
+// Release refusal tests for the landing command: destination and collision path tables in
+// the refusal output, and the checkout lookup a route takes for a path that is not
+// line-safe.
 package worktree
 
 import (
@@ -8,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"unicode"
+
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
@@ -22,7 +26,7 @@ func TestLandCommandRefusalListsDestinationPaths(t *testing.T) {
 	r := runVerb(t, verbLand, repoHome{root, home}.call(landArgs("refusal-destination", base, gitOutput(t, creation.Path, "rev-parse", "HEAD"), creation.Path)...))
 	// The route reads from the registry, so the face's repair keeps one source. The
 	// caller's own re-run rides behind it and this row does not pin it.
-	wantNext := "next=" + landingRefusalFaceByName(faceDestinationNotClean).route("")
+	wantNext := "next=" + landingRepair(faceDestinationNotClean, nil)
 	if r.exit != 1 || !strings.Contains(r.stdout, wantNext) || !strings.Contains(r.stdout, "paths_total=1") || !strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:") || !strings.Contains(r.stdout, "tracked.txt") || len(r.stderr) != 0 {
 		t.Fatalf("destination refusal = (%d, %q, %q)", r.exit, r.stdout, r.stderr)
 	}
@@ -41,8 +45,8 @@ func TestLandCommandRefusalListsCollidingPaths(t *testing.T) {
 	mustWrite(t, filepath.Join(root, ".env"), []byte("SECRET=1\n"), 0o600)
 	mustWrite(t, filepath.Join(root, "notes.txt"), []byte("notes\n"), 0o600)
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	next, printed := landingFaceNext(r.stdout, landingRefusalFaceByName(faceDestinationCollision).detail)
-	if r.exit != 1 || !printed || !strings.HasPrefix(next, landingRefusalFaceByName(faceDestinationCollision).route("")) ||
+	next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceDestinationCollision))
+	if r.exit != 1 || !printed || !strings.HasPrefix(next, landingRepair(faceDestinationCollision, nil)) ||
 		!strings.Contains(r.stdout, refusalPathsTable+"[1]{path}:\n  owned.txt\n") || strings.Contains(r.stdout, ".env") ||
 		strings.Contains(r.stdout, "notes.txt") || len(r.stderr) != 0 {
 		t.Fatalf("collision refusal = (%d, %q, %q), want owned.txt alone", r.exit, r.stdout, r.stderr)
@@ -163,4 +167,42 @@ func TestLandingDestinationAllowsUntrackedAndIgnoredFiles(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestUnsafePathRouteUsesThePlaceholder is RR58 and RR60. A source path that is not
+// line-safe cannot be pasted, and `bench worktree exec` refuses a Bench child, so the
+// preflight re-run and the incomplete landing's resume both look the path up by the
+// assignment id and print the checkout placeholder.
+func TestUnsafePathRouteUsesThePlaceholder(t *testing.T) {
+	t.Parallel()
+	unsafeFixture := func(t *testing.T, request string) landingFixture {
+		return publicLandingFixtureAtHome(t, request, "", "", filepath.Join(t.TempDir(), "bench\n\x1bhome"))
+	}
+	// requireCheckoutLookup fails t unless next looks the checkout up by the assignment
+	// id and names the checkout placeholder, with no exec wrapper around a Bench child.
+	requireCheckoutLookup := func(t *testing.T, kind, next string, printed bool, f landingFixture, stdout string) {
+		t.Helper()
+		lookup := "bench worktree path '" + f.creation.Assignment.ID + "'"
+		if !printed || !strings.Contains(next, "<checkout>") || !strings.Contains(next, lookup) || strings.Contains(next, "bench worktree exec") {
+			t.Fatalf("unsafe-path %s next = %q (printed=%t) in %q, want %q, <checkout>, and no bench worktree exec",
+				kind, next, printed, stdout, lookup)
+		}
+	}
+	t.Run("preflight re-run", func(t *testing.T) {
+		t.Parallel()
+		request := "unsafe-path-preflight"
+		f := unsafeFixture(t, request)
+		landingFixtureFor(t, faceSourceNotClean).mutate(t, f.root, f.creation)
+		r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
+		next, printed := landingFaceNext(r.stdout, refusalroute.Sentence(faceSourceNotClean))
+		requireCheckoutLookup(t, "preflight", next, printed && r.exit == 1, f, r.stdout)
+	})
+	t.Run("incomplete resume", func(t *testing.T) {
+		t.Parallel()
+		request := "unsafe-path-incomplete"
+		f := unsafeFixture(t, request)
+		r := interruptedLanding(t, f, request, f.tip)
+		next, printed := landedNext(r.stdout)
+		requireCheckoutLookup(t, "resume", next, printed, f, r.stdout)
+	})
 }

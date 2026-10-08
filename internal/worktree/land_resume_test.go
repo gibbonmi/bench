@@ -32,9 +32,9 @@ func TestLandCommandIncompleteNextUsesAssignmentPointerForUnsafePath(t *testing.
 	home := filepath.Join(t.TempDir(), "bench\n\x1bhome")
 	f := publicLandingFixtureAtHome(t, request, "private/output", "dist/", home)
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	wantNext := "next=bench worktree exec " + f.creation.Assignment.ID + " -- bench worktree land --resume '"
+	wantNext := "next=bench worktree path '" + f.creation.Assignment.ID + "'; then bench worktree land --resume '"
 	unsafe := strings.ContainsRune(r.stdout, '\x1b') || strings.Count(r.stdout, "\n") != 1
-	if r.exit != 3 || unsafe || !strings.Contains(r.stdout, wantNext) || !strings.Contains(r.stdout, " --spec 'x' .,census=0}") {
+	if r.exit != 3 || unsafe || !strings.Contains(r.stdout, wantNext) || !strings.Contains(r.stdout, " --spec 'x' <checkout>,census=0}") {
 		t.Fatalf("unsafe-path incomplete = (%d, %q, %q), want one safe pointer record containing %q", r.exit, r.stdout, r.stderr, wantNext)
 	}
 }
@@ -137,14 +137,17 @@ func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
 		t.Fatalf("terminal receipt = %#v, found=%t error=%v", receipt, found, err)
 	}
 	checkout := gitOutput(t, f.root, "status", "--porcelain=v1", "--untracked-files=all")
+	// A forged receipt is a cause only the reviewer clears, so each record hands back with
+	// the caller's own resume behind the route.
+	handback := ",next=" + landingRoute(faceLandHandback, resumeRerunOf(published, f.base, f.tip, f.creation.Path), nil) + "}\n"
 	for _, tc := range []struct {
 		name, want string
 		mutate     func(*intent.CleanupReceipt)
 	}{
-		{name: "wrong-branch", want: "refused{detail=missing-terminal-receipt}\n", mutate: func(receipt *intent.CleanupReceipt) {
+		{name: "wrong-branch", want: "refused{detail=missing-terminal-receipt" + handback, mutate: func(receipt *intent.CleanupReceipt) {
 			receipt.Branch = intent.AssignmentBranchRef(strings.Repeat("a", 32), strings.Repeat("b", 32))
 		}},
-		{name: "wrong-source", want: "refused{detail=terminal receipt source tip mismatch,observed=" + f.tip + ",wanted=" + f.base + "}\n", mutate: func(receipt *intent.CleanupReceipt) {
+		{name: "wrong-source", want: "refused{detail=terminal receipt source tip mismatch,observed=" + f.tip + ",wanted=" + f.base + handback, mutate: func(receipt *intent.CleanupReceipt) {
 			receipt.BranchOID = f.base
 		}},
 	} {

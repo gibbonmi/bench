@@ -33,6 +33,8 @@ func WithCompletion(ctx context.Context, path, sourceTip string) context.Context
 // transform, and returns the source tree. The deliverable's own proof comes first: the
 // exact spec status with the record allowance, or the absent tickets-only folder. The
 // verified closure follows, and every other path must keep its source bytes and mode.
+// Only a failed proof is a proof fault; a fault that captures or reads a tree, or that
+// derives the closure, returns as it is.
 func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) {
 	sourceTree, err := benchgit.Output("-C", e.identityRoot, "rev-parse", "--verify", e.completionSource+"^{tree}")
 	if err != nil {
@@ -65,7 +67,7 @@ func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) 
 			}
 			other, present := pair[1].entry(entry.Path)
 			if !present || other.Metadata != entry.Metadata {
-				return "", fmt.Errorf("completion composition changes %s; review the destination delta", entry.Path)
+				return "", proofFault("completion composition changes %s; review the destination delta", entry.Path)
 			}
 		}
 	}
@@ -81,14 +83,14 @@ func (e *gateEvaluation) completedSpec(source, graded *treeGeneration, path stri
 	}
 	want, err := spec.Implemented(original.data)
 	if err != nil {
-		return err
+		return completionProofError{err}
 	}
 	got, err := e.completionFile(graded, path)
 	if err != nil {
 		return err
 	}
 	if !bytes.Equal(want, got.data) || original.mode != got.mode {
-		return fmt.Errorf("completion spec %s differs from the exact status transform; review the spec delta", path)
+		return proofFault("completion spec %s differs from the exact status transform; review the spec delta", path)
 	}
 	record, err := reviewrecord.RecordPath(path)
 	if err != nil {
@@ -104,7 +106,7 @@ func closedFolder(source, graded *treeGeneration, folder string, proven map[stri
 	under := func(path string) bool { return strings.HasPrefix(path, folder+"/") }
 	for _, kept := range graded.snapshot.entries {
 		if under(kept.Path) {
-			return fmt.Errorf("completion keeps closed %s; review the delivery closure", kept.Path)
+			return proofFault("completion keeps closed %s; review the delivery closure", kept.Path)
 		}
 	}
 	for _, entry := range source.snapshot.entries {
@@ -128,13 +130,16 @@ func (e *gateEvaluation) completionClosure(graded *treeGeneration, sourceTree, p
 		proven[edit.Path] = true
 		if edit.Delete {
 			if _, present := graded.entry(edit.Path); present {
-				return nil, fmt.Errorf("completion keeps closed %s; review the delivery closure", edit.Path)
+				return nil, proofFault("completion keeps closed %s; review the delivery closure", edit.Path)
 			}
 			continue
 		}
 		got, err := e.completionFile(graded, edit.Path)
+		if err != nil && !errors.As(err, new(completionProofError)) {
+			return nil, err
+		}
 		if err != nil || got.mode != edit.Mode || !bytes.Equal(got.data, edit.Data) {
-			return nil, fmt.Errorf("completion %s differs from the exact closure transform; review the delivery closure", edit.Path)
+			return nil, proofFault("completion %s differs from the exact closure transform; review the delivery closure", edit.Path)
 		}
 	}
 	return proven, nil
@@ -158,13 +163,20 @@ type completionFile struct {
 	mode string
 }
 
-// The captured entry supplies both mode and object identity for the bounded read.
+// The captured entry supplies both mode and object identity for the bounded read. A tree
+// without the regular file fails the proof; a failed read returns as it is.
 func (e *gateEvaluation) completionFile(generation *treeGeneration, path string) (completionFile, error) {
 	entry, present := generation.entry(path)
 	fields := strings.Fields(entry.Metadata)
 	if !present || !(benchgit.IndexEntry{Mode: fields[0]}).IsRegularFile() {
-		return completionFile{}, fmt.Errorf("missing or nonregular completion file %s", path)
+		return completionFile{}, proofFault("missing or nonregular completion file %s", path)
 	}
 	data, err := benchgit.ReadControlBlob(e.identityRoot, fields[2])
 	return completionFile{data: data, mode: fields[0]}, err
+}
+
+// proofFault is a completion fault that shows the graded tree is not the exact transform of
+// the reviewed source.
+func proofFault(format string, args ...any) error {
+	return completionProofError{fmt.Errorf(format, args...)}
 }

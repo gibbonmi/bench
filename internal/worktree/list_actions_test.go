@@ -334,13 +334,15 @@ func activeListRow(id, request, tree string, landed any, path string) listRow {
 
 // TestActionsForRowsReadsTheTreeCell is F10, F11, and F12: an advertised action must be
 // one the operator can run, so a row whose tree is gone offers its recovery verb alone,
-// and a present row offers the two target-slot actions.
+// and a present row offers the two target-slot actions. A missing tree names the clean of
+// the landed set only when the landed selector retires it.
 func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
-		name string
-		row  listRow
-		want string
+		name        string
+		row         listRow
+		cleanLanded bool
+		want        string
 	}{
 		{
 			name: "missing tree, not landed",
@@ -348,9 +350,10 @@ func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
 			want: "help[1]{cmd,why}:\n  bench worktree release --request req-gone '/tmp/gone one',release the assignment whose worktree tree is missing\n",
 		},
 		{
-			name: "missing tree, landed",
-			row:  activeListRow("done", "req-done", "missing", true, "/tmp/done"),
-			want: "help[1]{cmd,why}:\n  bench worktree clean --landed,clean landed assignments\n",
+			name:        "missing tree, landed",
+			row:         activeListRow("done", "req-done", "missing", true, "/tmp/done"),
+			cleanLanded: true,
+			want:        "help[1]{cmd,why}:\n  bench worktree clean --landed,clean landed assignments\n",
 		},
 		{
 			name: "present tree",
@@ -360,6 +363,7 @@ func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
+			tc.row.cleanLanded = tc.cleanLanded
 			help, err := axi.RenderHelp(actionsForRows([]listRow{tc.row}))
 			if err != nil {
 				t.Fatal(err)

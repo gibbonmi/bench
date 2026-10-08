@@ -19,6 +19,7 @@ import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -97,8 +98,7 @@ func TestLandCommandInvalidatesAChangedSourceFingerprintBeforeTheGate(t *testing
 	// The sentence and the repair read from the registry, so each keeps one source. The
 	// hostile-source surface stays bounded: the refusal carries a route and no path table,
 	// so no source-authored path name reaches the operator's terminal.
-	face := landingRefusalFaceByName(faceSourceNotClean)
-	if r.exit != 1 || !strings.Contains(r.stdout, face.detail) || !strings.Contains(r.stdout, "next="+face.route("")) ||
+	if r.exit != 1 || !strings.Contains(r.stdout, refusalroute.Sentence(faceSourceNotClean)) || !strings.Contains(r.stdout, "next="+landingRepair(faceSourceNotClean, labelOf(f.creation))) ||
 		strings.Contains(r.stdout, refusalPathsTable) || strings.Contains(r.stdout, "dirty.txt") {
 		t.Fatalf("changed source fingerprint = (%d, %q, %q), want a routed not-clean refusal with no path table", r.exit, r.stdout, r.stderr)
 	}
@@ -208,8 +208,8 @@ func TestCommitmentStaleLanding(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, f.tip, f.creation.Path)...))
-	if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=commitment: ") || !strings.Contains(r.stdout, "bench commitment start") {
-		t.Fatalf("displaced landing = (%d, %q, %q), want a commitment refusal naming the start command", r.exit, r.stdout, r.stderr)
+	if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=commitment: ") || !strings.Contains(r.stdout, ",next=bench commitment start --outcome <id> --request <request> --deliverable <path>") {
+		t.Fatalf("displaced landing = (%d, %q, %q), want a commitment refusal whose route is the start command", r.exit, r.stdout, r.stderr)
 	}
 	if got := gitOutput(t, f.root, "rev-parse", "main"); got != switched {
 		t.Fatalf("displaced landing moved main to %s, want %s", got, switched)

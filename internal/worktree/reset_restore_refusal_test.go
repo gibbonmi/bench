@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 func TestResetRestoreRefusesAForeignRef(t *testing.T) {
@@ -101,6 +103,22 @@ func TestResetRestoreRefusesAControlByteBeforeTheLedger(t *testing.T) {
 	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "--restore contains control characters"), "control restore = %d %s %s", result.exit, result.stdout, result.stderr)
 }
 
+// A reset value and a target that are not line-safe print their slot placeholders in the
+// reset's re-run. A raw value would put a control byte, escaped or not, into a command that
+// the operator pastes back.
+func TestResetRerunPrintsAPlaceholderForAValueThatIsNotLineSafe(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	for _, tc := range []struct{ flag, value, target, rerun string }{
+		{"--to", "main\x1b", "unknown\x1b", "; then bench worktree reset --to <commit> <target>"},
+		{"--restore", "refs/bench/reset/\x1b", "unknown", "; then bench worktree reset --restore <ref> 'unknown'"},
+	} {
+		result := runVerb(t, verbReset, verbCall{root: root, home: t.TempDir(), args: []string{tc.flag, tc.value, tc.target}})
+		next, printed := recordField(result.stdout, "refused{", refusalroute.NextField)
+		requireTest(t, result.exit == 1 && printed && strings.HasSuffix(next, tc.rerun), "not-line-safe %s reset = %d %q %q, want a re-run ending %q", tc.flag, result.exit, result.stdout, result.stderr, tc.rerun)
+	}
+}
+
 func TestResetRestoreRefusesAStaleIndex(t *testing.T) {
 	t.Parallel()
 	f := restoreFixture(t)
@@ -125,7 +143,8 @@ func TestResetRestoreRefusesAnIgnoredCollision(t *testing.T) {
 	head := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	mustWrite(t, filepath.Join(f.creation.Path, "untracked"), []byte("ignored now\n"), 0o644)
 	result := runVerb(t, verbReset, f.call("--restore", f.ref, f.creation.Assignment.ID))
-	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "refused{detail=ignored content would be overwritten}") &&
+	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "refused{detail=ignored content would be overwritten,next=reviewer: ") &&
+		strings.Contains(result.stdout, "; then bench worktree reset --restore "+sanitize.ShellQuote(f.ref)+" "+sanitize.ShellQuote(f.creation.Assignment.ID)+"}\n") &&
 		strings.Contains(result.stdout, refusalPathsTable+"[1]{path}:\n  untracked\n"), "collision restore = %d %s %s", result.exit, result.stdout, result.stderr)
 	body, err := os.ReadFile(filepath.Join(f.creation.Path, "untracked"))
 	mustNoError(t, err)

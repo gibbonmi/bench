@@ -81,6 +81,22 @@ func hit(fault Fault, step LifecycleStep) error {
 	}
 	return fault(step)
 }
+
+// deletePlannedBranch deletes the landed branch a cleanup plan names, at the commit the plan
+// read, once the plan's checkout is retired. A plan that proves no landed branch keeps it.
+func deletePlannedBranch(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) error {
+	if !plan.deleteBranch {
+		return nil
+	}
+	if err := git.DeleteBranchExact(root, plan.branchRef, plan.branchOID); err != nil {
+		return fmt.Errorf("delete exact landed branch: %w", err)
+	}
+	if err := checkpoint(intent.ReceiptPhaseBranch); err != nil {
+		return err
+	}
+	return hit(fault, StepBranch)
+}
+
 func randomID() (string, error) {
 	raw := make([]byte, 16)
 	if _, err := io.ReadFull(rand.Reader, raw); err != nil {
@@ -260,7 +276,15 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	if assignment.State != intent.StateActive && assignment.State != intent.StateCleanupPending {
 		return intent.CleanupReceipt{}, errors.New("assignment state does not accept release")
 	}
-	if resumeFingerprint == "" {
+	// A tree that is gone answers for no lease and no bundle, so the release reads its lease
+	// through the shared administration directory and releases what the tree left behind.
+	absent := false
+	if shape, shapeErr := ClassifyPathShape(target); resumeFingerprint == "" && shapeErr == nil && shape == ShapeAbsent {
+		absent = true
+		if err := missingTreeLeaseRefusal(root, targetArg, *assignment); err != nil {
+			return intent.CleanupReceipt{}, err
+		}
+	} else if resumeFingerprint == "" {
 		lease, leaseErr := LeaseFile(target)
 		if leaseErr != nil {
 			return intent.CleanupReceipt{}, leaseErr
@@ -286,7 +310,11 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 		return intent.PutCleanupReceipt(root, receiptFromRelease(repo, request, current, string(plan.Action), plan.branchRef, plan.branchOID))
 	}
 	var plan CleanupPlan
-	if resumeFingerprint == "" {
+	if absent {
+		release := missingTreeRelease(*assignment)
+		planner := func(string) (CleanupPlan, error) { return release, nil }
+		plan, err = applyCleanupTransaction(j, a, root, target, release.Fingerprint, planner, nil, terminal)
+	} else if resumeFingerprint == "" {
 		plan, err = applyAutomaticWithTerminal(j, a, root, target, nil, terminal)
 	} else {
 		planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, a.now) }
@@ -306,6 +334,24 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 		return intent.CleanupReceipt{}, errors.New("terminal receipt missing")
 	}
 	return receipt, nil
+}
+
+// missingTreeLeaseRefusal keeps the lease verdicts of a present tree's release for a tree
+// that is gone: an unknown lease and a live lease each retain the assignment. The policy
+// decides the live-lease verdict, so its reason has one source.
+func missingTreeLeaseRefusal(root, targetArg string, assignment intent.Assignment) error {
+	leases, err := assignmentLeaseStates(root)
+	if err != nil {
+		return err
+	}
+	switch LeaseState(leases[assignment.OwnerID]) {
+	case LeaseUnknown:
+		return retainedReleaseError(retainedPlan(assignment.Worktree, ReasonUncertain, unknownLeaseReason), targetArg, assignment.ID)
+	case LeaseLive:
+		live := lifecyclepolicy.DecideAutomatic(lifecyclepolicy.AutomaticFacts{Explicit: lifecyclepolicy.ExplicitOutcome{HasAssignment: true}, LiveLease: true})
+		return retainedReleaseError(retainedPlan(assignment.Worktree, live.ReasonCode, live.Reason), targetArg, assignment.ID)
+	}
+	return nil
 }
 
 // retainedReleaseError turns a retain plan — the safe planner declining to remove the

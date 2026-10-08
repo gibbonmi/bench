@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -66,31 +67,34 @@ func mergeWith(_ joins, a ambient, root string, args []string, stdout, stderr io
 // mergeAttributed is the merge verb's own work, with the target assignment written to
 // assignment once the target resolves.
 func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Result, stdout, stderr io.Writer) int {
+	spelling := parsed.Flags["--from"]
+	// Every refusal prints the route of its face, which ends with the caller's own re-run.
+	rerun := mergeRerun(spelling, parsed.Positionals[0])
+	refuse := func(err error) int { return landRefusalError(stdout, mergeFaceRoute(err, rerun)) }
 	assignments, err := intent.Assignments(root)
 	if err != nil {
-		return landRefusal(stdout, "assignment ledger is unreadable")
+		return refuse(refusalError{refusal{detail: "assignment ledger is unreadable"}})
 	}
 	target, err := mergeTarget(root, assignments, parsed.Positionals[0])
 	if err != nil {
-		return landRefusalError(stdout, err)
+		return refuse(err)
 	}
 	*assignment = target.ID
-	spelling := parsed.Flags["--from"]
 	incoming, err := mergeIncoming(root, assignments, target, spelling)
 	if err != nil {
-		return landRefusalError(stdout, err)
+		return refuse(err)
 	}
 	previous, err := mergeTargetTip(root, target)
 	if err != nil {
-		return landRefusalError(stdout, err)
+		return refuse(err)
 	}
 	fingerprint, err := landing.CheckoutFingerprint(target.Worktree)
 	if err != nil {
-		return landRefusal(stdout, "merge target checkout fingerprint is unreadable")
+		return refuse(refusalError{refusal{detail: "merge target checkout fingerprint is unreadable"}})
 	}
 	owner, err := mergeOwner(a.kit, target.Worktree, previous)
 	if err != nil {
-		return landRefusal(stdout, err.Error())
+		return refuse(err)
 	}
 	request := landing.MergeRequest{
 		Root: root, Branch: target.Branch, PreviousTip: previous, Incoming: incoming,
@@ -111,13 +115,14 @@ func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Re
 	if err != nil {
 		// A composition conflict carries its paths typed, so it renders through the
 		// refusal record's path table rather than as a bare sentence. The repair is the
-		// landing's own, up to the commit that records the resolution.
+		// landing's own hand merge, up to the commit that records the resolution.
 		var conflict landing.ConflictError
 		if errors.As(err, &conflict) {
-			repair := conflictRepairPrefix(incoming, target.ID, target.Worktree)
-			return landRefusalError(stdout, refusalError{refusal{detail: conflict.Error(), paths: conflict.Paths, next: repair}})
+			err = refusalError{refusal{detail: conflict.Error(), paths: conflict.Paths, face: faceMergeConflict, values: conflictFacts(incoming, target.ID, target.Worktree)}}
 		}
-		return landRefusalError(stdout, err)
+		// A red fold takes the face of its cause, which the target tip's own grade decides.
+		err = mergeRedRefusal(err, func() authorization.Result { return mergeTargetGrade(a.kit, request) }, spelling, target.Label)
+		return refuse(err)
 	}
 	if len(result.Resolved) > 0 {
 		fmt.Fprintf(stderr, "merge composition{resolved=%s}\n", sanitize.Controls(strings.Join(result.Resolved, ",")))
@@ -128,7 +133,8 @@ func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Re
 	// up with; only a published tip needs the reconcile.
 	if result.Kind != landing.MergeKindCurrent {
 		if err := reconcileMergeCheckout(target.Worktree, result.Tip); err != nil {
-			fmt.Fprintln(stdout, record+",next="+sanitize.Controls(mergeReconcileNext(target, result.Tip))+"}")
+			next := refusalroute.New(faceMergePublishedUnreconciled, refusalroute.Facts{Values: map[string]string{refusalroute.FactResetPlan: mergeReconcileNext(target, result.Tip)}}).Route
+			fmt.Fprintln(stdout, record+","+refusalroute.NextField+"="+sanitize.Controls(next)+"}")
 			return 3
 		}
 	}
@@ -136,28 +142,11 @@ func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Re
 	return 0
 }
 
-func retryEmptyReasonInfrastructureFold(first error, verify func() int, retry func() error) error {
-	if first == nil || first.Error() != "prospective authorization refused: infrastructure; run bench doctor" {
-		return first
-	}
-	if verify() != 0 {
-		return first
-	}
-	return retry()
-}
-
 // mergeSubject derives the one message the verb publishes, so no `-m` exists and the log
 // reads one way. The spelling is the operand as typed, because that is what the operator
 // will search the log for.
 func mergeSubject(spelling, incoming, label string) string {
 	return "merge: compose " + spelling + " " + incoming[:8] + " into " + label
-}
-
-// mergeReconcileNext names the repair the exit-3 boundary leaves the operator: the reset
-// verb's plan at the published commit, which reconciles the checkout under a preserved
-// envelope. The guard denies an agent's raw git reset, so the repair is the Bench route.
-func mergeReconcileNext(target intent.Assignment, tip string) string {
-	return resetCommand("--to", tip, target.ID)
 }
 
 // mergeOnAssignmentBranch proves one checkout is on its assignment's branch. It runs
@@ -203,7 +192,7 @@ func mergeTargetTip(root string, a intent.Assignment) (string, error) {
 	if err != nil || tip != head {
 		return "", refusalError{refusal{detail: "merge target branch tip is not the checkout HEAD", observed: head, wanted: tip}}
 	}
-	if err := checkoutClean(a.Worktree, "merge target checkout is not clean", ""); err != nil {
+	if err := checkoutClean(a.Worktree, faceMergeTargetNotClean, map[string]string{refusalroute.FactLabel: a.Label}, ""); err != nil {
 		return "", err
 	}
 	return tip, nil
@@ -321,7 +310,9 @@ func siblingContribution(root string, selected intent.Assignment, tip string) (s
 	if err != nil || head != tip {
 		return "", refusalError{refusal{detail: "sibling checkout is not at its branch tip", observed: head, wanted: tip}}
 	}
-	if err := checkoutClean(selected.Worktree, "sibling checkout is not clean", "bench worktree exec "+selected.ID+" -- bench commit"); err != nil {
+	// The create verb prints the refusal outside the registry, so it keeps its own route;
+	// the merge prints the face's.
+	if err := checkoutClean(selected.Worktree, faceMergeSiblingNotClean, map[string]string{refusalroute.FactSiblingLabel: selected.Label}, "bench worktree exec "+selected.ID+" -- bench commit"); err != nil {
 		return "", err
 	}
 	return tip, nil

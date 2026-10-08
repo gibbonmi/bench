@@ -301,7 +301,7 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 	mergeHead := filepath.Join(gitOutput(t, f.creation.Path, "rev-parse", "--absolute-git-dir"), "MERGE_HEAD")
 	mustWrite(t, mergeHead, []byte(destination+"\n"), 0o644)
 	code, stdout, stderr = run(f.tip)
-	if code != 1 || !strings.Contains(stdout, "next=git -C '"+f.creation.Path+"' merge --continue") || strings.Contains(stdout, "then bench commit") {
+	if code != 1 || !strings.Contains(stdout, "next="+reviewerRoute+"git -C '"+f.creation.Path+"' merge --continue") || strings.Contains(stdout, "then bench commit") {
 		t.Fatalf("pending-merge conflict route = (%d, %q, %q), want the merge continuation", code, stdout, stderr)
 	}
 	// LRS22: an unreadable source Git directory leaves the merge state undecided, so the
@@ -319,13 +319,8 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 	if err := os.Remove(mergeHead); err != nil {
 		t.Fatal(err)
 	}
-	merge := descendant(t, "git", "-C", f.creation.Path, "merge", "--no-commit", "main")
-	if got, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(got), "CONFLICT") {
-		t.Fatalf("repair setup merge = %v, %s", err, got)
-	}
-	mustWrite(t, filepath.Join(f.creation.Path, "owned.txt"), []byte("destination bytes\nreviewed repair\n"), 0o644)
-	gitRun(t, f.creation.Path, "add", "owned.txt")
-	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "repair conflict")
+	stageHandMerge(t, f.creation.Path, "owned.txt", landingResolution)
+	commitHandMerge(t, f.creation.Path)
 	refreshLandingEvidence(t, f.creation.Path, f.base)
 	repairedTip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	code, stdout, stderr = run(f.tip)

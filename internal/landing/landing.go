@@ -71,13 +71,11 @@ func (e *ReconcileError) Error() string {
 func (e *ReconcileError) Unwrap() error { return e.Err }
 
 // PublishedUnreconciledError is the publication boundary: the commit is published and
-// the checkout is not reconciled. It carries the published commit, the path that did not
-// reconcile, and every named path in the owner's sorted, deduplicated order, so a caller
-// reports the remainder and the repair without a second read.
+// the checkout is not reconciled. It carries the published commit and the path that did
+// not reconcile, so a caller reports the remainder without a second read.
 type PublishedUnreconciledError struct {
 	Commit string
 	Path   string
-	Paths  []string
 	Err    error
 }
 
@@ -144,10 +142,10 @@ func (o Owner) composeAuthorized(ctx context.Context, r Request) ([]string, comp
 		return nil, composedSnapshot{}, fmt.Errorf("read expected base tree: %w", err)
 	}
 	if snapshot.tree == baseTree {
-		return nil, composedSnapshot{}, errors.New("nothing to commit")
+		return nil, composedSnapshot{}, NamedPathError{errors.New("nothing to commit")}
 	}
 	if got := o.authorize(ctx, r.Root, snapshot.tree, r.Stdout, r.Stderr); !o.publishes.permits(got.Kind) {
-		return nil, composedSnapshot{}, errors.New(refusalMessage(got))
+		return nil, composedSnapshot{}, AuthorizationRefusal{got}
 	}
 	return paths, snapshot, nil
 }
@@ -176,7 +174,7 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 	}
 	if err := o.reconcile(r, paths, snapshot); err != nil {
 		var failed *ReconcileError
-		remainder := &PublishedUnreconciledError{Commit: commit, Paths: paths, Err: err}
+		remainder := &PublishedUnreconciledError{Commit: commit, Err: err}
 		if errors.As(err, &failed) {
 			remainder.Path = failed.Path
 		}
@@ -249,7 +247,7 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 		ctx = gate.WithCompletion(ctx, deliverable, source)
 	}
 	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); !o.reviewedPublishes.permits(got.Kind) {
-		return ReviewedResult{}, errors.New(refusalMessage(got))
+		return ReviewedResult{}, AuthorizationRefusal{got}
 	}
 	// Recheck the two moving identities after the gate and before creating an
 	// otherwise unreachable object. Tree equality is insufficient: review binds a commit.
@@ -280,12 +278,20 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 	return ReviewedResult{SourceBase: r.ReviewBase, SourceTip: source, DestinationBase: destination, Commit: commit, Tree: tree}, nil
 }
 
+// AuthorizationRefusal is the refusal of a tree the gate did not authorize. It carries the
+// attributed result, so a caller picks the refusal's route by the kind and the reason and
+// never by the sentence.
+type AuthorizationRefusal struct{ Result authorization.Result }
+
+func (r AuthorizationRefusal) Error() string { return refusalMessage(r.Result) }
+
 // refusalMessage renders the one refusal line every authorization caller prints. The
 // literal prefix and the kind stay, because two tests and the operator's own memory read
-// them; the sentence after names what the attribution means and what to run next.
+// them; the sentence after names what the attribution means. It names no action, because
+// the refusal face of the verb that prints it carries the route.
 func refusalMessage(got authorization.Result) string {
 	line := "prospective authorization refused: " + string(got.Kind)
-	explanation, action := refusalGuidance(got.Kind)
+	explanation := refusalExplanation(got.Kind)
 	// An Infrastructure attribution carries the gate's own reason, which is more exact than
 	// anything this renderer could state about the kind.
 	if got.Reason != "" {
@@ -294,24 +300,20 @@ func refusalMessage(got authorization.Result) string {
 	if explanation != "" {
 		line += " (" + explanation + ")"
 	}
-	if action != "" {
-		line += "; " + action
-	}
 	return line
 }
 
-// refusalGuidance answers what a refused kind means to the operator and what to do next.
-// The two lane outcomes answer nothing: a lane states its own outcome line already.
-func refusalGuidance(kind authorization.Kind) (explanation, action string) {
+// refusalExplanation answers what a refused kind means to the operator. The two lane
+// outcomes and an infrastructure outcome answer nothing: a lane states its own outcome
+// line already, and only the gate's own reason explains an infrastructure outcome.
+func refusalExplanation(kind authorization.Kind) string {
 	switch kind {
 	case authorization.Inherited:
-		return "the gate ran red on the composed tree and no green baseline attributes the red to this diff", "run bench gate --fresh"
+		return "the gate ran red on the composed tree and no green baseline attributes the red to this diff"
 	case authorization.Candidate:
-		return "the gate ran red on the composed tree and the green baseline attributes the red to this diff", "fix the failures above"
-	case authorization.Infrastructure:
-		return "", "run bench doctor"
+		return "the gate ran red on the composed tree and the green baseline attributes the red to this diff"
 	}
-	return "", ""
+	return ""
 }
 
 // CheckoutFingerprint binds the attached branch, commit, index, worktree,
