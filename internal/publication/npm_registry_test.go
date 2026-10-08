@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // stubTool writes an executable script named tool onto PATH (via a fresh
@@ -193,5 +195,24 @@ func TestNPMCLIRegistryIntegrityPresentEmptyIsError(t *testing.T) {
 				t.Fatalf("expected empty integrity on error, got: %q", integrity)
 			}
 		})
+	}
+}
+
+// TestReleaseHelpPrintsTheGrammar: a sole help spelling in the subcommand
+// position is a request for the grammar, not an unknown subcommand.
+func TestReleaseHelpPrintsTheGrammar(t *testing.T) {
+	for _, spelling := range []string{"--help", "-h", "help"} {
+		if code, stdout := runRelease(t, spelling); code != 0 || stdout != usageLine+"\n" {
+			t.Errorf("bench release %s = (%d, %q), want (0, the release usage line)", spelling, code, stdout)
+		}
+	}
+}
+
+// TestReleaseUnknownArgumentIsStillRefused: only a help spelling gets the
+// grammar; any other sole argument stays an unknown-argument usage error.
+func TestReleaseUnknownArgumentIsStillRefused(t *testing.T) {
+	want := toon.Usage("bench release", "--bogus") + "\n"
+	if code, stdout := runRelease(t, "--bogus"); code != 2 || stdout != want {
+		t.Fatalf("bench release --bogus = (%d, %q), want (2, %q)", code, stdout, want)
 	}
 }
