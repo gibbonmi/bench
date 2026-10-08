@@ -332,8 +332,8 @@ func lockCleanupPersistence(j joins, repo, target string) (func(), error) {
 	return lockCleanupFile(j, file, target)
 }
 
-// releaseLeftover completes a release-leftover plan: the registration and the ledger entry
-// go, the bytes at the leftover path stay. It never reaches the removal steps below.
+// releaseLeftover completes a release-leftover plan: the registration, the ledger entry, and
+// a landed branch the plan names go, and the bytes at the leftover path stay. It never reaches the removal steps below.
 // `git worktree remove` deletes the tree it is pointed at, which is the one thing this
 // plan exists to avoid.
 func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
@@ -362,6 +362,9 @@ func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) erro
 		return plan, err
 	}
 	if err := hit(fault, StepRemoval); err != nil {
+		return plan, err
+	}
+	if err := deletePlannedBranch(root, plan, checkpoint, fault); err != nil {
 		return plan, err
 	}
 	assignment.State = intent.StateComplete
@@ -589,16 +592,8 @@ func retireCheckout(j joins, a ambient, root string, plan CleanupPlan, checkpoin
 	if err := hit(fault, StepRemoval); err != nil {
 		return plan, err
 	}
-	if plan.deleteBranch {
-		if err := git.DeleteBranchExact(root, plan.branchRef, plan.branchOID); err != nil {
-			return plan, fmt.Errorf("delete exact landed branch: %w", err)
-		}
-		if err := checkpoint(intent.ReceiptPhaseBranch); err != nil {
-			return plan, err
-		}
-		if err := hit(fault, StepBranch); err != nil {
-			return plan, err
-		}
+	if err := deletePlannedBranch(root, plan, checkpoint, fault); err != nil {
+		return plan, err
 	}
 	if recovered != nil {
 		recovered.State = intent.StateRecovered

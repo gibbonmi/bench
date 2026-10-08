@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 
@@ -25,6 +26,15 @@ var resetGrammar = usage.Grammar{
 		{Name: "--apply", HasValue: true, NoEmptyValue: true},
 	},
 }
+
+// The reset refusal face names. The shared registry declares each face, and a raising site
+// names the face it raises.
+const (
+	faceResetCheckoutConflicted = "reset-checkout-conflicted"
+	faceResetPlanStale          = "reset-plan-stale"
+	faceResetTreeMissing        = "reset-tree-missing"
+	faceResetHandback           = "reset-handback"
+)
 
 // ResetCommand plans or applies a recoverable return to an assignment checkpoint.
 func ResetCommand(root, home string, args []string, stdout, stderr io.Writer) int {
@@ -45,21 +55,24 @@ func resetWith(j joins, a ambient, root string, args []string, stdout, stderr io
 		fmt.Fprintln(stderr, resetGrammar.Help)
 		return 2
 	}
+	refuse := func(err error) int {
+		return landRefusalError(stdout, resetFaceRoute(err, resetRerun(parsed.Flags, parsed.Positionals[0])))
+	}
 	for _, flag := range []string{"--to", "--restore"} {
 		if !lineSafe(parsed.Flags[flag]) {
-			return landRefusal(stdout, flag+" contains control characters")
+			return refuse(errors.New(flag + " contains control characters"))
 		}
 	}
 	plan, err := planReset(root, parsed.Positionals[0], parsed.Flags["--to"], parsed.Flags["--restore"])
 	if err != nil {
-		return landRefusalError(stdout, err)
+		return refuse(err)
 	}
 	if fingerprint, apply := parsed.Flags["--apply"]; apply {
-		return applyReset(j, root, a.home, plan, fingerprint, stdout)
+		return applyReset(j, root, a.home, plan, fingerprint, stdout, refuse)
 	}
 	next := ""
 	if plan.action != "none" {
-		next = ",next=" + resetPlanCommand(plan) + " --apply " + plan.fingerprint
+		next = "," + refusalroute.NextField + "=" + resetPlanCommand(plan) + " --apply " + plan.fingerprint
 	}
 	if plan.envelope != "" {
 		next += ",envelope=" + plan.envelope
@@ -93,6 +106,27 @@ func resetPlanCommand(plan resetPlan) string {
 		return resetCommand("--restore", plan.envelope, plan.assignment.ID)
 	}
 	return resetCommand("--to", plan.checkpoint, plan.assignment.ID)
+}
+
+// resetRerun is the caller's own reset plan, with the values it passed. A value that is not
+// line-safe prints its placeholder. An apply re-runs as its plan, because the plan prints the
+// apply that the checkout takes once the cause is clear.
+func resetRerun(flags map[string]string, target string) string {
+	flag, placeholder := "--to", "<commit>"
+	if flags["--restore"] != "" {
+		flag, placeholder = "--restore", "<ref>"
+	}
+	return resetCommand(flag, landingRerunArg(flags[flag], placeholder), landingRerunArg(target, "<target>"))
+}
+
+// resetFaceRoute attaches the caller's own re-run to a reset refusal. A refusal that names a
+// registered face keeps it, and every other cause hands back to the reviewer under its own
+// sentence.
+func resetFaceRoute(err error, rerun string) error {
+	if raised := raisedRefusal(err); raised.face == "" {
+		return landingFaceRefusal(faceResetHandback, raised, rerun, "")
+	}
+	return err
 }
 
 type resetPlan struct {
@@ -210,7 +244,7 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 		return resetPlan{}, err
 	}
 	if conflicted {
-		return resetPlan{}, refusalError{refusal{detail: "checkout is conflicted", next: "bench worktree clean " + selected.ID}}
+		return resetPlan{}, landingFaceRefusal(faceResetCheckoutConflicted, refusal{values: map[string]string{refusalroute.FactAssignmentID: selected.ID}}, "", "")
 	}
 	hidden, err := hiddenIndexFlags(selected.Worktree)
 	if err != nil {

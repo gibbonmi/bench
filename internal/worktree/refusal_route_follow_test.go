@@ -1,12 +1,14 @@
 // Refusal route follow tests for the landing: each face's producing fixture carries out
 // the route the landing printed, re-runs the landing, and the landing completes. The route
-// walk helpers here serve the merge walk too, with the merge fixture sets it builds on.
+// walk helpers here serve the merge walk too, with the merge fixture sets it builds on and
+// the reset fixtures it walks.
 package worktree
 
 import (
 	"bytes"
 	"context"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -207,6 +209,132 @@ func markTargetGreen(t *testing.T, target Creation) {
 	mustNoError(t, greenmarker.Advance(target.Path, branch, gitOutput(t, target.Path, "rev-parse", "HEAD"), ""))
 	if !gate.ValidateProjectGreen(target.Path, branch).ReusableGreen {
 		t.Fatal("the target tip carries no reusable project green")
+	}
+}
+
+// producingFixtures requires a producing fixture for each cause of each face of verb, and a
+// registered face for each fixture. keys holds each fixture's face and cause. It returns the
+// verb's faces by name.
+func producingFixtures(t *testing.T, verb refusalroute.Verb, keys [][2]string) map[string]refusalroute.Face {
+	t.Helper()
+	faces := map[string]refusalroute.Face{}
+	for _, face := range refusalroute.Faces(verb) {
+		faces[face.Name] = face
+	}
+	produced := map[string]bool{}
+	for _, key := range keys {
+		if produced[key[0]+"/"+key[1]] {
+			t.Fatalf("%s face %q has two producing fixtures for cause %q", verb, key[0], key[1])
+		}
+		if _, ok := faces[key[0]]; !ok {
+			t.Fatalf("fixture %q produces no registered %s face", key[0], verb)
+		}
+		produced[key[0]], produced[key[0]+"/"+key[1]] = true, true
+	}
+	for name := range faces {
+		if !produced[name] {
+			t.Errorf("registry %s face %q has no producing fixture", verb, name)
+		}
+	}
+	return faces
+}
+
+// resetRefusalFixture produces exactly one reset face. build makes an owned assignment and
+// breaks it so the reset prints that face; it returns the assignment and the reset's
+// arguments. carry and after are the merge fixture's fields over the assignment.
+type resetRefusalFixture struct {
+	face  string
+	build func(t *testing.T) (ownedAssignment, []string)
+	carry map[int]func(t *testing.T, f ownedAssignment)
+	after func(t *testing.T, wrapper string, f ownedAssignment, last verbResult)
+}
+
+// followResetFace drives one reset fixture: the reset prints the face, the walk carries out
+// the printed route, and the reset plan reruns out of the face. A refused apply reruns as
+// its plan, because the plan prints the apply that the repaired checkout takes.
+func followResetFace(t *testing.T, wrapper string, face refusalroute.Face, fixture resetRefusalFixture) {
+	f, args := fixture.build(t)
+	r := runVerb(t, verbReset, f.call(args...))
+	record := "refused{detail=" + face.Sentence
+	next, printed := recordField(r.stdout, record, refusalroute.NextField)
+	if r.exit != 1 || !printed || next == "" {
+		t.Fatalf("face %s = (%d, %q, %q), want exit 1 and a non-empty next= field", face.Name, r.exit, r.stdout, r.stderr)
+	}
+	carry := func(index int) (func(), bool) {
+		step, carried := fixture.carry[index]
+		return func() { step(t, f) }, carried
+	}
+	last := followRoute(t, face, printedSteps(t, face, next, "", nil), carry, func(step string) verbResult {
+		return runPrintedStep(t, wrapper, f.repoHome, step)
+	})
+	if fixture.after != nil {
+		fixture.after(t, wrapper, f, last)
+	}
+	if rerun := runVerb(t, verbReset, f.call(args[:3]...)); strings.Contains(rerun.stdout, record) {
+		t.Fatalf("%s reset re-run = (%d, %q, %q), want it out of the face", face.Name, rerun.exit, rerun.stdout, rerun.stderr)
+	}
+}
+
+func resetRefusalFixtures() []resetRefusalFixture {
+	owned := func(t *testing.T, request string) (ownedAssignment, []string) {
+		f := newOwnedAssignment(t, "reset-route-"+request)
+		return f, []string{"--to", f.creation.Assignment.Start, f.creation.Assignment.ID}
+	}
+	return []resetRefusalFixture{
+		{
+			face: faceResetCheckoutConflicted,
+			build: func(t *testing.T) (ownedAssignment, []string) {
+				f, args := owned(t, "conflicted")
+				setupConflict(t, f.creation.Path)
+				return f, args
+			},
+			// The printed clean plans the checkout's retirement, and the operator applies it.
+			after: func(t *testing.T, wrapper string, f ownedAssignment, plan verbResult) {
+				runPrintedStep(t, wrapper, f.repoHome, "bench worktree clean "+f.creation.Assignment.ID+" --apply "+plan.mustFingerprint(t))
+			},
+		},
+		{
+			// The checkout changes between the plan and its apply, so the apply's fingerprint
+			// is stale. The printed plan prints the apply of the changed checkout.
+			face: faceResetPlanStale,
+			build: func(t *testing.T) (ownedAssignment, []string) {
+				f, args := owned(t, "stale")
+				mustWrite(t, filepath.Join(f.creation.Path, "work.txt"), []byte("planned\n"), 0o644)
+				fingerprint := runVerb(t, verbReset, f.call(args...)).mustFingerprint(t)
+				mustWrite(t, filepath.Join(f.creation.Path, "work.txt"), []byte("changed\n"), 0o644)
+				return f, append(args, "--apply", fingerprint)
+			},
+			after: func(t *testing.T, wrapper string, f ownedAssignment, plan verbResult) {
+				applyResetPlan(t, wrapper, f.repoHome, plan)
+			},
+		},
+		{
+			face: faceResetTreeMissing,
+			build: func(t *testing.T) (ownedAssignment, []string) {
+				// A landed branch takes the clean of the landed assignments, and its apply.
+				f, args := owned(t, "missing")
+				landAssignment(t, f.root, f.creation, "landed.txt")
+				mustNoError(t, os.RemoveAll(f.creation.Path))
+				return f, args
+			},
+			after: func(t *testing.T, wrapper string, f ownedAssignment, plan verbResult) {
+				runPrintedStep(t, wrapper, f.repoHome, "bench worktree clean --landed --apply "+plan.mustFingerprint(t))
+			},
+		},
+		{
+			// A hidden index flag is a cause that the reset names no repair for, so it hands
+			// back. The reviewer clears the flag, and the printed plan then runs.
+			face: faceResetHandback,
+			build: func(t *testing.T) (ownedAssignment, []string) {
+				f, args := owned(t, "handback")
+				gitRun(t, f.creation.Path, "update-index", "--assume-unchanged", "README.md")
+				mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("hidden edit\n"), 0o644)
+				return f, args
+			},
+			carry: map[int]func(*testing.T, ownedAssignment){0: func(t *testing.T, f ownedAssignment) {
+				gitRun(t, f.creation.Path, "update-index", "--no-assume-unchanged", "README.md")
+			}},
+		},
 	}
 }
 

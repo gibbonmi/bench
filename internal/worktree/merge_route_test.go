@@ -1,5 +1,6 @@
 // Refusal route tests for the merge: each merge face's producing fixture makes the merge
-// print the face, follows the route the merge printed, and reruns the merge to exit 0.
+// print the face, follows the route the merge printed, and reruns the merge to exit 0. The
+// one registry walk covers the reset faces too.
 package worktree
 
 import (
@@ -78,33 +79,28 @@ func mergeFixtureFor(t *testing.T, face string) mergeRefusalFixture {
 	return mergeRefusalFixture{}
 }
 
-// TestMergeFacesFollowTheirRoutes is RR28 and RR29 for the merge faces, and RR26, RR56, and
-// RR57 for the fold red. The registry is the source of the merge's face set, so each merge
-// face needs a producing fixture for each of its causes. Each fixture's printed route is
-// carried out step by step, as the landing walk carries out its own, and the merge then
-// reruns to exit 0.
+// TestMergeFacesFollowTheirRoutes is RR28 and RR29, and RR26, RR56, and RR57 for the fold
+// red. The registry is the source of the merge's and the reset's face sets, so each merge
+// face needs a producing fixture for each of its causes, and each reset face needs one.
+// Each fixture's printed route is carried out step by step, as the landing walk carries out
+// its own. The merge then reruns to exit 0, and the reset reruns out of its face.
 func TestMergeFacesFollowTheirRoutes(t *testing.T) {
 	t.Parallel()
-	faces := map[string]refusalroute.Face{}
-	for _, face := range refusalroute.Faces(refusalroute.Merge) {
-		faces[face.Name] = face
-	}
-	produced := map[string]bool{}
+	var keys, resetKeys [][2]string
 	for _, fixture := range mergeRefusalFixtures() {
-		if produced[fixture.face+"/"+fixture.cause] {
-			t.Fatalf("merge face %q has two producing fixtures for cause %q", fixture.face, fixture.cause)
-		}
-		if _, ok := faces[fixture.face]; !ok {
-			t.Fatalf("fixture %q produces no registered merge face", fixture.face)
-		}
-		produced[fixture.face], produced[fixture.face+"/"+fixture.cause] = true, true
+		keys = append(keys, [2]string{fixture.face, fixture.cause})
 	}
-	for name := range faces {
-		if !produced[name] {
-			t.Errorf("registry merge face %q has no producing fixture", name)
-		}
+	for _, fixture := range resetRefusalFixtures() {
+		resetKeys = append(resetKeys, [2]string{fixture.face, ""})
 	}
+	faces, resetFaces := producingFixtures(t, refusalroute.Merge, keys), producingFixtures(t, refusalroute.Reset, resetKeys)
 	wrapper := installedWrapper(t, testRunBinary(t))
+	for _, fixture := range resetRefusalFixtures() {
+		t.Run("reset/"+fixture.face, func(t *testing.T) {
+			t.Parallel()
+			followResetFace(t, wrapper, resetFaces[fixture.face], fixture)
+		})
+	}
 	for _, fixture := range mergeRefusalFixtures() {
 		t.Run(strings.TrimSuffix(fixture.face+"/"+fixture.cause, "/"), func(t *testing.T) {
 			t.Parallel()
@@ -349,11 +345,7 @@ func mergeRefusalFixtures() []mergeRefusalFixture {
 			clear: func(t *testing.T, f mergeSet) { mustRemove(t, mustAdminPath(t, f.created[0].Path, "index.lock")) },
 			// The reset plan prints its own apply, which the operator runs next.
 			after: func(t *testing.T, wrapper string, f mergeSet, plan verbResult) {
-				apply, printed := recordField(plan.stdout, "reset_plan{", refusalroute.NextField, "envelope", "fingerprint")
-				if !printed || apply == "" {
-					t.Fatalf("reset plan = %q, want a next= apply", plan.stdout)
-				}
-				runPrintedStep(t, wrapper, f.repoHome, apply)
+				applyResetPlan(t, wrapper, f.repoHome, plan)
 			},
 		},
 		{
@@ -372,6 +364,17 @@ func mergeRefusalFixtures() []mergeRefusalFixture {
 			}},
 		},
 	}
+}
+
+// applyResetPlan runs the apply that a printed reset plan names, which the operator runs
+// after the plan.
+func applyResetPlan(t *testing.T, wrapper string, f repoHome, plan verbResult) {
+	t.Helper()
+	apply, printed := recordField(plan.stdout, "reset_plan{", refusalroute.NextField, "envelope", "fingerprint")
+	if !printed || apply == "" {
+		t.Fatalf("reset plan = %q, want a next= apply", plan.stdout)
+	}
+	runPrintedStep(t, wrapper, f, apply)
 }
 
 // reconcileFailingMerge is the merge whose publication outruns its reconcile: the target's

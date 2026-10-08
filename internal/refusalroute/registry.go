@@ -77,8 +77,12 @@ const (
 	FactSiblingLabel = "sibling-label"
 	// FactFrom is the incoming commit of a merge, as the caller spelled it.
 	FactFrom = "from"
-	// FactResetPlan is the reset verb's plan command at the commit a verb published.
+	// FactResetPlan is a reset verb's plan command: the plan at the commit a verb published,
+	// or the plan of the checkout as it stands.
 	FactResetPlan = "reset-plan"
+	// FactRecovery is the route that clears an assignment record whose tree is missing,
+	// which the record's own landedness picks.
+	FactRecovery = "recovery"
 	// FactCheckoutGit is the Git command addressed at the conflicted checkout.
 	FactCheckoutGit = "checkout-git"
 	// FactConflictCommit is the commit whose composition conflicted.
@@ -129,7 +133,7 @@ var atCheckout = Command(Composed(FactCheckoutCommand), Fact(factCheckout))
 // inventory is the authoritative, ordered inventory of the write verbs' refusal faces. Each
 // verb declares its faces in its own file of this package, and a verb adds its face there
 // rather than composing a route at the site that refuses. The verbs join in this order.
-var inventory = slices.Concat(landFaces, mergeFaces)
+var inventory = slices.Concat(landFaces, mergeFaces, resetFaces)
 
 // New is the one constructor a registered face travels through.
 func New(name string, facts Facts) Refusal { return newIn(inventory, name, facts) }

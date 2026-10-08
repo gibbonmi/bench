@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 func TestResetRestoreRefusesAForeignRef(t *testing.T) {
@@ -125,7 +126,8 @@ func TestResetRestoreRefusesAnIgnoredCollision(t *testing.T) {
 	head := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	mustWrite(t, filepath.Join(f.creation.Path, "untracked"), []byte("ignored now\n"), 0o644)
 	result := runVerb(t, verbReset, f.call("--restore", f.ref, f.creation.Assignment.ID))
-	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "refused{detail=ignored content would be overwritten}") &&
+	requireTest(t, result.exit == 1 && strings.Contains(result.stdout, "refused{detail=ignored content would be overwritten,next=reviewer: ") &&
+		strings.Contains(result.stdout, "; then bench worktree reset --restore "+sanitize.ShellQuote(f.ref)+" "+sanitize.ShellQuote(f.creation.Assignment.ID)+"}\n") &&
 		strings.Contains(result.stdout, refusalPathsTable+"[1]{path}:\n  untracked\n"), "collision restore = %d %s %s", result.exit, result.stdout, result.stderr)
 	body, err := os.ReadFile(filepath.Join(f.creation.Path, "untracked"))
 	mustNoError(t, err)

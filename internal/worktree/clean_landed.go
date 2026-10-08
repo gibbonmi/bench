@@ -120,6 +120,14 @@ func planLandedAssignment(j joins, root string, assignment intent.Assignment, op
 	// Only the checkout shape licenses the explicit planner. It invokes git against the
 	// target, which can block forever when a ledger path has decayed into a FIFO or socket.
 	shape, shapeErr := ClassifyPathShape(assignment.Worktree)
+	if shapeErr == nil && shape == ShapeAbsent {
+		// The branch already sits in the default branch, so the release deletes it at the
+		// commit it holds, as the retirement of a present landed checkout does.
+		plan := missingTreeRelease(assignment)
+		oid, oidErr := git.ResolveCommit(root, assignment.Branch)
+		plan.deleteBranch, plan.branchRef, plan.branchOID = oidErr == nil, assignment.Branch, oid
+		return plan
+	}
 	if shapeErr != nil || shape != ShapeCheckoutDirectory {
 		detail := "assignment path shape is " + string(shape)
 		if shapeErr != nil {
@@ -138,6 +146,22 @@ func planLandedAssignment(j joins, root string, assignment intent.Assignment, op
 		return plan
 	}
 	return retainForLandedPreservation(plan)
+}
+
+// missingTreeRelease is the plan of an assignment whose tree is gone. No bytes at the path
+// answer for a checkout, so the plan releases the registration and the ledger entry and
+// removes nothing; the branch stays unless the caller proves it landed. Its fingerprint is
+// the owned registration's, which the cleanup receipt records.
+func missingTreeRelease(assignment intent.Assignment) CleanupPlan {
+	plan := CleanupPlan{Target: assignment.Worktree, Action: actionReleaseLeftover, Assignment: assignment.ID, Recovery: "none", Tracked: "unknown", ignoredSummary: "none", leftover: assignment.Worktree}
+	plan.assignment, plan.owned = &assignment, true
+	return automaticFingerprint(plan)
+}
+
+// landedApplies reports whether the apply of the landed set carries out a row: a removal,
+// or the release of a landed assignment whose tree is gone.
+func landedApplies(action CleanupAction) bool {
+	return action.Removes() || action == actionReleaseLeftover
 }
 
 // retainForLandedPreservation is the landed-set's single site for the preservation
@@ -242,7 +266,7 @@ func renderLandedSet(stdout io.Writer, set landedCleanupSet, options CleanupOpti
 	}
 	actions := make([]axi.Action, 0, len(set.rows)+1)
 	for _, row := range set.rows {
-		if row.plan.Action.Removes() {
+		if landedApplies(row.plan.Action) {
 			// The apply command is the re-plan command plus the digest this plan authorizes.
 			arguments := append(landedReplan(options), axi.KnownArgument("--apply"), axi.KnownArgument(set.fingerprint))
 			actions = append(actions, axi.ExecutableInvocation("apply the landed worktree plan", arguments...))
@@ -336,7 +360,7 @@ func applyLandedSet(j joins, a ambient, root string, set landedCleanupSet, optio
 		return preflightOutcomes(plans, landedRowPlans(set.rows), offender, err), err
 	}
 	for i, planned := range set.rows {
-		if !planned.plan.Action.Removes() {
+		if !landedApplies(planned.plan.Action) {
 			plans = append(plans, planned.plan)
 			continue
 		}
