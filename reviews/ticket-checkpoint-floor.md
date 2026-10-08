@@ -1,5 +1,32 @@
 # Review outcomes
 
+## Repair state
+
+Chunk TF-C1 used repair cycle 1 of 2. The cycle repairs S1, S2, S3, and C1 through a fresh repair session for ticket 01. C1 is the one hardening cycle of TF-C1. No reviewer extension exists.
+
+## Standards
+
+TF-C1 round 1: 4 findings, worst S1.
+
+- S1 (auto-fix, confidence 7): `internal/testreport/root_conformance_test.go:59-67` adds a third copy of the `selectRunBinary` override harness beside `installOwnedSelection` and `check_test.go:121-129`.
+- S2 (auto-fix, confidence 6): `root_conformance_test.go:22` and `:101` and `check_test.go:226` spell the kit path fact three times, and `liveKitRoot` owns it.
+- S3 (auto-fix, confidence 7): `check_test.go:201` keeps an independent help-list expectation that omits `root-conformance`, so an omission from help stays green.
+- S4 (no-op, confidence 4): `testBenchSource` is a one-line forwarder to `gate.KitRoot`. The ticket requires that forwarder.
+
+## Spec
+
+TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
+
+Advice: the TF2 test runs the `--full` form of the command. The bare form keeps the same exit and diagnostic.
+
+## Coverage
+
+TF-C1 round 1: 1 finding, worst C1.
+
+- C1 (auto-fix, confidence 8): `internal/gate/phases.go:151` has no test for the kit clause of `RootConformanceRuns`. A probe that drops the clause stays green.
+
+Advice: the empty-kit clause has no caller that passes an empty kit.
+
 ```bench-review-record
 {
   "version": 2,
@@ -123,7 +150,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1-standards-r1",
+          "performer": "claude:ft349_c1_standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "844ebbe4af8f14822c400f2796c02feccf1e6874",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c1_standards",
+            "digest": "sha256:4172eb6ff1d9e87d4f3f71875df1440a27317a18d68e8cccf2fbc756924eb96b",
+            "excerpt": "Standards axis TF-C1 (fable/high), diff 60da9ca9..c0629ddc. 4 advisory, 0 blocking (axis-stated); worst S1.\nS1 root_conformance_test.go:59-67 selectRunBinary override harness exists three times (here, installOwnedSelection :40-43, check_test.go:121-129); outcome_test.go:79-88 installCannedSelection owns the stub. auto-fix. conf 7.\nS2 root_conformance_test.go:22,:101 and check_test.go:226 spell filepath.Join(\"..\",\"..\") kit fact three times; liveKitRoot owns it. auto-fix. conf 6.\nS3 check_test.go:201 TestNamedCheckHelpListsEverySupportedCheck expectation omits root-conformance (and prose); omission from help stays green. auto-fix. conf 7.\nS4 command.go:331-336 testBenchSource is a one-line forwarder to gate.KitRoot. no-op. conf 4.\n"
+          },
+          "axis": "Standards",
+          "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
+          "tip": "c0629ddc8ab1537d213840594febbb77605c013b",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c1-spec-r1",
+          "performer": "claude:ft349_c1_spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "844ebbe4af8f14822c400f2796c02feccf1e6874",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c1_spec",
+            "digest": "sha256:d86f770d6b82fb2f2be561cab4a750a657ad43f2d74fad425f08b2b50f6828f3",
+            "excerpt": "Spec axis TF-C1 (fable/high), diff 60da9ca9..c0629ddc. 1 advisory, 0 blocking; worst P1.\nP1 root_conformance_test.go:112 TF2 test runs --full --check root-conformance while spec names the bare command; behavior holds in bare form. no-op. conf 4.\nTF1-TF5 and the testBenchSource line satisfied; seam cells TF1-TF5 in citation form naming existing tests; bench coverage mapped, 71 rows.\n"
+          },
+          "axis": "Spec",
+          "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
+          "tip": "c0629ddc8ab1537d213840594febbb77605c013b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1-coverage-r1",
+          "performer": "claude:ft349_c1_coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "high",
+          "source_digest": "844ebbe4af8f14822c400f2796c02feccf1e6874",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c1_coverage",
+            "digest": "sha256:646601a4a84087400a6791f57b15753be8877b649d2c0ac4adec3079789465ba",
+            "excerpt": "Coverage axis TF-C1 (fable/high), diff 60da9ca9..c0629ddc. 2 advisory, 0 blocking; worst C1.\nC1 internal/gate/phases.go:151 kit clause of RootConformanceRuns untested: probe swap 'sameDirectory(root, kitRootAt(root, kit))' -> 'sameDirectory(root, root)' silent on ./internal/gate (420) and testreport TF1/TF3/TF5 (3), restored=yes. auto-fix: assert RootConformanceRuns(liveKitRoot(t), t.TempDir()) == false. conf 8.\nC2 phases.go:149-151 empty-kit clause unreachable from callers; probe silent, restored=yes. no-op. conf 7.\n"
+          },
+          "axis": "Coverage",
+          "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
+          "tip": "c0629ddc8ab1537d213840594febbb77605c013b",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
