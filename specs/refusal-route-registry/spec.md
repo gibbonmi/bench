@@ -890,6 +890,18 @@ The orchestrator records each author session before that author's dispatch.
           "trigger": "user-directed",
           "stopped": "the ticket 07 author session returned a blocked report at about 318k tokens of context and has no live child; the reviewer directed a fresh author",
           "preserved": "a54fe8fca1910d7834bbc6c47c65d09ba6318e81"
+        },
+        {
+          "session": "claude:ft393_t7_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "e686bbda27b1db9256b38d1eb8502ecefc21b2a2",
+          "native_ref": "claude-agent:ft393_t7_repair1",
+          "predecessor": "claude:ft393_t7b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 07 successor reported its RR-C2 records and has no live child",
+          "preserved": "f932db29f82ba07271a8e11c8ac5ea011b0aa3ab"
         }
       ],
       "08-route-the-commit-exit-3-to-the-reset-plan.md": [],
