@@ -995,6 +995,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "4abc3cc84ba09b72fc56796fa2e20ea42ea4dbcb",
           "native_ref": "claude-agent:ft393_t10"
+        },
+        {
+          "session": "claude:ft393_t10b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "c53a2da583101247595f4d6806f6df5d68be9609",
+          "native_ref": "claude-agent:ft393_t10b",
+          "predecessor": "claude:ft393_t10",
+          "trigger": "user-directed",
+          "stopped": "the ticket 10 author passed the 300k context rule after its commit and has no live child",
+          "preserved": "c53a2da583101247595f4d6806f6df5d68be9609"
         }
       ],
       "11-route-the-commitment-policy-refusals-through-faces.md": [],
