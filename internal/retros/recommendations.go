@@ -19,8 +19,8 @@ func Recommendations(content []byte) []Recommendation {
 	var out []Recommendation
 	for i := 0; i < len(lines); {
 		line := strings.TrimSuffix(lines[i], "\r")
-		if strings.HasPrefix(line, "## ") {
-			inImprovements = strings.TrimSpace(strings.TrimPrefix(line, "## ")) == "Agent-experience improvements"
+		if after, ok := strings.CutPrefix(line, "## "); ok {
+			inImprovements = strings.TrimSpace(after) == "Agent-experience improvements"
 			i++
 			continue
 		}
@@ -66,8 +66,8 @@ func (r Recommendation) FeedsMarked() bool {
 func listItem(line string) (string, bool) {
 	trimmed := strings.TrimLeft(line, " \t")
 	for _, marker := range []string{"- ", "* ", "+ "} {
-		if strings.HasPrefix(trimmed, marker) {
-			return strings.TrimSpace(strings.TrimPrefix(trimmed, marker)), true
+		if after, ok := strings.CutPrefix(trimmed, marker); ok {
+			return strings.TrimSpace(after), true
 		}
 	}
 	period := strings.IndexByte(trimmed, '.')

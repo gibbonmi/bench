@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/token"
 	"go/types"
+	"slices"
 	"strings"
 )
 
@@ -26,10 +27,8 @@ type Match struct {
 // the same match found through the origin spelling are one match, not two.
 func Resolve(pkgs []*Package, query string) ([]Match, error) {
 	parts := strings.Split(query, ".")
-	for _, p := range parts {
-		if p == "" {
-			return nil, fmt.Errorf("malformed symbol %q", query)
-		}
+	if slices.Contains(parts, "") {
+		return nil, fmt.Errorf("malformed symbol %q", query)
 	}
 	var out []Match
 	var names []string

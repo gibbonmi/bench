@@ -18,6 +18,7 @@ package lines
 import (
 	"encoding/json"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/harnesses"
@@ -188,21 +189,11 @@ func Key(harness, tier string) string {
 
 // KnownHarness reports whether name is one of Harnesses.
 func KnownHarness(name string) bool {
-	for _, h := range Harnesses {
-		if h == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(Harnesses, name)
 }
 
 func knownTier(name string) bool {
-	for _, t := range Tiers {
-		if t == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(Tiers, name)
 }
 
 // foreignKeyRe matches any BENCH_<WORD>_<TIER> assignment, whatever the harness segment
@@ -608,10 +599,5 @@ func isProviderModel(model string) bool {
 	if len(parts) < 2 || !modelid.SafeToken(model) {
 		return false
 	}
-	for _, part := range parts {
-		if part == "" {
-			return false
-		}
-	}
-	return true
+	return !slices.Contains(parts, "")
 }

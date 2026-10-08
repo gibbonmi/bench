@@ -330,10 +330,7 @@ func (r refusal) table() string {
 	if len(r.paths) == 0 {
 		return ""
 	}
-	shown := len(r.paths)
-	if shown > ignoredEntryLimit {
-		shown = ignoredEntryLimit
-	}
+	shown := min(len(r.paths), ignoredEntryLimit)
 	rows := make([][]string, 0, shown)
 	for _, path := range r.paths[:shown] {
 		rows = append(rows, []string{sanitize.Controls(path)})

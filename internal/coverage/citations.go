@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -251,12 +252,7 @@ func citedPathSafe(rel string) bool {
 	if strings.HasPrefix(rel, "/") || strings.ContainsRune(rel, '\\') {
 		return false
 	}
-	for _, segment := range strings.Split(rel, "/") {
-		if segment == ".." {
-			return false
-		}
-	}
-	return true
+	return !slices.Contains(strings.Split(rel, "/"), "..")
 }
 
 // declaresFunc reports whether content declares a function of this name, with or
@@ -344,10 +340,8 @@ func checkReviewPickup(p parsed, slug string) []string {
 		return nil
 	}
 	want := reviewPickup(slug)
-	for _, token := range p.fences {
-		if token == want {
-			return nil
-		}
+	if slices.Contains(p.fences, want) {
+		return nil
 	}
 	return []string{fmt.Sprintf("coverage map spec declares ownership fences without the review pickup '%s'", want)}
 }

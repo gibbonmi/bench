@@ -32,8 +32,8 @@ func conformanceEnvironment(base []string, root, scope string, selection *runbin
 func environmentValue(env []string, name string) string {
 	prefix := name + "="
 	for i := len(env) - 1; i >= 0; i-- {
-		if strings.HasPrefix(env[i], prefix) {
-			return strings.TrimPrefix(env[i], prefix)
+		if after, ok := strings.CutPrefix(env[i], prefix); ok {
+			return after
 		}
 	}
 	return ""

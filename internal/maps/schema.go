@@ -3,6 +3,7 @@ package maps
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -101,21 +102,11 @@ type DecisionMap struct {
 }
 
 func (s decisionMapSchema) hasStatus(status string) bool {
-	for _, candidate := range s.statuses {
-		if status == candidate {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.statuses, status)
 }
 
 func (s decisionMapSchema) hasType(typ string) bool {
-	for _, candidate := range s.types {
-		if typ == candidate {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.types, typ)
 }
 
 func (s decisionMapSchema) field(name string) field {
@@ -194,16 +185,9 @@ func parseDecisionMap(topic string, content []byte) (DecisionMap, []Diagnostic) 
 			}
 			continue
 		}
-		unsupported := false
-		for _, heading := range canonicalDecisionMapSchema.unsupportedHeadings {
-			if line == heading {
-				diagnostics = append(diagnostics, Diagnostic{Message: "unsupported Handoff section"})
-				section = "Handoff"
-				unsupported = true
-				break
-			}
-		}
-		if unsupported {
+		if slices.Contains(canonicalDecisionMapSchema.unsupportedHeadings, line) {
+			diagnostics = append(diagnostics, Diagnostic{Message: "unsupported Handoff section"})
+			section = "Handoff"
 			continue
 		}
 		if match := inlineTicketHeading.FindStringSubmatch(line); match != nil {

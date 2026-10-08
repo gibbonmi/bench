@@ -157,11 +157,11 @@ func parseManifest(path, root string, data []byte) ([]Phase, error) {
 func unknownField(err error) (string, bool) {
 	const marker = "json: unknown field "
 	msg := err.Error()
-	idx := strings.Index(msg, marker)
-	if idx < 0 {
+	_, after, ok := strings.Cut(msg, marker)
+	if !ok {
 		return "", false
 	}
-	return strings.Trim(msg[idx+len(marker):], `"`), true
+	return strings.Trim(after, `"`), true
 }
 
 // LaneFor resolves the fast lane a root declares, and nil when it declares none. The

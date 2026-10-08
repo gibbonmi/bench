@@ -6,6 +6,7 @@ import (
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -161,10 +162,8 @@ func collectCensus(s Store, r *Run, b BenchInputs, selected map[string]Mapping) 
 	return nil
 }
 func appendReference(refs []Reference, ref Reference) []Reference {
-	for _, old := range refs {
-		if old == ref {
-			return refs
-		}
+	if slices.Contains(refs, ref) {
+		return refs
 	}
 	return append(refs, ref)
 }

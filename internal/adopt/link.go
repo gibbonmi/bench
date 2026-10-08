@@ -216,7 +216,7 @@ func claudeSkillsEntries(kit string, excludedPrefixes []string) ([]planEntry, er
 	}
 	filtered := entries[:0]
 	for _, e := range entries {
-		top := strings.SplitN(strings.TrimPrefix(e.rel, ".claude/skills/"), "/", 2)[0]
+		top, _, _ := strings.Cut(strings.TrimPrefix(e.rel, ".claude/skills/"), "/")
 		if _, err := os.Stat(filepath.Join(kit, ".agents", "commands", top+".md")); err == nil {
 			continue
 		}

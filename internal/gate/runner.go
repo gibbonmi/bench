@@ -443,10 +443,8 @@ func mergeEnv(base, overrides []string) []string {
 }
 
 func envKey(entry string) string {
-	if idx := strings.Index(entry, "="); idx >= 0 {
-		return entry[:idx]
-	}
-	return entry
+	key, _, _ := strings.Cut(entry, "=")
+	return key
 }
 
 // phaseToolAbsent reports that phase is optional and the tool it invokes is not on this

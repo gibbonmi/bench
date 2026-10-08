@@ -1,5 +1,7 @@
 package compatibility
 
+import "slices"
+
 const workflowOperation = "workflow"
 
 type capability struct {
@@ -41,12 +43,7 @@ func required(item capability, operation string) bool {
 	if operation == workflowOperation {
 		return true
 	}
-	for _, candidate := range item.operations {
-		if candidate == operation {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(item.operations, operation)
 }
 
 // CapabilityAction returns the probe owned by the capability inventory.

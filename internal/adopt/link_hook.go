@@ -185,11 +185,11 @@ func prePushBakedBranch(content string) (string, bool) {
 		return "", false
 	}
 	remainder := strings.TrimPrefix(content, prefix)
-	end := strings.Index(remainder, suffix)
-	if end < 0 {
+	before, _, ok := strings.Cut(remainder, suffix)
+	if !ok {
 		return "", false
 	}
-	if remainder[:end] != baked {
+	if before != baked {
 		return "", false
 	}
 	return baked, true

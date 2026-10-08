@@ -65,6 +65,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestWorkflowCadenceAnchorsRejectDeletionAndSwap":              true,
 	"TestSkillsIndexConformanceCarriesNoSecondReader":              true,
 	"TestSpecTicketHandoffWorkflowFixturesAreComplete":             true,
+	"TestStdlibReimplementationBites":                              true,
 	"TestTimingOrderStable":                                        true,
 	"TestUnknownScopeIsRedAndRunsNothing":                          true,
 }

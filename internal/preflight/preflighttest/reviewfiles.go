@@ -3,6 +3,7 @@ package preflighttest
 import (
 	"embed"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -103,19 +104,13 @@ func SeedReviewPair(t *testing.T, pair ReviewPair) (root, slug string, args []st
 	t.Chdir(root)
 	RunGit(t, "init", "-q", "--object-format=sha1", "-b", "main")
 	base := ReviewFenceWith()
-	for path, entry := range pair.Base {
-		base[path] = entry
-	}
+	maps.Copy(base, pair.Base)
 	tip := map[string]TreeEntry{}
-	for path, entry := range base {
-		tip[path] = entry
-	}
+	maps.Copy(tip, base)
 	for _, path := range pair.Removed {
 		delete(tip, path)
 	}
-	for path, entry := range pair.Tip {
-		tip[path] = entry
-	}
+	maps.Copy(tip, pair.Tip)
 	var stream strings.Builder
 	writeCommit(&stream, "refs/heads/main", 1, pinnedTimes[0], "base", base)
 	writeCommit(&stream, "refs/heads/feature", 2, pinnedTimes[1], "review source", tip)

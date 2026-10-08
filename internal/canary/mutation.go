@@ -172,8 +172,8 @@ func resolvePath(path string) (string, error) {
 func restoredFixturePath(rel string) string {
 	parts := strings.Split(filepath.Clean(rel), string(filepath.Separator))
 	for i, part := range parts {
-		if strings.HasPrefix(part, "dot-") {
-			parts[i] = "." + strings.TrimPrefix(part, "dot-")
+		if after, ok := strings.CutPrefix(part, "dot-"); ok {
+			parts[i] = "." + after
 		}
 	}
 	return filepath.Join(parts...)
@@ -185,8 +185,7 @@ func basePaths(root, basePath string) ([]string, error) {
 	var walk func([]byte) error
 	walk = func(data []byte) error {
 		for _, rel := range strings.Fields(string(data)) {
-			if strings.HasPrefix(rel, "@") {
-				include := strings.TrimPrefix(rel, "@")
+			if include, ok := strings.CutPrefix(rel, "@"); ok {
 				if !safeBasePath(include) {
 					return fmt.Errorf("invalid BASE include %q", include)
 				}

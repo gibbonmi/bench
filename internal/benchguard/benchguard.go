@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/shellcommand"
@@ -215,10 +216,8 @@ func leadRefusal(stream shellcommand.Stream, index int) (Side, bool) {
 	}
 	for _, earlier := range stream.Commands[:index] {
 		words := shellcommand.ProjectCommandWords(stream.Tokens[earlier.Start:earlier.End])
-		for _, word := range words {
-			if shellcommand.IsAssignment(word) {
-				return SideBefore, true
-			}
+		if slices.ContainsFunc(words, shellcommand.IsAssignment) {
+			return SideBefore, true
 		}
 		prefix := shellcommand.ResolveRoutinePrefix(words)
 		if prefix.Index < len(words) {

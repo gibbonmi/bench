@@ -2,6 +2,7 @@ package gitguard
 
 import (
 	"path"
+	"slices"
 	"strings"
 )
 
@@ -239,12 +240,7 @@ func isPathspecFileArg(arg string) bool {
 }
 
 func hasPathspecFile(args []string) bool {
-	for _, arg := range args {
-		if isPathspecFileArg(arg) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(args, isPathspecFileArg)
 }
 
 func restoreHasPathspec(args []string) bool {
@@ -337,14 +333,7 @@ func indexOf(args []string, s string) int {
 }
 
 func hasAny(args []string, opts ...string) bool {
-	for _, arg := range args {
-		for _, opt := range opts {
-			if arg == opt {
-				return true
-			}
-		}
-	}
-	return false
+	return slices.ContainsFunc(args, func(arg string) bool { return slices.Contains(opts, arg) })
 }
 
 // anyShortFlagHas reports whether any short-flag cluster contains one of the given

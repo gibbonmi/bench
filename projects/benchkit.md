@@ -455,6 +455,7 @@ current-state advertisement of its non-meta input bindings:
 | `harness-record` | `catch-all` |
 | `ticket-grammar` | `catch-all` |
 | `claude-agent-definitions` | `catch-all` |
+| `stdlib-reimplementation` | `go-source` |
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
 current exact green; partial/component and reduced-scope records are legacy input classes

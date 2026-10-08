@@ -18,8 +18,6 @@ findings in the owner details.
 The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
 and review cost that recent builds paid.
 
-**FT373 (HIGH) — a gate check refuses production code that re-implements a standard-library function.**
-
 **FT293 (HIGH) — preflight closes each ticket's complete ownership fence.**
 
 **FT375 (MEDIUM) — the build preflight reports spec staleness, and the staleness pass audits only drift and red rows.**
@@ -317,10 +315,7 @@ recommended table is sequencing advice.
 | FT254 | FT258 | Resolution follows the `MERGE_HEAD` contract. |
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
 | FT318 | FT317 | The completion form records the decided value of a capability-blocked row. |
-| FT365 | FT373 | The shared Go-rule scanner absorbs the standard-library duplicate rule family. |
-| FT374 | FT373 | Each language equivalent mirrors the Go rule family. |
 
 ## Recommended sequence
 
-1. FT373
-2. FT349
+1. FT349

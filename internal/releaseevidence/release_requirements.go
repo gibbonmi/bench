@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -58,10 +59,8 @@ func validateRequirementRegistry(registry Registry) error {
 		if seen[record.Key] || record.Key == "" || record.Owner == "" || record.Schema == "" || (!record.Producer && !coreSchema) || !safeRegistryPath(record.Path) || len(record.Profiles) == 0 || record.Requiredness != "required" && record.Requiredness != "conditional" {
 			return fmt.Errorf("invalid requirement registry record %q", record.Key)
 		}
-		for _, value := range []string{record.Key, record.Owner, record.Schema, record.Path} {
-			if hasControlBytes(value) {
-				return fmt.Errorf("requirement registry record %q contains control bytes", record.Key)
-			}
+		if slices.ContainsFunc([]string{record.Key, record.Owner, record.Schema, record.Path}, hasControlBytes) {
+			return fmt.Errorf("requirement registry record %q contains control bytes", record.Key)
 		}
 		seen[record.Key] = true
 		if record.PackageMode != "" {

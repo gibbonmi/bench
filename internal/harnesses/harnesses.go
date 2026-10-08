@@ -15,6 +15,8 @@
 // tree itself records today. Every other cell is unknown, and a reviewed edit fills it.
 package harnesses
 
+import "maps"
+
 // Schema is the record's shape version. A consumer prints it, so it can name the shape it
 // read.
 const Schema = 1
@@ -179,9 +181,7 @@ func unknownMeasures() map[string]Measure {
 // mechanics builds one row's cells from the unknown baseline plus the recorded facts.
 func mechanics(recorded map[string]Cell) map[string]Cell {
 	cells := unknownCells()
-	for name, cell := range recorded {
-		cells[name] = cell
-	}
+	maps.Copy(cells, recorded)
 	return cells
 }
 

@@ -32,8 +32,7 @@ func (f *FixtureRegistry) client() *http.Client {
 }
 
 func packageFileName(name, version string) string {
-	if strings.HasPrefix(name, "@redbench/") {
-		target := strings.TrimPrefix(name, "@redbench/")
+	if target, ok := strings.CutPrefix(name, "@redbench/"); ok {
 		return fmt.Sprintf("redbench-%s-%s.tgz", target, version)
 	}
 	return fmt.Sprintf("redbench-%s.tgz", version)

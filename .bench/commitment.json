@@ -364,6 +364,14 @@
       "identity": "sha256:ce5bb9385d4777136da79ab609e1be197fcc035569e23f3b73dd0e389c62d61d",
       "source": "0b3dabc01e5ba5fc92cef910ea5cad5c9ca81194",
       "evidence": "c9c0557ae4210c9a350a61aa06f16dc0ddb45ff5"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT373",
+      "binding": "stdlib-reimplementation-check",
+      "identity": "git-tree:222650a82c808f1f721116d34054374ca3fb2801",
+      "source": "19dceaeb44a1a8163e1589c00bfb4b976880ef03",
+      "evidence": "git-tree:0a1575b964638c753bcb4df127746cae2754ca96"
     }
   ]
 }

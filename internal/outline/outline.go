@@ -348,8 +348,8 @@ func testScope(files []string, test bool) []string {
 // to this depth because a row per scanned directory is larger than the symbol rows it
 // replaces once a tree is deep, which defeats the one-screen probe it exists to give.
 func topLevel(rel string) string {
-	if i := strings.Index(rel, "/"); i >= 0 {
-		return rel[:i]
+	if before, _, ok := strings.Cut(rel, "/"); ok {
+		return before
 	}
 	return "."
 }

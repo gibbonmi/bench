@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -60,12 +61,7 @@ var classOrder = []Class{Symlink, Fifo, PID, CPU, Privilege, Signal, Tool}
 func Classes() []Class { return append([]Class(nil), classOrder...) }
 
 func (c Class) valid() bool {
-	for _, known := range classOrder {
-		if c == known {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(classOrder, c)
 }
 
 // Kind separates the two skip populations. Only KindCapability describes a security
