@@ -29,6 +29,8 @@ Each fixture follows its printed route and reruns the checkpoint.
 Replace the pin of the write-access help row in `TestGateRunRetainsSubjectConstructionCause`.
 Extend `TestCompleteCheckpointRefusesADirtyCheckout` and `TestCompleteCheckpointRefusesAnUntransformableSpec` with the route assertions of RR41 and RR66.
 
+The walk test uses the shared route walk in `internal/refusalroute/routetest` and does not copy it.
+
 ## Acceptance
 
 - [ ] A checkpoint refusal for a missing completion record prints `next=bench preflight review example` and no `help[1]{cmd,why}` row.

@@ -18,6 +18,8 @@ No reader parses the tail text.
 This ticket runs after ticket 09, because both write `internal/commit/commit.go` and `internal/commit/refusal_route_test.go`.
 Add the commit rows of this ticket to `TestCommitFacesFollowTheirRoutes`.
 
+The walk test uses the shared route walk in `internal/refusalroute/routetest` and does not copy it.
+
 ## Acceptance
 
 - [ ] A commit from an assignment with no delivery binding prints a `next=` route that contains `bench commitment start --outcome`.

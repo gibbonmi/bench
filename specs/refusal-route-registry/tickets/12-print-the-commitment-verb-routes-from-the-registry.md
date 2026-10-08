@@ -21,6 +21,8 @@ Add `TestCommitmentFacesFollowTheirRoutes`.
 It walks the commitment faces of the registry and drives one producing fixture for each face.
 Each fixture follows its printed route and reruns the verb.
 
+The walk test uses the shared route walk in `internal/refusalroute/routetest` and does not copy it.
+
 ## Acceptance
 
 - [ ] A `bench commitment start` refusal for an outcome outside the active milestone prints a `next` cell that starts with `reviewer: `.

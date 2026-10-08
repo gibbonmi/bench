@@ -175,7 +175,7 @@ The destructive-git guard already states that the merge and any history rewrite 
 
 Each verb keeps its output shape.
 The landing, the merge, and the reset print `next=<route>` in the `refused{...}` record.
-The commit prints `next=<route>` on its stderr refusal line, and its exit 3 record keeps `committed{published_commit=…,path=…,next=…}`.
+The commit prints `next=<route>` on its own stderr line after the refusal sentence, and its exit 3 record keeps `committed{published_commit=…,path=…,next=…}`.
 The gate checkpoint prints `next=<route>` on stderr after its reason, and it no longer prints the fixed `help[1]{cmd,why}` row.
 The commitment verb keeps its `next[1]{command}` table, and the cell holds the face's route.
 
@@ -924,6 +924,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "f97dcb703cb5e304115e9b475385b6aae99a405b",
           "native_ref": "claude-agent:ft393_t8"
+        },
+        {
+          "session": "claude:ft393_t8_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "ba5d8921e4de62d64f4046ad1fef241f51b446b8",
+          "native_ref": "claude-agent:ft393_t8_repair1",
+          "predecessor": "claude:ft393_t8",
+          "trigger": "user-directed",
+          "stopped": "the ticket 08 author reported its RR-C3 records and has no live child",
+          "preserved": "ba5d8921e4de62d64f4046ad1fef241f51b446b8"
         }
       ],
       "09-route-each-commit-refusal-through-the-registry.md": [
@@ -1128,6 +1140,9 @@ The prospective build owns these exact paths:
 - `internal/worktree/list.go`
 - `internal/worktree/list_actions_test.go`
 - `internal/landing/landing_test.go`
+- `internal/refusalroute/routetest/routetest.go`
+- `internal/refusalroute/routetest/routetest_test.go`
+- `internal/landing/attribution.go`
 - `internal/worktree/lifecycle_test.go`
 - `internal/worktree/worktree_test.go`
 - `internal/worktree/lifecycle.go`
