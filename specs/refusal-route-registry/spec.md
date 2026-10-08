@@ -345,7 +345,7 @@ A conformance test scans the string literals in the production Go files of the w
 It refuses a literal outside `internal/refusalroute` that holds `next=`, `next[`, `run bench `, or the route joiner `; then `, or that equals `"next"`.
 The scanned packages include `internal/commitment` and `internal/commitment/repository`.
 The test holds one reviewed allowlist of files whose routes serve a non-write verb.
-The allowlist holds `internal/worktree/path.go`, `internal/worktree/build.go`, and `internal/worktree/tree_target.go`, and each other entry needs a non-write caller.
+The allowlist holds `internal/worktree/path.go`, `internal/worktree/build.go`, and `internal/worktree/tree_target.go`. The first serves the shared `--in` tree-target refusal, and each other entry needs a non-write caller.
 
 ### The recovery matrix
 
@@ -1124,6 +1124,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "b5f2e97b5a30599ae9ca3a582cf38fceb2bfebea",
           "native_ref": "claude-agent:ft393_t13"
+        },
+        {
+          "session": "claude:ft393_t13_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "1cf8c2eb79e414084ecaacb7fcc5d44d0f619b4a",
+          "native_ref": "claude-agent:ft393_t13_repair1",
+          "predecessor": "claude:ft393_t13",
+          "trigger": "user-directed",
+          "stopped": "the ticket 13 author reported its RR-C6 records and has no live child",
+          "preserved": "ef502ec90aea9e07fe0232b50866147ea28648b0"
         }
       ]
     }
@@ -1259,6 +1271,7 @@ The fail-closed refusals are the unregistered face (RR07) and each verb's `<verb
 - **Won't handle**: a fold that admits an inherited red — the decision source closes the merge policy, and `merge-target-red` routes the repair before the fold.
 - **Won't handle**: the exit-2 grammar refusals — the usage package owns their usage line, and `usage.Parse` keeps it.
 - **Won't handle**: the gate run-state refusals outside the checkpoint funnel — they serve every gate run, and `operational` keeps their reason line.
+- **Won't handle**: the `--in` tree-target refusal — it serves every tree-scoped verb, read and write, and `printTargetRefusal` keeps its route.
 - **Won't handle**: the non-write worktree verbs (`list`, `path`, `clean`, `release`, `build`) — the decision source names six write verbs, and `recoveryRoute` keeps their routes.
 - **Won't handle**: the exec arm of a reviewer conflict route for an unsafe path — the reviewer runs that step, and the check grades agent routes.
 - **Won't handle**: a change to either wired guard — the closed decision forbids it, and the guard check reads the guards unchanged.
