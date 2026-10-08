@@ -916,7 +916,16 @@ The orchestrator records each author session before that author's dispatch.
           "preserved": "d0c8c4955b07af76bcbc4e007a9b94c3714e6e96"
         }
       ],
-      "08-route-the-commit-exit-3-to-the-reset-plan.md": [],
+      "08-route-the-commit-exit-3-to-the-reset-plan.md": [
+        {
+          "session": "claude:ft393_t8",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "f97dcb703cb5e304115e9b475385b6aae99a405b",
+          "native_ref": "claude-agent:ft393_t8"
+        }
+      ],
       "09-route-each-commit-refusal-through-the-registry.md": [],
       "10-route-each-checkpoint-refusal-by-its-cause.md": [],
       "11-route-the-commitment-policy-refusals-through-faces.md": [],
@@ -995,7 +1004,7 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR56 | 23 | A `candidate` gate-kind fold red prints a `next=` value that starts with `reviewer: ` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A face map that ignores the gate kind's attribution gives a fold red the agent route |
 | RR27 | 24 | A merge composition conflict prints a `next=` value that starts with `reviewer: ` | planned TestConflictRepairIsAReviewerRoute in internal/worktree/refusal_route_test.go | The merge keeps printing the guard-denied `git merge` as an agent step |
 | RR28 | 25 | A fold with a dirty sibling prints a route that contains `bench commit --in ` and no `bench worktree exec` | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | The current route prints the exec form that FT341 refuses |
-| RR29 | 13, 27 | Each merge face and each reset face has exactly one producing fixture that follows its route out of the face | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A merge or reset face with no fixture reaches an operator unproven |
+| RR29 | 13, 27 | Each merge face and each reset face has exactly one producing fixture for each declared cause, and each fixture follows its route out of the face | planned TestMergeFacesFollowTheirRoutes in internal/worktree/merge_route_test.go | A merge or reset face with no fixture reaches an operator unproven |
 | RR30 | 26 | The `inherited` authorization refusal sentence equals `prospective authorization refused: inherited (the gate ran red on the composed tree and no green baseline attributes the red to this diff)` | `internal/landing/landing_reviewed_test.go` (`TestRefusalMessageNamesTheOperatorActionAndTheOpenReason`) | An inline action prints a second route beside the face's route |
 | RR67 | 26 | A landing whose composed tree grades red prints a `refused{` record whose `next=` contains `bench commit --in ` and ends with the caller's re-run | planned TestLandingRedRouteNamesTheRepair in internal/worktree/refusal_route_test.go | After the sentence drops its action, a landing red prints no route |
 | RR31 | 26 | The merge retries an empty-reason infrastructure refusal exactly once | `internal/worktree/merge_test.go` (`TestMergeRetriesOnlyAVerifiedEmptyReasonInfrastructureRefusal`) | A retry that matches the old sentence never fires after the sentence changes |
@@ -1040,6 +1049,7 @@ A path fact can hold a space, a glob byte, or a control byte.
 
 An agent route for a value that is not line-safe prints that value's placeholder and never the exec pointer form.
 For a path, the route prints `<checkout>` after a `bench worktree path <id>` step.
+A missing tree is the exception: its `bench worktree path <id>` step refuses, so its route prints the command with `<checkout>` and no path step.
 `landingResumeNext` and `atSourceWorktree` take this form, so the `land-incomplete` resume and each preflight re-run obey it.
 The renderer shell-quotes a line-safe value and prints the slot placeholder for a value that is not line-safe; RR34 grades the placeholder.
 A label fact comes from the assignment ledger, and the `--in` resolver refuses an ambiguous label under FT341.

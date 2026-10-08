@@ -26,7 +26,7 @@ After this ticket, the walk covers every merge face and every reset face.
 
 ## Acceptance
 
-- [ ] Each merge face and each reset face has exactly one producing fixture that follows its route out of the face.
+- [ ] Each merge face and each reset face has exactly one producing fixture for each declared cause. Each fixture follows its route out of the face.
 - [ ] Each reset refusal prints the same route text that the reset verb printed before this ticket.
 - [ ] A reset plan still prints `next=bench worktree reset --to ` with its `--apply` fingerprint.
 - [ ] For a landed assignment whose tree is missing, the printed `bench worktree clean --landed` route and its apply retire the assignment, and the refusal no longer prints.
