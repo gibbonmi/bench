@@ -38,6 +38,9 @@ func seededClosureFixture(t *testing.T, request string, step func(*testrepo.Gate
 // lightLandingSlug names the light-path folder that the source of lightLandingFixture carries.
 const lightLandingSlug = "lp"
 
+// lightPathTicket is the ticket of the light-path landing fixture's folder.
+var lightPathTicket = landing.ClosedFolderPath(lightLandingSlug) + "/tickets/one.md"
+
 // lightLandingFixture is the spec-less landing fixture whose source is a second assignment
 // that request names. That assignment starts at the base with no delivery binding. It
 // commits one light-path ticket whose Writes line lists owned.txt, and owned.txt, which the
@@ -46,9 +49,8 @@ func lightLandingFixture(t *testing.T, request string) landingFixture {
 	t.Helper()
 	f := specLessLandingFixture(t, request+"-bound")
 	f.creation = mustCreate(t, f.root, f.home, request, "light-path landing")
-	ticket := landing.ClosedFolderPath(lightLandingSlug) + "/tickets/one.md"
-	commitmenttest.WriteLightTicket(t, f.creation.Path, ticket, "owned.txt")
-	gitRun(t, f.creation.Path, "add", "--", ticket)
+	commitmenttest.WriteLightTicket(t, f.creation.Path, lightPathTicket, "owned.txt")
+	gitRun(t, f.creation.Path, "add", "--", lightPathTicket)
 	commitInWorktree(t, f.creation.Path, "owned.txt", "light-path bytes\n", "light-path change")
 	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	return f

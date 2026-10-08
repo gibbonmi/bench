@@ -165,9 +165,6 @@ type lightPathLandingFixture struct {
 	carry map[int]func(t *testing.T, f landingFixture)
 }
 
-// lightPathTicket is the ticket of the light-path landing fixture's folder.
-var lightPathTicket = landing.ClosedFolderPath(lightLandingSlug) + "/tickets/one.md"
-
 // lightPathLandingFixtures are the fixtures of the publication faces, which the landing walk
 // proves.
 func lightPathLandingFixtures() []lightPathLandingFixture {
