@@ -81,8 +81,8 @@ Report the reconcile verdicts (rows removed or reworded), the drained idea
 count, each retro recommendation disposition, each journal verdict, and any
 proposed commitment change. Flag judgment calls for veto. Run `bench roadmap --flow`
 once and quote its flow block in the exit. On approval, commit the pass once on a lane
-pass, over everything the pass touched, and land it through the gate. The recommended next command is the
-`commitment_outlook` command that `bench roadmap` prints.
+pass, over everything the pass touched, and land it through the gate.
+After the landing, the coordinator starts the `commitment_outlook` outcome under the next-outcome rule in `.bench/BENCH.md`.
 
 ## 1. Reconcile first
 

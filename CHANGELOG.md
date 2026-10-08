@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Next-outcome start
+
+- Changed the phase close so that the agent starts the next eligible outcome itself and hands the reviewer no `bench` command. When a `Next: ticket` outcome has no deliverable, the agent writes and lands the ticket folder, binds it, and then starts the outcome. A reorder or a new admission still needs the reviewer's direction.
+
 ### Refusal recovery routes
 
 - Added one shared refusal-route registry for the write verbs: `bench commit`, `bench worktree merge`, `bench worktree reset`, `bench worktree land`, the `bench gate` checkpoint, and `bench commitment`. Each refusal of these verbs now prints one recovery route from the registry. The commitment verb prints the route in its `next[1]{command}` table, and each other verb prints it on a `next=` line.
