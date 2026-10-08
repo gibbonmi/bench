@@ -11,7 +11,7 @@ func TestGradeNamedResultsExposesSentenceFinding(t *testing.T) {
 	sentence := words(27)
 	write(t, root, "docs/notes.md", sentence)
 
-	got := GradeNamedResults(root, []string{"docs/notes.md"})
+	got, _ := GradeNamedResults(root, []string{"docs/notes.md"})
 	if len(got) != 1 {
 		t.Fatalf("GradeNamedResults returned %d results, want 1", len(got))
 	}

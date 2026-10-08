@@ -11,17 +11,28 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// wantProseTable renders the pass table this verb owes for the named paths. The block
-// name, the field order, and the verdict cell are written here; the escaping derives
-// through the encoder that renders the real output, so a path the encoder quotes cannot
-// red the expectation for the wrong reason.
+// wantProseTable renders the pass table this verb owes for the named paths, every one of
+// them graded and clean.
 func wantProseTable(t *testing.T, paths ...string) string {
 	t.Helper()
-	rows := make([][]string, 0, len(paths))
+	rows := make([][2]string, 0, len(paths))
 	for _, path := range paths {
-		rows = append(rows, []string{path, "pass"})
+		rows = append(rows, [2]string{path, "pass"})
 	}
-	out, err := toon.Table("prose", []string{"path", "verdict"}, rows)
+	return wantVerdictTable(t, rows...)
+}
+
+// wantVerdictTable renders the table this verb owes for rows of a path and its verdict.
+// The block name, the field order, and the verdict cells are written here; the escaping
+// derives through the encoder that renders the real output, so a path the encoder quotes
+// cannot red the expectation for the wrong reason.
+func wantVerdictTable(t *testing.T, rows ...[2]string) string {
+	t.Helper()
+	cells := make([][]string, 0, len(rows))
+	for _, row := range rows {
+		cells = append(cells, []string{row[0], row[1]})
+	}
+	out, err := toon.Table("prose", []string{"path", "verdict"}, cells)
 	if err != nil {
 		t.Fatalf("render the expected prose table: %v", err)
 	}
@@ -170,6 +181,50 @@ func TestGateProseCommandCleanList(t *testing.T) {
 	}
 	if strings.Contains(stdout.String(), "green") {
 		t.Fatalf("stdout = %q, want no green token: the lane states that a pass is not a graded green", stdout.String())
+	}
+}
+
+// TestGateProseCommandMarksAnExcludedPath: a named path that the exclusion list excludes
+// reads `excluded`, never `pass`, so the table claims no grade that did not run. The
+// excluded file holds an over-long sentence, so a grade of it would red the run.
+func TestGateProseCommandMarksAnExcludedPath(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, ".bench/prose-exclusions", "docs/skip.md a test reason\n")
+	write(t, root, "docs/skip.md", words(27))
+	write(t, root, "docs/notes.md", "Short prose.\n")
+
+	for _, tc := range []struct {
+		paths []string
+		want  [][2]string
+	}{
+		{[]string{"docs/skip.md"}, [][2]string{{"docs/skip.md", "excluded"}}},
+		{[]string{"docs/skip.md", "docs/notes.md"}, [][2]string{{"docs/skip.md", "excluded"}, {"docs/notes.md", "pass"}}},
+	} {
+		var stdout, stderr bytes.Buffer
+		code := GateProseCommand(append([]string{root, "--"}, tc.paths...), &stdout, &stderr)
+		if code != 0 {
+			t.Fatalf("exit for %q = %d, want 0; stdout=%q stderr=%q", tc.paths, code, stdout.String(), stderr.String())
+		}
+		if want := wantVerdictTable(t, tc.want...); stdout.String() != want {
+			t.Errorf("stdout for %q = %q, want %q", tc.paths, stdout.String(), want)
+		}
+	}
+}
+
+// TestGateProseStagedMarksAnExcludedPath: a staged path that the staged exclusion list
+// excludes reads `excluded` in the staged form's table too.
+func TestGateProseStagedMarksAnExcludedPath(t *testing.T) {
+	root := policyRepo(t, "")
+	write(t, root, ".bench/prose-exclusions", "docs/skip.md a staged reason\n")
+	write(t, root, "docs/skip.md", words(27))
+	runGitIn(t, root, "add", "-A")
+
+	code, out := gradeStaged(t, root)
+	if code != 0 {
+		t.Fatalf("exit = %d, want 0; stdout=%q", code, out)
+	}
+	if want := wantVerdictTable(t, [2]string{"docs/skip.md", "excluded"}); out != want {
+		t.Fatalf("stdout = %q, want %q", out, want)
 	}
 }
 
