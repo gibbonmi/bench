@@ -77,45 +77,49 @@ func planLandedSet(j joins, root string, options CleanupOptions, scope string) (
 // Automatic cleanup also needs a commit after the assignment start. An empty
 // sibling created during the landing has no contribution for that landing to retire.
 func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions, scope string) (landedCleanupRow, bool) {
-	if assignment.State != intent.StateActive || assignment.Branch == "" {
-		return landedCleanupRow{}, false
-	}
-	branch := strings.TrimPrefix(assignment.Branch, "refs/heads/")
-	landed, byContent, proofErr := git.LandedInDefault(root, branch, defaultRef)
-	if proofErr != nil || !landed {
+	headOID, landed := landedSelected(root, assignment, defaultRef, lease)
+	if !landed {
 		return landedCleanupRow{}, false
 	}
 	if scope != "" {
-		before, _, scopeErr := git.LandedInDefault(root, branch, scope)
-		if scopeErr != nil || before {
+		before, _, scopeErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), scope)
+		startOID, startErr := git.ResolveCommit(root, assignment.Start)
+		if scopeErr != nil || before || startErr != nil || startOID == headOID || !git.OK("-C", root, "merge-base", "--is-ancestor", startOID, headOID) {
 			return landedCleanupRow{}, false
 		}
 	}
 	if lease == "" {
 		lease = "none"
 	}
-	classifierPlan := CleanupPlan{Target: root, landedTyped: lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessProven, Landed: true, ByContent: byContent}}
-	if lease == string(LeaseLive) {
-		classifierPlan.ReasonCode = ReasonLiveLease
-	}
-	if !assignmentLanded(assignment, classifierPlan) {
-		return landedCleanupRow{}, false
-	}
-	headOID, oidErr := git.ResolveCommit(root, assignment.Branch)
-	if oidErr != nil {
-		return landedCleanupRow{}, false
-	}
-	if scope != "" {
-		startOID, startErr := git.ResolveCommit(root, assignment.Start)
-		if startErr != nil || startOID == headOID || !git.OK("-C", root, "merge-base", "--is-ancestor", startOID, headOID) {
-			return landedCleanupRow{}, false
-		}
-	}
 	plan := planLandedAssignment(j, root, assignment, options)
 	plan.Assignment = assignment.ID
 	return landedCleanupRow{assignment: assignment, plan: plan, headOID: headOID, lease: lease}, true
 }
 
+// landedSelected is the selector's unscoped proof: the active record's branch is in the
+// default branch, no live lease holds it, and it answers the branch's commit. The
+// missing-tree refusal reads it too, so its landed route names what `clean --landed` selects.
+func landedSelected(root string, assignment intent.Assignment, defaultRef, lease string) (string, bool) {
+	if assignment.State != intent.StateActive || assignment.Branch == "" {
+		return "", false
+	}
+	landed, byContent, proofErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), defaultRef)
+	if proofErr != nil || !landed {
+		return "", false
+	}
+	classifierPlan := CleanupPlan{Target: root, landedTyped: lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessProven, Landed: true, ByContent: byContent}}
+	if lease == string(LeaseLive) {
+		classifierPlan.ReasonCode = ReasonLiveLease
+	}
+	if !assignmentLanded(assignment, classifierPlan) {
+		return "", false
+	}
+	headOID, oidErr := git.ResolveCommit(root, assignment.Branch)
+	return headOID, oidErr == nil
+}
+
+// planLandedAssignment plans one assignment's retirement. Its precondition is a landed proof:
+// the plan of a gone tree deletes the branch and claims no landedness for a caller to read.
 func planLandedAssignment(j joins, root string, assignment intent.Assignment, options CleanupOptions) CleanupPlan {
 	// Only the checkout shape licenses the explicit planner. It invokes git against the
 	// target, which can block forever when a ledger path has decayed into a FIFO or socket.

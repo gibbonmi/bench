@@ -81,7 +81,7 @@ func mergeFixtureFor(t *testing.T, face string) mergeRefusalFixture {
 
 // TestMergeFacesFollowTheirRoutes is RR28 and RR29, and RR26, RR56, and RR57 for the fold
 // red. The registry is the source of the merge's and the reset's face sets, so each merge
-// face needs a producing fixture for each of its causes, and each reset face needs one.
+// and each reset face needs a producing fixture for each of its causes.
 // Each fixture's printed route is carried out step by step, as the landing walk carries out
 // its own. The merge then reruns to exit 0, and the reset reruns out of its face.
 func TestMergeFacesFollowTheirRoutes(t *testing.T) {
@@ -91,12 +91,12 @@ func TestMergeFacesFollowTheirRoutes(t *testing.T) {
 		keys = append(keys, [2]string{fixture.face, fixture.cause})
 	}
 	for _, fixture := range resetRefusalFixtures() {
-		resetKeys = append(resetKeys, [2]string{fixture.face, ""})
+		resetKeys = append(resetKeys, [2]string{fixture.face, fixture.cause})
 	}
 	faces, resetFaces := producingFixtures(t, refusalroute.Merge, keys), producingFixtures(t, refusalroute.Reset, resetKeys)
 	wrapper := installedWrapper(t, testRunBinary(t))
 	for _, fixture := range resetRefusalFixtures() {
-		t.Run("reset/"+fixture.face, func(t *testing.T) {
+		t.Run(strings.TrimSuffix("reset/"+fixture.face+"/"+fixture.cause, "/"), func(t *testing.T) {
 			t.Parallel()
 			followResetFace(t, wrapper, resetFaces[fixture.face], fixture)
 		})

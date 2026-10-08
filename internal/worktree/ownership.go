@@ -96,6 +96,7 @@ func deletePlannedBranch(root string, plan CleanupPlan, checkpoint func(string) 
 	}
 	return hit(fault, StepBranch)
 }
+
 func randomID() (string, error) {
 	raw := make([]byte, 16)
 	if _, err := io.ReadFull(rand.Reader, raw); err != nil {
@@ -310,8 +311,9 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	}
 	var plan CleanupPlan
 	if absent {
-		planner := func(string) (CleanupPlan, error) { return missingTreeRelease(*assignment), nil }
-		plan, err = applyCleanupTransaction(j, a, root, target, missingTreeRelease(*assignment).Fingerprint, planner, nil, terminal)
+		release := missingTreeRelease(*assignment)
+		planner := func(string) (CleanupPlan, error) { return release, nil }
+		plan, err = applyCleanupTransaction(j, a, root, target, release.Fingerprint, planner, nil, terminal)
 	} else if resumeFingerprint == "" {
 		plan, err = applyAutomaticWithTerminal(j, a, root, target, nil, terminal)
 	} else {

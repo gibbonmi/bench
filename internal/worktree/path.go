@@ -92,15 +92,34 @@ func resolveAssignmentIn(root, target string, accepts func(intent.AssignmentStat
 }
 
 // missingTreeRefusal names the fact the operator can act on and the one verb that clears
-// the record, so a retained assignment whose tree is gone is never a dead end. The
-// landedness comes from the branch, because a tree that is gone proves nothing. Every verb
+// the record, so a retained assignment whose tree is gone is never a dead end. Every verb
 // that resolves the assignment raises the reset face, so the sentence and the route have
 // one source.
 func missingTreeRefusal(root string, assignment intent.Assignment) error {
-	def, defaultResolved := git.ResolvedDefault(root)
-	landed := listLanded(root, assignment.Branch, def, defaultResolved) == true
-	recovery := recoverMissingTree(landed, assignment.RequestToken, assignment.Worktree)
-	return landingFaceRefusal(faceResetTreeMissing, refusal{values: map[string]string{refusalroute.FactRecovery: recovery.line()}}, "", "")
+	return landingFaceRefusal(faceResetTreeMissing, refusal{values: map[string]string{refusalroute.FactRecovery: missingTreeRoute(root, assignment)}}, "", "")
+}
+
+// missingTreeRoute is the recovery the missing-tree face prints. A tree that is gone proves
+// nothing, so the landed selector's own proof picks the clean of the landed set, and every
+// other record takes its release. A value that is not line-safe prints its slot placeholder,
+// so the release keeps its command words.
+func missingTreeRoute(root string, assignment intent.Assignment) string {
+	landed := false
+	if defaultRef, resolved := git.ResolvedDefault(root); resolved {
+		if leases, err := assignmentLeaseStates(root); err == nil {
+			_, landed = landedSelected(root, assignment, defaultRef, leases[assignment.OwnerID])
+		}
+	}
+	request := assignment.RequestToken
+	if !lineSafe(request) {
+		request = "<request>"
+	}
+	route := recoverMissingTree(landed, request, assignment.Worktree)
+	if route.path == "" || lineSafe(route.path) {
+		return route.line()
+	}
+	route.path = ""
+	return refusalroute.AtCheckout(route.line(), "")
 }
 
 // errTargetControls refuses a target that no output line can carry. The refusal names no

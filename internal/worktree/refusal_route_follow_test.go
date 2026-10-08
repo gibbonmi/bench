@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -238,9 +237,10 @@ func producingFixtures(t *testing.T, verb refusalroute.Verb, keys [][2]string) m
 
 // resetRefusalFixture produces exactly one reset face. build makes an owned assignment and
 // breaks it so the reset prints that face; it returns the assignment and the reset's
-// arguments. carry and after are the merge fixture's fields over the assignment.
+// arguments. cause, carry, and after are the merge fixture's fields over the assignment.
 type resetRefusalFixture struct {
 	face  string
+	cause string
 	build func(t *testing.T) (ownedAssignment, []string)
 	carry map[int]func(t *testing.T, f ownedAssignment)
 	after func(t *testing.T, wrapper string, f ownedAssignment, last verbResult)
@@ -272,16 +272,25 @@ func followResetFace(t *testing.T, wrapper string, face refusalroute.Face, fixtu
 	}
 }
 
+// ownedResetFixture is the owned assignment of a reset fixture and the reset of its
+// checkout to the assignment start.
+func ownedResetFixture(t *testing.T, request string) (ownedAssignment, []string) {
+	t.Helper()
+	f := newOwnedAssignment(t, "reset-route-"+request)
+	return f, resetToStart(f)
+}
+
+// resetToStart is the reset of the assignment's checkout to the assignment start.
+func resetToStart(f ownedAssignment) []string {
+	return []string{"--to", f.creation.Assignment.Start, f.creation.Assignment.ID}
+}
+
 func resetRefusalFixtures() []resetRefusalFixture {
-	owned := func(t *testing.T, request string) (ownedAssignment, []string) {
-		f := newOwnedAssignment(t, "reset-route-"+request)
-		return f, []string{"--to", f.creation.Assignment.Start, f.creation.Assignment.ID}
-	}
-	return []resetRefusalFixture{
+	return append([]resetRefusalFixture{
 		{
 			face: faceResetCheckoutConflicted,
 			build: func(t *testing.T) (ownedAssignment, []string) {
-				f, args := owned(t, "conflicted")
+				f, args := ownedResetFixture(t, "conflicted")
 				setupConflict(t, f.creation.Path)
 				return f, args
 			},
@@ -295,7 +304,7 @@ func resetRefusalFixtures() []resetRefusalFixture {
 			// is stale. The printed plan prints the apply of the changed checkout.
 			face: faceResetPlanStale,
 			build: func(t *testing.T) (ownedAssignment, []string) {
-				f, args := owned(t, "stale")
+				f, args := ownedResetFixture(t, "stale")
 				mustWrite(t, filepath.Join(f.creation.Path, "work.txt"), []byte("planned\n"), 0o644)
 				fingerprint := runVerb(t, verbReset, f.call(args...)).mustFingerprint(t)
 				mustWrite(t, filepath.Join(f.creation.Path, "work.txt"), []byte("changed\n"), 0o644)
@@ -306,24 +315,11 @@ func resetRefusalFixtures() []resetRefusalFixture {
 			},
 		},
 		{
-			face: faceResetTreeMissing,
-			build: func(t *testing.T) (ownedAssignment, []string) {
-				// A landed branch takes the clean of the landed assignments, and its apply.
-				f, args := owned(t, "missing")
-				landAssignment(t, f.root, f.creation, "landed.txt")
-				mustNoError(t, os.RemoveAll(f.creation.Path))
-				return f, args
-			},
-			after: func(t *testing.T, wrapper string, f ownedAssignment, plan verbResult) {
-				runPrintedStep(t, wrapper, f.repoHome, "bench worktree clean --landed --apply "+plan.mustFingerprint(t))
-			},
-		},
-		{
 			// A hidden index flag is a cause that the reset names no repair for, so it hands
 			// back. The reviewer clears the flag, and the printed plan then runs.
 			face: faceResetHandback,
 			build: func(t *testing.T) (ownedAssignment, []string) {
-				f, args := owned(t, "handback")
+				f, args := ownedResetFixture(t, "handback")
 				gitRun(t, f.creation.Path, "update-index", "--assume-unchanged", "README.md")
 				mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("hidden edit\n"), 0o644)
 				return f, args
@@ -332,7 +328,7 @@ func resetRefusalFixtures() []resetRefusalFixture {
 				gitRun(t, f.creation.Path, "update-index", "--no-assume-unchanged", "README.md")
 			}},
 		},
-	}
+	}, missingTreeResetFixtures()...)
 }
 
 // mergeTargetArgs are the arguments of a merge of incoming into the set's first
