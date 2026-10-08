@@ -902,6 +902,18 @@ The orchestrator records each author session before that author's dispatch.
           "trigger": "user-directed",
           "stopped": "the ticket 07 successor reported its RR-C2 records and has no live child",
           "preserved": "f932db29f82ba07271a8e11c8ac5ea011b0aa3ab"
+        },
+        {
+          "session": "claude:ft393_t7_repair1b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "d0c8c4955b07af76bcbc4e007a9b94c3714e6e96",
+          "native_ref": "claude-agent:ft393_t7_repair1b",
+          "predecessor": "claude:ft393_t7_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 07 repair session neared the 300k context rule after its commit and has no live child",
+          "preserved": "d0c8c4955b07af76bcbc4e007a9b94c3714e6e96"
         }
       ],
       "08-route-the-commit-exit-3-to-the-reset-plan.md": [],
@@ -1082,6 +1094,8 @@ The prospective build owns these exact paths:
 - `internal/worktree/missing_tree_recovery_test.go`
 - `internal/worktree/merge_target_grade_test.go`
 - `internal/worktree/merge_caller_root_test.go`
+- `internal/worktree/list.go`
+- `internal/worktree/list_actions_test.go`
 - `internal/worktree/lifecycle_test.go`
 - `internal/worktree/worktree_test.go`
 - `internal/worktree/lifecycle.go`
