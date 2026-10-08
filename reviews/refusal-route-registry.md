@@ -3188,7 +3188,88 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "r-c5-standards",
+          "performer": "claude:ft393_c5_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "637552b850963de892372242d5b7e11c100fda7a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c5_standards",
+            "digest": "sha256:8775024e4c4c2885be6d2fdfa09930df2e186e5633e52a01b918b5697a9b4bc9",
+            "excerpt": "RR-C5 Standards (claude:ft393_c5_standards): evidence current=true. 4 findings, 1 blocking.\nC5-S1 blocking internal/refusalroute/faces_commitment.go:56-61: the commitment-light-path-outside route appends the ticket path to the rerun, but a spec landing can raise the face and bench worktree land takes no path; no landing fixture. ask-user. conf 8\nC5-S2 advisory internal/commitment/repository/light_path.go:51 keeps the \"; land the light-path change with --spec\" tail beside the commitment-unbound route: two routes from two sources. ask-user. conf 6\nC5-S3 advisory the proposal shape and the legacy-run setup are duplicated in commitcmd/refusal_route_test.go and repository/publication_test.go. auto-fix. conf 7\nC5-S4 advisory internal/commit/refusal_route_test.go:122 repeats the walk-membership rule that routetest.walked owns. auto-fix. conf 5\nConcerns (b), (c), (d): no finding. Worst: C5-S1. Implementation command contributed to C5-S1.\n"
+          },
+          "axis": "Standards",
+          "base": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "tip": "84299ea434da34fd1654d918ed446ccd2164fcea",
+          "finding_ids": [
+            "C5-S1",
+            "C5-S2",
+            "C5-S3",
+            "C5-S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c5-spec",
+          "performer": "claude:ft393_c5_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "637552b850963de892372242d5b7e11c100fda7a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c5_spec",
+            "digest": "sha256:a5f9c83f1dba770b1c21f662010320dcc68383ea95c037fd91cdb5d2c47b2f17",
+            "excerpt": "RR-C5 Spec (claude:ft393_c5_spec): evidence current=true. Rows RR45-RR48 and RR61-RR64 each map to a test. 8 findings, 1 blocking.\nC5-P1 blocking internal/refusalroute/faces_commitment.go:58 with light_path.go:62-79: a spec landing raises commitment-light-path-outside, and its route appends the ticket to bench worktree land, which takes at most one positional; a usage error; no landing test. ask-user. conf 7\nC5-P2 advisory light_path.go:86: the multi-ticket span error is untyped and prints the reviewer handback, though an agent clears it by splitting the commit. ask-user. conf 5\nC5-P3 advisory commitcmd/admission.go:93, command.go:259,265: untyped start/block/unblock/approve errors take commitment-decision, but ticket 12 says an untyped refusal takes commitment-handback. ask-user. conf 5\nC5-P4 advisory: the (new) marker on a deleted path. no-op, reviewer veto. conf 6\nC5-P5 advisory: FactMilestone and FactAssignmentID share \"id\". no-op. conf 6\nC5-P6 advisory: the plan-input wire shape is defined in two test packages. auto-fix. conf 5\nC5-P7 advisory worktree/land_refusal.go:229: raisedRefusal re-implements the Printed rule. ask-user. conf 4\nC5-P8 advisory: cell ownership and walked match the spec. no-op. conf 6\nWorst: C5-P1. Implementation command contributed to C5-P1.\n"
+          },
+          "axis": "Spec",
+          "base": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "tip": "84299ea434da34fd1654d918ed446ccd2164fcea",
+          "finding_ids": [
+            "C5-P1",
+            "C5-P2",
+            "C5-P3",
+            "C5-P4",
+            "C5-P5",
+            "C5-P6",
+            "C5-P7",
+            "C5-P8"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c5-coverage",
+          "performer": "claude:ft393_c5_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "637552b850963de892372242d5b7e11c100fda7a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c5_coverage",
+            "digest": "sha256:ff3c55be9edcc48d06f10d88e30d0d28fb2c250111bbaa431d71b06b4cb68dce",
+            "excerpt": "RR-C5 Coverage (claude:ft393_c5_coverage): evidence current=true. Rows RR45-RR48 and RR61-RR64 each have a producing test. 5 findings, 1 blocking.\nC5-1 blocking internal/refusalroute/faces_commitment.go:56-58 with worktree/land_refusal.go:229-231 and land.go:33: a landing prints bench worktree land <path> <ticket> for commitment-light-path-outside; landGrammar has MaxArgs 1; no worktree test asserts the route. ask-user. conf 8\nC5-2 advisory internal/commit/refusal_route_test.go:352: the commit walk derives the reviewer prefix for commitment-decision from the registry; no literal. auto-fix. conf 4\nC5-3 advisory commitcmd/command.go:296 and verification_test.go:46: no fixture gives verify a hostile milestone. auto-fix. conf 5\nC5-4 advisory light_path.go:86 and repository admission.go:39: the multi-ticket span error and other untyped causes get a reviewer route. no-op unless narrower faces are wanted. conf 4\nC5-5 no-op: concerns (b), (c), (e).\nWorst: C5-1. Implementation command contributed to C5-1 through plan text.\n"
+          },
+          "axis": "Coverage",
+          "base": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "tip": "84299ea434da34fd1654d918ed446ccd2164fcea",
+          "finding_ids": [
+            "C5-1",
+            "C5-2",
+            "C5-3",
+            "C5-4",
+            "C5-5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3722,3 +3803,42 @@ The repair session ran the debug step and stated these causes before its fixes.
 | C4-S3, C4-S6 | The `next=` reader had three copies, and new comments carried spec row ids. | A read of the gate and commit tests. |
 
 Only the `bench gate` verb prints a gate route now; the land and commit verbs print their own route for a funnel refusal.
+
+## RR-C5 pickup
+
+The RR-C5 review returned 17 findings, and all three axes marked one cause blocking.
+The findings collapse to repair targets in tickets 11 and 12.
+Each repair session runs the debug step and states the diagnosed cause before its fix.
+The ticket 11 repair runs first, and the ticket 12 repair starts from its commit.
+
+### Standards
+
+Count: 4. Worst issue: C5-S1, the light-path route that a landing prints.
+
+- C5-S1, auto-fix, confidence 8: each verb that prints `commitment-light-path-outside` prints a route that its own grammar accepts and that clears the cause. Ticket 11 repair.
+- C5-S2, auto-fix, confidence 6: the light-path refusal prints one route, and its sentence keeps no route tail. Ticket 11 repair.
+- C5-S3, auto-fix, confidence 7: one `commitmenttest` helper writes the proposal shape and the legacy run. Ticket 12 repair.
+- C5-S4, auto-fix, confidence 5: the commit walk reads the walk membership from `routetest`. Ticket 11 repair.
+
+### Spec
+
+Count: 8. Worst issue: C5-P1, the same cause as C5-S1.
+
+- C5-P1, auto-fix, confidence 7: the same target as C5-S1. Ticket 11 repair.
+- C5-P2, auto-fix, confidence 5: the multi-ticket span error takes an agent face by the Authority rule. Ticket 11 repair.
+- C5-P3, auto-fix, confidence 5: an untyped commitment verb error takes `commitment-handback`, as ticket 12 states. Each decision cause raises its face at the source. Ticket 12 repair.
+- C5-P4, no-op, confidence 6: the `(new)` marker on a deleted path; a learning records the grammar gap, flagged for reviewer veto.
+- C5-P5, no-op, confidence 6: the spec table forces the shared `id` slot.
+- C5-P6, auto-fix, confidence 5: the same target as C5-S3. Ticket 12 repair.
+- C5-P7, auto-fix, confidence 4: the landing prints a raised face through `refusalroute.Printed`. Ticket 11 repair.
+- C5-P8, no-op, confidence 6: the cell ownership matches the spec.
+
+### Coverage
+
+Count: 5. Worst issue: C5-1, the same cause as C5-S1.
+
+- C5-1, auto-fix, confidence 8: the same target as C5-S1, with a landing fixture that follows the printed route. Ticket 11 repair.
+- C5-2, auto-fix, confidence 4: the commit fixture for `commitment-decision` spells the reviewer prefix as a literal. Ticket 11 repair.
+- C5-3, auto-fix, confidence 5: a fixture gives `verify` a milestone with a space and one that is not line-safe. Ticket 12 repair.
+- C5-4, auto-fix, confidence 4: the same target as C5-P2 for the span error. The fail-closed handback covers the other causes.
+- C5-5, no-op, confidence 6: concerns (b), (c), and (e) need no change beyond C5-S3.
