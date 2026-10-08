@@ -3707,9 +3707,9 @@
     {
       "id": "RR-C6",
       "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
-      "tip": "8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2",
+      "tip": "f5fb5f43d240e851dd64f39eaa33076f82858620",
       "plan_digest": "sha256:08df0de0aee236977981d3819a115931a30410252cd757eb5ca4fb66f8084bbd",
-      "source_digest": "01f388aa729e573b7d21723626e4572c79f17f16",
+      "source_digest": "c910aa69ab09e4a560092aa2bad0db3bd96b25a1",
       "acceptance_rows": [
         "RR49",
         "RR50",
@@ -3843,6 +3843,71 @@
               "ref": "claude-agent:ft393_t13_repair1",
               "digest": "sha256:89936bcc274e9d4a791f8d527d5c734319ec2b6f0e8670c907853f75fed7d834",
               "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/conformance/refusal_route_bypass_test.go --omit '\"internal/commitment/repository\",' --package ./internal/conformance --run 'TestRouteBypassCheckBites'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/refusal_route_bypass_test.go,omit,failed,1,yes\n"
+            }
+          }
+        },
+        {
+          "id": "v-t13-bypass-check-r2",
+          "performer": "claude:ft393_t13_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c910aa69ab09e4a560092aa2bad0db3bd96b25a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t13_repair1",
+            "digest": "sha256:9cec8fd4e7c0793e959a1140dac99931d83d9595472b80d368be7be47ae8980f",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,f5fb5f43d240e851dd64f39eaa33076f82858620,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,31,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t13-bypass-check",
+          "command": "bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t13-conformance-package-r2",
+          "performer": "claude:ft393_t13_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c910aa69ab09e4a560092aa2bad0db3bd96b25a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t13_repair1",
+            "digest": "sha256:9509a99164b929fa623d89d658dfaa1f5b0228d3d83768c8f4e983eb3215e906",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  ft393-build,f5fb5f43d240e851dd64f39eaa33076f82858620,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,54713,1668\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n"
+          },
+          "requirement": "t13-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t13-scan-proof-r2",
+          "performer": "claude:ft393_t13_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c910aa69ab09e4a560092aa2bad0db3bd96b25a1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t13_repair1",
+            "digest": "sha256:0c3aebbd82d491e85251fddb3b34bb27fc0d37558fbebd611f12b0fd3f11eca0",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,f5fb5f43d240e851dd64f39eaa33076f82858620,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/conformance/refusal_route_bypass_test.go --omit '\"internal/commitment/repository\",' --package ./internal/conformance --run 'TestRouteBypassCheckBites'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/refusal_route_bypass_test.go,omit,failed,1,yes\n"
+          },
+          "requirement": "t13-scan-proof",
+          "command": "bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove `internal/commitment/repository` from the scanned packages of the bypass check. TestRouteBypassCheckBites must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t13_repair1",
+              "digest": "sha256:0c3aebbd82d491e85251fddb3b34bb27fc0d37558fbebd611f12b0fd3f11eca0",
+              "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,f5fb5f43d240e851dd64f39eaa33076f82858620,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/conformance/refusal_route_bypass_test.go --omit '\"internal/commitment/repository\",' --package ./internal/conformance --run 'TestRouteBypassCheckBites'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/refusal_route_bypass_test.go,omit,failed,1,yes\n"
             }
           }
         }
