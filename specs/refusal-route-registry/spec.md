@@ -1090,6 +1090,18 @@ The orchestrator records each author session before that author's dispatch.
           "trigger": "user-directed",
           "stopped": "the ticket 12 author reported its RR-C5 records and has no live child",
           "preserved": "048702bb1a57c0f3cbdb320a307aecfb2ee66892"
+        },
+        {
+          "session": "claude:ft393_t12_repair2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "cf88bc0eff5849adf8872088ec772e97a1af51c8",
+          "native_ref": "claude-agent:ft393_t12_repair2",
+          "predecessor": "claude:ft393_t12_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 12 repair session reported its RR-C5 records and has no live child",
+          "preserved": "56fa6378ac8d453a3a396b09a092c0b381783967"
         }
       ],
       "13-refuse-a-route-literal-outside-the-registry.md": []
@@ -1282,6 +1294,7 @@ The prospective build owns these exact paths:
 - `internal/commitment/commitmenttest/admission.go`
 - `internal/commitment/commitmenttest/repo.go`
 - `internal/commitment/repository/repository.go`
+- `internal/worktree/commitment_landing_fixture_test.go`
 - `internal/worktree/land.go`
 - `internal/refusalroute/routetest/routetest_test.go`
 - `internal/landing/attribution.go`
