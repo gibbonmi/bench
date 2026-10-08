@@ -2006,6 +2006,74 @@
             "C2-7"
           ],
           "supersedes": []
+        },
+        {
+          "id": "r-c2-r1-standards",
+          "performer": "claude:ft393_c2_r1_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "862129435b89ab30c479c604b3f28f8ea272ecc6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c2_r1_standards",
+            "digest": "sha256:e1052ce4ea27710dac8697c812e26371adf7441caea5fbcd6f9fc72920e7a78c",
+            "excerpt": "RR-C2 confirming round, Standards (claude:ft393_c2_r1_standards): evidence current=true. All 15 folds confirmed. Zero findings.\nConcern 1: not flaky; bench sets maintenance.auto off (internal/env/kit_run.go:69); a missing loose object fails loudly.\nConcern 2: list.go:113-116 is a second derivation for a present tree with a detached or foreign HEAD; unchanged since the chunk base; advice only.\nConcern 3: obeys the Edge inventory intent; AtCheckout(line, \"\") omits the path step by design.\nConcern 4: producingFixtures keys on (face, cause); RR29 and ticket 07 line 29 still say \"exactly one\" per face, a wording gap.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "tip": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c2-standards"
+          ]
+        },
+        {
+          "id": "r-c2-r1-spec",
+          "performer": "claude:ft393_c2_r1_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "862129435b89ab30c479c604b3f28f8ea272ecc6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c2_r1_spec",
+            "digest": "sha256:a35ce50355c3c9b58be3e64abf76d7e1459a5e4288ff3e1af809d5232380631a",
+            "excerpt": "RR-C2 confirming round, Spec (claude:ft393_c2_r1_spec): evidence current=true. All folds confirmed. Zero findings.\nAll 16 changed files sit in a ticket 05-07 Writes line; the pin 761 to 766 matches the five new tests.\nConcern 2: same predicate through the planner; lease read differs only in an edge case; unchanged since the chunk base; no finding.\nConcern 3: obeys the Edge inventory intent; the path <id> step refuses for a missing tree.\nConcern 4: covered; producingFixtures enforces one fixture for each face and cause.\nConcern 1: not flaky; a packed object fails loudly.\nAdvice: RR29 and ticket 07 line 29 should say \"for each cause\"; the Edge inventory should record the missing-tree exception.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "tip": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c2-spec"
+          ]
+        },
+        {
+          "id": "r-c2-r1-coverage",
+          "performer": "claude:ft393_c2_r1_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "862129435b89ab30c479c604b3f28f8ea272ecc6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c2_r1_coverage",
+            "digest": "sha256:58a452442f4c4211c4cdbd5e0fb46f18a9733e34ddfdd59127d126623a49010f",
+            "excerpt": "RR-C2 confirming round, Coverage (claude:ft393_c2_r1_coverage): evidence current=true. All folds confirmed.\nC2-RC1 advisory reviews/refusal-route-registry.md:2273-2283: for C2-2, C2-3, C2-4, C2-5, C2-6 and C2-P4 the repro column records only the pre-fix silent probe and no post-fix red verdict. auto-fix (evidence only). conf 5\nConcern 1: not flaky; the tip commit is loose by construction; a packed object fails loudly with the wrong face.\nConcern 2: list.go:113-124 is outside the delta; a second derivation for present trees; advice.\nConcern 3: obeys the intent; AtCheckout with an empty id is the registry's own form.\nConcern 4: covered by the face and cause key.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "tip": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "finding_ids": [
+            "C2-RC1"
+          ],
+          "supersedes": [
+            "r-c2-coverage"
+          ]
         }
       ]
     }
@@ -2286,3 +2354,20 @@ The repair sessions ran the debug step and stated these causes before their fixe
 | C2-P5 (list follow-up) | The `list` help row chose the missing-tree route from the branch-ancestry cell alone, so it named `clean --landed` where the refusal named the release. | `TestMissingTreeRouteAgreesWithTheLandedSelector`, red before the edit. |
 
 The ticket 07 repair left the `list` help row on the old landed rule, outside its fence. The orchestrator expanded the fence, and a fresh session moved both surfaces to one landed decision.
+
+### RR-C2 repair cycle 1 red verdicts after the fix
+
+The confirming round asked for the red verdict after each fix (C2-RC1). The repair returns hold these verdicts, and each probe restored its file.
+
+| finding | probe after the fix | verdict |
+|---|---|---|
+| C2-2 | The target-alone grade ignores the lane (`landing.New()` for `mergeOwner`). | `bit`, 4 failed, including both named-lane rows |
+| C2-2 | The target-alone grade reads `PreviousTip` instead of `Incoming`. | `bit`, 1 failed: `merge-target-red/named_lane` |
+| C2-3 | `path.go` forces the landed route. | `bit`: the assignment stays active after its route |
+| C2-4 (merge half) | `mergeRerun` prints the raw values. | `bit`, 1 failed: the new placeholder test |
+| C2-4 (reset half) | The reset rerun prints the raw target. | `bit`: the route printed `<rerun>` |
+| C2-5 | The lane-read arm returns `LanePass` instead of `Infrastructure`. | `bit`, 1 failed: `target_lane_unreadable` |
+| C2-5 | The unreadable-tree arm returns `Green` instead of `Infrastructure`. | `bit`, 1 failed: `target_tree_unreadable` |
+| C2-6 | The `case LeaseUnknown:` arm is removed. | `bit`: the release exited 0 |
+| C2-P4 | The absent arm of `planLandedAssignment` is disabled. | `bit`: the absent sibling stays active |
+| C2-P5 (list) | The help row reads the landed cell again. | `bit`, the leased landed row failed |
