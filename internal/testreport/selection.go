@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -62,6 +63,16 @@ func newPackageIndex(root string, packages []listedPackage) (packageIndex, error
 		}
 	}
 	return index, nil
+}
+
+// owners returns the direct packages of one slash-spelled path: the package whose
+// directory holds the path as a Go file, and the package that embeds the path. An empty
+// import path means that no package has that role.
+func (index packageIndex) owners(file string) (goPackage, embedOwner string) {
+	if strings.HasSuffix(file, ".go") {
+		goPackage = index.byDirectory[path.Dir(file)]
+	}
+	return goPackage, index.byEmbed[file]
 }
 
 var listCurrentPackages = currentPackages
@@ -208,7 +219,7 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 	if err != nil {
 		return nil, err
 	}
-	byDirectory, byEmbed, byImport := index.byDirectory, index.byEmbed, index.byImport
+	byEmbed, byImport := index.byEmbed, index.byImport
 	selected := changedSelection{}
 	mark := func(importPath, cause string) {
 		if current, ok := selected[importPath]; !ok || slices.Index(causePrecedence, cause) < slices.Index(causePrecedence, current) {
@@ -228,20 +239,16 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 			}
 			continue
 		}
-		isGo := strings.HasSuffix(input.path, ".go")
-		goPackage, inPackage := "", false
-		if isGo {
-			goPackage, inPackage = byDirectory[filepath.ToSlash(filepath.Dir(input.path))]
-		}
-		if importPath, ok := byEmbed[input.path]; ok {
-			mark(importPath, causeEmbed)
-			if inPackage {
+		goPackage, embedOwner := index.owners(input.path)
+		if embedOwner != "" {
+			mark(embedOwner, causeEmbed)
+			if goPackage != "" {
 				mark(goPackage, causeChanged)
 			}
 			continue
 		}
-		if isGo {
-			if !inPackage {
+		if strings.HasSuffix(input.path, ".go") {
+			if goPackage == "" {
 				return nil, fmt.Errorf("changed Go path is not in a current package")
 			}
 			mark(goPackage, causeChanged)

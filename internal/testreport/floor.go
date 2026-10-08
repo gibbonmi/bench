@@ -2,12 +2,9 @@ package testreport
 
 import (
 	"context"
-	"os"
-	"path"
-	"path/filepath"
 	"sort"
-	"strings"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -29,7 +26,7 @@ func WritesFloor(ctx context.Context, root string, entries []string) (Floor, err
 }
 
 func writesFloorWithLoader(ctx context.Context, root string, entries []string, load func(context.Context, string) ([]listedPackage, error)) (Floor, error) {
-	if info, err := os.Stat(filepath.Join(root, "go.mod")); err != nil || !info.Mode().IsRegular() {
+	if !gate.GoModuleRoot(root) {
 		// A root without a Go module owes no package test, so the floor starts no `go list`.
 		return Floor{}, nil
 	}
@@ -56,15 +53,14 @@ func writesFloorWithLoader(ctx context.Context, root string, entries []string, l
 			everyPackage = true
 			continue
 		}
-		if strings.HasSuffix(entryPath, ".go") {
-			if importPath, ok := index.byDirectory[path.Dir(entryPath)]; ok {
-				add(importPath)
-			}
+		goPackage, embedOwner := index.owners(entryPath)
+		if goPackage != "" {
+			add(goPackage)
 		}
 		// The index holds only the embed files that exist, so an absent `(new)` asset
 		// adds no owner.
-		if owner, ok := index.byEmbed[entryPath]; ok {
-			add(owner)
+		if embedOwner != "" {
+			add(embedOwner)
 			floor.Embed = true
 		}
 		for directory, importPath := range index.byDirectory {

@@ -112,13 +112,19 @@ func toolchainPhases(root, kit string) []Phase {
 }
 
 func goModuleToolchain(root string) (bool, error) {
-	if !isRegularFile(filepath.Join(root, "go.mod")) {
+	if !GoModuleRoot(root) {
 		return false, nil
 	}
 	if _, err := exec.LookPath("go"); err != nil {
 		return true, fmt.Errorf("gate: Go executable go is required by %s but is not on PATH", root)
 	}
 	return true, nil
+}
+
+// GoModuleRoot reports whether root holds a regular `go.mod` file, which every Go check
+// of root requires.
+func GoModuleRoot(root string) bool {
+	return isRegularFile(filepath.Join(root, "go.mod"))
 }
 
 // rootConformanceEnv points the ordinary test phase at the tree under grade. This way

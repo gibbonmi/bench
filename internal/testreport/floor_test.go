@@ -2,6 +2,7 @@ package testreport
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -42,6 +43,14 @@ func floorOf(t *testing.T, root string, packages []listedPackage, entries ...str
 	return got
 }
 
+// declareEmbedPatterns gives each canned package one embed pattern for each embed file
+// that it holds.
+func declareEmbedPatterns(packages []listedPackage) {
+	for index := range packages {
+		packages[index].EmbedPatterns = slices.Clone(packages[index].EmbedFiles)
+	}
+}
+
 func assertFloor(t *testing.T, got Floor, packages []string, embed bool) {
 	t.Helper()
 	if !slices.Equal(got.Packages, packages) || got.Embed != embed {
@@ -75,6 +84,14 @@ func TestWritesFloorCoversADirectoryEntry(t *testing.T) {
 	assertFloor(t, floorOf(t, root, packages, "nest/"), []string{"./nest", "./nest/inner"}, false)
 }
 
+// TestWritesFloorFlagsAnEmbeddingDirectory grades that a directory entry over a package
+// that declares an embed pattern sets the embed flag.
+func TestWritesFloorFlagsAnEmbeddingDirectory(t *testing.T) {
+	root, packages := floorFixture(t)
+	declareEmbedPatterns(packages)
+	assertFloor(t, floorOf(t, root, packages, "embedprod/"), []string{"./embedprod"}, true)
+}
+
 // TestWritesFloorKeepsTheSegmentBoundary grades that a directory entry covers a package
 // at a `/` boundary only, so a sibling that shares its leading bytes stays out.
 func TestWritesFloorKeepsTheSegmentBoundary(t *testing.T) {
@@ -89,10 +106,7 @@ func TestWritesFloorAddsTheEmbedOwner(t *testing.T) {
 	root, packages := floorFixture(t)
 	assertFloor(t, floorOf(t, root, packages, "embedprod/input.txt"), []string{"./embedprod"}, true)
 	assertFloor(t, floorOf(t, root, packages, "embedprod/embed.go"), []string{"./embedprod"}, false)
-	// Each canned package now declares one pattern for each embed file it holds.
-	for index := range packages {
-		packages[index].EmbedPatterns = slices.Clone(packages[index].EmbedFiles)
-	}
+	declareEmbedPatterns(packages)
 	assertFloor(t, floorOf(t, root, packages, "embedprod/embed.go"), []string{"./embedprod"}, true)
 	// `go list` itself reports the embed patterns of a module whose root package embeds.
 	got, err := WritesFloor(context.Background(), currentPackageGraphModule(t), []string{"embed.go"})
@@ -102,11 +116,13 @@ func TestWritesFloorAddsTheEmbedOwner(t *testing.T) {
 	assertFloor(t, got, []string{"./."}, true)
 }
 
-// TestWritesFloorAddsEveryPackageForModuleMetadata grades that a `go.mod` entry adds the
-// pattern that selects every package of the module.
+// TestWritesFloorAddsEveryPackageForModuleMetadata grades that a `go.mod` entry and a
+// `go.sum` entry each add the pattern that selects every package of the module.
 func TestWritesFloorAddsEveryPackageForModuleMetadata(t *testing.T) {
 	root, packages := floorFixture(t)
-	assertFloor(t, floorOf(t, root, packages, "go.mod"), []string{"./..."}, false)
+	for _, metadata := range []string{"go.mod", "go.sum"} {
+		assertFloor(t, floorOf(t, root, packages, metadata), []string{"./..."}, false)
+	}
 }
 
 // TestWritesFloorIgnoresAGuidancePath grades that a Markdown file that no package embeds
@@ -143,6 +159,23 @@ func TestWritesFloorSkipsANonGoRoot(t *testing.T) {
 		t.Fatalf("floor error = %v and loader calls = %d, want no error and no call", err, calls)
 	}
 	assertFloor(t, got, nil, false)
+}
+
+// TestWritesFloorReturnsTheGraphError grades that the floor returns the loader error, and
+// refuses a listed package outside the repository.
+func TestWritesFloorReturnsTheGraphError(t *testing.T) {
+	root, packages := floorFixture(t)
+	loadErr := errors.New("go list failed")
+	_, err := writesFloorWithLoader(context.Background(), root, []string{"direct/direct.go"}, func(context.Context, string) ([]listedPackage, error) {
+		return nil, loadErr
+	})
+	if !errors.Is(err, loadErr) {
+		t.Fatalf("floor error = %v, want the loader error", err)
+	}
+	outside := listedPackage{Dir: t.TempDir(), ImportPath: "outside"}
+	if _, err := writesFloorWithLoader(context.Background(), root, []string{"direct/direct.go"}, cannedLoader(append(packages, outside))); err == nil {
+		t.Fatal("floor error = nil, want a refusal of the package outside the repository")
+	}
 }
 
 // TestWritesFloorAgreesWithChangedSelection grades that the floor and the `--changed`
