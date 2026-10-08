@@ -1,7 +1,7 @@
 # Start the next outcome at phase close
 
 Blocked by: none
-Writes: .bench/BENCH.md, .agents/commands/bench-drain.md, internal/anchors/registry_commitment.go, internal/conformance/commitment_guidance_test.go, CHANGELOG.md
+Writes: .bench/BENCH.md, .agents/commands/bench-drain.md, internal/anchors/registry_commitment.go, internal/conformance/commitment_guidance_test.go, CHANGELOG.md, projects/benchkit.md
 Covers: none
 
 ## What to build
