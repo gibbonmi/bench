@@ -232,7 +232,7 @@ These faces and routes are required.
 | commitment | `commitment-verify-evidence` | agent | `bench commitment verify --milestone <id> --evidence <file>` |
 | commitment | `commitment-decision` | reviewer | `bench commitment plan --input <file>` |
 | commitment | `commitment-unbound` | agent | `bench commitment start --outcome <id> --request <request> --deliverable <path>` |
-| commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then the re-run |
+| commitment | `commitment-light-path-outside` | agent | add the path to the `Writes:` line of `<ticket>`; then the re-run with `<ticket>` among its paths |
 | commitment | `commitment-run-unknown` | agent | `bench commitment inventory` |
 
 The `<verb>-handback` reviewer faces join this list for each verb.
@@ -1213,6 +1213,12 @@ The prospective build owns these exact paths:
 - `internal/gate/completion.go`
 - `internal/gate/engine.go`
 - `internal/gate/authorization/authorization.go`
+- `internal/commitment/repository/light_path_test.go`
+- `internal/commit/commitment_test.go`
+- `internal/worktree/commitment_light_landing_test.go`
+- `internal/commit/assessment_span_test.go`
+- `internal/commit/commit_test.go`
+- `internal/commit/commitment_route_test.go`
 - `internal/refusalroute/routetest/routetest_test.go`
 - `internal/landing/attribution.go`
 - `internal/landing/gitexec.go`
