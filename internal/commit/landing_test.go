@@ -286,6 +286,24 @@ func cannedShapeGate(shape string, code int) func(t *testing.T, root string) {
 	}
 }
 
+// tipMovedFixture is the commit-tip-moved route fixture. The gate moves the checkout's
+// branch once, between the commit's read of its destination and its update, so the
+// compare-and-swap refuses the update. The gate leaves a marker, so the rerun that the
+// route prints publishes onto the moved branch. rerun is the route's caller commit.
+func tipMovedFixture(rerun string) commitFaceFixture {
+	return commitFaceFixture{
+		face: faceTipMoved, exit: 1, suffix: rerun,
+		build: func(t *testing.T) commitSet {
+			return assignedCommitSet(t, faceTipMoved, func(t *testing.T, root string) {
+				repo := "git -C " + sanitize.ShellQuote(root)
+				marker := sanitize.ShellQuote(adminPath(t, root, "tip-moved"))
+				gateScript("[ -e "+marker+" ] && exit 0\n: > "+marker+"\n"+
+					repo+" update-ref HEAD \"$("+repo+" commit-tree 'HEAD^{tree}' -p HEAD -m moved)\"")(t, root)
+			})
+		},
+	}
+}
+
 // BG21: the gate's bounded red shape reaches `bench commit`'s stdout byte for byte, and
 // the command's own refusal record follows on stderr. A relay that filtered, wrapped, or
 // re-rendered the table would lose the one account of what failed.

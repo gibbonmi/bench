@@ -50,6 +50,15 @@ var commitFaces = []Face{
 		Route:     []Step{Instruction(Text("correct the paths or the files that the refusal names")), commitRerun},
 	},
 	{
+		// The destination moved between the commit's read and its update, so the
+		// compare-and-swap refused the update. The rerun recomposes onto the moved
+		// destination in the caller's own worktree. The landing owns the sentence.
+		Verb:      Commit,
+		Name:      "commit-tip-moved",
+		Authority: Agent,
+		Route:     []Step{commitRerun},
+	},
+	{
 		// A cause outside the agent's authority, such as a lane declaration that the loader
 		// cannot read: a change to the gate's own checks is the reviewer's.
 		Verb:      Commit,

@@ -372,6 +372,7 @@ func commitFaceFixtures() []commitFaceFixture {
 				mustWrite(t, filepath.Join(f.checkout, "a.txt"), "changed\n", 0o644)
 			}},
 		},
+		tipMovedFixture(rerun(faceTipMoved)),
 		{
 			// A lane declaration that the loader cannot read has no repair the commit can
 			// name, so it hands back. The reviewer withdraws the declaration.

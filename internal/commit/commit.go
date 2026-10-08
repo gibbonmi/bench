@@ -147,8 +147,7 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 	}
 	// The composed path count is the attributed set the commit publishes. It is counted
 	// where the list already exists, so no second counter derives the same fact.
-	measures.pathCount = len(named)
-	measures.counted = true
+	measures.pathCount, measures.counted = len(named), true
 	// The lane is resolved before anything is graded. A declared lane replaces the
 	// whole-project gate for this commit; a malformed declaration refuses the run and
 	// names the defect, because a lane nobody can read grades nothing.
@@ -162,11 +161,10 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 			return refused(fmt.Errorf("format named Go files: %w", formatErr))
 		}
 		if len(formatted) > 0 {
-			shown := make([]string, len(formatted))
 			for i, path := range formatted {
-				shown[i] = sanitize.Controls(path)
+				formatted[i] = sanitize.Controls(path)
 			}
-			fmt.Fprintf(stdout, "formatted Go paths: %s\n", strings.Join(shown, " "))
+			fmt.Fprintf(stdout, "formatted Go paths: %s\n", strings.Join(formatted, " "))
 		}
 	}
 	owner := landing.NewForLane(lane, strings.TrimSpace(string(expectedBytes)))
@@ -209,16 +207,19 @@ const (
 	faceRed                   = "commit-red"
 	faceInfrastructure        = "commit-infrastructure"
 	faceNamedPath             = "commit-named-path"
+	faceTipMoved              = "commit-tip-moved"
 	faceHandback              = "commit-handback"
 )
 
 // landingFace picks the face of a refusal by its type: a named path that the caller corrects,
-// the attributed kind of an authorization refusal, or else the handback.
+// a moved tip, the attributed kind of an authorization refusal, or else the handback.
 func landingFace(err error) string {
 	var refused landing.AuthorizationRefusal
 	switch {
 	case errors.As(err, new(landing.NamedPathError)):
 		return faceNamedPath
+	case errors.As(err, new(landing.TipMovedError)):
+		return faceTipMoved
 	case !errors.As(err, &refused):
 	case refused.Result.Kind == authorization.Infrastructure:
 		return faceInfrastructure
@@ -228,10 +229,9 @@ func landingFace(err error) string {
 	return faceHandback
 }
 
-// refuse prints a refusal that published nothing, sentence and then the route of face on
-// its own next= line, and answers exit 1. The route re-runs the caller's own commit in the
-// worktree of the active assignment that owns root. With no owner, the zero owner's empty
-// label prints the label slot.
+// refuse prints a refusal that published nothing, sentence and then face's route on its own
+// next= line, and answers exit 1. The route re-runs the caller's commit in the worktree of the
+// active assignment that owns root; with no owner, the zero owner's empty label prints the slot.
 func refuse(stderr io.Writer, root string, req request, face, sentence string) int {
 	owner, _ := intent.AssignmentForWorktree(root)
 	args := []string{}
