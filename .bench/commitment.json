@@ -302,6 +302,18 @@
               "path": "roadmap/FT349.md",
               "identity": "sha256:f4f89dbf1f4de267d1877ad2a3eb9ba7c410bebc7df46214d3fc573e6b51a268"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "ticket-checkpoint-floor",
+                "path": "specs/ticket-checkpoint-floor/spec.md",
+                "identity": "sha256:bb67a783eee0f213c37d9d826327be68f693fb21fdf5a3922dfe81c1d7dece65"
+              },
+              "obligations": [
+                "FT349"
+              ]
+            }
           ]
         }
       ]
