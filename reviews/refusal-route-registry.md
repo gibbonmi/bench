@@ -3919,6 +3919,72 @@
             "C6-4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "r-c6-r1-standards",
+          "performer": "claude:ft393_c6_r1_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "01f388aa729e573b7d21723626e4572c79f17f16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c6_r1_standards",
+            "digest": "sha256:57041e1f952877a729c87986e82cab181bf455028fa7abe6a4db0e3a502116e6",
+            "excerpt": "RR-C6 confirming round, Standards (claude:ft393_c6_r1_standards): evidence current=true. C6-S1/C6-P1/C6-1, C6-2, and C6-3 confirmed. Zero findings.\nConcern 1: the AGENTS.md exception holds; the separation is needed and the reds are recorded. Concern 2: no other caller should read StepJoiner.\nAdvice: the routeLiteralFaults parameter path shadows the path package; internal/adopt/compatibility.go:278 composes a \"; then \" route outside the scanned packages.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "tip": "8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c6-standards"
+          ]
+        },
+        {
+          "id": "r-c6-r1-spec",
+          "performer": "claude:ft393_c6_r1_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "01f388aa729e573b7d21723626e4572c79f17f16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c6_r1_spec",
+            "digest": "sha256:d3ab7ed59c1f5e743c7b30240b97516fcc6c41f81ad2b3c3fb1ccc0e54a7a20c",
+            "excerpt": "RR-C6 confirming round, Spec (claude:ft393_c6_r1_spec): evidence current=true. C6-S1/C6-P1/C6-1, C6-2, and C6-3 confirmed. Zero findings.\nRR49, RR50, and RR65 are met. Concern 1: the independent-expectation exception holds. Concern 2: no other caller must read StepJoiner.\nAdvice: spec.md:346 still says allowlisted routes serve a non-write verb; the next sentence resolves it.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "tip": "8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c6-spec"
+          ]
+        },
+        {
+          "id": "r-c6-r1-coverage",
+          "performer": "claude:ft393_c6_r1_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "01f388aa729e573b7d21723626e4572c79f17f16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c6_r1_coverage",
+            "digest": "sha256:5e1c913c43a2d612706f439b898ba37f3273a918a78c525a23f8848adc0ebe55",
+            "excerpt": "RR-C6 confirming round, Coverage (claude:ft393_c6_r1_coverage): evidence current=true. C6-S1/C6-P1/C6-1, C6-2, and C6-3 confirmed. Zero findings.\nConcern 1: the AGENTS.md exception holds; a derived plant table drops its plant with the package, and the record holds the red. Each needle has a plant. Concern 2: no caller needs StepJoiner beyond the bypass check.\nAdvice: internal/adopt/compatibility.go:278 composes a \"; then \" route outside the scanned packages; adopt is not a write verb.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "tip": "8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c6-coverage"
+          ]
         }
       ]
     }
