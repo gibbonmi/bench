@@ -926,7 +926,16 @@ The orchestrator records each author session before that author's dispatch.
           "native_ref": "claude-agent:ft393_t8"
         }
       ],
-      "09-route-each-commit-refusal-through-the-registry.md": [],
+      "09-route-each-commit-refusal-through-the-registry.md": [
+        {
+          "session": "claude:ft393_t9",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "a62b2929153f8a1cf00a3c7cccba2b2fece0d861",
+          "native_ref": "claude-agent:ft393_t9"
+        }
+      ],
       "10-route-each-checkpoint-refusal-by-its-cause.md": [],
       "11-route-the-commitment-policy-refusals-through-faces.md": [],
       "12-print-the-commitment-verb-routes-from-the-registry.md": [],
@@ -1106,6 +1115,7 @@ The prospective build owns these exact paths:
 - `internal/worktree/merge_caller_root_test.go`
 - `internal/worktree/list.go`
 - `internal/worktree/list_actions_test.go`
+- `internal/landing/landing_test.go`
 - `internal/worktree/lifecycle_test.go`
 - `internal/worktree/worktree_test.go`
 - `internal/worktree/lifecycle.go`
