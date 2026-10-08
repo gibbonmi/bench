@@ -48,7 +48,7 @@ TF-C1 round 3: 0 findings. The callers of `installCannedSelection` keep their be
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:63741a116956d2ebb6084503ed645e4a874351d06671cd4699639b095d8dc998",
+  "plan_digest": "sha256:35975f8a331862c515848b125af2ab8e9e06ca5abe4ff7682fe97bba3f133356",
   "implementation_session": "",
   "chunks": [
     {
@@ -623,6 +623,15 @@ TF-C1 round 3: 0 findings. The callers of `installCannedSelection` keep their be
     {
       "from": "sha256:5ab185e24118847b76b5943bca905f1d204398378c7054a0d09b2307b1b6c981",
       "to": "sha256:63741a116956d2ebb6084503ed645e4a874351d06671cd4699639b095d8dc998",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:63741a116956d2ebb6084503ed645e4a874351d06671cd4699639b095d8dc998",
+      "to": "sha256:35975f8a331862c515848b125af2ab8e9e06ca5abe4ff7682fe97bba3f133356",
       "chunk_ids": {
         "TF-C1": [
           "TF-C1"
