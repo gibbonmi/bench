@@ -14,8 +14,8 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
-	"github.com/gibbonmi/bench/internal/shellcommand"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
@@ -96,22 +96,11 @@ var commitArgs = []string{"-m", "m", "--", "a.txt"}
 // command step verbatim through the verb's own entry. The commit then reruns out of the
 // face: as the route's own last step, or after a route that ends elsewhere.
 func TestCommitFacesFollowTheirRoutes(t *testing.T) {
-	faces := map[string]refusalroute.Face{}
-	for _, face := range refusalroute.Faces(refusalroute.Commit) {
-		faces[face.Name] = face
-	}
-	produced := map[string]bool{}
+	var keys [][2]string
 	for _, fixture := range commitFaceFixtures() {
-		if _, ok := faces[fixture.face]; !ok || produced[fixture.face] {
-			t.Fatalf("fixture %q produces no registered commit face, or a face a second fixture produces", fixture.face)
-		}
-		produced[fixture.face] = true
+		keys = append(keys, [2]string{fixture.face, ""})
 	}
-	for name := range faces {
-		if !produced[name] {
-			t.Errorf("registry commit face %q has no producing fixture", name)
-		}
-	}
+	faces := routetest.Fixtures(t, refusalroute.Commit, keys)
 	for _, fixture := range commitFaceFixtures() {
 		t.Run(fixture.face, func(t *testing.T) { followCommitFace(t, faces[fixture.face], fixture) })
 	}
@@ -130,32 +119,20 @@ func followCommitFace(t *testing.T, face refusalroute.Face, fixture commitFaceFi
 	if code != fixture.exit || !printed || !strings.Contains(next, fixture.contains) || !strings.HasSuffix(next, fixture.suffix) {
 		t.Fatalf("face %s = (%d, %q, %q), want exit %d and a next= route that holds %q and ends with %q", face.Name, code, stdout, stderr, fixture.exit, fixture.contains, fixture.suffix)
 	}
-	route, reviewer := strings.CutPrefix(next, "reviewer: ")
-	steps := refusalroute.Steps(route)
-	if reviewer != (face.Authority == refusalroute.Reviewer) || len(steps) != len(face.Route) {
-		t.Fatalf("%s next = %q, want the face's %d steps behind the reviewer marker exactly when the face is the reviewer's", face.Name, next, len(face.Route))
-	}
+	steps := routetest.Steps(t, face, next, "", nil)
 	if fixture.clear != nil {
 		fixture.clear(t, f)
 	}
-	last := ""
-	for index, step := range face.Route {
-		carried, ok := fixture.carry[index]
-		switch {
-		case ok && face.Authority == refusalroute.Agent && step.IsCommand():
-			t.Fatalf("%s step %d is an agent command, which the walk runs verbatim", face.Name, index+1)
-		case ok:
-			carried(t, f)
-		case step.IsCommand():
-			command := steps[index]
-			if fixture.slots != nil {
-				command = strings.NewReplacer(fixture.slots...).Replace(command)
-			}
-			last = runRouteStep(t, f, command)
-		default:
-			t.Fatalf("%s step %d %q is an instruction that the fixture does not carry out", face.Name, index+1, steps[index])
-		}
+	carry := func(index int) (func(), bool) {
+		step, carried := fixture.carry[index]
+		return func() { step(t, f) }, carried
 	}
+	last := routetest.Follow(t, face, steps, carry, func(step string) string {
+		if fixture.slots != nil {
+			step = strings.NewReplacer(fixture.slots...).Replace(step)
+		}
+		return runRouteStep(t, f, step)
+	})
 	// A route that ends with the caller's own commit has rerun it, and the step published.
 	if strings.HasPrefix(steps[len(steps)-1], "bench commit ") {
 		return
@@ -183,15 +160,11 @@ func printedNext(stderr string) (string, bool) {
 
 // runRouteStep runs one printed command step in process, the way the CLI dispatches it: a
 // commit at the worktree that its tree target names, and any other verb at the caller's
-// checkout. The step must read as one simple command with every slot filled, and a verb
-// other than the diagnosis must exit 0. It returns the step's stdout.
+// checkout. The shared walk states the rules a printed step and its exit meet. It returns
+// the step's stdout.
 func runRouteStep(t *testing.T, f commitSet, step string) string {
 	t.Helper()
-	stream := shellcommand.Parse(step)
-	if stream.Unlexed || len(stream.Commands) != 1 || len(stream.Tokens) != stream.Commands[0].End-stream.Commands[0].Start || strings.Contains(step, "<") {
-		t.Fatalf("printed step %q is not one simple command with every slot filled", step)
-	}
-	words := shellcommand.ProjectCommandWords(stream.Tokens)
+	words := routetest.Words(t, step)
 	var stdout, stderr bytes.Buffer
 	code := 0
 	switch strings.Join(words[:min(3, len(words))], " ") {
@@ -209,13 +182,11 @@ func runRouteStep(t *testing.T, f commitSet, step string) string {
 	case "bench worktree reset":
 		code = worktree.ResetCommand(f.checkout, f.home, words[3:], &stdout, &stderr)
 	case "bench doctor":
-		// The diagnosis reports the health of the whole install, which a fixture is not,
-		// so the walk runs it and does not grade its exit.
-		adopt.Doctor(words[2:], io.Discard, io.Discard, "fixture")
+		code = adopt.Doctor(words[2:], io.Discard, io.Discard, "fixture")
 	default:
 		t.Fatalf("printed step %q runs no verb that a commit route names", step)
 	}
-	if code != 0 {
+	if code != 0 && !routetest.Diagnostic(words) {
 		t.Fatalf("printed step %q = (%d, %q, %q), want exit 0", step, code, stdout.String(), stderr.String())
 	}
 	return stdout.String()

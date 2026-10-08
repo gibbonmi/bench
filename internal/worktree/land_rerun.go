@@ -2,7 +2,11 @@
 // each flag a refusal route swaps.
 package worktree
 
-import "github.com/gibbonmi/bench/internal/sanitize"
+import (
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/refusalroute"
+)
 
 // repairedSourceTipFlag is the re-run's --source-tip argument after a repair that commits
 // in the source. The commit moves the tip the caller named, so the operator fills the tip
@@ -40,11 +44,9 @@ func landingBaseFlag(base string) string {
 	return " --base " + landingRerunArg(base, "<full-review-base>")
 }
 
-// landingRerunArg renders one flag value the re-run repeats, and the placeholder that
-// stands in for a value the operator could not paste back.
+// landingRerunArg renders one flag value the re-run repeats by the registry's one
+// quote-or-placeholder rule. placeholder is the slot as the route prints it, in angle
+// brackets, and it stands in for a value the operator could not paste back.
 func landingRerunArg(value, placeholder string) string {
-	if value == "" || !lineSafe(value) {
-		return placeholder
-	}
-	return sanitize.ShellQuote(value)
+	return refusalroute.Arg(strings.TrimSuffix(strings.TrimPrefix(placeholder, "<"), ">"), value)
 }
