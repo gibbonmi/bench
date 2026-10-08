@@ -8,6 +8,8 @@ Round 2 confirmed those folds and found S5. Chunk TF-C1 uses repair cycle 2 of 2
 
 Chunk TF-C2 uses repair cycle 1 of 2 for S1, S2, C1, C2, C3, C4, and C6 through a fresh repair session for ticket 02. C1, C2, and C6 are the one hardening cycle of TF-C2. S1 widens the ticket 02 fence by `internal/gate/phases.go` under the `--auto-approve` fence approval.
 
+TF-C2 round 2 confirmed those folds and found S4. Chunk TF-C2 uses repair cycle 2 of 2 for S4 and for the copy of S5 that repair cycle 1 added. No reviewer extension exists.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -30,6 +32,12 @@ TF-C2 round 1: 3 findings, worst S1.
 - S2 (auto-fix, confidence 5): `floor.go:59-69` and `selection.go:231-241` each spell the rule that maps a path to its direct package.
 - S3 (no-op, confidence 3): the floor does not clean an entry path. A `Writes:` entry is already a clean repository path.
 
+TF-C2 round 2: 1 finding, worst S4. The folds of S1 and S2 hold.
+
+- S4 (auto-fix, confidence 6): `internal/testreport/selection.go:236-237` spells the Go-file and embed-owner rule for an absent path instead of reading `packageIndex.owners`.
+
+Advice: S5, the Go-file suffix test appears four times in `selection.go`, and three copies predate this build. Repair cycle 2 folds the copy that repair cycle 1 added.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
@@ -43,6 +51,8 @@ TF-C1 round 3: 0 findings. TF1 to TF5 hold.
 TF-C2 round 1: 0 blocking findings. Every TF-C2 row holds.
 
 Advice: P1, `go.work` and `go.work.sum` also add `./...` because the floor reuses the `--changed` metadata rule. The final report flags this widening for reviewer veto. P2, a `go.mod` entry leaves the embed flag false, and only the whole-suite command satisfies its element. P3, the author return holds the probe reds of TF21 and TF22.
+
+TF-C2 round 2: 0 findings. Every TF-C2 row holds.
 
 ## Coverage
 
@@ -65,6 +75,8 @@ TF-C2 round 1: 5 findings, worst C1.
 - C6 (auto-fix, confidence 8): the refusal of a package outside the repository in `selection.go:54` has no test.
 
 Advice: C5, a `go.mod` that is a directory or a link. The S1 repair makes the floor read the gate's rule, so the gate decides it.
+
+TF-C2 round 2: 0 findings. The folds of C1, C2, C3, C4, and C6 hold.
 
 ```bench-review-record
 {
@@ -937,6 +949,74 @@ Advice: C5, a `go.mod` that is a directory or a link. The S1 repair makes the fl
             "C6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2-standards-r2",
+          "performer": "claude:ft349_c2_standards_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "8a2a126a382a8659cb9c91f65fa3965881d6e971",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c2_standards_r2",
+            "digest": "sha256:e335ebb3a624b05a74640048162d244750e5c5e1f8c7e3693130f0e687f25f4a",
+            "excerpt": "Standards axis TF-C2 round 2 (fable/medium), repair delta ae5dd412..f1285acd. S1 held: GoModuleRoot (phases.go:126-128) read by goModuleToolchain, runBinarySource (gate.go:274), floor (floor.go:29). S2 held with a residue. 2 low findings; worst S4.\nS4 selection.go:236-237 absent-path branch spells the Go-file and embed-owner rule itself instead of index.owners. auto-fix. conf 6.\nS5 strings.HasSuffix(_, \".go\") at selection.go:72 (new), :158, :236, :250. no-op this round. conf 5.\n"
+          },
+          "axis": "Standards",
+          "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+          "tip": "f1285acdf3079a2c8f73bb2e3105425e11fe3a51",
+          "finding_ids": [
+            "S4"
+          ],
+          "supersedes": [
+            "c2-standards-r1"
+          ]
+        },
+        {
+          "id": "c2-spec-r2",
+          "performer": "claude:ft349_c2_spec_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "8a2a126a382a8659cb9c91f65fa3965881d6e971",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c2_spec_r2",
+            "digest": "sha256:19ab25143d2dc2bff0a48e93d7bae483447da840d9f56d2d5dcbbfc25edb8a1c",
+            "excerpt": "Spec axis TF-C2 round 2 (fable/medium), repair delta ae5dd412..f1285acd. TF7-TF15, TF19-TF22, TF71 held; seam cells name existing tests. Delta inside the widened ticket 02 Writes line; ticket and spec fence agree; TF-C2 plan covers ticket 02 floor. bench coverage mapped, 71 rows. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+          "tip": "f1285acdf3079a2c8f73bb2e3105425e11fe3a51",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r1"
+          ]
+        },
+        {
+          "id": "c2-coverage-r2",
+          "performer": "claude:ft349_c2_coverage_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "8a2a126a382a8659cb9c91f65fa3965881d6e971",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c2_coverage_r2",
+            "digest": "sha256:8d7bec176870a487bade728eeb08dbddba8ea146dcbbb93d309f5d3c5530bf8c",
+            "excerpt": "Coverage axis TF-C2 round 2 (fable/medium), repair delta ae5dd412..f1285acd. C1/C6, C2, C3, C4 held (floor_test.go:166-178, :121-127, :89-94). Probe swap in packageIndex.owners embed branch (selection.go:75) bit TestWritesFloorAddsTheEmbedOwner, TestWritesFloorAgreesWithChangedSelection, and TestCauseEmbedOnly; restored=yes. 0 findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+          "tip": "f1285acdf3079a2c8f73bb2e3105425e11fe3a51",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-r1"
+          ]
         }
       ]
     }
