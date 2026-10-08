@@ -3,6 +3,8 @@ package commitment
 import (
 	"fmt"
 	"slices"
+
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // Deliver records the verified delivery of the approved deliverable at path. It returns
@@ -18,7 +20,7 @@ func Deliver(policy Policy, path, source, evidence string) (Policy, []SourceBind
 		return policy, nil, err
 	}
 	if obligationFree(outcome, binding) {
-		return policy, nil, fmt.Errorf("deliverable %q of outcome %q names no obligation; list the sources that it satisfies with bench commitment plan --input <file>", path, outcome.ID)
+		return policy, nil, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: fmt.Errorf("deliverable %q of outcome %q names no obligation", path, outcome.ID)}
 	}
 	fact := DeliveryFact{Milestone: policy.ActiveMilestone, Outcome: outcome.ID, Binding: binding.Source.ID, Identity: binding.Source.Identity, Source: source, Evidence: evidence}
 	if deliveredKeys(policy)[fact.key()] {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // Start binds the owned assignment and its deliverable under the intent lock.
@@ -77,7 +78,7 @@ func (store Store) admissionPolicy() (commitment.Policy, error) {
 		return policy, err
 	}
 	if !exists {
-		return policy, errors.New("commitment adoption required: run bench commitment plan --input <file>")
+		return policy, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: errors.New("commitment adoption required")}
 	}
 	if strings.TrimSpace(policy.ActiveMilestone) == "" {
 		return policy, errors.New("no milestone is active")

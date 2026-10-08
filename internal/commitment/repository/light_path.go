@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
@@ -75,7 +76,11 @@ func lightPathCover(found []lightPathTicket, production []string) error {
 	}
 	for _, p := range production {
 		if !slices.ContainsFunc(found, func(ticket lightPathTicket) bool { return ticket.covers(p) }) {
-			return fmt.Errorf("production path %q is outside the Writes line of light-path ticket %q; add the path to that line, or run bench commitment start", p, found[0].path)
+			return refusalroute.Raised{
+				Name:   refusalroute.CommitmentLightPathOutside,
+				Err:    fmt.Errorf("production path %q is outside the Writes line of light-path ticket %q", p, found[0].path),
+				Values: map[string]string{refusalroute.FactTicket: found[0].path},
+			}
 		}
 	}
 	return errors.New("production paths span more than one light-path ticket; a light-path change carries one ticket")

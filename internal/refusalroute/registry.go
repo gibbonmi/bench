@@ -4,7 +4,9 @@
 package refusalroute
 
 import (
+	"errors"
 	"fmt"
+	"maps"
 	"slices"
 )
 
@@ -66,6 +68,36 @@ type Refusal struct {
 
 func (r Refusal) Error() string { return r.Sentence }
 
+// Raised is a refusal that a policy raises for whichever write verb runs the policy: the
+// name of its registered face, the cause, and the values the policy observed. The policy
+// does not know the verb that prints it, so it renders no route; Printed renders it.
+type Raised struct {
+	Name   string
+	Err    error
+	Values map[string]string
+}
+
+func (r Raised) Error() string { return r.Err.Error() }
+func (r Raised) Unwrap() error { return r.Err }
+
+// Printed is the refusal that a verb prints for cause: the face that cause raised, or else
+// face. values are the printing verb's own facts, and the raising policy's values join
+// them. The sentence is the cause's whole message, so the context that wraps a raised
+// refusal stays; a nil cause keeps the face's declared sentence.
+func Printed(face string, cause error, values map[string]string) Refusal {
+	facts := Facts{Values: map[string]string{}}
+	maps.Copy(facts.Values, values)
+	if cause != nil {
+		facts.Sentence = cause.Error()
+	}
+	var raised Raised
+	if errors.As(cause, &raised) {
+		face = raised.Name
+		maps.Copy(facts.Values, raised.Values)
+	}
+	return New(face, facts)
+}
+
 // The named facts the registered routes read. A raising site keys Facts.Values with these
 // names, so a slot and the value that fills it share one spelling.
 const (
@@ -102,6 +134,12 @@ const (
 	FactArguments = "arguments"
 	// FactSlug is the slug of the spec whose evidence a route reads.
 	FactSlug = "slug"
+	// FactTicket is the path of the light-path ticket whose Writes line a route edits.
+	FactTicket = "ticket"
+	// FactMilestone is the id of the milestone whose verification a route records. Its
+	// placeholder is the commitment grammar's <id>, and no route reads it beside
+	// FactAssignmentID.
+	FactMilestone = "id"
 )
 
 // Arg renders one value of a command that a raising site composes: shell-quoted, or the
@@ -148,7 +186,7 @@ var atCheckout = Command(Composed(FactCheckoutCommand), Fact(FactCheckout))
 // inventory is the authoritative, ordered inventory of the write verbs' refusal faces. Each
 // verb declares its faces in its own file of this package, and a verb adds its face there
 // rather than composing a route at the site that refuses. The verbs join in this order.
-var inventory = slices.Concat(landFaces, mergeFaces, resetFaces, commitFaces, gateFaces)
+var inventory = slices.Concat(landFaces, mergeFaces, resetFaces, commitFaces, gateFaces, commitmentFaces)
 
 // New is the one constructor a registered face travels through.
 func New(name string, facts Facts) Refusal { return newIn(inventory, name, facts) }

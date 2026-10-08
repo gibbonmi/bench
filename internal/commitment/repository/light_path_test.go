@@ -184,7 +184,7 @@ func TestLightPathPublication(t *testing.T) {
 		{name: "delivery-beside-unreadable-folder", deliverable: lightFolder, closes: true, drops: []string{"specs/big"}, steps: steps(ticket(lightTicket, "change.go"), write("change.go"), func(t *testing.T, worktree string) {
 			commitmenttest.Write(t, worktree, "specs/big/tickets/one.md", strings.Repeat("a", int(bounds.ControlRecordLimit)+1))
 		})},
-		{name: "spec-less", steps: steps(ticket(lightTicket, "change.go"), write("change.go")), want: `--deliverable <path>; land the light-path change with --spec "lp"`},
+		{name: "spec-less", steps: steps(ticket(lightTicket, "change.go"), write("change.go")), want: unbound + `; land the light-path change with --spec "lp"`},
 		{name: "spec-less-spaced-slug", steps: steps(ticket("specs/a b/tickets/one.md", "change.go"), write("change.go")), want: `--spec "a b"`},
 		{name: "spec-less-uncovered", steps: steps(ticket(lightTicket, "change.go"), write("change.go", "other.go")), want: unbound, absent: "--spec"},
 		{name: "bound-spec-delivery", deliverable: commitmenttest.MilestoneSpec, bound: true, steps: steps(ticket(lightTicket, "other.go"), write("bound.go"))},

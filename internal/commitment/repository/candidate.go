@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -24,7 +25,7 @@ func (store Store) AuthorizeCandidate(tree string) error {
 	}
 	owner, owned := activeOwner(ledger, store.Root)
 	if !owned {
-		return fmt.Errorf("commit requires an active owned assignment; run bench worktree create")
+		return refusalroute.Raised{Name: refusalroute.CommitmentNeedsAssignment, Err: errors.New("commit requires an active owned assignment")}
 	}
 	return store.authorizeCandidate(ledger, owner, tree, nil, false)
 }
@@ -76,7 +77,7 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 		protected = candidate
 	}
 	if err := store.protectedCandidate(protected, reference, tree, transition); err != nil {
-		return fmt.Errorf("candidate changes protected commitment: %w; run bench commitment plan --input <file>", err)
+		return refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: fmt.Errorf("candidate changes protected commitment: %w", err)}
 	}
 	changes, err := git.TreeChangesIncludingSubmodules(store.Root, reference, tree)
 	if err != nil {
@@ -151,7 +152,7 @@ func (store Store) retiredRecord(tree string, change git.TreeChange) bool {
 
 func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *commitment.Policy, revision string) error {
 	if candidate == nil {
-		return fmt.Errorf("commitment policy deletion is not approved; run bench commitment plan --input <file>")
+		return refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: errors.New("commitment policy deletion is not approved")}
 	}
 	for _, receipt := range ledger.CommitmentReceipts {
 		if !receipt.Approved || receipt.Decision == "" {
@@ -176,7 +177,7 @@ func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *
 		}
 		return nil
 	}
-	return fmt.Errorf("candidate policy has no exact approval; run bench commitment plan --input <file>")
+	return refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: errors.New("candidate policy has no exact approval")}
 }
 
 // closedPolicy reports whether candidate is exactly the policy edit of the verified closure
@@ -225,7 +226,7 @@ func (store Store) protectedCandidate(policy *commitment.Policy, revision, tree 
 		sequence = roadmap.SequenceText(projected)
 	}
 	if after.SequenceText != sequence {
-		return fmt.Errorf("protected recommended sequence changed; run bench commitment plan --input <file>")
+		return errors.New("protected recommended sequence changed")
 	}
 	rows := map[string]bool{}
 	for _, row := range after.Rows {

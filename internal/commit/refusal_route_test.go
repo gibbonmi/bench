@@ -5,6 +5,7 @@ package commit
 import (
 	"bytes"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -13,7 +14,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/adopt"
-	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
@@ -74,8 +75,9 @@ type commitFaceFixture struct {
 	// exit is the exit the face prints at: 1 for a refusal, 3 for a published commit whose
 	// checkout did not reconcile.
 	exit int
-	// contains and suffix state what the printed route must hold and end with.
-	contains, suffix string
+	// contains and suffix state what the printed route must hold and end with, and absent
+	// what the refusal must not print at all.
+	contains, suffix, absent string
 	// clear removes the fixture's own fault scaffolding once the face printed, which no
 	// operator's tree holds, so the route repairs only the cause the face names.
 	clear func(t *testing.T, f commitSet)
@@ -101,17 +103,26 @@ func callerCommit(label string, words ...string) string {
 	return strings.Join(append([]string{"bench commit --in", label}, words...), " ")
 }
 
-// TestCommitFacesFollowTheirRoutes is RR36 through RR38. The registry is the source of the
-// commit's face set, so each commit face needs a producing fixture. Each fixture's printed
-// route is carried out step by step: an instruction by the fixture's own means, and each
-// command step verbatim through the verb's own entry. The commit then reruns out of the
-// face: as the route's own last step, or after a route that ends elsewhere.
+// TestCommitFacesFollowTheirRoutes is RR36 through RR38 and RR61 through RR63. The registry
+// is the source of the commit's face set, so each commit face needs a producing fixture.
+// The commit also prints the commitment faces that the commitment policy raises at its
+// candidate, so the walk looks those up beside the commit's own; the commitment verb's
+// walk requires their fixtures. Each fixture's printed route is carried out step by step:
+// an instruction by the fixture's own means, and each command step verbatim through the
+// verb's own entry. The commit then reruns out of the face: as the route's own last step,
+// or after a route that ends elsewhere.
 func TestCommitFacesFollowTheirRoutes(t *testing.T) {
+	faces := map[string]refusalroute.Face{}
+	for _, face := range refusalroute.Faces(refusalroute.Commitment) {
+		faces[face.Name] = face
+	}
 	var keys [][2]string
 	for _, fixture := range commitFaceFixtures() {
-		keys = append(keys, [2]string{fixture.face, fixture.cause})
+		if _, raised := faces[fixture.face]; !raised {
+			keys = append(keys, [2]string{fixture.face, fixture.cause})
+		}
 	}
-	faces := routetest.Fixtures(t, refusalroute.Commit, keys)
+	maps.Copy(faces, routetest.Fixtures(t, refusalroute.Commit, keys))
 	for _, fixture := range commitFaceFixtures() {
 		t.Run(fixture.face+"/"+fixture.cause, func(t *testing.T) { followCommitFace(t, faces[fixture.face], fixture) })
 	}
@@ -130,6 +141,9 @@ func followCommitFace(t *testing.T, face refusalroute.Face, fixture commitFaceFi
 	}
 	if code != fixture.exit || !printed || !strings.Contains(next, fixture.contains) || !strings.HasSuffix(next, fixture.suffix) {
 		t.Fatalf("face %s = (%d, %q, %q), want exit %d and a next= route that holds %q and ends with %q", face.Name, code, stdout, stderr, fixture.exit, fixture.contains, fixture.suffix)
+	}
+	if fixture.absent != "" && strings.Contains(stderr, fixture.absent) {
+		t.Fatalf("face %s stderr = %q, want no %q", face.Name, stderr, fixture.absent)
 	}
 	steps := routetest.Steps(t, face, next, "", nil)
 	if fixture.clear != nil {
@@ -186,6 +200,10 @@ func runRouteStep(t *testing.T, f commitSet, step string) string {
 		code = worktree.CreateCommand(f.checkout, f.home, words[3:], &stdout, &stderr)
 	case "bench worktree reset":
 		code = worktree.ResetCommand(f.checkout, f.home, words[3:], &stdout, &stderr)
+	case "bench commitment start":
+		var out string
+		out, code = commitcmd.Command(f.checkout, words[2:])
+		stdout.WriteString(out)
 	case "bench doctor":
 		code = adopt.Doctor(words[2:], io.Discard, io.Discard, "fixture")
 	default:
@@ -196,9 +214,6 @@ func runRouteStep(t *testing.T, f commitSet, step string) string {
 	}
 	return stdout.String()
 }
-
-// commitFixtureSpec is the delivery the fixture repository's policy approves.
-const commitFixtureSpec = "specs/commit-fixture/spec.md"
 
 // primaryCommitSet is the commit fixture whose caller commits in the primary checkout, with
 // its change to a.txt uncommitted.
@@ -211,33 +226,6 @@ func primaryCommitSet(t *testing.T) commitSet {
 	f.checkout = f.primary
 	mustWrite(t, filepath.Join(f.primary, "a.txt"), "changed\n", 0o644)
 	return f
-}
-
-// assignedCommitSet is the commit fixture whose checkout is an assignment that the create
-// verb made and the delivery admits, so a printed tree target resolves as the CLI resolves
-// it. gate writes the checkout's gate, which its base commit holds. The caller's change to
-// a.txt waits uncommitted.
-func assignedCommitSet(t *testing.T, label string, gate func(t *testing.T, root string)) commitSet {
-	t.Helper()
-	f := primaryCommitSet(t)
-	runRouteStep(t, f, "bench worktree create --request "+label+" --label "+label)
-	f.checkout = admitCreated(t, f, label)
-	prepareLandingCheckout(t, f.checkout, gate)
-	runGit(t, f.checkout, "reset", "-q", "--hard", "HEAD")
-	mustWrite(t, filepath.Join(f.checkout, "a.txt"), "changed\n", 0o644)
-	return f
-}
-
-// admitCreated admits the assignment that a create of label made, as the operator's start
-// of the delivery would, and returns its checkout.
-func admitCreated(t *testing.T, f commitSet, label string) string {
-	t.Helper()
-	checkout, err := worktree.TreeTarget(f.primary, label)
-	if err != nil {
-		t.Fatalf("created assignment %q: %v", label, err)
-	}
-	commitmenttest.Admit(t, checkout, label, commitFixtureSpec)
-	return checkout
 }
 
 // gateScript writes the checkout's gate as body.
@@ -288,7 +276,7 @@ func commitFaceFixtures() []commitFaceFixture {
 			mustWrite(t, filepath.Join(root, ".bench", "phases.json"), `{"lane":[{"name":"check","argv":["sh","-c",`+strconv.Quote(check)+`]}]}`, 0o644)
 		}
 	}
-	return []commitFaceFixture{
+	return append([]commitFaceFixture{
 		{
 			// The gate takes the checkout's index lock, so the commit publishes and the
 			// checkout cannot follow it.
@@ -381,7 +369,7 @@ func commitFaceFixtures() []commitFaceFixture {
 				mustRemove(t, filepath.Join(f.checkout, ".bench", "phases.json"))
 			}},
 		},
-	}
+	}, commitmentFaceFixtures(rerun)...)
 }
 
 func mustRemove(t *testing.T, path string) {

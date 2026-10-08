@@ -14,6 +14,7 @@ import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 const publicationDeliverable = "specs/x/spec.md"
@@ -90,19 +91,22 @@ func TestAdmitPublicationFrozenIdentity(t *testing.T) {
 // The verified closure of the reviewed deliverable needs the owner's authority to close
 // it. The candidate is the closure alone and changes no production path, so no later
 // readiness check can decide it. A bound owner or a listed scope that names the
-// deliverable admits it. An unbound owner receives the start guidance, and a listed scope
-// that omits the deliverable receives the scope refusal.
+// deliverable admits it. An unbound owner receives the start face, and a listed scope that
+// omits the deliverable receives the scope refusal, a commitment decision. Each refusal
+// raises its face by type, and its sentence names no route: the printing verb renders the
+// face's route, so a route in the sentence would print a second one.
 func TestAdmitPublicationClosureAuthority(t *testing.T) {
 	for _, row := range []struct {
 		name  string
 		bind  bool
 		scope []string
 		want  string
+		face  string
 	}{
 		{name: "bound", bind: true},
-		{name: "unbound", want: "assignment has no current delivery binding; run bench commitment start"},
+		{name: "unbound", want: "assignment has no current delivery binding", face: refusalroute.CommitmentUnbound},
 		{name: "listed", scope: []string{closureSpec}},
-		{name: "listed-without-deliverable", scope: []string{"owned.txt"}, want: "legacy continuation scope excludes \"" + closureSpec + "\""},
+		{name: "listed-without-deliverable", scope: []string{"owned.txt"}, want: "legacy continuation scope excludes \"" + closureSpec + "\"", face: refusalroute.CommitmentDecision},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			root, head := closureRoot(t, func(t testing.TB, root string) { commitmenttest.SeedAdmission(t, root, closureSpec) })
@@ -135,8 +139,9 @@ func TestAdmitPublicationClosureAuthority(t *testing.T) {
 				}
 				return
 			}
-			if err == nil || !strings.Contains(err.Error(), row.want) {
-				t.Fatalf("AdmitPublication = %v, want a refusal naming %q", err, row.want)
+			var raised refusalroute.Raised
+			if err == nil || !strings.Contains(err.Error(), row.want) || !errors.As(err, &raised) || raised.Name != row.face || strings.Contains(err.Error(), "run bench") {
+				t.Fatalf("AdmitPublication = %v, want a refusal naming %q that raises the %s face and names no route", err, row.want, row.face)
 			}
 		})
 	}
@@ -244,7 +249,7 @@ func TestCommitmentContinuationApproval(t *testing.T) {
 			if err := commitmenttest.CommitPolicy(root, input.Policy, "adopt the policy"); err != nil {
 				t.Fatal(err)
 			}
-		}, want: "only the initial adoption lists runs; remove the continuations and run bench commitment plan --input <file>"},
+		}, want: "a policy is published, so only the initial adoption lists runs"},
 		{name: "run-complete", setup: func(t *testing.T, root string, _ continuationInput) {
 			moveAssignment(t, root, intent.RequestDigest("legacy"), intent.StateComplete)
 		}, want: "run %q is not active"},

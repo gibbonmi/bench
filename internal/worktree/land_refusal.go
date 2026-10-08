@@ -219,12 +219,16 @@ func landingFaceRoute(err error, rerun string, shortCircuited bool) error {
 	return refusalError{raised}
 }
 
-// raisedRefusal is the refused record an error carries: the typed refusal, or a refusal
-// whose sentence is the error's own.
+// raisedRefusal is the refused record an error carries: the typed refusal, the face that a
+// policy raised with the values it observed, or a refusal whose sentence is the error's own.
 func raisedRefusal(err error) refusal {
 	var typed refusalError
 	if errors.As(err, &typed) {
 		return typed.refusal
+	}
+	var raised refusalroute.Raised
+	if errors.As(err, &raised) {
+		return refusal{detail: err.Error(), face: raised.Name, values: raised.Values}
 	}
 	return refusal{detail: err.Error()}
 }

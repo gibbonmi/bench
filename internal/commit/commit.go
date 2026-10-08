@@ -112,14 +112,14 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 // as each becomes known. The exit code it returns is the verb's, so the record and the
 // shell agree about the same commit.
 func commitAttributed(measures *commitMeasures, root string, req request, stdout, stderr io.Writer) int {
-	refused := func(err error) int { return refuse(stderr, root, req, landingFace(err), err.Error()) }
+	refused := func(err error) int { return refuse(stderr, root, req, landingFace(err), err) }
 	primary, err := git.IsPrimaryCheckout(root)
 	if err != nil {
 		return refused(errors.New("checkout identity is unknown"))
 	}
 	if primary {
 		fmt.Fprintln(stderr, usage.PrimaryCheckoutRefusal())
-		return refuse(stderr, root, req, facePrimaryCheckout, "")
+		return refuse(stderr, root, req, facePrimaryCheckout, nil)
 	}
 
 	// Capture publication identity before reading attributed content. A detached checkout
@@ -142,8 +142,7 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 		return refused(err)
 	}
 	if err := (commitrepo.Store{Root: root}).AuthorizeCandidate(candidate); err != nil {
-		fmt.Fprintf(stderr, "error: commitment: %v\n", err)
-		return 1
+		return refused(fmt.Errorf("commitment: %w", err))
 	}
 	// The composed path count is the attributed set the commit publishes. It is counted
 	// where the list already exists, so no second counter derives the same fact.
@@ -229,10 +228,11 @@ func landingFace(err error) string {
 	return faceHandback
 }
 
-// refuse prints a refusal that published nothing, sentence and then face's route on its own
-// next= line, and answers exit 1. The route re-runs the caller's commit in the worktree of the
-// active assignment that owns root; with no owner, the zero owner's empty label prints the slot.
-func refuse(stderr io.Writer, root string, req request, face, sentence string) int {
+// refuse prints a refusal that published nothing, cause and then on its own next= line the
+// route of the face that cause raised, or else of face, and answers exit 1. The route re-runs
+// the caller's commit in the worktree of the active assignment that owns root; with no owner,
+// the zero owner's empty label prints the slot.
+func refuse(stderr io.Writer, root string, req request, face string, cause error) int {
 	owner, _ := intent.AssignmentForWorktree(root)
 	args := []string{}
 	if req.dryRun {
@@ -245,9 +245,9 @@ func refuse(stderr io.Writer, root string, req request, face, sentence string) i
 	for _, path := range req.paths {
 		args = append(args, refusalroute.Arg("path", path))
 	}
-	refusal := refusalroute.New(face, refusalroute.Facts{Sentence: sentence, Values: map[string]string{
-		refusalroute.FactLabel: owner.Label, refusalroute.FactArguments: strings.Join(args, " "),
-	}})
+	values := map[string]string{refusalroute.FactLabel: owner.Label, refusalroute.FactArguments: strings.Join(args, " ")}
+	values[refusalroute.FactRerun] = refusalroute.CommitRerun(values)
+	refusal := refusalroute.Printed(face, cause, values)
 	if refusal.Sentence != "" {
 		fmt.Fprintln(stderr, "error: "+refusal.Sentence)
 	}
