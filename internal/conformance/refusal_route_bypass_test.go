@@ -5,8 +5,11 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
 	"os"
+	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -30,17 +33,17 @@ var routeBypassPackages = []string{
 }
 
 // routeBypassAllowed is the reviewed allowlist: each file of a scanned package whose routes
-// serve a non-write verb, which the registry does not own, keyed to that non-write caller.
+// the registry does not own, keyed to the read or shared caller that its routes serve.
 var routeBypassAllowed = map[string]string{
-	"internal/worktree/path.go":        "the target refusal of bench worktree path, exec, show, build, and create",
+	"internal/worktree/path.go":        "the shared --in tree-target refusal of every tree-scoped verb, read and write",
 	"internal/worktree/build.go":       "the success route of bench worktree build",
 	"internal/worktree/tree_target.go": "the success route of bench worktree create",
 }
 
 // routeBypassNeedles are the route spellings that only the registry writes: the next label
 // as a record field and as a table header, the commitment route tail, and the route joiner.
-// The spec pins the tail and the joiner, so the check spells them.
-var routeBypassNeedles = []string{refusalroute.NextField + "=", refusalroute.NextField + "[", "run bench ", "; then "}
+// The spec pins the tail, so the check spells it; the registry exports the rest.
+var routeBypassNeedles = []string{refusalroute.NextField + "=", refusalroute.NextField + "[", "run bench ", refusalroute.StepJoiner}
 
 // routeBypassFaults names each string literal in a production Go file of a scanned package
 // that composes a route outside the registry: one that holds a needle, or that is the bare
@@ -112,38 +115,65 @@ func TestNoWriteVerbComposesARouteOutsideTheRegistry(t *testing.T) {
 	}
 }
 
-// TestRouteBypassCheckBites is RR50 and RR65. Each planted route literal, the commitment
-// tail in internal/commitment/repository included, reds with a fault that names its file.
-// The same literal in a test file or a comment does not red, and a literal that is not
-// line-safe keeps the fault on one line. An empty tree reds once for each scanned package.
+// TestRouteBypassCheckBites is RR50 and RR65. Each scanned package holds one planted route
+// literal, the commitment tail in internal/commitment/repository included, and each plant
+// reds with a fault that names its file. Each literal holds one needle, and each needle has
+// a plant, so a needle or a package that leaves the check reds here. The same literal in a
+// test file or a comment does not red, and a literal that is not line-safe keeps the fault
+// on one line. An empty tree reds once for each scanned package.
 func TestRouteBypassCheckBites(t *testing.T) {
 	t.Run("planted routes", func(t *testing.T) {
-		plants := map[string]string{
-			"internal/worktree/planted.go":              "package worktree\n\nvar planted = \"refused{reason=dirty,next=bench doctor}\"\n",
-			"internal/commit/planted.go":                "package commit\n\nvar planted = `next[1]:\n  bench doctor`\n",
-			"internal/commitment/repository/planted.go": "package repository\n\nimport \"errors\"\n\nvar planted = errors.New(\"no delivery binding; run bench commitment plan --input <file>\")\n",
-			"internal/landing/planted.go":               "package landing\n\nvar planted = \"next\"\n",
-			"internal/gate/planted.go":                  "package gate\n\nvar planted = \"refused\\x1b[31m\\nnext=bench doctor\"\n",
+		const (
+			nextField   = `"refused{reason=dirty,next=bench doctor}"`
+			nextTable   = "`next[1]:\n  bench doctor`"
+			tail        = `"no delivery binding; run bench commitment plan --input <file>"`
+			bareLabel   = `"next"`
+			notLineSafe = `"refused\x1b[31m\nnext=bench doctor"`
+		)
+		joined := strconv.Quote("bench doctor" + refusalroute.StepJoiner + "bench gate")
+		// The planted packages are spelled apart from routeBypassPackages, so a package that
+		// leaves the list leaves its plant unscanned and reds. Each scanned package must hold
+		// a plant, so the plants follow the list.
+		planted := map[string]string{
+			"internal/commit":                 nextTable,
+			"internal/commitment":             joined,
+			"internal/commitment/commitcmd":   tail,
+			"internal/commitment/repository":  tail,
+			"internal/gate":                   notLineSafe,
+			"internal/gate/authorization":     joined,
+			"internal/landing":                bareLabel,
+			"internal/worktree":               nextField,
+			"internal/worktree/landingpolicy": nextTable,
 		}
-		quiet := map[string]string{
-			"internal/worktree/planted_test.go": plants["internal/worktree/planted.go"],
-			"internal/worktree/prose.go":        "package worktree\n\n// A refusal prints its route on a next= line; then the operator runs it.\nfunc prose() {}\n",
+		for _, pkg := range routeBypassPackages {
+			if _, ok := planted[pkg]; !ok {
+				t.Errorf("scanned package %s holds no planted route", pkg)
+			}
+		}
+		source := func(pkg, literal string) string {
+			return fmt.Sprintf("package %s\n\nimport \"errors\"\n\nvar planted = errors.New(%s)\n", path.Base(pkg), literal)
 		}
 		files := map[string]string{}
-		for _, set := range []map[string]string{plants, quiet} {
-			for path, body := range set {
-				files[path] = body
-			}
+		var plants []string
+		for pkg, literal := range planted {
+			rel := pkg + "/planted.go"
+			files[rel] = source(pkg, literal)
+			plants = append(plants, rel)
 		}
+		quiet := map[string]string{
+			"internal/worktree/planted_test.go": source("internal/worktree", nextField),
+			"internal/worktree/prose.go":        "package worktree\n\n// A refusal prints its route on a next= line; then the operator runs it.\nfunc prose() {}\n",
+		}
+		maps.Copy(files, quiet)
 		faults := routeBypassFaults(throwawayRoot{files: files}.build(t))
-		for path := range plants {
-			if !containsDiagnostic(faults, path+":") {
-				t.Errorf("faults = %q, want one that names the planted route in %s", faults, path)
+		for _, rel := range plants {
+			if !containsDiagnostic(faults, rel+":") {
+				t.Errorf("faults = %q, want one that names the planted route in %s", faults, rel)
 			}
 		}
-		for path := range quiet {
-			if containsDiagnostic(faults, path+":") {
-				t.Errorf("faults = %q, want none that names %s, which prints no route", faults, path)
+		for rel := range quiet {
+			if containsDiagnostic(faults, rel+":") {
+				t.Errorf("faults = %q, want none that names %s, which prints no route", faults, rel)
 			}
 		}
 		for _, fault := range faults {

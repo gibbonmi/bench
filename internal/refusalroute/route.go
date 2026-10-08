@@ -9,7 +9,9 @@ import (
 const (
 	// reviewerMarker opens a reviewer route, so an agent that reads it stops and hands back.
 	reviewerMarker = "reviewer: "
-	stepJoiner     = "; then "
+	// StepJoiner joins the steps of a rendered route. Only the registry spells it, so a check
+	// that refuses a route composed elsewhere reads it here.
+	StepJoiner = "; then "
 	// prefaceJoiner separates the preface from the first step. The preface qualifies the
 	// route and is not a step to run, so it takes no "then".
 	prefaceJoiner = "; "
@@ -154,7 +156,7 @@ func (s Step) render(fill slotFill) string {
 
 // Steps splits the steps of a rendered route, in route order. A check that carries out a
 // printed route step by step reads the steps here, so the check and Render share one joiner.
-func Steps(route string) []string { return strings.Split(route, stepJoiner) }
+func Steps(route string) []string { return strings.Split(route, StepJoiner) }
 
 // Render is the one rendering of a face's route over a raising site's facts.
 func (f Face) Render(facts Facts) string {
@@ -163,7 +165,7 @@ func (f Face) Render(facts Facts) string {
 	for _, step := range f.Route {
 		steps = append(steps, step.render(fill))
 	}
-	route := strings.Join(steps, stepJoiner)
+	route := strings.Join(steps, StepJoiner)
 	if facts.Preface != "" {
 		route = asWritten(prefaceSlot, facts.Preface) + prefaceJoiner + route
 	}
