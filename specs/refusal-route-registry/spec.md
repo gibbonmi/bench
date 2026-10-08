@@ -934,6 +934,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "a62b2929153f8a1cf00a3c7cccba2b2fece0d861",
           "native_ref": "claude-agent:ft393_t9"
+        },
+        {
+          "session": "claude:ft393_t9b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "7d86d4697932a09f683f0ecf33ecacadda1c10b6",
+          "native_ref": "claude-agent:ft393_t9b",
+          "predecessor": "claude:ft393_t9",
+          "trigger": "user-directed",
+          "stopped": "the ticket 09 author neared the 300k context rule after its commit and has no live child",
+          "preserved": "7d86d4697932a09f683f0ecf33ecacadda1c10b6"
         }
       ],
       "10-route-each-checkpoint-refusal-by-its-cause.md": [],
