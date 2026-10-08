@@ -16,8 +16,7 @@ findings in the owner details.
 ## Reviewer priority (2026-10-03)
 
 The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
-and review cost that recent builds paid. On 2026-10-07 the reviewer put FT392 and FT393
-ahead of FT373, because those rows repair the landing recovery paths.
+and review cost that recent builds paid.
 
 **FT373 (HIGH) — a gate check refuses production code that re-implements a standard-library function.**
 
@@ -115,6 +114,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT335 (MEDIUM) — a `bench worktree merge` from the primary checkout grades the composed tree with the target's declared lane.**
 
+**FT401 (LOW, decision required) — the refusals outside the write verbs print their routes from the refusal-route registry.**
+
 ## Planning, ownership, and review integrity
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
@@ -161,6 +162,10 @@ and the small cuts. The rows below hold the rest.
 
 **FT396 (LOW) — a phase that moves its work to a new worktree releases the superseded one.**
 
+**FT397 (LOW, decision required) — a phase close names the parallel tracks that write disjoint files and cross disjoint seams.**
+
+**FT400 (MEDIUM, decision required) — a ticket author near 300k context tokens finishes its ticket, and a fresh recorded session takes later work.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -190,6 +195,8 @@ and the small cuts. The rows below hold the rest.
 **FT383 (LOW) — the planning commit test reuses the protected policy fixture.**
 
 **FT394 (LOW) — `bench learning` links a landed fix to the open entry that it resolves.**
+
+**FT402 (MEDIUM, decision required) — the landing gate costs less time and keeps its failure detection.**
 
 ## Release qualification
 
@@ -241,6 +248,10 @@ qualification requirements are met.
 **FT372 (MEDIUM, parked pending a repro) — the local-capture landing tests isolate their handoff state.**
 
 **FT385 (LOW, parked pending a repro) — the abbreviated source-tip landing test uses a prefix that is unique in its fixture.**
+
+**FT398 (LOW, parked pending a repro) — a test reads a built binary whose identity matches its recorded source.**
+
+**FT399 (MEDIUM, parked pending a repro) — the advertised recovery of an ignored-residual landing writes the terminal receipt.**
 
 
 ## Release and bank reassessment gate
