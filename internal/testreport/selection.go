@@ -69,7 +69,7 @@ func newPackageIndex(root string, packages []listedPackage) (packageIndex, error
 // directory holds the path as a Go file, and the package that embeds the path. An empty
 // import path means that no package has that role.
 func (index packageIndex) owners(file string) (goPackage, embedOwner string) {
-	if strings.HasSuffix(file, ".go") {
+	if isGoFile(file) {
 		goPackage = index.byDirectory[path.Dir(file)]
 	}
 	return goPackage, index.byEmbed[file]
@@ -155,7 +155,7 @@ func inspectChangedPath(root, path string) (changedPath, error) {
 	if !os.IsNotExist(err) {
 		return changedPath{}, fmt.Errorf("changed path is unreadable: %w", err)
 	}
-	if strings.HasSuffix(clean, ".go") {
+	if isGoFile(clean) {
 		parent, parentErr := os.Stat(filepath.Dir(filepath.Join(root, clean)))
 		if parentErr != nil || !parent.IsDir() {
 			return changedPath{}, fmt.Errorf("changed Go path is not in a current package")
@@ -219,7 +219,7 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 	if err != nil {
 		return nil, err
 	}
-	byEmbed, byImport := index.byEmbed, index.byImport
+	byImport := index.byImport
 	selected := changedSelection{}
 	mark := func(importPath, cause string) {
 		if current, ok := selected[importPath]; !ok || slices.Index(causePrecedence, cause) < slices.Index(causePrecedence, current) {
@@ -233,21 +233,18 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 			}
 			continue
 		}
-		if input.absent && !strings.HasSuffix(input.path, ".go") {
-			if _, ok := byEmbed[input.path]; ok {
-				return nil, fmt.Errorf("changed embed path is not in the current package graph")
-			}
-			continue
-		}
 		goPackage, embedOwner := index.owners(input.path)
 		if embedOwner != "" {
+			if input.absent && !isGoFile(input.path) {
+				return nil, fmt.Errorf("changed embed path is not in the current package graph")
+			}
 			mark(embedOwner, causeEmbed)
 			if goPackage != "" {
 				mark(goPackage, causeChanged)
 			}
 			continue
 		}
-		if strings.HasSuffix(input.path, ".go") {
+		if isGoFile(input.path) {
 			if goPackage == "" {
 				return nil, fmt.Errorf("changed Go path is not in a current package")
 			}
@@ -297,6 +294,10 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 // of pkg in one new slice.
 func directDependencies(pkg listedPackage) []string {
 	return append(append(append([]string{}, pkg.Imports...), pkg.TestImports...), pkg.XTestImports...)
+}
+
+func isGoFile(path string) bool {
+	return strings.HasSuffix(path, ".go")
 }
 
 func isGoMetadata(path string) bool {
