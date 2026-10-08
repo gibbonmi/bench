@@ -1,7 +1,7 @@
 # Route each commit refusal through the registry
 
 Blocked by: 08-route-the-commit-exit-3-to-the-reset-plan.md
-Writes: internal/refusalroute/registry.go (new), internal/commit/commit.go, internal/commit/refusal_route_test.go (new), internal/commit/dry_run_test.go, internal/commit/landing_test.go, internal/refusalroute/faces_commit.go (new), internal/landing/landing.go, internal/landing/landing_test.go, internal/landing/attribution.go
+Writes: internal/refusalroute/registry.go (new), internal/commit/commit.go, internal/commit/refusal_route_test.go (new), internal/commit/dry_run_test.go, internal/commit/landing_test.go, internal/refusalroute/faces_commit.go (new), internal/landing/landing.go, internal/landing/landing_test.go, internal/landing/attribution.go, internal/landing/gitexec.go
 Covers: RR36, RR37, RR38
 
 ## What to build
@@ -12,6 +12,8 @@ Declare these commit faces in the registry with the routes of the spec's face in
 - `commit-primary-checkout`
 - `commit-red`
 - `commit-infrastructure`
+- `commit-named-path`
+- `commit-tip-moved`
 - `commit-handback`
 
 A raising site derives the `<label>` fact through `intent.AssignmentsOwning` over its own root.
@@ -29,6 +31,6 @@ Each fixture follows its printed route and reruns the commit.
 
 ## Acceptance
 
-- [ ] Each commit face has exactly one producing fixture that follows its route out of the face.
+- [ ] Each commit face has exactly one producing fixture for each declared cause. Each fixture follows its route out of the face.
 - [ ] A red commit refusal prints a `next=` line on stderr whose route ends with the caller's commit command.
 - [ ] A commit in the primary checkout prints a `next=` route that contains `bench worktree create --request`.

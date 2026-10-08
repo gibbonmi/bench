@@ -168,6 +168,7 @@ A face has reviewer authority when the clear needs one of these:
 - a change to the primary checkout
 - a commitment change
 - a decision that FT342 owns
+- an edit of a gate check, such as the lane declaration
 
 The destructive-git guard already states that the merge and any history rewrite are the reviewer's, so the conflict faces take reviewer authority.
 
@@ -219,6 +220,8 @@ These faces and routes are required.
 | commit | `commit-primary-checkout` | agent | `bench worktree create --request <opaque-id> --label <work-item>` |
 | commit | `commit-red` | agent | repair each failure that the run reports; then the re-run |
 | commit | `commit-infrastructure` | agent | `bench doctor`; then the re-run |
+| commit | `commit-named-path` | agent | correct the paths or the files that the refusal names; then the re-run |
+| commit | `commit-tip-moved` | agent | the re-run |
 | gate | `checkpoint-completion-evidence` | agent | `bench preflight review <slug>` |
 | gate | `checkpoint-dirty-checkout` | agent | `bench commit --in <label> -m <msg> -- <path>...`; then the re-run |
 | gate | `checkpoint-composition` | reviewer | the delivery closure of the spec does not compose; hand back |
@@ -970,6 +973,18 @@ The orchestrator records each author session before that author's dispatch.
           "trigger": "user-directed",
           "stopped": "the ticket 09 verification session reported its RR-C3 records and has no live child",
           "preserved": "ba5d8921e4de62d64f4046ad1fef241f51b446b8"
+        },
+        {
+          "session": "claude:ft393_t9_repair2",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "4ddf054e5d72a88d3c75df034de47e7629f9e07f",
+          "native_ref": "claude-agent:ft393_t9_repair2",
+          "predecessor": "claude:ft393_t9_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 09 repair session reported its RR-C3 records and has no live child",
+          "preserved": "eb02867a4f5d139439fa9532ff05ae5cb889a537"
         }
       ],
       "10-route-each-checkpoint-refusal-by-its-cause.md": [],
@@ -1057,7 +1072,7 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR33 | 28 | A commit exit 3 `next=` value does not contain `git restore` | planned TestPublishedUnreconciledRouteIsTheResetPlan in internal/commit/refusal_route_test.go | A route that keeps the restore beside the reset still prints a denied step |
 | RR34 | 28 | A commit exit 3 on a root path that is not line-safe prints the placeholder `<checkout>` | planned TestPublishedUnreconciledRouteIsTheResetPlan in internal/commit/refusal_route_test.go | A raw control byte reaches the line-structured record |
 | RR35 | 29 | After a commit exit 3 in an assignment worktree, the printed reset plan and its `--apply` leave `git status --porcelain` empty at the published commit | planned TestCommitExitThreeRouteReconcilesTheCheckout in internal/worktree/commit_route_test.go | A reset route that does not reconcile leaves the exit 3 state |
-| RR36 | 30 | Each commit face has exactly one producing fixture that follows its route out of the face | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | A commit face with no fixture reaches an operator unproven |
+| RR36 | 30 | Each commit face has exactly one producing fixture for each declared cause, and each fixture follows its route out of the face | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | A commit face with no fixture reaches an operator unproven |
 | RR37 | 30 | A red commit refusal prints a `next=` line on stderr whose route ends with the caller's commit command | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The current `inherited` refusal prints only `run bench gate --fresh`, which re-grades the same red |
 | RR38 | 30 | A commit in the primary checkout prints a `next=` route that contains `bench worktree create --request` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | A refusal that keeps its route only inside the sentence bypasses the registry |
 | RR39 | 31 | A checkpoint refusal for a missing completion record prints no `help[1]{cmd,why}` row | `internal/gate/review_checkpoint_test.go` (`TestReviewCheckpointRefusalRoute`) | This is the FT330 defect: the fixed write-access row prints for every cause |
@@ -1155,6 +1170,7 @@ The prospective build owns these exact paths:
 - `internal/refusalroute/routetest/routetest.go`
 - `internal/refusalroute/routetest/routetest_test.go`
 - `internal/landing/attribution.go`
+- `internal/landing/gitexec.go`
 - `internal/worktree/lifecycle_test.go`
 - `internal/worktree/worktree_test.go`
 - `internal/worktree/lifecycle.go`
