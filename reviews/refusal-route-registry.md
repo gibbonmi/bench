@@ -2953,6 +2953,72 @@
             "C4-6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "r-c4-r1-standards",
+          "performer": "claude:ft393_c4_r1_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3bdd72ca8defafd138a1edd564cddbdffca873b8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c4_r1_standards",
+            "digest": "sha256:c93b968795c0a8fddc232da03d7f7647d7e611774095daea958cad0eb67806e7",
+            "excerpt": "RR-C4 confirming round, Standards (claude:ft393_c4_r1_standards): evidence current=true. All folds confirmed. Zero findings.\nConcern 4: acceptable; RunCompletionTree calls the same executeTreeWithOwner, and the fixture reruns through RunCommand.\nAdvice: completion.go:86 builds completionProofError directly beside the proofFault constructor; the proof-fault rule is restated in four comments; one test comment is not name-first.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+          "tip": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c4-standards"
+          ]
+        },
+        {
+          "id": "r-c4-r1-spec",
+          "performer": "claude:ft393_c4_r1_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3bdd72ca8defafd138a1edd564cddbdffca873b8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c4_r1_spec",
+            "digest": "sha256:f2b46b2906c59e76080a9df845638bbc9a4a498a53e5186a2ea93565952bf26b",
+            "excerpt": "RR-C4 confirming round, Spec (claude:ft393_c4_r1_spec): evidence current=true. All folds confirmed. Zero findings.\nConcern 1: the spec requires a route only on the bench gate checkpoint (Output shape and the out-of-scope row). Concern 2: both authority calls match; the RecordPath branch is unreachable after validation. Concern 3: not a gap. Concern 4: the walk proves the printed route.\nAdvice: a land-verb one-route test; the spec is silent on the authority of a closure-derive fault.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+          "tip": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c4-spec"
+          ]
+        },
+        {
+          "id": "r-c4-r1-coverage",
+          "performer": "claude:ft393_c4_r1_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3bdd72ca8defafd138a1edd564cddbdffca873b8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c4_r1_coverage",
+            "digest": "sha256:1625cf12ba51e31fdf25889d04b0839ea39673acb378c8a3be631dd43e188033",
+            "excerpt": "RR-C4 confirming round, Coverage (claude:ft393_c4_r1_coverage): evidence current=true. All folds confirmed. Zero findings.\nConcern 1: Execute and the shift session need no route; the Output shape names the gate checkpoint, and spec line 1159 covers run-state refusals.\nConcern 2: both authority calls match the spec rule. Concern 3: not a gap; land hits the same unexported guard. Concern 4: RunCompletionTree calls the production path.\nAdvice: a land-verb one-route test; a closure-derivation fault may be reviewer-owned and has no spec row.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+          "tip": "819154c6b9007e7c9019e19287f228a51462e02c",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c4-coverage"
+          ]
         }
       ]
     }
