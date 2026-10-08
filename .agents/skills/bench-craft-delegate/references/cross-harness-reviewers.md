@@ -5,18 +5,21 @@ subagent surface takes the capable-harness handoff in
 `.agents/commands/bench-review-implementation.md`, and it substitutes no
 same-family CLI.
 
-Close stdin on every one of these. A family CLI that receives both a prompt argument and
-an open stdin waits for stdin to supply more prompt. So a backgrounded reviewer
-parks before it starts and reports no error — it looks launched. Redirect from
-`/dev/null` and check the process is alive before treating a fan-out as running.
+Each direct recipe reads its charge from a file on stdin. The shell does not
+expand the text of a redirected file, so a backtick or a `$()` in the charge stays
+inert. In a double-quoted argument, the coordinator's shell runs each one as a
+command substitution. The file also closes stdin at its end. A family CLI with an
+open stdin waits for more prompt, so a backgrounded reviewer parks before it starts
+and reports no error. Check that the process is alive before you treat a fan-out as
+running.
 
 Claude:
 
-`claude -p --model <id> --effort <level> "<charge>" < /dev/null`
+`claude -p --model <id> --effort <level> < <charge-file>`
 
 Codex:
 
-`codex exec --sandbox read-only -C <dir> -m <id> -c model_reasoning_effort=<level> -o <file> "<charge>" < /dev/null`
+`codex exec --sandbox read-only -C <dir> -m <id> -c model_reasoning_effort=<level> -o <file> < <charge-file>`
 
 `-C` sets the reviewer's working root, which a backgrounded call cannot inherit
 from the caller's shell. `-o` writes the final message alone, so findings are

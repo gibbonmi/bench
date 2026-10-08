@@ -995,7 +995,7 @@ func TestChargeProbeOracleAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    file,
 				section: charge,
-				needle:  "`internal/conformance/tier_test.go`",
+				needle:  "`internal/conformance/tier_live_tree_test.go`",
 				want:    "delegation-discipline.md In the charge dropped the live-tree inventory file from a live-tree test charge's fence",
 			},
 			{
