@@ -2,7 +2,7 @@
 
 ## Repair state
 
-Chunk TF-C1 used repair cycle 1 of 2. The cycle repairs S1, S2, S3, and C1 through a fresh repair session for ticket 01. C1 is the one hardening cycle of TF-C1. No reviewer extension exists.
+Chunk TF-C1 used repair cycle 1 of 2 for S1, S2, S3, and C1. C1 is the one hardening cycle of TF-C1. Round 2 confirmed those folds and found S5. Chunk TF-C1 uses repair cycle 2 of 2 for S5 through a fresh repair session for ticket 01. No reviewer extension exists. Under `--auto-approve`, the reviewer approved a fence expansion in advance.
 
 ## Standards
 
@@ -13,11 +13,18 @@ TF-C1 round 1: 4 findings, worst S1.
 - S3 (auto-fix, confidence 7): `check_test.go:201` keeps an independent help-list expectation that omits `root-conformance`, so an omission from help stays green.
 - S4 (no-op, confidence 4): `testBenchSource` is a one-line forwarder to `gate.KitRoot`. The ticket requires that forwarder.
 
+TF-C1 round 2: 1 finding, worst S5. The folds of S1, S2, and S3 hold.
+
+- S5 (auto-fix, confidence 5): `internal/testreport/root_conformance_test.go:47-54` repeats the factory body of `installCannedSelection` in `outcome_test.go:79-88`. Only an observer flag differs.
+- S6 (no-op, confidence 4): the help-list expectation in `check_test.go` has a recorded red. The repair session dropped `root-conformance` from `namedChecks` through `bench probe`, and the test failed at `check_test.go:194`.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
 
 Advice: the TF2 test runs the `--full` form of the command. The bare form keeps the same exit and diagnostic.
+
+TF-C1 round 2: 0 findings. TF1 to TF5 hold.
 
 ## Coverage
 
@@ -26,6 +33,8 @@ TF-C1 round 1: 1 finding, worst C1.
 - C1 (auto-fix, confidence 8): `internal/gate/phases.go:151` has no test for the kit clause of `RootConformanceRuns`. A probe that drops the clause stays green.
 
 Advice: the empty-kit clause has no caller that passes an empty kit.
+
+TF-C1 round 2: 0 findings. The fold of C1 holds.
 
 ```bench-review-record
 {
@@ -318,6 +327,74 @@ Advice: the empty-kit clause has no caller that passes an empty kit.
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1-standards-r2",
+          "performer": "claude:ft349_c1_standards_r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ca91c85ea8501c3bc21f49e8bdbeb7e68c9bcc6b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c1_standards_r2",
+            "digest": "sha256:02e021096666f73b419975df12ba0347142008113c70daf2f2a75300d12126e5",
+            "excerpt": "Standards axis TF-C1 round 2 (sonnet/high), repair delta 2f4e9c6a..a044f115. Folds S1, S2, S3 held. 2 new low findings; worst S5.\nS5 root_conformance_test.go:47-54 runbinary.Factory literal repeats the body of installCannedSelection (outcome_test.go:79-88); only a selected=true flag differs. auto-fix. conf 5.\nS6 check_test.go:192 help expectation restates namedChecks(); no recorded red seen. no-op unless enforced. conf 4.\n"
+          },
+          "axis": "Standards",
+          "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
+          "tip": "a044f1155a78e044297f8993b201e0ca17f4e9ea",
+          "finding_ids": [
+            "S5"
+          ],
+          "supersedes": [
+            "c1-standards-r1"
+          ]
+        },
+        {
+          "id": "c1-spec-r2",
+          "performer": "claude:ft349_c1_spec_r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ca91c85ea8501c3bc21f49e8bdbeb7e68c9bcc6b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c1_spec_r2",
+            "digest": "sha256:b957f862f3606226d797caaf0cec3bcf5063166c1079596a6586a87b455f2c53",
+            "excerpt": "Spec axis TF-C1 round 2 (sonnet/high), repair delta 2f4e9c6a..a044f115. TF1-TF5 held; seam cells cite existing tests (root_conformance_test.go:71,90,109,131,138); bench coverage mapped, 71 rows; delta inside ticket 01 Writes. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
+          "tip": "a044f1155a78e044297f8993b201e0ca17f4e9ea",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec-r1"
+          ]
+        },
+        {
+          "id": "c1-coverage-r2",
+          "performer": "claude:ft349_c1_coverage_r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ca91c85ea8501c3bc21f49e8bdbeb7e68c9bcc6b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c1_coverage_r2",
+            "digest": "sha256:5d1aab89c011cc0f4fca1c16d7141631745bb78b9c54c43c5943a62026b840b6",
+            "excerpt": "Coverage axis TF-C1 round 2 (sonnet/high), repair delta 2f4e9c6a..a044f115. C1 held: kit-clause swap probe bit TestRootConformanceCheckRefusesAForeignRoot/foreign_kit at root_conformance_test.go:118, restored yes. S1 fold held: swaps in named_check.go (runGoTest dir) and environment.go (BENCH_KIT append) bit TestNamedCheckRunsFromKitAgainstLinkedConsumer at check_test.go:128 and :136, restored yes. 0 findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
+          "tip": "a044f1155a78e044297f8993b201e0ca17f4e9ea",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-coverage-r1"
+          ]
         }
       ]
     }
