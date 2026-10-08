@@ -21,9 +21,15 @@ const gateProseUsage = "usage: bench gate-prose <root> (--staged | [--] [path...
 	"example: bench gate-prose . -- <path>\n" +
 	"example: bench gate-prose . --staged"
 
-// gateProseFields is the pass table's schema, the shape `roadmap/FT270.md` decides for
-// this verb.
+// gateProseFields is the verdict table's schema.
 var gateProseFields = []string{"path", "verdict"}
+
+// The verdict cells of a clean list. A subject that the exclusion policy keeps out of the
+// grade reads as excluded, so no row claims a grade that did not run.
+const (
+	proseVerdictPass     = "pass"
+	proseVerdictExcluded = "excluded"
+)
 
 // GateProseCommand is the `bench gate-prose <root> (--staged | [--] [path...])` plumbing
 // command. It grades the named paths through the same per-subject grader the whole-tree
@@ -58,7 +64,8 @@ func GateProseCommand(args []string, stdout, stderr io.Writer) int {
 	if refusedOperands(root, paths, stdout) {
 		return 1
 	}
-	return renderProseVerdict(paths, prose.GradeNamedResults(root, paths), stdout)
+	findings, excluded := prose.GradeNamedResults(root, paths)
+	return renderProseVerdict(paths, excluded, findings, stdout)
 }
 
 // refusedOperands writes one refusal line for each named path the verb cannot find under
@@ -83,10 +90,12 @@ func refusedOperands(root string, paths []string, stdout io.Writer) bool {
 	return refused
 }
 
-// renderProseVerdict states the verdict both forms owe: the pass table over the graded
-// subjects on a clean list, and one diagnostic line per finding otherwise. The two forms
-// select their subjects differently and report them the same way.
-func renderProseVerdict(subjects []string, findings []prose.NamedResult, stdout io.Writer) int {
+// renderProseVerdict states the verdict both forms owe: the verdict table over the
+// subjects on a clean list, and one diagnostic line per finding otherwise. The excluded
+// set is the grader's own decision, so the table marks a subject excluded only where the
+// grade skipped it. The two forms select their subjects differently and report them the
+// same way.
+func renderProseVerdict(subjects []string, excluded map[string]bool, findings []prose.NamedResult, stdout io.Writer) int {
 	if len(findings) > 0 {
 		for _, f := range findings {
 			fmt.Fprintln(stdout, prose.RenderNamedResult(f))
@@ -95,7 +104,11 @@ func renderProseVerdict(subjects []string, findings []prose.NamedResult, stdout 
 	}
 	rows := make([][]string, 0, len(subjects))
 	for _, path := range subjects {
-		rows = append(rows, []string{path, "pass"})
+		verdict := proseVerdictPass
+		if excluded[path] {
+			verdict = proseVerdictExcluded
+		}
+		rows = append(rows, []string{path, verdict})
 	}
 	out, err := toon.Table("prose", gateProseFields, rows)
 	if err != nil {
@@ -150,11 +163,15 @@ func gateProseStaged(root string, stdout io.Writer) int {
 	}
 	var subjects []string
 	var findings []prose.NamedResult
+	excluded := map[string]bool{}
 	for _, entry := range index.Staged {
 		if !entry.IsRegularFile() || !prose.IsSubjectName(entry.Path) {
 			continue
 		}
 		subjects = append(subjects, entry.Path)
+		if grader.Excludes(entry.Path) {
+			excluded[entry.Path] = true
+		}
 		body, reason := readIndexBlob(root, entry.Path)
 		if reason != "" {
 			fmt.Fprintln(stdout, prose.UnreadableSubjectDiagnostic(entry.Path, reason))
@@ -162,7 +179,7 @@ func gateProseStaged(root string, stdout io.Writer) int {
 		}
 		findings = append(findings, grader.GradeBytes(entry.Path, body)...)
 	}
-	return renderProseVerdict(subjects, findings, stdout)
+	return renderProseVerdict(subjects, excluded, findings, stdout)
 }
 
 // readIndexBlob reads one index blob under the control-record bound and grades the bytes
