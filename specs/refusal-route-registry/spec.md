@@ -1116,7 +1116,16 @@ The orchestrator records each author session before that author's dispatch.
           "preserved": "56fa6378ac8d453a3a396b09a092c0b381783967"
         }
       ],
-      "13-refuse-a-route-literal-outside-the-registry.md": []
+      "13-refuse-a-route-literal-outside-the-registry.md": [
+        {
+          "session": "claude:ft393_t13",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "b5f2e97b5a30599ae9ca3a582cf38fceb2bfebea",
+          "native_ref": "claude-agent:ft393_t13"
+        }
+      ]
     }
   }
 }
