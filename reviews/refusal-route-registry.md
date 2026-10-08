@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/refusal-route-registry/spec.md",
-  "plan_digest": "sha256:08df0de0aee236977981d3819a115931a30410252cd757eb5ca4fb66f8084bbd",
+  "plan_digest": "sha256:bee194adbc97520ccd09924d29197b29fc22bb26a2d105bd47b5d365c193f762",
   "implementation_session": "",
   "chunks": [
     {
@@ -3707,9 +3707,9 @@
     {
       "id": "RR-C6",
       "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
-      "tip": "f5fb5f43d240e851dd64f39eaa33076f82858620",
-      "plan_digest": "sha256:08df0de0aee236977981d3819a115931a30410252cd757eb5ca4fb66f8084bbd",
-      "source_digest": "c910aa69ab09e4a560092aa2bad0db3bd96b25a1",
+      "tip": "3c36698dc8a8133c5084e481d027185284c6ab2e",
+      "plan_digest": "sha256:bee194adbc97520ccd09924d29197b29fc22bb26a2d105bd47b5d365c193f762",
+      "source_digest": "d82306e1db1ff66fa4a9ed2527b4da86b14bf906",
       "acceptance_rows": [
         "RR49",
         "RR50",
@@ -3908,6 +3908,71 @@
               "ref": "claude-agent:ft393_t13_repair1",
               "digest": "sha256:0c3aebbd82d491e85251fddb3b34bb27fc0d37558fbebd611f12b0fd3f11eca0",
               "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,f5fb5f43d240e851dd64f39eaa33076f82858620,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/conformance/refusal_route_bypass_test.go --omit '\"internal/commitment/repository\",' --package ./internal/conformance --run 'TestRouteBypassCheckBites'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/refusal_route_bypass_test.go,omit,failed,1,yes\n"
+            }
+          }
+        },
+        {
+          "id": "v-t13-bypass-check-r3",
+          "performer": "claude:ft393_t13_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d82306e1db1ff66fa4a9ed2527b4da86b14bf906",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t13_repair1",
+            "digest": "sha256:8057bbb08d6bec5f7aee36984ccdf2305a9e35f084e8f2d660599adf4a998eab",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,3c36698dc8a8133c5084e481d027185284c6ab2e,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,31,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t13-bypass-check",
+          "command": "bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t13-conformance-package-r3",
+          "performer": "claude:ft393_t13_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d82306e1db1ff66fa4a9ed2527b4da86b14bf906",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t13_repair1",
+            "digest": "sha256:3c72b5936000841c956964928cf0f0587cf4dd6624c2bea1ee6882ceac91049b",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  ft393-build,3c36698dc8a8133c5084e481d027185284c6ab2e,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,54356,1668\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n"
+          },
+          "requirement": "t13-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t13-scan-proof-r3",
+          "performer": "claude:ft393_t13_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d82306e1db1ff66fa4a9ed2527b4da86b14bf906",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t13_repair1",
+            "digest": "sha256:024af4e1929f1247b62b632562e85221c6d6860aed1d51def6af47c4b3de0ff3",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,3c36698dc8a8133c5084e481d027185284c6ab2e,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/conformance/refusal_route_bypass_test.go --omit '\"internal/commitment/repository\",' --package ./internal/conformance --run 'TestRouteBypassCheckBites'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/refusal_route_bypass_test.go,omit,failed,1,yes\n"
+          },
+          "requirement": "t13-scan-proof",
+          "command": "bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove `internal/commitment/repository` from the scanned packages of the bypass check. TestRouteBypassCheckBites must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t13_repair1",
+              "digest": "sha256:024af4e1929f1247b62b632562e85221c6d6860aed1d51def6af47c4b3de0ff3",
+              "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,3c36698dc8a8133c5084e481d027185284c6ab2e,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/conformance/refusal_route_bypass_test.go --omit '\"internal/commitment/repository\",' --package ./internal/conformance --run 'TestRouteBypassCheckBites'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/refusal_route_bypass_test.go,omit,failed,1,yes\n"
             }
           }
         }
@@ -4317,6 +4382,33 @@
     {
       "from": "sha256:78030d6d901fe1c9f90bbdb27262b31ba4c4b90a14013dff9c6118f074080af0",
       "to": "sha256:08df0de0aee236977981d3819a115931a30410252cd757eb5ca4fb66f8084bbd",
+      "chunk_ids": {
+        "RR-C1a": [
+          "RR-C1a"
+        ],
+        "RR-C1b": [
+          "RR-C1b"
+        ],
+        "RR-C2": [
+          "RR-C2"
+        ],
+        "RR-C3": [
+          "RR-C3"
+        ],
+        "RR-C4": [
+          "RR-C4"
+        ],
+        "RR-C5": [
+          "RR-C5"
+        ],
+        "RR-C6": [
+          "RR-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:08df0de0aee236977981d3819a115931a30410252cd757eb5ca4fb66f8084bbd",
+      "to": "sha256:bee194adbc97520ccd09924d29197b29fc22bb26a2d105bd47b5d365c193f762",
       "chunk_ids": {
         "RR-C1a": [
           "RR-C1a"
