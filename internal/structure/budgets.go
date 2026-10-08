@@ -30,10 +30,7 @@ func loadBudgets(path string) (map[string]int, []string) {
 		return budgets, warnings
 	}
 	for _, line := range strings.Split(string(content), "\n") {
-		stripped := line
-		if before, _, ok := strings.Cut(line, "#"); ok {
-			stripped = before
-		}
+		stripped, _, _ := strings.Cut(line, "#")
 		fields := strings.Fields(stripped)
 		if len(fields) == 0 {
 			continue
@@ -74,10 +71,7 @@ func loadAccepts(path string) (map[string]string, []string, error) {
 		return nil, nil, err
 	}
 	for _, line := range strings.Split(string(content), "\n") {
-		stripped := line
-		if before, _, ok := strings.Cut(line, "#"); ok {
-			stripped = before
-		}
+		stripped, _, _ := strings.Cut(line, "#")
 		trimmed := strings.TrimLeft(stripped, " \t")
 		if trimmed == "" {
 			continue

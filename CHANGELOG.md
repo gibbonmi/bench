@@ -12,8 +12,13 @@ All notable user-facing changes to Bench are documented here. The format follows
   - a loop that `slices.Contains` or `slices.ContainsFunc` can replace
   - a loop that copies map entries, which a `maps` function can replace
   - a user-defined `min` or `max` function, and an `if` or `else` statement that the built-in `min` or `max` can replace
-  - a `strings.Index` call that `strings.Cut` can replace, also when the code uses only the index
-  - a `HasPrefix` or `HasSuffix` test with its trim, which `strings.CutPrefix` or `strings.CutSuffix` can replace
+  - an `Index` or `IndexByte` call whose result slices the input, which `Cut` can replace
+  - an `Index` or `IndexByte` call whose result only tests for presence, which `Contains` can replace
+  - a `strings.Split` call or a `strings.SplitN` call with a count of 2, followed by index 0, which `strings.Cut` can replace
+  - a `HasPrefix` or `HasSuffix` test with its trim, which `CutPrefix` or `CutSuffix` can replace
+  - a `TrimPrefix` or `TrimSuffix` result that the code compares with its input, which `CutPrefix` or `CutSuffix` can replace
+
+  Each form applies to the `strings` package and to the `bytes` package, except the `Split` form, which applies only to `strings`.
 
   The check grades the root package and the packages below `cmd` and `internal`. It ignores test files. It does not grade a file that a build constraint excludes on the host. The production sites that the check found now call the standard functions.
 
