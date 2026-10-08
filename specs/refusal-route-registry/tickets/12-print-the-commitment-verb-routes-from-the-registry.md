@@ -1,7 +1,7 @@
 # Print the commitment verb routes from the registry
 
 Blocked by: 11-route-the-commitment-policy-refusals-through-faces.md
-Writes: internal/refusalroute/registry.go (new), internal/commitment/commitcmd/command.go, internal/commitment/commitcmd/admission.go, internal/commitment/commitcmd/refusal_route_test.go (new), internal/commitment/verification_test.go, cmd/bench/commitment_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/refusalroute/faces_commitment.go (new)
+Writes: internal/refusalroute/registry.go (new), internal/commitment/commitcmd/command.go, internal/commitment/commitcmd/admission.go, internal/commitment/commitcmd/refusal_route_test.go (new), internal/commitment/verification_test.go, cmd/bench/commitment_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/refusalroute/faces_commitment.go (new), internal/commitment/repository/admission.go, internal/refusalroute/routetest/routetest.go, internal/refusalroute/routetest/routetest_test.go, internal/commit/refusal_route_test.go, internal/commit/commitment_route_test.go
 Covers: RR45, RR46, RR47, RR48
 
 ## What to build
@@ -28,4 +28,4 @@ The walk test uses the shared route walk in `internal/refusalroute/routetest` an
 - [ ] A `bench commitment start` refusal for an outcome outside the active milestone prints a `next` cell that starts with `reviewer: `.
 - [ ] A `bench commitment start` refusal without an owned assignment prints a `next` cell that contains `bench worktree create --request`.
 - [ ] A `bench commitment verify` refusal keeps its `bench commitment verify --milestone` cell.
-- [ ] Each commitment face has exactly one producing fixture that follows its route out of the face.
+- [ ] Each commitment face has exactly one producing fixture for each declared cause. Each fixture follows its route out of the face. One shared routetest list names the candidate faces, which the commit walk proves.

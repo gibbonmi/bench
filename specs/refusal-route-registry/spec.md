@@ -249,7 +249,7 @@ No reader parses the tail text: `commitcmd.Outlook` replaces any projection erro
 
 These sites move to faces:
 
-- `commitment-needs-assignment`: the owned-assignment errors in `candidate.go`, `readiness.go`, and `publication.go`
+- `commitment-needs-assignment`: the owned-assignment errors in `candidate.go`, `readiness.go`, `publication.go`, and the start ownership refusal in `admission.go`
 - `commitment-decision`: the adoption, protected-commitment, policy-approval, sequence, continuation, legacy-scope, and obligation errors in `admission.go`, `candidate.go`, `continuation.go`, `publication.go`, and `delivery.go`
 - `commitment-unbound`: `errUnbound` in `readiness.go`
 - `commitment-light-path-outside`: the light-path fence error in `light_path.go`
@@ -1142,7 +1142,7 @@ Each new expectation derives from the fixture inputs and the registry's declared
 | RR63 | 37 | A light-path commit with a path outside its ticket's `Writes:` line prints an agent route that names the ticket and not `bench commitment start` | planned TestCommitFacesFollowTheirRoutes in internal/commit/refusal_route_test.go | The tail offers a commitment start for a fix that is one `Writes:` edit |
 | RR64 | 26 | The `assignment has no current delivery binding` refusal sentence does not contain `run bench` | `internal/commitment/repository/publication_test.go` (`TestAdmitPublicationClosureAuthority`) | A sentence that keeps its tail prints a second route beside the face's route |
 | RR65 | 39 | The bypass check reds a planted `; run bench` tail in an `internal/commitment/repository` production file | planned TestRouteBypassCheckBites in internal/conformance/refusal_route_bypass_test.go | A scan that skips the commitment packages lets a tail return |
-| RR48 | 13, 14 | Each commitment face has exactly one producing fixture that follows its route out of the face | planned TestCommitmentFacesFollowTheirRoutes in internal/commitment/commitcmd/refusal_route_test.go | A commitment face with no fixture reaches an operator unproven |
+| RR48 | 13, 14 | Each commitment face has exactly one producing fixture for each declared cause, and each fixture follows its route out of the face | planned TestCommitmentFacesFollowTheirRoutes in internal/commitment/commitcmd/refusal_route_test.go, with the candidate faces in TestCommitFacesFollowTheirRoutes through one shared routetest list | A commitment face with no fixture reaches an operator unproven |
 | RR49 | 38 | The bypass check passes on the tree after every chunk lands | planned TestNoWriteVerbComposesARouteOutsideTheRegistry in internal/conformance/refusal_route_bypass_test.go | A hand-composed route left in a verb shows as a red |
 | RR50 | 39 | The bypass check reds a planted `next=` literal, and a planted `next[1]:` literal, in a write-verb production file | planned TestRouteBypassCheckBites in internal/conformance/refusal_route_bypass_test.go | A check that scans no file passes every tree |
 | RR51 | 40 | `bench recovery` prints `recovery[N]{verb,face,authority,route}` and exits 0 | planned TestRecoveryListsEveryFace in internal/refusalroute/command_test.go | A missing header breaks the TOON contract |
