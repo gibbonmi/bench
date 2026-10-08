@@ -11,11 +11,11 @@ import (
 
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 )
 
-// reviewerRoute is the marker a reviewer route opens with. The spec pins it, so the proofs
-// spell it rather than read it from the renderer they grade.
-const reviewerRoute = "reviewer: "
+// reviewerRoute is the marker a reviewer route opens with, as the shared route walk spells it.
+const reviewerRoute = routetest.ReviewerMarker
 
 // landingRoute renders a land face's route over the caller's re-run and the facts a
 // fixture observed, so a proof that pins a whole route reads the shared registry.

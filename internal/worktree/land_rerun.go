@@ -2,11 +2,7 @@
 // each flag a refusal route swaps.
 package worktree
 
-import (
-	"strings"
-
-	"github.com/gibbonmi/bench/internal/refusalroute"
-)
+import "github.com/gibbonmi/bench/internal/refusalroute"
 
 // repairedSourceTipFlag is the re-run's --source-tip argument after a repair that commits
 // in the source. The commit moves the tip the caller named, so the operator fills the tip
@@ -23,11 +19,11 @@ func landingRerun(request, base, tip, specArg, path, assignment string) string {
 // landingRerunAt is landingRerun with its --source-tip argument already rendered, so a
 // route whose repair moves the tip can name the repaired one.
 func landingRerunAt(request, base, tipFlag, specArg, path, assignment string) string {
-	command := "bench worktree land --request " + landingRerunArg(request, "<request>") +
+	command := "bench worktree land --request " + refusalroute.Arg("request", request) +
 		landingBaseFlag(base) +
 		tipFlag
 	if specArg != "" {
-		command += " --spec " + landingRerunArg(specArg, "<spec>")
+		command += " --spec " + refusalroute.Arg("spec", specArg)
 	}
 	return atSourceWorktree(command+" -m <message>", path, assignment)
 }
@@ -35,18 +31,11 @@ func landingRerunAt(request, base, tipFlag, specArg, path, assignment string) st
 // landingSourceTipFlag is the one rendering of the re-run's --source-tip argument. The
 // mismatch face swaps this exact text, so the composition and the swap read the same fact.
 func landingSourceTipFlag(tip string) string {
-	return " --source-tip " + landingRerunArg(tip, "<full-source-tip>")
+	return " --source-tip " + refusalroute.Arg("full-source-tip", tip)
 }
 
 // landingBaseFlag is the one rendering of the re-run's --base argument, so a proof can
 // find the caller's base in a route.
 func landingBaseFlag(base string) string {
-	return " --base " + landingRerunArg(base, "<full-review-base>")
-}
-
-// landingRerunArg renders one flag value the re-run repeats by the registry's one
-// quote-or-placeholder rule. placeholder is the slot as the route prints it, in angle
-// brackets, and it stands in for a value the operator could not paste back.
-func landingRerunArg(value, placeholder string) string {
-	return refusalroute.Arg(strings.TrimSuffix(strings.TrimPrefix(placeholder, "<"), ">"), value)
+	return " --base " + refusalroute.Arg("full-review-base", base)
 }

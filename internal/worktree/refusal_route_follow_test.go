@@ -64,13 +64,6 @@ func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 	}
 }
 
-// The merge walk reads the shared route walk under these names.
-var (
-	printedSteps      = routetest.Steps
-	followRoute       = routetest.Follow[verbResult]
-	producingFixtures = routetest.Fixtures
-)
-
 // operatorFill fills the slots a printed route leaves to the operator, with the values the
 // operator holds: the paths it changed in the source, its own request and message, and the
 // source tip after its repair. A slot the walk has no value for stays, and the step then

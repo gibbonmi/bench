@@ -28,7 +28,7 @@ const (
 // mergeRerun is the caller's own merge command, with the values it passed. A value that is
 // not line-safe prints its placeholder.
 func mergeRerun(spelling, operand string) string {
-	return "bench worktree merge --from " + landingRerunArg(spelling, "<from>") + " " + landingRerunArg(operand, "<target>")
+	return "bench worktree merge --from " + refusalroute.Arg("from", spelling) + " " + refusalroute.Arg("target", operand)
 }
 
 // mergeFaceRoute attaches the caller's own re-run to a merge refusal. A refusal that names

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
@@ -93,7 +94,7 @@ func TestMergeFacesFollowTheirRoutes(t *testing.T) {
 	for _, fixture := range resetRefusalFixtures() {
 		resetKeys = append(resetKeys, [2]string{fixture.face, fixture.cause})
 	}
-	faces, resetFaces := producingFixtures(t, refusalroute.Merge, keys), producingFixtures(t, refusalroute.Reset, resetKeys)
+	faces, resetFaces := routetest.Fixtures(t, refusalroute.Merge, keys), routetest.Fixtures(t, refusalroute.Reset, resetKeys)
 	wrapper := installedWrapper(t, testRunBinary(t))
 	for _, fixture := range resetRefusalFixtures() {
 		t.Run(strings.TrimSuffix("reset/"+fixture.face+"/"+fixture.cause, "/"), func(t *testing.T) {
@@ -117,7 +118,7 @@ func TestMergeFacesFollowTheirRoutes(t *testing.T) {
 					}
 				}
 			}
-			steps := printedSteps(t, face, p.next, "", names)
+			steps := routetest.Steps(t, face, p.next, "", names)
 			if fixture.clear != nil {
 				fixture.clear(t, p.f)
 			}
@@ -125,7 +126,7 @@ func TestMergeFacesFollowTheirRoutes(t *testing.T) {
 				step, carried := fixture.carry[index]
 				return func() { step(t, p.f) }, carried
 			}
-			last := followRoute(t, face, steps, carry, func(step string) verbResult {
+			last := routetest.Follow(t, face, steps, carry, func(step string) verbResult {
 				return runPrintedStep(t, wrapper, p.f.repoHome, mergeOperatorFill(t, p.f, step))
 			})
 			if fixture.after != nil {

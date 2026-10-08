@@ -112,11 +112,11 @@ func resetPlanCommand(plan resetPlan) string {
 // line-safe prints its placeholder. An apply re-runs as its plan, because the plan prints the
 // apply that the checkout takes once the cause is clear.
 func resetRerun(flags map[string]string, target string) string {
-	flag, placeholder := "--to", "<commit>"
+	flag, slot := "--to", "commit"
 	if flags["--restore"] != "" {
-		flag, placeholder = "--restore", "<ref>"
+		flag, slot = "--restore", "ref"
 	}
-	return resetCommand(flag, landingRerunArg(flags[flag], placeholder), landingRerunArg(target, "<target>"))
+	return resetCommand(flag, refusalroute.Arg(slot, flags[flag]), refusalroute.Arg("target", target))
 }
 
 // resetFaceRoute attaches the caller's own re-run to a reset refusal. A refusal that names a
