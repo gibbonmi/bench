@@ -211,3 +211,33 @@ func TestCompatibilityMissingConfigurationHome(t *testing.T) {
 func compatibilityDoctor(args []string, stdout, stderr io.Writer, collect compatibilityCollector) int {
 	return runCompatibilityDoctor(args, stdout, stderr, collect, "1.0.0")
 }
+
+// TestUpgradeHelpPrintsTheGrammar: the shared parser decides the help spellings,
+// so help also wins beside a known flag. The fixture root is not a repository,
+// and a help request must answer before Upgrade looks for one.
+func TestUpgradeHelpPrintsTheGrammar(t *testing.T) {
+	want := doctorResult{Code: 0, Stdout: upgradeGrammar.Help + "\n"}
+	for _, args := range [][]string{{"--help"}, {"-h"}, {"help"}, {"--check", "--help"}} {
+		if got := runLegacyFixture(t, args, Upgrade); got != want {
+			t.Errorf("Upgrade(%q) = %#v, want %#v", args, got, want)
+		}
+	}
+}
+
+// TestUpgradeUnknownArgumentIsStillRefused: a refusal keeps the usage line on
+// stderr instead of the shared parser's unknown-argument line.
+func TestUpgradeUnknownArgumentIsStillRefused(t *testing.T) {
+	want := doctorResult{Code: 2, Stderr: upgradeGrammar.Help + "\n"}
+	if got := runLegacyFixture(t, []string{"--bogus"}, Upgrade); got != want {
+		t.Fatalf("Upgrade(--bogus) = %#v, want %#v", got, want)
+	}
+}
+
+// TestUpgradeRepeatedFlagIsUsageError: the shared parser refuses a repeated
+// flag, so a run with --check given twice stops before it looks for a repository.
+func TestUpgradeRepeatedFlagIsUsageError(t *testing.T) {
+	want := doctorResult{Code: 2, Stderr: upgradeGrammar.Help + "\n"}
+	if got := runLegacyFixture(t, []string{"--check", "--check"}, Upgrade); got != want {
+		t.Fatalf("Upgrade(--check --check) = %#v, want %#v", got, want)
+	}
+}
