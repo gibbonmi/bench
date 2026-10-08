@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // upgrade.go is the consumer's supported route onto a newer kit, replacing the
@@ -20,23 +21,30 @@ import (
 // that bench link uses. This keeps an interrupt from ever stranding a new tree under an
 // old version claim.
 
+var upgradeGrammar = usage.Grammar{
+	Cmd:   "bench upgrade",
+	Help:  "usage: bench upgrade [--check] [--force]",
+	Flags: []usage.Flag{{Name: "--check"}, {Name: "--force"}},
+}
+
 // Upgrade compares the linked repo's pinned kit version against the installed one, prints
 // the plan, and applies the relink. --check reports the plan and applies nothing. An
 // equal version is a definitive no-op success. A lower installed version is a downgrade
 // and fails closed until --force performs it.
 func Upgrade(args []string, stdout, stderr io.Writer, version string) int {
-	check, force := false, false
-	for _, arg := range args {
-		switch arg {
-		case "--check":
-			check = true
-		case "--force":
-			force = true
-		default:
-			fmt.Fprintln(stderr, "usage: bench upgrade [--check] [--force]")
-			return 2
-		}
+	parsed, line, code := usage.Parse(upgradeGrammar, args)
+	if code == 0 && line != "" {
+		fmt.Fprintln(stdout, line)
+		return 0
 	}
+	// The upgrade refusal is the usage line on stderr, not the parser's
+	// unknown-argument line.
+	if code != 0 {
+		fmt.Fprintln(stderr, upgradeGrammar.Help)
+		return code
+	}
+	_, check := parsed.Flags["--check"]
+	_, force := parsed.Flags["--force"]
 	root, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())

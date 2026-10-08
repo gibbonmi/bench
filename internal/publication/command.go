@@ -9,9 +9,15 @@ import (
 
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 const usageLine = "usage: bench release prepare|submit|promote|rollback|status --version <version> [--profile public|bank] [--root <dir>] [--registry <base-url>] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message <text>]"
+
+// helpGrammar accepts no argument, so the shared parser answers code 0 with a
+// line only for a help spelling. Command asks it about the subcommand position
+// alone: the release flags keep their own parser.
+var helpGrammar = usage.Grammar{Cmd: "bench release", Help: usageLine}
 
 // The two registry adapters --adapter selects between. The default is the
 // hermetic fixture: reaching the real registry is always an explicit opt-in.
@@ -36,6 +42,12 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		fmt.Fprintln(stdout, toon.Usage("bench release", "<missing subcommand>"))
 		return 2
+	}
+	if len(args) == 1 {
+		if _, line, code := usage.Parse(helpGrammar, args); code == 0 && line != "" {
+			fmt.Fprintln(stdout, line)
+			return 0
+		}
 	}
 	sub := args[0]
 	parsed, usageErr := parseCommandArgs(args[1:])
