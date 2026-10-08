@@ -139,7 +139,7 @@ The repository root is a package, because the module root holds `consumer_payloa
 
 An absent `(new)` embed file adds nothing. The package index lists only embed files that exist, and the selection skips an absent non-Go path (`internal/testreport/selection.go:201-205`). The after-ticket preflight adds the owner once the file exists.
 
-The floor splits each entry with `tickets.WritesPath` and matches directories with `tickets.Covers` (`internal/tickets/writes.go:13-25`). `go list -deps` shows that `internal/testreport` already depends on `internal/tickets`, and `internal/tickets` imports no Bench package. So the edge adds no cycle.
+The floor splits each entry with `tickets.WritesPath` and matches directories with `tickets.Covers` (`internal/tickets/writes.go:13-25`). `go list -deps` shows that `internal/testreport` already depends on `internal/tickets`. The dependency closure of `internal/tickets` holds seven Bench packages, and none of them reaches `internal/testreport`. So the edge adds no cycle.
 
 The reverse-import closure of `--changed` is not part of the floor. The floor names the packages that the ticket writes, as the guidance does.
 
@@ -339,27 +339,68 @@ The edge walk covers both audiences: this repository and every repository that l
 
 ## Ownership fences
 
-This fence is provisional. The ticket slicer replaces it with the exact union of the ticket `Writes:` lines, because `fence-writes` compares the two sets.
+This fence is the exact union of the ticket Writes lines, plus the review pickup.
 
-- `internal/testreport/`
-- `internal/gate/phases.go`
-- `internal/tickets/registry_data.go`
-- `internal/tickets/registry_data_test.go`
-- `internal/preflight/`
-- `internal/coverage/planned_rows.go`
-- `internal/coverage/planned_rows_test.go`
-- `internal/reviewrecord/recordcmd/`
-- `internal/reviewrecord/plan.go`
+- `.agents/commands/bench-implement-spec.md`
+- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
+- `.agents/skills/bench-craft-spec/references/map-discipline.md`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
+- `internal/anchors/registry_calibration.go`
+- `internal/anchors/registry_calibration_test.go`
+- `internal/anchors/registry_charge_binding.go`
+- `internal/anchors/registry_charge_binding_test.go`
+- `internal/anchors/registry_check_floor.go`
+- `internal/anchors/registry_check_floor_test.go`
+- `internal/anchors/registry_chunk_chain.go`
+- `internal/anchors/registry_chunk_chain_test.go`
+- `internal/anchors/registry_commitment.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry_ft311_preparation.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/anchors/registry_spec_trace_test.go`
+- `internal/anchors/registry_ticket_passes.go`
+- `internal/anchors/registry_ticket_passes_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
-- `internal/anchors/`
+- `internal/coverage/planned_rows.go`
+- `internal/coverage/planned_rows_test.go`
+- `internal/gate/phases.go`
+- `internal/preflight/check_floor.go`
+- `internal/preflight/check_floor_command_test.go`
+- `internal/preflight/check_floor_test.go`
+- `internal/preflight/command_bootstrap_test.go`
+- `internal/preflight/command_build_test.go`
+- `internal/preflight/command_review_test.go`
+- `internal/preflight/decision.go`
+- `internal/preflight/decision_test.go`
+- `internal/preflight/gather.go`
+- `internal/preflight/plan.go`
+- `internal/preflight/preflighttest/fixture.go`
+- `internal/preflight/ticket_rows.go`
+- `internal/reviewrecord/plan.go`
+- `internal/reviewrecord/recordcmd/chunk.go`
+- `internal/reviewrecord/recordcmd/command.go`
+- `internal/reviewrecord/recordcmd/completion.go`
+- `internal/reviewrecord/recordcmd/planned_cell.go`
+- `internal/reviewrecord/recordcmd/planned_cell_test.go`
+- `internal/testreport/check_test.go`
+- `internal/testreport/checks_face_test.go`
+- `internal/testreport/environment.go`
+- `internal/testreport/floor.go`
+- `internal/testreport/floor_test.go`
+- `internal/testreport/named_check.go`
+- `internal/testreport/root_conformance_test.go`
+- `internal/testreport/selection.go`
+- `internal/testreport/selection_facts.go`
+- `internal/testreport/selection_facts_test.go`
+- `internal/tickets/registry_data.go`
+- `internal/tickets/registry_data_test.go`
 - `tests/canary/workflow-guidance-anchors/`
-- `.agents/commands/bench-implement-spec.md`
-- `.agents/skills/bench-craft-spec/references/map-discipline.md`
-- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
 - `reviews/ticket-checkpoint-floor.md`
 
 Reviewer disposition: pending.
