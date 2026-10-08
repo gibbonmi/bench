@@ -20,6 +20,7 @@ import (
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -198,7 +199,7 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 	if err != nil {
 		var remainder *landing.PublishedUnreconciledError
 		if errors.As(err, &remainder) {
-			return publicationRemainder(stdout, remainder)
+			return publicationRemainder(stdout, root, remainder)
 		}
 		fmt.Fprintf(stderr, "error: %v\n", err)
 		return 1
@@ -207,34 +208,24 @@ func commitAttributed(measures *commitMeasures, root, msg string, paths []string
 	return 0
 }
 
-// publicationRemainder reports the publication boundary the landing owner reached: the
-// commit exists and the checkout does not match it. The record uses the landing verb's
-// name{key=value,...} grammar, and its exit code separates this outcome from a refusal
-// that published nothing.
-func publicationRemainder(stdout io.Writer, remainder *landing.PublishedUnreconciledError) int {
-	fmt.Fprintf(stdout, "committed{published_commit=%s,path=%s,next=%s}\n",
-		remainder.Commit, sanitize.Controls(remainder.Path), restoreNext(remainder.Commit, remainder.Paths))
-	return 3
-}
+// facePublishedUnreconciled is the face of a commit that published and left its checkout
+// behind. The shared registry declares it, and the exit 3 record names it.
+const facePublishedUnreconciled = "commit-published-unreconciled"
 
-// restoreNext names the one restore that reconciles every named path against the
-// published commit. The restore is idempotent, so it covers the paths that already
-// reconciled as well as the remainder. A path that is not line-safe takes the landing
-// verb's pointer form: quoting would still emit the raw byte into a line-structured
-// record, and escaping would name a path that does not exist.
+// publicationRemainder reports the publication boundary the landing owner reached: the
+// commit exists and the checkout at root does not match it. The record uses the landing
+// verb's name{key=value,...} grammar, and its exit code separates this outcome from a
+// refusal that published nothing.
 //
-// The value is line-safe by construction, so it reaches the record unescaped; the
+// The route is line-safe by construction, so it reaches the record unescaped; the
 // sanitizer's backslash escaping would break the quoting a reader pastes.
-func restoreNext(commit string, paths []string) string {
-	command := "git restore --source=" + commit + " --staged --worktree --"
-	quoted := make([]string, 0, len(paths))
-	for _, path := range paths {
-		if !sanitize.LineSafe(path) {
-			return command + " <named-paths>"
-		}
-		quoted = append(quoted, sanitize.ShellQuote(path))
-	}
-	return command + " " + strings.Join(quoted, " ")
+func publicationRemainder(stdout io.Writer, root string, remainder *landing.PublishedUnreconciledError) int {
+	next := refusalroute.New(facePublishedUnreconciled, refusalroute.Facts{Values: map[string]string{
+		refusalroute.FactPublishedCommit: remainder.Commit, refusalroute.FactCheckout: root,
+	}}).Route
+	fmt.Fprintf(stdout, "committed{published_commit=%s,path=%s,%s=%s}\n",
+		remainder.Commit, sanitize.Controls(remainder.Path), refusalroute.NextField, next)
+	return 3
 }
 
 // LaneClause names what a commit grades: the declared lane, or the gate when the

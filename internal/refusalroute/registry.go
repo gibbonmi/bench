@@ -92,9 +92,12 @@ const (
 	// FactCheckoutCommand is a command the raising site composed that takes a checkout
 	// path as its last word.
 	FactCheckoutCommand = "command"
-	// factCheckout is the checkout path. Only a path that is not line-safe takes the
-	// lookup route, so its slot prints the placeholder.
-	factCheckout = "checkout"
+	// FactCheckout is the checkout path. A path that is not line-safe prints the
+	// placeholder, and a route that can look the path up names the lookup first.
+	FactCheckout = "checkout"
+	// FactPublishedCommit is the commit a verb published before its checkout failed to
+	// follow it.
+	FactPublishedCommit = "published-commit"
 )
 
 // rerun ends a route with the caller's own command, so one paste finishes the recovery.
@@ -128,12 +131,12 @@ var handMerge = []Step{
 var pathLookup = Command(Text("bench worktree path"), Fact(FactAssignmentID))
 
 // atCheckout is a composed command addressed at a checkout through the checkout slot.
-var atCheckout = Command(Composed(FactCheckoutCommand), Fact(factCheckout))
+var atCheckout = Command(Composed(FactCheckoutCommand), Fact(FactCheckout))
 
 // inventory is the authoritative, ordered inventory of the write verbs' refusal faces. Each
 // verb declares its faces in its own file of this package, and a verb adds its face there
 // rather than composing a route at the site that refuses. The verbs join in this order.
-var inventory = slices.Concat(landFaces, mergeFaces, resetFaces)
+var inventory = slices.Concat(landFaces, mergeFaces, resetFaces, commitFaces)
 
 // New is the one constructor a registered face travels through.
 func New(name string, facts Facts) Refusal { return newIn(inventory, name, facts) }

@@ -222,25 +222,31 @@ func recordFields(t *testing.T, stdout string) (name string, fields map[string]s
 	return name, fields, order
 }
 
-// FB1, FB2, FB9: the production reconcile, with no injected function, fails on a named
-// path after the ref update succeeded. The command exits 3, reports the published commit
-// that is now HEAD, and names the path whose reconcile failed.
-func TestPublishedButUnreconciledCommitExitsThreeAndNamesTheFailedPath(t *testing.T) {
-	root, before := landingRepo(t, 0, unreconcilableGate("named"))
+// publishedUnreconciled drives the production reconcile, with no injected function, to fail
+// on the one named directory dir after the ref update succeeded. It fails t unless the
+// command exits 3 past a publication with its record on stdout alone, and it returns the
+// commit's root, the record, and the published commit.
+func publishedUnreconciled(t *testing.T, dir string) (root, stdout, published string) {
+	t.Helper()
+	root, before := landingRepo(t, 0, unreconcilableGate(dir))
 	runGit(t, root, "reset", "-q", "--hard", "HEAD")
-	namedDir(t, root, "named")
+	namedDir(t, root, dir)
 
-	code, stdout, stderr := runCommand(t, root, "-m", "m", "named")
-	if code != 3 {
-		t.Fatalf("exit = %d, want 3; stdout=%q stderr=%q", code, stdout, stderr)
+	code, stdout, stderr := runCommand(t, root, "-m", "m", dir)
+	published = strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
+	if code != 3 || published == before || stderr != "" {
+		t.Fatalf("exit = %d with HEAD %s from %s, want exit 3 past a publication and an empty stderr; stdout=%q stderr=%q", code, published, before, stdout, stderr)
 	}
+	return root, stdout, published
+}
+
+// FB1, FB2, FB9: the commit exits 3, reports the published commit that is now HEAD, and
+// names the path whose reconcile failed.
+func TestPublishedButUnreconciledCommitExitsThreeAndNamesTheFailedPath(t *testing.T) {
+	_, stdout, head := publishedUnreconciled(t, "named")
 	name, fields, order := recordFields(t, stdout)
 	if name != "committed" || !reflect.DeepEqual(order, []string{"published_commit", "path", "next"}) {
 		t.Fatalf("record = %q, want committed{published_commit=…,path=…,next=…}", stdout)
-	}
-	head := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
-	if head == before {
-		t.Fatal("HEAD did not move: the commit was not published")
 	}
 	if fields["published_commit"] != head {
 		t.Fatalf("published_commit = %q, want the new HEAD %q", fields["published_commit"], head)
@@ -248,55 +254,19 @@ func TestPublishedButUnreconciledCommitExitsThreeAndNamesTheFailedPath(t *testin
 	if fields["path"] != "named" {
 		t.Fatalf("path = %q, want the failed named path", fields["path"])
 	}
-	if stderr != "" {
-		t.Fatalf("stderr = %q, want the record on stdout alone", stderr)
-	}
 }
 
-// FB4: next= is one restore over every named path, shell-quoted, in the owner's sorted
-// order rather than the argv order. One path carries a space, so an unquoted render
-// would break the paste.
-func TestPublicationRemainderNextRestoresEveryNamedPathShellQuoted(t *testing.T) {
-	root, _ := landingRepo(t, 0, unreconcilableGate("zzz"))
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
-	namedDir(t, root, "zzz")
-	namedDir(t, root, "one dir")
-
-	code, stdout, stderr := runCommand(t, root, "-m", "m", "zzz", "one dir")
-	if code != 3 {
-		t.Fatalf("exit = %d, want 3; stdout=%q stderr=%q", code, stdout, stderr)
-	}
-	_, fields, _ := recordFields(t, stdout)
-	head := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
-	want := "git restore --source=" + head + " --staged --worktree -- 'one dir' 'zzz'"
-	if fields["next"] != want {
-		t.Fatalf("next = %q, want %q", fields["next"], want)
-	}
-}
-
-// FB7: a failed path carrying an ESC byte renders in path= as the sanitizer spells it,
-// and next= takes the placeholder rather than a command that would emit the raw byte.
-func TestPublicationRemainderSanitizesTheFailedPathAndPointsAtNamedPaths(t *testing.T) {
+// FB7: a failed path carrying an ESC byte renders in path= as the sanitizer spells it, so
+// no raw control byte reaches the record. The route rows of the record are RR32-RR34.
+func TestPublicationRemainderSanitizesTheFailedPath(t *testing.T) {
 	const escaped = "esc\x1bdir"
-	root, _ := landingRepo(t, 0, unreconcilableGate(escaped))
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
-	namedDir(t, root, escaped)
-
-	code, stdout, stderr := runCommand(t, root, "-m", "m", escaped)
-	if code != 3 {
-		t.Fatalf("exit = %d, want 3; stdout=%q stderr=%q", code, stdout, stderr)
-	}
+	_, stdout, _ := publishedUnreconciled(t, escaped)
 	_, fields, _ := recordFields(t, stdout)
 	if strings.ContainsRune(stdout, '\x1b') {
 		t.Fatalf("record carries a raw control byte: %q", stdout)
 	}
 	if fields["path"] != sanitize.Controls(escaped) {
 		t.Fatalf("path = %q, want the sanitizer's spelling %q", fields["path"], sanitize.Controls(escaped))
-	}
-	head := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
-	want := "git restore --source=" + head + " --staged --worktree -- <named-paths>"
-	if fields["next"] != want {
-		t.Fatalf("next = %q, want %q", fields["next"], want)
 	}
 }
 
