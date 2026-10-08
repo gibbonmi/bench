@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/refusal-route-registry/spec.md",
-  "plan_digest": "sha256:78030d6d901fe1c9f90bbdb27262b31ba4c4b90a14013dff9c6118f074080af0",
+  "plan_digest": "sha256:08df0de0aee236977981d3819a115931a30410252cd757eb5ca4fb66f8084bbd",
   "implementation_session": "",
   "chunks": [
     {
@@ -3707,9 +3707,9 @@
     {
       "id": "RR-C6",
       "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
-      "tip": "c64b7a6e17b32a8f6c70680ab029be8950dc6ccc",
-      "plan_digest": "sha256:78030d6d901fe1c9f90bbdb27262b31ba4c4b90a14013dff9c6118f074080af0",
-      "source_digest": "72a5ffb8f921f9e1b34b3f758a8db0378a2e0361",
+      "tip": "8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2",
+      "plan_digest": "sha256:08df0de0aee236977981d3819a115931a30410252cd757eb5ca4fb66f8084bbd",
+      "source_digest": "01f388aa729e573b7d21723626e4572c79f17f16",
       "acceptance_rows": [
         "RR49",
         "RR50",
@@ -3778,6 +3778,71 @@
               "ref": "claude-agent:ft393_t13",
               "digest": "sha256:468f663b7bec0810b844168f12475a51f0805bfd9b2a352ae0fe655867dc1e0f",
               "excerpt": "$ bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,c64b7a6e17b32a8f6c70680ab029be8950dc6ccc,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/conformance/refusal_route_bypass_test.go --omit '\"internal/commitment/repository\",' --package ./internal/conformance --run 'TestRouteBypassCheckBites'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/refusal_route_bypass_test.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestRouteBypassCheckBites,passed,3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,6,3\n"
+            }
+          }
+        },
+        {
+          "id": "v-t13-bypass-check-r1",
+          "performer": "claude:ft393_t13_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "01f388aa729e573b7d21723626e4572c79f17f16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t13_repair1",
+            "digest": "sha256:016e2daa13dd9779afa55bd12c5251fd3a736bb1afbd7aa7ee637196c8080e91",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,36,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t13-bypass-check",
+          "command": "bench test --package ./internal/conformance --run 'TestNoWriteVerbComposesARouteOutsideTheRegistry|TestRouteBypassCheckBites'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t13-conformance-package-r1",
+          "performer": "claude:ft393_t13_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "01f388aa729e573b7d21723626e4572c79f17f16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t13_repair1",
+            "digest": "sha256:034573cb74cefe41f7828f2552543d938033047a0c3683f937e9c69b4ef6ba30",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  ft393-build,8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,54662,1668\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem\"\n"
+          },
+          "requirement": "t13-conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t13-scan-proof-r1",
+          "performer": "claude:ft393_t13_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "01f388aa729e573b7d21723626e4572c79f17f16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t13_repair1",
+            "digest": "sha256:89936bcc274e9d4a791f8d527d5c734319ec2b6f0e8670c907853f75fed7d834",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/conformance/refusal_route_bypass_test.go --omit '\"internal/commitment/repository\",' --package ./internal/conformance --run 'TestRouteBypassCheckBites'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/refusal_route_bypass_test.go,omit,failed,1,yes\n"
+          },
+          "requirement": "t13-scan-proof",
+          "command": "bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove `internal/commitment/repository` from the scanned packages of the bypass check. TestRouteBypassCheckBites must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t13_repair1",
+              "digest": "sha256:89936bcc274e9d4a791f8d527d5c734319ec2b6f0e8670c907853f75fed7d834",
+              "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/conformance --run 'TestRouteBypassCheckBites'\ntree[1]{target,head,dirty}:\n  ft393-build,8a3922f75a6c8039a0aaaca047d5a28c0b45a0f2,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec ft393-build -- bench probe internal/conformance/refusal_route_bypass_test.go --omit '\"internal/commitment/repository\",' --package ./internal/conformance --run 'TestRouteBypassCheckBites'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/conformance/refusal_route_bypass_test.go,omit,failed,1,yes\n"
             }
           }
         }
@@ -4115,6 +4180,33 @@
         ],
         "RR-C5": [
           "RR-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:78030d6d901fe1c9f90bbdb27262b31ba4c4b90a14013dff9c6118f074080af0",
+      "to": "sha256:08df0de0aee236977981d3819a115931a30410252cd757eb5ca4fb66f8084bbd",
+      "chunk_ids": {
+        "RR-C1a": [
+          "RR-C1a"
+        ],
+        "RR-C1b": [
+          "RR-C1b"
+        ],
+        "RR-C2": [
+          "RR-C2"
+        ],
+        "RR-C3": [
+          "RR-C3"
+        ],
+        "RR-C4": [
+          "RR-C4"
+        ],
+        "RR-C5": [
+          "RR-C5"
+        ],
+        "RR-C6": [
+          "RR-C6"
         ]
       }
     }
@@ -4552,3 +4644,17 @@ The repair session runs the debug step and states the diagnosed cause before its
 - C6-3, plan correction, confidence 5: the shared `--in` tree-target refusal serves read and write verbs. A won't-handle row now names it, and the allowlist sentence names its reason. Flagged for reviewer veto. The test comment states the same reason. Ticket 13 repair.
 - C6-S2, C6-P2, C6-4, no-op, confidence 4: no omitted package composes a route today, and the spec does not pin the list.
 - C6-S3, no-op, confidence 3: the spec row ids in the doc comments follow the sibling tests.
+
+### RR-C6 repair cycle 1
+
+RR-C6 consumed 1 of its 2 repair cycles. The repair commit is 8a3922f7 (ticket 13).
+The repair session ran the debug step and stated these causes before its fixes.
+
+| finding | diagnosed cause | repro |
+|---|---|---|
+| C6-S1, C6-P1, C6-1 | The bypass check spelled the joiner itself, and every plant held another needle, so a dropped joiner needle left every plant caught. | A `bench probe` that dropped the joiner needle returned `silent` before the fix and `bit` after it. |
+| C6-2 | The plants covered five of the nine packages, and the empty-tree count follows the list, so a dropped package stayed green. | A `bench probe` that dropped `internal/commitment` from the list returned `silent` before the fix and `bit` after it. |
+| C6-3 | The allowlist comment for `path.go` gave the old reason. | A read of the comment. |
+
+The pickup asked for plants derived from the scanned list, but a derived plant drops with its package, so no probe could turn red.
+The repair keeps one plant table apart from the list, and the test fails a scanned package with no plant. The omission probes record the reds that this independent expectation needs.
