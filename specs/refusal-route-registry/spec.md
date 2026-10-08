@@ -856,6 +856,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "1fcfeef8aacc9b37ce51cc0566c053974337d2af",
           "native_ref": "claude-agent:ft393_t6"
+        },
+        {
+          "session": "claude:ft393_t6_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "eadc1b23a9247fef6e2ef3bd567eff24050b6726",
+          "native_ref": "claude-agent:ft393_t6_repair1",
+          "predecessor": "claude:ft393_t6",
+          "trigger": "user-directed",
+          "stopped": "the ticket 06 author reached the context limit and has no live child",
+          "preserved": "f932db29f82ba07271a8e11c8ac5ea011b0aa3ab"
         }
       ],
       "07-route-each-reset-refusal-through-the-registry.md": [
