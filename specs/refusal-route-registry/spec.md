@@ -842,6 +842,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "4812b3923e4c247a28e9e09f743c0c404515bdf6",
           "native_ref": "claude-agent:ft393_t7"
+        },
+        {
+          "session": "claude:ft393_t7b",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "a54fe8fca1910d7834bbc6c47c65d09ba6318e81",
+          "native_ref": "claude-agent:ft393_t7b",
+          "predecessor": "claude:ft393_t7",
+          "trigger": "user-directed",
+          "stopped": "the ticket 07 author session returned a blocked report at about 318k tokens of context and has no live child; the reviewer directed a fresh author",
+          "preserved": "a54fe8fca1910d7834bbc6c47c65d09ba6318e81"
         }
       ],
       "08-route-the-commit-exit-3-to-the-reset-plan.md": [],
@@ -1016,6 +1028,7 @@ The prospective build owns these exact paths:
 - `internal/worktree/reset.go`
 - `internal/worktree/reset_apply.go`
 - `internal/worktree/reset_restore.go`
+- `internal/worktree/ownership.go`
 - `internal/worktree/reset_restore_refusal_test.go`
 - `internal/worktree/reset_apply_test.go`
 - `internal/worktree/missing_tree_recovery_test.go`
