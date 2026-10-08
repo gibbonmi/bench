@@ -4115,6 +4115,72 @@
           "supersedes": [
             "r-c6-coverage"
           ]
+        },
+        {
+          "id": "r-c6-fold-standards",
+          "performer": "claude:ft393_c6_fold_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d82306e1db1ff66fa4a9ed2527b4da86b14bf906",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c6_fold_standards",
+            "digest": "sha256:4e661fad84fff107826a50f18cf7b2ab493ca960bbb309bfa48ff2bc843b0531",
+            "excerpt": "RR-C6 fold and reconciliation, Standards (claude:ft393_c6_fold_standards): evidence current=true. Zero findings.\nMain fold f5fb5f43: brings exactly the five main-landed paths, equal to main with no hand-resolved drift; no FT393 commit touched them; RR08 grades routes through gitguard and benchguard, not the agent-line hook.\nReconciliation 3c36698d: no planned cell remains; all 22 cited test names exist at their paths; sampled bodies hold their rows, including RR48 on both walks; RR54 stays review-owned.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "tip": "3c36698dc8a8133c5084e481d027185284c6ab2e",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c6-r1-standards"
+          ]
+        },
+        {
+          "id": "r-c6-fold-spec",
+          "performer": "claude:ft393_c6_fold_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d82306e1db1ff66fa4a9ed2527b4da86b14bf906",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c6_fold_spec",
+            "digest": "sha256:400054a8e965138df524335616cd924bb9f7afeca4da9ed49f173fd858687be4",
+            "excerpt": "RR-C6 fold and reconciliation, Spec (claude:ft393_c6_fold_spec): evidence current=true. Zero findings.\nMain fold f5fb5f43: five non-FT393 paths; RR08 to RR11 grade routes only through gitguard, benchguard, and the exec-form rule, so the agent-line change does not feed them.\nReconciliation 3c36698d: all 21 distinct cited pairs exist; sampled bodies hold their rows, including RR26, RR28, RR29, RR48, RR56, RR57; RR54 stays review-owned.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "tip": "3c36698dc8a8133c5084e481d027185284c6ab2e",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c6-r1-spec"
+          ]
+        },
+        {
+          "id": "r-c6-fold-coverage",
+          "performer": "claude:ft393_c6_fold_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d82306e1db1ff66fa4a9ed2527b4da86b14bf906",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c6_fold_coverage",
+            "digest": "sha256:18e875d830fcdfb3143645aaa56870ae4ac6b01ebccc1ea0d0ca1834d9392554",
+            "excerpt": "RR-C6 fold and reconciliation, Coverage (claude:ft393_c6_fold_coverage): evidence current=true. Zero findings.\nMain fold f5fb5f43: five non-FT393 paths; no FT393 test file in the delta; RR08 does not touch the agent-line hook; the omitted-model and fork denials still return 2.\nReconciliation 3c36698d: every one of the 67 cited files and test functions exists; no planned cell remains; sampled bodies hold their rows; RR54 stays review-owned.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "47ab7277320c8eed380038c5c1c87f5d38ff7a97",
+          "tip": "3c36698dc8a8133c5084e481d027185284c6ab2e",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c6-r1-coverage"
+          ]
         }
       ]
     }
