@@ -48,7 +48,7 @@ TF-C1 round 3: 0 findings. The callers of `installCannedSelection` keep their be
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:35975f8a331862c515848b125af2ab8e9e06ca5abe4ff7682fe97bba3f133356",
+  "plan_digest": "sha256:802ce2a779ccf3a4e748614f8b6837557f1f56e1ebe0232880dedbf0dba23a21",
   "implementation_session": "",
   "chunks": [
     {
@@ -601,6 +601,133 @@ TF-C1 round 3: 0 findings. The callers of `installCannedSelection` keep their be
           ]
         }
       ]
+    },
+    {
+      "id": "TF-C2",
+      "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+      "tip": "b9bf693e55636a0ef9331cf9226e75f14862fcda",
+      "plan_digest": "sha256:802ce2a779ccf3a4e748614f8b6837557f1f56e1ebe0232880dedbf0dba23a21",
+      "source_digest": "de79880a3a9ded9103cc4c9f40afcdc21c7d3c5e",
+      "acceptance_rows": [
+        "TF7",
+        "TF8",
+        "TF9",
+        "TF10",
+        "TF11",
+        "TF12",
+        "TF13",
+        "TF14",
+        "TF15",
+        "TF19",
+        "TF20",
+        "TF21",
+        "TF22",
+        "TF71"
+      ],
+      "verification": [
+        {
+          "id": "t2-pkg-internal-testreport",
+          "performer": "claude:ft349_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de79880a3a9ded9103cc4c9f40afcdc21c7d3c5e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2/pkg-internal-testreport",
+            "digest": "sha256:515ef8e72024cb5eed230e49d10f0acf937e5ec2449b43ca6d6640b124722992",
+            "excerpt": "command: bench test --package ./internal/testreport\nexit: 0\nwall: 59.98s\n  github.com/gibbonmi/bench/internal/testreport,pass,58249,219\nfailures[0]\nskips[0]\n"
+          },
+          "requirement": "pkg-internal-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-pkg-internal-tickets",
+          "performer": "claude:ft349_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de79880a3a9ded9103cc4c9f40afcdc21c7d3c5e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2/pkg-internal-tickets",
+            "digest": "sha256:0d1d5a25130216e675546efb942ede987c88a76617d06bf81f19e362b7f258da",
+            "excerpt": "command: bench test --package ./internal/tickets\nexit: 0\nwall: 1.50s\n  github.com/gibbonmi/bench/internal/tickets,pass,3,46\nfailures[0]\nskips[0]\n"
+          },
+          "requirement": "pkg-internal-tickets",
+          "command": "bench test --package ./internal/tickets",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-pkg-cmd-bench",
+          "performer": "claude:ft349_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de79880a3a9ded9103cc4c9f40afcdc21c7d3c5e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2/pkg-cmd-bench",
+            "digest": "sha256:7b3cd28d39377c7cd75c8f7660f9d766b0fe1b1b76322e5d81a4aeb1fa4d9353",
+            "excerpt": "command: bench test --package ./cmd/bench\nexit: 0\nwall: 18.91s\n  github.com/gibbonmi/bench/cmd/bench,pass,16208,333\nfailures[0]\nskips[0]\n"
+          },
+          "requirement": "pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-root-conformance",
+          "performer": "claude:ft349_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de79880a3a9ded9103cc4c9f40afcdc21c7d3c5e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2/root-conformance",
+            "digest": "sha256:8eca419ef980f53ef09f00ba0017c546ad106019d38986bc6ecf101e8e462d18",
+            "excerpt": "command: bench test --check root-conformance\nexit: 0\nwall: 19.10s\n  root-conformance,conformance,1,0\n  github.com/gibbonmi/bench/internal/conformance,pass,16615,1\nfailures[0]\nskips[0]\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-floor-probe",
+          "performer": "claude:ft349_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "de79880a3a9ded9103cc4c9f40afcdc21c7d3c5e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2/floor-probe",
+            "digest": "sha256:7e55771aa0ef2274e5a9ff619525732cd396e221d485b08525c4ba792a6c8974",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft349-build,773775a31b8d61c08b192b2e6871b939d59408bd,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/floor.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,^TestWritesFloor,passed,11\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,88,11\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestWritesFloorCoversADirectoryEntry,\"floor_test.go:75: floor = {Packages:[] Embed:false}, want packages [\\\"./nest\\\" \\\"./nest/inner\\\"] and embed false\",1\n  github.com/gibbonmi/bench/internal/testreport,TestWritesFloorKeepsTheSegmentBoundary,\"floor_test.go:82: floor = {Packages:[] Embed:false}, want packages [\\\"./internal/git\\\"] and embed false\",1\nskips[0]{package,test,reason}:\ncommand: bench probe internal/testreport/floor.go --omit <directory-entry loop> --package ./internal/testreport --run ^TestWritesFloor\nbench probe exit: 0\nwall: 3.56s\nmutated test run: status fail, 2 failed tests (exit 1 inferred; the probe prints no child exit code)\nbaseline: passed, 11 ran\nrestored: yes\n"
+          },
+          "requirement": "floor-probe",
+          "command": "bench test --package ./internal/testreport --run '^TestWritesFloor'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the directory-entry rule from the floor function. TestWritesFloorCoversADirectoryEntry turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft349_t2/floor-probe",
+              "digest": "sha256:7e55771aa0ef2274e5a9ff619525732cd396e221d485b08525c4ba792a6c8974",
+              "excerpt": "tree[1]{target,head,dirty}:\n  ft349-build,773775a31b8d61c08b192b2e6871b939d59408bd,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/floor.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,^TestWritesFloor,passed,11\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,88,11\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestWritesFloorCoversADirectoryEntry,\"floor_test.go:75: floor = {Packages:[] Embed:false}, want packages [\\\"./nest\\\" \\\"./nest/inner\\\"] and embed false\",1\n  github.com/gibbonmi/bench/internal/testreport,TestWritesFloorKeepsTheSegmentBoundary,\"floor_test.go:82: floor = {Packages:[] Embed:false}, want packages [\\\"./internal/git\\\"] and embed false\",1\nskips[0]{package,test,reason}:\ncommand: bench probe internal/testreport/floor.go --omit <directory-entry loop> --package ./internal/testreport --run ^TestWritesFloor\nbench probe exit: 0\nwall: 3.56s\nmutated test run: status fail, 2 failed tests (exit 1 inferred; the probe prints no child exit code)\nbaseline: passed, 11 ran\nrestored: yes\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -632,6 +759,15 @@ TF-C1 round 3: 0 findings. The callers of `installCannedSelection` keep their be
     {
       "from": "sha256:63741a116956d2ebb6084503ed645e4a874351d06671cd4699639b095d8dc998",
       "to": "sha256:35975f8a331862c515848b125af2ab8e9e06ca5abe4ff7682fe97bba3f133356",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:35975f8a331862c515848b125af2ab8e9e06ca5abe4ff7682fe97bba3f133356",
+      "to": "sha256:802ce2a779ccf3a4e748614f8b6837557f1f56e1ebe0232880dedbf0dba23a21",
       "chunk_ids": {
         "TF-C1": [
           "TF-C1"
