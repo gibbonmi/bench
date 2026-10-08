@@ -1,7 +1,6 @@
 package testreport
 
 import (
-	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -44,14 +43,7 @@ func installOwnedSelection(t *testing.T, kit string) {
 // binary, and the child's recorded environment, which is empty when no Go child started.
 func rootConformanceRun(t *testing.T, root, kit string) (output string, code int, selected bool, child string) {
 	t.Helper()
-	installTestSelectionFactory(t, runbinary.Factory{
-		TempRoot: t.TempDir(),
-		Build: func(_ context.Context, _, output string) error {
-			selected = true
-			return os.WriteFile(output, []byte("selected"), 0o755)
-		},
-		Verify: func(string, string) error { return nil },
-	})
+	selection := installCannedSelection(t)
 	if kit != "" {
 		t.Setenv("BENCH_KIT", kit)
 	}
@@ -65,14 +57,14 @@ func rootConformanceRun(t *testing.T, root, kit string) (output string, code int
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		t.Fatal(err)
 	}
-	return output, code, selected, string(data)
+	return output, code, *selection, string(data)
 }
 
 func TestRootConformanceCheckRunsUnscoped(t *testing.T) {
 	root := liveKitRoot(t)
-	output, code, _, child := rootConformanceRun(t, root, root)
-	if code != 0 || child == "" {
-		t.Fatalf("root-conformance over the kit = %d, child started %t\n%s", code, child != "", output)
+	output, code, selected, child := rootConformanceRun(t, root, root)
+	if code != 0 || !selected || child == "" {
+		t.Fatalf("root-conformance over the kit = %d, selected a run binary %t, child started %t\n%s", code, selected, child != "", output)
 	}
 	lines := strings.Split(child, "\n")
 	for _, want := range []string{

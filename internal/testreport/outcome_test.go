@@ -76,15 +76,20 @@ func installCannedGo(t *testing.T, set cannedSet) {
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
-func installCannedSelection(t *testing.T) {
+// installCannedSelection installs a factory whose build writes a canned run binary. The
+// answered flag turns true once a run selects that binary.
+func installCannedSelection(t *testing.T) *bool {
 	t.Helper()
+	selected := new(bool)
 	installTestSelectionFactory(t, runbinary.Factory{
 		TempRoot: t.TempDir(),
 		Build: func(_ context.Context, _, output string) error {
+			*selected = true
 			return os.WriteFile(output, []byte("selected"), 0o755)
 		},
 		Verify: func(string, string) error { return nil },
 	})
+	return selected
 }
 
 // cannedSelections are the two selection forms the goldens cover.
