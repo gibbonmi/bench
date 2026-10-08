@@ -1676,7 +1676,89 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "r-c2-standards",
+          "performer": "claude:ft393_c2_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c2_standards",
+            "digest": "sha256:9c8522d85174530edb669eb014160b2fbffe266a4c33791a0ed02d4de85fe96a",
+            "excerpt": "RR-C2 Standards (claude:ft393_c2_standards): evidence current=true. 6 advisory findings.\nC2-S1 the hand-merge fixture step is pasted three times. auto-fix. conf 7\nC2-S2 the mergeRedRefusal comment uses the parameter name as a verb. auto-fix. conf 6\nC2-S3 an unwrapped comment line and a missing blank line. auto-fix. conf 8\nC2-S4 planLandedAssignment does not state its landed precondition. auto-fix. conf 4\nC2-S5 releaseAssignment builds missingTreeRelease twice. no-op or ask-user. conf 3\nC2-S6 wholeGateMergeFixture rebuilds the mergeSet literal. auto-fix. conf 3\nWorst: C2-S1. Implementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "tip": "b91c696ce74e984b6cdd93d6d8758b35b61be62c",
+          "finding_ids": [
+            "C2-S1",
+            "C2-S2",
+            "C2-S3",
+            "C2-S4",
+            "C2-S5",
+            "C2-S6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c2-spec",
+          "performer": "claude:ft393_c2_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c2_spec",
+            "digest": "sha256:2bb008237491cc60bfc5164fab9aee471ca7c113f7e238677187cd9ec537f5cb",
+            "excerpt": "RR-C2 Spec (claude:ft393_c2_spec): evidence current=true. Every mapped row is implemented and tested. 5 advisory findings.\nC2-P1 the selective-lane target grade is sound but untested. no-op. conf 6\nC2-P2 a non-line-safe missing-tree path prints the whole route as one placeholder. ask-user. conf 5\nC2-P3 create --from keeps the exec-form sibling route. ask-user. conf 4\nC2-P4 cleanLandedSiblings now releases an absent landed sibling, untested. ask-user. conf 4\nC2-P5 the landed route choice and the clean selector conditions may differ. no-op unless reproduced. conf 3\nWorst: C2-P2. Implementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "tip": "b91c696ce74e984b6cdd93d6d8758b35b61be62c",
+          "finding_ids": [
+            "C2-P1",
+            "C2-P2",
+            "C2-P3",
+            "C2-P4",
+            "C2-P5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "r-c2-coverage",
+          "performer": "claude:ft393_c2_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4eeb67dac8ffa9bc3b73ed77fcbd3bd28caec77e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c2_coverage",
+            "digest": "sha256:0cf28b903a1ebd1e4110d68e76c919c7a1f442d17c4b3efb3e5d53a9336e7f9d",
+            "excerpt": "RR-C2 Coverage (claude:ft393_c2_coverage): evidence current=true. 7 findings, 1 blocking.\nC2-1 blocking a missing tree whose registration was pruned still fails in releaseRegistration. ask-user. conf 6\nC2-2 the target-alone grade base has no selective-lane test. auto-fix. conf 6\nC2-3 the unlanded missing-tree cause is not followed from its printed route. auto-fix. conf 6\nC2-4 the merge and reset placeholder arms are untested. auto-fix. conf 6\nC2-5 two infrastructure arms of the target-alone grade are unproduced. auto-fix. conf 5\nC2-6 the LeaseUnknown arm of missingTreeLeaseRefusal is untested. auto-fix. conf 5\nC2-7 an unfaced merge refusal hands back to the reviewer. ask-user. conf 4\nWorst: C2-1. Implementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "tip": "b91c696ce74e984b6cdd93d6d8758b35b61be62c",
+          "finding_ids": [
+            "C2-1",
+            "C2-2",
+            "C2-3",
+            "C2-4",
+            "C2-5",
+            "C2-6",
+            "C2-7"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1876,3 +1958,42 @@ The repair commit 33ac2f98 closes C1b-RS1.
 
 The confirming round confirmed C1b-RS1, C1b-RP1, and C1b-RC1 on all three axes and returned no new finding.
 The axes retained this optional advice: the resume form also appears in two test files outside this delta.
+
+## RR-C2 pickup
+
+The RR-C2 review returned 18 findings, and Coverage marked one of them blocking.
+The findings collapse to repair targets in tickets 05, 06, and 07.
+Each repair session runs the debug step and states the diagnosed cause before its fix.
+
+### Standards
+
+Count: 6. Worst issue: C2-S1, the hand-merge fixture step pasted three times.
+
+- C2-S1, auto-fix, confidence 7: one helper serves the hand-merge fixture step. Ticket 05 repair.
+- C2-S2, auto-fix, confidence 6: the `mergeRedRefusal` comment states the grade without the parameter name as a verb. Ticket 06 repair.
+- C2-S3, auto-fix, confidence 8: wrap the comment line and add the blank line. Ticket 07 repair.
+- C2-S4, auto-fix, confidence 4: `planLandedAssignment` states its landed precondition. Ticket 07 repair.
+- C2-S5, auto-fix, confidence 3: `releaseAssignment` builds the missing-tree release once. Ticket 07 repair.
+- C2-S6, auto-fix, confidence 3: the whole-gate fixture reuses `mergeSetAt`. Ticket 06 repair.
+
+### Spec
+
+Count: 5. Worst issue: C2-P2, the whole-route placeholder.
+
+- C2-P1, no-op, confidence 6: C2-2 adds the selective-lane test.
+- C2-P2, auto-fix, confidence 5: a non-line-safe missing-tree path prints a placeholder for each value, as the Edge inventory states. Ticket 07 repair.
+- C2-P3, no-op, confidence 4: `create` is outside the six write verbs, so a learning records its exec route.
+- C2-P4, auto-fix, confidence 4: a test proves that a landing retires an absent landed sibling. Ticket 07 repair.
+- C2-P5, auto-fix, confidence 3: the ticket 07 repair checks the landed route choice against the clean selector. It fixes a gap that a repro shows.
+
+### Coverage
+
+Count: 7. Worst issue: C2-1, the pruned registration.
+
+- C2-1, auto-fix, confidence 6: a missing tree whose registration Git already pruned must clear through the printed route. Ticket 07 repair.
+- C2-2, auto-fix, confidence 6: a selective-lane fixture grades the target-alone base. Ticket 06 repair.
+- C2-3, auto-fix, confidence 6: the walk follows the unlanded missing-tree cause from its printed route. Ticket 07 repair.
+- C2-4, auto-fix, confidence 6: tests hold the placeholder arms of the merge rerun (ticket 05 repair) and the reset rerun (ticket 07 repair).
+- C2-5, auto-fix, confidence 5: fixtures produce the two infrastructure arms of the target-alone grade. Ticket 06 repair.
+- C2-6, auto-fix, confidence 5: a test holds the unknown-lease arm of the missing-tree release. Ticket 07 repair.
+- C2-7, no-op, confidence 4: an unfaced merge refusal hands back, which is the fail-closed default of the spec.
