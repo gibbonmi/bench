@@ -29,18 +29,13 @@ func liveKitRoot(t *testing.T) string {
 	return root
 }
 
-// installOwnedSelection builds a Bench executable from root and makes it the run binary
-// of each focused run in the test.
-func installOwnedSelection(t *testing.T, root string) {
+// installOwnedSelection makes kit the BENCH_KIT of the test, and each focused run builds
+// its run binary from kit. The kit is set after the factory install, because that install
+// clears BENCH_KIT.
+func installOwnedSelection(t *testing.T, kit string) {
 	t.Helper()
-	selection, err := runbinary.Own(context.Background(), root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = selection.Close() })
-	previous := selectRunBinary
-	selectRunBinary = func(context.Context, string) (*runbinary.Selection, error) { return selection, nil }
-	t.Cleanup(func() { selectRunBinary = previous })
+	installTestSelectionFactory(t, runbinary.Factory{})
+	t.Setenv("BENCH_KIT", kit)
 }
 
 // rootConformanceRun runs the root-conformance check over root with BENCH_KIT set to
@@ -49,22 +44,17 @@ func installOwnedSelection(t *testing.T, root string) {
 // binary, and the child's recorded environment, which is empty when no Go child started.
 func rootConformanceRun(t *testing.T, root, kit string) (output string, code int, selected bool, child string) {
 	t.Helper()
-	t.Setenv("BENCH_KIT", kit)
-	if kit == "" {
-		if err := os.Unsetenv("BENCH_KIT"); err != nil {
-			t.Fatal(err)
-		}
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, _, output string) error {
+			selected = true
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	})
+	if kit != "" {
+		t.Setenv("BENCH_KIT", kit)
 	}
-	binary := filepath.Join(t.TempDir(), "bench")
-	if err := os.WriteFile(binary, []byte("selected"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	previous := selectRunBinary
-	selectRunBinary = func(_ context.Context, source string) (*runbinary.Selection, error) {
-		selected = true
-		return &runbinary.Selection{Path: binary, SourceRoot: source}, nil
-	}
-	t.Cleanup(func() { selectRunBinary = previous })
 	goDir := t.TempDir()
 	marker := filepath.Join(goDir, "go-ran")
 	writeCheckGo(t, filepath.Join(goDir, "go"), marker)
@@ -98,7 +88,7 @@ func TestRootConformanceCheckRunsUnscoped(t *testing.T) {
 }
 
 func TestRootConformanceCheckPrintsFailures(t *testing.T) {
-	root := gittest.KitCopy(t, filepath.Join("..", ".."))
+	root := gittest.KitCopy(t, liveKitRoot(t))
 	const drain, row = ".agents/commands/bench-drain.md", "| `kit-edit` | a `craft-synthesis` kit edit |\n"
 	body := readTestReportFile(t, filepath.Join(root, drain))
 	if strings.Count(body, row) != 1 {
@@ -106,7 +96,6 @@ func TestRootConformanceCheckPrintsFailures(t *testing.T) {
 	}
 	writeProseCheckFile(t, root, drain, strings.Replace(body, row, "", 1))
 	const diagnostic = "row-next-grammar drift: " + drain + " token table lacks token 'kit-edit'"
-	t.Setenv("BENCH_KIT", root)
 	installOwnedSelection(t, root)
 
 	output, code := Command(root, []string{"--full", "--check", rootConformanceCheckName})
@@ -115,17 +104,27 @@ func TestRootConformanceCheckPrintsFailures(t *testing.T) {
 	}
 }
 
+// The kit case grades the kit clause alone: its root declares the entry test, and only
+// the kit names another directory.
 func TestRootConformanceCheckRefusesAForeignRoot(t *testing.T) {
-	root := canonicalTestDir(t)
-	if gate.RootConformanceRuns(root, liveKitRoot(t)) {
-		t.Fatalf("gate predicate answers true for the foreign root %s", root)
-	}
-	output, code, selected, child := rootConformanceRun(t, root, liveKitRoot(t))
-	if code != 1 || !strings.Contains(output, rootConformanceUnavailable) {
-		t.Fatalf("root-conformance over a foreign root = %d, %q; want the refusal at exit 1", code, output)
-	}
-	if selected || child != "" {
-		t.Fatalf("foreign-root refusal selected a run binary %t or started a Go child %t", selected, child != "")
+	kit := liveKitRoot(t)
+	for name, pair := range map[string][2]string{
+		"foreign root": {canonicalTestDir(t), kit},
+		"foreign kit":  {kit, canonicalTestDir(t)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			root, benchKit := pair[0], pair[1]
+			if gate.RootConformanceRuns(root, benchKit) {
+				t.Fatalf("gate predicate answers true for root %s under kit %s", root, benchKit)
+			}
+			output, code, selected, child := rootConformanceRun(t, root, benchKit)
+			if code != 1 || !strings.Contains(output, rootConformanceUnavailable) {
+				t.Fatalf("root-conformance = %d, %q; want the refusal at exit 1", code, output)
+			}
+			if selected || child != "" {
+				t.Fatalf("refusal selected a run binary %t or started a Go child %t", selected, child != "")
+			}
+		})
 	}
 }
 

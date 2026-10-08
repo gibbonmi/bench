@@ -115,18 +115,9 @@ func TestNamedCheckRunsFromKitAgainstLinkedConsumer(t *testing.T) {
 	source := "#!/usr/bin/env bash\npwd > " + sanitize.ShellQuote(marker) + "\nenv >> " + sanitize.ShellQuote(marker) + "\nprintf '%s\\n' '{\"Action\":\"run\",\"Package\":\"checkfixture\",\"Test\":\"TestCheck\"}' '{\"Action\":\"pass\",\"Package\":\"checkfixture\"}'\n"
 	writeGoStub(t, goPath, source)
 	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	installCannedSelection(t)
 	t.Setenv("BENCH_KIT", kit)
 	t.Setenv(registry.ConsumerOnlyEnv, "1")
-
-	selected := filepath.Join(t.TempDir(), "bench")
-	if err := os.WriteFile(selected, []byte("selected"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	previous := selectRunBinary
-	selectRunBinary = func(context.Context, string) (*runbinary.Selection, error) {
-		return &runbinary.Selection{Path: selected, SourceRoot: kit}, nil
-	}
-	t.Cleanup(func() { selectRunBinary = previous })
 
 	output, code := Command(consumer, []string{"--check", "load-validity-metadata"})
 	if code != 0 {
@@ -198,7 +189,7 @@ func TestNamedCheckHelpListsEverySupportedCheck(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("named-check help = %d, want 0\n%s", code, output)
 	}
-	for _, check := range append(registry.Names(registry.Dev), gate.SystemPhaseName) {
+	for _, check := range append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName, rootConformanceCheckName) {
 		if !strings.Contains(output, "\n  "+check+"\n") {
 			t.Errorf("named-check help missing %q:\n%s", check, output)
 		}
@@ -223,8 +214,8 @@ func TestNamedCheckRefusesCorruptInheritedSelection(t *testing.T) {
 }
 
 func TestNamedCheckRunsOnlyRegisteredDevScope(t *testing.T) {
-	root := gittest.KitCopy(t, filepath.Join("..", ".."))
-	t.Setenv("BENCH_KIT", root)
+	root := gittest.KitCopy(t, liveKitRoot(t))
+	installOwnedSelection(t, root)
 	sourceTiming := registry.TimingPath(root)
 	before, beforeErr := os.ReadFile(sourceTiming)
 	existed := beforeErr == nil
@@ -235,7 +226,6 @@ func TestNamedCheckRunsOnlyRegisteredDevScope(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	installOwnedSelection(t, root)
 
 	timingRoot := t.TempDir()
 	runChangedGit(t, timingRoot, "init", "-q")
