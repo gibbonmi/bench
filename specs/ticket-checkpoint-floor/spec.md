@@ -404,7 +404,7 @@ This fence is the exact union of the ticket Writes lines, plus the review pickup
 - `tests/canary/workflow-guidance-anchors/`
 - `reviews/ticket-checkpoint-floor.md`
 
-Reviewer disposition: pending.
+Reviewer disposition: approved on 2026-10-08 as the exact union above.
 
 ## Out of scope
 
@@ -485,6 +485,8 @@ The learning names six commits. This census found nine, and the six held commits
 - Workflow-step writes: the freeze refusal writes nothing. Row TF49 compares the record bytes.
 
 ### Flagged items for reviewer veto
+
+The reviewer approved the spec and the tickets on 2026-10-08. The reviewer accepted the seam choice, the new `root-conformance` check name, and the bound-command predicate with its known misses. The reviewer also kept ticket 03 whole and accepted the new export names. No item below was vetoed.
 
 1. **Seam choice.** The floor refusal lives in the build preflight as `check-floor`. The planned refusal lives in `bench record chunk` and `bench record completion`. The commit lane stays unchanged. The row reds after the ticket commit and blocks the next charge and the review charge. It does not refuse the publication itself.
 2. **New command.** `bench test --check root-conformance` is a new public check name. No current command runs the unscoped pass, and `FT349.floor` needs one exact command to name an omission.
