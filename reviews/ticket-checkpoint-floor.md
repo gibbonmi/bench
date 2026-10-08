@@ -10,6 +10,8 @@ Chunk TF-C2 uses repair cycle 1 of 2 for S1, S2, C1, C2, C3, C4, and C6 through 
 
 TF-C2 round 2 confirmed those folds and found S4. Chunk TF-C2 uses repair cycle 2 of 2 for S4 and for the copy of S5 that repair cycle 1 added. No reviewer extension exists.
 
+TF-C2 round 3 confirmed the folds of S4 and S5 with 0 findings on every axis. TF-C2 closes with both repair cycles used and no open finding.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -38,6 +40,8 @@ TF-C2 round 2: 1 finding, worst S4. The folds of S1 and S2 hold.
 
 Advice: S5, the Go-file suffix test appears four times in `selection.go`, and three copies predate this build. Repair cycle 2 folds the copy that repair cycle 1 added.
 
+TF-C2 round 3: 0 findings. The folds of S4 and S5 hold.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
@@ -53,6 +57,8 @@ TF-C2 round 1: 0 blocking findings. Every TF-C2 row holds.
 Advice: P1, `go.work` and `go.work.sum` also add `./...` because the floor reuses the `--changed` metadata rule. The final report flags this widening for reviewer veto. P2, a `go.mod` entry leaves the embed flag false, and only the whole-suite command satisfies its element. P3, the author return holds the probe reds of TF21 and TF22.
 
 TF-C2 round 2: 0 findings. Every TF-C2 row holds.
+
+TF-C2 round 3: 0 findings. Advice: `spec.md:124` and `:140` cite line ranges of `selection.go` that drift. Final reconciliation corrects them.
 
 ## Coverage
 
@@ -77,6 +83,8 @@ TF-C2 round 1: 5 findings, worst C1.
 Advice: C5, a `go.mod` that is a directory or a link. The S1 repair makes the floor read the gate's rule, so the gate decides it.
 
 TF-C2 round 2: 0 findings. The folds of C1, C2, C3, C4, and C6 hold.
+
+TF-C2 round 3: 0 findings. Each behavior of the absent-path branch keeps its test.
 
 ```bench-review-record
 {
@@ -1135,6 +1143,72 @@ TF-C2 round 2: 0 findings. The folds of C1, C2, C3, C4, and C6 hold.
           "finding_ids": [],
           "supersedes": [
             "c2-coverage-r1"
+          ]
+        },
+        {
+          "id": "c2-standards-r3",
+          "performer": "claude:ft349_c2_standards_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c2_standards_r3",
+            "digest": "sha256:695196b8adf7eb1b04ce1d91188948112ff5c43b5396eb35ee84cfed8086a3ec",
+            "excerpt": "Standards axis TF-C2 round 3 (fable/medium), repair delta fb5fc85f..5845f836. S4 held: selectCurrentPackages reads index.owners once (selection.go:236); absent check under embedOwner != \"\" (:238). S5 held: isGoFile (selection.go:299-300) is the one .go suffix source in internal/testreport, called at :72, :158, :238, :247. 0 findings.\n"
+          },
+          "axis": "Standards",
+          "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+          "tip": "5845f8360fade33ea93f3f8119e6de309d4ada5b",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r2"
+          ]
+        },
+        {
+          "id": "c2-spec-r3",
+          "performer": "claude:ft349_c2_spec_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c2_spec_r3",
+            "digest": "sha256:4d99ada6085e2abcccf60fa410dc3365c6c35749760abf1283d63e0cab35afcf",
+            "excerpt": "Spec axis TF-C2 round 3 (fable/medium), repair delta fb5fc85f..5845f836. --changed selection unchanged (story 19, TF21, TF22); refusal of an absent non-Go path with an embed owner held (selection.go:238-239); floor rules unchanged; delta inside ticket 02 Writes. bench coverage mapped, 71 rows. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+          "tip": "5845f8360fade33ea93f3f8119e6de309d4ada5b",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r2"
+          ]
+        },
+        {
+          "id": "c2-coverage-r3",
+          "performer": "claude:ft349_c2_coverage_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c2_coverage_r3",
+            "digest": "sha256:fcb4f9fd5758ff908875df955778c7d88e0f30514e3ad7a44d5f42d9320f0d00",
+            "excerpt": "Coverage axis TF-C2 round 3 (fable/medium), repair delta fb5fc85f..5845f836. Three absent-path behaviors held (selection_test.go:128-133, :253-267, :118-127). Probe swap dropping input.absent from the refusal guard bit TestChangedPackageClosureAcrossAllGoEdges, restored=yes. bench test --package ./internal/testreport pass, 221 tests, 73.6s. 0 findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
+          "tip": "5845f8360fade33ea93f3f8119e6de309d4ada5b",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-r2"
           ]
         }
       ]
