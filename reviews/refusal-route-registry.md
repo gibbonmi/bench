@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/refusal-route-registry/spec.md",
-  "plan_digest": "sha256:e6df2b3ac2271259efedd93c96a79966b915548e2cd37747833ccc21905b1260",
+  "plan_digest": "sha256:129cae8ef3792d9ae5a007ed37c6d3df9bb3b1712d5c4b452690b42fe42b87f6",
   "implementation_session": "",
   "chunks": [
     {
@@ -2102,9 +2102,9 @@
     {
       "id": "RR-C3",
       "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
-      "tip": "0d0e0c1f2d9319b69ccd954eba83374fa7747327",
-      "plan_digest": "sha256:e6df2b3ac2271259efedd93c96a79966b915548e2cd37747833ccc21905b1260",
-      "source_digest": "9b3f091957045d14435a1efab24b54f1f2b92f97",
+      "tip": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+      "plan_digest": "sha256:129cae8ef3792d9ae5a007ed37c6d3df9bb3b1712d5c4b452690b42fe42b87f6",
+      "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
       "acceptance_rows": [
         "RR32",
         "RR33",
@@ -2374,6 +2374,136 @@
               "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,0d0e0c1f2d9319b69ccd954eba83374fa7747327,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,2128,9\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n$ bench worktree exec ft393-build -- bench probe internal/refusalroute/faces_commit.go --swap 'Route:     []Step{Instruction(Text(\"repair each failure that the run reports\")), commitRerun},' --with 'Route:     []Step{Instruction(Text(\"repair each failure that the run reports\"))},' --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/faces_commit.go,swap,failed,3,yes\n"
             }
           }
+        },
+        {
+          "id": "v-t8-commit-package-r2",
+          "performer": "claude:ft393_t8_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t8_repair1",
+            "digest": "sha256:c2a0f2ede1fa0c80488c7d4e8231aa920202f14ccf74d27cf5d0e869f2c5984e",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/commit\ntree[1]{target,head,dirty}:\n  ft393-build,0f2825e1678e14f2dd2ad40222cd46ac7772c810,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,10352,104\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t8-commit-exit-three-r2",
+          "performer": "claude:ft393_t8_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t8_repair1",
+            "digest": "sha256:c2cc59fb8370f97ed14b51c6eb585d5a162c55a7fb509c6d8289c735220eec46",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'\ntree[1]{target,head,dirty}:\n  ft393-build,0f2825e1678e14f2dd2ad40222cd46ac7772c810,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,435,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t8-commit-exit-three",
+          "command": "bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t8-reset-route-proof-r2",
+          "performer": "claude:ft393_t8_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t8_repair1",
+            "digest": "sha256:5a300fc541084b96e427210e8393306f1c55f80f6162e58c48935a7304a441a0",
+            "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/commit --run 'TestPublishedUnreconciledRouteIsTheResetPlan'\ntree[1]{target,head,dirty}:\n  ft393-build,0f2825e1678e14f2dd2ad40222cd46ac7772c810,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,348,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n$ bench worktree exec ft393-build -- bench probe internal/refusalroute/faces_commit.go --swap 'Route:     []Step{Command(Text(\"bench worktree reset --to\"), Fact(FactPublishedCommit), Fact(FactCheckout))},' --with 'Route:     []Step{Command(Text(\"git restore --source\"), Fact(FactPublishedCommit), Text(\"--staged --worktree -- .\"))},' --package ./internal/commit --run TestPublishedUnreconciledRouteIsTheResetPlan\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/faces_commit.go,swap,failed,2,yes\n"
+          },
+          "requirement": "t8-reset-route-proof",
+          "command": "bench test --package ./internal/commit --run 'TestPublishedUnreconciledRouteIsTheResetPlan'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Give the `commit-published-unreconciled` face the old `git restore` route. TestPublishedUnreconciledRouteIsTheResetPlan must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t8_repair1",
+              "digest": "sha256:5a300fc541084b96e427210e8393306f1c55f80f6162e58c48935a7304a441a0",
+              "excerpt": "$ bench worktree exec ft393-build -- bench test --package ./internal/commit --run 'TestPublishedUnreconciledRouteIsTheResetPlan'\ntree[1]{target,head,dirty}:\n  ft393-build,0f2825e1678e14f2dd2ad40222cd46ac7772c810,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,348,3\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n$ bench worktree exec ft393-build -- bench probe internal/refusalroute/faces_commit.go --swap 'Route:     []Step{Command(Text(\"bench worktree reset --to\"), Fact(FactPublishedCommit), Fact(FactCheckout))},' --with 'Route:     []Step{Command(Text(\"git restore --source\"), Fact(FactPublishedCommit), Text(\"--staged --worktree -- .\"))},' --package ./internal/commit --run TestPublishedUnreconciledRouteIsTheResetPlan\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/faces_commit.go,swap,failed,2,yes\n"
+            }
+          }
+        },
+        {
+          "id": "v-t9-commit-package-r2",
+          "performer": "claude:ft393_t9_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t9_repair2",
+            "digest": "sha256:e19fc69c5a9ea36f34b6038c9c742c26c70a87316a217b2d78afde64924b65f9",
+            "excerpt": "$ bench test --package ./internal/commit\ntree[1]{target,head,dirty}:\n  ft393-build,0f2825e1678e14f2dd2ad40222cd46ac7772c810,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,10096,104\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t9-commit-package",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t9-commit-exit-three-r2",
+          "performer": "claude:ft393_t9_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t9_repair2",
+            "digest": "sha256:c09616f7bf38be9059be9f8b1c52a8c00a1eedc0258992634e8f6e5b55d1121d",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'\ntree[1]{target,head,dirty}:\n  ft393-build,0f2825e1678e14f2dd2ad40222cd46ac7772c810,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,423,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t9-commit-exit-three",
+          "command": "bench test --package ./internal/worktree --run 'TestCommitExitThreeRouteReconcilesTheCheckout'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t9-red-route-proof-r2",
+          "performer": "claude:ft393_t9_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t9_repair2",
+            "digest": "sha256:830511dbf28698ae7f9cb62a02f43cb52d453492802fba0cb07015ea36a52dd3",
+            "excerpt": "$ bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,0f2825e1678e14f2dd2ad40222cd46ac7772c810,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,2452,10\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/refusalroute/faces_commit.go --swap 'Instruction(Text(\"repair each failure that the run reports\")), commitRerun}' --with 'Instruction(Text(\"repair each failure that the run reports\"))}' --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/faces_commit.go,swap,failed,3,yes\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commit,TestCommitFacesFollowTheirRoutes/commit-red/,...\n  github.com/gibbonmi/bench/internal/commit,TestCommitFacesFollowTheirRoutes/commit-red/dry_run,...\n  github.com/gibbonmi/bench/internal/commit,TestCommitFacesFollowTheirRoutes/commit-red/lane,...\n"
+          },
+          "requirement": "t9-red-route-proof",
+          "command": "bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the re-run step from the `commit-red` route. TestCommitFacesFollowTheirRoutes must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t9_repair2",
+              "digest": "sha256:830511dbf28698ae7f9cb62a02f43cb52d453492802fba0cb07015ea36a52dd3",
+              "excerpt": "$ bench test --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\ntree[1]{target,head,dirty}:\n  ft393-build,0f2825e1678e14f2dd2ad40222cd46ac7772c810,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,2452,10\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/refusalroute/faces_commit.go --swap 'Instruction(Text(\"repair each failure that the run reports\")), commitRerun}' --with 'Instruction(Text(\"repair each failure that the run reports\"))}' --package ./internal/commit --run 'TestCommitFacesFollowTheirRoutes'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/refusalroute/faces_commit.go,swap,failed,3,yes\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commit,TestCommitFacesFollowTheirRoutes/commit-red/,...\n  github.com/gibbonmi/bench/internal/commit,TestCommitFacesFollowTheirRoutes/commit-red/dry_run,...\n  github.com/gibbonmi/bench/internal/commit,TestCommitFacesFollowTheirRoutes/commit-red/lane,...\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -2626,6 +2756,24 @@
     {
       "from": "sha256:4af8e55ed11edfc3ea0c36181c13f11dd5742108f4f38d57f0b15bdf580b752b",
       "to": "sha256:e6df2b3ac2271259efedd93c96a79966b915548e2cd37747833ccc21905b1260",
+      "chunk_ids": {
+        "RR-C1a": [
+          "RR-C1a"
+        ],
+        "RR-C1b": [
+          "RR-C1b"
+        ],
+        "RR-C2": [
+          "RR-C2"
+        ],
+        "RR-C3": [
+          "RR-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e6df2b3ac2271259efedd93c96a79966b915548e2cd37747833ccc21905b1260",
+      "to": "sha256:129cae8ef3792d9ae5a007ed37c6d3df9bb3b1712d5c4b452690b42fe42b87f6",
       "chunk_ids": {
         "RR-C1a": [
           "RR-C1a"
@@ -2921,3 +3069,14 @@ The confirming round confirmed every fold for the named-path causes, and it retu
 
 The face table now lists `commit-named-path` and `commit-tip-moved`.
 RR-C3 repair cycle 2 is the last cycle that the bounded repair policy allows without a reviewer extension.
+
+### RR-C3 repair cycle 2
+
+RR-C3 consumed 2 of its 2 repair cycles. The repair commit is 0f2825e1 (ticket 09).
+The repair session ran the debug step and stated this cause before its fix.
+
+| finding | diagnosed cause | repro |
+|---|---|---|
+| C3-RC1, C3-RS2, C3-RP1 | `destinationUpdateFailure` returned the compare-and-swap refusal as an untyped error, so `landingFace` had no type to select and the refusal fell to `commit-handback`. | The `commit-tip-moved` walk fixture printed the reviewer handback route before the fix. |
+
+A `bench probe` that removed the typed wrap after the fix returned `bit`: the fixture printed the reviewer handback route again.
