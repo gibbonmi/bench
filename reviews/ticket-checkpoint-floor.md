@@ -46,9 +46,9 @@ TF-C1 round 2: 0 findings. The fold of C1 holds.
     {
       "id": "TF-C1",
       "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
-      "tip": "a044f1155a78e044297f8993b201e0ca17f4e9ea",
-      "plan_digest": "sha256:5ab185e24118847b76b5943bca905f1d204398378c7054a0d09b2307b1b6c981",
-      "source_digest": "ca91c85ea8501c3bc21f49e8bdbeb7e68c9bcc6b",
+      "tip": "776cac6e43bb1a8686bfe1399181c511bc044a74",
+      "plan_digest": "sha256:63741a116956d2ebb6084503ed645e4a874351d06671cd4699639b095d8dc998",
+      "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
       "acceptance_rows": [
         "TF1",
         "TF2",
@@ -256,6 +256,107 @@ TF-C1 round 2: 0 findings. The fold of C1 holds.
               "ref": "claude-agent:ft349_t1_repair1/root-scope-probe",
               "digest": "sha256:8ef4578c090183a067e61298c47f585fd204222b5c540f0a1de52fb97addfdcd",
               "excerpt": "green: bench test --package ./internal/testreport --run ^TestRootConformanceCheckRunsUnscoped$ -> exit 0, pass,51,1\nprobe: bench probe internal/testreport/environment.go --swap return \"\" --with return check (root-conformance branch of conformanceScope)\n  bit,internal/testreport/environment.go,swap,failed,1,yes\n  TestRootConformanceCheckRunsUnscoped: root_conformance_test.go:85: child lacks the line \"BENCH_CONFORMANCE_SCOPE=\"\nhead: a044f1155a78e044297f8993b201e0ca17f4e9ea dirty=false\nprobe exit: 0 (rerun at a044f115)\n"
+            }
+          }
+        },
+        {
+          "id": "t1r2-pkg-internal-testreport",
+          "performer": "claude:ft349_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t1_repair2/pkg-internal-testreport",
+            "digest": "sha256:11e5672ec966c3c8144143c90f2baa1ff609d6202737b69a41c57308f760fef6",
+            "excerpt": "command: bench worktree exec ft349-build -- bench test --package ./internal/testreport\nhead: 776cac6e43bb1a8686bfe1399181c511bc044a74 (clean)\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,63952,207\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit=0 wall=71.3s\n"
+          },
+          "requirement": "pkg-internal-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-pkg-internal-gate",
+          "performer": "claude:ft349_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t1_repair2/pkg-internal-gate",
+            "digest": "sha256:ade346f379d4d01deaa8ed1bd047bb988b1b05539af2df8940936050747f371b",
+            "excerpt": "command: bench worktree exec ft349-build -- bench test --package ./internal/gate\nhead: 776cac6e43bb1a8686bfe1399181c511bc044a74 (clean)\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,20413,420\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit=0 wall=24.6s\n"
+          },
+          "requirement": "pkg-internal-gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-pkg-cmd-bench",
+          "performer": "claude:ft349_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t1_repair2/pkg-cmd-bench",
+            "digest": "sha256:bb7021a9ac712288b7ab0f202370a830f336bba02d7fdf272b2add3b2ecb7811",
+            "excerpt": "command: bench worktree exec ft349-build -- bench test --package ./cmd/bench\nhead: 776cac6e43bb1a8686bfe1399181c511bc044a74 (clean)\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14653,333\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit=0 wall=17.7s\n"
+          },
+          "requirement": "pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-root-conformance",
+          "performer": "claude:ft349_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t1_repair2/root-conformance",
+            "digest": "sha256:2fe7be65bf512a0c490f9bd248226ff37272be68df4c115635a98deff3aca773",
+            "excerpt": "command: bench worktree exec ft349-build -- bench test --check root-conformance\nhead: 776cac6e43bb1a8686bfe1399181c511bc044a74 (clean)\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16429,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit=0 wall=18.5s\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-root-scope-probe",
+          "performer": "claude:ft349_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t1_repair2/root-scope-probe",
+            "digest": "sha256:11943d512cd06aff513b868b4215c4db5141187c8b463b85be69b0865a132059",
+            "excerpt": "command: bench worktree exec ft349-build -- bench probe internal/testreport/environment.go --swap '\tif check == rootConformanceCheckName {\\n\t\treturn \"\"' --with '\tif check == rootConformanceCheckName {\\n\t\treturn check' --package ./internal/testreport --run '^TestRootConformanceCheckRunsUnscoped$'\nhead: 776cac6e43bb1a8686bfe1399181c511bc044a74 (clean)\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/environment.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestRootConformanceCheckRunsUnscoped,\"root_conformance_test.go:77: root-conformance child lacks the line \\\"BENCH_CONFORMANCE_SCOPE=\\\":\",84\nprobe exit=0 wall=3.2s\n"
+          },
+          "requirement": "root-scope-probe",
+          "command": "bench test --package ./internal/testreport --run '^TestRootConformanceCheckRunsUnscoped$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap the empty conformance scope for the check name in the root-conformance environment. TestRootConformanceCheckRunsUnscoped turns red.",
+            "outcome": "bit",
+            "exit_code": 0,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft349_t1_repair2/root-scope-probe",
+              "digest": "sha256:11943d512cd06aff513b868b4215c4db5141187c8b463b85be69b0865a132059",
+              "excerpt": "command: bench worktree exec ft349-build -- bench probe internal/testreport/environment.go --swap '\tif check == rootConformanceCheckName {\\n\t\treturn \"\"' --with '\tif check == rootConformanceCheckName {\\n\t\treturn check' --package ./internal/testreport --run '^TestRootConformanceCheckRunsUnscoped$'\nhead: 776cac6e43bb1a8686bfe1399181c511bc044a74 (clean)\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/environment.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestRootConformanceCheckRunsUnscoped,\"root_conformance_test.go:77: root-conformance child lacks the line \\\"BENCH_CONFORMANCE_SCOPE=\\\":\",84\nprobe exit=0 wall=3.2s\n"
             }
           }
         }
