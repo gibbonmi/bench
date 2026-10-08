@@ -315,6 +315,33 @@
               ]
             }
           ]
+        },
+        {
+          "id": "NRO",
+          "criteria": [
+            {
+              "id": "NRO.order",
+              "text": "bench record chunk refuses a chunk write whose plan digest differs from the record plan digest, and each checkpoint refusal of a record entry names the bench record form that repairs it."
+            },
+            {
+              "id": "NRO.assignment",
+              "text": "A native bench record assignment form writes the dispatch history of a version 2 completion plan, so no author or orchestrator writes that history as hand-built JSON."
+            },
+            {
+              "id": "NRO.probe",
+              "text": "The verification record imports a probe result through its producer owner and keeps the mutated test run exit code apart from the probe command exit code."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "native-record-operations",
+                "path": "specs/native-record-operations/spec.md",
+                "identity": "sha256:845e519b1cb708f2952e064390fac20c4a06e1723b9ca938cfc6be4fd4276165"
+              }
+            }
+          ]
         }
       ]
     }
