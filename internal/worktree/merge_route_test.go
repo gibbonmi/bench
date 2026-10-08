@@ -158,6 +158,19 @@ func TestMergeConflictRefusalNamesTheHandRepair(t *testing.T) {
 	}
 }
 
+// A --from value and a target that are not line-safe print their slot placeholders in the
+// merge's re-run. A raw value would put a control byte, escaped or not, into a command that
+// the operator pastes back.
+func TestMergeRerunPrintsAPlaceholderForAValueThatIsNotLineSafe(t *testing.T) {
+	t.Parallel()
+	f := mergeFixture(t, "integration")
+	r := runVerb(t, verbMerge, f.merge("--from", "main\x1b", f.created[0].Assignment.ID+"\x1b"))
+	next, printed := recordField(r.stdout, "refused{", refusalroute.NextField)
+	if r.exit != 1 || !printed || !strings.HasSuffix(next, "; then bench worktree merge --from <from> <target>") {
+		t.Fatalf("not-line-safe merge = (%d, %q, %q), want a re-run with the <from> and <target> placeholders", r.exit, r.stdout, r.stderr)
+	}
+}
+
 // TestRedSourceFoldNamesAnExit is collision 5a: a red source folds a moved main. RR21-RR25
 // and RR55 follow the lane fail out: the target tip alone fails its lane, so the fold names
 // the target's own repair, and a fold into the target that the repair left dirty names the
@@ -307,18 +320,8 @@ func mergeRefusalFixtures() []mergeRefusalFixture {
 			// The reviewer's hand merge of the incoming commit into the target, its
 			// resolution, and the commit that records it.
 			carry: map[int]func(*testing.T, mergeSet){
-				0: func(t *testing.T, f mergeSet) {
-					target := f.created[0].Path
-					merge := descendant(t, "git", "-C", target, "merge", "--no-commit", "main")
-					if out, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(out), "CONFLICT") {
-						t.Fatalf("hand merge = %v, %s; want the conflict", err, out)
-					}
-					mustWrite(t, filepath.Join(target, "tracked.txt"), []byte("resolved edit\n"), 0o644)
-					gitRun(t, target, "add", "tracked.txt")
-				},
-				1: func(t *testing.T, f mergeSet) {
-					gitRun(t, f.created[0].Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "resolve the composition")
-				},
+				0: func(t *testing.T, f mergeSet) { stageHandMerge(t, f.created[0].Path, "tracked.txt", "resolved edit\n") },
+				1: func(t *testing.T, f mergeSet) { commitHandMerge(t, f.created[0].Path) },
 			},
 		},
 		{

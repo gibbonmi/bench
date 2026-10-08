@@ -77,16 +77,9 @@ func landingRefusalFixtures() []landingRefusalFixture {
 	// The reviewer's hand merge of the destination into the source, its resolution, and the
 	// commit that records it.
 	handMerge := func(t *testing.T, f landingFixture) {
-		merge := descendant(t, "git", "-C", f.creation.Path, "merge", "--no-commit", "main")
-		if out, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(out), "CONFLICT") {
-			t.Fatalf("hand merge = %v, %s; want the conflict", err, out)
-		}
-		mustWrite(t, filepath.Join(f.creation.Path, "owned.txt"), []byte("destination bytes\nreviewed repair\n"), 0o644)
-		gitRun(t, f.creation.Path, "add", "owned.txt")
+		stageHandMerge(t, f.creation.Path, "owned.txt", landingResolution)
 	}
-	commitResolution := func(t *testing.T, f landingFixture) {
-		gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "resolve the composition")
-	}
+	commitResolution := func(t *testing.T, f landingFixture) { commitHandMerge(t, f.creation.Path) }
 	// The review of the repaired source refreshes its completion evidence.
 	review := func(t *testing.T, f landingFixture) { refreshLandingEvidence(t, f.creation.Path, f.base) }
 	// The commit lane is the walk's scaffold, so it leaves the source before the review. The
@@ -248,6 +241,29 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			}},
 		},
 	}
+}
+
+// landingResolution resolves the landing fixture's conflict over owned.txt, which the
+// destination and the reviewed source both change.
+const landingResolution = "destination bytes\nreviewed repair\n"
+
+// stageHandMerge is the reviewer's hand merge of main into checkout: the merge must
+// conflict, and the resolution body at path is staged. A printed route names the commit
+// that records the resolution as its own later step, so commitHandMerge is a separate call.
+func stageHandMerge(t *testing.T, checkout, path, body string) {
+	t.Helper()
+	merge := descendant(t, "git", "-C", checkout, "merge", "--no-commit", "main")
+	if out, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(out), "CONFLICT") {
+		t.Fatalf("hand merge = %v, %s; want the conflict", err, out)
+	}
+	mustWrite(t, filepath.Join(checkout, path), []byte(body), 0o644)
+	gitRun(t, checkout, "add", path)
+}
+
+// commitHandMerge records the staged resolution of a hand merge in checkout.
+func commitHandMerge(t *testing.T, checkout string) {
+	t.Helper()
+	gitRun(t, checkout, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "resolve the composition")
 }
 
 // plantSourceCommitLane declares a commit lane for the source in an ignored phase
