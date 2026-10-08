@@ -79,7 +79,7 @@ Repair context: <fold targets and author context, each read by the coordinator b
 - A grammar charge enumerates two inventories in its fence:
   the shared fixture owners and the exact-record assertion families.
 - A charge that adds a live-tree test includes in its fence the live-tree
-  inventory file `internal/conformance/tier_test.go`.
+  inventory file `internal/conformance/tier_live_tree_test.go`.
 - A charge that writes a Go file under `tests/canary/` lists `go vet` in its
   focused checks. The fixture-bite test only parses the overlay, and `go vet`
   compiles every Go file in the tree.
