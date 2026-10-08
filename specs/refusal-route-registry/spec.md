@@ -1269,6 +1269,7 @@ The prospective build owns these exact paths:
 - `internal/commit/commitment_route_test.go`
 - `internal/commitment/commitmenttest/admission.go`
 - `internal/commitment/commitmenttest/repo.go`
+- `internal/commitment/repository/repository.go`
 - `internal/worktree/land.go`
 - `internal/refusalroute/routetest/routetest_test.go`
 - `internal/landing/attribution.go`
