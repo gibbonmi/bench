@@ -270,6 +270,18 @@
               "path": "roadmap/FT373.md",
               "identity": "sha256:64628d70448b2d9fe32ccdc2466af3a69ad192d019d767954fa4acb8f86c9938"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "stdlib-reimplementation-check",
+                "path": "specs/stdlib-reimplementation-check",
+                "identity": "git-tree:222650a82c808f1f721116d34054374ca3fb2801"
+              },
+              "obligations": [
+                "FT373"
+              ]
+            }
           ]
         },
         {
