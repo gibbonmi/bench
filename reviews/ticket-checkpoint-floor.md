@@ -2,7 +2,9 @@
 
 ## Repair state
 
-Chunk TF-C1 used repair cycle 1 of 2 for S1, S2, S3, and C1. C1 is the one hardening cycle of TF-C1. Round 2 confirmed those folds and found S5. Chunk TF-C1 uses repair cycle 2 of 2 for S5 through a fresh repair session for ticket 01. No reviewer extension exists. Under `--auto-approve`, the reviewer approved a fence expansion in advance.
+Chunk TF-C1 used repair cycle 1 of 2 for S1, S2, S3, and C1. C1 is the one hardening cycle of TF-C1.
+
+Round 2 confirmed those folds and found S5. Chunk TF-C1 uses repair cycle 2 of 2 for S5 through a fresh repair session for ticket 01. No reviewer extension exists. Under `--auto-approve`, the reviewer approved a fence expansion in advance. Round 3 confirmed the fold of S5 with 0 findings on every axis, so TF-C1 closes with both repair cycles used and no open finding.
 
 ## Standards
 
@@ -18,6 +20,8 @@ TF-C1 round 2: 1 finding, worst S5. The folds of S1, S2, and S3 hold.
 - S5 (auto-fix, confidence 5): `internal/testreport/root_conformance_test.go:47-54` repeats the factory body of `installCannedSelection` in `outcome_test.go:79-88`. Only an observer flag differs.
 - S6 (no-op, confidence 4): the help-list expectation in `check_test.go` has a recorded red. The repair session dropped `root-conformance` from `namedChecks` through `bench probe`, and the test failed at `check_test.go:194`.
 
+TF-C1 round 3: 0 findings. The fold of S5 holds.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
@@ -25,6 +29,8 @@ TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
 Advice: the TF2 test runs the `--full` form of the command. The bare form keeps the same exit and diagnostic.
 
 TF-C1 round 2: 0 findings. TF1 to TF5 hold.
+
+TF-C1 round 3: 0 findings. TF1 to TF5 hold.
 
 ## Coverage
 
@@ -35,6 +41,8 @@ TF-C1 round 1: 1 finding, worst C1.
 Advice: the empty-kit clause has no caller that passes an empty kit.
 
 TF-C1 round 2: 0 findings. The fold of C1 holds.
+
+TF-C1 round 3: 0 findings. The callers of `installCannedSelection` keep their behavior.
 
 ```bench-review-record
 {
@@ -495,6 +503,72 @@ TF-C1 round 2: 0 findings. The fold of C1 holds.
           "finding_ids": [],
           "supersedes": [
             "c1-coverage-r1"
+          ]
+        },
+        {
+          "id": "c1-standards-r3",
+          "performer": "claude:ft349_c1_standards_r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c1_standards_r3",
+            "digest": "sha256:13f98993a24ae36cef7d7d8049089ed83de0b76d86be8ac945b47aa658add3f9",
+            "excerpt": "Standards axis TF-C1 round 3 (sonnet/high), repair delta e5c10e3b..776cac6e. S5 held: rootConformanceRun calls installCannedSelection (root_conformance_test.go:46); the one owner is outcome_test.go:81. No duplicated knowledge added; new doc comment obeys craft-comments. 0 findings.\n"
+          },
+          "axis": "Standards",
+          "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
+          "tip": "776cac6e43bb1a8686bfe1399181c511bc044a74",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-standards-r2"
+          ]
+        },
+        {
+          "id": "c1-spec-r3",
+          "performer": "claude:ft349_c1_spec_r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c1_spec_r3",
+            "digest": "sha256:5a7e098ba6c0fd803c1749c0d402062fba63f91dc47a73dd072838022cf594c5",
+            "excerpt": "Spec axis TF-C1 round 3 (sonnet/high), repair delta e5c10e3b..776cac6e. TF1-TF5 held (root_conformance_test.go:63,82,101,123,130). Delta inside the widened ticket 01 Writes line; 7c308b1b adds outcome_test.go to the ticket and the spec fence consistently. bench coverage mapped, 71 rows. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
+          "tip": "776cac6e43bb1a8686bfe1399181c511bc044a74",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec-r2"
+          ]
+        },
+        {
+          "id": "c1-coverage-r3",
+          "performer": "claude:ft349_c1_coverage_r3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c1_coverage_r3",
+            "digest": "sha256:29834cd6acafab9a8ca3fb4c0c23d365e65ced2295a334d51c13d2d2841333db",
+            "excerpt": "Coverage axis TF-C1 round 3 (sonnet/high), repair delta e5c10e3b..776cac6e. Fold held: six other installCannedSelection callers discard the *bool; factory unchanged apart from the observer. Probe swap causeChanged \"changed\" -> \"chnged\" in selection.go:40 bit TestChangedRowsCarrySelectedBy at selected_by_test.go:36, restored yes. bench test --package ./internal/testreport pass, 207 tests, about 66s. 0 findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "60da9ca95d42fda9f625fda4cb2ea96280bff4c2",
+          "tip": "776cac6e43bb1a8686bfe1399181c511bc044a74",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-coverage-r2"
           ]
         }
       ]
