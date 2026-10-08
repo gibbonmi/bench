@@ -50,24 +50,26 @@ Five verification-only transfers averaged 28k tokens, and every record passed on
 
 | ticket | rounds | causes |
 |---|---|---|
-| 01-create-the-shared-refusal-route-registry.md | 1 | coverage |
-| 02-move-the-landing-faces-into-the-shared-registry.md | 1 | one-source, coverage |
-| 03-prove-each-agent-route-passes-the-wired-guards.md | 2 | one-source, coverage |
-| 04-render-the-recovery-matrix-from-the-registry.md | 1 | coverage |
-| 05-route-each-merge-refusal-through-the-registry.md | 1 | one-source, coverage |
-| 06-give-the-red-source-fold-an-exit.md | 1 | coverage |
-| 07-route-each-reset-refusal-through-the-registry.md | 1 | defect, coverage |
+| 01-create-the-shared-refusal-route-registry.md | 1 | delegate-error |
+| 02-move-the-landing-faces-into-the-shared-registry.md | 1 | one-source |
+| 03-prove-each-agent-route-passes-the-wired-guards.md | 2 | one-source, delegate-error |
+| 04-render-the-recovery-matrix-from-the-registry.md | 1 | delegate-error |
+| 05-route-each-merge-refusal-through-the-registry.md | 1 | one-source |
+| 06-give-the-red-source-fold-an-exit.md | 1 | delegate-error |
+| 07-route-each-reset-refusal-through-the-registry.md | 1 | delegate-error |
 | 08-route-the-commit-exit-3-to-the-reset-plan.md | 1 | one-source |
-| 09-route-each-commit-refusal-through-the-registry.md | 2 | authority, coverage |
-| 10-route-each-checkpoint-refusal-by-its-cause.md | 1 | authority, routing, coverage |
-| 11-route-the-commitment-policy-refusals-through-faces.md | 2 | route grammar, one-source |
-| 12-print-the-commitment-verb-routes-from-the-registry.md | 2 | authority, coverage |
-| 13-refuse-a-route-literal-outside-the-registry.md | 1 | one-source, coverage |
+| 09-route-each-commit-refusal-through-the-registry.md | 2 | delegate-error, spec-row |
+| 10-route-each-checkpoint-refusal-by-its-cause.md | 1 | ticket-slicing |
+| 11-route-the-commitment-policy-refusals-through-faces.md | 2 | spec-row, one-source |
+| 12-print-the-commitment-verb-routes-from-the-registry.md | 2 | delegate-error, delegate-error |
+| 13-refuse-a-route-literal-outside-the-registry.md | 1 | one-source |
 
 ## Agent-experience improvements
 
 ### Bench CLI
 
+- The census learning for this landing records 86 raw calls: rg 69, cat 9, sed 3, cd 2, rm 2, python3 1.
+  Feeds: new
 - Add a deletion marker to the ticket Writes grammar, and make `writes-resolve` and the landing fence both read it.
   Feeds: new
 - Make `bench probe` print the first failing test name in its verdict row, and the exit code of the mutated run.
