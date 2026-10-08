@@ -70,7 +70,7 @@ Advice: C5, a `go.mod` that is a directory or a link. The S1 repair makes the fl
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:e10da60fec12e5cdae6561536a283652fc88e5389f5069db37ba5659b69b8d56",
+  "plan_digest": "sha256:22c2f706e83b8458fc7e258c780bcc7e34d7267090d8202b0d9e95f81410167f",
   "implementation_session": "",
   "chunks": [
     {
@@ -869,6 +869,18 @@ Advice: C5, a `go.mod` that is a directory or a link. The S1 repair makes the fl
     {
       "from": "sha256:802ce2a779ccf3a4e748614f8b6837557f1f56e1ebe0232880dedbf0dba23a21",
       "to": "sha256:e10da60fec12e5cdae6561536a283652fc88e5389f5069db37ba5659b69b8d56",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ],
+        "TF-C2": [
+          "TF-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e10da60fec12e5cdae6561536a283652fc88e5389f5069db37ba5659b69b8d56",
+      "to": "sha256:22c2f706e83b8458fc7e258c780bcc7e34d7267090d8202b0d9e95f81410167f",
       "chunk_ids": {
         "TF-C1": [
           "TF-C1"
