@@ -1,7 +1,7 @@
 # Grade the completion plan against the ticket check floor
 
 Blocked by: 01-name-the-root-conformance-check.md, 02-derive-the-ticket-check-floor.md
-Writes: internal/preflight/check_floor.go (new), internal/preflight/check_floor_command_test.go (new), internal/preflight/check_floor_test.go (new), internal/preflight/command_bootstrap_test.go, internal/preflight/command_build_test.go, internal/preflight/command_review_test.go, internal/preflight/decision.go, internal/preflight/decision_test.go, internal/preflight/gather.go, internal/preflight/plan.go, internal/preflight/preflighttest/fixture.go, internal/preflight/ticket_rows.go (new)
+Writes: internal/preflight/check_floor.go (new), internal/preflight/check_floor_command_test.go (new), internal/preflight/check_floor_test.go (new), internal/preflight/command_bootstrap_test.go, internal/preflight/command_build_test.go, internal/preflight/command_review_test.go, internal/preflight/decision.go, internal/preflight/decision_test.go, internal/preflight/gather.go, internal/preflight/plan.go, internal/preflight/preflighttest/fixture.go, internal/preflight/ticket_rows.go (new), internal/testreport/check_test.go, internal/testreport/command.go, internal/testreport/environment.go, internal/testreport/named_check.go, internal/testreport/root_conformance_test.go
 Covers: TF6, TF16, TF17, TF18, TF23, TF24, TF25, TF26, TF27, TF28, TF29, TF30, TF31, TF32, TF33, TF34, TF35, TF36, TF37, TF38, TF39, TF40, TF41, TF42, TF43, TF44, TF45, TF46, TF66, TF68, TF69, TF70
 
 ## What to build
