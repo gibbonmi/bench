@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: internal/conformance/registry/checks.go, internal/conformance/checks_test.go, internal/conformance/stdlib_reimplementation_test.go (new), projects/benchkit.md, CHANGELOG.md, .bench/commitment.json, internal/adopt/doctor.go, internal/adopt/link.go, internal/adopt/link_hook.go, internal/assessment/collection.go, internal/benchguard/benchguard.go, internal/canary/mutation.go, internal/capability/capability.go, internal/compatibility/capabilities.go, internal/consumers/resolve.go, internal/coverage/citations.go, internal/gate/manifest.go, internal/gate/runner.go, internal/git/staged.go, internal/gitguard/verdict.go, internal/gitguard/verdict_push.go, internal/harnesses/harnesses.go, internal/landing/landing.go, internal/lines/lines.go, internal/maps/schema.go, internal/outline/outline.go, internal/preflight/preflighttest/reviewfiles.go, internal/publication/fixture_registry.go, internal/publication/npm_registry.go, internal/releaseevidence/release_requirements.go, internal/repairpilot/record.go, internal/retros/recommendations.go, internal/roadmap/roadmap.go, internal/sessioninspect/sessioninspect.go, internal/structure/budgets.go, internal/testreport/environment.go, internal/testreport/named_check.go, internal/worktree/clean.go, internal/worktree/land_refusal.go
-Covers: FT373.check, FT373.sites
+Covers: none
 
 ## What to build
 
