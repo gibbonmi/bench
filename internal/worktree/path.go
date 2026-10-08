@@ -99,22 +99,31 @@ func missingTreeRefusal(root string, assignment intent.Assignment) error {
 	return landingFaceRefusal(faceResetTreeMissing, refusal{values: map[string]string{refusalroute.FactRecovery: missingTreeRoute(root, assignment)}}, "", "")
 }
 
-// missingTreeRoute is the recovery the missing-tree face prints. A tree that is gone proves
-// nothing, so the landed selector's own proof picks the clean of the landed set, and every
-// other record takes its release. A value that is not line-safe prints its slot placeholder,
-// so the release keeps its command words.
-func missingTreeRoute(root string, assignment intent.Assignment) string {
-	landed := false
-	if defaultRef, resolved := git.ResolvedDefault(root); resolved {
-		if leases, err := assignmentLeaseStates(root); err == nil {
-			_, landed = landedSelected(root, assignment, defaultRef, leases[assignment.OwnerID])
-		}
+// missingTreeLanded reports whether a missing tree leaves with the clean of the landed set.
+// A tree that is gone proves nothing, so the landed selector's own proof decides. The
+// refusal and the `list` help row both read it, so neither names a clean that skips the
+// assignment.
+func missingTreeLanded(root string, assignment intent.Assignment) bool {
+	defaultRef, resolved := git.ResolvedDefault(root)
+	if !resolved {
+		return false
 	}
+	leases, err := assignmentLeaseStates(root)
+	if err != nil {
+		return false
+	}
+	_, landed := landedSelected(root, assignment, defaultRef, leases[assignment.OwnerID])
+	return landed
+}
+
+// missingTreeRoute is the recovery the missing-tree face prints. A value that is not
+// line-safe prints its slot placeholder, so the release keeps its command words.
+func missingTreeRoute(root string, assignment intent.Assignment) string {
 	request := assignment.RequestToken
 	if !lineSafe(request) {
 		request = "<request>"
 	}
-	route := recoverMissingTree(landed, request, assignment.Worktree)
+	route := recoverMissingTree(missingTreeLanded(root, assignment), request, assignment.Worktree)
 	if route.path == "" || lineSafe(route.path) {
 		return route.line()
 	}

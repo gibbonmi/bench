@@ -188,20 +188,32 @@ func TestMissingTreeRoutePrintsAPlaceholderInEachUnsafeSlot(t *testing.T) {
 }
 
 // TestMissingTreeRouteAgreesWithTheLandedSelector: the missing-tree route names the clean of
-// the landed set exactly when that clean selects the assignment. A live lease keeps a landed
-// assignment out of the landed set, so its route is the release, which names the lease.
+// the landed set exactly when that clean selects the assignment, and the `list` help row
+// names the same route. A live lease keeps a landed assignment out of the landed set, so its
+// route is the release, which names the lease.
 func TestMissingTreeRouteAgreesWithTheLandedSelector(t *testing.T) {
 	t.Parallel()
-	f := newOwnedAssignment(t, "missing-landed-leased")
-	landAssignment(t, f.root, f.creation, "landed.txt")
-	holdLiveLease(t, f)
-	mustNoError(t, os.RemoveAll(f.creation.Path))
-	r := runVerb(t, verbReset, f.call(resetToStart(f)...))
-	next, printed := recordField(r.stdout, "refused{detail="+refusalroute.Sentence(faceResetTreeMissing), refusalroute.NextField)
-	plan := runVerb(t, verbClean, f.call("--landed"))
-	selected := strings.Contains(plan.stdout, f.creation.Assignment.ID)
-	if !printed || (next == "bench worktree clean --landed") != selected {
-		t.Fatalf("missing-tree route = %q (printed %t) and clean --landed selects the assignment = %t, want the route to agree with the selector", next, printed, selected)
+	for _, leased := range []bool{true, false} {
+		request := map[bool]string{true: "missing-landed-leased", false: "missing-landed-free"}[leased]
+		t.Run(request, func(t *testing.T) {
+			t.Parallel()
+			f := newOwnedAssignment(t, request)
+			landAssignment(t, f.root, f.creation, "landed.txt")
+			if leased {
+				holdLiveLease(t, f)
+			}
+			mustNoError(t, os.RemoveAll(f.creation.Path))
+			r := runVerb(t, verbReset, f.call(resetToStart(f)...))
+			next, printed := recordField(r.stdout, "refused{detail="+refusalroute.Sentence(faceResetTreeMissing), refusalroute.NextField)
+			plan := runVerb(t, verbClean, f.call("--landed"))
+			selected := strings.Contains(plan.stdout, f.creation.Assignment.ID)
+			if !printed || (next == "bench worktree clean --landed") != selected || selected == leased {
+				t.Fatalf("missing-tree route = %q (printed %t) and clean --landed selects the assignment = %t, want the route to agree with the selector", next, printed, selected)
+			}
+			if list := runVerb(t, verbList, f.call()); !strings.Contains(list.stdout, "\n  "+next+",") {
+				t.Fatalf("list = (%d, %q), want the help row %q that the missing-tree refusal prints", list.exit, list.stdout, next)
+			}
+		})
 	}
 }
 
