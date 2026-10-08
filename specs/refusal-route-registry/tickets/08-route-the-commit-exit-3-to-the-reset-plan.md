@@ -1,7 +1,7 @@
 # Route the commit exit 3 to the reset plan
 
 Blocked by: 07-route-each-reset-refusal-through-the-registry.md
-Writes: internal/refusalroute/registry.go (new), internal/commit/commit.go, internal/commit/landing_test.go, internal/commit/refusal_route_test.go (new), internal/worktree/commit_route_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go, internal/refusalroute/faces_commit.go (new), internal/refusalroute/routetest/routetest.go (new), internal/refusalroute/routetest/routetest_test.go (new), internal/worktree/refusal_route_follow_test.go, internal/worktree/land_rerun.go
+Writes: internal/refusalroute/registry.go (new), internal/commit/commit.go, internal/commit/landing_test.go, internal/commit/refusal_route_test.go (new), internal/worktree/commit_route_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go, internal/refusalroute/faces_commit.go (new), internal/refusalroute/routetest/routetest.go (new), internal/refusalroute/routetest/routetest_test.go (new), internal/worktree/refusal_route_follow_test.go, internal/worktree/land_rerun.go, internal/worktree/merge_route_test.go, internal/worktree/refusal_route_test.go, internal/worktree/merge_refusal.go, internal/worktree/reset.go
 Covers: RR32, RR33, RR34, RR35
 
 ## What to build
