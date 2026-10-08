@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/refusal-route-registry/spec.md",
-  "plan_digest": "sha256:3ae2907dd73b212ed47dc6c3e373191338817deaa79e8f1aa1456e865b45dae6",
+  "plan_digest": "sha256:09259ca04468131aff9125326c043078881ec4190cafa38628483388cb98a239",
   "implementation_session": "",
   "chunks": [
     {
@@ -2729,9 +2729,9 @@
     {
       "id": "RR-C4",
       "base": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
-      "tip": "7879b23afb093bf754886394774b2193e4347968",
-      "plan_digest": "sha256:3ae2907dd73b212ed47dc6c3e373191338817deaa79e8f1aa1456e865b45dae6",
-      "source_digest": "8b17934c6d79e6c796068437f724283b0a90bee6",
+      "tip": "819154c6b9007e7c9019e19287f228a51462e02c",
+      "plan_digest": "sha256:09259ca04468131aff9125326c043078881ec4190cafa38628483388cb98a239",
+      "source_digest": "3bdd72ca8defafd138a1edd564cddbdffca873b8",
       "acceptance_rows": [
         "RR39",
         "RR40",
@@ -2805,6 +2805,71 @@
               "ref": "claude-agent:ft393_t10b",
               "digest": "sha256:6bc5397fbb60102a87b7587c7109331a39f832b95629d9a56be7b05d214cce1e",
               "excerpt": "$ bench test --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\ntree[1]{target,head,dirty}:\n  ft393-build,7879b23afb093bf754886394774b2193e4347968,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,260,5\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nProbe: Print the fixed write-access `help[1]{cmd,why}` row on the checkpoint refusal again\n$ bench probe internal/gate/run_transaction.go --swap 'return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --with 'fmt.Fprint(stdout, \"help[1]{cmd,why}:\\n  bench gate --fresh,retry after restoring repository write access\\n\"); return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/run_transaction.go,swap,failed,3,yes\n"
+            }
+          }
+        },
+        {
+          "id": "v-t10-gate-package-r1",
+          "performer": "claude:ft393_t10_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3bdd72ca8defafd138a1edd564cddbdffca873b8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t10_repair1",
+            "digest": "sha256:8d6d67e5ae6903deb17bd9a7f146cd88b12e2090aae432ab675272c66bc3d022",
+            "excerpt": "$ bench test --package ./internal/gate\ntree[1]{target,head,dirty}:\n  ft393-build,819154c6b9007e7c9019e19287f228a51462e02c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,26841,418\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-gate-package",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t10-checkpoint-routes-r1",
+          "performer": "claude:ft393_t10_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3bdd72ca8defafd138a1edd564cddbdffca873b8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t10_repair1",
+            "digest": "sha256:678fb49e461521571813fd03f049c0fa1721d6e96e23ae85b2b74c84a2fc1f23",
+            "excerpt": "$ bench test --package ./internal/gate --run 'TestCheckpointFacesFollowTheirRoutes|TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\ntree[1]{target,head,dirty}:\n  ft393-build,819154c6b9007e7c9019e19287f228a51462e02c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,1594,12\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t10-checkpoint-routes",
+          "command": "bench test --package ./internal/gate --run 'TestCheckpointFacesFollowTheirRoutes|TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'",
+          "exit_code": 0
+        },
+        {
+          "id": "v-t10-help-row-proof-r1",
+          "performer": "claude:ft393_t10_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3bdd72ca8defafd138a1edd564cddbdffca873b8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_t10_repair1",
+            "digest": "sha256:5b90b79db1e0fadbecb774c5c549daded7b2bd1e6ca633bc9aefc711b89c7375",
+            "excerpt": "$ bench test --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\ntree[1]{target,head,dirty}:\n  ft393-build,819154c6b9007e7c9019e19287f228a51462e02c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,259,5\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/gate/run_transaction.go --swap 'return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --with 'fmt.Fprintln(stdout, \"help[1]{cmd,why}:\"); return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/run_transaction.go,swap,failed,3,yes\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateRunRetainsSubjectConstructionCause,\"run_outcomes_test.go:201: stdout = \\\"help[1]{cmd,why}:\\\\n\\\", want no help row beside the route\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointRefusalRoute/missing_plan,\"review_checkpoint_test.go:248: refusal printed a help row beside its route: help[1]{cmd,why}:\",3\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointRefusalRoute/missing_record,\"review_checkpoint_test.go:248: refusal printed a help row beside its route: help[1]{cmd,why}:\",3\n"
+          },
+          "requirement": "t10-help-row-proof",
+          "command": "bench test --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Print the fixed write-access `help[1]{cmd,why}` row on the checkpoint refusal again. TestReviewCheckpointRefusalRoute must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft393_t10_repair1",
+              "digest": "sha256:5b90b79db1e0fadbecb774c5c549daded7b2bd1e6ca633bc9aefc711b89c7375",
+              "excerpt": "$ bench test --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\ntree[1]{target,head,dirty}:\n  ft393-build,819154c6b9007e7c9019e19287f228a51462e02c,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,259,5\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/gate/run_transaction.go --swap 'return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --with 'fmt.Fprintln(stdout, \"help[1]{cmd,why}:\"); return refuse(ctx, storageRoot, stderr, mode, funnelFace(err),' --package ./internal/gate --run 'TestReviewCheckpointRefusalRoute|TestGateRunRetainsSubjectConstructionCause'\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/gate/run_transaction.go,swap,failed,3,yes\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateRunRetainsSubjectConstructionCause,\"run_outcomes_test.go:201: stdout = \\\"help[1]{cmd,why}:\\\\n\\\", want no help row beside the route\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointRefusalRoute/missing_plan,\"review_checkpoint_test.go:248: refusal printed a help row beside its route: help[1]{cmd,why}:\",3\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointRefusalRoute/missing_record,\"review_checkpoint_test.go:248: refusal printed a help row beside its route: help[1]{cmd,why}:\",3\n"
             }
           }
         }
@@ -3035,6 +3100,27 @@
         ],
         "RR-C3": [
           "RR-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3ae2907dd73b212ed47dc6c3e373191338817deaa79e8f1aa1456e865b45dae6",
+      "to": "sha256:09259ca04468131aff9125326c043078881ec4190cafa38628483388cb98a239",
+      "chunk_ids": {
+        "RR-C1a": [
+          "RR-C1a"
+        ],
+        "RR-C1b": [
+          "RR-C1b"
+        ],
+        "RR-C2": [
+          "RR-C2"
+        ],
+        "RR-C3": [
+          "RR-C3"
+        ],
+        "RR-C4": [
+          "RR-C4"
         ]
       }
     }
@@ -3366,3 +3452,18 @@ Count: 6. Worst issue: C4-2, the gate route inside a land or commit authorizatio
 - C4-4, no-op, confidence 5: the same item as C4-P2.
 - C4-5, auto-fix, confidence 6: a fixture runs a refused `--fresh` checkpoint and holds `--fresh` in the rerun. Ticket 10 repair.
 - C4-6, no-op, confidence 4: the handback and tip-moved walks need no repair step by their nature.
+
+### RR-C4 repair cycle 1
+
+RR-C4 consumed 1 of its 2 repair cycles. The repair commit is 819154c6 (ticket 10).
+The repair session ran the debug step and stated these causes before its fixes.
+
+| finding | diagnosed cause | repro |
+|---|---|---|
+| C4-2, C4-P4, C4-S4 | The funnel served both the gate verb and the authorization entry, and `refuse` printed the gate route in every run. A commit or land run printed a second route, and a tickets-only landing printed `<arguments>`. | `TestAuthorizationRunPrintsTheCallersRoute` printed two `next=` lines before the edit. |
+| C4-S2, C4-P1, C4-3 | `applyCheckpoint` wrapped every `completionTree` error as a proof fault, so read and capture faults took `gate-handback`. | `TestCompletionFaultsRouteByTheirCause/unreadable_source` printed the reviewer route before the edit. |
+| C4-P3, C4-1 | The gate face declared the slug as a composed value, which prints as written. | `TestCheckpointRouteRendersHostileFacts/spaced_slug` printed the raw slug before the edit. |
+| C4-5 | No test graded the `mode == forceRun` term. | A `bench probe` that dropped the term returned `bit` after the new row. |
+| C4-S3, C4-S6 | The `next=` reader had three copies, and new comments carried spec row ids. | A read of the gate and commit tests. |
+
+Only the `bench gate` verb prints a gate route now; the land and commit verbs print their own route for a funnel refusal.
