@@ -2074,6 +2074,28 @@
           "supersedes": [
             "r-c2-coverage"
           ]
+        },
+        {
+          "id": "r-c2-r2-coverage",
+          "performer": "claude:ft393_c2_r1_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "862129435b89ab30c479c604b3f28f8ea272ecc6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c2_r1_coverage",
+            "digest": "sha256:11603a43a25bb261ca7a99ac8c091ae57547d838d10f60b0c65268b4ec169df9",
+            "excerpt": "RR-C2 confirming round, Coverage reaffirmation (claude:ft393_c2_r1_coverage) at record commit 6e16b78e.\nC2-RC1 resolved: the section \"RR-C2 repair cycle 1 red verdicts after the fix\" (about lines 2358-2373) gives a post-fix red verdict for C2-2, C2-3, C2-4, C2-5, C2-6, C2-P4 and C2-P5. Zero new findings.\nThe verdicts are recorded claims from the repair returns; the axis did not rerun them. The commit changes only the review record.\n"
+          },
+          "axis": "Coverage",
+          "base": "33ac2f98902ac4a51bfa951218f50f3fd268319d",
+          "tip": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c2-r1-coverage"
+          ]
         }
       ]
     }
