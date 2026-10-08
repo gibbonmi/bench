@@ -367,6 +367,35 @@ TF-C1 round 3: 0 findings. The callers of `installCannedSelection` keep their be
               "excerpt": "command: bench worktree exec ft349-build -- bench probe internal/testreport/environment.go --swap '\tif check == rootConformanceCheckName {\\n\t\treturn \"\"' --with '\tif check == rootConformanceCheckName {\\n\t\treturn check' --package ./internal/testreport --run '^TestRootConformanceCheckRunsUnscoped$'\nhead: 776cac6e43bb1a8686bfe1399181c511bc044a74 (clean)\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/environment.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestRootConformanceCheckRunsUnscoped,\"root_conformance_test.go:77: root-conformance child lacks the line \\\"BENCH_CONFORMANCE_SCOPE=\\\":\",84\nprobe exit=0 wall=3.2s\n"
             }
           }
+        },
+        {
+          "id": "t1r2-root-scope-probe-c1",
+          "performer": "claude:ft349_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e32356e41a7f6c51a086dfbd734eee8d0acae0ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t1_repair2/root-scope-probe",
+            "digest": "sha256:11943d512cd06aff513b868b4215c4db5141187c8b463b85be69b0865a132059",
+            "excerpt": "command: bench worktree exec ft349-build -- bench probe internal/testreport/environment.go --swap '\tif check == rootConformanceCheckName {\\n\t\treturn \"\"' --with '\tif check == rootConformanceCheckName {\\n\t\treturn check' --package ./internal/testreport --run '^TestRootConformanceCheckRunsUnscoped$'\nhead: 776cac6e43bb1a8686bfe1399181c511bc044a74 (clean)\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/environment.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestRootConformanceCheckRunsUnscoped,\"root_conformance_test.go:77: root-conformance child lacks the line \\\"BENCH_CONFORMANCE_SCOPE=\\\":\",84\nprobe exit=0 wall=3.2s\n"
+          },
+          "requirement": "root-scope-probe",
+          "command": "bench test --package ./internal/testreport --run '^TestRootConformanceCheckRunsUnscoped$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap the empty conformance scope for the check name in the root-conformance environment. TestRootConformanceCheckRunsUnscoped turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft349_t1_repair2/root-scope-probe",
+              "digest": "sha256:11943d512cd06aff513b868b4215c4db5141187c8b463b85be69b0865a132059",
+              "excerpt": "command: bench worktree exec ft349-build -- bench probe internal/testreport/environment.go --swap '\tif check == rootConformanceCheckName {\\n\t\treturn \"\"' --with '\tif check == rootConformanceCheckName {\\n\t\treturn check' --package ./internal/testreport --run '^TestRootConformanceCheckRunsUnscoped$'\nhead: 776cac6e43bb1a8686bfe1399181c511bc044a74 (clean)\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/testreport/environment.go,swap,failed,1,yes\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestRootConformanceCheckRunsUnscoped,\"root_conformance_test.go:77: root-conformance child lacks the line \\\"BENCH_CONFORMANCE_SCOPE=\\\":\",84\nprobe exit=0 wall=3.2s\n"
+            }
+          }
         }
       ],
       "reviews": [
