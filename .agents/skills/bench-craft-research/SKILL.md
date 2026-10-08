@@ -27,6 +27,10 @@ calling phase and `craft-delegate`.
 Draw the factual question graph before you read. The question graph is complete
 when every load-bearing claim traces to one question node.
 
+Each question asks for the fact and its nearest qualifier, such as the
+exemption list of a bound or the version gate of a rule. A question without
+its qualifier lets a literal answer stop the read one file early.
+
 Resolve a trivial lookup inline. Give one bounded question to one read-only
 delegate when its read set would displace your context, or when you hold useful
 concurrent work.
@@ -44,6 +48,16 @@ skill states no tier, no effort, and no iteration cap.
 
 Each charge follows `craft-delegate` for its contents, isolation, and
 verification mechanics. Add one research field: the primary-source boundary.
+
+Send each research slice to two independent readers at the same time. Both
+readers get one charge, and neither reader sees the other's return. A
+sequential second read is not a pair, because it inherits the first reader's
+spelling and scope.
+
+Diff the two returns by their `path:line` citations. The agreed set is the
+trusted set. Each disagreement and the union of the two not-verified lists form
+the frontier. Before you write the consuming charge, close the frontier with
+one targeted read.
 
 Synthesize a completed round before opening another. A new round names the
 conflict, the unknown, or the gap that its synthesis found. Dependent questions
@@ -65,6 +79,11 @@ The artifact under study and first-party upstream documentation or APIs are
 primary sources. Commentary, a secondary write-up, and unopened recall are not.
 A secondary source may locate evidence, but it cannot warrant a finding. When no
 primary source is reachable, record an unknown instead of a verified answer.
+
+For each fact it cites, a reader follows one hop. The reader opens the file
+that the fact names and reports the rule there that qualifies the fact. An edge
+the reader saw and did not follow goes on its not-verified list. That list is
+the open set of the search, and the coordinator dispatches the next read at it.
 
 The coordinator re-opens every source supporting a load-bearing conclusion and
 independently checks every join between returns. Delegate returns are ephemeral
