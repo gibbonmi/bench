@@ -27,4 +27,4 @@ At the ticket commit, rewrite the `planned` seam cell of each covered row into t
 - [ ] TF3: Over a root where the gate predicate answers false, the check exits 1 with a refusal and starts no Go child.
 - [ ] TF4: `bench test --checks` lists `root-conformance` with the kind `conformance`.
 - [ ] TF5: The check runs exactly where the gate predicate answers true, over a kit root, a kit without the entry test, and a foreign root.
-- [ ] `testBenchSource` returns `gate.KitRoot(root)`, and `internal/testreport/command.go` holds no read of `BENCH_KIT`.
+- [ ] `testBenchSource` returns `gate.KitRoot(root)` and holds no `os.Getenv("BENCH_KIT")` read.

@@ -6,7 +6,7 @@ Roadmap: FT349
 
 Decision source: `roadmap/FT349.md`, the named reviewed artifact from drain `d-bab100a48f42`, with the commitment criteria `FT349.floor` and `FT349.planned` in `.bench/commitment.json`.
 
-Verification log: pending
+Verification log: 2 iteration(s) to accept — paired Sonnet and Haiku reviewers reviewed the spec, then the tickets, with one confirming pass each. The spec fold closed six blocking items: the build-entry red route, four degenerate fixtures, and the exact public-response predicate. The ticket fold closed one blocking item: ticket 01 writes `internal/testreport/command.go` for its refusal before any Go child.
 
 ## Problem
 
