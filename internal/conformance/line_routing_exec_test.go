@@ -60,9 +60,9 @@ func checkAgentHookBehavior(root string) []string {
 		return nil
 	}
 	if !exists(realBench) {
-		probe := runWithInput(root, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"claude-nonexistent-9"}}`, "bash", hook)
+		probe := runWithInput(root, `{"tool_name":"Agent","tool_input":{"prompt":"x"}}`, "bash", hook)
 		if probe != nil && probe.ExitCode == 0 {
-			return []string{"check-agent-line.sh does not deny an unbound model"}
+			return []string{"check-agent-line.sh does not deny an omitted model"}
 		}
 		return nil
 	}
@@ -114,15 +114,15 @@ func checkAgentHookBehavior(root string) []string {
 	if replayErr != nil || !bytes.Equal(ledger, replayed) {
 		diags = append(diags, fmt.Sprintf("check-agent-line intent capture contract failed: replay changed ledger bytes: before=%q after=%q err=%v", ledger, replayed, replayErr))
 	}
-	// A tier name is not a token the Agent tool can pass. Only bound cells allow it.
-	hookCase("denies a tier name", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"mid"}}`, "", 2)
-	hookCase("denies an unbound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, "harness claude binds top=fable-5", 2)
+	// A model off every bound tier is a declared line the reviewer may direct, so it warns.
+	hookCase("warns on a tier name", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"mid"}}`, "is not a bound tier", 0)
+	hookCase("warns on an unbound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, "harness claude binds top=fable-5", 0)
 	// The advice is the asking harness's own column and nothing else. A Claude session never
 	// reads a recovery instruction naming ids it cannot pass.
 	if probe := runWithInputEnv(routed, env, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, "bash", hook); probe != nil && strings.Contains(probe.Stderr, "gpt-5.3-codex-spark") {
-		diags = append(diags, "check-agent-line.sh deny names another harness's column: "+probe.Stderr)
+		diags = append(diags, "check-agent-line.sh warning names another harness's column: "+probe.Stderr)
 	}
-	hookCase("denied intent is not captured", routed, `{"tool_name":"Agent","tool_use_id":"denied-1","tool_input":{"description":"must not persist","model":"gpt-9"}}`, "", 2)
+	hookCase("denied intent is not captured", routed, `{"tool_name":"Agent","tool_use_id":"denied-1","tool_input":{"description":"must not persist"}}`, "", 2)
 	if ledger, err := os.ReadFile(ledgerPath); err != nil || strings.Contains(string(ledger), "denied-1") {
 		diags = append(diags, fmt.Sprintf("check-agent-line intent capture contract failed: denied call changed ledger=%q err=%v", ledger, err))
 	}
@@ -358,8 +358,8 @@ func checkLineHarnessSurfaces(root string) []string {
 		{name: "kit CLI", want: "gpt-5.3-codex-spark", args: []string{"bash", realBench, "resolve-model", "--harness", "codex"}},
 		// A linked repo reaches the same core through the resolved wrapper on PATH.
 		{name: "linked-repo CLI", want: "opus-4-8", args: []string{"bash", filepath.Join(bindir, "bench"), "resolve-model", "--harness", "claude"}},
-		// The guard names claude, so its denial advises in the claude column.
-		{name: "claude hook", want: "harness claude binds top=fable-5", args: []string{"bash", hook}, input: `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`, wantExit: 2},
+		// The guard names claude, so its unbound-model warning advises in the claude column.
+		{name: "claude hook", want: "harness claude binds top=fable-5", args: []string{"bash", hook}, input: `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"gpt-9"}}`},
 	}, surfaces...) {
 		probe := runWithInputEnv(routed, env, surface.input, surface.args...)
 		if probe == nil || probe.ExitCode != surface.wantExit {

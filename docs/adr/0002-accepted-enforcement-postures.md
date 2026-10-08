@@ -22,9 +22,10 @@ A record that implies coverage it does not have is worse than silence.
    shift path exists for work that needs the enforced loop. Reopens on evidence
    of unverified done-claims shipping defects off the shift path.
 
-3. **The declared line's effort level has no enforcement surface.** Model
-   membership is enforced: the agent-line guard denies delegations off the
-   bound tiers. But effort exists only in the declaration, because effort is
+3. **The declared line's effort level has no enforcement surface.** The model
+   declaration is enforced: the agent-line guard denies a delegation with no
+   model. A model off the bound tiers gets a warning and runs, because the
+   reviewer may direct a delegation onto an unbound model. But effort exists only in the declaration, because effort is
    not observable to a hook the way a model id is. Accepted as declaration
    discipline under the no-silent-escalation invariant. Reopens if effort
    becomes mechanically observable, or if effort-declaration drift is shown to

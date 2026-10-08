@@ -464,14 +464,14 @@ func foreignKeyText(b Binding) string {
 }
 
 // AgentLineVerdict is the pure agent-line verdict for a delegation asked from harness.
-// Every degraded branch is fail-OPEN, exit 0, with a one-line stderr warning. Only a
-// present model bound nowhere in the matrix denies, exit 2. An unknown harness is a
+// Every degraded branch is fail-OPEN, exit 0, with a one-line stderr warning. A present
+// model bound nowhere in the matrix also warns and allows. Only an omitted model in a
+// routed repo, or a model declared on a fork, denies, exit 2. An unknown harness is a
 // wiring error, exit 1, the shim treats as a core error.
 //
-// Enforcement is permissive across every bound cell in the whole matrix. A Claude
-// session may legitimately name a Codex delegate's tier. The denial's advice names
-// only the asking harness's own tokens. The returned stderr carries no trailing
-// newline; the caller adds one.
+// A bound cell anywhere in the whole matrix allows silently. A Claude session may
+// legitimately name a Codex delegate's tier. The advice names only the asking harness's
+// own tokens. The returned stderr carries no trailing newline; the caller adds one.
 func AgentLineVerdict(stdin []byte, harness string, src Source) (exitCode int, stderr string) {
 	if !KnownHarness(harness) {
 		return 1, unknownHarness("check-agent-line", harness)
@@ -538,8 +538,8 @@ func AgentLineVerdict(stdin []byte, harness string, src Source) (exitCode int, s
 			}
 		}
 	}
-	return 2, "DENIED: delegation model '" + model + "' is not a bound tier; " + describeColumn(harness, b) +
-		" (see .bench/lines.env and the craft-line skill). Re-delegate on a bound tier or update the binding."
+	return 0, warn("delegation model '" + model + "' is not a bound tier; " + describeColumn(harness, b) +
+		" (see .bench/lines.env and the craft-line skill)")
 }
 
 // describeColumn formats the asking harness's own three bound tokens, the only tokens a
