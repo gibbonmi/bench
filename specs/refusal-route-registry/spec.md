@@ -987,7 +987,16 @@ The orchestrator records each author session before that author's dispatch.
           "preserved": "eb02867a4f5d139439fa9532ff05ae5cb889a537"
         }
       ],
-      "10-route-each-checkpoint-refusal-by-its-cause.md": [],
+      "10-route-each-checkpoint-refusal-by-its-cause.md": [
+        {
+          "session": "claude:ft393_t10",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "4abc3cc84ba09b72fc56796fa2e20ea42ea4dbcb",
+          "native_ref": "claude-agent:ft393_t10"
+        }
+      ],
       "11-route-the-commitment-policy-refusals-through-faces.md": [],
       "12-print-the-commitment-verb-routes-from-the-registry.md": [],
       "13-refuse-a-route-literal-outside-the-registry.md": []
