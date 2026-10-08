@@ -82,7 +82,7 @@ TF-C2 round 2: 0 findings. The folds of C1, C2, C3, C4, and C6 hold.
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:49fe6d5754b5458940bd3f566e3078842dbb4d355f4c67cfdd5f20258048c140",
+  "plan_digest": "sha256:99c7e75dc8b84d59453aebb7a6f005427886cf77a0ba1acfc7b5777e2f20f915",
   "implementation_session": "",
   "chunks": [
     {
@@ -1092,6 +1092,18 @@ TF-C2 round 2: 0 findings. The folds of C1, C2, C3, C4, and C6 hold.
     {
       "from": "sha256:22c2f706e83b8458fc7e258c780bcc7e34d7267090d8202b0d9e95f81410167f",
       "to": "sha256:49fe6d5754b5458940bd3f566e3078842dbb4d355f4c67cfdd5f20258048c140",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ],
+        "TF-C2": [
+          "TF-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:49fe6d5754b5458940bd3f566e3078842dbb4d355f4c67cfdd5f20258048c140",
+      "to": "sha256:99c7e75dc8b84d59453aebb7a6f005427886cf77a0ba1acfc7b5777e2f20f915",
       "chunk_ids": {
         "TF-C1": [
           "TF-C1"
