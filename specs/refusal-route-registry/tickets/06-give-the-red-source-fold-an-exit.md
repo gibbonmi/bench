@@ -1,7 +1,7 @@
 # Give the red-source fold an exit
 
 Blocked by: 05-route-each-merge-refusal-through-the-registry.md
-Writes: internal/refusalroute/registry.go (new), internal/worktree/merge.go, internal/landing/merge.go, internal/worktree/merge_route_test.go (new), internal/worktree/merge_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go, internal/worktree/merge_refusal.go, internal/worktree/land.go, internal/worktree/refusal_route_follow_test.go, internal/refusalroute/faces_land.go (new), internal/refusalroute/faces_merge.go (new)
+Writes: internal/refusalroute/registry.go (new), internal/worktree/merge.go, internal/landing/merge.go, internal/worktree/merge_route_test.go (new), internal/worktree/merge_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go, internal/worktree/merge_refusal.go, internal/worktree/land.go, internal/worktree/refusal_route_follow_test.go, internal/refusalroute/faces_land.go (new), internal/refusalroute/faces_merge.go (new), internal/worktree/merge_target_grade_test.go (new), internal/worktree/merge_caller_root_test.go
 Covers: RR21, RR22, RR23, RR24, RR25, RR26, RR55, RR56, RR57, RR59
 
 ## What to build

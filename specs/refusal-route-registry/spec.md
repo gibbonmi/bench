@@ -1068,6 +1068,8 @@ The prospective build owns these exact paths:
 - `internal/worktree/reset_restore_refusal_test.go`
 - `internal/worktree/reset_apply_test.go`
 - `internal/worktree/missing_tree_recovery_test.go`
+- `internal/worktree/merge_target_grade_test.go`
+- `internal/worktree/merge_caller_root_test.go`
 - `internal/worktree/lifecycle_test.go`
 - `internal/worktree/worktree_test.go`
 - `internal/worktree/lifecycle.go`
