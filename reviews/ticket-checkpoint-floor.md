@@ -639,9 +639,9 @@ TF-C2 round 2: 0 findings. The folds of C1, C2, C3, C4, and C6 hold.
     {
       "id": "TF-C2",
       "base": "07f1ee469e43e5d45a111cd5788df8c17f4d1cd2",
-      "tip": "f1285acdf3079a2c8f73bb2e3105425e11fe3a51",
-      "plan_digest": "sha256:49fe6d5754b5458940bd3f566e3078842dbb4d355f4c67cfdd5f20258048c140",
-      "source_digest": "8a2a126a382a8659cb9c91f65fa3965881d6e971",
+      "tip": "5845f8360fade33ea93f3f8119e6de309d4ada5b",
+      "plan_digest": "sha256:99c7e75dc8b84d59453aebb7a6f005427886cf77a0ba1acfc7b5777e2f20f915",
+      "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
       "acceptance_rows": [
         "TF7",
         "TF8",
@@ -876,6 +876,125 @@ TF-C2 round 2: 0 findings. The folds of C1, C2, C3, C4, and C6 hold.
               "ref": "claude-agent:ft349_t2_repair1/floor-probe",
               "digest": "sha256:33aced0b282ca21498cb8e37094f10f103c01a09e87c6a5410b95db8c5fd98ef",
               "excerpt": "head=f1285acdf3079a2c8f73bb2e3105425e11fe3a51\ncmd: bench test --package ./internal/testreport --run '^TestWritesFloor' exit=0\ngithub.com/gibbonmi/bench/internal/testreport,pass,154,13\nprobe (omit directory-entry loop in floor.go): bench probe exit=0, verdict=bit, cause=failed, failed_tests=3, restored=yes\nmutated test run exit=nonzero (failed): TestWritesFloorCoversADirectoryEntry, TestWritesFloorFlagsAnEmbeddingDirectory, TestWritesFloorKeepsTheSegmentBoundary\n"
+            }
+          }
+        },
+        {
+          "id": "t2r2-pkg-internal-testreport",
+          "performer": "claude:ft349_t2_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2_repair2/pkg-internal-testreport",
+            "digest": "sha256:3168dc4959dd9004b5099286282205b655ec0b3b0a89b00d53ad1349cfad2c7a",
+            "excerpt": "head=5845f8360fade33ea93f3f8119e6de309d4ada5b\ncommand: bench test --package ./internal/testreport\nexit=0 wall_s=64\ngithub.com/gibbonmi/bench/internal/testreport,pass,61870,221; failures[0] skips[0]\n"
+          },
+          "requirement": "pkg-internal-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-pkg-internal-tickets",
+          "performer": "claude:ft349_t2_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2_repair2/pkg-internal-tickets",
+            "digest": "sha256:42b0213f256bfcc5e50b92928b86fbdb9e99b3e0672cdd0790b98d5a58aeef68",
+            "excerpt": "head=5845f8360fade33ea93f3f8119e6de309d4ada5b\ncommand: bench test --package ./internal/tickets\nexit=0 wall_s=2\ngithub.com/gibbonmi/bench/internal/tickets,pass,4,46; failures[0] skips[0]\n"
+          },
+          "requirement": "pkg-internal-tickets",
+          "command": "bench test --package ./internal/tickets",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-pkg-internal-gate",
+          "performer": "claude:ft349_t2_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2_repair2/pkg-internal-gate",
+            "digest": "sha256:5443630cb3f83192cd266b1d95965cd215fdaff3d0283f9eab62c5176086ba75",
+            "excerpt": "head=5845f8360fade33ea93f3f8119e6de309d4ada5b\ncommand: bench test --package ./internal/gate\nexit=0 wall_s=24\ngithub.com/gibbonmi/bench/internal/gate,pass,21900,420; failures[0] skips[0]\n"
+          },
+          "requirement": "pkg-internal-gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-pkg-cmd-bench",
+          "performer": "claude:ft349_t2_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2_repair2/pkg-cmd-bench",
+            "digest": "sha256:d64cebfc42fdc6c111dabf012f3d7ee15bb20e086d4ca867fb01cc75ecad8c34",
+            "excerpt": "head=5845f8360fade33ea93f3f8119e6de309d4ada5b\ncommand: bench test --package ./cmd/bench\nexit=0 wall_s=18\ngithub.com/gibbonmi/bench/cmd/bench,pass,15355,333; failures[0] skips[0]\n"
+          },
+          "requirement": "pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-root-conformance",
+          "performer": "claude:ft349_t2_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2_repair2/root-conformance",
+            "digest": "sha256:881a20b22358f0fad791c30d9450bfe84f50f4cc78cd5543b0f5b31df082c970",
+            "excerpt": "head=5845f8360fade33ea93f3f8119e6de309d4ada5b\ncommand: bench test --check root-conformance (after bench worktree build)\nexit=0 wall_s=19\nroot-conformance,conformance,1,0; internal/conformance,pass,17119,1; failures[0] skips[0]\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2r2-floor-probe",
+          "performer": "claude:ft349_t2_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "be47e39db82bbdef53bfdaca32cf503aeacf9420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t2_repair2/floor-probe",
+            "digest": "sha256:d99b4d97449504adc23a59e4184e2ab47f5a43cd4df397dc74526fed521d7676",
+            "excerpt": "head=5845f8360fade33ea93f3f8119e6de309d4ada5b\ncommand: bench test --package ./internal/testreport --run '^TestWritesFloor' then bench probe internal/testreport/floor.go --omit <directory-entry loop>\nexit=baseline 0; probe verb 0; mutated run nonzero (cause=failed) wall_s=2 + 4\nbaseline: testreport,pass,94,13\nprobe: bit,internal/testreport/floor.go,omit,failed,3,restored=yes\nred: TestWritesFloorCoversADirectoryEntry floor_test.go:84; TestWritesFloorFlagsAnEmbeddingDirectory floor_test.go:92; TestWritesFloorKeepsTheSegmentBoundary floor_test.go:99\n"
+          },
+          "requirement": "floor-probe",
+          "command": "bench test --package ./internal/testreport --run '^TestWritesFloor'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the directory-entry rule from the floor function. TestWritesFloorCoversADirectoryEntry turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft349_t2_repair2/floor-probe",
+              "digest": "sha256:d99b4d97449504adc23a59e4184e2ab47f5a43cd4df397dc74526fed521d7676",
+              "excerpt": "head=5845f8360fade33ea93f3f8119e6de309d4ada5b\ncommand: bench test --package ./internal/testreport --run '^TestWritesFloor' then bench probe internal/testreport/floor.go --omit <directory-entry loop>\nexit=baseline 0; probe verb 0; mutated run nonzero (cause=failed) wall_s=2 + 4\nbaseline: testreport,pass,94,13\nprobe: bit,internal/testreport/floor.go,omit,failed,3,restored=yes\nred: TestWritesFloorCoversADirectoryEntry floor_test.go:84; TestWritesFloorFlagsAnEmbeddingDirectory floor_test.go:92; TestWritesFloorKeepsTheSegmentBoundary floor_test.go:99\n"
             }
           }
         }
