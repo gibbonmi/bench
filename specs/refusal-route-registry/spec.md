@@ -1066,6 +1066,18 @@ The orchestrator records each author session before that author's dispatch.
           "effort": "high",
           "source": "4cf6e4721b89fbcc06fdff9254442f3d95f18434",
           "native_ref": "claude-agent:ft393_t12"
+        },
+        {
+          "session": "claude:ft393_t12_repair1",
+          "assignment": "86659b1a8e60fc398e93bcaf62691549",
+          "model": "opus",
+          "effort": "high",
+          "source": "848a174e65dadbf399861e65ad684b36abbb1118",
+          "native_ref": "claude-agent:ft393_t12_repair1",
+          "predecessor": "claude:ft393_t12",
+          "trigger": "user-directed",
+          "stopped": "the ticket 12 author reported its RR-C5 records and has no live child",
+          "preserved": "048702bb1a57c0f3cbdb320a307aecfb2ee66892"
         }
       ],
       "13-refuse-a-route-literal-outside-the-registry.md": []
