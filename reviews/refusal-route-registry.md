@@ -2657,6 +2657,72 @@
           "supersedes": [
             "r-c3-coverage"
           ]
+        },
+        {
+          "id": "r-c3-r2-standards",
+          "performer": "claude:ft393_c3_r2_standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c3_r2_standards",
+            "digest": "sha256:9266e5887f6d13e77adb7a99cd11b8bd4cbeed15dad3520e69ed7a23cb447559",
+            "excerpt": "RR-C3 cycle 2 confirming round, Standards (claude:ft393_c3_r2_standards): evidence current=true. C3-RC1/C3-RS2/C3-RP1, C3-RS1, and C3-RP2 confirmed. Zero findings.\nConcern 1: the fixture is deterministic; the admin-dir marker stops a second move, and it lives under t.TempDir.\nConcern 2: land and merge face selection unchanged. Concern 3: the three commit.go edits change no behavior.\nAdvice: move tipMovedFixture beside the other fixtures; two typed errors do not need a shared abstraction yet.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Standards",
+          "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "tip": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c3-r1-standards"
+          ]
+        },
+        {
+          "id": "r-c3-r2-spec",
+          "performer": "claude:ft393_c3_r2_spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c3_r2_spec",
+            "digest": "sha256:653003881bc597efe4a9a2d6596b71ca388250fc0e1c90315cc68eaef3c06068",
+            "excerpt": "RR-C3 cycle 2 confirming round, Spec (claude:ft393_c3_r2_spec): evidence current=true. C3-RC1/C3-RS2/C3-RP1, C3-RS1, and C3-RP2 confirmed. Zero findings.\nConcern 2: no change; land and merge select faces by refusalError, AuthorizationRefusal, or the sentence, and the Error() text and Unwrap target are unchanged.\nAdvice: TipMovedError and NamedPathError could share one file.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Spec",
+          "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "tip": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c3-r1-spec"
+          ]
+        },
+        {
+          "id": "r-c3-r2-coverage",
+          "performer": "claude:ft393_c3_r2_coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a512c4e4ab3ccea3aa89a010f0c9dc1c8db8cfb7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft393_c3_r2_coverage",
+            "digest": "sha256:fc47c7e4bb6167f5eeb37679489d214a1d13df6dd195265459e1ee606940472a",
+            "excerpt": "RR-C3 cycle 2 confirming round, Coverage (claude:ft393_c3_r2_coverage): evidence current=true. C3-RC1/C3-RS2/C3-RP1, C3-RS1, and C3-RP2 confirmed. Zero findings.\nThe review record gives two red states for commit-tip-moved: the fixture printed the handback before the fix, and a probe that removed the typed wrap returned bit.\nConcern 1: the fixture is deterministic; a gate that ran too early turns the walk red, not falsely green.\nConcern 2: no face selection changed. Concern 3: no behavior change.\nImplementation command contributed to no finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "fba4fe785c6c55f8ad7a2cc1522efa33730332cb",
+          "tip": "0f2825e1678e14f2dd2ad40222cd46ac7772c810",
+          "finding_ids": [],
+          "supersedes": [
+            "r-c3-r1-coverage"
+          ]
         }
       ]
     }
