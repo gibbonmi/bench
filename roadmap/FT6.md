@@ -36,5 +36,6 @@ These candidates stay in the pending-evidence tier:
 - Unclaimed cleanup graduates when the sanctioned command omits unreached selected refs during a deterministic deletion fault.
 - The unclaimed fingerprint graduates if its required flags diverge or an observed digest mismatch occurs.
 - The cleanup-row test parser graduates when a comma-bearing fixture shifts a rendered field silently.
+- The 2026-10-08 skills-comparison candidates A2, A6 to A9, and B1 to B9 graduate when an occurrence names their failure. Each can also fold into a nearby edit of the same file. `capture/skills-comparison-assessment-2026-10-08.md` holds them. A1, the text-as-data rule, graduates on a reviewer decision.
 
-Sources: `capture/IDEAS.md` 2026-09-11 through 2026-09-12 and `capture/learnings.md` 2026-09-12, drained here. The structure candidate moved to FT307.
+Sources: `capture/IDEAS.md` 2026-09-11 through 2026-09-12 and `capture/learnings.md` 2026-09-12, drained here. The structure candidate moved to FT307. `capture/IDEAS.md` (2026-10-08 drain d-4df49992a158).

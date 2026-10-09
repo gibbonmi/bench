@@ -150,8 +150,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT381 (MEDIUM, decision required) — a delegated full run has decided risk classes, repair routing, and author-replacement records.**
 
-**FT378 (MEDIUM, decision required) — known issues and their workarounds have one tracked owner that each delegate charge reads.**
-
 **FT384 (MEDIUM, decision required) — legacy closure and the production path check share one scope matcher.**
 
 **FT386 (LOW, decision required) — the spec stage proposes a split above a row or ticket threshold.**
@@ -163,6 +161,8 @@ and the small cuts. The rows below hold the rest.
 **FT397 (LOW, decision required) — a phase close names the parallel tracks that write disjoint files and cross disjoint seams.**
 
 **FT400 (MEDIUM, decision required) — a ticket author near 300k context tokens finishes its ticket, and a fresh recorded session takes later work.**
+
+**FT403 (MEDIUM) — a review axis sweeps for each variant of a held finding and checks every registry of an extended family.**
 
 ## Evidence, diagnostics, and maintenance
 
@@ -195,6 +195,8 @@ and the small cuts. The rows below hold the rest.
 **FT394 (LOW) — `bench learning` links a landed fix to the open entry that it resolves.**
 
 **FT402 (MEDIUM, decision required) — the landing gate costs less time and keeps its failure detection.**
+
+**FT404 (LOW, decision required) — each conformance check states the scope that its detector grades.**
 
 ## Release qualification
 
@@ -319,3 +321,4 @@ recommended table is sequencing advice.
 ## Recommended sequence
 
 1. FT349
+2. NRO
