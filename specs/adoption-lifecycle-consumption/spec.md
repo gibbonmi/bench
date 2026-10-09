@@ -802,6 +802,18 @@ Review records bind three independent axes to each frozen chunk pair.
           "trigger": "user-directed",
           "stopped": "the ticket 04 author session reported completion of its ALC-UNLINK freeze and verification record commit a3b2eabc and has no live child",
           "preserved": "a3b2eabc816000c2b629e899c74162f4f8a4a28f"
+        },
+        {
+          "session": "claude:ft217_t4_repair2",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "069b514e9fd04c1475dbf9547677034aaa3d7d58",
+          "native_ref": "claude-agent:ft217_t4_repair2",
+          "predecessor": "claude:ft217_t4_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 04 repair cycle 1 session reported completion of its record commit c2a389e1 and has no live child",
+          "preserved": "069b514e9fd04c1475dbf9547677034aaa3d7d58"
         }
       ]
     }
