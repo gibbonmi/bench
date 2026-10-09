@@ -124,7 +124,7 @@ TF-C3 round 2: 0 findings. TF73 and TF74 hold.
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:dcdc9bb66453630198731959b1532905ac35a029dd46fb6b9800075a4ef466b3",
+  "plan_digest": "sha256:d0125cae58fd336eda51d56eea978aa655bbcc367cedbb84eb4258629f5a1afe",
   "implementation_session": "",
   "chunks": [
     {
@@ -2190,6 +2190,21 @@ TF-C3 round 2: 0 findings. TF73 and TF74 hold.
     {
       "from": "sha256:bd620dbd434de93df8a84f64d827e5963c24e31cbb3a1279fec758c23ea60cf5",
       "to": "sha256:dcdc9bb66453630198731959b1532905ac35a029dd46fb6b9800075a4ef466b3",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ],
+        "TF-C2": [
+          "TF-C2"
+        ],
+        "TF-C3": [
+          "TF-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:dcdc9bb66453630198731959b1532905ac35a029dd46fb6b9800075a4ef466b3",
+      "to": "sha256:d0125cae58fd336eda51d56eea978aa655bbcc367cedbb84eb4258629f5a1afe",
       "chunk_ids": {
         "TF-C1": [
           "TF-C1"
