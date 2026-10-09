@@ -65,25 +65,57 @@ func stagedAgents(stage, root string) (string, error) {
 	return stageBytes(stage, "agents", []byte(next), 0o644)
 }
 
-// stagedClaude converges CLAUDE.md to the canonical Bench form when it is absent or
-// already one of the known bench-generated forms. Any other existing content, including a
-// pre-existing empty file, is project-owned and left untouched. bench never writes into a
-// CLAUDE.md path a user already claimed, even with zero bytes; see the
-// pre-existing-empty-CLAUDE.md regression guard in the link/unlink surface contracts.
-// bench never injects the import lines into prose it did not write; see the "relink
-// injected an import into a project-owned CLAUDE.md" guard.
-func stagedClaude(stage, root string) (string, bool, error) {
-	b, err := os.ReadFile(filepath.Join(root, "CLAUDE.md"))
-	if os.IsNotExist(err) || string(b) == legacyClaudeMD() || string(b) == benchClaudeMD() {
-		p, e := stageBytes(stage, "claude", []byte(benchClaudeMD()), 0o644)
-		return p, true, e
+// observeClaude stages the canonical CLAUDE.md form and records the facts that the
+// conditional owner decides from. It returns the staged replacement. The known-form fact
+// comes from the bytes that the path reads, so a path that reads as absent, such as a
+// dangling link, is absent, and any other read error is returned. Content outside the
+// known forms, including a pre-existing empty file, is project content: bench never writes
+// into a CLAUDE.md path a user already claimed, and never injects the import lines into
+// prose it did not write. The caller observes a special file through isSpecialFile instead,
+// because reading a writerless FIFO never returns.
+func observeClaude(o *LifecycleObservation, stage, root string) (string, error) {
+	staged, err := stageBytes(stage, "claude", []byte(benchClaudeMD()), 0o644)
+	if err != nil {
+		return "", err
 	}
-	return "", false, err
+	dest := filepath.Join(root, "CLAUDE.md")
+	if err := observeDestination(o, dest, staged); err != nil {
+		return "", err
+	}
+	b, err := os.ReadFile(dest)
+	if os.IsNotExist(err) {
+		o.Present = false
+		return staged, nil
+	}
+	o.KnownForm = string(b) == legacyClaudeMD() || string(b) == benchClaudeMD()
+	return staged, err
 }
-func reclaimableClaude(path string) bool {
-	b, err := os.ReadFile(path)
-	return err == nil && (string(b) == legacyClaudeMD() || string(b) == benchClaudeMD())
+
+// observeWithdrawal records the facts of a manifest row that the plan no longer names. It
+// inspects no path that escapes the repository or crosses a symlink parent, and it
+// fingerprints only a regular file or a symlink, so it never opens a special file. A leaf
+// that Lstat cannot inspect is absent. A fingerprint failure is returned, because an
+// unreadable dropped asset is a hard failure.
+func observeWithdrawal(root string, row manifestRow, order int) (LifecycleObservation, error) {
+	o := LifecycleObservation{Path: row.rel, Order: order, Recorded: row.hash}
+	full, inside := resolveInside(root, row.rel)
+	o.Escapes = !inside
+	o.SymlinkParent = inside && hasSymlinkParent(root, row.rel)
+	if o.Escapes || o.SymlinkParent {
+		return o, nil
+	}
+	info, err := os.Lstat(full)
+	if err != nil {
+		return o, nil
+	}
+	o.Present, o.FileKind = true, fileKind(info.Mode())
+	if o.FileKind == "other" {
+		return o, nil
+	}
+	o.Observed, err = fingerprintPath(full)
+	return o, err
 }
+
 func hookBranch(root string) string {
 	if out, err := git.Output("-C", root, "ls-remote", "--symref", "origin", "HEAD"); err == nil {
 		for _, line := range strings.Split(out, "\n") {

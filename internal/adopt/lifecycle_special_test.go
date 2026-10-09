@@ -6,8 +6,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/compatibility"
 	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
 )
@@ -128,4 +131,146 @@ func TestLifecycleRepairCompatibility(t *testing.T) {
 		t.Fatalf("compatibility repair = (%d, %q, %q), want exit 1 with the modified-managed row and an incomplete repair", code, stdout, stderr)
 	}
 	requireKept(t, root, lifecycleDoc, before)
+}
+
+// TestLifecycleClaudeOwnership drives real relink over each CLAUDE.md partition, starting
+// from a linked repository. Project content, including an empty file, keeps its bytes and
+// takes no import and no row. Owned content that the project edited keeps its bytes and
+// row and is reported. An absent, legacy, or current form takes the current form.
+func TestLifecycleClaudeOwnership(t *testing.T) {
+	write := func(content string) func(*testing.T, string, string) {
+		return func(t *testing.T, _, path string) { writeFixtureFile(t, path, content, 0o644) }
+	}
+	project := func(content string) func(*testing.T, string, string) {
+		return func(t *testing.T, root, path string) {
+			write(content)(t, root, path)
+			editPreviewManifest(t, root, func(rows map[string]string) { delete(rows, "CLAUDE.md") })
+		}
+	}
+	for _, tc := range []struct {
+		name, reason string
+		installed    bool
+		arrange      func(t *testing.T, root, path string)
+	}{
+		{name: "project-authored", arrange: project("Project notes.\n")},
+		{name: "empty", arrange: project("")},
+		{name: "modified owned", reason: "modified-managed", arrange: write("Project notes.\n")},
+		{name: "absent", installed: true, arrange: func(t *testing.T, _, path string) {
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "legacy form", installed: true, arrange: write(legacyClaudeMD())},
+		{name: "current form", installed: true, arrange: func(*testing.T, string, string) {}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := consumerRepo(t)
+			linkConsumer(t, root, 0)
+			tc.arrange(t, root, filepath.Join(root, "CLAUDE.md"))
+			var before entryState
+			if !tc.installed {
+				before = observeEntry(t, root, "CLAUDE.md")
+			}
+			requireReported(t, runLink(nil), "CLAUDE.md", tc.reason)
+			if tc.installed {
+				requireClaudeInstalled(t, root)
+			} else {
+				requireKept(t, root, "CLAUDE.md", before)
+			}
+		})
+	}
+}
+
+// TestLifecycleSpecialInstructionFiles drives real Link with a writerless FIFO at an
+// instruction file. Link must finish without opening it, report it project-owned, keep
+// its file kind, and drop an ownership row that an earlier link wrote. Link runs off the
+// test goroutine behind a deadline because opening a writerless FIFO never returns.
+func TestLifecycleSpecialInstructionFiles(t *testing.T) {
+	for _, tc := range []struct {
+		name, rel string
+		owned     bool
+	}{
+		{name: "AGENTS.md", rel: "AGENTS.md"},
+		{name: "CLAUDE.md", rel: "CLAUDE.md"},
+		{name: "owned CLAUDE.md", rel: "CLAUDE.md", owned: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := consumerRepo(t)
+			path := filepath.Join(root, tc.rel)
+			if tc.owned {
+				linkConsumer(t, root, 0)
+				if err := os.Remove(path); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := syscall.Mkfifo(path, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			done := make(chan linkRun, 1)
+			go func() { done <- runLink(nil) }()
+			select {
+			case run := <-done:
+				requireReported(t, run, tc.rel, "project-owned")
+			case <-time.After(bounds.TestDeadline(bounds.TestDeadlineFloor)):
+				t.Fatalf("Link blocked on a FIFO at %s: the file was opened before its kind was checked", tc.rel)
+			}
+			if info, err := os.Lstat(path); err != nil || info.Mode()&os.ModeNamedPipe == 0 {
+				t.Fatalf("%s after Link: %v, want the FIFO kept", tc.rel, err)
+			}
+			if row := manifestHash(root, tc.rel); row != "" {
+				t.Fatalf("%s manifest row = %q, want no row", tc.rel, row)
+			}
+		})
+	}
+}
+
+// TestLifecycleHookCompatibility drives real Link over each effective pre-push state. An
+// absent or stale managed hook takes the current managed hook, also where core.hooksPath
+// diverts the hooks directory. A foreign hook, or any hook in a diverted directory that
+// Bench does not manage, refuses the whole link and leaves the repository unchanged.
+func TestLifecycleHookCompatibility(t *testing.T) {
+	foreign := func(t *testing.T, path string) { writeFixtureFile(t, path, "#!/bin/sh\nexit 0\n", 0o755) }
+	for _, tc := range []struct {
+		name     string
+		diverted bool
+		refused  bool
+		arrange  func(t *testing.T, path string)
+	}{
+		{name: "absent", arrange: func(*testing.T, string) {}},
+		{name: "stale managed", arrange: func(t *testing.T, path string) {
+			writeFixtureFile(t, path, strings.TrimSuffix(renderPrePushBranch("baked"), "\n"), 0o755)
+		}},
+		{name: "diverted absent", diverted: true, arrange: func(*testing.T, string) {}},
+		{name: "foreign", refused: true, arrange: foreign},
+		{name: "diverted foreign", diverted: true, refused: true, arrange: foreign},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := consumerRepo(t)
+			hooks := filepath.Join(root, ".git", "hooks")
+			if tc.diverted {
+				hooks = filepath.Join(root, "hooks")
+				if err := os.Mkdir(hooks, 0o755); err != nil {
+					t.Fatal(err)
+				}
+				runAdoptGit(t, root, "config", "core.hooksPath", hooks)
+			}
+			path := filepath.Join(hooks, "pre-push")
+			tc.arrange(t, path)
+			before := compatibilitytest.SnapshotHome(t, root)
+			run := runLink(nil)
+			if !tc.refused {
+				requireReported(t, run, "pre-push", "")
+				if got := InspectPrePush(root); got.State != PrePushManaged || got.Currency != PrePushCurrent || got.Path != path {
+					t.Fatalf("hook after Link = %#v, want the current managed hook at %s", got, path)
+				}
+				return
+			}
+			if want := "conflict: " + path + " exists and is not Bench-managed\n"; run.code != 1 || run.stderr != want {
+				t.Fatalf("Link = %d with stderr %q, want 1 with %q", run.code, run.stderr, want)
+			}
+			if after := compatibilitytest.SnapshotHome(t, root); !reflect.DeepEqual(after, before) {
+				t.Fatalf("refused link changed the repository:\n%+v\nwant:\n%+v", after, before)
+			}
+		})
+	}
 }

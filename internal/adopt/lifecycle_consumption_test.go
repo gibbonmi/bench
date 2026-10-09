@@ -12,11 +12,70 @@ import (
 )
 
 // The ordinary managed assets that the real Link fixtures change: a regular kit file, and
-// an executable kit file for the mode fixtures.
+// an executable kit file for the mode fixtures. lifecycleWithdrawn is a path that the
+// manifest owns and the current kit no longer plans.
 const (
-	lifecycleDoc  = ".bench/BENCH.md"
-	lifecycleExec = ".bench/bin/bench.sh"
+	lifecycleDoc       = ".bench/BENCH.md"
+	lifecycleExec      = ".bench/bin/bench.sh"
+	lifecycleWithdrawn = ".bench/withdrawn.md"
 )
+
+// linkRun is the exit and output of one real Link.
+type linkRun struct {
+	code           int
+	stdout, stderr string
+}
+
+func runLink(args []string) linkRun {
+	var stdout, stderr bytes.Buffer
+	code := Link(args, &stdout, &stderr, "1.0.0")
+	return linkRun{code, stdout.String(), stderr.String()}
+}
+
+// requireReported fails unless run exited 0, or, when reason is set, exited 3 with the
+// reason row for rel.
+func requireReported(t *testing.T, run linkRun, rel, reason string) {
+	t.Helper()
+	code := 0
+	if reason != "" {
+		code = 3
+	}
+	if run.code != code || reason != "" && !strings.Contains(run.stdout, rel+","+reason+"\n") {
+		t.Fatalf("Link = %d, want %d with the %q row for %s\nstdout:\n%s\nstderr:\n%s", run.code, code, reason, rel, run.stdout, run.stderr)
+	}
+}
+
+// plantWithdrawn writes the withdrawn asset and returns the fingerprint that a manifest
+// row records for it.
+func plantWithdrawn(t *testing.T, root string) string {
+	t.Helper()
+	path := filepath.Join(root, lifecycleWithdrawn)
+	writeFixtureFile(t, path, "withdrawn kit asset\n", 0o644)
+	recorded, err := fingerprintPath(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return recorded
+}
+
+// requireWithdrawn fails unless the withdrawn asset and its manifest row are both gone.
+func requireWithdrawn(t *testing.T, root string) {
+	t.Helper()
+	requireAbsent(t, filepath.Join(root, lifecycleWithdrawn))
+	if row := manifestHash(root, lifecycleWithdrawn); row != "" {
+		t.Fatalf("%s manifest row = %q, want no row", lifecycleWithdrawn, row)
+	}
+}
+
+// requireClaudeInstalled fails unless CLAUDE.md holds the current managed form and the
+// manifest records its fingerprint.
+func requireClaudeInstalled(t *testing.T, root string) {
+	t.Helper()
+	want := benchClaudeMD()
+	if got, row := readFile(t, filepath.Join(root, "CLAUDE.md")), manifestHash(root, "CLAUDE.md"); got != want || row != hashBytes([]byte(want)) {
+		t.Fatalf("CLAUDE.md = %q with row %q, want the current form and its fingerprint", got, row)
+	}
+}
 
 // entryState is what a preserved destination keeps: its bytes or link target and mode,
 // its file identity, and its manifest row.
@@ -117,14 +176,7 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 			if !tc.installed {
 				before = observeEntry(t, root, tc.rel)
 			}
-			code := 0
-			if tc.reason != "" {
-				code = 3
-			}
-			var stdout, stderr bytes.Buffer
-			if got := Link(tc.args, &stdout, &stderr, "1.0.0"); got != code || tc.reason != "" && !strings.Contains(stdout.String(), tc.rel+","+tc.reason+"\n") {
-				t.Fatalf("Link %v = %d, want %d with the %q row for %s\nstdout:\n%s\nstderr:\n%s", tc.args, got, code, tc.reason, tc.rel, &stdout, &stderr)
-			}
+			requireReported(t, runLink(tc.args), tc.rel, tc.reason)
 			if tc.installed {
 				requireInstalled(t, root, tc.rel)
 			} else {
@@ -134,10 +186,13 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 	}
 }
 
-// TestLifecycleOwnerConsumption drives each applying entry that consumes the desired
-// decision. Each entry starts from a manifest that pins the linked kit and owns no row,
-// and it must install an absent ordinary asset that the owner adds.
+// TestLifecycleOwnerConsumption drives each applying entry that consumes the complete
+// decision. Each entry starts from a manifest that pins the linked kit and owns only a
+// clean withdrawn asset, next to project AGENTS.md prose and no CLAUDE.md. Each entry
+// must install an absent ordinary asset and the current CLAUDE.md form, withdraw the clean
+// asset with its row, and add the managed block after the project prose.
 func TestLifecycleOwnerConsumption(t *testing.T) {
+	const prose = "# Team rules\n\nKeep this rule.\n"
 	for _, entry := range []struct {
 		name string
 		run  func(t *testing.T, root string)
@@ -157,11 +212,59 @@ func TestLifecycleOwnerConsumption(t *testing.T) {
 	} {
 		t.Run(entry.name, func(t *testing.T) {
 			root := consumerRepo(t)
-			if err := writeManifest(previewManifestPath(root), "1.0.0", nil); err != nil {
+			if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), prose, 0o644)
+			withdrawn := manifestRow{lifecycleWithdrawn, plantWithdrawn(t, root)}
+			if err := writeManifest(previewManifestPath(root), "1.0.0", []manifestRow{withdrawn}); err != nil {
 				t.Fatal(err)
 			}
 			entry.run(t, root)
 			requireInstalled(t, root, lifecycleDoc)
+			requireWithdrawn(t, root)
+			requireClaudeInstalled(t, root)
+			if got := readFile(t, filepath.Join(root, "AGENTS.md")); !strings.HasPrefix(got, prose) || !strings.Contains(got, BenchAgentsBlock()) {
+				t.Fatalf("AGENTS.md = %q, want the project prose followed by the managed block", got)
+			}
+		})
+	}
+}
+
+// TestLifecycleDroppedRows drives real relink over a manifest row that the kit no longer
+// plans. A clean withdrawn asset leaves with its row. A modified one keeps its bytes and
+// row and is reported. An absent one loses its row without a report.
+func TestLifecycleDroppedRows(t *testing.T) {
+	for _, tc := range []struct {
+		name, reason string
+		arrange      func(t *testing.T, path string)
+	}{
+		{name: "clean", arrange: func(*testing.T, string) {}},
+		{name: "modified", reason: "kept-modified-removed", arrange: func(t *testing.T, path string) {
+			writeFixtureFile(t, path, "project edit\n", 0o644)
+		}},
+		{name: "absent", arrange: func(t *testing.T, path string) {
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := consumerRepo(t)
+			linkConsumer(t, root, 0)
+			recorded := plantWithdrawn(t, root)
+			editPreviewManifest(t, root, func(rows map[string]string) { rows[lifecycleWithdrawn] = recorded })
+			tc.arrange(t, filepath.Join(root, lifecycleWithdrawn))
+			var before entryState
+			if tc.reason != "" {
+				before = observeEntry(t, root, lifecycleWithdrawn)
+			}
+			requireReported(t, runLink(nil), lifecycleWithdrawn, tc.reason)
+			if tc.reason != "" {
+				requireKept(t, root, lifecycleWithdrawn, before)
+				return
+			}
+			requireWithdrawn(t, root)
 		})
 	}
 }

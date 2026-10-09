@@ -42,8 +42,9 @@ type LifecycleInventory struct {
 type LifecycleObservation struct {
 	Path  string
 	Order int // the caller's original order
-	// PlanKind is the desired plan entry kind, or claude for the conditional CLAUDE.md
-	// owner. An empty kind marks a path that has no desired entry.
+	// PlanKind is the desired plan entry kind, claude for the conditional CLAUDE.md owner,
+	// or bespoke for a replacement that a domain helper prepared. An empty kind marks a
+	// path that has no desired entry.
 	PlanKind string
 	Present  bool
 	FileKind string // the destination kind: regular, symlink, or other
@@ -100,7 +101,8 @@ const (
 	manifestRetain = "retain"
 	manifestRecord = "record"
 
-	claudePlanKind = "claude"
+	claudePlanKind  = "claude"
+	bespokePlanKind = "bespoke"
 )
 
 // PlanLifecycle decides every path from immutable input without reading or changing a
@@ -215,6 +217,8 @@ func linkDecision(o LifecycleObservation) (LifecycleDecision, string) {
 		return seedDecision(o)
 	case claudePlanKind:
 		return claudeDecision(o), ""
+	case bespokePlanKind:
+		return bespokeDecision(o), ""
 	}
 	adoptAdapter := o.Recorded == "" && o.PlanKind == "adapter" && o.SymlinkParent && o.CanonicalAdapter
 	if o.Present && (o.Recorded != "" || adoptAdapter) && converged(o) {
@@ -286,6 +290,18 @@ func claudeDecision(o LifecycleObservation) LifecycleDecision {
 		return preserved(o.Path, "modified-managed", manifestRetain, o.Recorded)
 	}
 	return preserved(o.Path, "project-owned", manifestOmit, "")
+}
+
+// bespokeDecision publishes the replacement that a domain helper prepared, such as the
+// AGENTS.md managed block or the managed pre-push hook. The helper owns the transform, so
+// the owner reads only whether a replacement exists. A bespoke path has no manifest row.
+func bespokeDecision(o LifecycleObservation) LifecycleDecision {
+	if o.Staged == "" {
+		return preserved(o.Path, "unchanged", manifestOmit, "")
+	}
+	d := writeDecision(o)
+	d.ManifestAction, d.Fingerprint = manifestOmit, ""
+	return d
 }
 
 // withdrawalDecision removes a clean manifest row that link no longer plans.

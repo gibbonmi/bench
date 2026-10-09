@@ -422,15 +422,15 @@ Unlink / dry-run -> existing observations -> PlanLifecycle -> Decisions -> curre
 | ALC13 | 13 | Link retains an unowned collision without adding a manifest row. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleLinkPartitions`, project collision fixtures) | A project-preserve-to-add swap overwrites or owns the collision. |
 | ALC14 | 14 | Setup installs an absent seed without a manifest row. | `internal/adopt/setup_test.go` (`TestSetupSeedsGateInputs`) and `internal/adopt/lifecycle_special_test.go` (`TestLifecycleSeedOwnership`) | Omission of seed add leaves gate inputs absent. |
 | ALC15 | 15 | Setup retains an existing seed with its existing manifest disposition. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleSeedOwnership`) | A seed-preserve-to-change swap overwrites empty, edited, or dangling-leaf fixtures. |
-| ALC16 | 16 | Relink removes a clean dropped asset. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleDroppedRows`, clean fixture) | Omission of remove leaves the withdrawn file present. |
-| ALC17 | 17 | Relink retains a modified dropped asset with kept-modified-removed. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleDroppedRows`, modified fixture) | A preserve-to-remove swap deletes the edited withdrawn file. |
-| ALC18 | 18 | Relink drops ownership for an already absent withdrawn asset. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleDroppedRows`, absent fixture) | A manifest-omit-to-retain swap leaves the old row. |
+| ALC16 | 16 | Relink removes a clean dropped asset. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleDroppedRows`, clean fixture) | Omission of remove leaves the withdrawn file present. |
+| ALC17 | 17 | Relink retains a modified dropped asset with kept-modified-removed. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleDroppedRows`, modified fixture) | A preserve-to-remove swap deletes the edited withdrawn file. |
+| ALC18 | 18 | Relink drops ownership for an already absent withdrawn asset. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleDroppedRows`, absent fixture) | A manifest-omit-to-retain swap leaves the old row. |
 | ALC19 | 19 | A required write through a symlink parent aborts all planned promotion. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleHardRefusalOrder`) | Omission of the parent guard publishes a preceding accepted entry. |
 | ALC38 | 19 | The earlier inline symlink-parent refusal wins over the later missing-source refusal. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleHardRefusalOrder`, competing-refusals fixture through transactionalLink) | Omission of the early symlink-parent return exposes the later missing-source diagnostic. |
 | ALC20 | 20 | Link and unlink retain project prose around the managed AGENTS.md block. | `internal/adopt/link_transaction_test.go` (`TestUnlinkRemovesOnlyCleanManifestAssets`) | Omission of the domain transform or prose copy fails the existing round trip. |
-| ALC21 | 21 | Relink preserves empty or authored CLAUDE.md without injected imports. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleClaudeOwnership`, project fixtures) | A project-preserve-to-change swap injects the managed form. |
-| ALC22 | 22 | Relink installs the current CLAUDE.md form for absent or known forms. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleClaudeOwnership`, managed fixtures) | Omission of the selected replacement leaves the absent or legacy form. |
-| ALC23 | 23 | Link preserves special instruction files without opening their contents. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleSpecialInstructionFiles`) | Omission of the special-file guard reaches a deadline or changes the file kind. |
+| ALC21 | 21 | Relink preserves empty or authored CLAUDE.md without injected imports. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleClaudeOwnership`, project fixtures) | A project-preserve-to-change swap injects the managed form. |
+| ALC22 | 22 | Relink installs the current CLAUDE.md form for absent or known forms. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleClaudeOwnership`, managed fixtures) | Omission of the selected replacement leaves the absent or legacy form. |
+| ALC23 | 23 | Link preserves special instruction files without opening their contents. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleSpecialInstructionFiles`) | Omission of the special-file guard reaches a deadline or changes the file kind. |
 | ALC24 | 24 | Link and unlink retain the current effective-hook state behavior. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleHookCompatibility`) | A foreign-hook-to-managed swap replaces a foreign hook or changes the existing refusal. |
 | ALC25 | 25 | Compatibility repair retains strict ownership and retained recovery behavior. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleRepairCompatibility`) | Omission of strict mode preservation changes repair acceptance for a mode-edited asset. |
 | ALC26 | 26 | Unlink removes only clean present rows while absent rows remain silent. | `internal/adopt/link_transaction_test.go` (`TestUnlinkRemovesOnlyCleanManifestAssets`) and planned internal/adopt/lifecycle_unlink_test.go (`TestLifecycleUnlinkPartitions`) | Omission of a clean remove leaves a row destination present. |
@@ -815,8 +815,8 @@ Review records bind three independent axes to each frozen chunk pair.
         {
           "id": "dropped-probes",
           "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
-          "command": "bench probe internal/adopt/decision.go --omit <clean-withdrawal-remove-source> --package ./internal/adopt --run '^TestLifecycleDroppedRows$'",
-          "probe": "Clean-remove omission, modified-withdrawal effect swap, absent-row manifest-retain swap, and selected CLAUDE replacement omission must bite and restore. The ticket commit replaces the placeholder with the exact omitted source text."
+          "command": "bench probe internal/adopt/decision.go --omit 'case o.Observed == o.Recorded:' --package ./internal/adopt --run '^TestLifecycleDroppedRows$'",
+          "probe": "Clean-remove omission, modified-withdrawal effect swap, absent-row manifest-retain swap, and selected CLAUDE replacement omission must bite and restore."
         }
       ]
     },
