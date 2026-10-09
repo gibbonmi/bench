@@ -223,7 +223,78 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "nr-c1-r1-standards",
+          "performer": "claude:nro-c1-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "0f8a65e2cc006d71c605967d925149a2cf2af06d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c1-r1-standards",
+            "digest": "sha256:03eefd29623ea820ed813f20a7ad5ac7f0c1f73cf14065c8b58c532c83ec347f",
+            "excerpt": "## Standards (NR-C1 round 1, fable/medium, evidence sha256:8a91c71b63777a844e3be45777a036bfbc6df22c3866b84e2a0c5769731f8fcf, pair b925d1c1..4a3e8d02)\n\nBinding current (check-current: current=true, tip 4a3e8d02). Read the delta once (git diff b925d1c1 4a3e8d02 -- internal/ cmd/).\n\nHard violations: none.\n\nJudgment calls:\n- S1 auto-fix 6 — Duplicated Code / Lazy Element. RecordAssignment re-reads the spec and every planned ticket at internal/reviewrecord/assignment.go:179-183 through the same read closure that checkPlan already drove over every ticket (plan.go:111-112) and that read the spec at assignment.go:141. Plan.ticketPaths (assignment.go:188) exists only for that loop and is a second derivation of the ticket set beside checkPlan's names. The loop adds no refusal that checkPlan + line 141 do not already produce.\n- S2 ask-user 6 — One source per fact across the fence. recordtest.(*Fixture).TicketPath (recordtest/fixture.go:170) and reviewrecord.ticketPath (plan.go:65-66) both derive the planned-ticket location rule. The fixture collapsed its own two inline copies to one, but the production rule stays unexported, so a second source remains. Exporting it is a seam change the orchestrator should decide.\n- S3 no-op 5 — Duplicated fixture harness. refuseAssignment (recordcmd/assignment_test.go:61-76) repeats the run-check-compare shape of refuseArgs (verification_test.go:102-114) against the spec file instead of the record file. The two differ in target and in assertion set; incidental repetition, not knowledge.\n\nPlacement: cause relocated to recordcmd/verification.go, while spec.md:289 names refusal.go. Ticket 2 line 18 and its acceptance row at line 54 own that move, so this chunk is correct; no finding.\n\nAdvice: cmd/bench/record_operations_test.go:80-93 re-asserts the first-dispatch history and the \"already authors ticket 1.md\" refusal that assignment_test.go already pins; keep the CLI journey to dispatcher-only facts if the file grows. assignment.go:133-134 prints an empty head when ResolveCommit errs.\n\nCount: 3 (0 hard, 3 judgment). Worst: S1.\n\nEvidence cursors fetched: preflight check-current; git diff --stat; git diff -- internal/ cmd/; spec.md:279-319; ticket 1 lines 4, 18, 53; ticket 2 lines 18, 54; craft-review SKILL.md, finding-discipline.md, smell-baseline.md; craft-comments SKILL.md; wc -l on ten touched files; helper greps over recordcmd/*_test.go; delegated.go:97-106; chunk_test.go:46-93; verification_test.go:80-114; plan.go:60-129.\n\nExamined and clean: headroom (command.go 318 <= 370; verification.go 73, assignment.go 47, assignment_test.go 256 <= 350; fixture.go 380, write.go 330, help_inventory_test.go 338 under the 400 default); the payload/splice extraction in write.go removes a prior duplicate; help_inventory_test.go:9 is a gate-pinned independent expectation; all new comment prose is timeless, no provenance or narration, no FT<n> story tag; verification.go is a byte-for-byte relocation (sampled by reading the removed and added hunks side by side).\n"
+          },
+          "axis": "Standards",
+          "base": "b925d1c1fd675b0cc299543ff3ba4a60a4ddf978",
+          "tip": "e2068642f17fb744698626a66a26c6e67a7ce157",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "nr-c1-r1-spec",
+          "performer": "claude:nro-c1-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "0f8a65e2cc006d71c605967d925149a2cf2af06d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c1-r1-spec",
+            "digest": "sha256:c7fc8d97e21d8b0e65a04d19a35430ee5775fd83e70df8cf884375432970e77c",
+            "excerpt": "## Spec (NR-C1 round 1, fable/medium, evidence sha256:8a91c71b63777a844e3be45777a036bfbc6df22c3866b84e2a0c5769731f8fcf, pair b925d1c1..4a3e8d02)\n\nP1 | no-op | 7 | spec.md:125 \"Check those preimages again before calling the replacement owner.\" and spec.md:341 \"No new conformance check, hook, injected global port, or system-tagged test is required.\" and spec.md:555 \"Won't handle — concurrent unauthorized file writers after the final preimage check\" | The author's known limit. The loop exists at internal/reviewrecord/assignment.go:79-83. No NR row names the second check; only ticket bullet tickets/1-record-native-assignments.md:44 does, and spec line 341 forbids the one seam that could turn it red. Met by inspection; the chunk record should cite inspection, not a test.\n\nAdvice: (a) spec.md:123 says the source commit must \"remain HEAD for this assignment write\", but HEAD is resolved once (assignment.go:33) and the pre-write recheck compares preimages only; a commit between the two falls under the line-555 exclusion, so no finding. (b) spec.md:295 \"add only the shared guard there\" to write.go, yet write.go gained payload and splice (Render refactor); a one-source dedup, Standards call. (c) Chunk table spec.md:358 Tests column still reads \"planned assignment tests ... planned TestNativeRecordCLIJourney\"; the coverage-map cells are the citation form and the freeze accepted them, so cosmetic.\n\nScope creep: none. The form help (bench record assignment --help from the worktree binary) matches spec.md:117 byte for byte; recordcmd/assignment.go:207-216 lists no extra flag. Fixture additions Undispatched/TicketPath are test seams.\n\nGuidance edit: only .agents/commands/bench-implement-spec.md:80 changed, one sentence in place. Its anchored neighbours (internal/anchors/registry_retained_workflow.go:292-293) are untouched and the delegated-dispatch-declaration canary is unaffected. bench-review-implementation.md:211 already names bench record; .bench/BENCH-reference.md has no hand-built-JSON assignment description. Consistent with spec.md:314.\n\nRows audited and met: NR1-NR14, NR36 (all 15), each seam cell in citation form (spec.md:493-506, 528) and each named test present in internal/reviewrecord/recordcmd/assignment_test.go / cmd/bench/record_operations_test.go; refusals check unchanged bytes and no new directory entry (NR4, NR13); review-mode mismatch semantics match delegated.go:58-62.\n\nCount: 1 finding (P1, no-op). Worst: P1, no-op.\n\nEvidence cursors fetched: diff stat; spec sections 26-155, 279-344, 539-560, 721-732; ticket 1; finding-discipline.md; spills 1791536701736565707-da1caf7f2414d672.out (production diff), 1791536702801387987-10b7090536ac8d32.out (test diff), 1791536770896213206-2b72b6d40867100d.out and 1791536783455596507-c088726772a66843.out (spec-diff row lines); delegated.go:50-66; anchor greps; bench record assignment --help. Not fetched: full spec diff body, reviews/native-record-operations.md.\n"
+          },
+          "axis": "Spec",
+          "base": "b925d1c1fd675b0cc299543ff3ba4a60a4ddf978",
+          "tip": "e2068642f17fb744698626a66a26c6e67a7ce157",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "nr-c1-r1-coverage",
+          "performer": "claude:nro-c1-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "0f8a65e2cc006d71c605967d925149a2cf2af06d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c1-r1-coverage",
+            "digest": "sha256:b3e0ec0851d02c9319c70c63bea4cb1d6af616091655c72b9d85254d2ea7c486",
+            "excerpt": "## Coverage (NR-C1 round 1, fable/medium, evidence sha256:8a91c71b63777a844e3be45777a036bfbc6df22c3866b84e2a0c5769731f8fcf, pair b925d1c1..4a3e8d02)\n\nC1 — auto-fix — confidence 7 — input: a replacement whose --performer equals its --predecessor (the last session re-dispatching itself) over a history ending in that session. Expected break: refusal \"invalid predecessor; name the distinct preceding author\" (internal/reviewrecord/delegated.go:176), story 7 / rows NR8-NR9. No test in ./internal/reviewrecord/... exercises it: recordcmd/assignment_test.go:196-201 covers no-fields, another predecessor, missing stopped/preserved, and reassessment only; delegated_test.go:157-167 (replaced) always names a distinct successor. Probe: swap the guard to item.Predecessor != previous.Session → verdict silent, cause passed, restored yes. Should exist: a same-session-as-predecessor case in TestAssignmentReplacementHistory (exit 1, want \"distinct preceding author\").\n\nC2 — auto-fix — confidence 4 — input: --author-limit -1 (or 0). Expected break: usage exit 2 (the form advertises <positive> and assignmentValid closes it at recordcmd/assignment.go:194-198); edge inventory line 542 keeps the usage contract. No test; a mismatch would still refuse at exit 1 through RecordAssignment, so the observable gap is the exit code and help parity only. Probe: swap limit > 0 to limit != 0 → silent, restored yes. Should exist: a usage case in TestAssignmentExecutionIdentity or the recordcmd usage table.\n\nC3 — no-op — confidence 6 — input: --ticket 3.md on a two-ticket plan (decided edge, spec line 543 \"unplanned tickets\"). No test exercises the !planned branch at internal/reviewrecord/assignment.go:65-68; probe neutering it → silent, restored yes. The candidate validator (delegated.go:138-142) still refuses before replacement with \"invalid assignment ticket\", so the requirement holds and only the message differs.\n\nAdvice: the second preimage loop at internal/reviewrecord/assignment.go:85-89 is unobservable (its only breaker is a concurrent writer, a Won't-handle line); keep it but expect no witness. The checkPlan candidate also re-reads every ticket through unchanged, so TestAssignmentSourceRefusals/changed planned ticket already covers the working-ticket divergence.\n\nCount: 3 findings; worst is C1 (an undistinguished self-replacement writes a two-entry history under one session).\n\nEvidence cursors fetched: bench preflight evidence --check-current (current=true, base b925d1c1, tip 4a3e8d02); git diff b925d1c1 4a3e8d02 --stat and the full diffs of internal/reviewrecord/assignment.go, plan.go, write.go, recordcmd/assignment.go, recordcmd/command.go, recordcmd/assignment_test.go, cmd/bench/record_operations_test.go, recordtest/fixture.go, help_inventory_test.go; reads of spec.md lines 1-617, parse.go, delegated.go, plan.go, write.go:58-331, delegated_test.go:120-199, finding-discipline.md; rg for symlink/CRLF/duplicate-fence/predecessor witnesses.\n\nProbes (serial, each restored: yes): (1) delegated.go predecessor-guard swap → silent; (2) recordcmd/assignment.go limit > 0 → limit != 0 → silent (a first attempt dropping limit was invalid, compile refusal, discounted); (3) assignment.go !planned → false && !planned → silent. git status --short clean after.\n\nExamined and found covered: HEAD-stale source (NR6), divergent working spec and ticket (NR7), CRLF/Unicode outside the payload (assignment_test.go:220), execution-identity fields incl. omitted review mode defaulting, cross-ticket session reuse (recordcmd and CLI journey), version-1 refusal, temp-file absence on refusal, write failure via 0555 dir, replacement field crossing, symlink and parent-symlink spec paths (files.go:55 via readFile), duplicate plan fence (locate, parse.go:258-261), repeated --assignment id (allowed by design; the spec's own plan repeats it), short --source sha (resolved by commit(), command.go:257-264), repeated flags (once grammar).\n"
+          },
+          "axis": "Coverage",
+          "base": "b925d1c1fd675b0cc299543ff3ba4a60a4ddf978",
+          "tip": "e2068642f17fb744698626a66a26c6e67a7ce157",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -235,3 +306,37 @@
   }
 }
 ```
+
+## Repair state
+
+Chunk NR-C1 round 1 ran three fable/medium axes in parallel at `4a3e8d02`. Only the Coverage axis ran probes, and the tree was clean after every return.
+
+Chunk NR-C1 uses repair cycle 1 of 2 for C1 and C2 through a fresh repair session for ticket 1. C1 and C2 are the one hardening cycle of NR-C1, because the 15 acceptance rows proved in round 1. S1, S2, S3, P1, and C3 are `no-op`. No reviewer extension exists. Under `--auto-approve`, the reviewer approved repair rounds past the allowance in advance.
+
+## Standards
+
+NR-C1 round 1: 3 findings, worst S1. Raw count 3; repair targets 0.
+
+- S1 (no-op, confidence 6): the final preimage re-read loop in `internal/reviewrecord/assignment.go` repeats reads that `checkPlan` drove. The spec line "Check those preimages again before calling the replacement owner." requires that loop, and `ticketPaths` reads the same `ticketNames` owner as `checkPlan`.
+- S2 (no-op, confidence 6): `recordtest.(*Fixture).TicketPath` and `reviewrecord.ticketPath` both derive the ticket location rule. The fixture copies predate this build, and the delta folds two fixture copies into one. An export of the production rule is a seam change outside ticket 1.
+- S3 (no-op, confidence 5): `refuseAssignment` and `refuseArgs` share a run-check-compare shape with different targets and assertion sets; incidental repetition.
+
+Advice: the CLI journey re-asserts two facts that `assignment_test.go` pins; `RecordAssignment` prints an empty head when `ResolveCommit` errs.
+
+## Spec
+
+NR-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0. Rows NR1-NR14 and NR36 met.
+
+- P1 (no-op, confidence 7): the second preimage check has no red-capable test. The spec forbids the injected port that could reach it, and it marks the concurrent writer as Won't handle. Met by inspection.
+
+Advice: the HEAD re-resolution before the write falls under the Won't-handle line. `write.go` gained `payload` and `splice` as a one-source fold. The chunk table Tests column keeps its planning wording.
+
+## Coverage
+
+NR-C1 round 1: 3 findings, worst C1. Raw count 3; repair targets 2.
+
+- C1 (auto-fix, confidence 7): a replacement whose performer equals its predecessor is refused by `validateAssignment`, and no test exercises it. The predecessor-guard swap probe was silent. Repair: a same-session case in `TestAssignmentReplacementHistory`.
+- C2 (auto-fix, confidence 4): a non-positive `--author-limit` is a usage refusal that no test pins. The `limit > 0` swap probe was silent. Repair: a usage case in the recordcmd assignment tests.
+- C3 (no-op, confidence 6): an unplanned `--ticket` is refused by the candidate validator before replacement, so the `!planned` branch changes only the message.
+
+Advice: the second preimage loop has no witness by design.
