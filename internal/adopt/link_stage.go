@@ -199,80 +199,60 @@ func isSpecialFile(path string) bool {
 	return mode&os.ModeSymlink == 0 && !mode.IsRegular()
 }
 
-// convergedFingerprint returns dest's fingerprint when dest already holds exactly what
-// promoting staged would leave there, and "" when the entry still needs a write. The
-// permission bits are compared alongside the fingerprint because a fingerprint covers
-// content only. A kit asset can change its executable bit without changing a byte.
-func convergedFingerprint(dest, staged string) string {
-	destInfo, err := os.Lstat(dest)
-	if err != nil {
-		return ""
-	}
+// observeDestination records the staged entry and the destination facts that the
+// lifecycle owner compares. A fingerprint covers content only, so a present destination
+// also records both modes: a kit asset can change its executable bit without changing a
+// byte. An unreadable destination keeps an empty Observed fingerprint.
+//
+// A staged symlink also records what dest resolves to. A repo may satisfy a whole adapter
+// directory with one directory-level symlink (.claude/commands -> ../.agents/commands).
+// That symlink leaves dest resolving through its parent to the very file the staged link
+// names, so a reader of dest sees the same bytes as through the staged link.
+func observeDestination(o *LifecycleObservation, dest, staged string) error {
 	stagedInfo, err := os.Lstat(staged)
 	if err != nil {
-		return ""
+		return err
 	}
-	if stagedInfo.Mode()&os.ModeSymlink != 0 {
-		return convergedSymlinkFingerprint(dest, staged)
+	o.StagedKind = fileKind(stagedInfo.Mode())
+	if o.Staged, err = fingerprintPath(staged); err != nil {
+		return err
 	}
-	if destInfo.Mode()&os.ModeSymlink == 0 && destInfo.Mode().Perm() != stagedInfo.Mode().Perm() {
-		return ""
-	}
-	destPrint, err := fingerprintPath(dest)
+	destInfo, err := os.Lstat(dest)
 	if err != nil {
-		return ""
+		return nil
 	}
-	stagedPrint, err := fingerprintPath(staged)
-	if err != nil || destPrint != stagedPrint {
-		return ""
+	o.Present, o.FileKind = true, fileKind(destInfo.Mode())
+	o.Perm, o.StagedPerm = destInfo.Mode().Perm(), stagedInfo.Mode().Perm()
+	o.Observed, _ = fingerprintPath(dest)
+	if target, ok := stagedTarget(dest, staged); ok {
+		o.CanonicalAdapter = sameRegularFile(dest, target)
+		o.ResolvedEquivalent = sameRegularContent(dest, target)
 	}
-	return destPrint
+	return nil
 }
 
-// convergedSymlinkFingerprint answers convergedFingerprint for a staged symlink, whose
-// own permission bits carry nothing to compare. An identical link at dest is not the only
-// converged shape. A repo may satisfy a whole adapter directory with one directory-level
-// symlink (.claude/commands -> ../.agents/commands). That symlink leaves dest resolving
-// through its parent to the very file the staged link names. Both shapes are converged,
-// because a reader of dest sees the same bytes either way. Refusing the second shape
-// would send an untouched repo into the symlink-parent refusal on every entry.
-func convergedSymlinkFingerprint(dest, staged string) string {
-	destPrint, err := fingerprintPath(dest)
-	if err != nil {
-		return ""
-	}
-	if stagedPrint, err := fingerprintPath(staged); err == nil && stagedPrint == destPrint {
-		return destPrint
-	}
+// stagedTarget returns the file that a staged symlink names once it is promoted to dest.
+// stageSymlink writes the link inside the transaction's stage directory, so a relative
+// target resolves against dest's own directory.
+func stagedTarget(dest, staged string) (string, bool) {
 	target, err := os.Readlink(staged)
 	if err != nil {
-		return ""
-	}
-	// stageSymlink writes the link inside the transaction's stage directory, so a relative
-	// target only names its file once promoted: resolve it against dest's own directory.
-	if !filepath.IsAbs(target) {
-		target = filepath.Join(filepath.Dir(dest), target)
-	}
-	if !sameRegularContent(dest, target) {
-		return ""
-	}
-	return destPrint
-}
-
-func sameAdapterTarget(dest, staged string) bool {
-	target, err := os.Readlink(staged)
-	if err != nil {
-		return false
+		return "", false
 	}
 	if !filepath.IsAbs(target) {
 		target = filepath.Join(filepath.Dir(dest), target)
 	}
-	destInfo, err := os.Stat(dest)
+	return target, true
+}
+
+// sameRegularFile reports whether two paths resolve to one regular file.
+func sameRegularFile(a, b string) bool {
+	aInfo, err := os.Stat(a)
 	if err != nil {
 		return false
 	}
-	targetInfo, err := os.Stat(target)
-	return err == nil && destInfo.Mode().IsRegular() && targetInfo.Mode().IsRegular() && os.SameFile(destInfo, targetInfo)
+	bInfo, err := os.Stat(b)
+	return err == nil && aInfo.Mode().IsRegular() && bInfo.Mode().IsRegular() && os.SameFile(aInfo, bInfo)
 }
 
 // sameRegularContent reports whether two paths resolve to regular files holding the same
@@ -291,27 +271,4 @@ func sameRegularContent(a, b string) bool {
 	}
 	second, err := os.ReadFile(b)
 	return err == nil && bytes.Equal(first, second)
-}
-
-// ownedUnmodified reports whether dest still carries the exact bytes recorded for it in
-// the previous manifest. owned is that manifest's hash, and "" means unowned.
-func ownedUnmodified(dest, owned, staged string, strict bool) bool {
-	if owned == "" {
-		return false
-	}
-	fp, err := fingerprintPath(dest)
-	if err != nil || fp != owned {
-		return false
-	}
-	if strict {
-		before, beforeErr := os.Lstat(dest)
-		after, afterErr := os.Lstat(staged)
-		if beforeErr != nil || afterErr != nil {
-			return false
-		}
-		if before.Mode().IsRegular() && after.Mode().IsRegular() && before.Mode().Perm() != after.Mode().Perm() {
-			return false
-		}
-	}
-	return true
 }

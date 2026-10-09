@@ -64,6 +64,17 @@ type LifecycleObservation struct {
 	KnownForm          bool // CLAUDE.md holds a known Bench form
 }
 
+// fileKind names a file mode in the observation vocabulary: regular, symlink, or other.
+func fileKind(mode fs.FileMode) string {
+	switch {
+	case mode.IsRegular():
+		return "regular"
+	case mode&fs.ModeSymlink != 0:
+		return "symlink"
+	}
+	return "other"
+}
+
 // LifecycleDecision is the complete lifecycle choice for one path. ManifestAction is
 // omit, retain, or record, and Fingerprint is the value that it retains or records.
 type LifecycleDecision struct {
@@ -222,7 +233,9 @@ func linkDecision(o LifecycleObservation) (LifecycleDecision, string) {
 }
 
 // converged reports that the destination already holds what the staged entry writes.
-// A fingerprint covers content only, so a regular destination also compares its mode.
+// It compares the staged bytes rather than the recorded fingerprint, so a stale owned
+// asset still takes the current release. A fingerprint covers content only, so a regular
+// destination also compares its mode.
 func converged(o LifecycleObservation) bool {
 	if o.Observed == "" {
 		return false
@@ -246,7 +259,8 @@ func ownedClean(o LifecycleObservation) bool {
 }
 
 // seedDecision installs an absent seed once and preserves a present one. A seed adds
-// no manifest row, but it keeps an ownership row that already exists.
+// no manifest row, because a recorded row would read a later project edit back as a
+// modified-managed conflict. It keeps an ownership row that already exists.
 func seedDecision(o LifecycleObservation) (LifecycleDecision, string) {
 	if o.SymlinkParent {
 		return LifecycleDecision{}, symlinkParentRefusal(o.Path)

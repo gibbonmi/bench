@@ -2,11 +2,14 @@ package adopt
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -51,17 +54,24 @@ func editPreviewManifest(t *testing.T, root string, edit func(map[string]string)
 // previewEntry returns the first real link plan entry of kind.
 func previewEntry(t *testing.T, kind string) string {
 	t.Helper()
+	return linkPlanEntry(t, kind, func(entry planEntry) bool { return entry.kind == kind }).rel
+}
+
+// linkPlanEntry returns the first real link plan entry that match accepts. The name
+// labels the failure when no entry matches.
+func linkPlanEntry(t *testing.T, name string, match func(planEntry) bool) planEntry {
+	t.Helper()
 	plan, err := buildLinkPlan(gate.KitDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, entry := range plan {
-		if entry.kind == kind {
-			return entry.rel
+		if match(entry) {
+			return entry
 		}
 	}
-	t.Fatalf("link plan has no %s entry", kind)
-	return ""
+	t.Fatalf("link plan has no %s entry", name)
+	return planEntry{}
 }
 
 func TestLifecycleUpgradePreviewCompatibility(t *testing.T) {
@@ -223,6 +233,39 @@ func TestLifecycleUpgradeVersionGuards(t *testing.T) {
 			code, stdout, stderr := runPreviewUpgrade(t, nil, "1.0.1")
 			if code != 1 || stdout != "" || !strings.Contains(stderr, tc.wantErr) {
 				t.Fatalf("Upgrade = (%d, %q, %q), want exit 1 and %q", code, stdout, stderr, tc.wantErr)
+			}
+		})
+	}
+}
+
+// TestLifecycleSetupCancellation drives each Setup path that stops before the link
+// transaction. Each path keeps the repository snapshot that it had before Setup ran.
+func TestLifecycleSetupCancellation(t *testing.T) {
+	for _, tc := range []struct {
+		name, input, stderr string
+		args                []string
+		tty, ambiguous      bool
+		code                int
+	}{
+		{name: "plan", args: []string{"--plan"}},
+		{name: "decline", input: "n\n", tty: true, code: 1, stderr: "declined; no writes"},
+		{name: "end of input", tty: true, code: 1, stderr: "declined; no writes"},
+		{name: "ambiguous auto-confirm", args: []string{"--yes"}, ambiguous: true, code: 1, stderr: "--yes refuses an ambiguous plan"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := setupPromptTestRepo(t)
+			if tc.ambiguous {
+				writeFixtureFile(t, filepath.Join(root, "package.json"), `{"scripts":{"test":"echo ok"}}`+"\n", 0o644)
+			}
+			before := compatibilitytest.SnapshotHome(t, root)
+			var stdout, stderr bytes.Buffer
+			isTerminal := func(io.Reader) bool { return tc.tty }
+			code := setup(tc.args, strings.NewReader(tc.input), &stdout, &stderr, "1.0.0", isTerminal)
+			if after := compatibilitytest.SnapshotHome(t, root); !reflect.DeepEqual(after, before) {
+				t.Fatalf("setup %v changed the repository:\n%+v\nwant:\n%+v", tc.args, after, before)
+			}
+			if code != tc.code || !strings.Contains(stderr.String(), tc.stderr) {
+				t.Fatalf("setup %v = %d, stderr %q; want %d and %q", tc.args, code, stderr.String(), tc.code, tc.stderr)
 			}
 		})
 	}

@@ -1,0 +1,4 @@
+		if lifecycle.Refusal != "" {
+			fmt.Fprintln(stderr, lifecycle.Refusal)
+			return 1, false
+		}
