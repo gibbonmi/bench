@@ -689,7 +689,16 @@ Review records bind three independent axes to each frozen chunk pair.
           "preserved": "f3f912e8c26242032e71a77350339a700e428096"
         }
       ],
-      "02-consume-decisions-for-desired-link-assets.md": [],
+      "02-consume-decisions-for-desired-link-assets.md": [
+        {
+          "session": "claude:ft217_t2",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "native_ref": "claude-agent:ft217_t2"
+        }
+      ],
       "03-consume-decisions-for-dropped-and-bespoke-link-assets.md": [],
       "04-consume-unlink-decisions-and-close-entry-proof.md": []
     }
