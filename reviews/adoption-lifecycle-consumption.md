@@ -726,6 +726,107 @@
               "excerpt": "tree[1]{target,head,dirty}:\n  ft217-build,66c42d66315769053485b795ebfca9de74e6e55b,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/decision.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleDroppedRows$,passed,4\nspilled{lines=11,bytes=680,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/32297bb2a2b17d4d68b8c88121928c21/1791560273904735826-9051bc6b1e8f680d.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,6827,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleDroppedRows/clean,\"lifecycle_consumption_test.go:262: Link = 3, want 0 with the \\\"\\\" row for .bench/withdrawn.md\",11\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t2-desired-consumption",
+          "performer": "claude:ft217_t2b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2b/14-final-after-helper-collapse.txt",
+            "digest": "sha256:a50b47632805b7328c2fe493daca167637d3a1c78b2aeca15e4e9cecd6563345",
+            "excerpt": "change: test helper manifestRowOf removed; observeEntry, requireInstalled, and TestLifecycleSeedOwnership read the row through the production reader manifestHash (internal/adopt/link.go). Production unchanged. bench worktree build before each run.\n\nfloor 3: bench worktree exec ft217-build -- bench test --package ./internal/adopt\n  exit 0; github.com/gibbonmi/bench/internal/adopt,pass,194356,195; failures[0]; skips[0]\n\nfloor 1: bench worktree exec ft217-build -- bench test --package ./internal/adopt --run 'Test(LifecycleLinkPartitions|LifecycleSeedOwnership|LifecycleHardRefusalOrder|LifecycleRepairCompatibility|LifecycleSetupCancellation|TransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent|SetupSeedsGateInputs)'\n  exit 0; github.com/gibbonmi/bench/internal/adopt,pass,31470,31; failures[0]; skips[0]\n"
+          },
+          "requirement": "desired-consumption",
+          "command": "bench test --package ./internal/adopt --run 'Test(LifecycleLinkPartitions|LifecycleSeedOwnership|LifecycleHardRefusalOrder|LifecycleRepairCompatibility|LifecycleSetupCancellation|TransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent|SetupSeedsGateInputs)'",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-desired-floor-conformance",
+          "performer": "claude:ft217_t2b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2b/13-final-floor.txt",
+            "digest": "sha256:ddbb22a9532ccec2e702f34cb7f532438bc3d8d25bedd795752a7eee298b9ffb",
+            "excerpt": "final floor on the candidate with the final test files, after bench worktree build (production cmp-identical to scratchpad/t2/candidate/)\n\nfloor 1: bench worktree exec ft217-build -- bench test --package ./internal/adopt --run 'Test(LifecycleLinkPartitions|LifecycleSeedOwnership|LifecycleHardRefusalOrder|LifecycleRepairCompatibility|LifecycleSetupCancellation|TransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent|SetupSeedsGateInputs)'\n  exit 0; github.com/gibbonmi/bench/internal/adopt,pass,31956,31; failures[0]; skips[0]\n\nfloor 2: bench worktree exec ft217-build -- bench test --check root-conformance\n  exit 0; root-conformance,conformance,1,0; github.com/gibbonmi/bench/internal/conformance,pass,15461,1; failures[0]; skips[0]\n\nfloor 3: bench worktree exec ft217-build -- bench test --package ./internal/adopt\n  exit 0; github.com/gibbonmi/bench/internal/adopt,pass,193264,195; failures[0]; skips[0]\n\nfloor 4: bench worktree exec ft217-build -- bench test --package ./cmd/bench\n  exit 0; github.com/gibbonmi/bench/cmd/bench,pass,15047,334; failures[0]; skips[0]\n\nfloor 5 (skip-ownership): not run; no new test can skip (failures/skips[0] above, and no new test calls t.Skip).\n"
+          },
+          "requirement": "desired-floor-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-desired-floor-adopt",
+          "performer": "claude:ft217_t2b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2b/14-final-after-helper-collapse.txt",
+            "digest": "sha256:a50b47632805b7328c2fe493daca167637d3a1c78b2aeca15e4e9cecd6563345",
+            "excerpt": "change: test helper manifestRowOf removed; observeEntry, requireInstalled, and TestLifecycleSeedOwnership read the row through the production reader manifestHash (internal/adopt/link.go). Production unchanged. bench worktree build before each run.\n\nfloor 3: bench worktree exec ft217-build -- bench test --package ./internal/adopt\n  exit 0; github.com/gibbonmi/bench/internal/adopt,pass,194356,195; failures[0]; skips[0]\n\nfloor 1: bench worktree exec ft217-build -- bench test --package ./internal/adopt --run 'Test(LifecycleLinkPartitions|LifecycleSeedOwnership|LifecycleHardRefusalOrder|LifecycleRepairCompatibility|LifecycleSetupCancellation|TransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent|SetupSeedsGateInputs)'\n  exit 0; github.com/gibbonmi/bench/internal/adopt,pass,31470,31; failures[0]; skips[0]\n"
+          },
+          "requirement": "desired-floor-adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-desired-floor-cmd",
+          "performer": "claude:ft217_t2b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2b/13-final-floor.txt",
+            "digest": "sha256:ddbb22a9532ccec2e702f34cb7f532438bc3d8d25bedd795752a7eee298b9ffb",
+            "excerpt": "final floor on the candidate with the final test files, after bench worktree build (production cmp-identical to scratchpad/t2/candidate/)\n\nfloor 1: bench worktree exec ft217-build -- bench test --package ./internal/adopt --run 'Test(LifecycleLinkPartitions|LifecycleSeedOwnership|LifecycleHardRefusalOrder|LifecycleRepairCompatibility|LifecycleSetupCancellation|TransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent|SetupSeedsGateInputs)'\n  exit 0; github.com/gibbonmi/bench/internal/adopt,pass,31956,31; failures[0]; skips[0]\n\nfloor 2: bench worktree exec ft217-build -- bench test --check root-conformance\n  exit 0; root-conformance,conformance,1,0; github.com/gibbonmi/bench/internal/conformance,pass,15461,1; failures[0]; skips[0]\n\nfloor 3: bench worktree exec ft217-build -- bench test --package ./internal/adopt\n  exit 0; github.com/gibbonmi/bench/internal/adopt,pass,193264,195; failures[0]; skips[0]\n\nfloor 4: bench worktree exec ft217-build -- bench test --package ./cmd/bench\n  exit 0; github.com/gibbonmi/bench/cmd/bench,pass,15047,334; failures[0]; skips[0]\n\nfloor 5 (skip-ownership): not run; no new test can skip (failures/skips[0] above, and no new test calls t.Skip).\n"
+          },
+          "requirement": "desired-floor-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-link-probes",
+          "performer": "claude:ft217_t2b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2b/p01-alc38.txt",
+            "digest": "sha256:5633f20be80d3782bf348d84fa02e0617bdd91c619fa96d499ebedffebdf098e",
+            "excerpt": "command: bench worktree exec ft217-build -- bench probe internal/adopt/link_transaction.go --omit-file specs/adoption-lifecycle-consumption/assets/alc38-omit.txt --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$/^competing_refusals$'\nomitted bytes (od -c): \\t\\tif lifecycle.Refusal != \"\" {\\n\\t\\t\\tfmt.Fprintln(stderr, lifecycle.Refusal)\\n\\t\\t\\treturn 1, false\\n\\t\\t}\\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/link_transaction.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleHardRefusalOrder$/^competing_refusals$,passed,2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,31,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/competing_refusals,\"lifecycle_special_test.go:107: transactionalLink = (1, false), stderr \\\"conflict: kit asset missing: /tmp/BWUVJH/t/TestLifecycleHardRefusalOrder4280772862/001/absent-kit-source\\\\\\\\n\\\"; want (1, false), stderr \\\"conflict: linked/asset has a symlin… (261 bytes)\",1\nreading: the mutant still exits 1 with changed false (publishes nothing); only the exact stderr assertion fails, exposing the later missing-source diagnostic.\n"
+          },
+          "requirement": "link-probes",
+          "command": "bench probe internal/adopt/link_transaction.go --omit-file specs/adoption-lifecycle-consumption/assets/alc38-omit.txt --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Early competing-refusal omission, selected desired effects, mode facts, seeds, and strict repair witnesses must bite and restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft217_t2b/p01-alc38.txt",
+              "digest": "sha256:5633f20be80d3782bf348d84fa02e0617bdd91c619fa96d499ebedffebdf098e",
+              "excerpt": "command: bench worktree exec ft217-build -- bench probe internal/adopt/link_transaction.go --omit-file specs/adoption-lifecycle-consumption/assets/alc38-omit.txt --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$/^competing_refusals$'\nomitted bytes (od -c): \\t\\tif lifecycle.Refusal != \"\" {\\n\\t\\t\\tfmt.Fprintln(stderr, lifecycle.Refusal)\\n\\t\\t\\treturn 1, false\\n\\t\\t}\\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/link_transaction.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleHardRefusalOrder$/^competing_refusals$,passed,2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,31,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/competing_refusals,\"lifecycle_special_test.go:107: transactionalLink = (1, false), stderr \\\"conflict: kit asset missing: /tmp/BWUVJH/t/TestLifecycleHardRefusalOrder4280772862/001/absent-kit-source\\\\\\\\n\\\"; want (1, false), stderr \\\"conflict: linked/asset has a symlin… (261 bytes)\",1\nreading: the mutant still exits 1 with changed false (publishes nothing); only the exact stderr assertion fails, exposing the later missing-source diagnostic.\n"
+            }
+          }
         }
       ],
       "reviews": []
