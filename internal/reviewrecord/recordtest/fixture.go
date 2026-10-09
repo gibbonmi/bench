@@ -90,7 +90,7 @@ func (f *Fixture) SetTicketWrites(writes string) {
 	f.T.Helper()
 	for _, chunk := range f.Plan.Chunks {
 		for _, ticket := range chunk.Tickets {
-			path := filepath.ToSlash(filepath.Join(filepath.Dir(f.spec), "tickets", ticket))
+			path := f.TicketPath(ticket)
 			data, err := os.ReadFile(filepath.Join(f.Root, path))
 			if err != nil || !strings.Contains(string(data), preparedWrites) {
 				f.T.Fatalf("prepared ticket %s: %v; want the %q line", path, err, preparedWrites)
@@ -157,6 +157,19 @@ func Delegate(plan *rr.Plan) {
 	plan.Execution = execution
 }
 
+// Undispatched empties every assignment history of a delegated plan, so each ticket waits
+// for its first dispatch. It follows Delegate in the option list.
+func Undispatched(plan *rr.Plan) {
+	for ticket := range plan.Execution.Assignments {
+		plan.Execution.Assignments[ticket] = []rr.Assignment{}
+	}
+}
+
+// TicketPath is the repository path of one prepared ticket basename.
+func (f *Fixture) TicketPath(name string) string {
+	return filepath.ToSlash(filepath.Join(filepath.Dir(f.spec), "tickets", name))
+}
+
 // Assign is one first-dispatch assignment for a ticket.
 func Assign(ticket string) rr.Assignment {
 	return rr.Assignment{Session: Author(ticket), Assignment: "fixture-assignment-" + ticket, Model: "unknown", Effort: "unknown", Source: "fixture-source", NativeRef: "fixture:dispatch-" + ticket}
@@ -174,7 +187,7 @@ func Prepare(t testing.TB, root string, count int, spec, body string, options ..
 		if i > 1 {
 			blocker = fmt.Sprintf("%d.md", i-1)
 		}
-		f.Write(filepath.ToSlash(filepath.Join(filepath.Dir(spec), "tickets", ticket)), fmt.Sprintf("# Chunk %d\n\nBlocked by: %s\n"+preparedWrites+"\nCovers: E%d\n\n## What to build\n\nImplement the behavior.\n\n## Acceptance\n\n- [ ] E%d: The behavior works.\n", i, blocker, i, i))
+		f.Write(f.TicketPath(ticket), fmt.Sprintf("# Chunk %d\n\nBlocked by: %s\n"+preparedWrites+"\nCovers: E%d\n\n## What to build\n\nImplement the behavior.\n\n## Acceptance\n\n- [ ] E%d: The behavior works.\n", i, blocker, i, i))
 	}
 	for _, option := range options {
 		option(&plan)

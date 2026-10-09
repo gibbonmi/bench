@@ -19,18 +19,13 @@ import (
 // or a duplicate fence is an error, because a replacement would leave a fence
 // that the reader refuses.
 func Render(document []byte, record Record) ([]byte, error) {
-	var payload bytes.Buffer
-	encoder := json.NewEncoder(&payload)
-	// A reader reads "&", "<", and ">" in an excerpt as written. The encoder
-	// still escapes every control byte, so each payload line stays one line.
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(record); err != nil {
+	data, err := payload(record, "  ")
+	if err != nil {
 		return nil, err
 	}
 	span, err := locate(document, recordFence)
 	if err == nil {
-		return bytes.Join([][]byte{document[:span.start], payload.Bytes(), document[span.end:]}, nil), nil
+		return span.splice(document, data), nil
 	}
 	if !errors.Is(err, ErrMissing) {
 		return nil, err
@@ -42,7 +37,24 @@ func Render(document []byte, record Record) ([]byte, error) {
 			head += "\n"
 		}
 	}
-	return []byte(head + "\n" + fenceMarker + recordFence + "\n" + payload.String() + fenceMarker + "\n"), nil
+	return []byte(head + "\n" + fenceMarker + recordFence + "\n" + string(data) + fenceMarker + "\n"), nil
+}
+
+// payload encodes value as fence payload lines, each indented by indent.
+func payload(value any, indent string) ([]byte, error) {
+	var data bytes.Buffer
+	encoder := json.NewEncoder(&data)
+	// A reader reads "&", "<", and ">" in an excerpt as written. The encoder
+	// still escapes every control byte, so each payload line stays one line.
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", indent)
+	err := encoder.Encode(value)
+	return data.Bytes(), err
+}
+
+// splice returns document with the payload lines of span replaced by data.
+func (s fenceSpan) splice(document, data []byte) []byte {
+	return bytes.Join([][]byte{document[:s.start], data, document[s.end:]}, nil)
 }
 
 // write is the one write transaction on the record of spec under root. It reads the
