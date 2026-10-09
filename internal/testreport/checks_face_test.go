@@ -130,7 +130,7 @@ func TestChecksFaceRefusesInvalidInventory(t *testing.T) {
 }
 
 func TestHelpStartsWithGrammar(t *testing.T) {
-	const grammarText = "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures | bench test --checks"
+	const grammarText = "bench test [--full] [--package <expr> [--package <expr>]... | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures | bench test --checks"
 	if help, code := Command(t.TempDir(), []string{"--help"}); code != 0 || !strings.HasPrefix(help, "usage: "+grammarText+"\nnotes:\n") {
 		t.Fatalf("--help = %d, %q; want 0 and the grammar text first", code, help)
 	}

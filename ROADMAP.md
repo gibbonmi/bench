@@ -120,7 +120,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
 
-**FT318 (MEDIUM) — a `bench record` refusal names its repair form, and the completion form records a capability-blocked row's decided value.**
+**FT318 (MEDIUM, decision required) — the completion form records a capability-blocked row's decided value, and `bench record` closes its native-operation residuals.**
 
 **FT405 (MEDIUM, decision required) — one `bench record ticket` verb lets a ticket author amend, freeze, and record its chunk in one call.**
 
@@ -189,8 +189,6 @@ and the small cuts. The rows below hold the rest.
 **FT351 (LOW) — an offline diff report carries the approved visual prototype into a supported feature.**
 
 **FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
-
-**FT383 (LOW) — the planning commit test reuses the protected policy fixture.**
 
 **FT394 (LOW) — `bench learning` links a landed fix to the open entry that it resolves.**
 

@@ -21,14 +21,14 @@ import (
 )
 
 // Usage is the one owner of the bench test grammar line.
-const Usage = "bench test [--full] [--package <expr> | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures | bench test --checks"
+const Usage = "bench test [--full] [--package <expr> [--package <expr>]... | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures | bench test --checks"
 
 var grammar = usage.Grammar{
 	Cmd:  Usage,
 	Help: "usage: " + Usage,
 	Flags: []usage.Flag{
 		{Name: "--full"},
-		{Name: "--package", HasValue: true, NoEmptyValue: true},
+		{Name: "--package", HasValue: true, NoEmptyValue: true, Repeatable: true},
 		{Name: "--run", HasValue: true, NoEmptyValue: true},
 		{Name: "--changed"},
 		{Name: "--base", HasValue: true, NoEmptyValue: true},
@@ -45,7 +45,9 @@ var selectRunBinary = runbinary.ReuseOrOwn
 const goChildGroupCancelled = "child process group cancelled"
 
 type focusedRequest struct {
-	packageExpr string
+	// packageExprs holds the package patterns in argv order: one for each `--package`, or
+	// the one legacy or default operand.
+	packageExprs []string
 	// causes is the `--changed` selection; it is nil for every other form.
 	causes    changedSelection
 	full      bool
@@ -100,21 +102,25 @@ func parseFocusedRequest(root string, args []string) (focusedRequest, string, in
 	if hasCheck && !isNamedCheck(check) {
 		return focusedRequest{}, unknownCheck(check), 2
 	}
-	packageOperand := strings.Join(parsed.Positionals, "")
-	if explicit, ok := parsed.Flags["--package"]; ok {
-		packageOperand = explicit
+	packageOperands := parsed.Repeated["--package"]
+	if !explicit {
+		packageOperands = []string{strings.Join(parsed.Positionals, "")}
+	}
+	packageExprs := make([]string, 0, len(packageOperands))
+	for _, operand := range packageOperands {
+		packageExprs = append(packageExprs, packagePattern(root, operand))
 	}
 	_, full := parsed.Flags["--full"]
 	return focusedRequest{
-		packageExpr: packagePattern(root, packageOperand),
-		full:        full,
-		run:         parsed.Flags["--run"],
-		changed:     changed,
-		base:        base,
-		sourceTip:   sourceTip,
-		check:       check,
-		fixtures:    fixtures,
-		checks:      checks,
+		packageExprs: packageExprs,
+		full:         full,
+		run:          parsed.Flags["--run"],
+		changed:      changed,
+		base:         base,
+		sourceTip:    sourceTip,
+		check:        check,
+		fixtures:     fixtures,
+		checks:       checks,
 	}, "", 0
 }
 
@@ -186,7 +192,7 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	if len(request.causes) != 0 {
 		operands = append(operands, request.causes.packages()...)
 	} else {
-		operands = append(operands, request.packageExpr)
+		operands = append(operands, request.packageExprs...)
 	}
 	env, err := selectedRunEnvironment(os.Environ(), selection)
 	if err != nil {

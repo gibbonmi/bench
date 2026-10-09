@@ -1,6 +1,7 @@
 package testreport
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
@@ -27,12 +28,18 @@ func (r Request) Form() string {
 	return PackageForm
 }
 
-// Target answers the check name or the package expression the request selects.
+// Target answers the check name or the package expressions the request selects. Several
+// expressions read as one space-separated target, in argv order.
 func (r Request) Target() string {
 	if r.focused.check != "" {
 		return r.focused.check
 	}
-	return r.focused.packageExpr
+	return strings.Join(r.Packages(), " ")
+}
+
+// Packages answers each package expression the request passes Go, in argv order.
+func (r Request) Packages() []string {
+	return slices.Clone(r.focused.packageExprs)
 }
 
 // Changed answers whether the request carries `--changed`. That form's target is `./...`,
@@ -73,10 +80,16 @@ func namedCheckRunPattern() string {
 // caller for them after a hand mutation, so the probe's refusal and its help name this route.
 const HandProbeRoute = "copy the file aside, edit it, run bench test --check <name>, and restore the copy"
 
-// PackageExpressionNote states the one-expression rule of --package. The run passes the
-// value to Go as one typed argument, so a space-separated list fails as one missing
-// directory. Both the bench test help and the probe help print this sentence.
-const PackageExpressionNote = "--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; run one call per package or use a parent ./... pattern."
+// packageValueRule states the one-expression rule of each --package value. The run passes
+// the value to Go as one typed argument, so a space-separated list fails as one missing
+// directory. The bench test help and the probe help each add the remedy their grammar takes.
+const packageValueRule = "--package <expr> takes one Go package expression as one argument, so a space-separated list is not split"
+
+// PackageExpressionNote is the bench test help's package note. Its grammar repeats --package.
+const PackageExpressionNote = packageValueRule + "; repeat --package to run several expressions in one call, or use a parent ./... pattern."
+
+// probePackageNote is the probe help's package note. Its grammar takes one --package.
+const probePackageNote = packageValueRule + "; run one call per package or use a parent ./... pattern."
 
 // ProbeNotes states the four facts a caller needs to name a focused run correctly: what
 // each selection form takes, which two names are not probe targets, the hand route for
@@ -84,7 +97,7 @@ const PackageExpressionNote = "--package <expr> takes one Go package expression 
 // block, so the owner's behavior and its description stay one source.
 func ProbeNotes() string {
 	return "notes:\n  " + strings.Join([]string{
-		PackageExpressionNote,
+		probePackageNote,
 		"--check <name> names a conformance check from the bench test --help inventory, and " +
 			proseCheckName + " and " + gate.SystemPhaseName + " are not probe targets.",
 		"For " + proseCheckName + " or " + gate.SystemPhaseName + ", " + HandProbeRoute + ".",

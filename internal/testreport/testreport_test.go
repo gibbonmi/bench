@@ -105,6 +105,8 @@ func TestPackagePattern(t *testing.T) {
 	}
 }
 
+// FTPKG1: a repeated --package passes every expression to one Go child, so one
+// report names each selected package. The single forms keep their one selected package.
 func TestFocusedRequestPackageCompatibility(t *testing.T) {
 	root := focusedTestModule(t)
 	installTestSelectionFactory(t, runbinary.Factory{
@@ -115,21 +117,26 @@ func TestFocusedRequestPackageCompatibility(t *testing.T) {
 		Verify: func(string, string) error { return nil },
 	})
 
+	chosen := "\n  focusedfixture/chosen,pass,"
 	for _, tc := range []struct {
 		name string
 		args []string
+		want []string
 	}{
-		{name: "default"},
-		{name: "positional", args: []string{"chosen"}},
-		{name: "package flag", args: []string{"--package", "chosen"}},
+		{name: "default", want: []string{chosen}},
+		{name: "positional", args: []string{"chosen"}, want: []string{"packages[1]{", chosen}},
+		{name: "package flag", args: []string{"--package", "chosen"}, want: []string{"packages[1]{", chosen}},
+		{name: "repeated package flag", args: []string{"--package", "chosen", "--package", "."}, want: []string{"packages[2]{", chosen, "\n  focusedfixture,pass,"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			output, code := Command(root, tc.args)
 			if code != 0 {
 				t.Fatalf("Command(%v) = %d\n%s", tc.args, code, output)
 			}
-			if !strings.Contains(output, "focusedfixture/chosen") {
-				t.Fatalf("Command(%v) output = %q, want selected package", tc.args, output)
+			for _, want := range tc.want {
+				if !strings.Contains(output, want) {
+					t.Fatalf("Command(%v) output = %q, want %q", tc.args, output, want)
+				}
 			}
 		})
 	}

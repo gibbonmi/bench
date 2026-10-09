@@ -226,6 +226,14 @@ func TestCheckFloorAcceptsAParentPattern(t *testing.T) {
 	}
 }
 
+// FTPKG4: one command with a repeated --package satisfies each package it names.
+func TestCheckFloorAcceptsARepeatedPackage(t *testing.T) {
+	root := floorModule(t, "internal/x", "internal/y")
+	one, two := writer("one.md", "internal/x/p.go"), writer("two.md", "internal/y/p.go")
+	plan := onePlan([]tickets.Ticket{one, two}, "bench test --package ./internal/x --package ./internal/y/...")
+	requireFloorGreen(t, floorRow(t, root, plan, one, two))
+}
+
 func TestCheckFloorAcceptsTheWholeSuite(t *testing.T) {
 	root := floorModule(t, "internal/x")
 	preflighttest.MustWriteFile(t, filepath.Join(root, "p.go"), "package floor\n")
