@@ -1177,6 +1177,74 @@
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "nr-c2-r2-standards",
+          "performer": "claude:nro-c2-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "e6ea41b8455f3ae2e7fa7948ba0917d198037ebc",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c2-r2-standards",
+            "digest": "sha256:25de44f2b06f810c54ebcb1273f5a6d18ec1b6164999a0a821c365a497d73185",
+            "excerpt": "## Standards (NR-C2 round 2, fable/medium, evidence sha256:9a4a39fac344dde4a08c1d67d1ba1a3039d06fbdb771b97a78ecd740a8a33fbd, pair c311ec18..c6e112a0)\n\nRead git diff 07fdc84a 2fbc0afd (13 files) and git diff 3a78fb88 c6e112a0 -- reviews/native-record-operations.md.\n\n- S5 | repair-needed | 7 | reviews/native-record-operations.md:836-1224 — the record delta adds 14 JSON verification entries and one amendment entry, and no prose. No line in the delta names S1, P1, P2, P3, C1, C2, C4, or C5 with a disposition. The round 1 prose predates the delta. Line 1290 lists P2 among the repair targets, yet the repair commit 2fbc0afd names only S1, P3, C1, C2, C4, C5 and touches no completion help; P2's disposition is unknown.\n- S6 | no-op | 5 | recordcmd/assignment.go:45 and amendment.go:48 — row(\"assignment\", ...) and row(\"amendment\", ...) still spell the form name as the table name; chunk.go:30, command.go:338, completion.go:25, verification.go:56 share the pattern, and f.name is in scope at each call. Pre-existing, sixfold, outside the findings; a bench learning candidate, not a repair.\n- S7 | no-op | 4 | recordcmd/ordering_test.go:49 — a doc comment uses a colon after the symbol, while the sibling doc comments start a sentence with the name.\n\nAdvice: none beyond S6 and S7.\n\nCount 3, worst S5. Evidence cursors fetched: 1 (check-current).\n\nExamined and found clean: S1/P1 — assignment.go:10 and amendment.go:12 read reviewrecord.FormAssignment/FormAmendment; no const operand duplicate remains, refusal.go:32 and command.go:101 read refusalroute.FactSlug. P3 — cause(spec, err) binds named once (refusal.go:17-21); known maps the slug through reviewrecord.Slug. C1 — substituted --source '<tip>' and --chunk '2' asserted (ordering_test.go:33-34, 57-58). C2 — amendment row present, table on chunk/next (record_repair_test.go:25-60). C4 — coverage.go:34-37 returns a plain fmt.Errorf, not a Repair, with a timeless why-comment. C5 — write takes create func(path string), one absent(chunk) helper (write.go:96-100), callers at completion.go:23, coverage.go:207, write.go:212, 308. Comment prose in the delta is present tense with no narration or provenance. command.go is 340 lines (limit 370).\n"
+          },
+          "axis": "Standards",
+          "base": "c311ec18aa433aa19d4cd5a2682d11a6c56ab787",
+          "tip": "2fbc0afd7b1376c76f45292f0333046b1745f950",
+          "finding_ids": [
+            "S5"
+          ],
+          "supersedes": [
+            "nr-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "nr-c2-r2-spec",
+          "performer": "claude:nro-c2-r2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "e6ea41b8455f3ae2e7fa7948ba0917d198037ebc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c2-r2-spec",
+            "digest": "sha256:01556bcd195babd6a92b13b6191baab2834fd1f51519a911d8034e0002c5ee4b",
+            "excerpt": "## Spec (NR-C2 round 2, fable/medium, evidence sha256:9a4a39fac344dde4a08c1d67d1ba1a3039d06fbdb771b97a78ecd740a8a33fbd, pair c311ec18..c6e112a0)\n\nBinding: check-current returned current=true at tip c6e112a0; acted.\n\n- P5 | confirmed | 95 | spec.md:170 \"The existing recordcmd registry uses those names for its form declarations and derives their complete help grammar.\" | All six forms now declare name: reviewrecord.Form*; TestCompletionHelpOrdering adds assignment to the per-name --help loop. S1/P1 closed.\n- P6 | confirmed | 90 | spec.md:181 \"Use already-known slug, chunk, requirement, axis, and source values where the owner supplies them.\" | cause(spec, err)/known(spec, repair) put the slug into the usage line; absent(chunk) carries the call's chunk; TestVerificationRepairNamesKnownValues and the two \"absent record\" rows in repair_test.go pin it. P3/C5 closed.\n- P7 | confirmed | 90 | spec.md:176 \"The checkpoint-completion-evidence face retains bench preflight review <slug> for structural or unclassified refusals.\" | coverage.go:34-36 returns a plain (non-Repair) error for an unplanned chunk; the gate test row \"unplanned chunk\" expects next=bench preflight review 'example'. C4 closed.\n- P8 | confirmed | 90 | spec.md:106-123 Assignment contract | Appended claude:nro_t2_rep1 occurrence: predecessor claude:nro_t2 is the last session, trigger user-directed, stopped/preserved present, same assignment id, source ea282a92, author_limit 1. Valid.\n- P9 | confirmed | 95 | spec.md:370 \"The Writes union has 154 exact paths, equal to the 155-entry fence minus its review pickup.\" | My count of fence entries is 155; ticket 2 Writes gains recordcmd/amendment.go and recordcmd/assignment.go; spec.md:751 row updated.\n- P10 | no-op, agree | 85 | spec.md:184 \"Completion help derives its ordering note from this owner contract.\" and spec.md:53 story 18 | bench record completion --help prints only its usage line. The root bench help completion row prints the description \"validate and write final completion evidence for a source commit; write in the order amendment, chunk, verification, review, final verification, completion\", derived from reviewrecord.CompletionOrder() via completionOrder(). Met by the root row; the form help lacks it by the pinned grammar-only contract.\n\nAdvice: the write create-signature change and the gate test-table reshape alter no approved behavior. Not findings.\n\nCount 6, worst P10 (no-op). Cursors: git diff 07fdc84a 2fbc0afd, git diff 3a78fb88 23ab6c73 -- specs/native-record-operations, bench record --help, bench record completion --help, bench help, spec.md:104-130/560-575, command_test.go:30-55. Confirmed S1/P1, P3, C4, C5, the replacement occurrence, and the 155 fence count.\n"
+          },
+          "axis": "Spec",
+          "base": "c311ec18aa433aa19d4cd5a2682d11a6c56ab787",
+          "tip": "2fbc0afd7b1376c76f45292f0333046b1745f950",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "nr-c2-r2-coverage",
+          "performer": "claude:nro-c2-r2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "e6ea41b8455f3ae2e7fa7948ba0917d198037ebc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c2-r2-coverage",
+            "digest": "sha256:4b5bee86ba0e22876eef942bbcf9d03cc55a04698f419b47a0141a04a39f0b87",
+            "excerpt": "## Coverage (NR-C2 round 2, fable/medium, evidence sha256:9a4a39fac344dde4a08c1d67d1ba1a3039d06fbdb771b97a78ecd740a8a33fbd, pair c311ec18..c6e112a0)\n\n- C6 — advisory, confidence 70. Input: a create that returns an empty Record with nil error in place of absent(\"\") at completion.go:23 / coverage.go:207. Expected break: RecordAmendment and RecordCompletion on an absent record would proceed on an empty record instead of refusing with Repair{Form: FormChunk}. Test that should exist: an absent record amendment / absent record completion row in TestRecordRepairNamesOwnerValues (repair_test.go:104-110 covers only verification and review). No caller passes a create that returns a Record with a wrong chunk: RecordChunk's create builds a fresh record with no chunks and the change closure adds id; the other four callers use absent, which always refuses.\n\nAdvice: the next literals in internal/gate/record_repair_test.go:29-60 are hand-written strings, not generator output; probe 3 confirmed changed_plan grades against its own literal. The unplanned-chunk literal bench preflight review 'example' is likewise hand-written.\n\nCount: 1 finding (C6, advisory). Worst: C6, an uncovered-but-correct path. Evidence cursors fetched: check-current (current=true, tip c6e112a0, dirty=false); git diff 07fdc84a 2fbc0afd (13 files).\n\nProbes (all verdict bit, restored yes):\n1. S1/P1 refusal.go \"--ticket\": repair.Ticket -> \"\": TestVerificationRepairNamesKnownValues/undispatched_ticket red.\n2. P3 command.go:101 slug Arg(...) -> \"<slug>\": 4 red.\n3. C1/C2 repair.go:9 FormAmendment -> \"amendments\": TestCheckpointEntryRepairForms/changed_plan + TestChunkNeedsCurrentAmendment/{plan,prose} red.\n4. C4 coverage.go:99 !complete -> complete: unplanned_chunk and missing_completion red.\n5. C5 write.go RecordVerification absent(call.Chunk) -> absent(\"\"): absent_record_verification red.\n\nConfirmed: S1/P1, P3, C1, C2, C4, C5 folds are red-capable at sites distinct from the author's. git status --short clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "c311ec18aa433aa19d4cd5a2682d11a6c56ab787",
+          "tip": "2fbc0afd7b1376c76f45292f0333046b1745f950",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c2-r1-coverage"
+          ]
         }
       ]
     }
@@ -1324,3 +1392,17 @@ NR-C2 round 1: 5 findings, worst C1. Raw count 5; repair targets 4.
 - C5 (auto-fix, confidence 4): the absent-record refusal at `RecordVerification` and `RecordReview` omits the chunk it knows. Repair: fill `Chunk` from the call, with a test.
 
 Advice: the `<slug>` placeholder is P3; the chunk-writer-only scope of the digest guard is design.
+
+## NR-C2 round 2
+
+The repair session `claude:nro_t2_rep1` committed 2fbc0afd and closed S1, P1, P3, C1, C2, C4, and C5. P2 is `no-op` by the orchestrator's decision under `--auto-approve`. The existing `TestRecordHelpPrintsEachForm` pins each form help to its one grammar line, and that test is outside the spec fence. The completion row of the root record help carries the derived ordering note, which the Spec axis quoted in round 2. The reviewer can veto that decision after the landing.
+
+Round 2 confirmed every fold with 0 code findings on every axis at `c6e112a0`. The Standards axis raised S5, a record-prose correction: the round 2 prose and the P2 disposition were absent from the record. This section closes S5 as an evidence-only correction, and the Standards axis reaffirms it. S6 and S7 are `no-op` advice. The `row(...)` table names repeat the form names in six pre-existing places, and one test doc comment uses a colon.
+
+The Coverage axis left C6 as optional advice: `RecordAmendment` and `RecordCompletion` on an absent record have no observing test, and the path refuses correctly. NR-C2 closes with repair cycle 1 of 2 used and no open finding.
+
+NR-C2 round 2 (Standards): 0 code findings; S5 evidence-only, closed here; S6 and S7 `no-op`.
+
+NR-C2 round 2 (Spec): 0 findings. P5-P9 confirmed the folds, the repair assignment occurrence, and the 155-entry fence count. P10 agrees with the P2 decision.
+
+NR-C2 round 2 (Coverage): 0 findings. Five probes at sites distinct from the author's each bit and restored. C6 is optional advice.
