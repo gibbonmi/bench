@@ -36,8 +36,8 @@ Use craft-spec and craft-seams for its spec.
 
 ## Sources
 
-- Path: `roadmap/FT217.md`
-  Supports: the closed behavior, route, and exit proof.
+- Path: `capture/architecture-review-20260817T104714.html`
+  Supports: the FT217 lifecycle concern that the closed behavior, route, and exit proof answer.
   Drift: an approved change to that decision.
 - Path: `internal/adopt/decision.go`
   Supports: the existing immutable inventory decision.
