@@ -124,29 +124,66 @@ func TestRecordChunkReadsTheTip(t *testing.T) {
 	record(t, f, "1", base, tip)
 }
 
-// completed writes complete chunk and final evidence through the fixture for a spec whose
-// map holds seams, then runs the completion form at the chunk tip. The fixture writes the
-// chunk entry itself, so a planned cell that the chunk form refuses still reaches completion.
-func completed(t *testing.T, seams ...string) (string, int) {
+// completing writes the chunk evidence of count chunks and the final verification through
+// the fixture for a spec whose map holds seams, and returns the fixture and the last chunk
+// tip. The fixture writes each chunk entry itself, so a planned cell that the chunk form
+// refuses still reaches completion. The completion entry holds only its verification, so a
+// completion write changes the record.
+func completing(t *testing.T, count int, seams ...string) (*recordtest.Fixture, string) {
 	t.Helper()
-	f := linked(t, 1)
+	f := linked(t, count)
 	withMap(seams...)(f)
 	base, source := advance(f, "chunk 1")
 	f.Reload()
 	f.RecordChunk(base)
+	for len(f.Record.Chunks) < count {
+		f.AddChunk()
+		source = f.Tip()
+	}
 	f.Complete()
+	f.Record.Completion = rr.Completion{Verification: f.Record.Completion.Verification}
 	f.Save()
+	return f, source
+}
+
+// complete runs the completion form at source.
+func complete(t *testing.T, f *recordtest.Fixture, source string) (string, int) {
+	t.Helper()
 	return recordcmd.Command(f.Root, []string{"completion", slug(t), "--source", source})
 }
 
+// completed runs the completion form over a completing fixture.
+func completed(t *testing.T, count int, seams ...string) (string, int) {
+	t.Helper()
+	f, source := completing(t, count, seams...)
+	return complete(t, f, source)
+}
+
 func TestRecordCompletionRefusesAPlannedCell(t *testing.T) {
-	if out, code := completed(t, planned); code != 1 || !strings.Contains(out, "E1") {
+	if out, code := completed(t, 1, planned); code != 1 || !strings.Contains(out, "E1") {
 		t.Fatalf("planned plan row = exit %d, output %q; want exit 1 naming E1", code, out)
 	}
 }
 
+func TestRecordCompletionRefusesAPlannedCellOfALaterChunk(t *testing.T) {
+	if out, code := completed(t, 2, cited, planned); code != 1 || !strings.Contains(out, "E2") || !strings.Contains(out, coverage.CitationForm) {
+		t.Fatalf("planned chunk 2 row = exit %d, output %q; want exit 1 naming E2 and %s", code, out, coverage.CitationForm)
+	}
+}
+
+func TestRecordCompletionRefusalWritesNothing(t *testing.T) {
+	f, source := completing(t, 1, planned)
+	before := bytesOf(t, recordFile(t, f))
+	if out, code := complete(t, f, source); code != 1 {
+		t.Fatalf("planned plan row = exit %d, output %q; want exit 1", code, out)
+	}
+	if after := bytesOf(t, recordFile(t, f)); !bytes.Equal(before, after) {
+		t.Fatalf("refusal changed the record:\n%s\nwant:\n%s", after, before)
+	}
+}
+
 func TestRecordCompletionAcceptsCitedRows(t *testing.T) {
-	if out, code := completed(t, cited); code != 0 {
+	if out, code := completed(t, 2, cited, cited); code != 0 {
 		t.Fatalf("cited plan rows = exit %d, output %q; want exit 0", code, out)
 	}
 }
