@@ -2012,9 +2012,9 @@ TF-C4 round 2: 1 finding, worst C3.
     {
       "id": "TF-C4",
       "base": "41df830c693ac196a88d66010379bf721608bbf4",
-      "tip": "1166f604b5ead078de151eff772e49a9d5e22469",
-      "plan_digest": "sha256:ef8966844936830ac4813fdafadcfeecc75d430cb5b7d1cb3d19e8984f00391e",
-      "source_digest": "c3d484a5e37e3ef792df74ec9b635d5300a3957d",
+      "tip": "63c5500c51705ac4fd5dfdb43f3060a92e34e108",
+      "plan_digest": "sha256:498c044c9011172c24f9d06e3428ec205403b00826d4347d862c9881a3c4f5fc",
+      "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
       "acceptance_rows": [
         "TF47",
         "TF48",
@@ -2267,6 +2267,125 @@ TF-C4 round 2: 1 finding, worst C3.
               "ref": "claude-agent:ft349_t4_repair1/planned-cell-probe",
               "digest": "sha256:f35e34816fd7a81ae3d90afffa9d2bcd40351866dd096972dbee8510dbc8adb7",
               "excerpt": "bench test --package ./internal/reviewrecord/recordcmd --run '^TestRecordChunkRefusesAPlannedCell' at 1166f604b5ead078de151eff772e49a9d5e22469: exit 0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,40,1\nbench probe internal/reviewrecord/recordcmd/chunk.go --omit <refusePlanned call before the chunk write>: verdict bit, cause failed, failed_tests 1, restored yes\n  TestRecordChunkRefusesAPlannedCell: planned chunk row = exit 0; want exit 1 with the chunk refusal\n"
+            }
+          }
+        },
+        {
+          "id": "t4r2-pkg-internal-coverage",
+          "performer": "claude:ft349_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4_repair2/pkg-internal-coverage",
+            "digest": "sha256:06eb26ce153c30d801f8914b037a6dd2df1b7c29752ba38eed6ce8c5ecd4fd3f",
+            "excerpt": "bench test --package ./internal/coverage at 63c5500c51705ac4fd5dfdb43f3060a92e34e108: exit 0\n  github.com/gibbonmi/bench/internal/coverage,pass,1744,144\n"
+          },
+          "requirement": "pkg-internal-coverage",
+          "command": "bench test --package ./internal/coverage",
+          "exit_code": 0
+        },
+        {
+          "id": "t4r2-pkg-internal-reviewrecord",
+          "performer": "claude:ft349_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4_repair2/pkg-internal-reviewrecord",
+            "digest": "sha256:84f4f101447a1dc0a0a2da0026b2e4fe4df3211379f9c00c7e7b74edeb7cc1b7",
+            "excerpt": "bench test --package ./internal/reviewrecord/... at 63c5500c51705ac4fd5dfdb43f3060a92e34e108: exit 0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1626,73\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,7760,115\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n"
+          },
+          "requirement": "pkg-internal-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "t4r2-pkg-internal-conformance",
+          "performer": "claude:ft349_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4_repair2/pkg-internal-conformance",
+            "digest": "sha256:b76cc10f4fc8b25acf0aff677ff025c7616fdaf0c3e5b75a8574e109c9c4807c",
+            "excerpt": "bench test --package ./internal/conformance at 63c5500c51705ac4fd5dfdb43f3060a92e34e108: exit 0\n  github.com/gibbonmi/bench/internal/conformance,pass,53640,1673 (3 capability skips: socket, character device)\n"
+          },
+          "requirement": "pkg-internal-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4r2-pkg-cmd-bench",
+          "performer": "claude:ft349_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4_repair2/pkg-cmd-bench",
+            "digest": "sha256:6b51bf9abc73038124a9b0865abbb3757324ffa7dd1f3aaffc602aafedce5e62",
+            "excerpt": "bench test --package ./cmd/bench at 63c5500c51705ac4fd5dfdb43f3060a92e34e108: exit 0\n  github.com/gibbonmi/bench/cmd/bench,pass,13694,333\n"
+          },
+          "requirement": "pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t4r2-root-conformance",
+          "performer": "claude:ft349_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4_repair2/root-conformance",
+            "digest": "sha256:9108ca32980160376010691a136ea72ccfc55361d00d303817f124156761ca85",
+            "excerpt": "bench test --check root-conformance at 63c5500c51705ac4fd5dfdb43f3060a92e34e108: exit 0\n  root-conformance,conformance,1,0\n  github.com/gibbonmi/bench/internal/conformance,pass,16023,1\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4r2-planned-cell-probe",
+          "performer": "claude:ft349_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4_repair2/planned-cell-probe",
+            "digest": "sha256:f1cf8a6a21d87f927233c8b0744a4f21399a17933184a0c1b147f9f160ced26b",
+            "excerpt": "bench test --package ./internal/reviewrecord/recordcmd --run '^TestRecordChunkRefusesAPlannedCell' at 63c5500c51705ac4fd5dfdb43f3060a92e34e108: exit 0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,39,1\nbench probe internal/reviewrecord/recordcmd/chunk.go --omit <refusePlanned call before the chunk write>: verdict bit, cause failed, failed_tests 1, restored yes\n  TestRecordChunkRefusesAPlannedCell: planned chunk row = exit 0; want exit 1 with the chunk refusal\n"
+          },
+          "requirement": "planned-cell-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd --run '^TestRecordChunkRefusesAPlannedCell'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the planned-row refusal before the chunk write. TestRecordChunkRefusesAPlannedCell turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft349_t4_repair2/planned-cell-probe",
+              "digest": "sha256:f1cf8a6a21d87f927233c8b0744a4f21399a17933184a0c1b147f9f160ced26b",
+              "excerpt": "bench test --package ./internal/reviewrecord/recordcmd --run '^TestRecordChunkRefusesAPlannedCell' at 63c5500c51705ac4fd5dfdb43f3060a92e34e108: exit 0\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,39,1\nbench probe internal/reviewrecord/recordcmd/chunk.go --omit <refusePlanned call before the chunk write>: verdict bit, cause failed, failed_tests 1, restored yes\n  TestRecordChunkRefusesAPlannedCell: planned chunk row = exit 0; want exit 1 with the chunk refusal\n"
             }
           }
         }
