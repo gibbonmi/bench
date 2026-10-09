@@ -2177,6 +2177,74 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "nr-c3-r2-standards",
+          "performer": "claude:nro-c3-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r2-standards",
+            "digest": "sha256:9889b33fdbd8640b655dbd01d5dd8ba410b58041e25d580a005283007d6eb08e",
+            "excerpt": "## Standards (NR-C3 round 2, fable/medium, evidence sha256:333a8f7bcdc9edd3008451d912f8d5d821990cc4c5ffad99a72bad774eef9f0f, pair 4dd282e4..ae811542)\n\nBinding current (check-current: current=true, tip ae811542, dirty=false).\n\n- S9 (no-op, confidence 7): residual guard !ok || err != nil || Kind != Spilled in responseboundtest/spill.go:210 and owner_test.go:162. Incidental text, not duplicated knowledge: ProjectionLine (owner.go:271) owns what a frame is; the import cycle forces the second predicate. Accept.\n- S10 (no-op, confidence 6): export_test.go:71-100 exposes twelve symbols. Each is an alias or a one-line constructor; SetCreate is the only internal reach. Narrower than the pasted harness S1 removed. Accept.\n- S11 (no-op, confidence 7): Find now answers only a first reserved frame that is spilled (spill.go:196-205). All callers ask \"did this response spill\"; RequireComplete (owner.go:324) already treats the first frame as the verdict, so the semantics now agree. Accept.\n- S12 (no-op, confidence 5): result.go:107-108 indexes probeFields[3] etc. The index pairs with the cell order in rows() (probe.go:270-271); the render-back check catches drift, so the one-source rule holds.\n- S13 (flag, confidence 8): the record delta (git diff 46ec50d5 ae811542) is JSON only: tip/digest refreeze, 18 nr-c3-rep1-* verification rows, one amendment map. It carries no prose naming S1-S4, P2, P3, C1 with a disposition.\n\nAdvice: none beyond S13.\n\nCount 5, worst S13. Cursors: preflight check-current (1), git diff f6498344 1ae40409 (12 files), git diff 46ec50d5 ae811542 -- reviews/..., reads of owner.go:271-326, probe.go:22-41,265-271, result.go:20-144, craft-comments SKILL.md.\n\nClean: S1 (size_test.go external, imports responseboundtest.AssignmentCheckout, duplicate harness deleted), S2 (First shared by RequireComplete, Find, spillPath), S4 (identify.go one comment per declaration), P2 (help and test both \"producer owner's\"), P3 (BENCH-reference.md keeps one probe_execution sentence, drops the --probe-result paragraph, splits the selection paragraph), C1 (two cases in result_test.go:127-131, one mirror in verification_import_test.go:114), comment register (no narration, no provenance), headroom (owner.go 326/400).\n"
+          },
+          "axis": "Standards",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "1ae404090eebb5ff211bf72b518495023f95e120",
+          "finding_ids": [
+            "S13"
+          ],
+          "supersedes": [
+            "nr-c3-r1-standards"
+          ]
+        },
+        {
+          "id": "nr-c3-r2-spec",
+          "performer": "claude:nro-c3-r2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r2-spec",
+            "digest": "sha256:19ef5fc4ed911cc094026e82596d2f787792c1b28e338714683004bdd02284d7",
+            "excerpt": "## Spec (NR-C3 round 2 confirming, fable/medium, evidence sha256:333a8f7bcdc9edd3008451d912f8d5d821990cc4c5ffad99a72bad774eef9f0f, pair 4dd282e4..ae811542)\n\nPreflight evidence current (tree nro-build at ae811542, clean). Deltas read once: git diff f6498344 1ae40409 and git diff 46ec50d5 57e69209 -- specs/native-record-operations.\n\n- P6 accept 4 — \"Guidance updates preserve its current anchor placements and replace only descriptions that incorrectly require hand-built dispatch JSON.\" (spec.md:314). Object: .bench/BENCH-reference.md:263 kept sentence \"A probe_execution row follows with the result schema, the command exit, the mutated-run exit or null, and the byte count after it.\" Against base 4dd282e4 this is an addition that describes the new NR-C3 output row, not a replacement of an incorrect description. It changes no approved behavior and the round-1 --probe-result paragraph is gone, so I grade it accept, not a defect. The paragraph split is safe: no anchor needle in internal/anchors/ matches any phrase of that section.\n\nAdvice: none.\n\nConfirmed:\n- P2 — spec.md:277 \"bench probe, probe.restored, through the producer owner's restoration projection\". verification.go:34 now emits that text; help_inventory_test.go:146 and TestVerificationHelpFieldSources both pin the new wording.\n- C1 — spec.md:245 \"Re-encode through the shared producer schema to check the canonical body envelope.\" result.go:77-78 re-renders through e.rows() and refuses \"not canonical\"; decode reads cells by the shared field indices; new refusal rows \"reordered execution fields\", \"quoted bare cell\" (result_test.go:91-93) and \"reordered envelope\" (verification_import_test.go:114) exercise it.\n- S1/S2 — spec.md:336 and :233. spill.go routes Find through responsebound.First and ParseLine through ProjectionLine, both via one spillOf projector; no second parser. Find answering only when the first reserved frame is spilled does not contradict spec.md:435 or :220.\n- Assignment claude:nro_t3_rep1 — spec.md:130 and :153: predecessor is the last session claude:nro_t3, trigger user-directed, stopped and preserved present, no reassessment; valid replacement.\n- Fence — 158 entries between spec.md:560 and :725; ticket Writes union is 157 unique paths, including internal/responsebound/export_test.go (new). The 157/158 sentence and the ownership row are right.\n- Scope — the identify.go comment/var reorder and the size_test.go move change no approved behavior.\n\nCount: 1 finding (P6, accept). Worst: P6 accept. Evidence cursors: preflight check-current, the two delta diffs, base-to-tip diff of BENCH-reference, spec.md lines 106-158, 225-254, 305-354, 430-437, 560-579, anchors registry sweep, bench record verification --help.\n"
+          },
+          "axis": "Spec",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "1ae404090eebb5ff211bf72b518495023f95e120",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c3-r1-spec"
+          ]
+        },
+        {
+          "id": "nr-c3-r2-coverage",
+          "performer": "claude:nro-c3-r2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r2-coverage",
+            "digest": "sha256:afb0e7af28d1260316ea4f60679b255ba818d540d34bb26fa489f74e77e58cf9",
+            "excerpt": "## Coverage (NR-C3 round 2, fable/medium, evidence sha256:333a8f7bcdc9edd3008451d912f8d5d821990cc4c5ffad99a72bad774eef9f0f, pair 4dd282e4..ae811542)\n\n- C2 | finding | confidence 70 | input: a response whose first reserved frame is spill-failed{...} and a later line is spilled{...,path=...} (a nested bench worktree exec child's frame inside the outer owner's head; one Finish prints only one frame, so this arises only through nesting) | expected break: the repair changed Find (responseboundtest/spill.go:198-205) from \"first spilled line\" to \"first frame, only if spilled\", so Find now answers false and the outer spill is hidden; no test exercises Find on that input (callers: record_operations_test.go:216,225, spill_support_test.go:36, systemtest/compatibility_test.go:124, systemtest/adoption_test.go:301; none builds a two-frame response) | test that should exist: a responseboundtest unit test pinning Find on spill-failed then spilled to whichever semantic the owner intends. Whether the new semantic is the intended one is unknown.\n\nAdvice: the export_test.go aliases are plain name re-exports; SetCreate assigns owner.create exactly as the old in-package test did, and ExclusiveCreate is exclusiveCreate unchanged, so no refusal is bypassed. S1: 4 test functions before and the same 4 after, subtests unchanged; the removed helper is replaced by responseboundtest.AssignmentCheckout.\n\nCount: 1 finding. Worst: C2 (untested semantic change in Find). Evidence cursor: check-current = current, tip ae811542. Probes (all restored yes, verdict bit): C1 result.go canonical != string(head) -> length compare: TestProbeResultEnvelopeRefusals red on reordered execution fields only; S2 owner.go case line == 0: -> case line >= 0:: TestRequireCompleteRefusesEveryFrame red (lines_test.go:78); S3 probe.go swap verdict/subject: TestProbeRefusesAnAmbiguousMutation/no_match red (refusal_test.go:64). Confirmed: C1, S2, S3 red-capable; S1 assertion count preserved; git status --short clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "1ae404090eebb5ff211bf72b518495023f95e120",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c3-r1-coverage"
+          ]
         }
       ]
     }
@@ -2429,3 +2497,19 @@ NR-C3 round 1: 1 finding, worst C1. Raw count 1; repair targets 1.
 - C1 (auto-fix, confidence 9): a decodable but noncanonical result envelope is refused by the re-render check, and no test observes it. The neutered check was silent in both packages. Repair: cases with reordered execution fields and a quoted bare cell in `TestProbeResultEnvelopeRefusals`, and one mirror in `TestVerificationImportRefusals`.
 
 Advice: copy the `identify_test.go` noncanonical-cell pattern.
+
+## NR-C3 round 2
+
+The repair session `claude:nro_t3_rep1` committed 1ae40409 and closed S1, S2, S3, S4, P2, P3, and C1. Round 2 confirmed every fold with 0 code findings on every axis at `ae811542`. The Standards axis raised S13, a record-prose correction, because the round 2 prose was absent from the record. This section closes S13 as an evidence-only correction, and the Standards axis then reaffirms it.
+
+S9 to S12 are `no-op`. The residual frame guard is incidental text that the import cycle forces. The export surface is narrow, the `Find` semantic agrees with the owner, and the field indices pair with one owned order.
+
+P6 accepts the one kept guidance sentence as a description of the new output row.
+
+The Coverage axis raised C2: `Find` on a response whose first reserved frame is spill-failed and whose later line is spilled has no test. C2 is `no-op` by the orchestrator's decision. `Find` is a test accessor, every caller asks only whether a response spilled, and the Standards axis found that the new semantic agrees with `RequireComplete`. The decision stays open to a veto after the landing. NR-C3 closes with repair cycle 1 of 2 used and no open finding.
+
+NR-C3 round 2 (Standards): 0 code findings; S13 evidence-only, closed here; S9 to S12 `no-op`.
+
+NR-C3 round 2 (Spec): 0 findings. P6 accepts the kept guidance sentence. The folds, the repair assignment occurrence, and the 158-entry fence count are confirmed.
+
+NR-C3 round 2 (Coverage): 0 blocking findings. Three probes at sites distinct from the author's each bit and restored, and the moved size tests keep all four functions. C2 is `no-op` as decided above.
