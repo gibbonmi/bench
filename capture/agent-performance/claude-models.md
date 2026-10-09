@@ -1,8 +1,8 @@
 # Claude model scorecard
 
-Last incorporated landing: `stdlib-reimplementation-check` (`66896df6ad3753cc05b3c478bf081e94a292e323`, 2026-10-08) and `paired-research-readers` (`06e7bd6f232daf626e413e7c97a5c0afd14756ea`, 2026-10-08).
+Last incorporated landing: `ticket-checkpoint-floor` (`d0b62266587865469dff55076c9e3d6432046652`, 2026-10-09) and `known-issue-table` (`9b99dc0c8b44eb0640aa31faa53cef63d7a3ec5a`, 2026-10-08).
 
-The `stdlib-reimplementation-check` light path ran three arms on one ticket. Arm A, one Opus/medium author, landed after two repair cycles. Arm B, a Haiku/medium draft with an Opus/medium polish, cost twice arm A's tokens for equal review findings. Arm C, a Haiku/xhigh draft with a Haiku research fan-out, Haiku audits, and a Sonnet/high polish, cost nine times. The paired-reader research rules then ran six readers; the diagnostic is `capture/cheap-draft-polish-diagnostic-2026-10-08.md`.
+The `ticket-checkpoint-floor` build ran five chunks on Claude Code. An Opus/high orchestrator dispatched five fresh Opus/high authors and seven repair sessions. By reviewer direction, first rounds ran on Fable/high, then Opus/high, then Fable/medium, and confirming rounds ran on Sonnet/high and then Fable/medium. Haiku and Sonnet ran read-only research, and one Opus/medium author landed the `known-issue-table` light path. Provider usage and charges remain unknown.
 
 The `refusal-route-registry` build ran seven chunks and thirteen tickets on Claude Code. An Opus/high orchestrator dispatched 13 fresh Opus/high authors, one successor, 18 repair sessions, and 5 verification-only transfers. By reviewer direction, Sonnet/high ran 21 first-round axes and 34 confirming axes, and Fable/high ran one consultation. Provider usage and charges remain unknown.
 
@@ -10,13 +10,13 @@ The `refusal-route-registry` build ran seven chunks and thirteen tickets on Clau
 
 | model / effort | role and sample | observed quality | current use | calibration |
 | --- | --- | --- | --- | --- |
-| Fable / low–high | orchestrator, 38 landings + implementer, 10 charges + reviewer, 21 axes | On `worktree-seam-reduction` the high orchestrator ran seven chunks, preserved the three-arm blind, and probed each accepted repair. All chunk checkpoints and the original landing gate passed. | Coordination of a delegated build and adversarial spec review; it implements only when the reviewer names it | orchestrator 0.36 over 1 pair; medium reviewer 0.188 over 17 pairs; 0 abstained |
-| Fable / high | reviewer, 124 axes + 1 blind comparison + spec reviewer, 4 passes + control, 1 full-retrieval run + decider, 17 consultations + debug, 2 charges | On `ft290-test-projection` Fable/high ran two read-only consultations. One found a record-verb route that avoided a hand edit, and one proved a kit conflict between the completion gate and the review preflight. | Review axes and spec review by reviewer direction; consultations whenever the coordinator is uncertain; the RE2-style full control | reviewer: 0.168 over 32 pairs, 1 abstained |
-| Opus / high, xhigh | implementer, latest 10 of 49 current attempts; reviewer, 161 axes; repair, latest 10 of 46 current attempts; orchestrator, 1 build; spec author, slicer, and reviewer, latest 10 passes | On `refusal-route-registry` 13 high authors each committed inside the fence or stopped at it with a precise report, and every named probe bit. Each chunk still needed a repair cycle, mostly for authority choices and untested edges; three chunks needed two. A charge that listed the recurring review lessons cut the later first-round findings. | High for first-round review axes, debug runs, guidance tickets, and foundational Go seams such as an oracle route; xhigh for a spec or a ticket that crosses owner seams; repairs at the ticket's effort. | implementation: 0.098 over 68 pairs, 2 abstained, and 0.010 over 1 new pair; reviewer: 0.162 over 74 pairs, 9 abstained; repair: 0.010 over 11 pairs |
-| Opus / medium, low | implementer, latest 10 tickets; repair, latest 10 sessions; orchestrator, 5 builds; earlier reviewer and repair sessions | On `stdlib-reimplementation-check` one medium author landed a 38-path light-path ticket in 93,000 tokens with three biting probes. It marked one row verified with no red. Its two repair sessions closed 13 findings in two cycles, one blocked once on a fence expansion. | Medium for a CLI form ticket with named per-member probes, for a mechanical test migration with a named regression probe, and for orchestration. Low for exact tickets; a repair keeps the ticket's declared effort. | 0.129 over 67 pairs; 18 abstained |
-| Sonnet / high | orchestrator, 3 landings + reviewer, 132 axes + spec reviewer, 5 passes + researcher, 3 charges + implementer, 9 comparison tickets | On `refusal-route-registry` Sonnet/high ran every axis of seven chunk reviews and their confirming rounds. Its axes found every blocking defect of the build, including three authority errors and a route that a second verb could not run, and no finding was false. | First-round and confirming review axes by reviewer direction, and orchestration; not fresh ticket authorship | high 0.145 over 2 pairs; xhigh 0.40 over 2 pairs |
+| Fable / low–high | orchestrator, 38 landings + implementer, 10 charges + reviewer, 21 axes | On `ticket-checkpoint-floor` Fable/medium ran first and confirming axes for three chunks. Each axis took 1 to 4.5 minutes, and its Coverage axes found the two false passes that became rows TF73 and TF74. | Coordination of a delegated build and adversarial spec review; it implements only when the reviewer names it | orchestrator 0.36 over 1 pair; medium reviewer 0.188 over 17 pairs; 0 abstained |
+| Fable / high | reviewer, 124 axes + 1 blind comparison + spec reviewer, 4 passes + control, 1 full-retrieval run + decider, 17 consultations + debug, 2 charges | On `ticket-checkpoint-floor` Fable/high ran the first TF-C1 round. Its Coverage axis proved an untested kit clause with a silent probe, and its Standards axis found three duplicated facts. | Review axes and spec review by reviewer direction; consultations whenever the coordinator is uncertain; the RE2-style full control | reviewer: 0.168 over 32 pairs, 1 abstained |
+| Opus / high, xhigh | implementer, latest 10 of 49 current attempts; reviewer, 161 axes; repair, latest 10 of 46 current attempts; orchestrator, 1 build; spec author, slicer, and reviewer, latest 10 passes | On `ticket-checkpoint-floor` five high authors committed inside their fences or stopped at them, and every named probe bit. Two authors stopped for fences that the spec omitted. Charges that named the existing owners removed the blocking duplication from later first rounds. | High for first-round review axes, debug runs, guidance tickets, and foundational Go seams such as an oracle route; xhigh for a spec or a ticket that crosses owner seams; repairs at the ticket's effort. | implementation: 0.098 over 68 pairs, 2 abstained, 0.010 over 1 pair, and 0.028 over 5 new pairs; reviewer: 0.162 over 74 pairs, 9 abstained; repair: 0.010 over 11 pairs |
+| Opus / medium, low | implementer, latest 10 tickets; repair, latest 10 sessions; orchestrator, 5 builds; earlier reviewer and repair sessions | On `known-issue-table` one medium author landed a light-path ticket with a four-row table and a one-line charge rule. It reported one stale reference outside its fence before it edited. | Medium for a CLI form ticket with named per-member probes, for a mechanical test migration with a named regression probe, and for orchestration. Low for exact tickets; a repair keeps the ticket's declared effort. | 0.129 over 67 pairs; 18 abstained |
+| Sonnet / high | orchestrator, 3 landings + reviewer, 132 axes + spec reviewer, 5 passes + researcher, 3 charges + implementer, 9 comparison tickets | On `ticket-checkpoint-floor` Sonnet/high ran the TF-C1 confirming rounds and four staleness slices. It found one fixture duplication, and its staleness verdicts were all correct. | First-round and confirming review axes by reviewer direction, and orchestration; not fresh ticket authorship | high 0.145 over 2 pairs; xhigh 0.40 over 2 pairs |
 | Sonnet / high (research and polish) | researcher, 6 paired charges + polish, 1 session | On `stdlib-reimplementation-check` Sonnet made no wrong claim in six research slices and found every key fact under the paired-reader rules. Its high polish of a Haiku draft closed nine audit items in one pass and found a hole in the live-tree meta check. | Default research reader, paired with Haiku; polish of a cheap draft when the reviewer names it | research 6 of 6 slices clean; polish 1 pass |
-| Haiku / default–xhigh | researcher, 12 charges + implementer, 2 comparison tickets + auditor, 3 charges | On `stdlib-reimplementation-check` Haiku's seam maps were correct and cited in 80 seconds. Under the paired-reader rules it found one defect Sonnet missed, and it made one wrong tree-state claim. As an author it cost 1.3x Opus/medium at medium effort and 3.2x at xhigh, for equal review findings. | Research reader, paired with Sonnet; staleness audits; not ticket authorship | research 10 of 12 slices clean; authorship 0 landings |
+| Haiku / default–xhigh | researcher, 12 charges + implementer, 2 comparison tickets + auditor, 3 charges | On `ticket-checkpoint-floor` Haiku ranked 14 roadmap rows for time savings. Its top two citations held, and it named what it did not read. | Research reader, paired with Sonnet; staleness audits; not ticket authorship | research 10 of 12 slices clean; authorship 0 landings |
 | Sonnet / low–medium | implementer, latest 10 of 79 ticket-sized charges | On `ft311-diagnostics` one low charge landed after two corrections: its case-fold fixture was not red-capable for the row's named mutation, and its fixture left the fenced directory. On `craft-research-skill` one low review repair closed five findings first-pass with a biting omission probe. | Low for a prose or exact-spec repair at a known seam under a covering gate when the reviewer names it; the coordinator probes every return and runs the whole-tree gate before the landing | unknown |
 
 ## Representative evidence
@@ -34,41 +34,30 @@ The `refusal-route-registry` build ran seven chunks and thirteen tickets on Clau
 - Read this scorecard before each line declaration, because its decisions carry the orchestration rules that a build repeats.
 - Change routing only after two comparable runs, one controlled comparison, or explicit user direction.
 - Keep the `worktree-seam-reduction` comparison and the `markdown-block-reader` five-reviewer comparison descriptive until a comparable repeat.
-- Run a first review round on the harness mid binding, unless the reviewer directs another line. Sonnet/high served every axis of `refusal-route-registry` by reviewer direction.
-- When a delegate nears 300k tokens, let it finish its ticket, and send later work to a fresh recorded session. Send a verification alone to a fresh session; it costs about 28k tokens.
-- Charge each ticket author with the recurring review lessons: the shared walk, the authority rule, typed selection, hostile values, and no leftovers.
+- Run review axes on the line that the reviewer directs. Fable/medium served the later rounds of `ticket-checkpoint-floor` by reviewer direction, and it was faster than Opus/high at equal finding quality.
+- When a delegate nears 300k tokens, let it finish its ticket, and send later work to a fresh recorded session.
+- Name the existing owners, seams, and fixture helpers in each author charge, together with the recurring review lessons.
 - Before a ticket adds a printed route to a shared funnel or a shared face, name every caller and every printing verb in its charge.
 - Give each ticket a fresh Opus author at the spec's declared effort, and give each post-review repair a fresh Opus session at the ticket's effort.
 - Make every fix delegate follow `bench-debug`, and accept a debug result that disproves the reported cause.
 - Ask a Fable/high read-only consultation when the coordinator is uncertain, and check its claim against the tree.
-- Prove a review claim about Git behavior in a scratch tree before a repair dispatch.
 - Do not route fresh ticket authorship to Sonnet/high until a comparable repeat confirms the latest blind result.
-- Charge each author with root conformance, every package it writes, and `cmd/bench` for a public response or embed change.
+- Charge each author with root conformance, every package it writes, and `cmd/bench` for a public response or embed change. The `check-floor` row grades that floor.
 - Charge each author and repair with the duplicated-facts sweep, its comment sweep, and one recorded red per independent expectation.
-- Charge each repair of a shared helper with every production caller package, and require its mutation replay in each.
-- Run each named-check row through `bench worktree build` and then `./dist/bench test --check`, because the installed binary grades its own source.
-- Write each probe in a charge in a form that `bench probe` can express; a file omission empties a file and does not delete it.
-- Run `bench record amendment` right after each plan commit that changes the plan digest, and before any chunk, verification, or review entry.
-- Record the mutated-run probe exit as 1 from the failing test run, and say in the excerpt that the probe output does not print it.
-- Read a helper before a repair charge names it as the fold target.
-- Run the propose-writes preflight before dispatch, and fold fixture paths into the Writes lines.
+- When an active author reports a copy outside its fence, widen the fence before the freeze. The same author then folds the copy before review.
+- Run `bench worktree build` after each Go commit in a build worktree, because a stale binary turns `binary-seal` red.
+- Write each probe so that its mutant compiles and changes behavior; a mutant with an unused import or an equal commit name proves nothing.
+- Run `bench record amendment` after each plan commit and after each ticket commit that rewrites seam cells, before `bench record chunk`.
+- Apply a plan-text correction before the chunk freeze, or freeze the chunk again before any record at the old source.
+- Record the mutated-run probe exit as 1 from the failing test run; `docs/known-issues.md` holds the workaround.
+- With reviewer approval, let the ticket author record the amendment, freeze its chunk, and record its verification in one pass before it returns.
 - Treat `--auto-approve` as approval for fence expansions, spec and ticket expansions, and repair rounds, and fix a found defect at once instead of deferring it.
-- When `main` moves during a build, fold `main` into the source before the completion landing. The fold joins the last chunk's review delta, and the landing base stays the pre-chunk `main` tip.
+- When `main` moves during a build, fold `main` into the source before the completion landing. Fold it earlier when a later ticket writes a path that `main` changed. The fold joins the last chunk's review delta.
 - Commit every record before the complete checkpoint, because the checkpoint refuses a dirty checkout and grades the published tree.
-- Keep the narrow review shape provisional. Pair narrow axes with one full reader in a later trial.
-- Probe author claims independently, and rerun every ticket's verification at the final chunk source before the chunk review.
-- Record ticket assignments before each dispatch, and give each verification of a version 2 chunk an ID that is unique in that chunk.
-- Add a repair test's coverage row in the repair plan commit, before the repair dispatch and the confirming round.
 - Run tests and probes serially when review axes or authors share a tree.
 - Keep declared confidence unchanged, and separate unknown or abstained evidence from labeled claims.
-- Apply the repair allowance to blocking findings that change source. A record-only or comment-only change consumes no repair cycle.
-- Correct spec prose inside the chunk that needs it, because the checkpoint needs a passing Spec result.
-- Name every anchor needle in the plan probe list with its expected verdict.
-- Write each fact in a delegate charge from git output, not from memory.
-- Run the whole conformance package for a guidance ticket, because a Markdown lane misses a test that reads guidance, such as a prose budget.
-- Charge each author of a CLI form with one probe for each member of each refusal step that the form joins.
-- Charge each author to edit pool-path files only with the file tools or through `bench worktree exec`.
-- Stop a consultation that produces no output past its expected window, and reroute it.
+- Apply the repair allowance to blocking findings that change source. A record-only or plan-text change consumes no repair cycle.
+- Run the whole conformance package for a guidance ticket, because a Markdown lane misses a test that reads guidance.
 - Read the assignment census before landing releases the worktree.
 - Bind a deliverable to its outcome through a landed plan before `bench commitment start`, and run the start through `bench worktree exec` in the owning worktree.
 - Preserve exact terminal provider costs separately from token counts, and keep unavailable usage unknown.
