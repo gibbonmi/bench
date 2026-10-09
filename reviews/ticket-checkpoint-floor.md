@@ -18,6 +18,8 @@ TF-C3 round 2 confirmed those folds and found P3, a stale sentence in ticket 03.
 
 The Spec axis reaffirmed the correction of P3. TF-C3 closes with repair cycle 1 of 2 used and no open finding.
 
+Chunk TF-C4 uses repair cycle 1 of 2 for C1 and C2 through a fresh repair session for ticket 04. Before review, the ticket 04 author folded four reported copies inside a widened fence, so that work used no repair cycle.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -59,6 +61,10 @@ Advice: S1 and S2, `"bench test"` and the flag spellings have no exported owner,
 
 TF-C3 round 2: 0 findings. The folds of S3, S4, S6, and S7 hold.
 
+TF-C4 round 1: 0 findings. The four pre-review folds hold.
+
+Advice: S1, the projection and `strayTestNames` treat a review-owned cell differently, because rows TF51 and TF56 require both behaviors. S2, `ReadSpecAtCommit` and `atSource` both compose a commit, its tree, and its plan from the same owners. S3, `Plan.Chunk` wraps `findChunk`, and five callers outside the ticket 04 fence still call `findChunk`. S4, a test spells the opted-in map header that `internal/coverage` owns.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
@@ -86,6 +92,8 @@ Advice: P2, `spec.md:464` names row-list edits in three command tests that the d
 TF-C3 round 2: 1 finding, worst P3.
 
 - P3 (auto-fix, confidence 8): ticket 03 states the `./cmd/bench` condition without the floor-package clause that the spec now holds.
+
+TF-C4 round 1: 0 findings. TF47 to TF59 and TF67 hold.
 
 ## Coverage
 
@@ -119,6 +127,11 @@ TF-C3 round 1: 2 findings, worst C1.
 - C2 (auto-fix, confidence 5): `check_floor.go:78-81` owes no `./cmd/bench` for a directory entry above a bound command package. Row TF74 reads the command-package rule against each floor package.
 
 TF-C3 round 2: 0 findings. TF73 and TF74 hold.
+
+TF-C4 round 1: 2 findings, worst C2.
+
+- C1 (auto-fix, confidence 9): no test shows that a refused `bench record completion` writes nothing. A probe that writes before the refusal stays green.
+- C2 (auto-fix, confidence 9): no completion test holds a `planned` row in a later chunk. A probe that reads only the first chunk in `Plan.Rows` stays green.
 
 ```bench-review-record
 {
@@ -2129,7 +2142,71 @@ TF-C3 round 2: 0 findings. TF73 and TF74 hold.
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c4-standards-r1",
+          "performer": "claude:ft349_c4_standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c4_standards",
+            "digest": "sha256:5caa53e38e3779484efca175a3a0cea5dcc62223609b0a7e2307931de49e3fca",
+            "excerpt": "Standards axis TF-C4 round 1 (fable/medium), delta 2a3ab61b..7fcb4799. 4 advisory findings, 0 blocking; worst S1. Pre-review folds hold (citationFormat, Plan.Rows, Plan.Chunk, recordtest.Reload).\nS1 planned_rows.go:24 vs citations.go:148 the planned predicate differs by the review-owned prefix. ask-user. conf 6.\nS2 plan.go:130-142 ReadSpecAtCommit beside source.go:11 atSource compose commit to tree to plan twice. auto-fix. conf 6.\nS3 coverage.go:146 Plan.Chunk wraps findChunk, which five sites still call. auto-fix. conf 5.\nS4 planned_cell_test.go:29 spells the opted-in map header literally. no-op. conf 4.\n"
+          },
+          "axis": "Standards",
+          "base": "41df830c693ac196a88d66010379bf721608bbf4",
+          "tip": "7fcb4799823a8af896b8ff79a7902da11f282cae",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4-spec-r1",
+          "performer": "claude:ft349_c4_spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c4_spec",
+            "digest": "sha256:9dfb6874f3c5987722e3962e2f3f44aace1d0d84ea43738aa688440e99d8b5f7",
+            "excerpt": "Spec axis TF-C4 round 1 (fable/medium), delta 2a3ab61b..7fcb4799. TF47-TF59 and TF67 held; every seam cell cites an existing test. The planned-cell refusal section held in each clause; import edge held; delta equals the widened Writes line. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "41df830c693ac196a88d66010379bf721608bbf4",
+          "tip": "7fcb4799823a8af896b8ff79a7902da11f282cae",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4-coverage-r1",
+          "performer": "claude:ft349_c4_coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c4_coverage",
+            "digest": "sha256:5eb572fe1a230552eec95cb767d6af72058710d120c1cb2746032ce16cdccb5a",
+            "excerpt": "Coverage axis TF-C4 round 1 (fable/medium), delta 2a3ab61b..7fcb4799. 2 findings; worst C2.\nC1 planned_cell_test.go:142 no test guards that a refused completion writes nothing; probe RecordCompletion before refusePlanned in recordcmd/completion.go:18-21 silent, restored yes. auto-fix. conf 9.\nC2 plan.go:89-95 Plan.Rows and planned_cell_test.go:130-146 no completion test has a planned row in a later chunk; probe range p.Chunks[:1] silent over ./internal/reviewrecord/..., restored yes. auto-fix. conf 9.\n"
+          },
+          "axis": "Coverage",
+          "base": "41df830c693ac196a88d66010379bf721608bbf4",
+          "tip": "7fcb4799823a8af896b8ff79a7902da11f282cae",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
