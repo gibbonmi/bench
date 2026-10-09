@@ -26,7 +26,7 @@ func TestPreflightReviewChargeUsesCurrentVersion(t *testing.T) {
 		// so a staged spec states it.
 		"## Completion plan\n\n```bench-completion-plan\n" +
 		`{"version":1,"chunks":[{"id":"c1","tickets":["one.md"],` +
-		`"verification":[{"id":"tests","command":"go test ./..."}]}],` +
+		`"verification":[{"id":"tests","command":"bench test --package ./..."}]}],` +
 		`"final_verification":[{"id":"acceptance","command":"go test ./..."}]}` +
 		"\n```\n"
 	writeAXIFixture(t, filepath.Join(root, "specs/example/spec.md"), spec)

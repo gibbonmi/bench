@@ -12,9 +12,9 @@ import (
 // omits, so the count is per-mode rather than one literal.
 func bareRowCount(mode string) int {
 	if mode == modeBuild {
-		return 15
+		return 16
 	}
-	return 14
+	return 15
 }
 
 // TestSourceTipOmittedKeepsTodaysVerdict is H30's control half: without

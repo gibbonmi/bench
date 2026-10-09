@@ -17,9 +17,10 @@ import (
 
 const proseCheckName = "prose"
 
-// rootConformanceCheckName names the unscoped run of the root conformance test, which
-// grades every registered dev-tier check.
-const rootConformanceCheckName = "root-conformance"
+// RootConformanceCheckName names the unscoped run of the root conformance test, which
+// grades every registered dev-tier check. The build preflight reads it as the check-floor
+// element, so the name has one spelling.
+const RootConformanceCheckName = "root-conformance"
 
 // rootConformanceUnavailable is the error title of a root-conformance run over a root
 // where the gate does not run root conformance.
@@ -54,7 +55,7 @@ func namedCheckInventory() string {
 }
 
 func namedChecks() []string {
-	return append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName, rootConformanceCheckName)
+	return append(registry.Names(registry.Dev), gate.SystemPhaseName, proseCheckName, RootConformanceCheckName)
 }
 
 func isNamedCheck(check string) bool {

@@ -131,7 +131,7 @@ func PlanFence(tickets ...string) string {
 		Chunks: []reviewrecord.PlannedChunk{{
 			ID:           "c1",
 			Tickets:      tickets,
-			Verification: []reviewrecord.Requirement{{ID: "tests", Command: "go test ./..."}},
+			Verification: []reviewrecord.Requirement{{ID: "tests", Command: "bench test --package ./..."}},
 		}},
 		FinalVerification: []reviewrecord.Requirement{{ID: "acceptance", Command: "go test ./..."}},
 	}

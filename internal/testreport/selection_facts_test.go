@@ -58,6 +58,29 @@ func TestSelectionFactsNameTheChangedForm(t *testing.T) {
 	}
 }
 
+// TestSelectionFactsNameTheListingForms grades the accessor that tells a selection run from
+// the two forms that list and run nothing: the check inventory and a check's fixtures.
+func TestSelectionFactsNameTheListingForms(t *testing.T) {
+	root := t.TempDir()
+	for _, tc := range []struct {
+		args []string
+		runs bool
+	}{
+		{[]string{"--checks"}, false},
+		{[]string{"--check", RootConformanceCheckName, "--fixtures"}, false},
+		{[]string{"--check", RootConformanceCheckName}, true},
+		{[]string{"--package", "./..."}, true},
+	} {
+		request, line, code := Prepare(root, tc.args)
+		if line != "" {
+			t.Fatalf("Prepare refused %v: (%d, %q)", tc.args, code, line)
+		}
+		if request.Runs() != tc.runs {
+			t.Fatalf("Runs() of %v = %t, want %t", tc.args, request.Runs(), tc.runs)
+		}
+	}
+}
+
 // rootConformanceTestName is the test a named conformance check runs, spelled here
 // independently of the producer. A producer that names another test reds this row.
 const rootConformanceTestName = "TestRootConformance"

@@ -34,7 +34,7 @@ func conformanceEnvironment(base []string, root, scope string, selection *runbin
 // entry test refuses a scope that names no registered check. Every other check is its
 // own scope.
 func conformanceScope(check string) string {
-	if check == rootConformanceCheckName {
+	if check == RootConformanceCheckName {
 		return ""
 	}
 	return check

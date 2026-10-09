@@ -52,7 +52,7 @@ func rootConformanceRun(t *testing.T, root, kit string) (output string, code int
 	writeCheckGo(t, filepath.Join(goDir, "go"), marker)
 	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 
-	output, code = Command(root, []string{"--check", rootConformanceCheckName})
+	output, code = Command(root, []string{"--check", RootConformanceCheckName})
 	data, err := os.ReadFile(marker)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		t.Fatal(err)
@@ -90,7 +90,7 @@ func TestRootConformanceCheckPrintsFailures(t *testing.T) {
 	const diagnostic = "row-next-grammar drift: " + drain + " token table lacks token 'kit-edit'"
 	installOwnedSelection(t, root)
 
-	output, code := Command(root, []string{"--full", "--check", rootConformanceCheckName})
+	output, code := Command(root, []string{"--full", "--check", RootConformanceCheckName})
 	if code != 1 || !strings.Contains(output, diagnostic) {
 		t.Fatalf("root-conformance over a planted defect = %d, want 1 and the diagnostic %q\n%s", code, diagnostic, output)
 	}
@@ -122,8 +122,8 @@ func TestRootConformanceCheckRefusesAForeignRoot(t *testing.T) {
 
 func TestChecksFaceListsRootConformance(t *testing.T) {
 	_, rows := checksFace(t, t.TempDir())
-	if row := rows[rootConformanceCheckName]; len(row) != 3 || row[1] != "conformance" {
-		t.Fatalf("--checks row %q; want %s with the kind conformance", row, rootConformanceCheckName)
+	if row := rows[RootConformanceCheckName]; len(row) != 3 || row[1] != "conformance" {
+		t.Fatalf("--checks row %q; want %s with the kind conformance", row, RootConformanceCheckName)
 	}
 }
 

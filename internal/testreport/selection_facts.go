@@ -41,6 +41,12 @@ func (r Request) Changed() bool {
 	return r.focused.changed
 }
 
+// Runs answers whether the request runs its selection. The check inventory and a check's
+// fixture listing run nothing, although their form and target read like a run.
+func (r Request) Runs() bool {
+	return !r.focused.checks && !r.focused.fixtures
+}
+
 // Run answers the exact run pattern the focused run passes to Go, or AllTests when it
 // passes none. The named-check pattern comes from the one producer the argv reads, so a
 // caller is never told a pattern the run did not use. The prose grade starts no Go child,

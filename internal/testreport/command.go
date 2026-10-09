@@ -136,7 +136,7 @@ func runFocusedRequest(root string, request focusedRequest) (Outcome, string, in
 	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {
 		return refusedOutcome(toon.Errorf("system check unavailable", "the system suite grades the kit checkout only")+"\n", 1)
 	}
-	if request.check == rootConformanceCheckName && !gate.RootConformanceRuns(root, testBenchSource(root)) {
+	if request.check == RootConformanceCheckName && !gate.RootConformanceRuns(root, testBenchSource(root)) {
 		return refusedOutcome(toon.Errorf(rootConformanceUnavailable, "root conformance grades a kit checkout that declares its entry test only")+"\n", 1)
 	}
 	if request.check == proseCheckName {

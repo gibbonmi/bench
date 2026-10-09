@@ -1,6 +1,8 @@
 package preflight
 
 import (
+	"context"
+
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 )
@@ -10,8 +12,8 @@ import (
 // parses the same fence through the same reader, so a plan this row calls valid
 // is the plan the landing later accepts.
 //
-// The read is the gatherer's whole contribution: the digest for the review
-// charge's completion table, and the reader's message for the verdict row. An
+// The read gives the digest for the review charge's completion table, the reader's
+// message for the verdict row, and the parsed plan with its check floor. An
 // unresolvable tip answers as an unreadable plan, because neither state can
 // produce the evidence the checkpoint requires.
 func withCompletionPlan(root string, facts Facts) Facts {
@@ -26,6 +28,8 @@ func withCompletionPlan(root string, facts Facts) Facts {
 		return facts
 	}
 	facts.CompletionPlanDigest = plan.Digest
+	facts.CompletionPlan = plan
+	facts.CheckFloor = gatherCheckFloor(context.Background(), root, facts.Tickets, plan)
 	return facts
 }
 
