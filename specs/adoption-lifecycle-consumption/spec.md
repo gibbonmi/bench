@@ -240,6 +240,12 @@ The execution inventory must retain this distinction.
 It must not turn every invalid path into the legacy decision's whole-plan refusal.
 ALC28 and ALC34 include both call paths.
 
+An owned CLAUDE.md that is a dangling symlink reads as absent.
+The owner installs the current managed form and records its fingerprint, and Link exits 0.
+The reviewer accepted this result on 2026-10-09 as a reviewed behavior delta.
+The earlier caller replaced the file and also reported a preserved conflict with exit 3.
+ALC22 includes this fixture.
+
 ### Bespoke content and safety
 
 Keep AGENTS.md marker transforms in their existing domain helpers.
@@ -721,6 +727,18 @@ Review records bind three independent axes to each frozen chunk pair.
           "trigger": "user-directed",
           "stopped": "the ticket 02 author session claude:ft217_t2b reported completion of its ALC-LINK verification record commit 8613919f and has no live child",
           "preserved": "c34c359701f6fb3b9c23be84df19c47c3698a924"
+        },
+        {
+          "session": "claude:ft217_t2_repair1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "f5273edb48db45b0a1bada3552a5130a74d6c52d",
+          "native_ref": "claude-agent:ft217_t2_repair1",
+          "predecessor": "claude:ft217_t2_verify1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 02 verification session reported completion of its record commit 38041e98 and has no live child",
+          "preserved": "f5273edb48db45b0a1bada3552a5130a74d6c52d"
         }
       ],
       "03-consume-decisions-for-dropped-and-bespoke-link-assets.md": [
@@ -743,6 +761,18 @@ Review records bind three independent axes to each frozen chunk pair.
           "trigger": "user-directed",
           "stopped": "the ticket 03 author session reported completion of its ALC-LINK freeze and verification record commit 122095ca and has no live child",
           "preserved": "8613919f6e13a5e5049534016f091dc57747dc1d"
+        },
+        {
+          "session": "claude:ft217_t3_verify1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "f5273edb48db45b0a1bada3552a5130a74d6c52d",
+          "native_ref": "claude-agent:ft217_t3_verify1",
+          "predecessor": "claude:ft217_t3_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 03 repair session reported completion of its record commit cf1c1a6e and has no live child",
+          "preserved": "f5273edb48db45b0a1bada3552a5130a74d6c52d"
         }
       ],
       "04-consume-unlink-decisions-and-close-entry-proof.md": []
