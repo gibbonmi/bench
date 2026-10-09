@@ -2,6 +2,7 @@ package prose
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -31,9 +32,9 @@ func TestGradeNamedGradesAnUnexcludedSubject(t *testing.T) {
 	}
 }
 
-// TestGradeNamedSkipsAbsentAndSymlinkPaths covers the edge inventory: a named path that
-// does not exist, and a symbolic link, are both skipped rather than graded or refused.
-func TestGradeNamedSkipsAbsentAndSymlinkPaths(t *testing.T) {
+// TestGradeNamedSkipsAbsentAndRefusesSymlinkPaths covers the edge inventory: a named path
+// that does not exist is skipped, and a symbolic link is refused rather than followed.
+func TestGradeNamedSkipsAbsentAndRefusesSymlinkPaths(t *testing.T) {
 	root := t.TempDir()
 	write(t, root, ".bench/prose-exclusions", "")
 	write(t, root, "real.md", longSentence())
@@ -42,7 +43,11 @@ func TestGradeNamedSkipsAbsentAndSymlinkPaths(t *testing.T) {
 		t.Fatalf("symlink fixture: %v", err)
 	}
 
-	if got := GradeNamed(root, []string{"missing.md", "link.md"}); got != nil {
-		t.Fatalf("GradeNamed on an absent path and a symlink = %v, want no finding", got)
+	if got := GradeNamed(root, []string{"missing.md"}); got != nil {
+		t.Fatalf("GradeNamed on an absent path = %v, want no finding", got)
+	}
+	got := GradeNamed(root, []string{"link.md"})
+	if len(got) != 1 || !strings.HasPrefix(got[0], `prose: "link.md": refused subject:`) {
+		t.Fatalf("GradeNamed on a symlink = %v, want one refused-subject line", got)
 	}
 }

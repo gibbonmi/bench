@@ -342,11 +342,51 @@
               }
             }
           ]
+        },
+        {
+          "id": "FT217",
+          "criteria": [
+            {
+              "id": "FT217.owner",
+              "text": "PlanLifecycle is the single owner of the managed lifecycle decision, and link, setup, upgrade execution, and unlink consume its complete decision."
+            },
+            {
+              "id": "FT217.preserved",
+              "text": "Command behavior, reports, validation order, and the transaction owner stay unchanged, and the effect-only Operations view derives from the complete decision."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT217",
+              "path": "roadmap/FT217.md",
+              "identity": "sha256:db448f2ef82de4e8a079d140e2e8406bf68fac8892381d490f472eac3fbbf27c"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "adoption-lifecycle-consumption",
+                "path": "specs/adoption-lifecycle-consumption/spec.md",
+                "identity": "sha256:503f84b3ebc489c7077666488ef2574d3278fc44745d142fa7a31599bd08b7f6"
+              },
+              "obligations": [
+                "FT217"
+              ]
+            }
+          ]
         }
       ]
     }
   ],
   "active_milestone": "quality-1",
+  "parallel_grants": [
+    {
+      "outcomes": [
+        "NRO",
+        "FT217"
+      ]
+    }
+  ],
   "deliveries": [
     {
       "milestone": "quality-1",

@@ -1,4 +1,4 @@
-**FT6 (LOW, parked pending evidence — leave parked):**
+**FT6 (LOW, parked pending evidence — leave parked) — the parked query verbs return only on demonstrated session cost.**
 
 `bench refs`, `bench detect`, `bench doc`, `bench specs --retired`, and the
 doctor binary-presence row. The per-anchor
