@@ -573,7 +573,271 @@
         "NR35",
         "NR37"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "nr-c2-t2-record-domain",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./internal/reviewrecord at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:d2d6094f7a898ebce3f5b3e33c6103df584913714fc6f452ab127efff0be326c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1937,82\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-domain",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-record-forms",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./internal/reviewrecord/recordcmd at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:30a8b56d873a586e8faea9b24b51381ea89e95b1e8b4321f96cf74c5a2d877f7",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,10255,149\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-checkpoint-repair",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./internal/gate --run 'Test.*(Checkpoint|Review)' at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:c99eb537890f6b274cc7475dc78645ab749f9db765aa7692e4af56d758aced96",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,9516,95\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "checkpoint-repair",
+          "command": "bench test --package ./internal/gate --run 'Test.*(Checkpoint|Review)'",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-command-package",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./cmd/bench at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:568367d0200d428577e01ee8270fc24511eb935d7e6b34cf555fd93064f5894a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15031,334\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-native-ordering-journey",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$' at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:fca7eb983589dbfa1818b65c2c9cbe52065dcc8fc60d157017e1e7177fd45c6b",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,272,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "native-ordering-journey",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-guidance",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --check docs-currency-workflow at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:bb26f3d93840610c0a644946f81f85e9ded191ddd2a44b87d25637b1d6e1ff46",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,6508,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-root-conformance",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --check root-conformance at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:827f7b030e7013cd00a03c479f92dc0ab434c44f3fbd25fd2c57b53044b415ad",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17861,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-ordinary-census",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --check ordinary-build-census at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:bab0845cc5716c14eedbc2e0668829425066747dd9db55aad1659539bf89f4d4",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,310,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ordinary-census",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-anchors",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./internal/anchors at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:b7211791e473d199003c53caf0c39c80a41d22e49afbaa5cbf4b209af7830111",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1177,178\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-conformance-package",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./internal/conformance at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:4a91aadb14e1f287c9ee87c3118e6a579453679a14b228a3da6de5742594f07d",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,71118,1677\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/QMJK6B/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket3721426975/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/QMJK6B/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket3339791707/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-record-fixtures",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./internal/reviewrecord/recordtest at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:cff4d237410d79e700e012334abc18442f59ae8433e729872ca954138195d78a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-fixtures",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-gate-package",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./internal/gate at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:f5da844af83839d97a202fdca6a8e0d893f44bcf90d218e5479fe8a8b5b9bef5",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,32109,427\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate-package",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-refusal-routes",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench test --package ./internal/refusalroute at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:e0e727ea165670c34e994c305dbe2aa994ffe0ca3a05eec15044900dd90c5b50",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,17\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "refusal-routes",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c2-t2-chunk-guard-omission",
+          "performer": "claude:nro_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t2 bench probe internal/reviewrecord/write.go --omit <RecordChunk currentPlan guard> --package ./cmd/bench --run '^TestNativeRecordCLIJourney$' at 41a35a6e (df6eeb88 source plus its record commit)",
+            "digest": "sha256:accd302a3184ec3779582253d9a4cdc5f0bfc2398423f0f8317170d4e7386fe6",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,259,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:109: stale chunk 2 = exit 0, stdout \\\"chunk[1]{id,action,base,tip,source_digest,plan_digest,rows}:\\\\\\\\n  \\\\\\\\\\\"2\\\\\\\\\\\",added,e351bf3276b14a389b83a1ed62df0c4b7b7e0edd,e61a6b2a60f146b53decd8a2e58b25e395e67ca7,13975568dea633aa47a… (412 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "chunk-guard-omission",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit only the shared current-plan digest guard at RecordChunk, retaining the guard owner and other callers; the real record entry must write stale evidence and red TestNativeRecordCLIJourney.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:nro_t2 bench probe internal/reviewrecord/write.go --omit <RecordChunk currentPlan guard> --package ./cmd/bench --run '^TestNativeRecordCLIJourney$' at 41a35a6e (df6eeb88 source plus its record commit)",
+              "digest": "sha256:accd302a3184ec3779582253d9a4cdc5f0bfc2398423f0f8317170d4e7386fe6",
+              "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,41a35a6e21cecc3581b5770afc8811d2ca7e7961,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/write.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,259,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:109: stale chunk 2 = exit 0, stdout \\\"chunk[1]{id,action,base,tip,source_digest,plan_digest,rows}:\\\\\\\\n  \\\\\\\\\\\"2\\\\\\\\\\\",added,e351bf3276b14a389b83a1ed62df0c4b7b7e0edd,e61a6b2a60f146b53decd8a2e58b25e395e67ca7,13975568dea633aa47a… (412 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
       "reviews": []
     }
   ],
