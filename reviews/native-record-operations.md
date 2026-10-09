@@ -1245,6 +1245,28 @@
           "supersedes": [
             "nr-c2-r1-coverage"
           ]
+        },
+        {
+          "id": "nr-c2-r2-standards-reaffirmed",
+          "performer": "claude:nro-c2-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "e6ea41b8455f3ae2e7fa7948ba0917d198037ebc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c2-r2-standards-reaffirmation",
+            "digest": "sha256:beb0bd0f9e03ad0f17a8d4cd152467c10fd7b014fde1dcd416d806e5cf14e728",
+            "excerpt": "## Standards (NR-C2 round 2 reaffirmation, fable/medium, evidence sha256:9a4a39fac344dde4a08c1d67d1ba1a3039d06fbdb771b97a78ecd740a8a33fbd, pair c311ec18..c6e112a0, record commit 9b6af705)\n\nS5 | reaffirmed | 8 | reviews/native-record-operations.md:94-106 (commit 9b6af705) — the \"NR-C2 round 2\" section names S1, P1, P3, C1, C2, C4, C5 as closed by 2fbc0afd, P2 as no-op with its reason and the veto surface, S6 and S7 as no-op, and C6 as advice; every round 1 finding now carries one disposition.\n\nProse defect: line 98 states \"the Standards axis reaffirms it\" as a fact before this reaffirmation existed. It is true now, so no repair, but the sentence belongs after the verdict, not before it. No other prose defect.\n"
+          },
+          "axis": "Standards",
+          "base": "c311ec18aa433aa19d4cd5a2682d11a6c56ab787",
+          "tip": "2fbc0afd7b1376c76f45292f0333046b1745f950",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c2-r2-standards"
+          ]
         }
       ]
     }
