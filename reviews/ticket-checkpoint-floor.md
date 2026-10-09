@@ -137,7 +137,7 @@ TF-C4 round 1: 2 findings, worst C2.
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:d0125cae58fd336eda51d56eea978aa655bbcc367cedbb84eb4258629f5a1afe",
+  "plan_digest": "sha256:ef8966844936830ac4813fdafadcfeecc75d430cb5b7d1cb3d19e8984f00391e",
   "implementation_session": "",
   "chunks": [
     {
@@ -2436,6 +2436,24 @@ TF-C4 round 1: 2 findings, worst C2.
         ],
         "TF-C3": [
           "TF-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d0125cae58fd336eda51d56eea978aa655bbcc367cedbb84eb4258629f5a1afe",
+      "to": "sha256:ef8966844936830ac4813fdafadcfeecc75d430cb5b7d1cb3d19e8984f00391e",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ],
+        "TF-C2": [
+          "TF-C2"
+        ],
+        "TF-C3": [
+          "TF-C3"
+        ],
+        "TF-C4": [
+          "TF-C4"
         ]
       }
     }
