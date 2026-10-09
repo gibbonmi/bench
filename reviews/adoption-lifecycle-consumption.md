@@ -2018,6 +2018,72 @@
           "supersedes": [
             "unlink-coverage-r1"
           ]
+        },
+        {
+          "id": "unlink-standards-r3",
+          "performer": "claude:ft217_unlink_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b8b9fbd4b9b0befbb19b4c78d44b27be9d3f3f57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_unlink_standards_r3/review-unlink-standards-r3.txt",
+            "digest": "sha256:ab19d5a472f7d7fb393229d6fdc7ffa91419606040ef24dce6728c4cac8fde40",
+            "excerpt": "ALC-UNLINK Standards axis, confirming round 3. Session claude:ft217_unlink_standards_r3, opus / medium. Chunk pair efe66c1a..f03ce96e, source tip f3be6b3a, evidence sha256:3e68409e current=true. Read the test-only delta 4bd52e65..f03ce96e; named item only.\n\nCount: 0. Worst issue: none.\n\nFolds confirmed: (1) one source per fact holds: linkedCopy (lifecycle_consumption_test.go:37-64) calls consumerRepo (:39), which owns git init, BENCH_KIT, and chdir (link_transaction_test.go:79-86); linkedBase (:22-32) composes consumerRepo and linkConsumer; hookRepo (lifecycle_special_test.go:195) takes a root and builds no repo. (2) The stat lists only the four lifecycle test files; no assertion or table row changed; os.Mkdir became os.MkdirAll at lifecycle_special_test.go:200 as setup tolerance. (3) The new comments (lifecycle_consumption_test.go:17-21, :34-36; lifecycle_special_test.go:192-194) use the present tense with no provenance.\n\nAdvice (no confidence): the linkedBase comment's cost rationale could be one clause.\n\nCursors fetched: the diff spill and the consumerRepo spill. Examined: the delta, link_transaction_test.go:79-93, craft-comments.\n"
+          },
+          "axis": "Standards",
+          "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "tip": "f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63",
+          "finding_ids": [],
+          "supersedes": [
+            "unlink-standards-r2"
+          ]
+        },
+        {
+          "id": "unlink-spec-r3",
+          "performer": "claude:ft217_unlink_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b8b9fbd4b9b0befbb19b4c78d44b27be9d3f3f57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_unlink_spec_r3/review-unlink-spec-r3.txt",
+            "digest": "sha256:122de3155ff4c0825e2fca1d59cc028b259b7e4eeedc977c070e7e5665519f85",
+            "excerpt": "ALC-UNLINK Spec axis, confirming round 3. Session claude:ft217_unlink_spec_r3, opus / medium. Chunk pair efe66c1a..f03ce96e, source tip f3be6b3a, evidence sha256:3e68409e current=true. Read the test-only delta 4bd52e65..f03ce96e; named item only.\n\nCount: 0. Worst issue: none. Spec line: \"Use real Link, Setup, Upgrade, and Unlink entries for caller composition.\"\n\nFolds confirmed: linkedBase runs one real linkConsumer per parent test and restores the working directory (lifecycle_consumption_test.go:22-32); linkedCopy builds a fresh consumerRepo and copies bytes, symlinks, and modes (:37-64). Each per-subtest linkConsumer became linkedCopy while the arrange step and the entry under test (relink, Upgrade, Unlink) stay unchanged (lifecycle_consumption_test.go:237, :367; lifecycle_unlink_test.go:114, :38; lifecycle_preview_test.go:117, :201; lifecycle_special_test.go:202, :312). Link-subject hook subtests still call runLink on a new unlinked repository (lifecycle_special_test.go:219-222); unlinked partitions still use consumerRepo (lifecycle_consumption_test.go:86). Link writes symlinks with absolute kit-source targets (link_stage.go:25-28), so a copy does not point into the base.\n\nAdvice (no confidence): the diverted-hook copy re-points core.hooksPath at the copy (lifecycle_special_test.go:192-205, :312); whether other recorded state holds an absolute base path is unknown.\n\nCursors fetched: the diff spill and two rg spills. Examined: the delta, link_transaction_test.go:79-101, go.mod:3.\n"
+          },
+          "axis": "Spec",
+          "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "tip": "f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63",
+          "finding_ids": [],
+          "supersedes": [
+            "unlink-spec-r2"
+          ]
+        },
+        {
+          "id": "unlink-coverage-r3",
+          "performer": "claude:ft217_unlink_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b8b9fbd4b9b0befbb19b4c78d44b27be9d3f3f57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_unlink_coverage_r3/review-unlink-coverage-r3.txt",
+            "digest": "sha256:59cda6ac2875fd119c7cea5450b4e7c1ea2c28d4de7fe5bfd74a4f7e4fcb33e6",
+            "excerpt": "ALC-UNLINK Coverage axis, confirming round 3. Session claude:ft217_unlink_coverage_r3, opus / medium. Chunk pair efe66c1a..f03ce96e, source tip f3be6b3a, evidence sha256:3e68409e current=true. Read the test-only delta 4bd52e65..f03ce96e; named item only.\n\nCount: 0. Worst issue: none. No masked mutation: the copied base does not carry over a removal that the subtest must produce itself.\n\nFolds confirmed: bench probe internal/adopt/unlink.go --omit 'p.changes = append(p.changes, stagedChange{rel: rel})' --package ./internal/adopt --run '^TestLifecycleUnlinkPartitions$' → bit, 2 failed (clean and normalized at lifecycle_unlink_test.go:50, \".bench/BENCH.md after unlink: <nil>, want absent\"), restored yes; the omitted line is unlink.go:122 in planUnlink's lifecycleRemove branch. linkedCopy (lifecycle_consumption_test.go:37-64) copies with os.CopyFS(root, os.DirFS(base)), which keeps symlink target text on go 1.25 (go.mod:3; not checked by a run), then chmods each non-symlink entry to the base permission bits.\n\nAdvice (no confidence): Perm() drops setuid, setgid, and sticky bits; no fixture uses them.\n\nCursors fetched: the diff spill and the planUnlink listing spill. Examined: the delta, unlink.go:98-178, go.mod. Final git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "tip": "f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63",
+          "finding_ids": [],
+          "supersedes": [
+            "unlink-coverage-r2"
+          ]
         }
       ]
     }
