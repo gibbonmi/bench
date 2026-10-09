@@ -1,7 +1,6 @@
 package adopt
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -117,10 +116,7 @@ func planUnlink(root string, m Manifest, dryRun bool, guard *adoptionGuard) (unl
 	var candidateDirs []string
 	for order, rel := range rels {
 		o, full := observeUnlink(root, rel, m.hashes[rel], order)
-		d, err := decideUnlink(o)
-		if err != nil {
-			return p, err
-		}
+		d := p.decide(o)
 		switch {
 		case d.Kind == lifecycleRemove:
 			p.changes = append(p.changes, stagedChange{rel: rel})
@@ -138,12 +134,13 @@ func planUnlink(root string, m Manifest, dryRun bool, guard *adoptionGuard) (unl
 		}
 	}
 
-	p.agentsAction = stripAgentsForUnlink(root, dryRun, &p)
-	hookAction, err := removeManagedHook(root, dryRun, &p)
+	agents, transform := observeUnlinkAgents(root, p.stage)
+	p.agentsAction = transform.report(p.applyBespoke(agents, stagedChange{rel: agents.Path, stage: transform.stage}, dryRun))
+	hook, hookPath, err := observeUnlinkHook(root)
 	if err != nil {
 		return unlinkPlan{}, err
 	}
-	p.hookAction = hookAction
+	p.hookAction = unlinkHookReport(p.applyBespoke(hook, stagedChange{rel: hook.Path, dest: hookPath}, dryRun))
 	if !dryRun && len(p.changes) > 0 {
 		if err := promoteWithLease(root, p.changes, guard); err != nil {
 			return p, err
@@ -153,7 +150,6 @@ func planUnlink(root string, m Manifest, dryRun bool, guard *adoptionGuard) (unl
 
 	// The manifest is removed last, and only when no residual remains, so a partial run
 	// leaves the residual managed state tracked for a follow-up. Dry-run never removes it.
-	p.manifestKept = len(p.keptModified)+len(p.refused) > 0
 	if !p.manifestKept && !dryRun {
 		if err := promoteWithLease(root, []stagedChange{{rel: ".bench/link-manifest.tsv"}}, guard); err != nil {
 			return p, err
@@ -182,14 +178,28 @@ func observeUnlink(root, rel, recorded string, order int) (LifecycleObservation,
 	return o, full
 }
 
-// decideUnlink submits one manifest row's observation to the lifecycle owner and returns
-// its decision, or the owner's refusal as an error.
-func decideUnlink(o LifecycleObservation) (LifecycleDecision, error) {
-	lifecycle := PlanLifecycle(LifecycleInput{Execution: &LifecycleInventory{Action: "unlink", Observations: []LifecycleObservation{o}}})
-	if lifecycle.Refusal != "" {
-		return LifecycleDecision{}, errors.New(lifecycle.Refusal)
+// decide submits one unlink observation to the lifecycle owner and returns its decision. It
+// ignores the refusal, which unlinkDecision never returns. A decision that keeps its
+// manifest row, a residual, keeps the manifest.
+func (p *unlinkPlan) decide(o LifecycleObservation) LifecycleDecision {
+	d, _ := decideObservation("unlink", o)
+	if d.ManifestAction != manifestOmit {
+		p.manifestKept = true
 	}
-	return lifecycle.Decisions[0], nil
+	return d
+}
+
+// applyBespoke decides one bespoke path and applies the effect that the owner selects: the
+// prepared change or removal, which a dry run does not publish, or a refused residual.
+func (p *unlinkPlan) applyBespoke(o LifecycleObservation, change stagedChange, dryRun bool) LifecycleDecision {
+	d := p.decide(o)
+	switch {
+	case (publishes(d) || d.Kind == lifecycleRemove) && !dryRun:
+		p.changes = append(p.changes, change)
+	case d.Reason == reasonRefused:
+		p.refused = append(p.refused, d.Path)
+	}
+	return d
 }
 
 // resolveInside resolves a manifest rel against the repo root and returns the absolute path

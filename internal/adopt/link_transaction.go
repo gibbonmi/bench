@@ -269,12 +269,11 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 // decideLink submits one link observation to the lifecycle owner and keeps the manifest
 // row that its decision selects. It prints the owner's hard refusal and reports false.
 func decideLink(o LifecycleObservation, rows map[string]string, stderr io.Writer) (LifecycleDecision, bool) {
-	lifecycle := PlanLifecycle(LifecycleInput{Execution: &LifecycleInventory{Action: "link", Observations: []LifecycleObservation{o}}})
-	if lifecycle.Refusal != "" {
-		fmt.Fprintln(stderr, lifecycle.Refusal)
+	d, refusal := decideObservation("link", o)
+	if refusal != "" {
+		fmt.Fprintln(stderr, refusal)
 		return LifecycleDecision{}, false
 	}
-	d := lifecycle.Decisions[0]
 	if d.ManifestAction != manifestOmit {
 		rows[d.Path] = d.Fingerprint
 	}

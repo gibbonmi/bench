@@ -20,30 +20,39 @@ func moveManifestRow(t *testing.T, root, from, to string) {
 
 // TestLifecycleUnlinkPartitions drives real Unlink through each partition that leaves no
 // residual. A clean row loses its asset. A row whose asset is already absent stays out of
-// the report. A clean row that names its asset through sub/../ resolves to that asset and
-// removes it. Each run exits 0 and removes the manifest.
+// the report, and an emptied directory that only that row names is swept. A clean row that
+// names its asset through sub/../ resolves to that asset and removes it. Each run exits 0,
+// removes the manifest, and removes the AGENTS.md that link created with no project prose.
 func TestLifecycleUnlinkPartitions(t *testing.T) {
 	for _, tc := range []struct {
-		name, row string
-		absent    bool
+		name, row         string
+		absent, dedicated bool
 	}{
 		{name: "clean", row: lifecycleDoc},
 		{name: "absent", row: lifecycleDoc, absent: true},
+		{name: "absent in an emptied dedicated parent", row: "dedicated/asset", absent: true, dedicated: true},
 		{name: "normalized", row: "sub/../" + lifecycleDoc},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := consumerRepo(t)
 			linkConsumer(t, root, 0)
-			path := filepath.Join(root, lifecycleDoc)
+			path := filepath.Join(root, tc.row)
 			moveManifestRow(t, root, lifecycleDoc, tc.row)
 			if tc.absent {
-				if err := os.Remove(path); err != nil {
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
 					t.Fatal(err)
 				}
 			}
 			out := runUnlink(t, nil, 0)
 			requireAbsent(t, path)
 			requireAbsent(t, previewManifestPath(root))
+			requireAbsent(t, filepath.Join(root, "AGENTS.md"))
+			if tc.dedicated {
+				requireAbsent(t, filepath.Dir(path))
+			}
 			if mentioned := strings.Contains(out, tc.row+"\n"); mentioned == tc.absent {
 				t.Fatalf("unlink output names %s: %t, want %t\n%s", tc.row, mentioned, !tc.absent, out)
 			}
@@ -51,11 +60,12 @@ func TestLifecycleUnlinkPartitions(t *testing.T) {
 	}
 }
 
-// TestLifecycleUnlinkRefusals drives real Unlink over each residual row of a linked
+// TestLifecycleUnlinkRefusals drives real Unlink over each residual of a linked
 // repository. A modified asset keeps its bytes. A row that escapes the repository, a row
-// under a symlink parent, and a row that names a FIFO or a directory keep their targets.
-// Each run exits 3, reports the row with its reason, and keeps the manifest bytes, while a
-// clean row still leaves.
+// under a symlink parent, and a row that names a FIFO or a directory keep their targets. An
+// AGENTS.md that is a FIFO or holds a malformed managed block keeps its state without a
+// manifest row. Each run exits 3, reports the residual with its reason, and keeps the
+// manifest bytes, while a clean row still leaves.
 func TestLifecycleUnlinkRefusals(t *testing.T) {
 	plantFile := func(t *testing.T, path string) {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -66,8 +76,20 @@ func TestLifecycleUnlinkRefusals(t *testing.T) {
 	outside := "../" + filepath.Base(t.TempDir()) + "/asset with [glob]*"
 	for _, tc := range []struct {
 		name, rel, reason string
+		bespoke           bool
 		arrange           func(t *testing.T, root, path string)
 	}{
+		{name: "AGENTS.md special file", rel: "AGENTS.md", reason: reasonRefused, bespoke: true, arrange: func(t *testing.T, _, path string) {
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			if err := syscall.Mkfifo(path, 0o600); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "AGENTS.md malformed block", rel: "AGENTS.md", reason: reasonRefused, bespoke: true, arrange: func(t *testing.T, _, path string) {
+			writeFixtureFile(t, path, readFile(t, path)+benchStartMarker+"\n", 0o644)
+		}},
 		{name: "modified", rel: lifecycleDoc, reason: reasonModified, arrange: func(t *testing.T, _, path string) {
 			writeFixtureFile(t, path, "project edit\n", 0o644)
 		}},
@@ -92,7 +114,7 @@ func TestLifecycleUnlinkRefusals(t *testing.T) {
 			linkConsumer(t, root, 0)
 			path := filepath.Join(root, tc.rel)
 			tc.arrange(t, root, path)
-			if tc.rel != lifecycleDoc {
+			if tc.rel != lifecycleDoc && !tc.bespoke {
 				// A refused row records the fingerprint of a target that has one, so only the
 				// refusal keeps that target.
 				recorded, err := fingerprintPath(path)

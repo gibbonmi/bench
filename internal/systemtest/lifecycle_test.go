@@ -6,9 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
 )
@@ -19,6 +21,7 @@ const (
 	lifecycleDoc       = ".bench/BENCH.md"
 	lifecycleReference = ".bench/BENCH-reference.md"
 	lifecycleManifest  = ".bench/link-manifest.tsv"
+	lifecycleHook      = ".git/hooks/pre-push"
 	lifecycleProse     = "# Team rules\n\nKeep this rule.\n"
 )
 
@@ -94,19 +97,18 @@ func loseLifecycleAssets(t *testing.T, repo string) string {
 	return manifest
 }
 
-// trimLifecycleUnlink keeps only the lifecycleDoc manifest row and removes the hook, so
-// unlink removes that row and then publishes the stripped AGENTS.md as its last change.
-func trimLifecycleUnlink(t *testing.T, repo string) {
+// trimLifecycleUnlink keeps only the manifest rows named in rels, so unlink removes those
+// rows, publishes the stripped AGENTS.md, and then removes the managed hook.
+func trimLifecycleUnlink(t *testing.T, repo string, rels ...string) {
 	t.Helper()
 	path := filepath.Join(repo, lifecycleManifest)
 	kept := []string{}
 	for i, line := range strings.SplitAfter(readSpillFile(t, path), "\n") {
-		if i == 0 || strings.HasPrefix(line, lifecycleDoc+"\t") {
+		if rel, _, _ := strings.Cut(line, "\t"); i == 0 || slices.Contains(rels, rel) {
 			kept = append(kept, line)
 		}
 	}
 	commitmenttest.Write(t, repo, lifecycleManifest, strings.Join(kept, ""))
-	removeLifecycleFiles(t, repo, ".git/hooks/pre-push")
 }
 
 // TestLifecycleEntryJourney drives each applying lifecycle entry through the selected binary
@@ -134,10 +136,7 @@ func TestLifecycleEntryJourney(t *testing.T) {
 
 	fixture := newCompatibilitySession(t)
 	removeLifecycleFiles(t, fixture.repo, lifecycleDoc)
-	if err := owner.observeSelected(); err != nil {
-		t.Fatal(err)
-	}
-	if result := owner.runAt(fixture.repo, fixture.overrides, owner.selected.path, "doctor", "--compat", "codex-cli", "--fix"); result.code != 1 || result.stderr != "" {
+	if result := runLifecycleEntry(t, fixture.repo, fixture.overrides, "doctor", "--compat", "codex-cli", "--fix"); result.code != 1 || result.stderr != "" {
 		t.Fatalf("compatibility repair = %#v, want exit 1 with no error", result)
 	}
 	requireLifecycleState(t, fixture.repo, true, lifecycleDoc)
@@ -185,12 +184,17 @@ func TestLifecyclePublicationCompatibility(t *testing.T) {
 		{name: "stage failure", cause: "permission denied", args: link, arrange: func(t *testing.T, repo string) []string {
 			// The hook stages beside its destination, so a read-only hooks directory fails
 			// that stage after the lease is held.
-			hooks := filepath.Join(repo, ".git", "hooks")
-			removeLifecycleFiles(t, repo, ".git/hooks/pre-push")
+			hooks := filepath.Dir(filepath.Join(repo, lifecycleHook))
+			removeLifecycleFiles(t, repo, lifecycleHook)
 			if err := os.Chmod(hooks, 0o555); err != nil {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() { _ = os.Chmod(hooks, 0o755) })
+			if probe, err := os.CreateTemp(hooks, "lifecycle-stage-probe-"); err == nil {
+				_ = probe.Close()
+				_ = os.Remove(probe.Name())
+				capability.Capability(t, capability.Privilege, "read-only hooks directory remains writable by this user")
+			}
 			return nil
 		}},
 		{name: "report failure", cause: "control", args: link, arrange: func(t *testing.T, repo string) []string {
@@ -206,7 +210,10 @@ func TestLifecyclePublicationCompatibility(t *testing.T) {
 			return []string{"BENCH_LINK_FAULT=last"}
 		}},
 		{name: "unlink promotion failure", cause: "fault last", args: unlink, arrange: func(t *testing.T, repo string) []string {
-			trimLifecycleUnlink(t, repo)
+			// Without the hook, the stripped AGENTS.md is the last change, so the fault
+			// meets a replacement.
+			trimLifecycleUnlink(t, repo, lifecycleDoc)
+			removeLifecycleFiles(t, repo, lifecycleHook)
 			return []string{"BENCH_LINK_FAULT=last"}
 		}},
 		{name: "unlink report failure", cause: "control", args: unlink, changed: true, arrange: func(t *testing.T, repo string) []string {
@@ -236,22 +243,25 @@ func TestLifecyclePublicationCompatibility(t *testing.T) {
 		})
 	}
 	// A relink of the lost assets publishes lifecycleDoc, lifecycleReference, CLAUDE.md,
-	// the hook, and then the manifest. Unlink of the trimmed repository removes
-	// lifecycleDoc and then publishes AGENTS.md.
+	// the hook, and then the manifest. Unlink of a trimmed repository removes its kept rows,
+	// publishes AGENTS.md, and then removes the hook. The interruption seam stops only a
+	// rename, so an unlink interruption stops at AGENTS.md with the hook removal still
+	// pending, and the final manifest removal of Unlink has no interruption case.
 	for _, tc := range []struct {
-		name, interrupt         string
-		args, published, absent []string
+		name, interrupt               string
+		args, rows, published, absent []string
 	}{
 		{name: "link pre-publication", interrupt: "interrupt:1", args: link, absent: []string{lifecycleDoc, lifecycleReference}},
 		{name: "link middle promotion", interrupt: "interrupt:2", args: link, published: []string{lifecycleDoc}, absent: []string{lifecycleReference}},
 		{name: "link final manifest", interrupt: "interrupt:5", args: link, published: []string{lifecycleDoc, lifecycleReference}},
-		{name: "unlink middle promotion", interrupt: "interrupt:2", args: unlink, absent: []string{lifecycleDoc}},
+		{name: "unlink pre-publication", interrupt: "interrupt:1", args: unlink},
+		{name: "unlink middle promotion", interrupt: "interrupt:2", args: unlink, rows: []string{lifecycleDoc}, absent: []string{lifecycleDoc}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			repo := linkedLifecycleRepo(t)
 			clean := ""
 			if tc.args[0] == "unlink" {
-				trimLifecycleUnlink(t, repo)
+				trimLifecycleUnlink(t, repo, tc.rows...)
 			} else {
 				clean = loseLifecycleAssets(t, repo)
 			}
@@ -264,11 +274,16 @@ func TestLifecyclePublicationCompatibility(t *testing.T) {
 			if got := readSpillFile(t, filepath.Join(repo, lifecycleManifest)); got != manifest {
 				t.Fatalf("manifest after the interruption = %q, want the unpublished %q", got, manifest)
 			}
+			if clean == "" {
+				if _, err := os.Lstat(filepath.Join(repo, lifecycleHook)); err != nil {
+					t.Fatalf("hook after the interruption: %v, want its removal pending", err)
+				}
+			}
 			if result := runLifecycleEntry(t, repo, nil, tc.args...); result.code != 0 {
 				t.Fatalf("fresh-process %s = %#v, want exit 0", tc.name, result)
 			}
 			if clean == "" {
-				requireLifecycleState(t, repo, false, lifecycleDoc, lifecycleManifest)
+				requireLifecycleState(t, repo, false, append(tc.rows, lifecycleManifest, lifecycleHook)...)
 				requireLifecycleProse(t, repo)
 				return
 			}

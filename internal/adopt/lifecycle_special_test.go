@@ -254,8 +254,9 @@ func TestLifecycleSpecialInstructionFiles(t *testing.T) {
 // absent or stale managed hook takes the current managed hook, also where core.hooksPath
 // diverts the hooks directory. A foreign hook, or any hook in a diverted directory that
 // Bench does not manage, refuses the whole link and leaves the repository unchanged.
-// Real Unlink then meets each state in a linked repository. It removes a hook that
-// carries the managed marker, and it keeps a foreign hook without a refusal.
+// Real Unlink then meets each state in a linked repository. It removes and reports a hook
+// that carries the managed marker. It keeps a foreign hook without a refusal and leaves an
+// absent hook absent, and it reports neither.
 func TestLifecycleHookCompatibility(t *testing.T) {
 	foreign := func(t *testing.T, path string) { writeFixtureFile(t, path, "#!/bin/sh\nexit 0\n", 0o755) }
 	hookRepo := func(t *testing.T, diverted bool) (string, string) {
@@ -274,13 +275,14 @@ func TestLifecycleHookCompatibility(t *testing.T) {
 		name     string
 		diverted bool
 		refused  bool
+		absent   bool
 		arrange  func(t *testing.T, path string)
 	}{
-		{name: "absent", arrange: func(*testing.T, string) {}},
+		{name: "absent", absent: true, arrange: func(*testing.T, string) {}},
 		{name: "stale managed", arrange: func(t *testing.T, path string) {
 			writeFixtureFile(t, path, strings.TrimSuffix(renderPrePushBranch("baked"), "\n"), 0o755)
 		}},
-		{name: "diverted absent", diverted: true, arrange: func(*testing.T, string) {}},
+		{name: "diverted absent", diverted: true, absent: true, arrange: func(*testing.T, string) {}},
 		{name: "foreign", refused: true, arrange: foreign},
 		{name: "diverted foreign", diverted: true, refused: true, arrange: foreign},
 	} {
@@ -304,8 +306,18 @@ func TestLifecycleHookCompatibility(t *testing.T) {
 			root, path := hookRepo(t, tc.diverted)
 			linkConsumer(t, root, 0)
 			tc.arrange(t, path)
-			before := compatibilitytest.SnapshotHome(t, path)
-			runUnlink(t, nil, 0)
+			var before map[string]compatibilitytest.HomeEntry
+			if tc.absent {
+				if err := os.Remove(path); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				before = compatibilitytest.SnapshotHome(t, path)
+			}
+			out := runUnlink(t, nil, 0)
+			if reported, want := strings.Contains(out, "pre-push"), !tc.refused && !tc.absent; reported != want {
+				t.Fatalf("Unlink reports the hook: %t, want %t\n%s", reported, want, out)
+			}
 			if !tc.refused {
 				requireAbsent(t, path)
 			} else if after := compatibilitytest.SnapshotHome(t, path); !reflect.DeepEqual(after, before) {
