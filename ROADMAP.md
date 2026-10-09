@@ -172,8 +172,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT307 (MEDIUM, decision required) — `bench structure` grades working-tree changes and projects scoped headroom.**
 
-**FT217 (LOW) — one decision every adopt-lifecycle verb executes.**
-
 **FT168 (MEDIUM) — file-backed replacements and system or Markdown subjects extend the focused probe.**
 
 **FT255 (MEDIUM, decision required) — concurrent tests share one explicit machine budget.**
@@ -316,5 +314,3 @@ recommended table is sequencing advice.
 | FT318 | FT317 | The completion form records the decided value of a capability-blocked row. |
 
 ## Recommended sequence
-
-1. FT217

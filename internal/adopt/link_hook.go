@@ -268,27 +268,41 @@ func gitOK(args ...string) bool {
 	return exec.Command("git", args...).Run() == nil
 }
 
-// removeManagedHook removes the pre-push hook only when it carries the managed marker. It
-// resolves the effective hooks directory the same way link does, honoring core.hooksPath.
-// A hook without the marker is a foreign hook, left in place; its presence is not a
-// refusal because it was never Bench's. The hook is bespoke, not a manifest row.
-func removeManagedHook(root string, dryRun bool, p *unlinkPlan) (string, error) {
+// observeUnlinkHook records the facts of the effective pre-push hook for unlink and returns
+// its path. It resolves the effective hooks directory the same way link does, honoring
+// core.hooksPath. Only a hook that carries the managed marker prepares its removal. A hook
+// without the marker, a special file included, is a foreign hook, left in place; its
+// presence is not a refusal because it was never Bench's. The hook is bespoke, not a
+// manifest row.
+func observeUnlinkHook(root string) (LifecycleObservation, string, error) {
 	hooks, err := hooksDir(root)
 	if err != nil {
-		return "", err
+		return LifecycleObservation{}, "", err
 	}
-	path := filepath.Join(hooks, "pre-push")
+	o := LifecycleObservation{Path: "pre-push", PlanKind: bespokePlanKind}
+	path := filepath.Join(hooks, o.Path)
 	if isSpecialFile(path) {
-		return "", nil
+		o.Present = true
+		return o, path, nil
 	}
 	content, err := os.ReadFile(path)
-	if err != nil || !strings.Contains(string(content), PrePushMarker) {
-		return "", nil
+	if err != nil {
+		return o, path, nil
 	}
-	if !dryRun {
-		p.changes = append(p.changes, stagedChange{rel: "pre-push", dest: path})
+	o.Present = true
+	if strings.Contains(string(content), PrePushMarker) {
+		o.StagedKind = fileAbsent
 	}
-	return "pre-push hook (managed - removed)", nil
+	return o, path, nil
+}
+
+// unlinkHookReport is the unlink report line for the hook decision d, empty when d leaves
+// the hook alone.
+func unlinkHookReport(d LifecycleDecision) string {
+	if d.Kind == lifecycleRemove {
+		return "pre-push hook (managed - removed)"
+	}
+	return ""
 }
 
 func validateRepairHook(health PrePushHealth) error {

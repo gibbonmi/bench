@@ -1,6 +1,6 @@
 # Adoption lifecycle consumption
 
-Status: staged
+Status: implemented
 
 Roadmap: FT217
 
@@ -39,6 +39,7 @@ Harder chunks: ALC-LINK, ALC-UNLINK
 Author line: gpt-6.1-sol / high / one draft and at most two independent-review repair rounds
 Routing source: `projects/benchkit.md`, Lines, and `.bench/lines.env` bind the Codex mid tier to gpt-5.6-sol
 Routing disposition: proposed implementation line only. The user-selected author line remains gpt-6.1-sol/high
+Claude Code run line: opus / high, the Claude mid binding of the same tier, with opus / medium review axes and opus / high consultations by reviewer direction on 2026-10-09
 
 ### Complete decision
 
@@ -96,8 +97,8 @@ Routing disposition: proposed implementation line only. The user-selected author
 
 ### Source pins and factual questions
 
-Source tip: a382f4848d432815968f044820fad593e856e297
-Read date: 2026-10-06
+Source tip: aabd462d52349b00cfb3d66f67a6dd24891468d2
+Read date: 2026-10-09
 Invalidation trigger: any change to the named lifecycle owner, caller, observation helper, or pinned test before implementation
 Evidence status: source verified. Runnable compatibility evidence remains planned
 
@@ -117,8 +118,8 @@ The following source pins answer the code questions.
 | Link and repair classify desired entries | `internal/adopt/link_transaction.go:97` |
 | Link and repair reconcile dropped rows | `internal/adopt/link_transaction.go:190` |
 | Unlink classifies manifest rows | `internal/adopt/unlink.go:117` |
-| Upgrade uses synthetic non-file fingerprints | `internal/adopt/upgrade.go:127` |
-| Upgrade applies through the link transaction | `internal/adopt/upgrade.go:78` |
+| Upgrade uses synthetic non-file fingerprints | `internal/adopt/upgrade.go:139` |
+| Upgrade applies through the link transaction | `internal/adopt/upgrade.go:86` |
 | Compatibility repair shares the transaction | `internal/adopt/compatibility.go:264` |
 | Fingerprints omit regular-file permissions | `internal/adopt/manifest.go:107` |
 | Convergence compares permissions separately | `internal/adopt/link_stage.go:202` |
@@ -239,6 +240,12 @@ The execution inventory must retain this distinction.
 It must not turn every invalid path into the legacy decision's whole-plan refusal.
 ALC28 and ALC34 include both call paths.
 
+An owned CLAUDE.md that is a dangling symlink reads as absent.
+The owner installs the current managed form and records its fingerprint, and Link exits 0.
+The reviewer accepted this result on 2026-10-09 as a reviewed behavior delta.
+The earlier caller replaced the file and also reported a preserved conflict with exit 3.
+ALC22 includes this fixture.
+
 ### Bespoke content and safety
 
 Keep AGENTS.md marker transforms in their existing domain helpers.
@@ -301,12 +308,12 @@ No schema, public verb, public flag, manifest format, or rendered report changes
 
 | reader or writer | direct helpers that read its lifecycle facts | disposition |
 |---|---|---|
-| `upgradePlanCounts` in `internal/adopt/upgrade.go:121` | `Manifest.Rows`, `Manifest.Hash`, `fingerprintPath`, `PlanLifecycle` | ALC31, legacy input projection |
+| `upgradePlanCounts` in `internal/adopt/upgrade.go:129` | `Manifest.Rows`, `Manifest.Hash`, `fingerprintPath`, `PlanLifecycle` | ALC31, legacy input projection |
 | `transactionalRepair` in `internal/adopt/link_transaction.go:30` | `ReadManifest`, `stagePlanEntry`, `hasSymlinkParent`, `convergedFingerprint`, `sameAdapterTarget`, `ownedUnmodified`, `reclaimableClaude` | ALC06–ALC25, exact observation and decision consumption |
-| `planUnlink` in `internal/adopt/unlink.go:98` | `resolveInside`, `hasSymlinkParent`, `fingerprintPath`, `stripAgentsForUnlink`, `removeManagedHook`, `sweepEmptyDirs` | ALC26–ALC30, exact observation and decision consumption |
+| `planUnlink` in `internal/adopt/unlink.go:98` | `resolveInside`, `hasSymlinkParent`, `fingerprintPath`, `observeUnlink`, `observeUnlinkAgents`, `observeUnlinkHook`, `sweepEmptyDirs` | ALC26–ALC30, exact observation and decision consumption |
 | `Link` in `internal/adopt/link.go:28` | `buildLinkPlan`, `transactionalLink` | ALC35, unchanged command entry |
 | `convergeSetup` in `internal/adopt/setup.go:304` | `buildLinkPlan`, seed producers, `transactionalLink`, `finishSetup` | ALC14, ALC15, ALC33, ALC35 |
-| `Upgrade` in `internal/adopt/upgrade.go:27` | `pinnedManifest`, `buildLinkPlan`, `compareKitVersions`, `upgradePlanCounts`, `prePushRefreshEligible`, `transactionalLink` | ALC31, ALC32, ALC35 |
+| `Upgrade` in `internal/adopt/upgrade.go:34` | `pinnedManifest`, `buildLinkPlan`, `compareKitVersions`, `upgradePlanCounts`, `prePushRefreshEligible`, `transactionalLink` | ALC31, ALC32, ALC35 |
 | `Unlink` in `internal/adopt/unlink.go:26` | `ReadManifest`, `planUnlink`, `writeUnlinkReport` | ALC26–ALC30, ALC35 |
 | `mutateCompatibility` in `internal/adopt/compatibility.go:224` | `buildLinkPlan`, `transactionalRepair`, `transaction.Store.Undo` | ALC25, indirect caller protection |
 | `promoteWithLease` in `internal/adopt/transaction.go:76` | `observedChange`, `transaction.Publish`, `transaction.Store.Apply` | ALC34, unchanged publisher |
@@ -406,43 +413,43 @@ Unlink / dry-run -> existing observations -> PlanLifecycle -> Decisions -> curre
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| ALC01 | 1 | Real consumers obtain managed effect choices from one immutable owner. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleOwnerConsumption`) | A preserve-to-change swap in the owner changes the real command outcome. |
+| ALC01 | 1 | Real consumers obtain managed effect choices from one immutable owner. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleOwnerConsumption`) | A preserve-to-change swap in the owner changes the real command outcome. |
 | ALC02 | 2 | Operations retain the existing add/change/remove list without CLAUDE.md. | `internal/adopt/decision_test.go` (`TestPlanLifecycleFromImmutableInventories`) | An added preserve operation fails the unchanged exact comparison. |
-| ALC03 | 3 | Decisions include preserved CLAUDE.md with its reason and ownership disposition. | planned internal/adopt/lifecycle_decision_test.go (`TestCompleteLifecycleDecisions`) | Omission of the preserve decision fails the independent expected row. |
-| ALC04 | 4 | Reordered immutable inputs yield the same path-ordered complete decision. | planned internal/adopt/lifecycle_decision_test.go (`TestLifecycleDecisionOrder`) | Omission of owner order exposes unequal results from reordered inputs. |
+| ALC03 | 3 | Decisions include preserved CLAUDE.md with its reason and ownership disposition. | `internal/adopt/lifecycle_decision_test.go` (`TestCompleteLifecycleDecisions`) | Omission of the preserve decision fails the independent expected row. |
+| ALC04 | 4 | Reordered immutable inputs yield the same path-ordered complete decision. | `internal/adopt/lifecycle_decision_test.go` (`TestLifecycleDecisionOrder`) | Omission of owner order exposes unequal results from reordered inputs. |
 | ALC05 | 5 | Legacy duplicate paths, hostile paths, and missing fingerprints retain their refusals. | `internal/adopt/decision_test.go` (`TestPlanLifecycleFromImmutableInventories`) | Omission of the relevant guard accepts an existing refused fixture. |
-| ALC06 | 6 | Link installs an absent ordinary asset with its staged fingerprint. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleLinkPartitions`, absent fixture) | Omission of the owner's add result leaves the named destination absent. |
-| ALC07 | 7 | Relink replaces a clean old asset with current kit bytes. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleLinkPartitions`, clean-old fixture) | A change-to-preserve swap leaves the old bytes in place. |
-| ALC08 | 8 | Relink preserves the identity of a converged managed destination. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleLinkPartitions`, converged fixture) and planned internal/adopt/lifecycle_decision_test.go (`TestCompleteLifecycleDecisions`) | A preserve-to-change swap fails the exact complete-decision predicate. |
-| ALC09 | 9 | Relink applies a changed executable mode with identical file bytes. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleLinkPartitions`, mode fixture) | Omission of the mode fact leaves the destination mode stale. |
+| ALC06 | 6 | Link installs an absent ordinary asset with its staged fingerprint. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleLinkPartitions`, absent fixture) | Omission of the owner's add result leaves the named destination absent. |
+| ALC07 | 7 | Relink replaces a clean old asset with current kit bytes. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleLinkPartitions`, clean-old fixture) | A change-to-preserve swap leaves the old bytes in place. |
+| ALC08 | 8 | Relink preserves the identity of a converged managed destination. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleLinkPartitions`, converged fixtures) and `internal/adopt/lifecycle_decision_test.go` (`TestCompleteLifecycleDecisions`) | A preserve-to-change swap fails the exact complete-decision predicate. |
+| ALC09 | 9 | Relink applies a changed executable mode with identical file bytes. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleLinkPartitions`, mode fixture) | Omission of the mode fact leaves the destination mode stale. |
 | ALC10 | 10 | Link accepts a canonical adapter through a symlink parent without replacing its target. | `internal/adopt/link_transaction_test.go` (`TestTransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent`) | Omission of the canonical convergence branch refuses the existing converged fixture. |
 | ALC11 | 11 | Link refuses a foreign adapter target even when its bytes match. | `internal/adopt/link_transaction_test.go` (`TestTransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent`) | A canonical-identity-to-content swap accepts the foreign-identical fixture. |
-| ALC12 | 12 | Relink retains modified managed bytes and reports modified-managed. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleLinkPartitions`, modified fixture) | A preserve-to-change swap overwrites the project edit. |
-| ALC13 | 13 | Link retains an unowned collision without adding a manifest row. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleLinkPartitions`, project collision fixture) | A project-preserve-to-add swap overwrites or owns the collision. |
-| ALC14 | 14 | Setup installs an absent seed without a manifest row. | `internal/adopt/setup_test.go` (`TestSetupSeedsGateInputs`) and planned internal/adopt/lifecycle_special_test.go (`TestLifecycleSeedOwnership`) | Omission of seed add leaves gate inputs absent. |
-| ALC15 | 15 | Setup retains an existing seed with its existing manifest disposition. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleSeedOwnership`) | A seed-preserve-to-change swap overwrites empty, edited, or dangling-leaf fixtures. |
-| ALC16 | 16 | Relink removes a clean dropped asset. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleDroppedRows`, clean fixture) | Omission of remove leaves the withdrawn file present. |
-| ALC17 | 17 | Relink retains a modified dropped asset with kept-modified-removed. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleDroppedRows`, modified fixture) | A preserve-to-remove swap deletes the edited withdrawn file. |
-| ALC18 | 18 | Relink drops ownership for an already absent withdrawn asset. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleDroppedRows`, absent fixture) | A manifest-omit-to-retain swap leaves the old row. |
-| ALC19 | 19 | A required write through a symlink parent aborts all planned promotion. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleHardRefusalOrder`) | Omission of the parent guard publishes a preceding accepted entry. |
-| ALC38 | 19 | The earlier inline symlink-parent refusal wins over the later missing-source refusal. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleHardRefusalOrder`, competing-refusals fixture through transactionalLink) | Omission of the early symlink-parent return exposes the later missing-source diagnostic. |
-| ALC20 | 20 | Link and unlink retain project prose around the managed AGENTS.md block. | `internal/adopt/link_transaction_test.go` (`TestUnlinkRemovesOnlyCleanManifestAssets`) | Omission of the domain transform or prose copy fails the existing round trip. |
-| ALC21 | 21 | Relink preserves empty or authored CLAUDE.md without injected imports. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleClaudeOwnership`, project fixtures) | A project-preserve-to-change swap injects the managed form. |
-| ALC22 | 22 | Relink installs the current CLAUDE.md form for absent or known forms. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleClaudeOwnership`, managed fixtures) | Omission of the selected replacement leaves the absent or legacy form. |
-| ALC23 | 23 | Link preserves special instruction files without opening their contents. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleSpecialInstructionFiles`) | Omission of the special-file guard reaches a deadline or changes the file kind. |
-| ALC24 | 24 | Link and unlink retain the current effective-hook state behavior. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleHookCompatibility`) | A foreign-hook-to-managed swap replaces a foreign hook or changes the existing refusal. |
-| ALC25 | 25 | Compatibility repair retains strict ownership and retained recovery behavior. | planned internal/adopt/lifecycle_special_test.go (`TestLifecycleRepairCompatibility`) | Omission of strict mode preservation changes repair acceptance for a mode-edited asset. |
-| ALC26 | 26 | Unlink removes only clean present rows while absent rows remain silent. | `internal/adopt/link_transaction_test.go` (`TestUnlinkRemovesOnlyCleanManifestAssets`) and planned internal/adopt/lifecycle_unlink_test.go (`TestLifecycleUnlinkPartitions`) | Omission of a clean remove leaves a row destination present. |
-| ALC27 | 27 | Unlink retains modified managed bytes and reports a residual. | `internal/adopt/link_transaction_test.go` (`TestUnlinkKeepsModifiedAssetsAndProjectCollisions`) | A preserve-to-remove swap deletes the existing modified fixture. |
-| ALC28 | 28 | Unlink reports unsafe manifest rows without removing their targets. | `internal/adopt/link_transaction_test.go` (`TestUnlinkRefusesAManifestRowOutsideTheRepo`) and planned internal/adopt/lifecycle_unlink_test.go (`TestLifecycleUnlinkRefusals`) | Omission of refusal lets a hostile path or special target disappear. |
-| ALC29 | 29 | Unlink dry-run leaves the complete destination snapshot unchanged. | `internal/adopt/link_transaction_test.go` (`TestUnlinkDryRunOnACleanRepoWritesNothing`) and planned internal/adopt/lifecycle_unlink_test.go (`TestLifecycleDryRunSnapshot`) | Omission of the dry-run publisher guard changes bytes, modes, links, or directory entries. |
-| ALC30 | 30 | Unlink keeps the manifest whenever a modified or refused residual remains. | `internal/adopt/link_transaction_test.go` (`TestUnlinkKeepsModifiedAssetsAndProjectCollisions`) and planned internal/adopt/lifecycle_unlink_test.go (`TestLifecycleUnlinkRefusals`) | Omission of the manifest-last guard removes the resumable ownership record. |
-| ALC31 | 31 | Upgrade retains the existing count table for every plan kind. | planned internal/adopt/lifecycle_preview_test.go (`TestLifecycleUpgradePreviewCompatibility`) | A synthetic-to-exact non-file projection swap changes a named baseline count. |
-| ALC32 | 32 | Upgrade retains equal-version no-op and forced-downgrade behavior. | planned internal/adopt/lifecycle_preview_test.go (`TestLifecycleUpgradeVersionGuards`) | Omission of the equal-version or downgrade guard changes a real Upgrade result. |
-| ALC33 | 33 | Setup plan, declined confirmation, and ambiguous auto-confirm retain their write limits. | planned internal/adopt/lifecycle_preview_test.go (`TestLifecycleSetupCancellation`) | Omission of confirmation guards changes the pre-operation destination snapshot. |
-| ALC34 | 34 | Lifecycle publication retains the baseline failure and recovery result. | `internal/adopt/adopt_test.go` (`TestPromoteAllRollsBackOnDestinationSyncFailure`) and planned internal/systemtest/lifecycle_test.go (`TestLifecyclePublicationCompatibility`) | Omission of one restore leaves a changed preimage after the fault. |
-| ALC35 | 35 | Link, Setup, Upgrade, Unlink, and compatibility repair consume selected owner effects through their real entries. | planned internal/adopt/lifecycle_consumption_test.go (`TestLifecycleOwnerConsumption`) and planned internal/systemtest/lifecycle_test.go (`TestLifecycleEntryJourney`) | Omission of the selected add or remove result changes the corresponding real entry fixture. |
-| ALC36 | 36 | The frozen baseline and candidate pass the same characterization with old assertions unchanged. | planned differential run through existing package and system test owners | An effect swap changes one exact snapshot while the frozen baseline remains green. |
+| ALC12 | 12 | Relink retains modified managed bytes and reports modified-managed. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleLinkPartitions`, modified fixture) | A preserve-to-change swap overwrites the project edit. |
+| ALC13 | 13 | Link retains an unowned collision without adding a manifest row. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleLinkPartitions`, project collision fixtures) | A project-preserve-to-add swap overwrites or owns the collision. |
+| ALC14 | 14 | Setup installs an absent seed without a manifest row. | `internal/adopt/setup_test.go` (`TestSetupSeedsGateInputs`) and `internal/adopt/lifecycle_special_test.go` (`TestLifecycleSeedOwnership`) | Omission of seed add leaves gate inputs absent. |
+| ALC15 | 15 | Setup retains an existing seed with its existing manifest disposition. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleSeedOwnership`) | A seed-preserve-to-change swap overwrites empty, edited, or dangling-leaf fixtures. |
+| ALC16 | 16 | Relink removes a clean dropped asset. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleDroppedRows`, clean fixture) | Omission of remove leaves the withdrawn file present. |
+| ALC17 | 17 | Relink retains a modified dropped asset with kept-modified-removed. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleDroppedRows`, modified fixture) | A preserve-to-remove swap deletes the edited withdrawn file. |
+| ALC18 | 18 | Relink drops ownership for an already absent withdrawn asset. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleDroppedRows`, absent fixture) | A manifest-omit-to-retain swap leaves the old row. |
+| ALC19 | 19 | A required write through a symlink parent aborts all planned promotion. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleHardRefusalOrder`) | Omission of the parent guard publishes a preceding accepted entry. |
+| ALC38 | 19 | The earlier inline symlink-parent refusal wins over the later missing-source refusal. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleHardRefusalOrder`, competing-refusals fixture through transactionalLink) | Omission of the early symlink-parent return exposes the later missing-source diagnostic. |
+| ALC20 | 20 | Link and unlink retain project prose around the managed AGENTS.md block. | `internal/adopt/link_transaction_test.go` (`TestUnlinkRemovesOnlyCleanManifestAssets`) and `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleOwnerConsumption`, unlink entry) | Omission of the domain transform or prose copy fails the existing round trip. |
+| ALC21 | 21 | Relink preserves empty or authored CLAUDE.md without injected imports. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleClaudeOwnership`, project fixtures) | A project-preserve-to-change swap injects the managed form. |
+| ALC22 | 22 | Relink installs the current CLAUDE.md form for absent or known forms. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleClaudeOwnership`, managed fixtures) | Omission of the selected replacement leaves the absent or legacy form. |
+| ALC23 | 23 | Link preserves special instruction files without opening their contents. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleSpecialInstructionFiles`) | Omission of the special-file guard reaches a deadline or changes the file kind. |
+| ALC24 | 24 | Link and unlink retain the current effective-hook state behavior. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleHookCompatibility`) | A foreign-hook-to-managed swap replaces a foreign hook or changes the existing refusal. |
+| ALC25 | 25 | Compatibility repair retains strict ownership and retained recovery behavior. | `internal/adopt/lifecycle_special_test.go` (`TestLifecycleRepairCompatibility`) | Omission of strict mode preservation changes repair acceptance for a mode-edited asset. |
+| ALC26 | 26 | Unlink removes only clean present rows while absent rows remain silent. | `internal/adopt/link_transaction_test.go` (`TestUnlinkRemovesOnlyCleanManifestAssets`) and `internal/adopt/lifecycle_unlink_test.go` (`TestLifecycleUnlinkPartitions`) | Omission of a clean remove leaves a row destination present. |
+| ALC27 | 27 | Unlink retains modified managed bytes and reports a residual. | `internal/adopt/link_transaction_test.go` (`TestUnlinkKeepsModifiedAssetsAndProjectCollisions`) and `internal/adopt/lifecycle_unlink_test.go` (`TestLifecycleUnlinkRefusals`, modified fixture) | A preserve-to-remove swap deletes the existing modified fixture. |
+| ALC28 | 28 | Unlink reports unsafe manifest rows without removing their targets. | `internal/adopt/link_transaction_test.go` (`TestUnlinkRefusesAManifestRowOutsideTheRepo`) and `internal/adopt/lifecycle_unlink_test.go` (`TestLifecycleUnlinkRefusals`) | Omission of refusal lets a hostile path or special target disappear. |
+| ALC29 | 29 | Unlink dry-run leaves the complete destination snapshot unchanged. | `internal/adopt/link_transaction_test.go` (`TestUnlinkDryRunOnACleanRepoWritesNothing`) and `internal/adopt/lifecycle_unlink_test.go` (`TestLifecycleDryRunSnapshot`) | Omission of the dry-run publisher guard changes bytes, modes, links, or directory entries. |
+| ALC30 | 30 | Unlink keeps the manifest whenever a modified or refused residual remains. | `internal/adopt/link_transaction_test.go` (`TestUnlinkKeepsModifiedAssetsAndProjectCollisions`) and `internal/adopt/lifecycle_unlink_test.go` (`TestLifecycleUnlinkRefusals`) | Omission of the manifest-last guard removes the resumable ownership record. |
+| ALC31 | 31 | Upgrade retains the existing count table for every plan kind. | `internal/adopt/lifecycle_preview_test.go` (`TestLifecycleUpgradePreviewCompatibility`) | A synthetic-to-exact non-file projection swap changes a named baseline count. |
+| ALC32 | 32 | Upgrade retains equal-version no-op and forced-downgrade behavior. | `internal/adopt/lifecycle_preview_test.go` (`TestLifecycleUpgradeVersionGuards`) | Omission of the equal-version or downgrade guard changes a real Upgrade result. |
+| ALC33 | 33 | Setup plan, declined confirmation, and ambiguous auto-confirm retain their write limits. | `internal/adopt/lifecycle_preview_test.go` (`TestLifecycleSetupCancellation`) | Omission of confirmation guards changes the pre-operation destination snapshot. |
+| ALC34 | 34 | Lifecycle publication retains the baseline failure and recovery result. | `internal/adopt/adopt_test.go` (`TestPromoteAllRollsBackOnDestinationSyncFailure`) and `internal/systemtest/lifecycle_test.go` (`TestLifecyclePublicationCompatibility`) | Omission of one restore leaves a changed preimage after the fault. |
+| ALC35 | 35 | Link, Setup, Upgrade, Unlink, and compatibility repair consume selected owner effects through their real entries. | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleOwnerConsumption`) and `internal/systemtest/lifecycle_test.go` (`TestLifecycleEntryJourney`) | Omission of the selected add or remove result changes the corresponding real entry fixture. |
+| ALC36 | 36 | The frozen baseline and candidate pass the same characterization with old assertions unchanged. | differential run through existing package and system test owners | An effect swap changes one exact snapshot while the frozen baseline remains green. |
 | ALC37 | 37 | Each migration checkpoint removes its old classification copy. | review-owned: source census against `PlanLifecycle`, `transactionalRepair`, and `planUnlink` | A surviving caller-side effect branch defeats the owner's deletion test. |
 
 ### Edge inventory
@@ -467,7 +474,7 @@ Each in-scope partition receives the rows below.
 | Invalid immutable legacy input | Preserve current duplicate, path, and fingerprint refusal order | ALC05 |
 | Report control bytes | Retain current render failure before link promotion | ALC34 |
 | Confirmation EOF or decline | Setup retains its existing exit and write behavior | ALC33 |
-| Publication fault and interruption | Existing fault seam observes before publication, middle promotion, and final manifest publication | ALC34 |
+| Publication fault and interruption | Existing fault seam observes before publication, middle promotion, and final manifest publication for Link, and the first two for Unlink | ALC34 |
 | Modified destination after observation | Existing transaction identity recheck remains authoritative | ALC34 |
 | Existing manifests without a version | Upgrade retains absent, empty, and missing-header refusals | ALC32 |
 | Foreign hook and diverted hook | Link hard refusal and unlink silent preservation remain distinct | ALC24 |
@@ -489,7 +496,7 @@ All new tests live in new files.
 
 | owner responsibility | exact repo-relative paths | reviewer disposition |
 |---|---|---|
-| Immutable decision and projections | `internal/adopt/decision.go`, `internal/adopt/lifecycle_decision_test.go` | ticket graph accepted |
+| Immutable decision and projections | `internal/adopt/decision.go`, `internal/adopt/decision_execution.go`, `internal/adopt/lifecycle_decision_test.go` | ticket graph accepted; the execution file holds owner headroom for ticket 04 (plan expansion 2026-10-09) |
 | Observation and application composition | `internal/adopt/link_transaction.go`, `internal/adopt/link_stage.go`, `internal/adopt/lifecycle_consumption_test.go`, `internal/adopt/lifecycle_special_test.go` | accepted |
 | Unlink decision consumer | `internal/adopt/unlink.go`, `internal/adopt/lifecycle_unlink_test.go` | accepted |
 | Upgrade compatibility projection | `internal/adopt/upgrade.go`, `internal/adopt/lifecycle_preview_test.go` | accepted |
@@ -585,7 +592,7 @@ ALC32 drives real Upgrade for equal, newer, older, forced older, absent manifest
 The producer precision correction follows the accepted review without changing count expectations or scope.
 Upgrade calls buildLinkPlan, whose entries are file, inline, and adapter.
 Only confirmed Setup adds inline-exec and seed entries.
-The source pins are internal/adopt/upgrade.go:51, internal/adopt/link.go:98–139, and internal/adopt/setup.go:310–313.
+The source pins are internal/adopt/upgrade.go:59, internal/adopt/link.go:98–139, and internal/adopt/setup.go:310–313.
 Independent ticket Spec and Coverage review accepted this correction and retained the real Upgrade consumer proof.
 
 ALC34 records baseline results for source disappearance, stage failure, report failure, promotion failure, and final manifest failure.
@@ -594,6 +601,13 @@ It uses the current interruption seam for fresh-process recovery compatibility.
 The system test owner supplies the selected binary and child environment.
 The spec does not claim a new all-or-nothing unlink transaction.
 Unlink keeps its current separate manifest-last publication and directory sweep.
+
+The interruption seam fires only when a publication renames a staged file.
+Link reaches it at pre-publication, middle promotion, and final manifest publication.
+Unlink reaches it at pre-publication and middle promotion.
+Unlink publishes its final manifest as a removal, so the existing seam has no fault point there.
+A removal fault seam is a separate outcome, because the fences exclude the transaction adapter.
+The reviewer accepted this ALC34 scope on 2026-10-09.
 
 The author ran no behavior tests during this planning pass.
 The implementation first runs the same new characterization on the frozen baseline and the candidate.
@@ -647,7 +661,163 @@ Review records bind three independent axes to each frozen chunk pair.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft217-build-20261009",
+    "orchestrator_session": "claude:ft217-orchestrator-20261009",
+    "author_limit": 1,
+    "assignments": {
+      "01-expose-complete-decisions-through-upgrade-preview.md": [
+        {
+          "session": "claude:ft217_t1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "ca614ba803237418b693546441f7e9f94da7c926",
+          "native_ref": "claude-agent:ft217_t1"
+        },
+        {
+          "session": "claude:ft217_t1_repair1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "5382d14c13f83e064b640d9850545c87dfe55053",
+          "native_ref": "claude-agent:ft217_t1_repair1",
+          "predecessor": "claude:ft217_t1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 01 author session reported completion of its verification record commit 5382d14c and has no live child",
+          "preserved": "5382d14c13f83e064b640d9850545c87dfe55053"
+        },
+        {
+          "session": "claude:ft217_t1_repair2",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "f3f912e8c26242032e71a77350339a700e428096",
+          "native_ref": "claude-agent:ft217_t1_repair2",
+          "predecessor": "claude:ft217_t1_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 01 repair cycle 1 session reported completion of its repair commit 518c52ee and has no live child",
+          "preserved": "f3f912e8c26242032e71a77350339a700e428096"
+        }
+      ],
+      "02-consume-decisions-for-desired-link-assets.md": [
+        {
+          "session": "claude:ft217_t2",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "native_ref": "claude-agent:ft217_t2"
+        },
+        {
+          "session": "claude:ft217_t2b",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "cc9a43cdacadc2a57b939bf0a44c64d47b2e7927",
+          "native_ref": "claude-agent:ft217_t2b",
+          "predecessor": "claude:ft217_t2",
+          "trigger": "session-lost",
+          "stopped": "the orchestrator session paused on 2026-10-09 and stopped the ticket 02 author claude:ft217_t2 before any commit; it reported its uncommitted test files and has no live child",
+          "preserved": "cc9a43cdacadc2a57b939bf0a44c64d47b2e7927"
+        },
+        {
+          "session": "claude:ft217_t2_verify1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "c34c359701f6fb3b9c23be84df19c47c3698a924",
+          "native_ref": "claude-agent:ft217_t2_verify1",
+          "predecessor": "claude:ft217_t2b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 02 author session claude:ft217_t2b reported completion of its ALC-LINK verification record commit 8613919f and has no live child",
+          "preserved": "c34c359701f6fb3b9c23be84df19c47c3698a924"
+        },
+        {
+          "session": "claude:ft217_t2_repair1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "f5273edb48db45b0a1bada3552a5130a74d6c52d",
+          "native_ref": "claude-agent:ft217_t2_repair1",
+          "predecessor": "claude:ft217_t2_verify1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 02 verification session reported completion of its record commit 38041e98 and has no live child",
+          "preserved": "f5273edb48db45b0a1bada3552a5130a74d6c52d"
+        }
+      ],
+      "03-consume-decisions-for-dropped-and-bespoke-link-assets.md": [
+        {
+          "session": "claude:ft217_t3",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "24654b5fa3c1281a88b64d2b22bfd122b605eb8e",
+          "native_ref": "claude-agent:ft217_t3"
+        },
+        {
+          "session": "claude:ft217_t3_repair1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "8613919f6e13a5e5049534016f091dc57747dc1d",
+          "native_ref": "claude-agent:ft217_t3_repair1",
+          "predecessor": "claude:ft217_t3",
+          "trigger": "user-directed",
+          "stopped": "the ticket 03 author session reported completion of its ALC-LINK freeze and verification record commit 122095ca and has no live child",
+          "preserved": "8613919f6e13a5e5049534016f091dc57747dc1d"
+        },
+        {
+          "session": "claude:ft217_t3_verify1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "f5273edb48db45b0a1bada3552a5130a74d6c52d",
+          "native_ref": "claude-agent:ft217_t3_verify1",
+          "predecessor": "claude:ft217_t3_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 03 repair session reported completion of its record commit cf1c1a6e and has no live child",
+          "preserved": "f5273edb48db45b0a1bada3552a5130a74d6c52d"
+        }
+      ],
+      "04-consume-unlink-decisions-and-close-entry-proof.md": [
+        {
+          "session": "claude:ft217_t4",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "1a473e42e09022859166323b8f334699c152cabd",
+          "native_ref": "claude-agent:ft217_t4"
+        },
+        {
+          "session": "claude:ft217_t4_repair1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "a3b2eabc816000c2b629e899c74162f4f8a4a28f",
+          "native_ref": "claude-agent:ft217_t4_repair1",
+          "predecessor": "claude:ft217_t4",
+          "trigger": "user-directed",
+          "stopped": "the ticket 04 author session reported completion of its ALC-UNLINK freeze and verification record commit a3b2eabc and has no live child",
+          "preserved": "a3b2eabc816000c2b629e899c74162f4f8a4a28f"
+        },
+        {
+          "session": "claude:ft217_t4_repair2",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "069b514e9fd04c1475dbf9547677034aaa3d7d58",
+          "native_ref": "claude-agent:ft217_t4_repair2",
+          "predecessor": "claude:ft217_t4_repair1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 04 repair cycle 1 session reported completion of its record commit c2a389e1 and has no live child",
+          "preserved": "069b514e9fd04c1475dbf9547677034aaa3d7d58"
+        }
+      ]
+    }
+  },
   "chunks": [
     {
       "id": "ALC-OWNER",
@@ -657,11 +827,28 @@ Review records bind three independent axes to each frozen chunk pair.
       "verification": [
         {
           "id": "decision-preview",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
           "command": "bench test --package ./internal/adopt --run 'Test(PlanLifecycleFromImmutableInventories|CompleteLifecycleDecisions|LifecycleDecisionOrder|LifecycleUpgradePreviewCompatibility|LifecycleUpgradeVersionGuards)'"
         },
         {
+          "id": "owner-floor-conformance",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "owner-floor-adopt",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
+          "command": "bench test --package ./internal/adopt"
+        },
+        {
+          "id": "owner-floor-cmd",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
           "id": "owner-preview-probes",
-          "command": "bench probe internal/adopt/decision.go --omit <preserve-row-source> --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
+          "command": "bench probe internal/adopt/decision.go --omit 'decisions = append(decisions, preserved(name, \"requested-preserve\", manifestRetain, before))' --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
           "probe": "Preserve-row omission, owner-order omission, and real Upgrade synthetic-to-exact preview swap must bite and restore."
         }
       ]
@@ -675,16 +862,55 @@ Review records bind three independent axes to each frozen chunk pair.
       "verification": [
         {
           "id": "desired-consumption",
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
           "command": "bench test --package ./internal/adopt --run 'Test(LifecycleLinkPartitions|LifecycleSeedOwnership|LifecycleHardRefusalOrder|LifecycleRepairCompatibility|LifecycleSetupCancellation|TransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent|SetupSeedsGateInputs)'"
         },
         {
-          "id": "dropped-bespoke",
-          "command": "bench test --package ./internal/adopt --run 'Test(LifecycleDroppedRows|LifecycleClaudeOwnership|LifecycleSpecialInstructionFiles|LifecycleHookCompatibility|LifecycleOwnerConsumption)'"
+          "id": "desired-floor-conformance",
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "desired-floor-adopt",
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
+          "command": "bench test --package ./internal/adopt"
+        },
+        {
+          "id": "desired-floor-cmd",
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
+          "command": "bench test --package ./cmd/bench"
         },
         {
           "id": "link-probes",
-          "command": "bench probe internal/adopt/link_transaction.go --omit <early-parent-return-source> --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$'",
-          "probe": "Early competing-refusal omission, selected desired/dropped/bespoke effects, mode facts, seeds, and strict repair witnesses must bite and restore."
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
+          "command": "bench probe internal/adopt/link_transaction.go --omit 'o.SymlinkParent = hasSymlinkParent(root, e.rel)' --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$'",
+          "probe": "Early competing-refusal omission, selected desired effects, mode facts, seeds, and strict repair witnesses must bite and restore."
+        },
+        {
+          "id": "dropped-bespoke",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench test --package ./internal/adopt --run 'Test(LifecycleDroppedRows|LifecycleClaudeOwnership|LifecycleSpecialInstructionFiles|LifecycleHookCompatibility|LifecycleOwnerConsumption)'"
+        },
+        {
+          "id": "dropped-floor-conformance",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "dropped-floor-adopt",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench test --package ./internal/adopt"
+        },
+        {
+          "id": "dropped-floor-cmd",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "dropped-probes",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench probe internal/adopt/decision.go --omit 'case o.Observed == o.Recorded:' --package ./internal/adopt --run '^TestLifecycleDroppedRows$'",
+          "probe": "Clean-remove omission, modified-withdrawal effect swap, absent-row manifest-retain swap, and selected CLAUDE replacement omission must bite and restore."
         }
       ]
     },
@@ -696,16 +922,29 @@ Review records bind three independent axes to each frozen chunk pair.
       "verification": [
         {
           "id": "aggregate-adopt",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
           "command": "bench test --package ./internal/adopt"
         },
         {
           "id": "aggregate-system",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
           "command": "bench test --check system"
         },
         {
+          "id": "unlink-floor-conformance",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "unlink-floor-cmd",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
           "id": "unlink-entry-recovery-probes",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
           "command": "bench probe internal/adopt/unlink.go --omit <residual-manifest-guard-source> --package ./internal/adopt --run '^TestLifecycleUnlinkRefusals$'",
-          "probe": "Selected effects at all applying entries, unlink residual and dry-run guards, and the existing deterministic restore omission must bite and restore."
+          "probe": "Selected effects at all applying entries, unlink residual and dry-run guards, and the existing deterministic restore omission must bite and restore. The ticket commit replaces the placeholder with the exact omitted source text."
         }
       ]
     }

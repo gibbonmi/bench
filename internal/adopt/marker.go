@@ -213,50 +213,69 @@ func claudeHasImports(content string) bool {
 	return true
 }
 
-// stripAgentsForUnlink removes the fenced Bench block from AGENTS.md while preserving the
-// user's surrounding prose. When stripping leaves the file whitespace-only, the case
-// where link created it with no user content, the file is removed, mirroring link's
-// create-if-absent symmetry. A malformed managed block is left in place and counted as a
-// refusal, so the manifest survives for a manual fix. AGENTS.md is bespoke, not a
-// manifest row.
-func stripAgentsForUnlink(root string, dryRun bool, p *unlinkPlan) string {
-	path := filepath.Join(root, "AGENTS.md")
+// unlinkAgents is the AGENTS.md transform that unlink prepared: the staged stripped bytes,
+// or the cause of a failed transform.
+type unlinkAgents struct{ stage, failure string }
+
+// observeUnlinkAgents records the facts of AGENTS.md for unlink and prepares the strip of
+// the fenced Bench block, which keeps the user's surrounding prose. A strip that leaves the
+// file whitespace-only, the case where link created it with no user content, prepares the
+// removal of the file, mirroring link's create-if-absent symmetry. A special file or a
+// malformed managed block fails the transform, so the file stays and the manifest survives
+// for a manual fix. A real run stages the stripped bytes in stage. A dry run passes an
+// empty stage and only fingerprints them. AGENTS.md is bespoke, not a manifest row.
+func observeUnlinkAgents(root, stage string) (LifecycleObservation, unlinkAgents) {
+	o := LifecycleObservation{Path: "AGENTS.md", PlanKind: bespokePlanKind}
+	path := filepath.Join(root, o.Path)
 	if isSpecialFile(path) {
-		p.refused = append(p.refused, "AGENTS.md")
-		return "kept AGENTS.md (not a regular file)"
+		o.Present, o.Unprepared = true, true
+		return o, unlinkAgents{failure: "not a regular file"}
 	}
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return ""
+		return o, unlinkAgents{}
 	}
-	stripped, serr := StripAgentsBlock(string(content))
-	if serr != nil {
-		p.refused = append(p.refused, "AGENTS.md")
-		return "kept AGENTS.md (its managed block could not be parsed)"
+	o.Present = true
+	stripped, err := StripAgentsBlock(string(content))
+	switch {
+	case err != nil:
+		o.Unprepared = true
+		return o, unlinkAgents{failure: "its managed block could not be parsed"}
+	case stripped == string(content):
+		return o, unlinkAgents{}
+	case strings.TrimSpace(stripped) == "":
+		o.StagedKind = fileAbsent
+		return o, unlinkAgents{}
 	}
-	if stripped == string(content) {
-		return ""
+	o.Staged, o.StagedKind = hashBytes([]byte(stripped)), fileRegular
+	if stage == "" {
+		return o, unlinkAgents{}
 	}
-	if strings.TrimSpace(stripped) == "" {
-		if !dryRun {
-			p.changes = append(p.changes, stagedChange{rel: "AGENTS.md"})
-		}
+	info, err := os.Stat(path)
+	if err != nil {
+		o.Unprepared = true
+		return o, unlinkAgents{failure: "mode unavailable"}
+	}
+	staged, err := stageBytes(stage, "agents", []byte(stripped), info.Mode().Perm())
+	if err != nil {
+		o.Unprepared = true
+		return o, unlinkAgents{failure: "staging failed"}
+	}
+	return o, unlinkAgents{stage: staged}
+}
+
+// report is the unlink report line for the AGENTS.md decision d, empty when d leaves the
+// file alone.
+func (a unlinkAgents) report(d LifecycleDecision) string {
+	switch {
+	case d.Reason == reasonRefused:
+		return "kept AGENTS.md (" + a.failure + ")"
+	case d.Kind == lifecycleRemove:
 		return "AGENTS.md (removed - no user prose remained)"
+	case d.Kind == lifecycleChange:
+		return "AGENTS.md (managed block stripped, prose kept)"
 	}
-	if !dryRun {
-		info, err := os.Stat(path)
-		if err != nil {
-			p.refused = append(p.refused, "AGENTS.md")
-			return "kept AGENTS.md (mode unavailable)"
-		}
-		stage, err := stageBytes(p.stage, "agents", []byte(stripped), info.Mode().Perm())
-		if err != nil {
-			p.refused = append(p.refused, "AGENTS.md")
-			return "kept AGENTS.md (staging failed)"
-		}
-		p.changes = append(p.changes, stagedChange{rel: "AGENTS.md", stage: stage})
-	}
-	return "AGENTS.md (managed block stripped, prose kept)"
+	return ""
 }
 
 func stagedRepairAgents(stage, root string, repair *repairRun) (string, error) {

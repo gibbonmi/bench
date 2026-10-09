@@ -10,15 +10,6 @@ import (
 
 type lifecycleVerdict struct{ rel, reason string }
 
-// stagedEntry pairs a plan entry with the staged file promotion will rename into place.
-// Classification stages every entry it inspects because the skip decision compares the
-// destination against exactly the bytes and mode this plan would write. Staging is the
-// only definition of those.
-type stagedEntry struct {
-	entry planEntry
-	stage string
-}
-
 // transactionalLink stages and promotes plan into root as one transaction. It reports
 // whether anything on disk actually changed (the second return) alongside the usual
 // 0/1/2/3 result. bench setup's already-converged report reads the bool to distinguish
@@ -42,7 +33,7 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 	}
 	if repair != nil {
 		if err := validateRepairManifest(filepath.Join(root, ".bench", "link-manifest.tsv"), old); err != nil {
-			block, renderErr := renderVerdicts("conflicts", []lifecycleVerdict{{".bench/link-manifest.tsv", "modified-managed"}})
+			block, renderErr := renderVerdicts("conflicts", []lifecycleVerdict{{".bench/link-manifest.tsv", reasonModifiedManaged}})
 			if renderErr != nil {
 				fmt.Fprintln(stderr, renderErr)
 			} else {
@@ -52,24 +43,23 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 			return 1, false
 		}
 	}
-	accepted := make([]stagedEntry, 0, len(plan))
 	planned := make(map[string]bool, len(plan))
 	conflicts := []lifecycleVerdict{}
 	// A FIFO/socket/device at AGENTS.md or CLAUDE.md must never be opened for read.
 	// os.ReadFile on a FIFO with no writer on the other end blocks forever. Both are read
-	// unconditionally below (validateAgentsPath, stagedAgents, stagedClaude), so the
-	// special-file check runs first and routes straight to a conflict instead.
+	// below (validateAgentsPath, stagedRepairAgents, observeClaude), so the special-file
+	// check runs first and routes straight to a conflict instead.
 	agentsPath := filepath.Join(root, "AGENTS.md")
 	agentsSpecial := isSpecialFile(agentsPath)
 	if agentsSpecial {
-		conflicts = append(conflicts, lifecycleVerdict{"AGENTS.md", "project-owned"})
+		conflicts = append(conflicts, lifecycleVerdict{"AGENTS.md", reasonProjectOwned})
 	} else if err := validateAgentsPath(agentsPath); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1, false
 	}
 	claudeSpecial := isSpecialFile(filepath.Join(root, "CLAUDE.md"))
 	if claudeSpecial {
-		conflicts = append(conflicts, lifecycleVerdict{"CLAUDE.md", "project-owned"})
+		conflicts = append(conflicts, lifecycleVerdict{"CLAUDE.md", reasonProjectOwned})
 	}
 	if repair == nil {
 		populateOriginHead(root)
@@ -94,164 +84,114 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 	}
 	defer os.RemoveAll(stage)
 	rows := map[string]string{}
-	for _, e := range plan {
+	changes := []stagedChange{}
+	// Each entry runs its hard checks, then takes its lifecycle decision, before the next
+	// entry is inspected. A refusal therefore wins over every later entry's checks.
+	for order, e := range plan {
 		planned[e.rel] = true
-		// "seed" (seed-if-absent) entries, such as bench setup's profile, are neither a
-		// managed/converged asset nor a conflict candidate. An existing file at the path is
-		// reviewer-owned judgment content and is skipped silently, with no conflict and no
-		// manifest row. An absent one is staged and promoted with the rest of the transaction
-		// like any other write.
+		dest := filepath.Join(root, e.rel)
+		o := LifecycleObservation{Path: e.rel, Order: order, PlanKind: e.kind, Recorded: old.Hash(e.rel), Strict: repair != nil}
+		staged := ""
 		if e.kind == "seed" {
-			if hasSymlinkParent(root, e.rel) {
-				fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
+			_, err := os.Lstat(dest)
+			o.Present = err == nil
+		} else {
+			if e.kind != "inline" && e.kind != "inline-exec" {
+				if info, err := os.Stat(e.src); err != nil || !info.Mode().IsRegular() {
+					fmt.Fprintf(stderr, "conflict: kit asset missing: %s\n", e.src)
+					return 1, false
+				}
+			}
+			parent := filepath.Join(root, filepath.Dir(e.rel))
+			if info, err := os.Stat(parent); err == nil && !info.IsDir() {
+				fmt.Fprintf(stderr, "conflict: parent path for %s is not a directory\n", e.rel)
 				return 1, false
 			}
-			if _, err := os.Lstat(filepath.Join(root, e.rel)); err == nil {
-				continue
+			if staged, err = stagePlanEntry(stage, e, mode); err == nil {
+				err = observeDestination(&o, dest, staged)
 			}
-			p, err := stagePlanEntry(stage, e, mode)
 			if err != nil {
 				fmt.Fprintln(stderr, err)
 				return 1, false
 			}
-			accepted = append(accepted, stagedEntry{e, p})
-			continue
 		}
-		if e.kind != "inline" && e.kind != "inline-exec" {
-			if info, err := os.Stat(e.src); err != nil || !info.Mode().IsRegular() {
-				fmt.Fprintf(stderr, "conflict: kit asset missing: %s\n", e.src)
-				return 1, false
-			}
-		}
-		parent := filepath.Join(root, filepath.Dir(e.rel))
-		if info, err := os.Stat(parent); err == nil && !info.IsDir() {
-			fmt.Fprintf(stderr, "conflict: parent path for %s is not a directory\n", e.rel)
+		o.SymlinkParent = hasSymlinkParent(root, e.rel)
+		d, ok := decideLink(o, rows, stderr)
+		if !ok {
 			return 1, false
 		}
-		// A manifest-owned destination that already holds what this plan would write needs no
-		// write at all. It leaves the transaction here, never renamed over and never a conflict
-		// candidate, carrying its own fingerprint into the manifest. The comparison uses the
-		// incoming kit bytes rather than the recorded hash, so a locally stale kit asset is
-		// still caught. Keying the skip on the old hash would make every release a content
-		// no-op instead. Ownership still gates the skip, except for a byte-identical adapter
-		// resolved through a symlink parent to its canonical target. Everything past this point
-		// wants to write, so a symlinked parent is a hard refusal that outranks the soft
-		// per-entry conflict report.
-		dest := filepath.Join(root, e.rel)
-		_, statErr := os.Lstat(dest)
-		exists := statErr == nil
-		owned := old.Hash(e.rel)
-		staged, err := stagePlanEntry(stage, e, mode)
+		switch {
+		case publishes(d):
+			// A seed is staged only once the owner installs it.
+			if staged == "" {
+				if staged, err = stagePlanEntry(stage, e, mode); err != nil {
+					fmt.Fprintln(stderr, err)
+					return 1, false
+				}
+			}
+			changes = append(changes, stagedChange{rel: d.Path, stage: staged})
+		case d.Reason == reasonModifiedManaged || d.Reason == reasonProjectOwned:
+			conflicts = append(conflicts, lifecycleVerdict{d.Path, d.Reason})
+		}
+	}
+	// A dropped row is an old row that the plan no longer names. CLAUDE.md is conditionally
+	// owned, so the conditional owner below decides its row instead of the withdrawal rule.
+	for order, row := range old.Rows() {
+		if planned[row.rel] || row.rel == "CLAUDE.md" {
+			continue
+		}
+		o, err := observeWithdrawal(root, row, len(plan)+order)
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1, false
 		}
-		parentSymlink := hasSymlinkParent(root, e.rel)
-		adoptConvergedAdapter := owned == "" && e.kind == "adapter" && parentSymlink && sameAdapterTarget(dest, staged)
-		if exists && (owned != "" || adoptConvergedAdapter) {
-			if fp := convergedFingerprint(dest, staged); fp != "" {
-				rows[e.rel] = fp
-				continue
-			}
-		}
-		if parentSymlink {
-			fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
+		d, ok := decideLink(o, rows, stderr)
+		if !ok {
 			return 1, false
 		}
-		// An owned destination still carrying the bytes the manifest recorded is the consumer's
-		// untouched copy of an older kit. It is rewritten rather than reported. Only a
-		// destination that answers to neither the manifest nor the incoming kit is someone's
-		// local edit to preserve.
-		if exists && !ownedUnmodified(dest, owned, staged, repair != nil) {
-			reason := "project-owned"
-			if owned != "" {
-				reason = "modified-managed"
-			}
-			conflicts = append(conflicts, lifecycleVerdict{e.rel, reason})
-			continue
-		}
-		accepted = append(accepted, stagedEntry{e, staged})
-	}
-	changes := []stagedChange{}
-	for _, a := range accepted {
-		// A seed entry is never recorded as a managed row. A recorded row would make a later
-		// reviewer hand-edit read back as a modified-managed conflict on the next run, which
-		// defeats "seed-if-absent, then reviewer-owned".
-		if a.entry.kind != "seed" {
-			fp, err := fingerprintPath(a.stage)
-			if err != nil {
-				fmt.Fprintln(stderr, err)
-				return 1, false
-			}
-			rows[a.entry.rel] = fp
-		}
-		changes = append(changes, stagedChange{rel: a.entry.rel, stage: a.stage})
-	}
-	// A dropped old row leaves only when it is still clean. Modified rows remain owned.
-	for _, row := range old.Rows() {
-		// CLAUDE.md is conditionally owned and is reconciled by stagedClaude below.
-		if row.rel == "CLAUDE.md" {
-			full := filepath.Join(root, row.rel)
-			if fp, err := fingerprintPath(full); err == nil && fp != row.hash && !reclaimableClaude(full) {
-				rows[row.rel] = row.hash
-				conflicts = append(conflicts, lifecycleVerdict{row.rel, "modified-managed"})
-			}
-			continue
-		}
-		if planned[row.rel] {
-			// A current-plan collision was preserved, so retain its previous ownership
-			// row rather than treating it as a removed asset.
-			if _, accepted := rows[row.rel]; !accepted {
-				rows[row.rel] = row.hash
-			}
-			continue
-		}
-		if _, present := rows[row.rel]; present {
-			continue
-		}
-		full, ok := resolveInside(root, row.rel)
-		if !ok || hasSymlinkParent(root, row.rel) {
-			fmt.Fprintln(stderr, "refused manifest path: "+row.rel)
-			return 1, false
-		}
-		if info, err := os.Lstat(full); err == nil && !info.Mode().IsRegular() && info.Mode()&os.ModeSymlink == 0 {
-			fmt.Fprintln(stderr, "refused non-regular dropped asset: "+row.rel)
-			return 1, false
-		}
-		if _, err := os.Lstat(full); err == nil {
-			fp, err := fingerprintPath(full)
-			if err != nil {
-				fmt.Fprintln(stderr, err)
-				return 1, false
-			}
-			if fp == row.hash {
-				changes = append(changes, stagedChange{rel: row.rel})
-			} else {
-				rows[row.rel] = row.hash
-				conflicts = append(conflicts, lifecycleVerdict{row.rel, "kept-modified-removed"})
-			}
+		switch {
+		case d.Kind == lifecycleRemove:
+			changes = append(changes, stagedChange{rel: d.Path})
+		case d.Reason == reasonKeptModifiedRemoved:
+			conflicts = append(conflicts, lifecycleVerdict{d.Path, d.Reason})
 		}
 	}
 	if !agentsSpecial {
 		agents, err := stagedRepairAgents(stage, root, repair)
+		o := LifecycleObservation{Path: "AGENTS.md", PlanKind: bespokePlanKind}
+		if err == nil && agents != "" {
+			err = observeDestination(&o, agentsPath, agents)
+		}
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1, false
 		}
-		if agents != "" {
-			changes = append(changes, stagedChange{rel: "AGENTS.md", stage: agents})
+		d, ok := decideLink(o, rows, stderr)
+		if !ok {
+			return 1, false
+		}
+		if publishes(d) {
+			changes = append(changes, stagedChange{rel: d.Path, stage: agents})
 		}
 	}
 	if !claudeSpecial {
-		claude, managed, err := stagedClaude(stage, root)
+		o := LifecycleObservation{Path: "CLAUDE.md", PlanKind: claudePlanKind, Recorded: old.Hash("CLAUDE.md")}
+		claude, err := observeClaude(&o, stage, root)
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1, false
 		}
-		if managed {
-			fp, _ := fingerprintPath(claude)
-			rows["CLAUDE.md"] = fp
-			changes = append(changes, stagedChange{rel: "CLAUDE.md", stage: claude})
+		d, ok := decideLink(o, rows, stderr)
+		if !ok {
+			return 1, false
+		}
+		switch {
+		case publishes(d):
+			changes = append(changes, stagedChange{rel: d.Path, stage: claude})
+		case d.Reason == reasonModifiedManaged:
+			// The report omits a project-owned CLAUDE.md. Only the special-file guard
+			// above reports one.
+			conflicts = append(conflicts, lifecycleVerdict{d.Path, d.Reason})
 		}
 	}
 	hookStage, hookDirs, err := stageManagedPrePush(root, hook)
@@ -263,7 +203,7 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 		if err := validateRepairHook(hook); err != nil {
 			_ = os.Remove(hookStage)
 			removeEmptyDirs(hookDirs)
-			block, err := renderVerdicts("conflicts", []lifecycleVerdict{{hook.Path, "modified-managed"}})
+			block, err := renderVerdicts("conflicts", []lifecycleVerdict{{hook.Path, reasonModifiedManaged}})
 			if err != nil {
 				fmt.Fprintln(stderr, err)
 			} else {
@@ -279,7 +219,18 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 			removeEmptyDirs(hookDirs)
 		}
 	}()
-	changes = append(changes, stagedChange{rel: "pre-push", dest: hook.Path, stage: hookStage})
+	o := LifecycleObservation{Path: "pre-push", PlanKind: bespokePlanKind}
+	if err := observeDestination(&o, hook.Path, hookStage); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1, false
+	}
+	d, ok := decideLink(o, rows, stderr)
+	if !ok {
+		return 1, false
+	}
+	if publishes(d) {
+		changes = append(changes, stagedChange{rel: d.Path, dest: hook.Path, stage: hookStage})
+	}
 	manifestRows := make([]manifestRow, 0, len(rows))
 	for rel, hash := range rows {
 		manifestRows = append(manifestRows, manifestRow{rel, hash})
@@ -313,4 +264,23 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 		return 3, changed
 	}
 	return 0, changed
+}
+
+// decideLink submits one link observation to the lifecycle owner and keeps the manifest
+// row that its decision selects. It prints the owner's hard refusal and reports false.
+func decideLink(o LifecycleObservation, rows map[string]string, stderr io.Writer) (LifecycleDecision, bool) {
+	d, refusal := decideObservation("link", o)
+	if refusal != "" {
+		fmt.Fprintln(stderr, refusal)
+		return LifecycleDecision{}, false
+	}
+	if d.ManifestAction != manifestOmit {
+		rows[d.Path] = d.Fingerprint
+	}
+	return d, true
+}
+
+// publishes reports whether a decision selects the write of its prepared replacement.
+func publishes(d LifecycleDecision) bool {
+	return d.Kind == lifecycleAdd || d.Kind == lifecycleChange
 }
