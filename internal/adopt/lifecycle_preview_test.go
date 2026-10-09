@@ -5,11 +5,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -257,13 +255,12 @@ func TestLifecycleSetupCancellation(t *testing.T) {
 			if tc.ambiguous {
 				writeFixtureFile(t, filepath.Join(root, "package.json"), `{"scripts":{"test":"echo ok"}}`+"\n", 0o644)
 			}
-			before := compatibilitytest.SnapshotHome(t, root)
 			var stdout, stderr bytes.Buffer
+			var code int
 			isTerminal := func(io.Reader) bool { return tc.tty }
-			code := setup(tc.args, strings.NewReader(tc.input), &stdout, &stderr, "1.0.0", isTerminal)
-			if after := compatibilitytest.SnapshotHome(t, root); !reflect.DeepEqual(after, before) {
-				t.Fatalf("setup %v changed the repository:\n%+v\nwant:\n%+v", tc.args, after, before)
-			}
+			requireUnchanged(t, root, func() {
+				code = setup(tc.args, strings.NewReader(tc.input), &stdout, &stderr, "1.0.0", isTerminal)
+			})
 			if code != tc.code || !strings.Contains(stderr.String(), tc.stderr) {
 				t.Fatalf("setup %v = %d, stderr %q; want %d and %q", tc.args, code, stderr.String(), tc.code, tc.stderr)
 			}

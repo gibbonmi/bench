@@ -154,8 +154,8 @@ func TestLifecycleRepairCompatibility(t *testing.T) {
 // TestLifecycleClaudeOwnership drives real relink over each CLAUDE.md partition, starting
 // from a linked repository. Project content, including an empty file, keeps its bytes and
 // takes no import and no row. Owned content that the project edited keeps its bytes and
-// row and is reported. An absent, legacy, or current form takes the current form, and an
-// unowned dangling link reads as absent.
+// row and is reported. An absent, legacy, or current form takes the current form, and a
+// dangling link, owned or not, reads as absent.
 func TestLifecycleClaudeOwnership(t *testing.T) {
 	write := func(content string) func(*testing.T, string, string) {
 		return func(t *testing.T, _, path string) { writeFixtureFile(t, path, content, 0o644) }
@@ -164,6 +164,19 @@ func TestLifecycleClaudeOwnership(t *testing.T) {
 		return func(t *testing.T, root, path string) {
 			write(content)(t, root, path)
 			editPreviewManifest(t, root, func(rows map[string]string) { delete(rows, "CLAUDE.md") })
+		}
+	}
+	dangling := func(owned bool) func(*testing.T, string, string) {
+		return func(t *testing.T, root, path string) {
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink("missing-target", path); err != nil {
+				t.Fatal(err)
+			}
+			if !owned {
+				editPreviewManifest(t, root, func(rows map[string]string) { delete(rows, "CLAUDE.md") })
+			}
 		}
 	}
 	for _, tc := range []struct {
@@ -181,15 +194,8 @@ func TestLifecycleClaudeOwnership(t *testing.T) {
 		}},
 		{name: "legacy form", installed: true, arrange: write(legacyClaudeMD())},
 		{name: "current form", installed: true, arrange: func(*testing.T, string, string) {}},
-		{name: "unowned dangling link", installed: true, arrange: func(t *testing.T, root, path string) {
-			if err := os.Remove(path); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.Symlink("missing-target", path); err != nil {
-				t.Fatal(err)
-			}
-			editPreviewManifest(t, root, func(rows map[string]string) { delete(rows, "CLAUDE.md") })
-		}},
+		{name: "unowned dangling link", installed: true, arrange: dangling(false)},
+		{name: "owned dangling link", installed: true, arrange: dangling(true)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := consumerRepo(t)
