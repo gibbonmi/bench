@@ -12,6 +12,8 @@ TF-C2 round 2 confirmed those folds and found S4. Chunk TF-C2 uses repair cycle 
 
 TF-C2 round 3 confirmed the folds of S4 and S5 with 0 findings on every axis. TF-C2 closes with both repair cycles used and no open finding.
 
+Chunk TF-C3 uses repair cycle 1 of 2 for S3, S4, S6, S7, P1, and C2 through a fresh repair session for ticket 03. P1 and C1 name the same gap. The plan adds rows TF73 and TF74 for P1 and C2 under the `--auto-approve` spec approval.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -42,6 +44,15 @@ Advice: S5, the Go-file suffix test appears four times in `selection.go`, and th
 
 TF-C2 round 3: 0 findings. The folds of S4 and S5 hold.
 
+TF-C3 round 1: 4 findings, worst S3.
+
+- S3 (auto-fix, confidence 6): three test helpers in `internal/preflight/check_floor_test.go` and `check_floor_command_test.go` rebuild the red detail beside the one independent TF25 literal.
+- S4 (auto-fix, confidence 4): `Request.Runs` in `internal/testreport/selection_facts.go:47` restates which `bench test` forms run nothing, which the dispatch in `command.go:128-133` also decides.
+- S6 (auto-fix, confidence 7): a doc comment in `internal/preflight/check_floor.go:171-174` breaks a sentence across two lines.
+- S7 (auto-fix, confidence 6): the fixture plan command appears in `preflighttest/fixture.go:134`, `check_floor_command_test.go:31`, and `cmd/bench/preflight_version_test.go:10`.
+
+Advice: S1 and S2, `"bench test"` and the flag spellings have no exported owner, as `./cmd/bench` has none. S5, `ticket_rows.go` also holds `kitPinCheck`, as the ticket directed.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
@@ -59,6 +70,12 @@ Advice: P1, `go.work` and `go.work.sum` also add `./...` because the floor reuse
 TF-C2 round 2: 0 findings. Every TF-C2 row holds.
 
 TF-C2 round 3: 0 findings. Advice: `spec.md:124` and `:140` cite line ranges of `selection.go` that drift. Final reconciliation corrects them.
+
+TF-C3 round 1: 1 finding, worst P1.
+
+- P1 (auto-fix, confidence 5): `internal/preflight/check_floor.go:65` gives no floor to a ticket that no plan chunk names, so `check-floor` stays green. Row TF73 grades that ticket against an empty requirement set.
+
+Advice: P2, `spec.md:464` names row-list edits in three command tests that the delta does not touch; final reconciliation corrects it. The spec decides the redirection question: a redirection belongs to one simple command, so `bench test --package X > out` satisfies its element.
 
 ## Coverage
 
@@ -85,6 +102,11 @@ Advice: C5, a `go.mod` that is a directory or a link. The S1 repair makes the fl
 TF-C2 round 2: 0 findings. The folds of C1, C2, C3, C4, and C6 hold.
 
 TF-C2 round 3: 0 findings. Each behavior of the absent-path branch keeps its test.
+
+TF-C3 round 1: 2 findings, worst C1.
+
+- C1 (auto-fix, confidence 7): the same gap as P1. A probe that skips the unplanned-ticket guard stays green.
+- C2 (auto-fix, confidence 5): `check_floor.go:78-81` owes no `./cmd/bench` for a directory entry above a bound command package. Row TF74 reads the command-package rule against each floor package.
 
 ```bench-review-record
 {
@@ -1411,7 +1433,78 @@ TF-C2 round 3: 0 findings. Each behavior of the absent-path branch keeps its tes
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3-standards-r1",
+          "performer": "claude:ft349_c3_standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_standards",
+            "digest": "sha256:54728b2084958c62fd6a487a5a3b3454f7f3312abb164951f32dc67d32fa3846",
+            "excerpt": "Standards axis TF-C3 round 1 (fable/medium), ticket diff c9d09778..aee997de. 7 advisory findings, 0 blocking; worst S3.\nS1 check_floor.go:38 testCommand \"bench test\" second production spelling; no exported owner. ask-user. conf 5.\nS2 check_floor.go:199-202 floorCommand spells --check and --package again. no-op. conf 4.\nS3 check_floor_test.go:113-115, :275-277, check_floor_command_test.go:19 re-derive the red-detail format beside the TF25 literal. auto-fix. conf 6.\nS4 selection_facts.go:47 Runs() restates the dispatch fact of command.go:128-133. ask-user. conf 4.\nS5 ticket_rows.go holds kitPinCheck, which is not a row check. no-op. conf 5.\nS6 check_floor.go:171-174 stray line break in a doc comment. auto-fix. conf 7.\nS7 fixture plan command spelled in preflighttest/fixture.go:134, check_floor_command_test.go:31, cmd/bench/preflight_version_test.go:10. ask-user. conf 6.\n"
+          },
+          "axis": "Standards",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "aee997dea19596557cb5abfdb40518500756e635",
+          "finding_ids": [
+            "S3",
+            "S4",
+            "S6",
+            "S7"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-spec-r1",
+          "performer": "claude:ft349_c3_spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_spec",
+            "digest": "sha256:aa2cdeff052d0ca0bf9c783c81abd4666242a1e57f744cdf649002f7779f657e",
+            "excerpt": "Spec axis TF-C3 round 1 (fable/medium), ticket diff c9d09778..aee997de. All 33 rows met. 2 low findings; worst P1.\nP1 check_floor.go:65 a ticket that no plan chunk names gets no floor; check-floor stays green. ask-user. conf 5.\nP2 spec.md:464 sweep claims row-list edits in three command tests that the delta does not touch. no-op. conf 8.\nRedirection: spec line 161 \"one simple command ... words start with bench test\" decides it; a redirection belongs to one simple command, so it satisfies. no-op.\n"
+          },
+          "axis": "Spec",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "aee997dea19596557cb5abfdb40518500756e635",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-coverage-r1",
+          "performer": "claude:ft349_c3_coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_coverage",
+            "digest": "sha256:e7e255481a40d806eda63869d0c5823ced82fba01ec2844a6b6e2f53591790dd",
+            "excerpt": "Coverage axis TF-C3 round 1 (fable/medium), ticket diff c9d09778..aee997de. 2 advisory findings; worst C1.\nC1 check_floor.go:46-48, :136 an unplanned ticket's floor is ungraded; probe '; !planned {' -> '; !planned && false {' silent over ^TestCheckFloor, restored yes. ask-user. conf 7.\nC2 check_floor.go:78-81 a directory entry above a bound command package owes no ./cmd/bench; probe CommandPackage(path) || path == \"internal\" silent, restored yes. ask-user. conf 5.\nClosed by trace: two package operands, --run ., --package ./... --changed, empty command, duplicate chunk, v2 requirement without ticket, absent ticket file, quoted words, tabs, (new)-only entries, bare bench test.\n"
+          },
+          "axis": "Coverage",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "aee997dea19596557cb5abfdb40518500756e635",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
