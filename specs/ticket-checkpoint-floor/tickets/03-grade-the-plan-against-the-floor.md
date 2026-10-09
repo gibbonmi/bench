@@ -1,8 +1,8 @@
 # Grade the completion plan against the ticket check floor
 
 Blocked by: 01-name-the-root-conformance-check.md, 02-derive-the-ticket-check-floor.md
-Writes: internal/preflight/check_floor.go (new), internal/preflight/check_floor_command_test.go (new), internal/preflight/check_floor_test.go (new), internal/preflight/command_bootstrap_test.go, internal/preflight/command_build_test.go, internal/preflight/command_review_test.go, internal/preflight/decision.go, internal/preflight/decision_test.go, internal/preflight/gather.go, internal/preflight/plan.go, internal/preflight/preflighttest/fixture.go, internal/preflight/ticket_rows.go (new), internal/testreport/check_test.go, internal/testreport/command.go, internal/testreport/environment.go, internal/testreport/named_check.go, internal/testreport/root_conformance_test.go
-Covers: TF6, TF16, TF17, TF18, TF23, TF24, TF25, TF26, TF27, TF28, TF29, TF30, TF31, TF32, TF33, TF34, TF35, TF36, TF37, TF38, TF39, TF40, TF41, TF42, TF43, TF44, TF45, TF46, TF66, TF68, TF69, TF70
+Writes: internal/preflight/check_floor.go (new), internal/preflight/check_floor_command_test.go (new), internal/preflight/check_floor_test.go (new), internal/preflight/command_bootstrap_test.go, internal/preflight/command_build_test.go, internal/preflight/command_review_test.go, internal/preflight/decision.go, internal/preflight/decision_test.go, internal/preflight/gather.go, internal/preflight/plan.go, internal/preflight/preflighttest/fixture.go, internal/preflight/ticket_rows.go (new), internal/testreport/check_test.go, internal/testreport/command.go, internal/testreport/environment.go, internal/testreport/named_check.go, internal/testreport/root_conformance_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/preflight_version_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/preflight/source_tip_test.go, internal/preflight/preflighttest/testdata/review-documents.toon, internal/preflight/preflighttest/testdata/review-empty.toon, internal/preflight/preflighttest/testdata/review-shapes-no-renames.toon, internal/preflight/preflighttest/testdata/review-shapes-renames.toon, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go
+Covers: TF6, TF16, TF17, TF18, TF23, TF24, TF25, TF26, TF27, TF28, TF29, TF30, TF31, TF32, TF33, TF34, TF35, TF36, TF37, TF38, TF39, TF40, TF41, TF42, TF43, TF44, TF45, TF46, TF66, TF68, TF69, TF70, TF72
 
 ## What to build
 
@@ -64,3 +64,4 @@ At the ticket commit, rewrite the `planned` seam cell of each covered row into t
 - [ ] TF68: `bench test --package ./internal/git2` leaves the element `./internal/git` unsatisfied.
 - [ ] TF69: `bench preflight build <slug> --plan-only` prints a red `check-floor` row for an omitted package.
 - [ ] TF70: The rendered `check-floor` red holds no raw control byte inside its row.
+- [ ] TF72: `bench test --checks` and `bench test --check root-conformance --fixtures` satisfy nothing.
