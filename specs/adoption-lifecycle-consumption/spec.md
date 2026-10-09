@@ -310,7 +310,7 @@ No schema, public verb, public flag, manifest format, or rendered report changes
 |---|---|---|
 | `upgradePlanCounts` in `internal/adopt/upgrade.go:129` | `Manifest.Rows`, `Manifest.Hash`, `fingerprintPath`, `PlanLifecycle` | ALC31, legacy input projection |
 | `transactionalRepair` in `internal/adopt/link_transaction.go:30` | `ReadManifest`, `stagePlanEntry`, `hasSymlinkParent`, `convergedFingerprint`, `sameAdapterTarget`, `ownedUnmodified`, `reclaimableClaude` | ALC06–ALC25, exact observation and decision consumption |
-| `planUnlink` in `internal/adopt/unlink.go:98` | `resolveInside`, `hasSymlinkParent`, `fingerprintPath`, `stripAgentsForUnlink`, `removeManagedHook`, `sweepEmptyDirs` | ALC26–ALC30, exact observation and decision consumption |
+| `planUnlink` in `internal/adopt/unlink.go:98` | `resolveInside`, `hasSymlinkParent`, `fingerprintPath`, `observeUnlink`, `observeUnlinkAgents`, `observeUnlinkHook`, `sweepEmptyDirs` | ALC26–ALC30, exact observation and decision consumption |
 | `Link` in `internal/adopt/link.go:28` | `buildLinkPlan`, `transactionalLink` | ALC35, unchanged command entry |
 | `convergeSetup` in `internal/adopt/setup.go:304` | `buildLinkPlan`, seed producers, `transactionalLink`, `finishSetup` | ALC14, ALC15, ALC33, ALC35 |
 | `Upgrade` in `internal/adopt/upgrade.go:34` | `pinnedManifest`, `buildLinkPlan`, `compareKitVersions`, `upgradePlanCounts`, `prePushRefreshEligible`, `transactionalLink` | ALC31, ALC32, ALC35 |
@@ -474,7 +474,7 @@ Each in-scope partition receives the rows below.
 | Invalid immutable legacy input | Preserve current duplicate, path, and fingerprint refusal order | ALC05 |
 | Report control bytes | Retain current render failure before link promotion | ALC34 |
 | Confirmation EOF or decline | Setup retains its existing exit and write behavior | ALC33 |
-| Publication fault and interruption | Existing fault seam observes before publication, middle promotion, and final manifest publication | ALC34 |
+| Publication fault and interruption | Existing fault seam observes before publication, middle promotion, and final manifest publication for Link, and the first two for Unlink | ALC34 |
 | Modified destination after observation | Existing transaction identity recheck remains authoritative | ALC34 |
 | Existing manifests without a version | Upgrade retains absent, empty, and missing-header refusals | ALC32 |
 | Foreign hook and diverted hook | Link hard refusal and unlink silent preservation remain distinct | ALC24 |
@@ -601,6 +601,13 @@ It uses the current interruption seam for fresh-process recovery compatibility.
 The system test owner supplies the selected binary and child environment.
 The spec does not claim a new all-or-nothing unlink transaction.
 Unlink keeps its current separate manifest-last publication and directory sweep.
+
+The interruption seam fires only when a publication renames a staged file.
+Link reaches it at pre-publication, middle promotion, and final manifest publication.
+Unlink reaches it at pre-publication and middle promotion.
+Unlink publishes its final manifest as a removal, so the existing seam has no fault point there.
+A removal fault seam is a separate outcome, because the fences exclude the transaction adapter.
+The reviewer accepted this ALC34 scope on 2026-10-09.
 
 The author ran no behavior tests during this planning pass.
 The implementation first runs the same new characterization on the frozen baseline and the candidate.
