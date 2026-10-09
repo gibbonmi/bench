@@ -2,6 +2,7 @@ package adopt
 
 import (
 	"bytes"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -27,6 +28,55 @@ const (
 type linkRun struct {
 	code           int
 	stdout, stderr string
+}
+
+// linkedBase links one consumer repository for a parent test. When arrange is set, it
+// prepares that repository before the Link. A subtest that starts from a linked repository
+// takes a linkedCopy of the base and does not run its own Link. A real Link costs seconds of
+// synchronized writes, and its result does not depend on the repository path. The parent
+// test returns to its working directory, because consumerRepo finds the kit from there.
+func linkedBase(t *testing.T, arrange func(t *testing.T, root string)) string {
+	t.Helper()
+	wd := mustGetwd(t)
+	base := consumerRepo(t)
+	if arrange != nil {
+		arrange(t, base)
+	}
+	linkConsumer(t, base, 0)
+	t.Chdir(wd)
+	return base
+}
+
+// linkedCopy returns a fresh consumer repository, made the working directory, that holds a
+// copy of base: each file with its bytes, each symlink with its target, and each entry with
+// its mode.
+func linkedCopy(t *testing.T, base string) string {
+	t.Helper()
+	root := consumerRepo(t)
+	if err := os.RemoveAll(filepath.Join(root, ".git")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.CopyFS(root, os.DirFS(base)); err != nil {
+		t.Fatal(err)
+	}
+	err := filepath.WalkDir(base, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.Type()&fs.ModeSymlink != 0 {
+			return err
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(base, path)
+		if err != nil {
+			return err
+		}
+		return os.Chmod(filepath.Join(root, rel), info.Mode().Perm())
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return root
 }
 
 func runLink(args []string) linkRun {
@@ -153,6 +203,7 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 		}
 		editPreviewManifest(t, root, func(rows map[string]string) { rows[lifecycleDoc] = old })
 	}
+	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name, rel, reason, dir string
 		args                   []string
@@ -183,7 +234,12 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := consumerRepo(t)
+			var root string
+			if tc.linked {
+				root = linkedCopy(t, base)
+			} else {
+				root = consumerRepo(t)
+			}
 			if tc.dir != "" {
 				root = filepath.Join(root, tc.dir)
 				if err := os.Mkdir(root, 0o755); err != nil {
@@ -193,10 +249,10 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 				t.Chdir(root)
 			}
 			path := filepath.Join(root, tc.rel)
-			if tc.linked {
-				linkConsumer(t, root, 0)
-			} else if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-				t.Fatal(err)
+			if !tc.linked {
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatal(err)
+				}
 			}
 			tc.arrange(t, root, path)
 			var before entryState
@@ -280,6 +336,7 @@ func TestLifecycleOwnerConsumption(t *testing.T) {
 // relink with the exact refusal and keep the planted file and its row.
 func TestLifecycleDroppedRows(t *testing.T) {
 	keep := func(*testing.T, string) {}
+	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name, rel, reason, refusal string
 		symlinkParent              bool
@@ -307,8 +364,7 @@ func TestLifecycleDroppedRows(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := consumerRepo(t)
-			linkConsumer(t, root, 0)
+			root := linkedCopy(t, base)
 			rel := tc.rel
 			if rel == "" {
 				rel = lifecycleWithdrawn

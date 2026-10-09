@@ -179,6 +179,7 @@ func TestLifecycleClaudeOwnership(t *testing.T) {
 			}
 		}
 	}
+	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name, reason string
 		installed    bool
@@ -198,8 +199,7 @@ func TestLifecycleClaudeOwnership(t *testing.T) {
 		{name: "owned dangling link", installed: true, arrange: dangling(true)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := consumerRepo(t)
-			linkConsumer(t, root, 0)
+			root := linkedCopy(t, base)
 			tc.arrange(t, root, filepath.Join(root, "CLAUDE.md"))
 			var before entryState
 			if !tc.installed {
@@ -259,17 +259,23 @@ func TestLifecycleSpecialInstructionFiles(t *testing.T) {
 // absent hook absent, and it reports neither.
 func TestLifecycleHookCompatibility(t *testing.T) {
 	foreign := func(t *testing.T, path string) { writeFixtureFile(t, path, "#!/bin/sh\nexit 0\n", 0o755) }
-	hookRepo := func(t *testing.T, diverted bool) (string, string) {
-		root := consumerRepo(t)
+	// hookRepo points core.hooksPath of root at its own hooks directory when diverted is set,
+	// and returns root with the effective pre-push path. A copy of a diverted base takes the
+	// setting again, because the copied setting names the base directory.
+	hookRepo := func(t *testing.T, root string, diverted bool) (string, string) {
 		hooks := filepath.Join(root, ".git", "hooks")
 		if diverted {
 			hooks = filepath.Join(root, "hooks")
-			if err := os.Mkdir(hooks, 0o755); err != nil {
+			if err := os.MkdirAll(hooks, 0o755); err != nil {
 				t.Fatal(err)
 			}
 			runAdoptGit(t, root, "config", "core.hooksPath", hooks)
 		}
 		return root, filepath.Join(hooks, "pre-push")
+	}
+	bases := map[bool]string{}
+	for _, diverted := range []bool{false, true} {
+		bases[diverted] = linkedBase(t, func(t *testing.T, root string) { hookRepo(t, root, diverted) })
 	}
 	for _, tc := range []struct {
 		name     string
@@ -287,7 +293,7 @@ func TestLifecycleHookCompatibility(t *testing.T) {
 		{name: "diverted foreign", diverted: true, refused: true, arrange: foreign},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root, path := hookRepo(t, tc.diverted)
+			root, path := hookRepo(t, consumerRepo(t), tc.diverted)
 			tc.arrange(t, path)
 			if !tc.refused {
 				requireReported(t, runLink(nil), "pre-push", "")
@@ -303,8 +309,7 @@ func TestLifecycleHookCompatibility(t *testing.T) {
 			}
 		})
 		t.Run("unlink "+tc.name, func(t *testing.T) {
-			root, path := hookRepo(t, tc.diverted)
-			linkConsumer(t, root, 0)
+			_, path := hookRepo(t, linkedCopy(t, bases[tc.diverted]), tc.diverted)
 			tc.arrange(t, path)
 			var before map[string]compatibilitytest.HomeEntry
 			if tc.absent {
