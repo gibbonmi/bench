@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: internal/testreport/command.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go, internal/testreport/check_test.go, internal/testreport/testreport_test.go, internal/testreport/checks_face_test.go, internal/preflight/check_floor.go, internal/preflight/check_floor_test.go, cmd/bench/help_inventory_test.go, cmd/bench/command_registry_test.go, CHANGELOG.md
-Covers: FTPKG.repeat, FTPKG.exclusive, FTPKG.help, FTPKG.floor
+Covers: FTPKG1, FTPKG2, FTPKG3, FTPKG4
 
 ## What to build
 
@@ -16,8 +16,8 @@ The completion-plan check floor reads each package expression of a prepared sele
 
 ## Acceptance
 
-- [ ] FTPKG.repeat: `bench test --package <a> --package <b>` runs both packages in one focused run and prints one report that names both packages.
-- [ ] FTPKG.exclusive: a repeated `--package` with `--changed`, a legacy positional, or `--check` exits 2 with the usage line and starts no Go child.
-- [ ] FTPKG.help: the `bench test` usage line shows `[--package <expr>]...`, and the help note names the repeated flag. The `bench probe` help note is unchanged.
-- [ ] FTPKG.floor: a plan command with a repeated `--package` satisfies the floor element of each named package.
+- [ ] FTPKG1: `bench test --package <a> --package <b>` runs both packages in one focused run and prints one report that names both packages.
+- [ ] FTPKG2: a repeated `--package` with `--changed`, a legacy positional, or `--check` exits 2 with the usage line and starts no Go child.
+- [ ] FTPKG3: the `bench test` usage line shows `[--package <expr>]...`, and the help note names the repeated flag. The `bench probe` help note is unchanged.
+- [ ] FTPKG4: a plan command with a repeated `--package` satisfies the floor element of each named package.
 - [ ] `CHANGELOG.md` has one entry for the repeated flag.
