@@ -2668,6 +2668,72 @@
           "supersedes": [
             "nr-c3-r2-standards"
           ]
+        },
+        {
+          "id": "nr-c3-r3-standards",
+          "performer": "claude:nro-c3-r3-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r3-standards",
+            "digest": "sha256:d06724b0ecbea15574a459465f77ff7496bd4b17d5a5ff263d9dbc1a8ebe0371",
+            "excerpt": "## Standards (NR-C3 round 3, fold delta only, fable/medium, evidence sha256:437b13ab1ed19dfc51cc6691c1b4d729f9f03874ad013539da13e1788fb5f75c, pair 4dd282e4..f62aa065)\n\n- S14 — pass, confidence 9 — Fold delta is exactly one appended row with three cells and a named retire condition (docs/known-issues.md:12); the condition's obligation exists in roadmap/FT168.md:10-11. No sentence of the row recurs in .bench/BENCH-reference.md, AGENTS.md, or capture/agent-performance/*.md (rg for \"witness\", \"table-driven\", \"demonstrated red\", \"floor check\", \"one minute\", \"serial probes\": no hit). The row references the one-source rule (AGENTS.md:35) rather than restating it.\n- S15 — unknown, confidence 8 — No FT318 row exists in docs/known-issues.md at frozen base 4dd282e4 and git log -S FT318 4dd282e4..f62aa065 -- docs/known-issues.md is empty. The charge's \"FT318 row removed\" premise is unsupported for this range; the build removed only the FT168 exit-code row in this chunk and reassigned the binary-seal row's owner to FT406. (Orchestrator note: ticket 2 removed the FT318 row in NR-C2, before this chunk's base.)\n- S16 — minor, confidence 6, outside the fold delta — capture/agent-performance/claude-models.md:52 still says \"docs/known-issues.md holds the workaround\" for the probe exit code, but this build removed that row. Stale pointer; a drift for the next scorecard edit.\n\nAdvice: none beyond S16.\n\nCount: 3 (1 pass, 1 unknown, 1 minor). Worst: S16. Evidence cursor fetched: sha256:437b13ab, current at tip f62aa065, base 4dd282e4. Examined clean: diff 1ae40409..ae5c5228 -- docs/known-issues.md, merged docs/known-issues.md, AGENTS.md:35-48, probe/witness sentences in .bench/BENCH-reference.md and both scorecards, record commits ae5c5228, c0101f2d, f62aa065.\n"
+          },
+          "axis": "Standards",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "ae5c5228722725c37e611fb51fe15da794522e70",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c3-r2-standards-reaffirmed"
+          ]
+        },
+        {
+          "id": "nr-c3-r3-spec",
+          "performer": "claude:nro-c3-r3-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r3-spec",
+            "digest": "sha256:4591b6ae40c549ac25f28756de89e585b3ad2af1eeecdebb24fcd3518d0c773e",
+            "excerpt": "## Spec (NR-C3 round 3, fold delta only, fable/medium, evidence sha256:437b13ab1ed19dfc51cc6691c1b4d729f9f03874ad013539da13e1788fb5f75c, pair 4dd282e4..f62aa065)\n\n- P7 — pass — 95 — \"NR-C2 makes the FT318 retire condition of docs/known-issues.md hold, so its ticket removes the chunk-digest row.\" (spec.md:393) — merged docs/known-issues.md:10-12 holds no chunk-digest row.\n- P8 — pass — 95 — \"NR-C3 makes the FT168 retire condition hold, so its ticket removes the probe-exit row.\" (spec.md:394) — merged file holds no probe-exit row; it keeps the FT406 stale-binary row (:10), the unused-import row (:11), and the new probe-cost row from main (:12).\n- P9 — pass — 90 — \"FT168's replacement-file, system, multi-mutation, and multi-package forms ... Existing probe selections remain the surviving caller.\" (spec.md:730) — the new row's retire condition \"FT168: one probe takes several mutations in one private build\" is the excluded multi-mutation form, so it names a later FT168 deliverable; no conflict with this spec's scope.\n- P10 — pass — 100 — merge ae5c5228 parents are 2790579d and 23c59775; git show --stat lists only docs/known-issues.md, 1 insertion.\n\nAdvice: spec.md:394 now reads ambiguously, since the merged file again carries an FT168-owned row (the probe-cost row) whose retire condition NR-C3 does not make hold. A one-clause clarification in a later spec edit would close that reading; no change needed for this delta.\n\nCount: 4 findings, worst: none failing (P9 at 90). Evidence cursors fetched: preflight evidence sha256:437b13ab (current=true, base 4dd282e4, tip f62aa065), git diff 1ae40409 ae5c5228 -- docs/known-issues.md, git show --stat ae5c5228. Confirmed: the fold brought in only the one known-issues row, the spec's Known issues section holds on the merged file, and the merge parents match the frozen expectation.\n"
+          },
+          "axis": "Spec",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "ae5c5228722725c37e611fb51fe15da794522e70",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c3-r2-spec"
+          ]
+        },
+        {
+          "id": "nr-c3-r3-coverage",
+          "performer": "claude:nro-c3-r3-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r3-coverage",
+            "digest": "sha256:616cc17c74238a31a81064bb6078adb2b0b433cddf51b473892869473c22a397",
+            "excerpt": "## Coverage (NR-C3 round 3, fold delta only, fable/medium, evidence sha256:437b13ab1ed19dfc51cc6691c1b4d729f9f03874ad013539da13e1788fb5f75c, pair 4dd282e4..f62aa065)\n\nNo findings.\n\nAdvice: The charge says \"four rows\"; the merged file at ae5c5228 has a header, a three-column table, and three data rows (docs/known-issues.md:8-12). No reader asserts a row count. No test or check names known-issues literally in internal/conformance, internal/anchors, internal/gate, or tests/canary (rg exit 1); the file is reached only by generic Markdown sweeps.\n\nReaders of the file, by code reading:\n- TestProseMechanicsHoldsOnTheLiveTree (internal/conformance/prose_mechanics_test.go:59, prose.Grade(root) at line 21). .bench/prose-exclusions at ae5c5228 does not exclude docs/, so it grades the new row's sentences. Covered by final-conformance-package.\n- checkRetiredReproducibilityRecord (internal/conformance/workflow_checks_test.go:117-133) walks docs/ for the token workflow-reproducibility.json; the new row does not contain it. Covered by final-conformance-package.\n- Lane class markdown (internal/gate/lane_select.go:146-148) selects prose and docs-currency-workflow for any .md change; final-guidance ran the latter.\n\nRecorded final verification at ae5c5228, all completed, outcome pass, source_digest 330666568b0090c2ff624769c8abe16f2f09a80d: final-guidance sha256:2d9be9af..., final-root-conformance sha256:8983b2d3..., final-conformance-package sha256:f7c3658f... (1677 tests, pass).\n\nCount: 0. Worst: none. Cursors fetched: preflight evidence current (true), git diff 1ae40409 ae5c5228 -- docs/known-issues.md, 16 final-* ids. Examined: every reader of the file and the three named verification rows; all covered.\n"
+          },
+          "axis": "Coverage",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "ae5c5228722725c37e611fb51fe15da794522e70",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c3-r2-coverage"
+          ]
         }
       ]
     }
@@ -3231,3 +3297,7 @@ NR-C3 round 2 (Coverage): 0 blocking findings. Three probes at sites distinct fr
 All three chunk checkpoints are green: NR-C1 at c311ec18, NR-C2 at 4dd282e4, and NR-C3 at 2790579d. The orchestrator folded `main` at 23c59775 into the source at ae5c5228, and the merge gate was green. The 16 final verification commands ran at ae5c5228, each with exit 0, and the orchestrator recorded them as integration verification. The 45 acceptance rows hold their citations; NR35 is review-owned and its comparison is in the NR-C2 round 1 Spec result. No finding is open.
 
 Three orchestrator decisions stay open to a reviewer veto after the landing. The completion ordering note and the copied-flag sources live in the root record help rows. An existing test pins one grammar line per form help. Every biting `bench probe` answer now spills, because the `probe_execution` row crosses the 10-line bound. The test accessor `Find` answers only a first reserved frame that is `spilled`, and no test pins that on a two-frame response.
+
+## NR-C3 round 3
+
+`main` moved to 23c59775 after the NR-C3 checkpoint, with one known-issues row on a path this build edits. The orchestrator folded it at ae5c5228, and the completion record refused the stale reviewed source. NR-C3 was refrozen at ae5c5228, the repair session recorded its verification there again, and three read-only axes reviewed the fold delta. All three passed with 0 findings. The Spec axis advises a one-clause clarification of the spec's FT168 known-issue sentence in a later edit. The Standards axis notes a stale scorecard pointer for the retired probe-exit workaround, which the final-check scorecard update owns.
