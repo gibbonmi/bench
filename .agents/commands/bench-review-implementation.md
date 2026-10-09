@@ -213,7 +213,8 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    `bench record verification` appends one planned result, and `bench record amendment` records a plan-digest change.
    Supply the performer, model, effort, and native result. The verb derives the role, the source, and each digest.
 
-   The completion entry and each result in the failed, skipped, or pending state stay hand-written, because `bench record` has no form for them.
+   `bench record completion` writes the completion entry after the final verification.
+   Each result in the failed, skipped, or pending state stays hand-written, because `bench record` has no form for it.
    A hand-written entry names its performer, role, model, effort, source digest, state, and native result.
    It embeds the minimal native excerpt with the SHA-256 digest of that excerpt.
 

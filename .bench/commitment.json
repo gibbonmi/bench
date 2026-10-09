@@ -459,6 +459,14 @@
       "identity": "sha256:bb67a783eee0f213c37d9d826327be68f693fb21fdf5a3922dfe81c1d7dece65",
       "source": "c324a6037939cb44b35cc29d2bda01b7d4cfaf70",
       "evidence": "9d563547bb965d6f9d991c9ca15578b3df7ffef1"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "NRO",
+      "binding": "native-record-operations",
+      "identity": "sha256:845e519b1cb708f2952e064390fac20c4a06e1723b9ca938cfc6be4fd4276165",
+      "source": "90799f4a0853edb750aa61d4713a74a9b485bfde",
+      "evidence": "c9618930b2cd5664cb920135d0ed0cd276e0ca7a"
     }
   ]
 }

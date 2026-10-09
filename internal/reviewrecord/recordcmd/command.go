@@ -4,7 +4,6 @@
 package recordcmd
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -52,27 +52,36 @@ type form struct {
 	run               func(f form, root, spec string, parsed usage.Result) (string, int)
 }
 
-// probeFlags are the three flags of a planned probe.
-var probeFlags = []string{"--probe-outcome", "--probe-exit-code", "--probe-restore"}
+// forms is the form registry. init assigns it, because a form's refusal renders the usage
+// line of the form that repairs it, and a registry initializer that reaches its own reader
+// is an initialization cycle.
+var forms []form
 
-var forms = []form{
-	chunkForm,
-	{name: "verification", description: "append one planned verification result with its computed digests",
-		flags: []flag{{"--chunk", "<id>", true, once}, {"--source", "<commit>", false, once}, {"--final", "", false, once},
-			{"--requirement", "<id>", true, once}, {"--id", "<id>", true, once}, {"--performer", "<session>", true, once},
-			{"--model", "<model>", true, once}, {"--effort", "<effort>", true, once}, {"--exit-code", "<n>", false, once},
-			{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {probeFlags[0], "<verdict>", true, once},
-			{probeFlags[1], "<n>", false, once}, {probeFlags[2], "pass|fail", false, once}},
-		layout: []string{"(", "--chunk", "[", "--source", "]", "|", "--final", "--source", ")", "--requirement", "--id", "--performer",
-			"--model", "--effort", "--exit-code", "--ref", "--excerpt", "[", probeFlags[0], probeFlags[1], probeFlags[2], "]"},
-		valid: verificationValid, run: verification},
-	{name: "review", description: "append one independent review result to a recorded chunk",
-		flags: []flag{{"--chunk", "<id>", true, once}, {"--axis", strings.Join(reviewrecord.Axes(), "|"), false, once}, {"--id", "<id>", true, once},
-			{"--performer", "<session>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
-			{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {"--finding", "<id>", true, repeated}},
-		valid: reviewValid, run: review},
-	completionForm,
-	amendmentForm,
+func init() {
+	forms = []form{
+		assignmentForm,
+		chunkForm,
+		verificationForm,
+		reviewForm,
+		completionForm,
+		amendmentForm,
+	}
+}
+
+var reviewForm = form{name: reviewrecord.FormReview, description: "append one independent review result to a recorded chunk",
+	flags: []flag{{"--chunk", "<id>", true, once}, {"--axis", strings.Join(reviewrecord.Axes(), "|"), false, once}, {"--id", "<id>", true, once},
+		{"--performer", "<session>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
+		{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {"--finding", "<id>", true, repeated}},
+	valid: reviewValid, run: review}
+
+// named returns the registered form called name, or nil when no form has that name.
+func named(name string) *form {
+	for i := range forms {
+		if forms[i].name == name {
+			return &forms[i]
+		}
+	}
+	return nil
 }
 
 // terms is the layout of f, or its flags in order when the layout is empty.
@@ -86,12 +95,13 @@ func (f form) terms() []string {
 	return layout
 }
 
-// suffix is the form's grammar after `bench record`.
-func (f form) suffix() string {
-	terms := []string{"", f.name, "<slug>"}
+// suffix is the form's grammar after `bench record`. The slug operand or a flag that known
+// holds a value for shows that value in place of its placeholder.
+func (f form) suffix(known map[string]string) string {
+	terms := []string{"", f.name, refusalroute.Arg(refusalroute.FactSlug, known[refusalroute.FactSlug])}
 	for _, term := range f.terms() {
 		if strings.HasPrefix(term, "--") {
-			term = f.flag(term).usage()
+			term = f.flag(term).usage(known[term])
 		}
 		terms = append(terms, term)
 	}
@@ -165,8 +175,14 @@ func (f form) together(values map[string]string) bool {
 	return slices.Contains(sets, present)
 }
 
-func (fl flag) usage() string {
-	term := strings.TrimSpace(fl.name + " " + fl.placeholder)
+// usage is the flag's usage term. A nonempty value replaces the placeholder of a value
+// flag, rendered by the one composed-command value rule.
+func (fl flag) usage(value string) string {
+	placeholder := fl.placeholder
+	if value != "" && placeholder != "" {
+		placeholder = refusalroute.Arg(strings.Trim(placeholder, "<>"), value)
+	}
+	term := strings.TrimSpace(fl.name + " " + placeholder)
 	if fl.occurs == repeated {
 		term = "[" + term + "]..."
 	}
@@ -174,7 +190,7 @@ func (fl flag) usage() string {
 }
 
 func (f form) grammar() usage.Grammar {
-	g := usage.Grammar{Cmd: command + " " + f.name, Help: "usage: " + command + f.suffix(), MinArgs: 1, MaxArgs: 1}
+	g := usage.Grammar{Cmd: command + " " + f.name, Help: "usage: " + command + f.suffix(nil), MinArgs: 1, MaxArgs: 1}
 	sets, _ := f.admits(f.terms(), 0)
 	always := ^uint64(0)
 	for _, set := range sets {
@@ -199,7 +215,7 @@ type HelpRow struct {
 func HelpRows() []HelpRow {
 	rows := make([]HelpRow, len(forms))
 	for i, f := range forms {
-		rows[i] = HelpRow{Suffix: f.suffix(), Description: f.description}
+		rows[i] = HelpRow{Suffix: f.suffix(nil), Description: f.description}
 	}
 	return rows
 }
@@ -223,12 +239,7 @@ func Command(root string, args []string) (string, int) {
 	if len(args) == 0 {
 		return usageText(), 2
 	}
-	var selected *form
-	for i := range forms {
-		if forms[i].name == args[0] {
-			selected = &forms[i]
-		}
-	}
+	selected := named(args[0])
 	if selected == nil {
 		return toon.Usage(command, args[0]) + "\n", 2
 	}
@@ -295,67 +306,16 @@ func chosen(f form, values map[string]string, name string) bool {
 	return slices.Contains(strings.Split(f.flag(name).placeholder, "|"), values[name])
 }
 
-// verificationValid closes the value sets of the verification form. Command calls it
-// only for a set of flags that the layout admits.
-func verificationValid(f form, parsed usage.Result) bool {
-	_, exitCode := integer(parsed.Flags, "--exit-code")
-	_, probe := parsed.Flags[probeFlags[0]]
-	_, probeExitCode := integer(parsed.Flags, probeFlags[1])
-	return exitCode && (!probe || probeExitCode && chosen(f, parsed.Flags, probeFlags[2]))
-}
-
-// native reads the --excerpt file as exact bytes and pairs them with --ref. The read
-// never follows a link or opens a special file, and every state other than parsed
+// native reads the file that flag names as exact bytes and pairs them with --ref. The
+// read never follows a link or opens a special file, and every state other than parsed
 // refuses with the record error line for the operand path.
-func native(values map[string]string) (reviewrecord.NativeRef, string, int) {
-	path := values["--excerpt"]
+func native(values map[string]string, flag string) (reviewrecord.NativeRef, string, int) {
+	path := values[flag]
 	c := bounds.ClassifyNoFollow(path)
 	if c.State != bounds.StateParsed {
 		return reviewrecord.NativeRef{}, toon.RecordError(path, c.State, c.Reason) + "\n", 1
 	}
 	return reviewrecord.NativeRef{Ref: values["--ref"], Excerpt: string(c.Data), Digest: reviewrecord.Digest(c.Data)}, "", 0
-}
-
-// cause is the refusal cause of err. A missing chunk entry names the chunk form, and a
-// probe mismatch names the probe flags.
-func cause(err error) string {
-	switch {
-	case errors.Is(err, reviewrecord.ErrNoChunkEntry):
-		return err.Error() + "; write it with " + command + " chunk"
-	case errors.Is(err, reviewrecord.ErrProbe):
-		return err.Error() + "; the probe flags are " + strings.Join(probeFlags, ", ")
-	}
-	return err.Error()
-}
-
-func verification(f form, root, spec string, parsed usage.Result) (string, int) {
-	values := parsed.Flags
-	ref, out, code := native(values)
-	if out != "" {
-		return out, code
-	}
-	call := reviewrecord.VerificationCall{Chunk: values["--chunk"], Requirement: values["--requirement"],
-		Evidence: reviewrecord.Evidence{ID: values["--id"], Performer: values["--performer"], Model: values["--model"], Effort: values["--effort"], NativeRef: ref}}
-	if _, ok := values["--source"]; ok {
-		if call.Source, out, code = commit(f, root, values, "--source"); out != "" {
-			return out, code
-		}
-	}
-	call.ExitCode, _ = integer(values, "--exit-code")
-	if _, ok := values[probeFlags[0]]; ok {
-		exitCode, _ := integer(values, probeFlags[1])
-		call.Probe = &reviewrecord.Probe{Outcome: values[probeFlags[0]], ExitCode: exitCode, Restore: values[probeFlags[2]]}
-	}
-	entry, err := reviewrecord.RecordVerification(root, spec, call)
-	if err != nil {
-		return f.refuse(cause(err))
-	}
-	list := "chunk"
-	if call.Chunk == "" {
-		list = "completion"
-	}
-	return row("verification", []string{"list", "chunk", "id", "requirement", "role", "outcome", "source_digest", "excerpt_digest"},
-		[]string{list, call.Chunk, entry.ID, entry.Requirement, entry.Role, entry.Outcome, entry.SourceDigest, entry.NativeRef.Digest})
 }
 
 // reviewValid closes the --axis value set.
@@ -365,7 +325,7 @@ func reviewValid(f form, parsed usage.Result) bool {
 
 func review(f form, root, spec string, parsed usage.Result) (string, int) {
 	values := parsed.Flags
-	ref, out, code := native(values)
+	ref, out, code := native(values, "--excerpt")
 	if out != "" {
 		return out, code
 	}
@@ -373,7 +333,7 @@ func review(f form, root, spec string, parsed usage.Result) (string, int) {
 		Evidence: reviewrecord.Evidence{ID: values["--id"], Performer: values["--performer"], Model: values["--model"], Effort: values["--effort"], NativeRef: ref}}
 	entry, err := reviewrecord.RecordReview(root, spec, call)
 	if err != nil {
-		return f.refuse(cause(err))
+		return f.refuse(cause(spec, err))
 	}
 	return row("review", []string{"chunk", "id", "axis", "outcome", "supersedes", "source_digest", "excerpt_digest"},
 		[]string{call.Chunk, entry.ID, entry.Axis, entry.Outcome, strings.Join(entry.Supersedes, ","), entry.SourceDigest, entry.NativeRef.Digest})

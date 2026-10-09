@@ -20,7 +20,7 @@ func RecordCompletion(root, spec, source string) (Completion, error) {
 		return Completion{}, err
 	}
 	var entry Completion
-	err = write(root, spec, nil, func(record *Record) error {
+	err = write(root, spec, absent(""), func(record *Record) error {
 		reconciliation := map[string]string{}
 		for _, row := range plan.Rows() {
 			reconciliation[row] = "covered"

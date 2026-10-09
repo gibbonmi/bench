@@ -4,13 +4,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/runbinary"
-	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -131,42 +130,11 @@ func publishRunBinary(t *testing.T, root string) {
 	t.Setenv(runbinary.Env, executable)
 }
 
-// stubStart is what the stub `go` does on one `go test` start: shell it runs first, the
-// event stream it prints, and the exit it takes. A probe starts two of them, so a row
-// spells the baseline's start apart from the mutated run's.
-type stubStart struct {
-	hook   string
-	events string
-	exit   int
-}
-
-// installStubStarts puts a canned `go` ahead of the real one and records every start in the
-// fixture's marker. Non-test calls reach the real toolchain for settings and module
-// discovery. The marker is dropped
-// first, so each install restarts the count: an odd start is a baseline and the even start
-// after it is the mutated run. Both hooks read the start's ordinal in `$n`.
-func installStubStarts(t *testing.T, f *fixture, baseline, mutated stubStart) {
+// installStubStarts installs the shared canned `go` with the fixture's marker, so each row
+// reads the starts it caused from that one file.
+func installStubStarts(t *testing.T, f *fixture, baseline, mutated probetest.Start) {
 	t.Helper()
-	real, err := exec.LookPath("go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Remove(f.marker); err != nil && !os.IsNotExist(err) {
-		t.Fatal(err)
-	}
-	marker := sanitize.ShellQuote(f.marker)
-	dir := scratchDir(t)
-	script := "#!/usr/bin/env bash\n" +
-		"printf '%s\\n' \"$1\" >> " + marker + "\n" +
-		"if [ \"$1\" != test ]; then exec " + sanitize.ShellQuote(real) + " \"$@\"; fi\n" +
-		"n=$(grep -c '^test$' " + marker + ")\n" +
-		"if [ $((n % 2)) = 1 ]; then\n" + stubAnswer(baseline) + "fi\n" + stubAnswer(mutated)
-	writeFixtureFile(t, filepath.Join(dir, "go"), script, 0o755)
-	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
-}
-
-func stubAnswer(start stubStart) string {
-	return start.hook + "cat <<'PROBEEOF'\n" + start.events + "\nPROBEEOF\nexit " + strconv.Itoa(start.exit) + "\n"
+	probetest.InstallStarts(t, f.marker, baseline, mutated)
 }
 
 // installStubGo is the ordinary shape: the baseline passes, so the probe reaches the
@@ -174,7 +142,7 @@ func stubAnswer(start stubStart) string {
 // run's stub runs while that run is in flight.
 func installStubGo(t *testing.T, f *fixture, events string, exit int, hook string) {
 	t.Helper()
-	installStubStarts(t, f, stubStart{events: cannedPass}, stubStart{hook: hook, events: events, exit: exit})
+	installStubStarts(t, f, probetest.Start{Events: cannedPass}, probetest.Start{Hook: hook, Events: events, Exit: exit})
 }
 
 // cannedFailure is one failing test in the fixture package. diagnostic is the first
@@ -212,6 +180,17 @@ func probeRow(t *testing.T, verdict, subject, mutation, cause string, failed int
 func selectionRow(t *testing.T, form, target, run, baseline string, ran int) string {
 	t.Helper()
 	out, err := toon.TableTyped("selection", selectionFields, [][]any{{form, target, run, baseline, ran}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+// executionRow derives one expected execution block through the same encoder. focused is
+// nil for a probe whose mutated run never started.
+func executionRow(t *testing.T, command int, focused any, trailing int) string {
+	t.Helper()
+	out, err := toon.TableTyped("probe_execution", executionFields, [][]any{{resultSchema, command, focused, trailing}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -336,13 +315,13 @@ func TestProbeCarriesTheFocusedRunTables(t *testing.T) {
 	}
 	// The reference report is a start of its own, so a fresh install answers the mutated
 	// run's stream on either side of the baseline branch.
-	installStubStarts(t, f, stubStart{events: events, exit: 1}, stubStart{events: events, exit: 1})
+	installStubStarts(t, f, probetest.Start{Events: events, Exit: 1}, probetest.Start{Events: events, Exit: 1})
 	report, reportCode := testreport.Command(f.root, []string{"--package", "./", "--run", "^TestClampNegative$"})
 	if reportCode != 1 {
 		t.Fatalf("focused run exit = %d, want 1\n%s", reportCode, report)
 	}
 	row := probeRow(t, "bit", "clamp.go", "swap", "failed", 1, "yes")
-	if want := row + selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 1) + report; out != want {
+	if want := row + selectionRow(t, "package", "./", "^TestClampNegative$", "passed", 1) + executionRow(t, 0, 1, len(report)) + report; out != want {
 		t.Fatalf("stdout = %q, want %q", out, want)
 	}
 }

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/probe/probetest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -56,8 +57,8 @@ func TestProbeRunsTheBaselineFirst(t *testing.T) {
 	copies := scratchDir(t)
 	record := "cp " + sanitize.ShellQuote(f.subject) + " " + sanitize.ShellQuote(copies) + "/$n\n"
 	installStubStarts(t, f,
-		stubStart{hook: record, events: cannedPass},
-		stubStart{hook: record, events: cannedFailure("caught"), exit: 1})
+		probetest.Start{Hook: record, Events: cannedPass},
+		probetest.Start{Hook: record, Events: cannedFailure("caught"), Exit: 1})
 	if out, code := runProbe(t, probeArgs()...); code != 0 {
 		t.Fatalf("exit = %d, want 0\n%s", code, out)
 	}
@@ -91,7 +92,7 @@ func requireBaselineRefusal(t *testing.T, f *fixture, cause string, failed int, 
 // were red before the probe ran, and it writes nothing.
 func TestProbeRefusesARedBaseline(t *testing.T) {
 	f := newFixture(t)
-	installStubStarts(t, f, stubStart{events: cannedFailure("already red"), exit: 1}, stubStart{events: cannedPass})
+	installStubStarts(t, f, probetest.Start{Events: cannedFailure("already red"), Exit: 1}, probetest.Start{Events: cannedPass})
 	out := requireBaselineRefusal(t, f, "baseline-failed", 1, probeArgs()...)
 	if want := selectionRow(t, "package", "./", "^TestClampNegative$", "failed", 0); !strings.Contains(out, want) {
 		t.Fatalf("stdout = %q, want the selection row %q", out, want)
@@ -115,7 +116,7 @@ func TestProbeReportsABaselineWithoutAVerdict(t *testing.T) {
 	} {
 		t.Run(tc.cause, func(t *testing.T) {
 			f := newFixture(t)
-			installStubStarts(t, f, stubStart{events: tc.events, exit: tc.exit}, stubStart{events: cannedPass})
+			installStubStarts(t, f, probetest.Start{Events: tc.events, Exit: tc.exit}, probetest.Start{Events: cannedPass})
 			requireBaselineRefusal(t, f, tc.cause, 0, tc.args...)
 		})
 	}
@@ -125,7 +126,7 @@ func TestProbeReportsABaselineWithoutAVerdict(t *testing.T) {
 // cause names that refusal instead of collapsing onto a red suite.
 func TestProbeReportsABaselineRefusal(t *testing.T) {
 	f := newFixture(t)
-	installStubStarts(t, f, stubStart{exit: 1}, stubStart{events: cannedPass})
+	installStubStarts(t, f, probetest.Start{Exit: 1}, probetest.Start{Events: cannedPass})
 	requireBaselineRefusal(t, f, "baseline-refused", 0, probeArgs()...)
 }
 
@@ -134,12 +135,12 @@ func TestProbeReportsABaselineRefusal(t *testing.T) {
 func TestProbeForwardsFullToTheFocusedRun(t *testing.T) {
 	f := newFixture(t)
 	long := strings.Repeat("d", bounds.PreviewRuneLimit+40)
-	red := stubStart{events: cannedFailure(long), exit: 1}
+	red := probetest.Start{Events: cannedFailure(long), Exit: 1}
 	for _, tc := range []struct {
 		name              string
-		baseline, mutated stubStart
+		baseline, mutated probetest.Start
 	}{
-		{"mutated run", stubStart{events: cannedPass}, red},
+		{"mutated run", probetest.Start{Events: cannedPass}, red},
 		{"baseline", red, red},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -163,15 +164,15 @@ func TestProbeRestoresOnInterrupt(t *testing.T) {
 		runInterruptHelper(t, root)
 		return
 	}
-	sleeping := stubStart{hook: "sleep 60\n", events: cannedPass}
+	sleeping := probetest.Start{Hook: "sleep 60\n", Events: cannedPass}
 	for _, tc := range []struct {
 		name            string
 		start           int
-		baseline        stubStart
+		baseline        probetest.Start
 		cause, restored string
 	}{
 		{"baseline", 1, sleeping, "baseline-interrupted", "untouched"},
-		{"mutated run", 2, stubStart{events: cannedPass}, "interrupted", "yes"},
+		{"mutated run", 2, probetest.Start{Events: cannedPass}, "interrupted", "yes"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newFixture(t)

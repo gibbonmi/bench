@@ -1,6 +1,7 @@
 package treetarget
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -145,5 +146,51 @@ func TestIdentifyDirtyStates(t *testing.T) {
 				t.Fatalf("dirty = %#v, want %#v", dirty, row.dirty)
 			}
 		})
+	}
+}
+
+// ReadLead accepts no row or one canonical row and answers a view of the bytes after it.
+// The rows are authored apart from Row, so a reader that strips a fixed number of lines or
+// reads a second row as a fresh lead reds a case here.
+func TestReadLeadAcceptsZeroOrOneCanonicalRow(t *testing.T) {
+	body := []byte("probe[1]{verdict}:\n  bit\n")
+	for _, row := range []struct {
+		name, lead string
+		want       Identity
+	}{
+		{"clean primary", "tree[1]{target,head,dirty}:\n  primary,none,false\n", Identity{Target: "primary", Head: "none", Dirty: false}},
+		{"unknown dirty", "tree[1]{target,head,dirty}:\n  alpha," + strings.Repeat("c", 40) + ",unknown\n", Identity{Target: "alpha", Head: strings.Repeat("c", 40), Dirty: "unknown"}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			data := append([]byte(row.lead), body...)
+			identity, rest, found, err := ReadLead(data)
+			if err != nil || !found || identity != row.want || !bytes.Equal(rest, body) || &rest[0] != &data[len(row.lead)] {
+				t.Fatalf("ReadLead = (%+v, %q, %v, %v), want (%+v, a view of the body, true, nil)", identity, rest, found, err, row.want)
+			}
+		})
+	}
+	identity, rest, found, err := ReadLead(body)
+	if err != nil || found || identity != (Identity{}) || !bytes.Equal(rest, body) {
+		t.Fatalf("ReadLead without a row = (%+v, %q, %v, %v), want the data unchanged", identity, rest, found, err)
+	}
+}
+
+// An incomplete, malformed, noncanonical, or repeated row refuses.
+func TestReadLeadRefusesNoncanonicalRows(t *testing.T) {
+	lead := "tree[1]{target,head,dirty}:\n  primary,none,false\n"
+	for name, data := range map[string]string{
+		"header only":       "tree[1]{target,head,dirty}:\n",
+		"unterminated row":  "tree[1]{target,head,dirty}:\n  primary,none,false",
+		"missing field":     "tree[1]{target,head}:\n  primary,none\n",
+		"extra field":       "tree[1]{target,head,dirty,x}:\n  primary,none,false,1\n",
+		"two rows":          "tree[2]{target,head,dirty}:\n  primary,none,false\n  primary,none,false\n",
+		"string dirty":      "tree[1]{target,head,dirty}:\n  primary,none,\"false\"\n",
+		"numeric head":      "tree[1]{target,head,dirty}:\n  primary,12,false\n",
+		"noncanonical cell": "tree[1]{target,head,dirty}:\n  \"primary\",none,false\n",
+		"repeated row":      lead + lead + "probe[1]{verdict}:\n  bit\n",
+	} {
+		if identity, rest, found, err := ReadLead([]byte(data)); err == nil {
+			t.Errorf("%s: ReadLead = (%+v, %q, %v, nil), want a refusal", name, identity, rest, found)
+		}
 	}
 }

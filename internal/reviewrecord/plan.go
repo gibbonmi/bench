@@ -44,11 +44,33 @@ func ReadPlan(root, tree, spec string) (Plan, error) {
 	if err != nil {
 		return plan, err
 	}
-	payload, err := fenced(data, "bench-completion-plan")
+	return checkPlan(spec, data, func(name string) ([]byte, error) { return benchgit.ReadTreeFile(root, tree, name) })
+}
+
+// planFence names the completion plan's fence in a spec.
+const planFence = "bench-completion-plan"
+
+// parsePlan decodes the completion plan of one spec document without grading it.
+func parsePlan(data []byte) (Plan, error) {
+	var plan Plan
+	payload, err := fenced(data, planFence)
 	if err != nil {
 		return plan, fmt.Errorf("missing or invalid completion plan: %w", err)
 	}
-	if err := decode(payload, &plan); err != nil {
+	err = decode(payload, &plan)
+	return plan, err
+}
+
+// ticketPath is the repository path of a planned ticket basename beside spec.
+func ticketPath(spec, name string) string {
+	return path.Join(path.Dir(spec), "tickets", name)
+}
+
+// checkPlan is the complete plan grade of spec document data. read supplies each
+// planned ticket by its repository path, and the digest covers data and every ticket.
+func checkPlan(spec string, data []byte, read func(string) ([]byte, error)) (Plan, error) {
+	plan, err := parsePlan(data)
+	if err != nil {
 		return plan, err
 	}
 	if (plan.Version != 1 && plan.Version != 2) || len(plan.Chunks) == 0 {
@@ -87,7 +109,7 @@ func ReadPlan(root, tree, spec string) (Plan, error) {
 	}
 	parsed := []tickets.Ticket{}
 	for _, name := range names {
-		data, err := benchgit.ReadTreeFile(root, tree, path.Join(path.Dir(spec), "tickets", name))
+		data, err := read(ticketPath(spec, name))
 		if err != nil {
 			return plan, err
 		}

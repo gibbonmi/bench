@@ -1,6 +1,6 @@
 # Native record operations
 
-Status: staged
+Status: implemented
 
 Related roadmap: FT318 and the result-projection face of FT168.
 
@@ -87,23 +87,21 @@ The schema accepts explicit nonempty model and effort values, including `unknown
 
 `write` and `replace` in `internal/reviewrecord/write.go` own validation before atomic record replacement.
 Reuse `replace` for the assignment file effect.
-Use the same named-fence span owner that `fenced` and `Render` use.
+Use `locate`, the named-fence span owner that `fenced` and `Render` use.
 Keep JSON strictness, input size, safe path, source digest, and evidence rules in their existing owners.
 
 The source sweep covers qualified and unqualified calls to `ReadPlan`, `RecordChunk`, `RecordVerification`, `CheckTrees`, and the repair renderer.
 Production consumers are `reviewrecord.atSource`, `reviewrecord.checkSource`, `recordcmd`, `preflight.withCompletionPlan`, and `gate.applyCheckpoint`.
 Fixture consumers include both `recordtest` loaders and the existing delegated worktree journey.
-Public adapters retain their signatures unless the accepted Markdown delivery changes their internal composition.
+Public adapters retain their signatures.
 No `.mjs` or workflow consumer of these Go entry points was found.
 
-### Canonical Markdown prerequisite
+### Fence span owner
 
-NR-C1 uses the accepted delivery of `specs/markdown-block-reader/spec.md`, especially MB-C4's review-record reader and replacement spans.
-That delivery keeps `ReadPlan`, `fenced`, and record rendering on one block owner.
-The approved reader returns classified physical lines, byte offsets, and at most one fault.
-Native assignment consumes that contract through reviewrecord and adds no fence detector.
-This is an actual owner prerequisite, independent of the advisory C10 order.
-The later chunks inherit it through NR-C1's reviewed interface.
+NR-C1 composes `locate` in `internal/reviewrecord/parse.go`, which `ReadPlan`, `fenced`, and `Render` already share.
+Native assignment replaces only the plan payload span that `locate` reports and adds no fence detector.
+The later chunks inherit this through NR-C1's reviewed interface.
+The markdown-block-reader delivery is not a prerequisite; that later migration carries these callers with the other `locate` callers.
 
 ### Assignment contract
 
@@ -158,8 +156,9 @@ No-progress also adds reassessment.
 ### Ordering and repair ownership
 
 `RecordChunk` at `internal/reviewrecord/write.go:125` currently omits the record-versus-current plan digest guard.
-`checkSource` at `internal/reviewrecord/coverage.go:20` already detects the stale digest later.
+`checkSource` at `internal/reviewrecord/coverage.go:19` already detects the stale digest later.
 Share that condition so the chunk writer refuses before appending or updating evidence.
+The chunk form keeps its existing planned-cell refusal first, and the writer's digest guard follows it.
 Retain the missing record's initial chunk creation behavior.
 A valid amendment remains the only writer that advances an existing record's plan digest.
 
@@ -169,11 +168,12 @@ Do not parse human error strings to classify missing obligations.
 
 Reviewrecord owns typed repair form names and known context values.
 The existing recordcmd registry uses those names for its form declarations and derives their complete help grammar.
-Gate emits the corresponding `bench record <form> --help` route from the typed name.
-It does not copy flags or import recordcmd.
+The shared refusal-route registry declares the gate face that routes to `bench record <form> --help`.
+The gate checkpoint's `funnelFace` picks that face from the typed repair information, and the face declaration owns the route text.
+The gate composes no route literal, copies no flags, and does not import recordcmd.
 
 The import graph remains acyclic: recordcmd uses probe, probe uses gate, and gate uses reviewrecord.
-`gate.routedRefusal` retains `bench preflight review <slug>` for structural or unclassified refusals.
+The `checkpoint-completion-evidence` face retains `bench preflight review <slug>` for structural or unclassified refusals.
 The gate does not become an evidence writer.
 
 The repair families are assignment, amendment, chunk, verification, review, and completion.
@@ -284,7 +284,7 @@ It does not grade directory crowding.
 Existing full-tree crowding remains inherited structural debt, not a new required lane refusal.
 This spec adds no count-equal grant and edits no structure budget.
 
-`recordcmd/command.go` has 399 lines and one line of default headroom.
+`recordcmd/command.go` has 380 lines and 20 lines of default headroom.
 Move its existing verification validation and handler together into `recordcmd/verification.go` before adding import flags.
 Move `cause` into the coherent repair renderer in `recordcmd/refusal.go`.
 Keep the form registry and its help derivation in command.go.
@@ -293,7 +293,7 @@ Each new sibling targets at most 350 lines.
 
 `write.go` has 318 lines and 82 lines of headroom.
 Keep the new assignment operation in its own sibling and add only the shared guard there.
-`plan.go` has 163 lines, `coverage.go` 259, and `checkpoint.go` 159.
+`plan.go` has 188 lines, `coverage.go` 262, and `internal/gate/checkpoint.go` 232.
 The shared validator and typed refusal additions fit without a grant.
 `probe.go` has 254 lines, baseline.go 45, and outcome_test.go 276.
 Put result parsing and its new witnesses in result.go and result_test.go.
@@ -301,18 +301,18 @@ Put result parsing and its new witnesses in result.go and result_test.go.
 `verification_test.go` has 391 lines and nine lines of headroom.
 Put new import tests in verification_import_test.go and reuse its existing form and excerpt helpers.
 Retain the existing file's behavior tests.
-`recordtest/fixture.go` has 366 lines and 34 lines of headroom.
+`recordtest/fixture.go` has 367 lines and 33 lines of headroom.
 Use its existing `Option`, `NewLinked`, `WritePlan`, and committed ticket fixture without a copied builder.
 
 The five command registry names below are co-owned because probe is a bound command package.
 `command_registry_test.go` has 794 lines and no new default growth allowance.
 New entry cases go into record_operations_test.go using existing command fixtures.
 The co-owned AXI registry file also starts above default and needs no membership change for these mutating forms.
-`help_inventory_test.go` has 323 lines and 77 lines of headroom.
+`help_inventory_test.go` has 337 lines and 63 lines of headroom.
 The record form registry already derives root help, so no new main.go dispatch declaration is needed.
 
 Guidance updates preserve its current anchor placements and replace only descriptions that incorrectly require hand-built dispatch JSON.
-The canonical all-string-literal scan includes 11 current Go holders that pin the three guidance subjects.
+The canonical all-string-literal scan includes 12 current Go holders that pin the three guidance subjects.
 Its census includes registry_calibration_test.go, registry_chunk_chain_test.go, and registry_data_test.go.
 Each independent expectation remains effective; none is removed or derived from changed production values.
 
@@ -344,15 +344,14 @@ The exact canary directories below include recursive BASE includes, dot-restored
 ## Implementation chunks
 
 Each accepted green outcome now has one complete vertical ticket and one independent chunk checkpoint.
-NR-C1's accepted owner prerequisite must land before its author starts.
 Shared writer, form-registry, and help writes order NR-C2 after NR-C1 and NR-C3 after NR-C2.
 Each chunk retains all sufficient existing tests and includes its real command entry.
 
-The 11 anchor holders join every affected guidance chunk; their existing independent assertions remain intact.
+The 12 anchor holders join every affected guidance chunk; their existing independent assertions remain intact.
 NR-C2 includes reviewrecord/record.go for missing-axis typed repair information.
 NR-C3 includes probe/refusal_test.go, both framing owners and their listed tests, the shared spill accessor, and the real CLI journey.
 NR-C3 also owns the shared canned-runner extraction and every listed existing probe caller, with both caller families migrated before its green checkpoint.
-No chunk depends on the unlanded exact-reader or preflight policy specs.
+No chunk depends on the unlanded exact-reader, block-reader, or preflight policy specs.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
@@ -368,17 +367,15 @@ Ticket 2 blocks on ticket 1, and ticket 3 blocks on both predecessors.
 The shared writer, form registry, guidance, holders, fixtures, and real CLI test require this serial order.
 Each predecessor commits green and closes independent Standards, Spec, and Coverage review before its successor starts.
 
-The Writes union has 145 exact paths, equal to the unchanged 146-entry fence minus its review pickup.
+The Writes union has 157 exact paths, equal to the 158-entry fence minus its review pickup.
 Each ticket includes its first-use command, anchor, and fixture closure, not only the spec-wide union.
-The 78 canary units and 11 anchor holders remain available to every affected guidance checkpoint.
+The 80 canary units and 12 anchor holders remain available to every affected guidance checkpoint.
 Each test expectation and headroom route closes in its introducing ticket; final reconciliation cannot borrow a later repair.
 Co-owned files may remain unchanged when their existing assertions and closure suffice.
 
-This version-1 completion plan is a supported planning verification inventory, not a dispatch plan.
-Before any implementation charge, the coordinator must bind actual run and session identities in a version-2 plan with author-limit 1.
+The build-entry amendment binds the run and session identities in a version-2 plan with author-limit 1.
 Each ticket then receives a fresh author on the approved gpt-5.6-sol / high line and mapped verification ownership.
 No staged status, plan-only pass, or empty execution history grants implementation authority.
-The complete accepted Markdown-block-reader outcome, including MB-C4, must land before those interface and headroom bindings close.
 
 ### Completion plan
 
@@ -388,215 +385,14 @@ Require a compiling behavioral red, byte-identical restoration, and the same foc
 The final requirements run on the complete reconciled source after all three chunk checkpoints close.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "NR-C1",
-      "tickets": [
-        "1-record-native-assignments.md"
-      ],
-      "verification": [
-        {
-          "id": "record-domain",
-          "command": "bench test --package ./internal/reviewrecord"
-        },
-        {
-          "id": "record-forms",
-          "command": "bench test --package ./internal/reviewrecord/recordcmd"
-        },
-        {
-          "id": "command-package",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "native-assignment-journey",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'"
-        },
-        {
-          "id": "guidance",
-          "command": "bench test --check docs-currency-workflow"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check conformance-meta"
-        },
-        {
-          "id": "whole-plan-omission",
-          "command": "bench test --package ./internal/reviewrecord/recordcmd --run '^TestAssignmentWholePlanValidation$'",
-          "probe": "Omit only the complete candidate-validation call in RecordAssignment, retaining the validator used by ReadPlan; an unrelated invalid ticket must red TestAssignmentWholePlanValidation."
-        }
-      ]
-    },
-    {
-      "id": "NR-C2",
-      "tickets": [
-        "2-enforce-native-record-order.md"
-      ],
-      "verification": [
-        {
-          "id": "record-domain",
-          "command": "bench test --package ./internal/reviewrecord"
-        },
-        {
-          "id": "record-forms",
-          "command": "bench test --package ./internal/reviewrecord/recordcmd"
-        },
-        {
-          "id": "checkpoint-repair",
-          "command": "bench test --package ./internal/gate --run 'Test.*(Checkpoint|Review)'"
-        },
-        {
-          "id": "command-package",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "native-ordering-journey",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'"
-        },
-        {
-          "id": "guidance",
-          "command": "bench test --check docs-currency-workflow"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check conformance-meta"
-        },
-        {
-          "id": "ordinary-census",
-          "command": "bench test --check ordinary-build-census"
-        },
-        {
-          "id": "chunk-guard-omission",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
-          "probe": "Omit only the shared current-plan digest guard at RecordChunk, retaining the guard owner and other callers; the real record entry must write stale evidence and red TestNativeRecordCLIJourney."
-        }
-      ]
-    },
-    {
-      "id": "NR-C3",
-      "tickets": [
-        "3-import-complete-probe-results.md"
-      ],
-      "verification": [
-        {
-          "id": "probe-family",
-          "command": "bench test --package ./internal/probe/..."
-        },
-        {
-          "id": "record-forms",
-          "command": "bench test --package ./internal/reviewrecord/recordcmd"
-        },
-        {
-          "id": "response-framing",
-          "command": "bench test --package ./internal/responsebound/..."
-        },
-        {
-          "id": "tree-framing",
-          "command": "bench test --package ./internal/treetarget/..."
-        },
-        {
-          "id": "command-package",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "native-import-journey",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'"
-        },
-        {
-          "id": "guidance",
-          "command": "bench test --check docs-currency-workflow"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check conformance-meta"
-        },
-        {
-          "id": "focused-exit-substitution",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
-          "probe": "Substitute the successful probe command exit for Execute's normalized focused-execution exit in the result producer; retain both executions and red the independent command-0/focused-1 journey assertion."
-        },
-        {
-          "id": "tree-lead-omission",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
-          "probe": "Omit optional tree-lead handling in probe.ReadResult while retaining its public owner; complete ordinary Command.Run stdout must red the native import journey."
-        },
-        {
-          "id": "projection-refusal-omission",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
-          "probe": "Omit only responsebound.RequireComplete from ReadResult while preserving envelope and suffix parsing; the projected-stdout refusal and outside-path sentinel must red the real import journey."
-        },
-        {
-          "id": "suffix-comparison-omission",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
-          "probe": "Omit only exact trailing_bytes comparison from ReadResult; a complete envelope with a truncated declared suffix must red the real import journey."
-        },
-        {
-          "id": "suffix-renderer-omission",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
-          "probe": "Omit a rendered report suffix byte without changing its declared trailing_bytes; the actual producer/consumer complete-report journey must red."
-        },
-        {
-          "id": "runner-alternation-omission",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
-          "probe": "Make the shared runner always emit its baseline answer while retaining both supplied Start values; existing baseline/mutated cases and the independent real journey must red."
-        },
-        {
-          "id": "runner-passthrough-omission",
-          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
-          "probe": "Omit the shared runner's real-Go passthrough for non-test arguments while retaining test answers; the actual Go selection/freshness path in the native journey must red."
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "coverage",
-      "command": "bench coverage --check native-record-operations"
-    },
-    {
-      "id": "record-family",
-      "command": "bench test --package ./internal/reviewrecord/..."
-    },
-    {
-      "id": "probe-family",
-      "command": "bench test --package ./internal/probe/..."
-    },
-    {
-      "id": "response-framing",
-      "command": "bench test --package ./internal/responsebound/..."
-    },
-    {
-      "id": "tree-framing",
-      "command": "bench test --package ./internal/treetarget/..."
-    },
-    {
-      "id": "command-package",
-      "command": "bench test --package ./cmd/bench"
-    },
-    {
-      "id": "native-complete-journey",
-      "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'"
-    },
-    {
-      "id": "checkpoint-repair",
-      "command": "bench test --package ./internal/gate --run 'Test.*(Checkpoint|Review)'"
-    },
-    {
-      "id": "guidance",
-      "command": "bench test --check docs-currency-workflow"
-    },
-    {
-      "id": "root-conformance",
-      "command": "bench test --check conformance-meta"
-    },
-    {
-      "id": "ordinary-census",
-      "command": "bench test --check ordinary-build-census"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"nro-build-20261009","orchestrator_session":"claude:nro-orchestrator-20261009","author_limit":1,"assignments":{"1-record-native-assignments.md":[{"session":"claude:nro_t1","assignment":"1494f9bd9d4036914f3897f88c9afdf6","model":"opus","effort":"high","source":"6ab4a3ae0413b706637cce65432390314e4627a5","native_ref":"claude-agent:nro_t1"},{"session":"claude:nro_t1_r1","assignment":"1494f9bd9d4036914f3897f88c9afdf6","model":"opus","effort":"high","source":"49d8c5c7ed6c34b248eb8a7b7819577295abd323","native_ref":"claude-agent:nro_t1_r1","predecessor":"claude:nro_t1","trigger":"user-directed","stopped":"claude:nro_t1 stopped at the reviewer's restart direction before its first commit; its session ended, and its pause report is in capture/session-handoff.md section nro-build-20261009","preserved":"the uncommitted nro-build worktree diff of 6 modified and 5 new files, copied to ~/nro-pause-20261009/tracked.patch and untracked.tar"},{"session":"claude:nro_t1_rep1","assignment":"1494f9bd9d4036914f3897f88c9afdf6","model":"opus","effort":"high","source":"3116927a07ed83b869a4c3ff03deac1b519c42ce","native_ref":"claude-agent:nro_t1_rep1","predecessor":"claude:nro_t1_r1","trigger":"user-directed","stopped":"claude:nro_t1_r1 returned after its record commit 4a3e8d02 and holds no further assignment; NR-C1 round 1 review at 4a3e8d02 routes C1 and C2 to a fresh repair session","preserved":"committed ticket tip e2068642f17fb744698626a66a26c6e67a7ce157 on nro-build; no uncommitted work"}],"2-enforce-native-record-order.md":[{"session":"claude:nro_t2","assignment":"1494f9bd9d4036914f3897f88c9afdf6","model":"opus","effort":"high","source":"c311ec18aa433aa19d4cd5a2682d11a6c56ab787","native_ref":"claude-agent:nro_t2"},{"session":"claude:nro_t2_rep1","assignment":"1494f9bd9d4036914f3897f88c9afdf6","model":"opus","effort":"high","source":"ea282a92a4383f91c60ecd4fb748d07705703154","native_ref":"claude-agent:nro_t2_rep1","predecessor":"claude:nro_t2","trigger":"user-directed","stopped":"claude:nro_t2 returned after its record commit 35b3348f and holds no further assignment; NR-C2 round 1 review at 35b3348f routes S1, P1, P2, P3, C1, C2, C4, and C5 to a fresh repair session","preserved":"committed ticket tip df6eeb887b9249a9cb03571ba0178c22bac49d55 on nro-build; no uncommitted work"}],"3-import-complete-probe-results.md":[{"session":"claude:nro_t3","assignment":"1494f9bd9d4036914f3897f88c9afdf6","model":"opus","effort":"high","source":"cc6fce5b04d34ef939e93bda09c269b50e8223d3","native_ref":"claude-agent:nro_t3"},{"session":"claude:nro_t3_rep1","assignment":"1494f9bd9d4036914f3897f88c9afdf6","model":"opus","effort":"high","source":"be5c15a625ca9a94a2390edc9f0a5a95f828aaf0","native_ref":"claude-agent:nro_t3_rep1","predecessor":"claude:nro_t3","trigger":"user-directed","stopped":"claude:nro_t3 returned after its record commit 99ee2484 and holds no further assignment; NR-C3 round 1 review at 99ee2484 routes S1, S2, S3, S4, P2, P3, and C1 to a fresh repair session","preserved":"committed ticket tip 3a4c452e7378c1a5f31480e956dab5983e17c481 on nro-build; no uncommitted work"}]}},"chunks":[{"id":"NR-C1","tickets":["1-record-native-assignments.md"],"verification":[{"id":"record-domain","command":"bench test --package ./internal/reviewrecord","ticket":"1-record-native-assignments.md"},{"id":"record-forms","command":"bench test --package ./internal/reviewrecord/recordcmd","ticket":"1-record-native-assignments.md"},{"id":"command-package","command":"bench test --package ./cmd/bench","ticket":"1-record-native-assignments.md"},{"id":"native-assignment-journey","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","ticket":"1-record-native-assignments.md"},{"id":"guidance","command":"bench test --check docs-currency-workflow","ticket":"1-record-native-assignments.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"1-record-native-assignments.md"},{"id":"anchors","command":"bench test --package ./internal/anchors","ticket":"1-record-native-assignments.md"},{"id":"conformance-package","command":"bench test --package ./internal/conformance","ticket":"1-record-native-assignments.md"},{"id":"record-fixtures","command":"bench test --package ./internal/reviewrecord/recordtest","ticket":"1-record-native-assignments.md"},{"id":"whole-plan-omission","command":"bench test --package ./internal/reviewrecord/recordcmd --run '^TestAssignmentWholePlanValidation$'","probe":"Omit only the complete candidate-validation call in RecordAssignment, retaining the validator used by ReadPlan; an unrelated invalid ticket must red TestAssignmentWholePlanValidation.","ticket":"1-record-native-assignments.md"}]},{"id":"NR-C2","tickets":["2-enforce-native-record-order.md"],"verification":[{"id":"record-domain","command":"bench test --package ./internal/reviewrecord","ticket":"2-enforce-native-record-order.md"},{"id":"record-forms","command":"bench test --package ./internal/reviewrecord/recordcmd","ticket":"2-enforce-native-record-order.md"},{"id":"checkpoint-repair","command":"bench test --package ./internal/gate --run 'Test.*(Checkpoint|Review)'","ticket":"2-enforce-native-record-order.md"},{"id":"command-package","command":"bench test --package ./cmd/bench","ticket":"2-enforce-native-record-order.md"},{"id":"native-ordering-journey","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","ticket":"2-enforce-native-record-order.md"},{"id":"guidance","command":"bench test --check docs-currency-workflow","ticket":"2-enforce-native-record-order.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"2-enforce-native-record-order.md"},{"id":"ordinary-census","command":"bench test --check ordinary-build-census","ticket":"2-enforce-native-record-order.md"},{"id":"anchors","command":"bench test --package ./internal/anchors","ticket":"2-enforce-native-record-order.md"},{"id":"conformance-package","command":"bench test --package ./internal/conformance","ticket":"2-enforce-native-record-order.md"},{"id":"record-fixtures","command":"bench test --package ./internal/reviewrecord/recordtest","ticket":"2-enforce-native-record-order.md"},{"id":"gate-package","command":"bench test --package ./internal/gate","ticket":"2-enforce-native-record-order.md"},{"id":"refusal-routes","command":"bench test --package ./internal/refusalroute","ticket":"2-enforce-native-record-order.md"},{"id":"chunk-guard-omission","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","probe":"Omit only the shared current-plan digest guard at RecordChunk, retaining the guard owner and other callers; the real record entry must write stale evidence and red TestNativeRecordCLIJourney.","ticket":"2-enforce-native-record-order.md"}]},{"id":"NR-C3","tickets":["3-import-complete-probe-results.md"],"verification":[{"id":"probe-family","command":"bench test --package ./internal/probe/...","ticket":"3-import-complete-probe-results.md"},{"id":"record-forms","command":"bench test --package ./internal/reviewrecord/recordcmd","ticket":"3-import-complete-probe-results.md"},{"id":"response-framing","command":"bench test --package ./internal/responsebound/...","ticket":"3-import-complete-probe-results.md"},{"id":"tree-framing","command":"bench test --package ./internal/treetarget/...","ticket":"3-import-complete-probe-results.md"},{"id":"command-package","command":"bench test --package ./cmd/bench","ticket":"3-import-complete-probe-results.md"},{"id":"native-import-journey","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","ticket":"3-import-complete-probe-results.md"},{"id":"guidance","command":"bench test --check docs-currency-workflow","ticket":"3-import-complete-probe-results.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"3-import-complete-probe-results.md"},{"id":"anchors","command":"bench test --package ./internal/anchors","ticket":"3-import-complete-probe-results.md"},{"id":"conformance-package","command":"bench test --package ./internal/conformance","ticket":"3-import-complete-probe-results.md"},{"id":"record-fixtures","command":"bench test --package ./internal/reviewrecord/recordtest","ticket":"3-import-complete-probe-results.md"},{"id":"focused-exit-substitution","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","probe":"Substitute the successful probe command exit for Execute's normalized focused-execution exit in the result producer; retain both executions and red the independent command-0/focused-1 journey assertion.","ticket":"3-import-complete-probe-results.md"},{"id":"tree-lead-omission","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","probe":"Omit optional tree-lead handling in probe.ReadResult while retaining its public owner; complete ordinary Command.Run stdout must red the native import journey.","ticket":"3-import-complete-probe-results.md"},{"id":"projection-refusal-omission","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","probe":"Omit only responsebound.RequireComplete from ReadResult while preserving envelope and suffix parsing; the projected-stdout refusal and outside-path sentinel must red the real import journey.","ticket":"3-import-complete-probe-results.md"},{"id":"suffix-comparison-omission","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","probe":"Omit only exact trailing_bytes comparison from ReadResult; a complete envelope with a truncated declared suffix must red the real import journey.","ticket":"3-import-complete-probe-results.md"},{"id":"suffix-renderer-omission","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","probe":"Omit a rendered report suffix byte without changing its declared trailing_bytes; the actual producer/consumer complete-report journey must red.","ticket":"3-import-complete-probe-results.md"},{"id":"runner-alternation-omission","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","probe":"Make the shared runner always emit its baseline answer while retaining both supplied Start values; existing baseline/mutated cases and the independent real journey must red.","ticket":"3-import-complete-probe-results.md"},{"id":"runner-passthrough-omission","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'","probe":"Omit the shared runner's real-Go passthrough for non-test arguments while retaining test answers; the actual Go selection/freshness path in the native journey must red.","ticket":"3-import-complete-probe-results.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check native-record-operations"},{"id":"record-family","command":"bench test --package ./internal/reviewrecord/..."},{"id":"probe-family","command":"bench test --package ./internal/probe/..."},{"id":"response-framing","command":"bench test --package ./internal/responsebound/..."},{"id":"tree-framing","command":"bench test --package ./internal/treetarget/..."},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"native-complete-journey","command":"bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'"},{"id":"checkpoint-repair","command":"bench test --package ./internal/gate --run 'Test.*(Checkpoint|Review)'"},{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"ordinary-census","command":"bench test --check ordinary-build-census"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"record-fixtures","command":"bench test --package ./internal/reviewrecord/recordtest"},{"id":"gate-package","command":"bench test --package ./internal/gate"},{"id":"refusal-routes","command":"bench test --package ./internal/refusalroute"}]}
 ```
+
+### Known issues
+
+NR-C2 makes the FT318 retire condition of `docs/known-issues.md` hold, so its ticket removes the chunk-digest row.
+NR-C3 makes the FT168 retire condition hold, so its ticket removes the probe-exit row.
+Each removal lands in the same ticket as its behavior.
 
 ## Testing decisions
 
@@ -610,7 +406,7 @@ Probe tests use the shared canned Go runner below to distinguish probe command 0
 
 The current runner is private in internal/probe/probe_test.go:134-181.
 Its installStubStarts owns executable construction, real-Go passthrough, the invocation marker, and baseline/mutated parity.
-Recordtest.Prepare at internal/reviewrecord/recordtest/fixture.go:165 supplies the committed record fixture, not that runner.
+Recordtest.Prepare at internal/reviewrecord/recordtest/fixture.go:166 supplies the committed record fixture, not that runner.
 Gittest.StubGitDir owns git transport, and kittest.WriteTree owns a minimal build-input tree.
 Neither supplies the two-start Go transport needed by the real probe journey.
 
@@ -694,51 +490,51 @@ These reds are planned, not observed during specification.
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| NR1 | 1 | First dispatch appends one assignment to the target empty history | planned TestAssignmentFirstDispatch in internal/reviewrecord/recordcmd/assignment_test.go | A writer that only replaces an existing occurrence leaves the target undispatched. |
-| NR2 | 2 | A mismatched run identifier refuses without changing the spec | planned TestAssignmentExecutionIdentity in internal/reviewrecord/recordcmd/assignment_test.go | Changing the execution identity instead of checking it produces a different run. |
-| NR3 | 2 | A mismatched orchestrator, author limit, or review mode refuses without changing the spec | planned TestAssignmentExecutionIdentity in internal/reviewrecord/recordcmd/assignment_test.go | Checking only the run identifier admits a different execution posture. |
-| NR4 | 3 | An invalid non-target ticket makes assignment refuse before creating a temporary file | planned TestAssignmentWholePlanValidation in internal/reviewrecord/recordcmd/assignment_test.go | Validating only the target history writes an invalid complete plan. |
-| NR5 | 3 | A missing or cyclic ticket dependency makes assignment refuse before replacement | planned TestAssignmentWholePlanValidation in internal/reviewrecord/recordcmd/assignment_test.go | A copied assignment validator misses the committed ticket graph. |
-| NR6 | 4 | An assignment source older than HEAD refuses without replacing the spec | planned TestAssignmentSourceRefusals in internal/reviewrecord/recordcmd/assignment_test.go | Resolving a valid old commit alone overwrites current dispatch history. |
-| NR7 | 4 | A changed working spec or planned ticket refuses before any write | planned TestAssignmentSourceRefusals in internal/reviewrecord/recordcmd/assignment_test.go | Reading committed inputs while replacing divergent working bytes loses authored changes. |
-| NR8 | 5 | Replacement appends after the named preceding session | planned TestAssignmentReplacementHistory in internal/reviewrecord/recordcmd/assignment_test.go | Replacing the last array element erases a participant that review independence must retain. |
-| NR9 | 6 | A replacement lacking the required stopped or preserved evidence refuses | planned TestAssignmentReplacementHistory in internal/reviewrecord/recordcmd/assignment_test.go | Treating a predecessor or cleanup callback as sufficient bypasses the existing replacement contract. |
-| NR10 | 6 | A no-progress replacement lacking reassessment refuses | planned TestAssignmentReplacementHistory in internal/reviewrecord/recordcmd/assignment_test.go | A generic replacement path misses the trigger-specific requirement. |
-| NR11 | 7 | A session already assigned to another ticket refuses | planned TestAssignmentWholePlanValidation in internal/reviewrecord/recordcmd/assignment_test.go | A target-only check permits one session to own two tickets. |
-| NR12 | 8 | A successful assignment changes only the completion-plan payload | planned TestAssignmentPreservesDocument in internal/reviewrecord/recordcmd/assignment_test.go | Rendering a new whole spec drops the prefix, suffix, or original line endings. |
-| NR13 | 9 | A failed temporary write leaves the original spec bytes intact | planned TestAssignmentWriteFailure in internal/reviewrecord/recordcmd/assignment_test.go | Writing the destination before validation destroys the retry source. |
-| NR14 | 10 | Record family help exposes the complete assignment form | planned TestNativeRecordCLIJourney in cmd/bench/record_operations_test.go | A domain-only writer cannot be invoked through the real command entry. |
-| NR15 | 11 | A changed plan digest refuses a chunk write until an amendment is recorded | planned TestChunkNeedsCurrentAmendment in internal/reviewrecord/recordcmd/ordering_test.go | Current RecordChunk can append structurally valid evidence under a stale record plan digest. |
-| NR16 | 12 | A spec prose edit changes the plan digest used by the chunk refusal | planned TestChunkNeedsCurrentAmendment in internal/reviewrecord/recordcmd/ordering_test.go | A semantic exemption would silently remove the whole-spec input from ReadPlan. |
-| NR17 | 13 | A missing chunk checkpoint refusal names the chunk repair form | planned TestCheckpointEntryRepairForms in internal/gate/record_repair_test.go | A generic preflight route alone makes the operator rediscover the missing writer. |
-| NR18 | 14 | A missing planned verification checkpoint refusal names the verification repair form | planned TestCheckpointEntryRepairForms in internal/gate/record_repair_test.go | Routing every missing entry to chunk writes the wrong artifact. |
-| NR19 | 15 | A missing axis review checkpoint refusal names the review repair form | planned TestCheckpointEntryRepairForms in internal/gate/record_repair_test.go | A verification-only route cannot satisfy the independent review obligation. |
-| NR20 | 16 | A missing completion checkpoint refusal names the completion repair form | planned TestCheckpointEntryRepairForms in internal/gate/record_repair_test.go | A generic entry route cannot write reconciliation. |
-| NR21 | 17 | An undispatched ticket refusal names the assignment repair form | planned TestCheckpointEntryRepairForms in internal/gate/record_repair_test.go | The operator otherwise must edit the execution history by hand. |
-| NR22 | 18 | Completion help derives amendment-before-chunk order from the repair owner | planned TestCompletionHelpOrdering in internal/reviewrecord/recordcmd/ordering_test.go | An independent copied help sequence can disagree with the actual refusal order. |
-| NR23 | 19 | A biting probe reports focused-execution exit 1 while its command returns 0 | planned TestProbeReportsNormalizedExecutionExit in internal/probe/result_test.go | Substituting the successful probe command exit reports passing mutated execution. |
-| NR24 | 19 | A probe that never executes the mutated selection reports no focused-execution exit | planned TestProbeReportsNormalizedExecutionExit in internal/probe/result_test.go | Guessing from verdict words invents execution evidence for a refused run. |
-| NR25 | 20 | Result import fills the planned probe from the probe owner projection | planned TestVerificationImportsProbeResult in internal/reviewrecord/recordcmd/verification_import_test.go | A CLI that still requires copied outcome flags does not deliver native import. |
-| NR26 | 21 | Imported evidence retains the exact supplied native excerpt and its computed digest | planned TestVerificationImportsProbeResult in internal/reviewrecord/recordcmd/verification_import_test.go | Re-encoding the receipt loses its original provenance bytes. |
-| NR27 | 22 | An older envelope without the focused-execution field refuses import | planned TestProbeResultEnvelopeRefusals in internal/probe/result_test.go | Deriving an exit from failed_tests accepts a producer that did not report it. |
-| NR28 | 22 | A duplicate or substituted result envelope refuses import without writing evidence | planned TestVerificationImportRefusals in internal/reviewrecord/recordcmd/verification_import_test.go | The pinned decoder otherwise overwrites repeated object keys. |
-| NR29 | 23 | An imported silent result remains a failed probe at the checkpoint | planned TestVerificationImportsProbeResult in internal/reviewrecord/recordcmd/verification_import_test.go | Import must not interpret successful restoration as a biting mutation. |
-| NR30 | 23 | An imported failed restoration cannot pass the checkpoint | planned TestVerificationImportsProbeResult in internal/reviewrecord/recordcmd/verification_import_test.go | A biting test result alone does not prove restoration. |
+| NR1 | 1 | First dispatch appends one assignment to the target empty history | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentFirstDispatch`) | A writer that only replaces an existing occurrence leaves the target undispatched. |
+| NR2 | 2 | A mismatched run identifier refuses without changing the spec | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentExecutionIdentity`) | Changing the execution identity instead of checking it produces a different run. |
+| NR3 | 2 | A mismatched orchestrator, author limit, or review mode refuses without changing the spec | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentExecutionIdentity`) | Checking only the run identifier admits a different execution posture. |
+| NR4 | 3 | An invalid non-target ticket makes assignment refuse before creating a temporary file | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentWholePlanValidation`) | Validating only the target history writes an invalid complete plan. |
+| NR5 | 3 | A missing or cyclic ticket dependency makes assignment refuse before replacement | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentWholePlanValidation`) | A copied assignment validator misses the committed ticket graph. |
+| NR6 | 4 | An assignment source older than HEAD refuses without replacing the spec | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentSourceRefusals`) | Resolving a valid old commit alone overwrites current dispatch history. |
+| NR7 | 4 | A changed working spec or planned ticket refuses before any write | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentSourceRefusals`) | Reading committed inputs while replacing divergent working bytes loses authored changes. |
+| NR8 | 5 | Replacement appends after the named preceding session | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentReplacementHistory`) | Replacing the last array element erases a participant that review independence must retain. |
+| NR9 | 6 | A replacement lacking the required stopped or preserved evidence refuses | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentReplacementHistory`) | Treating a predecessor or cleanup callback as sufficient bypasses the existing replacement contract. |
+| NR10 | 6 | A no-progress replacement lacking reassessment refuses | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentReplacementHistory`) | A generic replacement path misses the trigger-specific requirement. |
+| NR11 | 7 | A session already assigned to another ticket refuses | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentWholePlanValidation`) | A target-only check permits one session to own two tickets. |
+| NR12 | 8 | A successful assignment changes only the completion-plan payload | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentPreservesDocument`) | Rendering a new whole spec drops the prefix, suffix, or original line endings. |
+| NR13 | 9 | A failed temporary write leaves the original spec bytes intact | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentWriteFailure`) | Writing the destination before validation destroys the retry source. |
+| NR14 | 10 | Record family help exposes the complete assignment form | `cmd/bench/record_operations_test.go` (`TestNativeRecordCLIJourney`) | A domain-only writer cannot be invoked through the real command entry. |
+| NR15 | 11 | A changed plan digest refuses a chunk write until an amendment is recorded | `internal/reviewrecord/recordcmd/ordering_test.go` (`TestChunkNeedsCurrentAmendment`) | Current RecordChunk can append structurally valid evidence under a stale record plan digest. |
+| NR16 | 12 | A spec prose edit changes the plan digest used by the chunk refusal | `internal/reviewrecord/recordcmd/ordering_test.go` (`TestChunkNeedsCurrentAmendment`) | A semantic exemption would silently remove the whole-spec input from ReadPlan. |
+| NR17 | 13 | A missing chunk checkpoint refusal names the chunk repair form | `internal/gate/record_repair_test.go` (`TestCheckpointEntryRepairForms`) | A generic preflight route alone makes the operator rediscover the missing writer. |
+| NR18 | 14 | A missing planned verification checkpoint refusal names the verification repair form | `internal/gate/record_repair_test.go` (`TestCheckpointEntryRepairForms`) | Routing every missing entry to chunk writes the wrong artifact. |
+| NR19 | 15 | A missing axis review checkpoint refusal names the review repair form | `internal/gate/record_repair_test.go` (`TestCheckpointEntryRepairForms`) | A verification-only route cannot satisfy the independent review obligation. |
+| NR20 | 16 | A missing completion checkpoint refusal names the completion repair form | `internal/gate/record_repair_test.go` (`TestCheckpointEntryRepairForms`) | A generic entry route cannot write reconciliation. |
+| NR21 | 17 | An undispatched ticket refusal names the assignment repair form | `internal/gate/record_repair_test.go` (`TestCheckpointEntryRepairForms`) | The operator otherwise must edit the execution history by hand. |
+| NR22 | 18 | Completion help derives amendment-before-chunk order from the repair owner | `internal/reviewrecord/recordcmd/ordering_test.go` (`TestCompletionHelpOrdering`) | An independent copied help sequence can disagree with the actual refusal order. |
+| NR23 | 19 | A biting probe reports focused-execution exit 1 while its command returns 0 | `internal/probe/result_test.go` (`TestProbeReportsNormalizedExecutionExit`) | Substituting the successful probe command exit reports passing mutated execution. |
+| NR24 | 19 | A probe that never executes the mutated selection reports no focused-execution exit | `internal/probe/result_test.go` (`TestProbeReportsNormalizedExecutionExit`) | Guessing from verdict words invents execution evidence for a refused run. |
+| NR25 | 20 | Result import fills the planned probe from the probe owner projection | `internal/reviewrecord/recordcmd/verification_import_test.go` (`TestVerificationImportsProbeResult`) | A CLI that still requires copied outcome flags does not deliver native import. |
+| NR26 | 21 | Imported evidence retains the exact supplied native excerpt and its computed digest | `internal/reviewrecord/recordcmd/verification_import_test.go` (`TestVerificationImportsProbeResult`) | Re-encoding the receipt loses its original provenance bytes. |
+| NR27 | 22 | An older envelope without the focused-execution field refuses import | `internal/probe/result_test.go` (`TestProbeResultEnvelopeRefusals`) | Deriving an exit from failed_tests accepts a producer that did not report it. |
+| NR28 | 22 | A duplicate or substituted result envelope refuses import without writing evidence | `internal/reviewrecord/recordcmd/verification_import_test.go` (`TestVerificationImportRefusals`) | The pinned decoder otherwise overwrites repeated object keys. |
+| NR29 | 23 | An imported silent result remains a failed probe at the checkpoint | `internal/reviewrecord/recordcmd/verification_import_test.go` (`TestVerificationImportsProbeResult`) | Import must not interpret successful restoration as a biting mutation. |
+| NR30 | 23 | An imported failed restoration cannot pass the checkpoint | `internal/reviewrecord/recordcmd/verification_import_test.go` (`TestVerificationImportsProbeResult`) | A biting test result alone does not prove restoration. |
 | NR31 | 24 | The existing scalar verification form retains its explicit probe values | `internal/reviewrecord/recordcmd/verification_test.go` (`TestRecordVerificationWritesThePlannedProbe`) | The import must not reinterpret a caller-supplied scalar exit as the command exit. |
-| NR32 | 25 | Verification help names the producer verb and field for each copied probe flag | planned TestVerificationHelpFieldSources in internal/reviewrecord/recordcmd/verification_import_test.go | Labels such as exit alone do not distinguish the three exit meanings. |
-| NR33 | 26 | Missing-record and missing-chunk errors remain reachable through errors.Is | planned TestRecordRepairPreservesErrorIdentity in internal/reviewrecord/repair_test.go | Wrapping a repair hint as plain text destroys the existing sentinel identity. |
+| NR32 | 25 | Verification help names the producer verb and field for each copied probe flag | `internal/reviewrecord/recordcmd/verification_import_test.go` (`TestVerificationHelpFieldSources`) | Labels such as exit alone do not distinguish the three exit meanings. |
+| NR33 | 26 | Missing-record and missing-chunk errors remain reachable through errors.Is | `internal/reviewrecord/repair_test.go` (`TestRecordRepairPreservesErrorIdentity`) | Wrapping a repair hint as plain text destroys the existing sentinel identity. |
 | NR34 | 27 | A valid amendment retains preceding evidence and the mapped digest chain | `internal/reviewrecord/recordcmd/amendment_test.go` (`TestRecordAmendmentChainsFromTheLastDigest`) | Replacing history instead of appending breaks the second amendment predecessor. |
 | NR35 | 28 | Completion continues to refuse capability-blocked reconciliation values | review-owned scope comparison at internal/reviewrecord/completion.go and roadmap/FT317.md | Adding a new completion value would decide the separate unresolved capability. |
-| NR36 | 29 | Assignment refuses version-1 plans without converting their verification mappings | planned TestAssignmentWholePlanValidation in internal/reviewrecord/recordcmd/assignment_test.go | An implicit conversion cannot infer which ticket owes every existing requirement. |
-| NR37 | 30 | The real record entry refuses a stale plan before its writer changes any bytes | planned TestNativeRecordCLIJourney in cmd/bench/record_operations_test.go | Owner-only checks stay green when command dispatch calls the writer before the guard. |
-| NR38 | 20 | The real record entry imports complete canonical tree-prefixed probe stdout | planned TestNativeRecordCLIJourney in cmd/bench/record_operations_test.go | A parser that requires probe at byte zero refuses the actual dispatcher response. |
-| NR39 | 21 | Import of the complete spill body retains exactly that selected file's bytes | planned TestNativeRecordCLIJourney in cmd/bench/record_operations_test.go | Reconstructing the omitted tree lead or using projected stdout changes the excerpt digest. |
-| NR40 | 22 | Projected stdout refuses import without changing record bytes | planned TestNativeRecordCLIJourney in cmd/bench/record_operations_test.go | Ignoring spilled or cut output accepts evidence the owner marked incomplete. |
-| NR41 | 22 | Spill-failed stdout refuses import without opening its marker path | planned TestNativeRecordCLIJourney in cmd/bench/record_operations_test.go | A complete-looking prefix cannot permit marker following or fallback to a different file. |
-| NR42 | 22 | A file truncated within a mandatory envelope refuses import | planned TestNativeRecordCLIJourney in cmd/bench/record_operations_test.go | Prefix-only field extraction misses the unfinished selected result. |
-| NR43 | 22 | A file truncated within the declared suffix refuses import | planned TestNativeRecordCLIJourney in cmd/bench/record_operations_test.go | A partial spill can retain all outcome cells while losing later native evidence. |
-| NR44 | 22 | A complete suffix that disagrees with trailing_bytes refuses import | planned TestProbeResultEnvelopeRefusals in internal/probe/result_test.go | Count changes and renderer suffix omissions detect unchecked completeness metadata. |
-| NR45 | 22 | A malformed or repeated tree identity envelope refuses import | planned TestProbeResultEnvelopeRefusals in internal/probe/result_test.go | Blindly stripping two lines or overwriting a second tree object accepts noncanonical framing. |
+| NR36 | 29 | Assignment refuses version-1 plans without converting their verification mappings | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentWholePlanValidation`) | An implicit conversion cannot infer which ticket owes every existing requirement. |
+| NR37 | 30 | The real record entry refuses a stale plan before its writer changes any bytes | `cmd/bench/record_operations_test.go` (`TestNativeRecordCLIJourney`) | Owner-only checks stay green when command dispatch calls the writer before the guard. |
+| NR38 | 20 | The real record entry imports complete canonical tree-prefixed probe stdout | `cmd/bench/record_operations_test.go` (`TestNativeRecordCLIJourney`) | A parser that requires probe at byte zero refuses the actual dispatcher response. |
+| NR39 | 21 | Import of the complete spill body retains exactly that selected file's bytes | `cmd/bench/record_operations_test.go` (`TestNativeRecordCLIJourney`) | Reconstructing the omitted tree lead or using projected stdout changes the excerpt digest. |
+| NR40 | 22 | Projected stdout refuses import without changing record bytes | `cmd/bench/record_operations_test.go` (`TestNativeRecordCLIJourney`) | Ignoring spilled or cut output accepts evidence the owner marked incomplete. |
+| NR41 | 22 | Spill-failed stdout refuses import without opening its marker path | `cmd/bench/record_operations_test.go` (`TestNativeRecordCLIJourney`) | A complete-looking prefix cannot permit marker following or fallback to a different file. |
+| NR42 | 22 | A file truncated within a mandatory envelope refuses import | `cmd/bench/record_operations_test.go` (`TestNativeRecordCLIJourney`) | Prefix-only field extraction misses the unfinished selected result. |
+| NR43 | 22 | A file truncated within the declared suffix refuses import | `cmd/bench/record_operations_test.go` (`TestNativeRecordCLIJourney`) | A partial spill can retain all outcome cells while losing later native evidence. |
+| NR44 | 22 | A complete suffix that disagrees with trailing_bytes refuses import | `internal/probe/result_test.go` (`TestProbeResultEnvelopeRefusals`) | Count changes and renderer suffix omissions detect unchecked completeness metadata. |
+| NR45 | 22 | A malformed or repeated tree identity envelope refuses import | `internal/probe/result_test.go` (`TestProbeResultEnvelopeRefusals`) | Blindly stripping two lines or overwriting a second tree object accepts noncanonical framing. |
 
 ### Edge inventory
 
@@ -775,8 +571,10 @@ No implementation write is authorized by this planning artifact alone.
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/record_operations_test.go`
 - `cmd/bench/response_bound_test.go`
+- `docs/known-issues.md`
 - `internal/anchors/registry_calibration.go`
 - `internal/anchors/registry_calibration_test.go`
+- `internal/anchors/registry_check_floor_test.go`
 - `internal/anchors/registry_chunk_chain.go`
 - `internal/anchors/registry_chunk_chain_test.go`
 - `internal/anchors/registry_commitment.go`
@@ -793,6 +591,7 @@ No implementation write is authorized by this planning artifact alone.
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/gate/checkpoint.go`
 - `internal/gate/record_repair_test.go`
+- `internal/gate/refusal_route_test.go`
 - `internal/gate/review_checkpoint_test.go`
 - `internal/probe/baseline.go`
 - `internal/probe/baseline_test.go`
@@ -804,10 +603,15 @@ No implementation write is authorized by this planning artifact alone.
 - `internal/probe/refusal_test.go`
 - `internal/probe/result.go`
 - `internal/probe/result_test.go`
+- `internal/refusalroute/faces_gate.go`
+- `internal/refusalroute/registry_test.go`
+- `internal/responsebound/export_test.go`
 - `internal/responsebound/lines_test.go`
 - `internal/responsebound/owner.go`
 - `internal/responsebound/owner_test.go`
 - `internal/responsebound/responseboundtest/spill.go`
+- `internal/responsebound/retire_test.go`
+- `internal/responsebound/size_test.go`
 - `internal/reviewrecord/assignment.go`
 - `internal/reviewrecord/assignment_test.go`
 - `internal/reviewrecord/check.go`
@@ -817,9 +621,11 @@ No implementation write is authorized by this planning artifact alone.
 - `internal/reviewrecord/parse.go`
 - `internal/reviewrecord/plan.go`
 - `internal/reviewrecord/record.go`
+- `internal/reviewrecord/recordcmd/amendment.go`
 - `internal/reviewrecord/recordcmd/amendment_test.go`
 - `internal/reviewrecord/recordcmd/assignment.go`
 - `internal/reviewrecord/recordcmd/assignment_test.go`
+- `internal/reviewrecord/recordcmd/chunk.go`
 - `internal/reviewrecord/recordcmd/command.go`
 - `internal/reviewrecord/recordcmd/completion.go`
 - `internal/reviewrecord/recordcmd/ordering_test.go`
@@ -861,12 +667,14 @@ No implementation write is authorized by this planning artifact alone.
 - `tests/canary/workflow-guidance-anchors/dg-31`
 - `tests/canary/workflow-guidance-anchors/dg-31-contradiction-trigger`
 - `tests/canary/workflow-guidance-anchors/implement-spec-adoption-freshness`
+- `tests/canary/workflow-guidance-anchors/implement-spec-check-floor`
 - `tests/canary/workflow-guidance-anchors/implement-spec-coverage-task-seeding`
 - `tests/canary/workflow-guidance-anchors/implement-spec-cross-harness-pointer`
 - `tests/canary/workflow-guidance-anchors/implement-spec-entry-validation`
 - `tests/canary/workflow-guidance-anchors/implement-spec-incapable-harness`
 - `tests/canary/workflow-guidance-anchors/implement-spec-inline-exception`
 - `tests/canary/workflow-guidance-anchors/implement-spec-mandatory-delegation-anchor`
+- `tests/canary/workflow-guidance-anchors/implement-spec-planned-cell-rewrite`
 - `tests/canary/workflow-guidance-anchors/implement-spec-prose-owner-transfer`
 - `tests/canary/workflow-guidance-anchors/implement-spec-read-only-helper`
 - `tests/canary/workflow-guidance-anchors/implement-spec-red-preflight-route`
@@ -936,14 +744,14 @@ The verification record is static: full source bodies, owner definitions, caller
 Prose, coverage, link checks, and the required planning lane freeze this spec before independent review.
 No runtime test, omission probe, benchmark, or implementation result is claimed.
 The graph retains exact per-ticket closure and shared-write blockers from the accepted source.
-Independent ticket review accepted the graph; build entry must refresh the landed provider, source pin, and headroom before any charge.
+Independent ticket review accepted the graph; build entry must refresh the source pin and headroom before any charge.
 
 | approval item | proposed disposition |
 | --- | --- |
 | implementation line | gpt-5.6-sol / high, retained accepted line |
 | seams and test purpose | Existing validators, producer result owner, real record entry, and gate checkpoint |
 | coverage and exclusions | NR1-NR45, with explicit FT317, conversion, and digest-policy exclusions |
-| ownership | Unchanged 146-entry fence; exact per-ticket closure independently accepted |
+| ownership | 158-entry fence after the build-entry refresh and the NR-C2 and NR-C3 expansions; exact per-ticket closure |
 | graph | Three serial vertical tickets accepted at 0d7fa110cc3869a4b089cba73cdb2aa435d38983 after SPEC acceptance |
 
 The numbered breakdown is:

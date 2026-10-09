@@ -25,6 +25,24 @@ var probeFields = []string{"verdict", "subject", "mutation", "cause", "failed_te
 // count, so the row renders through toon.TableTyped and that cell stays an integer.
 var selectionFields = []string{"form", "target", "run", "baseline", "ran"}
 
+// executionFields is the schema of the row that follows the probe and selection pair. The
+// command exit is the probe's own exit. The focused exit is the normalized exit of the
+// mutated run, or null when no mutated run started. trailing_bytes counts every byte after
+// the row, so a reader can tell a complete answer from a cut one.
+var executionFields = []string{"schema", "command_exit_code", "focused_exit_code", "trailing_bytes"}
+
+// resultTables names the envelope's three one-row tables in their printed order.
+var resultTables = []struct {
+	name   string
+	fields []string
+}{{"probe", probeFields}, {"selection", selectionFields}, {"probe_execution", executionFields}}
+
+// restoredCell is the restored cell of a probe whose restore was proven byte-exact.
+const restoredCell = "yes"
+
+// resultSchema is the schema cell of the execution row. A reader refuses any other value.
+const resultSchema = "bench-probe-result-v1"
+
 // verdictCells is one probe answer's variable half: the four cells the verdict row takes
 // from a run, and the two cells the selection row takes from the baseline and the mutated
 // run. The six travel together, because they come from two different runs and one outcome
@@ -84,7 +102,7 @@ func renderInvalidMutation(subject subject, mutation string, parsed usage.Result
 	} else if pattern, ok := parsed.Flags["--run"]; ok {
 		run = pattern
 	}
-	out, err := rowsWithSelection(subject, mutation, cells, form, target, run)
+	out, err := envelope{cells: cells, subject: subject.display, mutation: mutation, form: form, target: target, run: run, command: 1}.answer("")
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
@@ -157,45 +175,39 @@ func probe(root string, subject subject, mutated []byte, mutation string, reques
 	}
 	var outcome testreport.Outcome
 	var report string
+	var focused int
 	restored, reason := false, ""
 	func() {
 		defer func() { restored, reason = restore(subject, preserved) }()
-		outcome, report, _ = testreport.Execute(root, request)
+		outcome, report, focused = testreport.Execute(root, request)
 	}()
 	if restored {
 		preserved.release()
 	}
-	return render(subject, mutation, outcome, request, report, preserved, restored, reason, baseline)
+	return render(subject, mutation, outcome, focused, request, report, preserved, restored, reason, baseline)
 }
 
 // render prints the verdict row first, so a caller reads the answer before the evidence.
-// A subject the encoder cannot carry answers with the shared render error in place of the
-// row and the report, and the restore has already run by then, which is why an unprintable
-// name still leaves a clean tree. The restore-failed verdict overrides every other answer,
-// so a failed restore keeps the preserved row and exit 2 even when the row itself refuses.
-func render(subject subject, mutation string, outcome testreport.Outcome, request testreport.Request, report string, preserved preservation, restored bool, reason string, baseline testreport.OutcomeKind) (string, int) {
+// focused is the normalized exit of the mutated run. A subject the encoder cannot carry
+// answers with the shared render error in place of the rows and the report, and the
+// restore has already run by then, which is why an unprintable name still leaves a clean
+// tree. The restore-failed verdict overrides every other answer, so a failed restore keeps
+// the preserved row and exit 2 even when the rows themselves refuse.
+func render(subject subject, mutation string, outcome testreport.Outcome, focused int, request testreport.Request, report string, preserved preservation, restored bool, reason string, baseline testreport.OutcomeKind) (string, int) {
 	// The baseline cell carries the kind the baseline run observed, so the row joins the two
 	// runs it reports rather than asserting the kind the refusal order implies.
 	cells := verdictCells{
 		cause:    string(outcome.Kind),
 		failed:   outcome.FailedTests,
-		restored: "yes",
+		restored: restoredCell,
 		baseline: string(baseline),
 		ran:      outcome.Ran,
 	}
 	var code int
 	cells.verdict, code = verdictFor(outcome.Kind)
+	preservedBlock := ""
 	if !restored {
 		cells.verdict, code, cells.restored = "restore-failed", 2, "no"
-	}
-	out, err := rows(subject, mutation, cells, request)
-	if err != nil {
-		out, report = toon.RenderError(err)+"\n", ""
-		if restored {
-			code = 1
-		}
-	}
-	if !restored {
 		// The reason is diagnostic prose, and a failed write quotes the subject path inside
 		// it, so a subject the row already refused would refuse here too and the caller would
 		// lose the copy path. The path cell stays verbatim, because a stripped path names a
@@ -205,32 +217,70 @@ func render(subject subject, mutation string, outcome testreport.Outcome, reques
 		if err != nil {
 			return toon.RenderError(err) + "\n", code
 		}
+		preservedBlock = block
+	}
+	e := selected(subject, mutation, cells, request)
+	e.command, e.focused = code, &focused
+	out, err := e.answer(preservedBlock + report)
+	if err != nil {
+		if restored {
+			code = 1
+		}
+		return toon.RenderError(err) + "\n" + preservedBlock, code
+	}
+	return out, code
+}
+
+// envelope is one probe answer's three leading rows: the verdict row, the selection row
+// that names what the focused run selected and how many tests the mutated run ran, and the
+// execution row. Every render path builds one, so the rows keep one order and one schema.
+type envelope struct {
+	cells             verdictCells
+	subject, mutation string
+	form, target, run string
+	command           int
+	// focused is nil when no mutated run started, so the cell prints null rather than an
+	// integer's zero value.
+	focused  *int
+	trailing int
+}
+
+// selected fills an envelope's selection cells from the focused run's request.
+func selected(subject subject, mutation string, cells verdictCells, request testreport.Request) envelope {
+	return envelope{cells: cells, subject: subject.display, mutation: mutation, form: request.Form(), target: request.Target(), run: request.Run()}
+}
+
+// answer renders the envelope ahead of suffix, with the execution row counting every byte
+// of suffix. The rows render in one call, so a cell the encoder cannot carry refuses all
+// of them rather than printing half an answer.
+func (e envelope) answer(suffix string) (string, error) {
+	e.trailing = len(suffix)
+	head, err := e.rows()
+	if err != nil {
+		return "", err
+	}
+	return head + suffix, nil
+}
+
+func (e envelope) rows() (string, error) {
+	var focused any
+	if e.focused != nil {
+		focused = *e.focused
+	}
+	cells := [][]any{
+		{e.cells.verdict, e.subject, e.mutation, e.cells.cause, e.cells.failed, e.cells.restored},
+		{e.form, e.target, e.run, e.cells.baseline, e.cells.ran},
+		{resultSchema, e.command, focused, e.trailing},
+	}
+	var out string
+	for i, table := range resultTables {
+		block, err := toon.TableTyped(table.name, table.fields, [][]any{cells[i]})
+		if err != nil {
+			return "", err
+		}
 		out += block
 	}
-	return out + report, code
-}
-
-// rows renders the verdict row and the selection row that follows it. The pair renders in
-// one call, so a cell the encoder cannot carry refuses both rather than printing half an
-// answer. The selection row names what the focused run selected, what the baseline reached,
-// and how many tests the mutated run ran, which is what separates a mutation no test
-// observed from a run that started none.
-func rows(subject subject, mutation string, cells verdictCells, request testreport.Request) (string, error) {
-	return rowsWithSelection(subject, mutation, cells, request.Form(), request.Target(), request.Run())
-}
-
-func rowsWithSelection(subject subject, mutation string, cells verdictCells, form, target, run string) (string, error) {
-	verdictRow := []any{cells.verdict, subject.display, mutation, cells.cause, cells.failed, cells.restored}
-	out, err := toon.TableTyped("probe", probeFields, [][]any{verdictRow})
-	if err != nil {
-		return "", err
-	}
-	selectionRow := []any{form, target, run, cells.baseline, cells.ran}
-	block, err := toon.TableTyped("selection", selectionFields, [][]any{selectionRow})
-	if err != nil {
-		return "", err
-	}
-	return out + block, nil
+	return out, nil
 }
 
 // verdictFor maps the focused run's outcome onto the word a caller cites. A failing test is
