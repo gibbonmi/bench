@@ -1985,6 +1985,151 @@ TF-C3 round 2: 0 findings. TF73 and TF74 hold.
           ]
         }
       ]
+    },
+    {
+      "id": "TF-C4",
+      "base": "41df830c693ac196a88d66010379bf721608bbf4",
+      "tip": "7fcb4799823a8af896b8ff79a7902da11f282cae",
+      "plan_digest": "sha256:d0125cae58fd336eda51d56eea978aa655bbcc367cedbb84eb4258629f5a1afe",
+      "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+      "acceptance_rows": [
+        "TF47",
+        "TF48",
+        "TF49",
+        "TF50",
+        "TF51",
+        "TF52",
+        "TF53",
+        "TF54",
+        "TF55",
+        "TF56",
+        "TF57",
+        "TF58",
+        "TF59",
+        "TF67"
+      ],
+      "verification": [
+        {
+          "id": "t4-pkg-internal-coverage",
+          "performer": "claude:ft349_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4/pkg-internal-coverage",
+            "digest": "sha256:1636b0134edac0fa95a5003c43123c4a5e5f563a0899e5c767bf24eae37ea85f",
+            "excerpt": "commit: 7fcb4799823a8af896b8ff79a7902da11f282cae\ncommand: bench test --package ./internal/coverage\nexit: 0\nwall: 3.5s\n  github.com/gibbonmi/bench/internal/coverage,pass,1743,144\nfailures[0]\n"
+          },
+          "requirement": "pkg-internal-coverage",
+          "command": "bench test --package ./internal/coverage",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-pkg-internal-reviewrecord",
+          "performer": "claude:ft349_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4/pkg-internal-reviewrecord",
+            "digest": "sha256:fff29de3bd5b85e76bdcf304ae8881d715fdfe10c4f570900ff2373c3d16c7f9",
+            "excerpt": "commit: 7fcb4799823a8af896b8ff79a7902da11f282cae\ncommand: bench test --package ./internal/reviewrecord/...\nexit: 0\nwall: 9.1s\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,1665,73\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,7472,112\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]\n"
+          },
+          "requirement": "pkg-internal-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-pkg-internal-conformance",
+          "performer": "claude:ft349_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4/pkg-internal-conformance",
+            "digest": "sha256:5950e8e82ac4c33dcb820b91e738302668894a09458280b121e0f80c3aed8c78",
+            "excerpt": "commit: 7fcb4799823a8af896b8ff79a7902da11f282cae\ncommand: bench test --package ./internal/conformance\nexit: 0\nwall: 56.7s\n  github.com/gibbonmi/bench/internal/conformance,pass,54067,1673\nfailures[0]\nskips[3]: capability skips (unix sockets, character device)\n"
+          },
+          "requirement": "pkg-internal-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-pkg-cmd-bench",
+          "performer": "claude:ft349_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4/pkg-cmd-bench",
+            "digest": "sha256:f07d24df530bfcbe6a95f097600ca2465a4e46d0c822b7d70b8a5958c03d0f70",
+            "excerpt": "commit: 7fcb4799823a8af896b8ff79a7902da11f282cae\ncommand: bench test --package ./cmd/bench\nexit: 0\nwall: 17.3s\n  github.com/gibbonmi/bench/cmd/bench,pass,15217,333\nfailures[0]\n"
+          },
+          "requirement": "pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-root-conformance",
+          "performer": "claude:ft349_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4/root-conformance",
+            "digest": "sha256:d6833e23df6dd0b1859c257ed22a82e8730366aa260b7b8318959bd807592ed8",
+            "excerpt": "commit: 7fcb4799823a8af896b8ff79a7902da11f282cae\ncommand: bench test --check root-conformance\nexit: 0\nwall: 17.9s\n  root-conformance,conformance,1,0\n  github.com/gibbonmi/bench/internal/conformance,pass,16106,1\nfailures[0]\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-planned-cell-probe",
+          "performer": "claude:ft349_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a48f6d2b627800b7ef7d296bc4847c802aba02ba",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t4/planned-cell-probe",
+            "digest": "sha256:cba03d0e09094a61b5aca92e1f062742acba38e008d66874854f54e516a832a8",
+            "excerpt": "commit: 7fcb4799823a8af896b8ff79a7902da11f282cae\ncommand: bench test --package ./internal/reviewrecord/recordcmd --run '^TestRecordChunkRefusesAPlannedCell'\nexit: 0 (unmutated), wall 1.6s, recordcmd pass,39,1\nprobe: bench probe internal/reviewrecord/recordcmd/chunk.go --omit <refusePlanned block> (same --package/--run)\nprobe command exit: 0, wall 3.4s\n  bit,internal/reviewrecord/recordcmd/chunk.go,omit,failed,1,yes\n  recordcmd,fail,55,1\n  TestRecordChunkRefusesAPlannedCell: planned_cell_test.go:69: planned chunk row = exit 0 ... want exit 1\nmutated test run exit: 1\nrestored: yes\n"
+          },
+          "requirement": "planned-cell-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd --run '^TestRecordChunkRefusesAPlannedCell'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the planned-row refusal before the chunk write. TestRecordChunkRefusesAPlannedCell turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft349_t4/planned-cell-probe",
+              "digest": "sha256:cba03d0e09094a61b5aca92e1f062742acba38e008d66874854f54e516a832a8",
+              "excerpt": "commit: 7fcb4799823a8af896b8ff79a7902da11f282cae\ncommand: bench test --package ./internal/reviewrecord/recordcmd --run '^TestRecordChunkRefusesAPlannedCell'\nexit: 0 (unmutated), wall 1.6s, recordcmd pass,39,1\nprobe: bench probe internal/reviewrecord/recordcmd/chunk.go --omit <refusePlanned block> (same --package/--run)\nprobe command exit: 0, wall 3.4s\n  bit,internal/reviewrecord/recordcmd/chunk.go,omit,failed,1,yes\n  recordcmd,fail,55,1\n  TestRecordChunkRefusesAPlannedCell: planned_cell_test.go:69: planned chunk row = exit 0 ... want exit 1\nmutated test run exit: 1\nrestored: yes\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
