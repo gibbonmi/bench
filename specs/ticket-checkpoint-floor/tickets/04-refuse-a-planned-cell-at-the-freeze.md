@@ -1,7 +1,7 @@
 # Refuse a planned seam cell at the chunk freeze
 
 Blocked by: none
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/coverage/planned_rows.go (new), internal/coverage/planned_rows_test.go (new), internal/reviewrecord/plan.go, internal/reviewrecord/recordcmd/chunk.go (new), internal/reviewrecord/recordcmd/command.go, internal/reviewrecord/recordcmd/completion.go, internal/reviewrecord/recordcmd/planned_cell.go (new), internal/reviewrecord/recordcmd/planned_cell_test.go (new)
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/coverage/planned_rows.go (new), internal/coverage/planned_rows_test.go (new), internal/reviewrecord/plan.go, internal/reviewrecord/recordcmd/chunk.go (new), internal/reviewrecord/recordcmd/command.go, internal/reviewrecord/recordcmd/completion.go, internal/reviewrecord/recordcmd/planned_cell.go (new), internal/reviewrecord/recordcmd/planned_cell_test.go (new), internal/coverage/citations.go, internal/reviewrecord/completion.go, internal/reviewrecord/coverage.go, internal/reviewrecord/recordtest/fixture.go
 Covers: TF47, TF48, TF49, TF50, TF51, TF52, TF53, TF54, TF55, TF56, TF57, TF58, TF59, TF67
 
 ## What to build

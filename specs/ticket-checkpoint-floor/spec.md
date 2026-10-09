@@ -372,6 +372,7 @@ This fence is the exact union of the ticket Writes lines, plus the review pickup
 - `internal/anchors/registry_ticket_passes_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/coverage/citations.go`
 - `internal/coverage/planned_rows.go`
 - `internal/coverage/planned_rows_test.go`
 - `internal/gate/gate.go`
@@ -393,12 +394,15 @@ This fence is the exact union of the ticket Writes lines, plus the review pickup
 - `internal/preflight/preflighttest/fixture.go`
 - `internal/preflight/source_tip_test.go`
 - `internal/preflight/ticket_rows.go`
+- `internal/reviewrecord/completion.go`
+- `internal/reviewrecord/coverage.go`
 - `internal/reviewrecord/plan.go`
 - `internal/reviewrecord/recordcmd/chunk.go`
 - `internal/reviewrecord/recordcmd/command.go`
 - `internal/reviewrecord/recordcmd/completion.go`
 - `internal/reviewrecord/recordcmd/planned_cell.go`
 - `internal/reviewrecord/recordcmd/planned_cell_test.go`
+- `internal/reviewrecord/recordtest/fixture.go`
 - `internal/testreport/check_test.go`
 - `internal/testreport/checks_face_test.go`
 - `internal/testreport/command.go`
