@@ -258,6 +258,26 @@ func TestGateProseCommandRefusesAMissingOperand(t *testing.T) {
 	}
 }
 
+// TestGateProseCommandRefusesASymlinkOperand: a named symbolic link, live or dangling, is
+// refused in the walk's words, so it never reads as a pass row beside a clean path.
+func TestGateProseCommandRefusesASymlinkOperand(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, ".bench/prose-exclusions", "")
+	write(t, root, "docs/notes.md", "Short prose.\n")
+	write(t, root, "docs/long.md", words(27))
+	for link, target := range map[string]string{"docs/link.md": "long.md", "docs/dangling.md": "gone.md"} {
+		if err := os.Symlink(target, filepath.Join(root, filepath.FromSlash(link))); err != nil {
+			t.Fatalf("symlink fixture: %v", err)
+		}
+		var stdout, stderr bytes.Buffer
+		code := GateProseCommand([]string{root, "--", "docs/notes.md", link}, &stdout, &stderr)
+		if out := stdout.String(); code != 1 || strings.Contains(out, "prose[") || strings.Contains(out, "pass") ||
+			!strings.Contains(out, strconv.Quote(link)+": refused subject:") {
+			t.Errorf("%s: exit = %d, stdout = %q; want exit 1 and only the refused-subject line", link, code, out)
+		}
+	}
+}
+
 // TestGateProseCommandEmptyPathList passes with no findings when the lane names no
 // Markdown, and its pass table carries no row.
 func TestGateProseCommandEmptyPathList(t *testing.T) {

@@ -135,8 +135,8 @@ func (g *Grader) GradeSubject(rel string) []string {
 // GradeNamed grades a caller-selected list of repository-relative paths through the same
 // per-subject grader the whole-tree walk composes, so the prose rule keeps one source. A
 // path absent from the composed tree is skipped: a commit that deletes a named file grades
-// what it commits, not what it once named. A symbolic link is not followed and is not
-// graded, matching the whole-tree walk's own rule for a linked directory.
+// what it commits, not what it once named. A symbolic link is not followed: the subject
+// classifier refuses it, as the whole-tree walk refuses a linked file.
 func GradeNamed(root string, rels []string) []string {
 	results, _ := GradeNamedResults(root, rels)
 	return renderStripped(results)
@@ -158,8 +158,7 @@ func GradeNamedResults(root string, rels []string) ([]NamedResult, map[string]bo
 	var out []NamedResult
 	excluded := map[string]bool{}
 	for _, rel := range rels {
-		info, err := os.Lstat(filepath.Join(root, filepath.FromSlash(rel)))
-		if err != nil || info.Mode()&os.ModeSymlink != 0 {
+		if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(rel))); err != nil {
 			continue
 		}
 		if g.Excludes(rel) {
