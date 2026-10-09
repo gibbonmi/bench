@@ -128,6 +128,11 @@ func TestAssignmentExecutionIdentity(t *testing.T) {
 			refuseAssignment(t, f, 1, name, assignArgs(t, *f.Plan.Execution, "1.md", edit))
 		})
 	}
+	for _, limit := range []string{"0", "-1"} {
+		t.Run("non-positive author limit "+limit, func(t *testing.T) {
+			refuseAssignment(t, f, 2, "usage: bench record assignment", assignArgs(t, *f.Plan.Execution, "1.md", map[string]string{"--author-limit": limit}))
+		})
+	}
 	t.Run("omitted review mode asserts the default", func(t *testing.T) {
 		unified := undispatched(t, 1, func(plan *rr.Plan) { plan.Execution.ReviewMode = "unified" })
 		refuseAssignment(t, unified, 1, "review mode", assignArgs(t, *unified.Plan.Execution, "1.md"))
@@ -195,6 +200,7 @@ func TestAssignmentReplacementHistory(t *testing.T) {
 	}{
 		"no replacement fields":       {1, "predecessor", nil},
 		"another predecessor":         {1, "predecessor", []map[string]string{replacement, {"--predecessor": "someone-else"}}},
+		"predecessor as performer":    {1, "distinct preceding author", []map[string]string{replacement, {"--performer": recordtest.Author("1.md")}}},
 		"missing stopped evidence":    {2, "usage: bench record assignment", []map[string]string{replacement, {"--stopped": drop}}},
 		"missing preserved work":      {2, "usage: bench record assignment", []map[string]string{replacement, {"--preserved": drop}}},
 		"no progress, no reassessing": {1, "reassessment", []map[string]string{replacement, {"--trigger": "no-progress"}}},
