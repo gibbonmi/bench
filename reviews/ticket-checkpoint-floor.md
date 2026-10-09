@@ -112,7 +112,7 @@ TF-C3 round 1: 2 findings, worst C1.
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:f8dea56252de2a8c725f40adc773a48c23a38390dc0a3d75ea9232b8a1615b06",
+  "plan_digest": "sha256:694688348848d84aba26624560aaa2fba5e2f88952df02ddaf6475a0944538be",
   "implementation_session": "",
   "chunks": [
     {
@@ -1644,6 +1644,21 @@ TF-C3 round 1: 2 findings, worst C1.
         ],
         "TF-C2": [
           "TF-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f8dea56252de2a8c725f40adc773a48c23a38390dc0a3d75ea9232b8a1615b06",
+      "to": "sha256:694688348848d84aba26624560aaa2fba5e2f88952df02ddaf6475a0944538be",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ],
+        "TF-C2": [
+          "TF-C2"
+        ],
+        "TF-C3": [
+          "TF-C3"
         ]
       }
     }
