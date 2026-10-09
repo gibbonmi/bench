@@ -117,6 +117,22 @@ func ReadPlan(root, tree, spec string) (Plan, error) {
 	return plan, nil
 }
 
+// ReadSpecAtCommit reads the spec and its completion plan from the tree of commit, a full
+// commit ID. Both come from that one tree, so a caller never grades the spec of one tree
+// against the plan of another.
+func ReadSpecAtCommit(root, spec, commit string) ([]byte, Plan, error) {
+	tree, err := sourceTree(root, commit)
+	if err != nil {
+		return nil, Plan{}, err
+	}
+	plan, err := ReadPlan(root, tree, spec)
+	if err != nil {
+		return nil, plan, err
+	}
+	data, err := benchgit.ReadTreeFile(root, tree, spec)
+	return data, plan, err
+}
+
 // requirementsValid grades one verification inventory. A nil owned list marks
 // the final inventory, which names no ticket in either version. A version 2
 // chunk inventory maps every obligation onto one of its own tickets, and leaves

@@ -56,8 +56,7 @@ type form struct {
 var probeFlags = []string{"--probe-outcome", "--probe-exit-code", "--probe-restore"}
 
 var forms = []form{
-	{name: "chunk", description: "write one chunk's frozen pair, digests, and acceptance rows into reviews/<slug>.md",
-		flags: []flag{{"--chunk", "<id>", true, once}, {"--base", "<commit>", false, once}, {"--tip", "<commit>", false, once}}, run: chunk},
+	chunkForm,
 	{name: "verification", description: "append one planned verification result with its computed digests",
 		flags: []flag{{"--chunk", "<id>", true, once}, {"--source", "<commit>", false, once}, {"--final", "", false, once},
 			{"--requirement", "<id>", true, once}, {"--id", "<id>", true, once}, {"--performer", "<session>", true, once},
@@ -273,24 +272,6 @@ func commit(f form, root string, values map[string]string, name string) (string,
 		return "", out, code
 	}
 	return id, "", 0
-}
-
-func chunk(f form, root, spec string, parsed usage.Result) (string, int) {
-	values := parsed.Flags
-	base, out, code := commit(f, root, values, "--base")
-	if out != "" {
-		return out, code
-	}
-	tip, out, code := commit(f, root, values, "--tip")
-	if out != "" {
-		return out, code
-	}
-	action, entry, err := reviewrecord.RecordChunk(root, spec, values["--chunk"], base, tip)
-	if err != nil {
-		return f.refuse(err.Error())
-	}
-	return row("chunk", []string{"id", "action", "base", "tip", "source_digest", "plan_digest", "rows"},
-		[]string{entry.ID, action, entry.Base, entry.Tip, entry.SourceDigest, entry.PlanDigest, strconv.Itoa(len(entry.AcceptanceRows))})
 }
 
 // row prints the one output table of a form: its name, its header, and its one row.
