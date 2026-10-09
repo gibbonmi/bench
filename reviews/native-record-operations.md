@@ -2276,7 +2276,296 @@
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:coverage at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:67c66e71b9c234d7f8acf991ad928548e4312ea8b502ab6864ec4553c570ea05",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\nok: coverage map valid — 45 row(s)\nuncited: 1 row(s) with no seam-cell citation — NR35\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check native-record-operations",
+        "exit_code": 0
+      },
+      {
+        "id": "final-record-family",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:record-family at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:f93e9c82a9689de2fb07dbfadf1490d1f7497128da0aad18d766a76b23e6f5d4",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2751,84\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,14120,168\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "record-family",
+        "command": "bench test --package ./internal/reviewrecord/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-probe-family",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:probe-family at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:c95268512f45b3f02b150293159074c66f5d31c401abb00e9dac416dfb622c63",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,pass,28792,106\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "probe-family",
+        "command": "bench test --package ./internal/probe/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-response-framing",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:response-framing at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:56ff65af3f67d421637701eb5e365f9a281c603a2f00f0a6625b5286201403cb",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,255,57\n  github.com/gibbonmi/bench/internal/responsebound/responseboundtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "response-framing",
+        "command": "bench test --package ./internal/responsebound/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-tree-framing",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:tree-framing at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:735c23818485aba788ac595620dda1192c2adb3ace8f4007f71bfc64ff0453f4",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/treetarget,pass,2294,45\n  github.com/gibbonmi/bench/internal/treetarget/kittest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/treetarget/treetargettest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "tree-framing",
+        "command": "bench test --package ./internal/treetarget/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-command-package",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:command-package at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:694b53c62655b4bbc67bf47fe8778497f1842093b77cec5d12beefab17e6c795",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20136,334\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "command-package",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final-native-complete-journey",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:native-complete-journey at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:f5ff517816c0bc93f582d7e40cc4eb7093eb71bcc27fceb651f0e10966bf611a",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,1548,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "native-complete-journey",
+        "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+        "exit_code": 0
+      },
+      {
+        "id": "final-checkpoint-repair",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:checkpoint-repair at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:0de85bc59e2819877b19501d565a6e0a66f987b06c1c882dc5dde470026bdbd9",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,12972,97\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "checkpoint-repair",
+        "command": "bench test --package ./internal/gate --run 'Test.*(Checkpoint|Review)'",
+        "exit_code": 0
+      },
+      {
+        "id": "final-guidance",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:guidance at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:2d9be9afaad1141b8f95af8a02c99c880780b4b37f1549da273d9ff2f455b200",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5776,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "guidance",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "final-root-conformance",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:root-conformance at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:8983b2d326c38cf5a4f7164466c859e2f806b29ef26105a8fb8e0459cbec4c4c",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17719,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-ordinary-census",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:ordinary-census at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:a5b15ea98e3b63f5c46e12b5cdee0ee12b38e02aa46a005fca665cbbc28451f3",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,343,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "ordinary-census",
+        "command": "bench test --check ordinary-build-census",
+        "exit_code": 0
+      },
+      {
+        "id": "final-anchors",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:anchors at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:63727e2761f2476fc7cbaf3531890f3e1071ddd665ae27a08d1afaafaa51af96",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1257,178\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "anchors",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance-package",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:conformance-package at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:f7c3658f35b3203303b6ff0d78172e4a92f02a64d3665a527c74bcff1f613fea",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,59160,1677\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/MU4O4I/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket1409856786/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/MU4O4I/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket2436521012/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+        },
+        "requirement": "conformance-package",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-record-fixtures",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:record-fixtures at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:06265efa8962af9137f256f3cf15e0ddbb43ee8ff113d31d5a1ddeb517d69dd2",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "record-fixtures",
+        "command": "bench test --package ./internal/reviewrecord/recordtest",
+        "exit_code": 0
+      },
+      {
+        "id": "final-gate-package",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:gate-package at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:0c5cb363788a581f4ca33d2f230510921318695410a8b4074a0b43d94fc23ac8",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,23749,430\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "gate-package",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-refusal-routes",
+        "performer": "claude:nro-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "330666568b0090c2ff624769c8abe16f2f09a80d",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:nro-orchestrator-20261009:final:refusal-routes at ae5c5228722725c37e611fb51fe15da794522e70",
+          "digest": "sha256:c45ccdbc44ad9a026f297379750eb644c23cbf68c7a784f81f3828fe302c72a6",
+          "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,ae5c5228722725c37e611fb51fe15da794522e70,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,17\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "refusal-routes",
+        "command": "bench test --package ./internal/refusalroute",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -2535,3 +2824,9 @@ NR-C3 round 2 (Standards): 0 code findings; S13 evidence-only, closed here; S9 t
 NR-C3 round 2 (Spec): 0 findings. P6 accepts the kept guidance sentence. The folds, the repair assignment occurrence, and the 158-entry fence count are confirmed.
 
 NR-C3 round 2 (Coverage): 0 blocking findings. Three probes at sites distinct from the author's each bit and restored, and the moved size tests keep all four functions. C2 is `no-op` as decided above.
+
+## Final reconciliation
+
+All three chunk checkpoints are green: NR-C1 at c311ec18, NR-C2 at 4dd282e4, and NR-C3 at 2790579d. The orchestrator folded `main` at 23c59775 into the source at ae5c5228, and the merge gate was green. The 16 final verification commands ran at ae5c5228, each with exit 0, and the orchestrator recorded them as integration verification. The 45 acceptance rows hold their citations; NR35 is review-owned and its comparison is in the NR-C2 round 1 Spec result. No finding is open.
+
+Three orchestrator decisions stay open to a reviewer veto after the landing. The completion ordering note and the copied-flag sources live in the root record help rows. An existing test pins one grammar line per form help. Every biting `bench probe` answer now spills, because the `probe_execution` row crosses the 10-line bound. The test accessor `Find` answers only a first reserved frame that is `spilled`, and no test pins that on a two-frame response.
