@@ -1,7 +1,7 @@
 # Sync the adoption record once per transaction step
 
 Blocked by: none
-Writes: internal/adopt/transaction/transaction.go, internal/adopt/transaction/publication.go, internal/adopt/transaction/transaction_test.go
+Writes: internal/adopt/transaction/transaction.go, internal/adopt/transaction/publication.go, internal/adopt/transaction/transaction_test.go, internal/adopt/transaction/batch_test.go (new)
 Covers: none
 
 ## What to build
