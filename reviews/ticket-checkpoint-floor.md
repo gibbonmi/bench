@@ -20,6 +20,8 @@ The Spec axis reaffirmed the correction of P3. TF-C3 closes with repair cycle 1 
 
 Chunk TF-C4 uses repair cycle 1 of 2 for C1 and C2 through a fresh repair session for ticket 04. Before review, the ticket 04 author folded four reported copies inside a widened fence, so that work used no repair cycle.
 
+TF-C4 round 2 confirmed the folds of C1 and C2 and found C3. Chunk TF-C4 uses repair cycle 2 of 2 for C3 through a fresh repair session for ticket 04. No reviewer extension exists.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -65,6 +67,8 @@ TF-C4 round 1: 0 findings. The four pre-review folds hold.
 
 Advice: S1, the projection and `strayTestNames` treat a review-owned cell differently, because rows TF51 and TF56 require both behaviors. S2, `ReadSpecAtCommit` and `atSource` both compose a commit, its tree, and its plan from the same owners. S3, `Plan.Chunk` wraps `findChunk`, and five callers outside the ticket 04 fence still call `findChunk`. S4, a test spells the opted-in map header that `internal/coverage` owns.
 
+TF-C4 round 2: 0 findings. Advice: S5, two test helpers share a three-line setup that predates the repair.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
@@ -94,6 +98,8 @@ TF-C3 round 2: 1 finding, worst P3.
 - P3 (auto-fix, confidence 8): ticket 03 states the `./cmd/bench` condition without the floor-package clause that the spec now holds.
 
 TF-C4 round 1: 0 findings. TF47 to TF59 and TF67 hold.
+
+TF-C4 round 2: 0 findings. TF54 and TF55 hold with two chunks.
 
 ## Coverage
 
@@ -132,6 +138,10 @@ TF-C4 round 1: 2 findings, worst C2.
 
 - C1 (auto-fix, confidence 9): no test shows that a refused `bench record completion` writes nothing. A probe that writes before the refusal stays green.
 - C2 (auto-fix, confidence 9): no completion test holds a `planned` row in a later chunk. A probe that reads only the first chunk in `Plan.Rows` stays green.
+
+TF-C4 round 2: 1 finding, worst C3.
+
+- C3 (auto-fix, confidence 5): no completion test runs a `--source` commit behind HEAD, so a refusal that reads HEAD stays green. Ticket 04 states that completion refuses at its source.
 
 ```bench-review-record
 {
@@ -2324,6 +2334,74 @@ TF-C4 round 1: 2 findings, worst C2.
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c4-standards-r2",
+          "performer": "claude:ft349_c4_standards_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "c3d484a5e37e3ef792df74ec9b635d5300a3957d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c4_standards_r2",
+            "digest": "sha256:26f70d9d2c89e9144b9cce863988c1d8395ed52e25543d15801cfc70cc298b82",
+            "excerpt": "Standards axis TF-C4 round 2 (fable/medium), repair delta a457e647..1166f604. No second fixture harness; refusal expectations cite coverage.CitationForm; helper logic spelled once; comments timeless. S5 the completing and freeze helpers share an inherited three-line prelude: no-op. 0 findings.\n"
+          },
+          "axis": "Standards",
+          "base": "41df830c693ac196a88d66010379bf721608bbf4",
+          "tip": "1166f604b5ead078de151eff772e49a9d5e22469",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards-r1"
+          ]
+        },
+        {
+          "id": "c4-spec-r2",
+          "performer": "claude:ft349_c4_spec_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "c3d484a5e37e3ef792df74ec9b635d5300a3957d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c4_spec_r2",
+            "digest": "sha256:8572bf15b118848b3674bb1316e2edc14f7c8a94f9e4728c1bd2e5a2b587d098",
+            "excerpt": "Spec axis TF-C4 round 2 (fable/medium), repair delta a457e647..1166f604. TF54 and TF55 held with the two-chunk fixture; the new tests serve ticket 04 line 11; every TF-C4 seam cell names an existing test; delta inside ticket 04 Writes. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "41df830c693ac196a88d66010379bf721608bbf4",
+          "tip": "1166f604b5ead078de151eff772e49a9d5e22469",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-r1"
+          ]
+        },
+        {
+          "id": "c4-coverage-r2",
+          "performer": "claude:ft349_c4_coverage_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "c3d484a5e37e3ef792df74ec9b635d5300a3957d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c4_coverage_r2",
+            "digest": "sha256:5e208ffeba48af4c3d37facaeba029a4bc318cc801750c755a517bbc4a485fb7",
+            "excerpt": "Coverage axis TF-C4 round 2 (fable/medium), repair delta a457e647..1166f604. C1 and C2 held (planned_cell_test.go:62-71, :56-60). 1 finding.\nC3 completion.go:18 probe source -> \"HEAD\" in the refusePlanned call silent over ^TestRecordCompletion, restored yes; no completion test runs --source behind HEAD. ask-user. conf 5.\nbench test --package ./internal/reviewrecord/... pass (recordcmd 7.6s, reviewrecord 1.7s).\n"
+          },
+          "axis": "Coverage",
+          "base": "41df830c693ac196a88d66010379bf721608bbf4",
+          "tip": "1166f604b5ead078de151eff772e49a9d5e22469",
+          "finding_ids": [
+            "C3"
+          ],
+          "supersedes": [
+            "c4-coverage-r1"
+          ]
         }
       ]
     }
