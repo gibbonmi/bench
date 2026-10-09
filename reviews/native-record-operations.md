@@ -484,6 +484,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "nr-c1-r2-standards",
+          "performer": "claude:nro-c1-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c1-r2-standards",
+            "digest": "sha256:45e5a03e5ff515ae772388c32e3b4c3db748b552596c07b23874ac25d1b34d79",
+            "excerpt": "## Standards (NR-C1 round 2, fable/medium, evidence sha256:b3f8c6cd2c3a1b0ac72f297841357eda49a5572f8e1908f187b6826ff71b81de, pair b925d1c1..43ef1f33)\n\nBinding current (check-current: current=true, tip 43ef1f33). Read the repair delta (git diff 586d06d1 01d9e0a1, 6 added lines) and the record delta (git diff 3116927a 43ef1f33 -- reviews/native-record-operations.md).\n\nFindings: none. No ID S4 issued.\n\nAdvice: the record's nr-c1-rep1-whole-plan-omission entry carries the same native_ref excerpt twice, once at the verification level and once under probe. The round 1 entry has the same shape, so this is the verb's record form, not authored duplication.\n\nCount 0; worst finding none; evidence cursors fetched: 1 (preflight check-current).\n\nExamined and clean:\n- C1 (internal/reviewrecord/recordcmd/assignment_test.go:203): one table row, reuses the existing replacement map and recordtest.Author (recordtest/fixture.go:139); the want string \"distinct preceding author\" is an independent substring literal in the style of the neighbouring rows, and the message is owned once at delegated.go:177.\n- C2 (assignment_test.go:131-135): loop over literals \"0\", \"-1\", expectation \"usage: bench record assignment\" matches the existing usage rows at 204-205; no new helper, no second fixture derivation.\n- Comment prose: the delta adds no comments.\n- One-source rule: no duplicated knowledge introduced.\n- Record prose (file lines 516-544): Repair state names C1, C2 as the repair cycle and S1, S2, S3, P1, C3 as no-op; each section gives one disposition per finding, seven findings covered. The record delta itself changes only the JSON block.\n"
+          },
+          "axis": "Standards",
+          "base": "b925d1c1fd675b0cc299543ff3ba4a60a4ddf978",
+          "tip": "01d9e0a1edc65351b83480272baa9584e301757f",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c1-r1-standards"
+          ]
+        },
+        {
+          "id": "nr-c1-r2-spec",
+          "performer": "claude:nro-c1-r2-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c1-r2-spec",
+            "digest": "sha256:e0a7432bd59c3336f2143ed10aab8040e8958847ed240636f63610d23ccdd6be",
+            "excerpt": "## Spec (NR-C1 round 2, fable/medium, evidence sha256:b3f8c6cd2c3a1b0ac72f297841357eda49a5572f8e1908f187b6826ff71b81de, pair b925d1c1..43ef1f33)\n\nBinding: check-current returned current=true at tip 43ef1f33, dirty=false.\n\nFindings: none blocking.\n\n- P2-1 — pass — confidence 85 — spec.md:130 \"A nonempty history requires a validated replacement whose predecessor is its last session.\" — object: assignment_test.go line 203 (\"predecessor as performer\" case, exit 1, message \"distinct preceding author\") pins C1. The spec never spells \"performer differs from predecessor\" verbatim; the refusal follows from \"replacement\" and \"predecessor is its last session\".\n- P2-2 — pass — confidence 95 — spec.md:117 \"--author-limit <positive>\" and spec.md:542 \"Empty, duplicate, controlled, unknown, and repeated CLI operands retain the existing usage and safe-output contracts.\" — object: assignment_test.go lines 131-135 (\"0\", \"-1\" refuse with exit 2 and \"usage: bench record assignment\") pins C2.\n- P2-3 — pass — confidence 95 — spec.md:130 — object: appended occurrence claude:nro_t1_rep1 in the plan at spec.md:388: predecessor claude:nro_t1_r1 is the prior last session, trigger user-directed, stopped and preserved present, no reassessment, source 3116927a.\n\nScope: git show --stat 01d9e0a1 touches only internal/reviewrecord/recordcmd/assignment_test.go (+6). git show --stat 937e09c1 touches only specs/native-record-operations/spec.md (1 line, the plan payload; surrounding bytes unchanged per spec.md:134). No creep.\n\nAdvice: none.\n\nCount 3 (all pass), worst finding P2-1 (confidence 85, non-blocking). Evidence cursors fetched: preflight evidence sha256:b3f8c6cd, git diff 586d06d1 01d9e0a1, git diff 3116927a 937e09c1, git log b925d1c1..43ef1f33, spec.md:80-135 and grep hits at 117, 130, 501-502, 542. Confirmed: C1 and C2 folds match the quoted spec lines, the rep1 occurrence is a valid replacement under \"Assignment contract\", and the repair delta holds exactly one test file.\n"
+          },
+          "axis": "Spec",
+          "base": "b925d1c1fd675b0cc299543ff3ba4a60a4ddf978",
+          "tip": "01d9e0a1edc65351b83480272baa9584e301757f",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c1-r1-spec"
+          ]
+        },
+        {
+          "id": "nr-c1-r2-coverage",
+          "performer": "claude:nro-c1-r2-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c1-r2-coverage",
+            "digest": "sha256:86ac4fbfe081dd78186a157f8e47ec54c11ebda8c8f077c5ff318f10729ace49",
+            "excerpt": "## Coverage (NR-C1 round 2, fable/medium, evidence sha256:b3f8c6cd2c3a1b0ac72f297841357eda49a5572f8e1908f187b6826ff71b81de, pair b925d1c1..43ef1f33)\n\nC4 — confirmed, confidence 90 — Input: --predecessor equals the previous author's session and --performer is that same author (assignment_test.go:203, \"predecessor as performer\"). Expected break: a same-session replacement is accepted (exit 0). Test exists: TestAssignmentReplacementHistory/predecessor_as_performer.\n\nC5 — confirmed, confidence 90 — Input: --author-limit 0 and --author-limit -1 (assignment_test.go:131-135). Expected break: a non-positive limit passes usage and reaches the plan comparison (exit 1 instead of usage exit 2). Test exists: TestAssignmentExecutionIdentity/non-positive_author_limit_{0,-1}.\n\nC6 — no finding, confidence 85 — The C2 expectation \"usage: bench record assignment\" (assignment_test.go:133) is a hand-written literal; nothing in the test reads the usage generator. It is the same literal the pre-existing \"missing stopped evidence\" rows use (assignment_test.go:204), so it is independent of production text.\n\nAdvice: none. Both folds are red-capable at a site/kind distinct from the author's probes.\n\nCount: 2 confirmed folds, 0 defects. Worst finding: none.\n\nEvidence cursors: bench preflight evidence sha256:b3f8c6cd --check-current → current true, tip 43ef1f33, dirty false. Repair delta git diff 586d06d1 01d9e0a1 read in full (6 added lines, one test file).\n\nProbes (serial, each restored = yes):\n1. delegated.go swap guard → item.Predecessor != item.Session: verdict invalid (unused previous, compile refused). Proves nothing.\n2. delegated.go swap guard → item.Predecessor != previous.Session || item.Predecessor != item.Session: verdict bit, 4 failures incl. predecessor_as_performer (exit 0, want refusal).\n3. recordcmd/assignment.go swap limit > 0 → limit > -2: verdict bit, 2 failures (non-positive_author_limit_0, _-1, exit 1 want 2).\n\nConfirmed: C1 and C2 each have a test that turns red under an independent mutation. git status --short clean at end.\n"
+          },
+          "axis": "Coverage",
+          "base": "b925d1c1fd675b0cc299543ff3ba4a60a4ddf978",
+          "tip": "01d9e0a1edc65351b83480272baa9584e301757f",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c1-r1-coverage"
+          ]
         }
       ]
     }
@@ -515,6 +581,8 @@ Chunk NR-C1 round 1 ran three fable/medium axes in parallel at `4a3e8d02`. Only 
 
 Chunk NR-C1 uses repair cycle 1 of 2 for C1 and C2 through a fresh repair session for ticket 1. C1 and C2 are the one hardening cycle of NR-C1, because the 15 acceptance rows proved in round 1. S1, S2, S3, P1, and C3 are `no-op`. No reviewer extension exists. Under `--auto-approve`, the reviewer approved repair rounds past the allowance in advance.
 
+NR-C1 round 2 confirmed the folds of C1 and C2 with 0 findings on every axis at `43ef1f33`. NR-C1 closes with repair cycle 1 of 2 used and no open finding.
+
 ## Standards
 
 NR-C1 round 1: 3 findings, worst S1. Raw count 3; repair targets 0.
@@ -525,6 +593,8 @@ NR-C1 round 1: 3 findings, worst S1. Raw count 3; repair targets 0.
 
 Advice: the CLI journey re-asserts two facts that `assignment_test.go` pins; `RecordAssignment` prints an empty head when `ResolveCommit` errs.
 
+NR-C1 round 2: 0 findings. The folds of C1 and C2 add no helper, no fixture derivation, and no comment. Advice: the verification record repeats one native reference under its probe, which is the verb's form.
+
 ## Spec
 
 NR-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0. Rows NR1-NR14 and NR36 met.
@@ -532,6 +602,8 @@ NR-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0. Rows NR1-NR14
 - P1 (no-op, confidence 7): the second preimage check has no red-capable test. The spec forbids the injected port that could reach it, and it marks the concurrent writer as Won't handle. Met by inspection.
 
 Advice: the HEAD re-resolution before the write falls under the Won't-handle line. `write.go` gained `payload` and `splice` as a one-source fold. The chunk table Tests column keeps its planning wording.
+
+NR-C1 round 2: 0 findings. The C1 case matches "A nonempty history requires a validated replacement whose predecessor is its last session." The C2 cases match the `<positive>` grammar and the usage contract of the edge inventory. The repair assignment occurrence is a valid replacement, and the repair delta holds one test file.
 
 ## Coverage
 
@@ -542,3 +614,5 @@ NR-C1 round 1: 3 findings, worst C1. Raw count 3; repair targets 2.
 - C3 (no-op, confidence 6): an unplanned `--ticket` is refused by the candidate validator before replacement, so the `!planned` branch changes only the message.
 
 Advice: the second preimage loop has no witness by design.
+
+NR-C1 round 2: 0 findings. An inverted same-session clause in `delegated.go` and a `limit > -2` swap in `recordcmd/assignment.go` each bit and restored. The C2 expectation is an independent literal.
