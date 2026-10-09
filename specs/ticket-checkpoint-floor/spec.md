@@ -155,7 +155,7 @@ The build preflight composes each ticket's floor from three parts:
 
 - the element `root-conformance`, when the gate predicate applies to the graded root;
 - each package pattern from the testreport floor;
-- the element `./cmd/bench`, when an entry is in a bound command package or the floor's embed flag is set.
+- the element `./cmd/bench`, when an entry or a floor package is in a bound command package, or the floor's embed flag is set.
 
 The gatherer keeps the parsed completion plan beside its digest. For each requirement, it parses the command with the shell parser in `internal/shellcommand`.
 A command satisfies an element only when the stream is lexed, holds one simple command, and its words start with `bench test`. The remaining words then go through `testreport.Prepare`.
@@ -168,7 +168,7 @@ The decision applies these satisfaction rules:
 - The target `./...` satisfies every package element, the root element `./.` included.
 - A command that runs no test, such as the check inventory form or a fixture listing, satisfies nothing.
 
-A version 1 plan grades the union of a chunk's ticket floors against that chunk's requirements. A delegated version 2 plan grades each ticket's floor against the chunk requirements that name that ticket.
+A ticket that no plan chunk names is graded against an empty requirement set. A version 1 plan grades the union of a chunk's ticket floors against that chunk's requirements. A delegated version 2 plan grades each ticket's floor against the chunk requirements that name that ticket.
 
 `Decide` adds the row `check-floor` directly after `completion-plan`, in build mode and in review mode. The row shares the ticket-directory gate of the other ticket rows. It answers not-applicable when the completion plan is invalid.
 Its red detail lists `<ticket>: <element> (add <command>)` for each unsatisfied element, in ticket order. The command is `bench test --check root-conformance` or `bench test --package <pattern>`. A package-index failure reds the row with the loader message.
@@ -208,7 +208,7 @@ Each chunk is one review checkpoint. TF-C1 and TF-C2 create seams that TF-C3 con
 | --- | --- | --- | --- | --- |
 | TF-C1 / `01-name-the-root-conformance-check.md` | One exact root conformance command | TF1, TF2, TF3, TF4, TF5 | Completion-plan checks | no |
 | TF-C2 / `02-derive-the-ticket-check-floor.md` | The floor derives from the Writes line | TF7, TF8, TF9, TF10, TF11, TF12, TF13, TF14, TF15, TF19, TF20, TF21, TF22, TF71 | Completion-plan checks | yes |
-| TF-C3 / `03-grade-the-plan-against-the-floor.md` | The preflight grades the plan | TF6, TF16, TF17, TF18, TF23 to TF46, TF66, TF68, TF69, TF70, TF72 | Completion-plan checks | yes |
+| TF-C3 / `03-grade-the-plan-against-the-floor.md` | The preflight grades the plan | TF6, TF16, TF17, TF18, TF23 to TF46, TF66, TF68, TF69, TF70, TF72, TF73, TF74 | Completion-plan checks | yes |
 | TF-C4 / `04-refuse-a-planned-cell-at-the-freeze.md` | The chunk freeze refuses a planned cell | TF47 to TF59, TF67 | Completion-plan checks | no |
 | TF-C5 / `05-state-the-floor-in-the-guidance.md` | Guidance states the floor | TF60 to TF65 | Completion-plan checks | no |
 
@@ -316,6 +316,8 @@ Plan the evidence now, and do not implement the feature to obtain a red. Each ti
 | TF70 | 21 | The rendered `check-floor` red holds no raw control byte inside its row | `internal/preflight/check_floor_command_test.go` (`TestCheckFloorDetailRendersEscaped`) | A detail written past the renderer can split its own row. |
 | TF71 | 13 | An absent `(new)` embed file adds no package and no error | `internal/testreport/floor_test.go` (`TestWritesFloorSkipsAnUnbornEmbedFile`) | The `--changed` refusal for an absent path would red a plan before the asset exists. |
 | TF72 | 29 | `bench test --checks` and `bench test --check root-conformance --fixtures` satisfy nothing | `internal/preflight/check_floor_test.go` (`TestCheckFloorRejectsANonRunningForm`) | A rule that reads only the form and the target accepts a command that runs no test. |
+| TF73 | 32 | A ticket file that no plan chunk names makes `check-floor` red for each element of its floor | planned TestCheckFloorRedsAnUnplannedTicket in internal/preflight/check_floor_test.go | A gather that skips an unplanned ticket leaves its whole floor ungraded under a green row. |
+| TF74 | 14 | A directory entry above a bound command package adds the element `./cmd/bench` | planned TestCheckFloorAddsCmdBenchForADirectoryAboveACommandPackage in internal/preflight/check_floor_test.go | A rule that reads only the entry path misses a command package that the directory entry writes. |
 
 Not covered: story 54 — FT89 owns the decision about the per-return gate run, and this spec writes no surface that decides it.
 
