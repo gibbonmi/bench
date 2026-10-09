@@ -1,7 +1,7 @@
 # Remove released adoption lock files
 
 Blocked by: none
-Writes: internal/adopt/transaction/lock.go, internal/adopt/transaction/lock_test.go (new)
+Writes: internal/adopt/transaction/lock.go, internal/adopt/transaction/lock_test.go (new), docs/known-issues.md
 Covers: none
 
 ## What to build

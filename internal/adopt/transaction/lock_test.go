@@ -3,6 +3,7 @@ package transaction
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -10,6 +11,8 @@ import (
 	"sync/atomic"
 	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func TestReleasedLeaseLeavesNoLockFile(t *testing.T) {
@@ -89,6 +92,57 @@ func TestReleasedLockFileKeepsExclusion(t *testing.T) {
 	}
 	if overlaps.Load() != 0 || len(failed) != 0 || acquired.Load() == 0 {
 		t.Fatalf("concurrent writers: %d overlapping holds, %d acquisitions, failures: %v", overlaps.Load(), acquired.Load(), errors.Join(failed...))
+	}
+}
+
+func TestCloseRemovesOnlyTheHeldLockFile(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		replace bool
+	}{
+		{name: "removed"},
+		{name: "replaced", replace: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			lease, err := lockIn(filepath.Join(t.TempDir(), "locks"), []string{filepath.Join(t.TempDir(), "managed")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			path := lease.files[0].Name()
+			// An outside actor removes the held lock file, and another writer can then create a new one.
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			if tc.replace {
+				if err := os.WriteFile(path, nil, 0o600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := lease.Close(); err != nil {
+				t.Fatalf("close after the lock file was %s = %v, want nil", tc.name, err)
+			}
+			if _, err := os.Lstat(path); tc.replace && err != nil {
+				t.Fatalf("close removed the replacement lock file: %v", err)
+			}
+		})
+	}
+}
+
+func TestCloseReportsAnUnreadableLockPath(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "locks")
+	lease, err := lockIn(dir, []string{filepath.Join(t.TempDir(), "managed")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
+	if err := os.Chmod(dir, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(lease.files[0].Name()); err == nil {
+		capability.Capability(t, capability.Privilege, "lock directory without search permission remains searchable by this user")
+	}
+	if err := lease.Close(); !errors.Is(err, fs.ErrPermission) {
+		t.Fatalf("close on an unsearchable lock directory = %v, want the permission error", err)
 	}
 }
 

@@ -82,12 +82,9 @@ func acquire(path string) (*os.File, error) {
 			err = syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
 		}
 		if err == nil {
-			current, statErr := os.Lstat(path)
-			if statErr == nil && os.SameFile(held, current) {
+			var named bool
+			if named, err = names(path, held); named {
 				return f, nil
-			}
-			if statErr != nil && !os.IsNotExist(statErr) {
-				err = statErr
 			}
 		}
 		_ = f.Close()
@@ -95,6 +92,15 @@ func acquire(path string) (*os.File, error) {
 			return nil, err
 		}
 	}
+}
+
+// names reports whether path still names the held lock file. A missing path names no file.
+func names(path string, held os.FileInfo) (bool, error) {
+	current, statErr := os.Lstat(path)
+	if statErr != nil && !os.IsNotExist(statErr) {
+		return false, statErr
+	}
+	return statErr == nil && os.SameFile(held, current), nil
 }
 
 func canonicalDestination(path string) (string, error) {
@@ -145,11 +151,25 @@ func resolveDirectory(path string) (string, error) {
 func (l *Lease) Close() error {
 	var failures []error
 	for i := len(l.files) - 1; i >= 0; i-- {
-		failures = append(failures, os.Remove(l.files[i].Name()), l.files[i].Close())
+		failures = append(failures, removeHeld(l.files[i]), l.files[i].Close())
 	}
 	l.files = nil
 	l.keys = nil
 	return errors.Join(failures...)
+}
+
+// removeHeld unlinks the held lock file f only while its path still names f. A path that an
+// outside actor removed is already released, and a replacement belongs to another writer.
+func removeHeld(f *os.File) error {
+	held, err := f.Stat()
+	if err != nil {
+		return err
+	}
+	named, err := names(f.Name(), held)
+	if !named {
+		return err
+	}
+	return os.Remove(f.Name())
 }
 
 func destinationKey(path string) (string, error) {
