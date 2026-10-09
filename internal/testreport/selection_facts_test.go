@@ -23,6 +23,7 @@ func TestSelectionFactsNameTheRun(t *testing.T) {
 		{"prose check", []string{"--check", proseCheckName}, CheckForm, proseCheckName, AllTests},
 		{"package", []string{"--package", "./internal/..."}, PackageForm, "./internal/...", AllTests},
 		{"package and run", []string{"--package", "./...", "--run", "^TestClamp$"}, PackageForm, "./...", "^TestClamp$"},
+		{"repeated package", []string{"--package", "./a", "--package", "./b/..."}, PackageForm, "./a ./b/...", AllTests},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request, line, code := Prepare(root, tc.args)
@@ -34,6 +35,20 @@ func TestSelectionFactsNameTheRun(t *testing.T) {
 					request.Form(), request.Target(), request.Run(), tc.form, tc.target, tc.run)
 			}
 		})
+	}
+}
+
+// FTPKG2: a repeated --package keeps every exclusion of one --package. The refusal
+// answers from the grammar, before any selection or Go child.
+func TestRepeatedPackageKeepsTheSelectionExclusions(t *testing.T) {
+	for _, args := range [][]string{
+		{"--package", "./a", "--package", "./b", "--changed"},
+		{"--package", "./a", "--package", "./b", "./c"},
+		{"--check", "line-routing", "--package", "./a", "--package", "./b"},
+	} {
+		if output, code := Command(t.TempDir(), args); code != 2 || !strings.HasPrefix(output, "usage: bench test") {
+			t.Errorf("Command(%v) = %d, %q; want usage exit 2", args, code, output)
+		}
 	}
 }
 
@@ -140,7 +155,7 @@ func TestProbeNotesDeriveTheirTokens(t *testing.T) {
 	if lines := strings.Count(notes, "\n  "); lines != 4 {
 		t.Fatalf("notes hold %d facts, want 4:\n%s", lines, notes)
 	}
-	for _, token := range []string{PackageExpressionNote, proseCheckName, gate.SystemPhaseName, usage.WorktreeBuild, HandProbeRoute} {
+	for _, token := range []string{packageValueRule, proseCheckName, gate.SystemPhaseName, usage.WorktreeBuild, HandProbeRoute} {
 		if !strings.Contains(notes, token) {
 			t.Fatalf("notes = %q, want the runner's own %q", notes, token)
 		}
@@ -148,12 +163,13 @@ func TestProbeNotesDeriveTheirTokens(t *testing.T) {
 }
 
 // TestHelpStatesThePackageExpressionRule grades that bench test --help names the
-// one-expression rule before the check inventory. Two drain authors passed a
-// space-separated package list and read only a missing-directory failure.
+// one-expression rule and the repeated flag before the check inventory. Two drain authors
+// passed a space-separated package list and read only a missing-directory failure. The
+// repeat clause is spelled here apart from the producer, so a note that drops it reds.
 func TestHelpStatesThePackageExpressionRule(t *testing.T) {
 	output, code := Command(t.TempDir(), []string{"--help"})
 	want := "\nnotes:\n  " + PackageExpressionNote + "\nchecks:\n"
-	if code != 0 || !strings.Contains(output, want) {
-		t.Fatalf("help = (%q, %d), want the package note %q before the inventory", output, code, want)
+	if code != 0 || !strings.Contains(output, want) || !strings.Contains(PackageExpressionNote, "repeat --package to run several expressions in one call") {
+		t.Fatalf("help = (%q, %d), want the package note %q with the repeated flag before the inventory", output, code, want)
 	}
 }

@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Repeated package flag
+
+- Changed `bench test` so that `--package` can occur more than one time. `bench test --package ./internal/a --package ./internal/b` runs both package expressions in one focused run and prints one report. A repeated `--package` with `--changed`, a positional package, or `--check` is still a usage error. A completion-plan command with a repeated `--package` satisfies the check floor of each package that it names.
+
 ### Verb output fixes
 
 - Changed `bench gate-prose` so that a path on the prose exclusion list gets the verdict `excluded`, not `pass`. A pass row now means that the gate graded the path.

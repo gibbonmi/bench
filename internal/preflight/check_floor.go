@@ -163,7 +163,8 @@ func floorRedDetail(omitted []string) string {
 // satisfies applies the satisfaction rules to one selection. A form that runs no test
 // satisfies nothing. Only the root-conformance check satisfies its element. A package
 // element needs an unfiltered package run that is not `--changed`, whose target equals
-// the element or covers it at a segment boundary.
+// the element or covers it at a segment boundary. A run of several package expressions
+// satisfies each element that one of its expressions satisfies.
 func satisfies(selection testreport.Request, element string) bool {
 	if !selection.Runs() {
 		return false
@@ -174,8 +175,15 @@ func satisfies(selection testreport.Request, element string) bool {
 	if selection.Form() != testreport.PackageForm || selection.Run() != testreport.AllTests || selection.Changed() {
 		return false
 	}
-	// The parent `.` of `./...` covers every `./` element, the root element `./.` included.
-	target := selection.Target()
+	return slices.ContainsFunc(selection.Packages(), func(target string) bool {
+		return packageCovers(target, element)
+	})
+}
+
+// packageCovers answers whether one package expression equals element or covers it at a
+// segment boundary. The parent `.` of `./...` covers every `./` element, the root element
+// `./.` included.
+func packageCovers(target, element string) bool {
 	parent, recursive := strings.CutSuffix(target, "/...")
 	switch {
 	case target == element:
