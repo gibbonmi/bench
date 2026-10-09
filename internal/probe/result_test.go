@@ -125,6 +125,11 @@ func TestProbeResultEnvelopeRefusals(t *testing.T) {
 		"unterminated tree row":  strings.TrimSuffix(lead, "\n"),
 		"spill frame in suffix":  declared(t, out, trailing+len("spill-failed{reason=r}\n")) + "spill-failed{reason=r}\n",
 		"noncanonical row space": strings.Replace(out, "  bit,", "   bit,", 1),
+		// The two rows below decode cleanly under the strict decoder, so only the re-render
+		// check refuses them.
+		"reordered execution fields": strings.Replace(strings.Replace(out, "{schema,command_exit_code,focused_exit_code,", "{schema,focused_exit_code,command_exit_code,", 1),
+			resultSchema+",0,1,", resultSchema+",1,0,", 1),
+		"quoted bare cell": strings.Replace(out, "  bit,", "  \"bit\",", 1),
 	} {
 		if result, err := ReadResult([]byte(data)); err == nil {
 			t.Errorf("%s: ReadResult = %+v, want a refusal", name, result)

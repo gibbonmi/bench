@@ -256,21 +256,13 @@ target operand.
 Before the mutation, the verb runs the same selection once over the unmutated
 tree. A baseline that does not pass ends the probe before any write. The verdict
 is then `invalid`, the cause is `baseline-` with the baseline kind, and the
-`restored` cell reads `untouched`. A
-`selection[1]{form,target,run,baseline,ran}` row follows the verdict row. Its
+`restored` cell reads `untouched`.
+
+A `selection[1]{form,target,run,baseline,ran}` row follows the verdict row. Its
 cells name the form, the target, the `-run` pattern, the baseline outcome, and
-the count of the tests that ran. The help names the `--package` and `--check`
-forms in a `notes:` block.
-
-A `probe_execution` row follows the selection row. Its cells give the result
-schema, the exit of the probe command, and the normalized exit of the mutated
-run. The mutated-run exit is `null` when the mutated run did not start. The
-last cell gives the byte count of everything after the row.
-
-`bench record verification --probe-result <file>` imports the outcome, the
-mutated-run exit, and the restore result from one complete probe answer. The
-file can be the complete stdout or the complete spill body. The command keeps
-the exact file bytes as the excerpt.
+the count of the tests that ran. A `probe_execution` row follows with the result
+schema, the command exit, the mutated-run exit or `null`, and the byte count after it.
+The help names the `--package` and `--check` forms in a `notes:` block.
 
 `bench gate-prose <root> --staged` grades the staged Markdown from the index and
 takes no path list. The subject bytes and the exclusion policy come from the

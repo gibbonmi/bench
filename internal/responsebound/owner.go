@@ -299,18 +299,28 @@ func ProjectionLine(line string) (Projection, bool, error) {
 	return Projection{}, false, nil
 }
 
+// First finds the first physical line of data that opens a reserved frame. It answers the
+// frame, its one-based line number, and the error of a malformed frame. Line 0 means that
+// no line opens a frame.
+func First(data []byte) (Projection, int, error) {
+	for number, line := range strings.SplitAfter(string(data), "\n") {
+		if projection, ok, err := ProjectionLine(line); ok {
+			return projection, number + 1, err
+		}
+	}
+	return Projection{}, 0, nil
+}
+
 // RequireComplete refuses data that holds a reserved frame on any physical line, so a
 // caller never reads a projection as the complete output. It never opens a path that a
 // frame names, because the selected bytes are the only evidence the caller supplied.
 func RequireComplete(data []byte) error {
-	for number, line := range strings.SplitAfter(string(data), "\n") {
-		projection, ok, err := ProjectionLine(line)
-		if err != nil {
-			return fmt.Errorf("%w: line %d: %v", ErrIncomplete, number+1, err)
-		}
-		if ok {
-			return fmt.Errorf("%w: line %d is a %s frame", ErrIncomplete, number+1, projection.Kind)
-		}
+	projection, line, err := First(data)
+	switch {
+	case line == 0:
+		return nil
+	case err != nil:
+		return fmt.Errorf("%w: line %d: %v", ErrIncomplete, line, err)
 	}
-	return nil
+	return fmt.Errorf("%w: line %d is a %s frame", ErrIncomplete, line, projection.Kind)
 }

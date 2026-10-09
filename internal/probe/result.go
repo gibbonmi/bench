@@ -104,19 +104,21 @@ func decodeEnvelope(head []byte) (envelope, error) {
 		}
 		rows[i] = cellReader{table: table.name, row: row}
 	}
+	// Each index is the cell's position in envelope.rows, so each cell reads the field that
+	// it renders under.
 	verdict, selection, execution := &rows[0], &rows[1], &rows[2]
 	e := envelope{
-		cells: verdictCells{verdict: verdict.text("verdict"), cause: verdict.text("cause"), failed: verdict.integer("failed_tests"),
-			restored: verdict.text("restored"), baseline: selection.text("baseline"), ran: selection.integer("ran")},
-		subject: verdict.text("subject"), mutation: verdict.text("mutation"),
-		form: selection.text("form"), target: selection.text("target"), run: selection.text("run"),
-		command: execution.integer("command_exit_code"), trailing: execution.integer("trailing_bytes"),
+		cells: verdictCells{verdict: verdict.text(probeFields[0]), cause: verdict.text(probeFields[3]), failed: verdict.integer(probeFields[4]),
+			restored: verdict.text(probeFields[5]), baseline: selection.text(selectionFields[3]), ran: selection.integer(selectionFields[4])},
+		subject: verdict.text(probeFields[1]), mutation: verdict.text(probeFields[2]),
+		form: selection.text(selectionFields[0]), target: selection.text(selectionFields[1]), run: selection.text(selectionFields[2]),
+		command: execution.integer(executionFields[1]), trailing: execution.integer(executionFields[3]),
 	}
-	if execution.row["focused_exit_code"] != nil {
-		focused := execution.integer("focused_exit_code")
+	if execution.row[executionFields[2]] != nil {
+		focused := execution.integer(executionFields[2])
 		e.focused = &focused
 	}
-	schema := execution.text("schema")
+	schema := execution.text(executionFields[0])
 	for _, reader := range rows {
 		if reader.err != nil {
 			return envelope{}, reader.err

@@ -111,6 +111,8 @@ func TestVerificationImportRefusals(t *testing.T) {
 		"no mutated run":      {answer("invalid", "untouched", 1, "null", ""), "null", 1},
 		"projected response":  {bit + "spilled{lines=20,bytes=900,omitted_lines=11,cut_lines=0,path=/outside}\n", "incomplete response", 0},
 		"malformed tree lead": {"tree[1]{target,head}:\n  alpha,none\n" + bit, "identity row", 0},
+		"reordered envelope": {strings.Replace(bit, "{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,",
+			"{schema,focused_exit_code,command_exit_code,trailing_bytes}:\n  bench-probe-result-v1,1,0,", 1), "not canonical", 0},
 	} {
 		t.Run(name, func(t *testing.T) {
 			refuseVerify(t, f, tc.want, importing(t, tc.data, tc.exit))
@@ -136,7 +138,7 @@ func TestVerificationHelpFieldSources(t *testing.T) {
 		"--exit-code is the bench probe command exit, checked against probe_execution.command_exit_code on import",
 		"--probe-outcome is bench probe probe.verdict",
 		"--probe-exit-code is bench probe probe_execution.focused_exit_code, the normalized focused-execution exit",
-		"--probe-restore is bench probe probe.restored through the probe owner's restoration projection",
+		"--probe-restore is bench probe probe.restored through the producer owner's restoration projection",
 	} {
 		if !strings.Contains(description, source) {
 			t.Errorf("verification help = %q, want %q", description, source)

@@ -31,7 +31,7 @@ func probeSources() string {
 	return "for a probe, --exit-code is the bench probe command exit, checked against " + probe.FieldSource("command_exit_code") + " on import, " +
 		probeFlags[0] + " is bench probe " + probe.FieldSource("verdict") + ", " +
 		probeFlags[1] + " is bench probe " + probe.FieldSource("focused_exit_code") + ", the normalized focused-execution exit, " +
-		probeFlags[2] + " is bench probe " + probe.FieldSource("restored") + " through the probe owner's restoration projection, and " +
+		probeFlags[2] + " is bench probe " + probe.FieldSource("restored") + " through the producer owner's restoration projection, and " +
 		probeResult + " reads them from one complete bench probe answer"
 }
 

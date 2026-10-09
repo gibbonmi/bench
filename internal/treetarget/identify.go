@@ -22,13 +22,14 @@ import (
 // and as the tree-target keyword.
 const primaryTarget = "primary"
 
-// rowName and rowFields are the block name and the field set of the identity row.
+// rowName is the block name of the identity row.
 const rowName = "tree"
+
+// rowFields is the field set of the identity row.
+var rowFields = []string{"target", "head", "dirty"}
 
 // unknownDirty is the dirty cell of a tree whose status query failed.
 const unknownDirty = "unknown"
-
-var rowFields = []string{"target", "head", "dirty"}
 
 // Identity holds the three cells of one identity row.
 type Identity struct {
