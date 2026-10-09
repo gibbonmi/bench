@@ -16,6 +16,8 @@ Chunk TF-C3 uses repair cycle 1 of 2 for S3, S4, S6, S7, P1, and C2 through a fr
 
 TF-C3 round 2 confirmed those folds and found P3, a stale sentence in ticket 03. The orchestrator corrects that plan text, and the Spec axis reaffirms it. The correction uses no repair cycle.
 
+The Spec axis reaffirmed the correction of P3. TF-C3 closes with repair cycle 1 of 2 used and no open finding.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -1737,6 +1739,28 @@ TF-C3 round 2: 0 findings. TF73 and TF74 hold.
           "finding_ids": [],
           "supersedes": [
             "c3-coverage-r1"
+          ]
+        },
+        {
+          "id": "c3-spec-r2b",
+          "performer": "claude:ft349_c3_spec_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "21d718b1fc7e8e916324fd90a9b226fa9b36f081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_spec_r2/reaffirm",
+            "digest": "sha256:3317185a43f98ff17de3b70405157fcd2434d942d57fe5f55f1b8ae2ece7740f",
+            "excerpt": "Spec axis TF-C3 round 2 reaffirmation (fable/medium), plan-text correction 47867d92. P3 held: ticket 03 line 15 now matches spec.md:158 and the commandWrite OR over entries and floor packages at check_floor.go:93-98; no other spec or ticket hunk. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "733ed2f1a8ac58b885e21b8e0d0562273daf23fe",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-r2"
           ]
         }
       ]
