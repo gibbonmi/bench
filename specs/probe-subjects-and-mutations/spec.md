@@ -297,15 +297,86 @@ The focused-run owner selects the run binary and launches `go` as `bench test` d
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| PS-A / sliced after review | The five new mutation forms, the closed form matrix, and the derived help line | PS1-PS25, PS76 | planned edit, delete, and combined tests, extended omit-file and refusal tests, help inventory test | no |
-| PS-B / sliced after review | Prose and system subjects through the check owner, and the request-derived selection cells | PS26-PS37 | planned subject-check tests, extended check-form and selection-facts tests, a testreport build-count test | no |
-| PS-C / sliced after review | First failure, expected witness, self-naming build failure, and schema v2 | PS38-PS57 | planned verdict, mutant-build, result, testreport, and runbinary tests | yes |
-| PS-D / sliced after review | Subject lock with re-read and identity recheck | PS58-PS68, PS75 | planned lock tests, existing no-record and preservation tests | yes |
-| PS-E / sliced after review | Guidance and known issues | PS69-PS74 | review-owned reads, prose gate, anchors | no |
+| PS-A / 1-add-probe-mutation-forms.md | The five new mutation forms, the closed form matrix, and the derived help line | PS1-PS25, PS76 | planned edit, delete, and combined tests, extended omit-file and refusal tests, help inventory test | no |
+| PS-B / 2-probe-prose-and-system-checks.md | Prose and system subjects through the check owner, and the request-derived selection cells | PS26-PS37 | planned subject-check tests, extended check-form and selection-facts tests, a testreport build-count test | no |
+| PS-C / 3-name-the-first-failure-and-expected-witness.md, 4-name-a-mutant-build-failure.md | First failure, expected witness, self-naming build failure, and schema v2 | PS38-PS57 | planned verdict, mutant-build, result, testreport, and runbinary tests | yes |
+| PS-D / 5-lock-the-probe-subject.md | Subject lock with re-read and identity recheck | PS58-PS68, PS75 | planned lock tests, existing no-record and preservation tests | yes |
+| PS-E / 6-document-the-probe-forms.md | Guidance and known issues | PS69-PS74 | review-owned reads, prose gate, anchors | no |
 
 PS-A comes first, because every later chunk reads its grammar.
 PS-B, PS-C, and PS-D each call new owners from `internal/probe/probe.go`, so they run in series.
 PS-E comes last, because its guidance names every form.
+
+### Completion plan
+
+This version-1 completion plan is a planning verification inventory, not a dispatch plan.
+Its commands are future obligations, not executed proof.
+Before the first dispatch, the coordinator amends it to a version-2 plan with the run and session identities.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "PS-A",
+      "tickets": ["1-add-probe-mutation-forms.md"],
+      "verification": [
+        {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "package-core-guard", "command": "bench test --check package-core-guard"}
+      ]
+    },
+    {
+      "id": "PS-B",
+      "tickets": ["2-probe-prose-and-system-checks.md"],
+      "verification": [
+        {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
+        {"id": "testreport", "command": "bench test --package ./internal/testreport"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"}
+      ]
+    },
+    {
+      "id": "PS-C",
+      "tickets": ["3-name-the-first-failure-and-expected-witness.md", "4-name-a-mutant-build-failure.md"],
+      "verification": [
+        {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
+        {"id": "testreport", "command": "bench test --package ./internal/testreport"},
+        {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
+        {"id": "record-forms", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"}
+      ]
+    },
+    {
+      "id": "PS-D",
+      "tickets": ["5-lock-the-probe-subject.md"],
+      "verification": [
+        {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"}
+      ]
+    },
+    {
+      "id": "PS-E",
+      "tickets": ["6-document-the-probe-forms.md"],
+      "verification": [
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "root-conformance", "command": "bench test --check conformance-meta"},
+        {"id": "agent-definitions", "command": "bench test --check claude-agent-definitions"},
+        {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
+        {"id": "prose", "command": "bench test --check prose"}
+      ]
+    }
+  ],
+  "final_verification": [
+    {"id": "coverage", "command": "bench coverage --check specs/probe-subjects-and-mutations/spec.md"},
+    {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
+    {"id": "testreport", "command": "bench test --package ./internal/testreport"},
+    {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
+    {"id": "record-forms", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
+    {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+    {"id": "system", "command": "bench test --check system"}
+  ]
+}
+```
 
 ## Testing decisions
 
@@ -448,36 +519,141 @@ A lock path derives from a digest, so no operand byte reaches the lock file name
 
 ## Ownership fences
 
-- `internal/probe/`
-- `internal/testreport/selection_facts.go`
-- `internal/testreport/selection_facts_test.go`
+The ticket slice derives this fence, so it equals the union of the ticket Writes lines, plus the spec folder and the review pickup.
+It holds the owner and test files, the command registry closure, the anchor registry closure, and each canary unit that pins an edited file.
+The NRO import test in the record command package reads the schema token, and the record journey in the command package reads the v2 envelope.
+The named-check file of the testreport package holds the prose name that becomes the one export.
+NR-C3 lands the probe result owner, its test, the import test, and the record journey, so those four paths are absent before that landing.
+
+- `.agents/skills/bench-craft-delegate/SKILL.md`
+- `.bench/BENCH-reference.md`
+- `CHANGELOG.md`
+- `CONTEXT.md`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `cmd/bench/main.go`
+- `cmd/bench/record_operations_test.go`
+- `docs/known-issues.md`
+- `internal/anchors/registry_calibration.go`
+- `internal/anchors/registry_calibration_test.go`
+- `internal/anchors/registry_charge_binding.go`
+- `internal/anchors/registry_charge_binding_test.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry_decision_maps.go`
+- `internal/anchors/registry_decision_maps_test.go`
+- `internal/anchors/registry_ft311_preparation.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `internal/probe/baseline.go`
+- `internal/probe/baseline_test.go`
+- `internal/probe/combined_test.go`
+- `internal/probe/command.go`
+- `internal/probe/delete_test.go`
+- `internal/probe/edit.go`
+- `internal/probe/edit_test.go`
+- `internal/probe/invalid_cause_test.go`
+- `internal/probe/lock.go`
+- `internal/probe/lock_test.go`
+- `internal/probe/mutation_input.go`
+- `internal/probe/omit_file_test.go`
+- `internal/probe/outcome_test.go`
+- `internal/probe/probe.go`
+- `internal/probe/probe_test.go`
+- `internal/probe/refusal_test.go`
+- `internal/probe/result.go`
+- `internal/probe/result_test.go`
+- `internal/probe/subject.go`
+- `internal/probe/subject_check_test.go`
+- `internal/probe/unwrap_test.go`
+- `internal/probe/verdict.go`
+- `internal/probe/verdict_test.go`
+- `internal/reviewrecord/recordcmd/verification_import_test.go`
+- `internal/runbinary/build_script_test.go`
+- `internal/runbinary/runbinary.go`
+- `internal/runbinary/runbinary_test.go`
+- `internal/testreport/canned_go_test.go`
+- `internal/testreport/command.go`
+- `internal/testreport/failure_lines_test.go`
+- `internal/testreport/full_failure_test.go`
 - `internal/testreport/named_check.go`
 - `internal/testreport/outcome.go`
 - `internal/testreport/outcome_test.go`
-- `internal/testreport/testreport.go`
-- `internal/testreport/command.go`
 - `internal/testreport/runbinary_test.go`
-- `internal/testreport/failure_lines_test.go`
-- `internal/testreport/full_failure_test.go`
-- `internal/runbinary/runbinary.go`
-- `internal/runbinary/runbinary_test.go`
-- `internal/reviewrecord/recordcmd/`
-- `cmd/bench/main.go`
-- `cmd/bench/help_inventory_test.go`
-- `cmd/bench/record_operations_test.go`
-- `.bench/BENCH-reference.md`
-- `CONTEXT.md`
-- `.agents/skills/bench-craft-delegate/SKILL.md`
-- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
-- `docs/known-issues.md`
-- `roadmap/FT168.md`
-- `CHANGELOG.md`
-- `specs/probe-subjects-and-mutations/`
+- `internal/testreport/selection_facts.go`
+- `internal/testreport/selection_facts_test.go`
+- `internal/testreport/testreport.go`
 - `reviews/probe-subjects-and-mutations.md`
-
-The ticket slice narrows each ticket's `Writes:` line inside these fences.
-`internal/reviewrecord/recordcmd/` and `cmd/bench/record_operations_test.go` hold the NRO import tests that read the schema token.
-`internal/testreport/named_check.go` holds the prose name that becomes the one export.
+- `roadmap/FT168.md`
+- `specs/probe-subjects-and-mutations/`
+- `tests/canary/claude-agent-definitions/agent-unnamed-in-skill`
+- `tests/canary/claude-agent-definitions/model-declared`
+- `tests/canary/claude-agent-definitions/name-mismatch`
+- `tests/canary/claude-agent-definitions/shell-tool-absent`
+- `tests/canary/claude-agent-definitions/skill-names-missing-agent`
+- `tests/canary/claude-agent-definitions/spawning-tool`
+- `tests/canary/claude-agent-definitions/tools-absent`
+- `tests/canary/docs-currency-token-diet/benchref-imported`
+- `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
+- `tests/canary/docs-currency-token-diet/benchref-section-duplicated`
+- `tests/canary/docs-currency-token-diet/signal-vocabulary-drift`
+- `tests/canary/package-core-guard/unrouted-subcommand`
+- `tests/canary/skills-index-command-adapters/adapter-inert-invocation-key`
+- `tests/canary/skills-index-command-adapters/command-invocation-disabled-against-policy`
+- `tests/canary/skills-index-command-adapters/dangling-index`
+- `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
+- `tests/canary/skills-index-command-adapters/missing-index-field`
+- `tests/canary/skills-index-command-adapters/stale-index-wording`
+- `tests/canary/skills-index-command-adapters/unindexed-skill`
+- `tests/canary/workflow-guidance-anchors/agents-handoff-section-rule`
+- `tests/canary/workflow-guidance-anchors/calibration-delegate-pointer`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
+- `tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary`
+- `tests/canary/workflow-guidance-anchors/context-coverage-map-term`
+- `tests/canary/workflow-guidance-anchors/context-coverage-row-parts`
+- `tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary`
+- `tests/canary/workflow-guidance-anchors/context-decision-map-term`
+- `tests/canary/workflow-guidance-anchors/context-reader-sweep-term`
+- `tests/canary/workflow-guidance-anchors/context-ticket-vocabulary`
+- `tests/canary/workflow-guidance-anchors/delegate-cap-change-pinning-package`
+- `tests/canary/workflow-guidance-anchors/delegate-charge-effort-cap`
+- `tests/canary/workflow-guidance-anchors/delegate-coverage-row-charge`
+- `tests/canary/workflow-guidance-anchors/delegate-coverage-row-red-green`
+- `tests/canary/workflow-guidance-anchors/delegate-cross-harness-reviewer-pointer`
+- `tests/canary/workflow-guidance-anchors/delegate-exec-only-every-caller`
+- `tests/canary/workflow-guidance-anchors/delegate-model-id-escalation`
+- `tests/canary/workflow-guidance-anchors/delegate-own-family-native-surface`
+- `tests/canary/workflow-guidance-anchors/delegate-parallel-route-anchor`
+- `tests/canary/workflow-guidance-anchors/delegate-release-at-acceptance`
+- `tests/canary/workflow-guidance-anchors/delegate-resume-handoff-contents`
+- `tests/canary/workflow-guidance-anchors/delegate-self-probe-missing-row`
+- `tests/canary/workflow-guidance-anchors/delegate-stash-refusal-anchor`
+- `tests/canary/workflow-guidance-anchors/delegated-per-ticket-author`
+- `tests/canary/workflow-guidance-anchors/dg-6-owner-reference`
+- `tests/canary/workflow-guidance-anchors/fix-pass-sentinel-anchor`
+- `tests/canary/workflow-guidance-anchors/prepared-review-delegate-handoff-route`
+- `tests/canary/workflow-guidance-anchors/prepared-triage-bounds`
+- `tests/canary/workflow-guidance-anchors/reference-agent-push-rule`
+- `tests/canary/workflow-guidance-anchors/reference-bench-operational-layer`
+- `tests/canary/workflow-guidance-anchors/reference-category-context`
+- `tests/canary/workflow-guidance-anchors/reference-category-oracle`
+- `tests/canary/workflow-guidance-anchors/reference-category-setup`
+- `tests/canary/workflow-guidance-anchors/reference-category-work`
+- `tests/canary/workflow-guidance-anchors/reference-gate-authority`
+- `tests/canary/workflow-guidance-anchors/reference-kit-only-ship`
+- `tests/canary/workflow-guidance-anchors/reference-no-path-fallback`
+- `tests/canary/workflow-guidance-anchors/reference-progressive-loading-term`
+- `tests/canary/workflow-guidance-anchors/reference-refusal-route-shape`
+- `tests/canary/workflow-guidance-anchors/reference-retro-capture-owner`
+- `tests/canary/workflow-guidance-anchors/reference-retro-drain-owner`
+- `tests/canary/workflow-guidance-anchors/reference-skills-guidance`
+- `tests/canary/workflow-guidance-anchors/reference-upgrade-route`
+- `tests/canary/workflow-guidance-anchors/shared-worktree-path-pin`
 
 ## Out of scope
 
