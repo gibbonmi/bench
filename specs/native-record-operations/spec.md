@@ -367,7 +367,7 @@ Ticket 2 blocks on ticket 1, and ticket 3 blocks on both predecessors.
 The shared writer, form registry, guidance, holders, fixtures, and real CLI test require this serial order.
 Each predecessor commits green and closes independent Standards, Spec, and Coverage review before its successor starts.
 
-The Writes union has 153 exact paths, equal to the 154-entry fence minus its review pickup.
+The Writes union has 154 exact paths, equal to the 155-entry fence minus its review pickup.
 Each ticket includes its first-use command, anchor, and fixture closure, not only the spec-wide union.
 The 80 canary units and 12 anchor holders remain available to every affected guidance checkpoint.
 Each test expectation and headroom route closes in its introducing ticket; final reconciliation cannot borrow a later repair.
@@ -618,6 +618,7 @@ No implementation write is authorized by this planning artifact alone.
 - `internal/reviewrecord/parse.go`
 - `internal/reviewrecord/plan.go`
 - `internal/reviewrecord/record.go`
+- `internal/reviewrecord/recordcmd/amendment.go`
 - `internal/reviewrecord/recordcmd/amendment_test.go`
 - `internal/reviewrecord/recordcmd/assignment.go`
 - `internal/reviewrecord/recordcmd/assignment_test.go`
@@ -747,7 +748,7 @@ Independent ticket review accepted the graph; build entry must refresh the sourc
 | implementation line | gpt-5.6-sol / high, retained accepted line |
 | seams and test purpose | Existing validators, producer result owner, real record entry, and gate checkpoint |
 | coverage and exclusions | NR1-NR45, with explicit FT317, conversion, and digest-policy exclusions |
-| ownership | 154-entry fence after the build-entry refresh; exact per-ticket closure |
+| ownership | 155-entry fence after the build-entry refresh and the NR-C2 repair expansion; exact per-ticket closure |
 | graph | Three serial vertical tickets accepted at 0d7fa110cc3869a4b089cba73cdb2aa435d38983 after SPEC acceptance |
 
 The numbered breakdown is:
