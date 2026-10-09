@@ -838,7 +838,84 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "nr-c2-r1-standards",
+          "performer": "claude:nro-c2-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c2-r1-standards",
+            "digest": "sha256:8bce62844d05ac8d689915ad7129ae8f2018b943a0cd5713e3316c04ad14c4fc",
+            "excerpt": "## Standards (NR-C2 round 1, fable/medium, evidence sha256:c9195648a934990d9adb29afd695faf177b9edf316b949a690e64a7b1542ff88, pair c311ec18..35b3348f)\n\nBinding current: check-current returned current=true, tip 35b3348f, tree clean.\n\nHard violations:\n- S1 auto-fix 8 — Form name spelled twice. recordcmd/assignment.go:10 (name: \"assignment\") and amendment.go:12 (name: \"amendment\") duplicate reviewrecord.FormAssignment/FormAmendment (repair.go:8-9), while chunk.go:10, verification.go:11, completion.go:10, command.go:70 all read the constant. cause() (refusal.go:16) matches named(repair.Form) against f.name, so a drift of the assignment literal silently drops the repair grammar; no test pins it (ordering_test.go:50 omits assignment). The paths are outside the ticket's Writes fence, so the fix takes an in-scope fence expansion plus a fresh repair session.\n\nJudgment calls:\n- S2 no-op 5 — known() (refusal.go:26-28) spells --chunk, --requirement, --ticket, --axis, --source a second time beside each form's flags declaration. A renamed flag drops its value silently (the comment at line 25 documents the drop). The one-source fix needs a new seam (a flag field binding a Repair field), so it is a bench learning candidate, not an inline repair.\n- S3 no-op 7 — faceRecordRepair = \"checkpoint-record-repair\" (gate/checkpoint.go:138) repeats the registry name (faces_gate.go:88). This is the pre-existing pattern for all six faces, not a route literal; the registry still owns the route.\n- S4 no-op 8 — init() for forms (command.go:60) is justified: chunkForm.run -> cause -> named -> forms is a true Go initialization cycle; the comment states it correctly.\n\nAdvice: cause() calls named(repair.Form) twice (refusal.go:16-17); bind it once. checkVerification (check.go:14) reuses Repair as a positional-context carrier (at); the comment sentence starting with \"at holds\" reads oddly.\n\nCount: 4 findings, 1 hard (S1). Worst: S1.\n\nEvidence cursors: git diff --stat c311ec18 35b3348f (25 files); full diffs of repair.go, refusal.go, command.go, check.go, coverage.go, record.go, delegated.go, write.go, chunk.go, completion.go, verification.go, checkpoint.go, faces_gate.go, and the four tests; wc -l on the four headroom files; rg sweeps for form literals, bench record/--help in internal/gate, and errors.As(.*Repair across internal (enumeration).\n\nClean: no route literal in internal/gate non-test code (enumerated); no recordcmd import in internal/gate production code; one classifier each (funnelFace in gate, cause in recordcmd; the old cause in verification.go was moved, not copied); test expectations (record_repair_test.go:60, ordering_test.go:50, refusal_route_test.go:313) are independent expectations whose mutation turns red; headroom command.go 340/370, checkpoint.go 245, faces_gate.go 71, write.go 334; comment prose otherwise compliant and accurate.\n"
+          },
+          "axis": "Standards",
+          "base": "c311ec18aa433aa19d4cd5a2682d11a6c56ab787",
+          "tip": "df6eeb887b9249a9cb03571ba0178c22bac49d55",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "nr-c2-r1-spec",
+          "performer": "claude:nro-c2-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c2-r1-spec",
+            "digest": "sha256:a3f2c228f19f43f8c605d86eb2c764fc15671e8664e999233912d4b758398fad",
+            "excerpt": "## Spec (NR-C2 round 1, fable/medium, evidence sha256:c9195648a934990d9adb29afd695faf177b9edf316b949a690e64a7b1542ff88, pair c311ec18..35b3348f)\n\nP1 | partial | 7 | \"The existing recordcmd registry uses those names for its form declarations and derives their complete help grammar.\" (spec.md:170) | recordcmd/assignment.go:10 (name: \"assignment\") and amendment.go:12 (name: \"amendment\") still use string literals; only chunk, verification, review, and completion use reviewrecord.Form*. named(repair.Form) resolves the amendment and assignment repairs by coincidental text. Neither file is on ticket 2's Writes line, so this is a spec-versus-fence contradiction for the orchestrator.\n\nP2 | partial | 6 | \"Completion help derives its ordering note from this owner contract.\" (spec.md:184); story 18 \"I want completion help to show the required order\" (spec.md:53) | bench record completion --help prints only the usage line; the note appears only in the root bench help row via completion.go:10. Derivation from CompletionOrder() is met. The author's \"one usage line per form --help\" constraint is unknown to me: command_test.go:14,24 check only a usage: prefix. Reviewer call on whether the root row satisfies \"completion help\".\n\nP3 | partial | 4 | \"Use already-known slug, chunk, requirement, axis, and source values where the owner supplies them.\" (spec.md:181) | refusal.go known() maps chunk, requirement, ticket, axis, source; the slug, which recordcmd holds as spec, is never substituted, so every repair usage prints <slug>.\n\nP4 | Coverage, not Spec | 8 | same line (spec.md:181) | The stale-plan Repair supplies Source: source; the predicate is met in production. Whether a test reds its omission is a Coverage question; repair_test.go \"changed plan\" case asserts Source = f.Tip().\n\nAdvice: .agents/commands/bench-review-implementation.md:9-11 rewrites a completion-form sentence that is not a \"hand-built dispatch JSON\" description (spec.md:314); in fence, factually correct, minor scope drift. Gate TestCheckpointEntryRepairForms has no amendment-family case; NR17-21 do not require one.\n\nCount: 4 findings (3 Spec, 1 routed to Coverage). Worst: P1.\n\nEvidence cursors: preflight current (tip 35b3348f, clean); git diff c311ec18 35b3348f (code, spec, ticket); spec.md:44-69, 156-187, 279-343, 391-395, 504-529; ticket 2 full; completion.go; FT317.md; chunk.go:10-29; command_test.go:10-28; bench record --help, bench record completion --help; wc on command.go (340 <= 370).\n\nRows audited and met: NR15, NR16 (ordering_test, planned-cell first confirmed), NR17-NR21 (record_repair_test, face in faces_gate.go, gate imports no recordcmd, no route literal), NR33 (Repair wraps, errors.Is kept), NR34 (amendment_test.go unchanged in delta), NR35 (completion.go writes only \"covered\"; checkCompletion refuses any other value; FT317 stays decision-only, no new value), NR37 (CLI journey asserts unchanged bytes then amendment admits). Known-issues FT318 row removed. NR22 met only as P2 states.\n"
+          },
+          "axis": "Spec",
+          "base": "c311ec18aa433aa19d4cd5a2682d11a6c56ab787",
+          "tip": "df6eeb887b9249a9cb03571ba0178c22bac49d55",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3",
+            "P4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "nr-c2-r1-coverage",
+          "performer": "claude:nro-c2-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c2-r1-coverage",
+            "digest": "sha256:9ab9c4d7cba590ec77f5988e369bf7de3e85ea8069903bcfe2195b050806afd4",
+            "excerpt": "## Coverage (NR-C2 round 1, fable/medium, evidence sha256:c9195648a934990d9adb29afd695faf177b9edf316b949a690e64a7b1542ff88, pair c311ec18..35b3348f)\n\nC1 — open, confidence 7. Input: any recordcmd refusal that carries a Repair with known values (stale chunk write, missing chunk at verification, missing axis at completion). Break: cause() in recordcmd/refusal.go:17 renders known values into the usage line, but no test observes any substituted value. Probe: swap named(repair.Form).suffix(known(repair)) -> named(repair.Form).suffix(nil) against ./internal/reviewrecord/recordcmd: silent, restored yes. TestChunkNeedsCurrentAmendment (ordering_test.go:27) and the CLI journey (record_operations_test.go:108) assert only the substring \"bench record amendment\". Needed: one assertion that the stale-chunk refusal line contains --source <tip> (full commit) and that a missing-chunk verification refusal contains --chunk 2.\n\nC2 — open, confidence 6. State: a checkpoint whose record plan digest differs from the plan at HEAD. Break: funnelFace now routes it to bench record 'amendment' --help (new face), replacing the prior bench preflight review route, yet no gate test observes that route. Probe: swap Form: FormAmendment -> Form: FormChunk in repair.go against ./internal/gate --run 'Test.*(Checkpoint|Review)': silent, restored yes. TestCheckpointEntryRepairForms has no amendment case. Needed: an amendment row in that table.\n\nC3 — refuted (orchestrator candidate), confidence 9. Omission of \"Source: source, \" in currentPlan is observed by TestRecordRepairNamesOwnerValues/changed_plan (reviewrecord/repair_test.go:109). Probe against ./internal/reviewrecord --run '^TestRecordRepairNamesOwnerValues$': bit, failed_tests 1, restored yes. The named NR15/NR37 rows do not observe it (see C1).\n\nC4 — open, confidence 4. Input: bench gate --checkpoint <spec> --chunk 9 with a chunk id the plan lacks. coverage.go:121 returns Repair{Form: FormChunk, Chunk: \"9\"}, so the gate routes to bench record 'chunk' --help, a form that refuses \"chunk 9 is not a chunk of the plan\" (write.go:157). No test; the route cannot repair. Needed: an unplanned-chunk check before the repair, or a documented row.\n\nC5 — open, confidence 4. write.go:78 (absent record) emits Repair{Form: FormChunk} with no Chunk, though RecordVerification/RecordReview know call.Chunk; the CLI line shows --chunk <id>. Spec line 181 asks for known values. No test observes it.\n\nAdvice: the CLI repair line keeps the literal <slug> placeholder (command.go:97) although the form knows the slug; spec line 181 names slug among known values. RecordVerification and RecordReview apply no currentPlan guard; spec line 160 scopes the guard to the chunk writer, so this is design, not a defect.\n\nCount: 5 findings (3 open coverage gaps, 1 refuted candidate, 1 low). Worst: C1. Evidence cursor: check-current -> current true, tip 35b3348f. Probes: 3 (bit, silent, silent), all restored yes; git status --short clean. Examined and found covered: Form/Chunk/Axis/Requirement/Ticket/Source values at the domain level (repair_test.go), errors.Is identity, planned-cell-before-guard order, record bytes unchanged on refusal, all five gate form routes, missing-record keeps the preflight route (review_checkpoint_test.go:230), completion help order.\n"
+          },
+          "axis": "Coverage",
+          "base": "c311ec18aa433aa19d4cd5a2682d11a6c56ab787",
+          "tip": "df6eeb887b9249a9cb03571ba0178c22bac49d55",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -930,3 +1007,45 @@ NR-C1 round 1: 3 findings, worst C1. Raw count 3; repair targets 2.
 Advice: the second preimage loop has no witness by design.
 
 NR-C1 round 2: 0 findings. An inverted same-session clause in `delegated.go` and a `limit > -2` swap in `recordcmd/assignment.go` each bit and restored. The C2 expectation is an independent literal.
+
+## NR-C2 repair state
+
+Chunk NR-C2 round 1 ran three fable/medium axes in parallel at `35b3348f`. Only the Coverage axis ran probes, and the tree was clean after every return.
+
+Chunk NR-C2 uses repair cycle 1 of 2 for S1, P1, P2, P3, C1, C2, C4, and C5. A fresh repair session for ticket 2 runs it. C1, C2, C4, and C5 are the one hardening cycle of NR-C2, because the 12 acceptance rows proved in round 1. S2, S3, S4, P4, and C3 are `no-op`. S1 and P1 name one fix, so the repair targets are 7.
+
+Under `--auto-approve`, the reviewer approved the fence expansion by `recordcmd/assignment.go` and `recordcmd/amendment.go` in advance.
+
+## NR-C2 Standards
+
+NR-C2 round 1: 4 findings, worst S1. Raw count 4; repair targets 1.
+
+- S1 (auto-fix, confidence 8): `recordcmd/assignment.go` and `recordcmd/amendment.go` spell their form names as literals beside the `reviewrecord.Form*` constants, and `cause` matches on that text. Repair: read the constants, with a test that pins the assignment and amendment grammar.
+- S2 (no-op, confidence 5): `known()` spells the five flag names a second time beside the form declarations. The one-source fix needs a new seam, so it goes to `bench learning`.
+- S3 (no-op, confidence 7): the gate face name repeats the registry name, which is the existing pattern for all six faces. The registry owns the route.
+- S4 (no-op, confidence 8): the `init()` assignment of `forms` breaks a true initialization cycle, and its comment states that.
+
+Advice: `cause` calls `named` twice; the `checkVerification` comment reads oddly.
+
+## NR-C2 Spec
+
+NR-C2 round 1: 4 findings, worst P1. Raw count 4; repair targets 3. Rows NR15-NR21, NR33-NR35, and NR37 met; NR22 met only as the root help row.
+
+- P1 (auto-fix, confidence 7): the same fix as S1, cited against "The existing recordcmd registry uses those names for its form declarations".
+- P2 (auto-fix, confidence 6): `bench record completion --help` prints only its usage line, and the ordering note shows only in the root help row. Repair: print the derived note in the completion form help when the existing one-line help test permits; otherwise report the test.
+- P3 (auto-fix, confidence 4): the repair usage line never fills the known slug. Repair: substitute the slug that the form holds.
+- P4 (no-op, confidence 8): routed to Coverage as C3.
+
+Advice: the `bench-review-implementation.md` completion sentence is factually correct and in fence; `TestCheckpointEntryRepairForms` has no amendment case (see C2).
+
+## NR-C2 Coverage
+
+NR-C2 round 1: 5 findings, worst C1. Raw count 5; repair targets 4.
+
+- C1 (auto-fix, confidence 7): no test observes a substituted known value in a repair usage line; the `suffix(nil)` swap was silent. Repair: assert `--source <tip>` in the stale-chunk refusal and `--chunk 2` in a missing-chunk verification refusal.
+- C2 (auto-fix, confidence 6): no gate test observes the stale-plan route to the amendment form; the `FormChunk` swap was silent. Repair: an amendment row in `TestCheckpointEntryRepairForms`.
+- C3 (no-op, confidence 9): the orchestrator's `Source` omission candidate is observed by `TestRecordRepairNamesOwnerValues/changed_plan`; the probe bit.
+- C4 (auto-fix, confidence 4): an unplanned chunk id routes to the chunk form, which cannot repair it. Repair: refuse an unplanned chunk id unclassified so it keeps the preflight review route, with a test.
+- C5 (auto-fix, confidence 4): the absent-record refusal at `RecordVerification` and `RecordReview` omits the chunk it knows. Repair: fill `Chunk` from the call, with a test.
+
+Advice: the `<slug>` placeholder is P3; the chunk-writer-only scope of the digest guard is design.
