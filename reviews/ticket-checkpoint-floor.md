@@ -1250,9 +1250,9 @@ TF-C3 round 2: 0 findings. TF73 and TF74 hold.
     {
       "id": "TF-C3",
       "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
-      "tip": "733ed2f1a8ac58b885e21b8e0d0562273daf23fe",
-      "plan_digest": "sha256:7a3998fe0a1cc3dc588f6beefbc7048fbfc2edece6d5ffde0da9258ff93ea3bf",
-      "source_digest": "21d718b1fc7e8e916324fd90a9b226fa9b36f081",
+      "tip": "47867d92bcfafc156dfc44f62312433733d042c3",
+      "plan_digest": "sha256:bd620dbd434de93df8a84f64d827e5963c24e31cbb3a1279fec758c23ea60cf5",
+      "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
       "acceptance_rows": [
         "TF6",
         "TF16",
@@ -1600,6 +1600,161 @@ TF-C3 round 2: 0 findings. TF73 and TF74 hold.
               "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench probe internal/preflight/check_floor.go --omit 'elements = append(elements, floor.Packages...)' --package ./internal/preflight --run '^TestCheckFloor'\nexit: 0\nverdict=bit cause=failed failed_tests=25 restored=yes; baseline passed 39; TestCheckFloorRedsAnOmittedPackage/package and /second_ticket red; mutated test run exit code=1 (known issue: record as 1); wall=9.50s\n"
             }
           }
+        },
+        {
+          "id": "t3r1-pkg-internal-preflight-s2",
+          "performer": "claude:ft349_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3_repair1/pkg-internal-preflight",
+            "digest": "sha256:a34291d9f179dca35f0da62dcfe98ec9780b1b3dd58c203106bac2ff7de75e59",
+            "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench test --package ./internal/preflight/...\nexit: 0\ninternal/preflight pass 398; evidencecmd pass 229; failures[0]; wall=32.81s\n"
+          },
+          "requirement": "pkg-internal-preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-pkg-internal-testreport-s2",
+          "performer": "claude:ft349_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3_repair1/pkg-internal-testreport",
+            "digest": "sha256:dfe73d1ce764dbc0a1db9f555586fa2456c37f4f3a3725574f008f72d1766193",
+            "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench test --package ./internal/testreport\nexit: 0\ninternal/testreport pass 222; failures[0]; wall=61.17s\n"
+          },
+          "requirement": "pkg-internal-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-pkg-internal-diff-s2",
+          "performer": "claude:ft349_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3_repair1/pkg-internal-diff",
+            "digest": "sha256:a010f6177fdc9e9e9d0998b798b3455bc0034143f926405f7aaa71dad8aca118",
+            "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench test --package ./internal/diff\nexit: 0\ninternal/diff pass 98; failures[0]; wall=8.38s\n"
+          },
+          "requirement": "pkg-internal-diff",
+          "command": "bench test --package ./internal/diff",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-pkg-internal-conformance-s2",
+          "performer": "claude:ft349_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3_repair1/pkg-internal-conformance",
+            "digest": "sha256:e290b8d1a2013b0c026c148c5666d3ae6d2d8aa2770a03632c8a7b4892f25474",
+            "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench test --package ./internal/conformance\nexit: 0\ninternal/conformance pass 1673; failures[0]; skips[3] capability (socket x2, character device); wall=58.19s\n"
+          },
+          "requirement": "pkg-internal-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-pkg-cmd-bench-s2",
+          "performer": "claude:ft349_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3_repair1/pkg-cmd-bench",
+            "digest": "sha256:cbf7687864d8ecbabb351ff3371c4b9fc86af9412d37679a02104a8f4774a921",
+            "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench test --package ./cmd/bench\nexit: 0\ncmd/bench pass 333; failures[0]; wall=16.98s\n"
+          },
+          "requirement": "pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-root-conformance-s2",
+          "performer": "claude:ft349_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3_repair1/root-conformance",
+            "digest": "sha256:02df00282ee0fc0540b2d3cf88589fc7312b56c2d978ad88f8b3475780b18e66",
+            "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench test --check root-conformance\nexit: 0\nroot-conformance pass 1; failures[0]; wall=18.02s\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-system-s2",
+          "performer": "claude:ft349_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3_repair1/system",
+            "digest": "sha256:1ee309acb254b71e888af5f891d9c2644cb787a5f71dc920abb745621bf4cb7b",
+            "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench test --check system\nexit: 0\ninternal/systemtest pass 153; failures[0]; wall=97.78s\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-check-floor-probe-s2",
+          "performer": "claude:ft349_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3_repair1/check-floor-probe",
+            "digest": "sha256:0eb786e319ee68319112ea0f08f947119b32243f0e911928b570e505f31354f2",
+            "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench probe internal/preflight/check_floor.go --omit 'elements = append(elements, floor.Packages...)' --package ./internal/preflight --run '^TestCheckFloor'\nexit: 0\nverdict=bit cause=failed failed_tests=25 restored=yes; baseline passed 39; TestCheckFloorRedsAnOmittedPackage/package and /second_ticket red; mutated test run exit code=1 (known issue: record as 1); wall=9.50s\n"
+          },
+          "requirement": "check-floor-probe",
+          "command": "bench test --package ./internal/preflight --run '^TestCheckFloor'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the package elements from the check-floor comparison. TestCheckFloorRedsAnOmittedPackage turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft349_t3_repair1/check-floor-probe",
+              "digest": "sha256:0eb786e319ee68319112ea0f08f947119b32243f0e911928b570e505f31354f2",
+              "excerpt": "commit 733ed2f1a8ac58b885e21b8e0d0562273daf23fe\ncommand: bench probe internal/preflight/check_floor.go --omit 'elements = append(elements, floor.Packages...)' --package ./internal/preflight --run '^TestCheckFloor'\nexit: 0\nverdict=bit cause=failed failed_tests=25 restored=yes; baseline passed 39; TestCheckFloorRedsAnOmittedPackage/package and /second_ticket red; mutated test run exit code=1 (known issue: record as 1); wall=9.50s\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1761,6 +1916,72 @@ TF-C3 round 2: 0 findings. TF73 and TF74 hold.
           "finding_ids": [],
           "supersedes": [
             "c3-spec-r2"
+          ]
+        },
+        {
+          "id": "c3-standards-r2-s2",
+          "performer": "claude:ft349_c3_standards_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_standards_r2",
+            "digest": "sha256:030eb57c5f6cba72b03d2bc3ec7e7b24ac8834162f7723c423ba9b30172b52a2",
+            "excerpt": "Standards axis TF-C3 round 2 (fable/medium), repair delta e393718f..733ed2f1. S3 held (check_floor.go:153-161 owns the red-detail format; TF25 literal at check_floor_test.go:205-207). S4 held (focusedRequest.listing at command.go:129, read by dispatch :140 and Request.Runs selection_facts.go:47). S6 held. S7 held (preflighttest.PlanCommand fixture.go:125). S8 check_floor_test.go:234 whole-suite test input and the frozen toon snapshot: no-op. 0 findings.\n"
+          },
+          "axis": "Standards",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "47867d92bcfafc156dfc44f62312433733d042c3",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-r2"
+          ]
+        },
+        {
+          "id": "c3-spec-r2b-s2",
+          "performer": "claude:ft349_c3_spec_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_spec_r2/reaffirm",
+            "digest": "sha256:3317185a43f98ff17de3b70405157fcd2434d942d57fe5f55f1b8ae2ece7740f",
+            "excerpt": "Spec axis TF-C3 round 2 reaffirmation (fable/medium), plan-text correction 47867d92. P3 held: ticket 03 line 15 now matches spec.md:158 and the commandWrite OR over entries and floor packages at check_floor.go:93-98; no other spec or ticket hunk. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "47867d92bcfafc156dfc44f62312433733d042c3",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-r2b"
+          ]
+        },
+        {
+          "id": "c3-coverage-r2-s2",
+          "performer": "claude:ft349_c3_coverage_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "2d1ff6730973179ccb775f2911015116199aa4f9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_coverage_r2",
+            "digest": "sha256:bde5160a8312fce81c69620746f4b501239cb0d6794d1c17b01f6842f53ba94b",
+            "excerpt": "Coverage axis TF-C3 round 2 (fable/medium), repair delta e393718f..733ed2f1. TF73 and TF74 held. Probes, all restored yes: fixtures branch of listing() off bit fixture_listing; TrimPrefix drop at check_floor.go:81 bit TestCheckFloorAddsCmdBench; an omission for an empty-floor unplanned ticket bit the green assertion at check_floor_test.go:188 only. bench test --package ./internal/preflight/... pass, about 49s. 0 findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "47867d92bcfafc156dfc44f62312433733d042c3",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-r2"
           ]
         }
       ]
