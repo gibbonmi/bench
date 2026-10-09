@@ -74,16 +74,7 @@ func planningCommitRepo(t *testing.T) string {
 	notTheKitRoot(t)
 	primary := t.TempDir()
 	initializeLandingRepo(t, primary, 0)
-	outcomes := []commitment.Outcome{}
-	for i, id := range []string{"A", "B"} {
-		row := "FT" + strconv.Itoa(i+1)
-		path := "roadmap/" + row + ".md"
-		body := "**" + row + " — " + id + "**\n\nKeep the " + id + " obligation.\n"
-		commitmenttest.Write(t, primary, path, body)
-		outcomes = append(outcomes, commitment.Outcome{ID: id, Criteria: []commitment.Criterion{{ID: id + "-done", Text: "The obligation is satisfied."}}, Sources: []commitment.SourceBinding{{ID: row, Path: path, Identity: commitment.Identity([]byte(body))}}})
-	}
-	commitmenttest.WritePolicy(t, primary, commitment.Policy{Version: 1, ActiveMilestone: "M", Milestones: []commitment.Milestone{{ID: "M", Outcomes: outcomes}}})
-	commitmenttest.Write(t, primary, "ROADMAP.md", "# Roadmap\n\n## Parked\n\n**FT1 — A**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. A\n2. B\n")
+	commitmenttest.SeedProtected(t, primary)
 	commitmenttest.Commit(t, primary, "approve protected obligations")
 	return commitmenttest.Planning(t, primary)
 }
