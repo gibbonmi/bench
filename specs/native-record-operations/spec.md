@@ -87,23 +87,21 @@ The schema accepts explicit nonempty model and effort values, including `unknown
 
 `write` and `replace` in `internal/reviewrecord/write.go` own validation before atomic record replacement.
 Reuse `replace` for the assignment file effect.
-Use the same named-fence span owner that `fenced` and `Render` use.
+Use `locate`, the named-fence span owner that `fenced` and `Render` use.
 Keep JSON strictness, input size, safe path, source digest, and evidence rules in their existing owners.
 
 The source sweep covers qualified and unqualified calls to `ReadPlan`, `RecordChunk`, `RecordVerification`, `CheckTrees`, and the repair renderer.
 Production consumers are `reviewrecord.atSource`, `reviewrecord.checkSource`, `recordcmd`, `preflight.withCompletionPlan`, and `gate.applyCheckpoint`.
 Fixture consumers include both `recordtest` loaders and the existing delegated worktree journey.
-Public adapters retain their signatures unless the accepted Markdown delivery changes their internal composition.
+Public adapters retain their signatures.
 No `.mjs` or workflow consumer of these Go entry points was found.
 
-### Canonical Markdown prerequisite
+### Fence span owner
 
-NR-C1 uses the accepted delivery of `specs/markdown-block-reader/spec.md`, especially MB-C4's review-record reader and replacement spans.
-That delivery keeps `ReadPlan`, `fenced`, and record rendering on one block owner.
-The approved reader returns classified physical lines, byte offsets, and at most one fault.
-Native assignment consumes that contract through reviewrecord and adds no fence detector.
-This is an actual owner prerequisite, independent of the advisory C10 order.
-The later chunks inherit it through NR-C1's reviewed interface.
+NR-C1 composes `locate` in `internal/reviewrecord/parse.go`, which `ReadPlan`, `fenced`, and `Render` already share.
+Native assignment replaces only the plan payload span that `locate` reports and adds no fence detector.
+The later chunks inherit this through NR-C1's reviewed interface.
+The markdown-block-reader delivery is not a prerequisite; that later migration carries these callers with the other `locate` callers.
 
 ### Assignment contract
 
@@ -158,8 +156,9 @@ No-progress also adds reassessment.
 ### Ordering and repair ownership
 
 `RecordChunk` at `internal/reviewrecord/write.go:125` currently omits the record-versus-current plan digest guard.
-`checkSource` at `internal/reviewrecord/coverage.go:20` already detects the stale digest later.
+`checkSource` at `internal/reviewrecord/coverage.go:19` already detects the stale digest later.
 Share that condition so the chunk writer refuses before appending or updating evidence.
+The chunk form keeps its existing planned-cell refusal first, and the writer's digest guard follows it.
 Retain the missing record's initial chunk creation behavior.
 A valid amendment remains the only writer that advances an existing record's plan digest.
 
@@ -169,11 +168,12 @@ Do not parse human error strings to classify missing obligations.
 
 Reviewrecord owns typed repair form names and known context values.
 The existing recordcmd registry uses those names for its form declarations and derives their complete help grammar.
-Gate emits the corresponding `bench record <form> --help` route from the typed name.
-It does not copy flags or import recordcmd.
+The shared refusal-route registry declares the gate face that routes to `bench record <form> --help`.
+The gate checkpoint's `funnelFace` picks that face from the typed repair information, and the face declaration owns the route text.
+The gate composes no route literal, copies no flags, and does not import recordcmd.
 
 The import graph remains acyclic: recordcmd uses probe, probe uses gate, and gate uses reviewrecord.
-`gate.routedRefusal` retains `bench preflight review <slug>` for structural or unclassified refusals.
+The `checkpoint-completion-evidence` face retains `bench preflight review <slug>` for structural or unclassified refusals.
 The gate does not become an evidence writer.
 
 The repair families are assignment, amendment, chunk, verification, review, and completion.
@@ -284,7 +284,7 @@ It does not grade directory crowding.
 Existing full-tree crowding remains inherited structural debt, not a new required lane refusal.
 This spec adds no count-equal grant and edits no structure budget.
 
-`recordcmd/command.go` has 399 lines and one line of default headroom.
+`recordcmd/command.go` has 380 lines and 20 lines of default headroom.
 Move its existing verification validation and handler together into `recordcmd/verification.go` before adding import flags.
 Move `cause` into the coherent repair renderer in `recordcmd/refusal.go`.
 Keep the form registry and its help derivation in command.go.
@@ -293,7 +293,7 @@ Each new sibling targets at most 350 lines.
 
 `write.go` has 318 lines and 82 lines of headroom.
 Keep the new assignment operation in its own sibling and add only the shared guard there.
-`plan.go` has 163 lines, `coverage.go` 259, and `checkpoint.go` 159.
+`plan.go` has 188 lines, `coverage.go` 262, and `internal/gate/checkpoint.go` 232.
 The shared validator and typed refusal additions fit without a grant.
 `probe.go` has 254 lines, baseline.go 45, and outcome_test.go 276.
 Put result parsing and its new witnesses in result.go and result_test.go.
@@ -301,18 +301,18 @@ Put result parsing and its new witnesses in result.go and result_test.go.
 `verification_test.go` has 391 lines and nine lines of headroom.
 Put new import tests in verification_import_test.go and reuse its existing form and excerpt helpers.
 Retain the existing file's behavior tests.
-`recordtest/fixture.go` has 366 lines and 34 lines of headroom.
+`recordtest/fixture.go` has 367 lines and 33 lines of headroom.
 Use its existing `Option`, `NewLinked`, `WritePlan`, and committed ticket fixture without a copied builder.
 
 The five command registry names below are co-owned because probe is a bound command package.
 `command_registry_test.go` has 794 lines and no new default growth allowance.
 New entry cases go into record_operations_test.go using existing command fixtures.
 The co-owned AXI registry file also starts above default and needs no membership change for these mutating forms.
-`help_inventory_test.go` has 323 lines and 77 lines of headroom.
+`help_inventory_test.go` has 337 lines and 63 lines of headroom.
 The record form registry already derives root help, so no new main.go dispatch declaration is needed.
 
 Guidance updates preserve its current anchor placements and replace only descriptions that incorrectly require hand-built dispatch JSON.
-The canonical all-string-literal scan includes 11 current Go holders that pin the three guidance subjects.
+The canonical all-string-literal scan includes 12 current Go holders that pin the three guidance subjects.
 Its census includes registry_calibration_test.go, registry_chunk_chain_test.go, and registry_data_test.go.
 Each independent expectation remains effective; none is removed or derived from changed production values.
 
@@ -344,15 +344,14 @@ The exact canary directories below include recursive BASE includes, dot-restored
 ## Implementation chunks
 
 Each accepted green outcome now has one complete vertical ticket and one independent chunk checkpoint.
-NR-C1's accepted owner prerequisite must land before its author starts.
 Shared writer, form-registry, and help writes order NR-C2 after NR-C1 and NR-C3 after NR-C2.
 Each chunk retains all sufficient existing tests and includes its real command entry.
 
-The 11 anchor holders join every affected guidance chunk; their existing independent assertions remain intact.
+The 12 anchor holders join every affected guidance chunk; their existing independent assertions remain intact.
 NR-C2 includes reviewrecord/record.go for missing-axis typed repair information.
 NR-C3 includes probe/refusal_test.go, both framing owners and their listed tests, the shared spill accessor, and the real CLI journey.
 NR-C3 also owns the shared canned-runner extraction and every listed existing probe caller, with both caller families migrated before its green checkpoint.
-No chunk depends on the unlanded exact-reader or preflight policy specs.
+No chunk depends on the unlanded exact-reader, block-reader, or preflight policy specs.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
@@ -368,9 +367,9 @@ Ticket 2 blocks on ticket 1, and ticket 3 blocks on both predecessors.
 The shared writer, form registry, guidance, holders, fixtures, and real CLI test require this serial order.
 Each predecessor commits green and closes independent Standards, Spec, and Coverage review before its successor starts.
 
-The Writes union has 145 exact paths, equal to the unchanged 146-entry fence minus its review pickup.
+The Writes union has 153 exact paths, equal to the 154-entry fence minus its review pickup.
 Each ticket includes its first-use command, anchor, and fixture closure, not only the spec-wide union.
-The 78 canary units and 11 anchor holders remain available to every affected guidance checkpoint.
+The 80 canary units and 12 anchor holders remain available to every affected guidance checkpoint.
 Each test expectation and headroom route closes in its introducing ticket; final reconciliation cannot borrow a later repair.
 Co-owned files may remain unchanged when their existing assertions and closure suffice.
 
@@ -378,7 +377,6 @@ This version-1 completion plan is a supported planning verification inventory, n
 Before any implementation charge, the coordinator must bind actual run and session identities in a version-2 plan with author-limit 1.
 Each ticket then receives a fresh author on the approved gpt-5.6-sol / high line and mapped verification ownership.
 No staged status, plan-only pass, or empty execution history grants implementation authority.
-The complete accepted Markdown-block-reader outcome, including MB-C4, must land before those interface and headroom bindings close.
 
 ### Completion plan
 
@@ -419,7 +417,19 @@ The final requirements run on the complete reconciled source after all three chu
         },
         {
           "id": "root-conformance",
-          "command": "bench test --check conformance-meta"
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "anchors",
+          "command": "bench test --package ./internal/anchors"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
+          "id": "record-fixtures",
+          "command": "bench test --package ./internal/reviewrecord/recordtest"
         },
         {
           "id": "whole-plan-omission",
@@ -460,11 +470,31 @@ The final requirements run on the complete reconciled source after all three chu
         },
         {
           "id": "root-conformance",
-          "command": "bench test --check conformance-meta"
+          "command": "bench test --check root-conformance"
         },
         {
           "id": "ordinary-census",
           "command": "bench test --check ordinary-build-census"
+        },
+        {
+          "id": "anchors",
+          "command": "bench test --package ./internal/anchors"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
+          "id": "record-fixtures",
+          "command": "bench test --package ./internal/reviewrecord/recordtest"
+        },
+        {
+          "id": "gate-package",
+          "command": "bench test --package ./internal/gate"
+        },
+        {
+          "id": "refusal-routes",
+          "command": "bench test --package ./internal/refusalroute"
         },
         {
           "id": "chunk-guard-omission",
@@ -509,7 +539,19 @@ The final requirements run on the complete reconciled source after all three chu
         },
         {
           "id": "root-conformance",
-          "command": "bench test --check conformance-meta"
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "anchors",
+          "command": "bench test --package ./internal/anchors"
+        },
+        {
+          "id": "conformance-package",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
+          "id": "record-fixtures",
+          "command": "bench test --package ./internal/reviewrecord/recordtest"
         },
         {
           "id": "focused-exit-substitution",
@@ -588,15 +630,41 @@ The final requirements run on the complete reconciled source after all three chu
     },
     {
       "id": "root-conformance",
-      "command": "bench test --check conformance-meta"
+      "command": "bench test --check root-conformance"
     },
     {
       "id": "ordinary-census",
       "command": "bench test --check ordinary-build-census"
+    },
+    {
+      "id": "anchors",
+      "command": "bench test --package ./internal/anchors"
+    },
+    {
+      "id": "conformance-package",
+      "command": "bench test --package ./internal/conformance"
+    },
+    {
+      "id": "record-fixtures",
+      "command": "bench test --package ./internal/reviewrecord/recordtest"
+    },
+    {
+      "id": "gate-package",
+      "command": "bench test --package ./internal/gate"
+    },
+    {
+      "id": "refusal-routes",
+      "command": "bench test --package ./internal/refusalroute"
     }
   ]
 }
 ```
+
+### Known issues
+
+NR-C2 makes the FT318 retire condition of `docs/known-issues.md` hold, so its ticket removes the chunk-digest row.
+NR-C3 makes the FT168 retire condition hold, so its ticket removes the probe-exit row.
+Each removal lands in the same ticket as its behavior.
 
 ## Testing decisions
 
@@ -610,7 +678,7 @@ Probe tests use the shared canned Go runner below to distinguish probe command 0
 
 The current runner is private in internal/probe/probe_test.go:134-181.
 Its installStubStarts owns executable construction, real-Go passthrough, the invocation marker, and baseline/mutated parity.
-Recordtest.Prepare at internal/reviewrecord/recordtest/fixture.go:165 supplies the committed record fixture, not that runner.
+Recordtest.Prepare at internal/reviewrecord/recordtest/fixture.go:166 supplies the committed record fixture, not that runner.
 Gittest.StubGitDir owns git transport, and kittest.WriteTree owns a minimal build-input tree.
 Neither supplies the two-start Go transport needed by the real probe journey.
 
@@ -775,8 +843,10 @@ No implementation write is authorized by this planning artifact alone.
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/record_operations_test.go`
 - `cmd/bench/response_bound_test.go`
+- `docs/known-issues.md`
 - `internal/anchors/registry_calibration.go`
 - `internal/anchors/registry_calibration_test.go`
+- `internal/anchors/registry_check_floor_test.go`
 - `internal/anchors/registry_chunk_chain.go`
 - `internal/anchors/registry_chunk_chain_test.go`
 - `internal/anchors/registry_commitment.go`
@@ -793,6 +863,7 @@ No implementation write is authorized by this planning artifact alone.
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/gate/checkpoint.go`
 - `internal/gate/record_repair_test.go`
+- `internal/gate/refusal_route_test.go`
 - `internal/gate/review_checkpoint_test.go`
 - `internal/probe/baseline.go`
 - `internal/probe/baseline_test.go`
@@ -804,6 +875,8 @@ No implementation write is authorized by this planning artifact alone.
 - `internal/probe/refusal_test.go`
 - `internal/probe/result.go`
 - `internal/probe/result_test.go`
+- `internal/refusalroute/faces_gate.go`
+- `internal/refusalroute/registry_test.go`
 - `internal/responsebound/lines_test.go`
 - `internal/responsebound/owner.go`
 - `internal/responsebound/owner_test.go`
@@ -820,6 +893,7 @@ No implementation write is authorized by this planning artifact alone.
 - `internal/reviewrecord/recordcmd/amendment_test.go`
 - `internal/reviewrecord/recordcmd/assignment.go`
 - `internal/reviewrecord/recordcmd/assignment_test.go`
+- `internal/reviewrecord/recordcmd/chunk.go`
 - `internal/reviewrecord/recordcmd/command.go`
 - `internal/reviewrecord/recordcmd/completion.go`
 - `internal/reviewrecord/recordcmd/ordering_test.go`
@@ -861,12 +935,14 @@ No implementation write is authorized by this planning artifact alone.
 - `tests/canary/workflow-guidance-anchors/dg-31`
 - `tests/canary/workflow-guidance-anchors/dg-31-contradiction-trigger`
 - `tests/canary/workflow-guidance-anchors/implement-spec-adoption-freshness`
+- `tests/canary/workflow-guidance-anchors/implement-spec-check-floor`
 - `tests/canary/workflow-guidance-anchors/implement-spec-coverage-task-seeding`
 - `tests/canary/workflow-guidance-anchors/implement-spec-cross-harness-pointer`
 - `tests/canary/workflow-guidance-anchors/implement-spec-entry-validation`
 - `tests/canary/workflow-guidance-anchors/implement-spec-incapable-harness`
 - `tests/canary/workflow-guidance-anchors/implement-spec-inline-exception`
 - `tests/canary/workflow-guidance-anchors/implement-spec-mandatory-delegation-anchor`
+- `tests/canary/workflow-guidance-anchors/implement-spec-planned-cell-rewrite`
 - `tests/canary/workflow-guidance-anchors/implement-spec-prose-owner-transfer`
 - `tests/canary/workflow-guidance-anchors/implement-spec-read-only-helper`
 - `tests/canary/workflow-guidance-anchors/implement-spec-red-preflight-route`
@@ -936,14 +1012,14 @@ The verification record is static: full source bodies, owner definitions, caller
 Prose, coverage, link checks, and the required planning lane freeze this spec before independent review.
 No runtime test, omission probe, benchmark, or implementation result is claimed.
 The graph retains exact per-ticket closure and shared-write blockers from the accepted source.
-Independent ticket review accepted the graph; build entry must refresh the landed provider, source pin, and headroom before any charge.
+Independent ticket review accepted the graph; build entry must refresh the source pin and headroom before any charge.
 
 | approval item | proposed disposition |
 | --- | --- |
 | implementation line | gpt-5.6-sol / high, retained accepted line |
 | seams and test purpose | Existing validators, producer result owner, real record entry, and gate checkpoint |
 | coverage and exclusions | NR1-NR45, with explicit FT317, conversion, and digest-policy exclusions |
-| ownership | Unchanged 146-entry fence; exact per-ticket closure independently accepted |
+| ownership | 154-entry fence after the build-entry refresh; exact per-ticket closure |
 | graph | Three serial vertical tickets accepted at 0d7fa110cc3869a4b089cba73cdb2aa435d38983 after SPEC acceptance |
 
 The numbered breakdown is:
