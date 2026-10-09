@@ -95,10 +95,10 @@ func (f form) terms() []string {
 	return layout
 }
 
-// suffix is the form's grammar after `bench record`. A flag that known holds a value for
-// shows that value in place of its placeholder.
+// suffix is the form's grammar after `bench record`. The slug operand or a flag that known
+// holds a value for shows that value in place of its placeholder.
 func (f form) suffix(known map[string]string) string {
-	terms := []string{"", f.name, "<slug>"}
+	terms := []string{"", f.name, refusalroute.Arg(refusalroute.FactSlug, known[refusalroute.FactSlug])}
 	for _, term := range f.terms() {
 		if strings.HasPrefix(term, "--") {
 			term = f.flag(term).usage(known[term])
@@ -333,7 +333,7 @@ func review(f form, root, spec string, parsed usage.Result) (string, int) {
 		Evidence: reviewrecord.Evidence{ID: values["--id"], Performer: values["--performer"], Model: values["--model"], Effort: values["--effort"], NativeRef: ref}}
 	entry, err := reviewrecord.RecordReview(root, spec, call)
 	if err != nil {
-		return f.refuse(cause(err))
+		return f.refuse(cause(spec, err))
 	}
 	return row("review", []string{"chunk", "id", "axis", "outcome", "supersedes", "source_digest", "excerpt_digest"},
 		[]string{call.Chunk, entry.ID, entry.Axis, entry.Outcome, strings.Join(entry.Supersedes, ","), entry.SourceDigest, entry.NativeRef.Digest})

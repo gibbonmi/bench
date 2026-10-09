@@ -47,7 +47,7 @@ func verification(f form, root, spec string, parsed usage.Result) (string, int) 
 	}
 	entry, err := reviewrecord.RecordVerification(root, spec, call)
 	if err != nil {
-		return f.refuse(cause(err))
+		return f.refuse(cause(spec, err))
 	}
 	list := "chunk"
 	if call.Chunk == "" {

@@ -9,7 +9,9 @@ import (
 )
 
 // TestCheckpointEntryRepairForms covers NR17 through NR21: each checkpoint refusal for a
-// missing entry routes to the help of the record form that writes that entry.
+// missing entry routes to the help of the record form that writes that entry. A changed
+// plan routes to the amendment form, and an unplanned chunk, which no form writes, keeps
+// the preflight review route.
 func TestCheckpointEntryRepairForms(t *testing.T) {
 	undispatched := func(t *testing.T) *recordtest.Fixture {
 		f := attachedCheckpointFixture(t, recordtest.AttachDelegated, func(f *recordtest.Fixture) {
@@ -23,41 +25,49 @@ func TestCheckpointEntryRepairForms(t *testing.T) {
 		f.Save()
 		return f
 	}
+	// An empty chunk selects the complete checkpoint.
 	for _, tc := range []struct {
-		name, form string
-		complete   bool
-		fixture    func(*testing.T) *recordtest.Fixture
+		name, chunk, next string
+		fixture           func(*testing.T) *recordtest.Fixture
 	}{
-		{"missing chunk", "chunk", false, func(t *testing.T) *recordtest.Fixture {
+		{"missing chunk", "1", "bench record 'chunk' --help", func(t *testing.T) *recordtest.Fixture {
 			f := checkpointFixture(t)
 			f.Record.Chunks = nil
 			f.Save()
 			return f
 		}},
-		{"missing verification", "verification", false, func(t *testing.T) *recordtest.Fixture {
+		{"missing verification", "1", "bench record 'verification' --help", func(t *testing.T) *recordtest.Fixture {
 			f := checkpointFixture(t)
 			f.Record.Chunks[0].Verification = nil
 			f.Save()
 			return f
 		}},
-		{"missing axis", "review", false, func(t *testing.T) *recordtest.Fixture {
+		{"missing axis", "1", "bench record 'review' --help", func(t *testing.T) *recordtest.Fixture {
 			f := checkpointFixture(t)
 			f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
 			f.Save()
 			return f
 		}},
-		{"missing completion", "completion", true, checkpointFixture},
-		{"undispatched ticket", "assignment", false, undispatched},
+		{"missing completion", "", "bench record 'completion' --help", checkpointFixture},
+		{"undispatched ticket", "1", "bench record 'assignment' --help", undispatched},
+		{"changed plan", "1", "bench record 'amendment' --help", func(t *testing.T) *recordtest.Fixture {
+			f := checkpointFixture(t)
+			f.Plan.FinalVerification[0].Command = "go test -count=1 ./..."
+			f.WritePlan()
+			f.Commit("change the plan")
+			return f
+		}},
+		{"unplanned chunk", "9", "bench preflight review 'example'", checkpointFixture},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := tc.fixture(t)
-			args := []string{f.Root, "--checkpoint", recordtest.Spec, "--chunk", "1"}
-			if tc.complete {
+			args := []string{f.Root, "--checkpoint", recordtest.Spec, "--chunk", tc.chunk}
+			if tc.chunk == "" {
 				args = []string{f.Root, "--checkpoint", recordtest.Spec, "--complete"}
 			}
 			var out, diagnostic bytes.Buffer
 			code := RunCommand(args, &out, &diagnostic)
-			if want := "next=bench record '" + tc.form + "' --help\n"; code == 0 || !strings.Contains(diagnostic.String(), want) {
+			if want := "next=" + tc.next + "\n"; code == 0 || !strings.Contains(diagnostic.String(), want) {
 				t.Fatalf("checkpoint = exit %d, stderr %q; want a refusal whose route is %q", code, diagnostic.String(), want)
 			}
 		})

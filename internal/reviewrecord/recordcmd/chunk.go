@@ -25,7 +25,7 @@ func chunk(f form, root, spec string, parsed usage.Result) (string, int) {
 	}
 	action, entry, err := reviewrecord.RecordChunk(root, spec, values["--chunk"], base, tip)
 	if err != nil {
-		return f.refuse(cause(err))
+		return f.refuse(cause(spec, err))
 	}
 	return row("chunk", []string{"id", "action", "base", "tip", "source_digest", "plan_digest", "rows"},
 		[]string{entry.ID, action, entry.Base, entry.Tip, entry.SourceDigest, entry.PlanDigest, strconv.Itoa(len(entry.AcceptanceRows))})

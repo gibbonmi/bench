@@ -61,10 +61,10 @@ func (s fenceSpan) splice(document, data []byte) []byte {
 // record through the reader, applies change, renders the document, and grades the
 // rendered bytes as the reader grades a file: the bounded classification, then the
 // parse. Only then does it replace the file through a temporary file in
-// the same directory. A nil create refuses an absent record; otherwise create supplies
-// the record that an absent file starts from. A refusal at any step leaves the record
-// bytes unchanged and leaves no temporary file.
-func write(root, spec string, create func() (Record, error), change func(*Record) error) error {
+// the same directory. For an absent file at path, create supplies the record that the
+// file starts from or refuses it. A refusal at any step leaves the record bytes unchanged
+// and leaves no temporary file.
+func write(root, spec string, create func(path string) (Record, error), change func(*Record) error) error {
 	path, err := RecordPath(spec)
 	if err != nil {
 		return err
@@ -72,10 +72,8 @@ func write(root, spec string, create func() (Record, error), change func(*Record
 	data, err := readFile(root, path)
 	var record Record
 	switch {
-	case errors.Is(err, ErrMissing) && create != nil:
-		record, err = create()
 	case errors.Is(err, ErrMissing):
-		err = Repair{Form: FormChunk, Err: fmt.Errorf("%s holds no record: %w", path, ErrNoChunkEntry)}
+		record, err = create(path)
 	case err == nil:
 		record, err = parseRecord(data, spec)
 	}
@@ -96,6 +94,14 @@ func write(root, spec string, create func() (Record, error), change func(*Record
 		return err
 	}
 	return replace(filepath.Join(root, filepath.FromSlash(path)), rendered)
+}
+
+// absent refuses an absent record at path. The chunk form writes its first entry, for
+// chunk when the caller names one.
+func absent(chunk string) func(path string) (Record, error) {
+	return func(path string) (Record, error) {
+		return Record{}, Repair{Form: FormChunk, Chunk: chunk, Err: fmt.Errorf("%s holds no record: %w", path, ErrNoChunkEntry)}
+	}
 }
 
 // replace writes data to a temporary file beside path and renames it over path, so a
@@ -141,7 +147,7 @@ func RecordChunk(root, spec, id, base, tip string) (string, Chunk, error) {
 		return "", Chunk{}, err
 	}
 	action, entry := "", Chunk{}
-	create := func() (Record, error) {
+	create := func(string) (Record, error) {
 		if plan.Version != 2 {
 			return Record{}, fmt.Errorf("a new record needs a version 2 completion plan, and the plan at %s has version %d", tip, plan.Version)
 		}
@@ -203,7 +209,7 @@ type VerificationCall struct {
 // result must name the source of its chunk entry. The answer is the entry as written.
 func RecordVerification(root, spec string, call VerificationCall) (Verification, error) {
 	var entry Verification
-	err := write(root, spec, nil, func(record *Record) error {
+	err := write(root, spec, absent(call.Chunk), func(record *Record) error {
 		list, source := &record.Completion.Verification, call.Source
 		var chunk *Chunk
 		var err error
@@ -299,7 +305,7 @@ type ReviewCall struct {
 // entry as written.
 func RecordReview(root, spec string, call ReviewCall) (Review, error) {
 	var entry Review
-	err := write(root, spec, nil, func(record *Record) error {
+	err := write(root, spec, absent(call.Chunk), func(record *Record) error {
 		chunk, err := entryOf(record, call.Chunk)
 		if err != nil {
 			return err

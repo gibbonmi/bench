@@ -31,6 +31,10 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 	if !objectID.MatchString(tip) {
 		return errors.New("invalid requested source tip")
 	}
+	// No record form writes an unplanned chunk, so its refusal carries no repair.
+	if !complete && findChunk(current, chunkID) == nil {
+		return fmt.Errorf("chunk %s is not a chunk of the plan at %s", chunkID, tip)
+	}
 	if len(record.Chunks) == 0 {
 		return Repair{Form: FormChunk, Chunk: chunkID, Err: errors.New("missing chunk evidence; retain the three native review results")}
 	}
@@ -200,7 +204,7 @@ func RecordAmendment(root, spec, source string, changes map[string][]string) (Am
 		return Amendment{}, err
 	}
 	var entry Amendment
-	err = write(root, spec, nil, func(record *Record) error {
+	err = write(root, spec, absent(""), func(record *Record) error {
 		if record.PlanDigest == plan.Digest {
 			return fmt.Errorf("the plan at %s is unchanged from the record plan digest %s", source, plan.Digest)
 		}

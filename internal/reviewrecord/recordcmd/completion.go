@@ -20,7 +20,7 @@ func completion(f form, root, spec string, parsed usage.Result) (string, int) {
 	}
 	entry, err := reviewrecord.RecordCompletion(root, spec, source)
 	if err != nil {
-		return f.refuse(cause(err))
+		return f.refuse(cause(spec, err))
 	}
 	return row("completion", []string{"state", "source_digest", "performer", "rows", "verification"},
 		[]string{entry.State, entry.SourceDigest, entry.Performer, strconv.Itoa(len(entry.Reconciliation)), strconv.Itoa(len(entry.Verification))})

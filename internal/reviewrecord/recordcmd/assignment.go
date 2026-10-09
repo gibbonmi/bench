@@ -7,7 +7,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-var assignmentForm = form{name: "assignment", description: "append one author dispatch to a ticket's history in the version 2 completion plan at HEAD",
+var assignmentForm = form{name: reviewrecord.FormAssignment, description: "append one author dispatch to a ticket's history in the version 2 completion plan at HEAD",
 	flags: []flag{{"--source", "<commit>", false, once}, {"--ticket", "<basename>", true, once}, {"--performer", "<session>", true, once},
 		{"--assignment", "<id>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
 		{"--ref", "<native-dispatch-ref>", true, once}, {"--run", "<run-id>", true, once}, {"--orchestrator", "<session>", true, once},

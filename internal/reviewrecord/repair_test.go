@@ -53,7 +53,8 @@ func TestRecordRepairPreservesErrorIdentity(t *testing.T) {
 
 // TestRecordRepairNamesOwnerValues grades the values that each refusing owner supplies:
 // record.go names the chunk and the missing axis, the verifier names the undispatched
-// requirement and its ticket, and the checkpoint names the requested source.
+// requirement and its ticket, the checkpoint names the requested source, and a result
+// writer names the chunk of its call when the record is absent.
 func TestRecordRepairNamesOwnerValues(t *testing.T) {
 	recorded := func(t *testing.T, options ...recordtest.Option) *recordtest.Fixture {
 		f := recordtest.Prepare(t, gittest.RepoOnBranch(t, "main"), 1, recordtest.Spec, fixtureBody, options...)
@@ -99,6 +100,15 @@ func TestRecordRepairNamesOwnerValues(t *testing.T) {
 			f.WritePlan()
 			f.Commit("change the plan")
 			return rr.Check(f.Root, f.Tree(), f.Tip(), f.Record.Spec, "1", false), f.Tip()
+		}},
+		{name: "absent record verification", want: rr.Repair{Form: rr.FormChunk, Chunk: "1"}, err: func(t *testing.T) (error, string) {
+			return verifyChunk(recordtest.New(t, 1), "1"), ""
+		}},
+		{name: "absent record review", want: rr.Repair{Form: rr.FormChunk, Chunk: "1"}, err: func(t *testing.T) (error, string) {
+			f := recordtest.New(t, 1)
+			_, err := rr.RecordReview(f.Root, f.Record.Spec, rr.ReviewCall{Chunk: "1", Axis: "Standards",
+				Evidence: rr.Evidence{ID: "standards-1", Performer: "fixture-reviewer", Model: "unknown", Effort: "unknown", NativeRef: recordtest.Native("ok")}})
+			return err, ""
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
