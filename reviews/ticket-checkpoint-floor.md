@@ -24,6 +24,8 @@ TF-C4 round 2 confirmed the folds of C1 and C2 and found C3. Chunk TF-C4 uses re
 
 TF-C4 round 3 confirmed the fold of C3 with 0 findings on every axis. TF-C4 closes with both repair cycles used and no open finding.
 
+Chunk TF-C5 closes in round 1 with no repair cycle used and no open finding. Its review range holds the merge of `main`, which changes no file that ticket 05 writes.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -71,6 +73,8 @@ Advice: S1, the projection and `strayTestNames` treat a review-owned cell differ
 
 TF-C4 round 2: 0 findings. Advice: S5, two test helpers share a three-line setup that predates the repair.
 
+TF-C5 round 1: 0 findings. Advice: two guidance sentences carry the lifetime of the `planned` marker, as the spec requires, for two readers.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
@@ -102,6 +106,8 @@ TF-C3 round 2: 1 finding, worst P3.
 TF-C4 round 1: 0 findings. TF47 to TF59 and TF67 hold.
 
 TF-C4 round 2: 0 findings. TF54 and TF55 hold with two chunks.
+
+TF-C5 round 1: 0 findings. TF60 to TF65 hold.
 
 ## Coverage
 
@@ -144,6 +150,8 @@ TF-C4 round 1: 2 findings, worst C2.
 TF-C4 round 2: 1 finding, worst C3.
 
 - C3 (auto-fix, confidence 5): no completion test runs a `--source` commit behind HEAD, so a refusal that reads HEAD stays green. Ticket 04 states that completion refuses at its source.
+
+TF-C5 round 1: 0 findings. Four probes that weaken an anchored sentence each turn `docs-currency-workflow` red.
 
 ```bench-review-record
 {
@@ -2709,7 +2717,68 @@ TF-C4 round 2: 1 finding, worst C3.
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c5-standards-r1",
+          "performer": "claude:ft349_c5_standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "faa3171d75a2c9ad3959e81ae81b362c0488b415",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c5_standards",
+            "digest": "sha256:88882f1ea7b361472e99cd26e360e3a6a59b836753be52f371456947387eed16",
+            "excerpt": "Standards axis TF-C5 round 1 (fable/medium), ticket delta 418410ff..ee46a8ea. bench-implement-spec.md 83 lines; new sentences STE-conformant and in their owner files; removed focused-checks sentence has no remaining copy; merge 0fb483cf does not overlap the ticket delta. 3 advisory notes, all no-op: S1 two guidance sentences carry the planned-marker fact as the spec requires; S2 needle copies use the AGENTS.md test-expectation exception with a recorded red; S3 the seam-cell rewrite in spec.md is the spec's own exemption.\n"
+          },
+          "axis": "Standards",
+          "base": "3c2440b2f101ce2d484a2402206e6abe420082ea",
+          "tip": "ee46a8eaf1945dea84afaaa4c05b08b1761158eb",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c5-spec-r1",
+          "performer": "claude:ft349_c5_spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "faa3171d75a2c9ad3959e81ae81b362c0488b415",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c5_spec",
+            "digest": "sha256:74bdef23d1b061deb64c061ead57837c2df234fb8e05bd4025f98166cbc29862",
+            "excerpt": "Spec axis TF-C5 round 1 (fable/medium), ticket delta 418410ff..ee46a8ea. TF60-TF65 held: each statement sits where the spec names and matches check_floor.go, planned_cell.go, and named_check.go; TF64 anchor intact; story 54 stays undecided; seam cells cite fixture_bite_test.go; merge 0fb483cf changed no spec premise. P1 informational: the seam-cell rewrite edits spec.md, as spec.md:231 requires. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "3c2440b2f101ce2d484a2402206e6abe420082ea",
+          "tip": "ee46a8eaf1945dea84afaaa4c05b08b1761158eb",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c5-coverage-r1",
+          "performer": "claude:ft349_c5_coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "faa3171d75a2c9ad3959e81ae81b362c0488b415",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c5_coverage",
+            "digest": "sha256:f0b52c993182be95f7e544ccaed81756dfbdf575981e6d6dda8e8095e94e3a56",
+            "excerpt": "Coverage axis TF-C5 round 1 (fable/medium), ticket delta 418410ff..ee46a8ea. TF60-TF63 and TF65 held. Weakening probes, all bit and restored yes: route sentence without check-floor; root-conformance -> conformance in the delegation sentence; bench record chunk clause swapped in the rewrite sentence; check-floor -> completion-plan in the floor sentence. bench test --package ./internal/anchors pass (178); fixture-bite test pass. 0 findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "3c2440b2f101ce2d484a2402206e6abe420082ea",
+          "tip": "ee46a8eaf1945dea84afaaa4c05b08b1761158eb",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
