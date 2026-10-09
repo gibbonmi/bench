@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/adoption-lifecycle-consumption/spec.md",
-  "plan_digest": "sha256:bf33b2ae9a565b7369e5d3b06e524dcb32e0166709df6300d85fa08f1096812e",
+  "plan_digest": "sha256:5d7926a6de1e8e330d0b5b363d9d138edeb05738168949b51894359abe30b7ab",
   "implementation_session": "",
   "chunks": [
     {
@@ -976,6 +976,18 @@
       "from": "sha256:8f2db0bc94af1516cf342c05561e3ef7fc2434095cd3b95f3c8fe78eb6ac7974",
       "to": "sha256:bf33b2ae9a565b7369e5d3b06e524dcb32e0166709df6300d85fa08f1096812e",
       "chunk_ids": {
+        "ALC-OWNER": [
+          "ALC-OWNER"
+        ]
+      }
+    },
+    {
+      "from": "sha256:bf33b2ae9a565b7369e5d3b06e524dcb32e0166709df6300d85fa08f1096812e",
+      "to": "sha256:5d7926a6de1e8e330d0b5b363d9d138edeb05738168949b51894359abe30b7ab",
+      "chunk_ids": {
+        "ALC-LINK": [
+          "ALC-LINK"
+        ],
         "ALC-OWNER": [
           "ALC-OWNER"
         ]
