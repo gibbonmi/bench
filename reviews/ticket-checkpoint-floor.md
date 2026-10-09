@@ -90,7 +90,7 @@ TF-C2 round 3: 0 findings. Each behavior of the absent-path branch keeps its tes
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:72794a3b3eb14dc25c387506456fdd46eea0019c82a98b271942ada4e31f8224",
+  "plan_digest": "sha256:f8dea56252de2a8c725f40adc773a48c23a38390dc0a3d75ea9232b8a1615b06",
   "implementation_session": "",
   "chunks": [
     {
@@ -1212,6 +1212,206 @@ TF-C2 round 3: 0 findings. Each behavior of the absent-path branch keeps its tes
           ]
         }
       ]
+    },
+    {
+      "id": "TF-C3",
+      "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+      "tip": "aee997dea19596557cb5abfdb40518500756e635",
+      "plan_digest": "sha256:f8dea56252de2a8c725f40adc773a48c23a38390dc0a3d75ea9232b8a1615b06",
+      "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+      "acceptance_rows": [
+        "TF6",
+        "TF16",
+        "TF17",
+        "TF18",
+        "TF23",
+        "TF24",
+        "TF25",
+        "TF26",
+        "TF27",
+        "TF28",
+        "TF29",
+        "TF30",
+        "TF31",
+        "TF32",
+        "TF33",
+        "TF34",
+        "TF35",
+        "TF36",
+        "TF37",
+        "TF38",
+        "TF39",
+        "TF40",
+        "TF41",
+        "TF42",
+        "TF43",
+        "TF44",
+        "TF45",
+        "TF46",
+        "TF66",
+        "TF68",
+        "TF69",
+        "TF70",
+        "TF72"
+      ],
+      "verification": [
+        {
+          "id": "t3-pkg-internal-preflight",
+          "performer": "claude:ft349_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3/pkg-internal-preflight",
+            "digest": "sha256:7584eb1018e40e5291aff0afcff009f74d97a4a6fedad262430401fcc7eeeb59",
+            "excerpt": "commit aee997de; command: bench test --package ./internal/preflight/...; exit 0\ninternal/preflight pass 29073ms 396 tests; evidencecmd pass 19778ms 229 tests; failures[0]\n"
+          },
+          "requirement": "pkg-internal-preflight",
+          "command": "bench test --package ./internal/preflight/...",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-pkg-internal-testreport",
+          "performer": "claude:ft349_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3/pkg-internal-testreport",
+            "digest": "sha256:b20abf6a374f17c96087d4c832a4cb7c123ab48a24696b0ad61dff1c63782356",
+            "excerpt": "commit aee997de; command: bench test --package ./internal/testreport; exit 0\ninternal/testreport pass 65580ms 222 tests; failures[0]\n"
+          },
+          "requirement": "pkg-internal-testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-pkg-internal-diff",
+          "performer": "claude:ft349_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3/pkg-internal-diff",
+            "digest": "sha256:9ff7c8273cf744f1483ab0563b7bfb178e32eb799e6d7e233b5105e8f5b2f89d",
+            "excerpt": "commit aee997de; command: bench test --package ./internal/diff; exit 0\ninternal/diff pass 6785ms 98 tests; failures[0]\n"
+          },
+          "requirement": "pkg-internal-diff",
+          "command": "bench test --package ./internal/diff",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-pkg-internal-conformance",
+          "performer": "claude:ft349_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3/pkg-internal-conformance",
+            "digest": "sha256:4cb74f78b0b8413437c4523688331cd40b306d2fb683624e7537342b79dd737b",
+            "excerpt": "commit aee997de; command: bench test --package ./internal/conformance; exit 0\ninternal/conformance pass 55820ms 1673 tests; failures[0]; 3 capability skips (socket, char device)\n"
+          },
+          "requirement": "pkg-internal-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-pkg-cmd-bench",
+          "performer": "claude:ft349_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3/pkg-cmd-bench",
+            "digest": "sha256:9e43fb367cb44a00a8a3ea84b2e42d4fd19252068c9d9b72d238a2e1ad4f8acc",
+            "excerpt": "commit aee997de; command: bench test --package ./cmd/bench; exit 0\ncmd/bench pass 15128ms 333 tests; failures[0]\n"
+          },
+          "requirement": "pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-root-conformance",
+          "performer": "claude:ft349_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3/root-conformance",
+            "digest": "sha256:baec1b1db55857d022d8e604c5be0d3393aed75348df95142d0516d7908ac950",
+            "excerpt": "commit aee997de; command: bench test --check root-conformance; exit 0\ncheck root-conformance,conformance,1 test; internal/conformance pass 16802ms; failures[0]\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-system",
+          "performer": "claude:ft349_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3/system",
+            "digest": "sha256:2a4fce4ca5dbaf31d94ec13aeece5baff6f1808aaf1a3abc646640f833bd2a3f",
+            "excerpt": "commit aee997de; command: bench test --check system; exit 0\ncheck system,system,153 tests; internal/systemtest pass 93235ms; failures[0]\n"
+          },
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-check-floor-probe",
+          "performer": "claude:ft349_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "733b3ef92fc1f47b2f1127192a54b228ad31d572",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t3/check-floor-probe",
+            "digest": "sha256:4fb7a02a7d2201cc8edfa92a4ca1eb14b25de1c8b81106623e61864af05376d9",
+            "excerpt": "commit aee997de; command: bench probe internal/preflight/check_floor.go --omit 'elements = append(elements, floor.Packages...)' --package ./internal/preflight --run '^TestCheckFloor'; probe exit 0\nprobe verdict bit, cause failed, failed_tests 23, restored yes; mutated test run exit 1 (baseline passed, 37 ran)\nTestCheckFloorRedsAnOmittedPackage/package and /second_ticket red\n"
+          },
+          "requirement": "check-floor-probe",
+          "command": "bench test --package ./internal/preflight --run '^TestCheckFloor'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the package elements from the check-floor comparison. TestCheckFloorRedsAnOmittedPackage turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft349_t3/check-floor-probe",
+              "digest": "sha256:4fb7a02a7d2201cc8edfa92a4ca1eb14b25de1c8b81106623e61864af05376d9",
+              "excerpt": "commit aee997de; command: bench probe internal/preflight/check_floor.go --omit 'elements = append(elements, floor.Packages...)' --package ./internal/preflight --run '^TestCheckFloor'; probe exit 0\nprobe verdict bit, cause failed, failed_tests 23, restored yes; mutated test run exit 1 (baseline passed, 37 ran)\nTestCheckFloorRedsAnOmittedPackage/package and /second_ticket red\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1333,6 +1533,18 @@ TF-C2 round 3: 0 findings. Each behavior of the absent-path branch keeps its tes
     {
       "from": "sha256:425743906ad940d623711397e45136ac66b9d901f56fac447a70c3f621d23ab5",
       "to": "sha256:72794a3b3eb14dc25c387506456fdd46eea0019c82a98b271942ada4e31f8224",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ],
+        "TF-C2": [
+          "TF-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:72794a3b3eb14dc25c387506456fdd46eea0019c82a98b271942ada4e31f8224",
+      "to": "sha256:f8dea56252de2a8c725f40adc773a48c23a38390dc0a3d75ea9232b8a1615b06",
       "chunk_ids": {
         "TF-C1": [
           "TF-C1"
