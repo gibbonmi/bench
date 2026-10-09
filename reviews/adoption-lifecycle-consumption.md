@@ -1570,7 +1570,87 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "unlink-spec-r1",
+          "performer": "claude:ft217_unlink_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4385e886b2cd8f6c3776f95fbe126ae4a3261cac",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft217_unlink_spec_r1/review-unlink-spec-r1.txt",
+            "digest": "sha256:943f738be298ec0b0e855e4cd2e48c085ce54e9a7c22bb26c490ca043a2e6fcb",
+            "excerpt": "ALC-UNLINK Spec axis, round 1. Session claude:ft217_unlink_spec_r1, opus / medium. Frozen pair efe66c1a..30f7802f, source tip a3b2eabc, evidence sha256:674af9ea current=true.\n\nCount: 4. Worst: U1, Unlink's AGENTS.md and hook effects and the AGENTS.md residual never reach the owner, against the approved seam and ALC37.\n\nU1. Spec \"Their facts and prepared replacements join the same complete execution result\" and \"The caller publishes only the replacement selected by the complete result\" (spec.md:253, :255); ticket 04 \"Keep AGENTS.md and hook domain transforms single-sourced with their facts and prepared replacements selected by the complete result\" and \"Move the managed remove, preserve, absent, and manifest-residual classification into PlanLifecycle\" (ticket :22, :17). At the tip planUnlink calls stripAgentsForUnlink and removeManagedHook directly (unlink.go:141-146); they choose strip, remove, or keep and append to p.changes (marker.go:240-257, link_hook.go:288-290); AGENTS.md special-file and parse failures append to p.refused (marker.go:225, :234), which drives manifestKept (unlink.go:156); bespokeDecision yields only change or preserve (decision.go:316-323). The dry-run argument does not hold: spec.md:299 \"Unlink dry-run feeds the same observed facts to the owner without a lease, stage, or publication\", and Staged is a fingerprint fact. Confidence 7. auto-fix by a fresh ticket 04 repair session (in scope of the approved ticket).\nU2. ALC34: Unlink interruption covers only middle promotion (systemtest/lifecycle_test.go:248) while the spec names pre-publication, middle promotion, and final manifest publication (spec.md:477; ticket :44) and Unlink keeps its manifest-last publication (spec.md:603); the unlink fixture deletes the managed hook (:109), so hook-removal publication is never faulted. Confidence 5. auto-fix: add Unlink pre-publication and final-manifest interruptions.\nU3. ALC36: no differential baseline evidence for the new Unlink tests appears in the review record (spec.md:369). Confidence 5. Disposition: evidence-only; the author's baseline and candidate excerpts exist and the final reconciliation records them.\nU4. The fence names internal/adopt/decision_execution.go (spec.md:499, ticket :4), which the chunk never created. Confidence 4. auto-fix: use it for U1 or drop it.\n\nUnlink semantics hold against the base (unlink.go:118-183, decision.go:344-356): a non-not-exist Lstat error is refused; a fingerprint failure is a refused residual while Link fails hard (decision.go:334-335); sub/../asset is removed (lifecycle_unlink_test.go:142); the manifest stays with a residual and publishes last; dry-run has no stage, lease, or promotion (unlink.go:45, :101, :147, :157); sweepEmptyDirs unchanged; no rollback promised. ALC35 has five real entries in both suites (lifecycle_consumption_test.go:229-273, systemtest/lifecycle_test.go:117-150); the compatibility repair expectation (exit 1, empty stderr) was not checked against the base. ALC24 and ALC20 pass because the helpers are unchanged (see U1). Seam cells cited; unlink-entry-recovery-probes exact (spec.md:915). No observable unreported delta; dry-run fills p.changes unread (unlink.go:126, :147); the decideUnlink error return (unlink.go:120-122) is unreachable with one observation.\n\nAdvice (no confidence): give the owner a bespoke remove kind for a whitespace-only AGENTS.md and the managed hook, compute Staged in memory for dry-run, and take the AGENTS.md residual from the owner's decision; ticket :56's clean-remove, modified swap, and dry-run guard probes are a Coverage concern.\n\nCursors fetched: none. Examined: the chunk diff, spec.md:1-641 and 913-916, ticket 04, unlink.go:1-250, decision.go:20-379, marker.go:215-260, link_hook.go:271-292, link_transaction.go:150-233, the consumption test :116-128 and :216-274, the system test, the review-record deltas.\n"
+          },
+          "axis": "Spec",
+          "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "tip": "30f7802fdb06fffd11a00b8d8c852515255ede51",
+          "finding_ids": [
+            "U1",
+            "U2",
+            "U3",
+            "U4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "unlink-standards-r1",
+          "performer": "claude:ft217_unlink_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4385e886b2cd8f6c3776f95fbe126ae4a3261cac",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft217_unlink_standards_r1/review-unlink-standards-r1.txt",
+            "digest": "sha256:da5e4c11efb06dfb4d20b0b5e91b754935872c6e166d0c8f1bfc47edd29c8318",
+            "excerpt": "ALC-UNLINK Standards axis, round 1. Session claude:ft217_unlink_standards_r1, opus / medium. Frozen pair efe66c1a..30f7802f, source tip a3b2eabc, evidence sha256:674af9ea current=true.\n\nCount: 8 judgment calls, 0 hard violations. Worst: N1, a duplicated fixture harness in the new system test.\n\nN1. One source per fact: TestLifecycleEntryJourney calls owner.observeSelected and owner.runAt inline (internal/systemtest/lifecycle_test.go:137-140) while the same file owns that launch as runLifecycleEntry (:28-35). Confidence 6. auto-fix.\nN2. Duplicated Code: decideUnlink (unlink.go:187-193) and decideLink (link_transaction.go:271-277) repeat the single-observation PlanLifecycle call and its Refusal and Decisions[0] handling. Confidence 5. Orchestrator disposition under --auto-approve: auto-fix with one owner helper in decision.go used by both callers; the plan widens ticket 04's fence by link_transaction.go for that one call site.\nN3. observeUnlink (unlink.go:169-183) and observeWithdrawal (link_stage.go:99-117) share the safe-row check; the behavior differs as the spec requires (Unlink absent only on IsNotExist; Unlink turns a fingerprint error into a refused residual while withdrawal fails hard per spec.md:237; withdrawal records FileKind). Confidence 4. no-op (honest repetition).\nN4. decideUnlink's error branch (unlink.go:189-191) cannot run with one observation. Confidence 4. no-op; it guards the owner contract.\nN5. planUnlink sorts d.Reason into keptModified and refused lists and writeUnlinkReport maps them back (unlink.go:130-137, :320-323); manifestKept comes from list lengths because marker.go:225-254 appends AGENTS.md to p.refused outside the owner. Confidence 3. no-op here; the Spec axis U1 repair changes it.\nN6. runLifecycleEntry's env base (lifecycle_test.go:33) repeats the BENCH_RUN_BINARY/BENCH_KIT pair from runSelected (owner_test.go:141), a pattern in about 10 systemtest files. Confidence 4. no-op.\nN7. The prose fixture \"# Team rules\\n\\nKeep this rule.\\n\" is typed again (lifecycle_unlink_test.go:130). Confidence 3. no-op (incidental text).\nN8. The foreign-hook message is duplicated in production (link_transaction.go:77, link_hook.go:242) and typed again in the test (lifecycle_special_test.go:299); all three lines predate this delta. Confidence 7. Disposition: recorded with bench learning; not a delta finding.\n\nExpected values: the residual expectation (lifecycle_unlink_test.go:107) derives from renderVerdicts and the reason constants. Comments use the timeless present without provenance. 400-line rule passes (decision.go 399, unlink.go 351, tests 143-342). No new dependency.\n\nAdvice (no confidence): decision_execution.go was never created (Spec axis); TestLifecycleEntryJourney deletes lifecycleDoc in the shared owner.repos[0] fixture before the repair (compatibility_test.go:60, lifecycle_test.go:29), a Coverage concern; the hookRepo extraction correctly removes an older copy.\n\nCursors fetched: v1.674af9eac…m.0.0; s17 page 0 (all 5 consumers rows touched=true). Examined: the delta, decision.go:95-399, unlink.go:60-139, link_stage.go:90-139, link_transaction.go:60-89 and :265-288, link_hook.go:225-249, manifest.go:100-129, owner_test.go:100-174, compatibility_test.go:40-124, craft-comments.\n"
+          },
+          "axis": "Standards",
+          "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "tip": "30f7802fdb06fffd11a00b8d8c852515255ede51",
+          "finding_ids": [
+            "N1",
+            "N2",
+            "N3",
+            "N4",
+            "N5",
+            "N6",
+            "N7",
+            "N8"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "unlink-coverage-r1",
+          "performer": "claude:ft217_unlink_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4385e886b2cd8f6c3776f95fbe126ae4a3261cac",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft217_unlink_coverage_r1/review-unlink-coverage-r1.txt",
+            "digest": "sha256:3d7a6ed187dff9d3bf2a981b07e3df9e826a9942c41ccc951af7a782431bd23c",
+            "excerpt": "ALC-UNLINK Coverage axis, round 1. Session claude:ft217_unlink_coverage_r1, opus / medium. Frozen pair efe66c1a..30f7802f, source tip a3b2eabc, evidence sha256:674af9ea current=true.\n\nCount: 4. Worst: F1, the parent sweep for an absent row has no test, and an independent bypass is silent.\n\nF1. A clean row whose asset is already absent and whose parent holds nothing else: a mutant that stops collecting that row's ancestors leaves the empty managed parent after Unlink. The edge row \"Absent versus empty directories ... empty managed parents remain safe sweep candidates\" (ALC26, ALC29) has no fixture; the absent case uses .bench/BENCH.md whose parent holds other files (unlink.go:130-132, lifecycle_unlink_test.go:135-162). Confidence 9. auto-fix: an absent-row fixture under a parent that becomes empty.\nF2. Running as root: the stage-failure case makes .git/hooks read-only (0o555), root ignores the mode, link exits 0, and the case goes red (internal/systemtest/lifecycle_test.go:191-201). The privilege capability seam capability.Capability(t, capability.Privilege, ...) (internal/capability/capability.go:50, :230; precedent internal/spec/retire_preflight_test.go:84-90) applies. Confidence 8. auto-fix: route the guard through the seam.\nF3. decideUnlink's refusal-to-error branch is unreachable: unlinkDecision never refuses (decision.go:344-356), one observation cannot collide in the duplicate check, and the action is a constant (decision.go:199-213); the branch at unlink.go:189-191 is dead defensive code. Confidence 9. Disposition: advisory; the Standards N2 helper repair removes it.\nF4. The subtests \"unlink absent\" and \"unlink diverted absent\" run linkConsumer and a no-op arrange, so the managed hook is present when Unlink runs; no test covers an absent hook at Unlink (lifecycle_special_test.go:279, :283, :303-314). Confidence 7. auto-fix: make the hook absent in those arrangements, or rename the cases.\n\nCovered and checked: modified, escape (glob and space), symlink parent, FIFO, directory, sub/../ normalized, dry-run snapshot, manifest-last, report control byte (system), unlink fault last and interrupt :2, managed, stale, foreign, diverted-foreign hooks. decision_execution.go is in the Writes line and not created (benign).\n\nProbes\n1 bench probe internal/adopt/unlink.go --swap 'collectAncestors(&candidateDirs, root, full)\\n\\t\\tcase d.Reason == reasonModified:' --with 'case d.Reason == reasonModified:' --package ./internal/adopt --run '^(TestLifecycleUnlinkPartitions|TestLifecycleUnlinkRefusals|TestLifecycleDryRunSnapshot|TestLifecycleOwnerConsumption|TestUnlink.*)$' → silent, 24 passed, restored yes.\n\nAdvice (no confidence): close F1 with one more row in TestLifecycleUnlinkPartitions and rerun the probe; route F2 through the capability seam; F3 and F4 are cheap cleanups in ticket 04's Writes.\n\nCursors fetched: none. Examined: the delta, unlink.go:60-299, decision.go:100-380, link.go:259-272, link_transaction_test.go:140-279, lifecycle_special_test.go:270-289, the spec Edge inventory (455-485), docs/known-issues.md, internal/spec/retire_preflight_test.go:78-95. The dirty reviews file was the orchestrator's record writes.\n"
+          },
+          "axis": "Coverage",
+          "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "tip": "30f7802fdb06fffd11a00b8d8c852515255ede51",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {

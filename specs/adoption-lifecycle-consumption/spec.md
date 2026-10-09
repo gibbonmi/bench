@@ -783,6 +783,18 @@ Review records bind three independent axes to each frozen chunk pair.
           "effort": "high",
           "source": "1a473e42e09022859166323b8f334699c152cabd",
           "native_ref": "claude-agent:ft217_t4"
+        },
+        {
+          "session": "claude:ft217_t4_repair1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "a3b2eabc816000c2b629e899c74162f4f8a4a28f",
+          "native_ref": "claude-agent:ft217_t4_repair1",
+          "predecessor": "claude:ft217_t4",
+          "trigger": "user-directed",
+          "stopped": "the ticket 04 author session reported completion of its ALC-UNLINK freeze and verification record commit a3b2eabc and has no live child",
+          "preserved": "a3b2eabc816000c2b629e899c74162f4f8a4a28f"
         }
       ]
     }
@@ -912,8 +924,8 @@ Review records bind three independent axes to each frozen chunk pair.
         {
           "id": "unlink-entry-recovery-probes",
           "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
-          "command": "bench probe internal/adopt/unlink.go --omit 'p.manifestKept = len(p.keptModified)+len(p.refused) > 0' --package ./internal/adopt --run '^TestLifecycleUnlinkRefusals$'",
-          "probe": "Selected effects at all applying entries, unlink residual and dry-run guards, and the existing deterministic restore omission must bite and restore."
+          "command": "bench probe internal/adopt/unlink.go --omit <residual-manifest-guard-source> --package ./internal/adopt --run '^TestLifecycleUnlinkRefusals$'",
+          "probe": "Selected effects at all applying entries, unlink residual and dry-run guards, and the existing deterministic restore omission must bite and restore. The ticket commit replaces the placeholder with the exact omitted source text."
         }
       ]
     }
