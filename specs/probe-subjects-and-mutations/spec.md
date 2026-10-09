@@ -165,11 +165,15 @@ Each old string must match exactly once in the start bytes.
 Two edits whose byte ranges overlap refuse with `error: probe mutations overlap — two edits touch the same bytes`.
 
 The combined mutation cell lists each `--swap` edit and then each `--omit` edit, joined by `+`, for example `swap+swap+omit`.
-The cell is the same on every answer path, a substring miss included, because it derives from the argv alone.
+The cell is the same on every answer path, a substring miss included, because it derives from the two flag groups alone.
+The cell does not follow argv order: an argv that leads with `--omit` still lists the swaps first.
 A zero-match edit in a combined mutant gives the current substring-miss answer with that cell.
 
 The form matrix is closed.
-Each of these argv shapes is a usage refusal with exit 2:
+An argv names exactly one mutation group: the swap and omit group, `--unwrap`, `--omit-file`, `--insert-before`, or `--delete`.
+Any other count is a usage refusal with exit 2.
+So `--insert-before a --with b --swap c` refuses, because it names two groups.
+Each of these argv shapes is also a usage refusal with exit 2:
 
 - `--with` together with `--with-file`.
 - `--with-file` without `--swap` or `--insert-before`.
@@ -234,6 +238,7 @@ The probe reads the prose check name from one `testreport` export, and its own `
 That type carries the builder output, and its `Error()` text equals the current `<exit error>: <output>` bytes.
 A cancelled build and an absent Go keep their current untyped errors.
 `testreport` maps a `BuildError` to the outcome kind `build-failed` and keeps its current refusal text.
+The `OutcomeBuildFailed` doc comment in `internal/testreport/outcome.go` then names both sources: a package failure with no failing test, and a failed run-binary build script.
 Every other selection failure stays `refused`, and the `bench test` output and exit stay unchanged.
 
 `testreport.Outcome` gains `BuildLine`.
@@ -253,16 +258,19 @@ The probe takes the lock after the gate-lock read and before the baseline.
 The acquire protocol makes at most three attempts:
 
 1. Create the directory at mode 0700 if it is absent.
-2. Open the lock file with create, no-follow, and close-on-exec at mode 0600. If the open answers ENOENT, start the next attempt.
+2. Open the lock file read-write with create, no-follow, and close-on-exec at mode 0600. A write lock needs a writable descriptor. If the open answers ENOENT, start the next attempt.
 3. Take an exclusive, non-blocking write lock with `gocache.RecordLock`. If another process holds it, refuse with the in-use line.
-4. Compare the held descriptor's file identity with the path's file identity through `fstat` and `lstat`. Open no second descriptor. If they differ, close the descriptor and start the next attempt.
+4. Compare the held descriptor's file identity with the path's file identity through `fstat` and `lstat`. Open no second descriptor. If they differ, or if `lstat` answers ENOENT, close the descriptor and start the next attempt.
 
 A held lock refuses with `error: probe subject in use — another probe holds <subject>`.
-A directory that cannot be created, or a third identity mismatch, refuses with `error: probe subject lock unavailable — <reason>`.
+Four faults refuse with `error: probe subject lock unavailable — <reason>`.
+They are a directory that cannot be created, a third ENOENT at the open, any other open error, and a third identity mismatch.
+ELOOP and EACCES are examples of another open error.
 A lock file without a live holder grants the lock, because a record lock dies with its process.
 
 After the lock succeeds, the probe reads the subject again.
-If its bytes or its mode differ from the start read, the probe refuses with `error: probe subject changed — <subject> changed before the subject lock; run the probe again`.
+The re-read classifies the path through `resolveSubject`, so an absent, symlinked, special, or unreadable subject gives its current `error: probe subject unavailable — <subject> is <reason>` line.
+If the bytes or the mode differ from the start read, the probe refuses with `error: probe subject changed — <subject> changed before the subject lock; run the probe again`.
 
 The release protocol removes the lock file while the probe holds the lock.
 It then closes the descriptor, which releases the lock.
@@ -289,10 +297,10 @@ The focused-run owner selects the run binary and launches `go` as `bench test` d
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| PS-A / sliced after review | The five new mutation forms, the closed form matrix, and the derived help line | PS1-PS25 | planned edit, delete, and combined tests, extended omit-file and refusal tests, help inventory test | no |
+| PS-A / sliced after review | The five new mutation forms, the closed form matrix, and the derived help line | PS1-PS25, PS76 | planned edit, delete, and combined tests, extended omit-file and refusal tests, help inventory test | no |
 | PS-B / sliced after review | Prose and system subjects through the check owner, and the request-derived selection cells | PS26-PS37 | planned subject-check tests, extended check-form and selection-facts tests, a testreport build-count test | no |
 | PS-C / sliced after review | First failure, expected witness, self-naming build failure, and schema v2 | PS38-PS57 | planned verdict, mutant-build, result, testreport, and runbinary tests | yes |
-| PS-D / sliced after review | Subject lock with re-read and identity recheck | PS58-PS68 | planned lock tests, existing no-record and preservation tests | yes |
+| PS-D / sliced after review | Subject lock with re-read and identity recheck | PS58-PS68, PS75 | planned lock tests, existing no-record and preservation tests | yes |
 | PS-E / sliced after review | Guidance and known issues | PS69-PS74 | review-owned reads, prose gate, anchors | no |
 
 PS-A comes first, because every later chunk reads its grammar.
@@ -308,7 +316,7 @@ Rows that derive an expected row build it through `toon.TableTyped`, as `probeRo
 
 A lock row holds the lock from another process, as `TestProbeRefusesUnderALiveGateRun` holds the gate lock.
 A record lock belongs to its process, so an in-process holder cannot refuse the probe.
-A row that needs a step between the start read and the lock uses a package hook in `internal/probe`. The probe runs in the test process, so the hook reaches it.
+Two package hooks in `internal/probe` give the lock rows their windows. The start-read hook runs between the start read and the lock. The lock-owner hook runs between the open and the identity check. The probe runs in the test process, so both hooks reach it.
 
 A `testreport` row drives `Execute` through `installTestSelectionFactory` with a counting or failing builder.
 A `BuildError` row drives the canonical builder over a fixture `scripts/go-build.sh`, as `TestBuildSubjectLeavesTheManifestDirectoryToTheScript` does.
@@ -348,7 +356,7 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PS14 | 11 | A combined edit whose old string matches twice refuses as ambiguous | planned internal/probe/combined_test.go (TestCombinedEditsMatchOnce) | A combined path that skips the count mutates an unnamed site. |
 | PS15 | 11 | Each combined old string matches the start bytes, not the result of an earlier edit | planned internal/probe/combined_test.go (TestCombinedEditsMatchOnce) | A sequential apply lets a later old string match text that an earlier edit added. |
 | PS16 | 12 | Two edits with overlapping byte ranges refuse with the overlap line before any write | planned internal/probe/combined_test.go (TestCombinedEditsRefuseOverlap) | An apply in argv order rewrites the bytes of the first edit. |
-| PS17 | 13 | Two swaps and one omit read the mutation cell `swap+swap+omit` | planned internal/probe/combined_test.go (TestCombinedEditsMakeOneMutant) | A fixed word or a one-form cell hides what the mutant was. |
+| PS17 | 13 | An argv that leads with `--omit` and then gives two `--swap` pairs reads the mutation cell `swap+swap+omit` | planned internal/probe/combined_test.go (TestCombinedEditsMakeOneMutant) | An argv-order cell reads `omit+swap+swap`, and a fixed word hides the mutant. |
 | PS18 | 14 | A combined mutant with `--with-file`, `--insert-before`, `--unwrap`, `--omit-file`, or `--delete` prints the usage line with exit 2 | planned internal/probe/combined_test.go (TestCombinedEditsRefuseSingleForms) | A silent pair by position gives one form two meanings. |
 | PS19 | 15 | `--with` together with `--with-file` prints the usage line with exit 2 | planned internal/probe/edit_test.go (TestFormMatrixRefusesPartnerFaults) | A parser that prefers one value drops the other in silence. |
 | PS20 | 15 | `--with-file` without `--swap` or `--insert-before`, and `--insert-before` without text, each print the usage line | planned internal/probe/edit_test.go (TestFormMatrixRefusesPartnerFaults) | A missing partner gives an empty insertion or an unused file. |
@@ -361,7 +369,7 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PS27 | 18 | The prose bite's `failed_tests` cell equals the count of prose findings over the mutant | planned internal/probe/subject_check_test.go (TestProbeTakesTheProseCheck) | A probe that counts zero for a non-Go run reads `invalid`. |
 | PS28 | 19 | `--check system --run <pattern>` passes the baseline and runs the mutant through the system-suite argv | planned internal/probe/subject_check_test.go (TestProbeTakesTheSystemCheck) | The current refusal answers before the baseline. |
 | PS29 | 19 | Over a root that is not the kit, a system probe reads `invalid` with the cause `baseline-refused` | planned internal/probe/subject_check_test.go (TestProbeTakesTheSystemCheck) | A probe that skips the owner's kit refusal runs the suite in a linked repository. |
-| PS30 | 20, 24 | The probe request for `--check system --run ^X$` equals `testreport.Prepare` of the same selection | `internal/probe/outcome_test.go` (`TestProbeSelectsTheCheckForm`) | A private system path or a dropped pattern gives a different request. |
+| PS30 | 20, 24 | The probe request for `--check system --run ^X$` equals `testreport.Prepare` of the same selection | `internal/probe/outcome_test.go` (`TestProbeSelectsTheCheckForm`) | A dropped `--run` pattern gives a different request. |
 | PS31 | 21 | `--run` with `--check line-routing` stays the usage refusal | `internal/probe/refusal_test.go` (`TestProbeUsageNamesOneSelectionAndOneMutation`) | A widened rule passes a pattern that the named-check owner ignores. |
 | PS32 | 22 | Two `Execute` calls without an inherited selection call the builder twice | planned internal/testreport/runbinary_test.go (TestEachExecuteBuildsItsOwnSelection) | A cached selection runs the mutant against the baseline binary. |
 | PS33 | 22 | Over a fixture without an inherited selection, the mutated run's build script reads the mutant bytes | planned internal/probe/subject_check_test.go (TestProbeBuildsTheMutantRunBinary) | A build that starts before the write tests the unmutated tree. |
@@ -390,22 +398,24 @@ The gate observes every row through `bench test` of `./internal/probe/...`, `./i
 | PS56 | 26 | `testreport.Outcome.FailedNames` lists the failed tests in the failures-table order, and a prose run leaves it empty | planned internal/testreport/outcome_test.go (TestOutcomeNamesTheFailedTests) | A second derivation of the names drifts from the printed table. |
 | PS57 | 45 | The help inventory's probe line names `--expect` | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | The expected inventory line omits the new verdict flag. |
 | PS58 | 37 | With another process that holds the subject lock, a probe refuses with the in-use line and exit 1 | planned internal/probe/lock_test.go (TestSubjectLockRefusesASecondProbe) | Two probes mutate one file and one restore certifies the other's damage. |
-| PS59 | 38 | A subject that a holder process changes and restores between the start read and the lock refuses with the changed line, and the tree ends unchanged | planned internal/probe/lock_test.go (TestSubjectLockRereadsTheSubject) | A probe without the re-read preserves another probe's mutant as its start bytes. |
+| PS59 | 38 | A holder's mutant is on disk at the start read, and the holder restores it inside the start-read window, so the re-read differs and the probe refuses with the changed line, and the tree ends unchanged | planned internal/probe/lock_test.go (TestSubjectLockRereadsTheSubject) | A probe without the re-read preserves another probe's mutant as its start bytes. |
 | PS60 | 39 | The in-use refusal leaves the subject bytes, the Bench home, and the go marker unchanged | planned internal/probe/lock_test.go (TestSubjectLockRefusesASecondProbe) | A lock taken after the baseline starts a run child first. |
 | PS61 | 39 | With the gate lock and the subject lock both held by other processes, the gate-lock line wins | planned internal/probe/lock_test.go (TestSubjectLockFollowsTheGateLock) | A reversed order shows the subject line under a live gate. |
 | PS62 | 40 | A probe on a second subject runs while another process holds the first subject's lock | planned internal/probe/lock_test.go (TestSubjectLockAllowsAnotherSubject) | A repository-wide lock serializes unrelated probes. |
 | PS63 | 41 | After an interrupted probe, a new probe on the same subject reaches its verdict | planned internal/probe/lock_test.go (TestSubjectLockReleasesOnInterrupt) | A lock that survives the interrupt blocks the subject until a manual clean. |
 | PS64 | 42 | A seeded lock file with no holder grants the lock, and the probe removes the file at its end | planned internal/probe/lock_test.go (TestSubjectLockIgnoresAFileWithoutAHolder) | A presence lock created with exclusive create refuses forever after a kill. |
-| PS65 | 42 | A lock file replaced between the open and the lock gives a retry that holds the new file | planned internal/probe/lock_test.go (TestSubjectLockRechecksTheIdentity) | A lock on an unlinked file lets a second probe lock the new file too. |
-| PS66 | 43 | An identity mismatch on all three attempts refuses with the lock-unavailable line before the baseline | planned internal/probe/lock_test.go (TestSubjectLockRechecksTheIdentity) | An unbounded retry hangs the probe. |
+| PS65 | 42 | A lock file that the lock-owner hook replaces between the open and the identity check gives a retry that holds the new file | planned internal/probe/lock_test.go (TestSubjectLockRechecksTheIdentity) | A lock on an unlinked file lets a second probe lock the new file too. |
+| PS66 | 43 | A lock-owner hook that replaces the lock file on all three attempts gives the lock-unavailable line before the baseline | planned internal/probe/lock_test.go (TestSubjectLockRechecksTheIdentity) | An unbounded retry hangs the probe. |
 | PS67 | 43 | A regular file at `$BENCH_HOME/probe-locks` refuses with the lock-unavailable line and starts no run child | planned internal/probe/lock_test.go (TestSubjectLockRefusesAnUnusableDirectory) | A lock setup fault without a refusal starts the baseline unlocked. |
 | PS68 | 44 | A completed probe leaves the record surfaces unchanged | `internal/probe/outcome_test.go` (`TestProbeWritesNoRecord`) | A kept lock file or lock directory adds an entry under the Bench home. |
 | PS69 | 46 | The reference guide names each new form, the subject lock, and the `mutant` table | review-owned: the reviewer reads the probe paragraphs | The prose check grades sentences, not content. |
 | PS70 | 46 | `CONTEXT.md` defines **combined mutant** and **expected witness** with Avoid lists | review-owned: the reviewer reads the entries | The prose check grades sentences, not terms. |
-| PS71 | 46 | The delegate skill's probe sentence names the new forms, and its anchored line 81 stays byte-identical | review-owned: the reviewer reads the skill and the `bench anchors` output | A changed anchored needle reds the anchor registry. |
+| PS71 | 46 | The delegate skill's probe sentence at line 104 names the new forms | review-owned: the reviewer reads the sentence; the anchored line 81 is gate-owned through `internal/anchors/registry_data.go:215` and `internal/conformance/fixture_bite_test.go:360` | No check reads the content of line 104. |
 | PS72 | 46 | `CHANGELOG.md` names each new form and the schema v2 change | review-owned: the reviewer reads the entry | No check reads the changelog content. |
 | PS73 | 47 | `docs/known-issues.md` holds no row that names an unused probe import | review-owned: the reviewer reads the table | No check reads the issue table. |
 | PS74 | 48 | The probe-cost row names the batch obligation as its retire condition, and `roadmap/FT168.md` keeps that obligation | review-owned: the reviewer reads both files | The current condition holds once the combined mutant ships and forces an early removal. |
+| PS75 | 38 | A subject that the start-read hook deletes reads the absent-subject line at the re-read, and no run child starts | planned internal/probe/lock_test.go (TestSubjectLockRereadsTheSubject) | A re-read that compares only bytes fails on a read error with no named cause. |
+| PS76 | 14 | Each argv that names two mutation groups, `--delete` or `--insert-before` included, prints the usage line with exit 2 | `internal/probe/refusal_test.go` (`TestProbeUsageNamesOneSelectionAndOneMutation`) | A pair rule that names only the four current forms lets a new form combine in silence. |
 
 Not covered: story 49 — a reviewed exclusion under D2; the Out of scope section prices it.
 Not covered: story 50 — a reviewed exclusion under D2; the Out of scope section prices it.
@@ -485,7 +495,7 @@ Flagged additions:
 - The `mutant` table is a new block after `probe_execution`, not a new verdict-row cell.
 - The help inventory derives its probe suffix from `probe.Usage`, because the hand copy has drifted.
 - The removal of the unused-import known-issue row follows from the self-naming build failure and the combined form.
-- The cause values `expect-missed` and `baseline-build-failed` are new under the existing verdict `invalid`.
+- The cause values `expect-missed` and `baseline-build-failed` are new under the existing verdict `invalid`. The reviewer accepted `baseline-build-failed` on 2026-10-09, because no reader outside `internal/probe` parses the baseline cause.
 - The selection parse moves before the substring-miss answer, so an unknown check now wins over a miss.
 - The subject-changed and lock-unavailable refusals are new refusal lines.
 - The rebuild note leaves `ProbeNotes`.
@@ -497,6 +507,7 @@ Posture changes that red existing tests:
 - `TestProbeNotesDeriveTheirTokens` expects two notes, not four.
 - `TestProbeHelpSpellings` and `TestHelpInventoryIsComplete` expect the new usage line.
 - `TestExecuteClassifiesTheOutcome`, `TestFullFailedTestsCountsTests`, and the full-failure table test compare `Outcome` field-wise.
+- The literal verdict-row pins at `internal/probe/invalid_cause_test.go:26`, `internal/probe/refusal_test.go:58`, and `internal/reviewrecord/recordcmd/verification_import_test.go:46` on the NRO tip gain the `first_failure` cell.
 - `TestProbeRefusesWhenPreservationFails` and `TestProbePreservesTheSubjectBeforeTheRun` stay green, because the lock directory is a sibling of `$BENCH_HOME/probe`.
 
 Boundaries:
@@ -507,7 +518,7 @@ Boundaries:
 
 Response bound: a biting answer already spills past the 10-line bound after NR-C3, and an open learning asks the reviewer for that decision. This spec adds no line to a biting or silent answer. The `mutant` table adds two lines only to a build-failed answer.
 
-Known issues: the probe-cost row is on `main` at `docs/known-issues.md:14` since 23c59775. Its retire condition is "FT168: one probe takes several mutations in one private build". That condition holds once the combined mutant ships, so PS74 rewords it to the batch obligation. The probe-exit row at `docs/known-issues.md:11` leaves with the NRO build: the `nro-build` tip deletes it. NRO ticket 3 line 19 does not state that removal.
+Known issues: the probe-cost row is on `main` at `docs/known-issues.md:14` since 23c59775. Its retire condition is "FT168: one probe takes several mutations in one private build". That condition holds once the combined mutant ships, so PS74 rewords it to the batch obligation. The probe-exit row at `docs/known-issues.md:11` leaves with the NRO build. On the `nro-build` tip, NRO ticket 3 states the removal at lines 19 and 70, and the tip's `docs/known-issues.md` has no probe-exit row.
 
 Source-clause mapping:
 
@@ -546,6 +557,11 @@ The pre-review proof checklist follows.
 - Quantified obligations: "each new face must restore" covers `--with-file`, `--insert-before`, `--occurrence`, `--delete`, combined mutants, prose, and system.
 - Workflow-step writes: none.
 
-Uncertain: PS33 copies a sealed executable from a fixture build script. The ticket author confirms that `freshness.VerifyAt` accepts that copy before the row relies on it. PS32 stays the fallback evidence for story 22.
+PS33 copies a sealed executable pair from a fixture build script. `freshness.VerifyAt` accepts that copy under four conditions, and the PS33 fixture holds all four:
+
+1. The bytes stay unchanged, and the seal sits at `<output>.seal` (`internal/freshness/freshness_verify.go:51-71`).
+2. The subject is outside the digest closure (`internal/freshness/freshness_buildinputs.go:50-104`). `clamp.go` qualifies, because the fixture's `cmd/bench/main.go` imports nothing. A subject inside the closure makes the seal stale, and the selection refuses.
+3. No path component is a symlink (`internal/freshness/freshness_buildinputs.go:168`).
+4. `BENCH_RUN_BINARY` is unset, not empty. `newFixture` sets it, and `ReuseOrOwn` tests its presence (`internal/runbinary/runbinary.go:71`).
 
 Sources not re-read: the light-path repair pass retro, and the learning texts behind six occurrence lines that exist only in `roadmap/FT168.md`.
