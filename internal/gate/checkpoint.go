@@ -120,19 +120,31 @@ func (e completionProofError) Unwrap() error { return e.err }
 // errCheckpointTipMoved is a source tip that moved after the run accepted its subject.
 var errCheckpointTipMoved = errors.New("checkpoint source tip changed")
 
-// The checkpoint's refusal faces. The shared registry declares each face.
-const (
-	faceCompletionEvidence = "checkpoint-completion-evidence"
-	faceDirtyCheckout      = "checkpoint-dirty-checkout"
-	faceComposition        = "checkpoint-composition"
-	faceTipMoved           = "checkpoint-tip-moved"
-	faceSubjectUnavailable = "checkpoint-subject-unavailable"
-	faceHandback           = "gate-handback"
+// checkpointFace is one of the checkpoint's refusal faces, which the shared registry
+// declares, and the record form that the refused cause names, if any.
+type checkpointFace struct{ name, form string }
+
+// The checkpoint's refusal faces.
+var (
+	faceCompletionEvidence = checkpointFace{name: "checkpoint-completion-evidence"}
+	faceDirtyCheckout      = checkpointFace{name: "checkpoint-dirty-checkout"}
+	faceComposition        = checkpointFace{name: "checkpoint-composition"}
+	faceTipMoved           = checkpointFace{name: "checkpoint-tip-moved"}
+	faceSubjectUnavailable = checkpointFace{name: "checkpoint-subject-unavailable"}
+	faceHandback           = checkpointFace{name: "gate-handback"}
 )
 
-// funnelFace picks the face of a refusal before the oracle by the type of its cause.
-func funnelFace(err error) string {
+// faceRecordRepair is the face of an evidence refusal that one record form repairs.
+const faceRecordRepair = "checkpoint-record-repair"
+
+// funnelFace picks the face of a refusal before the oracle by the type of its cause. An
+// evidence refusal that one record form repairs names that form; every other evidence
+// refusal keeps the completion-evidence face.
+func funnelFace(err error) checkpointFace {
+	var repair reviewrecord.Repair
 	switch {
+	case errors.As(err, new(evidenceError)) && errors.As(err, &repair):
+		return checkpointFace{name: faceRecordRepair, form: repair.Form}
 	case errors.As(err, new(evidenceError)):
 		return faceCompletionEvidence
 	case errors.Is(err, errCheckpointTipMoved):
@@ -146,16 +158,17 @@ func funnelFace(err error) string {
 // refuse prints a refusal's reason. In a run of the gate verb, the route of face follows on
 // its own next= line. The route reruns the caller's gate in the worktree of the active
 // assignment that owns root; with no owner, the label prints its slot.
-func refuse(ctx context.Context, root string, stderr io.Writer, mode runMode, face, reason string) Result {
+func refuse(ctx context.Context, root string, stderr io.Writer, mode runMode, face checkpointFace, reason string) Result {
 	if verb, _ := ctx.Value(verbKey{}).(bool); !verb {
 		return operational(root, 0, stderr, reason)
 	}
 	checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint)
 	owner, _ := intent.AssignmentForWorktree(root)
 	slug, _ := reviewrecord.Slug(checkpoint.Spec)
-	refusal := refusalroute.New(face, refusalroute.Facts{Sentence: reason, Values: map[string]string{
+	refusal := refusalroute.New(face.name, refusalroute.Facts{Sentence: reason, Values: map[string]string{
 		refusalroute.FactLabel:     owner.Label,
 		refusalroute.FactSlug:      slug,
+		refusalroute.FactForm:      face.form,
 		refusalroute.FactArguments: rerunArguments(checkpoint, mode == forceRun || face == faceSubjectUnavailable),
 	}})
 	result := operational(root, 0, stderr, refusal.Sentence)

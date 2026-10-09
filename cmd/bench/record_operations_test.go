@@ -73,4 +73,45 @@ func TestNativeRecordCLIJourney(t *testing.T) {
 	if !bytes.Equal(read(), before) {
 		t.Fatal("cross-ticket refusal changed the spec")
 	}
+
+	// Chunk 1 records against the plan that holds its dispatch. The 2.md dispatch then
+	// commits a changed plan, so the chunk 2 entry refuses before any record byte changes,
+	// and the amendment admits it.
+	path, err := rr.RecordPath(recordtest.Spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := filepath.Join(f.Root, filepath.FromSlash(path))
+	chunk := func(id string) (axiCommandResult, []byte) {
+		base := f.Tip()
+		f.Write("source.txt", "chunk "+id+"\n")
+		f.Commit("chunk " + id)
+		result := runAXICommandAt(t, f.Root, []string{"record", "chunk", slug, "--chunk", id, "--base", base, "--tip", f.Tip()})
+		data, _ := os.ReadFile(record)
+		return result, data
+	}
+	if result, _ := chunk("1"); result.code != 0 {
+		t.Fatalf("chunk 1 = exit %d, stdout %q; want exit 0", result.code, result.stdout)
+	}
+	f.Commit("record chunk 1")
+	second := dispatch("2.md")
+	second[slices.Index(second, "--performer")+1] = "native-author-2"
+	if result := runAXICommandAt(t, f.Root, second); result.code != 0 {
+		t.Fatalf("second dispatch = exit %d, stdout %q; want exit 0", result.code, result.stdout)
+	}
+	f.Commit("dispatch 2.md")
+	recorded, err := os.ReadFile(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, after := chunk("2")
+	if result.code != 1 || !strings.Contains(result.stdout, "stale plan digest") || !strings.Contains(result.stdout, "bench record amendment") || !bytes.Equal(after, recorded) {
+		t.Fatalf("stale chunk 2 = exit %d, stdout %q; want exit 1 naming the amendment form and unchanged record bytes", result.code, result.stdout)
+	}
+	if result := runAXICommandAt(t, f.Root, []string{"record", "amendment", slug, "--source", "HEAD"}); result.code != 0 {
+		t.Fatalf("amendment = exit %d, stdout %q; want exit 0", result.code, result.stdout)
+	}
+	if result := runAXICommandAt(t, f.Root, []string{"record", "chunk", slug, "--chunk", "2", "--base", f.Git("rev-parse", "HEAD~1"), "--tip", f.Tip()}); result.code != 0 {
+		t.Fatalf("amended chunk 2 = exit %d, stdout %q; want exit 0", result.code, result.stdout)
+	}
 }

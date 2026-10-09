@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -51,17 +52,36 @@ type form struct {
 	run               func(f form, root, spec string, parsed usage.Result) (string, int)
 }
 
-var forms = []form{
-	assignmentForm,
-	chunkForm,
-	verificationForm,
-	{name: "review", description: "append one independent review result to a recorded chunk",
-		flags: []flag{{"--chunk", "<id>", true, once}, {"--axis", strings.Join(reviewrecord.Axes(), "|"), false, once}, {"--id", "<id>", true, once},
-			{"--performer", "<session>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
-			{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {"--finding", "<id>", true, repeated}},
-		valid: reviewValid, run: review},
-	completionForm,
-	amendmentForm,
+// forms is the form registry. init assigns it, because a form's refusal renders the usage
+// line of the form that repairs it, and a registry initializer that reaches its own reader
+// is an initialization cycle.
+var forms []form
+
+func init() {
+	forms = []form{
+		assignmentForm,
+		chunkForm,
+		verificationForm,
+		reviewForm,
+		completionForm,
+		amendmentForm,
+	}
+}
+
+var reviewForm = form{name: reviewrecord.FormReview, description: "append one independent review result to a recorded chunk",
+	flags: []flag{{"--chunk", "<id>", true, once}, {"--axis", strings.Join(reviewrecord.Axes(), "|"), false, once}, {"--id", "<id>", true, once},
+		{"--performer", "<session>", true, once}, {"--model", "<model>", true, once}, {"--effort", "<effort>", true, once},
+		{"--ref", "<ref>", true, once}, {"--excerpt", "<file>", true, once}, {"--finding", "<id>", true, repeated}},
+	valid: reviewValid, run: review}
+
+// named returns the registered form called name, or nil when no form has that name.
+func named(name string) *form {
+	for i := range forms {
+		if forms[i].name == name {
+			return &forms[i]
+		}
+	}
+	return nil
 }
 
 // terms is the layout of f, or its flags in order when the layout is empty.
@@ -75,12 +95,13 @@ func (f form) terms() []string {
 	return layout
 }
 
-// suffix is the form's grammar after `bench record`.
-func (f form) suffix() string {
+// suffix is the form's grammar after `bench record`. A flag that known holds a value for
+// shows that value in place of its placeholder.
+func (f form) suffix(known map[string]string) string {
 	terms := []string{"", f.name, "<slug>"}
 	for _, term := range f.terms() {
 		if strings.HasPrefix(term, "--") {
-			term = f.flag(term).usage()
+			term = f.flag(term).usage(known[term])
 		}
 		terms = append(terms, term)
 	}
@@ -154,8 +175,14 @@ func (f form) together(values map[string]string) bool {
 	return slices.Contains(sets, present)
 }
 
-func (fl flag) usage() string {
-	term := strings.TrimSpace(fl.name + " " + fl.placeholder)
+// usage is the flag's usage term. A nonempty value replaces the placeholder of a value
+// flag, rendered by the one composed-command value rule.
+func (fl flag) usage(value string) string {
+	placeholder := fl.placeholder
+	if value != "" && placeholder != "" {
+		placeholder = refusalroute.Arg(strings.Trim(placeholder, "<>"), value)
+	}
+	term := strings.TrimSpace(fl.name + " " + placeholder)
 	if fl.occurs == repeated {
 		term = "[" + term + "]..."
 	}
@@ -163,7 +190,7 @@ func (fl flag) usage() string {
 }
 
 func (f form) grammar() usage.Grammar {
-	g := usage.Grammar{Cmd: command + " " + f.name, Help: "usage: " + command + f.suffix(), MinArgs: 1, MaxArgs: 1}
+	g := usage.Grammar{Cmd: command + " " + f.name, Help: "usage: " + command + f.suffix(nil), MinArgs: 1, MaxArgs: 1}
 	sets, _ := f.admits(f.terms(), 0)
 	always := ^uint64(0)
 	for _, set := range sets {
@@ -188,7 +215,7 @@ type HelpRow struct {
 func HelpRows() []HelpRow {
 	rows := make([]HelpRow, len(forms))
 	for i, f := range forms {
-		rows[i] = HelpRow{Suffix: f.suffix(), Description: f.description}
+		rows[i] = HelpRow{Suffix: f.suffix(nil), Description: f.description}
 	}
 	return rows
 }
@@ -212,12 +239,7 @@ func Command(root string, args []string) (string, int) {
 	if len(args) == 0 {
 		return usageText(), 2
 	}
-	var selected *form
-	for i := range forms {
-		if forms[i].name == args[0] {
-			selected = &forms[i]
-		}
-	}
+	selected := named(args[0])
 	if selected == nil {
 		return toon.Usage(command, args[0]) + "\n", 2
 	}

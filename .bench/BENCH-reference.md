@@ -404,6 +404,8 @@ with their tickets and verification requirements, and the final verification.
 Before the first dispatch, the plan amendment makes the authored version 1 fence a version 2 plan.
 
 The `bench-review-record` fence in `reviews/<slug>.md` holds the evidence the checkpoint grades.
+When the record lacks an entry that one `bench record` form writes, the checkpoint refusal routes to the help of that form.
+Each other evidence refusal routes to `bench preflight review <slug>`.
 Checkpoint purpose and record bytes participate in the existing gate verdict identity.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.
 

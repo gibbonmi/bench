@@ -7,7 +7,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-var completionForm = form{name: "completion", description: "validate and write final completion evidence for a source commit",
+var completionForm = form{name: reviewrecord.FormCompletion, description: "validate and write final completion evidence for a source commit; " + completionOrder(),
 	flags: []flag{{"--source", "<commit>", false, once}}, run: completion}
 
 func completion(f form, root, spec string, parsed usage.Result) (string, int) {

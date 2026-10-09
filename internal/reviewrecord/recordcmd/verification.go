@@ -1,9 +1,6 @@
 package recordcmd
 
 import (
-	"errors"
-	"strings"
-
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -11,7 +8,7 @@ import (
 // probeFlags are the three flags of a planned probe.
 var probeFlags = []string{"--probe-outcome", "--probe-exit-code", "--probe-restore"}
 
-var verificationForm = form{name: "verification", description: "append one planned verification result with its computed digests",
+var verificationForm = form{name: reviewrecord.FormVerification, description: "append one planned verification result with its computed digests",
 	flags: []flag{{"--chunk", "<id>", true, once}, {"--source", "<commit>", false, once}, {"--final", "", false, once},
 		{"--requirement", "<id>", true, once}, {"--id", "<id>", true, once}, {"--performer", "<session>", true, once},
 		{"--model", "<model>", true, once}, {"--effort", "<effort>", true, once}, {"--exit-code", "<n>", false, once},
@@ -28,18 +25,6 @@ func verificationValid(f form, parsed usage.Result) bool {
 	_, probe := parsed.Flags[probeFlags[0]]
 	_, probeExitCode := integer(parsed.Flags, probeFlags[1])
 	return exitCode && (!probe || probeExitCode && chosen(f, parsed.Flags, probeFlags[2]))
-}
-
-// cause is the refusal cause of err. A missing chunk entry names the chunk form, and a
-// probe mismatch names the probe flags.
-func cause(err error) string {
-	switch {
-	case errors.Is(err, reviewrecord.ErrNoChunkEntry):
-		return err.Error() + "; write it with " + command + " chunk"
-	case errors.Is(err, reviewrecord.ErrProbe):
-		return err.Error() + "; the probe flags are " + strings.Join(probeFlags, ", ")
-	}
-	return err.Error()
 }
 
 func verification(f form, root, spec string, parsed usage.Result) (string, int) {

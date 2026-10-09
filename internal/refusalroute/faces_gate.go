@@ -5,6 +5,9 @@ package refusalroute
 // recovery forces a fresh run gets them with --fresh.
 var gateRerun = TreeCommand("bench gate", Fact(FactLabel), Composed(FactArguments))
 
+// FactForm is the record form that writes the entry a checkpoint refusal lacks.
+const FactForm = "form"
+
 // gateFaces are the gate checkpoint's refusal faces, in registry order. The raising site
 // supplies each sentence: the checkpoint names the cause it observed.
 var gateFaces = []Face{
@@ -16,6 +19,14 @@ var gateFaces = []Face{
 		Name:      "checkpoint-completion-evidence",
 		Authority: Agent,
 		Route:     []Step{Command(Text("bench preflight review"), Fact(FactSlug))},
+	},
+	{
+		// The completion record lacks an entry that one record form writes, and the
+		// refused cause names that form. The form's help prints its grammar.
+		Verb:      Gate,
+		Name:      "checkpoint-record-repair",
+		Authority: Agent,
+		Route:     []Step{Command(Text("bench record"), Fact(FactForm), Text("--help"))},
 	},
 	{
 		// The landing publishes only committed bytes, so the caller commits its own

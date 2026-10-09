@@ -75,7 +75,7 @@ func write(root, spec string, create func() (Record, error), change func(*Record
 	case errors.Is(err, ErrMissing) && create != nil:
 		record, err = create()
 	case errors.Is(err, ErrMissing):
-		err = fmt.Errorf("%s holds no record: %w", path, ErrNoChunkEntry)
+		err = Repair{Form: FormChunk, Err: fmt.Errorf("%s holds no record: %w", path, ErrNoChunkEntry)}
 	case err == nil:
 		record, err = parseRecord(data, spec)
 	}
@@ -132,8 +132,9 @@ func replace(path string, data []byte) error {
 // RecordChunk writes the entry of planned chunk id for the frozen pair base..tip, both
 // full commit IDs. The tip tree supplies the source digest, the plan digest, and the
 // acceptance rows. A recorded chunk keeps its results, and a new chunk follows the
-// recorded chunks. Only a version 2 plan starts a new record. The answer is the action,
-// created, added, or updated, and the entry as written.
+// recorded chunks. Only a version 2 plan starts a new record, and an existing record
+// whose plan digest differs from the plan at tip needs its amendment first. The answer
+// is the action, created, added, or updated, and the entry as written.
 func RecordChunk(root, spec, id, base, tip string) (string, Chunk, error) {
 	digest, plan, err := atSource(root, spec, tip)
 	if err != nil {
@@ -148,6 +149,9 @@ func RecordChunk(root, spec, id, base, tip string) (string, Chunk, error) {
 		return Record{Version: 2, Spec: spec, PlanDigest: plan.Digest, Completion: Completion{State: "pending", Reconciliation: map[string]string{}, Verification: []Verification{}}}, nil
 	}
 	err = write(root, spec, create, func(record *Record) error {
+		if err := currentPlan(*record, plan, tip); err != nil {
+			return err
+		}
 		planned := findChunk(plan, id)
 		if planned == nil {
 			return fmt.Errorf("chunk %s is not a chunk of the plan at %s", id, tip)
@@ -217,7 +221,7 @@ func RecordVerification(root, spec string, call VerificationCall) (Verification,
 			return err
 		}
 		if chunk != nil && digest != chunk.SourceDigest {
-			return fmt.Errorf("source %s differs from the source of chunk %s: %w", source, chunk.ID, ErrNoChunkEntry)
+			return Repair{Form: FormChunk, Chunk: chunk.ID, Err: fmt.Errorf("source %s differs from the source of chunk %s: %w", source, chunk.ID, ErrNoChunkEntry)}
 		}
 		requirements := plan.FinalVerification
 		if chunk != nil {
@@ -276,7 +280,7 @@ func entryOf(record *Record, id string) (*Chunk, error) {
 			return &record.Chunks[i], nil
 		}
 	}
-	return nil, fmt.Errorf("chunk %s has no entry: %w", id, ErrNoChunkEntry)
+	return nil, Repair{Form: FormChunk, Chunk: id, Err: fmt.Errorf("chunk %s has no entry: %w", id, ErrNoChunkEntry)}
 }
 
 // ReviewCall is the caller's part of one completed independent review result. Chunk

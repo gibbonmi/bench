@@ -204,7 +204,8 @@ func verifier(plan Plan, record Record, requirement Requirement, final bool) (st
 	}
 	session, dispatched := plan.Author(requirement.Ticket)
 	if !dispatched {
-		return "", "", fmt.Errorf("verification %s names undispatched ticket %s; dispatch an author before its obligation", requirement.ID, requirement.Ticket)
+		err := fmt.Errorf("verification %s names undispatched ticket %s; dispatch an author before its obligation", requirement.ID, requirement.Ticket)
+		return "", "", Repair{Form: FormAssignment, Requirement: requirement.ID, Ticket: requirement.Ticket, Err: err}
 	}
 	return session, "author-verification", nil
 }

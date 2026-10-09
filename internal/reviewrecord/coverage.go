@@ -21,8 +21,8 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 	if err != nil {
 		return err
 	}
-	if record.PlanDigest != current.Digest {
-		return errors.New("stale plan digest; review and record the plan delta")
+	if err := currentPlan(record, current, tip); err != nil {
+		return err
 	}
 	digest, err := SourceDigest(root, tree, record.Spec)
 	if err != nil {
@@ -32,7 +32,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		return errors.New("invalid requested source tip")
 	}
 	if len(record.Chunks) == 0 {
-		return errors.New("missing chunk evidence; retain the three native review results")
+		return Repair{Form: FormChunk, Chunk: chunkID, Err: errors.New("missing chunk evidence; retain the three native review results")}
 	}
 	matched := false
 	covered := map[string]bool{}
@@ -65,7 +65,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			return fmt.Errorf("chunk %s: stale acceptance rows", chunk.ID)
 		}
 		if verification {
-			if err := checkVerification(chunk.Verification, planned.Verification, plan, record, chunk.SourceDigest, "chunk "+chunk.ID, false); err != nil {
+			if err := checkVerification(chunk.Verification, planned.Verification, plan, record, chunk.SourceDigest, Repair{Chunk: chunk.ID}); err != nil {
 				return err
 			}
 		}
@@ -104,7 +104,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 			covered[id] = true
 			for _, predecessor := range current.Chunks {
 				if !covered[predecessor.ID] {
-					return fmt.Errorf("missing planned chunk %s before %s", predecessor.ID, id)
+					return Repair{Form: FormChunk, Chunk: predecessor.ID, Err: fmt.Errorf("missing planned chunk %s before %s", predecessor.ID, id)}
 				}
 				if predecessor.ID == id {
 					break
@@ -118,7 +118,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		}
 	}
 	if !complete && !matched {
-		return fmt.Errorf("missing chunk %s; record its completed evidence", chunkID)
+		return Repair{Form: FormChunk, Chunk: chunkID, Err: fmt.Errorf("missing chunk %s; record its completed evidence", chunkID)}
 	}
 	if previous.SourceDigest != digest && commentgap.Prove(root, previous.SourceDigest, digest) != nil {
 		// The reviewed tip and the requested tip bound the delta no review covers. When they
@@ -132,12 +132,12 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 	if complete {
 		for _, planned := range current.Chunks {
 			if !covered[planned.ID] {
-				return fmt.Errorf("missing planned chunk %s", planned.ID)
+				return Repair{Form: FormChunk, Chunk: planned.ID, Err: fmt.Errorf("missing planned chunk %s", planned.ID)}
 			}
 		}
 	}
 	if complete && verification {
-		return checkCompletion(record, current, digest)
+		return checkCompletion(record, current, digest, tip)
 	}
 	return nil
 }
