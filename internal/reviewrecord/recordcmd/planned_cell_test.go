@@ -171,6 +171,15 @@ func TestRecordCompletionRefusesAPlannedCellOfALaterChunk(t *testing.T) {
 	}
 }
 
+func TestRecordCompletionReadsTheSource(t *testing.T) {
+	f, source := completing(t, 1, planned)
+	f.Write(recordtest.Spec, strings.Replace(specText(f), planned, cited, 1))
+	f.Commit("cite E1")
+	if out, code := complete(t, f, source); code != 1 || !strings.Contains(out, "E1") || !strings.Contains(out, source) {
+		t.Fatalf("planned source row under a cited HEAD = exit %d, output %q; want exit 1 naming E1 at %s", code, out, source)
+	}
+}
+
 func TestRecordCompletionRefusalWritesNothing(t *testing.T) {
 	f, source := completing(t, 1, planned)
 	before := bytesOf(t, recordFile(t, f))
