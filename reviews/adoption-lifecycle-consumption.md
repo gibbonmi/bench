@@ -359,6 +359,74 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "owner-standards-r2",
+          "performer": "claude:ft217_owner_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a4ceabeedebed5984c9fa95ad56129fcd2a33cc8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_owner_standards_r2/review-owner-standards-r2.txt",
+            "digest": "sha256:68939caf86ef074658afbad4406b131bbb8e50056d0f9dd76c5119f897558e07",
+            "excerpt": "ALC-OWNER Standards axis, confirming round 2. Session claude:ft217_owner_standards_r2, opus / medium. Chunk pair aabd462d..518c52ee, source tip f3f912e8, evidence sha256:c1622475 current=true. Read the repair delta b933df41..518c52ee only.\n\nCount: 0. Worst issue: none.\n\nFolds confirmed\nS1 confirmed: record entries t1r1-owner-order-probe (2 failures in TestLifecycleDecisionOrder, restored) and t1r1-preview-swap-probe (16 failures, restored) exist at the repair tip.\nS2 confirmed: upgrade.go:30-33 declares upgradeTable and upgradeColumns; upgrade.go:75 and lifecycle_preview_test.go:20 use them; no other copy in internal/adopt; a header-swap red is recorded (11 failures).\nS5 confirmed: upgrade.go:131-134 states only the constraint.\nS6 confirmed: the ALC-OWNER plan probe prose at spec.md:716 no longer narrates the placeholder; the sentence remains only on the pending later chunks.\n\nAdvice (no confidence): the owner refusal text now duplicates the caller diagnostics (decision.go:281, :285, :327 against link_transaction.go:214, :218, :106, :158), the same transitional family as carried S3; ALC-LINK Standards should see the callers read Refusal or share one formatter. The extra probe entries in the record carry the requirement's command field rather than their own mutation; their excerpts hold the real commands. Exact-string refusal expectations at lifecycle_decision_test.go:172-191 are covered by recorded reds. 400-line rule passes (351, 245, 229, 244).\n\nCursors fetched: the evidence metadata summary only. Examined: the full repair diff, the round-1 Standards excerpt, reviews/adoption-lifecycle-consumption.md:100-289, ticket 01 lines 10-63, literal sweeps over internal/ for the refusal strings and the table header, the probe-prose sweep. Not read this pass: craft-comments and craft-review skill files, link_transaction.go beyond sweep hits. Wrote nothing; ran no tests or probes.\n"
+          },
+          "axis": "Standards",
+          "base": "aabd462d52349b00cfb3d66f67a6dd24891468d2",
+          "tip": "518c52eec4fe9edf5f8f6baad50bc8404e5a9f32",
+          "finding_ids": [],
+          "supersedes": [
+            "owner-standards-r1"
+          ]
+        },
+        {
+          "id": "owner-spec-r2",
+          "performer": "claude:ft217_owner_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a4ceabeedebed5984c9fa95ad56129fcd2a33cc8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_owner_spec_r2/review-owner-spec-r2.txt",
+            "digest": "sha256:ba7f81d3d9e2a35e9acd7c29610d3d546a2d95e4fdbb91d77688d4cb18a0ed2a",
+            "excerpt": "ALC-OWNER Spec axis, confirming round 2. Session claude:ft217_owner_spec_r2, opus / medium. Chunk pair aabd462d..518c52ee, source tip f3f912e8, evidence sha256:c1622475 current=true. Read the repair delta b933df41..518c52ee only.\n\nCount: 0. Worst issue: none.\n\nFolds confirmed\nP1 confirmed: each owner refusal matches the caller's printed bytes for the same condition (decision.go:281 = link_transaction.go:214; decision.go:285 = link_transaction.go:218 in the same order; decision.go:327 used at :213 and :252 = link_transaction.go:106 and :158). The duplicate and unknown-action refusals validate the owner's own input and have no caller condition.\nP2 confirmed: the ALC08 owner half cites lifecycle_decision_test.go without planned; the consumption half stays planned (spec.md:417).\nP3 confirmed: spec.md:716 no longer carries the placeholder sentence (commit 707f9dad).\n\nGraded with no finding: the new partition rows (symlink-mode converged per decision.go:233 and link_stage.go:218; strict-link-dest and strict-link-staged change per decision.go:245 and link_stage.go:312; claude-owned-special project-owned per link_transaction.go:195-199) are classifications under spec.md:200-229; the three legacy refusal-order rows match decision.go:123-135 and ALC05 (spec.md:468); the unreadable dropped row keeps the hard failure at decision.go:286-287 while the caller prints the raw error (link_transaction.go:222-225), which spec.md:203 and :261 keep at the caller, so it carries to ticket 03; upgradeTable/upgradeColumns is a one-source refactor.\n\nAdvice (no confidence): ticket 03 prints the caller's raw fingerprint error for an unreadable dropped row, not the owner's text; the ALC-LINK charge should check this.\n\nCursors fetched: summary page; manifest cursor v1.c1622475…m.0.0 (body not read). Examined: the repair delta, decision.go:95-333, link_transaction.go:95-234, link_stage.go:200-317, spec.md:172-266 and :705-717, the round-1 excerpt, git log aabd462d..f3f912e8.\n"
+          },
+          "axis": "Spec",
+          "base": "aabd462d52349b00cfb3d66f67a6dd24891468d2",
+          "tip": "518c52eec4fe9edf5f8f6baad50bc8404e5a9f32",
+          "finding_ids": [],
+          "supersedes": [
+            "owner-spec-r1"
+          ]
+        },
+        {
+          "id": "owner-coverage-r2",
+          "performer": "claude:ft217_owner_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a4ceabeedebed5984c9fa95ad56129fcd2a33cc8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft217_owner_coverage_r2/review-owner-coverage-r2.txt",
+            "digest": "sha256:bf1d4a3836167af411f6b5d69ad8dfc1aca3ac5329d74cd73c88bb7c6385be1e",
+            "excerpt": "ALC-OWNER Coverage axis, confirming round 2. Session claude:ft217_owner_coverage_r2, opus / medium. Chunk pair aabd462d..518c52ee, source tip f3f912e8, evidence sha256:c1622475 current=true. Read the repair delta b933df41..518c52ee only.\n\nCount: 1. Worst issue: C5, the new dropped-asset kind guard exempts symlinks but no fixture holds a dropped symlink.\n\nC5. Input: a dropped manifest row (PlanKind \"\") with Present true, FileKind \"symlink\", and a fingerprint. Expected break: the swap `case o.FileKind != \"regular\" && o.FileKind != \"symlink\":` → `case o.FileKind != \"regular\":` makes a clean dropped symlink refuse with \"refused non-regular dropped asset\", while the caller removes it (link_transaction.go:217 exempts os.ModeSymlink). Missing test: a dropped-symlink row in linkObservations (lifecycle_decision_test.go:58-60; all three dropped rows are regular), expecting remove, or kept-modified-removed when bytes differ. Location decision.go:284. Probe verdict silent, 25 tests pass, restored yes. Confidence 9. auto-fix.\n\nFolds confirmed (each --package ./internal/adopt --run '^Test(CompleteLifecycleDecisions|LifecycleDecisionOrder|PlanLifecycleFromImmutableInventories)$', each bit with 1 failed test, restored yes):\nC1 --swap 'if o.FileKind != \"symlink\" && o.Perm != o.StagedPerm {' --with 'if o.Perm != o.StagedPerm {' → link/symlink-mode\nC2 --swap 'case o.Recorded != \"\" && o.Observed != \"\" && o.Observed != o.Recorded:' --with 'case o.Recorded != \"\" && o.Observed != o.Recorded:' → link/claude-owned-special\nC3 --omit 'return nil, fmt.Sprintf(\"managed path %q is invalid\", name)' → invalid_preserve\nC4 --swap 'return !(o.Strict && o.FileKind == \"regular\" && o.StagedKind == \"regular\" && o.Perm != o.StagedPerm)' --with 'return !(o.Strict && o.Perm != o.StagedPerm)' → link/strict-link-dest\nThe refusal-order rows check Current, then Desired, then Preserve; the exact-text rows compare the full Refusal string.\n\nAdvice (no confidence): the non-regular case at decision.go:284 sits after the !Present case and that order is load-bearing, guarded only through the full plan expectation of dropped-absent; \"has no fingerprint\" (decision.go:287) is pinned while the caller prints the fingerprintPath error, a seam question for ticket 03; the upgrade.go header and comment changes have no test effect.\n\nCursors fetched: none beyond --check-current. Examined: the repair delta, decision.go:100-339, lifecycle_decision_test.go:30-79 and the refusal table, link_transaction.go:200-239, docs/known-issues.md, the round-1 excerpt; five serial probes. decision.go clean after each restore; the dirty reviews file was the orchestrator's own round-2 record writes.\n"
+          },
+          "axis": "Coverage",
+          "base": "aabd462d52349b00cfb3d66f67a6dd24891468d2",
+          "tip": "518c52eec4fe9edf5f8f6baad50bc8404e5a9f32",
+          "finding_ids": [
+            "C5"
+          ],
+          "supersedes": [
+            "owner-coverage-r1"
+          ]
         }
       ]
     }
