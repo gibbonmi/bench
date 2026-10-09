@@ -709,6 +709,18 @@ Review records bind three independent axes to each frozen chunk pair.
           "trigger": "session-lost",
           "stopped": "the orchestrator session paused on 2026-10-09 and stopped the ticket 02 author claude:ft217_t2 before any commit; it reported its uncommitted test files and has no live child",
           "preserved": "cc9a43cdacadc2a57b939bf0a44c64d47b2e7927"
+        },
+        {
+          "session": "claude:ft217_t2_verify1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "c34c359701f6fb3b9c23be84df19c47c3698a924",
+          "native_ref": "claude-agent:ft217_t2_verify1",
+          "predecessor": "claude:ft217_t2b",
+          "trigger": "user-directed",
+          "stopped": "the ticket 02 author session claude:ft217_t2b reported completion of its ALC-LINK verification record commit 8613919f and has no live child",
+          "preserved": "c34c359701f6fb3b9c23be84df19c47c3698a924"
         }
       ],
       "03-consume-decisions-for-dropped-and-bespoke-link-assets.md": [
