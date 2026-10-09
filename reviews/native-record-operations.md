@@ -2245,6 +2245,28 @@
           "supersedes": [
             "nr-c3-r1-coverage"
           ]
+        },
+        {
+          "id": "nr-c3-r2-standards-reaffirmed",
+          "performer": "claude:nro-c3-r2-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r2-standards-reaffirmation",
+            "digest": "sha256:1e6a2a7addec78e4bbde889af4af1aad63f6e6efedd189efbfa8d9502537a33f",
+            "excerpt": "## Standards (NR-C3 round 2 reaffirmation, fable/medium, evidence sha256:333a8f7bcdc9edd3008451d912f8d5d821990cc4c5ffad99a72bad774eef9f0f, pair 4dd282e4..ae811542, record commit 731bc91c)\n\nS13: reaffirmed — reviews/native-record-operations.md:96-102 names S1, S2, S3, S4, P2, P3, C1 as closed by 1ae40409, S9 to S12 as no-op, P6 accepted, and C2 no-op with the reason and the veto surface.\n\nProse defects: line 96 says S13 arose \"because the round 2 prose was absent\"; S13 concerned the absence of round 1 dispositions in the repair delta, so the cause is misstated. Line 96 also asserts \"the Standards axis then reaffirms it\" before the reaffirmation existed. Line 102 \"no open finding\" sits beside the JSON row nr-c3-r2-standards with outcome fail and finding_ids [S13]; the two disagree once S13 is closed.\n"
+          },
+          "axis": "Standards",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "1ae404090eebb5ff211bf72b518495023f95e120",
+          "finding_ids": [],
+          "supersedes": [
+            "nr-c3-r2-standards"
+          ]
         }
       ]
     }
@@ -2500,7 +2522,7 @@ Advice: copy the `identify_test.go` noncanonical-cell pattern.
 
 ## NR-C3 round 2
 
-The repair session `claude:nro_t3_rep1` committed 1ae40409 and closed S1, S2, S3, S4, P2, P3, and C1. Round 2 confirmed every fold with 0 code findings on every axis at `ae811542`. The Standards axis raised S13, a record-prose correction, because the round 2 prose was absent from the record. This section closes S13 as an evidence-only correction, and the Standards axis then reaffirms it.
+The repair session `claude:nro_t3_rep1` committed 1ae40409 and closed S1, S2, S3, S4, P2, P3, and C1. Round 2 confirmed every fold with 0 code findings on every axis at `ae811542`. The Standards axis raised S13, a record-prose correction, because the repair delta carried no disposition for the round 1 findings. This section closes S13 as an evidence-only correction, and the Standards axis reaffirmed it at 731bc91c.
 
 S9 to S12 are `no-op`. The residual frame guard is incidental text that the import cycle forces. The export surface is narrow, the `Find` semantic agrees with the owner, and the field indices pair with one owned order.
 
