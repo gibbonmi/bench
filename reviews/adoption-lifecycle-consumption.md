@@ -928,6 +928,107 @@
               "excerpt": "$ bench worktree exec ft217-build -- bench probe internal/adopt/decision.go --omit 'case o.Observed == o.Recorded:' --package ./internal/adopt --run '^TestLifecycleDroppedRows$'\nprobe call exit 0; mutant test run failed (exit 1)\ntree[1]{target,head,dirty}:\n  ft217-build,\"0126e37dd0e8149a46f97021abab4aade39641aa\",true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/decision.go,omit,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,12796,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleDroppedRows/clean,\"lifecycle_consumption_test.go:318: Link = 3, want 0 with the \\\"\\\" row for .bench/withdrawn.md\",11\n"
             }
           }
+        },
+        {
+          "id": "t2v1-desired-consumption",
+          "performer": "claude:ft217_t2_verify1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2_verify1/01a-desired-consumption.txt",
+            "digest": "sha256:40743183acb1072522869cc1532f1404a3e468a15ed4c7be346cfe86f5f1df89",
+            "excerpt": "$ bench worktree exec ft217-build -- bench test --package ./internal/adopt --run 'Test(LifecycleLinkPartitions|LifecycleSeedOwnership|LifecycleHardRefusalOrder|LifecycleRepairCompatibility|LifecycleSetupCancellation|TransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent|SetupSeedsGateInputs)'\nexit: 0\ntree[1]{target,head,dirty}:\n  ft217-build,cf1c1a6ea4bef58dcad31e4240cf8939c0e465da,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,pass,32114,33\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "desired-consumption",
+          "command": "bench test --package ./internal/adopt --run 'Test(LifecycleLinkPartitions|LifecycleSeedOwnership|LifecycleHardRefusalOrder|LifecycleRepairCompatibility|LifecycleSetupCancellation|TransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent|SetupSeedsGateInputs)'",
+          "exit_code": 0
+        },
+        {
+          "id": "t2v1-desired-floor-conformance",
+          "performer": "claude:ft217_t2_verify1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2_verify1/01b-floor-conformance.txt",
+            "digest": "sha256:78840e326c4a1fb2135a0d35ce34b429145b9d420eba777508b57d2d1d05ecca",
+            "excerpt": "$ bench worktree exec ft217-build -- bench test --check root-conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  ft217-build,cf1c1a6ea4bef58dcad31e4240cf8939c0e465da,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14771,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "desired-floor-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2v1-desired-floor-adopt",
+          "performer": "claude:ft217_t2_verify1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2_verify1/01c-floor-adopt.txt",
+            "digest": "sha256:bfd0f29a00ab7acac03aeb544c2712729cdd673c5b233b6299cf7d5a80b94cb4",
+            "excerpt": "$ bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench\n(one combined call per reviewer direction; covers desired-floor-adopt and desired-floor-cmd)\nexit: 0\ntree[1]{target,head,dirty}:\n  ft217-build,cf1c1a6ea4bef58dcad31e4240cf8939c0e465da,false\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15952,334\n  github.com/gibbonmi/bench/internal/adopt,pass,300223,222\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "desired-floor-adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "t2v1-desired-floor-cmd",
+          "performer": "claude:ft217_t2_verify1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2_verify1/01d-floor-cmd.txt",
+            "digest": "sha256:bfd0f29a00ab7acac03aeb544c2712729cdd673c5b233b6299cf7d5a80b94cb4",
+            "excerpt": "$ bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench\n(one combined call per reviewer direction; covers desired-floor-adopt and desired-floor-cmd)\nexit: 0\ntree[1]{target,head,dirty}:\n  ft217-build,cf1c1a6ea4bef58dcad31e4240cf8939c0e465da,false\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15952,334\n  github.com/gibbonmi/bench/internal/adopt,pass,300223,222\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "desired-floor-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t2v1-link-probes",
+          "performer": "claude:ft217_t2_verify1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t2_verify1/02-link-probes.txt",
+            "digest": "sha256:4ddcbddf7bf01818855ad339445cd32d160bbf1a2a67bee436cb3592f5dd3968",
+            "excerpt": "$ bench worktree exec ft217-build -- bench probe internal/adopt/link_transaction.go --omit 'o.SymlinkParent = hasSymlinkParent(root, e.rel)' --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$'\nexit: 0\n--- first-level spill ---\ntree[1]{target,head,dirty}:\n  ft217-build,cf1c1a6ea4bef58dcad31e4240cf8939c0e465da,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/link_transaction.go,omit,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleHardRefusalOrder$,passed,5\nspilled{lines=14,bytes=1350,omitted_lines=5,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/32297bb2a2b17d4d68b8c88121928c21/1791565234453704105-7e4db3b0de5ccc01.out}\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/absent_seed,\"lifecycle_special_test.go:127: refused run changed the repository:\",1081\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/competing_refusals,\"lifecycle_special_test.go:131: transactionalLink = (1, false), stderr \\\"conflict: kit asset missing: /tmp/CSAMGU/t/TestLifecycleHardRefusalOrder359374139/001/absent-kit-source\\\\\\\\n\\\"; want (1, false), stderr \\\"conflict: linked/asset has a symlink… (260 bytes)\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/present_seed,\"lifecycle_special_test.go:127: refused run changed the repository:\",1080\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/write,\"lifecycle_special_test.go:127: refused run changed the repository:\",1082\nskips[0]{package,test,reason}:\n--- nested spill (complete probe response) ---\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/link_transaction.go,omit,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleHardRefusalOrder$,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1003\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,253,5\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/absent_seed,\"lifecycle_special_test.go:127: refused run changed the repository:\",1081\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/competing_refusals,\"lifecycle_special_test.go:131: transactionalLink = (1, false), stderr \\\"conflict: kit asset missing: /tmp/CSAMGU/t/TestLifecycleHardRefusalOrder359374139/001/absent-kit-source\\\\\\\\n\\\"; want (1, false), stderr \\\"conflict: linked/asset has a symlink… (260 bytes)\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/present_seed,\"lifecycle_special_test.go:127: refused run changed the repository:\",1080\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/write,\"lifecycle_special_test.go:127: refused run changed the repository:\",1082\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "link-probes",
+          "command": "bench probe internal/adopt/link_transaction.go --omit 'o.SymlinkParent = hasSymlinkParent(root, e.rel)' --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Early competing-refusal omission, selected desired effects, mode facts, seeds, and strict repair witnesses must bite and restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft217_t2_verify1/02-link-probes.txt",
+              "digest": "sha256:4ddcbddf7bf01818855ad339445cd32d160bbf1a2a67bee436cb3592f5dd3968",
+              "excerpt": "$ bench worktree exec ft217-build -- bench probe internal/adopt/link_transaction.go --omit 'o.SymlinkParent = hasSymlinkParent(root, e.rel)' --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$'\nexit: 0\n--- first-level spill ---\ntree[1]{target,head,dirty}:\n  ft217-build,cf1c1a6ea4bef58dcad31e4240cf8939c0e465da,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/link_transaction.go,omit,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleHardRefusalOrder$,passed,5\nspilled{lines=14,bytes=1350,omitted_lines=5,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/32297bb2a2b17d4d68b8c88121928c21/1791565234453704105-7e4db3b0de5ccc01.out}\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/absent_seed,\"lifecycle_special_test.go:127: refused run changed the repository:\",1081\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/competing_refusals,\"lifecycle_special_test.go:131: transactionalLink = (1, false), stderr \\\"conflict: kit asset missing: /tmp/CSAMGU/t/TestLifecycleHardRefusalOrder359374139/001/absent-kit-source\\\\\\\\n\\\"; want (1, false), stderr \\\"conflict: linked/asset has a symlink… (260 bytes)\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/present_seed,\"lifecycle_special_test.go:127: refused run changed the repository:\",1080\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/write,\"lifecycle_special_test.go:127: refused run changed the repository:\",1082\nskips[0]{package,test,reason}:\n--- nested spill (complete probe response) ---\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/link_transaction.go,omit,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleHardRefusalOrder$,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1003\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,253,5\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/absent_seed,\"lifecycle_special_test.go:127: refused run changed the repository:\",1081\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/competing_refusals,\"lifecycle_special_test.go:131: transactionalLink = (1, false), stderr \\\"conflict: kit asset missing: /tmp/CSAMGU/t/TestLifecycleHardRefusalOrder359374139/001/absent-kit-source\\\\\\\\n\\\"; want (1, false), stderr \\\"conflict: linked/asset has a symlink… (260 bytes)\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/present_seed,\"lifecycle_special_test.go:127: refused run changed the repository:\",1080\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/write,\"lifecycle_special_test.go:127: refused run changed the repository:\",1082\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
