@@ -109,7 +109,7 @@ func observeWithdrawal(root string, row manifestRow, order int) (LifecycleObserv
 		return o, nil
 	}
 	o.Present, o.FileKind = true, fileKind(info.Mode())
-	if o.FileKind == "other" {
+	if o.FileKind == fileOther {
 		return o, nil
 	}
 	o.Observed, err = fingerprintPath(full)

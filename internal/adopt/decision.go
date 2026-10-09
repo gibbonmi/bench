@@ -47,7 +47,7 @@ type LifecycleObservation struct {
 	// path that has no desired entry.
 	PlanKind string
 	Present  bool
-	FileKind string // the destination kind: regular, symlink, or other
+	FileKind string // the destination kind that fileKind names
 	Perm     fs.FileMode
 	// Recorded is the manifest fingerprint, empty when the path is unowned. Observed is
 	// the destination fingerprint, empty when the destination has none.
@@ -65,15 +65,21 @@ type LifecycleObservation struct {
 	KnownForm          bool // CLAUDE.md holds a known Bench form
 }
 
-// fileKind names a file mode in the observation vocabulary: regular, symlink, or other.
+const (
+	fileRegular = "regular"
+	fileSymlink = "symlink"
+	fileOther   = "other"
+)
+
+// fileKind names a file mode in the observation vocabulary.
 func fileKind(mode fs.FileMode) string {
 	switch {
 	case mode.IsRegular():
-		return "regular"
+		return fileRegular
 	case mode&fs.ModeSymlink != 0:
-		return "symlink"
+		return fileSymlink
 	}
-	return "other"
+	return fileOther
 }
 
 // LifecycleDecision is the complete lifecycle choice for one path. ManifestAction is
@@ -103,6 +109,18 @@ const (
 
 	claudePlanKind  = "claude"
 	bespokePlanKind = "bespoke"
+
+	// The preserve reasons. A caller that reports a conflict matches and prints these.
+	reasonConverged           = "converged"
+	reasonModifiedManaged     = "modified-managed"
+	reasonProjectOwned        = "project-owned"
+	reasonSeedOwned           = "seed-owned"
+	reasonKeptModifiedRemoved = "kept-modified-removed"
+	reasonAbsent              = "absent"
+	reasonRefused             = "refused"
+	reasonModified            = "modified"
+	reasonUnchanged           = "unchanged"
+	reasonRequestedPreserve   = "requested-preserve"
 )
 
 // PlanLifecycle decides every path from immutable input without reading or changing a
@@ -155,11 +173,11 @@ func inventoryDecisions(input LifecycleInput) ([]LifecycleDecision, string) {
 		case !hasAfter && !preserve[name]:
 			decisions = append(decisions, LifecycleDecision{Path: name, Kind: lifecycleRemove, ManifestAction: manifestOmit})
 		case !hasAfter:
-			decisions = append(decisions, preserved(name, "requested-preserve", manifestRetain, before))
+			decisions = append(decisions, preserved(name, reasonRequestedPreserve, manifestRetain, before))
 		case before != after:
 			decisions = append(decisions, recorded(name, lifecycleChange, after))
 		default:
-			decisions = append(decisions, preserved(name, "unchanged", manifestRetain, before))
+			decisions = append(decisions, preserved(name, reasonUnchanged, manifestRetain, before))
 		}
 	}
 	for name, after := range desired {
@@ -222,16 +240,16 @@ func linkDecision(o LifecycleObservation) (LifecycleDecision, string) {
 	}
 	adoptAdapter := o.Recorded == "" && o.PlanKind == "adapter" && o.SymlinkParent && o.CanonicalAdapter
 	if o.Present && (o.Recorded != "" || adoptAdapter) && converged(o) {
-		return preserved(o.Path, "converged", manifestRecord, o.Observed), ""
+		return preserved(o.Path, reasonConverged, manifestRecord, o.Observed), ""
 	}
 	if o.SymlinkParent {
 		return LifecycleDecision{}, symlinkParentRefusal(o.Path)
 	}
 	if o.Present && !ownedClean(o) {
 		if o.Recorded != "" {
-			return preserved(o.Path, "modified-managed", manifestRetain, o.Recorded), ""
+			return preserved(o.Path, reasonModifiedManaged, manifestRetain, o.Recorded), ""
 		}
-		return preserved(o.Path, "project-owned", manifestOmit, ""), ""
+		return preserved(o.Path, reasonProjectOwned, manifestOmit, ""), ""
 	}
 	return writeDecision(o), ""
 }
@@ -244,10 +262,10 @@ func converged(o LifecycleObservation) bool {
 	if o.Observed == "" {
 		return false
 	}
-	if o.StagedKind == "symlink" {
+	if o.StagedKind == fileSymlink {
 		return o.Observed == o.Staged || o.ResolvedEquivalent
 	}
-	if o.FileKind != "symlink" && o.Perm != o.StagedPerm {
+	if o.FileKind != fileSymlink && o.Perm != o.StagedPerm {
 		return false
 	}
 	return o.Observed == o.Staged
@@ -259,7 +277,7 @@ func ownedClean(o LifecycleObservation) bool {
 	if o.Recorded == "" || o.Observed != o.Recorded {
 		return false
 	}
-	return !(o.Strict && o.FileKind == "regular" && o.StagedKind == "regular" && o.Perm != o.StagedPerm)
+	return !(o.Strict && o.FileKind == fileRegular && o.StagedKind == fileRegular && o.Perm != o.StagedPerm)
 }
 
 // seedDecision installs an absent seed once and preserves a present one. A seed adds
@@ -274,7 +292,7 @@ func seedDecision(o LifecycleObservation) (LifecycleDecision, string) {
 		action, fingerprint = manifestRetain, o.Recorded
 	}
 	if o.Present {
-		return preserved(o.Path, "seed-owned", action, fingerprint), ""
+		return preserved(o.Path, reasonSeedOwned, action, fingerprint), ""
 	}
 	return LifecycleDecision{Kind: lifecycleAdd, ManifestAction: action, Fingerprint: fingerprint}, ""
 }
@@ -287,9 +305,9 @@ func claudeDecision(o LifecycleObservation) LifecycleDecision {
 	case !o.Present || o.KnownForm:
 		return writeDecision(o)
 	case o.Recorded != "" && o.Observed != "" && o.Observed != o.Recorded:
-		return preserved(o.Path, "modified-managed", manifestRetain, o.Recorded)
+		return preserved(o.Path, reasonModifiedManaged, manifestRetain, o.Recorded)
 	}
-	return preserved(o.Path, "project-owned", manifestOmit, "")
+	return preserved(o.Path, reasonProjectOwned, manifestOmit, "")
 }
 
 // bespokeDecision publishes the replacement that a domain helper prepared, such as the
@@ -297,7 +315,7 @@ func claudeDecision(o LifecycleObservation) LifecycleDecision {
 // the owner reads only whether a replacement exists. A bespoke path has no manifest row.
 func bespokeDecision(o LifecycleObservation) LifecycleDecision {
 	if o.Staged == "" {
-		return preserved(o.Path, "unchanged", manifestOmit, "")
+		return preserved(o.Path, reasonUnchanged, manifestOmit, "")
 	}
 	d := writeDecision(o)
 	d.ManifestAction, d.Fingerprint = manifestOmit, ""
@@ -310,15 +328,15 @@ func withdrawalDecision(o LifecycleObservation) (LifecycleDecision, string) {
 	case o.Escapes || o.SymlinkParent:
 		return LifecycleDecision{}, "refused manifest path: " + o.Path
 	case !o.Present:
-		return preserved(o.Path, "absent", manifestOmit, ""), ""
-	case o.FileKind != "regular" && o.FileKind != "symlink":
+		return preserved(o.Path, reasonAbsent, manifestOmit, ""), ""
+	case o.FileKind != fileRegular && o.FileKind != fileSymlink:
 		return LifecycleDecision{}, "refused non-regular dropped asset: " + o.Path
 	case o.Observed == "":
 		return LifecycleDecision{}, fmt.Sprintf("dropped asset %q has no fingerprint", o.Path)
 	case o.Observed == o.Recorded:
 		return LifecycleDecision{Kind: lifecycleRemove, ManifestAction: manifestOmit}, ""
 	}
-	return preserved(o.Path, "kept-modified-removed", manifestRetain, o.Recorded), ""
+	return preserved(o.Path, reasonKeptModifiedRemoved, manifestRetain, o.Recorded), ""
 }
 
 // unlinkDecision removes a clean manifest row. An unsafe or modified row stays as a
@@ -326,13 +344,13 @@ func withdrawalDecision(o LifecycleObservation) (LifecycleDecision, string) {
 func unlinkDecision(o LifecycleObservation) (LifecycleDecision, string) {
 	switch {
 	case o.Escapes || o.SymlinkParent:
-		return preserved(o.Path, "refused", manifestRetain, o.Recorded), ""
+		return preserved(o.Path, reasonRefused, manifestRetain, o.Recorded), ""
 	case !o.Present:
-		return preserved(o.Path, "absent", manifestOmit, ""), ""
+		return preserved(o.Path, reasonAbsent, manifestOmit, ""), ""
 	case o.Observed == "":
-		return preserved(o.Path, "refused", manifestRetain, o.Recorded), ""
+		return preserved(o.Path, reasonRefused, manifestRetain, o.Recorded), ""
 	case o.Observed != o.Recorded:
-		return preserved(o.Path, "modified", manifestRetain, o.Recorded), ""
+		return preserved(o.Path, reasonModified, manifestRetain, o.Recorded), ""
 	}
 	return LifecycleDecision{Kind: lifecycleRemove, ManifestAction: manifestOmit}, ""
 }

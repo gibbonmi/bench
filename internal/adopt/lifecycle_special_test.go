@@ -8,9 +8,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
-	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/compatibility"
 	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
 )
@@ -76,41 +74,61 @@ func TestLifecycleSeedOwnership(t *testing.T) {
 	}
 }
 
+// plantSymlinkParent makes root/linked a symlink to the directory root/target.
+func plantSymlinkParent(t *testing.T, root string) {
+	t.Helper()
+	if err := os.Mkdir(filepath.Join(root, "target"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("target", filepath.Join(root, "linked")); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// requireUnchanged runs run and fails unless every entry under root keeps its state.
+func requireUnchanged(t *testing.T, root string, run func()) {
+	t.Helper()
+	before := compatibilitytest.SnapshotHome(t, root)
+	run()
+	if after := compatibilitytest.SnapshotHome(t, root); !reflect.DeepEqual(after, before) {
+		t.Fatalf("refused run changed the repository:\n%+v\nwant:\n%+v", after, before)
+	}
+}
+
 // TestLifecycleHardRefusalOrder drives the shared execution caller with plans whose write
-// needs a symlink parent. The refusal wins over the later entries, and nothing publishes.
+// needs a symlink parent. The refused entry follows an accepted one. The refusal wins over
+// the later entries, and nothing publishes. A seed refuses whether its leaf exists or not.
 func TestLifecycleHardRefusalOrder(t *testing.T) {
 	accepted := planEntry{rel: "accepted.txt", kind: "inline", content: "accepted\n"}
 	asset := planEntry{rel: "linked/asset", kind: "inline", content: "asset\n"}
 	missing := planEntry{src: filepath.Join(t.TempDir(), "absent-kit-source"), rel: "missing.txt", kind: "file"}
+	seed := func(rel string) planEntry { return planEntry{rel: rel, kind: "seed", content: "seed\n"} }
 	for _, tc := range []struct {
-		name, stderr string
-		plan         []planEntry
+		name    string
+		refused planEntry
+		later   []planEntry
 	}{
-		{name: "write", stderr: "conflict: linked/asset has a symlink parent directory\n", plan: []planEntry{accepted, asset}},
-		{name: "competing refusals", stderr: "conflict: linked/asset has a symlink parent directory\n", plan: []planEntry{accepted, asset, missing}},
-		{name: "present seed", stderr: "conflict: linked/seed has a symlink parent directory\n",
-			plan: []planEntry{accepted, {rel: "linked/seed", kind: "seed", content: "seed\n"}}},
+		{name: "write", refused: asset},
+		{name: "competing refusals", refused: asset, later: []planEntry{missing}},
+		{name: "present seed", refused: seed("linked/seed")},
+		{name: "absent seed", refused: seed("linked/absent-seed")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
 			runAdoptGit(t, root, "init", "-q")
 			writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), "# Project rules\n", 0o644)
 			writeFixtureFile(t, filepath.Join(root, "CLAUDE.md"), "Project notes.\n", 0o644)
-			if err := os.Mkdir(filepath.Join(root, "target"), 0o755); err != nil {
-				t.Fatal(err)
-			}
+			plantSymlinkParent(t, root)
 			writeFixtureFile(t, filepath.Join(root, "target", "seed"), "project seed\n", 0o644)
-			if err := os.Symlink("target", filepath.Join(root, "linked")); err != nil {
-				t.Fatal(err)
-			}
-			before := compatibilitytest.SnapshotHome(t, root)
+			plan := append([]planEntry{accepted, tc.refused}, tc.later...)
 			var stdout, stderr bytes.Buffer
-			code, changed := transactionalLink(root, t.TempDir(), "copy", "test", tc.plan, &stdout, &stderr)
-			if code != 1 || changed || stderr.String() != tc.stderr {
-				t.Fatalf("transactionalLink = (%d, %t), stderr %q; want (1, false), stderr %q", code, changed, stderr.String(), tc.stderr)
-			}
-			if after := compatibilitytest.SnapshotHome(t, root); !reflect.DeepEqual(after, before) {
-				t.Fatalf("refused plan changed the repository:\n%+v\nwant:\n%+v", after, before)
+			var code int
+			var changed bool
+			requireUnchanged(t, root, func() {
+				code, changed = transactionalLink(root, t.TempDir(), "copy", "test", plan, &stdout, &stderr)
+			})
+			if want := "conflict: " + tc.refused.rel + " has a symlink parent directory\n"; code != 1 || changed || stderr.String() != want {
+				t.Fatalf("transactionalLink = (%d, %t), stderr %q; want (1, false), stderr %q", code, changed, stderr.String(), want)
 			}
 		})
 	}
@@ -136,7 +154,8 @@ func TestLifecycleRepairCompatibility(t *testing.T) {
 // TestLifecycleClaudeOwnership drives real relink over each CLAUDE.md partition, starting
 // from a linked repository. Project content, including an empty file, keeps its bytes and
 // takes no import and no row. Owned content that the project edited keeps its bytes and
-// row and is reported. An absent, legacy, or current form takes the current form.
+// row and is reported. An absent, legacy, or current form takes the current form, and an
+// unowned dangling link reads as absent.
 func TestLifecycleClaudeOwnership(t *testing.T) {
 	write := func(content string) func(*testing.T, string, string) {
 		return func(t *testing.T, _, path string) { writeFixtureFile(t, path, content, 0o644) }
@@ -162,6 +181,15 @@ func TestLifecycleClaudeOwnership(t *testing.T) {
 		}},
 		{name: "legacy form", installed: true, arrange: write(legacyClaudeMD())},
 		{name: "current form", installed: true, arrange: func(*testing.T, string, string) {}},
+		{name: "unowned dangling link", installed: true, arrange: func(t *testing.T, root, path string) {
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink("missing-target", path); err != nil {
+				t.Fatal(err)
+			}
+			editPreviewManifest(t, root, func(rows map[string]string) { delete(rows, "CLAUDE.md") })
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := consumerRepo(t)
@@ -183,8 +211,7 @@ func TestLifecycleClaudeOwnership(t *testing.T) {
 
 // TestLifecycleSpecialInstructionFiles drives real Link with a writerless FIFO at an
 // instruction file. Link must finish without opening it, report it project-owned, keep
-// its file kind, and drop an ownership row that an earlier link wrote. Link runs off the
-// test goroutine behind a deadline because opening a writerless FIFO never returns.
+// its file kind, and drop an ownership row that an earlier link wrote.
 func TestLifecycleSpecialInstructionFiles(t *testing.T) {
 	for _, tc := range []struct {
 		name, rel string
@@ -206,14 +233,7 @@ func TestLifecycleSpecialInstructionFiles(t *testing.T) {
 			if err := syscall.Mkfifo(path, 0o600); err != nil {
 				t.Fatal(err)
 			}
-			done := make(chan linkRun, 1)
-			go func() { done <- runLink(nil) }()
-			select {
-			case run := <-done:
-				requireReported(t, run, tc.rel, "project-owned")
-			case <-time.After(bounds.TestDeadline(bounds.TestDeadlineFloor)):
-				t.Fatalf("Link blocked on a FIFO at %s: the file was opened before its kind was checked", tc.rel)
-			}
+			requireReported(t, runLinkBounded(t), tc.rel, "project-owned")
 			if info, err := os.Lstat(path); err != nil || info.Mode()&os.ModeNamedPipe == 0 {
 				t.Fatalf("%s after Link: %v, want the FIFO kept", tc.rel, err)
 			}
@@ -256,20 +276,17 @@ func TestLifecycleHookCompatibility(t *testing.T) {
 			}
 			path := filepath.Join(hooks, "pre-push")
 			tc.arrange(t, path)
-			before := compatibilitytest.SnapshotHome(t, root)
-			run := runLink(nil)
 			if !tc.refused {
-				requireReported(t, run, "pre-push", "")
+				requireReported(t, runLink(nil), "pre-push", "")
 				if got := InspectPrePush(root); got.State != PrePushManaged || got.Currency != PrePushCurrent || got.Path != path {
 					t.Fatalf("hook after Link = %#v, want the current managed hook at %s", got, path)
 				}
 				return
 			}
+			var run linkRun
+			requireUnchanged(t, root, func() { run = runLink(nil) })
 			if want := "conflict: " + path + " exists and is not Bench-managed\n"; run.code != 1 || run.stderr != want {
 				t.Fatalf("Link = %d with stderr %q, want 1 with %q", run.code, run.stderr, want)
-			}
-			if after := compatibilitytest.SnapshotHome(t, root); !reflect.DeepEqual(after, before) {
-				t.Fatalf("refused link changed the repository:\n%+v\nwant:\n%+v", after, before)
 			}
 		})
 	}

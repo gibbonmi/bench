@@ -6,8 +6,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
 )
 
@@ -32,6 +35,21 @@ func runLink(args []string) linkRun {
 	return linkRun{code, stdout.String(), stderr.String()}
 }
 
+// runLinkBounded runs real Link off the test goroutine behind a deadline, because opening
+// a writerless FIFO never returns.
+func runLinkBounded(t *testing.T) linkRun {
+	t.Helper()
+	done := make(chan linkRun, 1)
+	go func() { done <- runLink(nil) }()
+	select {
+	case run := <-done:
+		return run
+	case <-time.After(bounds.TestDeadline(bounds.TestDeadlineFloor)):
+		t.Fatal("Link blocked: it opened a special file before it checked the file kind")
+	}
+	return linkRun{}
+}
+
 // requireReported fails unless run exited 0, or, when reason is set, exited 3 with the
 // reason row for rel.
 func requireReported(t *testing.T, run linkRun, rel, reason string) {
@@ -45,11 +63,10 @@ func requireReported(t *testing.T, run linkRun, rel, reason string) {
 	}
 }
 
-// plantWithdrawn writes the withdrawn asset and returns the fingerprint that a manifest
-// row records for it.
-func plantWithdrawn(t *testing.T, root string) string {
+// plantWithdrawn writes a withdrawn asset at path and returns the fingerprint that a
+// manifest row records for it.
+func plantWithdrawn(t *testing.T, path string) string {
 	t.Helper()
-	path := filepath.Join(root, lifecycleWithdrawn)
 	writeFixtureFile(t, path, "withdrawn kit asset\n", 0o644)
 	recorded, err := fingerprintPath(path)
 	if err != nil {
@@ -125,7 +142,8 @@ func requireInstalled(t *testing.T, root, rel string) {
 // installed path takes the kit bytes, mode, and fingerprint. Every other path keeps its
 // bytes, identity, and manifest row, and a reported path names its conflict reason. A
 // copy relinked in symlink mode is converged because it resolves to the bytes that the
-// staged link names, so it stays a regular file.
+// staged link names, so it stays a regular file. A consumer root whose name holds a space
+// and glob characters takes the absent asset at its literal path.
 func TestLifecycleLinkPartitions(t *testing.T) {
 	ownOld := func(t *testing.T, root, path string) {
 		writeFixtureFile(t, path, "old kit\n", 0o644)
@@ -136,12 +154,13 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 		editPreviewManifest(t, root, func(rows map[string]string) { rows[lifecycleDoc] = old })
 	}
 	for _, tc := range []struct {
-		name, rel, reason string
-		args              []string
-		linked, installed bool
-		arrange           func(t *testing.T, root, path string)
+		name, rel, reason, dir string
+		args                   []string
+		linked, installed      bool
+		arrange                func(t *testing.T, root, path string)
 	}{
 		{name: "absent", rel: lifecycleDoc, installed: true, arrange: func(*testing.T, string, string) {}},
+		{name: "absent under a spaced glob root", rel: lifecycleDoc, dir: "dir with [glob]*", installed: true, arrange: func(*testing.T, string, string) {}},
 		{name: "clean old", rel: lifecycleDoc, linked: true, installed: true, arrange: ownOld},
 		{name: "converged", rel: lifecycleDoc, linked: true, arrange: func(*testing.T, string, string) {}},
 		{name: "converged in symlink mode", rel: lifecycleDoc, args: []string{"symlink"}, linked: true, arrange: func(*testing.T, string, string) {}},
@@ -165,6 +184,14 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := consumerRepo(t)
+			if tc.dir != "" {
+				root = filepath.Join(root, tc.dir)
+				if err := os.Mkdir(root, 0o755); err != nil {
+					t.Fatal(err)
+				}
+				runAdoptGit(t, root, "init", "-q")
+				t.Chdir(root)
+			}
 			path := filepath.Join(root, tc.rel)
 			if tc.linked {
 				linkConsumer(t, root, 0)
@@ -216,7 +243,7 @@ func TestLifecycleOwnerConsumption(t *testing.T) {
 				t.Fatal(err)
 			}
 			writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), prose, 0o644)
-			withdrawn := manifestRow{lifecycleWithdrawn, plantWithdrawn(t, root)}
+			withdrawn := manifestRow{lifecycleWithdrawn, plantWithdrawn(t, filepath.Join(root, lifecycleWithdrawn))}
 			if err := writeManifest(previewManifestPath(root), "1.0.0", []manifestRow{withdrawn}); err != nil {
 				t.Fatal(err)
 			}
@@ -233,13 +260,17 @@ func TestLifecycleOwnerConsumption(t *testing.T) {
 
 // TestLifecycleDroppedRows drives real relink over a manifest row that the kit no longer
 // plans. A clean withdrawn asset leaves with its row. A modified one keeps its bytes and
-// row and is reported. An absent one loses its row without a report.
+// row and is reported. An absent one loses its row without a report. A row under a
+// symlink parent, a row that escapes the repository, and a special file each refuse the
+// relink with the exact refusal and keep the planted file and its row.
 func TestLifecycleDroppedRows(t *testing.T) {
+	keep := func(*testing.T, string) {}
 	for _, tc := range []struct {
-		name, reason string
-		arrange      func(t *testing.T, path string)
+		name, rel, reason, refusal string
+		symlinkParent              bool
+		arrange                    func(t *testing.T, path string)
 	}{
-		{name: "clean", arrange: func(*testing.T, string) {}},
+		{name: "clean", arrange: keep},
 		{name: "modified", reason: "kept-modified-removed", arrange: func(t *testing.T, path string) {
 			writeFixtureFile(t, path, "project edit\n", 0o644)
 		}},
@@ -248,20 +279,46 @@ func TestLifecycleDroppedRows(t *testing.T) {
 				t.Fatal(err)
 			}
 		}},
+		{name: "symlink parent", rel: "linked/withdrawn.md", symlinkParent: true,
+			refusal: "refused manifest path: linked/withdrawn.md\n", arrange: keep},
+		{name: "escape", rel: "../withdrawn.md", refusal: "refused manifest path: ../withdrawn.md\n", arrange: keep},
+		{name: "special file", refusal: "refused non-regular dropped asset: " + lifecycleWithdrawn + "\n", arrange: func(t *testing.T, path string) {
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			if err := syscall.Mkfifo(path, 0o600); err != nil {
+				t.Fatal(err)
+			}
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := consumerRepo(t)
 			linkConsumer(t, root, 0)
-			recorded := plantWithdrawn(t, root)
-			editPreviewManifest(t, root, func(rows map[string]string) { rows[lifecycleWithdrawn] = recorded })
-			tc.arrange(t, filepath.Join(root, lifecycleWithdrawn))
-			var before entryState
-			if tc.reason != "" {
-				before = observeEntry(t, root, lifecycleWithdrawn)
+			rel := tc.rel
+			if rel == "" {
+				rel = lifecycleWithdrawn
 			}
-			requireReported(t, runLink(nil), lifecycleWithdrawn, tc.reason)
-			if tc.reason != "" {
-				requireKept(t, root, lifecycleWithdrawn, before)
+			if tc.symlinkParent {
+				plantSymlinkParent(t, root)
+			}
+			path := filepath.Join(root, rel)
+			recorded := plantWithdrawn(t, path)
+			editPreviewManifest(t, root, func(rows map[string]string) { rows[rel] = recorded })
+			tc.arrange(t, path)
+			var before entryState
+			if tc.reason != "" || tc.refusal != "" {
+				before = observeEntry(t, root, rel)
+			}
+			run := runLinkBounded(t)
+			if tc.refusal != "" {
+				if run.code != 1 || run.stderr != tc.refusal {
+					t.Fatalf("Link = %d with stderr %q, want 1 with %q", run.code, run.stderr, tc.refusal)
+				}
+			} else {
+				requireReported(t, run, rel, tc.reason)
+			}
+			if tc.reason != "" || tc.refusal != "" {
+				requireKept(t, root, rel, before)
 				return
 			}
 			requireWithdrawn(t, root)

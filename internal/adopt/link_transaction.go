@@ -33,7 +33,7 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 	}
 	if repair != nil {
 		if err := validateRepairManifest(filepath.Join(root, ".bench", "link-manifest.tsv"), old); err != nil {
-			block, renderErr := renderVerdicts("conflicts", []lifecycleVerdict{{".bench/link-manifest.tsv", "modified-managed"}})
+			block, renderErr := renderVerdicts("conflicts", []lifecycleVerdict{{".bench/link-manifest.tsv", reasonModifiedManaged}})
 			if renderErr != nil {
 				fmt.Fprintln(stderr, renderErr)
 			} else {
@@ -52,14 +52,14 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 	agentsPath := filepath.Join(root, "AGENTS.md")
 	agentsSpecial := isSpecialFile(agentsPath)
 	if agentsSpecial {
-		conflicts = append(conflicts, lifecycleVerdict{"AGENTS.md", "project-owned"})
+		conflicts = append(conflicts, lifecycleVerdict{"AGENTS.md", reasonProjectOwned})
 	} else if err := validateAgentsPath(agentsPath); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1, false
 	}
 	claudeSpecial := isSpecialFile(filepath.Join(root, "CLAUDE.md"))
 	if claudeSpecial {
-		conflicts = append(conflicts, lifecycleVerdict{"CLAUDE.md", "project-owned"})
+		conflicts = append(conflicts, lifecycleVerdict{"CLAUDE.md", reasonProjectOwned})
 	}
 	if repair == nil {
 		populateOriginHead(root)
@@ -130,7 +130,7 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 				}
 			}
 			changes = append(changes, stagedChange{rel: d.Path, stage: staged})
-		case d.Reason == "modified-managed" || d.Reason == "project-owned":
+		case d.Reason == reasonModifiedManaged || d.Reason == reasonProjectOwned:
 			conflicts = append(conflicts, lifecycleVerdict{d.Path, d.Reason})
 		}
 	}
@@ -152,7 +152,7 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 		switch {
 		case d.Kind == lifecycleRemove:
 			changes = append(changes, stagedChange{rel: d.Path})
-		case d.Reason == "kept-modified-removed":
+		case d.Reason == reasonKeptModifiedRemoved:
 			conflicts = append(conflicts, lifecycleVerdict{d.Path, d.Reason})
 		}
 	}
@@ -188,7 +188,7 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 		switch {
 		case publishes(d):
 			changes = append(changes, stagedChange{rel: d.Path, stage: claude})
-		case d.Reason == "modified-managed":
+		case d.Reason == reasonModifiedManaged:
 			// The report omits a project-owned CLAUDE.md. Only the special-file guard
 			// above reports one.
 			conflicts = append(conflicts, lifecycleVerdict{d.Path, d.Reason})
@@ -203,7 +203,7 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 		if err := validateRepairHook(hook); err != nil {
 			_ = os.Remove(hookStage)
 			removeEmptyDirs(hookDirs)
-			block, err := renderVerdicts("conflicts", []lifecycleVerdict{{hook.Path, "modified-managed"}})
+			block, err := renderVerdicts("conflicts", []lifecycleVerdict{{hook.Path, reasonModifiedManaged}})
 			if err != nil {
 				fmt.Fprintln(stderr, err)
 			} else {
