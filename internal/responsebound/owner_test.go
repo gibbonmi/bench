@@ -105,6 +105,20 @@ func onlySpill(t *testing.T, home string) string {
 	return filepath.Join(storeDir(home), entries[0].Name())
 }
 
+// spillPath answers the path of the spill frame that response prints. The package test
+// reads the frame through the owner's own classifier, because the shared test accessor
+// imports this package.
+func spillPath(t *testing.T, response string) string {
+	t.Helper()
+	for _, line := range strings.SplitAfter(response, "\n") {
+		if projection, ok, err := ProjectionLine(line); ok && err == nil && projection.Kind == Spilled {
+			return projection.Path
+		}
+	}
+	t.Fatalf("response = %q, want a spill line", response)
+	return ""
+}
+
 func readSpill(t *testing.T, path string) string {
 	t.Helper()
 	data, err := os.ReadFile(path)

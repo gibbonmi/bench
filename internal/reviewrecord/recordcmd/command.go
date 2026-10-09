@@ -306,11 +306,11 @@ func chosen(f form, values map[string]string, name string) bool {
 	return slices.Contains(strings.Split(f.flag(name).placeholder, "|"), values[name])
 }
 
-// native reads the --excerpt file as exact bytes and pairs them with --ref. The read
-// never follows a link or opens a special file, and every state other than parsed
+// native reads the file that flag names as exact bytes and pairs them with --ref. The
+// read never follows a link or opens a special file, and every state other than parsed
 // refuses with the record error line for the operand path.
-func native(values map[string]string) (reviewrecord.NativeRef, string, int) {
-	path := values["--excerpt"]
+func native(values map[string]string, flag string) (reviewrecord.NativeRef, string, int) {
+	path := values[flag]
 	c := bounds.ClassifyNoFollow(path)
 	if c.State != bounds.StateParsed {
 		return reviewrecord.NativeRef{}, toon.RecordError(path, c.State, c.Reason) + "\n", 1
@@ -325,7 +325,7 @@ func reviewValid(f form, parsed usage.Result) bool {
 
 func review(f form, root, spec string, parsed usage.Result) (string, int) {
 	values := parsed.Flags
-	ref, out, code := native(values)
+	ref, out, code := native(values, "--excerpt")
 	if out != "" {
 		return out, code
 	}

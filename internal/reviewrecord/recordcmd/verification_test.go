@@ -343,21 +343,7 @@ func TestRecordedVerificationPassesTheCheckpoint(t *testing.T) {
 	f := recorded(t, 1)
 	verify(t, f)
 	verify(t, f, unprobed)
-	record := read(t, f)
-	chunk := &record.Chunks[0]
-	for _, axis := range rr.Axes() {
-		chunk.Reviews = append(chunk.Reviews, rr.Review{Evidence: f.Evidence("review-"+axis, chunk.SourceDigest, "independent-review"), Axis: axis, Base: chunk.Base, Tip: chunk.Tip})
-	}
-	path := recordFile(t, f)
-	document, err := rr.Render(bytesOf(t, path), record)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, document, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	f.Commit("record chunk 1")
-	if err := rr.Check(f.Root, f.Tree(), f.Tip(), recordtest.Spec, "1", false); err != nil {
+	if err := checkpoint(t, f); err != nil {
 		t.Fatalf("checkpoint for chunk 1: %v", err)
 	}
 }

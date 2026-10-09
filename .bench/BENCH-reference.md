@@ -262,6 +262,16 @@ cells name the form, the target, the `-run` pattern, the baseline outcome, and
 the count of the tests that ran. The help names the `--package` and `--check`
 forms in a `notes:` block.
 
+A `probe_execution` row follows the selection row. Its cells give the result
+schema, the exit of the probe command, and the normalized exit of the mutated
+run. The mutated-run exit is `null` when the mutated run did not start. The
+last cell gives the byte count of everything after the row.
+
+`bench record verification --probe-result <file>` imports the outcome, the
+mutated-run exit, and the restore result from one complete probe answer. The
+file can be the complete stdout or the complete spill body. The command keeps
+the exact file bytes as the excerpt.
+
 `bench gate-prose <root> --staged` grades the staged Markdown from the index and
 takes no path list. The subject bytes and the exclusion policy come from the
 index blobs, so a working file does not change the answer. The path-list form

@@ -1,13 +1,15 @@
 // Package responseboundtest serves consumer tests of the response bound. It reads the
 // spill path of an over-bound response, and it makes the assignment checkout whose tree
 // sets the spill scope. The spill line has one reader here, so a test in any package
-// finds the spill file the same way. The reader checks only the frame of the line and
-// the path; the owner is the one source of the count fields.
+// finds the spill file the same way. The frame owner in package responsebound classifies
+// the line, so this package holds no second marker parser.
 package responseboundtest
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/responsebound"
 )
 
 // Spill is the parsed spill line of one over-bound response.
@@ -17,28 +19,14 @@ type Spill struct {
 	Path string
 }
 
-const (
-	linePrefix = "spilled{"
-	pathField  = ",path="
-	lineSuffix = "}"
-)
-
-// ParseLine parses one spill line, with or without its newline. A line without the spill
-// frame or a path answers false.
+// ParseLine parses one spill line, with or without its newline. It projects the frame
+// owner's classifier, so a line without the spill frame or a path answers false.
 func ParseLine(line string) (Spill, bool) {
-	body, ok := strings.CutPrefix(strings.TrimSuffix(line, "\n"), linePrefix)
-	if !ok {
+	projection, ok, err := responsebound.ProjectionLine(line)
+	if !ok || err != nil || projection.Kind != responsebound.Spilled {
 		return Spill{}, false
 	}
-	body, ok = strings.CutSuffix(body, lineSuffix)
-	if !ok {
-		return Spill{}, false
-	}
-	_, path, ok := strings.Cut(body, pathField)
-	if !ok || path == "" {
-		return Spill{}, false
-	}
-	return Spill{Path: path}, true
+	return Spill{Path: projection.Path}, true
 }
 
 // Find answers the first spill line of response. A response within the bound has none.

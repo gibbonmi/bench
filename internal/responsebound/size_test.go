@@ -3,10 +3,13 @@ package responsebound
 import (
 	"bytes"
 	"io"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
-	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
+	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
 // sizeOf sends writes through owner, finishes it, and answers its size.
@@ -84,8 +87,21 @@ func TestAssignmentScopeRefusesThePrimaryScope(t *testing.T) {
 // assignment, with no retirement input.
 func TestAssignmentScopeAnswersTheWorktreeAssignment(t *testing.T) {
 	home := privateHome(t)
-	_, checkout, id := responseboundtest.AssignmentCheckout(t, home)
+	_, checkout, id := assignmentCheckout(t, home)
 	if got, ok := AssignmentScope(home, checkout); !ok || got != id {
 		t.Fatalf("AssignmentScope of the worktree root = (%q, %v), want (%q, true)", got, ok, id)
 	}
+}
+
+// assignmentCheckout makes a linked worktree of a new repository at an assignment segment
+// of the pool below home, as responseboundtest.AssignmentCheckout does for the consumer
+// tests. That package imports this one, so this package test cannot import it back.
+func assignmentCheckout(t *testing.T, home string) (repo, checkout, id string) {
+	t.Helper()
+	repo = gittest.RepoOnBranch(t, "main")
+	id = strings.Repeat("b", 32)
+	checkout = filepath.Join(poolkey.Pool(home, repo), poolkey.AssignmentSegment(strings.Repeat("a", 32), id))
+	gittest.Output(t, repo, "commit", "-q", "--allow-empty", "-m", "base")
+	gittest.Output(t, repo, "worktree", "add", "-q", "--detach", checkout)
+	return repo, checkout, id
 }
