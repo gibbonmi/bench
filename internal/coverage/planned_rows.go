@@ -1,10 +1,16 @@
 package coverage
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
-// CitationForm is the seam-cell form that cites one test: a backticked test file path and
-// the backticked test name in parentheses after it.
-const CitationForm = "`<path>_test.go` (`<Name>`)"
+// citationFormat is the seam-cell form that cites one test: a backticked test file path
+// and, in parentheses after it, the backticked test name that each caller supplies.
+const citationFormat = "`<path>_test.go` (`%s`)"
+
+// CitationForm is the citation form with a placeholder for the test name.
+var CitationForm = fmt.Sprintf(citationFormat, "<Name>")
 
 // PlannedRows returns, in map order, the row ID of each opted-in map row whose seam cell
 // holds the planned marker. A map without row IDs gives no row ID, because a positional

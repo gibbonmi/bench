@@ -133,7 +133,6 @@ func completed(t *testing.T, seams ...string) (string, int) {
 	withMap(seams...)(f)
 	base, source := advance(f, "chunk 1")
 	f.Reload()
-	f.Record.PlanDigest = f.Plan.Digest
 	f.RecordChunk(base)
 	f.Complete()
 	f.Save()

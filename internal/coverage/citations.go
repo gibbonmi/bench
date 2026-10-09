@@ -135,7 +135,7 @@ func checkCitations(p parsed, base string) []string {
 			v = append(v, checkCitation(rn, base, c.rel, c.list, scopes)...)
 		}
 		for _, name := range strayTestNames(cell) {
-			v = append(v, fmt.Sprintf("coverage map row %d names '%s' outside the citation form; cite it as `<path>_test.go` (`%s`)", rn, name, name))
+			v = append(v, fmt.Sprintf("coverage map row %d names '%s' outside the citation form; cite it as "+citationFormat, rn, name, name))
 		}
 	}
 	return v

@@ -15,7 +15,7 @@ func completion(f form, root, spec string, parsed usage.Result) (string, int) {
 	if out != "" {
 		return out, code
 	}
-	if out, code := refusePlanned(f, root, spec, source, planRows); out != "" {
+	if out, code := refusePlanned(f, root, spec, source, reviewrecord.Plan.Rows); out != "" {
 		return out, code
 	}
 	entry, err := reviewrecord.RecordCompletion(root, spec, source)

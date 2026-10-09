@@ -35,20 +35,9 @@ func refusePlanned(f form, root, spec, commit string, rows func(reviewrecord.Pla
 // selects no row, and the writer then refuses it with its own cause.
 func chunkRows(id string) func(reviewrecord.Plan) []string {
 	return func(plan reviewrecord.Plan) []string {
-		for _, chunk := range plan.Chunks {
-			if chunk.ID == id {
-				return chunk.Rows
-			}
+		if chunk := plan.Chunk(id); chunk != nil {
+			return chunk.Rows
 		}
 		return nil
 	}
-}
-
-// planRows selects every row of every plan chunk.
-func planRows(plan reviewrecord.Plan) []string {
-	var rows []string
-	for _, chunk := range plan.Chunks {
-		rows = append(rows, chunk.Rows...)
-	}
-	return rows
 }

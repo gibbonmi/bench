@@ -117,6 +117,15 @@ func ReadPlan(root, tree, spec string) (Plan, error) {
 	return plan, nil
 }
 
+// Rows returns every row of every plan chunk, in chunk order.
+func (p Plan) Rows() []string {
+	var rows []string
+	for _, chunk := range p.Chunks {
+		rows = append(rows, chunk.Rows...)
+	}
+	return rows
+}
+
 // ReadSpecAtCommit reads the spec and its completion plan from the tree of commit, a full
 // commit ID. Both come from that one tree, so a caller never grades the spec of one tree
 // against the plan of another.

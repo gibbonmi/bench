@@ -117,15 +117,16 @@ func (f *Fixture) RewritePlan() {
 	f.Reload()
 }
 
-// Reload reads the committed plan again, keeping the retained record. A plan
-// amendment changes the digest that later evidence must name.
+// Reload reads the committed plan again and moves the record plan digest to it, keeping
+// the rest of the retained record. A plan amendment changes the digest that later
+// evidence must name.
 func (f *Fixture) Reload() {
 	f.T.Helper()
 	plan, err := rr.ReadPlan(f.Root, f.Tree(), f.Record.Spec)
 	if err != nil {
 		f.T.Fatal(err)
 	}
-	f.Plan = plan
+	f.Plan, f.Record.PlanDigest = plan, plan.Digest
 }
 
 // Option reshapes the planned fixture before it is written and committed.
