@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/native-record-operations/spec.md",
-  "plan_digest": "sha256:3f050973a2d5cd0a17846e07a65a79263dd5ddc42c9a742ef6bedfed5535eef0",
+  "plan_digest": "sha256:a2b11a0ac51dbb366db60665d1ad3e478daae502850e498b175ba070c251297d",
   "implementation_session": "",
   "chunks": [
     {
@@ -552,6 +552,29 @@
           ]
         }
       ]
+    },
+    {
+      "id": "NR-C2",
+      "base": "c311ec18aa433aa19d4cd5a2682d11a6c56ab787",
+      "tip": "df6eeb887b9249a9cb03571ba0178c22bac49d55",
+      "plan_digest": "sha256:a2b11a0ac51dbb366db60665d1ad3e478daae502850e498b175ba070c251297d",
+      "source_digest": "36629b12d9535ef342269613d00522e70788dc6e",
+      "acceptance_rows": [
+        "NR15",
+        "NR16",
+        "NR17",
+        "NR18",
+        "NR19",
+        "NR20",
+        "NR21",
+        "NR22",
+        "NR33",
+        "NR34",
+        "NR35",
+        "NR37"
+      ],
+      "verification": [],
+      "reviews": []
     }
   ],
   "completion": {
@@ -583,6 +606,15 @@
     {
       "from": "sha256:19878058db5b5c57a29d10dddb24ae5a1c610bff58ced8fc26f934a18c5942e8",
       "to": "sha256:3f050973a2d5cd0a17846e07a65a79263dd5ddc42c9a742ef6bedfed5535eef0",
+      "chunk_ids": {
+        "NR-C1": [
+          "NR-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3f050973a2d5cd0a17846e07a65a79263dd5ddc42c9a742ef6bedfed5535eef0",
+      "to": "sha256:a2b11a0ac51dbb366db60665d1ad3e478daae502850e498b175ba070c251297d",
       "chunk_ids": {
         "NR-C1": [
           "NR-C1"
