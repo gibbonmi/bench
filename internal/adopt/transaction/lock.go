@@ -26,7 +26,11 @@ func Lock(destinations []string) (*Lease, error) {
 	if err != nil {
 		return nil, err
 	}
-	dir := filepath.Join(shared, "bench-adoption-locks-"+strconv.Itoa(os.Getuid()))
+	return lockIn(filepath.Join(shared, "bench-adoption-locks-"+strconv.Itoa(os.Getuid())), destinations)
+}
+
+// lockIn acquires destinations through the lock files in dir.
+func lockIn(dir string, destinations []string) (*Lease, error) {
 	if err := os.Mkdir(dir, 0o700); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
@@ -53,25 +57,50 @@ func Lock(destinations []string) (*Lease, error) {
 	sort.Strings(ordered)
 	lease := &Lease{keys: keys}
 	for _, key := range ordered {
-		f, err := os.OpenFile(filepath.Join(dir, key), os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0o600)
-		if err == nil {
-			info, statErr := f.Stat()
-			if statErr != nil || !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
-				err = fmt.Errorf("invalid adoption lock file")
-			}
-		}
-		if err == nil {
-			err = syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
-		}
+		f, err := acquire(filepath.Join(dir, key))
 		if err != nil {
-			if f != nil {
-				_ = f.Close()
-			}
 			return nil, errors.Join(fmt.Errorf("adoption destination is unavailable; retry after the competing writer completes: %w", err), lease.Close())
 		}
 		lease.files = append(lease.files, f)
 	}
 	return lease, nil
+}
+
+// acquire holds the lock file at path. Only a holder removes a lock file, so a lock taken
+// on an inode that path no longer names belongs to a released holder and is retried.
+func acquire(path string) (*os.File, error) {
+	for {
+		f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0o600)
+		if err != nil {
+			return nil, err
+		}
+		held, err := f.Stat()
+		if err != nil || !held.Mode().IsRegular() || held.Mode().Perm() != 0o600 {
+			err = fmt.Errorf("invalid adoption lock file")
+		}
+		if err == nil {
+			err = syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
+		}
+		if err == nil {
+			var named bool
+			if named, err = names(path, held); named {
+				return f, nil
+			}
+		}
+		_ = f.Close()
+		if err != nil {
+			return nil, err
+		}
+	}
+}
+
+// names reports whether path still names the held lock file. A missing path names no file.
+func names(path string, held os.FileInfo) (bool, error) {
+	current, statErr := os.Lstat(path)
+	if statErr != nil && !os.IsNotExist(statErr) {
+		return false, statErr
+	}
+	return statErr == nil && os.SameFile(held, current), nil
 }
 
 func canonicalDestination(path string) (string, error) {
@@ -117,15 +146,30 @@ func resolveDirectory(path string) (string, error) {
 	return filepath.Join(resolved, name), nil
 }
 
-// Close releases this writer's destinations.
+// Close releases this writer's destinations. It removes each lock file while it still holds
+// the lock, so the directory does not grow and acquire can detect the released inode.
 func (l *Lease) Close() error {
 	var failures []error
 	for i := len(l.files) - 1; i >= 0; i-- {
-		failures = append(failures, l.files[i].Close())
+		failures = append(failures, removeHeld(l.files[i]), l.files[i].Close())
 	}
 	l.files = nil
 	l.keys = nil
 	return errors.Join(failures...)
+}
+
+// removeHeld unlinks the held lock file f only while its path still names f. A path that an
+// outside actor removed is already released, and a replacement belongs to another writer.
+func removeHeld(f *os.File) error {
+	held, err := f.Stat()
+	if err != nil {
+		return err
+	}
+	named, err := names(f.Name(), held)
+	if !named {
+		return err
+	}
+	return os.Remove(f.Name())
 }
 
 func destinationKey(path string) (string, error) {
