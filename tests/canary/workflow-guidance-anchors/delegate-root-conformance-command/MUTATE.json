@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-delegate/references/delegation-discipline.md",
+    "old": "The root conformance pass is `bench test --check root-conformance`.",
+    "new": "The root conformance pass is `bench test --package ./internal/conformance`."
+  }
+]
