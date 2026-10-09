@@ -39,6 +39,7 @@ Harder chunks: ALC-LINK, ALC-UNLINK
 Author line: gpt-6.1-sol / high / one draft and at most two independent-review repair rounds
 Routing source: `projects/benchkit.md`, Lines, and `.bench/lines.env` bind the Codex mid tier to gpt-5.6-sol
 Routing disposition: proposed implementation line only. The user-selected author line remains gpt-6.1-sol/high
+Claude Code run line: opus / high, the Claude mid binding of the same tier, with opus / medium review axes and opus / high consultations by reviewer direction on 2026-10-09
 
 ### Complete decision
 
@@ -96,8 +97,8 @@ Routing disposition: proposed implementation line only. The user-selected author
 
 ### Source pins and factual questions
 
-Source tip: a382f4848d432815968f044820fad593e856e297
-Read date: 2026-10-06
+Source tip: aabd462d52349b00cfb3d66f67a6dd24891468d2
+Read date: 2026-10-09
 Invalidation trigger: any change to the named lifecycle owner, caller, observation helper, or pinned test before implementation
 Evidence status: source verified. Runnable compatibility evidence remains planned
 
@@ -117,8 +118,8 @@ The following source pins answer the code questions.
 | Link and repair classify desired entries | `internal/adopt/link_transaction.go:97` |
 | Link and repair reconcile dropped rows | `internal/adopt/link_transaction.go:190` |
 | Unlink classifies manifest rows | `internal/adopt/unlink.go:117` |
-| Upgrade uses synthetic non-file fingerprints | `internal/adopt/upgrade.go:127` |
-| Upgrade applies through the link transaction | `internal/adopt/upgrade.go:78` |
+| Upgrade uses synthetic non-file fingerprints | `internal/adopt/upgrade.go:139` |
+| Upgrade applies through the link transaction | `internal/adopt/upgrade.go:86` |
 | Compatibility repair shares the transaction | `internal/adopt/compatibility.go:264` |
 | Fingerprints omit regular-file permissions | `internal/adopt/manifest.go:107` |
 | Convergence compares permissions separately | `internal/adopt/link_stage.go:202` |
@@ -301,12 +302,12 @@ No schema, public verb, public flag, manifest format, or rendered report changes
 
 | reader or writer | direct helpers that read its lifecycle facts | disposition |
 |---|---|---|
-| `upgradePlanCounts` in `internal/adopt/upgrade.go:121` | `Manifest.Rows`, `Manifest.Hash`, `fingerprintPath`, `PlanLifecycle` | ALC31, legacy input projection |
+| `upgradePlanCounts` in `internal/adopt/upgrade.go:129` | `Manifest.Rows`, `Manifest.Hash`, `fingerprintPath`, `PlanLifecycle` | ALC31, legacy input projection |
 | `transactionalRepair` in `internal/adopt/link_transaction.go:30` | `ReadManifest`, `stagePlanEntry`, `hasSymlinkParent`, `convergedFingerprint`, `sameAdapterTarget`, `ownedUnmodified`, `reclaimableClaude` | ALC06–ALC25, exact observation and decision consumption |
 | `planUnlink` in `internal/adopt/unlink.go:98` | `resolveInside`, `hasSymlinkParent`, `fingerprintPath`, `stripAgentsForUnlink`, `removeManagedHook`, `sweepEmptyDirs` | ALC26–ALC30, exact observation and decision consumption |
 | `Link` in `internal/adopt/link.go:28` | `buildLinkPlan`, `transactionalLink` | ALC35, unchanged command entry |
 | `convergeSetup` in `internal/adopt/setup.go:304` | `buildLinkPlan`, seed producers, `transactionalLink`, `finishSetup` | ALC14, ALC15, ALC33, ALC35 |
-| `Upgrade` in `internal/adopt/upgrade.go:27` | `pinnedManifest`, `buildLinkPlan`, `compareKitVersions`, `upgradePlanCounts`, `prePushRefreshEligible`, `transactionalLink` | ALC31, ALC32, ALC35 |
+| `Upgrade` in `internal/adopt/upgrade.go:34` | `pinnedManifest`, `buildLinkPlan`, `compareKitVersions`, `upgradePlanCounts`, `prePushRefreshEligible`, `transactionalLink` | ALC31, ALC32, ALC35 |
 | `Unlink` in `internal/adopt/unlink.go:26` | `ReadManifest`, `planUnlink`, `writeUnlinkReport` | ALC26–ALC30, ALC35 |
 | `mutateCompatibility` in `internal/adopt/compatibility.go:224` | `buildLinkPlan`, `transactionalRepair`, `transaction.Store.Undo` | ALC25, indirect caller protection |
 | `promoteWithLease` in `internal/adopt/transaction.go:76` | `observedChange`, `transaction.Publish`, `transaction.Store.Apply` | ALC34, unchanged publisher |
@@ -585,7 +586,7 @@ ALC32 drives real Upgrade for equal, newer, older, forced older, absent manifest
 The producer precision correction follows the accepted review without changing count expectations or scope.
 Upgrade calls buildLinkPlan, whose entries are file, inline, and adapter.
 Only confirmed Setup adds inline-exec and seed entries.
-The source pins are internal/adopt/upgrade.go:51, internal/adopt/link.go:98–139, and internal/adopt/setup.go:310–313.
+The source pins are internal/adopt/upgrade.go:59, internal/adopt/link.go:98–139, and internal/adopt/setup.go:310–313.
 Independent ticket Spec and Coverage review accepted this correction and retained the real Upgrade consumer proof.
 
 ALC34 records baseline results for source disappearance, stage failure, report failure, promotion failure, and final manifest failure.
@@ -647,7 +648,19 @@ Review records bind three independent axes to each frozen chunk pair.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft217-build-20261009",
+    "orchestrator_session": "claude:ft217-orchestrator-20261009",
+    "author_limit": 1,
+    "assignments": {
+      "01-expose-complete-decisions-through-upgrade-preview.md": [],
+      "02-consume-decisions-for-desired-link-assets.md": [],
+      "03-consume-decisions-for-dropped-and-bespoke-link-assets.md": [],
+      "04-consume-unlink-decisions-and-close-entry-proof.md": []
+    }
+  },
   "chunks": [
     {
       "id": "ALC-OWNER",
@@ -657,12 +670,29 @@ Review records bind three independent axes to each frozen chunk pair.
       "verification": [
         {
           "id": "decision-preview",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
           "command": "bench test --package ./internal/adopt --run 'Test(PlanLifecycleFromImmutableInventories|CompleteLifecycleDecisions|LifecycleDecisionOrder|LifecycleUpgradePreviewCompatibility|LifecycleUpgradeVersionGuards)'"
         },
         {
+          "id": "owner-floor-conformance",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "owner-floor-adopt",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
+          "command": "bench test --package ./internal/adopt"
+        },
+        {
+          "id": "owner-floor-cmd",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
           "id": "owner-preview-probes",
+          "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
           "command": "bench probe internal/adopt/decision.go --omit <preserve-row-source> --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
-          "probe": "Preserve-row omission, owner-order omission, and real Upgrade synthetic-to-exact preview swap must bite and restore."
+          "probe": "Preserve-row omission, owner-order omission, and real Upgrade synthetic-to-exact preview swap must bite and restore. The ticket commit replaces the placeholder with the exact omitted source text."
         }
       ]
     },
@@ -675,16 +705,55 @@ Review records bind three independent axes to each frozen chunk pair.
       "verification": [
         {
           "id": "desired-consumption",
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
           "command": "bench test --package ./internal/adopt --run 'Test(LifecycleLinkPartitions|LifecycleSeedOwnership|LifecycleHardRefusalOrder|LifecycleRepairCompatibility|LifecycleSetupCancellation|TransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent|SetupSeedsGateInputs)'"
         },
         {
-          "id": "dropped-bespoke",
-          "command": "bench test --package ./internal/adopt --run 'Test(LifecycleDroppedRows|LifecycleClaudeOwnership|LifecycleSpecialInstructionFiles|LifecycleHookCompatibility|LifecycleOwnerConsumption)'"
+          "id": "desired-floor-conformance",
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "desired-floor-adopt",
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
+          "command": "bench test --package ./internal/adopt"
+        },
+        {
+          "id": "desired-floor-cmd",
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
+          "command": "bench test --package ./cmd/bench"
         },
         {
           "id": "link-probes",
+          "ticket": "02-consume-decisions-for-desired-link-assets.md",
           "command": "bench probe internal/adopt/link_transaction.go --omit <early-parent-return-source> --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$'",
-          "probe": "Early competing-refusal omission, selected desired/dropped/bespoke effects, mode facts, seeds, and strict repair witnesses must bite and restore."
+          "probe": "Early competing-refusal omission, selected desired effects, mode facts, seeds, and strict repair witnesses must bite and restore. The ticket commit replaces the placeholder with the exact omitted source text."
+        },
+        {
+          "id": "dropped-bespoke",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench test --package ./internal/adopt --run 'Test(LifecycleDroppedRows|LifecycleClaudeOwnership|LifecycleSpecialInstructionFiles|LifecycleHookCompatibility|LifecycleOwnerConsumption)'"
+        },
+        {
+          "id": "dropped-floor-conformance",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "dropped-floor-adopt",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench test --package ./internal/adopt"
+        },
+        {
+          "id": "dropped-floor-cmd",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "dropped-probes",
+          "ticket": "03-consume-decisions-for-dropped-and-bespoke-link-assets.md",
+          "command": "bench probe internal/adopt/decision.go --omit <clean-withdrawal-remove-source> --package ./internal/adopt --run '^TestLifecycleDroppedRows$'",
+          "probe": "Clean-remove omission, modified-withdrawal effect swap, absent-row manifest-retain swap, and selected CLAUDE replacement omission must bite and restore. The ticket commit replaces the placeholder with the exact omitted source text."
         }
       ]
     },
@@ -696,16 +765,29 @@ Review records bind three independent axes to each frozen chunk pair.
       "verification": [
         {
           "id": "aggregate-adopt",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
           "command": "bench test --package ./internal/adopt"
         },
         {
           "id": "aggregate-system",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
           "command": "bench test --check system"
         },
         {
+          "id": "unlink-floor-conformance",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "unlink-floor-cmd",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
           "id": "unlink-entry-recovery-probes",
+          "ticket": "04-consume-unlink-decisions-and-close-entry-proof.md",
           "command": "bench probe internal/adopt/unlink.go --omit <residual-manifest-guard-source> --package ./internal/adopt --run '^TestLifecycleUnlinkRefusals$'",
-          "probe": "Selected effects at all applying entries, unlink residual and dry-run guards, and the existing deterministic restore omission must bite and restore."
+          "probe": "Selected effects at all applying entries, unlink residual and dry-run guards, and the existing deterministic restore omission must bite and restore. The ticket commit replaces the placeholder with the exact omitted source text."
         }
       ]
     }
