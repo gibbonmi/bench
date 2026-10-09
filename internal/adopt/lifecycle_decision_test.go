@@ -70,6 +70,7 @@ func linkObservations() []LifecycleObservation {
 			Staged: "new", StagedKind: "regular", StagedPerm: 0o644, Strict: true},
 		{Path: "strict-link-staged", PlanKind: "adapter", Present: true, FileKind: "regular", Perm: 0o644, Recorded: "old", Observed: "old",
 			Staged: "link", StagedKind: "symlink", StagedPerm: 0o777, Strict: true},
+		{Path: "dropped-symlink", Present: true, FileKind: "symlink", Recorded: "h", Observed: "h"},
 	}
 	for i := range observations {
 		observations[i].Order = i
@@ -115,6 +116,7 @@ func TestCompleteLifecycleDecisions(t *testing.T) {
 				decision("dropped-absent", "preserve", "absent", "omit", "", 13),
 				decision("dropped-clean", "remove", "", "omit", "", 11),
 				decision("dropped-modified", "preserve", "kept-modified-removed", "retain", "h", 12),
+				decision("dropped-symlink", "remove", "", "omit", "", 23),
 				decision("mode", "change", "", "record", "same", 4),
 				decision("modified", "preserve", "modified-managed", "retain", "old", 7),
 				decision("seed-absent", "add", "", "omit", "", 9),
@@ -126,8 +128,8 @@ func TestCompleteLifecycleDecisions(t *testing.T) {
 				decision("symlink-mode", "preserve", "converged", "record", "same", 19),
 			},
 			Operations: []Operation{{"add", "absent"}, {"add", "claude-absent"}, {"change", "claude-known"}, {"change", "clean-old"},
-				{"remove", "dropped-clean"}, {"change", "mode"}, {"add", "seed-absent"}, {"change", "strict-link-dest"},
-				{"change", "strict-link-staged"}},
+				{"remove", "dropped-clean"}, {"remove", "dropped-symlink"}, {"change", "mode"}, {"add", "seed-absent"},
+				{"change", "strict-link-dest"}, {"change", "strict-link-staged"}},
 		}
 		requirePlan(t, got, want)
 	})
