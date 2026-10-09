@@ -256,11 +256,13 @@ target operand.
 Before the mutation, the verb runs the same selection once over the unmutated
 tree. A baseline that does not pass ends the probe before any write. The verdict
 is then `invalid`, the cause is `baseline-` with the baseline kind, and the
-`restored` cell reads `untouched`. A
-`selection[1]{form,target,run,baseline,ran}` row follows the verdict row. Its
+`restored` cell reads `untouched`.
+
+A `selection[1]{form,target,run,baseline,ran}` row follows the verdict row. Its
 cells name the form, the target, the `-run` pattern, the baseline outcome, and
-the count of the tests that ran. The help names the `--package` and `--check`
-forms in a `notes:` block.
+the count of the tests that ran. A `probe_execution` row follows with the result
+schema, the command exit, the mutated-run exit or `null`, and the byte count after it.
+The help names the `--package` and `--check` forms in a `notes:` block.
 
 `bench gate-prose <root> --staged` grades the staged Markdown from the index and
 takes no path list. The subject bytes and the exclusion policy come from the
@@ -404,6 +406,8 @@ with their tickets and verification requirements, and the final verification.
 Before the first dispatch, the plan amendment makes the authored version 1 fence a version 2 plan.
 
 The `bench-review-record` fence in `reviews/<slug>.md` holds the evidence the checkpoint grades.
+When the record lacks an entry that one `bench record` form writes, the checkpoint refusal routes to the help of that form.
+Each other evidence refusal routes to `bench preflight review <slug>`.
 Checkpoint purpose and record bytes participate in the existing gate verdict identity.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.
 

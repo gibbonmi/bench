@@ -19,18 +19,13 @@ import (
 // or a duplicate fence is an error, because a replacement would leave a fence
 // that the reader refuses.
 func Render(document []byte, record Record) ([]byte, error) {
-	var payload bytes.Buffer
-	encoder := json.NewEncoder(&payload)
-	// A reader reads "&", "<", and ">" in an excerpt as written. The encoder
-	// still escapes every control byte, so each payload line stays one line.
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(record); err != nil {
+	data, err := payload(record, "  ")
+	if err != nil {
 		return nil, err
 	}
 	span, err := locate(document, recordFence)
 	if err == nil {
-		return bytes.Join([][]byte{document[:span.start], payload.Bytes(), document[span.end:]}, nil), nil
+		return span.splice(document, data), nil
 	}
 	if !errors.Is(err, ErrMissing) {
 		return nil, err
@@ -42,17 +37,34 @@ func Render(document []byte, record Record) ([]byte, error) {
 			head += "\n"
 		}
 	}
-	return []byte(head + "\n" + fenceMarker + recordFence + "\n" + payload.String() + fenceMarker + "\n"), nil
+	return []byte(head + "\n" + fenceMarker + recordFence + "\n" + string(data) + fenceMarker + "\n"), nil
+}
+
+// payload encodes value as fence payload lines, each indented by indent.
+func payload(value any, indent string) ([]byte, error) {
+	var data bytes.Buffer
+	encoder := json.NewEncoder(&data)
+	// A reader reads "&", "<", and ">" in an excerpt as written. The encoder
+	// still escapes every control byte, so each payload line stays one line.
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", indent)
+	err := encoder.Encode(value)
+	return data.Bytes(), err
+}
+
+// splice returns document with the payload lines of span replaced by data.
+func (s fenceSpan) splice(document, data []byte) []byte {
+	return bytes.Join([][]byte{document[:s.start], data, document[s.end:]}, nil)
 }
 
 // write is the one write transaction on the record of spec under root. It reads the
 // record through the reader, applies change, renders the document, and grades the
 // rendered bytes as the reader grades a file: the bounded classification, then the
 // parse. Only then does it replace the file through a temporary file in
-// the same directory. A nil create refuses an absent record; otherwise create supplies
-// the record that an absent file starts from. A refusal at any step leaves the record
-// bytes unchanged and leaves no temporary file.
-func write(root, spec string, create func() (Record, error), change func(*Record) error) error {
+// the same directory. For an absent file at path, create supplies the record that the
+// file starts from or refuses it. A refusal at any step leaves the record bytes unchanged
+// and leaves no temporary file.
+func write(root, spec string, create func(path string) (Record, error), change func(*Record) error) error {
 	path, err := RecordPath(spec)
 	if err != nil {
 		return err
@@ -60,10 +72,8 @@ func write(root, spec string, create func() (Record, error), change func(*Record
 	data, err := readFile(root, path)
 	var record Record
 	switch {
-	case errors.Is(err, ErrMissing) && create != nil:
-		record, err = create()
 	case errors.Is(err, ErrMissing):
-		err = fmt.Errorf("%s holds no record: %w", path, ErrNoChunkEntry)
+		record, err = create(path)
 	case err == nil:
 		record, err = parseRecord(data, spec)
 	}
@@ -84,6 +94,14 @@ func write(root, spec string, create func() (Record, error), change func(*Record
 		return err
 	}
 	return replace(filepath.Join(root, filepath.FromSlash(path)), rendered)
+}
+
+// absent refuses an absent record at path. The chunk form writes its first entry, for
+// chunk when the caller names one.
+func absent(chunk string) func(path string) (Record, error) {
+	return func(path string) (Record, error) {
+		return Record{}, Repair{Form: FormChunk, Chunk: chunk, Err: fmt.Errorf("%s holds no record: %w", path, ErrNoChunkEntry)}
+	}
 }
 
 // replace writes data to a temporary file beside path and renames it over path, so a
@@ -120,15 +138,16 @@ func replace(path string, data []byte) error {
 // RecordChunk writes the entry of planned chunk id for the frozen pair base..tip, both
 // full commit IDs. The tip tree supplies the source digest, the plan digest, and the
 // acceptance rows. A recorded chunk keeps its results, and a new chunk follows the
-// recorded chunks. Only a version 2 plan starts a new record. The answer is the action,
-// created, added, or updated, and the entry as written.
+// recorded chunks. Only a version 2 plan starts a new record, and an existing record
+// whose plan digest differs from the plan at tip needs its amendment first. The answer
+// is the action, created, added, or updated, and the entry as written.
 func RecordChunk(root, spec, id, base, tip string) (string, Chunk, error) {
 	digest, plan, err := atSource(root, spec, tip)
 	if err != nil {
 		return "", Chunk{}, err
 	}
 	action, entry := "", Chunk{}
-	create := func() (Record, error) {
+	create := func(string) (Record, error) {
 		if plan.Version != 2 {
 			return Record{}, fmt.Errorf("a new record needs a version 2 completion plan, and the plan at %s has version %d", tip, plan.Version)
 		}
@@ -136,6 +155,9 @@ func RecordChunk(root, spec, id, base, tip string) (string, Chunk, error) {
 		return Record{Version: 2, Spec: spec, PlanDigest: plan.Digest, Completion: Completion{State: "pending", Reconciliation: map[string]string{}, Verification: []Verification{}}}, nil
 	}
 	err = write(root, spec, create, func(record *Record) error {
+		if err := currentPlan(*record, plan, tip); err != nil {
+			return err
+		}
 		planned := findChunk(plan, id)
 		if planned == nil {
 			return fmt.Errorf("chunk %s is not a chunk of the plan at %s", id, tip)
@@ -187,7 +209,7 @@ type VerificationCall struct {
 // result must name the source of its chunk entry. The answer is the entry as written.
 func RecordVerification(root, spec string, call VerificationCall) (Verification, error) {
 	var entry Verification
-	err := write(root, spec, nil, func(record *Record) error {
+	err := write(root, spec, absent(call.Chunk), func(record *Record) error {
 		list, source := &record.Completion.Verification, call.Source
 		var chunk *Chunk
 		var err error
@@ -205,7 +227,7 @@ func RecordVerification(root, spec string, call VerificationCall) (Verification,
 			return err
 		}
 		if chunk != nil && digest != chunk.SourceDigest {
-			return fmt.Errorf("source %s differs from the source of chunk %s: %w", source, chunk.ID, ErrNoChunkEntry)
+			return Repair{Form: FormChunk, Chunk: chunk.ID, Err: fmt.Errorf("source %s differs from the source of chunk %s: %w", source, chunk.ID, ErrNoChunkEntry)}
 		}
 		requirements := plan.FinalVerification
 		if chunk != nil {
@@ -264,7 +286,7 @@ func entryOf(record *Record, id string) (*Chunk, error) {
 			return &record.Chunks[i], nil
 		}
 	}
-	return nil, fmt.Errorf("chunk %s has no entry: %w", id, ErrNoChunkEntry)
+	return nil, Repair{Form: FormChunk, Chunk: id, Err: fmt.Errorf("chunk %s has no entry: %w", id, ErrNoChunkEntry)}
 }
 
 // ReviewCall is the caller's part of one completed independent review result. Chunk
@@ -283,7 +305,7 @@ type ReviewCall struct {
 // entry as written.
 func RecordReview(root, spec string, call ReviewCall) (Review, error) {
 	var entry Review
-	err := write(root, spec, nil, func(record *Record) error {
+	err := write(root, spec, absent(call.Chunk), func(record *Record) error {
 		chunk, err := entryOf(record, call.Chunk)
 		if err != nil {
 			return err

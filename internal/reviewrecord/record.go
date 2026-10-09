@@ -88,6 +88,11 @@ func CheckReviews(chunk Chunk, excluded []string, distinct bool) error {
 }
 
 func checkReviews(chunk Chunk, excluded []string, reviewerCount int) error {
+	// Each refusal below repairs through the review form: the chunk lacks a current
+	// independent result of the named axis, or of the axis set.
+	refused := func(axis string, err error) error {
+		return Repair{Form: FormReview, Chunk: chunk.ID, Axis: axis, Err: err}
+	}
 	axisOwners := map[string]string{}
 	for _, axis := range Axes() {
 		var current *Review
@@ -97,24 +102,24 @@ func checkReviews(chunk Chunk, excluded []string, reviewerCount int) error {
 			}
 		}
 		if current == nil {
-			return fmt.Errorf("chunk %s: missing %s; record the native review result", chunk.ID, axis)
+			return refused(axis, fmt.Errorf("chunk %s: missing %s; record the native review result", chunk.ID, axis))
 		}
 		if current.Role != "independent-review" || slices.Contains(excluded, current.Performer) || current.Performer == "" {
-			return fmt.Errorf("chunk %s: invalid %s performer or role; obtain independent review", chunk.ID, axis)
+			return refused(axis, fmt.Errorf("chunk %s: invalid %s performer or role; obtain independent review", chunk.ID, axis))
 		}
 		axisOwners[current.Performer] = axis
 		if current.State != "completed" || current.Outcome != "pass" || len(current.FindingIDs) != 0 {
-			return fmt.Errorf("chunk %s: %s %s; resolve findings and obtain a completed result", chunk.ID, current.State, axis)
+			return refused(axis, fmt.Errorf("chunk %s: %s %s; resolve findings and obtain a completed result", chunk.ID, current.State, axis))
 		}
 		if current.SourceDigest != chunk.SourceDigest || current.Base != chunk.Base || current.Tip != chunk.Tip {
-			return fmt.Errorf("chunk %s: stale %s; review the current frozen pair", chunk.ID, axis)
+			return refused(axis, fmt.Errorf("chunk %s: stale %s; review the current frozen pair", chunk.ID, axis))
 		}
 	}
 	if reviewerCount == 3 && len(axisOwners) != 3 {
-		return fmt.Errorf("chunk %s: use three distinct review sessions", chunk.ID)
+		return refused("", fmt.Errorf("chunk %s: use three distinct review sessions", chunk.ID))
 	}
 	if reviewerCount == 1 && len(axisOwners) != 1 {
-		return fmt.Errorf("chunk %s: unified review requires one reviewer for all three axes", chunk.ID)
+		return refused("", fmt.Errorf("chunk %s: unified review requires one reviewer for all three axes", chunk.ID))
 	}
 	return nil
 }

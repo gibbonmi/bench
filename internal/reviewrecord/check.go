@@ -23,12 +23,23 @@ func CheckTrees(root, sourceTree, evidenceTree, tip, spec, chunk string, complet
 // checkVerification grades retained occurrences against one requirement
 // inventory. The plan resolves each obligation's owed performer and role, so a
 // version 1 record keeps its one implementation session and a version 2 record
-// reads each obligation's owner from its own frozen plan.
-func checkVerification(items []Verification, requirements []Requirement, plan Plan, record Record, source, scope string, final bool) error {
+// reads each obligation's owner from its own frozen plan. at holds the chunk ID of
+// a chunk inventory, or no chunk and the requested source of the final inventory;
+// each refusal repairs through the verification form there.
+func checkVerification(items []Verification, requirements []Requirement, plan Plan, record Record, source string, at Repair) error {
+	scope := "completion"
+	if at.Chunk != "" {
+		scope = "chunk " + at.Chunk
+	}
 	for _, requirement := range requirements {
-		performer, role, err := verifier(plan, record, requirement, final)
+		performer, role, err := verifier(plan, record, requirement, at.Chunk == "")
 		if err != nil {
 			return fmt.Errorf("%s: %w", scope, err)
+		}
+		refused := func(format string, args ...any) error {
+			repair := at
+			repair.Form, repair.Requirement, repair.Err = FormVerification, requirement.ID, fmt.Errorf("%s: "+format, append([]any{scope}, args...)...)
+			return repair
 		}
 		var current *Verification
 		for i := range items {
@@ -37,36 +48,38 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 			}
 		}
 		if current == nil {
-			return fmt.Errorf("%s: missing verification %s; execute and retain %s", scope, requirement.ID, requirement.Command)
+			return refused("missing verification %s; execute and retain %s", requirement.ID, requirement.Command)
 		}
 		if current.Role != role || current.Performer != performer || current.SourceDigest != source || current.Command != requirement.Command || current.State != "completed" || current.Outcome != "pass" || current.ExitCode == nil || *current.ExitCode != 0 {
-			return fmt.Errorf("%s: verification %s is incomplete, failed, or stale; execute and retain %s", scope, requirement.ID, requirement.Command)
+			return refused("verification %s is incomplete, failed, or stale; execute and retain %s", requirement.ID, requirement.Command)
 		}
 		if requirement.Probe != "" {
 			probe := current.Probe
 			if probe == nil || probe.Mutation != requirement.Probe || probe.Outcome != "bit" || probe.ExitCode == 0 {
-				return fmt.Errorf("%s: verification %s requires a successful diagnostic probe %s; run and retain it", scope, requirement.ID, requirement.Probe)
+				return refused("verification %s requires a successful diagnostic probe %s; run and retain it", requirement.ID, requirement.Probe)
 			}
 			if probe.Restore != "pass" {
-				return fmt.Errorf("%s: verification %s probe restore failed; restore and verify the source", scope, requirement.ID)
+				return refused("verification %s probe restore failed; restore and verify the source", requirement.ID)
 			}
 		}
 	}
 	return nil
 }
 
-func checkCompletion(record Record, plan Plan, source string) error {
+// checkCompletion grades the completion entry and the final verification against the
+// current plan at source, the digest of tip.
+func checkCompletion(record Record, plan Plan, source, tip string) error {
 	completion := record.Completion
 	reconciler := completionReconciler(record, plan)
 	if completion.State != "completed" || completion.SourceDigest != source || completion.Performer != reconciler {
-		return errors.New("completion is incomplete or stale; execute final verification and reconcile acceptance")
+		return Repair{Form: FormCompletion, Source: tip, Err: errors.New("completion is incomplete or stale; execute final verification and reconcile acceptance")}
 	}
 	for _, chunk := range plan.Chunks {
 		for _, row := range chunk.Rows {
 			if completion.Reconciliation[row] != "covered" {
-				return fmt.Errorf("completion: missing acceptance reconciliation %s; reconcile every planned row", row)
+				return Repair{Form: FormCompletion, Source: tip, Err: fmt.Errorf("completion: missing acceptance reconciliation %s; reconcile every planned row", row)}
 			}
 		}
 	}
-	return checkVerification(completion.Verification, plan.FinalVerification, plan, record, source, "completion", true)
+	return checkVerification(completion.Verification, plan.FinalVerification, plan, record, source, Repair{Source: tip})
 }

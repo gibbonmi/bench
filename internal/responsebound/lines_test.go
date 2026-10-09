@@ -1,6 +1,7 @@
 package responsebound
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -37,4 +38,44 @@ func TestOwnerSplitsOneWriteIntoLines(t *testing.T) {
 	writes := append(stdoutLines(numbered(1, 2)...), tagged{data: strings.Join(numbered(3, 12), "")}, tagged{data: "line 13\n"})
 	output := joined(writes)
 	assertProjection(t, home, respond(t, writes), output, "lines=13,bytes=104,omitted_lines=4", numbered(1, 4), numbered(9, 13))
+}
+
+// The reserved frames are authored apart from Finish, in the shapes that the spec and the
+// owner tests above fix. A reader that misses a frame, or accepts a frame that does not
+// close, reds a row here.
+func TestProjectionLineClassifiesReservedFrames(t *testing.T) {
+	for _, row := range []struct {
+		line    string
+		want    Projection
+		framed  bool
+		refused bool
+	}{
+		{"probe[1]{verdict}:\n", Projection{}, false, false},
+		{"  spilled{path=/x}\n", Projection{}, false, false},
+		{"spilled{lines=12,bytes=96,omitted_lines=3,cut_lines=0,path=/h/a,b.out}\n", Projection{Spilled, "/h/a,b.out"}, true, false},
+		{"spill-failed{path=/h/c.out,written_bytes=100,reason=no space}\n", Projection{SpillFailed, "/h/c.out"}, true, false},
+		{"spill-failed{reason=mkdir home: not a directory}", Projection{SpillFailed, ""}, true, false},
+		{"spilled{lines=12,bytes=96,path=/h/a.out\n", Projection{Kind: Spilled}, true, true},
+		{"spilled{lines=12,bytes=96}\n", Projection{Kind: Spilled}, true, true},
+		{"spill-failed{path=/h/c.out}\n", Projection{Kind: SpillFailed, Path: "/h/c.out"}, true, true},
+		{"spill-failed{}\n", Projection{Kind: SpillFailed}, true, true},
+	} {
+		got, framed, err := ProjectionLine(row.line)
+		if got != row.want || framed != row.framed || (err != nil) != row.refused {
+			t.Errorf("ProjectionLine(%q) = (%+v, %v, %v), want (%+v, %v, refused=%v)", row.line, got, framed, err, row.want, row.framed, row.refused)
+		}
+	}
+}
+
+// RequireComplete refuses a frame on any physical line, and a complete output passes.
+func TestRequireCompleteRefusesEveryFrame(t *testing.T) {
+	complete := "probe[1]{verdict}:\n  bit\n"
+	if err := RequireComplete([]byte(complete)); err != nil {
+		t.Fatalf("complete output = %v, want nil", err)
+	}
+	for _, frame := range []string{"spilled{lines=1,bytes=1,omitted_lines=0,cut_lines=0,path=/p}\n", "spill-failed{reason=r}\n", "spilled{\n"} {
+		if err := RequireComplete([]byte(complete + frame + "tail\n")); !errors.Is(err, ErrIncomplete) {
+			t.Errorf("output with %q = %v, want ErrIncomplete", frame, err)
+		}
+	}
 }

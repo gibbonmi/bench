@@ -21,6 +21,7 @@ import (
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -171,8 +172,8 @@ func runGateRouteStep(t *testing.T, set gateSet, step string) int {
 	t.Chdir(set.f.Root)
 	var stdout, stderr bytes.Buffer
 	code := 0
-	switch strings.Join(words[:min(3, len(words))], " ") {
-	case "bench gate --in", "bench commit --in":
+	switch key := strings.Join(words[:min(3, len(words))], " "); {
+	case key == "bench gate --in" || key == "bench commit --in":
 		if words[3] != set.label {
 			t.Fatalf("printed step %q names the worktree %q, want the fixture's assignment %q", step, words[3], set.label)
 		}
@@ -181,11 +182,15 @@ func runGateRouteStep(t *testing.T, set gateSet, step string) int {
 		} else {
 			_, code = commit.Run(words[4:], &stdout, &stderr)
 		}
-	case "bench preflight review":
+	case strings.HasPrefix(key, "bench record "):
+		var out string
+		out, code = recordcmd.Command(set.f.Root, words[2:])
+		stdout.WriteString(out)
+	case key == "bench preflight review":
 		var out string
 		out, code = preflight.Command(words[2:])
 		stdout.WriteString(out)
-	case "bench doctor":
+	case key == "bench doctor":
 		code = adopt.Doctor(words[2:], io.Discard, io.Discard, "fixture")
 	default:
 		t.Fatalf("printed step %q runs no verb that a checkpoint route names", step)
@@ -213,6 +218,7 @@ func gateFaceFixtures() []gateFaceFixture {
 	record, _ := rr.RecordPath(recordtest.Spec)
 	return []gateFaceFixture{
 		evidenceFixture(record),
+		repairFixture(record),
 		dirtyFixture(record),
 		{
 			// The spec drops its staged status, which only the reviewer restores.
@@ -291,6 +297,26 @@ func evidenceFixture(record string) gateFaceFixture {
 				t.Fatal(err)
 			}
 			return gateSet{f: &recordtest.Fixture{T: t, Root: root}}
+		},
+		after: func(_ *testing.T, set gateSet) { set.f.Write(record, string(saved)) },
+	}
+}
+
+// repairFixture is the record-repair fixture: the chunk lacks its Coverage review, which
+// the review form writes. The route prints that form's grammar, and the operator retains
+// the review.
+func repairFixture(record string) gateFaceFixture {
+	var saved []byte
+	return gateFaceFixture{
+		face:     "checkpoint-record-repair",
+		args:     chunkArgs,
+		contains: "bench record 'review' --help",
+		build: func(t *testing.T) gateSet {
+			set := assigned(t, "gate-record", false)
+			saved = readFile(t, set.f.Root, record)
+			set.f.Record.Chunks[0].Reviews = set.f.Record.Chunks[0].Reviews[:2]
+			set.f.Save()
+			return set
 		},
 		after: func(_ *testing.T, set gateSet) { set.f.Write(record, string(saved)) },
 	}
