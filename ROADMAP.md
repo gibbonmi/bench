@@ -50,8 +50,6 @@ and review cost that recent builds paid.
 
 **FT387 (MEDIUM) — a verified harness path preserves complete tool output before it returns a bounded replacement.**
 
-**FT388 (LOW) — the session-context-efficiency coordinator closes when its overflow child lands.**
-
 ## Quality survey (2026-09-29)
 
 The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure. Its
@@ -85,6 +83,8 @@ and the small cuts. The rows below hold the rest.
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
 **FT344 (MEDIUM) — every rebuild remedy for a pool worktree names `bench worktree build` from one owner.**
+
+**FT406 (MEDIUM, decision required) — a Go commit in a build worktree leaves no stale `dist/bench` for the next preflight.**
 
 **FT354 (MEDIUM) — strict JSON, atomic replace, and shell quoting each have one owner.**
 
@@ -121,6 +121,8 @@ and the small cuts. The rows below hold the rest.
 **FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
 
 **FT318 (MEDIUM) — a `bench record` refusal names its repair form, and the completion form records a capability-blocked row's decided value.**
+
+**FT405 (MEDIUM, decision required) — one `bench record ticket` verb lets a ticket author amend, freeze, and record its chunk in one call.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -231,7 +233,7 @@ qualification requirements are met.
 
 **FT347 (EXPERIMENT, parked until 2026-11-03) — return to the Jev skill-relevance research.**
 
-**FT6 (LOW, parked pending evidence — leave parked):**
+**FT6 (LOW, parked pending evidence — leave parked) — the parked query verbs return only on demonstrated session cost.**
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.**
 
@@ -300,7 +302,6 @@ recommended table is sequencing advice.
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305 | Adoption follows durable execution. |
-| FT388 | FT387 | The coordinator closes after its last child lands. |
 
 ### Recommended
 
