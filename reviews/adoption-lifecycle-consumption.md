@@ -1450,9 +1450,9 @@
     {
       "id": "ALC-UNLINK",
       "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
-      "tip": "f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63",
+      "tip": "d656f94ad08e91fa085a528e9b9adf0b82b04f6f",
       "plan_digest": "sha256:89fdb62639aa969c1b5146c9edcd6ccad2d87d3012be39913ae16ba73e6050f1",
-      "source_digest": "b8b9fbd4b9b0befbb19b4c78d44b27be9d3f3f57",
+      "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
       "acceptance_rows": [
         "ALC01",
         "ALC20",
@@ -1850,6 +1850,107 @@
           "model": "opus",
           "effort": "high",
           "source_digest": "b8b9fbd4b9b0befbb19b4c78d44b27be9d3f3f57",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4_repair2/unlink-entry-recovery-probes.txt",
+            "digest": "sha256:c30c7fec6cbba549095d73ba8ed7f54f8a0ffc0601a78280a780b4624e1816b1",
+            "excerpt": "command: bench worktree exec ft217-build -- bench probe internal/adopt/unlink.go --omit 'p.manifestKept = true' --package ./internal/adopt --run '^TestLifecycleUnlinkRefusals$'\nsource: repair commit f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63; run on the working tree that this commit records unchanged (base 4bd52e65 plus the four test files), after bench worktree build\nplaceholder: the plan's <residual-manifest-guard-source> resolves to the owner-decision write `p.manifestKept = true` in unlinkPlan.decide, as in repair 1\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/unlink.go,omit,failed,7,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleUnlinkRefusals$,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1181\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,12581,8\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/AGENTS.md_malformed_block,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/AGENTS.md_special_file,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/directory,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/escape,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/modified,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",152\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/special_file,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/symlink_parent,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "unlink-entry-recovery-probes",
+          "command": "bench probe internal/adopt/unlink.go --omit <residual-manifest-guard-source> --package ./internal/adopt --run '^TestLifecycleUnlinkRefusals$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Selected effects at all applying entries, unlink residual and dry-run guards, and the existing deterministic restore omission must bite and restore. The ticket commit replaces the placeholder with the exact omitted source text.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft217_t4_repair2/unlink-entry-recovery-probes.txt",
+              "digest": "sha256:c30c7fec6cbba549095d73ba8ed7f54f8a0ffc0601a78280a780b4624e1816b1",
+              "excerpt": "command: bench worktree exec ft217-build -- bench probe internal/adopt/unlink.go --omit 'p.manifestKept = true' --package ./internal/adopt --run '^TestLifecycleUnlinkRefusals$'\nsource: repair commit f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63; run on the working tree that this commit records unchanged (base 4bd52e65 plus the four test files), after bench worktree build\nplaceholder: the plan's <residual-manifest-guard-source> resolves to the owner-decision write `p.manifestKept = true` in unlinkPlan.decide, as in repair 1\nexit: 0\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/unlink.go,omit,failed,7,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleUnlinkRefusals$,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,1181\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,12581,8\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/AGENTS.md_malformed_block,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/AGENTS.md_special_file,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/directory,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/escape,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/modified,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",152\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/special_file,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/symlink_parent,\"lifecycle_unlink_test.go:128: Unlink [] = 0, want 3\",153\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t4r2b-aggregate-adopt",
+          "performer": "claude:ft217_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4_repair2/aggregate-adopt.txt",
+            "digest": "sha256:17533bc11f59df4f483aef0c399733fc54c6ac75191a4e50531cc9677192f659",
+            "excerpt": "command: bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench\nsource: repair commit f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63; run on the working tree that this commit records unchanged (base 4bd52e65 plus the four test files), after bench worktree build\nexit: 0\ntree[1]{target,head,dirty}:\n  ft217-build,4bd52e651058eed8315b9063407b05d9e0eccd4e,true\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20538,334\n  github.com/gibbonmi/bench/internal/adopt,pass,275410,243\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nadopt package elapsed: 460.5 s before (go test -json at base 4bd52e65), 275.4 s after\n"
+          },
+          "requirement": "aggregate-adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "t4r2b-aggregate-system",
+          "performer": "claude:ft217_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4_repair2/aggregate-system.txt",
+            "digest": "sha256:37c62ea10b8f1769c1e8db06277d42c6062e459ad45149f136e5932c73eecda0",
+            "excerpt": "command: bench worktree exec ft217-build -- bench test --check system\nsource: repair commit f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63; run on the working tree that this commit records unchanged (base 4bd52e65 plus the four test files), after bench worktree build\nexit: 0\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,167,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,139161,167\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "aggregate-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t4r2b-unlink-floor-conformance",
+          "performer": "claude:ft217_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4_repair2/unlink-floor-conformance.txt",
+            "digest": "sha256:af56c87e0394dd4a04c25fa5c8f16e828ae3ef4f458fde8bbf415999a54bfdfd",
+            "excerpt": "command: bench worktree exec ft217-build -- bench test --check root-conformance\nsource: repair commit f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63; run on the working tree that this commit records unchanged (base 4bd52e65 plus the four test files), after bench worktree build\nexit: 0\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16539,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nalso: bench test --check skip-ownership exit 0 (skip-ownership,conformance,1,0; pass)\n"
+          },
+          "requirement": "unlink-floor-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4r2b-unlink-floor-cmd",
+          "performer": "claude:ft217_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4_repair2/unlink-floor-cmd.txt",
+            "digest": "sha256:17533bc11f59df4f483aef0c399733fc54c6ac75191a4e50531cc9677192f659",
+            "excerpt": "command: bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench\nsource: repair commit f03ce96e770b6d3ba3bd74b3a9888a9f272d0f63; run on the working tree that this commit records unchanged (base 4bd52e65 plus the four test files), after bench worktree build\nexit: 0\ntree[1]{target,head,dirty}:\n  ft217-build,4bd52e651058eed8315b9063407b05d9e0eccd4e,true\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20538,334\n  github.com/gibbonmi/bench/internal/adopt,pass,275410,243\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nadopt package elapsed: 460.5 s before (go test -json at base 4bd52e65), 275.4 s after\n"
+          },
+          "requirement": "unlink-floor-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t4r2b-unlink-entry-recovery-probes",
+          "performer": "claude:ft217_t4_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
           "state": "completed",
           "outcome": "pass",
           "native_ref": {
