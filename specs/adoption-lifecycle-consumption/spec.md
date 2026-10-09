@@ -697,6 +697,18 @@ Review records bind three independent axes to each frozen chunk pair.
           "effort": "high",
           "source": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
           "native_ref": "claude-agent:ft217_t2"
+        },
+        {
+          "session": "claude:ft217_t2b",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "cc9a43cdacadc2a57b939bf0a44c64d47b2e7927",
+          "native_ref": "claude-agent:ft217_t2b",
+          "predecessor": "claude:ft217_t2",
+          "trigger": "session-lost",
+          "stopped": "the orchestrator session paused on 2026-10-09 and stopped the ticket 02 author claude:ft217_t2 before any commit; it reported its uncommitted test files and has no live child",
+          "preserved": "cc9a43cdacadc2a57b939bf0a44c64d47b2e7927"
         }
       ],
       "03-consume-decisions-for-dropped-and-bespoke-link-assets.md": [],
