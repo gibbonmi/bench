@@ -663,6 +663,18 @@ Review records bind three independent axes to each frozen chunk pair.
           "effort": "high",
           "source": "ca614ba803237418b693546441f7e9f94da7c926",
           "native_ref": "claude-agent:ft217_t1"
+        },
+        {
+          "session": "claude:ft217_t1_repair1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "5382d14c13f83e064b640d9850545c87dfe55053",
+          "native_ref": "claude-agent:ft217_t1_repair1",
+          "predecessor": "claude:ft217_t1",
+          "trigger": "user-directed",
+          "stopped": "the ticket 01 author session reported completion of its verification record commit 5382d14c and has no live child",
+          "preserved": "5382d14c13f83e064b640d9850545c87dfe55053"
         }
       ],
       "02-consume-decisions-for-desired-link-assets.md": [],
@@ -701,7 +713,7 @@ Review records bind three independent axes to each frozen chunk pair.
           "id": "owner-preview-probes",
           "ticket": "01-expose-complete-decisions-through-upgrade-preview.md",
           "command": "bench probe internal/adopt/decision.go --omit 'decisions = append(decisions, preserved(name, \"requested-preserve\", manifestRetain, before))' --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
-          "probe": "Preserve-row omission, owner-order omission, and real Upgrade synthetic-to-exact preview swap must bite and restore. The ticket commit replaces the placeholder with the exact omitted source text."
+          "probe": "Preserve-row omission, owner-order omission, and real Upgrade synthetic-to-exact preview swap must bite and restore."
         }
       ]
     },
