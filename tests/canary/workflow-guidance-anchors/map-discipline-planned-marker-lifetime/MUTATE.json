@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/skills/bench-craft-spec/references/map-discipline.md",
+    "old": "The `planned` marker lasts until the covering ticket commits.",
+    "new": "The `planned` marker lasts until the spec lands."
+  }
+]

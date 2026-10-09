@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -25,9 +26,53 @@ type listedPackage struct {
 	Imports         []string
 	TestImports     []string
 	XTestImports    []string
+	EmbedPatterns   []string
 	EmbedFiles      []string
 	TestEmbedFiles  []string
 	XTestEmbedFiles []string
+}
+
+// packageIndex is the one path-to-package map of the current package graph. The
+// `--changed` selection and the ticket floor both read it.
+type packageIndex struct {
+	// byDirectory maps a slash-spelled directory, relative to the root, to its import path.
+	byDirectory map[string]string
+	// byEmbed maps a slash-spelled embed file of any class, relative to the root, to the
+	// import path of its owner.
+	byEmbed map[string]string
+	// byImport maps an import path to its package, which holds its embed patterns.
+	byImport map[string]listedPackage
+}
+
+func newPackageIndex(root string, packages []listedPackage) (packageIndex, error) {
+	index := packageIndex{
+		byDirectory: make(map[string]string, len(packages)),
+		byEmbed:     make(map[string]string),
+		byImport:    make(map[string]listedPackage, len(packages)),
+	}
+	for _, pkg := range packages {
+		directory, err := filepath.Rel(root, pkg.Dir)
+		if err != nil || directory == ".." || strings.HasPrefix(directory, ".."+string(filepath.Separator)) {
+			return packageIndex{}, fmt.Errorf("go list returned a package outside the repository")
+		}
+		directory = filepath.ToSlash(directory)
+		index.byDirectory[directory] = pkg.ImportPath
+		index.byImport[pkg.ImportPath] = pkg
+		for _, name := range append(append(append([]string{}, pkg.EmbedFiles...), pkg.TestEmbedFiles...), pkg.XTestEmbedFiles...) {
+			index.byEmbed[filepath.ToSlash(filepath.Join(directory, name))] = pkg.ImportPath
+		}
+	}
+	return index, nil
+}
+
+// owners returns the direct packages of one slash-spelled path: the package whose
+// directory holds the path as a Go file, and the package that embeds the path. An empty
+// import path means that no package has that role.
+func (index packageIndex) owners(file string) (goPackage, embedOwner string) {
+	if isGoFile(file) {
+		goPackage = index.byDirectory[path.Dir(file)]
+	}
+	return goPackage, index.byEmbed[file]
 }
 
 var listCurrentPackages = currentPackages
@@ -110,7 +155,7 @@ func inspectChangedPath(root, path string) (changedPath, error) {
 	if !os.IsNotExist(err) {
 		return changedPath{}, fmt.Errorf("changed path is unreadable: %w", err)
 	}
-	if strings.HasSuffix(clean, ".go") {
+	if isGoFile(clean) {
 		parent, parentErr := os.Stat(filepath.Dir(filepath.Join(root, clean)))
 		if parentErr != nil || !parent.IsDir() {
 			return changedPath{}, fmt.Errorf("changed Go path is not in a current package")
@@ -170,21 +215,11 @@ func currentPackagesWithEnvironment(ctx context.Context, root string, env []stri
 }
 
 func selectCurrentPackages(root string, packages []listedPackage, inputs []changedPath) (changedSelection, error) {
-	byDirectory := make(map[string]string, len(packages))
-	byEmbed := make(map[string]string)
-	byImport := make(map[string]listedPackage, len(packages))
-	for _, pkg := range packages {
-		directory, err := filepath.Rel(root, pkg.Dir)
-		if err != nil || directory == ".." || strings.HasPrefix(directory, ".."+string(filepath.Separator)) {
-			return nil, fmt.Errorf("go list returned a package outside the repository")
-		}
-		directory = filepath.ToSlash(directory)
-		byDirectory[directory] = pkg.ImportPath
-		byImport[pkg.ImportPath] = pkg
-		for _, name := range append(append(append([]string{}, pkg.EmbedFiles...), pkg.TestEmbedFiles...), pkg.XTestEmbedFiles...) {
-			byEmbed[filepath.ToSlash(filepath.Join(directory, name))] = pkg.ImportPath
-		}
+	index, err := newPackageIndex(root, packages)
+	if err != nil {
+		return nil, err
 	}
+	byImport := index.byImport
 	selected := changedSelection{}
 	mark := func(importPath, cause string) {
 		if current, ok := selected[importPath]; !ok || slices.Index(causePrecedence, cause) < slices.Index(causePrecedence, current) {
@@ -198,26 +233,19 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 			}
 			continue
 		}
-		if input.absent && !strings.HasSuffix(input.path, ".go") {
-			if _, ok := byEmbed[input.path]; ok {
+		goPackage, embedOwner := index.owners(input.path)
+		if embedOwner != "" {
+			if input.absent && !isGoFile(input.path) {
 				return nil, fmt.Errorf("changed embed path is not in the current package graph")
 			}
-			continue
-		}
-		isGo := strings.HasSuffix(input.path, ".go")
-		goPackage, inPackage := "", false
-		if isGo {
-			goPackage, inPackage = byDirectory[filepath.ToSlash(filepath.Dir(input.path))]
-		}
-		if importPath, ok := byEmbed[input.path]; ok {
-			mark(importPath, causeEmbed)
-			if inPackage {
+			mark(embedOwner, causeEmbed)
+			if goPackage != "" {
 				mark(goPackage, causeChanged)
 			}
 			continue
 		}
-		if isGo {
-			if !inPackage {
+		if isGoFile(input.path) {
+			if goPackage == "" {
 				return nil, fmt.Errorf("changed Go path is not in a current package")
 			}
 			mark(goPackage, causeChanged)
@@ -266,6 +294,10 @@ func selectCurrentPackages(root string, packages []listedPackage, inputs []chang
 // of pkg in one new slice.
 func directDependencies(pkg listedPackage) []string {
 	return append(append(append([]string{}, pkg.Imports...), pkg.TestImports...), pkg.XTestImports...)
+}
+
+func isGoFile(path string) bool {
+	return strings.HasSuffix(path, ".go")
 }
 
 func isGoMetadata(path string) bool {

@@ -411,6 +411,14 @@
       "identity": "git-tree:222650a82c808f1f721116d34054374ca3fb2801",
       "source": "19dceaeb44a1a8163e1589c00bfb4b976880ef03",
       "evidence": "git-tree:0a1575b964638c753bcb4df127746cae2754ca96"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT349",
+      "binding": "ticket-checkpoint-floor",
+      "identity": "sha256:bb67a783eee0f213c37d9d826327be68f693fb21fdf5a3922dfe81c1d7dece65",
+      "source": "c324a6037939cb44b35cc29d2bda01b7d4cfaf70",
+      "evidence": "9d563547bb965d6f9d991c9ca15578b3df7ffef1"
     }
   ]
 }

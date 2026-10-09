@@ -124,17 +124,29 @@ func testGrammar() usage.Grammar {
 	return withInventory
 }
 
+// listing answers the listing that request prints in place of a run, or nil when the
+// request runs its selection. The run dispatch and Request.Runs both read it.
+func (request focusedRequest) listing() func(root string) (Outcome, string, int) {
+	switch {
+	case request.fixtures:
+		return func(root string) (Outcome, string, int) { return checkFixtures(root, request.check) }
+	case request.checks:
+		return checksInventory
+	}
+	return nil
+}
+
 func runFocusedRequest(root string, request focusedRequest) (Outcome, string, int) {
-	if request.fixtures {
-		return checkFixtures(root, request.check)
+	if list := request.listing(); list != nil {
+		return list(root)
 	}
-	if request.checks {
-		return checksInventory(root)
-	}
-	// The refusal precedes the run-owner selection, which builds a Bench executable with
-	// Go. A root the suite may not grade therefore starts no child at all.
+	// The refusals precede the run-owner selection, which builds a Bench executable with
+	// Go. A root the check may not grade therefore starts no child at all.
 	if request.check == gate.SystemPhaseName && !gate.SystemSuiteRuns(root, testBenchSource(root)) {
 		return refusedOutcome(toon.Errorf("system check unavailable", "the system suite grades the kit checkout only")+"\n", 1)
+	}
+	if request.check == RootConformanceCheckName && !gate.RootConformanceRuns(root, testBenchSource(root)) {
+		return refusedOutcome(toon.Errorf(rootConformanceUnavailable, "root conformance grades a kit checkout that declares its entry test only")+"\n", 1)
 	}
 	if request.check == proseCheckName {
 		return runProseCheck(root, request.full)
@@ -326,9 +338,8 @@ func packagePattern(root, operand string) string {
 	return "./" + operand
 }
 
+// testBenchSource answers the kit that owns the Go tests for root, through the gate's
+// one resolution rule.
 func testBenchSource(root string) string {
-	if kit := os.Getenv("BENCH_KIT"); kit != "" {
-		return kit
-	}
-	return root
+	return gate.KitRoot(root)
 }

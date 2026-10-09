@@ -142,6 +142,9 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 	return nil
 }
 
+// Chunk returns the planned chunk id, or nil when the plan names no such chunk.
+func (p Plan) Chunk(id string) *PlannedChunk { return findChunk(p, id) }
+
 func findChunk(plan Plan, id string) *PlannedChunk {
 	for i := range plan.Chunks {
 		if plan.Chunks[i].ID == id {

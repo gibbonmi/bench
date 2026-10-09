@@ -22,10 +22,8 @@ func RecordCompletion(root, spec, source string) (Completion, error) {
 	var entry Completion
 	err = write(root, spec, nil, func(record *Record) error {
 		reconciliation := map[string]string{}
-		for _, chunk := range plan.Chunks {
-			for _, row := range chunk.Rows {
-				reconciliation[row] = "covered"
-			}
+		for _, row := range plan.Rows() {
+			reconciliation[row] = "covered"
 		}
 		entry = Completion{
 			State:          "completed",

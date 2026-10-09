@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "The completion plan carries the check floor of each ticket, and the `check-floor` row of `bench preflight build` grades the plan against that floor.",
+    "new": "The completion plan carries the focused checks of each ticket."
+  }
+]

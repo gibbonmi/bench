@@ -24,8 +24,6 @@ and review cost that recent builds paid.
 
 **FT369 (MEDIUM) — the delegate charge and the slicing checks close the 2026-09-30 batch's fence and venue gaps.**
 
-**FT349 (MEDIUM) — the ticket checkpoint enforces the check floor and refuses a leftover `planned` citation.**
-
 **FT352 (MEDIUM, decision required) — the orchestrator reads its own context size, and a spec can then restore a gated ticket fork.**
 
 **FT125 (LOW) — section, story, symbol, and worktree readers return precise slices.**
@@ -320,5 +318,4 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT349
-2. NRO
+1. NRO

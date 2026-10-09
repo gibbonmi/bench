@@ -123,6 +123,7 @@ governs each current-code claim in the spec prose.
   that function in the same session.
   The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.
   The check refuses a seam-cell test name outside that form, unless the cell holds the marker `planned` for a test that does not exist yet.
+  The `planned` marker lasts until the covering ticket commits.
 - A row that substitutes a package variable names the venue. A substitution in the
   test process reaches nothing inside a test that drives a real subprocess.
 - An ordering promise gets a row where two refusals compete, and the row names the

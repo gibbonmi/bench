@@ -271,7 +271,7 @@ func (m runMode) String() string {
 func runBinarySource(runtimeRoot, storageRoot string, plan subject) string {
 	if plan.Resolution.Kind == ProspectiveGateSh &&
 		isRegularFile(filepath.Join(runtimeRoot, "scripts", "go-build.sh")) &&
-		isRegularFile(filepath.Join(runtimeRoot, "go.mod")) {
+		GoModuleRoot(runtimeRoot) {
 		return runtimeRoot
 	}
 	return kitRoot(storageRoot)

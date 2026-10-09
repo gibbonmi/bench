@@ -66,6 +66,22 @@ func TestBoundFilesResolvesAtASegmentBoundary(t *testing.T) {
 	}
 }
 
+// TestCommandPackageReadsTheBindingRows grades the command-package predicate against the
+// binding rows: a path under a command row answers true, and a path under the
+// `internal/toon` row, which binds other files, answers false.
+func TestCommandPackageReadsTheBindingRows(t *testing.T) {
+	for path, want := range map[string]bool{
+		"internal/harnesses/harnesses.go": true,
+		"cmd/bench/main.go":               true,
+		"internal/toon/toon.go":           false,
+		"internal/harnessesx/x.go":        false,
+	} {
+		if got := CommandPackage(path); got != want {
+			t.Errorf("CommandPackage(%q) = %t, want %t", path, got, want)
+		}
+	}
+}
+
 // TestCommandRowsBindTheHelpProjectionAndEnvelopeCases keeps both command
 // registries in every command row. A verb that ships without one of them reaches
 // the gate with a registry nobody updated.

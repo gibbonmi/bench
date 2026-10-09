@@ -121,6 +121,9 @@ func WritesTicketDoc(title string, writes []string, covers ...string) string {
 	return commitmenttest.TicketBody(title, writes, covers...)
 }
 
+// PlanCommand is the chunk requirement command of the seeded completion plan.
+const PlanCommand = "bench test --package ./..."
+
 // PlanFence renders the bench-completion-plan section the checkpoint reader parses, as one
 // chunk over tickets. Every seeded spec carries it, so a green fixture states the plan the
 // landing later requires. The section heading closes the ownership-fence section above it,
@@ -131,7 +134,7 @@ func PlanFence(tickets ...string) string {
 		Chunks: []reviewrecord.PlannedChunk{{
 			ID:           "c1",
 			Tickets:      tickets,
-			Verification: []reviewrecord.Requirement{{ID: "tests", Command: "go test ./..."}},
+			Verification: []reviewrecord.Requirement{{ID: "tests", Command: PlanCommand}},
 		}},
 		FinalVerification: []reviewrecord.Requirement{{ID: "acceptance", Command: "go test ./..."}},
 	}

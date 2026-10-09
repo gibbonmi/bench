@@ -71,6 +71,17 @@ func Bindings() []BindingRow {
 	return append([]BindingRow(nil), bindings...)
 }
 
+// CommandPackage reports whether path sits under a bound command package: a binding row
+// whose files are the command registry set.
+func CommandPackage(path string) bool {
+	for _, row := range bindings {
+		if slices.Equal(row.Files, commandRegistries) && Covers(row.Prefix, path) {
+			return true
+		}
+	}
+	return false
+}
+
 // BoundFiles returns every file bound to a row whose prefix covers path, sorted
 // and deduplicated. A path under no bound package answers none.
 func BoundFiles(path string) []string {

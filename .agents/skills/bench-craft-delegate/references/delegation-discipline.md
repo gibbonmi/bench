@@ -32,6 +32,7 @@ Repair context: <fold targets and author context, each read by the coordinator b
 
 - A write charge names the root conformance pass and the file's wrap width in its
   verification list.
+  The root conformance pass is `bench test --check root-conformance`.
 - A write charge states that its ownership fence is a refusal boundary above any
   mirror-every-registry instruction. The delegate reports an out-of-fence write
   before the delegate edits.

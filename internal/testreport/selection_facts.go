@@ -35,6 +35,18 @@ func (r Request) Target() string {
 	return r.focused.packageExpr
 }
 
+// Changed answers whether the request carries `--changed`. That form's target is `./...`,
+// so the target alone cannot tell it from the whole-suite package form.
+func (r Request) Changed() bool {
+	return r.focused.changed
+}
+
+// Runs answers whether the request runs its selection. A listing form runs nothing,
+// although its form and target read like a run.
+func (r Request) Runs() bool {
+	return r.focused.listing() == nil
+}
+
 // Run answers the exact run pattern the focused run passes to Go, or AllTests when it
 // passes none. The named-check pattern comes from the one producer the argv reads, so a
 // caller is never told a pattern the run did not use. The prose grade starts no Go child,
