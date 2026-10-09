@@ -27,7 +27,7 @@ func newBatchFixture(t *testing.T, n int) batchFixture {
 		if err := os.WriteFile(dest, preimage(i), 0o640); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(stage, []byte(fmt.Sprintf("after %d", i)), 0o750); err != nil {
+		if err := os.WriteFile(stage, replacement(i), 0o750); err != nil {
 			t.Fatal(err)
 		}
 		info, err := os.Stat(dest)
@@ -42,9 +42,11 @@ func newBatchFixture(t *testing.T, n int) batchFixture {
 
 func preimage(i int) []byte { return []byte(fmt.Sprintf("before %d", i)) }
 
+func replacement(i int) []byte { return []byte(fmt.Sprintf("after %d", i)) }
+
 // requirePreimages fails unless every destination holds its preimage content and mode.
-// With sameFile, each destination must also keep its original file identity.
-func (f batchFixture) requirePreimages(t *testing.T, sameFile bool) {
+// Each destination from index rewritten on must also keep its original file identity.
+func (f batchFixture) requirePreimages(t *testing.T, rewritten int) {
 	t.Helper()
 	for i, dest := range f.dests {
 		data, err := os.ReadFile(dest)
@@ -52,7 +54,7 @@ func (f batchFixture) requirePreimages(t *testing.T, sameFile bool) {
 		if err != nil || statErr != nil || string(data) != string(preimage(i)) || info.Mode().Perm() != 0o640 {
 			t.Fatalf("%s holds %q, %v, %v; want its preimage", dest, data, err, statErr)
 		}
-		if sameFile && !os.SameFile(f.before[i], info) {
+		if i >= rewritten && !os.SameFile(f.before[i], info) {
 			t.Fatalf("%s was replaced", dest)
 		}
 	}
@@ -85,25 +87,31 @@ func TestRecordSavesIndependentOfEntryCount(t *testing.T) {
 
 func TestPublicationFailureAfterChangedDestinations(t *testing.T) {
 	f := newBatchFixture(t, 5)
-	const failing = 3
+	const published = 2
 	renames := 0
+	// Fail every destination rename after the first published ones, so Apply's own undo cannot restore them either.
 	f.store.Rename = func(from, to string) error {
 		if filepath.Dir(to) == f.root {
 			renames++
-			if renames == failing {
+			if renames > published {
 				return os.ErrPermission
 			}
 		}
 		return os.Rename(from, to)
 	}
 	id, err := f.store.Apply(f.changes)
-	if err == nil || id == "" || renames < failing {
+	if err == nil || id == "" || renames <= published {
 		t.Fatalf("fixture did not fail publication after changed destinations: id=%q, renames=%d, err=%v", id, renames, err)
+	}
+	for i, dest := range f.dests[:published] {
+		if data, err := os.ReadFile(dest); err != nil || string(data) != string(replacement(i)) {
+			t.Fatalf("%s holds %q, %v; want its replacement before Undo", dest, data, err)
+		}
 	}
 	if err := (transaction.Store{Directory: f.store.Directory}).Undo(id); err != nil {
 		t.Fatalf("undo after failed publication: %v", err)
 	}
-	f.requirePreimages(t, false)
+	f.requirePreimages(t, published)
 }
 
 func TestStagingFailureLeavesDestinations(t *testing.T) {
@@ -123,7 +131,7 @@ func TestStagingFailureLeavesDestinations(t *testing.T) {
 	if _, err := f.store.Apply(f.changes); err == nil {
 		t.Fatal("apply succeeded after a staging failure")
 	}
-	f.requirePreimages(t, true)
+	f.requirePreimages(t, 0)
 	if _, err := os.Lstat(late); !os.IsNotExist(err) {
 		t.Fatalf("late destination changed: %v", err)
 	}
