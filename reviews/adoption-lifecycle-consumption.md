@@ -10,9 +10,9 @@
     {
       "id": "ALC-OWNER",
       "base": "aabd462d52349b00cfb3d66f67a6dd24891468d2",
-      "tip": "518c52eec4fe9edf5f8f6baad50bc8404e5a9f32",
-      "plan_digest": "sha256:a5fa48d1160a4f45c76b2dfe2e6c33e052685518fa0aa6f87d8478db4799d8dd",
-      "source_digest": "a4ceabeedebed5984c9fa95ad56129fcd2a33cc8",
+      "tip": "089f7740dc9e0915f92d10cf3808c7a9e07ceef5",
+      "plan_digest": "sha256:0961cf7468e1a471e94be90e8e77207d0589fd8e821ae8b47d150da0bdcffc28",
+      "source_digest": "cd4d91d9b677dbc77f4d07c689d69fa4a74afd89",
       "acceptance_rows": [
         "ALC02",
         "ALC03",
@@ -279,6 +279,107 @@
               "ref": "claude-agent:ft217_t1_repair1/p-s1-preview-swap.txt",
               "digest": "sha256:ee26100faddf1454b82169be51ec01109f3d58f62aaff5fb973e227e6320b12e",
               "excerpt": "S1 synthetic-to-exact preview swap at 518c52ee: bench probe internal/adopt/upgrade.go --swap 'if entry.kind == \"file\" {' --with 'if entry.kind != \"seed\" {' --package ./internal/adopt --run '^TestLifecycleUpgradePreviewCompatibility$'\ntree[1]{target,head,dirty}:\n  ft217-build,518c52eec4fe9edf5f8f6baad50bc8404e5a9f32,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/upgrade.go,swap,failed,16,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleUpgradePreviewCompatibility$,passed,28\nspilled{lines=24,bytes=5250,omitted_lines=15,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/32297bb2a2b17d4d68b8c88121928c21/1791549537755320700-0aa162a85bb469cf.out}\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUpgradePreviewCompatibility/preserved_CLAUDE.md,\"lifecycle_preview_test.go:114: Upgrade --check = (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,0,47,0\\\\\\\\n\\\", \\\"\\\"), want (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,0,0,0\\\\\\\\n\\\", \\\"\\\")\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUpgradePreviewCompatibility/unowned_adapter,\"lifecycle_preview_test.go:114: Upgrade --check = (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,46,0\\\\\\\\n\\\", \\\"\\\"), want (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,0,0\\\\\\\\n\\\", \\\"\\\")\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUpgradePreviewCompatibility/unowned_file,\"lifecycle_preview_test.go:114: Upgrade --check = (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,47,0\\\\\\\\n\\\", \\\"\\\"), want (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,0,0\\\\\\\\n\\\", \\\"\\\")\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUpgradePreviewCompatibility/unowned_inline,\"lifecycle_preview_test.go:114: Upgrade --check = (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,46,0\\\\\\\\n\\\", \\\"\\\"), want (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,0,0\\\\\\\\n\\\", \\\"\\\")\",1\nskips[0]{package,test,reason}:\n\nAuthor excerpt at a2e997fb (scratchpad/t1/p03-c-synthetic-to-exact-adapter-swap.txt):\ntree[1]{target,head,dirty}:\n  ft217-build,a2e997fb27e0382d6c465a8190c14d21f056fd14,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/upgrade.go,swap,failed,12,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleUpgradePreviewCompatibility$,passed,28\nspilled{lines=20,bytes=4329,omitted_lines=11,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/32297bb2a2b17d4d68b8c88121928c21/1791546189834605584-10fa61093e9f9043.out}\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUpgradePreviewCompatibility/preserved_CLAUDE.md,\"lifecycle_preview_test.go:115: Upgrade --check = (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,0,46,0\\\\\\\\n\\\", \\\"\\\"), want (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,0,0,0\\\\\\\\n\\\", \\\"\\\")\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUpgradePreviewCompatibility/unowned_adapter,\"lifecycle_preview_test.go:115: Upgrade --check = (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,45,0\\\\\\\\n\\\", \\\"\\\"), want (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,0,0\\\\\\\\n\\\", \\\"\\\")\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUpgradePreviewCompatibility/unowned_file,\"lifecycle_preview_test.go:115: Upgrade --check = (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,46,0\\\\\\\\n\\\", \\\"\\\"), want (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,0,0\\\\\\\\n\\\", \\\"\\\")\",1\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUpgradePreviewCompatibility/unowned_inline,\"lifecycle_preview_test.go:115: Upgrade --check = (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,46,0\\\\\\\\n\\\", \\\"\\\"), want (0, \\\"upgrade[1]{from,to,added,changed,removed}:\\\\\\\\n  1.0.0,1.0.1,1,0,0\\\\\\\\n\\\", \\\"\\\")\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1r2-decision-preview",
+          "performer": "claude:ft217_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cd4d91d9b677dbc77f4d07c689d69fa4a74afd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t1_repair2/04a-decision-preview.txt",
+            "digest": "sha256:64166911555b426ab50773fc8f1769816e2ec75c0c7af2936c437e09595586ec",
+            "excerpt": "Command: bench worktree exec ft217-build -- bench test --package ./internal/adopt --run 'Test(PlanLifecycleFromImmutableInventories|CompleteLifecycleDecisions|LifecycleDecisionOrder|LifecycleUpgradePreviewCompatibility|LifecycleUpgradeVersionGuards)'\nPerformer: claude:ft217_t1_repair2. Exit 0. Complete Bench response (not spilled):\n\ntree[1]{target,head,dirty}:\n  ft217-build,\"089f7740dc9e0915f92d10cf3808c7a9e07ceef5\",true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,pass,31974,62\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "decision-preview",
+          "command": "bench test --package ./internal/adopt --run 'Test(PlanLifecycleFromImmutableInventories|CompleteLifecycleDecisions|LifecycleDecisionOrder|LifecycleUpgradePreviewCompatibility|LifecycleUpgradeVersionGuards)'",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-owner-floor-conformance",
+          "performer": "claude:ft217_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cd4d91d9b677dbc77f4d07c689d69fa4a74afd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t1_repair2/04b-owner-floor-conformance.txt",
+            "digest": "sha256:192dad2b50cd8e130692af0f28abf9dd8e6bd102393597de56c14f053d76e02d",
+            "excerpt": "Command: bench worktree exec ft217-build -- bench test --check root-conformance\nPerformer: claude:ft217_t1_repair2. Exit 0. Complete Bench response (not spilled):\n\ntree[1]{target,head,dirty}:\n  ft217-build,\"089f7740dc9e0915f92d10cf3808c7a9e07ceef5\",true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15928,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-floor-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-owner-floor-adopt",
+          "performer": "claude:ft217_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cd4d91d9b677dbc77f4d07c689d69fa4a74afd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t1_repair2/04c-owner-floor-adopt.txt",
+            "digest": "sha256:0f7fba6dabe469796c491e42e2cc009828ef7db5defd338e571ac7374fa8797e",
+            "excerpt": "Command: bench worktree exec ft217-build -- bench test --package ./internal/adopt\nPerformer: claude:ft217_t1_repair2. Exit 0. Complete Bench response (not spilled):\n\ntree[1]{target,head,dirty}:\n  ft217-build,\"089f7740dc9e0915f92d10cf3808c7a9e07ceef5\",true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,pass,274824,165\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-floor-adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-owner-floor-cmd",
+          "performer": "claude:ft217_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cd4d91d9b677dbc77f4d07c689d69fa4a74afd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t1_repair2/04d-owner-floor-cmd.txt",
+            "digest": "sha256:fd41ce8134d77eba8619a016f223621fd68207680a09688ab40ccedc906b8fd0",
+            "excerpt": "Command: bench worktree exec ft217-build -- bench test --package ./cmd/bench\nPerformer: claude:ft217_t1_repair2. Exit 0. Complete Bench response (not spilled):\n\ntree[1]{target,head,dirty}:\n  ft217-build,\"089f7740dc9e0915f92d10cf3808c7a9e07ceef5\",true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22001,333\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "owner-floor-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t1r2-owner-preview-probes",
+          "performer": "claude:ft217_t1_repair2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cd4d91d9b677dbc77f4d07c689d69fa4a74afd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t1_repair2/probe-c5.txt",
+            "digest": "sha256:699561bcc03bd911033c959982bb4230b2474f36efce5b701de98c3ff1d8fe96",
+            "excerpt": "C5 probe, session claude:ft217_t1_repair2, worktree ft217-build head b48b4803 (dirty: the dropped-symlink row in lifecycle_decision_test.go).\nCommand: bench probe internal/adopt/decision.go --swap 'case o.FileKind != \"regular\" && o.FileKind != \"symlink\":' --with 'case o.FileKind != \"regular\":' --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'\nWall: ~7 s (1791550581 -> 1791550588). bench exit 0.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/decision.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,16\nfailures[1]:\n  TestCompleteLifecycleDecisions/link, lifecycle_decision_test.go:134: decision 0 = {Path: ...}, want {Path:absent Kind:add ...}\n  (the mutant refuses the whole link plan with \"refused non-regular dropped asset: dropped-symlink\", so every decision is empty)\n\nRed before this repair (round-2 Coverage, 518c52ee): the same swap was silent, 25 tests pass, restored yes.\nGreen after: focused run 62 tests pass (see report).\n"
+          },
+          "requirement": "owner-preview-probes",
+          "command": "bench probe internal/adopt/decision.go --omit 'decisions = append(decisions, preserved(name, \"requested-preserve\", manifestRetain, before))' --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Preserve-row omission, owner-order omission, and real Upgrade synthetic-to-exact preview swap must bite and restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft217_t1_repair2/probe-c5.txt",
+              "digest": "sha256:699561bcc03bd911033c959982bb4230b2474f36efce5b701de98c3ff1d8fe96",
+              "excerpt": "C5 probe, session claude:ft217_t1_repair2, worktree ft217-build head b48b4803 (dirty: the dropped-symlink row in lifecycle_decision_test.go).\nCommand: bench probe internal/adopt/decision.go --swap 'case o.FileKind != \"regular\" && o.FileKind != \"symlink\":' --with 'case o.FileKind != \"regular\":' --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'\nWall: ~7 s (1791550581 -> 1791550588). bench exit 0.\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/decision.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,16\nfailures[1]:\n  TestCompleteLifecycleDecisions/link, lifecycle_decision_test.go:134: decision 0 = {Path: ...}, want {Path:absent Kind:add ...}\n  (the mutant refuses the whole link plan with \"refused non-regular dropped asset: dropped-symlink\", so every decision is empty)\n\nRed before this repair (round-2 Coverage, 518c52ee): the same swap was silent, 25 tests pass, restored yes.\nGreen after: focused run 62 tests pass (see report).\n"
             }
           }
         }
