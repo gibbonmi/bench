@@ -2185,13 +2185,79 @@
           "supersedes": [
             "unlink-coverage-r2"
           ]
+        },
+        {
+          "id": "unlink-coverage-r4",
+          "performer": "claude:ft217_unlink_coverage_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_unlink_coverage_r4/review-unlink-coverage-r4.txt",
+            "digest": "sha256:04a854829ade388d22358afbc668e4c34742c832cb488b7084f5a41b6b857f54",
+            "excerpt": "ALC-UNLINK Coverage axis, confirming round 4 (verification only). Session claude:ft217_unlink_coverage_r4, opus / medium. Chunk pair efe66c1a..d656f94a. Binding: evidence sha256:5e04c987, current=true, source tip 40a013a5, base efe66c1a, clean tree (a first binding attempt at 2a9b97b5 refused because the orchestrator's uncommitted record writes left the checkout dirty).\n\nCount: 0. Worst issue: none.\n\nFolds confirmed: the delta f03ce96e..d656f94a outside reviews changes one file, specs/adoption-lifecycle-consumption/decisions/architecture-adoption.md (2 added, 2 removed, the Sources entry near line 39); it touches no Go file and no test, so the coverage evidence recorded at f03ce96e still describes the code under review. bench test --check decision-map-integrity passed (internal/conformance, 1 test, 0 failures) at 2a9b97b5, whose tree equals the frozen source.\n\nAdvice: none.\n\nExamined: the named delta, architecture-adoption.md:39. Final git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "tip": "d656f94ad08e91fa085a528e9b9adf0b82b04f6f",
+          "finding_ids": [],
+          "supersedes": [
+            "unlink-coverage-r3"
+          ]
+        },
+        {
+          "id": "unlink-standards-r4",
+          "performer": "claude:ft217_unlink_standards_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_unlink_standards_r4/review-unlink-standards-r4.txt",
+            "digest": "sha256:e5da01827030fa612ce1eb80758624394bd0c7a0f67a0ac552f7960b9427e9c4",
+            "excerpt": "ALC-UNLINK Standards axis, confirming round 4 (verification only). Session claude:ft217_unlink_standards_r4, opus / medium. Chunk pair efe66c1a..d656f94a. Binding: evidence sha256:5e04c987, current=true, source tip 40a013a5, base efe66c1a, clean tree (a first binding attempt at 2a9b97b5 refused because the orchestrator's uncommitted record writes left the checkout dirty).\n\nCount: 0. Worst issue: none.\n\nFolds confirmed: the delta f03ce96e..d656f94a outside reviews touches only specs/adoption-lifecycle-consumption/decisions/architecture-adoption.md (2 in, 2 out), swapping the roadmap/FT217.md Sources entry for capture/architecture-review-20260817T104714.html; git ls-files shows the new source tracked; spec.md:131 names it as FT217's historical source and its only other reference is architecture-adoption.md:39; no second copy of the FT217 contract text; no Go file changed.\n\nAdvice: none.\n\nExamined: the binding check, the diff and its stat, ls-files and ls-tree, rg over specs/adoption-lifecycle-consumption.\n"
+          },
+          "axis": "Standards",
+          "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "tip": "d656f94ad08e91fa085a528e9b9adf0b82b04f6f",
+          "finding_ids": [],
+          "supersedes": [
+            "unlink-standards-r3"
+          ]
+        },
+        {
+          "id": "unlink-spec-r4",
+          "performer": "claude:ft217_unlink_spec_r4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_unlink_spec_r4/review-unlink-spec-r4.txt",
+            "digest": "sha256:7e2285cd9187275a985ff9990a46aa63b3de6fcebdbbf3df1f039864d7b01a9b",
+            "excerpt": "ALC-UNLINK Spec axis, confirming round 4 (verification only). Session claude:ft217_unlink_spec_r4, opus / medium. Chunk pair efe66c1a..d656f94a. Binding: evidence sha256:5e04c987, current=true, source tip 40a013a5, base efe66c1a, clean tree (a first binding attempt at 2a9b97b5 refused because the orchestrator's uncommitted record writes left the checkout dirty).\n\nCount: 0. Worst issue: none.\n\nFolds confirmed: only the Sources entry changed (architecture-adoption.md:39-40); no decision (lines 20-21), out-of-scope row, ticket, or acceptance row changed. The new source supports the narrowed Supports text: spec.md:131 names the review as FT217's historical source, and the review at lines 148-177 shows that three decision paths leak and recommends one deep lifecycle decision, the concern decisions 1 and 2 answer.\n\nAdvice: none.\n\nExamined: the binding check, the named diff, architecture-adoption.md, spec.md:120-139, the review HTML lines 145-179.\n"
+          },
+          "axis": "Spec",
+          "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "tip": "d656f94ad08e91fa085a528e9b9adf0b82b04f6f",
+          "finding_ids": [],
+          "supersedes": [
+            "unlink-spec-r3"
+          ]
         }
       ]
     }
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "b8b9fbd4b9b0befbb19b4c78d44b27be9d3f3f57",
+    "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
     "performer": "claude:ft217-orchestrator-20261009",
     "reconciliation": {
       "ALC01": "covered",
