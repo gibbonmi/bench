@@ -28,10 +28,12 @@ For a `BuildError`, `BuildLine` is the first builder output line that contains `
 The table sits inside the counted suffix, so `trailing_bytes` includes it.
 The cell passes through `sanitize.Preview` before the encoder.
 A baseline whose run-binary build script fails now reads the cause `baseline-build-failed`.
+`BuildLine` rides on `Outcome`, so the `render` signature stays unchanged, and the direct call at `internal/probe/outcome_test.go:266` needs no edit.
 
 `internal/runbinary/runbinary_test.go` has 391 lines, so the PS44 and PS49 test needs headroom.
 Move the build-script tests that follow `TestBuildEnvironmentCarriesTheBenchBuildCache` to `internal/runbinary/build_script_test.go` first.
-If `internal/testreport/outcome_test.go` would pass 400 lines, move its canned-Go helpers to `internal/testreport/canned_go_test.go`.
+`internal/testreport/outcome_test.go` passes 400 lines after tickets 3 and 4, and the growth ratchet reds it.
+Move its canned-Go helpers, `cannedSets` through `cannedSelections` before `TestExecuteClassifiesTheOutcome`, to `internal/testreport/canned_go_test.go` first.
 Each move keeps every assertion unchanged.
 
 The full-failure table test and `TestExecuteClassifiesTheOutcome` gain `BuildLine` in their build-failure expectations.

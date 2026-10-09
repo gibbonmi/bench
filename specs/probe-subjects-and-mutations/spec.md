@@ -347,6 +347,7 @@ Before the first dispatch, the coordinator amends it to a version-2 plan with th
         {"id": "testreport", "command": "bench test --package ./internal/testreport"},
         {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
         {"id": "record-forms", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
+        {"id": "gate-readers", "command": "bench test --package ./internal/gate"},
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
@@ -384,6 +385,7 @@ Before the first dispatch, the coordinator amends it to a version-2 plan with th
     {"id": "testreport", "command": "bench test --package ./internal/testreport"},
     {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
     {"id": "record-forms", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
+    {"id": "gate-readers", "command": "bench test --package ./internal/gate"},
     {"id": "command-package", "command": "bench test --package ./cmd/bench"},
     {"id": "system", "command": "bench test --check system"}
   ]
@@ -533,9 +535,9 @@ A lock path derives from a digest, so no operand byte reaches the lock file name
 
 The ticket slice derives this fence, so it equals the union of the ticket Writes lines, plus the spec folder and the review pickup.
 It holds the owner and test files, the command registry closure, the anchor registry closure, and each canary unit that pins an edited file.
-The NRO import test in the record command package reads the schema token, and the record journey in the command package reads the v2 envelope.
+The NRO import test in the record command package reads the schema token.
 The named-check file of the testreport package holds the prose name that becomes the one export.
-NR-C3 lands the probe result owner, its test, the import test, and the record journey, so those four paths are absent before that landing.
+Every reader of that name is in the fence.
 
 - `.agents/skills/bench-craft-delegate/SKILL.md`
 - `.bench/BENCH-reference.md`
@@ -545,7 +547,6 @@ NR-C3 lands the probe result owner, its test, the import test, and the record jo
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/main.go`
-- `cmd/bench/record_operations_test.go`
 - `docs/known-issues.md`
 - `internal/anchors/registry_calibration.go`
 - `internal/anchors/registry_calibration_test.go`
@@ -570,6 +571,7 @@ NR-C3 lands the probe result owner, its test, the import test, and the record jo
 - `internal/probe/edit_test.go`
 - `internal/probe/invalid_cause_test.go`
 - `internal/probe/lock.go`
+- `internal/probe/lock_holder_test.go`
 - `internal/probe/lock_test.go`
 - `internal/probe/mutation_input.go`
 - `internal/probe/omit_file_test.go`
@@ -580,6 +582,7 @@ NR-C3 lands the probe result owner, its test, the import test, and the record jo
 - `internal/probe/result.go`
 - `internal/probe/result_test.go`
 - `internal/probe/subject.go`
+- `internal/probe/subject_check_fixture_test.go`
 - `internal/probe/subject_check_test.go`
 - `internal/probe/unwrap_test.go`
 - `internal/probe/verdict.go`
@@ -589,6 +592,7 @@ NR-C3 lands the probe result owner, its test, the import test, and the record jo
 - `internal/runbinary/runbinary.go`
 - `internal/runbinary/runbinary_test.go`
 - `internal/testreport/canned_go_test.go`
+- `internal/testreport/check_test.go`
 - `internal/testreport/command.go`
 - `internal/testreport/failure_lines_test.go`
 - `internal/testreport/full_failure_test.go`
@@ -598,6 +602,7 @@ NR-C3 lands the probe result owner, its test, the import test, and the record jo
 - `internal/testreport/runbinary_test.go`
 - `internal/testreport/selection_facts.go`
 - `internal/testreport/selection_facts_test.go`
+- `internal/testreport/system_run_test.go`
 - `internal/testreport/testreport.go`
 - `reviews/probe-subjects-and-mutations.md`
 - `roadmap/FT168.md`

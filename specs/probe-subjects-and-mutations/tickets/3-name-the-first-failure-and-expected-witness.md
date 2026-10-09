@@ -1,7 +1,7 @@
 # Name the first failure and the expected witness in a v2 verdict row
 
 Blocked by: 1-add-probe-mutation-forms.md, 2-probe-prose-and-system-checks.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/record_operations_test.go (new), internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/baseline.go, internal/probe/baseline_test.go, internal/probe/combined_test.go (new), internal/probe/command.go, internal/probe/delete_test.go (new), internal/probe/edit_test.go (new), internal/probe/invalid_cause_test.go, internal/probe/omit_file_test.go, internal/probe/outcome_test.go, internal/probe/probe.go, internal/probe/probe_test.go, internal/probe/refusal_test.go, internal/probe/result.go (new), internal/probe/result_test.go (new), internal/probe/subject_check_test.go (new), internal/probe/unwrap_test.go, internal/probe/verdict.go (new), internal/probe/verdict_test.go (new), internal/reviewrecord/recordcmd/verification_import_test.go (new), internal/testreport/failure_lines_test.go, internal/testreport/full_failure_test.go, internal/testreport/named_check.go, internal/testreport/outcome.go, internal/testreport/outcome_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/baseline.go, internal/probe/baseline_test.go, internal/probe/combined_test.go (new), internal/probe/command.go, internal/probe/delete_test.go (new), internal/probe/edit_test.go (new), internal/probe/invalid_cause_test.go, internal/probe/omit_file_test.go, internal/probe/outcome_test.go, internal/probe/probe.go, internal/probe/probe_test.go, internal/probe/refusal_test.go, internal/probe/result.go, internal/probe/result_test.go, internal/probe/subject_check_test.go (new), internal/probe/unwrap_test.go, internal/probe/verdict.go (new), internal/probe/verdict_test.go (new), internal/reviewrecord/recordcmd/verification_import_test.go, internal/testreport/check_test.go, internal/testreport/command.go, internal/testreport/failure_lines_test.go, internal/testreport/full_failure_test.go, internal/testreport/named_check.go, internal/testreport/outcome.go, internal/testreport/outcome_test.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go, internal/testreport/system_run_test.go
 Covers: PS38, PS39, PS40, PS41, PS42, PS43, PS54, PS55, PS56, PS57
 
 ## What to build
@@ -10,8 +10,7 @@ An author reads the first failed test in the verdict row, and `--expect <test>` 
 The result envelope moves to `bench-probe-result-v2`, and native verification import still reads it.
 
 Tickets 1 and 2 supply the edit owner, the probe targets, and the request-derived selection cells.
-NR-C3 lands `internal/probe/result.go`, `result_test.go`, `verification_import_test.go`, and `cmd/bench/record_operations_test.go`.
-Those paths carry the `(new)` marker only because this tree does not hold them before that landing.
+NR-C3 on `main` supplies `internal/probe/result.go`, its test, and the native import test.
 
 `testreport.Outcome` gains `FailedNames`, the failed Go test names in the order that the failures table prints them.
 For a Go run, `FailedTests` and `FailedNames` derive from the one `report.failed()` walk.
@@ -22,8 +21,17 @@ Create `internal/probe/verdict.go` as the owner of `first_failure` and `--expect
 The verdict row gains the cell `first_failure` after `failed_tests`, and the cell reads null when `FailedNames` is empty.
 `--expect` matches a failed name that equals the value or starts with the value and `/`.
 A failed mutated run without a match reads `invalid`, cause `expect-missed`, and exit 1.
-`--expect` with the prose check is a usage refusal, and the probe reads the prose name from one `testreport` export.
-The `proseCheck` constant in `probe.go` retires.
+`--expect` with the prose check is a usage refusal with exit 2.
+
+The prose check name becomes the exported constant `testreport.ProseCheckName`, as `RootConformanceCheckName` is exported.
+The private `proseCheckName` and the `proseCheck` constant in `probe.go` retire, so the name has one source.
+Each reader of the old name moves to the export:
+
+- `internal/testreport/named_check.go:18`, `:58`, `:71`, and `:117`.
+- `internal/testreport/command.go:151`.
+- `internal/testreport/selection_facts.go:56`, and `:89` and `:90` if ticket 2 keeps them.
+- `internal/testreport/selection_facts_test.go:23`, and `:143` if ticket 2 keeps it.
+- `internal/testreport/check_test.go:192` and `internal/testreport/system_run_test.go:64`.
 
 The schema token changes to `bench-probe-result-v2`, and `probe.ReadResult` reads the new field set.
 A v1 envelope refuses by its schema.
@@ -32,13 +40,13 @@ A v1 envelope refuses by its schema.
 The posture list reds these existing pins, and this ticket updates each one:
 
 - The literal verdict-row pins at `internal/probe/invalid_cause_test.go:26`, `internal/probe/refusal_test.go:58`, and `internal/reviewrecord/recordcmd/verification_import_test.go:46`.
-- The v1 token pins in `verification_import_test.go`.
+- The v1 token pins at `verification_import_test.go:48`, `:106`, `:108`, `:114`, and `:115`.
 - `TestExecuteClassifiesTheOutcome`, `TestFullFailedTestsCountsTests`, and the full-failure table test, which compare `Outcome` field-wise.
-- `TestProbeHelpSpellings` and `TestHelpInventoryIsComplete`, which expect the `--expect` usage line.
+- The literal expected probe line at `cmd/bench/help_inventory_test.go:120`, which gains `--expect`.
 
+`TestProbeHelpSpellings` builds from `grammar.Help`, so it follows the new usage line without an edit.
 The `probeRow` helper in `probe_test.go` derives every expected verdict row through `probeFields`.
 Each caller file of that helper is on this `Writes:` line, the files of tickets 1 and 2 included.
-`cmd/bench/record_operations_test.go` holds the real import journey, and it stays green over the v2 envelope.
 The command registry files join this `Writes:` line through the binding registry, and they change only when the help projection requires it.
 
 Ticket 4 receives `verdict.go` and the field-wise `Outcome` helper.
@@ -53,6 +61,8 @@ Ticket 4 receives `verdict.go` and the field-wise `Outcome` helper.
 - [ ] The probe result schema cell reads `bench-probe-result-v2`.
 - [ ] `probe.ReadResult` reads a v2 envelope and refuses a v1 envelope by its schema.
 - [ ] `FailedNames` lists the failed tests in the failures-table order, and a prose run leaves it empty.
+- [ ] No reader of the prose check name keeps a private copy, and `rg` finds no `proseCheckName` in the tree.
 - [ ] The help inventory's probe line names `--expect`.
-- [ ] The native verification import tests and the record journey stay green over the v2 envelope.
+- [ ] The native verification import tests stay green over the v2 envelope.
+- [ ] `TestNativeRecordCLIJourney` in `cmd/bench/record_operations_test.go` stays green over the v2 envelope without an edit.
 - [ ] Each changed file stays at 400 lines or fewer, and no test keeps a second derivation of the verdict row.

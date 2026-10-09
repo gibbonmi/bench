@@ -1,7 +1,7 @@
 # Add the probe mutation forms and the closed form matrix
 
 Blocked by: none
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/combined_test.go (new), internal/probe/command.go, internal/probe/delete_test.go (new), internal/probe/edit.go (new), internal/probe/edit_test.go (new), internal/probe/mutation_input.go, internal/probe/omit_file_test.go, internal/probe/probe.go, internal/probe/refusal_test.go, internal/probe/subject.go, tests/canary/package-core-guard/unrouted-subcommand
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/combined_test.go (new), internal/probe/command.go, internal/probe/delete_test.go (new), internal/probe/edit.go (new), internal/probe/edit_test.go (new), internal/probe/mutation_input.go, internal/probe/omit_file_test.go, internal/probe/probe.go, internal/probe/refusal_test.go, internal/probe/subject.go, internal/probe/unwrap_test.go, tests/canary/package-core-guard/unrouted-subcommand
 Covers: PS1, PS2, PS3, PS4, PS5, PS6, PS7, PS8, PS9, PS10, PS11, PS12, PS13, PS14, PS15, PS16, PS17, PS18, PS19, PS20, PS21, PS22, PS23, PS24, PS25, PS76
 
 ## What to build
@@ -9,16 +9,16 @@ Covers: PS1, PS2, PS3, PS4, PS5, PS6, PS7, PS8, PS9, PS10, PS11, PS12, PS13, PS1
 An author gives `bench probe` a multiline swap, an insertion, one occurrence, a deletion, or a combined mutant.
 Each form refuses a bad input before any write, and each form restores the subject.
 
-This ticket cannot start until the NRO chunk NR-C3 lands on `main`.
-NR-C3 supplies the `probe_execution` table, `probe.ReadResult`, the `bench-probe-result-v1` token, and the canned runner in `internal/probe/probetest`.
+The NRO chunk NR-C3 is on `main`.
+It supplies the `probe_execution` table, `probe.ReadResult`, the `bench-probe-result-v1` token, and the canned runner in `internal/probe/probetest`.
 Bind that landed shape, and refresh each line count before the charge.
-Every later ticket inherits this prerequisite through its `Blocked by:` chain.
 
 Create `internal/probe/edit.go` as the one owner of the edit list and the form rules.
 The mutation input resolves to an ordered list of edits over the start bytes of the subject.
 Each edit is a byte range and its replacement bytes.
 Move `mutate` into that owner, so every form shares the match, overlap, and empty rules.
 `probe.go` keeps the sequence and calls the owner.
+`internal/probe/unwrap_test.go:45` and `:49` call `mutate` directly and read its result, so they follow the moved owner.
 
 Extract the current `--omit-file` reader in `mutation_input.go` into one bounded regular-file reader.
 Keep its refusal set and its refusal text unchanged.
@@ -39,7 +39,8 @@ An argv names exactly one mutation group, and each partner fault is a usage refu
 `cmd/bench/main.go` is already over the 400-line structure budget, so keep the derivation inside the existing row and add no line.
 
 `TestProbeUsageNamesOneSelectionAndOneMutation` loses its "two mutations" subtest, because that argv is now a valid combined mutant.
-`TestProbeHelpSpellings` and `TestHelpInventoryIsComplete` expect the new usage line.
+`TestProbeHelpSpellings` builds its expectation from `grammar.Help` at `refusal_test.go:307`, so it follows the new usage line.
+The literal expected probe line at `cmd/bench/help_inventory_test.go:120` changes to the new usage line.
 The binding registry binds the command registry files to `internal/probe` and `cmd/bench`, so they join this `Writes:` line.
 Change a registry file only when the help projection requires it.
 The canary unit `tests/canary/package-core-guard/unrouted-subcommand` pins `cmd/bench/main.go`, so it joins this line and keeps its meaning.

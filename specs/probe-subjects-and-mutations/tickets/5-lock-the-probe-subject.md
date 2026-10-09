@@ -1,7 +1,7 @@
 # Lock the probe subject and re-read it before the baseline
 
 Blocked by: 1-add-probe-mutation-forms.md, 2-probe-prose-and-system-checks.md, 3-name-the-first-failure-and-expected-witness.md, 4-name-a-mutant-build-failure.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/lock.go (new), internal/probe/lock_test.go (new), internal/probe/probe.go, internal/probe/refusal_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/lock.go (new), internal/probe/lock_holder_test.go (new), internal/probe/lock_test.go (new), internal/probe/probe.go, internal/probe/refusal_test.go
 Covers: PS58, PS59, PS60, PS61, PS62, PS63, PS64, PS65, PS66, PS67, PS68, PS75
 
 ## What to build
@@ -35,7 +35,8 @@ The start-read hook runs between the start read and the lock.
 The lock-owner hook runs between the open and the identity check.
 
 A lock row holds the lock from another process, as `TestProbeRefusesUnderALiveGateRun` holds the gate lock.
-That holder lives in `refusal_test.go`, so PS61 composes it with a second subject-lock holder.
+That holder lives at `refusal_test.go:93-108` and `:116`, and `refusal_test.go` stays on this line because the subject-lock holder may generalize it.
+Put the subject-lock holder process and its hook helpers in `internal/probe/lock_holder_test.go`, so `lock_test.go` stays at 400 lines or fewer.
 `TestProbeWritesNoRecord`, `TestProbeRefusesWhenPreservationFails`, and `TestProbePreservesTheSubjectBeforeTheRun` stay green without an edit.
 The command registry files join this `Writes:` line through the binding registry, and this ticket does not change them.
 
@@ -53,3 +54,4 @@ The command registry files join this `Writes:` line through the binding registry
 - [ ] Replacement on all three attempts gives the lock-unavailable line before the baseline.
 - [ ] A regular file at `$BENCH_HOME/probe-locks` refuses with the lock-unavailable line and starts no run child.
 - [ ] A completed probe leaves the record surfaces unchanged.
+- [ ] Each new file stays at 400 lines or fewer.

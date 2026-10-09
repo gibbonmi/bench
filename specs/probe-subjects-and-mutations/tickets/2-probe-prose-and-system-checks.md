@@ -1,7 +1,7 @@
 # Probe the prose check and the system suite through the check owner
 
 Blocked by: 1-add-probe-mutation-forms.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/outcome_test.go, internal/probe/probe.go, internal/probe/refusal_test.go, internal/probe/subject_check_test.go (new), internal/testreport/runbinary_test.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/probe/command.go, internal/probe/outcome_test.go, internal/probe/probe.go, internal/probe/refusal_test.go, internal/probe/subject_check_fixture_test.go (new), internal/probe/subject_check_test.go (new), internal/testreport/runbinary_test.go, internal/testreport/selection_facts.go, internal/testreport/selection_facts_test.go
 Covers: PS26, PS27, PS28, PS29, PS30, PS31, PS32, PS33, PS34, PS35, PS36, PS37
 
 ## What to build
@@ -30,7 +30,11 @@ The fixture meets the four conditions in the spec's further notes, and `BENCH_RU
 `newFixture` sets that variable, so the PS33 test removes it for its own run.
 
 `TestProbeRefusesProseAndSystemChecks` retires, because both checks become probe targets.
-`TestProbeNotesDeriveTheirTokens` expects two notes, and `TestProbeHelpSpellings` and `TestHelpInventoryIsComplete` expect the new usage line.
+`TestProbeNotesDeriveTheirTokens` expects two notes.
+The independent `probeHelpNotes` list at `refusal_test.go:291` loses the not-a-target clause, the hand route, and the rebuild note.
+The literal expected probe line at `cmd/bench/help_inventory_test.go:120` changes to name both `--run` positions.
+
+Put the fixture builder of PS33 in `internal/probe/subject_check_fixture_test.go`, so `subject_check_test.go` stays at 400 lines or fewer.
 The command registry files join this `Writes:` line through the binding registry, and they change only when the help projection requires it.
 
 Ticket 3 receives probe targets that include a prose run, which leaves the failed-name list empty.
@@ -48,4 +52,5 @@ Ticket 3 receives probe targets that include a prose run, which leaves the faile
 - [ ] `testreport.ProbeNotes` holds exactly two notes, and the probe help names no copy-aside route and no not-a-target sentence.
 - [ ] A substring miss with an unknown check answers the unknown-check refusal with exit 2.
 - [ ] A check-form substring miss names the named-check run pattern in its run cell.
+- [ ] Each new test file stays at 400 lines or fewer.
 - [ ] Every remaining probe and `testreport` assertion stays green.
