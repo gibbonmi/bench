@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/adoption-lifecycle-consumption/spec.md",
-  "plan_digest": "sha256:8f2db0bc94af1516cf342c05561e3ef7fc2434095cd3b95f3c8fe78eb6ac7974",
+  "plan_digest": "sha256:bf33b2ae9a565b7369e5d3b06e524dcb32e0166709df6300d85fa08f1096812e",
   "implementation_session": "",
   "chunks": [
     {
@@ -596,6 +596,139 @@
           ]
         }
       ]
+    },
+    {
+      "id": "ALC-LINK",
+      "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+      "tip": "64b4d0883988092fc4b113fe413804bc4b0d9e40",
+      "plan_digest": "sha256:bf33b2ae9a565b7369e5d3b06e524dcb32e0166709df6300d85fa08f1096812e",
+      "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+      "acceptance_rows": [
+        "ALC06",
+        "ALC07",
+        "ALC08",
+        "ALC09",
+        "ALC10",
+        "ALC11",
+        "ALC12",
+        "ALC13",
+        "ALC14",
+        "ALC15",
+        "ALC19",
+        "ALC25",
+        "ALC33",
+        "ALC38",
+        "ALC16",
+        "ALC17",
+        "ALC18",
+        "ALC21",
+        "ALC22",
+        "ALC23"
+      ],
+      "verification": [
+        {
+          "id": "t3-dropped-bespoke",
+          "performer": "claude:ft217_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3/03-floor-dropped-bespoke.txt",
+            "digest": "sha256:d1139cfcb238735364add52b7a5a3f9deeaeecc93c4af49fe5534ddda3ef2b48",
+            "excerpt": "Requirement dropped-bespoke. Candidate after final source edits and bench worktree build ft217-build.\nCommand: bench worktree exec ft217-build -- bench test --package ./internal/adopt --run 'Test(LifecycleDroppedRows|LifecycleClaudeOwnership|LifecycleSpecialInstructionFiles|LifecycleHookCompatibility|LifecycleOwnerConsumption)'\nExit: 0  Wall: 38.1s\ntree[1]{target,head,dirty}:\n  ft217-build,66c42d66315769053485b795ebfca9de74e6e55b,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,pass,38090,26\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "dropped-bespoke",
+          "command": "bench test --package ./internal/adopt --run 'Test(LifecycleDroppedRows|LifecycleClaudeOwnership|LifecycleSpecialInstructionFiles|LifecycleHookCompatibility|LifecycleOwnerConsumption)'",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-dropped-floor-conformance",
+          "performer": "claude:ft217_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3/04-floor-root-conformance.txt",
+            "digest": "sha256:8bb701708be5988f7073663802f0dd0cef5afdaa7f271c9b8394cd151ed47753",
+            "excerpt": "Requirement dropped-floor-conformance.\nCommand: bench worktree exec ft217-build -- bench test --check root-conformance\nExit: 0  Wall: 16.5s\ntree[1]{target,head,dirty}:\n  ft217-build,66c42d66315769053485b795ebfca9de74e6e55b,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16451,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "dropped-floor-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-dropped-floor-adopt",
+          "performer": "claude:ft217_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3/05-floor-adopt.txt",
+            "digest": "sha256:cfa1abc6f45c68fbc2e1a1afe0b3b700cd4e0fdaf14a1c24a2fcc2bc6dcf6ccb",
+            "excerpt": "Requirement dropped-floor-adopt (combined repeated --package run).\nCommand: bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench\nExit: 0  Wall: 285.5s\ntree[1]{target,head,dirty}:\n  ft217-build,66c42d66315769053485b795ebfca9de74e6e55b,true\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20472,334\n  github.com/gibbonmi/bench/internal/adopt,pass,285496,216\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "dropped-floor-adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-dropped-floor-cmd",
+          "performer": "claude:ft217_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3/06-floor-cmd.txt",
+            "digest": "sha256:6d20bcd837e98cb795328cb419b16e957bbbb7101ad264c75df429045f83218c",
+            "excerpt": "Requirement dropped-floor-cmd (combined repeated --package run).\nCommand: bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench\nExit: 0  Wall: 285.5s\ntree[1]{target,head,dirty}:\n  ft217-build,66c42d66315769053485b795ebfca9de74e6e55b,true\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20472,334\n  github.com/gibbonmi/bench/internal/adopt,pass,285496,216\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "dropped-floor-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-dropped-probes",
+          "performer": "claude:ft217_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3/10-probe-alc16-clean-remove-omit.txt",
+            "digest": "sha256:92e839922fce21229f0ceef4330c9dee47bb88ca1d766c122ef91d7070495ba7",
+            "excerpt": "tree[1]{target,head,dirty}:\n  ft217-build,66c42d66315769053485b795ebfca9de74e6e55b,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/decision.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleDroppedRows$,passed,4\nspilled{lines=11,bytes=680,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/32297bb2a2b17d4d68b8c88121928c21/1791560273904735826-9051bc6b1e8f680d.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,6827,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleDroppedRows/clean,\"lifecycle_consumption_test.go:262: Link = 3, want 0 with the \\\"\\\" row for .bench/withdrawn.md\",11\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "dropped-probes",
+          "command": "bench probe internal/adopt/decision.go --omit 'case o.Observed == o.Recorded:' --package ./internal/adopt --run '^TestLifecycleDroppedRows$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Clean-remove omission, modified-withdrawal effect swap, absent-row manifest-retain swap, and selected CLAUDE replacement omission must bite and restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft217_t3/10-probe-alc16-clean-remove-omit.txt",
+              "digest": "sha256:92e839922fce21229f0ceef4330c9dee47bb88ca1d766c122ef91d7070495ba7",
+              "excerpt": "tree[1]{target,head,dirty}:\n  ft217-build,66c42d66315769053485b795ebfca9de74e6e55b,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/decision.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleDroppedRows$,passed,4\nspilled{lines=11,bytes=680,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/32297bb2a2b17d4d68b8c88121928c21/1791560273904735826-9051bc6b1e8f680d.out}\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,6827,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleDroppedRows/clean,\"lifecycle_consumption_test.go:262: Link = 3, want 0 with the \\\"\\\" row for .bench/withdrawn.md\",11\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -654,6 +787,15 @@
     {
       "from": "sha256:23d40a1649f145c84dbc3f8724123aefc4edf7b22a388ad8243d688f070f5495",
       "to": "sha256:8f2db0bc94af1516cf342c05561e3ef7fc2434095cd3b95f3c8fe78eb6ac7974",
+      "chunk_ids": {
+        "ALC-OWNER": [
+          "ALC-OWNER"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8f2db0bc94af1516cf342c05561e3ef7fc2434095cd3b95f3c8fe78eb6ac7974",
+      "to": "sha256:bf33b2ae9a565b7369e5d3b06e524dcb32e0166709df6300d85fa08f1096812e",
       "chunk_ids": {
         "ALC-OWNER": [
           "ALC-OWNER"
