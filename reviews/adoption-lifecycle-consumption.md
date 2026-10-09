@@ -600,9 +600,9 @@
     {
       "id": "ALC-LINK",
       "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
-      "tip": "64b4d0883988092fc4b113fe413804bc4b0d9e40",
-      "plan_digest": "sha256:bf33b2ae9a565b7369e5d3b06e524dcb32e0166709df6300d85fa08f1096812e",
-      "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+      "tip": "b40e664a062035f515a04217368d7ec4e80c0e12",
+      "plan_digest": "sha256:e507a32f51f190782ee087a97d3d67c39d107e50e7bce2b611f419126de8c082",
+      "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
       "acceptance_rows": [
         "ALC06",
         "ALC07",
@@ -825,6 +825,107 @@
               "ref": "claude-agent:ft217_t2b/p01-alc38.txt",
               "digest": "sha256:5633f20be80d3782bf348d84fa02e0617bdd91c619fa96d499ebedffebdf098e",
               "excerpt": "command: bench worktree exec ft217-build -- bench probe internal/adopt/link_transaction.go --omit-file specs/adoption-lifecycle-consumption/assets/alc38-omit.txt --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$/^competing_refusals$'\nomitted bytes (od -c): \\t\\tif lifecycle.Refusal != \"\" {\\n\\t\\t\\tfmt.Fprintln(stderr, lifecycle.Refusal)\\n\\t\\t\\treturn 1, false\\n\\t\\t}\\n\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/link_transaction.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleHardRefusalOrder$/^competing_refusals$,passed,2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,31,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleHardRefusalOrder/competing_refusals,\"lifecycle_special_test.go:107: transactionalLink = (1, false), stderr \\\"conflict: kit asset missing: /tmp/BWUVJH/t/TestLifecycleHardRefusalOrder4280772862/001/absent-kit-source\\\\\\\\n\\\"; want (1, false), stderr \\\"conflict: linked/asset has a symlin… (261 bytes)\",1\nreading: the mutant still exits 1 with changed false (publishes nothing); only the exact stderr assertion fails, exposing the later missing-source diagnostic.\n"
+            }
+          }
+        },
+        {
+          "id": "t3r1-dropped-bespoke",
+          "performer": "claude:ft217_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3_repair1/03-floor-dropped-bespoke.txt",
+            "digest": "sha256:dbe0171868c8e16a9451269b7b7f2f836e63e2579a4e4ea5350d2bd88f9a1540",
+            "excerpt": "$ bench worktree exec ft217-build -- bench test --package ./internal/adopt --run 'Test(LifecycleDroppedRows|LifecycleClaudeOwnership|LifecycleSpecialInstructionFiles|LifecycleHookCompatibility|LifecycleOwnerConsumption|LifecycleLinkPartitions|LifecycleHardRefusalOrder|LifecycleSeedOwnership)'\nexit 0 (repair tree; the commit holds this tree)\ntree[1]{target,head,dirty}:\n  ft217-build,\"0126e37dd0e8149a46f97021abab4aade39641aa\",true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,pass,123337,51\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "dropped-bespoke",
+          "command": "bench test --package ./internal/adopt --run 'Test(LifecycleDroppedRows|LifecycleClaudeOwnership|LifecycleSpecialInstructionFiles|LifecycleHookCompatibility|LifecycleOwnerConsumption)'",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-dropped-floor-conformance",
+          "performer": "claude:ft217_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3_repair1/04-floor-root-conformance.txt",
+            "digest": "sha256:f3023a0bcdf40aaf5e9f8f6d35519bda4dd8439c2eff2693f64ca80ddac7a38f",
+            "excerpt": "$ bench worktree exec ft217-build -- bench test --check root-conformance\nexit 0 (repair tree; the commit holds this tree)\ntree[1]{target,head,dirty}:\n  ft217-build,\"0126e37dd0e8149a46f97021abab4aade39641aa\",true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15333,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "dropped-floor-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-dropped-floor-adopt",
+          "performer": "claude:ft217_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3_repair1/05-floor-adopt.txt",
+            "digest": "sha256:da20ec05410ca174b3d582694d484d4d33cdb9dd7ace4f0687cd8db22bec070a",
+            "excerpt": "$ bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench\nexit 0 (one call covers dropped-floor-adopt and dropped-floor-cmd; repair tree; the commit holds this tree)\ntree[1]{target,head,dirty}:\n  ft217-build,\"0126e37dd0e8149a46f97021abab4aade39641aa\",true\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16251,334\n  github.com/gibbonmi/bench/internal/adopt,pass,303341,222\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "dropped-floor-adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-dropped-floor-cmd",
+          "performer": "claude:ft217_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3_repair1/06-floor-cmd.txt",
+            "digest": "sha256:da20ec05410ca174b3d582694d484d4d33cdb9dd7ace4f0687cd8db22bec070a",
+            "excerpt": "$ bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench\nexit 0 (one call covers dropped-floor-adopt and dropped-floor-cmd; repair tree; the commit holds this tree)\ntree[1]{target,head,dirty}:\n  ft217-build,\"0126e37dd0e8149a46f97021abab4aade39641aa\",true\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16251,334\n  github.com/gibbonmi/bench/internal/adopt,pass,303341,222\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "dropped-floor-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t3r1-dropped-probes",
+          "performer": "claude:ft217_t3_repair1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t3_repair1/10-dropped-probes.txt",
+            "digest": "sha256:61efa66928f36455cfb44d023f0e215848780e34215d6a0eea9090ac1380c9c6",
+            "excerpt": "$ bench worktree exec ft217-build -- bench probe internal/adopt/decision.go --omit 'case o.Observed == o.Recorded:' --package ./internal/adopt --run '^TestLifecycleDroppedRows$'\nprobe call exit 0; mutant test run failed (exit 1)\ntree[1]{target,head,dirty}:\n  ft217-build,\"0126e37dd0e8149a46f97021abab4aade39641aa\",true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/decision.go,omit,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,12796,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleDroppedRows/clean,\"lifecycle_consumption_test.go:318: Link = 3, want 0 with the \\\"\\\" row for .bench/withdrawn.md\",11\n"
+          },
+          "requirement": "dropped-probes",
+          "command": "bench probe internal/adopt/decision.go --omit 'case o.Observed == o.Recorded:' --package ./internal/adopt --run '^TestLifecycleDroppedRows$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Clean-remove omission, modified-withdrawal effect swap, absent-row manifest-retain swap, and selected CLAUDE replacement omission must bite and restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft217_t3_repair1/10-dropped-probes.txt",
+              "digest": "sha256:61efa66928f36455cfb44d023f0e215848780e34215d6a0eea9090ac1380c9c6",
+              "excerpt": "$ bench worktree exec ft217-build -- bench probe internal/adopt/decision.go --omit 'case o.Observed == o.Recorded:' --package ./internal/adopt --run '^TestLifecycleDroppedRows$'\nprobe call exit 0; mutant test run failed (exit 1)\ntree[1]{target,head,dirty}:\n  ft217-build,\"0126e37dd0e8149a46f97021abab4aade39641aa\",true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/decision.go,omit,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,12796,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleDroppedRows/clean,\"lifecycle_consumption_test.go:318: Link = 3, want 0 with the \\\"\\\" row for .bench/withdrawn.md\",11\n"
             }
           }
         }
