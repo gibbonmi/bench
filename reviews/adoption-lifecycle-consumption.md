@@ -2287,6 +2287,60 @@
         "requirement": "system-entries-and-recovery",
         "command": "bench test --check system",
         "exit_code": 0
+      },
+      {
+        "id": "final2-adopt-unchanged-assertions",
+        "performer": "claude:ft217-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:ft217/final/adopt-unchanged-assertions.txt",
+          "digest": "sha256:944c33832b16af6262641ad4c0281c11d7a210ca8ed9574450d8a19a3369535e",
+          "excerpt": "tree[1]{target,head,dirty}:\n  ft217-build,cc2277544160dcf3008fcc66d6724e74e1428e4b,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,pass,260015,243\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n[exited with code 0]\n"
+        },
+        "requirement": "adopt-unchanged-assertions",
+        "command": "bench test --package ./internal/adopt",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-system-entries-and-recovery",
+        "performer": "claude:ft217-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:ft217/final/system-entries-and-recovery.txt",
+          "digest": "sha256:c2299be1497ac74ec94b034db25c75881d1a404c174443163d43eaa46a2515f2",
+          "excerpt": "tree[1]{target,head,dirty}:\n  ft217-build,cc2277544160dcf3008fcc66d6724e74e1428e4b,false\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,167,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,147198,167\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n[exited with code 0]\n"
+        },
+        "requirement": "system-entries-and-recovery",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-copy-survival-census",
+        "performer": "claude:ft217-orchestrator-20261009",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "42f2c788079add64082b71dc0ada7867a75d1d1e",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:ft217/final/copy-survival-census.txt",
+          "digest": "sha256:e8de0c843fe970cfff065f68dddc4908f58802d23a83b9e20ace6a3434ce62e8",
+          "excerpt": "tree[1]{target,head,dirty}:\n  ft217-build,cc2277544160dcf3008fcc66d6724e74e1428e4b,false\nconsumers[5]{symbol,file,line,via,enclosing}:\n  PlanLifecycle,internal/adopt/decision_execution.go,8,call,decideObservation\n  PlanLifecycle,internal/adopt/upgrade.go,156,call,upgradePlanCounts\n  transactionalRepair,internal/adopt/compatibility.go,264,call,mutateCompatibility\nspilled{lines=11,bytes=738,omitted_lines=2,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/32297bb2a2b17d4d68b8c88121928c21/1791580531697798168-0cebd4b6dfdf6dca.out}\nmeta[1]{packages,files,matches,rows,truncated}:\n  338,5,3,5,false\ncitation[1]{sha,state,version,cmd,hash}:\n  cc2277544160dcf3008fcc66d6724e74e1428e4b,clean,0.2.0,bench consumers PlanLifecycle transactionalRepair planUnlink --production --full,bbc3214213b975be0e71ae82002f4c33cba47743a8ded66865296ead6c3bdf5a\nhelp[0]{cmd,why}:\nconsumers[5]{symbol,file,line,via,enclosing}:\n  PlanLifecycle,internal/adopt/decision_execution.go,8,call,decideObservation\n  PlanLifecycle,internal/adopt/upgrade.go,156,call,upgradePlanCounts\n  transactionalRepair,internal/adopt/compatibility.go,264,call,mutateCompatibility\n  transactionalRepair,internal/adopt/link_transaction.go,18,call,transactionalLink\n  planUnlink,internal/adopt/unlink.go,68,call,Unlink\nmeta[1]{packages,files,matches,rows,truncated}:\n  338,5,3,5,false\ncitation[1]{sha,state,version,cmd,hash}:\n  cc2277544160dcf3008fcc66d6724e74e1428e4b,clean,0.2.0,bench consumers PlanLifecycle transactionalRepair planUnlink --production --full,bbc3214213b975be0e71ae82002f4c33cba47743a8ded66865296ead6c3bdf5a\nhelp[0]{cmd,why}:\n"
+        },
+        "requirement": "copy-survival-census",
+        "command": "bench consumers PlanLifecycle transactionalRepair planUnlink --production --full",
+        "exit_code": 0
       }
     ]
   },
