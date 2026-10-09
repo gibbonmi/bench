@@ -496,7 +496,7 @@ All new tests live in new files.
 
 | owner responsibility | exact repo-relative paths | reviewer disposition |
 |---|---|---|
-| Immutable decision and projections | `internal/adopt/decision.go`, `internal/adopt/lifecycle_decision_test.go` | ticket graph accepted |
+| Immutable decision and projections | `internal/adopt/decision.go`, `internal/adopt/decision_execution.go`, `internal/adopt/lifecycle_decision_test.go` | ticket graph accepted; the execution file holds owner headroom for ticket 04 (plan expansion 2026-10-09) |
 | Observation and application composition | `internal/adopt/link_transaction.go`, `internal/adopt/link_stage.go`, `internal/adopt/lifecycle_consumption_test.go`, `internal/adopt/lifecycle_special_test.go` | accepted |
 | Unlink decision consumer | `internal/adopt/unlink.go`, `internal/adopt/lifecycle_unlink_test.go` | accepted |
 | Upgrade compatibility projection | `internal/adopt/upgrade.go`, `internal/adopt/lifecycle_preview_test.go` | accepted |
@@ -775,7 +775,16 @@ Review records bind three independent axes to each frozen chunk pair.
           "preserved": "f5273edb48db45b0a1bada3552a5130a74d6c52d"
         }
       ],
-      "04-consume-unlink-decisions-and-close-entry-proof.md": []
+      "04-consume-unlink-decisions-and-close-entry-proof.md": [
+        {
+          "session": "claude:ft217_t4",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "1a473e42e09022859166323b8f334699c152cabd",
+          "native_ref": "claude-agent:ft217_t4"
+        }
+      ]
     }
   },
   "chunks": [

@@ -1,7 +1,7 @@
 # Consume Unlink decisions and close real entry proof
 
 Blocked by: 01-expose-complete-decisions-through-upgrade-preview.md, 02-consume-decisions-for-desired-link-assets.md, 03-consume-decisions-for-dropped-and-bespoke-link-assets.md
-Writes: internal/adopt/decision.go, internal/adopt/unlink.go, internal/adopt/marker.go, internal/adopt/link_hook.go, internal/adopt/lifecycle_consumption_test.go (new), internal/adopt/lifecycle_special_test.go (new), internal/adopt/lifecycle_unlink_test.go (new), internal/systemtest/lifecycle_test.go (new)
+Writes: internal/adopt/decision.go, internal/adopt/decision_execution.go (new), internal/adopt/unlink.go, internal/adopt/marker.go, internal/adopt/link_hook.go, internal/adopt/lifecycle_consumption_test.go (new), internal/adopt/lifecycle_special_test.go (new), internal/adopt/lifecycle_unlink_test.go (new), internal/systemtest/lifecycle_test.go (new)
 Covers: ALC01, ALC20, ALC24, ALC26, ALC27, ALC28, ALC29, ALC30, ALC34, ALC35, ALC36, ALC37
 
 ## What to build
