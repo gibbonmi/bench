@@ -323,7 +323,9 @@ Before the first dispatch, the coordinator amends it to a version-2 plan with th
       "verification": [
         {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "package-core-guard", "command": "bench test --check package-core-guard"}
+        {"id": "package-core-guard", "command": "bench test --check package-core-guard"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
     {
@@ -332,7 +334,9 @@ Before the first dispatch, the coordinator amends it to a version-2 plan with th
       "verification": [
         {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
         {"id": "testreport", "command": "bench test --package ./internal/testreport"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"}
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
     {
@@ -343,7 +347,9 @@ Before the first dispatch, the coordinator amends it to a version-2 plan with th
         {"id": "testreport", "command": "bench test --package ./internal/testreport"},
         {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
         {"id": "record-forms", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"}
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
     {
@@ -351,7 +357,9 @@ Before the first dispatch, the coordinator amends it to a version-2 plan with th
       "tickets": ["5-lock-the-probe-subject.md"],
       "verification": [
         {"id": "probe-family", "command": "bench test --package ./internal/probe/..."},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"}
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
     {
@@ -359,10 +367,14 @@ Before the first dispatch, the coordinator amends it to a version-2 plan with th
       "tickets": ["6-document-the-probe-forms.md"],
       "verification": [
         {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "root-conformance", "command": "bench test --check conformance-meta"},
+        {"id": "conformance-meta", "command": "bench test --check conformance-meta"},
         {"id": "agent-definitions", "command": "bench test --check claude-agent-definitions"},
         {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
-        {"id": "prose", "command": "bench test --check prose"}
+        {"id": "prose", "command": "bench test --check prose"},
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
     }
   ],
