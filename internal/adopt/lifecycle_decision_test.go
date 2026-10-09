@@ -63,6 +63,13 @@ func linkObservations() []LifecycleObservation {
 		{Path: "claude-known", PlanKind: "claude", Present: true, FileKind: "regular", KnownForm: true, Recorded: "old", Observed: "legacy", Staged: "current"},
 		{Path: "claude-empty", PlanKind: "claude", Present: true, FileKind: "regular", Observed: "empty", Staged: "current"},
 		{Path: "claude-special", PlanKind: "claude", Present: true, FileKind: "other", Staged: "current"},
+		{Path: "symlink-mode", PlanKind: "file", Present: true, FileKind: "symlink", Perm: 0o777, Recorded: "old", Observed: "same",
+			Staged: "same", StagedKind: "regular", StagedPerm: 0o644},
+		{Path: "claude-owned-special", PlanKind: "claude", Present: true, FileKind: "other", Recorded: "old", Staged: "current"},
+		{Path: "strict-link-dest", PlanKind: "file", Present: true, FileKind: "symlink", Perm: 0o777, Recorded: "old", Observed: "old",
+			Staged: "new", StagedKind: "regular", StagedPerm: 0o644, Strict: true},
+		{Path: "strict-link-staged", PlanKind: "adapter", Present: true, FileKind: "regular", Perm: 0o644, Recorded: "old", Observed: "old",
+			Staged: "link", StagedKind: "symlink", StagedPerm: 0o777, Strict: true},
 	}
 	for i := range observations {
 		observations[i].Order = i
@@ -100,6 +107,7 @@ func TestCompleteLifecycleDecisions(t *testing.T) {
 				decision("claude-empty", "preserve", "project-owned", "omit", "", 17),
 				decision("claude-known", "change", "", "record", "current", 16),
 				decision("claude-modified", "preserve", "modified-managed", "retain", "old", 14),
+				decision("claude-owned-special", "preserve", "project-owned", "omit", "", 20),
 				decision("claude-special", "preserve", "project-owned", "omit", "", 18),
 				decision("clean-old", "change", "", "record", "new", 2),
 				decision("collision", "preserve", "project-owned", "omit", "", 8),
@@ -112,10 +120,14 @@ func TestCompleteLifecycleDecisions(t *testing.T) {
 				decision("seed-absent", "add", "", "omit", "", 9),
 				decision("seed-owned", "preserve", "seed-owned", "retain", "old", 10),
 				decision("seed-present", "preserve", "seed-owned", "omit", "", 0),
+				decision("strict-link-dest", "change", "", "record", "new", 21),
+				decision("strict-link-staged", "change", "", "record", "link", 22),
 				decision("strict-mode", "preserve", "modified-managed", "retain", "same", 5),
+				decision("symlink-mode", "preserve", "converged", "record", "same", 19),
 			},
 			Operations: []Operation{{"add", "absent"}, {"add", "claude-absent"}, {"change", "claude-known"}, {"change", "clean-old"},
-				{"remove", "dropped-clean"}, {"change", "mode"}, {"add", "seed-absent"}},
+				{"remove", "dropped-clean"}, {"change", "mode"}, {"add", "seed-absent"}, {"change", "strict-link-dest"},
+				{"change", "strict-link-staged"}},
 		}
 		requirePlan(t, got, want)
 	})
@@ -150,29 +162,38 @@ func TestCompleteLifecycleDecisions(t *testing.T) {
 			t.Fatalf("nil execution = %#v, want the legacy decision", got)
 		}
 	})
+	execution := func(action string, observations ...LifecycleObservation) LifecycleInput {
+		return LifecycleInput{Execution: &LifecycleInventory{Action: action, Observations: observations}}
+	}
 	for _, tc := range []struct {
-		name, action, path string
-		observations       []LifecycleObservation
+		name, want string
+		input      LifecycleInput
 	}{
-		{name: "symlink parent write", action: "link", path: "linked/asset", observations: []LifecycleObservation{
-			{Path: "linked/asset", PlanKind: "inline", SymlinkParent: true, Staged: "s"}}},
-		{name: "foreign adapter", action: "link", path: ".claude/commands/x.md", observations: []LifecycleObservation{
-			{Path: ".claude/commands/x.md", PlanKind: "adapter", Present: true, FileKind: "regular", Observed: "bytes", Staged: "link",
-				StagedKind: "symlink", ResolvedEquivalent: true, SymlinkParent: true}}},
-		{name: "seed symlink parent", action: "link", path: "linked/seed", observations: []LifecycleObservation{
-			{Path: "linked/seed", PlanKind: "seed", Present: true, FileKind: "regular", SymlinkParent: true}}},
-		{name: "dropped escape", action: "link", path: "../escape", observations: []LifecycleObservation{
-			{Path: "../escape", Escapes: true, Present: true, Recorded: "h", Observed: "h"}}},
-		{name: "dropped special", action: "link", path: "dir", observations: []LifecycleObservation{
-			{Path: "dir", Present: true, FileKind: "other", Recorded: "h"}}},
-		{name: "duplicate", action: "unlink", path: "twice", observations: []LifecycleObservation{
-			{Path: "twice", Recorded: "h"}, {Path: "twice", Recorded: "h", Order: 1}}},
-		{name: "unknown action", action: "relink", path: "relink", observations: []LifecycleObservation{{Path: "x"}}},
+		{name: "symlink parent write", want: "conflict: linked/asset has a symlink parent directory", input: execution("link",
+			LifecycleObservation{Path: "linked/asset", PlanKind: "inline", SymlinkParent: true, Staged: "s"})},
+		{name: "foreign adapter", want: "conflict: .claude/commands/x.md has a symlink parent directory", input: execution("link",
+			LifecycleObservation{Path: ".claude/commands/x.md", PlanKind: "adapter", Present: true, FileKind: "regular", Observed: "bytes",
+				Staged: "link", StagedKind: "symlink", ResolvedEquivalent: true, SymlinkParent: true})},
+		{name: "seed symlink parent", want: "conflict: linked/seed has a symlink parent directory", input: execution("link",
+			LifecycleObservation{Path: "linked/seed", PlanKind: "seed", Present: true, FileKind: "regular", SymlinkParent: true})},
+		{name: "dropped escape", want: "refused manifest path: ../escape", input: execution("link",
+			LifecycleObservation{Path: "../escape", Escapes: true, Present: true, Recorded: "h", Observed: "h"})},
+		{name: "dropped special", want: "refused non-regular dropped asset: dir", input: execution("link",
+			LifecycleObservation{Path: "dir", Present: true, FileKind: "other", Recorded: "h"})},
+		{name: "dropped unreadable", want: `dropped asset "unread" has no fingerprint`, input: execution("link",
+			LifecycleObservation{Path: "unread", Present: true, FileKind: "regular", Recorded: "h"})},
+		{name: "duplicate", want: `managed asset "twice" is duplicated`, input: execution("unlink",
+			LifecycleObservation{Path: "twice", Recorded: "h"}, LifecycleObservation{Path: "twice", Recorded: "h", Order: 1})},
+		{name: "unknown action", want: `lifecycle action "relink" is invalid`, input: execution("relink", LifecycleObservation{Path: "x"})},
+		{name: "invalid preserve", want: `managed path "../x" is invalid`, input: LifecycleInput{Preserve: []string{"../x"}}},
+		{name: "current before desired", want: `managed asset "../c" is invalid`, input: LifecycleInput{
+			Current: []Asset{{"../c", "h"}}, Desired: []Asset{{"../d", "h"}}, Preserve: []string{"../p"}}},
+		{name: "desired before preserve", want: `managed asset "../d" is invalid`, input: LifecycleInput{
+			Desired: []Asset{{"../d", "h"}}, Preserve: []string{"../p"}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := PlanLifecycle(LifecycleInput{Execution: &LifecycleInventory{Action: tc.action, Observations: tc.observations}})
-			if !strings.Contains(got.Refusal, tc.path) || got.Decisions != nil || got.Operations != nil {
-				t.Fatalf("PlanLifecycle() = %#v, want a refusal naming %q", got, tc.path)
+			if got := PlanLifecycle(tc.input); got.Refusal != tc.want || got.Decisions != nil || got.Operations != nil {
+				t.Fatalf("PlanLifecycle() = %#v, want the refusal %q", got, tc.want)
 			}
 		})
 	}

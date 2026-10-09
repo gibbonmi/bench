@@ -278,9 +278,11 @@ func claudeDecision(o LifecycleObservation) LifecycleDecision {
 func withdrawalDecision(o LifecycleObservation) (LifecycleDecision, string) {
 	switch {
 	case o.Escapes || o.SymlinkParent:
-		return LifecycleDecision{}, fmt.Sprintf("refused manifest path %q", o.Path)
+		return LifecycleDecision{}, "refused manifest path: " + o.Path
 	case !o.Present:
 		return preserved(o.Path, "absent", manifestOmit, ""), ""
+	case o.FileKind != "regular" && o.FileKind != "symlink":
+		return LifecycleDecision{}, "refused non-regular dropped asset: " + o.Path
 	case o.Observed == "":
 		return LifecycleDecision{}, fmt.Sprintf("dropped asset %q has no fingerprint", o.Path)
 	case o.Observed == o.Recorded:
@@ -322,7 +324,7 @@ func preserved(path, reason, action, fingerprint string) LifecycleDecision {
 }
 
 func symlinkParentRefusal(path string) string {
-	return fmt.Sprintf("managed path %q has a symlink parent directory", path)
+	return "conflict: " + path + " has a symlink parent directory"
 }
 
 func duplicatedAsset(path string) string {

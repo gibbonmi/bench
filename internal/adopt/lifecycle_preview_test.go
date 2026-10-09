@@ -17,8 +17,7 @@ type previewCounts struct{ added, changed, removed int }
 // previewTable renders the count table that a real Upgrade prints before any guard.
 func previewTable(t *testing.T, from, to string, want previewCounts) string {
 	t.Helper()
-	block, err := toon.TableTyped("upgrade", []string{"from", "to", "added", "changed", "removed"},
-		[][]any{{from, to, want.added, want.changed, want.removed}})
+	block, err := toon.TableTyped(upgradeTable, upgradeColumns, [][]any{{from, to, want.added, want.changed, want.removed}})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -27,6 +27,12 @@ var upgradeGrammar = usage.Grammar{
 	Flags: []usage.Flag{{Name: "--check"}, {Name: "--force"}},
 }
 
+// upgradeTable and upgradeColumns are the header of the count table that Upgrade prints.
+var (
+	upgradeTable   = "upgrade"
+	upgradeColumns = []string{"from", "to", "added", "changed", "removed"}
+)
+
 // Upgrade compares the linked repo's pinned kit version against the installed one, prints
 // the plan, and applies the relink. --check reports the plan and applies nothing. An
 // equal version is a definitive no-op success. A lower installed version is a downgrade
@@ -66,8 +72,7 @@ func Upgrade(args []string, stdout, stderr io.Writer, version string) int {
 	if direction != 0 && prePushRefreshEligible(root) {
 		changed++
 	}
-	block, err := toon.TableTyped("upgrade", []string{"from", "to", "added", "changed", "removed"},
-		[][]any{{pinned, version, added, changed, removed}})
+	block, err := toon.TableTyped(upgradeTable, upgradeColumns, [][]any{{pinned, version, added, changed, removed}})
 	if err != nil {
 		fmt.Fprintln(stderr, toon.RenderError(err))
 		return 1
@@ -123,11 +128,10 @@ func pinnedManifest(path string, stderr io.Writer) (Manifest, int) {
 //   - an owned file entry whose kit-side bytes no longer match the recorded hash is changed
 //
 // Only file entries can drift; an adapter symlink and an inline entry are generated from
-// the destination path and from constant content. This reads the same inputs
-// transactionalLink reconciles and counts only PlanLifecycle's effect projection, so it
-// decides nothing a second time. CLAUDE.md is manifest-owned but conditionally, never
-// planned. Its requested preserve decision stays outside the effects, so it is not a
-// withdrawal.
+// the destination path and from constant content. The counts come only from the effect
+// projection of PlanLifecycle; do not decide a path here. CLAUDE.md is manifest-owned but
+// conditionally, never planned. Its requested preserve decision stays outside the effects,
+// so it is not a withdrawal.
 func upgradePlanCounts(manifest Manifest, plan []planEntry) (added, changed, removed int) {
 	current := make([]Asset, 0, len(manifest.hashes))
 	for _, row := range manifest.Rows() {
