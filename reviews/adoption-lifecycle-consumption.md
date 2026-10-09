@@ -528,6 +528,72 @@
           "supersedes": [
             "owner-coverage-r1"
           ]
+        },
+        {
+          "id": "owner-standards-r3",
+          "performer": "claude:ft217_owner_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "cd4d91d9b677dbc77f4d07c689d69fa4a74afd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_owner_standards_r3/review-owner-standards-r3.txt",
+            "digest": "sha256:020c12362dafcf0558588646a653f10d86b72c8e263290d3b8ac25d940089e9f",
+            "excerpt": "ALC-OWNER Standards axis, confirming round 3. Session claude:ft217_owner_standards_r3, opus / medium. Chunk pair aabd462d..089f7740, source tip 461ad92c, evidence sha256:f0e134ea current=true. Read the repair 2 delta b48b4803..089f7740 only.\n\nCount: 0. Worst issue: none.\n\nThe delta touches only internal/adopt/lifecycle_decision_test.go (4 added, 2 removed): the dropped-symlink fixture row (line 73), its expected decision at order 23 (line 119), and the remove operation (line 131). It reuses the existing table form, adds no helper, parser, or comment, and the file is 247 lines.\n\nFolds confirmed: C5 is test-only (one file in the stat); the main fold left docs/known-issues.md unchanged against 23c59775.\n\nAdvice (no confidence): the new expectation's recorded red is the t1r2-owner-preview-probes entry (the dropped-symlink probe), which the Coverage axis confirms.\n\nCursors fetched: the spilled repair diff. Examined: lifecycle_decision_test.go:20-154, the repair 2 diff and stat, the known-issues diff.\n"
+          },
+          "axis": "Standards",
+          "base": "aabd462d52349b00cfb3d66f67a6dd24891468d2",
+          "tip": "089f7740dc9e0915f92d10cf3808c7a9e07ceef5",
+          "finding_ids": [],
+          "supersedes": [
+            "owner-standards-r2"
+          ]
+        },
+        {
+          "id": "owner-spec-r3",
+          "performer": "claude:ft217_owner_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "cd4d91d9b677dbc77f4d07c689d69fa4a74afd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_owner_spec_r3/review-owner-spec-r3.txt",
+            "digest": "sha256:9133c2fb4e4ec56e2dd0a4a93b05f10ded7136ba3559c0812cedbd96217dae9a",
+            "excerpt": "ALC-OWNER Spec axis, confirming round 3. Session claude:ft217_owner_spec_r3, opus / medium. Chunk pair aabd462d..089f7740, source tip 461ad92c, evidence sha256:f0e134ea current=true. Read the repair 2 delta b48b4803..089f7740 only.\n\nCount: 0. Worst issue: none.\n\nFolds confirmed: C5. The new observation (lifecycle_decision_test.go:73) is a dropped present symlink with Recorded \"h\" and Observed \"h\"; its expected decision is remove with manifest omit at order 23, matching spec.md:219 (\"A dropped ordinary row is present and matches its recorded hash | Withdraw a clean asset | remove | omit | ALC16\") and the caller at link_transaction.go:217-228, which lets a symlink through and stages a removal on a matching fingerprint. The order index and the sorted operation position are correct. No scope creep: one test file, no production code.\n\nAdvice (no confidence): spec.md:219 says \"ordinary row\" without naming a symlink; the fixture and the caller both treat a symlink as ordinary; ALC16's cell could name the symlink case.\n\nCursors fetched: the spilled repair diff. Examined: the diff, lifecycle_decision_test.go:40-79, link_transaction.go:205-234, spec.md:219-221.\n"
+          },
+          "axis": "Spec",
+          "base": "aabd462d52349b00cfb3d66f67a6dd24891468d2",
+          "tip": "089f7740dc9e0915f92d10cf3808c7a9e07ceef5",
+          "finding_ids": [],
+          "supersedes": [
+            "owner-spec-r2"
+          ]
+        },
+        {
+          "id": "owner-coverage-r3",
+          "performer": "claude:ft217_owner_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "cd4d91d9b677dbc77f4d07c689d69fa4a74afd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_owner_coverage_r3/review-owner-coverage-r3.txt",
+            "digest": "sha256:a3469c7579d9dc79527cbacf597133c62406b9eb1bff032f2cb60165054899d2",
+            "excerpt": "ALC-OWNER Coverage axis, confirming round 3. Session claude:ft217_owner_coverage_r3, opus / medium. Chunk pair aabd462d..089f7740, source tip 461ad92c, evidence sha256:f0e134ea current=true. Read the repair 2 delta b48b4803..089f7740 only.\n\nCount: 0. Worst issue: none.\n\nFolds confirmed: bench probe internal/adopt/decision.go --swap 'case o.FileKind != \"regular\" && o.FileKind != \"symlink\":' --with 'case o.FileKind != \"regular\":' --package ./internal/adopt --run '^Test(CompleteLifecycleDecisions|LifecycleDecisionOrder|PlanLifecycleFromImmutableInventories)$' → bit, cause failed, 2 failed tests (TestCompleteLifecycleDecisions/link at lifecycle_decision_test.go:134, TestLifecycleDecisionOrder/execution at :217), restored yes.\n\nAdvice (no confidence): a dropped symlink with differing fingerprints has no row; a kind-specific mutant at decision.go:288 stayed silent (25 tests, restored yes), but the production guard is kind-agnostic and dropped-modified (regular) witnesses it; an optional row dropped-symlink-edit expecting kept-modified-removed would close it. The absent dropped symlink and the special-kind over-admission are already witnessed by dropped-absent and the dropped special refusal row.\n\nCursors fetched: the spilled repair diff; one rg spill not read. Examined: the diff, decision.go:270-309, docs/known-issues.md. Tree clean after both restores; the dirty reviews file was the orchestrator's round-3 record writes.\n"
+          },
+          "axis": "Coverage",
+          "base": "aabd462d52349b00cfb3d66f67a6dd24891468d2",
+          "tip": "089f7740dc9e0915f92d10cf3808c7a9e07ceef5",
+          "finding_ids": [],
+          "supersedes": [
+            "owner-coverage-r2"
+          ]
         }
       ]
     }
