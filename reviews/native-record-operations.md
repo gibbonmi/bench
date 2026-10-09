@@ -10,9 +10,9 @@
     {
       "id": "NR-C1",
       "base": "b925d1c1fd675b0cc299543ff3ba4a60a4ddf978",
-      "tip": "e2068642f17fb744698626a66a26c6e67a7ce157",
-      "plan_digest": "sha256:db85f3d092897f31ec6d6d341cb0a8c11a741dcc7d6587808e14a5945a113680",
-      "source_digest": "0f8a65e2cc006d71c605967d925149a2cf2af06d",
+      "tip": "01d9e0a1edc65351b83480272baa9584e301757f",
+      "plan_digest": "sha256:2b12b170d327afc0e3e75678520924f04f8bd7432bf1031309e2a6849dfed75a",
+      "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
       "acceptance_rows": [
         "NR1",
         "NR2",
@@ -219,6 +219,197 @@
               "ref": "claude-agent:nro_t1_r1 focused green and bench probe omit of the checkPlan call in internal/reviewrecord/assignment.go at e2068642",
               "digest": "sha256:3ebb042d1fa4e81f5cdac13ab554c28dbed1212145ded28294073e26634901ce",
               "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,e2068642f17fb744698626a66a26c6e67a7ce157,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,197,6\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\ntree[1]{target,head,dirty}:\n  nro-build,e2068642f17fb744698626a66a26c6e67a7ce157,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/assignment.go,omit,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,^TestAssignmentWholePlanValidation$,passed,6\nspilled{lines=12,bytes=1960,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/1494f9bd9d4036914f3897f88c9afdf6/1791536500750183733-abc69c5ebad2bc45.out}\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/cyclic_dependency,\"assignment_test.go:152: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",9b7fe78f3825c7b491a43ebc7e8a7fe73c634c2f\\\\\\\\n\\\"; want exit 1 naming \\\"cycle\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/invalid_non-target_ticket,\"assignment_test.go:142: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",9c8d026b8030b98cbef1c0cb38dd7c85577f0763\\\\\\\\n\\\"; want exit 1 naming \\\"2.md\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/missing_dependency,\"assignment_test.go:147: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",71f10da2b26a75a85efa0f6ead7b2729617efe25\\\\\\\\n\\\"; want exit 1 naming \\\"9.md\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/session_of_another_ticket,\"assignment_test.go:158: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  2.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",ff0b343216296251da9c2de7fc49d44b8251ccbd\\\\\\\\n\\\"; want exit 1 naming \\\"already authors ticket… (246 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "nr-c1-rep1-record-domain",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 bench test --package ./internal/reviewrecord at 01d9e0a1",
+            "digest": "sha256:496c7bc1fb0df6f69a60c8ea5e2d3f6132b0ebcbc5ece8369c3ab415d817e509",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2082,73\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-domain",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c1-rep1-record-forms",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 bench test --package ./internal/reviewrecord/recordcmd at 01d9e0a1",
+            "digest": "sha256:c91f23e1f1882e69cc6857ee5f92c82e22a83d6a80ef08a16eed84759f62ab31",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,12074,144\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c1-rep1-command-package",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 bench test --package ./cmd/bench at 01d9e0a1",
+            "digest": "sha256:08951009a48f96c487f9002ddf648214b3b5cc26175fea85f97e8263401eb1a5",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20462,334\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c1-rep1-native-assignment-journey",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 bench test --package ./cmd/bench --run ^TestNativeRecordCLIJourney$ at 01d9e0a1",
+            "digest": "sha256:f7b2ed9b435548e9fd7d5bede6977a32ab31223729d0e51afeeb4e64756a25e0",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,178,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "native-assignment-journey",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c1-rep1-guidance",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 bench test --check docs-currency-workflow at 01d9e0a1",
+            "digest": "sha256:d51dea8afc2389b9da3b2108f578f907ef0cb69454851bc4dfb7facc5368c928",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7806,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c1-rep1-root-conformance",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 bench test --check root-conformance at 01d9e0a1",
+            "digest": "sha256:be0992e6961e4717d8ac60a737f7e4f6a7f702a25e88d5ac6931ee33dae266f3",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,22546,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c1-rep1-anchors",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 bench test --package ./internal/anchors at 01d9e0a1",
+            "digest": "sha256:04a7a2f47edafcb49a984e9ddfdc28e7eac86cd486e229060a262af2ed81923e",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1597,178\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c1-rep1-conformance-package",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 bench test --package ./internal/conformance at 01d9e0a1",
+            "digest": "sha256:ddbe2011800aa98a4f4b7a4c746f5505df51248e1fc36751a9d186328a346089",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,75499,1677\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/ILGPJK/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket2743163995/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/ILGPJK/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket1925460874/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c1-rep1-record-fixtures",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 bench test --package ./internal/reviewrecord/recordtest at 01d9e0a1",
+            "digest": "sha256:0a56ab3979d4335cd9e9c7c04d7c027973ba395309d5e9129301373966ef13f8",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-fixtures",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c1-rep1-whole-plan-omission",
+          "performer": "claude:nro_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a46cb388a152a03631ffb734a4deea1560130d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t1_rep1 focused green and bench probe omit of the checkPlan call in internal/reviewrecord/assignment.go at 01d9e0a1",
+            "digest": "sha256:398a0f451876bdd5bfda45a073c963d22a53813ba75aaaaaa2d74b0c6144a579",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,289,6\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\ntree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/assignment.go,omit,failed,4,yes\nspilled{lines=12,bytes=2084,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/primary/1791537802108726604-6bbb722c3379c8cb.out}\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/cyclic_dependency,\"assignment_test.go:157: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",12f9222de6eb5c15ac8ced95c7f29fd7ab358dbb\\\\\\\\n\\\"; want exit 1 naming \\\"cycle\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/invalid_non-target_ticket,\"assignment_test.go:147: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",\\\\\\\\\\\"0874828928de42b6337aca616ed07368f874a002\\\\\\\\\\\"\\\\\\\\n\\\"; want exit 1 naming \\\"2.md\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/missing_dependency,\"assignment_test.go:152: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",f3ce6772eb3f5d942eeb0e2064f6023f2ddeb7eb\\\\\\\\n\\\"; want exit 1 naming \\\"9.md\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/session_of_another_ticket,\"assignment_test.go:163: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  2.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",c99b6d382a884b7f0d84d985b1e03579fe8dec68\\\\\\\\n\\\"; want exit 1 naming \\\"already authors ticket… (246 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "whole-plan-omission",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd --run '^TestAssignmentWholePlanValidation$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit only the complete candidate-validation call in RecordAssignment, retaining the validator used by ReadPlan; an unrelated invalid ticket must red TestAssignmentWholePlanValidation.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:nro_t1_rep1 focused green and bench probe omit of the checkPlan call in internal/reviewrecord/assignment.go at 01d9e0a1",
+              "digest": "sha256:398a0f451876bdd5bfda45a073c963d22a53813ba75aaaaaa2d74b0c6144a579",
+              "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,289,6\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\ntree[1]{target,head,dirty}:\n  nro-build,\"01d9e0a1edc65351b83480272baa9584e301757f\",false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/reviewrecord/assignment.go,omit,failed,4,yes\nspilled{lines=12,bytes=2084,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/primary/1791537802108726604-6bbb722c3379c8cb.out}\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/cyclic_dependency,\"assignment_test.go:157: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",12f9222de6eb5c15ac8ced95c7f29fd7ab358dbb\\\\\\\\n\\\"; want exit 1 naming \\\"cycle\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/invalid_non-target_ticket,\"assignment_test.go:147: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",\\\\\\\\\\\"0874828928de42b6337aca616ed07368f874a002\\\\\\\\\\\"\\\\\\\\n\\\"; want exit 1 naming \\\"2.md\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/missing_dependency,\"assignment_test.go:152: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",f3ce6772eb3f5d942eeb0e2064f6023f2ddeb7eb\\\\\\\\n\\\"; want exit 1 naming \\\"9.md\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestAssignmentWholePlanValidation/session_of_another_ticket,\"assignment_test.go:163: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  2.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",c99b6d382a884b7f0d84d985b1e03579fe8dec68\\\\\\\\n\\\"; want exit 1 naming \\\"already authors ticket… (246 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
