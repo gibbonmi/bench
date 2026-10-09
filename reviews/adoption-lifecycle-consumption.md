@@ -1108,6 +1108,74 @@
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "link-spec-r2",
+          "performer": "claude:ft217_link_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_link_spec_r2/review-link-spec-r2.txt",
+            "digest": "sha256:df3137bd274cb853c6d236d029eccad591beea0f9e51863a6b1d3f2ac2a0e84c",
+            "excerpt": "ALC-LINK Spec axis, confirming round 2. Session claude:ft217_link_spec_r2, opus / medium. Chunk pair a8ede0f6..b40e664a, source tip 38041e98, evidence sha256:55d80134 current=true. Read the repair delta 0126e37d..b40e664a and the plan change 8613919f..0126e37d only; named findings only.\n\nCount: 0. Worst issue: none.\n\nFolds confirmed\nP1 closed: the plan's link-probes command (spec.md:816) omits `o.SymlinkParent = hasSymlinkParent(root, e.rel)`, which exists once at link_transaction.go:118; record t2v1-link-probes (reviews/adoption-lifecycle-consumption.md:1005-1031, bit, restored yes) shows competing_refusals failing only at its stderr check (lifecycle_special_test.go:131) with the missing-source diagnostic while the unchanged-repo check (:127) holds, matching spec.md:570. Confidence 9.\nP2 pending the reviewer decision as intended: no fixture pins the owned dangling CLAUDE.md case; the new unowned row (lifecycle_special_test.go:184-192) pins replaced with exit 0, unchanged from the base (a8ede0f6 link_stage.go:76-78). Confidence 8.\nReport bytes unchanged: the constants (decision.go:68-72, :113-123) equal the literals they replace at every call site (decision.go, link_stage.go:112, link_transaction.go:36, :55, :62, :133, :155, :191, :206). Confidence 9.\n\nAdvice (no confidence): the repair's new test rows (dropped symlink-parent, escaping, FIFO rows; absent seed; spaced glob root) were not graded in this round.\n\nCursors fetched: none. Examined: the round-1 excerpt, the repair diff, the plan diff, reviews :1000-1044, lifecycle_special_test.go:154-210, base stagedClaude, git diff --stat cf1c1a6e b40e664a.\n"
+          },
+          "axis": "Spec",
+          "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "tip": "b40e664a062035f515a04217368d7ec4e80c0e12",
+          "finding_ids": [],
+          "supersedes": [
+            "link-spec-r1"
+          ]
+        },
+        {
+          "id": "link-standards-r2",
+          "performer": "claude:ft217_link_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft217_link_standards_r2/review-link-standards-r2.txt",
+            "digest": "sha256:e7a548a8507a8fc79139762fd1663642f3f15373382d5f262376f0d9b082a28e",
+            "excerpt": "ALC-LINK Standards axis, confirming round 2. Session claude:ft217_link_standards_r2, opus / medium. Chunk pair a8ede0f6..b40e664a, source tip 38041e98, evidence sha256:55d80134 current=true. Read the repair delta 0126e37d..b40e664a only; named findings only.\n\nCount: 1 (judgment). Worst: J2 partly closed.\n\nJ2r. One source per fact (fixture harness pasted N times): lifecycle_preview_test.go:260-266 keeps the inline snapshot-run-require-equal block; the repair did not touch this file, which is in ticket 02's Writes line. Confidence 4. auto-fix: wrap the setup call in requireUnchanged (lifecycle_special_test.go:89).\n\nFolds confirmed\nH1 closed: reason constants at decision.go:114-123; callers use them at link_transaction.go:36, 55, 62, 133, 155, 191, 206; no bare reason literal remains in decision.go, link_transaction.go, link_stage.go.\nH2 closed: link_transaction.go:118 holds the witness text the plan's link-probes command (spec.md:816) omits; alc38-omit.txt is gone.\nH3 closed: fileRegular, fileSymlink, fileOther at decision.go:69-71 beside fileKind; used at decision.go:265, 268, 280, 332 and link_stage.go:112 (\"symlink\" at link_stage.go:27 is a link-mode argument).\nJ1 closed by the fence: tickets 02 and 03 Writes lines exclude link_transaction_test.go and spec.md:502 excludes existing test files; runLinkBounded wraps runLink.\nJ2 partly closed: one helper at lifecycle_special_test.go:89 with callers :127 and :287; the third copy remains (above).\nJ3 closed: record t2v1-link-probes (reviews :1005-1031) carries the competing_refusals stderr red.\nJ4 no-op.\n\nAdvice (no confidence): the new TestLifecycleDroppedRows rows hardcode \"refused manifest path:\" and \"refused non-regular dropped asset:\"; under J3's rule that text needs a recorded red.\n\nCursors fetched: none. Examined: the repair diff, rg sweeps, spec.md:502 and :812-818, tickets 02 and 03 Writes lines, reviews :1005-1031, lifecycle_preview_test.go:250-269.\n"
+          },
+          "axis": "Standards",
+          "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "tip": "b40e664a062035f515a04217368d7ec4e80c0e12",
+          "finding_ids": [
+            "J2r"
+          ],
+          "supersedes": [
+            "link-standards-r1"
+          ]
+        },
+        {
+          "id": "link-coverage-r2",
+          "performer": "claude:ft217_link_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "47a6fd7670f427362aaace1132facbf0e78d81ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_link_coverage_r2/review-link-coverage-r2.txt",
+            "digest": "sha256:211af684d1ca91d3b508a9e95175eebb769d46969b637e9a5c74cbee6084247e",
+            "excerpt": "ALC-LINK Coverage axis, confirming round 2. Session claude:ft217_link_coverage_r2, opus / medium. Chunk pair a8ede0f6..b40e664a, source tip 38041e98, evidence sha256:55d80134 current=true. Read the repair delta 0126e37d..b40e664a in internal/adopt only; named findings only.\n\nCount: 0. Worst issue: none. All five round-1 folds closed.\n\nFolds confirmed\nC2 closed: bench probe internal/adopt/decision.go --swap seedDecision `if o.SymlinkParent {` → `if o.SymlinkParent && o.Present {` (with the signature line) --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$' → bit, 1 failed (absent_seed, lifecycle_special_test.go:127), restored yes.\nC3 closed: bench probe internal/adopt/link_stage.go --omit 'o.SymlinkParent = inside && hasSymlinkParent(root, row.rel)' --package ./internal/adopt --run '^TestLifecycleDroppedRows$' → bit, 1 failed (symlink_parent, lifecycle_consumption_test.go:315), restored yes.\nC4 closed for the unowned case: bench probe internal/adopt/link_stage.go --swap '\\t\\to.Present = false\\n\\t\\treturn staged, nil' --with '\\t\\treturn staged, nil' --package ./internal/adopt --run '^TestLifecycleClaudeOwnership$' → bit, 1 failed (unowned_dangling_link, lifecycle_special_test.go:204), restored yes. A broader omission that also removed the return failed 7 tests for an unrelated reason and is not counted. The owned case awaits the reviewer decision.\nC1 confirmed: record t2v1-link-probes (reviews :1005-1031), bit, restore pass, command omits the symlink-parent observation in link_transaction.go.\nC5 confirmed: lifecycle_consumption_test.go:163 row \"absent under a spaced glob root\" with dir `dir with [glob]*`, built at :187-193; the t3r1 floor excerpt shows TestLifecycleLinkPartitions selected and 51 tests passing at 0126e37d.\n\nAdvice (no confidence): rerun the C4 fold with the precise swap above.\n\nCursors fetched: none. Examined: the round-1 excerpt, docs/known-issues.md, the repair diff, decision.go:283-297, link_stage.go:75-114, reviews :1003-1032, the t3r1 floor excerpt. All probes restored; the dirty reviews file was the orchestrator's record writes.\n"
+          },
+          "axis": "Coverage",
+          "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "tip": "b40e664a062035f515a04217368d7ec4e80c0e12",
+          "finding_ids": [],
+          "supersedes": [
+            "link-coverage-r1"
+          ]
         }
       ]
     }
