@@ -7,8 +7,10 @@
 package responsebound
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -209,11 +211,11 @@ func (o *Owner) Finish() {
 		o.retained = nil
 	case spilling:
 		_ = o.file.Close()
-		o.printProjection(fmt.Sprintf("spilled{lines=%d,bytes=%d,omitted_lines=%d,cut_lines=%d,path=%s}\n",
-			o.lines.count, o.bytes, o.lines.omitted(), o.lines.cutLines(), o.path), o.lines.tailBytes())
+		o.printProjection(fmt.Sprintf("%s{lines=%d,bytes=%d,omitted_lines=%d,cut_lines=%d,"+pathField+"%s}\n",
+			Spilled, o.lines.count, o.bytes, o.lines.omitted(), o.lines.cutLines(), o.path), o.lines.tailBytes())
 	case unspilled:
 		_ = o.file.Close()
-		o.printProjection(fmt.Sprintf("spill-failed{path=%s,written_bytes=%d,reason=%s}\n", o.path, o.written, o.reason), o.refused)
+		o.printProjection(fmt.Sprintf("%s{"+pathField+"%s"+writtenField+"%d,"+reasonField+"%s}\n", SpillFailed, o.path, o.written, o.reason), o.refused)
 	case passing:
 		if o.stderrOpen {
 			_, _ = io.WriteString(o.stderr, "\n")
@@ -222,7 +224,7 @@ func (o *Owner) Finish() {
 		if o.stdoutOpen {
 			separator = "\n"
 		}
-		_, _ = fmt.Fprintf(o.stdout, "%sspill-failed{reason=%s}\n", separator, o.reason)
+		_, _ = fmt.Fprintf(o.stdout, "%s%s{"+reasonField+"%s}\n", separator, SpillFailed, o.reason)
 	}
 	o.phase = finished
 }
@@ -231,4 +233,94 @@ func (o *Owner) printProjection(line string, rest []byte) {
 	_, _ = o.stdout.Write(o.lines.headBytes())
 	_, _ = io.WriteString(o.stdout, line)
 	_, _ = o.stdout.Write(rest)
+}
+
+// Kind names one reserved frame line that the owner prints in place of complete output.
+type Kind string
+
+const (
+	// Spilled frames a projection whose complete output is in the named spill file.
+	Spilled Kind = "spilled"
+	// SpillFailed frames a response whose spill file could not take the complete output.
+	SpillFailed Kind = "spill-failed"
+)
+
+// pathField, writtenField, and reasonField are the field spellings that a frame reader
+// keys on.
+const (
+	pathField    = "path="
+	writtenField = ",written_bytes="
+	reasonField  = "reason="
+)
+
+// ErrIncomplete marks data that holds a reserved frame line, or a malformed one.
+var ErrIncomplete = errors.New("incomplete response")
+
+// Projection is one reserved frame line. Path is the file that the frame names, and it is
+// empty for a spill that could not open.
+type Projection struct {
+	Kind Kind
+	Path string
+}
+
+// ProjectionLine classifies one physical line, with or without its newline. A line outside
+// the reserved frames answers false. A line that opens a reserved frame but does not close
+// it, or whose fields do not match the shape that Finish prints for its kind, answers true
+// with an error. The reader checks only the frame, the path, and the field order; Finish
+// owns the count fields.
+func ProjectionLine(line string) (Projection, bool, error) {
+	line = strings.TrimSuffix(line, "\n")
+	for _, kind := range []Kind{Spilled, SpillFailed} {
+		body, ok := strings.CutPrefix(line, string(kind)+"{")
+		if !ok {
+			continue
+		}
+		projection := Projection{Kind: kind}
+		body, ok = strings.CutSuffix(body, "}")
+		if !ok {
+			return projection, true, fmt.Errorf("%s frame does not close", kind)
+		}
+		switch {
+		case kind == Spilled:
+			_, projection.Path, ok = strings.Cut(body, ","+pathField)
+			ok = ok && projection.Path != ""
+		case strings.HasPrefix(body, pathField):
+			var rest string
+			projection.Path, rest, ok = strings.Cut(strings.TrimPrefix(body, pathField), writtenField)
+			ok = ok && projection.Path != "" && strings.Contains(rest, ","+reasonField)
+		default:
+			ok = strings.HasPrefix(body, reasonField)
+		}
+		if !ok {
+			return projection, true, fmt.Errorf("%s frame is malformed", kind)
+		}
+		return projection, true, nil
+	}
+	return Projection{}, false, nil
+}
+
+// First finds the first physical line of data that opens a reserved frame. It answers the
+// frame, its one-based line number, and the error of a malformed frame. Line 0 means that
+// no line opens a frame.
+func First(data []byte) (Projection, int, error) {
+	for number, line := range strings.SplitAfter(string(data), "\n") {
+		if projection, ok, err := ProjectionLine(line); ok {
+			return projection, number + 1, err
+		}
+	}
+	return Projection{}, 0, nil
+}
+
+// RequireComplete refuses data that holds a reserved frame on any physical line, so a
+// caller never reads a projection as the complete output. It never opens a path that a
+// frame names, because the selected bytes are the only evidence the caller supplied.
+func RequireComplete(data []byte) error {
+	projection, line, err := First(data)
+	switch {
+	case line == 0:
+		return nil
+	case err != nil:
+		return fmt.Errorf("%w: line %d: %v", ErrIncomplete, line, err)
+	}
+	return fmt.Errorf("%w: line %d is a %s frame", ErrIncomplete, line, projection.Kind)
 }

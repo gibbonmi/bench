@@ -20,8 +20,9 @@ const baselineCause = "baseline-"
 // ends here: before the preserved copy, before the mutation, and before any write.
 //
 // The evidence after the rows is the baseline's own report, so its failures table names the
-// tests that were red before the probe ran. The `ran` cell reads 0, because the mutated run
-// never started, and the `baseline` cell names the kind the caller has to fix first.
+// tests that were red before the probe ran. The `ran` cell reads 0 and the focused exit is
+// null, because the mutated run never started, and the `baseline` cell names the kind the
+// caller has to fix first.
 //
 // The third result is the kind this run observed. The probe that follows prints it in its
 // own `baseline` cell, so that cell reports one run's answer rather than a constant.
@@ -37,9 +38,11 @@ func gradeBaseline(root string, subject subject, mutation string, request testre
 		restored: untouchedCell,
 		baseline: string(outcome.Kind),
 	}
-	out, err := rows(subject, mutation, cells, request)
+	e := selected(subject, mutation, cells, request)
+	e.command = 1
+	out, err := e.answer(report)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1, outcome.Kind
 	}
-	return out + report, 1, outcome.Kind
+	return out, 1, outcome.Kind
 }
