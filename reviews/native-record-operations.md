@@ -1699,7 +1699,85 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "nr-c3-r1-standards",
+          "performer": "claude:nro-c3-r1-standards",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "608cad4e801f450f977e3488eb2629315915a768",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r1-standards",
+            "digest": "sha256:a09cdd85484bd923fbe0730eeafd66974a7bed56a5b3730cdbdd5e2ed1c30740",
+            "excerpt": "## Standards (NR-C3 round 1, fable/medium, evidence sha256:794da58c1a3407690870a8e25f78df16d261b1ac76d0bcca5d18bfb52ecb6b93, pair 4dd282e4..99ee2484)\n\nPreflight evidence current (assignment 1494f9bd, tip 99ee2484). Delta read: git diff cd2b8816 3a4c452e (27 files), fully enumerated.\n\nHard violations (one source per fact):\n- S1 ask-user 6 — internal/responsebound/size_test.go:99-107 assignmentCheckout pastes the responseboundtest.AssignmentCheckout harness (AGENTS.md names \"a fixture harness pasted N times\" as the defect). The cycle is real but not forcing: the checkout builder depends only on gittest/poolkey, so it can live in a package below responsebound and both callers compose it. Needs a placement decision outside ticket 3's Writes.\n- S2 auto-fix 5 — internal/responsebound/owner_test.go:116-125 spillPath repeats the first-frame search loop of responseboundtest.Find. Remedy inside the owner: export one First(data) (Projection, bool); RequireComplete (owner.go:293-303), Find, and spillPath then share it.\n\nJudgment calls:\n- S3 auto-fix 4 — internal/probe/result.go:109-118 decodeEnvelope respells every field name as a literal while probeFields/selectionFields/executionFields (probe.go:22-33) own them; treetarget/identify.go:117-119 indexes rowFields instead. The canonical re-render makes a drift red, so a rename cannot land silently.\n- S4 auto-fix 7 — internal/treetarget/identify.go:25-32: the comment \"rowName and rowFields are...\" sits over rowName only; rowFields is declared after unknownDirty.\n- S5 no-op 4 — recordcmd/verification.go:101-103 \"fail\"/\"pass\" restore literals: tree convention; no constant exists to compose.\n- S6 no-op 3 — verification.go:30-34 \"bench probe\" prose literal: cmd/bench/main.go:109 registers Name: \"probe\"; the spec table fixes the wording.\n- S7 no-op 6 — result_test.go:78-85 declared and record_operations_test.go:166-176 recount both rewrite the sixth line's last cell. Independent expectations by spec (spec.md:415 bars probetest from holding any row schema).\n- S8 no-op 3 — owner.go:142-146: writtenField carries a leading comma while pathField/reasonField do not, so Finish adds commas by hand.\n\nAdvice: TestVerificationHelpFieldSources pins substrings that help_inventory_test.go:146 already pins whole; keep it because NR32 names fields. The verb \"reds\" is tree jargon.\n\nCount: 8 findings (2 hard, 6 judgment). Worst: S1.\n\nCursors fetched: preflight check (current=true); git log range; git diff --stat/full diff (spill 1791546664981340028-481ac05fde23ceee.out); wc -l; rg for literals/init (spill 1791546760591902534-6f5bce676bf683bd.out); spec sections (spill 1791546753909575611-298e24f472bc5556.out); finding-discipline.md, craft-comments/SKILL.md:40-71, review SKILL grep.\n\nExamined, clean: headroom — command.go 340 <= 370, probetest/fixture.go 57 <= 150 with no package variable and only sanitize + stdlib imports, recordcmd/verification_test.go shrank 14 lines, result.go/result_test.go the only new internal/probe files; no func init in the delta; one marker parser (ProjectionLine, ParseLine a thin projection); one strict toonlib.Decode in each reader, no regex; probe_execution rendered once through resultTables and re-rendered for the canonical check; envelope.rows single source for producer and reader; checkpoint helper deduplicated from verification_test.go.\n"
+          },
+          "axis": "Standards",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "3a4c452e7378c1a5f31480e956dab5983e17c481",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6",
+            "S7",
+            "S8"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "nr-c3-r1-spec",
+          "performer": "claude:nro-c3-r1-spec",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "608cad4e801f450f977e3488eb2629315915a768",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r1-spec",
+            "digest": "sha256:e95820fdd36ca2c13d665631f829050c601d408ac50d7a4a19df2a1f204bbcd2",
+            "excerpt": "## Spec (NR-C3 round 1, fable/medium, evidence sha256:794da58c1a3407690870a8e25f78df16d261b1ac76d0bcca5d18bfb52ecb6b93, pair 4dd282e4..99ee2484)\n\nPreflight evidence current (base 4dd282e4, tip 99ee2484); delta read once as git diff cd2b8816 3a4c452e.\n\n- P1 ask-user 6 — \"Copied flag help names these sources exactly\" (spec.md:270) and NR32 \"Verification help names the producer verb and field for each copied probe flag\" (spec.md:524). The sources sit only in the form description (recordcmd/verification.go:18, :27-33), which reaches the root bench help row (help_inventory_test.go:146). bench record verification --help and bench record --help print the grammar line only; neither names a source. The root row meets the table text, the form help does not.\n- P2 auto-fix 3 — spec.md:277 \"probe.restored, through the producer owner's restoration projection\"; help says \"through the probe owner's restoration projection\" (verification.go:32). Verb and field match; the qualifier drifts from \"exactly\".\n- P3 ask-user 4 — spec.md:314 \"Guidance updates ... replace only descriptions that incorrectly require hand-built dispatch JSON\". .bench/BENCH-reference.md:265-273 adds two new paragraphs (probe_execution row, --probe-result); no prior description was replaced. An addition the spec's rule does not authorize, not a wrong fact.\n- P4 no-op 4 — spec.md:454 \"A responsebound-owned failure fixture supplies the partial spill whose complete envelope precedes the shortened suffix\". The journey truncates the real spill body by hand (record_operations_test.go:209); no such fixture exists in the delta. NR43 behavior is met.\n- P5 no-op 5 — NR41 \"Spill-failed stdout refuses import without opening its marker path\" (spec.md:533). The journey's spill-failed stdout is the pathless form (record_operations_test.go:177-186), so \"without opening its path\" rests on the projected case (:205-207). Row met in letter.\n\nDecision (1) no-op 7 — spec.md:210 \"Accept either a complete canonical tree-prefixed stdout response or the complete spill body\"; spec.md:445-447 require only \"ordinary stdout with the canonical tree lead\" and a --full spill; spec.md:439 requires \"the real command journey's independent command-0/focused-1 assertion\", which record_operations_test.go:171 carries on the spill import. No spec line assumes a biting answer stays in bound.\n\nAdvice: strict decoding is the toon-go default (internal/codec/options.go:125), so bare toonlib.Decode meets spec.md:237/242. Import refuses a null focused exit (verification.go:~98); that matches \"absent exit\" (spec.md:264). FT168 row is gone. Scope creep: none beyond P3; probe.FieldSource is a help derivation, not a new flag or field.\n\nCount: 5 findings; worst P1. Cursors: preflight evidence current, pair 4dd282e4 -> 99ee2484, delta cd2b8816..3a4c452e. Audited NR23-NR32, NR38-NR45; met: NR23-NR31, NR38-NR40, NR42-NR45; NR41 met with P5 caveat; NR32 partial (P1).\n"
+          },
+          "axis": "Spec",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "3a4c452e7378c1a5f31480e956dab5983e17c481",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3",
+            "P4",
+            "P5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "nr-c3-r1-coverage",
+          "performer": "claude:nro-c3-r1-coverage",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "608cad4e801f450f977e3488eb2629315915a768",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:nr-c3-r1-coverage",
+            "digest": "sha256:7bd78ab0ceb1bbe6641f295b1421defdffc90d2be27d3712bf4115ae7725c53d",
+            "excerpt": "## Coverage (NR-C3 round 1, fable/medium, evidence sha256:794da58c1a3407690870a8e25f78df16d261b1ac76d0bcca5d18bfb52ecb6b93, pair 4dd282e4..99ee2484)\n\nBinding current (base 4dd282e4, tip 99ee2484). Delta read as git diff cd2b8816 3a4c452e.\n\n- C1 — gap, confidence 9. Input: a complete probe answer whose envelope decodes and types correctly but is not canonical, e.g. probe_execution[1]{trailing_bytes,schema,command_exit_code,focused_exit_code} with cells reordered, or a bare cell quoted (\"bit\"). Expected break: probe.ReadResult refuses with \"the probe result envelope is not canonical\" (spec.md:245, \"Re-encode through the shared producer schema to check the canonical body envelope\"). Probe: result.go:77 swap err != nil || canonical != string(head) -> err != nil || canonical == \"\" && head == nil: silent in ./internal/probe (106 tests pass, restored yes) and silent in ./internal/reviewrecord/recordcmd (167 pass, restored yes). The only noncanonical row in result_test.go:127 (\"noncanonical row space\") is refused by the strict decoder before the re-render check. Row that should exist: a TestProbeResultEnvelopeRefusals case with reordered execution fields and one with a quoted bare cell, both decoding cleanly under toonlib.Decode; mirror one in TestVerificationImportRefusals (NR28 names \"substituted result envelope\").\n\nAdvice: treetarget/identify.go:95 has the same shape and is covered (identify_test.go \"noncanonical cell\", quoted \"primary\"); copy that pattern into result_test.go.\n\nCount: 1 finding. Worst: C1, an untested spec-named refusal in the import boundary.\n\nEvidence cursors fetched: preflight evidence check (current); git diff cd2b8816 3a4c452e (27 files; spill read); spec lines 188-275, 360, 457-467, 515-537, 539-558.\n\nProbes (all restored yes):\n1. result.go:77 canonical check neutered, ./internal/probe — silent.\n2. same, ./internal/reviewrecord/recordcmd — silent.\n3. identify.go:95 identity-row canonical check neutered, ./internal/treetarget — bit (TestReadLeadRefusesNoncanonicalRows).\n4. recordcmd/command.go:314 ClassifyNoFollow -> Classify(path, ControlRecordLimit), ./internal/reviewrecord/recordcmd — bit (TestRecordRefusesALinkedExcerpt), so --probe-result inherits the no-follow, oversized, FIFO refusals through the shared native(values, flag) seam.\n5. baseline.go omit e.command = 1, ./internal/probe — bit (TestProbeReportsNormalizedExecutionExit/red_baseline).\n(First attempt of probe 1 was invalid: unused variable; proves nothing.)\n\nExamined and found covered: tree-prefixed stdout, spill body without lead, projected and spill-failed stdout, malformed/truncated/repeated frames, truncated envelope and suffix, trailing_bytes over/under/negative, duplicate envelope, repeated/malformed/dirty=unknown tree rows, older schema, substituted schema, string and fractional exits, null focused_exit_code (refused at verification.go:98), --exit-code disagreement, scalar+import usage error (the layout admits exactly one branch), exact excerpt bytes and digest, record unchanged on refusal, preserved-copy block inside the counted suffix. Unopened marker path: RequireComplete is string-only; the journey's projected case points at a real spill and is refused; no fixture demonstrates it for a spill-failed frame with a path, same code path, not raised.\n"
+          },
+          "axis": "Coverage",
+          "base": "4dd282e4eb692f333fa0ad198c1a21bad0ec1e3f",
+          "tip": "3a4c452e7378c1a5f31480e956dab5983e17c481",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1895,3 +1973,43 @@ NR-C2 round 2 (Standards): 0 code findings; S5 evidence-only, closed here; S6 an
 NR-C2 round 2 (Spec): 0 findings. P5-P9 confirmed the folds, the repair assignment occurrence, and the 155-entry fence count. P10 agrees with the P2 decision.
 
 NR-C2 round 2 (Coverage): 0 findings. Five probes at sites distinct from the author's each bit and restored. C6 is optional advice.
+
+## NR-C3 repair state
+
+Chunk NR-C3 round 1 ran three fable/medium axes in parallel at `99ee2484`. Only the Coverage axis ran probes, and the tree was clean after every return. The range holds the `main` fold at `cc6fce5b`, which the review preflight authorized unchanged.
+
+Chunk NR-C3 uses repair cycle 1 of 2 for S1, S2, S3, S4, P2, P3, and C1. A fresh repair session for ticket 3 runs it. C1 is the one hardening cycle of NR-C3, because the 18 acceptance rows proved in round 1. S5, S6, S7, S8, P4, and P5 are `no-op`. P1 is `no-op` by the orchestrator's decision, which follows the NR-C2 P2 decision.
+
+Under `--auto-approve`, the reviewer approved the fence expansion by a new `internal/responsebound/export_test.go` in advance. The orchestrator decided S1 and P3 in place of the reviewer, and both calls are open to a veto after the landing.
+
+## NR-C3 Standards
+
+NR-C3 round 1: 8 findings, worst S1. Raw count 8; repair targets 4.
+
+- S1 (auto-fix, confidence 6): `size_test.go` pastes the `responseboundtest.AssignmentCheckout` harness. Repair: move `size_test.go` to the external test package so it imports the helper, and expose the in-package test helpers it needs through `export_test.go`.
+- S2 (auto-fix, confidence 5): `owner_test.go` `spillPath` repeats the first-frame search loop of `responseboundtest.Find`. Repair: export one `First` from the owner that `RequireComplete`, `Find`, and the test share.
+- S3 (auto-fix, confidence 4): `decodeEnvelope` respells the field names that the producer lists own. Repair: index the owned lists.
+- S4 (auto-fix, confidence 7): a comment in `identify.go` describes a split pair. Repair: move the comment or the declaration.
+- S5 to S8 (no-op): the restore literals follow the tree convention. The `bench probe` prose matches the spec table. The two line-rewrite helpers are independent expectations by spec. The comma placement is uneven but readable.
+
+Advice: the help-source test pins substrings that the root inventory pins whole; the verb "reds" is tree jargon.
+
+## NR-C3 Spec
+
+NR-C3 round 1: 5 findings, worst P1. Raw count 5; repair targets 2. Rows NR23-NR31, NR38-NR40, and NR42-NR45 met; NR41 met in letter; NR32 met by the root help row.
+
+- P1 (no-op, confidence 6): the copied-flag sources show only in the verification form's description, which the root record help prints. The form help prints one grammar line, because `TestRecordHelpPrintsEachForm` pins that shape outside the spec fence. The same reasoning closed NR-C2 P2.
+- P2 (auto-fix, confidence 3): the help says "probe owner's" where the spec table says "producer owner's". Repair: match the table exactly.
+- P3 (auto-fix, confidence 4): `.bench/BENCH-reference.md` gains two new paragraphs that the spec's guidance rule does not authorize. Repair: keep one sentence that corrects the existing probe envelope description for `probe_execution`, and remove the `--probe-result` paragraph.
+- P4 (no-op, confidence 4): the journey truncates the real spill body by hand instead of a responsebound-owned fixture; NR43 behavior is met.
+- P5 (no-op, confidence 5): the spill-failed journey case uses the pathless frame; NR41 is met in letter, and the projected case covers the unopened path.
+
+The orchestrator's spill decision is `no-op` at confidence 7. No spec line assumes a biting answer stays in bound, and the spill import carries the independent command-0/focused-1 assertion.
+
+## NR-C3 Coverage
+
+NR-C3 round 1: 1 finding, worst C1. Raw count 1; repair targets 1.
+
+- C1 (auto-fix, confidence 9): a decodable but noncanonical result envelope is refused by the re-render check, and no test observes it. The neutered check was silent in both packages. Repair: cases with reordered execution fields and a quoted bare cell in `TestProbeResultEnvelopeRefusals`, and one mirror in `TestVerificationImportRefusals`.
+
+Advice: copy the `identify_test.go` noncanonical-cell pattern.
