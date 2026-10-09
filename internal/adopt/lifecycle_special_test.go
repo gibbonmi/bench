@@ -254,8 +254,22 @@ func TestLifecycleSpecialInstructionFiles(t *testing.T) {
 // absent or stale managed hook takes the current managed hook, also where core.hooksPath
 // diverts the hooks directory. A foreign hook, or any hook in a diverted directory that
 // Bench does not manage, refuses the whole link and leaves the repository unchanged.
+// Real Unlink then meets each state in a linked repository. It removes a hook that
+// carries the managed marker, and it keeps a foreign hook without a refusal.
 func TestLifecycleHookCompatibility(t *testing.T) {
 	foreign := func(t *testing.T, path string) { writeFixtureFile(t, path, "#!/bin/sh\nexit 0\n", 0o755) }
+	hookRepo := func(t *testing.T, diverted bool) (string, string) {
+		root := consumerRepo(t)
+		hooks := filepath.Join(root, ".git", "hooks")
+		if diverted {
+			hooks = filepath.Join(root, "hooks")
+			if err := os.Mkdir(hooks, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			runAdoptGit(t, root, "config", "core.hooksPath", hooks)
+		}
+		return root, filepath.Join(hooks, "pre-push")
+	}
 	for _, tc := range []struct {
 		name     string
 		diverted bool
@@ -271,16 +285,7 @@ func TestLifecycleHookCompatibility(t *testing.T) {
 		{name: "diverted foreign", diverted: true, refused: true, arrange: foreign},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := consumerRepo(t)
-			hooks := filepath.Join(root, ".git", "hooks")
-			if tc.diverted {
-				hooks = filepath.Join(root, "hooks")
-				if err := os.Mkdir(hooks, 0o755); err != nil {
-					t.Fatal(err)
-				}
-				runAdoptGit(t, root, "config", "core.hooksPath", hooks)
-			}
-			path := filepath.Join(hooks, "pre-push")
+			root, path := hookRepo(t, tc.diverted)
 			tc.arrange(t, path)
 			if !tc.refused {
 				requireReported(t, runLink(nil), "pre-push", "")
@@ -293,6 +298,18 @@ func TestLifecycleHookCompatibility(t *testing.T) {
 			requireUnchanged(t, root, func() { run = runLink(nil) })
 			if want := "conflict: " + path + " exists and is not Bench-managed\n"; run.code != 1 || run.stderr != want {
 				t.Fatalf("Link = %d with stderr %q, want 1 with %q", run.code, run.stderr, want)
+			}
+		})
+		t.Run("unlink "+tc.name, func(t *testing.T) {
+			root, path := hookRepo(t, tc.diverted)
+			linkConsumer(t, root, 0)
+			tc.arrange(t, path)
+			before := compatibilitytest.SnapshotHome(t, path)
+			runUnlink(t, nil, 0)
+			if !tc.refused {
+				requireAbsent(t, path)
+			} else if after := compatibilitytest.SnapshotHome(t, path); !reflect.DeepEqual(after, before) {
+				t.Fatalf("foreign hook after Unlink = %+v, want the kept %+v", after, before)
 			}
 		})
 	}

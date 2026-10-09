@@ -1,6 +1,7 @@
 package adopt
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -114,37 +115,27 @@ func planUnlink(root string, m Manifest, dryRun bool, guard *adoptionGuard) (unl
 
 	removedSet := map[string]bool{}
 	var candidateDirs []string
-	for _, rel := range rels {
-		full, ok := resolveInside(root, rel)
-		if !ok || hasSymlinkParent(root, rel) {
-			// A hand-edited row that escapes the repo (absolute path, `..` traversal, or a
-			// symlinked parent) is refused and reported, never removed.
-			p.refused = append(p.refused, rel)
-			continue
-		}
-		if _, err := os.Lstat(full); os.IsNotExist(err) {
-			// Already absent — no action, but its parents are still sweep candidates.
-			collectAncestors(&candidateDirs, root, full)
-			continue
-		}
-		fp, err := fingerprintPath(full)
+	for order, rel := range rels {
+		o, full := observeUnlink(root, rel, m.hashes[rel], order)
+		d, err := decideUnlink(o)
 		if err != nil {
-			// A directory or other non-regular target cannot be a managed file: skip and
-			// report it rather than delete it.
-			p.refused = append(p.refused, rel)
-			continue
+			return p, err
 		}
-		if fp != m.hashes[rel] {
-			// Edited since link — the user's content now: keep and report.
-			p.keptModified = append(p.keptModified, rel)
-			continue
-		}
-		if !dryRun {
+		switch {
+		case d.Kind == lifecycleRemove:
 			p.changes = append(p.changes, stagedChange{rel: rel})
+			p.removed = append(p.removed, rel)
+			removedSet[full] = true
+			collectAncestors(&candidateDirs, root, full)
+		case d.Reason == reasonAbsent:
+			// An absent asset needs no action, but its parents are still sweep candidates.
+			collectAncestors(&candidateDirs, root, full)
+		case d.Reason == reasonModified:
+			p.keptModified = append(p.keptModified, rel)
+		default:
+			// A refused row, unsafe or without a fingerprint, stays as a residual.
+			p.refused = append(p.refused, rel)
 		}
-		p.removed = append(p.removed, rel)
-		removedSet[full] = true
-		collectAncestors(&candidateDirs, root, full)
 	}
 
 	p.agentsAction = stripAgentsForUnlink(root, dryRun, &p)
@@ -160,16 +151,45 @@ func planUnlink(root string, m Manifest, dryRun bool, guard *adoptionGuard) (unl
 	}
 	p.emptyDirs = sweepEmptyDirs(candidateDirs, removedSet, dryRun)
 
-	// Manifest removed last, and only when nothing was refused, so a partial run leaves the
-	// residual managed state tracked for a follow-up. Dry-run never removes it.
-	if len(p.keptModified)+len(p.refused) > 0 {
-		p.manifestKept = true
-	} else if !dryRun {
+	// The manifest is removed last, and only when no residual remains, so a partial run
+	// leaves the residual managed state tracked for a follow-up. Dry-run never removes it.
+	p.manifestKept = len(p.keptModified)+len(p.refused) > 0
+	if !p.manifestKept && !dryRun {
 		if err := promoteWithLease(root, []stagedChange{{rel: ".bench/link-manifest.tsv"}}, guard); err != nil {
 			return p, err
 		}
 	}
 	return p, nil
+}
+
+// observeUnlink records the facts of one manifest row and returns the path that the row
+// resolves to. It inspects no row that escapes the repository or crosses a symlink parent.
+// Only a leaf that Lstat reports missing is absent. A present leaf without a fingerprint,
+// such as a directory or a special file, keeps an empty Observed fingerprint.
+func observeUnlink(root, rel, recorded string, order int) (LifecycleObservation, string) {
+	o := LifecycleObservation{Path: rel, Order: order, Recorded: recorded}
+	full, inside := resolveInside(root, rel)
+	o.Escapes = !inside
+	o.SymlinkParent = inside && hasSymlinkParent(root, rel)
+	if o.Escapes || o.SymlinkParent {
+		return o, full
+	}
+	if _, err := os.Lstat(full); os.IsNotExist(err) {
+		return o, full
+	}
+	o.Present = true
+	o.Observed, _ = fingerprintPath(full)
+	return o, full
+}
+
+// decideUnlink submits one manifest row's observation to the lifecycle owner and returns
+// its decision, or the owner's refusal as an error.
+func decideUnlink(o LifecycleObservation) (LifecycleDecision, error) {
+	lifecycle := PlanLifecycle(LifecycleInput{Execution: &LifecycleInventory{Action: "unlink", Observations: []LifecycleObservation{o}}})
+	if lifecycle.Refusal != "" {
+		return LifecycleDecision{}, errors.New(lifecycle.Refusal)
+	}
+	return lifecycle.Decisions[0], nil
 }
 
 // resolveInside resolves a manifest rel against the repo root and returns the absolute path
@@ -297,10 +317,10 @@ func writeUnlinkReport(w io.Writer, root string, dryRun bool, p unlinkPlan) erro
 	// bespoke parsers for their partial outcomes.
 	verdicts := make([]lifecycleVerdict, 0, len(p.keptModified)+len(p.refused))
 	for _, rel := range p.keptModified {
-		verdicts = append(verdicts, lifecycleVerdict{rel, "modified"})
+		verdicts = append(verdicts, lifecycleVerdict{rel, reasonModified})
 	}
 	for _, rel := range p.refused {
-		verdicts = append(verdicts, lifecycleVerdict{rel, "refused"})
+		verdicts = append(verdicts, lifecycleVerdict{rel, reasonRefused})
 	}
 	if len(verdicts) > 0 {
 		block, err := renderVerdicts("residuals", verdicts)

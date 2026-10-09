@@ -214,10 +214,12 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 }
 
 // TestLifecycleOwnerConsumption drives each applying entry that consumes the complete
-// decision. Each entry starts from a manifest that pins the linked kit and owns only a
-// clean withdrawn asset, next to project AGENTS.md prose and no CLAUDE.md. Each entry
-// must install an absent ordinary asset and the current CLAUDE.md form, withdraw the clean
-// asset with its row, and add the managed block after the project prose.
+// decision. Each linking entry starts from a manifest that pins the linked kit and owns
+// only a clean withdrawn asset, next to project AGENTS.md prose and no CLAUDE.md. Each
+// linking entry must install an absent ordinary asset and the current CLAUDE.md form,
+// withdraw the clean asset with its row, and add the managed block after the project
+// prose. Unlink starts from a linked repository with one modified asset. It must remove a
+// clean asset, keep the modified one with its row, and leave the project prose alone.
 func TestLifecycleOwnerConsumption(t *testing.T) {
 	const prose = "# Team rules\n\nKeep this rule.\n"
 	for _, entry := range []struct {
@@ -256,6 +258,19 @@ func TestLifecycleOwnerConsumption(t *testing.T) {
 			}
 		})
 	}
+	t.Run("unlink", func(t *testing.T) {
+		root := consumerRepo(t)
+		writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), prose, 0o644)
+		linkConsumer(t, root, 0)
+		writeFixtureFile(t, filepath.Join(root, lifecycleDoc), "project edit\n", 0o644)
+		before := observeEntry(t, root, lifecycleDoc)
+		runUnlink(t, nil, 3)
+		requireAbsent(t, filepath.Join(root, lifecycleExec))
+		requireKept(t, root, lifecycleDoc, before)
+		if got := readFile(t, filepath.Join(root, "AGENTS.md")); got != prose {
+			t.Fatalf("AGENTS.md after unlink = %q, want the project prose %q", got, prose)
+		}
+	})
 }
 
 // TestLifecycleDroppedRows drives real relink over a manifest row that the kit no longer
