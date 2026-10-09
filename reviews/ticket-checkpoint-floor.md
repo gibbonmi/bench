@@ -149,7 +149,7 @@ TF-C4 round 2: 1 finding, worst C3.
 {
   "version": 2,
   "spec": "specs/ticket-checkpoint-floor/spec.md",
-  "plan_digest": "sha256:c867a6bcdd3f304c494a63f18da1643f211bf1ca3244dc5332b4892eed1a7612",
+  "plan_digest": "sha256:edfe0a42def0181fcced40e5c180e1a1873e18988f57a53e44a6d77cb08a56f2",
   "implementation_session": "",
   "chunks": [
     {
@@ -2591,6 +2591,125 @@ TF-C4 round 2: 1 finding, worst C3.
           ]
         }
       ]
+    },
+    {
+      "id": "TF-C5",
+      "base": "3c2440b2f101ce2d484a2402206e6abe420082ea",
+      "tip": "ee46a8eaf1945dea84afaaa4c05b08b1761158eb",
+      "plan_digest": "sha256:edfe0a42def0181fcced40e5c180e1a1873e18988f57a53e44a6d77cb08a56f2",
+      "source_digest": "faa3171d75a2c9ad3959e81ae81b362c0488b415",
+      "acceptance_rows": [
+        "TF60",
+        "TF61",
+        "TF62",
+        "TF63",
+        "TF64",
+        "TF65"
+      ],
+      "verification": [
+        {
+          "id": "t5-pkg-internal-anchors",
+          "performer": "claude:ft349_t5",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "faa3171d75a2c9ad3959e81ae81b362c0488b415",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t5/pkg-internal-anchors",
+            "digest": "sha256:5403db962cf73fde23be8f109dfa365a41a928712c4a33a8f799de80067a723d",
+            "excerpt": "$ bench test --package ./internal/anchors   (exit 0, tip ee46a8eaf1945dea84afaaa4c05b08b1761158eb)\ntree[1]{target,head,dirty}:\n  ft349-build,ee46a8eaf1945dea84afaaa4c05b08b1761158eb,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1128,178\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "pkg-internal-anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-pkg-internal-conformance",
+          "performer": "claude:ft349_t5",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "faa3171d75a2c9ad3959e81ae81b362c0488b415",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t5/pkg-internal-conformance",
+            "digest": "sha256:222d0cc546b5d00fb51d1a28929ec7ec3ac06197a027b898fb57b63dabd854a6",
+            "excerpt": "$ bench test --package ./internal/conformance   (exit 0, tip ee46a8eaf1945dea84afaaa4c05b08b1761158eb)\ntree[1]{target,head,dirty}:\n  ft349-build,ee46a8eaf1945dea84afaaa4c05b08b1761158eb,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,54983,1677\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}: (capability skips: unix socket x2, character device x1)\n"
+          },
+          "requirement": "pkg-internal-conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-pkg-cmd-bench",
+          "performer": "claude:ft349_t5",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "faa3171d75a2c9ad3959e81ae81b362c0488b415",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t5/pkg-cmd-bench",
+            "digest": "sha256:f65f00ba540209b5d0187690463aee7a57d0d9e0aee6fd1a64a297d2f5d7d89c",
+            "excerpt": "$ bench test --package ./cmd/bench   (exit 0, tip ee46a8eaf1945dea84afaaa4c05b08b1761158eb)\ntree[1]{target,head,dirty}:\n  ft349-build,ee46a8eaf1945dea84afaaa4c05b08b1761158eb,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15078,333\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "pkg-cmd-bench",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-root-conformance",
+          "performer": "claude:ft349_t5",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "faa3171d75a2c9ad3959e81ae81b362c0488b415",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t5/root-conformance",
+            "digest": "sha256:fdfbd2081e84ac57d9e56f515d499aed8d8453b2529f77d61cb01fcf7101301e",
+            "excerpt": "$ bench test --check root-conformance   (exit 0, tip ee46a8eaf1945dea84afaaa4c05b08b1761158eb)\ntree[1]{target,head,dirty}:\n  ft349-build,ee46a8eaf1945dea84afaaa4c05b08b1761158eb,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16288,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-guidance-probe",
+          "performer": "claude:ft349_t5",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "faa3171d75a2c9ad3959e81ae81b362c0488b415",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_t5/guidance-probe",
+            "digest": "sha256:48a58d8531116cd83cc30eb5618ca13a4ebb65133102812546d7d0f618760dd2",
+            "excerpt": "$ bench probe .agents/commands/bench-implement-spec.md --omit 'The completion plan carries the check floor of each ticket, and the `check-floor` row of `bench preflight build` grades the plan against that floor.' --check docs-currency-workflow   (probe exit 0; mutated run exit 1; tip ee46a8eaf1945dea84afaaa4c05b08b1761158eb)\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5381,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: check floor: the completion plan carries each ticket's floor, and check-floor grades it\",1\n\n$ bench test --check docs-currency-workflow   (unmutated, exit 0, tip ee46a8eaf1945dea84afaaa4c05b08b1761158eb)\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5444,1\nfailures[0]{package,test,line,lines}:\n"
+          },
+          "requirement": "guidance-probe",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Delete the new implement-spec floor sentence. bench test --check docs-currency-workflow turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft349_t5/guidance-probe",
+              "digest": "sha256:48a58d8531116cd83cc30eb5618ca13a4ebb65133102812546d7d0f618760dd2",
+              "excerpt": "$ bench probe .agents/commands/bench-implement-spec.md --omit 'The completion plan carries the check floor of each ticket, and the `check-floor` row of `bench preflight build` grades the plan against that floor.' --check docs-currency-workflow   (probe exit 0; mutated run exit 1; tip ee46a8eaf1945dea84afaaa4c05b08b1761158eb)\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5381,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: check floor: the completion plan carries each ticket's floor, and check-floor grades it\",1\n\n$ bench test --check docs-currency-workflow   (unmutated, exit 0, tip ee46a8eaf1945dea84afaaa4c05b08b1761158eb)\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5444,1\nfailures[0]{package,test,line,lines}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2862,6 +2981,24 @@ TF-C4 round 2: 1 finding, worst C3.
     {
       "from": "sha256:498c044c9011172c24f9d06e3428ec205403b00826d4347d862c9881a3c4f5fc",
       "to": "sha256:c867a6bcdd3f304c494a63f18da1643f211bf1ca3244dc5332b4892eed1a7612",
+      "chunk_ids": {
+        "TF-C1": [
+          "TF-C1"
+        ],
+        "TF-C2": [
+          "TF-C2"
+        ],
+        "TF-C3": [
+          "TF-C3"
+        ],
+        "TF-C4": [
+          "TF-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c867a6bcdd3f304c494a63f18da1643f211bf1ca3244dc5332b4892eed1a7612",
+      "to": "sha256:edfe0a42def0181fcced40e5c180e1a1873e18988f57a53e44a6d77cb08a56f2",
       "chunk_ids": {
         "TF-C1": [
           "TF-C1"
