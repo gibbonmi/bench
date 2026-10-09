@@ -12,7 +12,7 @@ The gatherer keeps the parsed completion plan beside its digest, and it composes
 
 - the element `root-conformance`, when `gate.RootConformanceRuns(root, gate.KitRoot(root))` from ticket 01 answers true;
 - each pattern of `Floor.Packages`, and the loader error, from `testreport.WritesFloor(ctx, root, ticket.Writes)` of ticket 02;
-- the element `./cmd/bench`, when `tickets.CommandPackage` of ticket 02 answers true for an entry path, or `Floor.Embed` is true.
+- the element `./cmd/bench`, when `tickets.CommandPackage` answers true for an entry path or for the directory of a floor package, or `Floor.Embed` is true.
 
 The kit resolver `gate.KitRoot` is the one that ticket 01 makes `testBenchSource` call, so the preflight and the named check read one kit. Each plan command goes through `shellcommand.Parse` and then `testreport.Prepare`. The accessor `Request.Changed()` of ticket 02 tells a `--changed` command from a `./...` package command. A version 1 plan grades the union of a chunk's ticket floors against that chunk's requirements. A delegated version 2 plan grades each ticket's floor against the chunk requirements that name that ticket.
 

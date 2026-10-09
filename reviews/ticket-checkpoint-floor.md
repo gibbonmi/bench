@@ -14,6 +14,8 @@ TF-C2 round 3 confirmed the folds of S4 and S5 with 0 findings on every axis. TF
 
 Chunk TF-C3 uses repair cycle 1 of 2 for S3, S4, S6, S7, P1, and C2 through a fresh repair session for ticket 03. P1 and C1 name the same gap. The plan adds rows TF73 and TF74 for P1 and C2 under the `--auto-approve` spec approval.
 
+TF-C3 round 2 confirmed those folds and found P3, a stale sentence in ticket 03. The orchestrator corrects that plan text, and the Spec axis reaffirms it. The correction uses no repair cycle.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -53,6 +55,8 @@ TF-C3 round 1: 4 findings, worst S3.
 
 Advice: S1 and S2, `"bench test"` and the flag spellings have no exported owner, as `./cmd/bench` has none. S5, `ticket_rows.go` also holds `kitPinCheck`, as the ticket directed.
 
+TF-C3 round 2: 0 findings. The folds of S3, S4, S6, and S7 hold.
+
 ## Spec
 
 TF-C1 round 1: 0 findings. TF1 to TF5 and the `testBenchSource` line hold.
@@ -76,6 +80,10 @@ TF-C3 round 1: 1 finding, worst P1.
 - P1 (auto-fix, confidence 5): `internal/preflight/check_floor.go:65` gives no floor to a ticket that no plan chunk names, so `check-floor` stays green. Row TF73 grades that ticket against an empty requirement set.
 
 Advice: P2, `spec.md:464` names row-list edits in three command tests that the delta does not touch; final reconciliation corrects it. The spec decides the redirection question: a redirection belongs to one simple command, so `bench test --package X > out` satisfies its element.
+
+TF-C3 round 2: 1 finding, worst P3.
+
+- P3 (auto-fix, confidence 8): ticket 03 states the `./cmd/bench` condition without the floor-package clause that the spec now holds.
 
 ## Coverage
 
@@ -107,6 +115,8 @@ TF-C3 round 1: 2 findings, worst C1.
 
 - C1 (auto-fix, confidence 7): the same gap as P1. A probe that skips the unplanned-ticket guard stays green.
 - C2 (auto-fix, confidence 5): `check_floor.go:78-81` owes no `./cmd/bench` for a directory entry above a bound command package. Row TF74 reads the command-package rule against each floor package.
+
+TF-C3 round 2: 0 findings. TF73 and TF74 hold.
 
 ```bench-review-record
 {
@@ -1660,6 +1670,74 @@ TF-C3 round 1: 2 findings, worst C1.
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3-standards-r2",
+          "performer": "claude:ft349_c3_standards_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "21d718b1fc7e8e916324fd90a9b226fa9b36f081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_standards_r2",
+            "digest": "sha256:030eb57c5f6cba72b03d2bc3ec7e7b24ac8834162f7723c423ba9b30172b52a2",
+            "excerpt": "Standards axis TF-C3 round 2 (fable/medium), repair delta e393718f..733ed2f1. S3 held (check_floor.go:153-161 owns the red-detail format; TF25 literal at check_floor_test.go:205-207). S4 held (focusedRequest.listing at command.go:129, read by dispatch :140 and Request.Runs selection_facts.go:47). S6 held. S7 held (preflighttest.PlanCommand fixture.go:125). S8 check_floor_test.go:234 whole-suite test input and the frozen toon snapshot: no-op. 0 findings.\n"
+          },
+          "axis": "Standards",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "733ed2f1a8ac58b885e21b8e0d0562273daf23fe",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-r1"
+          ]
+        },
+        {
+          "id": "c3-spec-r2",
+          "performer": "claude:ft349_c3_spec_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "21d718b1fc7e8e916324fd90a9b226fa9b36f081",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_spec_r2",
+            "digest": "sha256:498268c9b005d82a73b32e4bddd00802bafd6224901be883eac2f86c2b58c03f",
+            "excerpt": "Spec axis TF-C3 round 2 (fable/medium), repair delta e393718f..733ed2f1. TF73 and TF74 held as spec.md:171 and :158 state; seam cells name existing tests. Other TF-C3 rows and Unchanged surfaces held; delta inside ticket 03 Writes. 1 finding.\nP3 ticket 03 line 15 still states the command-package condition without the floor-package clause of spec.md:158. auto-fix via plan text. conf 8.\n"
+          },
+          "axis": "Spec",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "733ed2f1a8ac58b885e21b8e0d0562273daf23fe",
+          "finding_ids": [
+            "P3"
+          ],
+          "supersedes": [
+            "c3-spec-r1"
+          ]
+        },
+        {
+          "id": "c3-coverage-r2",
+          "performer": "claude:ft349_c3_coverage_r2",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "21d718b1fc7e8e916324fd90a9b226fa9b36f081",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c3_coverage_r2",
+            "digest": "sha256:bde5160a8312fce81c69620746f4b501239cb0d6794d1c17b01f6842f53ba94b",
+            "excerpt": "Coverage axis TF-C3 round 2 (fable/medium), repair delta e393718f..733ed2f1. TF73 and TF74 held. Probes, all restored yes: fixtures branch of listing() off bit fixture_listing; TrimPrefix drop at check_floor.go:81 bit TestCheckFloorAddsCmdBench; an omission for an empty-floor unplanned ticket bit the green assertion at check_floor_test.go:188 only. bench test --package ./internal/preflight/... pass, about 49s. 0 findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "a9ae270abf4bedb99ce56602086cb809c68164e1",
+          "tip": "733ed2f1a8ac58b885e21b8e0d0562273daf23fe",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-r1"
+          ]
         }
       ]
     }
