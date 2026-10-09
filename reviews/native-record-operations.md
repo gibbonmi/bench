@@ -1697,6 +1697,407 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probetest/fixture.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,496\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,330,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:219: import /tmp/YCODVT/t/TestNativeRecordCLIJourney2693610581/008/ordinary.out = exit 1, stdout \\\"error: bench record verification refused — the imported probe_execution.focused_exit_code is null, because no mutate… (271 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "nr-c3-rep1-probe-family",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:probe-family",
+            "digest": "sha256:0ecc0fce3a2c7979643a05164d18b6464219012af704906ae92137b05fa50c64",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,pass,18451,106\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "probe-family",
+          "command": "bench test --package ./internal/probe/...",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-record-forms",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:record-forms",
+            "digest": "sha256:282baba4355b5d21fbc0998a36ec286e38dbb1dd7dea0b0d3c1c4edafd0ecf07",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,8655,168\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-forms",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-response-framing",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:response-framing",
+            "digest": "sha256:37c5172d338611bdb8c1cb896d14d46da503556c50cb32edd245161b98eea641",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/responsebound,pass,210,57\n  github.com/gibbonmi/bench/internal/responsebound/responseboundtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "response-framing",
+          "command": "bench test --package ./internal/responsebound/...",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-tree-framing",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:tree-framing",
+            "digest": "sha256:efbb50b78ae1e308e0268a6d8ebb3e7da2d1a03be9bcba9268664687aa7572c5",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/treetarget,pass,1097,45\n  github.com/gibbonmi/bench/internal/treetarget/kittest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/treetarget/treetargettest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "tree-framing",
+          "command": "bench test --package ./internal/treetarget/...",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-command-package",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:command-package",
+            "digest": "sha256:16c40df72a1341d2b38382ad6c35364943be0d4d7618b0b592bc71d799d07a66",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,14282,334\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "command-package",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-native-import-journey",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:native-import-journey",
+            "digest": "sha256:d90d19c4bc2fc5aa8bd82fc6f4a1c862170d848e86c3a8e8f8e3adc4ac477bbb",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,1115,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "native-import-journey",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-guidance",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:guidance",
+            "digest": "sha256:d262758c372a7752c32e0508b9e10eafd15a71ef3afcc422290a52c2c5f1c3da",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5027,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-root-conformance",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:root-conformance",
+            "digest": "sha256:2e6a711165ebe8e6c2f1ae4df39897e6ccb187180e958cd7cb60e75ba492d533",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14908,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-anchors",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:anchors",
+            "digest": "sha256:43ddbbf8d18b3ca399222fadcacb5dd00433a7068d2917f08a3a38c382e19608",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1116,178\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-conformance-package",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:conformance-package",
+            "digest": "sha256:8be3178edd698f4e5f39b5f8f32d11a66cd0887fbb45c0ae290835ba5f7bcd79",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,51529,1677\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceProseBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/YT5ZKU/t/TestGuidanceProseBudgetRefusesNonRegularSubjectssocket4119275871/001/.agents/skills/bench-craft-linked/SKILL.md: bind: invalid argument\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetRefusesNonRegularSubjects/socket,\"capability: fifo: unix sockets unavailable on this filesystem: listen unix /tmp/YT5ZKU/t/TestSkillDescriptionBudgetRefusesNonRegularSubjectssocket3610662726/001/.agents/skills/bench-craft-planted/SKILL.md: bind: invalid argument\"\n"
+          },
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-record-fixtures",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:record-fixtures",
+            "digest": "sha256:62593459631bf86c5da1b80721a576bde3863bd4c162d966b213791ae053a943",
+            "excerpt": "tree[1]{target,head,dirty}:\n  nro-build,\"0413d11cd2b338986a549e74a685cc3d68c343ec\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-fixtures",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "nr-c3-rep1-focused-exit-substitution",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:focused-exit-substitution",
+            "digest": "sha256:867ae5a4c8e0b5dc3da51bea89d2e4349152da3ee26817b7e459d5d9b179c18c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,494\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,559,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:219: imported probe = &{Mutation:omit source check Outcome:silent ExitCode:1 Restore:pass NativeRef:{Ref:native:probe Digest:sha256:5009a370b641c309616687444bbda80823fa2e532217bfb08f6c1f5ae1b47958 Excerpt:tree[1]{t… (258 bytes)\",25\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "focused-exit-substitution",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Substitute the successful probe command exit for Execute's normalized focused-execution exit in the result producer; retain both executions and red the independent command-0/focused-1 journey assertion.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:nro_t3_rep1:focused-exit-substitution",
+              "digest": "sha256:867ae5a4c8e0b5dc3da51bea89d2e4349152da3ee26817b7e459d5d9b179c18c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,494\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,559,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:219: imported probe = &{Mutation:omit source check Outcome:silent ExitCode:1 Restore:pass NativeRef:{Ref:native:probe Digest:sha256:5009a370b641c309616687444bbda80823fa2e532217bfb08f6c1f5ae1b47958 Excerpt:tree[1]{t… (258 bytes)\",25\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "nr-c3-rep1-tree-lead-omission",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:tree-lead-omission",
+            "digest": "sha256:6c8015ed0a786a0470ed0cd6dc9ff62ceae2263ce902585a1316854017529802",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/result.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,496\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,556,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:219: import /tmp/RCC7Z2/t/TestNativeRecordCLIJourney4251200849/008/ordinary.out = exit 1, stdout \\\"error: bench record verification refused — --probe-result the probe result has no probe table at line 1; the support… (292 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "tree-lead-omission",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit optional tree-lead handling in probe.ReadResult while retaining its public owner; complete ordinary Command.Run stdout must red the native import journey.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:nro_t3_rep1:tree-lead-omission",
+              "digest": "sha256:6c8015ed0a786a0470ed0cd6dc9ff62ceae2263ce902585a1316854017529802",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/result.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,496\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,556,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:219: import /tmp/RCC7Z2/t/TestNativeRecordCLIJourney4251200849/008/ordinary.out = exit 1, stdout \\\"error: bench record verification refused — --probe-result the probe result has no probe table at line 1; the support… (292 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "nr-c3-rep1-projection-refusal-omission",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:projection-refusal-omission",
+            "digest": "sha256:ea812065d3b7ecedd27f4c607134c80ff256b03979952b47c4cba945c0cec117",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/result.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,501\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1026,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:272: projected stdout import = exit 1, stdout \\\"error: bench record verification refused — --probe-result the probe result has no probe_execution table at line 5; the supported schema is bench-probe-result-v1\\\\\\\\n\\\"; wa… (280 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "projection-refusal-omission",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit only responsebound.RequireComplete from ReadResult while preserving envelope and suffix parsing; the projected-stdout refusal and outside-path sentinel must red the real import journey.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:nro_t3_rep1:projection-refusal-omission",
+              "digest": "sha256:ea812065d3b7ecedd27f4c607134c80ff256b03979952b47c4cba945c0cec117",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/result.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,501\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1026,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:272: projected stdout import = exit 1, stdout \\\"error: bench record verification refused — --probe-result the probe result has no probe_execution table at line 5; the supported schema is bench-probe-result-v1\\\\\\\\n\\\"; wa… (280 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "nr-c3-rep1-suffix-comparison-omission",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:suffix-comparison-omission",
+            "digest": "sha256:ab649b55f89fe45d41d2a67ac9100af17d85022788d39602b28f83ad7bae9685",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/result.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,506\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1122,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:272: truncated suffix import = exit 0, stdout \\\"verification[1]{list,chunk,id,requirement,role,outcome,source_digest,excerpt_digest}:\\\\\\\\n  chunk,\\\\\\\\\\\"2\\\\\\\\\\\",probe-6,tests,author-verification,pass,b4fe6bd4eeea5734b68375d3c12… (378 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "suffix-comparison-omission",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit only exact trailing_bytes comparison from ReadResult; a complete envelope with a truncated declared suffix must red the real import journey.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:nro_t3_rep1:suffix-comparison-omission",
+              "digest": "sha256:ab649b55f89fe45d41d2a67ac9100af17d85022788d39602b28f83ad7bae9685",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/result.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,506\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1122,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:272: truncated suffix import = exit 0, stdout \\\"verification[1]{list,chunk,id,requirement,role,outcome,source_digest,excerpt_digest}:\\\\\\\\n  chunk,\\\\\\\\\\\"2\\\\\\\\\\\",probe-6,tests,author-verification,pass,b4fe6bd4eeea5734b68375d3c12… (378 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "nr-c3-rep1-suffix-renderer-omission",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:suffix-renderer-omission",
+            "digest": "sha256:91332ea3e6ba073c950a8cab72d54672d4eddb719bcfad8f6600772641aead98",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,496\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,650,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:219: import /tmp/GDDIYR/t/TestNativeRecordCLIJourney1797178818/008/ordinary.out = exit 1, stdout \\\"error: bench record verification refused — --probe-result the probe result is incomplete: 145 bytes follow the envel… (294 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "suffix-renderer-omission",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit a rendered report suffix byte without changing its declared trailing_bytes; the actual producer/consumer complete-report journey must red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:nro_t3_rep1:suffix-renderer-omission",
+              "digest": "sha256:91332ea3e6ba073c950a8cab72d54672d4eddb719bcfad8f6600772641aead98",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probe.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,496\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,650,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:219: import /tmp/GDDIYR/t/TestNativeRecordCLIJourney1797178818/008/ordinary.out = exit 1, stdout \\\"error: bench record verification refused — --probe-result the probe result is incomplete: 145 bytes follow the envel… (294 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "nr-c3-rep1-runner-alternation-omission",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:runner-alternation-omission",
+            "digest": "sha256:76d7c6f46ec67d3f5f02eba1fd579f7533a48a4ffdaa1b1b060ce0f122313b99",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probetest/fixture.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,504\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1159,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:227: --full probe = exit 1, stdout \\\"tree[1]{target,head,dirty}:\\\\\\\\n  unassigned,cf7579126fd0a934bc5e7f673d8603da57b8ff5c,true\\\\\\\\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  silent,clamp/clamp.go,… (664 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "runner-alternation-omission",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make the shared runner always emit its baseline answer while retaining both supplied Start values; existing baseline/mutated cases and the independent real journey must red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:nro_t3_rep1:runner-alternation-omission",
+              "digest": "sha256:76d7c6f46ec67d3f5f02eba1fd579f7533a48a4ffdaa1b1b060ce0f122313b99",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probetest/fixture.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,504\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,1159,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:227: --full probe = exit 1, stdout \\\"tree[1]{target,head,dirty}:\\\\\\\\n  unassigned,cf7579126fd0a934bc5e7f673d8603da57b8ff5c,true\\\\\\\\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\\\\\\\\n  silent,clamp/clamp.go,… (664 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "nr-c3-rep1-runner-passthrough-omission",
+          "performer": "claude:nro_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4ec6cf698b8894be5096bab27ab81294d9bc7580",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:nro_t3_rep1:runner-passthrough-omission",
+            "digest": "sha256:a6b90c98202d6ee7a9352ce0da25ae023c4b7f668105aa819719201d4cdeef07",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probetest/fixture.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,496\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,338,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:219: import /tmp/TSLU7S/t/TestNativeRecordCLIJourney1506543307/008/ordinary.out = exit 1, stdout \\\"error: bench record verification refused — the imported probe_execution.focused_exit_code is null, because no mutate… (271 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "runner-passthrough-omission",
+          "command": "bench test --package ./cmd/bench --run '^TestNativeRecordCLIJourney$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the shared runner's real-Go passthrough for non-test arguments while retaining test answers; the actual Go selection/freshness path in the native journey must red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:nro_t3_rep1:runner-passthrough-omission",
+              "digest": "sha256:a6b90c98202d6ee7a9352ce0da25ae023c4b7f668105aa819719201d4cdeef07",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/probe/probetest/fixture.go,swap,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestNativeRecordCLIJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,496\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,338,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestNativeRecordCLIJourney,\"record_operations_test.go:219: import /tmp/TSLU7S/t/TestNativeRecordCLIJourney1506543307/008/ordinary.out = exit 1, stdout \\\"error: bench record verification refused — the imported probe_execution.focused_exit_code is null, because no mutate… (271 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
