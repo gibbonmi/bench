@@ -1378,6 +1378,72 @@
           "supersedes": [
             "link-coverage-r1"
           ]
+        },
+        {
+          "id": "link-standards-r3",
+          "performer": "claude:ft217_link_standards_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c471fa51302108c04a298f67c8ae0f5bd24801f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_link_standards_r3/review-link-standards-r3.txt",
+            "digest": "sha256:24820970ca951b569765af70ab70a3d1494a4c3e23a376955461f08e4788b829",
+            "excerpt": "ALC-LINK Standards axis, confirming round 3. Session claude:ft217_link_standards_r3, opus / medium. Chunk pair a8ede0f6..efe66c1a, source tip 176e9603, evidence sha256:1a2abe2b current=true. Read the test-only delta b40e664a..efe66c1a; named finding only.\n\nCount: 0. Worst issue: none.\n\nFolds confirmed\nJ2r closed: TestLifecycleSetupCancellation calls the shared requireUnchanged helper (lifecycle_preview_test.go:261; helper at lifecycle_special_test.go:89); the delta drops the unused reflect and compatibilitytest imports; one source remains for the snapshot-run-require-equal assertion.\nNo production file changed: the stat lists lifecycle_preview_test.go, lifecycle_special_test.go, and the two record files.\n\nAdvice (no confidence): the new dangling(owned bool) arrange factory and the owned dangling row hold no duplication; internal/adopt/repairtest/repair_test.go:310-315 has a similar inline snapshot comparison in a separate, older package.\n\nCursors fetched: the diff spill. Examined: the evidence binding, the delta stat and test hunks, an rg search for requireUnchanged and SnapshotHome in internal/adopt.\n"
+          },
+          "axis": "Standards",
+          "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "tip": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "finding_ids": [],
+          "supersedes": [
+            "link-standards-r2"
+          ]
+        },
+        {
+          "id": "link-spec-r3",
+          "performer": "claude:ft217_link_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c471fa51302108c04a298f67c8ae0f5bd24801f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_link_spec_r3/review-link-spec-r3.txt",
+            "digest": "sha256:9a5fbe0d9f072963564595a4de85f32adc3ae2c346c866df36b695510a6a1a4e",
+            "excerpt": "ALC-LINK Spec axis, confirming round 3. Session claude:ft217_link_spec_r3, opus / medium. Chunk pair a8ede0f6..efe66c1a, source tip 176e9603, evidence sha256:1a2abe2b current=true. Read the test-only delta b40e664a..efe66c1a and the spec note; named finding only.\n\nCount: 0. Worst issue: none.\n\nFolds confirmed\nP2 closed: dangling(true) (lifecycle_special_test.go:169-181) plants the dangling symlink and keeps the CLAUDE.md row; the row at :198 (installed true, empty reason) runs requireReported, which requires exit 0 with no reason (lifecycle_consumption_test.go:55-63), and requireClaudeInstalled, which checks the current form and its fingerprint row (:89-95); this matches the spec note (spec.md:243-247) and rules out the earlier exit-3 conflict.\nALC33 equivalence holds: requireUnchanged (lifecycle_special_test.go:89-96) takes the same SnapshotHome before and after DeepEqual around the setup call (lifecycle_preview_test.go:258-263); only the failure message text changed.\nNo production file changed: the stat lists the two test files, the review record, and the spec.\n\nAdvice (no confidence): no assertion checks stdout for an absent CLAUDE.md modified-managed row (exit 0 carries it); readFile may follow the symlink, so an Lstat regular-file check would close a write-through-the-link case.\n\nCursors fetched: none. Examined: the delta, the spec diff, lifecycle_special_test.go:89-216, lifecycle_consumption_test.go:28-112.\n"
+          },
+          "axis": "Spec",
+          "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "tip": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "finding_ids": [],
+          "supersedes": [
+            "link-spec-r2"
+          ]
+        },
+        {
+          "id": "link-coverage-r3",
+          "performer": "claude:ft217_link_coverage_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c471fa51302108c04a298f67c8ae0f5bd24801f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_link_coverage_r3/review-link-coverage-r3.txt",
+            "digest": "sha256:c817274fe5969b5beabd808f68ba51046eb5ded648776c547a3633acdb05a67b",
+            "excerpt": "ALC-LINK Coverage axis, confirming round 3. Session claude:ft217_link_coverage_r3, opus / medium. Chunk pair a8ede0f6..efe66c1a, source tip 176e9603, evidence sha256:1a2abe2b current=true. Read the test-only delta b40e664a..efe66c1a; named finding only.\n\nCount: 0. Worst issue: none.\n\nFolds confirmed\nC4 owned case closed: bench probe internal/adopt/link_stage.go --swap '\\t\\to.Present = false\\n\\t\\treturn staged, nil' --with '\\t\\treturn staged, nil' --package ./internal/adopt --run '^TestLifecycleClaudeOwnership$/^owned_dangling_link$' → bit, 1 failed of 2 run, failing line lifecycle_special_test.go:208 \"Link = 3, want 0 with the \\\"\\\" row for CLAUDE.md\" (the row's requireReported assertion, not its arrangement at :169-181), restored yes.\nALC33 kept: TestLifecycleSetupCancellation (lifecycle_preview_test.go:261-263) wraps setup in requireUnchanged, which compares the full SnapshotHome before and after with reflect.DeepEqual (lifecycle_special_test.go:89-96); the code and stderr check stays at :264-266.\n\nAdvice (no confidence): the shared failure text \"refused run changed the repository\" (lifecycle_special_test.go:94) fits the cancellation paths poorly and drops the tc.args the old message named; wording only.\n\nCursors fetched: none. Examined: the delta, lifecycle_special_test.go:80-216, lifecycle_preview_test.go:239-269, docs/known-issues.md. Final git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "tip": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+          "finding_ids": [],
+          "supersedes": [
+            "link-coverage-r2"
+          ]
         }
       ]
     }
