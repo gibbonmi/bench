@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/native-record-operations/spec.md",
-  "plan_digest": "sha256:a2b11a0ac51dbb366db60665d1ad3e478daae502850e498b175ba070c251297d",
+  "plan_digest": "sha256:7559c5825d78c155a42e659d015808bf13b36e8aeaab648f1fb7c04bfc773638",
   "implementation_session": "",
   "chunks": [
     {
@@ -959,6 +959,18 @@
       "chunk_ids": {
         "NR-C1": [
           "NR-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a2b11a0ac51dbb366db60665d1ad3e478daae502850e498b175ba070c251297d",
+      "to": "sha256:7559c5825d78c155a42e659d015808bf13b36e8aeaab648f1fb7c04bfc773638",
+      "chunk_ids": {
+        "NR-C1": [
+          "NR-C1"
+        ],
+        "NR-C2": [
+          "NR-C2"
         ]
       }
     }
