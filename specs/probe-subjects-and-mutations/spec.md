@@ -6,7 +6,7 @@ Related roadmap: FT168, partial. This spec settles the mutation-input, subject, 
 
 Decision source: named reviewed artifact `roadmap/FT168.md` at aabd462d, with the `/bench-write-spec FT168` invocation and the reviewer decisions D1 and D2 of 2026-10-09.
 
-Verification log: pending — iteration 1 folded; iteration 2 has not run.
+Verification log: 2 iteration(s) to accept — an opus xhigh spec review found five blocking defects in iteration 1, and the author folded them. Iteration 2 accepted after folds. A sonnet high ticket review accepted after folds in one iteration, and the slicer added the missing Writes paths.
 
 ## Problem
 
