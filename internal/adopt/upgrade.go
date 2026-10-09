@@ -124,8 +124,10 @@ func pinnedManifest(path string, stderr io.Writer) (Manifest, int) {
 //
 // Only file entries can drift; an adapter symlink and an inline entry are generated from
 // the destination path and from constant content. This reads the same inputs
-// transactionalLink reconciles without deciding anything a second time. CLAUDE.md is
-// manifest-owned but conditionally, never planned, so it is not a withdrawal.
+// transactionalLink reconciles and counts only PlanLifecycle's effect projection, so it
+// decides nothing a second time. CLAUDE.md is manifest-owned but conditionally, never
+// planned. Its requested preserve decision stays outside the effects, so it is not a
+// withdrawal.
 func upgradePlanCounts(manifest Manifest, plan []planEntry) (added, changed, removed int) {
 	current := make([]Asset, 0, len(manifest.hashes))
 	for _, row := range manifest.Rows() {
