@@ -22,6 +22,8 @@ Chunk TF-C4 uses repair cycle 1 of 2 for C1 and C2 through a fresh repair sessio
 
 TF-C4 round 2 confirmed the folds of C1 and C2 and found C3. Chunk TF-C4 uses repair cycle 2 of 2 for C3 through a fresh repair session for ticket 04. No reviewer extension exists.
 
+TF-C4 round 3 confirmed the fold of C3 with 0 findings on every axis. TF-C4 closes with both repair cycles used and no open finding.
+
 ## Standards
 
 TF-C1 round 1: 4 findings, worst S1.
@@ -2520,6 +2522,72 @@ TF-C4 round 2: 1 finding, worst C3.
           ],
           "supersedes": [
             "c4-coverage-r1"
+          ]
+        },
+        {
+          "id": "c4-standards-r3",
+          "performer": "claude:ft349_c4_standards_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c4_standards_r3",
+            "digest": "sha256:b89c66a5cd98142d2ffe8d3da669d190a73cbeacf45e1bb9b72a9c8b01be4de6",
+            "excerpt": "Standards axis TF-C4 round 3 (fable/medium), repair delta ddc19951..63c5500c. TestRecordCompletionReadsTheSource composes existing helpers and fixture seams; no copied production string; no second harness. 0 findings.\n"
+          },
+          "axis": "Standards",
+          "base": "41df830c693ac196a88d66010379bf721608bbf4",
+          "tip": "63c5500c51705ac4fd5dfdb43f3060a92e34e108",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards-r2"
+          ]
+        },
+        {
+          "id": "c4-spec-r3",
+          "performer": "claude:ft349_c4_spec_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c4_spec_r3",
+            "digest": "sha256:856162658c32250526b60d9522b98efc0f2e5c71f63126f0a8392d79cfb6aa6b",
+            "excerpt": "Spec axis TF-C4 round 3 (fable/medium), repair delta ddc19951..63c5500c. The new test proves completion refuses at its source (spec.md:185, ticket 04 line 11); every TF-C4 seam cell names an existing test; delta inside ticket 04 Writes. 0 findings.\n"
+          },
+          "axis": "Spec",
+          "base": "41df830c693ac196a88d66010379bf721608bbf4",
+          "tip": "63c5500c51705ac4fd5dfdb43f3060a92e34e108",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-spec-r2"
+          ]
+        },
+        {
+          "id": "c4-coverage-r3",
+          "performer": "claude:ft349_c4_coverage_r3",
+          "role": "independent-review",
+          "model": "fable",
+          "effort": "medium",
+          "source_digest": "0f8d0f2538bf35d193332e7070fdc47a45318581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft349_c4_coverage_r3",
+            "digest": "sha256:c70b600709a56da8585ce8f0909a141adec8df5777c33b6b42381082f449c141",
+            "excerpt": "Coverage axis TF-C4 round 3 (fable/medium), repair delta ddc19951..63c5500c. C3 held: the test asserts exit 1, E1, and the source sha. bench test --package ./internal/reviewrecord/... pass, about 10.2s. 0 findings.\n"
+          },
+          "axis": "Coverage",
+          "base": "41df830c693ac196a88d66010379bf721608bbf4",
+          "tip": "63c5500c51705ac4fd5dfdb43f3060a92e34e108",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-coverage-r2"
           ]
         }
       ]
