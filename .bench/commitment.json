@@ -467,6 +467,14 @@
       "identity": "sha256:845e519b1cb708f2952e064390fac20c4a06e1723b9ca938cfc6be4fd4276165",
       "source": "90799f4a0853edb750aa61d4713a74a9b485bfde",
       "evidence": "c9618930b2cd5664cb920135d0ed0cd276e0ca7a"
+    },
+    {
+      "milestone": "quality-1",
+      "outcome": "FT217",
+      "binding": "adoption-lifecycle-consumption",
+      "identity": "sha256:503f84b3ebc489c7077666488ef2574d3278fc44745d142fa7a31599bd08b7f6",
+      "source": "66c5f91c9b841bc0c7ca422879afa60b3a5f3b6e",
+      "evidence": "c5e3c21ad695534158c6b685516dc853eb4dfddc"
     }
   ]
 }
