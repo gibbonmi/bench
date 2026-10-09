@@ -719,6 +719,18 @@ Review records bind three independent axes to each frozen chunk pair.
           "effort": "high",
           "source": "24654b5fa3c1281a88b64d2b22bfd122b605eb8e",
           "native_ref": "claude-agent:ft217_t3"
+        },
+        {
+          "session": "claude:ft217_t3_repair1",
+          "assignment": "32297bb2a2b17d4d68b8c88121928c21",
+          "model": "opus",
+          "effort": "high",
+          "source": "8613919f6e13a5e5049534016f091dc57747dc1d",
+          "native_ref": "claude-agent:ft217_t3_repair1",
+          "predecessor": "claude:ft217_t3",
+          "trigger": "user-directed",
+          "stopped": "the ticket 03 author session reported completion of its ALC-LINK freeze and verification record commit 122095ca and has no live child",
+          "preserved": "8613919f6e13a5e5049534016f091dc57747dc1d"
         }
       ],
       "04-consume-unlink-decisions-and-close-entry-proof.md": []
@@ -789,7 +801,7 @@ Review records bind three independent axes to each frozen chunk pair.
         {
           "id": "link-probes",
           "ticket": "02-consume-decisions-for-desired-link-assets.md",
-          "command": "bench probe internal/adopt/link_transaction.go --omit-file specs/adoption-lifecycle-consumption/assets/alc38-omit.txt --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$'",
+          "command": "bench probe internal/adopt/link_transaction.go --omit 'o.SymlinkParent = hasSymlinkParent(root, e.rel)' --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$'",
           "probe": "Early competing-refusal omission, selected desired effects, mode facts, seeds, and strict repair witnesses must bite and restore."
         },
         {

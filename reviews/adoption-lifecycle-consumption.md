@@ -829,7 +829,85 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "link-standards-r1",
+          "performer": "claude:ft217_link_standards_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft217_link_standards_r1/review-link-standards-r1.txt",
+            "digest": "sha256:42338fb095e26a965d17d1dc8650c63a59a8528c42e04af9d84fc561ed724d7e",
+            "excerpt": "ALC-LINK Standards axis, round 1. Session claude:ft217_link_standards_r1, opus / medium. Frozen pair a8ede0f6..64b4d088, source tip 8613919f, evidence sha256:6d95994a current=true. Read the build delta only (internal/adopt, spec.md, assets).\n\nCount: 7 (3 hard, 4 judgment). Worst: H1, the partition reason vocabulary has two sources.\n\nAuthor claims confirmed: decideLink is the one owner call (link_transaction.go:271); observeClaude replaced the old helpers (link_stage.go:76); stagedClaude, reclaimableClaude, convergedFingerprint, ownedUnmodified, sameAdapterTarget, stagedEntry are gone; refusal strings have one source in decision.go (311, 315, 356); the compatibilitytest precedent exists in repairtest.\n\nHard violations\nH1. One source per fact: decision.go:232,234,290,292,321 type \"modified-managed\", \"project-owned\", \"kept-modified-removed\", and link_transaction.go:133,155,191 type the same literals to choose the report label; broker.go:156-158 re-derives the owned-to-reason classification (outside the delta; the carried ALC-OWNER S4). Fix: named reason constants in decision.go matched by the caller. Confidence 9. auto-fix in fence; broker.go carried (outside ticket 02/03 Writes).\nH2. One source per fact: specs/adoption-lifecycle-consumption/assets/alc38-omit.txt (ticket 02) holds a two-tab block ending `return 1, false`; ticket 03 moved that block into decideLink (link_transaction.go:273-275) with one-tab indent and `return LifecycleDecision{}, false`, so the plan's link-probes command (spec.md:792) no longer matches the tree and the ALC38 red record is stale. Confidence 8. auto-fix: regenerate the asset and re-record the red.\nH3. One source per fact: fileKind owns \"regular\", \"symlink\", \"other\" (decision.go:70-76) while link_stage.go:112 and decision.go:247,250,262,314 repeat bare literals. Confidence 6. auto-fix: named constants.\n\nJudgment calls\nJ1. runLink (lifecycle_consumption_test.go:29-33) and linkConsumer (link_transaction_test.go:90-101) both call Link and capture output; one runner. Confidence 6. auto-fix.\nJ2. The snapshot-run-require-equal assertion is pasted three times (lifecycle_special_test.go:106-113, :259-273, lifecycle_preview_test.go:74-80). Confidence 4. auto-fix: a requireUnchanged helper.\nJ3. Tests hardcode production refusal text (lifecycle_special_test.go:89-92 symlink-parent, :268 hook refusal); allowed only with a recorded red, and H2 makes the ALC38 red stale. Confidence 4. Disposition: closes with H2's re-recorded red; no separate repair.\nJ4. The caller still routes partitions and selects labels (link_transaction.go:140, :191); FT217 lets each verb keep its own reporting; fine once H1 single-sources the labels. Confidence 3. no-op.\n\nNo-op checks: 400-line rule passes (381, 306, 287, tests 270-276); comments state the why in present tense.\n\nAdvice (no confidence): add reason and file-kind constants in decision.go and match against them in link_transaction.go; regenerate alc38-omit.txt from the decideLink refusal block and re-record the ALC38 red before the chunk closes; fold runLink and linkConsumer into one runner; the two special-file ordering comments are acceptable warnings at separate break points.\n\nCursors fetched: evidence_summary; v1.6d95994…m.0.0; --source s1; --source s103 page 0 (touched=false rows: only lifecycle_decision_test.go LifecycleObservation uses). Examined: decision.go:95-381, link_transaction.go diff, link_stage.go diff, both new test files in full, lifecycle_preview_test.go diff, link_transaction_test.go:85-139, the alc38 asset, spec.md rows 343/429/792, craft-comments, rg sweeps. Not read: projects/benchkit.md in full, finding-discipline.md.\n"
+          },
+          "axis": "Standards",
+          "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "tip": "64b4d0883988092fc4b113fe413804bc4b0d9e40",
+          "finding_ids": [
+            "H1",
+            "H2",
+            "H3",
+            "J1",
+            "J2",
+            "J3",
+            "J4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "link-spec-r1",
+          "performer": "claude:ft217_link_spec_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft217_link_spec_r1/review-link-spec-r1.txt",
+            "digest": "sha256:87b3738a554f19d74c8306b3575e5e48a3afe5654001386d13dea64059b20806",
+            "excerpt": "ALC-LINK Spec axis, round 1. Session claude:ft217_link_spec_r1, opus / medium. Frozen pair a8ede0f6..64b4d088, source tip 8613919f, evidence sha256:6d95994a current=true. Read the build delta only.\n\nCount: 2 action items. Worst: P1, the plan's link-probes ALC38 witness cannot run at the chunk tip.\n\nP1. assets/alc38-omit.txt holds the two-tab block ending `return 1, false` that existed at 67cd3937 (link_transaction.go:120-123) but not at the tip, where the refusal sits in decideLink (:273-276) and returns LifecycleDecision{}, false. Omitting that block would panic on lifecycle.Decisions[0] (:277) instead of producing the spec's mutant (spec:570 \"The mutant emits the missing-source diagnostic and still publishes nothing\"). Confidence 9. auto-fix: retarget the witness so the mutant drops the symlink-parent fact before the owner call (the orchestrator's probe `--omit 'o.SymlinkParent = hasSymlinkParent(root, e.rel)'` at 67cd3937 produced exactly the missing-source diagnostic), update the plan command, and re-record the red.\nP2. Uncovered behavior delta: an owned CLAUDE.md that is a dangling symlink. Old path: fingerprintPath hashes the link, the hash differs, reclaimableClaude fails the read, the row is kept and modified-managed reported, then stagedClaude replaces the file: replaced, exit 3. New path: observeClaude sets Present=false on IsNotExist and claudeDecision writes (decision.go:287-288): replaced, exit 0. No existing assertion pins the old result; the ALC22 row supports the new one; spec:610 and :365-366 route the delta to the reviewer. Confidence 8. ask-user.\n\nNo-op: report order (old dropped-row order came from a Go map, so the current report defined none, spec:196; confidence 9); one owner call per plan entry satisfies the seam (no second planner or callback, spec:157; caller order kept, spec:195; ticket 02:20 forbids a collector; story 1 holds per path; ALC04's cross-observation ordering runs only at the owner seam; confidence 7); hard checks keep their order at the tip (link_transaction.go:53-63, :56, :70, :76, :99-109; seed parent first; ALC38 order through the per-entry loop; unreadable dropped asset prints the raw error via observeWithdrawal and :143-146; confidence 8); every partition row has a real-entry fixture (consumption test :144-164, :242-250; special test :42-50, :89-92, :155-164, :193-195, :122-134; preview test setup cancellation) and the owner matches each row (decision.go:212-322; confidence 8); seam cells, plan fences, and existing tests are correct (dropped-probes text exists once at decision.go:318; no pre-spec test file changed; confidence 9).\n\nAdvice (no confidence): fix alc38-omit.txt and re-record red and green before ALC-LINK closes; accept exit 0 for the dangling CLAUDE.md case, record the decision with bench learning, add one fixture that pins it; observeDestination now fails hard on a staged-file Lstat or fingerprint error where the old code ignored it (minor).\n\nCursors fetched: none; the bench coverage page read from its spill. Examined: the whole spec, tickets 02 and 03, the delta for decision.go, link_stage.go, link_transaction.go, lifecycle_preview_test.go, assets, spec.md; tip link_transaction.go and decision.go; consumption test :90-270; special test :81-230; manifest.go:32-37, :107-129; link_stage.go:136-176; git grep of the omit text at both commits.\n"
+          },
+          "axis": "Spec",
+          "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "tip": "64b4d0883988092fc4b113fe413804bc4b0d9e40",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "link-coverage-r1",
+          "performer": "claude:ft217_link_coverage_r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d201b211776c46a0e964c51e6719f5029dcd3615",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft217_link_coverage_r1/review-link-coverage-r1.txt",
+            "digest": "sha256:f3d195a633ff534ac41e9f92348c3d73348159366e2c795edbb29fbe4965d01a",
+            "excerpt": "ALC-LINK Coverage axis, round 1. Session claude:ft217_link_coverage_r1, opus / medium. Frozen pair a8ede0f6..64b4d088, source tip 8613919f, evidence sha256:6d95994a current=true. Read the build delta only.\n\nCount: 5. Worst: C1, the recorded ALC38 probe command returns invalid (substring-miss) at the chunk tip, so ALC38 has no live witness.\n\nCited tests exist: TestLifecycleLinkPartitions (lifecycle_consumption_test.go:129), TestLifecycleDroppedRows (:237), TestLifecycleSeedOwnership, TestLifecycleHardRefusalOrder, TestLifecycleRepairCompatibility, TestLifecycleClaudeOwnership, TestLifecycleSpecialInstructionFiles (lifecycle_special_test.go:36, 81, 122, 140, 188), TestLifecycleSetupCancellation (lifecycle_preview_test.go:243).\n\nC1. alc38-omit.txt holds the ticket 02 inline refusal that ticket 03 moved into decideLink (link_transaction.go:273-275); the link-probes command (spec.md:792) is invalid with cause substring-miss. Confidence 10. auto-fix: retarget the witness and rerun it.\nC2. An absent seed under a symlink parent: the spec expects a refusal (ALC19; edge row \"Symlink destination and symlink parent … seed fixtures\"); only present-seed fixtures exist (lifecycle_special_test.go:91-92, lifecycle_decision_test.go:179-180); the bypass `if o.SymlinkParent && o.Present {` in seedDecision (decision.go:269) is silent across the package. Confidence 8. auto-fix: an absent-seed row in TestLifecycleHardRefusalOrder.\nC3. A dropped manifest row under a symlink parent or escaping the repo, and a dropped special file: only the pure decision test drives them (lifecycle_decision_test.go:181); nothing exercises the consumer observation (link_stage.go:103, :107); the omission of the withdrawal symlink-parent observation is silent across the package. Confidence 8. auto-fix: consumer rows in TestLifecycleDroppedRows.\nC4. A dangling-symlink CLAUDE.md, owned or unowned: owned now exits 0 and is replaced (formerly exit 3); unowned is replaced as before; no test covers either; the omission of `o.Present = false` in observeClaude (link_stage.go:87) is silent across the package. Confidence 9. auto-fix for the unowned case (unchanged behavior); the owned case waits for the reviewer decision.\nC5. Paths with spaces and glob characters (ALC06 edge row): consumerRepo uses a plain t.TempDir (link_transaction_test.go:81) and the partition fixtures use fixed plain leaves (lifecycle_consumption_test.go:18-20). Confidence 7. auto-fix: one spaced and glob-character fixture.\n\nNot a gap here: the foreign-hook stderr literal (lifecycle_special_test.go:268) belongs to ALC24, ticket 04, which must show its red or derive it from the producer.\n\nProbes (serial, whole package unless noted):\n1 bench probe internal/adopt/link_transaction.go --omit-file specs/adoption-lifecycle-consumption/assets/alc38-omit.txt --package ./internal/adopt --run '^TestLifecycleHardRefusalOrder$' → invalid (substring-miss), restored untouched\n2 bench probe internal/adopt/decision.go --swap seedDecision `if o.SymlinkParent {` → `if o.SymlinkParent && o.Present {` --package ./internal/adopt → silent, 216 tests, restored yes\n3 bench probe internal/adopt/link_stage.go --omit '\\to.SymlinkParent = inside && hasSymlinkParent(root, row.rel)' --package ./internal/adopt → silent, 216 tests, restored yes\n4 bench probe internal/adopt/link_stage.go --omit '\\t\\to.Present = false' --package ./internal/adopt → silent, 216 tests, restored yes\n\nAdvice (no confidence): retarget the ALC38 witness at the tip text; one derivation for both seed states; the dangling CLAUDE.md exit change needs the reviewer decision before a test pins it; each whole-package probe costs about 4.5 minutes.\n\nCursors fetched: none; spec Edge inventory read directly (spec.md:449-482). Examined: the build delta, both new test files in full, lifecycle_decision_test.go:168-187, link_transaction_test.go:75-114, the four tickets' Writes and Covers lines, docs/known-issues.md, stageManagedPrePush. All probes restored; the dirty reviews file was the orchestrator's record writes.\n"
+          },
+          "axis": "Coverage",
+          "base": "a8ede0f69a6b3c8d1caf86dbcfead017ba5172f4",
+          "tip": "64b4d0883988092fc4b113fe413804bc4b0d9e40",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
