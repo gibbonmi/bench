@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/adoption-lifecycle-consumption/spec.md",
-  "plan_digest": "sha256:168d040b106bf09943fdaf33ceba0a103e45404bc0972453ec61912ee8f5fe40",
+  "plan_digest": "sha256:b3cd611cf727f71c821797319db9b7f8091323b830e16b154a4c24739633d4ea",
   "implementation_session": "",
   "chunks": [
     {
@@ -1446,6 +1446,131 @@
           ]
         }
       ]
+    },
+    {
+      "id": "ALC-UNLINK",
+      "base": "efe66c1afe7a7a38ca55360ff3d037ce0cdc92ed",
+      "tip": "30f7802fdb06fffd11a00b8d8c852515255ede51",
+      "plan_digest": "sha256:b3cd611cf727f71c821797319db9b7f8091323b830e16b154a4c24739633d4ea",
+      "source_digest": "4385e886b2cd8f6c3776f95fbe126ae4a3261cac",
+      "acceptance_rows": [
+        "ALC01",
+        "ALC20",
+        "ALC24",
+        "ALC26",
+        "ALC27",
+        "ALC28",
+        "ALC29",
+        "ALC30",
+        "ALC34",
+        "ALC35",
+        "ALC36",
+        "ALC37"
+      ],
+      "verification": [
+        {
+          "id": "t4-aggregate-adopt",
+          "performer": "claude:ft217_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4385e886b2cd8f6c3776f95fbe126ae4a3261cac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4/aggregate-adopt.txt",
+            "digest": "sha256:330d98e688f9974efdf0d462584d63929e853248940d724e35486195304d5630",
+            "excerpt": "command: bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench (one call, reviewer allowance: aggregate-adopt and unlink-floor-cmd)\ntree[1]{target,head,dirty}:\n  ft217-build,\"0569b0068272f379ae31597eec222b6781ac6975\",true\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18716,334\n  github.com/gibbonmi/bench/internal/adopt,pass,432670,240\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "aggregate-adopt",
+          "command": "bench test --package ./internal/adopt",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-aggregate-system",
+          "performer": "claude:ft217_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4385e886b2cd8f6c3776f95fbe126ae4a3261cac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4/aggregate-system.txt",
+            "digest": "sha256:ed27347f2de56a897220772528bc9a4d082a6ac21b078222705b3b9ad58edf7f",
+            "excerpt": "command: bench worktree exec ft217-build -- bench test --check system\ntree[1]{target,head,dirty}:\n  ft217-build,\"0569b0068272f379ae31597eec222b6781ac6975\",true\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,166,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,129544,166\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "aggregate-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-unlink-floor-conformance",
+          "performer": "claude:ft217_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4385e886b2cd8f6c3776f95fbe126ae4a3261cac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4/unlink-floor-conformance.txt",
+            "digest": "sha256:19e10c448036a8787a6f2e74d5eb76edb488afbacb3e01e78af6197ac536d5d2",
+            "excerpt": "command: bench worktree exec ft217-build -- bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  ft217-build,\"0569b0068272f379ae31597eec222b6781ac6975\",true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15840,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "unlink-floor-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-unlink-floor-cmd",
+          "performer": "claude:ft217_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4385e886b2cd8f6c3776f95fbe126ae4a3261cac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4/unlink-floor-cmd.txt",
+            "digest": "sha256:330d98e688f9974efdf0d462584d63929e853248940d724e35486195304d5630",
+            "excerpt": "command: bench worktree exec ft217-build -- bench test --package ./internal/adopt --package ./cmd/bench (one call, reviewer allowance: aggregate-adopt and unlink-floor-cmd)\ntree[1]{target,head,dirty}:\n  ft217-build,\"0569b0068272f379ae31597eec222b6781ac6975\",true\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18716,334\n  github.com/gibbonmi/bench/internal/adopt,pass,432670,240\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "unlink-floor-cmd",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-unlink-entry-recovery-probes",
+          "performer": "claude:ft217_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4385e886b2cd8f6c3776f95fbe126ae4a3261cac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft217_t4/probe-alc30-residual-manifest-full.txt",
+            "digest": "sha256:fab9818cf510072661ba7f4e411d697a26c080de4689ed13973d705f97318035",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/unlink.go,omit,failed,5,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleUnlinkRefusals$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,874\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,16357,6\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/directory,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/escape,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/modified,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",152\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/special_file,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/symlink_parent,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",153\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "unlink-entry-recovery-probes",
+          "command": "bench probe internal/adopt/unlink.go --omit 'p.manifestKept = len(p.keptModified)+len(p.refused) > 0' --package ./internal/adopt --run '^TestLifecycleUnlinkRefusals$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Selected effects at all applying entries, unlink residual and dry-run guards, and the existing deterministic restore omission must bite and restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft217_t4/probe-alc30-residual-manifest-full.txt",
+              "digest": "sha256:fab9818cf510072661ba7f4e411d697a26c080de4689ed13973d705f97318035",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/adopt/unlink.go,omit,failed,5,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestLifecycleUnlinkRefusals$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,874\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,16357,6\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/directory,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/escape,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/modified,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",152\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/special_file,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",153\n  github.com/gibbonmi/bench/internal/adopt,TestLifecycleUnlinkRefusals/symlink_parent,\"lifecycle_unlink_test.go:106: Unlink [] = 0, want 3\",153\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1558,6 +1683,18 @@
     {
       "from": "sha256:67c082ace9269026dcd80afe9ac7b7b75d83738f180bca0f633d16f017be7a3f",
       "to": "sha256:168d040b106bf09943fdaf33ceba0a103e45404bc0972453ec61912ee8f5fe40",
+      "chunk_ids": {
+        "ALC-LINK": [
+          "ALC-LINK"
+        ],
+        "ALC-OWNER": [
+          "ALC-OWNER"
+        ]
+      }
+    },
+    {
+      "from": "sha256:168d040b106bf09943fdaf33ceba0a103e45404bc0972453ec61912ee8f5fe40",
+      "to": "sha256:b3cd611cf727f71c821797319db9b7f8091323b830e16b154a4c24739633d4ea",
       "chunk_ids": {
         "ALC-LINK": [
           "ALC-LINK"
