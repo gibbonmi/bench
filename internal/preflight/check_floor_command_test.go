@@ -10,7 +10,7 @@ import (
 
 // floorOmission is the check-floor detail of the seeded package that the seeded plan omits.
 // The seeded plan runs the whole suite, so the fixture replaces it with a foreign command.
-const floorOmission = "completion plan omits a floor check: one.md: ./internal/example (add bench test --package ./internal/example)"
+var floorOmission = floorRedDetail([]string{omittedElement("one.md", "./internal/example")})
 
 // seedFloorRepo seeds the conformant fixture, folds a Go module into its base, and plans
 // a command that satisfies nothing. The ticket's package is then a floor element that no
@@ -22,7 +22,7 @@ func seedFloorRepo(t *testing.T) (root, slug string) {
 	preflighttest.RunGit(t, "checkout", "-q", "main")
 	preflighttest.MustWriteFile(t, "go.mod", "module example.com/floor\n\ngo 1.25\n")
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(preflighttest.SpecBody(slug),
-		"bench test --package ./...", "go test ./...", 1))
+		preflighttest.PlanCommand, "go test ./...", 1))
 	// The approved policy binds the spec bytes, so the edited spec is approved again.
 	commitmenttest.SeedAdmission(t, root, "specs/"+slug+"/spec.md")
 	preflighttest.RunGit(t, "add", ".")

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	toonlib "github.com/toon-format/toon-go"
 )
 
@@ -15,20 +16,16 @@ func TestPreflightReviewChargeUsesCurrentVersion(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	t.Chdir(root)
 	writeAXIFixture(t, filepath.Join(root, "go.mod"), "module example.com/versiontest\n\ngo 1.25\n")
-	const spec = "# Example\n\nStatus: staged\n\n## User stories\n\n" +
+	spec := "# Example\n\nStatus: staged\n\n## User stories\n\n" +
 		"1. As a reviewer, I want evidence, so that I can inspect it.\n\n" +
 		"### Acceptance coverage map\n\n" +
 		"| row | story | behavior | seam | why it catches the failure |\n" +
 		"|---|---|---|---|---|\n" +
 		"| PF1 | 1 | evidence is complete | command | catches omitted evidence |\n\n" +
-		"## Ownership fences\n\n- `target/`\n- `outside/`\n- `reviews/example.md`\n\n" +
+		"## Ownership fences\n\n- `target/`\n- `outside/`\n- `reviews/example.md`\n" +
 		// The review charge grades the completion plan the checkpoint later reads,
 		// so a staged spec states it.
-		"## Completion plan\n\n```bench-completion-plan\n" +
-		`{"version":1,"chunks":[{"id":"c1","tickets":["one.md"],` +
-		`"verification":[{"id":"tests","command":"bench test --package ./..."}]}],` +
-		`"final_verification":[{"id":"acceptance","command":"go test ./..."}]}` +
-		"\n```\n"
+		preflighttest.PlanFence("one.md")
 	writeAXIFixture(t, filepath.Join(root, "specs/example/spec.md"), spec)
 	writeAXIFixture(t, filepath.Join(root, "specs/example/tickets/one.md"), `# One
 

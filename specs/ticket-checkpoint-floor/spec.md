@@ -316,8 +316,8 @@ Plan the evidence now, and do not implement the feature to obtain a red. Each ti
 | TF70 | 21 | The rendered `check-floor` red holds no raw control byte inside its row | `internal/preflight/check_floor_command_test.go` (`TestCheckFloorDetailRendersEscaped`) | A detail written past the renderer can split its own row. |
 | TF71 | 13 | An absent `(new)` embed file adds no package and no error | `internal/testreport/floor_test.go` (`TestWritesFloorSkipsAnUnbornEmbedFile`) | The `--changed` refusal for an absent path would red a plan before the asset exists. |
 | TF72 | 29 | `bench test --checks` and `bench test --check root-conformance --fixtures` satisfy nothing | `internal/preflight/check_floor_test.go` (`TestCheckFloorRejectsANonRunningForm`) | A rule that reads only the form and the target accepts a command that runs no test. |
-| TF73 | 32 | A ticket file that no plan chunk names makes `check-floor` red for each element of its floor | planned TestCheckFloorRedsAnUnplannedTicket in internal/preflight/check_floor_test.go | A gather that skips an unplanned ticket leaves its whole floor ungraded under a green row. |
-| TF74 | 14 | A directory entry above a bound command package adds the element `./cmd/bench` | planned TestCheckFloorAddsCmdBenchForADirectoryAboveACommandPackage in internal/preflight/check_floor_test.go | A rule that reads only the entry path misses a command package that the directory entry writes. |
+| TF73 | 32 | A ticket file that no plan chunk names makes `check-floor` red for each element of its floor | `internal/preflight/check_floor_test.go` (`TestCheckFloorRedsAnUnplannedTicket`) | A gather that skips an unplanned ticket leaves its whole floor ungraded under a green row. |
+| TF74 | 14 | A directory entry above a bound command package adds the element `./cmd/bench` | `internal/preflight/check_floor_test.go` (`TestCheckFloorAddsCmdBenchForADirectoryAboveACommandPackage`) | A rule that reads only the entry path misses a command package that the directory entry writes. |
 
 Not covered: story 54 — FT89 owns the decision about the per-return gate run, and this spec writes no surface that decides it.
 

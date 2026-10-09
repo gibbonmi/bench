@@ -124,12 +124,21 @@ func testGrammar() usage.Grammar {
 	return withInventory
 }
 
-func runFocusedRequest(root string, request focusedRequest) (Outcome, string, int) {
-	if request.fixtures {
-		return checkFixtures(root, request.check)
+// listing answers the listing that request prints in place of a run, or nil when the
+// request runs its selection. The run dispatch and Request.Runs both read it.
+func (request focusedRequest) listing() func(root string) (Outcome, string, int) {
+	switch {
+	case request.fixtures:
+		return func(root string) (Outcome, string, int) { return checkFixtures(root, request.check) }
+	case request.checks:
+		return checksInventory
 	}
-	if request.checks {
-		return checksInventory(root)
+	return nil
+}
+
+func runFocusedRequest(root string, request focusedRequest) (Outcome, string, int) {
+	if list := request.listing(); list != nil {
+		return list(root)
 	}
 	// The refusals precede the run-owner selection, which builds a Bench executable with
 	// Go. A root the check may not grade therefore starts no child at all.

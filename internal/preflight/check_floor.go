@@ -22,11 +22,11 @@ const testCommand = "bench test"
 // it writes into a bound command package or touches an embed.
 const commandPackageElement = "./cmd/bench"
 
-// CheckFloorFacts is the evidence check-floor grades: the floor of each planned ticket,
-// and the selection of each plan command. The gatherer composes both; whether an element
-// is satisfied is Decide's.
+// CheckFloorFacts is the evidence check-floor grades: the floor of each ticket, and the
+// selection of each plan command. The gatherer composes both; whether an element is
+// satisfied is Decide's.
 type CheckFloorFacts struct {
-	// Elements holds the floor elements of each planned ticket, keyed by ticket basename.
+	// Elements holds the floor elements of each ticket, keyed by ticket basename.
 	Elements map[string][]string
 	// Selections holds the prepared selection of each plan command that is one simple
 	// `bench test` call that the grammar accepts, keyed by the command text. Any other
@@ -36,16 +36,13 @@ type CheckFloorFacts struct {
 	LoaderError string
 }
 
-// gatherCheckFloor composes the floor of each ticket that the plan names and prepares
-// each plan command. A loader failure stops the composition, because a partial floor
-// would grade as a false green.
+// gatherCheckFloor composes the floor of each ticket and prepares each plan command. A
+// loader failure stops the composition, because a partial floor would grade as a false
+// green.
 func gatherCheckFloor(ctx context.Context, root string, parsed []tickets.Ticket, plan reviewrecord.Plan) CheckFloorFacts {
 	facts := CheckFloorFacts{Elements: map[string][]string{}, Selections: map[string]testreport.Request{}}
 	conformance := gate.RootConformanceRuns(root, gate.KitRoot(root))
 	for _, ticket := range parsed {
-		if _, planned := ticketRequirements(plan, ticket.Name); !planned {
-			continue
-		}
 		elements, err := floorElements(ctx, root, ticket.Writes, conformance)
 		if err != nil {
 			facts.LoaderError = err.Error()
@@ -64,7 +61,9 @@ func gatherCheckFloor(ctx context.Context, root string, parsed []tickets.Ticket,
 }
 
 // floorElements is one ticket's floor: root conformance where it applies, each package
-// that the ticket writes, and the command tests for a command package or an embed.
+// that the ticket writes, and the command tests for a command package or an embed. An
+// entry can name a command package that holds no package yet, and a directory entry can
+// hold a command package below it, so both the entries and the floor packages are asked.
 func floorElements(ctx context.Context, root string, writes []string, conformance bool) ([]string, error) {
 	floor, err := testreport.WritesFloor(ctx, root, writes)
 	if err != nil {
@@ -75,11 +74,13 @@ func floorElements(ctx context.Context, root string, writes []string, conformanc
 		elements = append(elements, testreport.RootConformanceCheckName)
 	}
 	elements = append(elements, floor.Packages...)
-	commandEntry := slices.ContainsFunc(writes, func(entry string) bool {
+	commandWrite := slices.ContainsFunc(writes, func(entry string) bool {
 		path, _ := tickets.WritesPath(entry)
 		return tickets.CommandPackage(path)
+	}) || slices.ContainsFunc(floor.Packages, func(pattern string) bool {
+		return tickets.CommandPackage(strings.TrimPrefix(pattern, "./"))
 	})
-	if (floor.Embed || commandEntry) && !slices.Contains(elements, commandPackageElement) {
+	if (floor.Embed || commandWrite) && !slices.Contains(elements, commandPackageElement) {
 		elements = append(elements, commandPackageElement)
 	}
 	return elements, nil
@@ -102,10 +103,10 @@ func planSelection(root, command string) (testreport.Request, bool) {
 	return request, line == ""
 }
 
-// ticketRequirements answers the requirements that grade one ticket, and whether the plan
-// names the ticket. A version 1 chunk grades every ticket against all of its requirements.
-// A delegated chunk grades each ticket against the requirements that name it.
-func ticketRequirements(plan reviewrecord.Plan, name string) ([]reviewrecord.Requirement, bool) {
+// ticketRequirements answers the requirements that grade one ticket. A version 1 chunk
+// grades every ticket against all of its requirements. A delegated chunk grades each
+// ticket against the requirements that name it. A ticket that no chunk names gets none.
+func ticketRequirements(plan reviewrecord.Plan, name string) []reviewrecord.Requirement {
 	for _, chunk := range plan.Chunks {
 		if !slices.Contains(chunk.Tickets, name) {
 			continue
@@ -116,13 +117,13 @@ func ticketRequirements(plan reviewrecord.Plan, name string) ([]reviewrecord.Req
 				owned = append(owned, requirement)
 			}
 		}
-		return owned, true
+		return owned
 	}
-	return nil, false
+	return nil
 }
 
-// checkFloorCheck grades each planned ticket's floor against its requirements. An
-// invalid plan is completion-plan's red, so this row does not grade it a second time.
+// checkFloorCheck grades each ticket's floor against its requirements. An invalid plan is
+// completion-plan's red, so this row does not grade it a second time.
 func checkFloorCheck(f Facts) CheckResult {
 	if f.CompletionPlanError != "" {
 		return notApplicable(checkFloorName)
@@ -132,27 +133,37 @@ func checkFloorCheck(f Facts) CheckResult {
 	}
 	var omitted []string
 	for _, ticket := range f.Tickets {
-		requirements, _ := ticketRequirements(f.CompletionPlan, ticket.Name)
+		requirements := ticketRequirements(f.CompletionPlan, ticket.Name)
 		for _, element := range f.CheckFloor.Elements[ticket.Name] {
 			satisfied := slices.ContainsFunc(requirements, func(requirement reviewrecord.Requirement) bool {
 				selection, ok := f.CheckFloor.Selections[requirement.Command]
 				return ok && satisfies(selection, element)
 			})
 			if !satisfied {
-				omitted = append(omitted, ticket.Name+": "+element+" (add "+floorCommand(element)+")")
+				omitted = append(omitted, omittedElement(ticket.Name, element))
 			}
 		}
 	}
 	if len(omitted) > 0 {
-		return red(checkFloorName, "completion plan omits a floor check: "+strings.Join(omitted, "; "))
+		return red(checkFloorName, floorRedDetail(omitted))
 	}
 	return green(checkFloorName)
 }
 
+// omittedElement is the red item of one unsatisfied element.
+func omittedElement(ticket, element string) string {
+	return ticket + ": " + element + " (add " + floorCommand(element) + ")"
+}
+
+// floorRedDetail is the red detail over the omitted items, in ticket order.
+func floorRedDetail(omitted []string) string {
+	return "completion plan omits a floor check: " + strings.Join(omitted, "; ")
+}
+
 // satisfies applies the satisfaction rules to one selection. A form that runs no test
-// satisfies nothing. Only the root-conformance
-// check satisfies its element. A package element needs an unfiltered package run that is
-// not `--changed`, whose target equals the element or covers it at a segment boundary.
+// satisfies nothing. Only the root-conformance check satisfies its element. A package
+// element needs an unfiltered package run that is not `--changed`, whose target equals
+// the element or covers it at a segment boundary.
 func satisfies(selection testreport.Request, element string) bool {
 	if !selection.Runs() {
 		return false

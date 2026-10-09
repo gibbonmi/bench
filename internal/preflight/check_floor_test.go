@@ -76,10 +76,18 @@ func floorRow(t *testing.T, root string, plan reviewrecord.Plan, planned ...tick
 	return row
 }
 
-// requireFloorRed fails unless the row is red with exactly the omitted items.
-func requireFloorRed(t *testing.T, row CheckResult, omitted string) {
+// requireFloorRed fails unless the row is red with exactly the omitted items. The detail
+// comes from the production builders, so TestCheckFloorDetailNamesTheCommand alone states
+// its spelling.
+func requireFloorRed(t *testing.T, row CheckResult, omitted ...string) {
 	t.Helper()
-	if want := "completion plan omits a floor check: " + omitted; row.Verdict != verdictRed || row.Detail != want {
+	requireFloorDetail(t, row, floorRedDetail(omitted))
+}
+
+// requireFloorDetail fails unless the row is red with exactly the detail want.
+func requireFloorDetail(t *testing.T, row CheckResult, want string) {
+	t.Helper()
+	if row.Verdict != verdictRed || row.Detail != want {
 		t.Fatalf("check-floor row = %+v, want the red detailed %q", row, want)
 	}
 }
@@ -109,11 +117,6 @@ func requireFloor(t *testing.T, got []string, want ...string) {
 	}
 }
 
-// omission is the red item of one unsatisfied package element.
-func omission(ticket, element string) string {
-	return ticket + ": " + element + " (add bench test --package " + element + ")"
-}
-
 func TestCheckFloorAddsRootConformanceOnTheKit(t *testing.T) {
 	root := kitModule(t)
 	for _, kit := range []string{"", root} {
@@ -137,6 +140,11 @@ func TestCheckFloorAddsCmdBenchForACommandPackage(t *testing.T) {
 	requireFloor(t, floorOf(t, root, writer("one.md", "internal/anchors/next.go (new)")), commandPackageElement)
 }
 
+func TestCheckFloorAddsCmdBenchForADirectoryAboveACommandPackage(t *testing.T) {
+	root := floorModule(t, "internal/worktree")
+	requireFloor(t, floorOf(t, root, writer("one.md", "internal/")), "./internal/worktree", commandPackageElement)
+}
+
 func TestCheckFloorAddsCmdBenchForAnEmbedChange(t *testing.T) {
 	root := floorModule(t)
 	preflighttest.MustWriteFile(t, filepath.Join(root, "internal", "assets", "assets.go"),
@@ -155,20 +163,29 @@ func TestCheckFloorRedsAnOmittedPackage(t *testing.T) {
 		root := floorModule(t, "internal/x", "internal/other")
 		one := writer("one.md", "internal/x/p.go")
 		requireFloorRed(t, floorRow(t, root, onePlan([]tickets.Ticket{one}, "bench test --package ./internal/other"), one),
-			omission("one.md", "./internal/x"))
+			omittedElement("one.md", "./internal/x"))
 	})
 	t.Run("command package alone", func(t *testing.T) {
 		root := floorModule(t, "internal/worktree")
 		one := writer("one.md", "internal/worktree/p.go")
 		requireFloorRed(t, floorRow(t, root, onePlan([]tickets.Ticket{one}, "bench test --package ./internal/worktree"), one),
-			omission("one.md", commandPackageElement))
+			omittedElement("one.md", commandPackageElement))
 	})
 	t.Run("second ticket", func(t *testing.T) {
 		root := floorModule(t, "internal/x", "internal/y")
 		one, two := writer("one.md", "internal/x/p.go"), writer("two.md", "internal/y/p.go")
 		requireFloorRed(t, floorRow(t, root, onePlan([]tickets.Ticket{one, two}, "bench test --package ./internal/x"), one, two),
-			omission("two.md", "./internal/y"))
+			omittedElement("two.md", "./internal/y"))
 	})
+}
+
+func TestCheckFloorRedsAnUnplannedTicket(t *testing.T) {
+	root := floorModule(t, "internal/x", "internal/y")
+	one, two := writer("one.md", "internal/x/p.go"), writer("two.md", "internal/y/p.go")
+	plan := onePlan([]tickets.Ticket{one}, "bench test --package ./internal/x")
+	requireFloorRed(t, floorRow(t, root, plan, one, two), omittedElement("two.md", "./internal/y"))
+	// A ticket whose floor is empty stays green, although no chunk names it.
+	requireFloorGreen(t, floorRow(t, root, plan, one, writer("three.md", "docs/guide.md")))
 }
 
 func TestCheckFloorGreenWhenSatisfied(t *testing.T) {
@@ -179,13 +196,14 @@ func TestCheckFloorGreenWhenSatisfied(t *testing.T) {
 	requireFloorGreen(t, floorRow(t, root, plan, one, two))
 }
 
-// TestCheckFloorDetailNamesTheCommand states each command token as a literal, apart from
-// the code that composes it, so a renamed check or flag turns it red.
+// TestCheckFloorDetailNamesTheCommand states the whole detail as a literal, apart from the
+// code that composes it, so a renamed check, flag, or separator turns it red.
 func TestCheckFloorDetailNamesTheCommand(t *testing.T) {
 	root := kitModule(t, "internal/x", "internal/other")
 	one := writer("one.md", "internal/x/p.go")
 	row := floorRow(t, root, onePlan([]tickets.Ticket{one}, "bench test --package ./internal/other"), one)
-	requireFloorRed(t, row, "one.md: root-conformance (add bench test --check root-conformance); "+
+	requireFloorDetail(t, row, "completion plan omits a floor check: "+
+		"one.md: root-conformance (add bench test --check root-conformance); "+
 		"one.md: ./internal/x (add bench test --package ./internal/x)")
 }
 
@@ -219,51 +237,51 @@ func TestCheckFloorAcceptsTheWholeSuite(t *testing.T) {
 func TestCheckFloorKeepsTheSegmentBoundary(t *testing.T) {
 	root := floorModule(t, "internal/git", "internal/git2")
 	requireFloorRed(t, satisfaction(t, root, "internal/git2/p.go", "bench test --package ./internal/git/..."),
-		omission("one.md", "./internal/git2"))
+		omittedElement("one.md", "./internal/git2"))
 }
 
 func TestCheckFloorKeepsTheReverseBoundary(t *testing.T) {
 	root := floorModule(t, "internal/git", "internal/git2")
 	requireFloorRed(t, satisfaction(t, root, "internal/git/p.go", "bench test --package ./internal/git2"),
-		omission("one.md", "./internal/git"))
+		omittedElement("one.md", "./internal/git"))
 }
 
 func TestCheckFloorRejectsAFilteredRun(t *testing.T) {
 	root := floorModule(t, "internal/x")
 	requireFloorRed(t, satisfaction(t, root, "internal/x/p.go", "bench test --package ./internal/x --run '^TestA$|^TestB$'"),
-		omission("one.md", "./internal/x"))
+		omittedElement("one.md", "./internal/x"))
 }
 
 func TestCheckFloorRejectsAChangedRun(t *testing.T) {
 	root := floorModule(t, "internal/worktree")
 	requireFloorRed(t, satisfaction(t, root, "internal/worktree/p.go", "bench test --changed"),
-		omission("one.md", "./internal/worktree")+"; "+omission("one.md", commandPackageElement))
+		omittedElement("one.md", "./internal/worktree"), omittedElement("one.md", commandPackageElement))
 }
 
 func TestCheckFloorRejectsACompoundCommand(t *testing.T) {
 	root := floorModule(t, "internal/x")
 	for _, command := range []string{"true && bench test --package ./internal/x", "bench test --package ./internal/x && true"} {
-		requireFloorRed(t, satisfaction(t, root, "internal/x/p.go", command), omission("one.md", "./internal/x"))
+		requireFloorRed(t, satisfaction(t, root, "internal/x/p.go", command), omittedElement("one.md", "./internal/x"))
 	}
 }
 
 func TestCheckFloorRejectsAnotherExecutable(t *testing.T) {
 	root := floorModule(t, "internal/x")
 	for _, command := range []string{"go test ./internal/x", "BENCH_KIT=x bench test --package ./internal/x"} {
-		requireFloorRed(t, satisfaction(t, root, "internal/x/p.go", command), omission("one.md", "./internal/x"))
+		requireFloorRed(t, satisfaction(t, root, "internal/x/p.go", command), omittedElement("one.md", "./internal/x"))
 	}
 }
 
 func TestCheckFloorRejectsARefusedCommand(t *testing.T) {
 	root := floorModule(t, "internal/x")
 	requireFloorRed(t, satisfaction(t, root, "internal/x/p.go", "bench test --package ./internal/x --bogus"),
-		omission("one.md", "./internal/x"))
+		omittedElement("one.md", "./internal/x"))
 }
 
 func TestCheckFloorRejectsANonRunningForm(t *testing.T) {
 	t.Run("check inventory", func(t *testing.T) {
 		requireFloorRed(t, satisfaction(t, floorModule(t, "internal/x"), "internal/x/p.go", "bench test --checks"),
-			omission("one.md", "./internal/x"))
+			omittedElement("one.md", "./internal/x"))
 	})
 	t.Run("fixture listing", func(t *testing.T) {
 		requireFloorRed(t, satisfaction(t, kitModule(t), "docs/guide.md", "bench test --check root-conformance --fixtures"),
@@ -273,7 +291,7 @@ func TestCheckFloorRejectsANonRunningForm(t *testing.T) {
 
 // conformanceRed is the red item of the unsatisfied root-conformance element.
 func conformanceRed() string {
-	return "one.md: " + testreport.RootConformanceCheckName + " (add bench test --check " + testreport.RootConformanceCheckName + ")"
+	return omittedElement("one.md", testreport.RootConformanceCheckName)
 }
 
 func TestCheckFloorAcceptsTheRootConformanceCheck(t *testing.T) {
@@ -298,7 +316,7 @@ func TestCheckFloorReadsOnlyTheOwnChunk(t *testing.T) {
 		chunk("c1", []string{"one.md"}, "bench test --package ./internal/x", "bench test --package ./internal/y"),
 		chunk("c2", []string{"two.md"}, "bench test --package ./internal/x"),
 	}}
-	requireFloorRed(t, floorRow(t, root, plan, one, two), omission("two.md", "./internal/y"))
+	requireFloorRed(t, floorRow(t, root, plan, one, two), omittedElement("two.md", "./internal/y"))
 }
 
 func TestCheckFloorReadsOnlyTheOwnTicket(t *testing.T) {
@@ -313,7 +331,7 @@ func TestCheckFloorReadsOnlyTheOwnTicket(t *testing.T) {
 	if !plan.Delegated() {
 		t.Fatal("fixture invalid: the plan is not delegated")
 	}
-	requireFloorRed(t, floorRow(t, root, plan, one, two), omission("two.md", "./internal/y"))
+	requireFloorRed(t, floorRow(t, root, plan, one, two), omittedElement("two.md", "./internal/y"))
 }
 
 // omittingFacts is a fact set whose floor element no requirement satisfies.
@@ -326,7 +344,7 @@ func omittingFacts() Facts {
 
 func TestCheckFloorDefersToTheCompletionPlan(t *testing.T) {
 	f := omittingFacts()
-	requireFloorRed(t, checkFloorCheck(f), omission("one.md", "./internal/example"))
+	requireFloorRed(t, checkFloorCheck(f), omittedElement("one.md", "./internal/example"))
 	f.CompletionPlanError = "missing or invalid completion plan: no record"
 	if row, _ := checkRow(Decide(f), checkFloorName); row.Verdict != verdictNA || row.Detail != "" {
 		t.Fatalf("check-floor under an invalid plan = %+v, want not-applicable", row)
