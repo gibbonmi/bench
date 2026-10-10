@@ -1,7 +1,7 @@
 [
   {
     "path": ".agents/commands/bench-write-spec.md",
-    "old": "Run `craft-spec`'s reader sweep before that lock.",
-    "new": "Lock the rows that touch it."
+    "old": "Lock no row before the findings cover its enforcement surface and `craft-spec`'s reader sweep.",
+    "new": "Lock no row before the findings cover its enforcement surface."
   }
 ]

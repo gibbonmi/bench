@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Spec research fan-out
+
+- Changed `/bench-write-spec` so that the invoking session first fans out read-only research delegates over the decision source, under `craft-delegate`, `craft-line`, and `craft-research`. The delegates read the enforcement surface, `docs/known-issues.md`, the reader sweep, and the code sites, tests, fixtures, and anchors of each decision-source item, and they write nothing. The invoking session forks the spec author only after every delegate returns. The fork takes the findings as compressed inputs and reads only what the findings leave open. Before, the session forked at once, and the fork did those reads alone.
+
 ### Drain priority review
 
 - Added a closing priority review to `/bench-drain`. After the sealed-generation retirement, read-only research delegates review the roadmap priorities and the staged specs, and they start from the rows that the reviewer already prioritized. The closing exit reports one proposed next commitment set. The proposal is unapproved input until the reviewer adopts it through the commitment rule. In ticket triage, the drain then puts each reviewer decision of the proposal to the reviewer as one selection prompt, with the recommended option first, and the answers become the decision reference for `bench commitment approve`. A row that needs `/bench-shape-idea` stays out of ticket triage, and the exit names it as separate-session work. Changed the drain's read-delegate cap to a bound on the live read delegates, so the review keeps the one cap.

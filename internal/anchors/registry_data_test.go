@@ -441,7 +441,7 @@ func TestCraftDelegateDisciplineAnchorsRedOnRemoval(t *testing.T) {
 			},
 			{
 				file:   writeSpec,
-				needle: "Run `craft-spec`'s reader sweep before that lock.",
+				needle: "Lock no row before the findings cover its enforcement surface and `craft-spec`'s reader sweep.",
 				want:   ".agents/commands/bench-write-spec.md dropped the reader sweep sequenced before the craft-tickets charge",
 			},
 			{

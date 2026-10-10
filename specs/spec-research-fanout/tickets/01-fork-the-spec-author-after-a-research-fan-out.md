@@ -1,7 +1,7 @@
 # Fork the spec author after a research fan-out
 
 Blocked by: none
-Writes: .agents/commands/bench-write-spec.md, projects/benchkit.md, docs/field-guide.html, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, tests/canary/workflow-guidance-anchors/write-spec-conversation-fork/MUTATE.json, tests/canary/workflow-guidance-anchors/write-spec-reader-sweep-sequence/MUTATE.json, CHANGELOG.md
+Writes: .agents/commands/bench-write-spec.md, projects/benchkit.md, docs/field-guide.html, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_craft_research.go, internal/anchors/registry_craft_research_test.go, tests/canary/workflow-guidance-anchors/write-spec-conversation-fork/MUTATE.json, tests/canary/workflow-guidance-anchors/write-spec-reader-sweep-sequence/MUTATE.json, CHANGELOG.md
 Covers: none
 
 ## What to build
