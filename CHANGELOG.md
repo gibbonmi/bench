@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Landed verdict for dirty output
+
+- Changed `bench worktree list`, `bench worktree clean --landed`, and the session-start landed count so that an assignment with no commit of its own and uncommitted output is unlanded work. This holds after a fast-forward merge of `main` too, because those commits belong to `main`. Before, its branch tip was a `main` commit, so each reader called it landed. An assignment with no commit and a clean tree stays landed, and so does an assignment with a landed commit.
+
 ### Learning link
 
 - Added `bench learning --resolves "<title>" --commit <sha>`. It adds a `Resolved by` bullet with the full commit ID to the open journal entry with that exact title. The entry stays open. The verb refuses an unknown title, a repeated title, a linked entry, a commit that does not resolve, and a commit that the default branch does not reach. When a capture drain is open, the refusal for a missing title names the drain.

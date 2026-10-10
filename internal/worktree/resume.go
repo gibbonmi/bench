@@ -462,7 +462,7 @@ func sweepOrphanAssignments(j joins, root string, result *ResumeResult, now time
 			continue
 		}
 		if _, statErr := os.Stat(a.Worktree); statErr == nil {
-			if plan := planLandedAssignment(j, root, a, CleanupOptions{}); assignmentLanded(a, plan) {
+			if plan := planLandedAssignment(j, root, a, CleanupOptions{}); assignmentLanded(root, a, plan) {
 				continue
 			}
 			result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})
