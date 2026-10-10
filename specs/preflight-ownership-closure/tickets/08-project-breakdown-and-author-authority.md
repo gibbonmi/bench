@@ -25,7 +25,7 @@ Update the two fenced authoring references with proposal, amendment, and indepen
 Preserve every guidance requirement and co-owned anchor/canary assertion.
 This ticket performs the terminal union, helper, source-clause, metadata, and rendered-reader census after all preceding behavior exists.
 It changes neither commitment nor the separate manual-staleness workflow.
-Add no FT318, FT317, FT125, or literal C10-order blocker.
+Add no FT318, FT125, or literal C10-order blocker.
 
 This ticket belongs to OC-C4.
 The explicit predecessor edge orders every overlapping write.

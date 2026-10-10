@@ -26,7 +26,7 @@ The pre-push hook guards the default branch. This line only states the binding.)
   accepted trust posture.
 - **The `bench` CLI subcommands.** This is the operational shell surface.
 
-  `bench help`, rendered from the Go `commandRegistry`, is the executable inventory, while
+  `bench help`, rendered from the Go `commandRegistry`, is the executable inventory of the public verbs, while
   `.bench/BENCH-reference.md` keeps category-level operational guidance. The contract is the
   stable command names and exit codes; the
   implementation behind each stays free to change. Keep the gate resolution

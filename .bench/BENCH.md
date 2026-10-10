@@ -13,7 +13,7 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 
 ## The Bench CLI contract
 
-`bench help` is the complete executable inventory.
+`bench help` is the complete executable inventory of the public verbs, and `.bench/BENCH-reference.md` names the one internal verb that a session runs.
 The command registry owns the plumbing subcommands that hooks and adapters drive.
 Run `bench` exactly as its executable help spells it.
 
