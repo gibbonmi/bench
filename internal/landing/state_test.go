@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -16,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func TestLandPreAuthorizationRefusalTable(t *testing.T) {
@@ -154,11 +154,7 @@ func requireLandingSocket(t *testing.T, path string) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	listener, err := net.Listen("unix", path)
-	if err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable: %v", err))
-	}
-	t.Cleanup(func() { _ = listener.Close() })
+	testrepo.RequireSocket(t, path)
 }
 
 func requireLandingDevice(t *testing.T, path string) {

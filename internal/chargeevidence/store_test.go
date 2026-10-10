@@ -3,7 +3,6 @@ package chargeevidence_test
 import (
 	"errors"
 	"math"
-	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	ce "github.com/gibbonmi/bench/internal/chargeevidence"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // storeName is the store directory name, stated independently of ce.StoreName so that a
@@ -241,12 +241,7 @@ func TestEvidenceStoreKinds(t *testing.T) {
 			case "CE92 FIFO":
 				err = syscall.Mkfifo(path, 0o600)
 			case "CE93 socket":
-				// A relative name keeps the socket address under the platform length limit.
-				t.Chdir(dir)
-				var listener net.Listener
-				if listener, err = net.Listen("unix", filepath.Base(path)); err == nil {
-					t.Cleanup(func() { _ = listener.Close() })
-				}
+				err = testrepo.MakeSocket(path)
 			case "CE94 device":
 				if err = syscall.Mknod(path, syscall.S_IFCHR|0o600, 0x0103); err != nil {
 					capability.Capability(t, capability.Privilege, "cannot create a character device: "+err.Error())
