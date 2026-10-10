@@ -1182,6 +1182,50 @@
           "supersedes": [
             "bd-c3-r1-standards"
           ]
+        },
+        {
+          "id": "bd-c3-r2-coverage",
+          "performer": "claude:bd_bdc3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc3_coverage",
+            "digest": "sha256:1a2d687d719f0036fb989620364777b8992af4c30069ab1755b1ebe9761a97b1",
+            "excerpt": "axis: Coverage (round 2); session claude:bd_bdc3_coverage; model opus; effort high; chunk BD-C3 rebased on 6303bb6f..ed901b25.\nverdict: clean (0 findings)\nThe added part 6303bb6f..773901ad under internal/ is one doc-comment line at internal/anchors/registry_ticket_passes.go:84; no constant value, anchor row, needle, diagnostic, or test file changed, and no harness reads a Go comment.\nRun: bench test --package ./internal/anchors passed (179 tests) at e5e5fe74 on a clean tree; git status empty afterwards.\n"
+          },
+          "axis": "Coverage",
+          "base": "6303bb6f1de32856316fc1cf1963f89aef369f3b",
+          "tip": "ed901b255cab951d6bb57ec01a2e7a1db56dcddc",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c3-r1-coverage"
+          ]
+        },
+        {
+          "id": "bd-c3-r2-spec",
+          "performer": "claude:bd_bdc3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc3_spec",
+            "digest": "sha256:6fa0cd29659b31abe0b2b0c68462834cb873f7ac7382336df9c310577fabc787",
+            "excerpt": "axis: Spec (round 2); session claude:bd_bdc3_spec; model opus; effort high; chunk BD-C3 rebased on 6303bb6f..ed901b25.\nverdict: clean (0 findings)\nThe base move changes no BD-C3 row and no earlier row. The added non-record code is one comment line at internal/anchors/registry_ticket_passes.go:84, which now agrees with the BD22 sentence (spec.md:391). The two commits are BD-C2 comment-only repairs on a ticket 04 Writes path (ticket 04 line 4; spec.md:480), in the BD-C3 range only because the base moved. The rest of the delta is unchanged from round 1.\nCitation correction for round 1: registry_chunk_chain.go rows sit at BD59 :54, BD37 :55, BD32 :56, BD33 :57, BD34 :58, BD38 :59, BD54 :60, BD31 :61.\n"
+          },
+          "axis": "Spec",
+          "base": "6303bb6f1de32856316fc1cf1963f89aef369f3b",
+          "tip": "ed901b255cab951d6bb57ec01a2e7a1db56dcddc",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c3-r1-spec"
+          ]
         }
       ]
     }
