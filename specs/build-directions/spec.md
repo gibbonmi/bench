@@ -153,6 +153,10 @@ That refreeze follows the named record action of the checkpoint evidence, which 
 The existing pinned sentences at implement-spec:56 and review-implementation:98 stay byte-exact.
 
 The explicit range makes `base-current` green (internal/preflight/decision.go:262-266).
+The Build sentence that names the post-ticket preflight changes in place to the sentence below, so the command has one form.
+
+> After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`.
+
 The docs/known-issues.md:14 row stays, because it retires only on FT342.
 
 The craft-delegate stale-base rule keeps its two sentences byte-exact, because registry_data.go:69 and fixture_bite_test.go:350 quote them.
@@ -311,7 +315,7 @@ Each ticket adds one `CHANGELOG.md` entry.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| BD-C1 / 01-fold-only-at-chunk-boundaries.md, 02-hold-light-paths-during-a-build.md, 03-close-the-last-chunk-through-the-complete-checkpoint.md | The build flow folds at chunk boundaries, holds light paths, gives the chunk record to the author, and runs the chunk gate only before a successor | BD1–BD21, BD50–BD52, BD55, BD57, BD58, BD60, BD61 | TestChunkChainAnchors, TestCommitmentGuidance, TestReviewConvergenceContractCurrentDocs, TestWorkflowCadenceAnchorsRejectDeletionAndSwap, TestEveryRetainedFixtureBitesThroughRegisteredOwner, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
+| BD-C1 / 01-fold-only-at-chunk-boundaries.md, 02-hold-light-paths-during-a-build.md, 03-close-the-last-chunk-through-the-complete-checkpoint.md | The build flow folds at chunk boundaries, holds light paths, gives the chunk record to the author, and runs the chunk gate only before a successor | BD1–BD21, BD50–BD52, BD55, BD57, BD58, BD60–BD63 | TestChunkChainAnchors, TestCommitmentGuidance, TestReviewConvergenceContractCurrentDocs, TestWorkflowCadenceAnchorsRejectDeletionAndSwap, TestEveryRetainedFixtureBitesThroughRegisteredOwner, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
 | BD-C2 / 04-cap-witnesses-and-keep-moved-guards.md | The author charge states the moved-code guard, the witness definition and cap, and the batched `bench test` call | BD22–BD30 | TestWriteSpecChunkedSlicing, TestChargeBindingAnchors, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
 | BD-C3 / 05-scope-review-rounds.md | The review phase pins parallel axes, sends a one-ticket round in one combined repair charge, and scopes a confirming round to its named findings | BD31–BD38, BD54, BD59 | TestChunkChainAnchors, TestPreparedReviewGuidance, TestEveryRetainedFixtureBitesThroughRegisteredOwner | no |
 | BD-C4 / 06-keep-the-build-log.md | The orchestrator keeps a git-ignored build log, and the landing and `bench init` treat it as local capture | BD39–BD49, BD53 | TestChunkChainAnchors, TestLocalCapturePathRecognizesTheBuildLog, TestCheckoutFingerprintIgnoresTheBuildLog, TestKitGitignoreIgnoresTheBuildLog, TestInitIgnoresLocalCaptureFiles, TestLocalCaptureIgnoreLinesMatchTheLandingPredicate | yes |
@@ -358,6 +362,7 @@ The new rules govern each build that starts after this landing.
 | BD60 | 2 | Implement-spec Land holds "The fold at the start of the last chunk comes before its first ticket dispatch." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing dispatch-order sentence raises the new Require diagnostic. |
 | BD61 | 2 | Implement-spec Land holds "A fold before the completion landing follows `/bench-review-implementation` step 1, and the last chunk refreezes." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing late-fold sentence raises the new Require diagnostic. |
 | BD3 | 3 | Implement-spec Land holds "Inside a chunk, the post-ticket preflight passes the chunk's `--base` and the current `--source-tip`, so a moved `main` does not route a fold." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing explicit-range sentence raises the new Require diagnostic. |
+| BD62 | 3 | Implement-spec Build holds "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A bare post-ticket preflight command raises the rewritten Require diagnostic. |
 | BD4 | 4 | The craft-delegate skill holds "During a build, `/bench-implement-spec` owns the fold timing, and a ticket charge starts without this fold." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing scope sentence raises the new Require diagnostic. |
 | BD5 | 4 | The two craft-delegate stale-base sentences stay byte-exact. | `internal/conformance/fixture_bite_test.go` (`TestWorkflowCadenceAnchorsRejectDeletionAndSwap`) | A rewrap or rewrite of either sentence breaks the byte-exact mutation row. |
 | BD6 | 5 | The implement-spec:56 fold sentences and the review-implementation:98 step 1 sentence stay pinned. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | An edit that drops either pinned sentence raises its existing diagnostic. |
@@ -381,6 +386,7 @@ The new rules govern each build that starts after this landing.
 | BD50 | 18 | Implement-spec holds "not code, and it refreshes `bench handoff` at each chunk checkpoint and at the final reconciliation." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing final-reconciliation refresh raises the rewritten Require diagnostic. |
 | BD51 | 19 | README.md holds `more -->\|"yes; chunk checkpoint"\| chunk`. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A diagram without the checkpoint on the successor edge raises the new Require diagnostic. |
 | BD55 | 19 | README.md no longer holds `"none; chunk checkpoint"`. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A diagram that keeps the checkpoint on the no-successor edge raises the new Forbid diagnostic. |
+| BD63 | 19 | README.md no longer holds `chunk checkpoint"\| accepted`. | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A diagram that puts the checkpoint on the no-successor edge raises the new Forbid diagnostic. |
 | BD52 | 20 | ADR 0023 holds "It refreshes the session handoff at each chunk checkpoint and at the final reconciliation". | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing ADR refresh clause raises the new Require diagnostic. |
 | BD22 | 22 | Implement-spec holds "Code that the author moves or merges keeps its error handling and validation." | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecChunkedSlicing`) | A missing guard sentence raises the new Require diagnostic. |
 | BD23 | 23 | Implement-spec holds "A witness is one demonstrated red of one independent test expectation." | `internal/anchors/registry_ticket_passes_test.go` (`TestWriteSpecChunkedSlicing`) | A missing definition raises the new Require diagnostic. |
@@ -531,7 +537,7 @@ Source-sentence-to-row table:
 
 | source criterion | rows |
 |---|---|
-| build-directions.no-mid-chunk-fold | BD1–BD6, BD60, BD61 |
+| build-directions.no-mid-chunk-fold | BD1–BD6, BD60–BD62 |
 | build-directions.no-in-build-light-path | BD7–BD13, BD57 |
 | build-directions.author-self-check | BD22, BD27 |
 | build-directions.witness-cap | BD23–BD26, BD28–BD30 |
@@ -540,7 +546,7 @@ Source-sentence-to-row table:
 | build-directions.confirming-scope | BD35–BD38, BD54, BD59 |
 | build-directions.step-log | BD39–BD48 |
 | build-directions.FT410-last-chunk | BD17, BD18 |
-| build-directions.FT410-complete | BD19–BD21, BD50–BD52, BD55 |
+| build-directions.FT410-complete | BD19–BD21, BD50–BD52, BD55, BD63 |
 | build-directions.open | BD49, BD53 |
 
 The pre-review proof checklist follows.

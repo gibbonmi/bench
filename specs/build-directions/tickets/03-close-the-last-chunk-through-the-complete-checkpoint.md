@@ -2,7 +2,7 @@
 
 Blocked by: 02-hold-light-paths-during-a-build.md
 Writes: .agents/commands/bench-implement-spec.md, docs/adr/0023-each-ticket-gets-a-fresh-author.md, README.md, CHANGELOG.md, projects/benchkit.md, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_check_floor.go, internal/anchors/registry_check_floor_test.go, internal/anchors/registry_commitment.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_debug_loop.go, internal/anchors/registry_decision_maps.go, internal/anchors/registry_decision_maps_test.go, internal/anchors/registry_ft311_preparation.go, internal/anchors/registry_retained_workflow.go, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, internal/conformance/docs_workflow_helpers_test.go, internal/conformance/retained_workflow_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/docs-currency-token-diet, tests/canary/load-validity-metadata, tests/canary/workflow-guidance-anchors, tests/canary/guidance-prose-budgets, tests/canary/line-routing, tests/canary/skill-description-budgets, internal/anchors/registry_ft311_review_dispatch.go
-Covers: BD14, BD15, BD16, BD17, BD18, BD19, BD20, BD21, BD50, BD51, BD52, BD55, BD58
+Covers: BD14, BD15, BD16, BD17, BD18, BD19, BD20, BD21, BD50, BD51, BD52, BD55, BD58, BD63
 
 ## What to build
 
@@ -31,5 +31,6 @@ One bullet under the `### Build directions` heading of `CHANGELOG.md` records th
 - [ ] Implement-spec runs the chunk checkpoint gate only before a successor chunk and drops the every-chunk wording, and TestChunkChainAnchors goes red on each reversal (BD17, BD18).
 - [ ] Implement-spec holds the two last-chunk sentences, and its reconciliation sentence keeps its lowercase pin in TestReviewConvergenceContractCurrentDocs (BD19, BD20, BD21).
 - [ ] Implement-spec and ADR 0023 name the final-reconciliation handoff refresh, and TestChunkChainAnchors goes red when either is removed (BD50, BD52).
-- [ ] README shows the chunk checkpoint on the successor edge only, and TestChunkChainAnchors goes red on the old label (BD51, BD55).
+- [ ] README shows the chunk checkpoint on the successor edge only (BD51).
+- [ ] TestChunkChainAnchors goes red on the old label or on a checkpoint label on the `accepted` edge (BD55, BD63).
 - [ ] Implement-spec has 89 lines, and TestGuidanceProseBudgetsHoldOnTheLiveTree passes.
