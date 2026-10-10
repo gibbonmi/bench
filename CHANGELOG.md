@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Learning link
+
+- Added `bench learning --resolves "<title>" --commit <sha>`. It adds a `Resolved by` bullet with the full commit ID to the open journal entry with that exact title. The entry stays open. The verb refuses an unknown title, a repeated title, a linked entry, and a commit that does not resolve.
+- Changed the `learnings` block of `bench roadmap --context` so that it has a `resolved_by` column. `/bench-drain` reads that column and closes a linked entry by its commit.
+
 ### Known-issues route
 
 - Changed `/bench-implement-spec` so that the ticket author charge names `docs/known-issues.md` when the repository has that file. Changed `/bench-write-spec` so that the author step reads that file before it plans the probes and the check floor.

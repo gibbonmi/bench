@@ -1,6 +1,7 @@
 package roadmap
 
 import (
+	"errors"
 	"path/filepath"
 	"strings"
 	"time"
@@ -15,28 +16,37 @@ import (
 
 // learningGrammar declares the argument shape for `bench learning`. The title is
 // variadic like an idea's text; the body comes in through the three named flags, so the
-// verb never has to split one prose blob into the journal's bullets.
+// verb never has to split one prose blob into the journal's bullets. The link form takes
+// the open entry's exact title and the fixing commit through its own two flags.
 var learningGrammar = usage.Grammar{
 	Cmd:  "bench learning",
-	Help: `usage: bench learning "<title>" --what <text> --right <text> [--rule <text>]`,
+	Help: `usage: bench learning "<title>" --what <text> --right <text> [--rule <text>] | --resolves "<title>" --commit <sha>`,
 	Flags: []usage.Flag{
 		{Name: "--what", HasValue: true, NoEmptyValue: true},
 		{Name: "--right", HasValue: true, NoEmptyValue: true},
 		{Name: "--rule", HasValue: true, NoEmptyValue: true},
+		{Name: "--resolves", HasValue: true, NoEmptyValue: true},
+		{Name: "--commit", HasValue: true, NoEmptyValue: true},
 	},
 	MaxArgs: -1,
 }
 
 // LearningCommand implements `bench learning <title...> --what --right [--rule]` and
-// appends one open entry to capture/learnings.md through learnings.FormatEntry. The
-// heading's `[open]` marker is the drain's state flag, and a hand-written entry has
-// omitted it twice; the verb exists so the marker is never typed by hand. Inbox routing
-// is the same as `bench idea`: an ignored journal writes the primary checkout's copy, a
-// tracked one refuses the primary checkout.
+// appends one open entry to capture/learnings.md through learnings.FormatEntry. With
+// `--resolves <title> --commit <sha>` it instead links a fix to an existing entry
+// (resolveLearning). The heading's `[open]` marker is the drain's state flag, and a
+// hand-written entry has omitted it twice; the verb exists so the marker is never typed
+// by hand. Inbox routing is the same as `bench idea`: an ignored journal writes the
+// primary checkout's copy, a tracked one refuses the primary checkout.
 func LearningCommand(args []string) (string, int) {
 	parsed, line, code := usage.Parse(learningGrammar, args)
 	if line != "" {
 		return line + "\n", code
+	}
+	_, hasResolves := parsed.Flags["--resolves"]
+	_, hasCommit := parsed.Flags["--commit"]
+	if hasResolves || hasCommit {
+		return resolveLearning(parsed)
 	}
 	title := strings.TrimSpace(strings.Join(parsed.Positionals, " "))
 	if title == "" {
@@ -69,6 +79,58 @@ func LearningCommand(args []string) (string, int) {
 		return cannotWrite(learnings.JournalPath, err), 1
 	}
 	return "captured: " + title + "\n", 0
+}
+
+// resolveLearning implements the link form, `bench learning --resolves <title> --commit
+// <sha>`. It resolves the commit in the current checkout, then marks the one open entry
+// with that exact title through learnings.MarkResolved inside the same capture
+// transaction an append uses. A refusal changes no byte of the journal. The entry stays
+// open: the drain reads the link and closes the entry.
+func resolveLearning(parsed usage.Result) (string, int) {
+	title, hasResolves := parsed.Flags["--resolves"]
+	commit, hasCommit := parsed.Flags["--commit"]
+	switch {
+	case !hasResolves:
+		return toon.MissingArg(learningGrammar.Cmd, "--resolves") + "\n", 2
+	case !hasCommit:
+		return toon.MissingArg(learningGrammar.Cmd, "--commit") + "\n", 2
+	}
+	for _, flag := range []string{"--what", "--right", "--rule"} {
+		if _, joined := parsed.Flags[flag]; joined {
+			return learningGrammar.Help + "\n", 2
+		}
+	}
+	if len(parsed.Positionals) > 0 {
+		return learningGrammar.Help + "\n", 2
+	}
+	title = strings.TrimSpace(title)
+	root, refusal, code := inboxRoot(learnings.JournalPath)
+	if refusal != "" {
+		return refusal, code
+	}
+	checkout, err := git.Root()
+	if err != nil {
+		return toon.NotInRepo() + "\n", 1
+	}
+	// A value that leads with a dash would reach git as an option, so it never resolves.
+	full := ""
+	if !strings.HasPrefix(commit, "-") {
+		full, err = git.ResolveCommit(checkout, commit, "--quiet")
+	}
+	if full == "" || err != nil {
+		return toon.Errorf("commit does not resolve: "+commit, "pass a commit that exists in this repository") + "\n", 1
+	}
+	file := filepath.Join(root, learnings.JournalPath)
+	err = capturetx.Append(root, capturetx.Source{Name: learnings.JournalPath, Path: file}, func(current []byte) ([]byte, error) {
+		return learnings.MarkResolved(current, title, full)
+	})
+	switch {
+	case errors.Is(err, learnings.ErrNoOpenEntry), errors.Is(err, learnings.ErrAmbiguousEntry), errors.Is(err, learnings.ErrAlreadyResolved):
+		return toon.Errorf(err.Error()+": "+title, "run bench learnings for the open titles") + "\n", 1
+	case err != nil:
+		return cannotWrite(learnings.JournalPath, err), 1
+	}
+	return "resolved: " + title + " by " + full + "\n", 0
 }
 
 // inboxRoot resolves the checkout whose copy of relPath a capture verb writes, or the

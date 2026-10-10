@@ -156,6 +156,113 @@ func TestLearningTwoEntriesStayApart(t *testing.T) {
 	}
 }
 
+// headCommit returns the full ID of HEAD in the fixture checkout.
+func headCommit(t *testing.T, root string) string {
+	t.Helper()
+	out, err := exec.Command("git", "-C", root, "rev-parse", "HEAD").Output()
+	if err != nil {
+		t.Fatalf("rev-parse HEAD: %v", err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+// TestLearningResolvesLinksTheNamedOpenEntry covers the link verb: an abbreviated commit
+// resolves to its full ID, only the entry with the exact title carries it, and the entry
+// stays open and well-formed for the parser.
+func TestLearningResolvesLinksTheNamedOpenEntry(t *testing.T) {
+	root := newRepo(t)
+	for _, title := range []string{"first lesson", "second lesson"} {
+		if out, code := LearningCommand([]string{title, "--what", "it failed", "--right", "read the map"}); code != 0 {
+			t.Fatalf("seed %q = %q/%d", title, out, code)
+		}
+	}
+	head := headCommit(t, root)
+	out, code := LearningCommand([]string{"--resolves", "second lesson", "--commit", head[:10]})
+	if code != 0 || out != "resolved: second lesson by "+head+"\n" {
+		t.Fatalf("resolve = %q/%d, want the full commit ID on exit 0", out, code)
+	}
+	data, err := os.ReadFile(journalPath(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries, malformed := learnings.Parse(data)
+	if len(malformed) != 0 || len(entries) != 2 {
+		t.Fatalf("entries=%d malformed=%+v\n%s", len(entries), malformed, data)
+	}
+	if entries[0].ResolvedBy != "" || entries[1].ResolvedBy != head || entries[1].State != "open" {
+		t.Fatalf("entries = %+v, want only the second linked to %s and still open", entries, head)
+	}
+}
+
+// TestLearningResolveRefusalsLeaveTheJournalUnchanged covers each content refusal: exit 1,
+// a named cause, and the journal bytes as they were.
+func TestLearningResolveRefusalsLeaveTheJournalUnchanged(t *testing.T) {
+	root := newRepo(t)
+	head := headCommit(t, root)
+	for _, title := range []string{"first lesson", "first lesson", "linked lesson"} {
+		if out, code := LearningCommand([]string{title, "--what", "it failed", "--right", "read the map"}); code != 0 {
+			t.Fatalf("seed %q = %q/%d", title, out, code)
+		}
+	}
+	if out, code := LearningCommand([]string{"--resolves", "linked lesson", "--commit", head}); code != 0 {
+		t.Fatalf("link = %q/%d", out, code)
+	}
+	before, err := os.ReadFile(journalPath(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name, title, commit, want string
+	}{
+		{"unknown title", "missing lesson", head, "no open entry has that title"},
+		{"two entries share the title", "first lesson", head, "more than one open entry has that title"},
+		{"entry already linked", "linked lesson", head, "already names a resolving commit"},
+		{"commit does not resolve", "linked lesson", "0000000000000000000000000000000000000001", "does not resolve"},
+		{"commit reads as an option", "first lesson", "--all", "does not resolve"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			out, code := LearningCommand([]string{"--resolves", tc.title, "--commit", tc.commit})
+			if code != 1 || !strings.Contains(out, tc.want) {
+				t.Fatalf("resolve = %q/%d, want exit 1 naming %q", out, code, tc.want)
+			}
+			after, err := os.ReadFile(journalPath(t, root))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(after) != string(before) {
+				t.Fatalf("journal changed on refusal:\n%s", after)
+			}
+		})
+	}
+}
+
+// TestLearningResolveUsageExitsTwo covers the argument shapes the link form refuses: each
+// half without the other, and the resolve flag beside a new entry's title or body.
+func TestLearningResolveUsageExitsTwo(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		args []string
+	}{
+		{"resolves without commit", []string{"--resolves", "a lesson"}},
+		{"commit without resolves", []string{"--commit", "HEAD"}},
+		{"title joins resolves", []string{"--resolves", "a lesson", "--commit", "HEAD", "extra"}},
+		{"what joins resolves", []string{"--resolves", "a lesson", "--commit", "HEAD", "--what", "x"}},
+		{"right joins resolves", []string{"--resolves", "a lesson", "--commit", "HEAD", "--right", "x"}},
+		{"rule joins resolves", []string{"--resolves", "a lesson", "--commit", "HEAD", "--rule", "x"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newRepo(t)
+			out, code := LearningCommand(tc.args)
+			if code != 2 || !strings.HasPrefix(out, "usage: bench learning") {
+				t.Fatalf("args %q: got %q/%d, want the usage line on exit 2", tc.args, out, code)
+			}
+			if _, err := os.Stat(journalPath(t, root)); err == nil {
+				t.Fatal("usage refusal created the journal")
+			}
+		})
+	}
+}
+
 // TestLearningUsageExitsTwo covers the argument shapes the grammar refuses: no title,
 // and a title without both body flags. None of them creates the journal.
 func TestLearningUsageExitsTwo(t *testing.T) {

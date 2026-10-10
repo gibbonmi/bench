@@ -192,8 +192,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
 
-**FT394 (LOW) — `bench learning` links a landed fix to the open entry that it resolves.**
-
 **FT402 (MEDIUM, decision required) — the landing gate costs less time and keeps its failure detection.**
 
 **FT409 (MEDIUM) — `bench test` reports the slowest tests and warns when a package nears the go test timeout.**

@@ -78,6 +78,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench capture drain [show|commit|abort] [<drain-id>]  seal or finish one concurrent-safe capture drain
   bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
   bench learning "<title>" --what --right [--rule]  append one open entry to capture/learnings.md (the drain verdicts it)
+  bench learning --resolves "<title>" --commit <sha>  link the commit that fixed an open entry (the drain closes it)
   bench retro [--in <label|primary>] <slug> (--body <markdown> | --scaffold)  draft, or validate and create, one primary-local implementation retrospective
   bench roadmap [--in <label|primary>]  show the top 10 roadmap rows + drain state
   bench status [--in <label|primary>]  ambient dashboard: what needs attention + the next action

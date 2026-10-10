@@ -115,6 +115,36 @@ func TestContextCommandIndexOmitsCaptureBodiesWithTrueSizes(t *testing.T) {
 	}
 }
 
+// TestContextCommandLearningsReportTheResolvingCommit covers the drain's read of the link:
+// the learnings block names the commit that a linked entry carries, and leaves the cell
+// empty for an unlinked one, in the index and in the full snapshot.
+func TestContextCommandLearningsReportTheResolvingCommit(t *testing.T) {
+	root := newRepo(t)
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	journal := "## 2026-01-03 — linked  [open]\n- **Resolved by:** " + commit + "\n- **What happened:** x\n\n## 2026-01-04 — unlinked  [open]\n- **What happened:** y\n"
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(learnings.JournalPath)), []byte(journal), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"--context"}, {"--context", "--full"}} {
+		out, code := ContextCommand(args, func(string) GateCacheFact { return GateCacheFact{} }, absentOutlook)
+		if code != 0 {
+			t.Fatalf("args=%v exit = %d, output=%q", args, code, out)
+		}
+		document, err := axitest.DecodeDocument(out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows, err := document.Rows("learnings")
+		if err != nil || len(rows) != 2 {
+			t.Fatalf("args=%v learnings rows = %#v, %v", args, rows, err)
+		}
+		linked, unlinked := rows[0].(map[string]any), rows[1].(map[string]any)
+		if linked["resolved_by"] != commit || unlinked["resolved_by"] != "" {
+			t.Fatalf("args=%v resolved_by = %#v, %#v; want %q then empty", args, linked["resolved_by"], unlinked["resolved_by"], commit)
+		}
+	}
+}
+
 func TestContextCommandCarriesCaptureLineNumbersInEveryMode(t *testing.T) {
 	root := newRepo(t)
 	for path, body := range map[string]string{

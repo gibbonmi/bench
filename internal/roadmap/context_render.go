@@ -144,9 +144,9 @@ func renderContext(s ContextSnapshot) (string, error) {
 	bs = append(bs, block{"ideas", []string{"date", "line", "text", "text_bytes"}, rows})
 	rows = nil
 	for _, r := range s.Learnings {
-		rows = append(rows, []any{r.Date, r.Line, r.Title, r.State, r.Body, r.BodyBytes})
+		rows = append(rows, []any{r.Date, r.Line, r.Title, r.State, r.ResolvedBy, r.Body, r.BodyBytes})
 	}
-	bs = append(bs, block{"learnings", []string{"date", "line", "title", "state", "body", "body_bytes"}, rows})
+	bs = append(bs, block{"learnings", []string{"date", "line", "title", "state", "resolved_by", "body", "body_bytes"}, rows})
 	rows = nil
 	for _, r := range s.Retros {
 		rows = append(rows, []any{r.Path, r.State, r.Body, r.BodyBytes})
