@@ -129,6 +129,10 @@ Harder chunks: BD-C4, because it holds the one Go production change and it touch
 45. As the reviewer, I want FT379 and FT369 unedited and open, so that their undelivered parts keep their owners.
 46. As the reviewer, I want the landing to retire FT410 only, so that the roadmap closes exactly the delivered row.
 
+### Source cleanup
+
+47. As the landing, I want a source release to discard an ignored build-log file, so that the log takes the local-capture cleanup.
+
 ## Implementation decisions
 
 ### One owner for each rule
@@ -418,7 +422,7 @@ The new rules govern each build that starts after this landing.
 | BD46 | 43 | `landing.LocalCapturePath` refuses `capture/build-log-foreign/x.log`. | `internal/landing/local_capture_test.go` (`TestLocalCapturePathRecognizesTheBuildLog`) | A bare prefix match accepts the sibling name. |
 | BD47 | 43 | `landing.LocalCapturePath` refuses a `..` segment, a doubled slash, and a control byte under the build-log name. | `internal/landing/local_capture_test.go` (`TestLocalCapturePathRecognizesTheBuildLog`) | A predicate without the clean-path guards accepts each unsafe case. |
 | BD48 | 44 | `landing.CheckoutFingerprint` returns the same value before and after an ignored `capture/build-log/<slug>.log` appears in the checkout. | `internal/landing/local_capture_test.go` (`TestCheckoutFingerprintIgnoresTheBuildLog`) | A predicate that refuses the build log keeps its `!!` entry in the fingerprint status, so the two values differ. |
-| BD64 | 44 | A source worktree release discards an ignored `capture/build-log/<slug>.log`, as it discards the three exact local capture files. | `internal/worktree/land_local_capture_test.go` (`TestLandCommandReleasesSourceWithIgnoredBuildLog`) | A predicate that refuses the build log leaves the source retained with an ignored residual, so the release fails. |
+| BD64 | 47 | A source worktree release discards an ignored `capture/build-log/<slug>.log`, as it discards the three exact local capture files. | `internal/worktree/land_local_capture_test.go` (`TestLandCommandReleasesSourceWithIgnoredBuildLog`) | A predicate that refuses the build log leaves the source retained with an ignored residual, so the release fails. |
 | BD49 | 45 | The landed tree leaves roadmap/FT379.md and roadmap/FT369.md byte-identical to the build base. | review-owned: Spec axis compares both files at the final tip | An edit that narrows either row shows in the final delta. |
 | BD53 | 46 | The landing retires roadmap/FT410.md and its `ROADMAP.md` row and no other row. | review-owned: `/bench-final-check` reads the landing commit | A delivery closure that removes a second row shows in the landing diff. |
 
