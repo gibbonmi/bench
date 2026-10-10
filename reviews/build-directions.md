@@ -653,9 +653,9 @@
     {
       "id": "BD-C2",
       "base": "0487a79f9ba7f3753cfd8acd93a1016e3abcaaf8",
-      "tip": "823bca72714e6c61f7bd045b246bd9921f6aec39",
-      "plan_digest": "sha256:869e494317e6355f26fef01a52b7eb96aa01d06d5f1f7395b1ec425d774dd841",
-      "source_digest": "b02fe549c99cc5b106fd2bdaeefb9a675861adf3",
+      "tip": "6303bb6f1de32856316fc1cf1963f89aef369f3b",
+      "plan_digest": "sha256:82642c06e950f0a05d916ebece7a6e5d631b8ced21637d0982eaf349caf456ee",
+      "source_digest": "271b3b03f4360d421fa599efa847fb534b637383",
       "acceptance_rows": [
         "BD22",
         "BD23",
@@ -748,6 +748,89 @@
               "ref": "claude-agent:bd_t04",
               "digest": "sha256:6aba96d43a23f7dce7262a8fba4302a92db56232c14058a4d3772d601d36e9e6",
               "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,9286842669ff782bf84cd1c9ec9dfa167c224baa,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,412\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,6136,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: witness cap: the author charge defines a witness\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "bd-04-focused-t04-rep1",
+          "performer": "claude:bd_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "271b3b03f4360d421fa599efa847fb534b637383",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t04_rep1",
+            "digest": "sha256:9e52729181c168da9448bcec525c64b8e801925766423772a374046fdbc29476",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,2c966663f2a1c096d9735ec2f281179df4b345c1,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,181,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-04-focused",
+          "command": "bench test --package ./internal/anchors --run TestWriteSpecChunkedSlicing",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-04-floor-t04-rep1",
+          "performer": "claude:bd_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "271b3b03f4360d421fa599efa847fb534b637383",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t04_rep1",
+            "digest": "sha256:fd9ff814c6b006bb10e75b5284429994a2bb51903b1ae37cb170451efa59787b",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,2c966663f2a1c096d9735ec2f281179df4b345c1,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15799,333\n  github.com/gibbonmi/bench/internal/anchors,pass,1947,179\n  github.com/gibbonmi/bench/internal/conformance,pass,55419,1684\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "bd-04-floor",
+          "command": "bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-04-conformance-t04-rep1",
+          "performer": "claude:bd_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "271b3b03f4360d421fa599efa847fb534b637383",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t04_rep1",
+            "digest": "sha256:b34e7da28992eebf288262234be3fb01d75498a0b546b8ae7432ae2eb2b08e87",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,2c966663f2a1c096d9735ec2f281179df4b345c1,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15680,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-04-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-04-live-t04-rep1",
+          "performer": "claude:bd_t04_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "271b3b03f4360d421fa599efa847fb534b637383",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t04_rep1",
+            "digest": "sha256:447d27e50ec0a403fe1e9b6eb8856cddad4f3883232a173ad914ab0277bae329",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,6303bb6f1de32856316fc1cf1963f89aef369f3b,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,412\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5487,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: witness cap: the author charge defines a witness\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-04-live",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the sentence \"A witness is one demonstrated red of one independent test expectation.\" from .agents/commands/bench-implement-spec.md. The docs-currency-workflow check turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bd_t04_rep1",
+              "digest": "sha256:447d27e50ec0a403fe1e9b6eb8856cddad4f3883232a173ad914ab0277bae329",
+              "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,6303bb6f1de32856316fc1cf1963f89aef369f3b,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,412\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5487,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: witness cap: the author charge defines a witness\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
