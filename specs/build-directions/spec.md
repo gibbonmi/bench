@@ -62,7 +62,7 @@ Harder chunks: BD-C4, because it holds the one Go production change and it touch
 ### Fold timing
 
 1. As the orchestrator, I want no `main` fold between two tickets of a chunk, so that a moved `main` adds no gate run there.
-2. As the orchestrator, I want the two sanctioned fold points named, so that I know where a fold can go.
+2. As the orchestrator, I want the three sanctioned fold points named, so that I know where a fold can go.
 3. As the orchestrator, I want the post-ticket preflight inside a chunk to pass an explicit range, so that a moved `main` routes no fold.
 4. As a build coordinator, I want the craft-delegate stale-base fold scoped out of a build, so that two rules agree.
 5. As a maintainer, I want the anchored fold sentences of both phases to stay, so that the chunk chain keeps its pins.
@@ -149,6 +149,7 @@ The Land section of implement-spec takes the five sentences below in a new parag
 A fold at the start of the last chunk joins that chunk's review delta, so the pinned sentence at implement-spec:56 holds.
 The last ticket's author then freezes the chunk after that fold, so no refreeze and no records-only resumption follow.
 A `main` move after that start takes the fold before the completion landing, and the last chunk then refreezes.
+That refreeze follows the named record action of the checkpoint evidence, which implement-spec:60 already routes.
 The existing pinned sentences at implement-spec:56 and review-implementation:98 stay byte-exact.
 
 The explicit range makes `base-current` green (internal/preflight/decision.go:262-266).
