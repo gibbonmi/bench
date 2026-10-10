@@ -183,6 +183,53 @@ func TestKitTestRunRejectsInvalidHomeBeforeCreation(t *testing.T) {
 	}
 }
 
+func TestKitRunDirectoryBase(t *testing.T) {
+	writable := func(t *testing.T) string { return t.TempDir() }
+	cases := []struct {
+		name      string
+		callerSet bool
+		candidate func(t *testing.T) string
+		want      string
+	}{
+		{"caller TMPDIR keeps priority", true, writable, "caller"},
+		{"writable candidate", false, writable, "candidate"},
+		{"absent candidate", false, func(t *testing.T) string { return filepath.Join(t.TempDir(), "absent") }, "fallback"},
+		{"file candidate", false, func(t *testing.T) string {
+			file := filepath.Join(t.TempDir(), "file")
+			if err := os.WriteFile(file, nil, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			return file
+		}, "fallback"},
+		{"unwritable candidate", false, func(t *testing.T) string {
+			if os.Geteuid() == 0 {
+				t.Skip("root writes to any directory")
+			}
+			dir := t.TempDir()
+			if err := os.Chmod(dir, 0o500); err != nil {
+				t.Fatal(err)
+			}
+			return dir
+		}, "fallback"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			bases := map[string]string{"caller": "", "candidate": c.candidate(t), "fallback": t.TempDir()}
+			if c.callerSet {
+				bases["caller"] = t.TempDir()
+			}
+			t.Setenv("TMPDIR", bases["fallback"])
+			dir, err := openKitRunDirectory(bases["caller"], bases["candidate"])
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := filepath.Dir(dir); got != bases[c.want] {
+				t.Fatalf("run base = %q, want the %s %q", got, c.want, bases[c.want])
+			}
+		})
+	}
+}
+
 func TestKitTestRunRejectsInvalidTmpdir(t *testing.T) {
 	base := kitRunBase(t)
 	file := filepath.Join(t.TempDir(), "file")
