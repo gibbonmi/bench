@@ -1097,7 +1097,71 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bd-c3-r1-standards",
+          "performer": "claude:bd_bdc3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc3_standards",
+            "digest": "sha256:db978bbd50e27e801a3db4d9556b2011d57c9070bd3aee5ca66d15bb073e13df",
+            "excerpt": "axis: Standards; session claude:bd_bdc3_standards; model opus; effort high; frozen pair 773901ad..ed901b25; evidence sha256:fa5162a30f090a836a1086f96121e15f287755d4685f3f7ae052c930820a0dbc current=true at 39e1de5a.\nverdict: findings (2 advisory, 0 blocking)\nS1 | advisory | .agents/skills/bench-craft-delegate/references/delegation-discipline.md:216-217 | The re-review bullet restates the confirming-round scope that review-implementation:48 states; both copies are pinned. | AGENTS.md one source per fact; the approved spec at spec.md:265 requires this exact text. | ask-user | confidence 6\nS2 | advisory | .agents/commands/bench-review-implementation.md:50 | The third combined-charge sentence repeats the BENCH.md repair rule and points to it. | spec.md:250 and ticket 05 require the sentence; the pointer names the owner. | no-op | confidence 4\nChecked with no finding: the registry comment matches its rows; diagnostic prefixes; the 17-row family unchanged; Forbid rows match the retired sentences; mirrors independent; the :46-48 paragraph keeps five sentences; the CHANGELOG bullet reads as STE; plan and record commits precede the ticket commit; no surviving retired copy.\nImplementation command contribution: none (both come from the spec stage).\nOrchestrator disposition: S1 is no-op for this build, because the approved spec (story 36) chose agreement and a pointer would reopen that decision; a bench learning carries it to a later spec. S2 no-op.\n"
+          },
+          "axis": "Standards",
+          "base": "773901add554bc9b5da92310c70adb0428954e16",
+          "tip": "ed901b255cab951d6bb57ec01a2e7a1db56dcddc",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bd-c3-r1-spec",
+          "performer": "claude:bd_bdc3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc3_spec",
+            "digest": "sha256:1c60bfd35d6fd5919eb14a468dccbd6f8a6a75e1ea6e8ea5afe9648a2eb50632",
+            "excerpt": "axis: Spec; session claude:bd_bdc3_spec; model opus; effort high; frozen pair 773901ad..ed901b25; evidence sha256:fa5162a30f090a836a1086f96121e15f287755d4685f3f7ae052c930820a0dbc current=true at 39e1de5a.\nverdict: clean (0 findings)\nBD31-BD38, BD54, BD59 checked against spec.md:400-409 and :243-266: BD31 step 4 sentence kept, RequireInStep row registry_chunk_chain.go:62, mirror test :85; BD32-BD34 three sentences as their own paragraph at review-implementation.md:50, rows :57-59, mirrors :80-82; BD35 row registry_ft311_review_dispatch.go:22 rewritten in place, diagnostic drops the folds clause, mirror test :77; BD59 row :54, mirror :78; BD36 unchanged; BD37 Forbid row :55, mirror :79; BD38 and BD54 bullet at delegation-discipline.md:216-217 matches spec :265, rows and mirrors :83-84; the :46-48 paragraph keeps five sentences; the prepared review dispatch family keeps 17 rows; no retired copy survives; no canary targets an edited sentence; no scope creep.\nTests and probes run: none.\n"
+          },
+          "axis": "Spec",
+          "base": "773901add554bc9b5da92310c70adb0428954e16",
+          "tip": "ed901b255cab951d6bb57ec01a2e7a1db56dcddc",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bd-c3-r1-coverage",
+          "performer": "claude:bd_bdc3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc3_coverage",
+            "digest": "sha256:7972a9018e9ac564852f4c3a8d0733b5d636a44a3694341d8c11c0198aa72b72",
+            "excerpt": "axis: Coverage; session claude:bd_bdc3_coverage; model opus; effort high; frozen pair 773901ad..ed901b25; evidence sha256:fa5162a30f090a836a1086f96121e15f287755d4685f3f7ae052c930820a0dbc current=true at 39e1de5a.\nverdict: clean (0 findings)\nRows BD31-BD38, BD54, BD59: each has a registry row and a separate mirror rule; BD36 keeps its row and mirror; whitespace collapse covers the wrapped sentences; the prepared review dispatch family holds 17 rows; no retired sentence survives.\nRuns after a worktree build: docs-currency-workflow, conformance-canary-families, guidance-prose-budgets, TestChunkChainAnchors, TestPreparedReviewGuidance, TestEveryRetainedFixtureBitesThroughRegisteredOwner all pass. Live probes bit for BD37 (first-look sentence restored), BD54 (blocking-bar scope restored), and BD31 (step 4 swapped to serial). Every probe restored its file; git status clean.\nAdvice: a capitalized restore of the retired first-look sentence stays green, because file-wide Forbid matching is case-sensitive (locate.go:204); the spec chose that matching rule (spec:562).\n"
+          },
+          "axis": "Coverage",
+          "base": "773901add554bc9b5da92310c70adb0428954e16",
+          "tip": "ed901b255cab951d6bb57ec01a2e7a1db56dcddc",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1175,6 +1239,8 @@ Chunk BD-C2 round 1 ran three opus/high axes in parallel at `d6789152` over the 
 
 BD-C2 round 2 ran three opus/high axes in parallel at `c3f97902` over the repair delta `823bca72..6303bb6f`. Every axis confirmed the folds of C1, S1, and S3. The Standards axis raised S21 on the new comment. The orchestrator committed two comment-only corrections, `403b633f` and `123c6f7a`, as evidence-only work. The Standards axis then reaffirmed S21 and S31 as closed. BD-C2 closes with repair cycle 1 of 2 used and no open finding.
 
+Chunk BD-C3 round 1 ran three opus/high axes in parallel at `39e1de5a` over the frozen pair `773901ad..ed901b25`. Only the Coverage axis ran tests and probes, and the tree was clean after every return. S1 and S2 are `no-op`, so BD-C3 uses no repair cycle and closes with no open finding.
+
 ## Standards
 
 BD-C1 round 1: 5 findings, worst S1. Raw count 5; repair targets 3 after S1 merges with P1 and C2.
@@ -1197,6 +1263,11 @@ BD-C2 round 2: 1 finding, worst S21. Raw count 1; repair targets 0 after the evi
 
 - S21 (auto-fix, confidence 3): the new comment makes the charge the agent and uses a synonym for error handling and validation. The reaffirmation added S31 (auto-fix, confidence 2) for the missing merged case. Both closed in `123c6f7a`.
 
+BD-C3 round 1: 2 findings, worst S1. Raw count 2; repair targets 0.
+
+- S1 (no-op, confidence 6): the delegation-discipline re-review bullet restates the confirming-round scope of the review phase. The approved spec chose that agreement in story 36, so a pointer would reopen a closed decision. A learning carries the pointer to a later spec.
+- S2 (no-op, confidence 4): the third combined-charge sentence repeats the repair rule, and it names `.bench/BENCH.md` as the owner.
+
 ## Spec
 
 BD-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0 after P1 merges with S1. Every BD-C1 row is met.
@@ -1208,6 +1279,8 @@ BD-C1 round 2: 0 findings. BD62 and BD63 are met. Advice: the review pickup firs
 BD-C2 round 1: 0 findings. Rows BD22-BD30 are met. Advice: the CHANGELOG bullet summarizes the batched call.
 
 BD-C2 round 2: 0 findings. The repair delta keeps rows BD22-BD30 met.
+
+BD-C3 round 1: 0 findings. Rows BD31-BD38, BD54, and BD59 are met.
 
 ## Coverage
 
@@ -1223,3 +1296,5 @@ BD-C2 round 1: 1 finding, worst C1. Raw count 1; repair targets 1.
 - C1 (auto-fix, confidence 8): the BD28 forbidden mirror holds the whole old sentence, so a widened registry needle stays green. Repair: ticket 04 sets the mirror needle to the BD28 text.
 
 BD-C2 round 2: 0 findings. A widened registry needle now bites. Advice: a reworded copy of the cap that drops the exact prefix passes BD28; the spec's needle choice owns that edge.
+
+BD-C3 round 1: 0 findings. Live probes bit for BD31, BD37, and BD54. Advice: a capitalized restore of a retired sentence stays green, because the spec chose case-sensitive file-wide matching.
