@@ -6,10 +6,6 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
-### Drain light-path delegation
-
-- Changed the light-path fix rule in `.bench/BENCH.md` so that `/bench-drain` implements no light-path fix inline. The drain gives every light-path fix in its run to a fresh write delegate, whatever its source. Before, the rule named only a fix that a drain verdict kept. Changed `/bench-drain` so that the delegate commits the ticket and the coordinator lands it after it verifies the done-claim.
-
 ### Release route for unlanded output
 
 - Fixed `bench worktree release` for an assignment with no commit of its own and uncommitted output. The release now refuses it as `unmerged` and names `bench worktree clean --discard-branch <path>`, the same route as the `bench worktree list` help row. Before, the release refused it as `dirty` and named the release again, so each retry gave the same refusal. An assignment with a landed commit and uncommitted output still refuses as `dirty` and names the release.
