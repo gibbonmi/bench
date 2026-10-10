@@ -1,1 +1,1 @@
-[{"path": ".agents/commands/bench-write-spec.md", "old": "When the round takes more\n   than one iteration to accept, append one", "new": "When the round takes more than one iteration to accept, continue without recording the miss and skip"}]
+[{"path": ".agents/commands/bench-write-spec.md", "old": "When a round takes more than one iteration to accept, append one", "new": "When a round takes more than one iteration to accept, continue without recording the miss and skip"}]

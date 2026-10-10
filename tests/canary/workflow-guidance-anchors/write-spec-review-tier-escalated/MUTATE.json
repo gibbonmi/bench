@@ -1,1 +1,1 @@
-[{"path": ".agents/commands/bench-write-spec.md", "old": "One independent review round covers the spec-and-tickets pair at reviewer\n   sign-off.", "new": "The falsification review runs at the mid tier for one iteration in a fresh read-only delegate."}]
+[{"path": ".agents/commands/bench-write-spec.md", "old": "After the spec fork returns, one independent review round grades the spec alone under `craft-spec`'s review rubric, its chunk table included.", "new": "The falsification review runs at the mid tier for one iteration in a fresh read-only delegate."}]

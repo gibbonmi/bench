@@ -19,7 +19,7 @@ func TestTicketSlicingPasses(t *testing.T) {
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Slicing rules", needle: "A retirement pass gives each sentence that grants the retired behavior its own forbid row and red-capable check.", want: "ticket slicing: each retired grant needs its own forbid row"},
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Slicing rules", needle: "A cited verifier row names the exact checks it performed.", want: "ticket slicing: a verifier row names its exact checks"},
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Slicing rules", needle: "The slicer runs `bench preflight build <slug>` after each change to a ticket or an acceptance row.", want: "ticket slicing: build preflight reruns after each ticket or acceptance row change"},
-		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Slicing rules", needle: "The spec goes to review, to sign-off, and to its landing only on a green preflight of its current ticket graph.", want: "ticket slicing: review, sign-off, and the landing wait for a green build preflight"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Slicing rules", needle: "The spec and its tickets go to sign-off and to their landing only on a green preflight of the current ticket graph.", want: "ticket slicing: sign-off and the landing wait for a green build preflight"},
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Slicing rules", needle: "Each acceptance claim names an available producer and an executable check at its ticket checkpoint.", want: "ticket slicing: each claim names its producer and check at its checkpoint"},
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Slicing rules", needle: "A ticket that preserves or moves a ref names a check for each of the head, the tip, and the checked-out-ref shapes.", want: "ticket slicing: a ref move checks every ref shape"},
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Slicing rules", needle: "A rule for one member of an enumerated family goes on its declaration row, and `Writes:` names the declaration table and its dispatch test.", want: "ticket slicing: a per-member rule fences its family declaration table and dispatch test"},
@@ -30,5 +30,30 @@ func TestTicketSlicingPasses(t *testing.T) {
 		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", section: "Before the map locks", needle: "A spec that adds or removes a preflight row names every file that asserts the row count or the row list.", want: "map discipline: a preflight row change names every row-count reader"},
 		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", section: "Before the map locks", needle: "A spec that changes the output of a fixture builder names every test that asserts or rewrites that output.", want: "map discipline: a fixture builder change names every output reader"},
 		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", section: "Per row", needle: "The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.", want: "map discipline: an existing test seam cites its function in the resolvable form"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "Each research return lists every likely fence expansion in one of these classes:", want: "ticket slicing: chunk research lists each likely fence expansion by class"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "Each entry cites its evidence as a `path:line` or as a command and its result.", want: "ticket slicing: each fence-expansion entry cites its evidence"},
+	}}.check(t)
+}
+
+// TestWriteSpecChunkedSlicing keeps the write-spec spec review, per-chunk slicing, and
+// review-line rules red-capable. Each needle and diagnostic is written here independently
+// of the registry, so a rewrite that drops a rule cannot define itself green.
+func TestWriteSpecChunkedSlicing(t *testing.T) {
+	const writeSpec = ".agents/commands/bench-write-spec.md"
+	const line = ".agents/skills/bench-craft-line/SKILL.md"
+	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
+		{file: writeSpec, section: "Process", needle: "After the spec fork returns, one independent review round grades the spec alone under `craft-spec`'s review rubric, its chunk table included.", want: "write-spec slicing: one independent round reviews the spec alone"},
+		{file: writeSpec, section: "Process", needle: "It returns accept or reject, and slicing starts only after it accepts.", want: "write-spec slicing: slicing waits for the spec round to accept"},
+		{file: writeSpec, section: "Process", needle: "The invoking session then slices the tickets one chunk at a time, in the order of the accepted chunk table.", want: "write-spec slicing: the invoking session slices the tickets one chunk at a time"},
+		{file: writeSpec, section: "Process", needle: "Read-only research delegates gather the chunk's ticket evidence and return each likely fence expansion under the slicing checks' `Fence-expansion evidence` classes.", want: "write-spec slicing: each chunk's research returns its likely fence expansions"},
+		{file: writeSpec, section: "Process", needle: "Compare each ticket's `Writes:` line with `bench preflight build <slug> --propose-writes` under the slicing checks.", want: "write-spec slicing: each chunk ticket's Writes line meets the propose-writes proposal"},
+		{file: writeSpec, section: "Process", needle: "A delegate on `craft-line`'s chunk ticket review line grades the chunk's tickets under `craft-tickets`' granularity, edge, and merge-or-split quiz. The delegate returns accept or reject.", want: "write-spec slicing: a delegate on the chunk ticket review line accepts or rejects each chunk"},
+		{file: writeSpec, section: "Process", needle: "A chunk review can run while the research of the next chunk runs. The invoking session writes one chunk at a time.", want: "write-spec slicing: chunk writes stay serial"},
+		{file: writeSpec, section: "Process", needle: "After the last chunk is accepted, write the fence section. `bench preflight build <slug> --plan-only` then grades the whole ticket graph.", want: "write-spec slicing: the plan-only preflight grades the whole ticket graph after the last chunk"},
+		{file: writeSpec, section: "Process", needle: "The invoking session repairs a rejected spec or chunk, and the same round grades the repair alone.", want: "write-spec slicing: a rejected spec or chunk is repaired and reviewed again alone"},
+		{file: writeSpec, section: "Process", needle: "The count `<n>` sums the iterations of the spec round and of every chunk round.", want: "write-spec slicing: the verification log sums the iterations of every round"},
+		{file: writeSpec, needle: "The invoking session coordinates the phase, slices the tickets, and presents the completed approval table to the reviewer.", want: "write-spec slicing: the invoking session slices the tickets"},
+		{file: line, needle: "| Spec review (`/bench-write-spec`) | mid + high |", want: "write-spec slicing: craft-line routes the spec review to mid + high"},
+		{file: line, needle: "| Chunk ticket review (`/bench-write-spec`) | cheap + high |", want: "write-spec slicing: craft-line routes the chunk ticket review to cheap + high"},
 	}}.check(t)
 }

@@ -1086,7 +1086,8 @@
                   uncertainty is exactly what the smartest model is for. Once the map is clear, the
                   write-spec phase fans out read-only research delegates, and then the invoking
                   session forks the current conversation. That fork inherits the session's line and
-                  the research findings, and it authors the spec and tickets.</p>
+                  the research findings, and it authors the spec and its chunk table. The invoking
+                  session then slices the tickets one chunk at a time.</p>
                 </div>
               </div></div>
             </details>
@@ -1117,8 +1118,9 @@
                   <code>specs/&lt;feature&gt;/decisions/</code>, updates their references, and leaves
                   top-level <code>decisions/</code> for pre-spec decision work. Its entry contract owns
                   the narrow same-session recording
-                  exception. The spec stops for your sign-off, tickets are sliced and approved in
-                  that context, then each ticket gets its own fresh author session in the build. The target is locked before the loop starts, so the loop can't
+                  exception. An independent round reviews the spec alone. The tickets are then
+                  sliced and reviewed one chunk at a time in that context. The spec and tickets stop
+                  for your one sign-off, then each ticket gets its own fresh author session in the build. The target is locked before the loop starts, so the loop can't
                   renegotiate it.</p>
                 </div>
               </div></div>
@@ -1325,7 +1327,8 @@
           The write-spec phase fans out read-only research delegates, and then it forks the
           current conversation before it authors the spec.
           The fork inherits the invoking session's line and reviewed intent while it turns the
-          decision source into engineering seams, coverage, and an approved ticket breakdown.
+          decision source into engineering seams, coverage, and a chunk table. The invoking
+          session then slices the approved ticket breakdown one chunk at a time.
           After ticket approval, <code>.bench/BENCH.md</code> owns ticket and repair authorship.
         </p>
       </div>

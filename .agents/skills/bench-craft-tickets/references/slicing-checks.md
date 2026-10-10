@@ -4,7 +4,8 @@ Charged from `craft-tickets` when the slicer writes each ticket's `Writes:` line
 the spec's ownership fence. The first section lists every `Writes:` rule that the ticket
 parser and build preflight enforce, and some `Blocked by:` and `Covers:` rules beside them.
 The second section states the slicing rules that no check enforces, each from a repair
-round that a retrospective recorded.
+round that a retrospective recorded. The third section lists the evidence classes that
+the research of each ticket chunk returns.
 
 ## Enforced rules
 
@@ -42,8 +43,8 @@ differ.
   Before the ticket graph goes to approval, and before each plan-expansion commit, the slicer also runs
   `bench preflight build <slug> --propose-writes --ticket <basename> --base <commit> --source-tip <commit>`
   for each affected ticket. The slicer adds each listed closure file to the `Writes:` line of that ticket.
-  The spec goes to review, to sign-off, and to its landing only on a green preflight of its current ticket graph.
-  Review then grades the final fence, not an earlier one.
+  The spec and its tickets go to sign-off and to their landing only on a green preflight of the current ticket graph.
+  Sign-off then grades the final fence, not an earlier one.
 - A plan commit that renames a spec symbol runs one `rg` for the old symbol across every ticket, and it corrects each hit.
 - A fence expansion reads the fence section of the spec and corrects each sentence that names the added package.
 - Each acceptance claim names an available producer and an executable check at its ticket checkpoint. A claim whose producer lands in a later ticket has no evidence at that checkpoint.
@@ -55,3 +56,16 @@ differ.
   The search covers the tests, the help inventories, the generated references, and their anchor registry files.
   The spec-wide fence masks a hit that is absent from one ticket's `Writes:` line, so the fence alone does not close the gap.
 - A ticket that moves a test expectation names the file that holds the old expectation in its own `Writes:` line. Otherwise the old expectation stays behind as a second copy.
+
+## Fence-expansion evidence
+
+`/bench-write-spec` charges read-only research for each ticket chunk. Each research return lists every likely fence expansion in one of these classes:
+
+- a caller file that `bench consumers` names;
+- a fixture or a canary that pins a path;
+- an anchor registry file that names a guidance path;
+- a count pin, such as a package test-count pin;
+- a file over its structure budget, with its headroom;
+- a shared file that more than one ticket writes, such as `CHANGELOG.md`.
+
+Each entry cites its evidence as a `path:line` or as a command and its result.
