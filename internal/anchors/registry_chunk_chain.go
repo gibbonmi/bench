@@ -7,11 +7,11 @@ package anchors
 // phase's pointer to the staleness-pass reference and the cheap-tier fan-out charge that
 // the reference states. The fold rows pin the build's fold points in the implement phase and
 // the craft-delegate sentence that leaves the build's fold timing to it. The light-path rows pin
-// the build's hold on a light-path dispatch in the implement phase and in ADR 0023, and forbid
-// the ADR's retired unscoped clause. The chunk-record rows give the chunk freeze and record to the last
-// ticket's author, run the chunk checkpoint gate only before a successor chunk, close the last chunk
-// through the complete checkpoint, and forbid each retired sentence. The `bench record` rows route each
-// completed review-record entry to the verb and forbid the retired hand-recording sentences.
+// the build's light-path hold in the implement phase and in ADR 0023. They also forbid the ADR's
+// retired unscoped clause. The chunk-record rows pin the last ticket author's freeze and chunk
+// record. They pin the chunk checkpoint gate before a successor chunk and the last chunk's close
+// through the complete checkpoint. They also forbid each retired sentence. The `bench record` rows
+// route each completed review-record entry to the verb and forbid the retired hand-recording sentences.
 var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Require, Needle: "If every red row is a `*-closure` row, `fence-writes`, `completion-plan`, or `check-floor`, the staleness pass below takes the red. Any other red stops the phase.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped or widened the staleness route for a red build preflight"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Declare the line, validate the tickets, route the venue", Needle: "charge the staleness pass that `" + stalenessPass + "` states.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped the staleness-pass charge pointer to its reference"},
