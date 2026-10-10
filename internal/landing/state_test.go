@@ -154,9 +154,7 @@ func requireLandingSocket(t *testing.T, path string) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := testrepo.MakeSocket(path); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable: %v", err))
-	}
+	testrepo.RequireSocket(t, path)
 }
 
 func requireLandingDevice(t *testing.T, path string) {

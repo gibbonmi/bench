@@ -83,7 +83,7 @@ func TestChangedPackageSelectionRefusalMatrix(t *testing.T) {
 	if err := syscall.Mkfifo(filepath.Join(root, "unsafe-fifo"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	err := testrepo.MakeSocket(filepath.Join(root, "unsafe-socket"))
+	err := testrepo.PlantSocket(t, filepath.Join(root, "unsafe-socket"))
 	hasSocket := err == nil
 	if !hasSocket {
 		t.Logf("socket case skipped: cannot create Unix socket: %v", err)

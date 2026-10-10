@@ -456,9 +456,7 @@ func TestSkillDescriptionBudgetRefusesNonRegularSubjects(t *testing.T) {
 		{
 			kind: "socket",
 			plant: func(t *testing.T, path string) {
-				if err := testrepo.MakeSocket(path); err != nil {
-					capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable on this filesystem: %v", err))
-				}
+				testrepo.RequireSocket(t, path)
 			},
 		},
 	} {
