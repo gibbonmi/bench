@@ -489,12 +489,12 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 |---|---|
 | `.bench/BENCH.md` | 192 |
 | `.agents/commands/bench-implement-spec.md` | 83 |
-| `.agents/commands/bench-write-spec.md` | 82 |
+| `.agents/commands/bench-write-spec.md` | 87 |
 | `.agents/commands/bench-debug.md` | 170 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
 | `.agents/skills/bench-craft-spec/SKILL.md` | 155 |
 | `.agents/skills/bench-craft-delegate/SKILL.md` | 126 |
-| `.agents/skills/bench-craft-line/SKILL.md` | 130 |
+| `.agents/skills/bench-craft-line/SKILL.md` | 132 |
 | `.agents/skills/bench-craft-tdd/SKILL.md` | 122 |
 | `.agents/skills/bench-craft-review/SKILL.md` | 122 |
 | `.agents/skills/bench-craft-research/SKILL.md` | 140 |
@@ -572,12 +572,13 @@ escalation.
   session that loads it, so the effort is high. The top tier implements
   nothing, code or prose, unless the reviewer names it for the run (reviewer
   direction, 2026-08-26). The `craft-skills` and `craft-adr` skills apply.
-- **Spec and ticket authoring** → **a fork of the current conversation**.
+- **Spec authoring** → **a fork of the current conversation**.
   `/bench-write-spec` accepts exactly one of three sources: a ready compiled
   map, a reviewer-confirmed current conversation, or a named reviewed artifact.
   The invoking session forks after the research fan-out that `/bench-write-spec`
-  owns. That context-inheriting fork authors the spec and slices the tickets from
-  the source and the research findings.
+  owns. That context-inheriting fork authors the spec and its chunk table from
+  the source and the research findings. `/bench-write-spec` owns the ticket
+  slicing that follows.
   The fork inherits the invoking session's line, with no model override.
 
   Top +
@@ -590,10 +591,10 @@ escalation.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed. A wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
-- **Spec-and-tickets review round** (`/bench-write-spec`) → **reviewer sign-off**.
-  The reviewer applies `craft-tickets` and `craft-spec` to the spec and its ticket
-  breakdown after the author slices it. `/bench-write-spec` owns the round's
-  operating protocol, and the fork retains all writes.
+- **Spec and chunk review rounds** (`/bench-write-spec`) → the spec review and
+  chunk ticket review rows of `craft-line`'s stage defaults. The reviewer then
+  signs off the spec and its tickets once. `/bench-write-spec` owns the rounds'
+  operating protocol.
 - **Review-axis delegate** (`/bench-review-implementation`) → the conditional
   review line in `craft-line`, at high effort and **~1 iteration each**. By
   default, each axis gets a fresh parallel session with its own source. Explicit

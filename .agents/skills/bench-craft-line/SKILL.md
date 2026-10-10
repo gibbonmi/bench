@@ -51,6 +51,8 @@ A fourth signal, **leverage**, overrides the table. An artifact that steers futu
 | Orchestration | mid + medium |
 | Ticket implementation | cheap + low |
 | Review axis | conditional + high |
+| Spec review (`/bench-write-spec`) | cheap + high |
+| Chunk ticket review (`/bench-write-spec`) | cheap + high |
 
 The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding. Every other implementation sends each axis to the invoking harness's mid binding. A first review round runs each axis on this conditional line. Only a confirming round or a later round can move an axis to the top binding, and only at the reviewer's direction.
 
@@ -58,7 +60,7 @@ These are starting defaults, not a flat rule. Every ticket author runs on the sp
 
 A post-review repair keeps the declared model and the declared effort of its ticket.
 
-The leverage override still wins for orchestration, implementation, and repair, so a repair of guidance runs at high effort. The conditional review line owns review.
+The leverage override still wins for orchestration, implementation, and repair, so a repair of guidance runs at high effort. The conditional review line owns implementation review.
 `craft-delegate` owns the author venue; this skill routes the author.
 
 ## Delegated author lines

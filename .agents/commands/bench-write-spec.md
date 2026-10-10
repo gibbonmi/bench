@@ -45,7 +45,7 @@ The invoking session first fans out read-only research delegates over the one de
 
 Each delegate returns its findings and its not-verified list under `craft-research`. The research delegates write nothing. The spec is the durable output of the research run, and its rows cite the findings.
 
-After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and slice its tickets. The charge gives the fork the findings as compressed inputs, and the fork does not repeat their reads. The fork inherits the invoking session's line. Omit a model override. Keep all spec-and-ticket writes in the phase worktree. The invoking session coordinates the phase and presents the fork's completed approval table to the reviewer.
+After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and its chunk table only. The charge gives the fork the findings as compressed inputs, and the fork does not repeat their reads. The fork inherits the invoking session's line. Omit a model override. Keep all spec-and-ticket writes in the phase worktree. The invoking session coordinates the phase, slices the tickets, and presents the completed approval table to the reviewer.
 
 After ticket approval, each ticket goes to a fresh author session under `.bench/BENCH.md`'s authorship rule. Spec authoring owns engineering seams, deep-versus-thin design, tests,
 acceptance coverage, hostile-input attachment, and gate attachment; shaping sources constrain behavior, scope,
@@ -63,20 +63,25 @@ compatibility, or a reviewer-chosen seam.
 2. **Retire superseded work by promotion then deletion.** Leave no `Superseded by` marker: promote durable
    decisions, delete the old spec under a `spec-retire: <name>` commit, repair references. The same
    promote-then-delete commit removes the spec's `ROADMAP.md` row and that row's `roadmap/FT<n>.md` detail file. Whole-folder retirement removes the compiled topic folders, their tickets and assets included. It removes each compiled index file too.
-3. **Slice, then review once.** Where the stories partition into disjoint package or fence sets, could a narrower
+3. **Review the spec alone.** After the spec fork returns, one independent review round grades the spec alone under `craft-spec`'s review rubric, its chunk table included.
+   The round runs on `craft-line`'s spec review line. It returns accept or reject, and slicing starts only after it accepts. The fence section stays empty until the slicing writes it.
+4. **Slice one chunk at a time.** Where the stories partition into disjoint package or fence sets, could a narrower
    capability ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule. The ticket graph splits where a consumer branch lands green alone.
 
-   Charge `craft-tickets` and write the breakdown under `specs/<slug>/tickets/`. Carry
+   The invoking session then slices the tickets one chunk at a time, in the order of the accepted chunk table. For each chunk:
+
+   1. Read-only research delegates gather the chunk's ticket evidence and return each likely fence expansion under the slicing checks' `Fence-expansion evidence` classes.
+   2. The invoking session verifies the findings. Charge `craft-tickets` and write the chunk's tickets under `specs/<slug>/tickets/`. Compare each ticket's `Writes:` line with `bench preflight build <slug> --propose-writes` under the slicing checks.
+   3. A delegate on `craft-line`'s chunk ticket review line grades the chunk's tickets under `craft-tickets`' granularity, edge, and merge-or-split quiz. The delegate returns accept or reject.
+
+   A chunk review can run while the research of the next chunk runs. The invoking session writes one chunk at a time.
+
+   After the last chunk is accepted, write the fence section. `bench preflight build <slug> --plan-only` then grades the whole ticket graph. Carry
    its numbered title, `Blocked by:`, and delivered outcome list into the approval table. The spec and tickets
    receive one sign-off.
 
-   One independent review round covers the spec-and-tickets pair at reviewer
-   sign-off. The reviewer applies `craft-tickets`' granularity, edge, and
-   merge-or-split quiz and `craft-spec`'s review rubric.
+   Every review round follows one loop. The round declares its iteration cap before the first charge. The invoking session repairs a rejected spec or chunk, and the same round grades the repair alone. The invoking session folds the findings of each round and names them in the verification log.
 
-   The round declares its iteration cap before the first charge. The author folds
-   findings from the round and names them in the verification log.
-
-   At close, write `Verification log: <n> iteration(s) to accept — <note>` into the spec. When the round takes more
-   than one iteration to accept, append one `capture/learnings.md` entry. The entry names the stage that missed,
+   At close, write `Verification log: <n> iteration(s) to accept — <note>` into the spec. The count `<n>` sums the iterations of the spec round and of every chunk round. The note names each round that took more than one iteration.
+   When a round takes more than one iteration to accept, append one `capture/learnings.md` entry for that round. The entry names the stage that missed,
    what review caught, why it was missed, and the proposed rule change.

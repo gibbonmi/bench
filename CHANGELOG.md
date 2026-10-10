@@ -6,6 +6,15 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Chunked ticket slicing
+
+- Changed `/bench-write-spec` so that the spec fork authors the spec and its chunk table only. One independent review round then grades the spec alone and returns accept or reject. The invoking session slices the tickets one chunk at a time:
+  - Read-only research delegates return the likely fence expansions of the chunk, each with its evidence.
+  - The invoking session writes the chunk's tickets and compares each `Writes:` line with `bench preflight build --propose-writes`.
+  - A cheap-tier, high-effort delegate accepts or rejects the chunk, and a rejected chunk is repaired and reviewed again alone.
+
+  After the last chunk, `bench preflight build <slug> --plan-only` grades the whole ticket graph, and the spec and tickets receive one sign-off. The verification log sums the iterations of every round. `craft-line` holds the tiers of both reviews, and the slicing checks hold the fence-expansion evidence classes. Before, the fork sliced every ticket, and one review at sign-off covered the spec and the tickets together.
+
 ### Spec research fan-out
 
 - Changed `/bench-write-spec` so that the invoking session first fans out read-only research delegates over the decision source, under `craft-delegate`, `craft-line`, and `craft-research`. The delegates read the enforcement surface, `docs/known-issues.md`, the reader sweep, and the code sites, tests, fixtures, and anchors of each decision-source item, and they write nothing. The invoking session forks the spec author only after every delegate returns. The fork takes the findings as compressed inputs and reads only what the findings leave open. Before, the session forked at once, and the fork did those reads alone.

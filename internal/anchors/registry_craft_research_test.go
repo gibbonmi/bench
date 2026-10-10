@@ -101,7 +101,7 @@ func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
 			{
 				file:    writeSpec,
 				section: "Who runs this phase",
-				needle:  "After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and slice its tickets.",
+				needle:  "After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and its chunk table only.",
 				want:    ".agents/commands/bench-write-spec.md dropped the conversation fork for spec authoring and ticket slicing",
 			},
 		},
