@@ -289,7 +289,8 @@ A new log file created during a landing would otherwise change that fingerprint,
 The source cleanup plan reads the same predicate (internal/worktree/build_outputs.go:81).
 The init agreement test reds once init writes a line that the predicate refuses (internal/adopt/adopt_test.go:579-585).
 
-A conformance test in a new file reads the kit `.gitignore` and requires a line equal to `landing.BuildLogDir`, so the constant stays the one source.
+A conformance test beside TestLocalCaptureFilesAreNotTracked reads the kit `.gitignore` and requires a line equal to `landing.BuildLogDir`.
+The constant therefore stays the one source, and internal/conformance/tier_live_tree_test.go classifies the new live-tree test.
 
 ### Budgets and shared files
 
@@ -403,7 +404,7 @@ The new rules govern each build that starts after this landing.
 | BD39 | 37 | Implement-spec holds "The orchestrator keeps one build log at the primary checkout's `capture/build-log/<slug>.log`." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing build-log sentence raises the new Require diagnostic. |
 | BD40 | 38 | Implement-spec holds "For each reviewer direction that saves a step, it appends one line that names the direction and the step that it removed." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing step-line sentence raises the new Require diagnostic. |
 | BD41 | 39 | Implement-spec holds "The retro author reads that log." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing retro reader raises the new Require diagnostic. |
-| BD42 | 40 | The kit `.gitignore` holds a line equal to `landing.BuildLogDir`. | planned internal/conformance/local_capture_ignore_test.go (TestKitGitignoreIgnoresTheBuildLog) | A kit `.gitignore` without the line fails the comparison. |
+| BD42 | 40 | The kit `.gitignore` holds a line equal to `landing.BuildLogDir`. | planned internal/conformance/local_capture_tracking_test.go (TestKitGitignoreIgnoresTheBuildLog) | A kit `.gitignore` without the line fails the comparison. |
 | BD43 | 41 | `bench init` writes `capture/build-log/` after the three existing capture lines. | `internal/adopt/adopt_test.go` (`TestInitIgnoresLocalCaptureFiles`) | An init list without the constant leaves the expected byte string unmatched. |
 | BD44 | 41 | Each line that `bench init` ignores satisfies `landing.LocalCapturePath`. | `internal/adopt/adopt_test.go` (`TestLocalCaptureIgnoreLinesMatchTheLandingPredicate`) | An init line that the predicate refuses fails the agreement test. |
 | BD45 | 42 | `landing.LocalCapturePath` accepts `capture/build-log/`, `capture/build-log`, and `capture/build-log/<slug>.log`. | planned internal/landing/local_capture_test.go (TestLocalCapturePathRecognizesTheBuildLog) | A predicate that keeps only the three exact files refuses each accepted case. |
@@ -450,7 +451,7 @@ Flagged additions for reviewer veto:
 - The landing predicate change in `internal/landing` is in-scope support for the build log. A refused build-log entry changes the destination fingerprint, and the init agreement test reds.
 - The exported build-log directory constant lives in `internal/landing`, and `internal/adopt` gains an import of that package.
 - `LocalCapturePath` moves to a new file, internal/landing/local_capture.go, and its tests take a new file beside it, because both landing files sit near the 400-line limit.
-- A new conformance test file reads the kit `.gitignore` against `landing.BuildLogDir`.
+- A new conformance test in internal/conformance/local_capture_tracking_test.go reads the kit `.gitignore` against `landing.BuildLogDir`.
 - The last chunk's fold moves to the start of that chunk, before its first ticket dispatch, so the author's freeze follows the fold.
 - Implement-spec's line budget rises from 85 to 93 across four tickets.
 - The craft-delegate scope is a new sentence, and its two pinned stale-base sentences stay byte-exact.
@@ -493,3 +494,14 @@ The pre-review proof checklist follows.
 - Consolidated rules: none.
 - Quantified obligations: "every chunk" in the complete checkpoint holds by internal/reviewrecord/coverage.go:136-141; "each affected ticket" in the repair rule stays as written.
 - Workflow-step writes: the author's chunk record writes `reviews/<slug>.md` at the chunk source, as the orchestrator's record did, so the checkpoint digests do not change.
+
+## Completion plan
+
+This version 1 inventory records planned obligations only.
+Before the first dispatch, the plan amendment records a version 2 plan with the run, orchestrator, and assignment identities.
+Each chunk names one focused check with a probe for each ticket, one batched package call, and the root conformance check.
+The batched call repeats `--package` for each package that the chunk writes, so the floor of each ticket is one `bench test` call.
+
+```bench-completion-plan
+{"version":1,"chunks":[{"id":"BD-C1","tickets":["01-fold-only-at-chunk-boundaries.md","02-hold-light-paths-during-a-build.md","03-close-the-last-chunk-through-the-complete-checkpoint.md"],"verification":[{"id":"bd-01-focused","command":"bench test --package ./internal/anchors --run TestChunkChainAnchors","probe":"bd-01-omission"},{"id":"bd-02-focused","command":"bench test --package ./internal/conformance --run TestCommitmentGuidance","probe":"bd-02-omission"},{"id":"bd-03-focused","command":"bench test --package ./internal/anchors --run TestChunkChainAnchors","probe":"bd-03-omission"},{"id":"bd-c1-floor","command":"bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench"},{"id":"bd-c1-conformance","command":"bench test --check root-conformance"}]},{"id":"BD-C2","tickets":["04-cap-witnesses-and-keep-moved-guards.md"],"verification":[{"id":"bd-04-focused","command":"bench test --package ./internal/anchors --run TestWriteSpecChunkedSlicing","probe":"bd-04-omission"},{"id":"bd-c2-floor","command":"bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench"},{"id":"bd-c2-conformance","command":"bench test --check root-conformance"}]},{"id":"BD-C3","tickets":["05-scope-review-rounds.md"],"verification":[{"id":"bd-05-focused","command":"bench test --package ./internal/anchors --run TestChunkChainAnchors","probe":"bd-05-omission"},{"id":"bd-c3-floor","command":"bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench"},{"id":"bd-c3-conformance","command":"bench test --check root-conformance"}]},{"id":"BD-C4","tickets":["06-keep-the-build-log.md"],"verification":[{"id":"bd-06-focused","command":"bench test --package ./internal/landing --run 'TestLocalCapturePathRecognizesTheBuildLog|TestCheckoutFingerprintIgnoresTheBuildLog'","probe":"bd-06-omission"},{"id":"bd-06-init","command":"bench test --package ./internal/adopt --run 'TestInitIgnoresLocalCaptureFiles|TestLocalCaptureIgnoreLinesMatchTheLandingPredicate'"},{"id":"bd-c4-floor","command":"bench test --package ./internal/landing --package ./internal/adopt --package ./internal/worktree --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench"},{"id":"bd-c4-conformance","command":"bench test --check root-conformance"}]}],"final_verification":[{"id":"final-preflight","command":"bench preflight build build-directions"},{"id":"final-conformance","command":"bench test --check root-conformance"},{"id":"final-workflow","command":"bench test --check docs-currency-workflow"}]}
+```
