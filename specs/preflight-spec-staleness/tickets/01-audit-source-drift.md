@@ -10,7 +10,7 @@ The actual --audit-spec command reports exact source drift over declared scope.
 Before any implementation, require complete independently accepted and landed preflight-ownership-closure delivery.
 A draft or provider chunk is insufficient.
 Reconcile graph pins and claims against that landed source through the existing enabling-plan procedure.
-No FT318, FT317, or FT125 delivery is required.
+No FT318 or FT125 delivery is required.
 
 Expose staleness.Collect(source ownership.Source, manifest ownership.Manifest, sourceFacts ownership.Snapshot) (AuditFacts, error) and staleness.Decide(facts AuditFacts) Audit.
 Typed staleness.Error preserves Stage, Subject, Cause, and Unwrap.

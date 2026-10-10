@@ -67,7 +67,7 @@ Freeze the reviewed implementation graph against that landed provider source bef
 A graph drafted earlier must reconcile its pins and claims through the existing enabling-plan procedure.
 
 The C10 order is advice.
-No FT318, FT317, or FT125 outcome is a prerequisite.
+No FT318 or FT125 outcome is a prerequisite.
 This spec adds no record forms, capability values, or exact artifact reader.
 
 ### Owner and source identity
@@ -559,7 +559,7 @@ No live unrelated spec or ticket migration belongs to this build.
 ## Out of scope
 
 FT293 implementation is an actual complete prerequisite, not a scope cut.
-FT318/FT317 new record writes and capability values remain separate: estimated 8 edits and 3 focused runs.
+FT318 new record writes and capability values remain separate: estimated 8 edits and 3 focused runs.
 FT125 exact readers remain separate: estimated 9 edits and 4 focused runs.
 A generic semantic equivalence engine is excluded: a future spec would need at least 3 owners and 3 qualification runs.
 These estimates do not replace an in-scope predicate.

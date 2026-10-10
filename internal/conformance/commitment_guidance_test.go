@@ -49,7 +49,7 @@ func TestCommitmentGuidance(t *testing.T) {
 		remove("light-path observable", guide, " It carries one tickets-only folder with exactly one ticket, and it lands with that folder as `--spec`.", "operating guide dropped the light-path observable"),
 		remove("light-path Writes boundary", guide, " Its production paths stay inside that ticket's `Writes:` line.", "operating guide dropped the light-path Writes boundary"),
 		remove("light-path row rule", guide, " It may remove a roadmap row that no committed outcome pins as a source; a pinned row changes only through its outcome.", "operating guide dropped the light-path row rule"),
-		remove("drain light-path dispatch", guide, " `/bench-drain` dispatches every other light-path fix that its verdicts keep, whatever the active commitment is.", "operating guide dropped the drain light-path dispatch"),
+		remove("drain light-path dispatch", guide, " `/bench-drain` implements no light-path fix inline: it dispatches every light-path fix in its run, whatever its source and whatever the active commitment is.", "operating guide dropped the drain light-path dispatch"),
 		remove("next-outcome start", guide, " At a phase close, do the preparation and run `bench commitment start` from the outcome's own worktree; never hand me a `bench` command.", "operating guide dropped the next-outcome start"),
 		remove("binding-only limit", guide, " That plan changes only the deliverable binding; a reorder or a new admission still needs my direction.", "operating guide dropped the binding-only limit"),
 		remove("drain next-outcome start", drain, "After the landing, the coordinator starts the `commitment_outlook` outcome under the next-outcome rule in `.bench/BENCH.md`.", "drain dropped its next-outcome start"),

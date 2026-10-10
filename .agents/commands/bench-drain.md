@@ -212,8 +212,11 @@ re-park it. A re-parked entry names the missing repro as its graduation trigger.
 
 Every kept item that needs a spec becomes uncommitted intake: a new row, or a merge into the row that already covers it.
 The commitment rule in `.bench/BENCH.md` decides whether spec intake starts; a drain approval never admits it.
+
 A drained light-path item needs no commitment: the drain dispatches it under the light-path fix rule in `.bench/BENCH.md`.
-The delegate writes the one ticket file, implements it, and lands it as the light-path row states. The coordinator verifies the done-claim against the ticket's acceptance rows and the gate.
+A light-path change that the run finds from any other source follows the same rule.
+The delegate writes the one ticket file, implements it, and commits it. The coordinator verifies the done-claim against the ticket's acceptance rows and the gate.
+Then the coordinator lands the ticket as the light-path row states.
 
 A learning entry with a light-path fix follows the light-path fix rule in `.bench/BENCH.md`.
 Its verdict closes the entry by implementation after the fix lands.
