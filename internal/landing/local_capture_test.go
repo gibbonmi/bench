@@ -27,17 +27,26 @@ func TestLocalCapturePathRecognizesTheBuildLog(t *testing.T) {
 }
 
 func TestCheckoutFingerprintIgnoresTheBuildLog(t *testing.T) {
-	root := fixture(t)
-	write(t, root, ".gitignore", "capture/build-log/\n")
-	git(t, root, "add", ".gitignore")
-	git(t, root, "commit", "-qm", "ignore the build log")
-	before, err := CheckoutFingerprint(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	write(t, root, "capture/build-log/build-directions.log", "direction\n")
-	after, err := CheckoutFingerprint(root)
+	before, after, err := ignoredWriteFingerprints(t, "capture/build-log/", "capture/build-log/build-directions.log")
 	if err != nil || after != before {
 		t.Fatalf("build-log fingerprint = (%q, %v), want %q", after, err, before)
 	}
+}
+
+// ignoredWriteFingerprints commits a .gitignore that holds the ignore line in a new
+// checkout, then writes one file at path. It returns the fingerprint before the write and
+// the fingerprint and error after it.
+func ignoredWriteFingerprints(t *testing.T, ignore, path string) (before, after string, err error) {
+	t.Helper()
+	root := fixture(t)
+	write(t, root, ".gitignore", ignore+"\n")
+	git(t, root, "add", ".gitignore")
+	git(t, root, "commit", "-qm", "ignore "+ignore)
+	before, err = CheckoutFingerprint(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	write(t, root, path, "ignored\n")
+	after, err = CheckoutFingerprint(root)
+	return before, after, err
 }

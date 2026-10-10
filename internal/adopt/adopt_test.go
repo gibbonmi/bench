@@ -527,10 +527,10 @@ func runInit(t *testing.T) {
 }
 
 // TestInitIgnoresLocalCaptureFiles covers HS24. A linked repo must not track the capture
-// inboxes or the handoff, so init adds them to .gitignore. The re-run row is the point: a
-// blind append duplicates the lines every time the reviewer runs init again. The partial
-// row proves the check is per line rather than per file, so a repo that already ignores one
-// entry gains only the other three.
+// inboxes, the handoff, or the build log, so init adds them to .gitignore. The re-run row
+// is the point: a blind append duplicates the lines every time the reviewer runs init again.
+// The partial row proves the check is per line rather than per file, so a repo that already
+// ignores one entry gains only the other three.
 func TestInitIgnoresLocalCaptureFiles(t *testing.T) {
 	cases := []struct {
 		name     string
