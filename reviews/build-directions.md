@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-directions/spec.md",
-  "plan_digest": "sha256:8c0367a9d0b21d1603f3e78be5d804444dbff9d59ad19095af13ddfb3a1b744d",
+  "plan_digest": "sha256:01866b4acb73615d5cdd7f0f9902098e52656d7a5be19791790ec260c8032ab7",
   "implementation_session": "",
   "chunks": [
     {
@@ -358,7 +358,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:8c0367a9d0b21d1603f3e78be5d804444dbff9d59ad19095af13ddfb3a1b744d",
+      "to": "sha256:01866b4acb73615d5cdd7f0f9902098e52656d7a5be19791790ec260c8032ab7",
+      "chunk_ids": {
+        "BD-C1": [
+          "BD-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
