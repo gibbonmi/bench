@@ -901,6 +901,96 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bd-c2-r2-standards",
+          "performer": "claude:bd_c2r2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "271b3b03f4360d421fa599efa847fb534b637383",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_c2r2_standards",
+            "digest": "sha256:edfa135cd8e6920ac3cb1509f07b964a0d137997b289175519f89d7fcef37e50",
+            "excerpt": "axis: Standards (confirming round 2); session claude:bd_c2r2_standards; model opus; effort high; frozen pair 0487a79f..6303bb6f; repair delta 823bca72..6303bb6f; evidence sha256:8b9978a148debdcba1634dc47cf34ef8cf4ff4d1aeaa617bc6b59080d6f1b90b current=true at c3f97902.\nverdict: clean; no blocking finding; one advisory.\nFolds: C1 -> BD28 confirmed (registry_ticket_passes_test.go:91 holds the spec needle; registry :73; anchor_harness_test.go:132-133). S1 confirmed (CHANGELOG.md:14; sentences 21, 15, 20, 19, 10, 9 words). S3 confirmed (registry_ticket_passes.go:84 covers rows :67-:71).\nDuplication: CHANGELOG.md:14 repeats the rule sentence as a change summary; the registry and mirror pair is the accepted exception.\nS21 | advisory | internal/anchors/registry_ticket_passes.go:84 | The new comment makes the charge the agent that \"keeps the guards\" and uses \"guards\" as a synonym for the \"error handling and validation\" of row :67. | ste-prose.md:14 and :25. | auto-fix | confidence 3\n"
+          },
+          "axis": "Standards",
+          "base": "0487a79f9ba7f3753cfd8acd93a1016e3abcaaf8",
+          "tip": "6303bb6f1de32856316fc1cf1963f89aef369f3b",
+          "finding_ids": [
+            "S21"
+          ],
+          "supersedes": [
+            "bd-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "bd-c2-r2-spec",
+          "performer": "claude:bd_c2r2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "271b3b03f4360d421fa599efa847fb534b637383",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c2r2_spec",
+            "digest": "sha256:b5e4f7ff76e4a56f27d59085a1e76bdbcc1306b1efb6de0a9407f97983a49f83",
+            "excerpt": "axis: Spec (confirming round 2); session claude:bd_c2r2_spec; model opus; effort high; frozen pair 0487a79f..6303bb6f; repair delta 823bca72..6303bb6f; evidence sha256:8b9978a148debdcba1634dc47cf34ef8cf4ff4d1aeaa617bc6b59080d6f1b90b current=true at c3f97902.\nverdict: clean (0 findings). The repair delta keeps rows BD22-BD30 met.\nFolds: C1 -> BD28 confirmed (registry_ticket_passes_test.go:91 matches spec.md:397 and registry :73; harness :132-133, :161-172). S1 confirmed (CHANGELOG.md:14 matches implement-spec.md:27 and spec.md:230). S3 confirmed (registry_ticket_passes.go:84).\nChecked: the spec edit in the delta changes only the completion plan (the claude:bd_t04_rep1 assignment); every delta path is on the ticket 04 Writes line; no needle of BD22-BD27, BD29, or BD30 changed.\nTests and probes run: none.\n"
+          },
+          "axis": "Spec",
+          "base": "0487a79f9ba7f3753cfd8acd93a1016e3abcaaf8",
+          "tip": "6303bb6f1de32856316fc1cf1963f89aef369f3b",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "bd-c2-r2-coverage",
+          "performer": "claude:bd_c2r2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "271b3b03f4360d421fa599efa847fb534b637383",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c2r2_coverage",
+            "digest": "sha256:2772a65ebacb0875eeeca190a15576788ab1cddcee9a2b502e1b40d6b6f454a6",
+            "excerpt": "axis: Coverage (confirming round 2); session claude:bd_c2r2_coverage; model opus; effort high; frozen pair 0487a79f..6303bb6f; repair delta 823bca72..6303bb6f; evidence sha256:8b9978a148debdcba1634dc47cf34ef8cf4ff4d1aeaa617bc6b59080d6f1b90b current=true at c3f97902.\nverdict: clean (0 findings)\nFolds: C1 -> BD28 confirmed by probe (registry needle widened to the whole old sentence: bit, TestWriteSpecChunkedSlicing failed at registry_ticket_passes_test.go:92, restored). S1 confirmed (CHANGELOG.md:14, sentences 21, 15, 20, 19, 10, 10 words). S3 confirmed (registry_ticket_passes.go:84).\nNew edge check: the cap prefix restored into docs/known-issues.md:12 bit through docs-currency-workflow (\"witness cap: the known-issues row kept a copy of the cap\"), restored. git status clean after probes.\nAdvice: a reworded copy of the cap that drops the exact prefix passes BD28; that comes from the spec's needle choice, not the repair delta.\n"
+          },
+          "axis": "Coverage",
+          "base": "0487a79f9ba7f3753cfd8acd93a1016e3abcaaf8",
+          "tip": "6303bb6f1de32856316fc1cf1963f89aef369f3b",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c2-r1-coverage"
+          ]
+        },
+        {
+          "id": "bd-c2-r3-standards",
+          "performer": "claude:bd_c2r2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "271b3b03f4360d421fa599efa847fb534b637383",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c2r2_standards",
+            "digest": "sha256:37f2db9209d87e800a859c4066ddc6dba3a8a5ff5fb4818797cf8e20eeb984a2",
+            "excerpt": "axis: Standards (reaffirmation of evidence-only comment corrections); session claude:bd_c2r2_standards; model opus; effort high; corrections 403b633f and 123c6f7a after the BD-C2 chunk tip 6303bb6f.\nverdict: S21 closed; S31 closed; no new finding.\nS21: internal/anchors/registry_ticket_passes.go:84 at 123c6f7a makes moved or merged code the agent of \"keeps\" and uses the term of row :67; ste-prose.md:14 and :25 pass.\nS31: the same line names \"moved or merged code\", as row :67 does.\nThe sentence has 21 words. Scope: 403b633f..123c6f7a changes only registry_ticket_passes.go:84.\n"
+          },
+          "axis": "Standards",
+          "base": "0487a79f9ba7f3753cfd8acd93a1016e3abcaaf8",
+          "tip": "6303bb6f1de32856316fc1cf1963f89aef369f3b",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c2-r2-standards"
+          ]
         }
       ]
     }
@@ -966,6 +1056,8 @@ BD-C1 round 2 ran three opus/high axes in parallel at `94d9c296` over the repair
 
 Chunk BD-C2 round 1 ran three opus/high axes in parallel at `d6789152` over the frozen pair `0487a79f..823bca72`. Only the Coverage axis ran tests and probes, and the tree was clean after every return. BD-C2 uses repair cycle 1 of 2 through one fresh repair session for ticket 04, which takes C1, S1, and S3. S2 is `no-op`.
 
+BD-C2 round 2 ran three opus/high axes in parallel at `c3f97902` over the repair delta `823bca72..6303bb6f`. Every axis confirmed the folds of C1, S1, and S3. The Standards axis raised S21 on the new comment. The orchestrator committed two comment-only corrections, `403b633f` and `123c6f7a`, as evidence-only work. The Standards axis then reaffirmed S21 and S31 as closed. BD-C2 closes with repair cycle 1 of 2 used and no open finding.
+
 ## Standards
 
 BD-C1 round 1: 5 findings, worst S1. Raw count 5; repair targets 3 after S1 merges with P1 and C2.
@@ -984,6 +1076,10 @@ BD-C2 round 1: 3 findings, worst S1. Raw count 3; repair targets 2.
 - S2 (no-op, confidence 4): the ticket 04 author showed all seven mirror diagnostics red with the registry rows absent, before its first production edit.
 - S3 (auto-fix, confidence 3): the `implementSpecCommand` doc comment names one use of the constant. Repair: ticket 04 updates the comment.
 
+BD-C2 round 2: 1 finding, worst S21. Raw count 1; repair targets 0 after the evidence-only correction.
+
+- S21 (auto-fix, confidence 3): the new comment makes the charge the agent and uses a synonym for error handling and validation. The reaffirmation added S31 (auto-fix, confidence 2) for the missing merged case. Both closed in `123c6f7a`.
+
 ## Spec
 
 BD-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0 after P1 merges with S1. Every BD-C1 row is met.
@@ -993,6 +1089,8 @@ BD-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0 after P1 merge
 BD-C1 round 2: 0 findings. BD62 and BD63 are met. Advice: the review pickup first gave S2 to two ticket repairs, and this record now names the evidence-only route.
 
 BD-C2 round 1: 0 findings. Rows BD22-BD30 are met. Advice: the CHANGELOG bullet summarizes the batched call.
+
+BD-C2 round 2: 0 findings. The repair delta keeps rows BD22-BD30 met.
 
 ## Coverage
 
@@ -1006,3 +1104,5 @@ BD-C1 round 2: 0 findings. BD62 and BD63 bite on the live tree. Advice: the BD63
 BD-C2 round 1: 1 finding, worst C1. Raw count 1; repair targets 1.
 
 - C1 (auto-fix, confidence 8): the BD28 forbidden mirror holds the whole old sentence, so a widened registry needle stays green. Repair: ticket 04 sets the mirror needle to the BD28 text.
+
+BD-C2 round 2: 0 findings. A widened registry needle now bites. Advice: a reworded copy of the cap that drops the exact prefix passes BD28; the spec's needle choice owns that edge.
