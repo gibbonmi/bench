@@ -108,6 +108,35 @@ func (p publication) publish(s Store, expected *image) error {
 	return s.syncDirectory(filepath.Dir(p.path))
 }
 
+// publishEntries stages every replacement, saves their identities in one record save, then publishes each in order.
+func (s Store) publishEntries(id string, r *record) error {
+	staged := make([]publication, 0, len(r.Entries))
+	defer func() {
+		for _, p := range staged {
+			p.close()
+		}
+	}()
+	for i := range r.Entries {
+		e := &r.Entries[i]
+		p, err := stagePublication(e.Destination, e.After, s.syncDirectory)
+		if err != nil {
+			return err
+		}
+		staged = append(staged, p)
+		e.After = p.value
+	}
+	// Persist every staged identity before the first rename so interrupted publication remains recoverable.
+	if err := s.save(id, *r); err != nil {
+		return err
+	}
+	for i, p := range staged {
+		if err := p.publish(s, &r.Entries[i].Before); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s Store) publish(path string, value image) error {
 	staged, err := stagePublication(path, value, s.syncDirectory)
 	if err != nil {
