@@ -148,7 +148,7 @@ func validateRepairManifest(path string, manifest Manifest) error {
 	rows := manifest.Rows()
 	sort.Slice(rows, func(i, j int) bool { return rows[i].rel < rows[j].rel })
 	if file.State != bounds.StateParsed || info.Mode() != manifestMode || !bytes.Equal(file.Data, manifestBytes(manifest.KitVersion, rows)) {
-		return fmt.Errorf("modified-managed: ownership manifest must retain its canonical bytes and mode: %s", path)
+		return fmt.Errorf("%s: ownership manifest must retain its canonical bytes and mode: %s", reasonModifiedManaged, path)
 	}
 	return nil
 }

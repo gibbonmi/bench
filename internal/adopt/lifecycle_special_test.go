@@ -305,7 +305,7 @@ func TestLifecycleHookCompatibility(t *testing.T) {
 			}
 			var run linkRun
 			requireUnchanged(t, root, func() { run = runLink(nil) })
-			if want := "conflict: " + path + " exists and is not Bench-managed\n"; run.code != 1 || run.stderr != want {
+			if want := foreignHookConflict(path); run.code != 1 || run.stderr != want {
 				t.Fatalf("Link = %d with stderr %q, want 1 with %q", run.code, run.stderr, want)
 			}
 		})
