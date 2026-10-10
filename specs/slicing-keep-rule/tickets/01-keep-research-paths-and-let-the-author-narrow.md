@@ -13,7 +13,7 @@ The change moves the design choice from the slicer to the ticket author. `Writes
 1. **Research once.** After the spec review accepts, one round charges two read-only readers for each chunk, with every chunk at the same time. The invoking session merges each pair into one research table: the agreed set and the frontier. If the spec review changes the chunk table, the research reruns for each changed chunk.
 2. **Keep every research path.** Each path that a research return names goes into the ticket's `Writes:` line. The slicer drops such a path only with `path:line` evidence that the path cannot change under any design. `Writes:` is the approved upper bound of the ticket, not a task list. This rule lives in the slicing checks, and the command points to it.
 3. **One ticket review.** The invoking session still slices one chunk at a time. After the last chunk, one review round grades the whole ticket set under the `craft-tickets` quiz, with a cap of 2 iterations. It replaces the per-chunk review.
-4. **Review line.** `craft-line`'s stage table replaces the chunk ticket review row with "Ticket review (`/bench-write-spec`) | mid + medium". The spec review row stays at cheap + high.
+4. **Review line.** `craft-line`'s stage table replaces the chunk ticket review row with "Ticket review (`/bench-write-spec`) | mid + medium". It changes the spec review row to "Spec review (`/bench-write-spec`) | mid + medium".
 5. **Slicing line.** `craft-line`'s stage table adds "Ticket slicing (`/bench-write-spec`) | mid + high". When the invoking session runs on another model, a fresh writer on the mid binding slices the tickets.
 6. **The author narrows the fence.** The author charge says that the author changes only what the acceptance needs. Before the first edit, the author lists every place the change must reach: callers, tests, fixtures, and exports. The author's return names each untouched `Writes:` entry with a one-clause reason.
 7. **The review reads the fence the same way.** An untouched `Writes:` entry is not a defect. An edit outside the acceptance's reach is a finding, even when its path is in `Writes:`.
@@ -29,7 +29,8 @@ The anchors and canaries that pin a changed sentence change with it. New require
 - [ ] The slicing checks state that `Writes:` is the approved upper bound of a ticket.
 - [ ] `/bench-write-spec` runs the ticket research for all chunks in one round after the spec review.
 - [ ] `/bench-write-spec` runs one ticket review after the last chunk, in place of a review for each chunk.
-- [ ] `craft-line`'s stage table holds "Ticket review (`/bench-write-spec`) | mid + medium" and "Ticket slicing (`/bench-write-spec`) | mid + high", with no chunk ticket review row.
+- [ ] `craft-line`'s stage table holds "Spec review (`/bench-write-spec`) | mid + medium" and "Ticket review (`/bench-write-spec`) | mid + medium".
+- [ ] `craft-line`'s stage table holds "Ticket slicing (`/bench-write-spec`) | mid + high", with no chunk ticket review row.
 - [ ] The `/bench-implement-spec` author charge carries the reach list before the first edit and the untouched-entry return.
 - [ ] The `/bench-implement-spec` review charge states that an untouched entry is not a defect.
 - [ ] `/bench-write-spec` states the context checkpoint and its ledger.
