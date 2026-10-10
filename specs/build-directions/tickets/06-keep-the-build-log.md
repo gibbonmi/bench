@@ -2,7 +2,7 @@
 
 Blocked by: 05-scope-review-rounds.md
 Writes: .agents/commands/bench-implement-spec.md, .gitignore, .bench/BENCH-reference.md, docs/field-guide.html, CHANGELOG.md, projects/benchkit.md, internal/landing/landing.go, internal/landing/landing_test.go, internal/landing/local_capture.go (new), internal/landing/local_capture_test.go (new), internal/landing/state_test.go, internal/adopt/init.go, internal/adopt/adopt_test.go, internal/conformance/local_capture_tracking_test.go, internal/conformance/tier_live_tree_test.go, internal/worktree/build_outputs.go, internal/worktree/land_local_capture_test.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_check_floor_test.go, internal/anchors/registry_commitment.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_debug_loop.go, internal/anchors/registry_ft311_preparation.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_retained_workflow.go, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/guidance-prose-budgets, tests/canary/line-routing, tests/canary/skill-description-budgets, tests/canary/workflow-guidance-anchors, tests/canary/docs-currency-token-diet, tests/canary/skills-index-command-adapters
-Covers: BD39, BD40, BD41, BD42, BD43, BD44, BD45, BD46, BD47, BD48
+Covers: BD39, BD40, BD41, BD42, BD43, BD44, BD45, BD46, BD47, BD48, BD49, BD53
 
 ## What to build
 
@@ -30,3 +30,5 @@ One `CHANGELOG.md` entry records the change.
 - [ ] The predicate accepts the build-log directory and its clean paths and refuses each unsafe or sibling name (BD45, BD46, BD47).
 - [ ] `CheckoutFingerprint` returns the same value before and after an ignored build-log file appears (BD48).
 - [ ] `internal/adopt/adopt_test.go` keeps its line count, and implement-spec has 93 lines under its budget row.
+- [ ] As the last ticket, it leaves roadmap/FT379.md and roadmap/FT369.md byte-identical to the build base, which the Spec axis confirms at the final tip (BD49).
+- [ ] The landing retires roadmap/FT410.md and its `ROADMAP.md` row and no other row, which the Spec axis confirms in the retirement diff (BD53).
