@@ -1334,7 +1334,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bd-c4-r1-standards",
+          "performer": "claude:bd_bdc4_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b05c9b209baf95ceae39569a55a8893847d0565",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc4_standards",
+            "digest": "sha256:1cd62a4e7fcc463b4caada3e47e2f7fa8cb69e2edb94c78811b2fdd776bb71b0",
+            "excerpt": "axis: Standards; session claude:bd_bdc4_standards; model opus; effort high; frozen pair 07eef7ec..4ed02fb8; evidence sha256:87f7fe014a02423e96df5a96bfd81c47c4b8f1a753926fd5e220e01ec9ab6b4d current=true at dddab05a.\nverdict: findings (2 advisory, 0 blocking)\nS1 | advisory | internal/adopt/adopt_test.go:529-530 | The doc comment still names \"the capture inboxes or the handoff\" though the want strings at :542, :547, :552 now end in capture/build-log/. | ste-prose.md:25; craft-review comment rule. | auto-fix (reword in place; line count unchanged) | confidence 7\nS2 | advisory | internal/anchors/registry_chunk_chain.go:45 | The build-log path has two sources: landing.BuildLogDir and a literal inside the anchor needle; a constant rename leaves the guidance needle unchecked. | AGENTS.md one source; precedent stalenessPass at registry_chunk_chain.go:20. | ask-user | confidence 4\nExamined with no finding: withinIgnoredDir keeps every guard of the old RuntimeIgnoredPath byte for byte; anchor mirrors are independent expectations; the three capture literals predate the chunk; the plan commit is orchestrator bookkeeping; CHANGELOG.md:16 within the STE bounds.\nImplementation command contribution: S1 partly (the charge steers to the table and away from its doc comment); S2 no.\nOrchestrator disposition: S1 auto-fix as an evidence-only comment correction; S2 no-op, because spec.md:272-277 approved the literal sentence and the independent mirror at registry_chunk_chain_test.go:39 covers it.\n"
+          },
+          "axis": "Standards",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "4ed02fb86b4eea16e05a0fd5c64adb3b7f198139",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bd-c4-r1-spec",
+          "performer": "claude:bd_bdc4_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b05c9b209baf95ceae39569a55a8893847d0565",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc4_spec",
+            "digest": "sha256:624f1cf56c07c52802856a4c492f1561c3ea3e311b92a87a4b60323bbcb75e11",
+            "excerpt": "axis: Spec; session claude:bd_bdc4_spec; model opus; effort high; frozen pair 07eef7ec..4ed02fb8; evidence sha256:87f7fe014a02423e96df5a96bfd81c47c4b8f1a753926fd5e220e01ec9ab6b4d current=true at dddab05a.\nverdict: clean (0 findings)\nBD39-BD41 at implement-spec Land :72 match spec.md:272 with matching rows and mirrors; BD42 local_capture_tracking_test.go:26-31 against landing.BuildLogDir, .gitignore:48; BD43-BD44 init.go:84 order and adopt_test want strings, line count kept; BD45-BD47 walked case by case through local_capture.go:21-35; BD48 fingerprintStatus drops a !! entry only through the two predicates; BD49 git diff --stat dcf7fad0 4ed02fb8 on roadmap/FT379.md, roadmap/FT369.md, ROADMAP.md, roadmap/FT410.md is empty; BD53 no roadmap path in the delta; budget 93/93.\nRejected candidates: the RuntimeIgnoredPath rewrite keeps the behavior (spec.md:284 names its guards as precedent); the .gitignore line sits in its own capture comment block; only landing.go:355 and build_outputs.go:81 read the predicate; plan and coverage-map edits are in the fence.\nTests and probes run: none.\n"
+          },
+          "axis": "Spec",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "4ed02fb86b4eea16e05a0fd5c64adb3b7f198139",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bd-c4-r1-coverage",
+          "performer": "claude:bd_bdc4_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b05c9b209baf95ceae39569a55a8893847d0565",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc4_coverage",
+            "digest": "sha256:b75728d8d6454df1d30c3880a8e62d76c93ebfd45e1301ce36e3bee59ac0a604",
+            "excerpt": "axis: Coverage; session claude:bd_bdc4_coverage; model opus; effort high; frozen pair 07eef7ec..4ed02fb8; evidence sha256:87f7fe014a02423e96df5a96bfd81c47c4b8f1a753926fd5e220e01ec9ab6b4d current=true at dddab05a.\nverdict: findings (1 advisory, 0 blocking)\nC1 | advisory | internal/worktree/build_outputs.go:81 | The second caller now discards a source worktree that holds an ignored capture/build-log/<slug>.log at release, where it was retained before (\"ignored residuals require --discard-ignored\"); no row, edge-inventory line, or test decides this case. | Before: undeclared, lifecyclepolicy.go:382-383 returns Retain. After: local_capture.go:15 accepts it, lifecyclepolicy.go:414-415 returns ActionDiscardRemove. spec.md:293 names the consumer with no row; land_local_capture_test.go:10-14 lists only the three exact files. | ask-user | confidence 6\nChecked and clean: the write set; BD39-BD48 map to the named tests; withinIgnoredDir behaves exactly like the old RuntimeIgnoredPath; fingerprintStatus pinned by BD48; land_identity.go:108 and landingpolicy.go:105-119 read collisions only.\nOwn bypass probes, each red and restored: sibling-prefix swap in withinIgnoredDir; capture/learnings.md removed from the exact list; LocalCapturePath filter removed from fingerprintStatus; the .gitignore line removed; the BD40 sentence removed. Landing, adopt, and worktree packages pass; tree clean.\nImplementation command contribution: none (spec-stage gap).\nOrchestrator disposition: C1 auto-fix under --auto-approve. The source release discards an ignored build-log file, as it already discards the three exact local capture files; a new row BD64 and a ticket 06 repair test pin that behavior. Flagged for reviewer veto.\n"
+          },
+          "axis": "Coverage",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "4ed02fb86b4eea16e05a0fd5c64adb3b7f198139",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1444,6 +1510,8 @@ BD-C2 round 2 ran three opus/high axes in parallel at `c3f97902` over the repair
 
 Chunk BD-C3 round 1 ran three opus/high axes in parallel at `39e1de5a` over the frozen pair `773901ad..ed901b25`. Only the Coverage axis ran tests and probes, and the tree was clean after every return. S1 and S2 are `no-op`, so BD-C3 uses no repair cycle and closes with no open finding. The checkpoint required the BD-C2 tip `6303bb6f` as the BD-C3 base, so the two comment-only corrections joined the BD-C3 delta. In round 2, the Standards axis accepted both `no-op` dispositions and graded that added comment with no finding.
 
+Chunk BD-C4 round 1 ran three opus/high axes in parallel at `dddab05a` over the frozen pair `07eef7ec..4ed02fb8`. Only the Coverage axis ran tests and probes, and the tree was clean after every return. BD-C4 uses repair cycle 1 of 2 through one fresh repair session for ticket 06, which takes S1 and C1. C1 adds row BD64 under `--auto-approve`. S2 is `no-op`.
+
 ## Standards
 
 BD-C1 round 1: 5 findings, worst S1. Raw count 5; repair targets 3 after S1 merges with P1 and C2.
@@ -1471,6 +1539,11 @@ BD-C3 round 1: 2 findings, worst S1. Raw count 2; repair targets 0.
 - S1 (no-op, confidence 6): the delegation-discipline re-review bullet restates the confirming-round scope of the review phase. The approved spec chose that agreement in story 36, so a pointer would reopen a closed decision. A learning carries the pointer to a later spec.
 - S2 (no-op, confidence 4): the third combined-charge sentence repeats the repair rule, and it names `.bench/BENCH.md` as the owner.
 
+BD-C4 round 1: 2 findings, worst S1. Raw count 2; repair targets 1.
+
+- S1 (auto-fix, confidence 7): the `TestInitIgnoresLocalCaptureFiles` doc comment still names only the capture inboxes and the handoff. Repair: ticket 06 rewords it in place.
+- S2 (no-op, confidence 4): the build-log anchor needle spells the path that `landing.BuildLogDir` holds. The approved spec chose the literal sentence, and an independent mirror covers it.
+
 ## Spec
 
 BD-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0 after P1 merges with S1. Every BD-C1 row is met.
@@ -1484,6 +1557,8 @@ BD-C2 round 1: 0 findings. Rows BD22-BD30 are met. Advice: the CHANGELOG bullet 
 BD-C2 round 2: 0 findings. The repair delta keeps rows BD22-BD30 met.
 
 BD-C3 round 1: 0 findings. Rows BD31-BD38, BD54, and BD59 are met.
+
+BD-C4 round 1: 0 findings. Rows BD39-BD49 are met, and roadmap/FT379.md and roadmap/FT369.md match the build base.
 
 ## Coverage
 
@@ -1501,3 +1576,7 @@ BD-C2 round 1: 1 finding, worst C1. Raw count 1; repair targets 1.
 BD-C2 round 2: 0 findings. A widened registry needle now bites. Advice: a reworded copy of the cap that drops the exact prefix passes BD28; the spec's needle choice owns that edge.
 
 BD-C3 round 1: 0 findings. Live probes bit for BD31, BD37, and BD54. Advice: a capitalized restore of a retired sentence stays green, because the spec chose case-sensitive file-wide matching.
+
+BD-C4 round 1: 1 finding, worst C1. Raw count 1; repair targets 1.
+
+- C1 (auto-fix, confidence 6): the source cleanup now discards a worktree that holds an ignored build-log file, and no row or test decides that case. Repair: row BD64 pins the discard, the same treatment as the three exact local capture files, with a ticket 06 test in `internal/worktree/land_local_capture_test.go`.
