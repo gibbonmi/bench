@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-directions/spec.md",
-  "plan_digest": "sha256:01866b4acb73615d5cdd7f0f9902098e52656d7a5be19791790ec260c8032ab7",
+  "plan_digest": "sha256:9ed0a106b0890921c785675eeaebe3e014f38a2ebb24eab433dbd64c7ee140af",
   "implementation_session": "",
   "chunks": [
     {
@@ -363,6 +363,15 @@
     {
       "from": "sha256:8c0367a9d0b21d1603f3e78be5d804444dbff9d59ad19095af13ddfb3a1b744d",
       "to": "sha256:01866b4acb73615d5cdd7f0f9902098e52656d7a5be19791790ec260c8032ab7",
+      "chunk_ids": {
+        "BD-C1": [
+          "BD-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:01866b4acb73615d5cdd7f0f9902098e52656d7a5be19791790ec260c8032ab7",
+      "to": "sha256:9ed0a106b0890921c785675eeaebe3e014f38a2ebb24eab433dbd64c7ee140af",
       "chunk_ids": {
         "BD-C1": [
           "BD-C1"
