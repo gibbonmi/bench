@@ -208,7 +208,7 @@ After an authorized recovery, repeat the active-operation procedure above in the
 ## Command Notes
 
 Bench renders `bench help` from the Go `commandRegistry`; it is the executable
-inventory. `.bench/BENCH-reference.md` gives category-level operational guidance,
+inventory of the public verbs. `.bench/BENCH-reference.md` gives category-level operational guidance,
 not a second command list. The project profile (`projects/<name>.md`) carries the
 detailed output contracts for the AXI query surfaces. The sections below
 describe the hook and adapter plumbing.
