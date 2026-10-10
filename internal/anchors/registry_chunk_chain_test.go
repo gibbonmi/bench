@@ -6,7 +6,7 @@ import "testing"
 func TestChunkChainAnchors(t *testing.T) {
 	const implement = ".agents/commands/bench-implement-spec.md"
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
-		{file: implement, section: "Build", needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug>`.", want: "chunk chain: build preflight runs through the worktree after each ticket commit"},
+		{file: implement, section: "Build", needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`.", want: "chunk chain: build preflight runs through the worktree with the chunk's --base and --source-tip after each ticket commit"},
 		{file: implement, section: "Build", needle: "The author commits the verification and probe record before the axis dispatch.", want: "chunk chain: the probe record commits before the axis dispatch"},
 		{file: implement, section: "Build", needle: "Prepare the review charge from that record commit. The sequence is the author record commit, then the review charge, then the axis dispatch.", want: "chunk chain: the review charge follows the author record commit and precedes the axis dispatch"},
 		{file: implement, section: "Build", needle: "Prepare the review charge before the author record commit.", want: "chunk chain: the Build section puts the review charge before the author record commit", forbidden: true},
