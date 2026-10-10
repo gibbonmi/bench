@@ -6,7 +6,9 @@ package anchors
 // to the staleness pass before the chain starts. The next two rows pin the implement
 // phase's pointer to the staleness-pass reference and the cheap-tier fan-out charge that
 // the reference states. The fold rows pin the build's fold points in the implement phase and
-// the craft-delegate sentence that leaves the build's fold timing to it. The `bench record` rows route each completed review-record entry to
+// the craft-delegate sentence that leaves the build's fold timing to it. The light-path rows pin
+// the build's hold on a light-path dispatch in the implement phase and in ADR 0023, and forbid
+// the ADR's retired unscoped clause. The `bench record` rows route each completed review-record entry to
 // the verb and forbid the retired hand-recording sentences.
 var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Require, Needle: "If every red row is a `*-closure` row, `fence-writes`, `completion-plan`, or `check-floor`, the staleness pass below takes the red. Any other red stops the phase.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped or widened the staleness route for a red build preflight"},
@@ -16,6 +18,10 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "The author commits the verification and probe record before the axis dispatch.", Diagnostic: "chunk chain: the probe record commits before the axis dispatch"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "Prepare the review charge from that record commit. The sequence is the author record commit, then the review charge, then the axis dispatch.", Diagnostic: "chunk chain: the review charge follows the author record commit and precedes the axis dispatch"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Build", Needle: "review charge before the author record commit", Diagnostic: "chunk chain: the Build section puts the review charge before the author record commit"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "A build dispatches no light-path fix while it runs.", Diagnostic: "chunk chain: the build dispatches no light-path fix"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "A fix that the build's own outcome needs lands as the build's own commit under `.bench/BENCH.md`'s fix-don't-park rule.", Diagnostic: "chunk chain: a fix the build needs lands as the build's own commit"},
+	{Group: AfterImplementSpec, File: freshAuthorADR, Kind: Require, Needle: "A build dispatches no light-path fix while it runs.", Diagnostic: "chunk chain: ADR 0023 dropped the build's light-path hold"},
+	{Group: AfterImplementSpec, File: freshAuthorADR, Kind: Forbid, Needle: "and so does a phase that needs a learning's fix.", Diagnostic: "chunk chain: ADR 0023 restored the unscoped light-path dispatch of a phase"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Plan commits land before the ticket merge, and a `main` merge lands before the first chunk. Only record commits and comment-only corrections follow the chunk tip.", Diagnostic: "chunk chain: only record and comment-only commits follow the chunk tip"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "When `main` moves during the build, the `main` fold and the reconciliation commit join the review delta of the last chunk.", Diagnostic: "chunk chain: the main fold and the reconciliation commit join the last chunk delta"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "A build folds `main` only before the first chunk, at the start of the last chunk, or before the completion landing.", Diagnostic: "chunk chain: a build folds main only at its three fold points"},
@@ -42,8 +48,10 @@ var chunkChainAnchors = []Anchor{
 
 // implementPhase and reviewPhase are the phase files that state the chunk chain.
 // stalenessPass is the reference that owns the build-entry staleness charge.
+// freshAuthorADR is the decision record that states the build's light-path hold.
 const (
 	implementPhase = ".agents/commands/bench-implement-spec.md"
 	reviewPhase    = ".agents/commands/bench-review-implementation.md"
 	stalenessPass  = ".agents/skills/bench-implement-spec/references/staleness-pass.md"
+	freshAuthorADR = "docs/adr/0023-each-ticket-gets-a-fresh-author.md"
 )

@@ -9,6 +9,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 ### Build directions
 
 - Changed `/bench-implement-spec` so that a build folds `main` only before the first chunk, at the start of the last chunk, or before the completion landing. A build never folds `main` between two tickets of a chunk. Inside a chunk, the post-ticket preflight passes the chunk's `--base` and the current `--source-tip`, so a moved `main` does not route a fold. The stale-base rule of `craft-delegate` now leaves the fold timing of a build to `/bench-implement-spec`. Before, that rule folded a moved `main` before each ticket charge.
+- Changed `/bench-implement-spec` so that a build dispatches no light-path fix while it runs. A fix that the build's own outcome needs lands as the build's own commit. The light-path fix rule in `.bench/BENCH.md` now applies outside a build and points to `/bench-implement-spec` for the build rule. Before, that rule let a build ship a light-path fix through a side landing.
 
 ### Ticket slicing keep rule
 

@@ -51,6 +51,8 @@ The ticket commit rewrites each covered `planned` seam cell into the citation fo
 
 The author commits the verification and probe record before the axis dispatch. Prepare the review charge from that record commit. The sequence is the author record commit, then the review charge, then the axis dispatch. The review charge says that an untouched `Writes:` entry is not a defect. An edit outside the acceptance's reach is a finding, even when its path is in `Writes:`. When evidence requires an in-scope plan, `Writes:`, or gate expansion, apply `.bench/BENCH.md`'s approved plan-expansion policy before using it.
 
+A build dispatches no light-path fix while it runs. A fix that the build's own outcome needs lands as the build's own commit under `.bench/BENCH.md`'s fix-don't-park rule.
+
 ## Land
 
 Tickets commit green serially in `Blocked by:` order on the retained integration source. After each chunk review, accepted findings go to fresh repair sessions under `.bench/BENCH.md`'s repair rule, and each repair commits with current repair coverage. Start the successor only after that repair closes. Plan commits land before the ticket merge, and a `main` merge lands before the first chunk. Only record commits and comment-only corrections follow the chunk tip. When `main` moves during the build, the `main` fold and the reconciliation commit join the review delta of the last chunk.

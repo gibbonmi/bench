@@ -8,9 +8,10 @@ const CommitmentRuleMarker = "**Deliver only the committed outcome.**"
 const CommitmentDiagnosticPrefix = "commitment guidance: "
 
 // commitmentAnchors pin the canonical delivery commitment rule, each phase route to its
-// commands, and the light-path exemption. Each prohibition refuses one retired rule: a grant
-// that let work start or displace the commitment outside the committed outcome, or a
-// restriction that held light-path work behind the active commitment.
+// commands, and the light-path exemption with its pointer to the build rule. Each prohibition
+// refuses one retired rule: a grant that let work start or displace the commitment outside the
+// committed outcome, a grant that let a build ship a light-path fix, or a restriction that held
+// light-path work behind the active commitment.
 var commitmentAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: CommitmentRuleMarker, Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the canonical delivery commitment rule"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "A spec implementation starts only through `bench commitment start` for the eligible outcome that `bench status` names.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the spec start route"},
@@ -22,6 +23,8 @@ var commitmentAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "Its production paths stay inside that ticket's `Writes:` line.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the light-path Writes boundary"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "It may remove a roadmap row that no committed outcome pins as a source; a pinned row changes only through its outcome.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the light-path row rule"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "`/bench-drain` implements no light-path fix inline: it dispatches every light-path fix in its run, whatever its source and whatever the active commitment is.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the drain light-path dispatch"},
+	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "Outside a build, a `bench learning` entry's light-path fix ships at once only when the active outcome needs it", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the outside-a-build learning fix"},
+	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "`/bench-implement-spec` states the build rule.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the pointer to the build rule"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "At a phase close, do the preparation and run `bench commitment start` from the outcome's own worktree; never hand me a `bench` command.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the next-outcome start"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "That plan changes only the deliverable binding; a reorder or a new admission still needs my direction.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the binding-only limit"},
 	{Group: AfterImplementSpec, File: drainCommand, Kind: Require, Needle: "After the landing, the coordinator starts the `commitment_outlook` outcome under the next-outcome rule in `.bench/BENCH.md`.", Diagnostic: CommitmentDiagnosticPrefix + "drain dropped its next-outcome start"},
@@ -57,6 +60,7 @@ var commitmentAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "a light-path fix that needs no reviewer decision", Diagnostic: CommitmentDiagnosticPrefix + "operating guide restored the learning fix without admission"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "light path and fixes included", Diagnostic: CommitmentDiagnosticPrefix + "operating guide restored the commitment start for light-path work"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "a light-path fix that the active committed outcome needs", Diagnostic: CommitmentDiagnosticPrefix + "operating guide restored the learning fix for the active outcome only"},
+	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "`/bench-implement-spec` included, a `bench learning` entry's light-path fix ships at once", Diagnostic: CommitmentDiagnosticPrefix + "operating guide restored the in-build learning fix"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "A small defect you find mid-work is not roadmap work", Diagnostic: CommitmentDiagnosticPrefix + "operating guide restored the fix of every mid-work defect without admission"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench.md", Kind: Forbid, Needle: "take the first `sequence` row", Diagnostic: CommitmentDiagnosticPrefix + "router restored the first sequence row as its work"},
 }
