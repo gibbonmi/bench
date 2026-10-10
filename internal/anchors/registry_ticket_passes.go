@@ -81,6 +81,7 @@ const slicingChecks = ".agents/skills/bench-craft-tickets/references/slicing-che
 const writeSpecCommand = ".agents/commands/bench-write-spec.md"
 
 // implementSpecCommand is the phase command whose author and review charges read Writes: as an upper bound.
+// Its author charge also keeps the guards of moved code and caps the witnesses.
 const implementSpecCommand = ".agents/commands/bench-implement-spec.md"
 
 // craftLineSkill is the skill whose stage defaults route the write-spec slicing and review rounds.
