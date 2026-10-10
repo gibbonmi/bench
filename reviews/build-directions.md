@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-directions/spec.md",
-  "plan_digest": "sha256:0b5e0eb343d1dd759d53b44c88aabd02e45d2658315e555b81a7c74650aabfa2",
+  "plan_digest": "sha256:ff7dc4ce92a26b57668d44c2f6afccafd432b8efd7ddae6e1d54fcfd2f738206",
   "implementation_session": "",
   "chunks": [
     {
@@ -1232,9 +1232,9 @@
     {
       "id": "BD-C4",
       "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
-      "tip": "4ed02fb86b4eea16e05a0fd5c64adb3b7f198139",
-      "plan_digest": "sha256:f7117b227002759aac22c8cc4202839b256fdf43034a74d28e1bcceffbbf2895",
-      "source_digest": "3b05c9b209baf95ceae39569a55a8893847d0565",
+      "tip": "6f33a6c68ef910765a5e90e4e81284d55bc796d0",
+      "plan_digest": "sha256:ff7dc4ce92a26b57668d44c2f6afccafd432b8efd7ddae6e1d54fcfd2f738206",
+      "source_digest": "4e8ef27e2dc873c66ec5fd916027a235cabfc88a",
       "acceptance_rows": [
         "BD39",
         "BD40",
@@ -1247,7 +1247,8 @@
         "BD47",
         "BD48",
         "BD49",
-        "BD53"
+        "BD53",
+        "BD64"
       ],
       "verification": [
         {
@@ -1332,6 +1333,89 @@
               "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,4ed02fb86b4eea16e05a0fd5c64adb3b7f198139,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/local_capture.go,omit,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,TestLocalCapturePathRecognizesTheBuildLog,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,799\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,fail,3,8\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLocalCapturePathRecognizesTheBuildLog/capture/build-log,\"local_capture_test.go:23: LocalCapturePath(\\\"capture/build-log\\\") = false, want true\",1\n  github.com/gibbonmi/bench/internal/landing,TestLocalCapturePathRecognizesTheBuildLog/capture/build-log/,\"local_capture_test.go:23: LocalCapturePath(\\\"capture/build-log/\\\") = false, want true\",1\n  github.com/gibbonmi/bench/internal/landing,TestLocalCapturePathRecognizesTheBuildLog/capture/build-log/build-directions.log,\"local_capture_test.go:23: LocalCapturePath(\\\"capture/build-log/build-directions.log\\\") = false, want true\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "bd-06-focused-t06-rep1",
+          "performer": "claude:bd_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4e8ef27e2dc873c66ec5fd916027a235cabfc88a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t06_rep1",
+            "digest": "sha256:96987f770ba5ea4174bb7d4f37c77383d9213a78893439002c753421dade0f01",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,6f33a6c68ef910765a5e90e4e81284d55bc796d0,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/local_capture.go,omit,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,TestLocalCapturePathRecognizesTheBuildLog,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,799\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,fail,4,8\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLocalCapturePathRecognizesTheBuildLog/capture/build-log,\"local_capture_test.go:23: LocalCapturePath(\\\"capture/build-log\\\") = false, want true\",1\n  github.com/gibbonmi/bench/internal/landing,TestLocalCapturePathRecognizesTheBuildLog/capture/build-log/,\"local_capture_test.go:23: LocalCapturePath(\\\"capture/build-log/\\\") = false, want true\",1\n  github.com/gibbonmi/bench/internal/landing,TestLocalCapturePathRecognizesTheBuildLog/capture/build-log/build-directions.log,\"local_capture_test.go:23: LocalCapturePath(\\\"capture/build-log/build-directions.log\\\") = false, want true\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-06-focused",
+          "command": "bench test --package ./internal/landing --run 'TestLocalCapturePathRecognizesTheBuildLog|TestCheckoutFingerprintIgnoresTheBuildLog'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the build-log directory acceptance from landing.LocalCapturePath. TestLocalCapturePathRecognizesTheBuildLog turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bd_t06_rep1",
+              "digest": "sha256:96987f770ba5ea4174bb7d4f37c77383d9213a78893439002c753421dade0f01",
+              "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,6f33a6c68ef910765a5e90e4e81284d55bc796d0,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/local_capture.go,omit,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,TestLocalCapturePathRecognizesTheBuildLog,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,799\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,fail,4,8\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLocalCapturePathRecognizesTheBuildLog/capture/build-log,\"local_capture_test.go:23: LocalCapturePath(\\\"capture/build-log\\\") = false, want true\",1\n  github.com/gibbonmi/bench/internal/landing,TestLocalCapturePathRecognizesTheBuildLog/capture/build-log/,\"local_capture_test.go:23: LocalCapturePath(\\\"capture/build-log/\\\") = false, want true\",1\n  github.com/gibbonmi/bench/internal/landing,TestLocalCapturePathRecognizesTheBuildLog/capture/build-log/build-directions.log,\"local_capture_test.go:23: LocalCapturePath(\\\"capture/build-log/build-directions.log\\\") = false, want true\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "bd-06-init-t06-rep1",
+          "performer": "claude:bd_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4e8ef27e2dc873c66ec5fd916027a235cabfc88a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t06_rep1",
+            "digest": "sha256:1ff10885afeb21e1f30365bfd60aae0b33b95f46f17890422ad36501351d5c03",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,6f33a6c68ef910765a5e90e4e81284d55bc796d0,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,pass,15,5\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-06-init",
+          "command": "bench test --package ./internal/adopt --run 'TestInitIgnoresLocalCaptureFiles|TestLocalCaptureIgnoreLinesMatchTheLandingPredicate'",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-06-floor-t06-rep1",
+          "performer": "claude:bd_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4e8ef27e2dc873c66ec5fd916027a235cabfc88a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t06_rep1",
+            "digest": "sha256:d7e2fa59d73cb98ae8cfeb87714fdfed81318155d1f08d096ea79a88c306dd8c",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,6f33a6c68ef910765a5e90e4e81284d55bc796d0,true\npackages[6]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,27814,333\n  github.com/gibbonmi/bench/internal/adopt,pass,27824,243\n  github.com/gibbonmi/bench/internal/anchors,pass,2187,179\n  github.com/gibbonmi/bench/internal/conformance,pass,85860,1685\n  github.com/gibbonmi/bench/internal/landing,pass,9951,197\n  github.com/gibbonmi/bench/internal/worktree,pass,78458,1394\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "bd-06-floor",
+          "command": "bench test --package ./internal/landing --package ./internal/adopt --package ./internal/worktree --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-06-conformance-t06-rep1",
+          "performer": "claude:bd_t06_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4e8ef27e2dc873c66ec5fd916027a235cabfc88a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t06_rep1",
+            "digest": "sha256:5338116cf0286b55cf492acb03b1145af7c604c6883943f16ad9d77a35341a9a",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,6f33a6c68ef910765a5e90e4e81284d55bc796d0,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16621,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-06-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -1513,6 +1597,24 @@
     {
       "from": "sha256:3497dfab40036c51f52c3ac5d5ae81e803eba7d9b1cefea03ed4b0ceadeaf221",
       "to": "sha256:0b5e0eb343d1dd759d53b44c88aabd02e45d2658315e555b81a7c74650aabfa2",
+      "chunk_ids": {
+        "BD-C1": [
+          "BD-C1"
+        ],
+        "BD-C2": [
+          "BD-C2"
+        ],
+        "BD-C3": [
+          "BD-C3"
+        ],
+        "BD-C4": [
+          "BD-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0b5e0eb343d1dd759d53b44c88aabd02e45d2658315e555b81a7c74650aabfa2",
+      "to": "sha256:ff7dc4ce92a26b57668d44c2f6afccafd432b8efd7ddae6e1d54fcfd2f738206",
       "chunk_ids": {
         "BD-C1": [
           "BD-C1"
