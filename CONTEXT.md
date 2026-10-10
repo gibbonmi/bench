@@ -232,6 +232,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **displacement decision** — the reviewer's explicit approval of a change to
   a delivery commitment, naming the work delayed or removed. Not "drain approval",
   not "finding approval" — displacement decision.
+- **ticket triage** — the closing `/bench-drain` step that settles the reviewer
+  decisions of a proposed next commitment set, one selection prompt for each
+  decision. `/bench-drain` owns its procedure. Not "shaping", not "decision
+  session" — ticket triage.
 - **roadmap index / roadmap detail** — schema-4 projections of the **roadmap** and
   its capture evidence. The index inventories every row and capture unit with
   true body sizes but no bodies. Detail is a complete body, read for a named row

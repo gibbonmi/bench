@@ -321,6 +321,20 @@ Order the set by purpose under the proposal rule in `.bench/BENCH.md`.
 The proposal is unapproved input, and the closing exit is its only output.
 Only the reviewer's direction adopts it, through `bench commitment plan` and `bench commitment approve` under the commitment rule in `.bench/BENCH.md`.
 
+In ticket triage, the coordinator puts each reviewer decision that the proposal depends on to the reviewer as one selection prompt.
+These decisions are the proposed order and each open decision that a proposed row names.
+Give each prompt one option set, and put the recommended option first.
+Use the native question surface of the harness, such as the AskUserQuestion tool in Claude Code.
+If the harness has no such surface, use a plain numbered list.
+
+The answers are the decision reference for `bench commitment approve`.
+Record each settled row decision in its `roadmap/FT<n>.md`.
+
+Ticket triage excludes a row whose next action is `/bench-shape-idea`.
+Such a row has `Next: shape`, or a decision tree that needs more than one selection.
+The closing exit lists each such row as separate-session work and names its shape command in the form of this harness.
+The drain does not prompt the decisions of such a row.
+
 The coordinator runs `bench handoff` last, from the primary checkout after the landing.
 
 `bench status` dates the `main` section of an ignored handoff by the file's write time.
