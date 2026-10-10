@@ -213,5 +213,5 @@ Repair context: <fold targets and author context, each read by the coordinator b
 
 - A fan-out is reported as launched only after a liveness check, never after a
   successful spawn.
-- A re-review charge names the folds, and asks only for findings above the
-  blocking bar.
+- A re-review charge names the findings and the folds to confirm, and the round
+  examines only those findings.

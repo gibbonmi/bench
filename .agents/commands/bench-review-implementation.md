@@ -45,8 +45,9 @@ Each planned chunk takes one review across Standards, Spec, and Coverage. The ax
 
 After the fresh repair author repairs accepted findings, current repair coverage closes those predicates. A repeated review uses the full chunk diff as context and blocks only on the later delta or the named concern that starts it.
 A chunk that ends on a repair takes one confirming round of all three axes at its final tip.
-A confirming round reads only the repair delta, and its charge names the folds to confirm.
-That charge directs the Standards axis to look first for duplicated knowledge in the repair delta.
+A confirming round reads only the repair delta and examines only the findings that its charge names. Its charge names those findings and the folds to confirm.
+
+When every accepted finding of a round falls on one ticket, one combined repair charge carries them all. That charge holds the findings of every axis and goes to that ticket's repair session. When the accepted findings fall on several tickets, each affected ticket keeps its own repair session under `.bench/BENCH.md`'s repair rule.
 
 A coverage-map amendment updates each affected ticket's `Covers:` line under `.bench/BENCH.md`'s plan-expansion policy.
 
