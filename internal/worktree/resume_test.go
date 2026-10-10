@@ -335,10 +335,10 @@ func TestPlanAutomaticRetainsDirtyNestedState(t *testing.T) {
 	})
 	// Ordinary dirt is classified, not undecided: the automatic planner names it
 	// as the reason it retains. This separates a checkout holding uncommitted
-	// work from one whose state it could not read.
+	// work from one whose state it could not read. The own commit lands first,
+	// because dirt on a branch with no own commit is unlanded work.
 	t.Run("ordinary parent dirt remains classifiable", func(t *testing.T) {
-		f := newOwnedAssignment(t, "ordinary-dirt")
-		mustWrite(t, filepath.Join(f.creation.Path, "ordinary.txt"), []byte("ordinary\n"), 0o644)
+		f := newLandedDirtyAssignment(t, "ordinary-dirt")
 		markPending(t, f.root, f.creation.Assignment)
 		requirePlanAction(t, f.root, f.creation.Path, ActionRetain)
 		plan, err := PlanAutomatic(f.root, f.creation.Path)

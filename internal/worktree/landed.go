@@ -7,18 +7,35 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 )
 
-// assignmentLanded is the one landed verdict of an active assignment. The branch has to be
-// in the default ref, no live lease may hold the tree, and the tree may not hold unlanded
-// output. The list banner, the selector of the landed set, the resume sweep, and the
-// automatic classifier all read it.
+// assignmentLanded is the one landed verdict of an active assignment. assignmentLandedness
+// has to prove the branch landed, and no live lease may hold the tree. The landedness comes
+// first, so a plan without an ancestry proof never reads the lease of its tree. The list
+// banner, the selector of the landed set, the resume sweep, and the automatic classifier
+// all read it.
 func assignmentLanded(root string, assignment intent.Assignment, plan CleanupPlan) bool {
-	if assignment.State != intent.StateActive || !plan.landedTyped.ProvenLanded() || planHasLiveLease(plan) {
-		return false
+	return assignment.State == intent.StateActive &&
+		assignmentLandedness(root, assignment, plan.landedTyped).ProvenLanded() && !planHasLiveLease(plan)
+}
+
+// assignmentLandedness is the landedness of an assignment in any state. It is the ancestry
+// proof, except that an assignment that holds unlanded output has not landed. The automatic
+// classifier gives it to the decision of a cleanup-pending release, so the release refusal
+// and the list cell read one verdict and name one route.
+func assignmentLandedness(root string, assignment intent.Assignment, ancestry lifecyclepolicy.Landedness) lifecyclepolicy.Landedness {
+	if !ancestry.ProvenLanded() {
+		return ancestry
 	}
 	holds, err := assignmentHoldsUnlandedOutput(root, assignment)
-	return err == nil && !holds
+	if err != nil {
+		return lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessUnknownError, Err: err.Error()}
+	}
+	if holds {
+		return lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessProven}
+	}
+	return ancestry
 }
 
 // assignmentHoldsUnlandedOutput reports an assignment with no commit of its own and a dirty
