@@ -59,8 +59,8 @@ func cleanupRow(plan CleanupPlan) []string {
 	}
 	// An operator-asserted branch deletion is the one removal this command performs that
 	// nothing else in the row implies. The plan half names the exact ref it spends that
-	// assertion on. The derived case stays silent: its deletion follows from the landedness
-	// the tool proved for itself, and its row is a settled output contract.
+	// assertion on. The derived case stays silent: its deletion follows from the ancestry
+	// proof the tool made for itself, and its row is a settled output contract.
 	if plan.discardBranch && plan.deleteBranch && plan.Action.Removes() {
 		detail = "discards branch " + plan.branchRef + "; " + detail
 	}
@@ -210,12 +210,10 @@ type CleanupPlan struct {
 	deleteBranch         bool
 	branchRef, branchOID string
 	ignoredSummary       string
-	landed               string
-	// landedTyped carries the landedness evidence of landed as the typed value that
-	// lifecyclepolicy.DecideExplicit produced. A production reader can branch on its kind
-	// and proof fields rather than parse the wire string. landed stays alongside it, since
-	// subshell.go's fingerprint hashes the string as evidence. A hand-built stub
-	// (clean_landed.go) may populate only the typed field and need not fabricate the string.
+	// landedTyped is the one landedness verdict of the plan's assignment, as
+	// lifecyclepolicy.DecideExplicit produced it. Every reader branches on its kind and proof
+	// fields, and the explicit fingerprint hashes its wire string as evidence. The landed
+	// selector (clean_landed.go) builds a plan stub that carries only this field.
 	landedTyped lifecyclepolicy.Landedness
 	// leftover names the present bytes a release-leftover plan hands on rather than
 	// removes. It is empty for every plan that answers for a checkout.
@@ -279,7 +277,7 @@ func planAutomaticAt(j joins, root, path string, now time.Time) (CleanupPlan, er
 			facts.MissingBranchLiveLease = planHasLiveLease(salvage)
 		}
 	} else if explicitPlan.assignment != nil {
-		facts.Explicit.Landed, facts.LiveLease = assignmentLandedness(root, *explicitPlan.assignment, explicitPlan.landedTyped), planHasLiveLease(explicitPlan)
+		facts.LiveLease = planHasLiveLease(explicitPlan)
 		facts.Landed = assignmentLanded(root, *explicitPlan.assignment, explicitPlan)
 		if explicitPlan.assignment.State == intent.StateActive {
 			facts.OrphanedActive = orphaned(*explicitPlan.assignment, now)

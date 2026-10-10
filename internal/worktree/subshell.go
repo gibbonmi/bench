@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"bytes"
+	"cmp"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -318,26 +319,22 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 	facts.HeadRef, facts.Head = headRef, head
 	if !facts.HeadDetached && facts.DefaultKnown {
 		facts.LandedOK, facts.LandedByContent, facts.LandedErr = git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef)
+		if named := cmp.Or(facts.MatchedAssignment, facts.ForeignAssignment); facts.LandedOK && named != nil {
+			facts.HoldsUnlandedOutput, facts.UnlandedOutputErr = assignmentHoldsUnlandedOutput(root, *named)
+		}
 	}
 	facts.UnsafeTarget = unsafeTarget
 
 	verdict := lifecyclepolicy.DecideExplicit(facts)
 	plan.Action, plan.ReasonCode, plan.Reason = verdict.Action, verdict.ReasonCode, verdict.Reason
 	plan.owned, plan.assignment = verdict.Owned, verdict.Assignment
-	plan.Tracked = verdict.Tracked
-	landed := verdict.Landed.String()
-	plan.landed = landed
-	plan.landedTyped = verdict.Landed
+	plan.Tracked, plan.landedTyped = verdict.Tracked, verdict.Landed
 	plan.deleteBranch, plan.branchRef, plan.branchOID = verdict.DeleteBranch, verdict.BranchRef, verdict.BranchOID
-	// The derivation above reads ancestry, then merges, then patch-equivalence, then
-	// reverse-applicability. That proves a squash-landing but still refuses whatever it
-	// cannot represent byte- and mode-exactly, so a fully-landed branch can read as
-	// unmerged. DiscardBranch is the operator supplying that missing proof by hand, applied
-	// here rather than fed into the decision. The recorded landedness reports what the tool
-	// concluded on its own.
-	//
-	// The automatic path plans with an empty CleanupOptions, so this override never reaches
-	// it. The detached conjunct holds because headRef is the "detached" sentinel, not a ref.
+	// DiscardBranch is the operator's own proof of a landing that git.LandedInDefault cannot
+	// represent. It applies here rather than in the decision, so the recorded landedness
+	// stays what the tool concluded on its own. The automatic path plans with an empty
+	// CleanupOptions and never reaches it. The detached conjunct holds because headRef is
+	// the "detached" sentinel, not a ref.
 	if options.DiscardBranch && !facts.HeadDetached {
 		plan.deleteBranch = true
 		plan.branchRef, plan.branchOID = headRef, head
@@ -361,7 +358,7 @@ func planExplicitWith(j joins, root, path string, options CleanupOptions) (Clean
 		[]byte(target), []byte(admin), []byte(registration.Path), []byte(registration.BranchRef),
 		[]byte(strconv.FormatBool(registration.Detached)), []byte(strconv.FormatBool(registration.Locked)), []byte(registration.LockReason),
 		markerBytes, ledgerBytes, []byte(head), []byte(headRef), indexBytes, status, []byte(contentIdentity), leaseBytes, buildOutputEvidence,
-		[]byte(landed), []byte(nestedEvidence), ignoredCanonical, []byte(plan.Recovery),
+		[]byte(plan.landedTyped.String()), []byte(nestedEvidence), ignoredCanonical, []byte(plan.Recovery),
 		[]byte(strconv.FormatBool(options.DiscardIgnored)), []byte(strconv.FormatBool(options.DiscardBranch)),
 		[]byte(plan.Action), []byte(plan.ReasonCode), []byte(plan.Reason), []byte(strconv.FormatBool(plan.deleteBranch)), []byte(plan.branchRef), []byte(plan.branchOID),
 	}

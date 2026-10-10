@@ -66,19 +66,20 @@ func TestLifecycleLeaseFactAdapterTranslatesRealLeases(t *testing.T) {
 }
 
 // TestLifecycleEligibilityFactAdapterTranslatesTrackedState is the eligibility
-// fact group. A real dirty checkout must translate into the typed tracked and
-// nested facts, and the production planner must reach the policy's verdict
-// over exactly those facts.
+// fact group. A real dirty checkout must translate into the typed tracked,
+// nested, and unlanded-output facts, and the production planner must reach the
+// policy's verdict over exactly those facts.
 func TestLifecycleEligibilityFactAdapterTranslatesTrackedState(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "fa-eligibility")
 	clean := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
-	requireTest(t, clean.InitialTracked == "clean" && clean.NestedState == nestedClean && clean.NestedErr == nil,
-		"clean facts = %+v, want clean tracked and nested state", clean)
+	requireTest(t, clean.InitialTracked == "clean" && clean.NestedState == nestedClean && clean.NestedErr == nil && !clean.HoldsUnlandedOutput,
+		"clean facts = %+v, want clean tracked and nested state and no unlanded output", clean)
 
 	mustWrite(t, filepath.Join(f.creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
 	dirty := gatherExplicitFactsForTest(t, f.root, f.creation.Path, CleanupOptions{})
-	requireTest(t, dirty.InitialTracked == "dirty", "dirty facts = %+v, want tracked=dirty", dirty)
+	requireTest(t, dirty.InitialTracked == "dirty" && dirty.HoldsUnlandedOutput && dirty.UnlandedOutputErr == nil,
+		"dirty facts = %+v, want tracked=dirty and unlanded output", dirty)
 
 	plan, err := PlanExplicitWithOptions(f.root, f.creation.Path, CleanupOptions{})
 	mustNoError(t, err)

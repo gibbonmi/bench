@@ -82,8 +82,8 @@ func hit(fault Fault, step LifecycleStep) error {
 	return fault(step)
 }
 
-// deletePlannedBranch deletes the landed branch a cleanup plan names, at the commit the plan
-// read, once the plan's checkout is retired. A plan that proves no landed branch keeps it.
+// deletePlannedBranch deletes the branch a cleanup plan names, at the commit the plan read,
+// once its checkout is retired. Only the ancestry proof or an operator discard names one.
 func deletePlannedBranch(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) error {
 	if !plan.deleteBranch {
 		return nil
