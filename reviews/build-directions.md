@@ -993,6 +993,111 @@
           ]
         }
       ]
+    },
+    {
+      "id": "BD-C3",
+      "base": "773901add554bc9b5da92310c70adb0428954e16",
+      "tip": "ed901b255cab951d6bb57ec01a2e7a1db56dcddc",
+      "plan_digest": "sha256:922a6d6522d78e25e8c5d910c15d52ed8b6f1a245e4ac6aa06ba292ac228c4b0",
+      "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+      "acceptance_rows": [
+        "BD31",
+        "BD32",
+        "BD33",
+        "BD34",
+        "BD35",
+        "BD36",
+        "BD37",
+        "BD38",
+        "BD54",
+        "BD59"
+      ],
+      "verification": [
+        {
+          "id": "bd-05-focused-t05",
+          "performer": "claude:bd_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t05",
+            "digest": "sha256:b078c54921d1dcf60b3a6469c73bd2eeb414c6b122e8d788d8ce3842b5ad2ede",
+            "excerpt": "command: bench worktree exec build-directions -- bench test --package ./internal/anchors --run TestChunkChainAnchors\nexit: 0\ntree[1]{target,head,dirty}:\n  build-directions,a7e59f8db766b77b0b0a9f226920ec49a976c27f,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,419,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-05-focused",
+          "command": "bench test --package ./internal/anchors --run TestChunkChainAnchors",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-05-floor-t05",
+          "performer": "claude:bd_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t05",
+            "digest": "sha256:d4d19276451429682727237752642a740804eb363f1b2845ff1b06800ae5d6c7",
+            "excerpt": "command: bench worktree exec build-directions -- bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench\nexit: 0\ntree[1]{target,head,dirty}:\n  build-directions,a7e59f8db766b77b0b0a9f226920ec49a976c27f,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16365,333\n  github.com/gibbonmi/bench/internal/anchors,pass,2063,179\n  github.com/gibbonmi/bench/internal/conformance,pass,55480,1684\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "bd-05-floor",
+          "command": "bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-05-conformance-t05",
+          "performer": "claude:bd_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t05",
+            "digest": "sha256:262e78c0c79239762c30aca46cf7e43c1a258e8b913ba0d3e87a59609c00da24",
+            "excerpt": "command: bench worktree exec build-directions -- bench test --check root-conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  build-directions,a7e59f8db766b77b0b0a9f226920ec49a976c27f,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14879,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-05-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-05-live-t05",
+          "performer": "claude:bd_t05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t05",
+            "digest": "sha256:dd988549591b214021867893de91b6af3c1293ce63a2ddb72114165dd3c85ead",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,ed901b255cab951d6bb57ec01a2e7a1db56dcddc,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-review-implementation.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,444\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5179,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: chunk chain: a confirming round's charge dropped its named findings or its folds\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-05-live",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the sentence \"Its charge names those findings and the folds to confirm.\" from .agents/commands/bench-review-implementation.md. The docs-currency-workflow check turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bd_t05",
+              "digest": "sha256:dd988549591b214021867893de91b6af3c1293ce63a2ddb72114165dd3c85ead",
+              "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,ed901b255cab951d6bb57ec01a2e7a1db56dcddc,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-review-implementation.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,444\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5179,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: chunk chain: a confirming round's charge dropped its named findings or its folds\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
