@@ -8,8 +8,10 @@ package anchors
 // the reference states. The fold rows pin the build's fold points in the implement phase and
 // the craft-delegate sentence that leaves the build's fold timing to it. The light-path rows pin
 // the build's hold on a light-path dispatch in the implement phase and in ADR 0023, and forbid
-// the ADR's retired unscoped clause. The `bench record` rows route each completed review-record entry to
-// the verb and forbid the retired hand-recording sentences.
+// the ADR's retired unscoped clause. The chunk-record rows give the chunk freeze and record to the last
+// ticket's author, run the chunk checkpoint gate only before a successor chunk, close the last chunk
+// through the complete checkpoint, and forbid each retired sentence. The `bench record` rows route each
+// completed review-record entry to the verb and forbid the retired hand-recording sentences.
 var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Require, Needle: "If every red row is a `*-closure` row, `fence-writes`, `completion-plan`, or `check-floor`, the staleness pass below takes the red. Any other red stops the phase.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped or widened the staleness route for a red build preflight"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Declare the line, validate the tickets, route the venue", Needle: "charge the staleness pass that `" + stalenessPass + "` states.", Diagnostic: ".agents/commands/bench-implement-spec.md dropped the staleness-pass charge pointer to its reference"},
@@ -30,7 +32,16 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "A fold before the completion landing follows `/bench-review-implementation` step 1, and the last chunk refreezes.", Diagnostic: "chunk chain: a fold before the completion landing follows review step 1 and refreezes the last chunk"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Inside a chunk, the post-ticket preflight passes the chunk's `--base` and the current `--source-tip`, so a moved `main` does not route a fold.", Diagnostic: "chunk chain: the in-chunk preflight passes the chunk base and the current source tip"},
 	{Group: AfterImplementSpec, File: ".agents/skills/bench-craft-delegate/SKILL.md", Kind: Require, Needle: "During a build, `/bench-implement-spec` owns the fold timing, and a ticket charge starts without this fold.", Diagnostic: "chunk chain: craft-delegate leaves the build fold timing to the implement phase"},
-	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "When the orchestrator freezes a chunk after its last ticket, it records the chunk entry with `bench record chunk`.", Diagnostic: "chunk chain: the orchestrator records the chunk entry at the freeze"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "After the last ticket of a chunk, that ticket's author freezes the chunk and records the chunk entry with `bench record chunk`.", Diagnostic: "chunk chain: the last ticket's author records the chunk entry at the freeze"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Build", Needle: "The last ticket's author performs that freeze, as the Land section states.", Diagnostic: "chunk chain: the Build section dropped the last ticket's author as the freeze owner"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "When the orchestrator freezes a chunk after its last ticket", Diagnostic: "chunk chain: the implement phase restored the orchestrator's chunk record"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Before a successor chunk starts, run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>`.", Diagnostic: "chunk chain: the chunk checkpoint gate runs before a successor chunk"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "--chunk <id>` before the successor", Diagnostic: "chunk chain: the implement phase restored the chunk checkpoint gate for every chunk"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "The last chunk runs no chunk checkpoint gate, because the complete checkpoint that `/bench-final-check` owns grades every chunk again.", Diagnostic: "chunk chain: the last chunk closes through the complete checkpoint alone"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "The last chunk keeps its chunk entry, its verification entries, and its three review entries.", Diagnostic: "chunk chain: the last chunk keeps its chunk, verification, and review entries"},
+	{Group: AfterImplementSpec, File: freshAuthorADR, Kind: Require, Needle: "It refreshes the session handoff at each chunk checkpoint and at the final reconciliation", Diagnostic: "chunk chain: ADR 0023 dropped the handoff refresh at the final reconciliation"},
+	{Group: AfterImplementSpec, File: "README.md", Kind: Require, Needle: "more -->|\"yes; chunk checkpoint\"| chunk", Diagnostic: "chunk chain: the README chunk flow dropped the chunk checkpoint on the successor edge"},
+	{Group: AfterImplementSpec, File: "README.md", Kind: Forbid, Needle: "\"none; chunk checkpoint\"", Diagnostic: "chunk chain: the README chunk flow restored the chunk checkpoint on the no-successor edge"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Each ticket author then writes its verification entries at that chunk source with `bench record verification`.", Diagnostic: "chunk chain: each ticket author records its verification at the chunk source"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "`--full <spec>`", Needle: "A green chunk checkpoint and its handoff refresh are not a phase exit. The orchestrator continues into the successor chunk in the same turn, and it stops only on a `craft-line` stop condition.", Diagnostic: "chunk chain: a green chunk checkpoint is not a phase exit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "Write the ordinary assessment record before the `bench worktree land` step, and append the landing evidence after it.", Diagnostic: "chunk chain: the assessment record precedes the landing"},
@@ -48,7 +59,8 @@ var chunkChainAnchors = []Anchor{
 
 // implementPhase and reviewPhase are the phase files that state the chunk chain.
 // stalenessPass is the reference that owns the build-entry staleness charge.
-// freshAuthorADR is the decision record that states the build's light-path hold.
+// freshAuthorADR is the decision record that states the build's light-path hold and the
+// orchestrator's handoff refresh.
 const (
 	implementPhase = ".agents/commands/bench-implement-spec.md"
 	reviewPhase    = ".agents/commands/bench-review-implementation.md"

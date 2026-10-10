@@ -78,8 +78,8 @@ flowchart TD
     repair --> coverage["Current repair coverage<br/>+ author verification"]
     coverage --> review
     blockers -->|"allowance exhausted"| decision["Reviewer decision required"]
-    blockers -->|"none; chunk checkpoint"| more{"More approved chunks?"}
-    more -->|"yes"| chunk
+    blockers -->|"none"| more{"More approved chunks?"}
+    more -->|"yes; chunk checkpoint"| chunk
     more -->|"no"| accepted["All chunks accepted"]
 ```
 

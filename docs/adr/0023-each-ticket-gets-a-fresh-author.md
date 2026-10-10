@@ -12,7 +12,7 @@ So the existing record checks name the author of each ticket, and the record sch
 
 - The authors work serially in one integration worktree, in dependency order. Only an explicit delegated run adds concurrent authors and the full tier range.
 - Outside a delegated run, a tier move of a fresh author asks the reviewer first.
-- The orchestrator reads manifests, returns, and verdicts, not code. It refreshes the session handoff at each chunk checkpoint, and it reconciles the final acceptance and integration.
+- The orchestrator reads manifests, returns, and verdicts, not code. It refreshes the session handoff at each chunk checkpoint and at the final reconciliation. It reconciles the final acceptance and integration.
 - A post-review repair goes to a fresh repair session for each affected ticket. The plan records that session as a new assignment with the user-directed trigger, and the session runs the verification of its ticket again.
 - The orchestrator does not repair at final reconciliation. A finding there goes to a fresh repair session for the ticket whose expected writes hold the path. A finding on a path that no ticket holds is a material acceptance shortfall.
 - Each ticket takes its own session, because the review record refuses one session for two tickets.

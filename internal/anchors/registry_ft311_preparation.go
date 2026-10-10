@@ -40,7 +40,7 @@ var ft311PreparationAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "Retrieve every required source with `bench preflight evidence <id>`, and follow each exact successor command until the stream ends.", Diagnostic: "fresh ticket author: bench-implement-spec.md restored the full evidence retrieval"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Forbid, Needle: "Build action requires verified delivery", Diagnostic: "fresh ticket author: bench-implement-spec.md restored the verified-delivery build rule"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "The orchestrator reads manifests, returns, and verdicts, not code", Diagnostic: "fresh ticket author: bench-implement-spec.md dropped the orchestrator's read bound"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "not code, and it refreshes `bench handoff` at each chunk checkpoint.", Diagnostic: "fresh ticket author: bench-implement-spec.md dropped the handoff refresh at each chunk checkpoint"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "not code, and it refreshes `bench handoff` at each chunk checkpoint and at the final reconciliation.", Diagnostic: "fresh ticket author: bench-implement-spec.md dropped the handoff refresh at each chunk checkpoint or at the final reconciliation"},
 
 	// The unchanged-route rows below hold the migration's declared boundary. The
 	// implementation phase keeps its own full-run control, which names no preflight
