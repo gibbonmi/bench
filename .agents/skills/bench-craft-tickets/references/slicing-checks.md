@@ -5,7 +5,7 @@ the spec's ownership fence. The first section lists every `Writes:` rule that th
 parser and build preflight enforce, and some `Blocked by:` and `Covers:` rules beside them.
 The second section states the slicing rules that no check enforces, each from a repair
 round that a retrospective recorded. The third section lists the evidence classes that
-the research of each ticket chunk returns.
+the research of each ticket chunk returns, and the rule that keeps each research path.
 
 ## Enforced rules
 
@@ -69,3 +69,5 @@ differ.
 - a shared file that more than one ticket writes, such as `CHANGELOG.md`.
 
 Each entry cites its evidence as a `path:line` or as a command and its result.
+
+Each path that a research return names goes into the ticket's `Writes:` line. The slicer drops such a path only with `path:line` evidence that the path cannot change under any design. `Writes:` is the approved upper bound of the ticket, not a task list. `/bench-implement-spec` owns how the ticket author narrows it.

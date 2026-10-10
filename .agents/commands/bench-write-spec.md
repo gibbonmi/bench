@@ -68,20 +68,20 @@ compatibility, or a reviewer-chosen seam.
 4. **Slice one chunk at a time.** Where the stories partition into disjoint package or fence sets, could a narrower
    capability ship on its own gate? Apply `craft-spec`'s named `Bootstrap authority before execution` rule. The ticket graph splits where a consumer branch lands green alone.
 
-   The invoking session then slices the tickets one chunk at a time, in the order of the accepted chunk table. For each chunk:
+   After the spec review accepts, one research round charges two read-only readers for each chunk, with every chunk at the same time. Each reader returns each likely fence expansion under the slicing checks' `Fence-expansion evidence` classes. The invoking session merges each pair into one research table: the agreed set and the frontier. If the spec review changes the chunk table, the research reruns for each changed chunk.
 
-   1. Read-only research delegates gather the chunk's ticket evidence and return each likely fence expansion under the slicing checks' `Fence-expansion evidence` classes.
-   2. The invoking session verifies the findings. Charge `craft-tickets` and write the chunk's tickets under `specs/<slug>/tickets/`. Compare each ticket's `Writes:` line with `bench preflight build <slug> --propose-writes` under the slicing checks.
-   3. A delegate on `craft-line`'s chunk ticket review line grades the chunk's tickets under `craft-tickets`' granularity, edge, and merge-or-split quiz. The delegate returns accept or reject.
+   The slicer runs on `craft-line`'s ticket slicing line and slices the tickets one chunk at a time, in the order of the accepted chunk table. For each chunk, the slicer verifies the research table. Charge `craft-tickets` and write the chunk's tickets under `specs/<slug>/tickets/`. Each `Writes:` line keeps every research path under the slicing checks' keep rule. Compare each ticket's `Writes:` line with `bench preflight build <slug> --propose-writes` under the slicing checks.
 
-   A chunk review can run while the research of the next chunk runs. The invoking session writes one chunk at a time.
+   If the slicing session passes about 300k tokens of context, it compacts or restarts at a chunk boundary, never inside a chunk. It carries a ledger. The ledger holds the accepted tickets, the research table, the deferrals, the ordering edges, the spec flags, and the paths that wait for the fence.
 
-   After the last chunk is accepted, write the fence section. `bench preflight build <slug> --plan-only` then grades the whole ticket graph. Carry
+   After the last chunk, one review round on `craft-line`'s ticket review line grades the whole ticket set under `craft-tickets`' granularity, edge, and merge-or-split quiz. Its iteration cap is 2. The round returns accept or reject.
+
+   After the ticket review accepts, write the fence section. `bench preflight build <slug> --plan-only` then grades the whole ticket graph. Carry
    its numbered title, `Blocked by:`, and delivered outcome list into the approval table. The spec and tickets
    receive one sign-off.
 
-   Every review round follows one loop. The round declares its iteration cap before the first charge. The invoking session repairs a rejected spec or chunk, and the same round grades the repair alone. The invoking session folds the findings of each round and names them in the verification log.
+   Every review round follows one loop. The round declares its iteration cap before the first charge. The invoking session repairs a rejected spec or ticket set, and the same round grades the repair alone. The invoking session folds the findings of each round and names them in the verification log.
 
-   At close, write `Verification log: <n> iteration(s) to accept — <note>` into the spec. The count `<n>` sums the iterations of the spec round and of every chunk round. The note names each round that took more than one iteration.
+   At close, write `Verification log: <n> iteration(s) to accept — <note>` into the spec. The count `<n>` sums the iterations of the spec round and of the ticket round. The note names each round that took more than one iteration.
    When a round takes more than one iteration to accept, append one `capture/learnings.md` entry for that round. The entry names the stage that missed,
    what review caught, why it was missed, and the proposed rule change.

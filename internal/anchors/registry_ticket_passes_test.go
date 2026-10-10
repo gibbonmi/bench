@@ -38,28 +38,47 @@ func TestTicketSlicingPasses(t *testing.T) {
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "- a count pin, such as a package test-count pin;", want: "ticket slicing: fence-expansion evidence dropped the count pin class"},
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "- a file over its structure budget, with its headroom;", want: "ticket slicing: fence-expansion evidence dropped the structure budget class"},
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "- a shared file that more than one ticket writes, such as `CHANGELOG.md`.", want: "ticket slicing: fence-expansion evidence dropped the shared file class"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "Each path that a research return names goes into the ticket's `Writes:` line.", want: "ticket slicing: each research path goes into the ticket's Writes line"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "The slicer drops such a path only with `path:line` evidence that the path cannot change under any design.", want: "ticket slicing: a research path drops only on evidence that it cannot change"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "`Writes:` is the approved upper bound of the ticket, not a task list.", want: "ticket slicing: Writes is the approved upper bound of the ticket"},
 	}}.check(t)
 }
 
-// TestWriteSpecChunkedSlicing keeps the write-spec spec review, per-chunk slicing, and
-// review-line rules red-capable. Each needle and diagnostic is written here independently
-// of the registry, so a rewrite that drops a rule cannot define itself green.
+// TestWriteSpecChunkedSlicing keeps the write-spec spec review, research round, per-chunk
+// slicing, one ticket review, context checkpoint, review-line, and fence-narrowing rules
+// red-capable. Each needle and diagnostic is written here independently of the registry, so
+// a rewrite that drops a rule cannot define itself green.
 func TestWriteSpecChunkedSlicing(t *testing.T) {
 	const writeSpec = ".agents/commands/bench-write-spec.md"
+	const implementSpec = ".agents/commands/bench-implement-spec.md"
 	const line = ".agents/skills/bench-craft-line/SKILL.md"
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
 		{file: writeSpec, section: "Process", needle: "After the spec fork returns, one independent review round grades the spec alone under `craft-spec`'s review rubric, its chunk table included.", want: "write-spec slicing: one independent round reviews the spec alone"},
 		{file: writeSpec, section: "Process", needle: "It returns accept or reject, and slicing starts only after it accepts.", want: "write-spec slicing: slicing waits for the spec round to accept"},
-		{file: writeSpec, section: "Process", needle: "The invoking session then slices the tickets one chunk at a time, in the order of the accepted chunk table.", want: "write-spec slicing: the invoking session slices the tickets one chunk at a time"},
-		{file: writeSpec, section: "Process", needle: "Read-only research delegates gather the chunk's ticket evidence and return each likely fence expansion under the slicing checks' `Fence-expansion evidence` classes.", want: "write-spec slicing: each chunk's research returns its likely fence expansions"},
+		{file: writeSpec, section: "Process", needle: "After the spec review accepts, one research round charges two read-only readers for each chunk, with every chunk at the same time.", want: "write-spec slicing: one research round charges two readers for every chunk after the spec review"},
+		{file: writeSpec, section: "Process", needle: "Each reader returns each likely fence expansion under the slicing checks' `Fence-expansion evidence` classes.", want: "write-spec slicing: each chunk's research returns its likely fence expansions"},
+		{file: writeSpec, section: "Process", needle: "The invoking session merges each pair into one research table: the agreed set and the frontier.", want: "write-spec slicing: each reader pair merges into one research table"},
+		{file: writeSpec, section: "Process", needle: "If the spec review changes the chunk table, the research reruns for each changed chunk.", want: "write-spec slicing: a changed chunk reruns its research"},
+		{file: writeSpec, section: "Process", needle: "The slicer runs on `craft-line`'s ticket slicing line and slices the tickets one chunk at a time, in the order of the accepted chunk table.", want: "write-spec slicing: the slicer runs on the ticket slicing line, one chunk at a time"},
+		{file: writeSpec, section: "Process", needle: "Each `Writes:` line keeps every research path under the slicing checks' keep rule.", want: "write-spec slicing: the command points to the slicing checks' keep rule"},
 		{file: writeSpec, section: "Process", needle: "Compare each ticket's `Writes:` line with `bench preflight build <slug> --propose-writes` under the slicing checks.", want: "write-spec slicing: each chunk ticket's Writes line meets the propose-writes proposal"},
-		{file: writeSpec, section: "Process", needle: "A delegate on `craft-line`'s chunk ticket review line grades the chunk's tickets under `craft-tickets`' granularity, edge, and merge-or-split quiz. The delegate returns accept or reject.", want: "write-spec slicing: a delegate on the chunk ticket review line accepts or rejects each chunk"},
-		{file: writeSpec, section: "Process", needle: "A chunk review can run while the research of the next chunk runs. The invoking session writes one chunk at a time.", want: "write-spec slicing: chunk writes stay serial"},
-		{file: writeSpec, section: "Process", needle: "After the last chunk is accepted, write the fence section. `bench preflight build <slug> --plan-only` then grades the whole ticket graph.", want: "write-spec slicing: the plan-only preflight grades the whole ticket graph after the last chunk"},
-		{file: writeSpec, section: "Process", needle: "The invoking session repairs a rejected spec or chunk, and the same round grades the repair alone.", want: "write-spec slicing: a rejected spec or chunk is repaired and reviewed again alone"},
-		{file: writeSpec, section: "Process", needle: "The count `<n>` sums the iterations of the spec round and of every chunk round.", want: "write-spec slicing: the verification log sums the iterations of every round"},
+		{file: writeSpec, section: "Process", needle: "If the slicing session passes about 300k tokens of context, it compacts or restarts at a chunk boundary, never inside a chunk.", want: "write-spec slicing: the context checkpoint falls at a chunk boundary"},
+		{file: writeSpec, section: "Process", needle: "The ledger holds the accepted tickets, the research table, the deferrals, the ordering edges, the spec flags, and the paths that wait for the fence.", want: "write-spec slicing: the context checkpoint carries its ledger"},
+		{file: writeSpec, section: "Process", needle: "After the last chunk, one review round on `craft-line`'s ticket review line grades the whole ticket set under `craft-tickets`' granularity, edge, and merge-or-split quiz. Its iteration cap is 2.", want: "write-spec slicing: one ticket review round grades the whole ticket set after the last chunk"},
+		{file: writeSpec, needle: "A delegate on `craft-line`'s chunk ticket review line grades the chunk's tickets.", want: "write-spec slicing: the retired review of each chunk returned", forbidden: true},
+		{file: writeSpec, section: "Process", needle: "After the ticket review accepts, write the fence section. `bench preflight build <slug> --plan-only` then grades the whole ticket graph.", want: "write-spec slicing: the plan-only preflight grades the whole ticket graph after the ticket review"},
+		{file: writeSpec, section: "Process", needle: "The invoking session repairs a rejected spec or ticket set, and the same round grades the repair alone.", want: "write-spec slicing: a rejected spec or ticket set is repaired and reviewed again alone"},
+		{file: writeSpec, section: "Process", needle: "The count `<n>` sums the iterations of the spec round and of the ticket round.", want: "write-spec slicing: the verification log sums the iterations of every round"},
 		{file: writeSpec, needle: "The invoking session coordinates the phase, slices the tickets, and presents the completed approval table to the reviewer.", want: "write-spec slicing: the invoking session slices the tickets"},
-		{file: line, needle: "| Spec review (`/bench-write-spec`) | cheap + high |", want: "write-spec slicing: craft-line routes the spec review to cheap + high"},
-		{file: line, needle: "| Chunk ticket review (`/bench-write-spec`) | cheap + high |", want: "write-spec slicing: craft-line routes the chunk ticket review to cheap + high"},
+		{file: line, needle: "| Spec review (`/bench-write-spec`) | mid + medium |", want: "write-spec slicing: craft-line routes the spec review to mid + medium"},
+		{file: line, needle: "| Ticket slicing (`/bench-write-spec`) | mid + high |", want: "write-spec slicing: craft-line routes the ticket slicing to mid + high"},
+		{file: line, needle: "| Ticket review (`/bench-write-spec`) | mid + medium |", want: "write-spec slicing: craft-line routes the ticket review to mid + medium"},
+		{file: line, needle: "| Chunk ticket review (`/bench-write-spec`) | cheap + high |", want: "write-spec slicing: craft-line kept the retired chunk ticket review row", forbidden: true},
+		{file: line, needle: "When the invoking session runs on a model other than the mid binding, a fresh writer on the mid binding slices the tickets.", want: "write-spec slicing: craft-line sends the slicing to a fresh mid writer when the session model differs"},
+		{file: implementSpec, needle: "The charge says that the author changes only what the acceptance needs.", want: "fence narrowing: the author charge limits the edit to what the acceptance needs"},
+		{file: implementSpec, needle: "Before the first edit, the author lists every place the change must reach: callers, tests, fixtures, and exports.", want: "fence narrowing: the author lists the reach of the change before the first edit"},
+		{file: implementSpec, needle: "The author's return names each untouched `Writes:` entry with a one-clause reason.", want: "fence narrowing: the author's return names each untouched Writes entry"},
+		{file: implementSpec, needle: "The review charge says that an untouched `Writes:` entry is not a defect.", want: "fence narrowing: the review charge accepts an untouched Writes entry"},
+		{file: implementSpec, needle: "An edit outside the acceptance's reach is a finding, even when its path is in `Writes:`.", want: "fence narrowing: the review charge finds an edit outside the acceptance's reach"},
 	}}.check(t)
 }

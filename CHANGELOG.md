@@ -6,6 +6,15 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Ticket slicing keep rule
+
+- Changed `/bench-write-spec` so that one research round reads every chunk after the spec review accepts. Two read-only readers return for each chunk, and the invoking session merges each pair into one research table.
+  - The slicing checks keep each research path in the ticket's `Writes:` line, unless `path:line` evidence shows that the path cannot change under any design. `Writes:` is the approved upper bound of a ticket, not a task list.
+  - One review round grades the whole ticket set after the last chunk, with a cap of 2 iterations. It replaces the review of each chunk.
+  - A slicing session that passes about 300k tokens of context compacts or restarts at a chunk boundary and carries a ledger.
+
+  `craft-line` now routes the spec review and the ticket review at mid + medium and the ticket slicing at mid + high. Before, both reviews ran at cheap + high. Changed `/bench-implement-spec` so that the ticket author lists the reach of the change before the first edit and names each untouched `Writes:` entry in its return. The review charge states that an untouched entry is not a defect. An edit outside the acceptance's reach is a finding.
+
 ### Chunked ticket slicing
 
 - Changed `/bench-write-spec` so that the spec fork authors the spec and its chunk table only. One independent review round then grades the spec alone and returns accept or reject. The invoking session slices the tickets one chunk at a time:
