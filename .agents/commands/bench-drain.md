@@ -59,7 +59,7 @@ If cleanup cannot reach zero, stop before batch mutation and report the retained
 
 ## Delegate the evidence
 
-Use at most three read-only delegates after the snapshot passes its trust check.
+Use at most three read-only delegates at one time after the snapshot passes its trust check.
 Assign at most one delegate to each scope: roadmap reconcile, idea and journal mapping, and retro analysis.
 Skip a scope when its indexed source set is empty. Charge every delegate under
 `craft-delegate` and `craft-line`.
@@ -83,6 +83,7 @@ proposed commitment change. Flag judgment calls for veto. Run `bench roadmap --f
 once and quote its flow block in the exit. On approval, commit the pass once on a lane
 pass, over everything the pass touched, and land it through the gate.
 After the landing, the coordinator starts the `commitment_outlook` outcome under the next-outcome rule in `.bench/BENCH.md`.
+The closing exit also reports the priority review in `## 8`.
 
 ## 1. Reconcile first
 
@@ -307,6 +308,33 @@ After approval and the tracked landing, the coordinator runs
 `bench capture drain commit <drain-id>`. This retires only the sealed generation; post-snapshot
 captures stay in the live inboxes. If the batch is abandoned, run `bench capture
 drain abort <drain-id>` to restore the sealed generation before the live entries.
+
+After the sealed-generation retirement, the coordinator charges read-only research delegates to review the roadmap priorities.
+Start them before or with the `commitment_outlook` start in `## Exit handoff`.
+Charge them under `craft-delegate`, `craft-line`, and `craft-research`, which owns the round, the readers, and the citations.
+Give them one question: which next commitment set do the landed `ROADMAP.md` and the staged specs support?
+Tell them to start from the rows that the reviewer already prioritized in `ROADMAP.md`.
+The cap in `## Delegate the evidence` also bounds these readers.
+
+The coordinator puts one proposed next commitment set in the closing exit.
+Order the set by purpose under the proposal rule in `.bench/BENCH.md`.
+The proposal is unapproved input, and the closing exit is its only output.
+Only the reviewer's direction adopts it, through `bench commitment plan` and `bench commitment approve` under the commitment rule in `.bench/BENCH.md`.
+
+In ticket triage, the coordinator puts each reviewer decision that the proposal depends on to the reviewer as one selection prompt.
+These decisions are the proposed order and each open decision that a proposed row names.
+Give each prompt one option set, and put the recommended option first.
+Use the native question surface of the harness, such as the AskUserQuestion tool in Claude Code.
+If the harness has no such surface, use a plain numbered list.
+
+The answers are the decision reference for `bench commitment approve`.
+Record each settled row decision in its `roadmap/FT<n>.md`.
+
+Ticket triage excludes a row whose next action is `/bench-shape-idea`.
+Such a row has `Next: shape`, or a decision tree that needs more than one selection.
+The closing exit lists each such row as separate-session work and names its shape command in the form of this harness.
+The drain does not prompt the decisions of such a row.
+
 The coordinator runs `bench handoff` last, from the primary checkout after the landing.
 
 `bench status` dates the `main` section of an ignored handoff by the file's write time.
