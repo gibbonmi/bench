@@ -39,7 +39,7 @@ No guidance names a build log, so the saved steps live in an ad hoc untracked fi
 ## Solution
 
 The guidance states nine reviewer directions, and the tree keeps one owner for each rule.
-A build folds `main` only at the two sanctioned points, never inside a chunk.
+A build folds `main` only at three sanctioned points, never between two tickets of a chunk.
 A build dispatches no light-path fix while it runs.
 The ticket author freezes the chunk, records the chunk entry, and records its own verification.
 The chunk checkpoint gate runs only before a successor chunk.
@@ -61,7 +61,7 @@ Harder chunks: BD-C4, because it holds the one Go production change and it touch
 
 ### Fold timing
 
-1. As the orchestrator, I want implement-spec to forbid a `main` fold inside a chunk, so that a moved `main` adds no gate run there.
+1. As the orchestrator, I want no `main` fold between two tickets of a chunk, so that a moved `main` adds no gate run there.
 2. As the orchestrator, I want the two sanctioned fold points named, so that I know where a fold can go.
 3. As the orchestrator, I want the post-ticket preflight inside a chunk to pass an explicit range, so that a moved `main` routes no fold.
 4. As a build coordinator, I want the craft-delegate stale-base fold scoped out of a build, so that two rules agree.
@@ -142,13 +142,13 @@ Each edit replaces a sentence in place or adds a sentence, so that no second sta
 
 ### Fold timing
 
-The Land section of implement-spec takes the two sentences below in a new paragraph.
+The Land section of implement-spec takes the five sentences below in a new paragraph.
 
-> A build folds `main` only before the first chunk or at the start of the last chunk, before its first ticket dispatch. It never folds `main` inside a chunk. Inside a chunk, the post-ticket preflight passes the chunk's `--base` and the current `--source-tip`, so a moved `main` does not route a fold.
+> A build folds `main` only before the first chunk, at the start of the last chunk, or before the completion landing. The fold at the start of the last chunk comes before its first ticket dispatch. It never folds `main` between two tickets of a chunk. A fold before the completion landing follows `/bench-review-implementation` step 1, and the last chunk refreezes. Inside a chunk, the post-ticket preflight passes the chunk's `--base` and the current `--source-tip`, so a moved `main` does not route a fold.
 
 A fold at the start of the last chunk joins that chunk's review delta, so the pinned sentence at implement-spec:56 holds.
 The last ticket's author then freezes the chunk after that fold, so no refreeze and no records-only resumption follow.
-A `main` move after the start of the last chunk takes the existing landing route, which a Won't handle line names.
+A `main` move after that start takes the fold before the completion landing, and the last chunk then refreezes.
 The existing pinned sentences at implement-spec:56 and review-implementation:98 stay byte-exact.
 
 The explicit range makes `base-current` green (internal/preflight/decision.go:262-266).
@@ -253,7 +253,8 @@ The confirming-round sentence at review-implementation:48 becomes the two senten
 The sentence at :49, "That charge directs the Standards axis to look first for duplicated knowledge in the repair delta.", goes away.
 The repair author already runs a duplicated-facts sweep of its own delta (delegation-discipline.md:96), so the removal leaves that check in place.
 The round stays three axes at the final tip (registry_chunk_chain.go:26), because the checkpoint needs three review entries (internal/reviewrecord/record.go:111-119).
-The anchor row at registry_ft311_review_dispatch.go:22 changes in place to the first new sentence, so its counted family keeps 17 rows.
+The anchor row at registry_ft311_review_dispatch.go:22 changes in place to the first new sentence.
+Its diagnostic drops the clause "or drop its named folds", because BD59 owns that clause.
 A new row in registry_chunk_chain.go pins the second sentence, so the folds clause keeps its pin.
 
 The delegation-discipline bullet at :216-217 becomes "- A re-review charge names the findings and the folds to confirm, and the round examines only those findings."
@@ -269,11 +270,12 @@ The log has no schema and no verb, and no gate reads its content.
 
 The kit `.gitignore` takes the line `capture/build-log/` in its capture block.
 The `landing` package owns the directory name as one exported constant, `landing.BuildLogDir`, with the value `capture/build-log/`.
-`LocalCapturePath` and that constant move to a new file, internal/landing/local_capture.go, so landing.go shrinks below its 400-line limit.
+`LocalCapturePath` and that constant move to a new file, internal/landing/local_capture.go, so landing.go gains headroom under its 400-line limit.
 
 `landing.LocalCapturePath` accepts that directory, its slash-less form, and each clean path beneath it.
 It refuses a control byte, a `..` segment, a doubled slash, and a sibling name that only shares the prefix.
-Git reports an ignored directory as one `!!` entry with a trailing slash, as the `.logs/` case shows (internal/landing/landing.go:346).
+`CheckoutFingerprint` runs git status with `--untracked-files=all --ignored` (internal/landing/landing.go:326), and the exact git spelling of an ignored directory there is not observed.
+The predicate accepts the directory spellings and each clean path beneath them, so either spelling passes.
 The `RuntimeIgnoredPath` guards at internal/landing/landing.go:340-354 are the precedent for that shape.
 
 `internal/adopt/init.go` adds the constant to `localCaptureIgnoreLines`, so `bench init` writes the ignore line.
@@ -282,7 +284,7 @@ A repository that ran `bench init` before this landing gains the line at its nex
 
 The landing reads ignored paths through this predicate in two places.
 The destination fingerprint filter drops each accepted entry (internal/landing/landing.go:378).
-A log write during a landing would otherwise change that fingerprint, and the landing would refuse (landing.go:256-257).
+A new log file created during a landing would otherwise change that fingerprint, and the landing would refuse (landing.go:256-257).
 The source cleanup plan reads the same predicate (internal/worktree/build_outputs.go:81).
 The init agreement test reds once init writes a line that the predicate refuses (internal/adopt/adopt_test.go:579-585).
 
@@ -307,7 +309,7 @@ Each ticket adds one `CHANGELOG.md` entry.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| BD-C1 / 01-fold-only-at-chunk-boundaries.md, 02-hold-light-paths-during-a-build.md, 03-close-the-last-chunk-through-the-complete-checkpoint.md | The build flow folds at chunk boundaries, holds light paths, gives the chunk record to the author, and runs the chunk gate only before a successor | BD1–BD21, BD50–BD52, BD55, BD57, BD58 | TestChunkChainAnchors, TestCommitmentGuidance, TestReviewConvergenceContractCurrentDocs, TestWorkflowCadenceAnchorsRejectDeletionAndSwap, TestEveryRetainedFixtureBitesThroughRegisteredOwner, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
+| BD-C1 / 01-fold-only-at-chunk-boundaries.md, 02-hold-light-paths-during-a-build.md, 03-close-the-last-chunk-through-the-complete-checkpoint.md | The build flow folds at chunk boundaries, holds light paths, gives the chunk record to the author, and runs the chunk gate only before a successor | BD1–BD21, BD50–BD52, BD55, BD57, BD58, BD60, BD61 | TestChunkChainAnchors, TestCommitmentGuidance, TestReviewConvergenceContractCurrentDocs, TestWorkflowCadenceAnchorsRejectDeletionAndSwap, TestEveryRetainedFixtureBitesThroughRegisteredOwner, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
 | BD-C2 / 04-cap-witnesses-and-keep-moved-guards.md | The author charge states the moved-code guard, the witness definition and cap, and the batched `bench test` call | BD22–BD30 | TestWriteSpecChunkedSlicing, TestChargeBindingAnchors, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
 | BD-C3 / 05-scope-review-rounds.md | The review phase pins parallel axes, sends a one-ticket round in one combined repair charge, and scopes a confirming round to its named findings | BD31–BD38, BD54, BD59 | TestChunkChainAnchors, TestPreparedReviewGuidance, TestEveryRetainedFixtureBitesThroughRegisteredOwner | no |
 | BD-C4 / 06-keep-the-build-log.md | The orchestrator keeps a git-ignored build log, and the landing and `bench init` treat it as local capture | BD39–BD49, BD53 | TestChunkChainAnchors, TestLocalCapturePathRecognizesTheBuildLog, TestCheckoutFingerprintIgnoresTheBuildLog, TestKitGitignoreIgnoresTheBuildLog, TestInitIgnoresLocalCaptureFiles, TestLocalCaptureIgnoreLinesMatchTheLandingPredicate | yes |
@@ -349,8 +351,10 @@ The new rules govern each build that starts after this landing.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| BD1 | 1 | Implement-spec Land holds "It never folds `main` inside a chunk." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing no-fold sentence raises the new Require diagnostic. |
-| BD2 | 2 | Implement-spec Land holds "A build folds `main` only before the first chunk or at the start of the last chunk, before its first ticket dispatch." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing fold-point sentence raises the new Require diagnostic. |
+| BD1 | 1 | Implement-spec Land holds "It never folds `main` between two tickets of a chunk." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing no-fold sentence raises the new Require diagnostic. |
+| BD2 | 2 | Implement-spec Land holds "A build folds `main` only before the first chunk, at the start of the last chunk, or before the completion landing." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing fold-point sentence raises the new Require diagnostic. |
+| BD60 | 2 | Implement-spec Land holds "The fold at the start of the last chunk comes before its first ticket dispatch." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing dispatch-order sentence raises the new Require diagnostic. |
+| BD61 | 2 | Implement-spec Land holds "A fold before the completion landing follows `/bench-review-implementation` step 1, and the last chunk refreezes." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing late-fold sentence raises the new Require diagnostic. |
 | BD3 | 3 | Implement-spec Land holds "Inside a chunk, the post-ticket preflight passes the chunk's `--base` and the current `--source-tip`, so a moved `main` does not route a fold." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing explicit-range sentence raises the new Require diagnostic. |
 | BD4 | 4 | The craft-delegate skill holds "During a build, `/bench-implement-spec` owns the fold timing, and a ticket charge starts without this fold." | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A missing scope sentence raises the new Require diagnostic. |
 | BD5 | 4 | The two craft-delegate stale-base sentences stay byte-exact. | `internal/conformance/fixture_bite_test.go` (`TestWorkflowCadenceAnchorsRejectDeletionAndSwap`) | A rewrap or rewrite of either sentence breaks the byte-exact mutation row. |
@@ -417,7 +421,7 @@ For an empty directory, Git reports no path, and a landing proceeds as today.
 
 **Won't handle:**
 
-- A `main` move after the start of the last chunk — FT342 owns that route, and the existing fold-and-refreeze route survives at review-implementation:98.
+- A refreeze-free route for a late `main` move in the last chunk — FT342 owns it, and the completion-landing fold survives at review-implementation:98.
 - A plan commit that `base-current` refuses while `main` has moved — FT380-plan-commit and FT342 own the plan-commit lane, and the explicit-range preflight stays the in-scope caller.
 - A light-path fix that another session lands while a build runs — FT342 owns the landing refusal, and `/bench-final-check` keeps its rule at final-check:52.
 - A combined repair charge for findings on several tickets — FT405 owns one session that records every ticket, and the per-ticket repair rule at .bench/BENCH.md:127 survives.
@@ -460,7 +464,7 @@ Source-sentence-to-row table:
 
 | source criterion | rows |
 |---|---|
-| build-directions.no-mid-chunk-fold | BD1–BD6 |
+| build-directions.no-mid-chunk-fold | BD1–BD6, BD60, BD61 |
 | build-directions.no-in-build-light-path | BD7–BD13, BD57 |
 | build-directions.author-self-check | BD22, BD27 |
 | build-directions.witness-cap | BD23–BD26, BD28–BD30 |
