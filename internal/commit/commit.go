@@ -195,7 +195,7 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 		}
 		return refused(err)
 	}
-	fmt.Fprintf(stdout, "committed %d path(s)\n", len(named))
+	fmt.Fprintf(stdout, "committed{published_commit=%s,path_count=%d}\n", result.Commit, len(named))
 	return 0
 }
 

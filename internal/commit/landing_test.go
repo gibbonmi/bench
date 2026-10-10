@@ -98,7 +98,8 @@ func TestHelpAdvertisesNoSpecFlag(t *testing.T) {
 	}
 }
 
-// FA7: the plain path route publishes the one named path on a green gate.
+// FA7: the plain path route publishes the one named path on a green gate, and its last
+// line is the committed record that names the published commit, so no caller asks git.
 func TestGreenLandingPublishesTheNamedPath(t *testing.T) {
 	root, before := landingRepo(t, 0, func(t *testing.T, root string) {})
 	runGit(t, root, "reset", "-q", "--hard", "HEAD")
@@ -107,8 +108,15 @@ func TestGreenLandingPublishesTheNamedPath(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after == before {
+	after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
+	if after == before {
 		t.Fatal("HEAD did not move")
+	}
+	lines := strings.Split(strings.TrimSuffix(stdout, "\n"), "\n")
+	name, fields, order := recordFields(t, lines[len(lines)-1])
+	if name != "committed" || !reflect.DeepEqual(order, []string{"published_commit", "path_count"}) ||
+		fields["published_commit"] != after || fields["path_count"] != "1" {
+		t.Fatalf("stdout = %q, want committed{published_commit=%s,path_count=1}", stdout, after)
 	}
 	if !headHasPrefix(t, root, "a.txt") {
 		t.Fatalf("published commit does not track a.txt: %v", headPaths(t, root))

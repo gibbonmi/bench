@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Commit success record
+
+- Changed `bench commit` so that a successful commit prints `committed{published_commit=<hash>,path_count=<n>}`. The record names the published commit with the exit-3 record's key. Before, the line printed only `committed N path(s)`, so authors asked `git` for the hash.
+
 ### Build directions
 
 - Changed `/bench-implement-spec` so that a build folds `main` only before the first chunk, at the start of the last chunk, or before the completion landing. A build never folds `main` between two tickets of a chunk. Inside a chunk, the post-ticket preflight passes the chunk's `--base` and the current `--source-tip`, so a moved `main` does not route a fold. The stale-base rule of `craft-delegate` now leaves the fold timing of a build to `/bench-implement-spec`. Before, that rule folded a moved `main` before each ticket charge.
