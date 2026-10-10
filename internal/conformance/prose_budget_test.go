@@ -3,7 +3,6 @@ package conformance
 import (
 	"bytes"
 	"fmt"
-	"net"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 const (
@@ -376,11 +376,9 @@ func TestGuidanceProseBudgetRefusesNonRegularSubjects(t *testing.T) {
 			kind: "socket",
 			want: "prose-budget subject refused: .agents/skills/bench-craft-linked/SKILL.md is not a regular file",
 			plant: func(t *testing.T, path string) {
-				listener, err := net.Listen("unix", path)
-				if err != nil {
+				if err := testrepo.MakeSocket(path); err != nil {
 					capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable on this filesystem: %v", err))
 				}
-				t.Cleanup(func() { listener.Close() })
 			},
 		},
 	} {

@@ -1,7 +1,6 @@
 package preflight
 
 import (
-	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func TestChargeRefusesLinkedSpecAndTicketInputs(t *testing.T) {
@@ -92,11 +92,9 @@ func TestChargeRefusesSpecialTicketBeforeRead(t *testing.T) {
 					t.Fatal(err)
 				}
 			case "socket":
-				listener, err := net.Listen("unix", path)
-				if err != nil {
+				if err := testrepo.MakeSocket(path); err != nil {
 					t.Fatal(err)
 				}
-				t.Cleanup(func() { _ = listener.Close() })
 			}
 			out, code := Command(preflighttest.ChargeArgs(t, root, slug))
 			if code != 1 || !strings.Contains(out, "ticket file not readable") ||

@@ -3,7 +3,6 @@ package testreport
 import (
 	"context"
 	"encoding/json"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func TestChangedPackageClosureAcrossAllGoEdges(t *testing.T) {
@@ -83,11 +83,9 @@ func TestChangedPackageSelectionRefusalMatrix(t *testing.T) {
 	if err := syscall.Mkfifo(filepath.Join(root, "unsafe-fifo"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	socket, err := net.Listen("unix", filepath.Join(root, "unsafe-socket"))
+	err := testrepo.MakeSocket(filepath.Join(root, "unsafe-socket"))
 	hasSocket := err == nil
-	if hasSocket {
-		t.Cleanup(func() { _ = socket.Close() })
-	} else {
+	if !hasSocket {
 		t.Logf("socket case skipped: cannot create Unix socket: %v", err)
 	}
 	device := filepath.Join(root, "unsafe-device")

@@ -2,7 +2,6 @@ package worktree
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func TestCleanLandedQuotesSpaceAndGlobPaths(t *testing.T) {
@@ -93,11 +93,9 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 			}
 		}},
 		{name: "socket", shape: "non-directory", make: func(t *testing.T, path string) {
-			listener, err := net.Listen("unix", path)
-			if err != nil {
+			if err := testrepo.MakeSocket(path); err != nil {
 				capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable: %v", err))
 			}
-			t.Cleanup(func() { _ = listener.Close() })
 		}},
 		{name: "device", shape: "non-directory", make: func(t *testing.T, path string) {
 			if info, err := os.Lstat("/dev/null"); err != nil || info.Mode()&os.ModeDevice == 0 {
@@ -145,11 +143,9 @@ func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
 			}
 		}},
 		{name: "socket", make: func(t *testing.T, path string) {
-			listener, err := net.Listen("unix", path)
-			if err != nil {
+			if err := testrepo.MakeSocket(path); err != nil {
 				capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable: %v", err))
 			}
-			t.Cleanup(func() { _ = listener.Close() })
 		}},
 		{name: "symlink", make: func(t *testing.T, path string) {
 			if err := os.Symlink(path+"-target", path); err != nil {

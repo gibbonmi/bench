@@ -2,7 +2,6 @@ package conformance
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -15,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/lines"
 	"github.com/gibbonmi/bench/internal/modelid"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // guidanceDirs are the two trees kit guidance prose lives in. Their contents are
@@ -414,11 +414,9 @@ func TestGuidanceSweepRejectsNonRegularEntriesBeforeReading(t *testing.T) {
 			}
 		},
 		"socket": func(t *testing.T, path string) {
-			listener, err := net.Listen("unix", path)
-			if err != nil {
+			if err := testrepo.MakeSocket(path); err != nil {
 				capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable on this filesystem: %v", err))
 			}
-			t.Cleanup(func() { listener.Close() })
 		},
 		"symlink": func(t *testing.T, path string) {
 			if err := os.Symlink(filepath.Join(filepath.Dir(path), "SKILL.md"), path); err != nil {
