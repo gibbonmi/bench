@@ -1727,11 +1727,130 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "659d624d64aea685d5b7864364b6dd9ef386ff44",
+    "performer": "claude:build-directions-orchestrator-20261010",
+    "reconciliation": {
+      "BD1": "covered",
+      "BD10": "covered",
+      "BD11": "covered",
+      "BD12": "covered",
+      "BD13": "covered",
+      "BD14": "covered",
+      "BD15": "covered",
+      "BD16": "covered",
+      "BD17": "covered",
+      "BD18": "covered",
+      "BD19": "covered",
+      "BD2": "covered",
+      "BD20": "covered",
+      "BD21": "covered",
+      "BD22": "covered",
+      "BD23": "covered",
+      "BD24": "covered",
+      "BD25": "covered",
+      "BD26": "covered",
+      "BD27": "covered",
+      "BD28": "covered",
+      "BD29": "covered",
+      "BD3": "covered",
+      "BD30": "covered",
+      "BD31": "covered",
+      "BD32": "covered",
+      "BD33": "covered",
+      "BD34": "covered",
+      "BD35": "covered",
+      "BD36": "covered",
+      "BD37": "covered",
+      "BD38": "covered",
+      "BD39": "covered",
+      "BD4": "covered",
+      "BD40": "covered",
+      "BD41": "covered",
+      "BD42": "covered",
+      "BD43": "covered",
+      "BD44": "covered",
+      "BD45": "covered",
+      "BD46": "covered",
+      "BD47": "covered",
+      "BD48": "covered",
+      "BD49": "covered",
+      "BD5": "covered",
+      "BD50": "covered",
+      "BD51": "covered",
+      "BD52": "covered",
+      "BD53": "covered",
+      "BD54": "covered",
+      "BD55": "covered",
+      "BD57": "covered",
+      "BD58": "covered",
+      "BD59": "covered",
+      "BD6": "covered",
+      "BD60": "covered",
+      "BD61": "covered",
+      "BD62": "covered",
+      "BD63": "covered",
+      "BD64": "covered",
+      "BD7": "covered",
+      "BD8": "covered",
+      "BD9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-preflight-orch",
+        "performer": "claude:build-directions-orchestrator-20261010",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "659d624d64aea685d5b7864364b6dd9ef386ff44",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:build-directions-orchestrator-20261010",
+          "digest": "sha256:1421f3a829498e2b64e3b4e75e157a94c297f2cac5a55e9ec92755d826d2508e",
+          "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,f6d24c6edd9224341e498dce7604e1ace587d040,false\nphase: build\nspec: specs/build-directions/spec.md\nchecks{green=15,not_applicable=1,red=0}\n"
+        },
+        "requirement": "final-preflight",
+        "command": "bench preflight build build-directions",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance-orch",
+        "performer": "claude:build-directions-orchestrator-20261010",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "659d624d64aea685d5b7864364b6dd9ef386ff44",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:build-directions-orchestrator-20261010",
+          "digest": "sha256:bc4c4e436640ad6a128d0c4174a08bae6126059bc07b8fdedc7ad87995ebfef3",
+          "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,f6d24c6edd9224341e498dce7604e1ace587d040,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16721,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "final-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-workflow-orch",
+        "performer": "claude:build-directions-orchestrator-20261010",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "659d624d64aea685d5b7864364b6dd9ef386ff44",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:build-directions-orchestrator-20261010",
+          "digest": "sha256:b5fe3099ea80871fcf11fddc26adcb0d49fe2e1437683b105b38a65de4143d0a",
+          "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,f6d24c6edd9224341e498dce7604e1ace587d040,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5733,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "final-workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -1912,6 +2031,12 @@ An independent consultation grader found G1: the build-log fingerprint test past
 BD-C4 round 2 ran three opus/high axes in parallel at `5fe7a2c8` over the repair delta `4ed02fb8..6f33a6c6`. Every axis confirmed the folds of C1, S1, and G1. The Spec axis raised P21, and plan commit `4628024f` gave BD64 its own story 47. The Spec axis then reaffirmed P21 as closed.
 
 The checkpoint refused the plan commit after the chunk tip, so BD-C4 refroze at `4628024f`. The ticket 06 repair session recorded its verification there, and all three axes graded the spec-only delta with no finding. BD-C4 closes with repair cycle 1 of 2 used and no open finding.
+
+## Final reconciliation
+
+The orchestrator reconciled every acceptance row at `f6d24c6e`. Rows BD1-BD21, BD50-BD52, BD55, BD57, BD58, and BD60-BD63 hold through the BD-C1 reviews. Rows BD22-BD30 hold through BD-C2, and rows BD31-BD38, BD54, and BD59 hold through BD-C3. Rows BD39-BD49 and BD64 hold through BD-C4, and BD49 keeps roadmap/FT379.md and roadmap/FT369.md byte-identical to the build base. BD53 belongs to `/bench-final-check`, which reads the landing commit.
+
+The integrated tree passes the final preflight, the root conformance check, and the docs-currency-workflow check. The main branch did not move during the build, so the landing needs no fold. Every chunk closed with no open finding; BD-C1, BD-C2, and BD-C4 each used repair cycle 1 of 2, and BD-C3 used none.
 
 ## Standards
 
