@@ -36,7 +36,16 @@ tree or multi-session fog to `$bench-shape-idea`.
 
 ## Who runs this phase
 
-The invoking session immediately forks the current conversation and charges that fork to author the spec and slice its tickets. The fork inherits the invoking session's line. Omit a model override. Keep all spec-and-ticket writes in the phase worktree. The invoking session coordinates the phase and presents the fork's completed approval table to the reviewer.
+The invoking session first fans out read-only research delegates over the one decision source. Charge them under `craft-delegate`, `craft-line`, and `craft-research`, which owns the round, the readers, and the citations. Give them these independent questions:
+
+- the enforcement surface that the rows touch;
+- `docs/known-issues.md`, when the repository has it;
+- `craft-spec`'s reader sweep;
+- the code sites, tests, fixtures, and anchors of each decision-source item.
+
+Each delegate returns its findings and its not-verified list under `craft-research`. The research delegates write nothing. The spec is the durable output of the research run, and its rows cite the findings.
+
+After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and slice its tickets. The charge gives the fork the findings as compressed inputs, and the fork does not repeat their reads. The fork inherits the invoking session's line. Omit a model override. Keep all spec-and-ticket writes in the phase worktree. The invoking session coordinates the phase and presents the fork's completed approval table to the reviewer.
 
 After ticket approval, each ticket goes to a fresh author session under `.bench/BENCH.md`'s authorship rule. Spec authoring owns engineering seams, deep-versus-thin design, tests,
 acceptance coverage, hostile-input attachment, and gate attachment; shaping sources constrain behavior, scope,
@@ -44,7 +53,7 @@ compatibility, or a reviewer-chosen seam.
 
 ## Process
 
-1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source; read the enforcement surface before you lock rows that touch it. Run `craft-spec`'s reader sweep before that lock. When the repository has `docs/known-issues.md`, read it before you plan the probes and the check floor.
+1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source and the research findings. Lock no row before the findings cover its enforcement surface and `craft-spec`'s reader sweep. Plan the probes and the check floor from the findings, including any `docs/known-issues.md` finding. Read only what the findings leave open, before you lock the rows.
 
    Apply `craft-spec`'s implementation-line recommendation contract through `craft-line`. Write `specs/<feature>/spec.md` from the template and run `bench coverage --check`. The stale-command-reference sweep remains fail-closed across staged specs.
 

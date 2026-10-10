@@ -1,7 +1,8 @@
 package anchors
 
 // This file holds the research anchor rows — the `craft-research` skill's load-bearing
-// sentences and the caller pointers that name the skill — which live here for the line
+// sentences, the caller pointers that name the skill, and the write-spec research
+// fan-out — which live here for the line
 // budget of registry_data.go. Research reads primary sources, verifies the joins between
 // delegate returns, and leaves one cited durable output per run.
 var craftResearchAnchors = []Anchor{
@@ -19,4 +20,6 @@ var craftResearchAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-shape-idea.md", Kind: Forbid, Section: "", Needle: "and produce a short", Diagnostic: ".agents/commands/bench-shape-idea.md keeps the Research ticket's own output rule; craft-research owns the durable output"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-shape-idea.md", Kind: Forbid, Section: "", Needle: "Include a runnable compatibility probe when the answer", Diagnostic: ".agents/commands/bench-shape-idea.md keeps the Research ticket's own probe rule; craft-research owns the compatibility evidence rule"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-shape-idea.md", Kind: Forbid, Section: "", Needle: "as a read-only delegation. Otherwise resolve it inline.", Diagnostic: ".agents/commands/bench-shape-idea.md keeps its own research delegation rule; craft-research owns the rounds and the delegates"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-write-spec.md", Kind: Require, Section: "", Needle: "The invoking session first fans out read-only research delegates over the one decision source.", Diagnostic: ".agents/commands/bench-write-spec.md dropped the research fan-out before the spec-authoring fork"},
+	{Group: AfterImplementSpec, File: ".agents/commands/bench-write-spec.md", Kind: Require, Section: "", Needle: "The charge gives the fork the findings as compressed inputs, and the fork does not repeat their reads.", Diagnostic: ".agents/commands/bench-write-spec.md dropped the fork's use of the research findings without a repeat of their reads"},
 }

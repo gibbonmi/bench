@@ -489,7 +489,7 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 |---|---|
 | `.bench/BENCH.md` | 192 |
 | `.agents/commands/bench-implement-spec.md` | 83 |
-| `.agents/commands/bench-write-spec.md` | 73 |
+| `.agents/commands/bench-write-spec.md` | 82 |
 | `.agents/commands/bench-debug.md` | 170 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
 | `.agents/skills/bench-craft-spec/SKILL.md` | 155 |
@@ -575,8 +575,9 @@ escalation.
 - **Spec and ticket authoring** → **a fork of the current conversation**.
   `/bench-write-spec` accepts exactly one of three sources: a ready compiled
   map, a reviewer-confirmed current conversation, or a named reviewed artifact.
-  The invoking session forks before authoring, and that context-inheriting fork
-  authors the spec and slices the tickets from the source and the current tree.
+  The invoking session forks after the research fan-out that `/bench-write-spec`
+  owns. That context-inheriting fork authors the spec and slices the tickets from
+  the source and the research findings.
   The fork inherits the invoking session's line, with no model override.
 
   Top +

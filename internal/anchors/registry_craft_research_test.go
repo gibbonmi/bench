@@ -3,12 +3,15 @@ package anchors
 import "testing"
 
 // TestCraftResearchAnchorsRedOnRemoval keeps the research skill's anchored sentences and
-// the caller pointers red-capable. Each needle and diagnostic is written here
-// independently of the registry, so a rewrite that drops a rule cannot define itself green.
+// the caller pointers red-capable. The write-spec rules hold its phase order: the research
+// fan-out comes first, and the spec-authoring fork follows every return. Each needle and
+// diagnostic is written here independently of the registry, so a rewrite that drops a rule
+// cannot define itself green.
 func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
 	const skill = ".agents/skills/bench-craft-research/SKILL.md"
 	const shaping = ".agents/commands/bench-shape-idea.md"
 	const bootstrap = ".agents/skills/bench-craft-spec/references/bootstrap-authority.md"
+	const writeSpec = ".agents/commands/bench-write-spec.md"
 	anchorHarness{
 		group: AfterImplementSpec,
 		rules: []anchorRule{
@@ -84,6 +87,22 @@ func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
 				needle:    "as a read-only delegation. Otherwise resolve it inline.",
 				want:      ".agents/commands/bench-shape-idea.md keeps its own research delegation rule; craft-research owns the rounds and the delegates",
 				forbidden: true,
+			},
+			{
+				file:   writeSpec,
+				needle: "The invoking session first fans out read-only research delegates over the one decision source.",
+				want:   ".agents/commands/bench-write-spec.md dropped the research fan-out before the spec-authoring fork",
+			},
+			{
+				file:   writeSpec,
+				needle: "The charge gives the fork the findings as compressed inputs, and the fork does not repeat their reads.",
+				want:   ".agents/commands/bench-write-spec.md dropped the fork's use of the research findings without a repeat of their reads",
+			},
+			{
+				file:    writeSpec,
+				section: "Who runs this phase",
+				needle:  "After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and slice its tickets.",
+				want:    ".agents/commands/bench-write-spec.md dropped the conversation fork for spec authoring and ticket slicing",
 			},
 		},
 	}.check(t)
