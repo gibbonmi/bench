@@ -38,7 +38,7 @@ and review cost that recent builds paid.
 
 **FT258 (HIGH, decision required) — `bench commit` derives a complete change set and preserves merge parents.**
 
-**FT342 (HIGH, decision required) — a chunked build has one sanctioned route for a moved `main`, from preflight through completion and landing.**
+**FT342 (HIGH) — a chunked build has one sanctioned route for a moved `main`, from preflight through completion and landing.**
 
 **FT141 (HIGH, decision required) — red verdicts are attributed against an exact-tree baseline.**
 
@@ -112,6 +112,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT401 (LOW, decision required) — the refusals outside the write verbs print their routes from the refusal-route registry.**
 
+**FT408 (MEDIUM) — an assignment with no landed commit and uncommitted output is not landed.**
+
 ## Planning, ownership, and review integrity
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
@@ -164,6 +166,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT403 (MEDIUM) — a review axis sweeps for each variant of a held finding and checks every registry of an extended family.**
 
+**FT410 (LOW) — the last chunk of a build closes through the complete checkpoint alone.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -191,6 +195,14 @@ and the small cuts. The rows below hold the rest.
 **FT394 (LOW) — `bench learning` links a landed fix to the open entry that it resolves.**
 
 **FT402 (MEDIUM, decision required) — the landing gate costs less time and keeps its failure detection.**
+
+**FT409 (MEDIUM) — `bench test` reports the slowest tests and warns when a package nears the go test timeout.**
+
+**FT411 (MEDIUM, decision required) — tests that add no value are cut, and their coverage stays with the tests that subsume them.**
+
+**FT407 (LOW) — the adoption transaction seam has a removal fault point.**
+
+**FT412 (LOW) — a production seam that does I/O per item has a test that pins how its cost grows.**
 
 **FT404 (LOW, decision required) — each conformance check states the scope that its detector grades.**
 
