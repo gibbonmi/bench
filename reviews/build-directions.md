@@ -1656,6 +1656,72 @@
           "supersedes": [
             "bd-c4-r2-spec"
           ]
+        },
+        {
+          "id": "bd-c4-r4-spec",
+          "performer": "claude:bd_c4r2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "659d624d64aea685d5b7864364b6dd9ef386ff44",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c4r2_spec",
+            "digest": "sha256:445a8c645dcffcd96dee538764d2ea570a9416cfc03aa979b5949271238af9bf",
+            "excerpt": "axis: Spec (reaffirmation of P21); session claude:bd_c4r2_spec; model opus; effort high; plan commit 4628024f after the BD-C4 chunk tip 6f33a6c6.\nverdict: P21 closed; no new finding.\nCitation: 4628024f adds story 47 under a new Source cleanup heading at spec.md:132-134 and moves the BD64 row from story 44 to story 47 at spec.md:425; story 44 keeps only BD48. The orchestrator ran bench coverage --check on the spec: valid, 63 rows.\n"
+          },
+          "axis": "Spec",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "4628024f0668fede5d996583cb3a1a60f1a2219c",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c4-r3-spec"
+          ]
+        },
+        {
+          "id": "bd-c4-r3-standards",
+          "performer": "claude:bd_c4r2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "659d624d64aea685d5b7864364b6dd9ef386ff44",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c4r2_standards",
+            "digest": "sha256:a228875c1ed66161f4943bca83bb908f4171fc03fea66ef098dea3cb78031aa9",
+            "excerpt": "axis: Standards (round 3, refrozen pair 07eef7ec..4628024f); session claude:bd_c4r2_standards; model opus; effort high; added delta 6f33a6c6..4628024f (spec only).\nverdict: clean; no blocking finding.\nThe delta adds the Source cleanup heading and story 47 at spec.md:132-134 and remaps BD64 to story 47 at spec.md:425; the BD64 behavior, seam, and why-it-catches cells are byte-identical; the persona matches stories 42-44; the story stays within 25 words; the source-sentence row at spec.md:554 still holds; no duplicated knowledge.\nAdvice (orchestrator classification: optional advice, a wording preference at confidence 3 with no binding requirement; a fix would force another refreeze): the \"so that\" clause of story 47 restates the want instead of giving the reason, and \"takes\" is vague; BD64's why-it-catches cell holds the reason.\nEvidence note: the axis's --check-current refused only because the orchestrator's uncommitted Spec record entry made the tree dirty; the orchestrator bound sha256:c132de463bcd328a4d08e8a9f7a6b31af66a9916a20b97981b65fb84f99c1336 as current=true at 43adc5e9 immediately before that write.\n"
+          },
+          "axis": "Standards",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "4628024f0668fede5d996583cb3a1a60f1a2219c",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c4-r2-standards"
+          ]
+        },
+        {
+          "id": "bd-c4-r3-coverage",
+          "performer": "claude:bd_c4r2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "659d624d64aea685d5b7864364b6dd9ef386ff44",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c4r2_coverage",
+            "digest": "sha256:8abe3984af954b5b8389d3b43428111a3c5affeca7432f772ea4ec990967ed9e",
+            "excerpt": "axis: Coverage (round 3, refrozen pair 07eef7ec..4628024f); session claude:bd_c4r2_coverage; model opus; effort high; added delta 6f33a6c6..4628024f (spec only).\nverdict: clean (0 findings)\nThe delta adds story 47 (spec.md:129-135) and changes the BD64 story cell from 44 to 47 (spec.md:425); the row's behavior, test, and why-it-catches text are byte-identical. It touches no ticket, Go file, or completion-plan entry, so the round 2 probes on BD64, both fingerprint tests, and the count pin still apply.\nCitation: bench coverage --check specs/build-directions/spec.md returned \"ok: coverage map valid — 63 row(s)\" at 43adc5e9.\nEvidence note: the axis's --check-current refused only because the orchestrator's uncommitted Spec record entry made the tree dirty; the orchestrator bound sha256:c132de463bcd328a4d08e8a9f7a6b31af66a9916a20b97981b65fb84f99c1336 as current=true at 43adc5e9 immediately before that write.\n"
+          },
+          "axis": "Coverage",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "4628024f0668fede5d996583cb3a1a60f1a2219c",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c4-r2-coverage"
+          ]
         }
       ]
     }
@@ -1843,7 +1909,9 @@ Chunk BD-C4 round 1 ran three opus/high axes in parallel at `dddab05a` over the 
 
 An independent consultation grader found G1: the build-log fingerprint test pasted the fixture harness of the runtime fingerprint test. The orchestrator accepted G1 and added it to the ticket 06 repair. The repair `6f33a6c6` also widened the ticket 06 fence by the package test-count pin in plan commit `ff541363`.
 
-BD-C4 round 2 ran three opus/high axes in parallel at `5fe7a2c8` over the repair delta `4ed02fb8..6f33a6c6`. Every axis confirmed the folds of C1, S1, and G1. The Spec axis raised P21, and plan commit `4628024f` gave BD64 its own story 47. The Spec axis then reaffirmed P21 as closed. BD-C4 closes with repair cycle 1 of 2 used and no open finding.
+BD-C4 round 2 ran three opus/high axes in parallel at `5fe7a2c8` over the repair delta `4ed02fb8..6f33a6c6`. Every axis confirmed the folds of C1, S1, and G1. The Spec axis raised P21, and plan commit `4628024f` gave BD64 its own story 47. The Spec axis then reaffirmed P21 as closed.
+
+The checkpoint refused the plan commit after the chunk tip, so BD-C4 refroze at `4628024f`. The ticket 06 repair session recorded its verification there, and all three axes graded the spec-only delta with no finding. BD-C4 closes with repair cycle 1 of 2 used and no open finding.
 
 ## Standards
 
