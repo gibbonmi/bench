@@ -65,7 +65,7 @@ and fold them into the landing's census entry.
 
 For a defect outside its fence, a delegate follows [debug integration](../../commands/bench-debug.md#how-it-meets-the-rest-of-bench) for the diagnostic handoff.
 A new worktree charge starts after the coordinator runs `git rev-parse HEAD main`.
-If the refs differ, only the coordinator runs `bench worktree merge --from main <target>` and verifies equality before the delegate starts.
+If the refs differ, only the coordinator runs `bench worktree merge --from main <target>` and verifies equality before the delegate starts. During a build, `/bench-implement-spec` owns the fold timing, and a ticket charge starts without this fold.
 A fix-pass charge names a commit-specific sentinel.
 
 A user-directed write delegate returns focused evidence and its own mutation probe, and it does not land the diff.
