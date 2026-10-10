@@ -121,8 +121,12 @@ func TestContextCommandIndexOmitsCaptureBodiesWithTrueSizes(t *testing.T) {
 func TestContextCommandLearningsReportTheResolvingCommit(t *testing.T) {
 	root := newRepo(t)
 	const commit = "0123456789abcdef0123456789abcdef01234567"
-	journal := "## 2026-01-03 — linked  [open]\n- **Resolved by:** " + commit + "\n- **What happened:** x\n\n## 2026-01-04 — unlinked  [open]\n- **What happened:** y\n"
-	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(learnings.JournalPath)), []byte(journal), 0o644); err != nil {
+	unlinked := "## 2026-01-03 — linked  [open]\n- **What happened:** x\n\n## 2026-01-04 — unlinked  [open]\n- **What happened:** y\n"
+	journal, err := learnings.MarkResolved([]byte(unlinked), "linked", commit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(learnings.JournalPath)), journal, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	for _, args := range [][]string{{"--context"}, {"--context", "--full"}} {

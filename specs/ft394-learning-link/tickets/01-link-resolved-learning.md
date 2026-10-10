@@ -12,12 +12,14 @@ The heading keeps its `[open]` marker.
 
 The journal parser reads the bullet. The `learnings` block of `bench roadmap --context` shows it in a `resolved_by` column.
 The drain reads that column and closes the entry by that commit. It no longer pairs a second `Resolved:` entry by hand.
+
+The verb links only a commit that the default branch reaches. It reads only the live journal, so inside an open drain it refuses a sealed entry. The drain guidance says that a fix landed inside the drain needs no link.
 The same change retires the roadmap row FT394.
 
 ## Acceptance
 
 - [ ] `bench learning --resolves "<title>" --commit <sha>` writes the full commit ID into the one open entry with that exact title. The entry stays open and parses with no malformed record. Other entries are unchanged.
-- [ ] The verb exits 1 and leaves the journal unchanged when no open entry has the title. It does the same when two open entries have it, when the entry already has a link, or when the commit does not resolve.
+- [ ] The verb exits 1 and leaves the journal unchanged when no open entry has the title. It does the same when two open entries have it, or when the entry already has a link. It does the same when the commit does not resolve or when the default branch does not reach the commit. When a capture drain is open and no live open entry has the title, the refusal names the drain.
 - [ ] The verb exits 2 with the usage line when `--resolves` has no `--commit`, or `--commit` has no `--resolves`. It does the same when a title, `--what`, `--right`, or `--rule` joins `--resolves`.
 - [ ] `bench roadmap --context` reports the commit in the `resolved_by` column of the entry. An unlinked entry has an empty cell. The index and the full snapshot both show the column.
 - [ ] The root help inventory lists the new form, and the drain guidance tells the drain to read `resolved_by`.

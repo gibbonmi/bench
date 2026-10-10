@@ -34,7 +34,7 @@ func TestMarkResolvedLinksOnlyTheNamedEntry(t *testing.T) {
 	if entries[1].State != "open" {
 		t.Fatalf("state = %q, want open", entries[1].State)
 	}
-	if got := strings.Replace(string(after), "- **Resolved by:** "+resolvingCommit+"\n", "", 1); got != before {
+	if got := strings.Replace(string(after), resolvedBulletPrefix+resolvingCommit+"\n", "", 1); got != before {
 		t.Fatalf("journal changed beyond the one bullet:\n%s", after)
 	}
 }

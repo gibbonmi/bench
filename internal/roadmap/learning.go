@@ -116,12 +116,26 @@ func resolveLearning(parsed usage.Result) (string, int) {
 	if err != nil || full == "" {
 		return toon.Errorf("commit does not resolve: "+commit, "pass a commit that exists in this repository") + "\n", 1
 	}
+	// The default branch owns "fixed": a commit it does not reach is not landed work.
+	def, ok := git.ResolvedDefault(checkout)
+	if !ok {
+		return toon.Errorf("default branch does not resolve", "repair Git metadata, then retry") + "\n", 1
+	}
+	if !git.OK("-C", checkout, "merge-base", "--is-ancestor", full, def) {
+		return toon.Errorf("commit is not on the default branch "+def+": "+full, "land the fix, then link it") + "\n", 1
+	}
 	file := filepath.Join(root, learnings.JournalPath)
 	err = capturetx.Append(root, capturetx.Source{Name: learnings.JournalPath, Path: file}, func(current []byte) ([]byte, error) {
 		return learnings.MarkResolved(current, title, full)
 	})
 	switch {
-	case errors.Is(err, learnings.ErrNoOpenEntry), errors.Is(err, learnings.ErrAmbiguousEntry), errors.Is(err, learnings.ErrAlreadyResolved):
+	case errors.Is(err, learnings.ErrNoOpenEntry):
+		// An open drain moved the sealed entries out of the live journal, so name it.
+		if bundle, present, drainErr := capturetx.Current(root); drainErr == nil && present {
+			return toon.Errorf(err.Error()+": "+title, "drain "+bundle.ID+" is open and sealed its entries; the drain closes them") + "\n", 1
+		}
+		return toon.Errorf(err.Error()+": "+title, "run bench learnings for the open titles") + "\n", 1
+	case errors.Is(err, learnings.ErrAmbiguousEntry), errors.Is(err, learnings.ErrAlreadyResolved):
 		return toon.Errorf(err.Error()+": "+title, "run bench learnings for the open titles") + "\n", 1
 	case err != nil:
 		return cannotWrite(learnings.JournalPath, err), 1

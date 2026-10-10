@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capturetx"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -233,6 +234,71 @@ func TestLearningResolveRefusalsLeaveTheJournalUnchanged(t *testing.T) {
 				t.Fatalf("journal changed on refusal:\n%s", after)
 			}
 		})
+	}
+}
+
+// TestLearningResolveRefusesACommitOffTheDefaultBranch covers the containment rule: a
+// commit that exists in the repository but that the default branch does not reach is
+// refused with exit 1, and the journal keeps its bytes. The fixture's topic branch holds
+// the extra commit, and main does not.
+func TestLearningResolveRefusesACommitOffTheDefaultBranch(t *testing.T) {
+	root := newRepo(t)
+	if out, code := LearningCommand([]string{"open lesson", "--what", "it failed", "--right", "read the map"}); code != 0 {
+		t.Fatalf("seed = %q/%d", out, code)
+	}
+	if out, err := exec.Command("git", "-C", root, "commit", "-q", "--allow-empty", "-m", "topic only").CombinedOutput(); err != nil {
+		t.Fatalf("topic commit: %v: %s", err, out)
+	}
+	offMain := headCommit(t, root)
+	before, err := os.ReadFile(journalPath(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, code := LearningCommand([]string{"--resolves", "open lesson", "--commit", offMain})
+	if code != 1 || !strings.Contains(out, "not on the default branch") {
+		t.Fatalf("resolve = %q/%d, want exit 1 naming the default branch", out, code)
+	}
+	after, err := os.ReadFile(journalPath(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != string(before) {
+		t.Fatalf("journal changed on refusal:\n%s", after)
+	}
+}
+
+// TestLearningResolveNamesTheOpenDrainWhenTheTitleIsSealed covers the refusal text for a
+// title that an open drain sealed: the live journal no longer holds the entry, so the
+// refusal names the drain, and the reader learns why the title is missing.
+func TestLearningResolveNamesTheOpenDrainWhenTheTitleIsSealed(t *testing.T) {
+	root := newRepo(t)
+	head := headCommit(t, root)
+	if out, code := LearningCommand([]string{"sealed lesson", "--what", "it failed", "--right", "read the map"}); code != 0 {
+		t.Fatalf("seed = %q/%d", out, code)
+	}
+	if out, code := CaptureCommand([]string{"drain"}); code != 0 {
+		t.Fatalf("drain = %q/%d", out, code)
+	}
+	bundle, present, err := capturetx.Current(root)
+	if err != nil || !present {
+		t.Fatalf("open drain = %v, present=%v", err, present)
+	}
+	out, code := LearningCommand([]string{"--resolves", "sealed lesson", "--commit", head})
+	if code != 1 || !strings.Contains(out, "no open entry has that title") || !strings.Contains(out, bundle.ID) {
+		t.Fatalf("resolve = %q/%d, want exit 1 naming the open drain %s", out, code, bundle.ID)
+	}
+	if out, code := LearningCommand([]string{"--resolves", "missing lesson", "--commit", head}); code != 1 || !strings.Contains(out, bundle.ID) {
+		t.Fatalf("resolve of an unknown title = %q/%d, want the open drain named too", out, code)
+	}
+}
+
+// TestLearningResolveNamesNoDrainWhenNoneIsOpen keeps the drain note out of a refusal that
+// the drain did not cause.
+func TestLearningResolveNamesNoDrainWhenNoneIsOpen(t *testing.T) {
+	newRepo(t)
+	out, code := LearningCommand([]string{"--resolves", "missing lesson", "--commit", headCommit(t, ".")})
+	if code != 1 || strings.Contains(out, "drain") {
+		t.Fatalf("resolve = %q/%d, want exit 1 with no drain named", out, code)
 	}
 }
 

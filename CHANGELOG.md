@@ -8,7 +8,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Learning link
 
-- Added `bench learning --resolves "<title>" --commit <sha>`. It adds a `Resolved by` bullet with the full commit ID to the open journal entry with that exact title. The entry stays open. The verb refuses an unknown title, a repeated title, a linked entry, and a commit that does not resolve.
+- Added `bench learning --resolves "<title>" --commit <sha>`. It adds a `Resolved by` bullet with the full commit ID to the open journal entry with that exact title. The entry stays open. The verb refuses an unknown title, a repeated title, a linked entry, a commit that does not resolve, and a commit that the default branch does not reach. When a capture drain is open, the refusal for a missing title names the drain.
 - Changed the `learnings` block of `bench roadmap --context` so that it has a `resolved_by` column. `/bench-drain` reads that column and closes a linked entry by its commit.
 
 ### Known-issues route
