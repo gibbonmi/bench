@@ -433,7 +433,7 @@ For an empty directory, Git reports no path, and a landing proceeds as today.
 
 ## Ownership fences
 
-The fence is the union of the ticket `Writes:` lines, plus the review pickup.
+The fence is the union of the ticket Writes lines, plus the review pickup.
 The reviewer disposition of this fence is part of the spec sign-off.
 
 - `.agents/commands/bench-implement-spec.md`
