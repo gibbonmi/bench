@@ -581,6 +581,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bd-c1-r2-standards",
+          "performer": "claude:bd_c1r2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c1r2_standards",
+            "digest": "sha256:61fe34839a04175a6170586b5479dd23ad236ecfb38eec46f1069638e1ff6a8d",
+            "excerpt": "axis: Standards (confirming round 2); session claude:bd_c1r2_standards; model opus; effort high; frozen pair dcf7fad0..11006538; repair delta d3bd78a9..11006538; evidence sha256:45b5d7e03bcfd8e11e5c11f280f45d50725cc23fbb9d891c3fb193f1fa4835f0 current=true at 94d9c296.\nverdict: clean; no blocking finding; two advisory no-op findings.\nFolds: S1/P1/C2 -> BD62 confirmed (implement-spec.md:50; registry_chunk_chain.go:19; registry_chunk_chain_test.go:9). S5 confirmed (registry_chunk_chain.go:34 uses craftDelegate; registry_charge_binding.go:37). S2 confirmed (registry_chunk_chain.go:8-14 and registry_commitment.go:10-14, every sentence 24 words or fewer). S3 confirmed (CHANGELOG.md:13, longest sentence 19 words). C1 -> BD63 confirmed (registry_chunk_chain.go:45; registry_chunk_chain_test.go:37; README.md:83 clean).\nS21 | advisory | internal/anchors/registry_chunk_chain.go:3-4 | The header's first sentence predates this chunk and has 26 words; editing it is outside the acceptance's reach. | ste-prose.md:17-18; git diff dcf7fad0 11006538 leaves lines 3-4 unchanged. | no-op | confidence 3\nS22 | advisory | .agents/commands/bench-implement-spec.md:50 | The post-ticket flag pair now appears in Build :50 and Land :60, each pinned; the copies agree, and BD62 approved the in-place Build edit. | implement-spec.md:60; registry_chunk_chain.go:19 and :33; spec.md:365. | no-op | confidence 3\nOrchestrator classification: S21 is optional advice (pre-existing text outside the chunk's reach, bounded-repair-policy.md:33-36); S22 is optional advice (a closed spec decision, BD62).\n"
+          },
+          "axis": "Standards",
+          "base": "dcf7fad065c259c7013bcd21138431360a15e33f",
+          "tip": "11006538a3b96299a8110cf266d3698390fb6029",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c1-r1-standards"
+          ]
+        },
+        {
+          "id": "bd-c1-r2-spec",
+          "performer": "claude:bd_c1r2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c1r2_spec",
+            "digest": "sha256:023e98bc44f2229942e109b14b882d028c032684b7cc5be6109e77506b1967ad",
+            "excerpt": "axis: Spec (confirming round 2); session claude:bd_c1r2_spec; model opus; effort high; frozen pair dcf7fad0..11006538; repair delta d3bd78a9..11006538; evidence sha256:45b5d7e03bcfd8e11e5c11f280f45d50725cc23fbb9d891c3fb193f1fa4835f0 current=true at 94d9c296.\nverdict: findings (1 advisory, 0 blocking)\nFolds: S1/P1/C2 -> BD62 confirmed (implement-spec.md:50 matches spec.md:158 and :365; row registry_chunk_chain.go:19; mirror registry_chunk_chain_test.go:9; no other bare post-ticket preflight). S5 confirmed (registry_chunk_chain.go:34). S2 confirmed (registry_chunk_chain.go:8-14, registry_commitment.go:10-13). S3 confirmed (CHANGELOG.md:13). C1 -> BD63 confirmed (registry_chunk_chain.go:45; registry_chunk_chain_test.go:37; spec.md:389; README.md:83). The plan expansion is consistent, and the repair delta changes no needle of any other BD-C1 row.\nP21 | advisory | internal/anchors/registry_commitment.go:10-13 | The orchestrator made the S2 repair itself in 11006538, while the repair state at reviews/build-directions.md:622,629 gave it to tickets 02 and 03. | BENCH.md repair rule; spec.md:140; no learning records the route. | ask-user | confidence 6\nOrchestrator classification: P21 is optional advice. bounded-repair-policy.md:47 makes a comment-only Go correction that the checkpoint accepts evidence-only, committed by the orchestrator with no plan assignment; the repair-state prose is corrected to name that route.\n"
+          },
+          "axis": "Spec",
+          "base": "dcf7fad065c259c7013bcd21138431360a15e33f",
+          "tip": "11006538a3b96299a8110cf266d3698390fb6029",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c1-r1-spec"
+          ]
+        },
+        {
+          "id": "bd-c1-r2-coverage",
+          "performer": "claude:bd_c1r2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c1r2_coverage",
+            "digest": "sha256:b1f00a44a1f8cb377cc8fa058f1e03895c36f1e9bb1f50e2313faad805353ed5",
+            "excerpt": "axis: Coverage (confirming round 2); session claude:bd_c1r2_coverage; model opus; effort high; frozen pair dcf7fad0..11006538; repair delta d3bd78a9..11006538; evidence sha256:45b5d7e03bcfd8e11e5c11f280f45d50725cc23fbb9d891c3fb193f1fa4835f0 current=true at 94d9c296.\nverdict (native): findings (2 advisory, 0 blocking). All five folds confirmed; BD62 and BD63 both bite on the live tree.\nChecks: bench worktree build; floor packages pass (anchors 179, conformance 1684, cmd/bench 333, one capability skip); docs-currency-workflow green; bench coverage --check valid with 62 rows; git status --porcelain empty after four probes.\nFolds: S1/P1/C2 -> BD62 confirmed (swap back to the bare form bit with the rewritten diagnostic). S5 confirmed (registry_chunk_chain.go:34). S2 confirmed (longest sentences 24 words). S3 confirmed (CHANGELOG.md:13). C1 -> BD63 confirmed (adding \"no; chunk checkpoint\"| accepted bit with the new Forbid diagnostic).\nAdvice (orchestrator classification: optional advice under bounded-repair-policy.md:38-40, because each item grades only a check from the BD-C1 hardening cycle, BD62 or BD63):\n- README.md:83: the BD63 needle depends on the space before `accepted`; a no-space variant was silent. A Require on the exact edge could cover BD55 and BD63 together.\n- implement-spec.md:50: BD62 is Require-only, so a second near-variant bare preflight sentence passes; that is not the retired sentence.\n"
+          },
+          "axis": "Coverage",
+          "base": "dcf7fad065c259c7013bcd21138431360a15e33f",
+          "tip": "11006538a3b96299a8110cf266d3698390fb6029",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c1-r1-coverage"
+          ]
         }
       ]
     }
@@ -619,17 +685,21 @@
 
 Chunk BD-C1 round 1 ran three opus/high axes in parallel at `8832b21f` over the frozen pair `dcf7fad0..d3bd78a9`. Only the Coverage axis ran tests and probes, and the tree was clean after every return.
 
-Chunk BD-C1 uses repair cycle 1 through one fresh repair session for each affected ticket. Ticket 01 takes S1, P1, C2, and S5. Ticket 02 takes the `registry_commitment.go` part of S2. Ticket 03 takes the `registry_chunk_chain.go` part of S2, S3, and C1. S4 is `no-op`. Under `--auto-approve`, the reviewer approved the spec expansion for S1 and C1 in advance.
+Chunk BD-C1 uses repair cycle 1 of 2. A fresh repair session for ticket 01 takes S1, P1, C2, and S5 in `d2ef0be0`. A fresh repair session for ticket 03 takes S3 and C1 in `b9c8e95c`. S2 is a comment-only Go correction, so the orchestrator commits it as evidence-only work in `11006538` under the bounded repair policy. S4 is `no-op`. Under `--auto-approve`, the reviewer approved the spec expansion for S1 and C1 in advance.
+
+BD-C1 round 2 ran three opus/high axes in parallel at `94d9c296` over the repair delta `d3bd78a9..11006538`. Every axis confirmed the folds of S1, P1, C2, S2, S3, S5, and C1, and every axis passed. BD-C1 closes with repair cycle 1 of 2 used and no open finding.
 
 ## Standards
 
 BD-C1 round 1: 5 findings, worst S1. Raw count 5; repair targets 3 after S1 merges with P1 and C2.
 
 - S1 (auto-fix, confidence 7): the Build sentence at implement-spec:50 gives the bare post-ticket preflight. The Land fold paragraph says that this preflight passes an explicit range. Repair: ticket 01 edits the Build sentence in place to name the range, and its anchor row and mirror change with it.
-- S2 (auto-fix, confidence 7): the header comments of `registry_chunk_chain.go` and `registry_commitment.go` hold sentences over the 25-word bound. Repair: tickets 03 and 02 split them.
+- S2 (auto-fix, confidence 7): the header comments of `registry_chunk_chain.go` and `registry_commitment.go` hold sentences over the 25-word bound. Repair: the orchestrator splits them in an evidence-only comment correction.
 - S3 (auto-fix, confidence 5): the third `### Build directions` bullet of `CHANGELOG.md` holds one 29-word sentence. Repair: ticket 03 splits it.
 - S4 (no-op, confidence 4): each author recorded a harness red with the mirror rules in place and the registry rows absent, in its red-to-green log. That red demonstrates each mirror's independence.
 - S5 (auto-fix, confidence 3): the craft-delegate row spells the path that the `craftDelegate` constant already holds. Repair: ticket 01 uses the constant.
+
+BD-C1 round 2: 0 findings. Advice: the first header sentence of `registry_chunk_chain.go` predates the chunk and has 26 words. The Build and Land sentences both name the post-ticket range; they agree, and BD62 approved that pair.
 
 ## Spec
 
@@ -637,9 +707,13 @@ BD-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0 after P1 merge
 
 - P1 (auto-fix, confidence 4): the same defect as S1.
 
+BD-C1 round 2: 0 findings. BD62 and BD63 are met. Advice: the review pickup first gave S2 to two ticket repairs, and this record now names the evidence-only route.
+
 ## Coverage
 
 BD-C1 round 1: 2 findings, worst C1. Raw count 2; repair targets 1 after C2 merges with S1.
 
 - C1 (auto-fix, confidence 7): no row keeps the chunk checkpoint label off the README `accepted` edge, and a swap probe that adds it was silent. Repair: ticket 03 adds one README Forbid row with a mirror.
 - C2 (auto-fix, confidence 6): the same defect as S1.
+
+BD-C1 round 2: 0 findings. BD62 and BD63 bite on the live tree. Advice: the BD63 needle depends on the space before `accepted`, and BD62 does not refuse a second near-variant sentence. Each grades only a check from the BD-C1 hardening cycle.
