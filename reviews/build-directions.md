@@ -277,7 +277,79 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bd-c1-r1-standards",
+          "performer": "claude:bd_c1_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "abbd803bc52d56e9be73ca6b490ec45bd0c9cd03",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_c1_standards",
+            "digest": "sha256:70de1f325e173af5890fee834bd5fe7bf500aefea2c7fcfbc194fafbc7916069",
+            "excerpt": "axis: Standards; session claude:bd_c1_standards; model opus; effort high; frozen pair dcf7fad0..d3bd78a9; evidence sha256:8d97c0bde2ab464ecb1cc05e490987cd0d5e3684f58b7d2063710ad83d35eb6d current=true at 8832b21f.\nverdict: findings (5 advisory, 0 blocking; worst S1)\nS1 | advisory | .agents/commands/bench-implement-spec.md:50 | Build :50 still gives the bare post-ticket preflight while Land :60 says that preflight passes --base and --source-tip; two statements of one rule disagree. | AGENTS.md one-source rule; spec.md:141, spec.md:24; registry_chunk_chain_test.go:9 pins the bare needle. | ask-user | confidence 7\nS2 | advisory | internal/anchors/registry_chunk_chain.go:11-12 | A new comment sentence has 37 words and says rows \"give the chunk freeze\" though rows only pin sentences; registry_commitment.go:12-14 grows a sentence past 25 words. | craft-comments/SKILL.md:12; ste-prose.md:17-18. | auto-fix | confidence 7\nS3 | advisory | CHANGELOG.md:13 | The third bullet has one 29-word sentence that joins an unrelated fact to a because clause. | ste-prose.md:17-18; .bench/prose-exclusions:7 skips the file. | auto-fix | confidence 5\nS4 | advisory | internal/anchors/registry_chunk_chain_test.go:13-36 | 22 mirror rows; the record holds no red that shows a dropped registry row turns a mirror red. | AGENTS.md test-expectation exception. | ask-user | confidence 4\nS5 | advisory | internal/anchors/registry_chunk_chain.go:32 | The new row spells the craft-delegate path as a literal although craftDelegate exists (registry_charge_binding.go:37). | Duplicated Code smell; registry_data.go repeats the literal 43 times. | no-op | confidence 3\nImplementation command contribution: S2 and S3 yes (the author charge does not say that no gate grades Go comments or excluded files); S1 spec stage; S4, S5 no.\n"
+          },
+          "axis": "Standards",
+          "base": "dcf7fad065c259c7013bcd21138431360a15e33f",
+          "tip": "d3bd78a98f4834886c8714d9bf00930e89c3ef23",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bd-c1-r1-spec",
+          "performer": "claude:bd_c1_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "abbd803bc52d56e9be73ca6b490ec45bd0c9cd03",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_c1_spec",
+            "digest": "sha256:4c9ea484cc11b82f96144d215bb1ee5faa4b0f58352acdb9656bf0d43a4f821d",
+            "excerpt": "axis: Spec; session claude:bd_c1_spec; model opus; effort high; frozen pair dcf7fad0..d3bd78a9; evidence sha256:8d97c0bde2ab464ecb1cc05e490987cd0d5e3684f58b7d2063710ad83d35eb6d current=true at 8832b21f.\nverdict: findings (one advisory, no-op; nothing blocking)\nEvery BD-C1 row (BD1-BD21, BD50-BD52, BD55, BD57, BD58, BD60, BD61) checked against the spec's quoted sentences and implementation decisions (spec.md:143-214): every required sentence present byte-exact in its named section; pinned text unchanged (BD5, BD6, BD15, BD20); registry rows and mirrors placed as the spec states; budgets 89/89; CHANGELOG one heading and three bullets; no retired rule survives (rg --hidden sweep).\nP1 | advisory | .agents/commands/bench-implement-spec.md:50 | The Build section still says \"After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug>`.\" in bare form; only the Land sentence at :60 qualifies it. | spec.md:145-147 places the explicit-range sentence in Land only and directs no edit to :50; that sentence is pinned at registry_chunk_chain_test.go:9. | no-op | confidence 4\nImplementation command contribution: none for P1.\nTests and probes run: none.\n"
+          },
+          "axis": "Spec",
+          "base": "dcf7fad065c259c7013bcd21138431360a15e33f",
+          "tip": "d3bd78a98f4834886c8714d9bf00930e89c3ef23",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bd-c1-r1-coverage",
+          "performer": "claude:bd_c1_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "abbd803bc52d56e9be73ca6b490ec45bd0c9cd03",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_c1_coverage",
+            "digest": "sha256:d25ae2f714abbefd2f20891ff2b636f98f5a03dfabfc2b7892a621d1f10d9f21",
+            "excerpt": "axis: Coverage; session claude:bd_c1_coverage; model opus; effort high; frozen pair dcf7fad0..d3bd78a9; evidence sha256:8d97c0bde2ab464ecb1cc05e490987cd0d5e3684f58b7d2063710ad83d35eb6d current=true at 8832b21f.\nverdict: findings (2 advisory, 0 blocking)\nC1 | advisory | README.md:83 | No row stops the chunk checkpoint label from returning on the no-successor (accepted) edge; story 19 asks for the successor edge only. | bench probe README.md --swap 'more -->|\"no\"| accepted' --with 'more -->|\"no; chunk checkpoint\"| accepted' --check docs-currency-workflow returned silent (passed, 0 failed, restored yes); rows registry_chunk_chain.go:43-44, mirrors registry_chunk_chain_test.go:35-36. | auto-fix (add one README Forbid row with a mirror) | confidence 7\nC2 | advisory | .agents/commands/bench-implement-spec.md:50 | The Build section gives the bare post-ticket preflight; when main moves mid-chunk, base-current goes red and routes bench worktree merge --from main (internal/preflight/decision.go:268-287), a mid-chunk fold that BD1 and BD3 forbid. | spec.md:24, spec.md:141; registry_chunk_chain_test.go:9 pins the bare form; BD3 pins only the Land sentence. | ask-user | confidence 6\nChecked and holding: floor packages pass; docs-currency-workflow green; every new or rewritten row has a mirror; no surviving retired copy (rg --hidden); BD3 claim true (gather.go:114, decision.go:262-266, decision_test.go:217); BD5 holds; no edit outside the acceptance's reach; tree clean after the probe.\nImplementation command contribution: none for C1 or C2 (both spec stage).\n"
+          },
+          "axis": "Coverage",
+          "base": "dcf7fad065c259c7013bcd21138431360a15e33f",
+          "tip": "d3bd78a98f4834886c8714d9bf00930e89c3ef23",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -289,3 +361,32 @@
   }
 }
 ```
+
+## Repair state
+
+Chunk BD-C1 round 1 ran three opus/high axes in parallel at `8832b21f` over the frozen pair `dcf7fad0..d3bd78a9`. Only the Coverage axis ran tests and probes, and the tree was clean after every return.
+
+Chunk BD-C1 uses repair cycle 1 through one fresh repair session for each affected ticket. Ticket 01 takes S1, P1, C2, and S5. Ticket 02 takes the `registry_commitment.go` part of S2. Ticket 03 takes the `registry_chunk_chain.go` part of S2, S3, and C1. S4 is `no-op`. Under `--auto-approve`, the reviewer approved the spec expansion for S1 and C1 in advance.
+
+## Standards
+
+BD-C1 round 1: 5 findings, worst S1. Raw count 5; repair targets 3 after S1 merges with P1 and C2.
+
+- S1 (auto-fix, confidence 7): the Build sentence at implement-spec:50 gives the bare post-ticket preflight. The Land fold paragraph says that this preflight passes an explicit range. Repair: ticket 01 edits the Build sentence in place to name the range, and its anchor row and mirror change with it.
+- S2 (auto-fix, confidence 7): the header comments of `registry_chunk_chain.go` and `registry_commitment.go` hold sentences over the 25-word bound. Repair: tickets 03 and 02 split them.
+- S3 (auto-fix, confidence 5): the third `### Build directions` bullet of `CHANGELOG.md` holds one 29-word sentence. Repair: ticket 03 splits it.
+- S4 (no-op, confidence 4): each author recorded a harness red with the mirror rules in place and the registry rows absent, in its red-to-green log. That red demonstrates each mirror's independence.
+- S5 (auto-fix, confidence 3): the craft-delegate row spells the path that the `craftDelegate` constant already holds. Repair: ticket 01 uses the constant.
+
+## Spec
+
+BD-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0 after P1 merges with S1. Every BD-C1 row is met.
+
+- P1 (auto-fix, confidence 4): the same defect as S1.
+
+## Coverage
+
+BD-C1 round 1: 2 findings, worst C1. Raw count 2; repair targets 1 after C2 merges with S1.
+
+- C1 (auto-fix, confidence 7): no row keeps the chunk checkpoint label off the README `accepted` edge, and a swap probe that adds it was silent. Repair: ticket 03 adds one README Forbid row with a mirror.
+- C2 (auto-fix, confidence 6): the same defect as S1.
