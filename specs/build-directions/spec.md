@@ -319,7 +319,7 @@ Each ticket adds one `CHANGELOG.md` entry.
 | BD-C1 / 01-fold-only-at-chunk-boundaries.md, 02-hold-light-paths-during-a-build.md, 03-close-the-last-chunk-through-the-complete-checkpoint.md | The build flow folds at chunk boundaries, holds light paths, gives the chunk record to the author, and runs the chunk gate only before a successor | BD1–BD21, BD50–BD52, BD55, BD57, BD58, BD60–BD63 | TestChunkChainAnchors, TestCommitmentGuidance, TestReviewConvergenceContractCurrentDocs, TestWorkflowCadenceAnchorsRejectDeletionAndSwap, TestEveryRetainedFixtureBitesThroughRegisteredOwner, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
 | BD-C2 / 04-cap-witnesses-and-keep-moved-guards.md | The author charge states the moved-code guard, the witness definition and cap, and the batched `bench test` call | BD22–BD30 | TestWriteSpecChunkedSlicing, TestChargeBindingAnchors, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
 | BD-C3 / 05-scope-review-rounds.md | The review phase pins parallel axes, sends a one-ticket round in one combined repair charge, and scopes a confirming round to its named findings | BD31–BD38, BD54, BD59 | TestChunkChainAnchors, TestPreparedReviewGuidance, TestEveryRetainedFixtureBitesThroughRegisteredOwner | no |
-| BD-C4 / 06-keep-the-build-log.md | The orchestrator keeps a git-ignored build log, and the landing and `bench init` treat it as local capture | BD39–BD49, BD53, BD64 | TestChunkChainAnchors, TestLocalCapturePathRecognizesTheBuildLog, TestCheckoutFingerprintIgnoresTheBuildLog, TestKitGitignoreIgnoresTheBuildLog, TestInitIgnoresLocalCaptureFiles, TestLocalCaptureIgnoreLinesMatchTheLandingPredicate | yes |
+| BD-C4 / 06-keep-the-build-log.md | The orchestrator keeps a git-ignored build log, and the landing and `bench init` treat it as local capture | BD39–BD49, BD53, BD64 | TestChunkChainAnchors, TestLocalCapturePathRecognizesTheBuildLog, TestCheckoutFingerprintIgnoresTheBuildLog, TestKitGitignoreIgnoresTheBuildLog, TestInitIgnoresLocalCaptureFiles, TestLocalCaptureIgnoreLinesMatchTheLandingPredicate, TestLandCommandReleasesSourceWithIgnoredBuildLog | yes |
 
 The ticket basenames are planned names, and the slicer may rename them.
 Tickets 01, 02, 03, 04, and 06 all edit implement-spec, so they run serially in that order.
@@ -499,6 +499,7 @@ The reviewer disposition of this fence is part of the spec sign-off.
 - `internal/landing/state_test.go`
 - `internal/worktree/build_outputs.go`
 - `internal/worktree/land_local_capture_test.go`
+- `internal/worktree/parallel_census_test.go`
 - `projects/benchkit.md`
 - `tests/canary/claude-agent-definitions`
 - `tests/canary/docs-currency-token-diet`
