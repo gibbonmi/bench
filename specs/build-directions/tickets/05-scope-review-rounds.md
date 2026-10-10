@@ -8,7 +8,7 @@ Covers: BD31, BD32, BD33, BD34, BD35, BD36, BD37, BD38, BD54, BD59
 
 A review round's axes run in parallel, and a one-ticket round sends every finding in one combined repair charge.
 A confirming round examines only its named findings.
-A new Require row pins the existing parallel-dispatch sentence of review step 4.
+A new `RequireInStep` row (Process, step 4) in `registry_chunk_chain.go` pins the existing parallel-dispatch sentence.
 The "Review modes" section of `/bench-review-implementation` takes the three combined-charge sentences that the spec quotes as their own paragraph.
 When the findings fall on several tickets, each affected ticket keeps its own repair session, and `.bench/BENCH.md`'s repair rule stays unchanged.
 
@@ -20,7 +20,7 @@ The row at `registry_ft311_review_dispatch.go:22` changes in place to the first 
 New rows in `registry_chunk_chain.go` pin the second sentence, the combined-charge sentences, and the delegation-discipline bullet.
 Forbid rows keep the first-look sentence and the blocking-bar scope out.
 Independent mirror rules in `registry_chunk_chain_test.go` restate every new and rewritten row.
-One `CHANGELOG.md` entry records the change.
+One bullet under the `### Build directions` heading of `CHANGELOG.md` records the change.
 
 ## Acceptance
 
@@ -29,3 +29,4 @@ One `CHANGELOG.md` entry records the change.
 - [ ] Review-implementation holds both confirming-round sentences and keeps the three-axis sentence, and TestChunkChainAnchors goes red on each removal (BD35, BD36, BD59).
 - [ ] The first-look sentence and the blocking-bar scope are absent, and TestChunkChainAnchors goes red when either returns (BD37, BD54).
 - [ ] Delegation-discipline holds the named-findings clause, and TestChunkChainAnchors goes red when it is removed (BD38).
+- [ ] The "prepared review dispatch: " family keeps 17 rows, so TestPreparedReviewGuidance stays green.

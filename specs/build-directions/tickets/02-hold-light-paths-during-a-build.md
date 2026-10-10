@@ -17,9 +17,11 @@ ADR 0023 line 19 scopes its light-path clause to a phase outside a build, as the
 It then adds "A build dispatches no light-path fix while it runs."
 The `/bench-final-check` sentence at final-check:52 stays, because it governs a landing from another session.
 
-Require and Forbid rows pin each new and retired sentence, with independent mirrors or commitment-guidance cases.
+The BD9, BD10, and BD57 rows go in `registry_commitment.go` with `anchors.CommitmentDiagnosticPrefix`, because TestCommitmentGuidance reads only that prefix.
+In TestCommitmentGuidance, BD9 is a `restore` case, and BD10 and BD57 are `remove` cases.
+The BD7, BD8, BD12, and BD13 rows go in `registry_chunk_chain.go`, with independent mirrors in its test.
 The implement-spec line budget moves from 87 to 89.
-One `CHANGELOG.md` entry records the change.
+One bullet under the `### Build directions` heading of `CHANGELOG.md` records the change.
 
 ## Acceptance
 

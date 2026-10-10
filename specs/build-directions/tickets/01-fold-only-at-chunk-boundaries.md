@@ -17,7 +17,7 @@ The pinned fold sentences at implement-spec:56 and review-implementation:98 stay
 
 New Require rows in `registry_chunk_chain.go` pin each new sentence, and independent mirror rules in `registry_chunk_chain_test.go` restate them.
 The implement-spec line budget in `projects/benchkit.md` moves from 85 to 87, and the craft-delegate budget stays 126.
-One `CHANGELOG.md` entry records the change.
+Under `## [Unreleased]` in `CHANGELOG.md`, this ticket opens one `### Build directions` heading with one bullet, and tickets 02 to 06 each add one bullet under it.
 
 ## Acceptance
 

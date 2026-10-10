@@ -7,23 +7,27 @@ Covers: BD14, BD15, BD16, BD17, BD18, BD19, BD20, BD21, BD50, BD51, BD52, BD55, 
 ## What to build
 
 The last ticket's author freezes and records its chunk, and the last chunk closes through the complete checkpoint alone.
-The Land paragraph at implement-spec:58 replaces its orchestrator sentence with the author-records sentence that the spec quotes.
-Its last sentence becomes the two sentences that run the chunk checkpoint gate only before a successor chunk.
-The Build paragraph at implement-spec:50 keeps its pinned freeze sentence byte-exact and adds "The last ticket's author performs that freeze, as the Land section states."
+Tickets 01 and 02 move the build-base line numbers, so the author finds each target by its section and sentence lead.
+In the Land paragraph that starts "Retain author verification", the author-records sentence that the spec quotes replaces the sentence that starts "When the orchestrator freezes".
+That paragraph's last sentence becomes the two sentences that run the chunk checkpoint gate only before a successor chunk.
+In the Build paragraph, the freeze-owner sentence that the spec quotes follows the pinned sentence that starts "After the last ticket in a chunk, freeze".
 
-The paragraph at implement-spec:62 keeps its first sentence byte-exact and adds the two last-chunk sentences that the spec quotes.
-The handoff clause at implement-spec:31 adds "and at the final reconciliation", and ADR 0023 line 15 takes the same change.
+The Land paragraph that starts "After the last chunk, reconcile" keeps that first sentence byte-exact.
+The two last-chunk sentences that the spec quotes follow that first sentence.
+The handoff clause that ends "at each chunk checkpoint." adds "and at the final reconciliation".
+ADR 0023 line 15 takes the two sentences that the spec states under "Chunk records and checkpoints".
 The README chunk flow moves the "chunk checkpoint" label to the successor edge.
 
-The rows at `registry_chunk_chain.go:20` and `registry_ft311_preparation.go:43` change in place, and their mirrors change with them.
+The chunk-chain row that pins the orchestrator-records sentence changes in place, and its mirror in `registry_chunk_chain_test.go` changes with it.
+The handoff row in `registry_ft311_preparation.go` changes in place, and a new BD50 mirror rule goes into `registry_chunk_chain_test.go`, because that registry has no harness test.
 New Require rows pin each new sentence, and Forbid rows keep each retired sentence out.
 Each edit replaces text in place, so implement-spec keeps 89 lines.
-One `CHANGELOG.md` entry records the change.
+One bullet under the `### Build directions` heading of `CHANGELOG.md` records the change.
 
 ## Acceptance
 
 - [ ] Implement-spec holds the author-freeze and author-records sentences and drops the orchestrator sentence, and TestChunkChainAnchors goes red on each reversal (BD14, BD16, BD58).
-- [ ] The verification sentence at implement-spec:58 still raises no diagnostic (BD15).
+- [ ] The Land verification sentence still raises no diagnostic (BD15).
 - [ ] Implement-spec runs the chunk checkpoint gate only before a successor chunk and drops the every-chunk wording, and TestChunkChainAnchors goes red on each reversal (BD17, BD18).
 - [ ] Implement-spec holds the two last-chunk sentences, and its reconciliation sentence keeps its lowercase pin in TestReviewConvergenceContractCurrentDocs (BD19, BD20, BD21).
 - [ ] Implement-spec and ADR 0023 name the final-reconciliation handoff refresh, and TestChunkChainAnchors goes red when either is removed (BD50, BD52).

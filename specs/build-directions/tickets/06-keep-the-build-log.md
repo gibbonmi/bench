@@ -19,16 +19,17 @@ A new `internal/landing/local_capture_test.go` holds the predicate table test an
 The three want strings in `internal/adopt/adopt_test.go` change in place, because that file cannot grow.
 `internal/conformance/local_capture_tracking_test.go` takes TestKitGitignoreIgnoresTheBuildLog, and `tier_live_tree_test.go` classifies it as a live-tree test.
 New Require rows in `registry_chunk_chain.go` pin the three build-log sentences, with independent mirrors.
-The implement-spec line budget moves from 91 to 93.
-One `CHANGELOG.md` entry records the change.
+The implement-spec line budget moves from 91, which ticket 04 sets, to 93.
+One bullet under the `### Build directions` heading of `CHANGELOG.md` records the change.
 
 ## Acceptance
 
 - [ ] Implement-spec holds the three build-log sentences, and TestChunkChainAnchors goes red when any one is removed (BD39, BD40, BD41).
 - [ ] The kit `.gitignore` holds a line equal to `landing.BuildLogDir`, and TestKitGitignoreIgnoresTheBuildLog goes red without it (BD42).
-- [ ] `bench init` writes the build-log line after the three capture lines, and every init line satisfies the landing predicate (BD43, BD44).
-- [ ] The predicate accepts the build-log directory and its clean paths and refuses each unsafe or sibling name (BD45, BD46, BD47).
-- [ ] `CheckoutFingerprint` returns the same value before and after an ignored build-log file appears (BD48).
+- [ ] `bench init` writes the build-log line after the three capture lines, under TestInitIgnoresLocalCaptureFiles (BD43).
+- [ ] Every init line satisfies the landing predicate, under TestLocalCaptureIgnoreLinesMatchTheLandingPredicate (BD44).
+- [ ] The predicate accepts the build-log directory and its clean paths and refuses each unsafe or sibling name, under TestLocalCapturePathRecognizesTheBuildLog (BD45, BD46, BD47).
+- [ ] `CheckoutFingerprint` returns the same value before and after an ignored build-log file appears, under TestCheckoutFingerprintIgnoresTheBuildLog (BD48).
 - [ ] `internal/adopt/adopt_test.go` keeps its line count, and implement-spec has 93 lines under its budget row.
 - [ ] As the last ticket, it leaves roadmap/FT379.md and roadmap/FT369.md byte-identical to the build base, which the Spec axis confirms at the final tip (BD49).
-- [ ] The landing retires roadmap/FT410.md and its `ROADMAP.md` row and no other row, which the Spec axis confirms in the retirement diff (BD53).
+- [ ] No ticket writes `ROADMAP.md`, because the delivery closure of `bench worktree land` retires FT410. `/bench-final-check` confirms from the landing commit that only FT410 retired (BD53).

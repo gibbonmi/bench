@@ -11,7 +11,7 @@ Two late decisions on 2026-10-10 close its open forks.
 A combined repair charge for findings on several tickets waits for FT405.
 The build log is a git-ignored capture file.
 
-Verification log: pending — the spec and ticket review rounds write this line at close.
+Verification log: 4 iteration(s) to accept — the spec round took 3 iterations, for event-order defects and then a fold-point contradiction; the ticket round took 1.
 
 ## Problem
 
@@ -412,7 +412,7 @@ The new rules govern each build that starts after this landing.
 | BD47 | 43 | `landing.LocalCapturePath` refuses a `..` segment, a doubled slash, and a control byte under the build-log name. | planned internal/landing/local_capture_test.go (TestLocalCapturePathRecognizesTheBuildLog) | A predicate without the clean-path guards accepts each unsafe case. |
 | BD48 | 44 | `landing.CheckoutFingerprint` returns the same value before and after an ignored `capture/build-log/<slug>.log` appears in the checkout. | planned internal/landing/local_capture_test.go (TestCheckoutFingerprintIgnoresTheBuildLog) | A predicate that refuses the build log keeps its `!!` entry in the fingerprint status, so the two values differ. |
 | BD49 | 45 | The landed tree leaves roadmap/FT379.md and roadmap/FT369.md byte-identical to the build base. | review-owned: Spec axis compares both files at the final tip | An edit that narrows either row shows in the final delta. |
-| BD53 | 46 | The landing retires roadmap/FT410.md and its `ROADMAP.md` row and no other row. | review-owned: Spec axis reads the retirement commit | A retirement that removes a second row shows in the retirement diff. |
+| BD53 | 46 | The landing retires roadmap/FT410.md and its `ROADMAP.md` row and no other row. | review-owned: `/bench-final-check` reads the landing commit | A delivery closure that removes a second row shows in the landing diff. |
 
 ### Edge inventory
 
@@ -433,8 +433,73 @@ For an empty directory, Git reports no path, and a landing proceeds as today.
 
 ## Ownership fences
 
-The fence section is written after ticket slicing.
+The fence is the union of the ticket `Writes:` lines, plus the review pickup.
+The reviewer disposition of this fence is part of the spec sign-off.
 
+- `.agents/commands/bench-implement-spec.md`
+- `.agents/commands/bench-review-implementation.md`
+- `.agents/skills/bench-craft-delegate/SKILL.md`
+- `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
+- `.bench/BENCH-reference.md`
+- `.bench/BENCH.md`
+- `.gitignore`
+- `CHANGELOG.md`
+- `README.md`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `docs/adr/0023-each-ticket-gets-a-fresh-author.md`
+- `docs/field-guide.html`
+- `docs/known-issues.md`
+- `internal/adopt/adopt_test.go`
+- `internal/adopt/init.go`
+- `internal/anchors/anchor_harness_diagnostics_test.go`
+- `internal/anchors/registry_calibration.go`
+- `internal/anchors/registry_calibration_test.go`
+- `internal/anchors/registry_charge_binding.go`
+- `internal/anchors/registry_charge_binding_test.go`
+- `internal/anchors/registry_check_floor.go`
+- `internal/anchors/registry_check_floor_test.go`
+- `internal/anchors/registry_chunk_chain.go`
+- `internal/anchors/registry_chunk_chain_test.go`
+- `internal/anchors/registry_commitment.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_debug_loop.go`
+- `internal/anchors/registry_decision_maps.go`
+- `internal/anchors/registry_decision_maps_test.go`
+- `internal/anchors/registry_ft311_preparation.go`
+- `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/anchors/registry_ticket_passes.go`
+- `internal/anchors/registry_ticket_passes_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/charge_evidence_guidance_test.go`
+- `internal/conformance/commitment_guidance_test.go`
+- `internal/conformance/docs_workflow_helpers_test.go`
+- `internal/conformance/fixture_bite_test.go`
+- `internal/conformance/ft311_preparation_test.go`
+- `internal/conformance/implementation_continuation_test.go`
+- `internal/conformance/local_capture_tracking_test.go`
+- `internal/conformance/retained_workflow_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/tier_live_tree_test.go`
+- `internal/landing/landing.go`
+- `internal/landing/landing_test.go`
+- `internal/landing/local_capture.go`
+- `internal/landing/local_capture_test.go`
+- `internal/landing/state_test.go`
+- `internal/worktree/build_outputs.go`
+- `internal/worktree/land_local_capture_test.go`
+- `projects/benchkit.md`
+- `tests/canary/claude-agent-definitions`
+- `tests/canary/docs-currency-token-diet`
+- `tests/canary/guidance-prose-budgets`
+- `tests/canary/line-routing`
+- `tests/canary/load-validity-metadata`
+- `tests/canary/skill-description-budgets`
+- `tests/canary/skills-index-command-adapters`
+- `tests/canary/workflow-guidance-anchors`
 - `reviews/build-directions.md`
 
 ## Out of scope

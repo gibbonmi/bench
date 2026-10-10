@@ -18,7 +18,7 @@ The delegation-discipline one-red rule stays byte-exact.
 New Require rows in `registry_ticket_passes.go` pin each new sentence and the known-issues pointer, and a Forbid row keeps the old cap text out of `docs/known-issues.md`.
 Independent mirror rules in `registry_ticket_passes_test.go` restate them.
 The implement-spec line budget moves from 89 to 91.
-One `CHANGELOG.md` entry records the change.
+One bullet under the `### Build directions` heading of `CHANGELOG.md` records the change.
 
 ## Acceptance
 
