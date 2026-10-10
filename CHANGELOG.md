@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Drain light-path delegation
+
+- Changed the light-path fix rule in `.bench/BENCH.md` so that `/bench-drain` implements no light-path fix inline. The drain gives every light-path fix in its run to a fresh write delegate, whatever its source. Before, the rule named only a fix that a drain verdict kept. Changed `/bench-drain` so that the delegate commits the ticket and the coordinator lands it after it verifies the done-claim.
+
 ### Help inventory claim
 
 - Fixed `.bench/BENCH.md` so that it calls `bench help` the complete inventory of the public verbs, not of every verb. The same sentence points to `.bench/BENCH-reference.md` for `bench gate-prose`, the one internal verb that a session runs. Before, a session that obeyed the guide did not find that verb and did not do the prose step before a commit.
