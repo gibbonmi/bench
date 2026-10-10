@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Known-issues route
+
+- Changed `/bench-implement-spec` so that the ticket author charge names `docs/known-issues.md` when the repository has that file. Changed `/bench-write-spec` so that the author step reads that file before it plans the probes and the check floor.
+
 ### Repeated package flag
 
 - Changed `bench test` so that `--package` can occur more than one time. `bench test --package ./internal/a --package ./internal/b` runs both package expressions in one focused run and prints one report. A repeated `--package` with `--changed`, a positional package, or `--check` is still a usage error. A completion-plan command with a repeated `--package` satisfies the check floor of each package that it names.
