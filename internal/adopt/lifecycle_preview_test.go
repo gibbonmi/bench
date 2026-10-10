@@ -85,7 +85,6 @@ func TestLifecycleUpgradePreviewCompatibility(t *testing.T) {
 			editPreviewManifest(t, root, func(rows map[string]string) { delete(rows, rel) })
 		}
 	}
-	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name    string
 		version string
@@ -114,7 +113,7 @@ func TestLifecycleUpgradePreviewCompatibility(t *testing.T) {
 		{name: "hook refresh at equal version", version: "1.0.0", arrange: removePreviewHook},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := linkedCopy(t, base)
+			root := linkedCopy(t, goldenPlain)
 			tc.arrange(t, root)
 			before := readFile(t, previewManifestPath(root))
 			code, stdout, stderr := runPreviewUpgrade(t, []string{"--check"}, tc.version)
@@ -184,7 +183,6 @@ func testPreviewPlanKinds(t *testing.T) {
 
 func TestLifecycleUpgradeVersionGuards(t *testing.T) {
 	const gitignore = ".bench/dist/.gitignore"
-	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name, version, wantKit, wantErr string
 		args                            []string
@@ -198,7 +196,7 @@ func TestLifecycleUpgradeVersionGuards(t *testing.T) {
 		{name: "forced older", version: "0.9.0", args: []string{"--force"}, wantKit: "0.9.0", applied: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := linkedCopy(t, base)
+			root := linkedCopy(t, goldenPlain)
 			if err := os.Remove(filepath.Join(root, gitignore)); err != nil {
 				t.Fatal(err)
 			}

@@ -2,7 +2,6 @@ package adopt
 
 import (
 	"bytes"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -28,55 +27,6 @@ const (
 type linkRun struct {
 	code           int
 	stdout, stderr string
-}
-
-// linkedBase links one consumer repository for a parent test. When arrange is set, it
-// prepares that repository before the Link. A subtest that starts from a linked repository
-// takes a linkedCopy of the base and does not run its own Link. A real Link costs seconds of
-// synchronized writes, and its result does not depend on the repository path. The parent
-// test returns to its working directory, because consumerRepo finds the kit from there.
-func linkedBase(t *testing.T, arrange func(t *testing.T, root string)) string {
-	t.Helper()
-	wd := mustGetwd(t)
-	base := consumerRepo(t)
-	if arrange != nil {
-		arrange(t, base)
-	}
-	linkConsumer(t, base, 0)
-	t.Chdir(wd)
-	return base
-}
-
-// linkedCopy returns a fresh consumer repository, made the working directory, that holds a
-// copy of base: each file with its bytes, each symlink with its target, and each entry with
-// its mode.
-func linkedCopy(t *testing.T, base string) string {
-	t.Helper()
-	root := consumerRepo(t)
-	if err := os.RemoveAll(filepath.Join(root, ".git")); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.CopyFS(root, os.DirFS(base)); err != nil {
-		t.Fatal(err)
-	}
-	err := filepath.WalkDir(base, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil || entry.Type()&fs.ModeSymlink != 0 {
-			return err
-		}
-		info, err := entry.Info()
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(base, path)
-		if err != nil {
-			return err
-		}
-		return os.Chmod(filepath.Join(root, rel), info.Mode().Perm())
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return root
 }
 
 func runLink(args []string) linkRun {
@@ -203,7 +153,6 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 		}
 		editPreviewManifest(t, root, func(rows map[string]string) { rows[lifecycleDoc] = old })
 	}
-	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name, rel, reason, dir string
 		args                   []string
@@ -236,7 +185,7 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var root string
 			if tc.linked {
-				root = linkedCopy(t, base)
+				root = linkedCopy(t, goldenPlain)
 			} else {
 				root = consumerRepo(t)
 			}
@@ -277,7 +226,6 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 // prose. Unlink starts from a linked repository with one modified asset. It must remove a
 // clean asset, keep the modified one with its row, and leave the project prose alone.
 func TestLifecycleOwnerConsumption(t *testing.T) {
-	const prose = "# Team rules\n\nKeep this rule.\n"
 	for _, entry := range []struct {
 		name string
 		run  func(t *testing.T, root string)
@@ -300,7 +248,7 @@ func TestLifecycleOwnerConsumption(t *testing.T) {
 			if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), prose, 0o644)
+			writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), teamProse, 0o644)
 			withdrawn := manifestRow{lifecycleWithdrawn, plantWithdrawn(t, filepath.Join(root, lifecycleWithdrawn))}
 			if err := writeManifest(previewManifestPath(root), "1.0.0", []manifestRow{withdrawn}); err != nil {
 				t.Fatal(err)
@@ -309,22 +257,20 @@ func TestLifecycleOwnerConsumption(t *testing.T) {
 			requireInstalled(t, root, lifecycleDoc)
 			requireWithdrawn(t, root)
 			requireClaudeInstalled(t, root)
-			if got := readFile(t, filepath.Join(root, "AGENTS.md")); !strings.HasPrefix(got, prose) || !strings.Contains(got, BenchAgentsBlock()) {
+			if got := readFile(t, filepath.Join(root, "AGENTS.md")); !strings.HasPrefix(got, teamProse) || !strings.Contains(got, BenchAgentsBlock()) {
 				t.Fatalf("AGENTS.md = %q, want the project prose followed by the managed block", got)
 			}
 		})
 	}
 	t.Run("unlink", func(t *testing.T) {
-		root := consumerRepo(t)
-		writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), prose, 0o644)
-		linkConsumer(t, root, 0)
+		root := linkedCopy(t, goldenProse)
 		writeFixtureFile(t, filepath.Join(root, lifecycleDoc), "project edit\n", 0o644)
 		before := observeEntry(t, root, lifecycleDoc)
 		runUnlink(t, nil, 3)
 		requireAbsent(t, filepath.Join(root, lifecycleExec))
 		requireKept(t, root, lifecycleDoc, before)
-		if got := readFile(t, filepath.Join(root, "AGENTS.md")); got != prose {
-			t.Fatalf("AGENTS.md after unlink = %q, want the project prose %q", got, prose)
+		if got := readFile(t, filepath.Join(root, "AGENTS.md")); got != teamProse {
+			t.Fatalf("AGENTS.md after unlink = %q, want the project prose %q", got, teamProse)
 		}
 	})
 }
@@ -336,7 +282,6 @@ func TestLifecycleOwnerConsumption(t *testing.T) {
 // relink with the exact refusal and keep the planted file and its row.
 func TestLifecycleDroppedRows(t *testing.T) {
 	keep := func(*testing.T, string) {}
-	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name, rel, reason, refusal string
 		symlinkParent              bool
@@ -364,7 +309,7 @@ func TestLifecycleDroppedRows(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := linkedCopy(t, base)
+			root := linkedCopy(t, goldenPlain)
 			rel := tc.rel
 			if rel == "" {
 				rel = lifecycleWithdrawn

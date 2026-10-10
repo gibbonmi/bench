@@ -78,7 +78,12 @@ func TestTransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent(t *testing.T)
 // against this kit checkout. It is the one setup for a real link round trip.
 func consumerRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
+	return consumerRepoAt(t, t.TempDir())
+}
+
+// consumerRepoAt makes the existing directory root a consumerRepo.
+func consumerRepoAt(t *testing.T, root string) string {
+	t.Helper()
 	runAdoptGit(t, root, "init", "-q")
 	t.Setenv("BENCH_KIT", filepath.Clean(filepath.Join(mustGetwd(t), "..", "..")))
 	t.Chdir(root)
@@ -93,11 +98,17 @@ func linkConsumer(t *testing.T, root string, wantCode int) ([]manifestRow, strin
 	if code := Link(nil, &stdout, &stderr, "1.0.0"); code != wantCode {
 		t.Fatalf("Link = %d, want %d\nstdout:\n%s\nstderr:\n%s", code, wantCode, stdout.String(), stderr.String())
 	}
-	m, err := ReadManifest(filepath.Join(root, ".bench", "link-manifest.tsv"))
+	return linkedRows(t, root), stdout.String() + stderr.String()
+}
+
+// linkedRows returns the rows of the link manifest in root.
+func linkedRows(t *testing.T, root string) []manifestRow {
+	t.Helper()
+	m, err := ReadManifest(previewManifestPath(root))
 	if err != nil {
 		t.Fatal(err)
 	}
-	return m.Rows(), stdout.String() + stderr.String()
+	return m.Rows()
 }
 
 // projectCollision is the managed path that plantCollision fills with project bytes
@@ -141,10 +152,9 @@ func requireAbsent(t *testing.T, path string) {
 // TestUnlinkRemovesOnlyCleanManifestAssets pins the clean round trip: every manifest
 // row, the manifest, and the managed hook leave, and project content stays.
 func TestUnlinkRemovesOnlyCleanManifestAssets(t *testing.T) {
-	root := consumerRepo(t)
+	root := linkedCopy(t, goldenProse)
 	writeFixtureFile(t, filepath.Join(root, "notes.md"), "project notes\n", 0o644)
-	writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), "# Team rules\n\nKeep this rule.\n", 0o644)
-	rows, _ := linkConsumer(t, root, 0)
+	rows := linkedRows(t, root)
 	if len(rows) == 0 {
 		t.Fatal("Link recorded no manifest rows")
 	}
@@ -158,7 +168,7 @@ func TestUnlinkRemovesOnlyCleanManifestAssets(t *testing.T) {
 	if got := readFile(t, filepath.Join(root, "notes.md")); got != "project notes\n" {
 		t.Fatalf("notes.md = %q, want the project bytes", got)
 	}
-	if got := readFile(t, filepath.Join(root, "AGENTS.md")); !strings.Contains(got, "Keep this rule.") || strings.Contains(got, benchStartMarker) {
+	if got := readFile(t, filepath.Join(root, "AGENTS.md")); !strings.Contains(got, teamProse) || strings.Contains(got, benchStartMarker) {
 		t.Fatalf("AGENTS.md = %q, want the project prose without the managed block", got)
 	}
 }
@@ -201,9 +211,8 @@ func TestUnlinkKeepsModifiedAssetsAndProjectCollisions(t *testing.T) {
 // TestUnlinkDryRunOnACleanRepoWritesNothing pins the clean dry run: it exits 0, and the
 // manifest, the managed hook, AGENTS.md, and every manifest row keep their bytes.
 func TestUnlinkDryRunOnACleanRepoWritesNothing(t *testing.T) {
-	root := consumerRepo(t)
-	writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), "# Team rules\n\nKeep this rule.\n", 0o644)
-	rows, _ := linkConsumer(t, root, 0)
+	root := linkedCopy(t, goldenProse)
+	rows := linkedRows(t, root)
 	paths := []string{".bench/link-manifest.tsv", ".git/hooks/pre-push", "AGENTS.md"}
 	for _, row := range rows {
 		paths = append(paths, row.rel)
@@ -242,8 +251,8 @@ func TestUnlinkCollisionOnlyRepoExitsZero(t *testing.T) {
 // TestUnlinkRefusesAManifestRowOutsideTheRepo plants a hand-edited row that escapes
 // the repository and carries the exact fingerprint of the file it names.
 func TestUnlinkRefusesAManifestRowOutsideTheRepo(t *testing.T) {
-	root := consumerRepo(t)
-	rows, _ := linkConsumer(t, root, 0)
+	root := linkedCopy(t, goldenPlain)
+	rows := linkedRows(t, root)
 	var bench manifestRow
 	for _, row := range rows {
 		if row.rel == ".bench/BENCH.md" {
