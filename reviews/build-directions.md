@@ -1160,6 +1160,28 @@
           "tip": "ed901b255cab951d6bb57ec01a2e7a1db56dcddc",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "bd-c3-r2-standards",
+          "performer": "claude:bd_bdc3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "06d87d4ceb2eeb59abc6364aa82b7e2fc9f0f246",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc3_standards",
+            "digest": "sha256:cedb11b340a4a3d1ae80fd1e29d1d2d5479defa774d33a8834d00d6969b5da61",
+            "excerpt": "axis: Standards (round 2); session claude:bd_bdc3_standards; model opus; effort high; chunk BD-C3 rebased on 6303bb6f..ed901b25, which adds 403b633f and 123c6f7a.\nverdict: clean (0 findings)\nS1 no-op accepted: story 36 (spec.md:114) asks for agreement between the two files, and spec.md:265 dictates the bullet text; the bench learning route is correct.\nS2 no-op accepted: spec.md:250 quotes the sentence and ticket 05 line 13 keeps the BENCH.md repair rule unchanged; the sentence names its owner.\nAdded delta: the net internal/ change from 6303bb6f to 773901ad is one comment line, registry_ticket_passes.go:84, which states implement-spec:25 and :27 correctly and is comment-only.\n"
+          },
+          "axis": "Standards",
+          "base": "6303bb6f1de32856316fc1cf1963f89aef369f3b",
+          "tip": "ed901b255cab951d6bb57ec01a2e7a1db56dcddc",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c3-r1-standards"
+          ]
         }
       ]
     }
@@ -1239,7 +1261,7 @@ Chunk BD-C2 round 1 ran three opus/high axes in parallel at `d6789152` over the 
 
 BD-C2 round 2 ran three opus/high axes in parallel at `c3f97902` over the repair delta `823bca72..6303bb6f`. Every axis confirmed the folds of C1, S1, and S3. The Standards axis raised S21 on the new comment. The orchestrator committed two comment-only corrections, `403b633f` and `123c6f7a`, as evidence-only work. The Standards axis then reaffirmed S21 and S31 as closed. BD-C2 closes with repair cycle 1 of 2 used and no open finding.
 
-Chunk BD-C3 round 1 ran three opus/high axes in parallel at `39e1de5a` over the frozen pair `773901ad..ed901b25`. Only the Coverage axis ran tests and probes, and the tree was clean after every return. S1 and S2 are `no-op`, so BD-C3 uses no repair cycle and closes with no open finding.
+Chunk BD-C3 round 1 ran three opus/high axes in parallel at `39e1de5a` over the frozen pair `773901ad..ed901b25`. Only the Coverage axis ran tests and probes, and the tree was clean after every return. S1 and S2 are `no-op`, so BD-C3 uses no repair cycle and closes with no open finding. The checkpoint required the BD-C2 tip `6303bb6f` as the BD-C3 base, so the two comment-only corrections joined the BD-C3 delta. In round 2, the Standards axis accepted both `no-op` dispositions and graded that added comment with no finding.
 
 ## Standards
 
