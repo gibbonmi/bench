@@ -112,12 +112,8 @@ func resolveLearning(parsed usage.Result) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	// A value that leads with a dash would reach git as an option, so it never resolves.
-	full := ""
-	if !strings.HasPrefix(commit, "-") {
-		full, err = git.ResolveCommit(checkout, commit, "--quiet")
-	}
-	if full == "" || err != nil {
+	full, err := git.ResolveCommit(checkout, commit, "--quiet")
+	if err != nil || full == "" {
 		return toon.Errorf("commit does not resolve: "+commit, "pass a commit that exists in this repository") + "\n", 1
 	}
 	file := filepath.Join(root, learnings.JournalPath)
