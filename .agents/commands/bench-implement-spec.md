@@ -69,6 +69,8 @@ After the last chunk, reconcile every acceptance row and the integrated behavior
 
 Write the ordinary assessment record before the `bench worktree land` step, and append the landing evidence after it. The review and final-check phases own the other assessment updates. Keep the retained run identity available for those phase boundaries.
 
+The orchestrator keeps one build log at the primary checkout's `capture/build-log/<slug>.log`. For each reviewer direction that saves a step, it appends one line that names the direction and the step that it removed. The retro author reads that log.
+
 ## When the build stops short
 
 Report the state: what is done, what remains, the coverage table, and what consumed the cap. Keep landed work landed. Then route by cause:

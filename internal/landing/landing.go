@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -338,29 +337,7 @@ func CheckoutFingerprint(root string) (string, error) {
 // RuntimeIgnoredPath reports whether path is a safe spelling within Bench's ignored
 // runtime log root.
 func RuntimeIgnoredPath(path string) bool {
-	for _, r := range path {
-		if r < 0x20 || r == 0x7f {
-			return false
-		}
-	}
-	if path == ".logs/" {
-		return true
-	}
-	native := filepath.FromSlash(path)
-	if path == "" || filepath.IsAbs(native) || filepath.Clean(native) != native || filepath.ToSlash(native) != path {
-		return false
-	}
-	return path == ".logs" || strings.HasPrefix(path, ".logs/")
-}
-
-// LocalCapturePath reports whether path is one exact project-local capture file.
-func LocalCapturePath(path string) bool {
-	switch path {
-	case "capture/IDEAS.md", "capture/learnings.md", "capture/session-handoff.md":
-		return true
-	default:
-		return false
-	}
+	return withinIgnoredDir(path, ".logs/")
 }
 
 func fingerprintStatus(raw []byte) ([]byte, error) {

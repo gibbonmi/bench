@@ -530,7 +530,7 @@ func runInit(t *testing.T) {
 // inboxes or the handoff, so init adds them to .gitignore. The re-run row is the point: a
 // blind append duplicates the lines every time the reviewer runs init again. The partial
 // row proves the check is per line rather than per file, so a repo that already ignores one
-// entry gains only the other two.
+// entry gains only the other three.
 func TestInitIgnoresLocalCaptureFiles(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -539,17 +539,17 @@ func TestInitIgnoresLocalCaptureFiles(t *testing.T) {
 	}{
 		{
 			name: "absent file",
-			want: "capture/session-handoff.md\ncapture/IDEAS.md\ncapture/learnings.md\n",
+			want: "capture/session-handoff.md\ncapture/IDEAS.md\ncapture/learnings.md\ncapture/build-log/\n",
 		},
 		{
 			name:     "no trailing newline",
 			existing: "dist/",
-			want:     "dist/\ncapture/session-handoff.md\ncapture/IDEAS.md\ncapture/learnings.md\n",
+			want:     "dist/\ncapture/session-handoff.md\ncapture/IDEAS.md\ncapture/learnings.md\ncapture/build-log/\n",
 		},
 		{
 			name:     "one entry already present",
 			existing: "capture/IDEAS.md\n",
-			want:     "capture/IDEAS.md\ncapture/session-handoff.md\ncapture/learnings.md\n",
+			want:     "capture/IDEAS.md\ncapture/session-handoff.md\ncapture/learnings.md\ncapture/build-log/\n",
 		},
 	}
 	for _, tc := range cases {

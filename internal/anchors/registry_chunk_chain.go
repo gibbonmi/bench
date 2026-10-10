@@ -10,8 +10,9 @@ package anchors
 // the build's light-path hold in the implement phase and in ADR 0023. They also forbid the ADR's
 // retired unscoped clause. The chunk-record rows pin the last ticket author's freeze and chunk
 // record. They pin the chunk checkpoint gate before a successor chunk and the last chunk's close
-// through the complete checkpoint. They also forbid each retired sentence. The `bench record` rows
-// route each completed review-record entry to the verb and forbid the retired hand-recording sentences.
+// through the complete checkpoint. They also forbid each retired sentence. The build-log rows pin
+// the orchestrator's one build log, its line for each saved step, and its retro reader.
+// The `bench record` rows route each completed review-record entry to the verb and forbid the retired hand-recording sentences.
 // The review-round rows pin the parallel axis dispatch, the combined repair charge, and the
 // named-findings scope of a confirming round. They also forbid the two retired sentences that widen that scope.
 var chunkChainAnchors = []Anchor{
@@ -41,6 +42,9 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "--chunk <id>` before the successor", Diagnostic: "chunk chain: the implement phase restored the chunk checkpoint gate for every chunk"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "The last chunk runs no chunk checkpoint gate, because the complete checkpoint that `/bench-final-check` owns grades every chunk again.", Diagnostic: "chunk chain: the last chunk closes through the complete checkpoint alone"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "The last chunk keeps its chunk entry, its verification entries, and its three review entries.", Diagnostic: "chunk chain: the last chunk keeps its chunk, verification, and review entries"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "The orchestrator keeps one build log at the primary checkout's `capture/build-log/<slug>.log`.", Diagnostic: "chunk chain: the orchestrator keeps one build log in the primary checkout's capture folder"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "For each reviewer direction that saves a step, it appends one line that names the direction and the step that it removed.", Diagnostic: "chunk chain: the build log takes one line for each reviewer direction that saves a step"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Section: "Land", Needle: "The retro author reads that log.", Diagnostic: "chunk chain: the retro author reads the build log"},
 	{Group: AfterImplementSpec, File: freshAuthorADR, Kind: Require, Needle: "It refreshes the session handoff at each chunk checkpoint and at the final reconciliation", Diagnostic: "chunk chain: ADR 0023 dropped the handoff refresh at the final reconciliation"},
 	{Group: AfterImplementSpec, File: "README.md", Kind: Require, Needle: "more -->|\"yes; chunk checkpoint\"| chunk", Diagnostic: "chunk chain: the README chunk flow dropped the chunk checkpoint on the successor edge"},
 	{Group: AfterImplementSpec, File: "README.md", Kind: Forbid, Needle: "\"none; chunk checkpoint\"", Diagnostic: "chunk chain: the README chunk flow restored the chunk checkpoint on the no-successor edge"},
