@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-directions/spec.md",
-  "plan_digest": "sha256:ff7dc4ce92a26b57668d44c2f6afccafd432b8efd7ddae6e1d54fcfd2f738206",
+  "plan_digest": "sha256:c08f9dedb34cdabebb6602d7886df5fa57a5fdee4bc53586288059a0629e89b4",
   "implementation_session": "",
   "chunks": [
     {
@@ -1483,6 +1483,96 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bd-c4-r2-standards",
+          "performer": "claude:bd_c4r2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4e8ef27e2dc873c66ec5fd916027a235cabfc88a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c4r2_standards",
+            "digest": "sha256:5b4f85138acc8255212861de4c06d25f11fbd68e34395364c035b25da3607070",
+            "excerpt": "axis: Standards (confirming round 2); session claude:bd_c4r2_standards; model opus; effort high; frozen pair 07eef7ec..6f33a6c6; repair delta 4ed02fb8..6f33a6c6; evidence sha256:fbb1014554d7654e193c2dadac57b7dd886d3b9ce6317e4e4685c21d0fc3bd5c current=true at 5fe7a2c8.\nverdict: clean; no blocking finding.\nFolds: C1 -> BD64 confirmed (land_local_capture_test.go:77-92 writes under landing.BuildLogDir and asserts worktree=released; parallel_census_test.go:1061 = 772; one top-level test added). S1 confirmed (adopt_test.go:529-533 names the build log; numstat 4/4). G1 confirmed (landing_test.go:62-67 and local_capture_test.go:29-34 share ignoredWriteFingerprints at local_capture_test.go:39-52; landing_test.go nets -9 lines).\nAdvice (orchestrator classification: optional advice under bounded-repair-policy.md:38-40, because each item grades only the BD64 hardening test):\n- land_local_capture_test.go:18,81: the helper parameter is named `foreign`, and the new call passes landing.BuildLogDir, which the predicate treats as local capture.\n- land_local_capture_test.go:75-76: the new comment makes the worktree the agent that discards the log, and its release wording is circular.\nExamined with no finding: the rebase-and-tip sequence is the package convention; the literal at local_capture_test.go:30 predates the repair; new comment sentences within 25 words; spec and ticket edits are the recorded plan expansion.\n"
+          },
+          "axis": "Standards",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "6f33a6c68ef910765a5e90e4e81284d55bc796d0",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c4-r1-standards"
+          ]
+        },
+        {
+          "id": "bd-c4-r2-coverage",
+          "performer": "claude:bd_c4r2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4e8ef27e2dc873c66ec5fd916027a235cabfc88a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c4r2_coverage",
+            "digest": "sha256:7a3cbdb55c3494b1b10ca07833a474e19db18bd7a45f1674cfefc6895ec510c1",
+            "excerpt": "axis: Coverage (confirming round 2); session claude:bd_c4r2_coverage; model opus; effort high; frozen pair 07eef7ec..6f33a6c6; repair delta 4ed02fb8..6f33a6c6; evidence sha256:fbb1014554d7654e193c2dadac57b7dd886d3b9ce6317e4e4685c21d0fc3bd5c current=true at 5fe7a2c8.\nverdict: clean (0 findings)\nFolds: C1 -> BD64 confirmed by three probes, each turning only TestLandCommandReleasesSourceWithIgnoredBuildLog red with land exit 3 (LocalCapturePath reduced to the exact list; LocalCapturePath accepting only the bare directory; LocalCapturePath removed from the build_outputs.go:81 filter). The pin set back to 771 turned TestPackageTestCountPin red. S1 confirmed (adopt_test.go:529-533; line count holds). G1 confirmed (ignoredWriteFingerprints at local_capture_test.go:39-52; removing LocalCapturePath at landing.go:355 reds only the build-log test, and removing RuntimeIgnoredPath reds only the runtime test).\nNew edges: none; the resume landing builds its cleanup plan through the same call (subshell.go:316). adopt, landing, and worktree packages pass (243, 197, 1394 tests). git status clean after probes.\n"
+          },
+          "axis": "Coverage",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "6f33a6c68ef910765a5e90e4e81284d55bc796d0",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c4-r1-coverage"
+          ]
+        },
+        {
+          "id": "bd-c4-r2-spec",
+          "performer": "claude:bd_c4r2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4e8ef27e2dc873c66ec5fd916027a235cabfc88a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_c4r2_spec",
+            "digest": "sha256:d8ca0e1ed754108a3b38686e5c16cf0cb6749d309d7e4aa05905fe3067aff357",
+            "excerpt": "axis: Spec (confirming round 2); session claude:bd_c4r2_spec; model opus; effort high; frozen pair 07eef7ec..6f33a6c6; repair delta 4ed02fb8..6f33a6c6; evidence sha256:fbb1014554d7654e193c2dadac57b7dd886d3b9ce6317e4e4685c21d0fc3bd5c current=true at 5fe7a2c8.\nverdict: findings (1 advisory, 0 blocking)\nFolds: C1 -> BD64 confirmed (land_local_capture_test.go:77-92; without the predicate, build_outputs.go:81 sets DeclaredIgnored false and lifecyclepolicy.go:382-383 retains; pin 771 -> 772 at parallel_census_test.go:1061). S1 confirmed (adopt_test.go:529-533; line count unchanged). G1 confirmed (both tests call ignoredWriteFingerprints; landing_test.go +1/-10).\nBD64 appears in the coverage map (spec.md:421), the narrative (:294), the chunk row, the source table (:550), and ticket 06 Covers and acceptance; the fence entry is at spec.md:502 and ticket 06 Writes. BD39-BD49 still hold; roadmap/FT379.md, roadmap/FT369.md, and ROADMAP.md are unchanged over 07eef7ec..6f33a6c6.\nP21 | advisory | specs/build-directions/spec.md:421 | BD64 sits under story 44, which covers only the checkout fingerprint; the source-release behavior has no story. | spec.md:125; lifecyclepolicy.go:382. | ask-user | confidence 6\n"
+          },
+          "axis": "Spec",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "6f33a6c68ef910765a5e90e4e81284d55bc796d0",
+          "finding_ids": [
+            "P21"
+          ],
+          "supersedes": [
+            "bd-c4-r1-spec"
+          ]
+        },
+        {
+          "id": "bd-c4-r3-spec",
+          "performer": "claude:bd_c4r2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4e8ef27e2dc873c66ec5fd916027a235cabfc88a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_c4r2_spec",
+            "digest": "sha256:445a8c645dcffcd96dee538764d2ea570a9416cfc03aa979b5949271238af9bf",
+            "excerpt": "axis: Spec (reaffirmation of P21); session claude:bd_c4r2_spec; model opus; effort high; plan commit 4628024f after the BD-C4 chunk tip 6f33a6c6.\nverdict: P21 closed; no new finding.\nCitation: 4628024f adds story 47 under a new Source cleanup heading at spec.md:132-134 and moves the BD64 row from story 44 to story 47 at spec.md:425; story 44 keeps only BD48. The orchestrator ran bench coverage --check on the spec: valid, 63 rows.\n"
+          },
+          "axis": "Spec",
+          "base": "07eef7ecb3aedc404d2a7633e4710b9e388b68f9",
+          "tip": "6f33a6c68ef910765a5e90e4e81284d55bc796d0",
+          "finding_ids": [],
+          "supersedes": [
+            "bd-c4-r2-spec"
+          ]
         }
       ]
     }
@@ -1629,6 +1719,24 @@
           "BD-C4"
         ]
       }
+    },
+    {
+      "from": "sha256:ff7dc4ce92a26b57668d44c2f6afccafd432b8efd7ddae6e1d54fcfd2f738206",
+      "to": "sha256:c08f9dedb34cdabebb6602d7886df5fa57a5fdee4bc53586288059a0629e89b4",
+      "chunk_ids": {
+        "BD-C1": [
+          "BD-C1"
+        ],
+        "BD-C2": [
+          "BD-C2"
+        ],
+        "BD-C3": [
+          "BD-C3"
+        ],
+        "BD-C4": [
+          "BD-C4"
+        ]
+      }
     }
   ]
 }
@@ -1649,6 +1757,10 @@ BD-C2 round 2 ran three opus/high axes in parallel at `c3f97902` over the repair
 Chunk BD-C3 round 1 ran three opus/high axes in parallel at `39e1de5a` over the frozen pair `773901ad..ed901b25`. Only the Coverage axis ran tests and probes, and the tree was clean after every return. S1 and S2 are `no-op`, so BD-C3 uses no repair cycle and closes with no open finding. The checkpoint required the BD-C2 tip `6303bb6f` as the BD-C3 base, so the two comment-only corrections joined the BD-C3 delta. In round 2, the Standards axis accepted both `no-op` dispositions and graded that added comment with no finding.
 
 Chunk BD-C4 round 1 ran three opus/high axes in parallel at `dddab05a` over the frozen pair `07eef7ec..4ed02fb8`. Only the Coverage axis ran tests and probes, and the tree was clean after every return. BD-C4 uses repair cycle 1 of 2 through one fresh repair session for ticket 06, which takes S1 and C1. C1 adds row BD64 under `--auto-approve`. S2 is `no-op`.
+
+An independent consultation grader found G1: the build-log fingerprint test pasted the fixture harness of the runtime fingerprint test. The orchestrator accepted G1 and added it to the ticket 06 repair. The repair `6f33a6c6` also widened the ticket 06 fence by the package test-count pin in plan commit `ff541363`.
+
+BD-C4 round 2 ran three opus/high axes in parallel at `5fe7a2c8` over the repair delta `4ed02fb8..6f33a6c6`. Every axis confirmed the folds of C1, S1, and G1. The Spec axis raised P21, and plan commit `4628024f` gave BD64 its own story 47. The Spec axis then reaffirmed P21 as closed. BD-C4 closes with repair cycle 1 of 2 used and no open finding.
 
 ## Standards
 
@@ -1682,6 +1794,8 @@ BD-C4 round 1: 2 findings, worst S1. Raw count 2; repair targets 1.
 - S1 (auto-fix, confidence 7): the `TestInitIgnoresLocalCaptureFiles` doc comment still names only the capture inboxes and the handoff. Repair: ticket 06 rewords it in place.
 - S2 (no-op, confidence 4): the build-log anchor needle spells the path that `landing.BuildLogDir` holds. The approved spec chose the literal sentence, and an independent mirror covers it.
 
+BD-C4 round 2: 0 findings. Advice: the `addLocalCaptureIgnore` parameter name `foreign` does not fit the build-log call, and the new test comment names the worktree as the agent. Each grades only the BD64 hardening test.
+
 ## Spec
 
 BD-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0 after P1 merges with S1. Every BD-C1 row is met.
@@ -1697,6 +1811,10 @@ BD-C2 round 2: 0 findings. The repair delta keeps rows BD22-BD30 met.
 BD-C3 round 1: 0 findings. Rows BD31-BD38, BD54, and BD59 are met.
 
 BD-C4 round 1: 0 findings. Rows BD39-BD49 are met, and roadmap/FT379.md and roadmap/FT369.md match the build base.
+
+BD-C4 round 2: 1 finding, worst P21. Raw count 1; repair targets 0 after the spec-only fix.
+
+- P21 (auto-fix, confidence 6): BD64 sat under story 44, which covers only the checkout fingerprint. Plan commit `4628024f` adds story 47, and the reaffirmation closed P21.
 
 ## Coverage
 
@@ -1718,3 +1836,5 @@ BD-C3 round 1: 0 findings. Live probes bit for BD31, BD37, and BD54. Advice: a c
 BD-C4 round 1: 1 finding, worst C1. Raw count 1; repair targets 1.
 
 - C1 (auto-fix, confidence 6): the source cleanup now discards a worktree that holds an ignored build-log file, and no row or test decides that case. Repair: row BD64 pins the discard, the same treatment as the three exact local capture files, with a ticket 06 test in `internal/worktree/land_local_capture_test.go`.
+
+BD-C4 round 2: 0 findings. BD64 bites on the release side, and each fingerprint test still bites alone after the shared helper.
