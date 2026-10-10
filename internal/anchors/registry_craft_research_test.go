@@ -94,6 +94,11 @@ func TestCraftResearchAnchorsRedOnRemoval(t *testing.T) {
 				want:   ".agents/commands/bench-write-spec.md dropped the research fan-out before the spec-authoring fork",
 			},
 			{
+				file:   writeSpec,
+				needle: "The charge gives the fork the findings as compressed inputs, and the fork does not repeat their reads.",
+				want:   ".agents/commands/bench-write-spec.md dropped the fork's use of the research findings without a repeat of their reads",
+			},
+			{
 				file:    writeSpec,
 				section: "Who runs this phase",
 				needle:  "After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and slice its tickets.",
