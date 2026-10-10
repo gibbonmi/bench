@@ -59,7 +59,7 @@ func TestWriteSpecChunkedSlicing(t *testing.T) {
 		{file: writeSpec, section: "Process", needle: "The invoking session repairs a rejected spec or chunk, and the same round grades the repair alone.", want: "write-spec slicing: a rejected spec or chunk is repaired and reviewed again alone"},
 		{file: writeSpec, section: "Process", needle: "The count `<n>` sums the iterations of the spec round and of every chunk round.", want: "write-spec slicing: the verification log sums the iterations of every round"},
 		{file: writeSpec, needle: "The invoking session coordinates the phase, slices the tickets, and presents the completed approval table to the reviewer.", want: "write-spec slicing: the invoking session slices the tickets"},
-		{file: line, needle: "| Spec review (`/bench-write-spec`) | mid + high |", want: "write-spec slicing: craft-line routes the spec review to mid + high"},
+		{file: line, needle: "| Spec review (`/bench-write-spec`) | cheap + high |", want: "write-spec slicing: craft-line routes the spec review to cheap + high"},
 		{file: line, needle: "| Chunk ticket review (`/bench-write-spec`) | cheap + high |", want: "write-spec slicing: craft-line routes the chunk ticket review to cheap + high"},
 	}}.check(t)
 }

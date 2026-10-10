@@ -45,7 +45,7 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Section: "Process", Needle: "The invoking session repairs a rejected spec or chunk, and the same round grades the repair alone.", Diagnostic: "write-spec slicing: a rejected spec or chunk is repaired and reviewed again alone"},
 	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Section: "Process", Needle: "The count `<n>` sums the iterations of the spec round and of every chunk round.", Diagnostic: "write-spec slicing: the verification log sums the iterations of every round"},
 	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: Require, Section: "", Needle: "The invoking session coordinates the phase, slices the tickets, and presents the completed approval table to the reviewer.", Diagnostic: "write-spec slicing: the invoking session slices the tickets"},
-	{Group: AfterImplementSpec, File: craftLineSkill, Kind: Require, Section: "", Needle: "| Spec review (`/bench-write-spec`) | mid + high |", Diagnostic: "write-spec slicing: craft-line routes the spec review to mid + high"},
+	{Group: AfterImplementSpec, File: craftLineSkill, Kind: Require, Section: "", Needle: "| Spec review (`/bench-write-spec`) | cheap + high |", Diagnostic: "write-spec slicing: craft-line routes the spec review to cheap + high"},
 	{Group: AfterImplementSpec, File: craftLineSkill, Kind: Require, Section: "", Needle: "| Chunk ticket review (`/bench-write-spec`) | cheap + high |", Diagnostic: "write-spec slicing: craft-line routes the chunk ticket review to cheap + high"},
 }
 
