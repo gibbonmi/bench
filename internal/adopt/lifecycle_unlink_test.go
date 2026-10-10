@@ -24,7 +24,6 @@ func moveManifestRow(t *testing.T, root, from, to string) {
 // names its asset through sub/../ resolves to that asset and removes it. Each run exits 0,
 // removes the manifest, and removes the AGENTS.md that link created with no project prose.
 func TestLifecycleUnlinkPartitions(t *testing.T) {
-	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name, row         string
 		absent, dedicated bool
@@ -35,7 +34,7 @@ func TestLifecycleUnlinkPartitions(t *testing.T) {
 		{name: "normalized", row: "sub/../" + lifecycleDoc},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := linkedCopy(t, base)
+			root := linkedCopy(t, goldenPlain)
 			path := filepath.Join(root, tc.row)
 			moveManifestRow(t, root, lifecycleDoc, tc.row)
 			if tc.absent {
@@ -74,7 +73,6 @@ func TestLifecycleUnlinkRefusals(t *testing.T) {
 		writeFixtureFile(t, path, "kit asset\n", 0o644)
 	}
 	outside := "../" + filepath.Base(t.TempDir()) + "/asset with [glob]*"
-	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name, rel, reason string
 		bespoke           bool
@@ -111,7 +109,7 @@ func TestLifecycleUnlinkRefusals(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := linkedCopy(t, base)
+			root := linkedCopy(t, goldenPlain)
 			path := filepath.Join(root, tc.rel)
 			tc.arrange(t, root, path)
 			if tc.rel != lifecycleDoc && !tc.bespoke {
@@ -148,9 +146,7 @@ func TestLifecycleUnlinkRefusals(t *testing.T) {
 // its plan and leaves every byte, mode, symlink target, and directory entry of the
 // repository unchanged, the manifest included.
 func TestLifecycleDryRunSnapshot(t *testing.T) {
-	root := consumerRepo(t)
-	writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), "# Team rules\n\nKeep this rule.\n", 0o644)
-	linkConsumer(t, root, 0)
+	root := linkedCopy(t, goldenProse)
 	writeFixtureFile(t, filepath.Join(root, lifecycleDoc), "project edit\n", 0o644)
 	if err := os.Remove(filepath.Join(root, lifecycleExec)); err != nil {
 		t.Fatal(err)

@@ -138,8 +138,7 @@ func TestLifecycleHardRefusalOrder(t *testing.T) {
 // whose bytes are clean but whose mode a project changed. Strict repair keeps the asset
 // and reports it, where ordinary relink would restore the mode.
 func TestLifecycleRepairCompatibility(t *testing.T) {
-	root := consumerRepo(t)
-	linkConsumer(t, root, 0)
+	root := linkedCopy(t, goldenPlain)
 	if err := os.Chmod(filepath.Join(root, lifecycleDoc), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +178,6 @@ func TestLifecycleClaudeOwnership(t *testing.T) {
 			}
 		}
 	}
-	base := linkedBase(t, nil)
 	for _, tc := range []struct {
 		name, reason string
 		installed    bool
@@ -199,7 +197,7 @@ func TestLifecycleClaudeOwnership(t *testing.T) {
 		{name: "owned dangling link", installed: true, arrange: dangling(true)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := linkedCopy(t, base)
+			root := linkedCopy(t, goldenPlain)
 			tc.arrange(t, root, filepath.Join(root, "CLAUDE.md"))
 			var before entryState
 			if !tc.installed {
@@ -228,10 +226,14 @@ func TestLifecycleSpecialInstructionFiles(t *testing.T) {
 		{name: "owned CLAUDE.md", rel: "CLAUDE.md", owned: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := consumerRepo(t)
+			var root string
+			if tc.owned {
+				root = linkedCopy(t, goldenPlain)
+			} else {
+				root = consumerRepo(t)
+			}
 			path := filepath.Join(root, tc.rel)
 			if tc.owned {
-				linkConsumer(t, root, 0)
 				if err := os.Remove(path); err != nil {
 					t.Fatal(err)
 				}
@@ -250,6 +252,22 @@ func TestLifecycleSpecialInstructionFiles(t *testing.T) {
 	}
 }
 
+// hookRepo points core.hooksPath of root at its own hooks directory when diverted is set,
+// and returns root with the effective pre-push path. A copy of a diverted golden repository
+// takes the setting again, because the copied setting names the golden directory.
+func hookRepo(t *testing.T, root string, diverted bool) (string, string) {
+	t.Helper()
+	hooks := filepath.Join(root, ".git", "hooks")
+	if diverted {
+		hooks = filepath.Join(root, "hooks")
+		if err := os.MkdirAll(hooks, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		runAdoptGit(t, root, "config", "core.hooksPath", hooks)
+	}
+	return root, filepath.Join(hooks, "pre-push")
+}
+
 // TestLifecycleHookCompatibility drives real Link over each effective pre-push state. An
 // absent or stale managed hook takes the current managed hook, also where core.hooksPath
 // diverts the hooks directory. A foreign hook, or any hook in a diverted directory that
@@ -259,24 +277,7 @@ func TestLifecycleSpecialInstructionFiles(t *testing.T) {
 // absent hook absent, and it reports neither.
 func TestLifecycleHookCompatibility(t *testing.T) {
 	foreign := func(t *testing.T, path string) { writeFixtureFile(t, path, "#!/bin/sh\nexit 0\n", 0o755) }
-	// hookRepo points core.hooksPath of root at its own hooks directory when diverted is set,
-	// and returns root with the effective pre-push path. A copy of a diverted base takes the
-	// setting again, because the copied setting names the base directory.
-	hookRepo := func(t *testing.T, root string, diverted bool) (string, string) {
-		hooks := filepath.Join(root, ".git", "hooks")
-		if diverted {
-			hooks = filepath.Join(root, "hooks")
-			if err := os.MkdirAll(hooks, 0o755); err != nil {
-				t.Fatal(err)
-			}
-			runAdoptGit(t, root, "config", "core.hooksPath", hooks)
-		}
-		return root, filepath.Join(hooks, "pre-push")
-	}
-	bases := map[bool]string{}
-	for _, diverted := range []bool{false, true} {
-		bases[diverted] = linkedBase(t, func(t *testing.T, root string) { hookRepo(t, root, diverted) })
-	}
+	goldens := map[bool]*golden{false: goldenPlain, true: goldenDiverted}
 	for _, tc := range []struct {
 		name     string
 		diverted bool
@@ -309,7 +310,7 @@ func TestLifecycleHookCompatibility(t *testing.T) {
 			}
 		})
 		t.Run("unlink "+tc.name, func(t *testing.T) {
-			_, path := hookRepo(t, linkedCopy(t, bases[tc.diverted]), tc.diverted)
+			_, path := hookRepo(t, linkedCopy(t, goldens[tc.diverted]), tc.diverted)
 			tc.arrange(t, path)
 			var before map[string]compatibilitytest.HomeEntry
 			if tc.absent {
