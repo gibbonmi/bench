@@ -96,18 +96,18 @@ func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, 
 	return landedCleanupRow{assignment: assignment, plan: plan, headOID: headOID, lease: lease}, true
 }
 
-// landedSelected is the selector's unscoped proof: the active record's branch is in the
-// default branch, no live lease holds it, and it answers the branch's commit. The
-// missing-tree refusal reads it too, so its landed route names what `clean --landed` selects.
+// landedSelected is the selector's unscoped proof: the active record has landed, no live
+// lease holds it, and it answers the branch's commit. The missing-tree refusal reads it
+// too, so its landed route names what `clean --landed` selects.
 func landedSelected(root string, assignment intent.Assignment, defaultRef, lease string) (string, bool) {
 	if assignment.State != intent.StateActive || assignment.Branch == "" {
 		return "", false
 	}
-	landed, byContent, proofErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), defaultRef)
-	if proofErr != nil || !landed {
+	ancestry := lifecyclepolicy.Ancestry(git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), defaultRef))
+	if !ancestry.ProvenLanded() {
 		return "", false
 	}
-	classifierPlan := CleanupPlan{Target: root, landedTyped: lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessProven, Landed: true, ByContent: byContent}}
+	classifierPlan := CleanupPlan{Target: root, landedTyped: ancestry.ForAssignment(assignmentHoldsUnlandedOutput(root, assignment))}
 	if lease == string(LeaseLive) {
 		classifierPlan.ReasonCode = ReasonLiveLease
 	}

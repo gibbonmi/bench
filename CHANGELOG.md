@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### One landedness verdict for a cleanup plan
+
+- Changed the `bench worktree clean <path>` plan for an assignment with no commit of its own and uncommitted output. Its `landed` evidence is now `false:ancestry`, the same verdict that the release and the `bench worktree list` cell read, so its fingerprint changes. The apply refuses a fingerprint from an earlier plan of that shape as stale, so make a new plan. The apply still keeps the output in a recovery ref and deletes the branch, because `main` holds every commit of the branch. Every other plan, the release, the list cell, and the landed sweep keep their behavior.
+
 ### Drain light-path delegation
 
 - Changed the light-path fix rule in `.bench/BENCH.md` so that `/bench-drain` implements no light-path fix inline. The drain gives every light-path fix in its run to a fresh write delegate, whatever its source. Before, the rule named only a fix that a drain verdict kept. Changed `/bench-drain` so that the delegate commits the ticket and the coordinator lands it after it verifies the done-claim.

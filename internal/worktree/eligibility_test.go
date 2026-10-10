@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"bytes"
+	"cmp"
 	"errors"
 	"os"
 	"path/filepath"
@@ -34,21 +35,29 @@ func TestExplicitEligibilityAllowsRuntimeIgnoredResidue(t *testing.T) {
 // is the whole decision. It independently gathers the same typed facts
 // PlanExplicitWithOptions gathers, through the same package-private evidence functions:
 // validateOwnerMarker, ProbeLease, classifyNestedState, inventoryIgnored,
-// git.LandedInDefault. It never copies production's own answer. Calling DecideExplicit
+// git.LandedInDefault, assignmentHoldsUnlandedOutput. It never copies production's own answer. Calling DecideExplicit
 // directly reproduces the exact action, reason, typed landedness, and
 // recovery/branch-deletion authority PlanExplicitWithOptions itself returns. A second
 // decision made in subshell.go, or a plan mutated after DecideExplicit returned, would
 // make this independent comparison diverge from PlanExplicitWithOptions's own projection.
+// Each subtest then applies the clean that its plan names, so the branch-deletion
+// authority of the plan reaches the apply.
 func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
 	t.Parallel()
 	t.Run("clean-remove", func(t *testing.T) {
 		f := newOwnedAssignment(t, "ev1-clean-remove")
-		assertVerdictMatchesPlan(t, f.root, f.creation.Path, CleanupOptions{})
+		plan := assertVerdictMatchesPlan(t, f.root, f.creation.Path, CleanupOptions{})
+		requireTest(t, plan.Action == ActionRemove && plan.landedTyped.String() == "true:ancestry",
+			"clean plan = %s/%s, want remove/true:ancestry", plan.Action, plan.landedTyped)
+		requireBareCleanDeletesTheBranch(t, f, "", "")
 	})
 	t.Run("dirty-recover-remove", func(t *testing.T) {
 		f := newOwnedAssignment(t, "ev1-dirty-recover-remove")
 		mustWrite(t, filepath.Join(f.creation.Path, "dirty.txt"), []byte("uncommitted\n"), 0o644)
-		assertVerdictMatchesPlan(t, f.root, f.creation.Path, CleanupOptions{})
+		plan := assertVerdictMatchesPlan(t, f.root, f.creation.Path, CleanupOptions{})
+		requireTest(t, plan.Action == ActionRecoverRemove && plan.landedTyped.String() == "false:ancestry",
+			"dirty plan = %s/%s, want recover-remove/false:ancestry", plan.Action, plan.landedTyped)
+		requireBareCleanDeletesTheBranch(t, f, "dirty.txt", "uncommitted")
 	})
 }
 
@@ -56,8 +65,8 @@ func TestEligibilityVerdictProjectsWithoutSecondDecision(t *testing.T) {
 // PlanExplicitWithOptions and decides a verdict from them directly. It asserts every
 // field the projection is responsible for carrying onto CleanupPlan: action, reason,
 // typed landedness, and branch/recovery authority. Every field must agree with what
-// PlanExplicitWithOptions actually returns for the identical fixture.
-func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOptions) {
+// PlanExplicitWithOptions actually returns for the identical fixture. It returns that plan.
+func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOptions) CleanupPlan {
 	t.Helper()
 	target, err := canonicalPath(path)
 	mustNoError(t, err)
@@ -69,8 +78,8 @@ func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOp
 
 	requireTest(t, verdict.Action == plan.Action && verdict.ReasonCode == plan.ReasonCode && verdict.Reason == plan.Reason,
 		"independently decided verdict = %#v, want it to match PlanExplicitWithOptions's projection %#v", verdict, plan)
-	requireTest(t, verdict.Landed.String() == plan.landed,
-		"independently decided typed landedness %q, want it to match the projected landed string %q", verdict.Landed.String(), plan.landed)
+	requireTest(t, verdict.Landed == plan.landedTyped,
+		"independently decided typed landedness %q, want it to match the projected landedness %q", verdict.Landed, plan.landedTyped)
 	requireTest(t, verdict.DeleteBranch == plan.deleteBranch && verdict.BranchRef == plan.branchRef && verdict.BranchOID == plan.branchOID,
 		"independently decided branch-deletion authority = %v/%s/%s, want it to match the projected plan %v/%s/%s",
 		verdict.DeleteBranch, verdict.BranchRef, verdict.BranchOID, plan.deleteBranch, plan.branchRef, plan.branchOID)
@@ -91,6 +100,7 @@ func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOp
 	}
 	requireTest(t, wantRecovery == plan.Recovery,
 		"independently resolved recovery ref %q, want it to match the projected plan recovery %q", wantRecovery, plan.Recovery)
+	return plan
 }
 
 // gatherExplicitFactsForTest independently gathers the same explicit facts
@@ -206,6 +216,9 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 	facts.HeadRef, facts.Head = headRef, head
 	if !facts.HeadDetached && facts.DefaultKnown {
 		facts.LandedOK, facts.LandedByContent, facts.LandedErr = git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef)
+	}
+	if named := cmp.Or(facts.MatchedAssignment, facts.ForeignAssignment); facts.LandedOK && named != nil {
+		facts.HoldsUnlandedOutput, facts.UnlandedOutputErr = assignmentHoldsUnlandedOutput(root, *named)
 	}
 	facts.UnsafeTarget = !cleanupOutputSafe(target)
 	return facts
