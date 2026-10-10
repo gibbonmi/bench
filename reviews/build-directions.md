@@ -649,6 +649,110 @@
           ]
         }
       ]
+    },
+    {
+      "id": "BD-C2",
+      "base": "0487a79f9ba7f3753cfd8acd93a1016e3abcaaf8",
+      "tip": "823bca72714e6c61f7bd045b246bd9921f6aec39",
+      "plan_digest": "sha256:869e494317e6355f26fef01a52b7eb96aa01d06d5f1f7395b1ec425d774dd841",
+      "source_digest": "b02fe549c99cc5b106fd2bdaeefb9a675861adf3",
+      "acceptance_rows": [
+        "BD22",
+        "BD23",
+        "BD24",
+        "BD25",
+        "BD26",
+        "BD27",
+        "BD28",
+        "BD29",
+        "BD30"
+      ],
+      "verification": [
+        {
+          "id": "bd-04-focused-t04",
+          "performer": "claude:bd_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b02fe549c99cc5b106fd2bdaeefb9a675861adf3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t04",
+            "digest": "sha256:68ad6ddf6df72e8694c7fdc33a405d7a01a90654da4fc613d0710db3bf48dac4",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,9286842669ff782bf84cd1c9ec9dfa167c224baa,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,195,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-04-focused",
+          "command": "bench test --package ./internal/anchors --run TestWriteSpecChunkedSlicing",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-04-floor-t04",
+          "performer": "claude:bd_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b02fe549c99cc5b106fd2bdaeefb9a675861adf3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t04",
+            "digest": "sha256:0cdaa5a938c666bd7572ca0788715f404d711275c21250439afc4ce4868cbd74",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,9286842669ff782bf84cd1c9ec9dfa167c224baa,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,18271,333\n  github.com/gibbonmi/bench/internal/anchors,pass,2032,179\n  github.com/gibbonmi/bench/internal/conformance,pass,58666,1684\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "bd-04-floor",
+          "command": "bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-04-conformance-t04",
+          "performer": "claude:bd_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b02fe549c99cc5b106fd2bdaeefb9a675861adf3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t04",
+            "digest": "sha256:49f9cf420867a730dd8dc25b5512fe9deb7c17c46612ce66903f01d1d97c78ab",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,9286842669ff782bf84cd1c9ec9dfa167c224baa,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15786,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-04-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-04-live-t04",
+          "performer": "claude:bd_t04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b02fe549c99cc5b106fd2bdaeefb9a675861adf3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t04",
+            "digest": "sha256:6aba96d43a23f7dce7262a8fba4302a92db56232c14058a4d3772d601d36e9e6",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,9286842669ff782bf84cd1c9ec9dfa167c224baa,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,412\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,6136,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: witness cap: the author charge defines a witness\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-04-live",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the sentence \"A witness is one demonstrated red of one independent test expectation.\" from .agents/commands/bench-implement-spec.md. The docs-currency-workflow check turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bd_t04",
+              "digest": "sha256:6aba96d43a23f7dce7262a8fba4302a92db56232c14058a4d3772d601d36e9e6",
+              "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,9286842669ff782bf84cd1c9ec9dfa167c224baa,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,412\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,6136,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: witness cap: the author charge defines a witness\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
