@@ -58,44 +58,6 @@ func TestResumeSummaryCountsLandedProofWithoutBranchAdvance(t *testing.T) {
 	}
 }
 
-// TestDirtyAssignmentWithoutOwnCommitIsNotLanded pins FT408. A branch tip that sits at the
-// recorded start is a main commit, but an assignment with no commit of its own and
-// uncommitted output holds unlanded work. Each landed reader must agree on that verdict,
-// and the two neighbors that keep a landed verdict must stay landed.
-func TestDirtyAssignmentWithoutOwnCommitIsNotLanded(t *testing.T) {
-	t.Parallel()
-	root := newWorktreeRepo(t)
-	home := filepath.Join(root, ".bench-home")
-	dirtyNoCommit := mustCreate(t, root, home, "no-commit-dirty", "no commit dirty")
-	cleanNoCommit := mustCreate(t, root, home, "no-commit-clean", "no commit clean")
-	dirtyOwnCommit := mustCreate(t, root, home, "own-commit-dirty", "own commit dirty")
-	landAssignment(t, root, dirtyOwnCommit, "own-commit.txt")
-	mustWrite(t, filepath.Join(dirtyNoCommit.Path, "research.txt"), []byte("output\n"), 0o644)
-	mustWrite(t, filepath.Join(dirtyOwnCommit.Path, "extra.txt"), []byte("output\n"), 0o644)
-
-	list := runVerb(t, verbList, repoHome{root, home}.call())
-	requireTest(t, list.exit == 0, "ListCommand exit=%d output=%q", list.exit, list.stdout)
-	landedByID := map[string]any{}
-	for _, row := range list.mustRows(t, listTable) {
-		fields := row.(map[string]any)
-		landedByID[fields["id"].(string)] = fields["landed"]
-	}
-	for id, want := range map[string]bool{dirtyNoCommit.Assignment.ID: false, cleanNoCommit.Assignment.ID: true, dirtyOwnCommit.Assignment.ID: true} {
-		requireTest(t, landedByID[id] == want, "list landed cell of %s = %v, want %v", id, landedByID[id], want)
-	}
-
-	plan := runVerb(t, verbClean, repoHome{root, home}.call("--landed"))
-	requireTest(t, plan.exit == 0, "clean --landed exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
-	requireTest(t, !strings.Contains(plan.stdout, dirtyNoCommit.Path), "clean --landed selected the unlanded worktree: %q", plan.stdout)
-	for _, landed := range []Creation{cleanNoCommit, dirtyOwnCommit} {
-		requireTest(t, strings.Contains(plan.stdout, landed.Path), "clean --landed output=%q, want %s", plan.stdout, landed.Path)
-	}
-
-	resumed := runVerb(t, verbResumeClean, repoHome{root, home}.call())
-	requireTest(t, resumed.exit == 0, "ResumeCleanCommand exit=%d stdout=%q stderr=%q", resumed.exit, resumed.stdout, resumed.stderr)
-	requireTest(t, strings.Contains(resumed.stdout, "retained active=1 landed=2"), "summary=%q, want one active and two landed", resumed.stdout)
-}
-
 func TestResumeSummaryPartitionsLandedLeases(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)

@@ -73,9 +73,8 @@ func planLandedSet(j joins, root string, options CleanupOptions, scope string) (
 // scope narrows the selector to one landing's own work. The same landed proof answers
 // both questions: the branch has to be landed in the destination as it stands now, and it
 // has to be unlanded at the destination base this landing composed against. An assignment
-// that was already landed before this landing belongs to no landing's own set.
-// Automatic cleanup also needs a commit after the assignment start. An empty
-// sibling created during the landing has no contribution for that landing to retire.
+// landed before this landing, or with no own commit, belongs to no landing's own set. A
+// fast-forward merge of the default branch adds no own commit.
 func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions, scope string) (landedCleanupRow, bool) {
 	headOID, landed := landedSelected(root, assignment, defaultRef, lease)
 	if !landed {
@@ -84,7 +83,8 @@ func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, 
 	if scope != "" {
 		before, _, scopeErr := git.LandedInDefault(root, strings.TrimPrefix(assignment.Branch, "refs/heads/"), scope)
 		startOID, startErr := git.ResolveCommit(root, assignment.Start)
-		if scopeErr != nil || before || startErr != nil || startOID == headOID || !git.OK("-C", root, "merge-base", "--is-ancestor", startOID, headOID) {
+		own, ownErr := assignmentOwnsCommit(root, assignment)
+		if scopeErr != nil || before || startErr != nil || ownErr != nil || !own || !git.OK("-C", root, "merge-base", "--is-ancestor", startOID, headOID) {
 			return landedCleanupRow{}, false
 		}
 	}

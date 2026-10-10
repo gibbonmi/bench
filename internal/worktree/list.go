@@ -312,7 +312,8 @@ func listLease(path string) string {
 }
 
 // listLanded renders one landed cell from the proof the row's kind owns: an assignment
-// reads assignmentLandedInDefault, and a foreign registration reads the branch ancestry.
+// reads the branch ancestry and then assignmentHoldsUnlandedOutput, and a foreign
+// registration reads the branch ancestry alone.
 func listLanded(branch, def string, defaultResolved bool, prove func(def string) (bool, bool, error)) any {
 	if !defaultResolved || branch == "" {
 		return "unknown"

@@ -3,6 +3,7 @@ package worktree
 import (
 	"errors"
 	"os"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -21,11 +22,35 @@ func assignmentLanded(root string, assignment intent.Assignment, plan CleanupPla
 }
 
 // assignmentHoldsUnlandedOutput reports an assignment with no commit of its own and a dirty
-// tree. Its branch tip sits at its recorded start, which is a default-ref commit whatever the
-// tree holds, so the ancestry proof alone calls the uncommitted output landed. A clean tree
-// has no output to lose, and an assignment with an own commit has landed that commit. A
-// missing tree holds nothing. The list cell reads this fact too, so no reader derives it twice.
+// tree. Such a branch holds only default-branch commits, so the ancestry proof alone calls
+// the uncommitted output landed. A clean tree has no output to lose, and an assignment with
+// an own commit has landed that commit. A missing tree holds nothing. The list cell reads
+// this fact too, so no reader derives it twice.
 func assignmentHoldsUnlandedOutput(root string, assignment intent.Assignment) (bool, error) {
+	own, err := assignmentOwnsCommit(root, assignment)
+	if err != nil || own {
+		return false, err
+	}
+	if _, statErr := os.Lstat(assignment.Worktree); errors.Is(statErr, os.ErrNotExist) {
+		return false, nil
+	}
+	status, err := checkoutStatus(assignment.Worktree)
+	return len(status) > 0, err
+}
+
+// assignmentOwnsCommit reports whether the first-parent chain from the branch tip back to
+// the recorded start holds a commit that is not on the default branch's first-parent
+// history. A landing publishes a two-parent commit on the default branch, with the
+// assignment tip as its second parent, so a landed own commit is never a first-parent
+// default-branch commit. A fast-forward merge of the default branch moves the tip past the
+// start over commits that are all first-parent default-branch commits. The first-parent
+// chain also leaves out the side commits of a landing merge that the fast-forward takes in.
+// The scoped landed selector reads this fact too, as its no-contribution test.
+func assignmentOwnsCommit(root string, assignment intent.Assignment) (bool, error) {
+	def, ok := git.ResolvedDefault(root)
+	if !ok {
+		return false, errors.New("the default branch does not resolve")
+	}
 	tip, err := git.ResolveCommit(root, assignment.Branch)
 	if err != nil {
 		return false, err
@@ -34,14 +59,24 @@ func assignmentHoldsUnlandedOutput(root string, assignment intent.Assignment) (b
 	if err != nil {
 		return false, err
 	}
-	if tip != start {
-		return false, nil
+	chain, err := git.Output("-C", root, "rev-list", "--first-parent", start+".."+tip)
+	if err != nil || chain == "" {
+		return false, err
 	}
-	if _, statErr := os.Lstat(assignment.Worktree); errors.Is(statErr, os.ErrNotExist) {
-		return false, nil
+	history, err := git.Output("-C", root, "rev-list", "--first-parent", def, "^"+start)
+	if err != nil {
+		return false, err
 	}
-	status, err := checkoutStatus(assignment.Worktree)
-	return len(status) > 0, err
+	onDefault := map[string]bool{}
+	for _, commit := range strings.Fields(history) {
+		onDefault[commit] = true
+	}
+	for _, commit := range strings.Fields(chain) {
+		if !onDefault[commit] {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func planHasLiveLease(plan CleanupPlan) bool {
