@@ -93,11 +93,25 @@ func promoteWithLease(root string, changes []stagedChange, guard *adoptionGuard)
 		parents[filepath.Dir(dest)] = true
 		destinations[dest] = i + 1
 	}
+	// BENCH_LINK_FAULT names the nth change of this promotion, whether the change publishes
+	// by a rename or by a removal. "<n>" fails that change, "last" fails the final change,
+	// and "interrupt:<n>" exits the process at that change.
 	faultName := os.Getenv("BENCH_LINK_FAULT")
 	fault, _ := strconv.Atoi(faultName)
 	interrupt := 0
 	if value, ok := strings.CutPrefix(faultName, "interrupt:"); ok {
 		interrupt, _ = strconv.Atoi(value)
+	}
+	faultAt := func(dest string) error {
+		index := destinations[dest]
+		if index > 0 && index == interrupt {
+			// Abrupt exit leaves the durable journal for a fresh-process recovery test.
+			os.Exit(97)
+		}
+		if index > 0 && ((fault > 0 && index == fault) || (faultName == "last" && index == len(changes))) {
+			return fmt.Errorf("injected link promotion fault %s", faultName)
+		}
+		return nil
 	}
 	var lease *transaction.Lease
 	if guard != nil {
@@ -112,14 +126,16 @@ func promoteWithLease(root string, changes []stagedChange, guard *adoptionGuard)
 			return syncDir(dir)
 		},
 		Rename: func(old, new string) error {
-			if index := destinations[new]; index > 0 && index == interrupt {
-				// Abrupt exit leaves the durable journal for a fresh-process recovery test.
-				os.Exit(97)
-			}
-			if index := destinations[new]; index > 0 && ((fault > 0 && index == fault) || (faultName == "last" && index == len(changes))) {
-				return fmt.Errorf("injected link promotion fault %s", faultName)
+			if err := faultAt(new); err != nil {
+				return err
 			}
 			return os.Rename(old, new)
+		},
+		Remove: func(path string) error {
+			if err := faultAt(path); err != nil {
+				return err
+			}
+			return os.Remove(path)
 		},
 	}
 	if guard != nil && guard.repair != nil {
