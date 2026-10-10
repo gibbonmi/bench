@@ -280,7 +280,7 @@ func planAutomaticAt(j joins, root, path string, now time.Time) (CleanupPlan, er
 		}
 	} else if explicitPlan.assignment != nil {
 		facts.LiveLease = planHasLiveLease(explicitPlan)
-		facts.Landed = assignmentLanded(*explicitPlan.assignment, explicitPlan)
+		facts.Landed = assignmentLanded(root, *explicitPlan.assignment, explicitPlan)
 		if explicitPlan.assignment.State == intent.StateActive {
 			facts.OrphanedActive = orphaned(*explicitPlan.assignment, now)
 		}

@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Landed verdict for dirty output
+
+- Changed `bench worktree list`, `bench worktree clean --landed`, and the session-start landed count so that an assignment with no commit of its own and uncommitted output is unlanded work. Before, its branch tip was a `main` commit, so each reader called it landed. An assignment with no commit and a clean tree stays landed, and so does an assignment with a landed commit.
+
 ### Known-issues route
 
 - Changed `/bench-implement-spec` so that the ticket author charge names `docs/known-issues.md` when the repository has that file. Changed `/bench-write-spec` so that the author step reads that file before it plans the probes and the check floor.

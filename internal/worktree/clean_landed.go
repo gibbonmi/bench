@@ -111,7 +111,7 @@ func landedSelected(root string, assignment intent.Assignment, defaultRef, lease
 	if lease == string(LeaseLive) {
 		classifierPlan.ReasonCode = ReasonLiveLease
 	}
-	if !assignmentLanded(assignment, classifierPlan) {
+	if !assignmentLanded(root, assignment, classifierPlan) {
 		return "", false
 	}
 	headOID, oidErr := git.ResolveCommit(root, assignment.Branch)

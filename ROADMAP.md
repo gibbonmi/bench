@@ -112,8 +112,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT401 (LOW, decision required) — the refusals outside the write verbs print their routes from the refusal-route registry.**
 
-**FT408 (MEDIUM) — an assignment with no landed commit and uncommitted output is not landed.**
-
 ## Planning, ownership, and review integrity
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**

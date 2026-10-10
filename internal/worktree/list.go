@@ -94,7 +94,9 @@ func ListCommand(root, _ string, args []string) (string, int) {
 			label = registration.Path
 		}
 		tree := listTree(registration.Path)
-		row := listRow{values: []any{"foreign", label, "", "foreign", "foreign", tree, listLease(registration.Path), listLanded(root, registration.Branch, def, defaultResolved)}}
+		row := listRow{values: []any{"foreign", label, "", "foreign", "foreign", tree, listLease(registration.Path), listLanded(registration.Branch, def, defaultResolved, func(def string) (bool, bool, error) {
+			return git.LandedInDefault(root, registration.Branch, def)
+		})}}
 		row.values = append(row.values, listIgnored(j, registration.Path))
 		if tree == "missing" {
 			row.orphanPath = registration.Path
@@ -110,7 +112,7 @@ func ListCommand(root, _ string, args []string) (string, int) {
 		if assignment.State != intent.StateActive {
 			continue
 		}
-		if plan := planLandedAssignment(j, root, assignment, CleanupOptions{}); assignmentLanded(assignment, plan) {
+		if plan := planLandedAssignment(j, root, assignment, CleanupOptions{}); assignmentLanded(root, assignment, plan) {
 			landed = true
 			break
 		}
@@ -269,7 +271,14 @@ func (r recoveryRoute) action() axi.Action {
 }
 
 func listAssignmentRow(j joins, root string, assignment intent.Assignment, def string, defaultResolved bool) []any {
-	return []any{assignment.ID, assignment.Label, assignment.RequestToken, string(assignment.State), "assignment", listTree(assignment.Worktree), listLease(assignment.Worktree), listLanded(root, assignment.Branch, def, defaultResolved), listIgnored(j, assignment.Worktree)}
+	return []any{assignment.ID, assignment.Label, assignment.RequestToken, string(assignment.State), "assignment", listTree(assignment.Worktree), listLease(assignment.Worktree), listLanded(assignment.Branch, def, defaultResolved, func(def string) (bool, bool, error) {
+		landed, byContent, err := git.LandedInDefault(root, assignment.Branch, def)
+		if err != nil || !landed {
+			return landed, byContent, err
+		}
+		holds, err := assignmentHoldsUnlandedOutput(root, assignment)
+		return !holds, byContent, err
+	}), listIgnored(j, assignment.Worktree)}
 }
 
 func listTree(path string) string {
@@ -302,11 +311,13 @@ func listLease(path string) string {
 	return string(ProbeLease(lease))
 }
 
-func listLanded(root, branch, def string, defaultResolved bool) any {
+// listLanded renders one landed cell from the proof the row's kind owns: an assignment
+// reads assignmentLandedInDefault, and a foreign registration reads the branch ancestry.
+func listLanded(branch, def string, defaultResolved bool, prove func(def string) (bool, bool, error)) any {
 	if !defaultResolved || branch == "" {
 		return "unknown"
 	}
-	landed, _, err := git.LandedInDefault(root, branch, def)
+	landed, _, err := prove(def)
 	if err != nil {
 		return "unknown"
 	}

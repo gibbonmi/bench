@@ -1,22 +1,22 @@
 # Require an own commit for a landed verdict on dirty output
 
 Blocked by: none
-Writes: internal/worktree/landed.go, internal/worktree/list.go, internal/worktree/clean_landed.go, internal/worktree/subshell.go, internal/worktree/landed_test.go, ROADMAP.md, roadmap/FT408.md, CHANGELOG.md
+Writes: internal/worktree/landed.go, internal/worktree/list.go, internal/worktree/clean_landed.go, internal/worktree/classifier.go, internal/worktree/resume.go, internal/worktree/landed_test.go, internal/worktree/parallel_census_test.go, ROADMAP.md, roadmap/FT408.md, CHANGELOG.md
 Covers: none
 
 ## What to build
 
 Today an active assignment is landed when its branch tip is an ancestor of `main`. This is also true when the assignment made no commit and its tree holds uncommitted output. The list cell, the clean of the landed set, the session-start count, and the orphan sweep then treat that output as landed work.
 
-An assignment has no commit of its own when its branch tip equals its recorded start. One shared proof in `internal/worktree/landed.go` reports such an assignment as not landed when its tree is dirty. Dirty means the tracked and untracked status of the checkout is not empty.
+An assignment has no commit of its own when its branch tip equals its recorded start. One shared fact in `internal/worktree/landed.go` reports such an assignment as holding unlanded output when its tree is dirty. Dirty means the tracked and untracked status of the checkout is not empty.
 
-Every site that today calls `git.LandedInDefault` for an assignment calls this proof instead. These sites are the `landed` cell of `bench worktree list` and the selector of `bench worktree clean --landed`. The explicit planner is the third site. Its `LandedOK` fact feeds the resume sweep and the automatic classifier.
+The landed verdict of an active assignment reads this fact, and so does the `landed` cell of `bench worktree list`. The verdict feeds the list banner, the selector of `bench worktree clean --landed`, the resume sweep, and the automatic classifier. The explicit planner keeps its ancestry proof, because its branch removal and its dirty retain reasons depend on it.
 
 An assignment with no commit and a clean tree stays landed, as the code defines it today. An assignment with an own commit that `main` contains stays landed, with or without dirty output. The reviewer decides the salvage of each unlanded worktree.
 
 ## Acceptance
 
-- [ ] `bench worktree list` shows `landed=false` for an active assignment with no own commit and an untracked file.
+- [ ] `bench worktree list` shows `landed=false` for an assignment with no own commit and an untracked file.
 - [ ] `bench worktree clean --landed` does not select that assignment.
 - [ ] The session-start summary does not count that assignment as landed.
 - [ ] An assignment with no own commit and a clean tree still shows `landed=true` and still counts as landed.
