@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
+	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -72,7 +73,7 @@ func Init(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// localCaptureIgnoreLines are the project-local capture files a linked repo must not track.
+// localCaptureIgnoreLines are the project-local capture paths a linked repo must not track.
 // Their content enters history only through a reviewed drain, so bench init ignores them.
 // landing.LocalCapturePath is the matching predicate; the adopt tests hold the two lists in
 // agreement, so a new capture file cannot be ignored here and stay unrecognized there.
@@ -80,6 +81,7 @@ var localCaptureIgnoreLines = []string{
 	handoffdoc.DocumentPath,
 	roadmap.IdeasFile,
 	learnings.JournalPath,
+	landing.BuildLogDir,
 }
 
 // ignoreLocalCapture appends the missing localCaptureIgnoreLines entries to the root

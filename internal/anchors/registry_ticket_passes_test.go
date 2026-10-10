@@ -47,11 +47,13 @@ func TestTicketSlicingPasses(t *testing.T) {
 // TestWriteSpecChunkedSlicing keeps the write-spec spec review, research round, per-chunk
 // slicing, one ticket review, context checkpoint, review-line, and fence-narrowing rules
 // red-capable. Each needle and diagnostic is written here independently of the registry, so
-// a rewrite that drops a rule cannot define itself green.
+// a rewrite that drops a rule cannot define itself green. The moved-code guard, the witness
+// cap, and the known-issues pointer to that cap have their rules here too.
 func TestWriteSpecChunkedSlicing(t *testing.T) {
 	const writeSpec = ".agents/commands/bench-write-spec.md"
 	const implementSpec = ".agents/commands/bench-implement-spec.md"
 	const line = ".agents/skills/bench-craft-line/SKILL.md"
+	const issues = "docs/known-issues.md"
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
 		{file: writeSpec, section: "Process", needle: "After the spec fork returns, one independent review round grades the spec alone under `craft-spec`'s review rubric, its chunk table included.", want: "write-spec slicing: one independent round reviews the spec alone"},
 		{file: writeSpec, section: "Process", needle: "It returns accept or reject, and slicing starts only after it accepts.", want: "write-spec slicing: slicing waits for the spec round to accept"},
@@ -80,5 +82,12 @@ func TestWriteSpecChunkedSlicing(t *testing.T) {
 		{file: implementSpec, needle: "The author's return names each untouched `Writes:` entry with a one-clause reason.", want: "fence narrowing: the author's return names each untouched Writes entry"},
 		{file: implementSpec, needle: "The review charge says that an untouched `Writes:` entry is not a defect.", want: "fence narrowing: the review charge accepts an untouched Writes entry"},
 		{file: implementSpec, needle: "An edit outside the acceptance's reach is a finding, even when its path is in `Writes:`.", want: "fence narrowing: the review charge finds an edit outside the acceptance's reach"},
+		{file: implementSpec, needle: "Code that the author moves or merges keeps its error handling and validation.", want: "author charge: moved or merged code keeps its error handling and validation"},
+		{file: implementSpec, needle: "A witness is one demonstrated red of one independent test expectation.", want: "witness cap: the author charge defines a witness"},
+		{file: implementSpec, needle: "The charge caps the witnesses at one for each coverage row plus one for each production branch that the ticket adds.", want: "witness cap: the charge caps the witnesses by coverage rows and new production branches"},
+		{file: implementSpec, needle: "The author meets the cap with fewer independent expectations, such as one table-driven test, and skips no witness.", want: "witness cap: the author meets the cap with fewer expectations and skips no witness"},
+		{file: implementSpec, needle: "The author runs the floor checks and witnesses of several packages in one `bench test` call that repeats `--package`.", want: "witness cap: the author runs several packages in one bench test call"},
+		{file: issues, needle: "Apply the witness cap and the batched `bench test` call that `/bench-implement-spec` states.", want: "witness cap: the known-issues row points to implement-spec for the cap"},
+		{file: issues, needle: "Cap the witnesses in a charge", want: "witness cap: the known-issues row kept a copy of the cap", forbidden: true},
 	}}.check(t)
 }

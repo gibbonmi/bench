@@ -39,6 +39,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestInjectedPortRegistryCheckBites":                           true,
 	"TestInvalidOrderedSetRedsAndWidensToTheFullTier":              true,
 	"TestLocalCaptureFilesAreNotTracked":                           true,
+	"TestKitGitignoreIgnoresTheBuildLog":                           true,
 	"TestAXIMembershipExpectationBitesInBothDirections":            true,
 	"TestAXIGuidanceContractBites":                                 true,
 	"TestNativeWorkflowEvidenceEdgeBites":                          true,

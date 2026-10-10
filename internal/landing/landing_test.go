@@ -60,16 +60,7 @@ func TestRuntimeIgnoredPathRejectsUnsafeOrCollapsedNames(t *testing.T) {
 }
 
 func TestCheckoutFingerprintIgnoresRuntimeRecords(t *testing.T) {
-	root := fixture(t)
-	write(t, root, ".gitignore", ".logs/\n")
-	git(t, root, "add", ".gitignore")
-	git(t, root, "commit", "-qm", "ignore runtime logs")
-	before, err := CheckoutFingerprint(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	write(t, root, ".logs/gate.jsonl", "record\n")
-	after, err := CheckoutFingerprint(root)
+	before, after, err := ignoredWriteFingerprints(t, ".logs/", ".logs/gate.jsonl")
 	if err != nil || after != before {
 		t.Fatalf("runtime record fingerprint = (%q, %v), want %q", after, err, before)
 	}

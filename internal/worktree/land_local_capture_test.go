@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/landing"
 )
 
 var localCapturePaths = []string{
@@ -67,6 +69,25 @@ func TestResumeLandCommandAllowsLocalCaptureInDestination(t *testing.T) {
 	r := runVerb(t, verbLand, f.call(args...))
 	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
 		t.Fatalf("resume with local capture = (%d, %q, %q), want released", r.exit, r.stdout, r.stderr)
+	}
+}
+
+// A source worktree that holds an ignored build-log file at release discards it as local
+// capture, so the landing releases the source.
+func TestLandCommandReleasesSourceWithIgnoredBuildLog(t *testing.T) {
+	t.Parallel()
+	request := "local-capture-build-log"
+	f := specLessLandingFixture(t, request)
+	base, _ := addLocalCaptureIgnore(t, f.root, landing.BuildLogDir)
+	gitRun(t, f.creation.Path, "rebase", "main")
+	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	log := filepath.Join(f.creation.Path, filepath.FromSlash(landing.BuildLogDir+request+".log"))
+	mustMkdirAll(t, filepath.Dir(log), 0o755)
+	mustWrite(t, log, []byte("build log\n"), 0o600)
+
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, base, tip, f.creation.Path)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released,census=0}") {
+		t.Fatalf("land with an ignored source build log = (%d, %q, %q), want released", r.exit, r.stdout, r.stderr)
 	}
 }
 

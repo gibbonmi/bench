@@ -64,6 +64,13 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The author's return names each untouched `Writes:` entry with a one-clause reason.", Diagnostic: "fence narrowing: the author's return names each untouched Writes entry"},
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The review charge says that an untouched `Writes:` entry is not a defect.", Diagnostic: "fence narrowing: the review charge accepts an untouched Writes entry"},
 	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "An edit outside the acceptance's reach is a finding, even when its path is in `Writes:`.", Diagnostic: "fence narrowing: the review charge finds an edit outside the acceptance's reach"},
+	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "Code that the author moves or merges keeps its error handling and validation.", Diagnostic: "author charge: moved or merged code keeps its error handling and validation"},
+	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "A witness is one demonstrated red of one independent test expectation.", Diagnostic: "witness cap: the author charge defines a witness"},
+	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The charge caps the witnesses at one for each coverage row plus one for each production branch that the ticket adds.", Diagnostic: "witness cap: the charge caps the witnesses by coverage rows and new production branches"},
+	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The author meets the cap with fewer independent expectations, such as one table-driven test, and skips no witness.", Diagnostic: "witness cap: the author meets the cap with fewer expectations and skips no witness"},
+	{Group: AfterImplementSpec, File: implementSpecCommand, Kind: Require, Section: "", Needle: "The author runs the floor checks and witnesses of several packages in one `bench test` call that repeats `--package`.", Diagnostic: "witness cap: the author runs several packages in one bench test call"},
+	{Group: AfterImplementSpec, File: knownIssues, Kind: Require, Section: "", Needle: "Apply the witness cap and the batched `bench test` call that `/bench-implement-spec` states.", Diagnostic: "witness cap: the known-issues row points to implement-spec for the cap"},
+	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "Cap the witnesses in a charge", Diagnostic: "witness cap: the known-issues row kept a copy of the cap"},
 }
 
 // slicingChecks is the craft-tickets reference that states the enforced Writes: rules,
@@ -74,6 +81,7 @@ const slicingChecks = ".agents/skills/bench-craft-tickets/references/slicing-che
 const writeSpecCommand = ".agents/commands/bench-write-spec.md"
 
 // implementSpecCommand is the phase command whose author and review charges read Writes: as an upper bound.
+// Its author charge also states that moved or merged code keeps its error handling and validation, and it caps the witnesses.
 const implementSpecCommand = ".agents/commands/bench-implement-spec.md"
 
 // craftLineSkill is the skill whose stage defaults route the write-spec slicing and review rounds.
@@ -81,3 +89,6 @@ const craftLineSkill = ".agents/skills/bench-craft-line/SKILL.md"
 
 // mapDiscipline is the craft-spec reference that holds the reader-sweep rules.
 const mapDiscipline = ".agents/skills/bench-craft-spec/references/map-discipline.md"
+
+// knownIssues is the known-issues file whose workaround row points to implement-spec for the witness cap.
+const knownIssues = "docs/known-issues.md"

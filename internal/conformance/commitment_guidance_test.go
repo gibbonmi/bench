@@ -50,6 +50,8 @@ func TestCommitmentGuidance(t *testing.T) {
 		remove("light-path Writes boundary", guide, " Its production paths stay inside that ticket's `Writes:` line.", "operating guide dropped the light-path Writes boundary"),
 		remove("light-path row rule", guide, " It may remove a roadmap row that no committed outcome pins as a source; a pinned row changes only through its outcome.", "operating guide dropped the light-path row rule"),
 		remove("drain light-path dispatch", guide, " `/bench-drain` implements no light-path fix inline: it dispatches every light-path fix in its run, whatever its source and whatever the active commitment is.", "operating guide dropped the drain light-path dispatch"),
+		remove("outside-a-build learning fix", guide, "Outside a build, a `bench learning` entry's light-path fix ships at once only when the active outcome needs it", "operating guide dropped the outside-a-build learning fix"),
+		remove("build rule pointer", guide, " `/bench-implement-spec` states the build rule.", "operating guide dropped the pointer to the build rule"),
 		remove("next-outcome start", guide, " At a phase close, do the preparation and run `bench commitment start` from the outcome's own worktree; never hand me a `bench` command.", "operating guide dropped the next-outcome start"),
 		remove("binding-only limit", guide, " That plan changes only the deliverable binding; a reorder or a new admission still needs my direction.", "operating guide dropped the binding-only limit"),
 		remove("drain next-outcome start", drain, "After the landing, the coordinator starts the `commitment_outlook` outcome under the next-outcome rule in `.bench/BENCH.md`.", "drain dropped its next-outcome start"),
@@ -83,6 +85,7 @@ func TestCommitmentGuidance(t *testing.T) {
 		restore("unadmitted learning fix", guide, learningFix, "A `bench learning` entry can have a light-path fix that needs no reviewer decision.", "operating guide restored the learning fix without admission"),
 		restore("light-path commitment start", guide, "**Deliver only the committed outcome.**", "Delivery starts only through `bench commitment start` for the eligible outcome that `bench status` names, light path and fixes included.", "operating guide restored the commitment start for light-path work"),
 		restore("active-outcome learning fix", guide, learningFix, "At any point in the workflow, `/bench-implement-spec` included, a `bench learning` entry can have a light-path fix that the active committed outcome needs.", "operating guide restored the learning fix for the active outcome only"),
+		restore("in-build learning fix", guide, learningFix, "At any point in the workflow, `/bench-implement-spec` included, a `bench learning` entry's light-path fix ships at once only when the active outcome needs it.", "operating guide restored the in-build learning fix"),
 		restore("mid-work defect fix", guide, "**Fix, don't park.**", "A small defect you find mid-work is not roadmap work: the fix lands in the active workflow as its own commit.", "operating guide restored the fix of every mid-work defect without admission"),
 		restore("first sequence row", router, "State its outcome, then", "For roadmap work, run `bench roadmap` and take the first `sequence` row.", "router restored the first sequence row as its work"),
 	} {
