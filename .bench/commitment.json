@@ -434,6 +434,18 @@
               "path": "roadmap/FT410.md",
               "identity": "sha256:802bfd784abf9f0df90ec363b8d85f277b092cf2f1ce7044157728051b8a5b89"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "build-directions",
+                "path": "specs/build-directions/spec.md",
+                "identity": "sha256:65d4c78f189356ab57657c587b67f18a03523a7e560b0620579b84b11215b73a"
+              },
+              "obligations": [
+                "FT410"
+              ]
+            }
           ]
         },
         {
