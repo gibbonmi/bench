@@ -57,6 +57,7 @@ type Store struct {
 	Lease         *Lease
 	SyncDirectory func(string) error
 	Rename        func(string, string) error
+	Remove        func(string) error
 }
 
 // Apply publishes prepared managed replacements and retains their recovery state.

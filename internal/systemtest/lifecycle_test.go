@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/adopt/transaction"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
@@ -244,9 +245,8 @@ func TestLifecyclePublicationCompatibility(t *testing.T) {
 	}
 	// A relink of the lost assets publishes lifecycleDoc, lifecycleReference, CLAUDE.md,
 	// the hook, and then the manifest. Unlink of a trimmed repository removes its kept rows,
-	// publishes AGENTS.md, and then removes the hook. The interruption seam stops only a
-	// rename, so an unlink interruption stops at AGENTS.md with the hook removal still
-	// pending, and the final manifest removal of Unlink has no interruption case.
+	// publishes AGENTS.md, and then removes the hook. These cases stop at a rename, with the
+	// hook removal still pending. TestLifecycleUnlinkRemovalInterruption stops at a removal.
 	for _, tc := range []struct {
 		name, interrupt               string
 		args, rows, published, absent []string
@@ -292,5 +292,42 @@ func TestLifecyclePublicationCompatibility(t *testing.T) {
 				t.Fatalf("manifest after recovery = %q, want the clean %q", got, clean)
 			}
 		})
+	}
+}
+
+// TestLifecycleUnlinkRemovalInterruption interrupts unlink at the removal of the managed
+// hook. That removal is the last change of the first promotion, so two managed files are
+// gone and AGENTS.md is stripped, while the final manifest removal has not started. Undo of
+// the journal that the interrupted process left in TMPDIR restores every destination.
+func TestLifecycleUnlinkRemovalInterruption(t *testing.T) {
+	repo := linkedLifecycleRepo(t)
+	trimLifecycleUnlink(t, repo, lifecycleDoc, lifecycleReference)
+	before := compatibilitytest.SnapshotHome(t, repo)
+	recovery := t.TempDir()
+	if result := runLifecycleEntry(t, repo, []string{"BENCH_LINK_FAULT=interrupt:4", "TMPDIR=" + recovery}, "unlink"); result.code != 97 {
+		t.Fatalf("interrupted unlink = %#v, want exit 97", result)
+	}
+	requireLifecycleState(t, repo, false, lifecycleDoc, lifecycleReference)
+	requireLifecycleProse(t, repo)
+	if _, err := os.Lstat(filepath.Join(repo, lifecycleHook)); err != nil {
+		t.Fatalf("hook after the interruption: %v, want its removal pending", err)
+	}
+	if _, err := os.Lstat(filepath.Join(repo, lifecycleManifest)); err != nil {
+		t.Fatalf("manifest after the interruption: %v, want the final removal pending", err)
+	}
+	records, err := filepath.Glob(filepath.Join(recovery, "bench-adoption-*", "*"))
+	if err != nil || len(records) != 1 {
+		t.Fatalf("recovery records = %v, %v; want the one interrupted journal", records, err)
+	}
+	if err := (transaction.Store{Directory: filepath.Dir(records[0])}).Undo(filepath.Base(records[0])); err != nil {
+		t.Fatalf("undo of the interrupted unlink: %v", err)
+	}
+	// The interrupted process leaves its unlink stage directory, so compare each entry
+	// that existed before the unlink and ignore the extra ones.
+	after := compatibilitytest.SnapshotHome(t, repo)
+	for rel, want := range before {
+		if got, ok := after[rel]; !ok || got != want {
+			t.Errorf("%s after undo = %+v, present %v; want %+v", rel, got, ok, want)
+		}
 	}
 }

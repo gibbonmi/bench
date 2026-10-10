@@ -218,6 +218,12 @@ The delegate writes the one ticket file, implements it, and lands it as the ligh
 A learning entry with a light-path fix follows the light-path fix rule in `.bench/BENCH.md`.
 Its verdict closes the entry by implementation after the fix lands.
 
+A fix that lands outside an open drain links to its open entry through `bench learning --resolves "<title>" --commit <sha>`.
+The verb reads only the live journal, so it refuses an entry that this drain sealed.
+A fix that lands inside this drain needs no link, because the drain closes its entry itself.
+The `resolved_by` column of the `learnings` block in the context index shows a link made before the drain opened.
+Verdict an entry with that cell set as closed by that commit. Do not pair a second `Resolved:` entry by hand.
+
 ## 6. Classify every run; restructure on request
 
 While you walk the rows, classify each row by its purpose. Use fix (a defect
