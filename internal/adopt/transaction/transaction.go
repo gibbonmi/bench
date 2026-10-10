@@ -120,25 +120,12 @@ func (s Store) Apply(changes []Change) (id string, resultErr error) {
 	if err != nil {
 		return id, fmt.Errorf("repair backup publication failed: %w", err)
 	}
-	for i := range r.Entries {
-		e := &r.Entries[i]
-		staged, err := stagePublication(e.Destination, e.After, s.syncDirectory)
-		if err == nil {
-			// Persist the inode before its rename so interrupted publication remains recoverable.
-			e.After = staged.value
-			err = s.save(id, r)
+	if err := s.publishEntries(id, &r); err != nil {
+		saved, loadErr := s.load(id)
+		if loadErr != nil {
+			return id, errors.Join(err, loadErr)
 		}
-		if err == nil {
-			err = staged.publish(s, &e.Before)
-		}
-		staged.close()
-		if err != nil {
-			saved, loadErr := s.load(id)
-			if loadErr != nil {
-				return id, errors.Join(err, loadErr)
-			}
-			return id, errors.Join(err, s.undo(id, saved))
-		}
+		return id, errors.Join(err, s.undo(id, saved))
 	}
 	r.State = stateApplied
 	if err := s.save(id, r); err != nil {
