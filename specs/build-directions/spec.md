@@ -291,6 +291,7 @@ The landing reads ignored paths through this predicate in two places.
 The destination fingerprint filter drops each accepted entry (internal/landing/landing.go:378).
 A new log file created during a landing would otherwise change that fingerprint, and the landing would refuse (landing.go:256-257).
 The source cleanup plan reads the same predicate (internal/worktree/build_outputs.go:81).
+So a source release discards an ignored build-log file, as it discards the three exact local capture files.
 The init agreement test reds once init writes a line that the predicate refuses (internal/adopt/adopt_test.go:579-585).
 
 A conformance test beside TestLocalCaptureFilesAreNotTracked reads the kit `.gitignore` and requires a line equal to `landing.BuildLogDir`.
@@ -318,7 +319,7 @@ Each ticket adds one `CHANGELOG.md` entry.
 | BD-C1 / 01-fold-only-at-chunk-boundaries.md, 02-hold-light-paths-during-a-build.md, 03-close-the-last-chunk-through-the-complete-checkpoint.md | The build flow folds at chunk boundaries, holds light paths, gives the chunk record to the author, and runs the chunk gate only before a successor | BD1–BD21, BD50–BD52, BD55, BD57, BD58, BD60–BD63 | TestChunkChainAnchors, TestCommitmentGuidance, TestReviewConvergenceContractCurrentDocs, TestWorkflowCadenceAnchorsRejectDeletionAndSwap, TestEveryRetainedFixtureBitesThroughRegisteredOwner, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
 | BD-C2 / 04-cap-witnesses-and-keep-moved-guards.md | The author charge states the moved-code guard, the witness definition and cap, and the batched `bench test` call | BD22–BD30 | TestWriteSpecChunkedSlicing, TestChargeBindingAnchors, TestGuidanceProseBudgetsHoldOnTheLiveTree | no |
 | BD-C3 / 05-scope-review-rounds.md | The review phase pins parallel axes, sends a one-ticket round in one combined repair charge, and scopes a confirming round to its named findings | BD31–BD38, BD54, BD59 | TestChunkChainAnchors, TestPreparedReviewGuidance, TestEveryRetainedFixtureBitesThroughRegisteredOwner | no |
-| BD-C4 / 06-keep-the-build-log.md | The orchestrator keeps a git-ignored build log, and the landing and `bench init` treat it as local capture | BD39–BD49, BD53 | TestChunkChainAnchors, TestLocalCapturePathRecognizesTheBuildLog, TestCheckoutFingerprintIgnoresTheBuildLog, TestKitGitignoreIgnoresTheBuildLog, TestInitIgnoresLocalCaptureFiles, TestLocalCaptureIgnoreLinesMatchTheLandingPredicate | yes |
+| BD-C4 / 06-keep-the-build-log.md | The orchestrator keeps a git-ignored build log, and the landing and `bench init` treat it as local capture | BD39–BD49, BD53, BD64 | TestChunkChainAnchors, TestLocalCapturePathRecognizesTheBuildLog, TestCheckoutFingerprintIgnoresTheBuildLog, TestKitGitignoreIgnoresTheBuildLog, TestInitIgnoresLocalCaptureFiles, TestLocalCaptureIgnoreLinesMatchTheLandingPredicate | yes |
 
 The ticket basenames are planned names, and the slicer may rename them.
 Tickets 01, 02, 03, 04, and 06 all edit implement-spec, so they run serially in that order.
@@ -417,6 +418,7 @@ The new rules govern each build that starts after this landing.
 | BD46 | 43 | `landing.LocalCapturePath` refuses `capture/build-log-foreign/x.log`. | `internal/landing/local_capture_test.go` (`TestLocalCapturePathRecognizesTheBuildLog`) | A bare prefix match accepts the sibling name. |
 | BD47 | 43 | `landing.LocalCapturePath` refuses a `..` segment, a doubled slash, and a control byte under the build-log name. | `internal/landing/local_capture_test.go` (`TestLocalCapturePathRecognizesTheBuildLog`) | A predicate without the clean-path guards accepts each unsafe case. |
 | BD48 | 44 | `landing.CheckoutFingerprint` returns the same value before and after an ignored `capture/build-log/<slug>.log` appears in the checkout. | `internal/landing/local_capture_test.go` (`TestCheckoutFingerprintIgnoresTheBuildLog`) | A predicate that refuses the build log keeps its `!!` entry in the fingerprint status, so the two values differ. |
+| BD64 | 44 | A source worktree release discards an ignored `capture/build-log/<slug>.log`, as it discards the three exact local capture files. | planned internal/worktree/land_local_capture_test.go (TestLandCommandReleasesSourceWithIgnoredBuildLog) | A predicate that refuses the build log leaves the source retained with an ignored residual, so the release fails. |
 | BD49 | 45 | The landed tree leaves roadmap/FT379.md and roadmap/FT369.md byte-identical to the build base. | review-owned: Spec axis compares both files at the final tip | An edit that narrows either row shows in the final delta. |
 | BD53 | 46 | The landing retires roadmap/FT410.md and its `ROADMAP.md` row and no other row. | review-owned: `/bench-final-check` reads the landing commit | A delivery closure that removes a second row shows in the landing diff. |
 
@@ -544,7 +546,7 @@ Source-sentence-to-row table:
 | build-directions.author-records | BD14–BD16, BD58 |
 | build-directions.parallel-axes | BD31–BD34 |
 | build-directions.confirming-scope | BD35–BD38, BD54, BD59 |
-| build-directions.step-log | BD39–BD48 |
+| build-directions.step-log | BD39–BD48, BD64 |
 | build-directions.FT410-last-chunk | BD17, BD18 |
 | build-directions.FT410-complete | BD19–BD21, BD50–BD52, BD55, BD63 |
 | build-directions.open | BD49, BD53 |
