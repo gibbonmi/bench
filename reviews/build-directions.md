@@ -752,7 +752,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bd-c2-r1-standards",
+          "performer": "claude:bd_bdc2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b02fe549c99cc5b106fd2bdaeefb9a675861adf3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc2_standards",
+            "digest": "sha256:dbfbd27b711ae4931f6eb61db1bd99f21ee30208fdc240dbe85f250993b54c2a",
+            "excerpt": "axis: Standards; session claude:bd_bdc2_standards; model opus; effort high; frozen pair 0487a79f..823bca72; evidence sha256:9a4b9349dd4c0dd33b1e3e01760c2d9c8f93eed94b0bd649c573eeb0a40c7b24 current=true at d6789152.\nverdict: findings (3 advisory, 0 blocking)\nS1 | advisory | CHANGELOG.md:14 | The bullet restates the batched-call rule without \"and witnesses\" and \"that repeats `--package`\", a divergent account of a fact that implement-spec:27 owns. | AGENTS.md one source per fact. | auto-fix | confidence 5\nS2 | advisory | internal/anchors/registry_ticket_passes_test.go:85-91 | Seven independent mirror expectations, and the record holds one recorded red (bd-04-live-t04). | AGENTS.md test-expectation exception. | ask-user | confidence 4\nS3 | advisory | internal/anchors/registry_ticket_passes.go:83 | The implementSpecCommand doc comment names only the Writes upper-bound use, though the const now anchors the guard and witness-cap rows. | craft-comments \"Aging\". | auto-fix | confidence 3\nExamined with no finding: one production constant for the known-issues path; the budget appears once; the :25 paragraph has six sentences; no new sentence breaks the STE bound; the Forbid needle difference is valid for the harness substring logic.\nImplementation command contribution: S1 no; S2 partly; S3 no.\n"
+          },
+          "axis": "Standards",
+          "base": "0487a79f9ba7f3753cfd8acd93a1016e3abcaaf8",
+          "tip": "823bca72714e6c61f7bd045b246bd9921f6aec39",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bd-c2-r1-spec",
+          "performer": "claude:bd_bdc2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b02fe549c99cc5b106fd2bdaeefb9a675861adf3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc2_spec",
+            "digest": "sha256:0d8b3d97b7a7c012d6e64810f3aa941f39e570c12c0aec41ae549d6254fb8300",
+            "excerpt": "axis: Spec; session claude:bd_bdc2_spec; model opus; effort high; frozen pair 0487a79f..823bca72; evidence sha256:9a4b9349dd4c0dd33b1e3e01760c2d9c8f93eed94b0bd649c573eeb0a40c7b24 current=true at d6789152.\nverdict: clean (0 findings)\nBD22-BD30 examined against the spec and the frozen tip: the guard sentence follows the reach list at implement-spec:25 (six sentences); the four witness sentences at implement-spec:27 match spec:230 and sit before the \"Build action requires\" paragraph; known-issues:12 holds the two pointer sentences with the symptom and FT168 cells kept; Require and Forbid rows at registry_ticket_passes.go:68-73 with mirrors at the test :86-91; BD30 untouched; implement-spec 91 lines with budget 91; one CHANGELOG bullet. The two plan commits in range are orchestrator bookkeeping.\nAdvice: the CHANGELOG bullet summarizes the batched call without \"and witnesses\"; no row grades it.\nTests and probes run: none.\n"
+          },
+          "axis": "Spec",
+          "base": "0487a79f9ba7f3753cfd8acd93a1016e3abcaaf8",
+          "tip": "823bca72714e6c61f7bd045b246bd9921f6aec39",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bd-c2-r1-coverage",
+          "performer": "claude:bd_bdc2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b02fe549c99cc5b106fd2bdaeefb9a675861adf3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bd_bdc2_coverage",
+            "digest": "sha256:2e67df184d22fd29a86567bdb206ba3574f63f78a03079bcacfc451b57148615",
+            "excerpt": "axis: Coverage; session claude:bd_bdc2_coverage; model opus; effort high; frozen pair 0487a79f..823bca72; evidence sha256:9a4b9349dd4c0dd33b1e3e01760c2d9c8f93eed94b0bd649c573eeb0a40c7b24 current=true at d6789152.\nverdict: findings (1 advisory, 0 blocking)\nC1 | advisory | internal/anchors/registry_ticket_passes_test.go:91 | The BD28 mirror forbids the whole old sentence while the spec row and the registry Forbid row use the prefix \"Cap the witnesses in a charge\"; a registry needle widened to the whole sentence stays green, so a partial copy of the cap could pass. | bench probe internal/anchors/registry_ticket_passes.go --swap 'Needle: \"Cap the witnesses in a charge\",' --with 'Needle: \"Cap the witnesses in a charge at one per coverage row plus one per production branch that the ticket adds.\",' --package ./internal/anchors --run TestWriteSpecChunkedSlicing returned silent, restored yes; spec.md:397. | auto-fix (set the forbidden mirror needle to the BD28 text) | confidence 8\nPassing checks: docs-currency-workflow green; TestWriteSpecChunkedSlicing and TestChargeBindingAnchors green; live probe omitting the guard sentence bit; live probe restoring the cap over the pointer bit (2 failures); BD27 and BD30 rows kept. git status clean after probes.\nImplementation command contribution: yes; the author charge does not say that a Forbid mirror restates the needle that the spec row quotes.\n"
+          },
+          "axis": "Coverage",
+          "base": "0487a79f9ba7f3753cfd8acd93a1016e3abcaaf8",
+          "tip": "823bca72714e6c61f7bd045b246bd9921f6aec39",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -802,6 +869,8 @@ Chunk BD-C1 uses repair cycle 1 of 2. A fresh repair session for ticket 01 takes
 
 BD-C1 round 2 ran three opus/high axes in parallel at `94d9c296` over the repair delta `d3bd78a9..11006538`. Every axis confirmed the folds of S1, P1, C2, S2, S3, S5, and C1, and every axis passed. BD-C1 closes with repair cycle 1 of 2 used and no open finding.
 
+Chunk BD-C2 round 1 ran three opus/high axes in parallel at `d6789152` over the frozen pair `0487a79f..823bca72`. Only the Coverage axis ran tests and probes, and the tree was clean after every return. BD-C2 uses repair cycle 1 of 2 through one fresh repair session for ticket 04, which takes C1, S1, and S3. S2 is `no-op`.
+
 ## Standards
 
 BD-C1 round 1: 5 findings, worst S1. Raw count 5; repair targets 3 after S1 merges with P1 and C2.
@@ -814,6 +883,12 @@ BD-C1 round 1: 5 findings, worst S1. Raw count 5; repair targets 3 after S1 merg
 
 BD-C1 round 2: 0 findings. Advice: the first header sentence of `registry_chunk_chain.go` predates the chunk and has 26 words. The Build and Land sentences both name the post-ticket range; they agree, and BD62 approved that pair.
 
+BD-C2 round 1: 3 findings, worst S1. Raw count 3; repair targets 2.
+
+- S1 (auto-fix, confidence 5): the ticket 04 CHANGELOG bullet states the batched call without its witnesses and without the repeated `--package`. Repair: ticket 04 matches the rule sentence.
+- S2 (no-op, confidence 4): the ticket 04 author showed all seven mirror diagnostics red with the registry rows absent, before its first production edit.
+- S3 (auto-fix, confidence 3): the `implementSpecCommand` doc comment names one use of the constant. Repair: ticket 04 updates the comment.
+
 ## Spec
 
 BD-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0 after P1 merges with S1. Every BD-C1 row is met.
@@ -821,6 +896,8 @@ BD-C1 round 1: 1 finding, worst P1. Raw count 1; repair targets 0 after P1 merge
 - P1 (auto-fix, confidence 4): the same defect as S1.
 
 BD-C1 round 2: 0 findings. BD62 and BD63 are met. Advice: the review pickup first gave S2 to two ticket repairs, and this record now names the evidence-only route.
+
+BD-C2 round 1: 0 findings. Rows BD22-BD30 are met. Advice: the CHANGELOG bullet summarizes the batched call.
 
 ## Coverage
 
@@ -830,3 +907,7 @@ BD-C1 round 1: 2 findings, worst C1. Raw count 2; repair targets 1 after C2 merg
 - C2 (auto-fix, confidence 6): the same defect as S1.
 
 BD-C1 round 2: 0 findings. BD62 and BD63 bite on the live tree. Advice: the BD63 needle depends on the space before `accepted`, and BD62 does not refuse a second near-variant sentence. Each grades only a check from the BD-C1 hardening cycle.
+
+BD-C2 round 1: 1 finding, worst C1. Raw count 1; repair targets 1.
+
+- C1 (auto-fix, confidence 8): the BD28 forbidden mirror holds the whole old sentence, so a widened registry needle stays green. Repair: ticket 04 sets the mirror needle to the BD28 text.
