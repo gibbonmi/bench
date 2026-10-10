@@ -51,8 +51,11 @@ A fourth signal, **leverage**, overrides the table. An artifact that steers futu
 | Orchestration | mid + medium |
 | Ticket implementation | cheap + low |
 | Review axis | conditional + high |
-| Spec review (`/bench-write-spec`) | cheap + high |
-| Chunk ticket review (`/bench-write-spec`) | cheap + high |
+| Spec review (`/bench-write-spec`) | mid + medium |
+| Ticket slicing (`/bench-write-spec`) | mid + high |
+| Ticket review (`/bench-write-spec`) | mid + medium |
+
+When the invoking session runs on a model other than the mid binding, a fresh writer on the mid binding slices the tickets.
 
 The conditional review line uses high effort and ~1 iteration. A Codex mid implementation sends each axis to the Codex top binding. Every other implementation sends each axis to the invoking harness's mid binding. A first review round runs each axis on this conditional line. Only a confirming round or a later round can move an axis to the top binding, and only at the reviewer's direction.
 

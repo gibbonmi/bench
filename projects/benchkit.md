@@ -488,13 +488,13 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 | subject | limit |
 |---|---|
 | `.bench/BENCH.md` | 192 |
-| `.agents/commands/bench-implement-spec.md` | 83 |
+| `.agents/commands/bench-implement-spec.md` | 85 |
 | `.agents/commands/bench-write-spec.md` | 87 |
 | `.agents/commands/bench-debug.md` | 170 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
 | `.agents/skills/bench-craft-spec/SKILL.md` | 155 |
 | `.agents/skills/bench-craft-delegate/SKILL.md` | 126 |
-| `.agents/skills/bench-craft-line/SKILL.md` | 132 |
+| `.agents/skills/bench-craft-line/SKILL.md` | 135 |
 | `.agents/skills/bench-craft-tdd/SKILL.md` | 122 |
 | `.agents/skills/bench-craft-review/SKILL.md` | 122 |
 | `.agents/skills/bench-craft-research/SKILL.md` | 140 |
@@ -591,8 +591,8 @@ escalation.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed. A wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
-- **Spec and chunk review rounds** (`/bench-write-spec`) → the spec review and
-  chunk ticket review rows of `craft-line`'s stage defaults. The reviewer then
+- **Spec and ticket review rounds** (`/bench-write-spec`) → the spec review and
+  ticket review rows of `craft-line`'s stage defaults. The reviewer then
   signs off the spec and its tickets once. `/bench-write-spec` owns the rounds'
   operating protocol.
 - **Review-axis delegate** (`/bench-review-implementation`) → the conditional
