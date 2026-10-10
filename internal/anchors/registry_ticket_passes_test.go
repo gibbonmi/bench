@@ -32,6 +32,12 @@ func TestTicketSlicingPasses(t *testing.T) {
 		{file: ".agents/skills/bench-craft-spec/references/map-discipline.md", section: "Per row", needle: "The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.", want: "map discipline: an existing test seam cites its function in the resolvable form"},
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "Each research return lists every likely fence expansion in one of these classes:", want: "ticket slicing: chunk research lists each likely fence expansion by class"},
 		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "Each entry cites its evidence as a `path:line` or as a command and its result.", want: "ticket slicing: each fence-expansion entry cites its evidence"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "- a caller file that `bench consumers` names;", want: "ticket slicing: fence-expansion evidence dropped the consumers caller class"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "- a fixture or a canary that pins a path;", want: "ticket slicing: fence-expansion evidence dropped the pinning fixture class"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "- an anchor registry file that names a guidance path;", want: "ticket slicing: fence-expansion evidence dropped the anchor registry class"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "- a count pin, such as a package test-count pin;", want: "ticket slicing: fence-expansion evidence dropped the count pin class"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "- a file over its structure budget, with its headroom;", want: "ticket slicing: fence-expansion evidence dropped the structure budget class"},
+		{file: ".agents/skills/bench-craft-tickets/references/slicing-checks.md", section: "Fence-expansion evidence", needle: "- a shared file that more than one ticket writes, such as `CHANGELOG.md`.", want: "ticket slicing: fence-expansion evidence dropped the shared file class"},
 	}}.check(t)
 }
 
