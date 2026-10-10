@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Drain priority review
+
+- Added a closing priority review to `/bench-drain`. After the sealed-generation retirement, read-only research delegates review the roadmap priorities and the staged specs, and they start from the rows that the reviewer already prioritized. The closing exit reports one proposed next commitment set. The proposal is unapproved input until the reviewer adopts it through the commitment rule. Changed the drain's read-delegate cap to a bound on the live read delegates, so the review keeps the one cap.
+
 ### Drain light-path delegation
 
 - Changed the light-path fix rule in `.bench/BENCH.md` so that `/bench-drain` implements no light-path fix inline. The drain gives every light-path fix in its run to a fresh write delegate, whatever its source. Before, the rule named only a fix that a drain verdict kept. Changed `/bench-drain` so that the delegate commits the ticket and the coordinator lands it after it verifies the done-claim.

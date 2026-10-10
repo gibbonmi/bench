@@ -59,7 +59,7 @@ func checkRecurrenceMaintenanceContract(root string) []string {
 	if worktreeCount != 1 || !strings.Contains(worktrees, "invoke `/bench-debug` and assess its root cause before cleanup") {
 		diags = append(diags, "bench-drain does not route orphaned worktrees through root-cause diagnosis")
 	}
-	parallelRead := "Use at most three read-only delegates after the snapshot passes its trust check."
+	parallelRead := "Use at most three read-only delegates at one time after the snapshot passes its trust check."
 	readScopes := "Assign at most one delegate to each scope: roadmap reconcile, idea and journal mapping, and retro analysis."
 	skipEmpty := "Skip a scope when its indexed source set is empty."
 	delegateRouting := "Charge every delegate under `craft-delegate` and `craft-line`."
@@ -204,7 +204,7 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		{"orphan owner", "The drain owns removal of every orphaned worktree", "The active phase owns removal of its own worktree", "bench-drain does not own orphaned worktree closure"},
 		{"orphan completion", "require zero orphaned rows", "report the remaining orphaned rows", "bench-drain does not own orphaned worktree closure"},
 		{"orphan diagnosis", "invoke `/bench-debug` and assess its root cause before cleanup", "clean it without diagnosis", "bench-drain does not route orphaned worktrees through root-cause diagnosis"},
-		{"bounded parallel reads", "Use at most three read-only delegates after the snapshot passes its trust check.", "Use unlimited read-only delegates after the snapshot passes its trust check.", "bench-drain does not retain the bounded parallel-read contract"},
+		{"bounded parallel reads", "Use at most three read-only delegates at one time after the snapshot passes its trust check.", "Use unlimited read-only delegates at one time after the snapshot passes its trust check.", "bench-drain does not retain the bounded parallel-read contract"},
 		{"read scopes", "Assign at most one delegate to each scope: roadmap reconcile, idea and journal mapping, and retro analysis.", "Assign one delegate to roadmap reconcile only.", "bench-drain does not assign the three independent read scopes"},
 		{"skip empty scope", "Skip a scope when its indexed source set is empty.", "Run every scope even when its indexed source set is empty.", "bench-drain does not skip empty indexed read scopes"},
 		{"delegate routing", "Charge every delegate under\n`craft-delegate` and `craft-line`.", "Charge every delegate without routing.", "bench-drain does not route every delegate through craft-delegate and craft-line"},
