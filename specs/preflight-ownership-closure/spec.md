@@ -908,7 +908,7 @@ Holder files that need no byte change stay unchanged.
 ## Out of scope
 
 FT375's automatic manual-audit omission is separate: 1 outcome, estimated 12 owner edits and 4 focused verification runs.
-FT318/FT317 record writes and capability values are separate: estimated 8 owner edits and 3 focused runs.
+FT318 record writes and capability values are separate: estimated 8 owner edits and 3 focused runs.
 FT125 exact artifact readers are separate: estimated 9 owner edits and 4 focused runs.
 These estimates describe capability cuts, not skipped acceptance.
 No literal C10 order becomes a dependency.

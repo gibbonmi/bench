@@ -34,7 +34,7 @@ Use craft-cli, craft-spec, and craft-seams for each outcome.
 - One new orchestration engine or a duplicate plan database.
 - Automatic write-fence approval.
 - A semantic-digest exemption for prose changes without a separate decision.
-- The capability-blocked value that FT317 must decide.
+- The capability-blocked value that FT318 must decide.
 - Summarized content in an exact artifact reader.
 
 ## Sources

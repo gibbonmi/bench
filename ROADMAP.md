@@ -118,8 +118,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT343 (MEDIUM) — production test seams have one decided policy that the injected-port audit enforces.**
 
-**FT317 (MEDIUM, decision required) — a capability-blocked acceptance row has one decided value at the completion checkpoint.**
-
 **FT318 (MEDIUM, decision required) — the completion form records a capability-blocked row's decided value, and `bench record` closes its native-operation residuals.**
 
 **FT405 (MEDIUM, decision required) — one `bench record ticket` verb lets a ticket author amend, freeze, and record its chunk in one call.**
@@ -317,6 +315,5 @@ recommended table is sequencing advice.
 | FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
 | FT254 | FT258 | Resolution follows the `MERGE_HEAD` contract. |
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
-| FT318 | FT317 | The completion form records the decided value of a capability-blocked row. |
 
 ## Recommended sequence
