@@ -93,7 +93,11 @@ func (p publication) publish(s Store, expected *image) error {
 		}
 	}
 	if p.value.Kind == "absent" {
-		if err := os.Remove(p.path); err != nil && !os.IsNotExist(err) {
+		remove := s.Remove
+		if remove == nil {
+			remove = os.Remove
+		}
+		if err := remove(p.path); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	} else {

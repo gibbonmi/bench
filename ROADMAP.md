@@ -200,8 +200,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT411 (MEDIUM, decision required) — tests that add no value are cut, and their coverage stays with the tests that subsume them.**
 
-**FT407 (LOW) — the adoption transaction seam has a removal fault point.**
-
 **FT412 (LOW) — a production seam that does I/O per item has a test that pins how its cost grows.**
 
 **FT404 (LOW, decision required) — each conformance check states the scope that its detector grades.**
