@@ -3,7 +3,6 @@ package freshness
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +10,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func TestVerifyRefusesSymbolicLinkBeforeReadingExecutable(t *testing.T) {
@@ -291,11 +292,7 @@ func TestVerifyRefusesSpecialArtifactsBeforeReading(t *testing.T) {
 			{
 				name: "Unix socket",
 				create: func(path string) (func(), error) {
-					listener, err := net.Listen("unix", path)
-					if err != nil {
-						return nil, err
-					}
-					return func() { _ = listener.Close() }, nil
+					return func() {}, testrepo.MakeSocket(path)
 				},
 			},
 		} {

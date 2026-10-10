@@ -38,11 +38,7 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 	if err := json.Unmarshal(output, &settings); err != nil {
 		return nil, fmt.Errorf("kit test run: read Go environment: %w", err)
 	}
-	tmp := kitEnvValue(base, "TMPDIR")
-	if tmp == "" {
-		tmp = os.TempDir()
-	}
-	dir, err := kitRunDirectory(tmp)
+	dir, err := openKitRunDirectory(kitEnvValue(base, "TMPDIR"), kitRunTmpfs)
 	if err != nil {
 		return nil, fmt.Errorf("kit test run: TMPDIR: %w", err)
 	}
@@ -73,6 +69,21 @@ func OpenKitTestRun(base []string) (*KitTestRun, error) {
 		run.entries = append(run.entries, name+"="+settings[name])
 	}
 	return run, nil
+}
+
+// kitRunTmpfs is the run base when the caller sets no TMPDIR, because fsync dominates kit test time on a disk.
+const kitRunTmpfs = "/dev/shm"
+
+// openKitRunDirectory creates the run under the caller's TMPDIR when the caller sets one.
+// Otherwise it creates the run under tmpfs, and under os.TempDir when tmpfs refuses the directory.
+func openKitRunDirectory(callerTmp, tmpfs string) (string, error) {
+	if callerTmp != "" {
+		return kitRunDirectory(callerTmp)
+	}
+	if dir, err := kitRunDirectory(tmpfs); err == nil {
+		return dir, nil
+	}
+	return kitRunDirectory(os.TempDir())
 }
 
 func kitRunDirectory(tmp string) (string, error) {

@@ -44,7 +44,7 @@ compatibility, or a reviewer-chosen seam.
 
 ## Process
 
-1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source; read the enforcement surface before you lock rows that touch it. Run `craft-spec`'s reader sweep before that lock.
+1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source; read the enforcement surface before you lock rows that touch it. Run `craft-spec`'s reader sweep before that lock. When the repository has `docs/known-issues.md`, read it before you plan the probes and the check floor.
 
    Apply `craft-spec`'s implementation-line recommendation contract through `craft-line`. Write `specs/<feature>/spec.md` from the template and run `bench coverage --check`. The stale-command-reference sweep remains fail-closed across staged specs.
 
