@@ -7,42 +7,23 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy"
 )
 
-// assignmentLanded is the one landed verdict of an active assignment. assignmentLandedness
-// has to prove the branch landed, and no live lease may hold the tree. The landedness comes
-// first, so a plan without an ancestry proof never reads the lease of its tree. The list
+// assignmentLanded is the one landed verdict of an active assignment. The plan's landedness
+// has to prove the assignment landed, and no live lease may hold the tree. The landedness
+// comes first, so a plan without that proof never reads the lease of its tree. The list
 // banner, the selector of the landed set, the resume sweep, and the automatic classifier
 // all read it.
 func assignmentLanded(root string, assignment intent.Assignment, plan CleanupPlan) bool {
-	return assignment.State == intent.StateActive &&
-		assignmentLandedness(root, assignment, plan.landedTyped).ProvenLanded() && !planHasLiveLease(plan)
-}
-
-// assignmentLandedness is the landedness of an assignment in any state. It is the ancestry
-// proof, except that an assignment that holds unlanded output has not landed. The automatic
-// classifier gives it to the decision of a cleanup-pending release, so the release refusal
-// and the list cell read one verdict and name one route.
-func assignmentLandedness(root string, assignment intent.Assignment, ancestry lifecyclepolicy.Landedness) lifecyclepolicy.Landedness {
-	if !ancestry.ProvenLanded() {
-		return ancestry
-	}
-	holds, err := assignmentHoldsUnlandedOutput(root, assignment)
-	if err != nil {
-		return lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessUnknownError, Err: err.Error()}
-	}
-	if holds {
-		return lifecyclepolicy.Landedness{Kind: lifecyclepolicy.LandednessProven}
-	}
-	return ancestry
+	return assignment.State == intent.StateActive && plan.landedTyped.ProvenLanded() && !planHasLiveLease(plan)
 }
 
 // assignmentHoldsUnlandedOutput reports an assignment with no commit of its own and a dirty
 // tree. Such a branch holds only default-branch commits, so the ancestry proof alone calls
 // the uncommitted output landed. A clean tree has no output to lose, and an assignment with
-// an own commit has landed that commit. A missing tree holds nothing. The list cell reads
-// this fact too, so no reader derives it twice.
+// an own commit has landed that commit. A missing tree holds nothing. The explicit planner,
+// the landed selector, and the list cell read this fact, and
+// lifecyclepolicy.Landedness.ForAssignment applies it.
 func assignmentHoldsUnlandedOutput(root string, assignment intent.Assignment) (bool, error) {
 	own, err := assignmentOwnsCommit(root, assignment)
 	if err != nil || own {

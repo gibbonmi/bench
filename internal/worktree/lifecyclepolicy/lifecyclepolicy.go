@@ -26,6 +26,7 @@ const (
 	ActionRemove         Action = "remove"
 	ActionRecoverRemove  Action = "recover-remove"
 	ActionDiscardRemove  Action = "discard-remove"
+	ActionReleaseRemove  Action = "release-remove"
 	ActionRemoved        Action = "removed"
 	ActionError          Action = "error"
 	ReasonForeign        Reason = "foreign"
@@ -40,9 +41,6 @@ const (
 	ReasonDirty          Reason = "dirty"
 	ReasonLanded         Reason = "landed"
 )
-
-// ActionReleaseRemove is the release path's removal action.
-const ActionReleaseRemove Action = "release-remove"
 
 // ActionReleaseLeftover releases one assignment's registration and ledger entry
 // while the bytes at its path stay exactly where they are. It is deliberately
@@ -151,14 +149,12 @@ func Orphaned(a ledger.Assignment, now time.Time, staleAfter time.Duration) bool
 // Residual reports whether a record preserves no work and is therefore safe to
 // compact. Its recovery set is the single source of that judgment: an empty set
 // means residue. A non-empty set means preserved work that must never be
-// silently discarded. Both the release reconcile and the resume sweep consult
-// this one predicate.
+// silently discarded. The release reconcile and the resume sweep both read it.
 func Residual(a ledger.Assignment) bool { return len(a.Recovery) == 0 }
 
-// LandednessKind names which of the four ways the explicit planner can know a
-// branch's relationship to the default ref. The branch may be never resolvable
-// (detached), resolvable but never asked (no default), asked and refused by the
-// query itself, or asked and answered.
+// LandednessKind names how a branch's relationship to the default ref is known:
+// never resolvable (detached), resolvable but never asked (no default), asked
+// and refused by the query itself, or asked and answered.
 type LandednessKind int
 
 const (
@@ -186,12 +182,27 @@ func (l Landedness) ProvenLanded() bool {
 	return l.Kind == LandednessProven && l.Landed
 }
 
+// Ancestry types one answer of the branch ancestry query. A failed query is unknown.
+func Ancestry(landed, byContent bool, err error) Landedness {
+	if err != nil {
+		return Landedness{Kind: LandednessUnknownError, Err: err.Error()}
+	}
+	return Landedness{Kind: LandednessProven, Landed: landed, ByContent: byContent}
+}
+
+// ForAssignment is the landedness of an assignment whose branch has the ancestry l: held
+// unlanded output reads as a not-landed answer, and a failed output query as an unknown one.
+func (l Landedness) ForAssignment(holdsUnlandedOutput bool, outputErr error) Landedness {
+	if l.ProvenLanded() && (holdsUnlandedOutput || outputErr != nil) {
+		return Ancestry(false, false, outputErr)
+	}
+	return l
+}
+
 func (l Landedness) String() string {
 	switch l.Kind {
 	case LandednessDetached:
 		return "detached"
-	case LandednessUnknownNoDefault:
-		return "unknown"
 	case LandednessUnknownError:
 		return "unknown:" + l.Err
 	case LandednessProven:
@@ -199,17 +210,10 @@ func (l Landedness) String() string {
 		if l.ByContent {
 			proof = "patch"
 		}
-		return boolLabel(l.Landed) + ":" + proof
+		return strconv.FormatBool(l.Landed) + ":" + proof
 	default:
 		return "unknown"
 	}
-}
-
-func boolLabel(ok bool) string {
-	if ok {
-		return "true"
-	}
-	return "false"
 }
 
 // RecoveryLookupKind names whether a recovery ref still needs a git query, and
@@ -267,12 +271,14 @@ type ExplicitFacts struct {
 
 	InitialTracked string
 
-	HeadDetached    bool
-	DefaultKnown    bool
-	LandedOK        bool
-	LandedByContent bool
-	LandedErr       error
-	HeadRef, Head   string
+	HeadDetached        bool
+	DefaultKnown        bool
+	LandedOK            bool
+	LandedByContent     bool
+	LandedErr           error
+	HeadRef, Head       string
+	HoldsUnlandedOutput bool
+	UnlandedOutputErr   error
 
 	UnsafeTarget bool
 }
@@ -377,20 +383,17 @@ func DecideExplicit(f ExplicitFacts) ExplicitVerdict {
 		v.Action, v.ReasonCode, v.Reason = ActionRetain, ReasonIgnored, "ignored residuals require --discard-ignored"
 	}
 
-	switch {
-	case f.HeadDetached:
+	v.Landed = Ancestry(f.LandedOK, f.LandedByContent, f.LandedErr)
+	if f.HeadDetached {
 		v.Landed = Landedness{Kind: LandednessDetached}
-	case !f.DefaultKnown:
+	} else if !f.DefaultKnown {
 		v.Landed = Landedness{Kind: LandednessUnknownNoDefault}
-	case f.LandedErr != nil:
-		v.Landed = Landedness{Kind: LandednessUnknownError, Err: f.LandedErr.Error()}
-	default:
-		v.Landed = Landedness{Kind: LandednessProven, Landed: f.LandedOK, ByContent: f.LandedByContent}
-		if f.LandedOK {
-			v.DeleteBranch = true
-			v.BranchRef, v.BranchOID = f.HeadRef, f.Head
-		}
 	}
+	// Branch deletion reads the ancestry alone: it asks whether main holds every commit.
+	if v.Landed.ProvenLanded() {
+		v.DeleteBranch, v.BranchRef, v.BranchOID = true, f.HeadRef, f.Head
+	}
+	v.Landed = v.Landed.ForAssignment(f.HoldsUnlandedOutput, f.UnlandedOutputErr)
 
 	if v.Action != ActionRetain && (v.Tracked != "clean" || f.RegistrationDetached || (v.Assignment != nil && len(v.Assignment.Recovery) > 0)) {
 		v.Action = ActionRecoverRemove
@@ -440,12 +443,9 @@ type ExplicitOutcome struct {
 // automatic-specific fact the automatic planner gathers on top of it.
 // DecideAutomatic uses these to answer "is this eligible for unattended,
 // automatic cleanup, and if not, why not". ExplicitErr and Explicit are
-// mutually exclusive with the MissingBranch* fields. The MissingBranch* fields
-// are gathered only when explicit planning itself failed and the automatic
-// planner salvages one narrow fact from that failure. Every other field is
-// gathered only when explicit planning succeeded, mirroring the planner's own
-// conditional evidence-gathering. A field left at its zero value simply was
-// never gathered, because an earlier fact already made it inapplicable.
+// mutually exclusive with the MissingBranch* fields. Every other field is
+// gathered only when explicit planning succeeded, and a field left at its zero
+// value was never gathered, as in ExplicitFacts.
 type AutomaticFacts struct {
 	ExplicitErr error
 	Explicit    ExplicitOutcome

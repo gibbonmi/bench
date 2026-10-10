@@ -90,12 +90,36 @@ func TestUnlandedCleanupPendingListRowNamesTheDiscardClean(t *testing.T) {
 	}
 }
 
+// requireBareCleanDeletesTheBranch applies a clean without --discard-branch to an
+// assignment with no own commit. The apply removes the tree and deletes the branch, because
+// main holds every commit of the branch. A named output file stays in the working layer of
+// the recovery ref; a clean tree leaves no recovery ref.
+func requireBareCleanDeletesTheBranch(t *testing.T, f ownedAssignment, output, body string) {
+	t.Helper()
+	planned := runVerb(t, verbClean, f.call(f.creation.Path))
+	applied := runVerb(t, verbClean, f.call(f.creation.Path, "--apply", planned.mustFingerprint(t)))
+	requireTest(t, applied.exit == 0 && strings.Contains(applied.stdout, ",removed,"), "apply = (%d, %q, %q), want removed", applied.exit, applied.stdout, applied.stderr)
+	_, statErr := os.Lstat(f.creation.Path)
+	requireTest(t, os.IsNotExist(statErr), "apply left %s: %v", f.creation.Path, statErr)
+	requireTest(t, !branchExists(t, f.root, f.creation.Assignment.Branch), "apply kept branch %s", f.creation.Assignment.Branch)
+	refs := recoveryRefs(t, f.root, f.creation.Assignment)
+	if output == "" {
+		requireTest(t, refs == "", "apply left recovery refs %q", refs)
+		return
+	}
+	manifest, ok := readRecoveryManifest(f.root, refs)
+	requireTest(t, ok, "recovery ref %q carries no manifest", refs)
+	kept := gitOutput(t, f.root, "show", manifest.Layers["working"]+":"+output)
+	requireTest(t, kept == body, "recovery ref %q holds %s = %q, want %q", refs, output, kept, body)
+}
+
 // newLandedDirtyAssignment builds the landed neighbor of the FT408 shape: an assignment
-// whose own commit main holds, with an untracked file in its tree.
+// whose own commit main holds through a landing merge, with an untracked file in its tree.
 func newLandedDirtyAssignment(t *testing.T, request string) ownedAssignment {
 	t.Helper()
 	f := newOwnedAssignment(t, request)
-	landAssignment(t, f.root, f.creation, "own-commit.txt")
+	commitInWorktree(t, f.creation.Path, "own-commit.txt", "landed\n", "landed")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "merge", "-q", "--no-ff", "-m", "land", f.creation.Assignment.Branch)
 	mustWrite(t, filepath.Join(f.creation.Path, "extra.txt"), []byte("output\n"), 0o644)
 	return f
 }
@@ -107,6 +131,9 @@ func newLandedDirtyAssignment(t *testing.T, request string) ownedAssignment {
 func TestLandedDirtyReleaseKeepsTheReleaseRoute(t *testing.T) {
 	t.Parallel()
 	f := newLandedDirtyAssignment(t, "landed-dirty")
+	plan, err := PlanExplicitWithOptions(f.root, f.creation.Path, CleanupOptions{})
+	mustNoError(t, err)
+	requireTest(t, plan.landedTyped.String() == "true:ancestry", "plan landedness = %q, want true:ancestry", plan.landedTyped)
 	release := runVerb(t, verbRelease, f.call("--request", "landed-landed-dirty", f.creation.Path))
 	want := "next=bench worktree release --request <request> " + sanitize.ShellQuote(f.creation.Path) + "\n"
 	requireTest(t, release.exit == 1 && strings.Contains(release.stderr, "worktree retained (dirty)") && strings.Contains(release.stderr, want),
