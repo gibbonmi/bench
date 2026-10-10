@@ -1,6 +1,7 @@
 package learnings
 
 import (
+	"errors"
 	"strings"
 	"unicode"
 )
@@ -28,6 +29,57 @@ func FormatEntry(date, title, what, right, rule string) string {
 		out += "- **" + bullet.label + ":** " + values[i] + "\n"
 	}
 	return out
+}
+
+// resolvedBulletPrefix opens the one body bullet that links an open entry to the commit
+// that fixed it. MarkResolved writes it and Parse reads it, so the two share this prefix.
+const resolvedBulletPrefix = "- **Resolved by:** "
+
+// resolvedBy returns the commit a body line names when the line is the resolved bullet.
+func resolvedBy(line string) (string, bool) {
+	value, ok := strings.CutPrefix(line, resolvedBulletPrefix)
+	return strings.TrimSpace(value), ok
+}
+
+// Refusals MarkResolved returns when the title does not name exactly one unlinked open
+// entry.
+var (
+	ErrNoOpenEntry     = errors.New("no open entry has that title")
+	ErrAmbiguousEntry  = errors.New("more than one open entry has that title")
+	ErrAlreadyResolved = errors.New("the entry already names a resolving commit")
+)
+
+// MarkResolved links the open entry whose title equals title to commit. It inserts the
+// resolved bullet directly below the entry's heading, so the heading keeps its `[open]`
+// marker and every other byte of content is unchanged. The drain still owns closing the
+// entry. It returns a nil slice and one of the Err values above when no change is made.
+func MarkResolved(content []byte, title, commit string) ([]byte, error) {
+	var found []Entry
+	for _, entry := range Entries(content) {
+		if entry.Title == title {
+			found = append(found, entry)
+		}
+	}
+	switch {
+	case len(found) == 0:
+		return nil, ErrNoOpenEntry
+	case len(found) > 1:
+		return nil, ErrAmbiguousEntry
+	case found[0].ResolvedBy != "":
+		return nil, ErrAlreadyResolved
+	}
+	lines := strings.SplitAfter(string(content), "\n")
+	heading := found[0].Line - 1
+	terminator := "\n"
+	if strings.HasSuffix(lines[heading], "\r\n") {
+		terminator = "\r\n"
+	}
+	if !strings.HasSuffix(lines[heading], "\n") {
+		lines[heading] += terminator
+	}
+	bullet := resolvedBulletPrefix + sanitizeField(commit) + terminator
+	out := append(append(append([]string(nil), lines[:heading+1]...), bullet), lines[heading+1:]...)
+	return []byte(strings.Join(out, "")), nil
 }
 
 // entryBullets is the body order FormatEntry renders, so EntryField reads the same order

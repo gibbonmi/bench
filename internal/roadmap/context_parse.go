@@ -173,7 +173,7 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	learningFacts, malformedLearnings := learnings.Parse(data[learnings.JournalPath])
 	for _, e := range learningFacts {
 		body, n := projectBody(e.Body, full)
-		s.Learnings = append(s.Learnings, LearningFact{Date: e.Date, Title: e.Title, State: e.State, Body: body, Line: e.Line, BodyBytes: n})
+		s.Learnings = append(s.Learnings, LearningFact{Date: e.Date, Title: e.Title, State: e.State, Body: body, ResolvedBy: e.ResolvedBy, Line: e.Line, BodyBytes: n})
 		units = append(units, captureUnit{Source: learnings.JournalPath, CaptureUnit: "line " + strconv.Itoa(e.Line), Body: e.Body})
 	}
 	for _, m := range malformedLearnings {
@@ -266,6 +266,7 @@ type IdeaFact struct {
 }
 type LearningFact struct {
 	Date, Title, State, Body string
+	ResolvedBy               string
 	Line                     int
 	BodyBytes                int
 }

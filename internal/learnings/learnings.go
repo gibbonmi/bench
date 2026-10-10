@@ -28,6 +28,7 @@ var grammar = usage.Grammar{
 // heading so roadmap context and the human projections share this parser.
 type Entry struct {
 	Date, Title, State, Body string
+	ResolvedBy               string
 	Line                     int
 }
 
@@ -104,9 +105,14 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 		// so a heading that is itself malformed keeps its record ahead of the body's and
 		// every reason stays in ascending source-line order.
 		var bodyLost []Malformed
+		linkedCommit := ""
 		for i < len(lines) && !strings.HasPrefix(strings.TrimSuffix(lines[i], "\r"), "## ") {
-			if bodyLine := strings.TrimSuffix(lines[i], "\r"); isLostDatedLine(bodyLine) {
+			bodyLine := strings.TrimSuffix(lines[i], "\r")
+			if isLostDatedLine(bodyLine) {
 				bodyLost = append(bodyLost, Malformed{Reason: lostDatedLineReason, Raw: bodyLine, Line: i + 1})
+			}
+			if commit, ok := resolvedBy(bodyLine); ok && linkedCommit == "" {
+				linkedCommit = commit
 			}
 			i++
 		}
@@ -115,7 +121,7 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 		if state != "open" {
 			malformed = append(malformed, Malformed{Reason: "dated learning heading must end with [open]", Raw: line, Line: start})
 		} else {
-			out = append(out, Entry{Date: date, Title: title, State: state, Body: body, Line: start})
+			out = append(out, Entry{Date: date, Title: title, State: state, Body: body, ResolvedBy: linkedCommit, Line: start})
 		}
 		malformed = append(malformed, bodyLost...)
 	}
