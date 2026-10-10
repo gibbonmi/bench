@@ -317,3 +317,20 @@ recommended table is sequencing advice.
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
 
 ## Recommended sequence
+
+1. build-directions
+2. FT380-plan-commit
+3. FT403
+4. FT168-probe-subjects
+5. FT168-probe-batch
+6. FT342-FT253
+7. FT293-ownership-closure
+8. FT375-spec-staleness
+9. FT405
+10. FT379
+11. FT409
+12. FT402
+13. FT411
+14. FT354-durable-replace
+15. FT354-strict-json
+16. FT258-merge-parent
