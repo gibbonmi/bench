@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
@@ -180,6 +181,77 @@ func TestKitTestRunRejectsInvalidHomeBeforeCreation(t *testing.T) {
 				t.Fatalf("invalid HOME created a run: %v, %v", entries, err)
 			}
 		})
+	}
+}
+
+func TestKitRunDirectoryBase(t *testing.T) {
+	writable := func(t *testing.T) string { return t.TempDir() }
+	cases := []struct {
+		name      string
+		callerSet bool
+		candidate func(t *testing.T) string
+		want      string
+	}{
+		{"caller TMPDIR keeps priority", true, writable, "caller"},
+		{"writable candidate", false, writable, "candidate"},
+		{"absent candidate", false, func(t *testing.T) string { return filepath.Join(t.TempDir(), "absent") }, "fallback"},
+		{"file candidate", false, func(t *testing.T) string {
+			file := filepath.Join(t.TempDir(), "file")
+			if err := os.WriteFile(file, nil, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			return file
+		}, "fallback"},
+		{"unwritable candidate", false, func(t *testing.T) string {
+			if os.Geteuid() == 0 {
+				capability.Capability(t, capability.Privilege, "root ignores the read-only directory mode; cannot make the candidate unwritable")
+			}
+			dir := t.TempDir()
+			if err := os.Chmod(dir, 0o500); err != nil {
+				t.Fatal(err)
+			}
+			return dir
+		}, "fallback"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			bases := map[string]string{"caller": "", "candidate": c.candidate(t), "fallback": t.TempDir()}
+			if c.callerSet {
+				bases["caller"] = t.TempDir()
+			}
+			t.Setenv("TMPDIR", bases["fallback"])
+			dir, err := openKitRunDirectory(bases["caller"], bases["candidate"])
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := filepath.Dir(dir); got != bases[c.want] {
+				t.Fatalf("run base = %q, want the %s %q", got, c.want, bases[c.want])
+			}
+		})
+	}
+}
+
+func TestKitTestRunUsesTmpfsWithoutCallerTmpdir(t *testing.T) {
+	probe, err := os.MkdirTemp(kitRunTmpfs, "probe")
+	if err != nil {
+		capability.Environment(t, "the tmpfs run base refuses a directory: "+err.Error())
+	}
+	if err := os.Remove(probe); err != nil {
+		t.Fatal(err)
+	}
+	// A distinct os.TempDir keeps the fallback base apart from the tmpfs base.
+	t.Setenv("TMPDIR", t.TempDir())
+	run, err := OpenKitTestRun(capability.WithoutEnvironment(kitRunBase(t), "TMPDIR"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := run.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if got := filepath.Dir(run.dir); got != kitRunTmpfs {
+		t.Fatalf("run base = %q, want the tmpfs base %q", got, kitRunTmpfs)
 	}
 }
 

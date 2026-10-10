@@ -1,7 +1,6 @@
 package preflight
 
 import (
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/testrepo"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -57,19 +57,17 @@ func TestEvidenceRequiredSourceStates(t *testing.T) {
 		make       func(t *testing.T) (root, path string)
 	}{
 		{"CE44 FIFO", "not a regular file: p---------", func(t *testing.T) (string, string) {
-			root := shortTempDir(t)
+			root := t.TempDir()
 			if err := syscall.Mkfifo(filepath.Join(root, "source.md"), 0o600); err != nil {
 				t.Fatal(err)
 			}
 			return root, "source.md"
 		}},
 		{"CE45 socket", "not a regular file: S---------", func(t *testing.T) (string, string) {
-			root := shortTempDir(t)
-			listener, err := net.Listen("unix", filepath.Join(root, "source.md"))
-			if err != nil {
+			root := t.TempDir()
+			if err := testrepo.MakeSocket(filepath.Join(root, "source.md")); err != nil {
 				t.Fatal(err)
 			}
-			t.Cleanup(func() { _ = listener.Close() })
 			return root, "source.md"
 		}},
 		{"CE46 device", "not a regular file: Dc---------", func(*testing.T) (string, string) {
@@ -250,15 +248,4 @@ func TestEvidenceBuildMetadataSchema(t *testing.T) {
 	if first := manifest.Sources[0]; first.Role != "metadata" || first.Kind != "derived" || first.Path != "" || !first.Required {
 		t.Fatalf("metadata descriptor = %+v", first)
 	}
-}
-
-// shortTempDir keeps a Unix socket path under the platform length limit.
-func shortTempDir(t *testing.T) string {
-	t.Helper()
-	dir, err := os.MkdirTemp("", "ce")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
-	return dir
 }
