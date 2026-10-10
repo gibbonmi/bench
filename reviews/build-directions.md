@@ -10,9 +10,9 @@
     {
       "id": "BD-C1",
       "base": "dcf7fad065c259c7013bcd21138431360a15e33f",
-      "tip": "d3bd78a98f4834886c8714d9bf00930e89c3ef23",
-      "plan_digest": "sha256:8c0367a9d0b21d1603f3e78be5d804444dbff9d59ad19095af13ddfb3a1b744d",
-      "source_digest": "abbd803bc52d56e9be73ca6b490ec45bd0c9cd03",
+      "tip": "11006538a3b96299a8110cf266d3698390fb6029",
+      "plan_digest": "sha256:9ed0a106b0890921c785675eeaebe3e014f38a2ebb24eab433dbd64c7ee140af",
+      "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
       "acceptance_rows": [
         "BD1",
         "BD2",
@@ -22,6 +22,7 @@
         "BD6",
         "BD60",
         "BD61",
+        "BD62",
         "BD7",
         "BD8",
         "BD9",
@@ -42,7 +43,8 @@
         "BD51",
         "BD52",
         "BD55",
-        "BD58"
+        "BD58",
+        "BD63"
       ],
       "verification": [
         {
@@ -271,6 +273,237 @@
             "ref": "claude-agent:bd_t03",
             "digest": "sha256:26e3f8acb3f09a3c43a74ca28c03c19465dae932b2a3851fcafc4caa8b9880f8",
             "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,d3bd78a98f4834886c8714d9bf00930e89c3ef23,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18148,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-03-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-01-focused-t01-rep1",
+          "performer": "claude:bd_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t01_rep1",
+            "digest": "sha256:cf231420b00eb01cf26c8f3d8a0051f32bcab64d7b375910818f78cb0cee0db7",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,314,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-01-focused",
+          "command": "bench test --package ./internal/anchors --run TestChunkChainAnchors",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-01-live-t01-rep1",
+          "performer": "claude:bd_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t01_rep1",
+            "digest": "sha256:3a12462c0b3c1618112427ae2018d20a6b0b33346edfe1b938a53dc5b6310205",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,420\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,6462,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: chunk chain: no main fold between two tickets of a chunk\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-01-live",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the sentence \"It never folds `main` between two tickets of a chunk.\" from .agents/commands/bench-implement-spec.md. The docs-currency-workflow check turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bd_t01_rep1",
+              "digest": "sha256:3a12462c0b3c1618112427ae2018d20a6b0b33346edfe1b938a53dc5b6310205",
+              "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,420\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,6462,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: chunk chain: no main fold between two tickets of a chunk\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "bd-01-floor-t01-rep1",
+          "performer": "claude:bd_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t01_rep1",
+            "digest": "sha256:52b47d5b3abec112b93cd14797435f348d82827946d0d64d1405ffe49087c906",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,17421,333\n  github.com/gibbonmi/bench/internal/anchors,pass,1932,179\n  github.com/gibbonmi/bench/internal/conformance,pass,57622,1684\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "bd-01-floor",
+          "command": "bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-01-conformance-t01-rep1",
+          "performer": "claude:bd_t01_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t01_rep1",
+            "digest": "sha256:e955413b182d3b317c37c8fafa98fa40b70816a54cc7d923d89cc0958fe25489",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17109,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-01-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-02-focused-t02-final",
+          "performer": "claude:bd_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t02",
+            "digest": "sha256:9844323819d78cb1ec5cb1ca5443d6bff5b118ca6a3cc1dc39b680b7b7784f02",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.bench/BENCH.md,omit,failed,19,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestCommitmentGuidance,passed,49\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,4692\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,2346,49\nfailures[19]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/active-outcome_learning_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/binding-only_limit,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/blocker_report,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/build_rule_pointer,\"commitment_guidance_test.go:95: .bench/BENCH.md holds \\\" `/bench-implement-spec` states the build rule.\\\" 0 times, want once\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/canonical_rule,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/drain_light-path_dispatch,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/explicit_displacement,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/in-build_learning_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_Writes_boundary,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_commitment_start,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_observable,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_row_rule,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/mid-work_defect_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/next-outcome_start,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/outside-a-build_learning_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/purpose_priority,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/start_route,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/unadmitted_learning_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/uncommitted_intake,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-02-focused",
+          "command": "bench test --package ./internal/conformance --run TestCommitmentGuidance",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the clause \"`/bench-implement-spec` states the build rule.\" from .bench/BENCH.md. TestCommitmentGuidance turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bd_t02",
+              "digest": "sha256:9844323819d78cb1ec5cb1ca5443d6bff5b118ca6a3cc1dc39b680b7b7784f02",
+              "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.bench/BENCH.md,omit,failed,19,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestCommitmentGuidance,passed,49\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,4692\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,2346,49\nfailures[19]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/active-outcome_learning_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/binding-only_limit,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/blocker_report,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/build_rule_pointer,\"commitment_guidance_test.go:95: .bench/BENCH.md holds \\\" `/bench-implement-spec` states the build rule.\\\" 0 times, want once\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/canonical_rule,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/drain_light-path_dispatch,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/explicit_displacement,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/in-build_learning_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_Writes_boundary,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_commitment_start,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_observable,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/light-path_row_rule,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/mid-work_defect_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/next-outcome_start,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/outside-a-build_learning_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/purpose_priority,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/start_route,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/unadmitted_learning_fix,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/uncommitted_intake,\"commitment_guidance_test.go:99: live .bench/BENCH.md raised [\\\"commitment guidance: operating guide dropped the pointer to the build rule\\\"]\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "bd-02-floor-t02-final",
+          "performer": "claude:bd_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t02",
+            "digest": "sha256:5a020afb2c90a4e3eba0f53a1199c19e75f24a3184ee3b63ab84fce04c5d6ea2",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16654,333\n  github.com/gibbonmi/bench/internal/anchors,pass,2054,179\n  github.com/gibbonmi/bench/internal/conformance,pass,58508,1684\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "bd-02-floor",
+          "command": "bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-02-conformance-t02-final",
+          "performer": "claude:bd_t02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t02",
+            "digest": "sha256:47909ce50546e35e817dff3efe81f5e3c9993d09865629fc870c4e615628e9c9",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15639,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-02-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-03-focused-t03-rep1",
+          "performer": "claude:bd_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t03_rep1",
+            "digest": "sha256:fabb930c5ea18461e2e6658f55f761e3d0ba5464248e4e2035df9fafd6c4fe00",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,309,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-03-focused",
+          "command": "bench test --package ./internal/anchors --run TestChunkChainAnchors",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-03-live-t03-rep1",
+          "performer": "claude:bd_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t03_rep1",
+            "digest": "sha256:98dfcec4d8c3cc2099bf409d8a9c13b0bbb671ea87e1165b3f0bf49d188e0d09",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,441\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5063,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: chunk chain: the last chunk keeps its chunk, verification, and review entries\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "bd-03-live",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the sentence \"The last chunk keeps its chunk entry, its verification entries, and its three review entries.\" from .agents/commands/bench-implement-spec.md. The docs-currency-workflow check turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bd_t03_rep1",
+              "digest": "sha256:98dfcec4d8c3cc2099bf409d8a9c13b0bbb671ea87e1165b3f0bf49d188e0d09",
+              "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,441\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,5063,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: chunk chain: the last chunk keeps its chunk, verification, and review entries\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "bd-03-floor-t03-rep1",
+          "performer": "claude:bd_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t03_rep1",
+            "digest": "sha256:bf66278c403674bac9b9ffaaf579b7bb30517be1939766e648c4ac82024bd0a9",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,15954,333\n  github.com/gibbonmi/bench/internal/anchors,pass,1801,179\n  github.com/gibbonmi/bench/internal/conformance,pass,57447,1684\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "bd-03-floor",
+          "command": "bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bd-03-conformance-t03-rep1",
+          "performer": "claude:bd_t03_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2e969e62d14083fae5f6ace86e983354a3b49ee5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bd_t03_rep1",
+            "digest": "sha256:0b37b40723a0e88707780c91837b59272adeeeb54560a80d0e1a65d27b872201",
+            "excerpt": "tree[1]{target,head,dirty}:\n  build-directions,11006538a3b96299a8110cf266d3698390fb6029,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15359,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "bd-03-conformance",
           "command": "bench test --check root-conformance",
