@@ -74,7 +74,7 @@ func transactionalRepair(root, kit, mode, version string, plan []planEntry, stdo
 	hook := InspectPrePush(root)
 	_, hookPresent := os.Lstat(hook.Path)
 	if hook.State == PrePushForeign || (hook.State == PrePushDiverted && hookPresent == nil) {
-		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", hook.Path)
+		fmt.Fprint(stderr, foreignHookConflict(hook.Path))
 		return 1, false
 	}
 	stage, err := os.MkdirTemp(root, ".bench-link-")

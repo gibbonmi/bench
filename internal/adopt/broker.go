@@ -123,7 +123,7 @@ func retainDoctorChange(change transaction.Change, repair *repairRun) error {
 			canonical = canonicalBroker(change.Destination, current.Data, repair.staging)
 		}
 		if current.State != bounds.StateParsed || before.Mode() != info.Mode() || !canonical {
-			return fmt.Errorf("modified-managed doctor asset: %s", change.Destination)
+			return fmt.Errorf("%s doctor asset: %s", reasonModifiedManaged, change.Destination)
 		}
 	}
 	path, err := stageBytes(repair.staging, fmt.Sprintf("asset-%d", len(repair.pending)), staged.Data, info.Mode())
@@ -153,9 +153,9 @@ func validateRepairShim(path string) error {
 	if file.State == bounds.StateParsed && target != "" && content == ShimContent(target)+"\n" && info.Mode() == shimMode {
 		return nil
 	}
-	reason := "project-owned"
+	reason := reasonProjectOwned
 	if managedShimContent(content) {
-		reason = "modified-managed"
+		reason = reasonModifiedManaged
 	}
 	return fmt.Errorf("%s shim: %s", reason, path)
 }

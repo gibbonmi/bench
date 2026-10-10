@@ -227,6 +227,12 @@ func protectedBranch(root string) string {
 	return fallbackProtectedBranch
 }
 
+// foreignHookConflict is the refusal line for a pre-push hook at path that Bench does not
+// manage. Link and the hook installer print it on stderr before they refuse.
+func foreignHookConflict(path string) string {
+	return fmt.Sprintf("conflict: %s exists and is not Bench-managed\n", path)
+}
+
 func installGitHook(root string, stderr io.Writer, guard *adoptionGuard) error {
 	hooks, err := hooksDir(root)
 	if err != nil {
@@ -239,7 +245,7 @@ func installGitHook(root string, stderr io.Writer, guard *adoptionGuard) error {
 	}
 	prepush := filepath.Join(hooks, "pre-push")
 	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), PrePushMarker) {
-		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
+		fmt.Fprint(stderr, foreignHookConflict(prepush))
 		return fmt.Errorf("foreign pre-push")
 	}
 	mode := prePushMode
@@ -314,7 +320,7 @@ func validateRepairHook(health PrePushHealth) error {
 		return err
 	}
 	if health.Currency != PrePushCurrent || info.Mode() != prePushMode {
-		return fmt.Errorf("modified-managed pre-push: %s", health.Path)
+		return fmt.Errorf("%s pre-push: %s", reasonModifiedManaged, health.Path)
 	}
 	return nil
 }
