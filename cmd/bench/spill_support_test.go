@@ -11,8 +11,13 @@ import (
 )
 
 // TestMain runs the package under a private Bench home. A bounded response that spills
-// in a test then writes its spill file there, never under the operator's home.
+// in a test then writes its spill file there, never under the operator's home. A gate
+// route owner process runs before the home exists, because it exits without returning
+// here and it uses the home that its parent test gave it.
 func TestMain(m *testing.M) {
+	if code, owner := gateRouteOwnerProcess(); owner {
+		os.Exit(code)
+	}
 	home, err := os.MkdirTemp("", "bench-cmd-home-")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "private BENCH_HOME:", err)
@@ -24,7 +29,12 @@ func TestMain(m *testing.M) {
 	} else {
 		code = m.Run()
 	}
-	_ = os.RemoveAll(home)
+	if err := os.RemoveAll(home); err != nil {
+		fmt.Fprintln(os.Stderr, "remove private BENCH_HOME:", err)
+		if code == 0 {
+			code = 1
+		}
+	}
 	os.Exit(code)
 }
 

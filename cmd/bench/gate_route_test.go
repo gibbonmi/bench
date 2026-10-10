@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,34 +16,43 @@ import (
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
-func TestGateRouteOwnerProcess(t *testing.T) {
-	if os.Getenv("BENCH_GATE_ROUTE_PROCESS") != "1" {
-		return
+const gateRouteProcessEnv = "BENCH_GATE_ROUTE_PROCESS"
+
+// gateRouteOwnerProcess runs the owner process that the gateRoute wrapper starts from
+// this test binary, and reports whether this process is that owner.
+func gateRouteOwnerProcess() (int, bool) {
+	if os.Getenv(gateRouteProcessEnv) != "1" {
+		return 0, false
 	}
 	for i, arg := range os.Args {
 		if arg == "--" {
-			os.Exit((Command{Stdout: os.Stdout, Stderr: os.Stderr}).Run(os.Args[i+1:]))
+			return Command{Stdout: os.Stdout, Stderr: os.Stderr}.Run(os.Args[i+1:]), true
 		}
 	}
-	t.Fatal("missing owner process arguments")
+	fmt.Fprintln(os.Stderr, "missing owner process arguments")
+	return 2, true
 }
 
+// gateRoute runs the public shell wrapper's gate route with this test binary as the
+// owner process. The owner's temporary directory must stay empty: an owner that exits
+// before its cleanup leaves an entry there.
 func gateRoute(t *testing.T, root string, args ...string) (string, string, int) {
 	t.Helper()
 	kit := t.TempDir()
+	temporary := t.TempDir()
 	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(kit, "bin", "bench.sh"))
 	executable, err := os.Executable()
 	if err != nil {
 		t.Fatal(err)
 	}
-	writeExecutable(t, filepath.Join(kit, "dist", "bench"), "#!/bin/sh\nexec \"$BENCH_GATE_ROUTE_EXECUTABLE\" -test.run '^TestGateRouteOwnerProcess$' -- \"$@\"\n")
+	writeExecutable(t, filepath.Join(kit, "dist", "bench"), "#!/bin/sh\nexec \"$BENCH_GATE_ROUTE_EXECUTABLE\" -- \"$@\"\n")
 	cmd := exec.Command("bash", append([]string{filepath.Join(kit, "bin", "bench.sh"), "gate"}, args...)...)
 	if root != "" {
 		cmd.Dir = root
 	}
 	environment := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
 	environment = capability.WithoutEnvironment(capability.WithoutEnvironment(environment, "BENCH_KIT"), "BENCH_WRAPPER")
-	cmd.Env = append(environment, "BENCH_GATE_ROUTE_PROCESS=1", "BENCH_GATE_ROUTE_EXECUTABLE="+executable, "BENCH_HOME="+filepath.Join(kit, "home"), "BENCH_KIT="+kit)
+	cmd.Env = append(environment, gateRouteProcessEnv+"=1", "BENCH_GATE_ROUTE_EXECUTABLE="+executable, "BENCH_HOME="+filepath.Join(kit, "home"), "BENCH_KIT="+kit, "TMPDIR="+temporary)
 	var out, diagnostic bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &diagnostic
@@ -53,6 +63,13 @@ func gateRoute(t *testing.T, root string, args ...string) (string, string, int) 
 			t.Fatal(err)
 		}
 		code = exit.ExitCode()
+	}
+	left, err := os.ReadDir(temporary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range left {
+		t.Errorf("gate %v: owner process left %s in its temporary directory", args, entry.Name())
 	}
 	return out.String(), diagnostic.String(), code
 }
