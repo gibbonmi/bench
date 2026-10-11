@@ -384,6 +384,79 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sb1-standards-r2",
+          "performer": "claude:ssb_sb1_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a731cd5d93d27a8536508e178e3f4d38a557f50a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb1_standards_r2",
+            "digest": "sha256:b2f8fa2decb8f8e693742ad90f67ef3ac495e43f9b69c9d5866174f88fccab16",
+            "excerpt": "claude:ssb_sb1_standards_r2 (opus/high) — SB1 round 2 Standards axis over caa476a6..b6e6b0d9 (chunk tip d0a21c74)\n\nFindings: 1 new. Worst: S21.\n\nS1 confirmed closed: reviews/spec-stage-binding.md:457-484 records a red for SB13 (probes 2, 3), SB15 (3), SB10 and SB11 (4), SB07 (5), SB16 (6), SB20 (7), SB21 (8), SB22 (9), SB19 (10), each bit with restored=yes and a failure line; the pre-edit reds are at lines 459-468.\nS2 confirmed closed: internal/commitment/head_binding_test.go:45-46 sentences are 16 and 11 words; the specStage comment at repository/head_binding_test.go:22-25 has 12, 15, 21, and 4 words.\nS3 confirmed closed: head_binding_test.go:40 reads \"headBinding binds the spec bytes body at headSpec with no obligation.\"\n\nS21 (auto-fix, confidence 6): the new C2 and C3 rows (TestHeadBindingReadsEachNewDeliverableAtHEAD first-policy and rebinding, head_binding_test.go:184-215) have no recorded red in the tree. Rule: AGENTS.md, an independent expectation needs a recorded and demonstrated red; craft-comments, the commit or spec owns the red record. The repair's one recorded probe (record line 195) omits both tests from its --run. SB45 has no such gap (its unfolded/folded pair at repository/head_binding_test.go:86-87). Repair: rerun the nil-clause and path-only probes against the new subtests and keep them in Retained red evidence.\n\nNo other new finding: the beforePlan hook (lines 26, 34-36) is described accurately with one caller; the SB45 comment sentences are 20, 18, and 14 words; the two repetitions (policy(...) at lines 29, 148, 191; headBinding(StagedBody) at 192 and 202 with different roles) do not bind the one-source rule.\n\nAdvice: a headPolicy(others ...string) helper could serve headWorktree and lines 148 and 191; record lines 475 and 478 abbreviate probes 3 and 6 with \"...\", so they cannot be replayed as written.\n\nExamined: check-current current=true at b6e6b0d9; one git diff caa476a6..b6e6b0d9 and git log (two spill files); craft-review SKILL, finding-discipline, craft-comments; both head_binding_test.go files in full, stale_base_test.go:60-89,160-179, the record's headings and probe rows. No native refs fetched; no probe or test run. Tokens 81k, 16 tool uses, 107 s.\n"
+          },
+          "axis": "Standards",
+          "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
+          "tip": "d0a21c7467ce76700ee8377cbe69d9a4f6df6d0c",
+          "finding_ids": [
+            "S21"
+          ],
+          "supersedes": [
+            "sb1-standards-r1"
+          ]
+        },
+        {
+          "id": "sb1-spec-r2",
+          "performer": "claude:ssb_sb1_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a731cd5d93d27a8536508e178e3f4d38a557f50a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb1_spec_r2",
+            "digest": "sha256:9f74eeb6fbc82176cdfd85ddffcf2805e3108f241c1ed7a5271751b18a8a6bde",
+            "excerpt": "claude:ssb_sb1_spec_r2 (opus/high) — SB1 round 2 Spec axis over caa476a6..b6e6b0d9 (chunk tip d0a21c74)\n\ncheck-current current=true at b6e6b0d9, clean.\n\nP1 reopened, narrowed to SB02, SB04, SB05 (auto-fix, confidence 5): Retained red evidence (record lines 462-489) covers SB01, SB03, SB06-SB22, and the central SB12/SB14 red. SB02 asserts at head_binding_test.go:56-61, after the SB01 Fatalf at :53, so the pre-edit red never reached it; SB04 and SB05 assert at :86 and :89 after the :83 Fatalf. Record line 484 names author probes 11-14 without describing them. Repair: record three probes, or describe probes 11-14 in the record.\n\nP21 (auto-fix, confidence 7): the C1 amendment texts agree on the fold before the plan (spec :222 and ticket 3 :35 identical; chunk row :300 \"SB01-SB22, SB45\"; ticket 1 Covers adds SB45; E1 :620 and D1-D9 do not conflict; ticket 3 :46 agrees with :271). Contradiction: spec :229 says the fold comes before the plan because approve dirties the tree; the Won't-handle line :428 says a second fold clears a refusal after the binding commit; ticket 1 :49 says \"The binding commit refuses, the worktree folds main, and the approval check admits\". bench worktree merge refuses a dirty target (internal/worktree/merge.go:184-195), so the second fold cannot run as written. Repair: name the second-fold route (set aside or discard the approve output, fold, then plan again) in :428, and reword ticket 1 :49 to put the fold before the plan.\n\nSB45 met: the unfolded row expects `unbound` = \"assignment has no current delivery binding\" (light_path_test.go:238); the folded row expects admission (repository/head_binding_test.go:115-136); the seam cell is in citation form; the test follows the close order (specStage commits the spec, beforePlan lands production and folds, then plan, approve, and the binding commit; :28-36, :120-126).\n\nC2 and C3 match the findings and add no behavior: first-policy (head_binding_test.go:37-48) has main with only a README, so current is nil; rebinding (:49-65) has main binding headSpec at the StagedBody identity and the worktree binding the same path at a new identity; both lock the Term at spec :121; test files only.\n\nAdvice: branchReference is cited as candidate.go:131-144 at spec :175 and :131-145 at :230 (the function ends at 145). The SB45 red is in-test (the fold left out); no production mutation applies because the row proves a close-order route; the record does not say so.\n\nExamined: check-current; one git diff caa476a6..b6e6b0d9 (spill 1791733629881773957, lines 1-601); spec lines 117-276, 362-388, 412-432, 700-759; ticket 1 lines 40-114; the record searched for probes, SB02, SB04, SB05; head_binding_test.go:25-94, candidate.go:125-145, merge.go dirty-target search, repository search for unbound and landProduction. Not read: the skill files, the native-ref logs; no probe or test run. Tokens 92k, 16 tool uses, 129 s.\n"
+          },
+          "axis": "Spec",
+          "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
+          "tip": "d0a21c7467ce76700ee8377cbe69d9a4f6df6d0c",
+          "finding_ids": [
+            "P1",
+            "P21"
+          ],
+          "supersedes": [
+            "sb1-spec-r1"
+          ]
+        },
+        {
+          "id": "sb1-coverage-r2",
+          "performer": "claude:ssb_sb1_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a731cd5d93d27a8536508e178e3f4d38a557f50a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb1_coverage_r2",
+            "digest": "sha256:e5d3fab1412bf6882d271e6b7c7455a591ab59b8a3cf308c7b0b8bfc6aa3fb6c",
+            "excerpt": "claude:ssb_sb1_coverage_r2 (opus/high) — SB1 round 2 Coverage axis over caa476a6..b6e6b0d9 (chunk tip d0a21c74)\n\nFindings: 1 new (C21, low). C1, C2, C3, SB45 confirmed closed. Evidence bound current=true at b6e6b0d9, clean.\n\nC2 confirmed closed: TestHeadBindingReadsEachNewDeliverableAtHEAD/first-policy (head_binding_test.go:185-196) reds when the nil clause is gone (probe 1); the fixture starts with no policy on main (gittest.RepoOnBranch plus a README commit; commitmenttest.Assignment writes no policy, repo.go:152-164); the red line `missing or nonregular tree file specs/head/spec.md` shows the fallback to a main that lacks the spec.\nC3 confirmed closed: the rebinding row (:197-213) reds under an ID-plus-Path match (probe 2); its line `changed from sha256:d836... to sha256:c072...` shows main binds the same path at another identity; the worktree branches first (:199) and main's binding commits before the worktree stages (:200-205).\nSB45 confirmed closed: unfolded reds when the `inherited != identity` clause of branchReference (candidate.go:141) is dropped, so its refusal comes from branchReference returning the tip (probe 3); folded has no production-side probe, because after the fold the merge base equals the tip and lines 138 and 141 both return the tip; a fixture-side no-op merge of HEAD reds folded with `assignment has no current delivery binding` (probe 4).\nC1 route confirmed closed: spec :222 folds main before the plan; the Won't-handle line :428 decides a main move between the fold and the commit; a fold when main has not moved does nothing (merge_test.go:111, WM3). One open state: a fold conflict, for example on the scorecard file that step 1 commits; the landing met the same conflict before the amendment.\n\nC21 (auto-fix, confidence 4): spec :510 cites SB45 for \"the composed tree at the landing stays safe when main moves again\", but SB45 grades only AuthorizeCandidate; the witness is SB14, which runs landProduction after the binding commit (repository/head_binding_test.go:139). No new row; cite SB14 there.\n\nProbes at b6e6b0d9 (all bit, restored yes):\n1. bench probe internal/commitment/delivery.go --swap 'return namesDeliverable(proposed, source) && (current == nil || !namesDeliverable(*current, source))' --with 'return current != nil && namesDeliverable(proposed, source) && !namesDeliverable(*current, source)' --package ./internal/commitment --run '^TestHeadBindingReadsEachNewDeliverableAtHEAD$': 1 failed (first-policy :194)\n2. bench probe internal/commitment/delivery.go --swap 'return binding.Source == source' --with 'return binding.Source.ID == source.ID && binding.Source.Path == source.Path' (same package and run): 1 failed (rebinding :212)\n3. bench probe internal/commitment/repository/candidate.go --swap 'if _, inherited, err := store.policyAt(base); err != nil || inherited != identity {' --with 'if _, _, err := store.policyAt(base); err != nil {' --package ./internal/commitment/repository --run '^TestAuthorizeCandidateAdmitsAFoldedBinding$': 1 failed (unfolded :106)\n4. bench probe internal/commitment/repository/head_binding_test.go --swap '\"merge\", \"--no-ff\", \"-m\", \"fold main\", \"main\")' --with '\"merge\", \"--no-ff\", \"-m\", \"fold main\", \"HEAD\")' (same package and run): 1 failed (folded :101)\n\nAdvice: fix the C21 citation; a fold-conflict state could get a Won't-handle line naming the landing's conflict route.\n\nExamined: the evidence bind; git diff caa476a6..b6e6b0d9 (spill lines 1-160 and 490-600); record lines 421-485; delivery.go:140-156, candidate.go:20-145, sources.go:1-110, repository.go:95-147, commitmenttest/repo.go, stale_base_test.go:170-181, spec.md:160-169,219-230,410-432. Not read: the craft-review references. Final git status clean. Tokens and time: see the assessment record.\n"
+          },
+          "axis": "Coverage",
+          "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
+          "tip": "d0a21c7467ce76700ee8377cbe69d9a4f6df6d0c",
+          "finding_ids": [
+            "C21"
+          ],
+          "supersedes": [
+            "sb1-coverage-r1"
+          ]
         }
       ]
     }
@@ -482,3 +555,28 @@ The orchestrator reran the author's probes 2 to 10 on the clean tip `caa476a6`. 
 | 10 | `bench probe internal/commitment/repository/outlook.go --swap 'policy, exists, err := store.Policy()' --with 'head, _, err := store.policyAt("HEAD"); policy, exists := commitment.Policy{}, head != nil; if head != nil { policy = *head }' --package ./internal/worktree --run 'TestCommitmentSpecStageLandsSpecAndBinding'` | 1 | `land_specless_test.go:291: show in .../worktrees/... before the landing = (...)` (SB19) |
 
 The author's probes 1 (central, rerun at `fccb67ae`), 11, 12, 13, and 14 ran at the committed tip. Its verification entries and logs hold them. The orchestrator's independent probe ran at `caa476a6`: `bench probe internal/commitment/delivery.go --omit 'return true' --package ./internal/commitment --run '^TestHeadBindingPlansAStagedSpecThatHEADHolds$'`. It bit with 1 failed test (`head_binding_test.go:53 ... refused ..., want acceptance`) and `restored=yes`.
+
+## Round 2 (confirming)
+
+Round 2 ran three opus/high axes at `b6e6b0d9` over the repair delta `caa476a6..b6e6b0d9` (chunk tip `d0a21c74`). Standards confirmed S1, S2, and S3 closed. Spec confirmed SB45 met, and C2 and C3 add no behavior. Coverage confirmed C1, C2, C3, and SB45 closed with four independent probes. Repair cycle 1 of 2 stays the only consumed cycle; the items below change no source.
+
+- S21 (`auto-fix`, confidence 6): the C2 and C3 rows had no red in the record. Closed evidence-only: the orchestrator reran the repair session's two probes at the clean tip `b6e6b0d9` (below). The Coverage round 2 probes 1 and 2 bit the same rows with other mutations.
+- P1 (reopened, narrowed to SB02, SB04, SB05; `auto-fix`, confidence 5): the pre-edit Fatalf at `:53` and `:83` stopped before those assertions. Closed evidence-only: the author's probes 11, 12, and 13 ran at the clean tip `caa476a6` and bit those three assertions (below).
+- P21 (`auto-fix`, confidence 7): the Won't-handle line and ticket 1 described a second fold on a dirty tree, which `bench worktree merge` refuses. Closed by the plan commit `a4ffe486`: the line now names `git restore` of the approve output, a fold, and a new plan. Ticket 1 puts the fold before the plan.
+- C21 (`auto-fix`, confidence 4): the close-order paragraph cited SB45 for the landing sentence. Closed by the plan commit `a4ffe486`: the sentence cites SB14, and SB45 keeps the fold route. The same commit cites `branchReference` as `candidate.go:131-145` in both places.
+
+Advice retained: a `headPolicy` helper, and exact probe texts in the record rows 3 and 6. A Won't-handle line could name a fold conflict on the scorecard file; the landing met the same conflict before the amendment.
+
+### Retained reds of round 2
+
+Author probes 11 to 13 at `caa476a6` (author logs `claude-agent:ssb_t1/probe-11-approve-at-tip.txt`, `probe-12-inventory-scope.txt`, `probe-13-inventory-identity.txt`), each `bit` with `restored=yes`:
+
+- SB02, probe 11: `bench probe internal/commitment/repository/repository.go --swap $'\t\t\thead, err := store.checkoutHead()' --with $'\t\t\thead, err := store.sourceRevision()' --package ./internal/commitment --run 'TestHeadBindingPlansAStagedSpecThatHEADHolds'`; 1 failed: `head_binding_test.go:56: Approve(the HEAD binding) = commitment source "A.spec" refused: missing or nonregular tree file specs/head/spec.md, want the bound policy staged`.
+- SB04, probe 12: `bench probe internal/commitment/repository/sources.go --swap 'Identity: identity, Scope: scope})' --with 'Identity: identity, Scope: scope[:0]})' --package ./internal/commitment --run 'TestHeadBindingInventoryListsAHeadHeldSpec'`; 1 failed: `head_binding_test.go:86: scope of specs/head/spec.md = "", want its Roadmap value "FT7"`.
+- SB05, probe 13: `bench probe internal/commitment/repository/sources.go --swap 'Identity: identity, Scope: scope})' --with 'Identity: identity + "-stale", Scope: scope})' --package ./internal/commitment --run 'TestHeadBindingInventoryListsAHeadHeldSpec'`; 1 failed: `head_binding_test.go:89: identity of specs/head/spec.md = "sha256:06d2...-stale", want the identity "sha256:06d2..."`.
+
+Orchestrator reruns at `b6e6b0d9` (bodies `claude-agent:ssb-orchestrator-20261011/sb1-review/rerun-c2-probe.txt` and `rerun-c3-probe.txt`), each `bit` with `restored=yes`:
+
+- C2: `bench probe internal/commitment/delivery.go --swap '(current == nil || !namesDeliverable(*current, source))' --with '(current != nil && !namesDeliverable(*current, source))' --package ./internal/commitment --run '^TestHeadBindingReadsEachNewDeliverableAtHEAD$'`; 1 failed: `head_binding_test.go:194: Plan(the first policy, which binds the spec that HEAD holds) = commitment source "A.spec" refused: missing or nonregular tree file specs/head/spec.md, want acceptance`.
+- C3: `bench probe internal/commitment/delivery.go --swap 'return binding.Source == source' --with 'return binding.Source.Path == source.Path' --package ./internal/commitment --run '^TestHeadBindingReadsEachNewDeliverableAtHEAD$'`; 1 failed: `head_binding_test.go:212: Plan(a binding of the path that main binds, at the identity that HEAD holds) = commitment source "A.spec" changed from sha256:d836... to sha256:c072...`.
+- The orchestrator's independent probe at `b6e6b0d9`: `bench probe internal/commitment/delivery.go --omit 'namesDeliverable(proposed, source) && ' --package ./internal/commitment --run '^TestHeadBindingKeepsTheDefaultTipForEveryOtherSource$'`; `bit`, 1 failed (`changed-row`, `:164`), `restored=yes`.
