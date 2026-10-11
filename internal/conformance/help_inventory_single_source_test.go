@@ -19,7 +19,71 @@ func checkRoadmapHelpLine(helpInventorySource string) []string {
 	return []string{"cmd/bench/main.go help inventory does not describe the top-10 board"}
 }
 
-const helpInventoryTitle = "bench — agent work in isolated worktrees, graded by one gate, landed only on green. Run bench status for the next action."
+// helpRegistrySource declares the help inventory title as the string constant
+// helpTitleConstant. The conformance package cannot import package main, so the check reads
+// the title from that declaration.
+const (
+	helpRegistrySource = "cmd/bench/command_registry.go"
+	helpTitleConstant  = "helpInventoryTitle"
+)
+
+// declaredStringConstant returns the value of the string constant name that file declares.
+func declaredStringConstant(file *ast.File, name string) (string, bool) {
+	for _, decl := range file.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.CONST {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			value, ok := spec.(*ast.ValueSpec)
+			if !ok {
+				continue
+			}
+			for i, ident := range value.Names {
+				if ident.Name == name && i < len(value.Values) {
+					return stringLiteral(value.Values[i])
+				}
+			}
+		}
+	}
+	return "", false
+}
+
+// checkHelpInventoryTitleOccurrences reports unless title appears exactly once across the
+// production Go sources and the public Bench surfaces under root.
+func checkHelpInventoryTitleOccurrences(root, title string) []string {
+	var diags []string
+	occurrences := 0
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel := filepath.ToSlash(strings.TrimPrefix(path, root+string(filepath.Separator)))
+		if entry.IsDir() {
+			if rel == ".git" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		productionGo := strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, "_test.go")
+		publicSurface := rel == "bin/bench.sh" || rel == ".bench/BENCH.md" || rel == ".bench/BENCH-reference.md"
+		if productionGo || publicSurface {
+			if !entry.Type().IsRegular() {
+				diags = append(diags, rel+" is not a regular help-inventory source")
+				return nil
+			}
+			occurrences += strings.Count(readIfExists(path), title)
+		}
+		return nil
+	})
+	if err != nil {
+		diags = append(diags, "scan help inventory sources: "+err.Error())
+	}
+	if occurrences != 1 {
+		diags = append(diags, fmt.Sprintf("help inventory title appears %d times on production surfaces, want exactly 1", occurrences))
+	}
+	return diags
+}
 
 // helpRowProjections names each command whose help rows derive from its own form
 // registry, and the projection call that must supply them. Every other public command keeps
@@ -46,34 +110,35 @@ func isHelpRowProjection(args []ast.Expr, spread bool, projection string) bool {
 
 func checkHelpInventorySingleSource(root string) []string {
 	var diags []string
-	occurrences := 0
-	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return err
+	title := ""
+	for _, rel := range []string{"cmd/bench/main.go", helpRegistrySource} {
+		sourcePath := filepath.Join(root, filepath.FromSlash(rel))
+		file, parseErr := parser.ParseFile(token.NewFileSet(), sourcePath, readIfExists(sourcePath), 0)
+		if parseErr != nil {
+			diags = append(diags, rel+" cannot be parsed for standalone help catalogs: "+parseErr.Error())
+			continue
 		}
-		rel := filepath.ToSlash(strings.TrimPrefix(path, root+string(filepath.Separator)))
-		if entry.IsDir() {
-			if rel == ".git" {
-				return filepath.SkipDir
+		if rel == helpRegistrySource {
+			declared, ok := declaredStringConstant(file, helpTitleConstant)
+			if !ok || declared == "" {
+				diags = append(diags, rel+" declares no non-empty string constant "+helpTitleConstant)
 			}
-			return nil
+			title = declared
 		}
-		productionGo := strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, "_test.go")
-		publicSurface := rel == "bin/bench.sh" || rel == ".bench/BENCH.md" || rel == ".bench/BENCH-reference.md"
-		if productionGo || publicSurface {
-			if !entry.Type().IsRegular() {
-				diags = append(diags, rel+" is not a regular help-inventory source")
-				return nil
+		ast.Inspect(file, func(node ast.Node) bool {
+			literal, ok := node.(*ast.BasicLit)
+			if !ok || literal.Kind != token.STRING {
+				return true
 			}
-			occurrences += strings.Count(readIfExists(path), helpInventoryTitle)
-		}
-		return nil
-	})
-	if err != nil {
-		diags = append(diags, "scan help inventory sources: "+err.Error())
+			text, unquoteErr := strconv.Unquote(literal.Value)
+			if unquoteErr == nil && (strings.HasPrefix(text, "  bench ") || strings.HasPrefix(text, "  bash bin/bench.sh ")) {
+				diags = append(diags, rel+" carries a standalone rendered help command row")
+			}
+			return true
+		})
 	}
-	if occurrences != 1 {
-		diags = append(diags, fmt.Sprintf("help inventory title appears %d times on production surfaces, want exactly 1", occurrences))
+	if title != "" {
+		diags = append(diags, checkHelpInventoryTitleOccurrences(root, title)...)
 	}
 
 	path := filepath.Join(root, "cmd", "bench", "main.go")
@@ -138,26 +203,7 @@ func checkHelpInventorySingleSource(root string) []string {
 	if !publicCommands["repair"] {
 		diags = append(diags, "CLI inventory omits bench repair")
 	}
-	for _, rel := range []string{"cmd/bench/main.go", "cmd/bench/command_registry.go"} {
-		sourcePath := filepath.Join(root, filepath.FromSlash(rel))
-		file, parseErr := parser.ParseFile(token.NewFileSet(), sourcePath, readIfExists(sourcePath), 0)
-		if parseErr != nil {
-			diags = append(diags, rel+" cannot be parsed for standalone help catalogs: "+parseErr.Error())
-			continue
-		}
-		ast.Inspect(file, func(node ast.Node) bool {
-			literal, ok := node.(*ast.BasicLit)
-			if !ok || literal.Kind != token.STRING {
-				return true
-			}
-			text, unquoteErr := strconv.Unquote(literal.Value)
-			if unquoteErr == nil && (strings.HasPrefix(text, "  bench ") || strings.HasPrefix(text, "  bash bin/bench.sh ")) {
-				diags = append(diags, rel+" carries a standalone rendered help command row")
-			}
-			return true
-		})
-	}
-	registryOwner := readIfExists(filepath.Join(root, "cmd", "bench", "command_registry.go"))
+	registryOwner := readIfExists(filepath.Join(root, filepath.FromSlash(helpRegistrySource)))
 	if !strings.Contains(registryOwner, "definition.Name + row.Suffix") {
 		diags = append(diags, "help renderer does not derive each command token from commandRegistry Name")
 	}
@@ -176,10 +222,12 @@ func TestHelpInventorySingleSourceBites(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	title := helpInventoryTitle
+	const title = "fixture help title"
 	registry := "package main\n\nvar commandRegistry = []commandDefinition{\n\t{Name: \"help\", Inventory: publicInventory()},\n\t{Name: \"repair\", WrapperOnly: true, Inventory: publicInventory(helpRow{Order: 1, Description: \"repair\"})},\n\t{Name: \"status\", Inventory: publicInventory(helpRow{Order: 2, Description: \"state\"})},\n\t{Name: \"plumbing\", Inventory: internalInventory},\n}\n"
+	renderer := "func render(definition commandDefinition, row helpRow) { _ = definition.Name + row.Suffix }\n"
+	declaredTitle := "package main\nconst helpInventoryTitle = \"" + title + "\"\n" + renderer
 	write("cmd/bench/main.go", registry)
-	write("cmd/bench/command_registry.go", "package main\nconst title = \""+title+"\"\nfunc render(definition commandDefinition, row helpRow) { _ = definition.Name + row.Suffix }\n")
+	write(helpRegistrySource, declaredTitle)
 	write("bin/bench.sh", "#!/bin/sh\n")
 	write(".bench/BENCH.md", "Run `bench help`.\n")
 	if diags := checkHelpInventorySingleSource(root); len(diags) != 0 {
@@ -190,8 +238,22 @@ func TestHelpInventorySingleSourceBites(t *testing.T) {
 	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "appears 2 times") {
 		t.Fatalf("duplicate production inventory = %v, want duplicate-source diagnostic", diags)
 	}
-
 	write("bin/bench.sh", "#!/bin/sh\n")
+
+	// The title source fails closed: a renamed, variable, empty, or computed declaration each reds.
+	for name, source := range map[string]string{
+		"renamed constant":  "package main\nconst helpInventoryTitl = \"" + title + "\"\n" + renderer,
+		"variable":          "package main\nvar helpInventoryTitle = \"" + title + "\"\n" + renderer,
+		"empty constant":    "package main\nconst helpInventoryTitle = \"\"\n" + renderer,
+		"computed constant": "package main\nconst helpInventoryTitle = prefix + \"" + title + "\"\n" + renderer,
+	} {
+		write(helpRegistrySource, source)
+		if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "declares no non-empty string constant helpInventoryTitle") {
+			t.Fatalf("%s = %v, want title-declaration diagnostic", name, diags)
+		}
+	}
+	write(helpRegistrySource, declaredTitle)
+
 	write("cmd/bench/main.go", registry+"\nvar helpInventory = []string{\"  bench status  state\"}\n")
 	if diags := checkHelpInventorySingleSource(root); !containsDiagnostic(diags, "standalone rendered help command row") {
 		t.Fatalf("inventory moved beside registry = %v, want standalone-catalog diagnostic", diags)
