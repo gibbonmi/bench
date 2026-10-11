@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 	"maps"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -76,18 +74,12 @@ func conflictFacts(commit, assignment, path string) map[string]string {
 }
 
 // sourceMergePending reports whether the source worktree holds a pending merge, which
-// MERGE_HEAD in the worktree's Git directory records. An unreadable Git directory leaves
-// the state undecided and answers false, because the commit-and-review route is correct
-// under both states while the continuation route is correct under one.
+// git.PendingMerge reads. A refusal of that reader leaves the state undecided and answers
+// false, because the commit-and-review route is correct under both states while the
+// continuation route is correct under one.
 func sourceMergePending(source string) bool {
-	dir, err := git.AdminDir(source)
-	if err != nil {
-		return false
-	}
-	if _, err := os.ReadFile(filepath.Join(dir, "MERGE_HEAD")); err != nil {
-		return false
-	}
-	return true
+	heads, err := git.PendingMerge(source)
+	return err == nil && len(heads) > 0
 }
 
 // landingConflictRefusal is the one constructor the conflict faces travel through. It

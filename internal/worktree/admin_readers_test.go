@@ -67,6 +67,18 @@ func TestSourceMergePendingIsFalseWhenUndecided(t *testing.T) {
 	}
 }
 
+// TestSourceMergePendingReadsTheSharedOwner proves the merge-pending probe reads
+// MERGE_HEAD through git.PendingMerge: an empty MERGE_HEAD is an unreadable merge
+// state, so the probe answers false. (Coverage row MP15.)
+func TestSourceMergePendingReadsTheSharedOwner(t *testing.T) {
+	t.Parallel()
+	source := newOwnedAssignment(t, "merge-pending-empty").creation.Path
+	mustWrite(t, mustAdminPath(t, source, "MERGE_HEAD"), nil, 0o644)
+	if sourceMergePending(source) {
+		t.Fatal("sourceMergePending over an empty MERGE_HEAD = true, want false")
+	}
+}
+
 // TestOwnershipRefusalTextsUseTheGlossaryTerm proves the classifier's
 // owner-evidence refusal and the ownership marker refusal each hold the
 // glossary term checkout administration directory. The fixture creates the
