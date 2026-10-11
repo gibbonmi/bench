@@ -450,6 +450,9 @@ Before the first dispatch, the coordinator amends it to version 2.
         {"id": "commitment", "command": "bench test --package ./internal/commitment/..."},
         {"id": "worktree", "command": "bench test --package ./internal/worktree"},
         {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
+        {"id": "gate", "command": "bench test --package ./internal/gate/..."},
+        {"id": "gocache", "command": "bench test --package ./internal/gocache"},
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "data-handling", "command": "bench test --check data-handling-derivation"},
         {"id": "system-lease", "command": "bench test --check system --run TestTwoLandingProcessesShareOneLease"},
@@ -465,6 +468,7 @@ Before the first dispatch, the coordinator amends it to version 2.
         {"id": "landing", "command": "bench test --package ./internal/landing/..."},
         {"id": "worktree", "command": "bench test --package ./internal/worktree"},
         {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
+        {"id": "commit", "command": "bench test --package ./internal/commit"},
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "system-race", "command": "bench test --check system --run TestWorktreeLandPublicRaceAndRerun"},
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
@@ -478,6 +482,7 @@ Before the first dispatch, the coordinator amends it to version 2.
         {"id": "reviewrecord", "command": "bench test --package ./internal/reviewrecord/..."},
         {"id": "testreport", "command": "bench test --package ./internal/testreport"},
         {"id": "gate", "command": "bench test --package ./internal/gate/..."},
+        {"id": "landing", "command": "bench test --package ./internal/landing/..."},
         {"id": "preflight", "command": "bench test --package ./internal/preflight/..."},
         {"id": "worktree", "command": "bench test --package ./internal/worktree"},
         {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
@@ -507,6 +512,8 @@ Before the first dispatch, the coordinator amends it to version 2.
       "tickets": ["7-grant-a-reviewer-override.md"],
       "verification": [
         {"id": "commitment", "command": "bench test --package ./internal/commitment/..."},
+        {"id": "intent", "command": "bench test --package ./internal/intent/..."},
+        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
         {"id": "benchguard", "command": "bench test --package ./internal/benchguard"},
         {"id": "guards", "command": "bench test --package ./internal/guards"},
         {"id": "worktree", "command": "bench test --package ./internal/worktree"},
@@ -524,6 +531,7 @@ Before the first dispatch, the coordinator amends it to version 2.
         {"id": "conformance-meta", "command": "bench test --check conformance-meta"},
         {"id": "prose", "command": "bench test --check prose"},
         {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
