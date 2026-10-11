@@ -84,7 +84,9 @@ and the small cuts. The rows below hold the rest.
 
 **FT344 (MEDIUM) — every rebuild remedy for a pool worktree names `bench worktree build` from one owner.**
 
-**FT406 (MEDIUM, decision required) — a Go commit in a build worktree leaves no stale `dist/bench` for the next preflight.**
+**FT406 (MEDIUM, decision required) — a commit in a build worktree leaves no stale `dist/bench` for the next preflight or `--in` verb.**
+
+**FT413 (MEDIUM, decision required) — parallel landings compose `CHANGELOG.md` with no conflict.**
 
 **FT354 (MEDIUM) — strict JSON, atomic replace, and shell quoting each have one owner.**
 
@@ -122,6 +124,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT405 (MEDIUM, decision required) — one `bench record ticket` verb lets a ticket author amend, freeze, and record its chunk in one call.**
 
+**FT414 (HIGH) — the record, commit, and landing verbs state their preconditions before an attempt.**
+
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
 **FT89 (LOW) — resolve the remaining guidance contradictions.**
@@ -152,7 +156,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT386 (LOW, decision required) — the spec stage proposes a split above a row or ticket threshold.**
 
-**FT395 (LOW) — a spec-stage close lands its staged spec and states its outcome's deliverable binding.**
+**FT395 (MEDIUM) — a spec-stage close lands its staged spec and states its outcome's deliverable binding.**
 
 **FT396 (LOW) — a phase that moves its work to a new worktree releases the superseded one.**
 
@@ -193,6 +197,8 @@ and the small cuts. The rows below hold the rest.
 **FT411 (MEDIUM, decision required) — tests that add no value are cut, and their coverage stays with the tests that subsume them.**
 
 **FT412 (LOW) — a production seam that does I/O per item has a test that pins how its cost grows.**
+
+**FT415 (LOW) — a red `bench test` lists every failed want line of a multi-rule harness.**
 
 **FT404 (LOW, decision required) — each conformance check states the scope that its detector grades.**
 
@@ -250,6 +256,8 @@ qualification requirements are met.
 **FT398 (LOW, parked pending a repro) — a test reads a built binary whose identity matches its recorded source.**
 
 **FT399 (MEDIUM, parked pending a repro) — the advertised recovery of an ignored-residual landing writes the terminal receipt.**
+
+**FT416 (MEDIUM, parked pending a repro) — `bench commitment plan` effects show a milestone activation.**
 
 
 ## Release and bank reassessment gate
