@@ -137,6 +137,24 @@ func Unsettled(policy Policy) ([]SourceBinding, []DeliveryBinding) {
 	return sources, bindings
 }
 
+// NewDeliverable reports whether a deliverable of proposed names source and no deliverable of
+// current names that id, path, and identity. A nil current names no deliverable.
+func NewDeliverable(current *Policy, proposed Policy, source SourceBinding) bool {
+	return namesDeliverable(proposed, source) && (current == nil || !namesDeliverable(*current, source))
+}
+
+// namesDeliverable reports whether a deliverable of policy names source.
+func namesDeliverable(policy Policy, source SourceBinding) bool {
+	for _, milestone := range policy.Milestones {
+		for _, outcome := range milestone.Outcomes {
+			if slices.ContainsFunc(outcome.Deliverables, func(binding DeliveryBinding) bool { return binding.Source == source }) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // settlement holds what the recorded deliveries of one policy settle.
 type settlement struct {
 	satisfied map[string]bool

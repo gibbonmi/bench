@@ -39,7 +39,8 @@ func (store Store) Policy() (commitment.Policy, bool, error) {
 	return *policy, true, nil
 }
 
-// Inventory reads sources at the revision that plan validates, so each identity feeds plan unchanged.
+// Inventory reads each roadmap row at the default-branch tip and each staged spec at the checkout
+// HEAD. Plan reads a row and a new deliverable there too, so each identity feeds plan unchanged.
 func (store Store) Inventory() ([]InventoryItem, error) {
 	revision, err := store.sourceRevision()
 	if err != nil {
@@ -57,7 +58,11 @@ func (store Store) Inventory() ([]InventoryItem, error) {
 		}
 		items = append(items, InventoryItem{Kind: "roadmap", ID: row.ID, State: row.SpecStatus, Identity: identity, Scope: roadmap.RowFilePath(row.ID)})
 	}
-	specs, err := store.stagedSpecs(revision)
+	head, err := store.checkoutHead()
+	if err != nil {
+		return nil, err
+	}
+	specs, err := store.stagedSpecs(head)
 	if err != nil {
 		return nil, err
 	}
@@ -101,14 +106,18 @@ func (store Store) Plan(input []byte) (commitment.Plan, error) {
 	if err != nil {
 		return commitment.Plan{}, err
 	}
-	if err := store.validateDeliverables(proposed); err != nil {
+	head, err := store.checkoutHead()
+	if err != nil {
+		return commitment.Plan{}, err
+	}
+	if err := store.validateDeliverables(current, proposed, head); err != nil {
 		return commitment.Plan{}, err
 	}
 	plan, err := commitment.BuildPlan(current, proposal)
 	if err != nil {
 		return commitment.Plan{}, err
 	}
-	if err := store.validateSources(plan.Sources); err != nil {
+	if err := store.validateSources(current, proposed, head, plan.Sources); err != nil {
 		return commitment.Plan{}, err
 	}
 	payload, err := json.Marshal(plan)
@@ -180,7 +189,15 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 			if !sameSet(delayed, plan.Effects.Delayed) || !sameSet(removed, plan.Effects.Removed) {
 				return ledger, false, errors.New("commitment approval refused: delayed or removed operands do not match the plan")
 			}
-			if err := store.validateSources(plan.Sources); err != nil {
+			proposed, err := commitment.Parse(plan.Proposed)
+			if err != nil {
+				return ledger, false, err
+			}
+			head, err := store.checkoutHead()
+			if err != nil {
+				return ledger, false, err
+			}
+			if err := store.validateSources(current, proposed, head, plan.Sources); err != nil {
 				return ledger, false, replan(err)
 			}
 			if receipt.Approved {
@@ -188,10 +205,6 @@ func (store Store) Approve(planID, decision string, delayed, removed []string) (
 					return ledger, false, errors.New("commitment approval refused: replay decision differs")
 				}
 				return ledger, false, nil
-			}
-			proposed, err := commitment.Parse(plan.Proposed)
-			if err != nil {
-				return ledger, false, err
 			}
 			if err := verifiedCompletions(ledger, current, plan.Predecessor, proposed); err != nil {
 				return ledger, false, err
@@ -247,19 +260,6 @@ func (store Store) policyAt(branch string) (*commitment.Policy, string, error) {
 		return nil, "", err
 	}
 	return &policy, commitment.Identity(canonical), nil
-}
-
-func (store Store) validateSources(sources []commitment.SourceBinding) error {
-	revision, err := store.sourceRevision()
-	if err != nil {
-		return err
-	}
-	for _, source := range sources {
-		if err := store.validateSourceAt(revision, source); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (store Store) stage(plan commitment.Plan) (func(), error) {
