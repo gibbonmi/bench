@@ -207,6 +207,7 @@ The value is `binding unknown (policy unreadable)` when the policy does not read
 That phrase joins the unknown phrases of `internal/handoff/facts.go:44-52`, and the handoff still writes.
 
 The handoff reads the policy once per run through `commitrepo.Store.Policy`.
+`errDefaultUnresolved` is private (`internal/commitment/repository/outlook.go:10-19`), so the repository package exports one test for an unresolved default branch, and the outlook and the handoff both call it.
 `internal/commitment` owns the rule that maps a path to its binding outcomes, beside `Unsettled`, so the handoff restates no settlement rule.
 The new import edges are `internal/handoff` to `internal/commitment` and to `internal/commitment/repository`.
 `internal/handoff` already depends on both packages through `internal/status`, and neither package depends on `internal/handoff`.
@@ -253,8 +254,12 @@ No budget rises, because a raised budget weakens a check.
 
 The Exit handoff paragraph of the command already holds five sentences, and a paragraph holds at most six (`internal/prose/prose.go:17-18`).
 The close order therefore takes a new block after that paragraph.
-To pay for that block, the edit joins the wrapped prose of command lines 9-11, 20-23, 28-29, and 32-35 into one physical line each.
-That join frees nine lines and changes no word.
+To pay for that block, the edit joins wrapped prose lines into one physical line each, and it changes no word.
+
+Anchors collapse whitespace (`internal/anchors/locate.go:177`), so a join keeps every anchor.
+A canary `MUTATE.json` `old` string or a Go mirror string is byte-exact (`internal/canary/mutation.go:68-78`).
+Such strings hold the newlines at command lines 21-22, 32-35, 50-51, 61-62, 68-69, 79-81, and 86-87, so the edit joins none of them.
+The joins at command lines 9-11, 20-21, 22-23, 28-29, 51-52, and 63-65 free eight lines, and the block uses at most eight.
 
 The edit keeps the two `Require` sentences that `internal/anchors/registry_data.go:336-337` pin on command line 16.
 The edit adds no needle that `internal/anchors/registry_data.go:335`, `:358-359`, or `internal/anchors/registry_ft311_preparation.go:50` forbid.
@@ -274,15 +279,20 @@ The refusal registry gains no face.
 `internal/commit/commit.go` stays unchanged.
 The roadmap row and the commitment criteria stay unchanged, and the completion landing settles FT395 as it settles any outcome.
 
+### The changelog entry
+
+One typed section under `## [Unreleased]` of `CHANGELOG.md` states the one-landing close and the `Spec binding` line (`.agents/skills/bench-craft-synthesis/SKILL.md:74`).
+The last ticket writes it, because that ticket follows both behaviors.
+
 ## Implementation chunks
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | SB1 / planned: 1-bind-a-new-deliverable-from-its-publishing-tree.md, 2-land-the-spec-and-its-binding-together.md | A new deliverable binds from the tree that publishes it, so one spec-less landing publishes a staged spec and its binding, and `bench status` then prints the complete start command | SB01-SB22 | the `internal/commitment`, `internal/commitment/repository`, `internal/commit`, `internal/worktree`, and `cmd/bench` package tests | yes |
-| SB2 / planned: 3-name-the-binding-state-in-the-handoff.md | `bench handoff` names the binding state of each live spec | SB23-SB30 | the `internal/handoff`, `internal/handoffdoc`, and `internal/conformance` package tests | no |
-| SB3 / planned: 4-state-the-one-landing-close.md | The guidance states the one-landing close, the binding grant, the handoff pin, the Writes rule, and the template comment | SB31-SB43 | the `internal/anchors` and `internal/conformance` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `skills-index-command-adapters` checks | no |
+| SB2 / planned: 3-name-the-binding-state-in-the-handoff.md | `bench handoff` names the binding state of each live spec | SB23-SB30 | the `internal/handoff`, `internal/handoffdoc`, `internal/commitment`, `internal/commitment/repository`, `cmd/bench`, and `internal/conformance` package tests | no |
+| SB3 / planned: 4-state-the-one-landing-close.md | The guidance states the one-landing close, the binding grant, the handoff pin, the Writes rule, and the template comment | SB31-SB43 | the `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `skills-index-command-adapters` checks | no |
 
-SB1 and SB2 change disjoint packages.
+SB1 and SB2 both write files of `internal/commitment`, so the serial order also keeps their shared helper files apart.
 SB3 describes the shipped behavior of both, so it waits for the SB1 and SB2 checkpoints.
 The serial order is SB1, SB2, and then SB3.
 The first SB1 ticket owns `.bench/commitment.json` in its `Writes:` line under D5.
@@ -317,6 +327,8 @@ The ticket names are planned, and the slicing replaces them with the sliced name
       "tickets": ["3-name-the-binding-state-in-the-handoff.md"],
       "verification": [
         {"id": "handoff-packages", "command": "bench test --package ./internal/handoff --package ./internal/handoffdoc"},
+        {"id": "commitment-packages", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
@@ -326,6 +338,7 @@ The ticket names are planned, and the slicing replaces them with the sliced name
       "tickets": ["4-state-the-one-landing-close.md"],
       "verification": [
         {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
         {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
         {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
@@ -593,10 +606,15 @@ Each existing plan and approve test roots at the primary repository, where HEAD 
 The one worktree-rooted `AuthorizeCandidate` test uses a legacy adoption that binds no deliverable (`internal/commitment/repository/publication_test.go:201-212`, `internal/commitment/commitmenttest/admission.go:76-79`).
 So the static search finds no existing fixture that the HEAD rule turns red. The SB1 author runs the commitment packages before the first production edit to confirm it, and lists each red as a posture change.
 
+The slicing research found three files at the 400-line structure limit.
+`internal/commitment/repository/repository.go` and `internal/handoffdoc/document.go` hold 400 lines, and `internal/conformance/handoff_single_source_test.go` holds 399.
+The lane's growth check reds a file over the limit that gains a line (`internal/structure/structure.go:308-331`).
+Each ticket therefore keeps these files at 400 lines or fewer.
+`internal/worktree/parallel_census_test.go:1061` pins the package test count at 773, so each new top-level `internal/worktree` test raises that pin in the same ticket.
+
 ### Not verified
 
 - Whether `spec.CommitTree` and `ticketsOnlyAt` resolve a tree object id as they resolve a commit. `protectedCandidate` already reads roadmap rows at a tree id, but no current test binds a tickets-only folder at a tree id.
-- The line budget of `internal/worktree/land_specless_test.go` and of `internal/handoff/render_test.go` against the structure ratchet.
 - Whether the landing gate runs a commitment check other than `AdmitPublication` over the composed tree.
 - The exact path of the FT393 `paths-authorized` red. The tree keeps only the occurrence line at `roadmap/FT395.md:17`.
 - The executed census of existing tests under the HEAD rule. A static search finds none that would turn red, and Observations states the evidence.
@@ -614,8 +632,8 @@ The two probes differ in kind and in site, and each one must report a restored s
 
 Run `bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd` for SB1.
 Run `bench test --package ./internal/commit`, `bench test --package ./internal/worktree`, and `bench test --package ./cmd/bench` for the SB1 journey and pins.
-Run `bench test --package ./internal/handoff --package ./internal/handoffdoc` for SB2.
-Run the `internal/anchors` and `internal/conformance` package tests and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `skills-index-command-adapters` checks for SB3.
+Run `bench test --package ./internal/handoff --package ./internal/handoffdoc`, the commitment packages, and the `cmd/bench` package for SB2.
+Run the `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `skills-index-command-adapters` checks for SB3.
 The coordinator runs the whole gate only at the landing.
 
 ### Bootstrap of this spec
@@ -628,3 +646,4 @@ The handoff then pins the start command that `bench status` prints for FT395.
 
 - SR1: the spec review ran on Fable at xhigh effort, by reviewer direction of 2026-10-11, over commit `a0cc7a54`. It accepted in iteration 1 with eight findings, and none of them blocked.
 - The coordinator folded the eight findings into this revision. R1 names the freed command lines and the kept anchors. R2 names the SB09 refusal sentence. R3, R4, R5, and R6 move settled facts into the evidence. R7 became the decision E7, which the reviewer closed on 2026-10-11. R8 keeps E5 flagged for veto.
+- Slicing research: two blind readers for each chunk, one on Haiku at xhigh and one on Sonnet at high. The coordinator folded five findings, and none changes a row or a chunk. F1 corrects the package overlap of SB1 and SB2, and F2 replaces the line joins that broke three canary needles. F3 exports the unresolved-default test for the handoff, and F4 names the one `CHANGELOG.md` entry. F5 adds the `cmd/bench` check floor to SB2 and SB3, and the commitment packages to SB2.
