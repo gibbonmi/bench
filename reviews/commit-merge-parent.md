@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/commit-merge-parent/spec.md",
-  "plan_digest": "sha256:a04f42ffc9dfb7f7f9d0fa07008db4015b2556030e54abef1763c39e19541c70",
+  "plan_digest": "sha256:7654187ea92c112db47b0160f0dd2cc0ea2e1645dc5648227d777f5de457dd7f",
   "implementation_session": "",
   "chunks": [
     {
@@ -1191,6 +1191,101 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "mp2-coverage-r2",
+          "performer": "claude:cmp_mp2_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp2_coverage_r2",
+            "digest": "sha256:d90c47e4d9006616aa211133009ae6d7e8d485d3c0e78177e237d046e6c4a76f",
+            "excerpt": "MP2 Coverage axis round 2 (confirming), claude:cmp_mp2_coverage_r2, opus/high, one iteration, frozen pair 004e4e94..54dc1636 (chunk tip 83d43fba), evidence sha256:1bb2d23a76b8f3572503775882a30c0c1a9f2b77f1ecdf3e65d5a55cd19e0bec current=true, clean tree. The repair delta fabb55f3..54dc1636 changes test files and comments only; the one production edit is the comment at landing.go:125-127.\n\nC1 confirmed closed: row \"octopus side path omitted\" at pending_merge_test.go:68 names side-a and expects \"side-b\", the two paths octopusMerge adds (pending_merge_fixture_test.go:80). Probe (swap attribution.go:88 `if len(omitted) > 0 {` for `if len(omitted) > 0 && len(heads) == 1 {`, run ^TestLandRefusesAnIncompleteMergeNameSet$): bit, 1 failed (octopus_side_path_omitted), restored yes.\nC3 confirmed closed: row \"reordered merge heads\" at pending_merge_test.go:183 starts from octopusMerge; the reverse stub (:150-154) reads the real MERGE_HEAD lines, reverses them, and writes them back through plantHeads. Probe (swap landing.go:176 slices.Equal for an order-blind set comparison with slices.ContainsFunc, run ^TestLandRefusesAMergeStateChangeDuringAuthorization$): bit, 1 failed (reordered_merge_heads), restored yes.\n\nFocused runs on the tip: landing IncompleteMergeNameSet|MergeStateChange passed, 13 tests; commit RecordsTheMergeParent|RefusesAnIncompleteMergeNameSet passed, 5 tests (the S3 head helper swap kept them green; the rev-parse mergeIncoming call at merge_parent_test.go:78 stays inline because head reads only HEAD).\n\nNew findings on the repair delta: 0. Worst issue: none. Final git status --short: empty.\n\nAdvice: the C1 row writes side-a and \"side-b\" as literals while the octopus closure discards the added names that octopusMerge returns (:52-55); a rename turns the row red rather than silent, so not a coverage gap; a Standards call.\n\nExamined: the full repair delta for internal; reviews/commit-merge-parent.md:1256-1360 and the MP2 Coverage round 1 excerpt at :1183; attribution.go:30-114, landing.go:160-199, pending_merge_fixture_test.go (whole), pending_merge_test.go:40-269, lane_test.go:84-90.\nEvidence cursors fetched: --check-current only; the diff spill read in full; the two probe spills not read (inline verdicts complete).\n"
+          },
+          "axis": "Coverage",
+          "base": "004e4e94019144653de1ec8e179abe015b704242",
+          "tip": "83d43fbaf4cbf79f571cafdfeb054cc5ad434120",
+          "finding_ids": [],
+          "supersedes": [
+            "mp2-coverage-r1"
+          ]
+        },
+        {
+          "id": "mp2-standards-r2",
+          "performer": "claude:cmp_mp2_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp2_standards_r2",
+            "digest": "sha256:4920f6ebd63b1fdde9ef7d21aa7a7a2cc00b6d72541505b0e540f6d0c87089dc",
+            "excerpt": "MP2 Standards axis round 2 (confirming), claude:cmp_mp2_standards_r2, opus/high, one iteration, frozen pair 004e4e94..54dc1636 (chunk tip 83d43fba), evidence sha256:1bb2d23a76b8f3572503775882a30c0c1a9f2b77f1ecdf3e65d5a55cd19e0bec current=true, clean tree. Repair delta fabb55f3..54dc1636 read for internal and the spec.\n\nS1 confirmed closed: faces_commit.go:44-47 now holds five sentences of 11, 14, 17, 11, and 5 words; commit 188a3f55 changes those four comment lines only.\nS2 confirmed closed: every sentence in the five comments is 25 words or fewer (merge_parent_test.go:16-19, :33-38, :157-161; pending_merge_fixture_test.go:57-61; pending_merge_test.go:43-48, six sentences with the coverage parenthetical).\nS3 confirmed closed: merge_parent_test.go calls head(t, ...) at lines 56, 76, 152, 174, 191 (lane_test.go:87-90); revParse is gone; the one rev-parse left (:168) resolves the branch mergeIncoming, not HEAD.\nS4 confirmed closed: the merge-heads fact appears only in the composedSnapshot doc at landing.go:58; the composeAuthorized doc at :125-127 keeps the steps and the waiver.\nS8 confirmed closed (evidence-only): reviews/commit-merge-parent.md:1299-1329 keeps both sentence-swap probes on the clean tip fabb55f3, each red on 3 tests with the subject restored.\n\nScope: record commits 19a56959, bdf5f4ba, bc50e71e, 27aaedba, 54dc1636 touch only reviews/commit-merge-parent.md; plan commit 1063cbb1 changes one plan JSON line; spec amendment eb0321e5 changes the MP42 why cell (spec:350), five citation lines (spec:154, 156, 172, 186, 233), and one Won't handle line (spec:398); none changes production code. The five citations are accurate at the tip. Budgets: merge_parent_test.go 194, landing.go 392, pending_merge_fixture_test.go 131, pending_merge_test.go 279; landing_reviewed_test.go 437 with an empty diff. One source per fact: plantHeads (pending_merge_test.go:142-146) is the only MERGE_HEAD writer in the landing tests; the start field's three starts (:156-168) are the old inline branch moved into the table; the two octopus adapters (:52-55, :165-168) repeat text, not knowledge.\n\nNew finding: S21 (auto-fix, confidence 3). ste-prose.md:23 (no telegraphic style) through craft-comments: merge_parent_test.go:16 \"The paths and the branch of a pending merge journey.\" has no verb after the S2 split. Fix: give it a verb.\n\nAdvice: faces_commit.go:45-46 could take a five-item vertical list; reverse (pending_merge_test.go:150-154) splits MERGE_HEAD with strings.Fields beside plantHeads and could read through benchgit.PendingMerge; plantHeads and plant have no t.Helper(); the octopus adapter at :52 ignores added; landing.go:58 \"its name-set check\" could name composeAuthorized; pending_merge_test.go:137-138 could make Owner.Land the subject.\n\nFindings: 1 new (S21). Worst issue: S21, no behavior effect.\nExamined: the repair-delta spill; the per-commit log with stats and the diffs of eb0321e5 and 1063cbb1; reviews/commit-merge-parent.md:1256-1355 and the round 1 excerpts; craft-comments and ste-prose.md; merge_parent_test.go, pending_merge_test.go, pending_merge_fixture_test.go in full; landing.go:50-151, faces_commit.go:38-53, lane_test.go:84-90, landing_helpers_test.go:290-319, land_refusal.go:74-85, BENCH-reference.md:278-311; rg searches; an empty diff stat for landing_reviewed_test.go.\nEvidence cursors fetched: none beyond --check-current; seven spilled outputs read, one not opened.\n"
+          },
+          "axis": "Standards",
+          "base": "004e4e94019144653de1ec8e179abe015b704242",
+          "tip": "83d43fbaf4cbf79f571cafdfeb054cc5ad434120",
+          "finding_ids": [
+            "S21"
+          ],
+          "supersedes": [
+            "mp2-standards-r1"
+          ]
+        },
+        {
+          "id": "mp2-spec-r2",
+          "performer": "claude:cmp_mp2_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp2_spec_r2",
+            "digest": "sha256:4edc09f83e63656b1759df54cdb48e2fc8492b5a37e7a45e879f219c0bd5351f",
+            "excerpt": "MP2 Spec axis round 2 (confirming), claude:cmp_mp2_spec_r2, opus/high, one iteration, frozen pair 004e4e94..54dc1636 (chunk tip 83d43fba), evidence sha256:1bb2d23a76b8f3572503775882a30c0c1a9f2b77f1ecdf3e65d5a55cd19e0bec current=true, clean tree.\n\n1. P1/C2 (MP42 why cell): confirmed, with the P22 caveat. The cell is accurate: TestLandRefusesAnIncompleteMergeNameSet passes the hostile name as written and expects a publication (pending_merge_test.go:51, :67), so a rule that changes the name's bytes before the :(literal) pathspec refuses it; the framing catch sits with MP41 (merge_parent_test.go:116, :124; Coverage probe 6 at reviews/commit-merge-parent.md:1183).\n2. Line citations: four confirmed (land_refusal.go:80-83 and :76-79; attribution.go:213 and :234; BENCH-reference.md:310 holds the route needle of registry_retained_workflow.go:206); one finding P21.\n3. The new Won't handle line (spec.md:398): confirmed. A merged path is what git diff-index --cached lists against the base (Terms, spec.md:111); line 118 says a path staged after the merge joins, so an unstaged path leaves by the same rule; D1 (spec.md:130) measures through that listing; stories 20-23 and 32 and spec.md:389 hold; .pending is untouched.\n4. Production behavior unchanged: confirmed. Only landing.go (one doc sentence removed at :125-127) and faces_commit.go (comment, :44-47) are production files in the delta. The octopus refusal row (pending_merge_test.go:68) takes side-a and side-b from octopusMerge (fixture :80-89); the reordered-heads row (:183) reverses MERGE_HEAD during authorization (:150-154) and expects the recheck sentence that slices.Equal at landing.go:176 produces; merge_parent_test.go calls the existing head helper.\n5. Seam cells: confirmed. MP19-MP54 and MP62 cite 16 existing tests in the citation form (merge_parent_test.go :85, :101, :133, :145, :162; pending_merge_test.go :31, :49, :96, :121, :139, :208, :243, :266; landing_test.go :69, :336; state_test.go:21). MP51 met (git merge --quit at landing.go:193-197; os.RemoveAll only on temp directories), MP55 met (BENCH-reference.md:285-287), MP56 met.\n\nP21 (auto-fix, confidence 9). Spec line 186 cites landing.go:146-148; at the tip the refusal is lines 145-147 (the repair commit 83d43fba removed one doc line above the block). Fix: a spec-text change to landing.go:145-147.\nP22 (no-op on the spec, confidence 5). The MP42 cell is true as worded, but the record's C2 excerpt says \"MP42 still catches a dropped :(literal) (the ticket 2 probe)\" and no recorded probe shows MP42 red under a :(literal) swap or drop; on the axis's reading of Git's matcher (match_pathspec_item, from memory), a plain drop leaves the hostile row publishing. Disposition: leave the cell; record the probe or remove the claim.\n\nAdvice: a dropped :(literal) on the covered listing (attribution.go:100) looks uncaught; a refusal row where a glob name covers another merged path (side-* in the octopus fixture) would catch it. Spec line 197 (landing.go:247-257) and line 17 (landing.go:163) look like base-state citations the refresh did not touch.\n\nFindings: 2 (P21 auto-fix, P22 no-op). Worst issue: P21. Neither is behavioral.\nExamined: --check-current; the repair delta for internal and the spec with its file list; the git log base to tip; attribution.go:1-269; landing.go:120-261; land_refusal.go:70-89; BENCH-reference.md:276-313; the anchor needles; spec.md:68-183 and 327-399; pending_merge_test.go and pending_merge_fixture_test.go in full; merge_parent_test.go:14-148; lane_test.go:85-90; the probe entries of reviews/commit-merge-parent.md; an os.Remove sweep. No test or probe run.\nEvidence cursors fetched: none beyond --check-current; every spilled command output read in full.\n"
+          },
+          "axis": "Spec",
+          "base": "004e4e94019144653de1ec8e179abe015b704242",
+          "tip": "83d43fbaf4cbf79f571cafdfeb054cc5ad434120",
+          "finding_ids": [
+            "P21",
+            "P22"
+          ],
+          "supersedes": [
+            "mp2-spec-r1"
+          ]
+        },
+        {
+          "id": "mp2-coverage-r2b",
+          "performer": "claude:cmp_mp2_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp2_coverage_r2/amended",
+            "digest": "sha256:963ed9d6fef92a461d2d0123d803ca28efa82b60cbabdb95fbe652bc4974db6c",
+            "excerpt": "MP2 Coverage axis round 2, amended read-only pass, claude:cmp_mp2_coverage_r2, opus/high, frozen pair 004e4e94..54dc1636 (chunk tip 83d43fba), evidence sha256:1bb2d23a76b8f3572503775882a30c0c1a9f2b77f1ecdf3e65d5a55cd19e0bec. No probe and no test run this pass; C1 and C3 stay confirmed closed as in the first pass.\n\nC21 (auto-fix, confidence 7): no row catches a covered listing that drops :(literal). Input: during a pending merge the incoming commit adds a file whose literal name looks like a glob (side-*) and a sibling that the glob also matches (side-a); the name set names side-* and not side-a. Expected break: with the prefix dropped at attribution.go:100, Git reads side-* as a glob in the covered listing, side-a counts as covered, and D1 stays silent; compose still adds each name as :(literal) (attribution.go:213), so the merge commit takes side-* and the base version of side-a, and the next landing undoes side-a (the observation B hazard). The orchestrator's probe (swap `\":(literal)\"+name` for `name`, run ^TestLandRefusesAnIncompleteMergeNameSet$) was silent with 7 passed and restored yes; the hostile name a b[x]*\\né.txt stays covered without the prefix because Git tries an exact match first (from the axis's knowledge of Git, not read in this tree). Why a witness is needed: spec.md:171-172 decides that one :(literal) pathspec for each name decides coverage, the rule compose and reconcile use (attribution.go:213, :234-253); projects/benchkit.md:181 names glob characters; spec line 375 claims MP41 and MP42 cover glob characters, but no row tests glob matching. Row to add: a refusal row in TestLandRefusesAnIncompleteMergeNameSet, \"glob-shaped name does not cover a sibling\", with the incoming commit adding side-* and side-a, the name set naming side-* and not side-a, and the refusal naming \"side-a\" (spec observation 7 at spec.md:604 shows :(literal)name* printing nothing). Confirm the fold by rerunning the prefix-drop swap; it must bite this row.\n\nFinding count: 1 (C21). Worst issue: C21.\nRead this pass: spec.md:160-179 and the literal and glob hits at :78, :171, :349-350, :375, :604, :638; attribution.go:200-219 and :100, :213, :234-253; projects/benchkit.md:181; from the earlier pass pending_merge_test.go:40-90 and pending_merge_fixture_test.go:35-71. Evidence cursors fetched this pass: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "004e4e94019144653de1ec8e179abe015b704242",
+          "tip": "83d43fbaf4cbf79f571cafdfeb054cc5ad434120",
+          "finding_ids": [
+            "C21"
+          ],
+          "supersedes": [
+            "mp2-coverage-r2"
+          ]
         }
       ]
     }
@@ -1250,6 +1345,18 @@
           "MP2"
         ]
       }
+    },
+    {
+      "from": "sha256:a04f42ffc9dfb7f7f9d0fa07008db4015b2556030e54abef1763c39e19541c70",
+      "to": "sha256:7654187ea92c112db47b0160f0dd2cc0ea2e1645dc5648227d777f5de457dd7f",
+      "chunk_ids": {
+        "MP1": [
+          "MP1"
+        ],
+        "MP2": [
+          "MP2"
+        ]
+      }
     }
   ]
 }
@@ -1264,6 +1371,12 @@ The ticket 1 repair session `claude:cmp_t1_rep1` closed S1 and C1 to C5 in `a329
 Chunk MP2 round 1 ran three opus/high axes in parallel at `fabb55f3` over the frozen pair `004e4e94..fabb55f3`. The chunk tip is `eb7c791c`. Only the Coverage axis ran probes, and the tree was clean after every return. MP2 uses repair cycle 1 of 2 through one fresh repair session for ticket 3, which takes S2, S3, S4, C1, and C3. Every path of those findings sits inside the ticket 3 `Writes:` line.
 
 S1 is a comment-only Go correction, so the orchestrator commits it as evidence-only work. P1 and C2 are one spec-text amendment, which the orchestrator commits as a plan commit. S8 closes evidence-only below. S5, S6, and S7 are `no-op`.
+
+The ticket 3 repair session `claude:cmp_t3_rep1` closed S2, S3, S4, C1, and C3 in `83d43fba` with tests and comments only. It refroze MP2 at that tip in `bc50e71e`, and the ticket 2 and ticket 4 authors re-recorded their entries at that source. MP2 round 2 ran three opus/high axes in parallel over the repair delta `fabb55f3..54dc1636`. Every axis confirmed each fold.
+
+Standards raised S21, a verbless comment sentence, which the orchestrator corrected in `2df5483b` as comment-only work. Spec raised P21, a citation one line off after the repair, which the orchestrator corrected in the plan commit `1539f297`. Spec also raised P22, a `no-op` on the record's unproven MP42 probe claim.
+
+The orchestrator then ran two probes at `54dc1636`: the `:(literal)` spelling swap bit MP42, and the dropped `:(literal)` prefix stayed silent. The Coverage axis graded the silent probe as C21. MP2 uses repair cycle 2 of 2 through one fresh repair session for ticket 2, which takes C21. After that repair, every MP2 author re-records at the refrozen tip, and a round 3 confirms C21, S21, and P21.
 
 ## Standards
 
@@ -1296,6 +1409,7 @@ MP2 findings: 8. Worst issue: S3.
 - S5 (`no-op`, confidence 8): one merge fixture per package follows the ticket keep decisions. Ticket 2 lines 46-47 and 60 and ticket 3 lines 47 and 51 state them.
 - S6 (`no-op`, confidence 3): `Owner.Land` holds six straight steps in 40 lines. Ticket 3 line 33 keeps `commit-tree` there, and line 40 moves a helper out only past 400 lines.
 - S7 (`no-op`, confidence 3): the `[]string` merge heads follow ticket 3 line 16 and the `git.PendingMerge` answer.
+- S21 (`auto-fix`, confidence 3, round 2): the const-block comment at `merge_parent_test.go:16` had no verb after the S2 split. Closed in `2df5483b`.
 - S8 (`ask-user`, confidence 4): the refusal-sentence expectations `pending merge changed during the commit` and the commit-side `pending merge changed paths that the commit does not name:` had no recorded red. The AGENTS.md exception needs a named mutation and a recorded red, so the orchestrator ran both sentence swaps on the clean tip `fabb55f3`:
 
 ```text
@@ -1338,6 +1452,9 @@ MP2 findings: 1. Worst issue: P1 (documentation only).
 
 - P1 (`auto-fix`, confidence 8): the MP42 why cell says a newline-framed listing makes the correct name set refuse. Both listings share one framing, so that mutation leaves MP42 green, and MP41 catches it. Repair: a spec-text plan commit rewords the cell to the `:(literal)` coverage it guards and points the framing catch at MP41. The same commit refreshes the stale line citations that the axis listed.
 
+- P21 (`auto-fix`, confidence 9, round 2): the `landing.go` empty-diff citation was one line off after the repair. Closed in `1539f297`.
+- P22 (`no-op`, confidence 5, round 2): the record claimed an MP42 probe that no run retained. The orchestrator ran the `:(literal)` spelling swap at `54dc1636`, and it bit the hostile-path row.
+
 Review-owned rows: MP51 is met, because `Land` runs `git merge --quit` and Bench removes no admin entry file. MP55 is met, because the two sentences sit after the fast-lane note and the retained anchors excerpt shows every require row nonzero. MP56 is met, because no roadmap path and no `internal/commit/commit.go` appear in the diff or the fence.
 
 ## Coverage
@@ -1355,5 +1472,6 @@ MP2 findings: 3. Worst issue: C1.
 - C1 (`auto-fix`, confidence 5): a D1 check gated on one head stays silent, because no refusal row uses an octopus merge. Repair: an octopus refusal row in `TestLandRefusesAnIncompleteMergeNameSet`.
 - C2 (`no-op`, confidence 8): the newline-framing mutation leaves MP42 green; the MP42 why cell is inexact, and P1 carries the spec fix.
 - C3 (`auto-fix`, confidence 4): a recheck that compares sorted copies stays silent. Repair: a reordered-heads row in `TestLandRefusesAMergeStateChangeDuringAuthorization`.
+- C21 (`auto-fix`, confidence 7, round 2): a covered listing without the `:(literal)` prefix stays silent. No row puts a glob-shaped merged name beside a sibling that the glob matches. Repair: a refusal row where the incoming commit adds `side-*` and `side-a`, the name set names only `side-*`, and the refusal names `side-a`.
 
 Advice kept for the final reconciliation: no positive `DryRun` row exists during a pending merge. A merged path that the caller unstages drops out of the index listing, and the Edge inventory now names that case. The `AuthorizeCandidate` read of the heads precedes `composeAuthorized`, and the MP3 review reads that window.
