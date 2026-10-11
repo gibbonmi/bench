@@ -1629,11 +1629,329 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+    "performer": "claude:ssb-orchestrator-20261011",
+    "reconciliation": {
+      "SB01": "covered",
+      "SB02": "covered",
+      "SB03": "covered",
+      "SB04": "covered",
+      "SB05": "covered",
+      "SB06": "covered",
+      "SB07": "covered",
+      "SB08": "covered",
+      "SB09": "covered",
+      "SB10": "covered",
+      "SB11": "covered",
+      "SB12": "covered",
+      "SB13": "covered",
+      "SB14": "covered",
+      "SB15": "covered",
+      "SB16": "covered",
+      "SB17": "covered",
+      "SB18": "covered",
+      "SB19": "covered",
+      "SB20": "covered",
+      "SB21": "covered",
+      "SB22": "covered",
+      "SB23": "covered",
+      "SB24": "covered",
+      "SB25": "covered",
+      "SB26": "covered",
+      "SB27": "covered",
+      "SB28": "covered",
+      "SB29": "covered",
+      "SB30": "covered",
+      "SB31": "covered",
+      "SB32": "covered",
+      "SB33": "covered",
+      "SB34": "covered",
+      "SB35": "covered",
+      "SB36": "covered",
+      "SB37": "covered",
+      "SB38": "covered",
+      "SB39": "covered",
+      "SB40": "covered",
+      "SB41": "covered",
+      "SB42": "covered",
+      "SB43": "covered",
+      "SB44": "covered",
+      "SB45": "covered",
+      "SB46": "covered"
+    },
+    "verification": [
+      {
+        "id": "coverage-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/coverage.txt",
+          "digest": "sha256:303da27d0c991fd1af968f075cc15856fb068c2eb757104679c79f543a20c7df",
+          "excerpt": "$ bench coverage --check specs/spec-stage-binding/spec.md\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\nok: coverage map valid — 46 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/spec-stage-binding/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "commitment-packages-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/commitment-packages.txt",
+          "digest": "sha256:0c78d5802a98afa6ac480c5acfb7149a3e58cd4adaee0001c1499a7e0997c882",
+          "excerpt": "$ bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment,pass,5230,175\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,775,19\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,4827,107\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "commitment-packages",
+        "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest",
+        "exit_code": 0
+      },
+      {
+        "id": "commit-package-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/commit-package.txt",
+          "digest": "sha256:f090570e8a198d5b338e04395c0e8b0564af6a77888b30333ec2613756b69194",
+          "excerpt": "$ bench test --package ./internal/commit\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,9642,117\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "commit-package",
+        "command": "bench test --package ./internal/commit",
+        "exit_code": 0
+      },
+      {
+        "id": "worktree-package-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/worktree-package.txt",
+          "digest": "sha256:161ea4ac9444848155b864326e8fe51323854a8838eb3f1d030b864552425449",
+          "excerpt": "$ bench test --package ./internal/worktree\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,58845,1399\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "worktree-package",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "handoff-packages-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/handoff-packages.txt",
+          "digest": "sha256:8d2851dc6cc3196c0de3d65f2a6e2c10247455ccd3373a18ccd23ba63c9d109d",
+          "excerpt": "$ bench test --package ./internal/handoff --package ./internal/handoffdoc\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\npackages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoff,pass,2619,56\n  github.com/gibbonmi/bench/internal/handoffdoc,pass,29,24\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "handoff-packages",
+        "command": "bench test --package ./internal/handoff --package ./internal/handoffdoc",
+        "exit_code": 0
+      },
+      {
+        "id": "anchors-package-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/anchors-package.txt",
+          "digest": "sha256:c8f55f2e0509d40fa6bd7959eaafbab5bcad096e98f0fc62c7fa07c262b62bf0",
+          "excerpt": "$ bench test --package ./internal/anchors\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1705,179\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "anchors-package",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "command-package-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/command-package.txt",
+          "digest": "sha256:556e6e6710d607578bdc6c993d2ec8eca85892337a567a65e5981319c02c600e",
+          "excerpt": "$ bench test --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,13143,333\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "command-package",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "conformance-package-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/conformance-package.txt",
+          "digest": "sha256:8a82d3c1ef30f79cd0cb312704b3624da88ad366434944c02b4d2754c25fe0d0",
+          "excerpt": "$ bench test --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,57122,1689\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+        },
+        "requirement": "conformance-package",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "guidance-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/guidance.txt",
+          "digest": "sha256:2de9ab6710e3298ddc2606b166eae149e39c5bad162d49cceb4e2252668a6069",
+          "excerpt": "$ bench test --check docs-currency-workflow\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5528,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "guidance",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "budgets-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/budgets.txt",
+          "digest": "sha256:926a34d4ae4f1aa12bf7811c1ee6078dbe8b120114136fd1b9649d071f233ff7",
+          "excerpt": "$ bench test --check guidance-prose-budgets\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "budgets",
+        "command": "bench test --check guidance-prose-budgets",
+        "exit_code": 0
+      },
+      {
+        "id": "prose-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/prose.txt",
+          "digest": "sha256:08b2642886149d49d8f9e8b0e1204a4dea36470494fbef7379104e0efdd25d39",
+          "excerpt": "$ bench test --check prose-mechanics\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,300,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "prose",
+        "command": "bench test --check prose-mechanics",
+        "exit_code": 0
+      },
+      {
+        "id": "skills-index-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/skills-index.txt",
+          "digest": "sha256:f9bf02b5d9ce68abf1aaba580413412b1cf56067d9987b4695bc0fa76ce2d7f9",
+          "excerpt": "$ bench test --check skills-index-command-adapters\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  skills-index-command-adapters,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "skills-index",
+        "command": "bench test --check skills-index-command-adapters",
+        "exit_code": 0
+      },
+      {
+        "id": "root-conformance-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/root-conformance.txt",
+          "digest": "sha256:cf26857399f9921737ab1d9e5404b4fb5cb70c2469bdd73802d96792114f4bd5",
+          "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16249,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "git-plumbing-owner-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/git-plumbing-owner.txt",
+          "digest": "sha256:5907b7deb057ca0b350d841f0c62a791a69817bd612bf9d9a937ce55a8a52c37",
+          "excerpt": "$ bench test --check git-plumbing-owner\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,100,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "git-plumbing-owner",
+        "command": "bench test --check git-plumbing-owner",
+        "exit_code": 0
+      },
+      {
+        "id": "ordinary-build-census-final",
+        "performer": "claude:ssb-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "medium",
+        "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:ssb-orchestrator-20261011/final/ordinary-build-census.txt",
+          "digest": "sha256:e320843eba60fb0cf7634500fb9a9d203d701c18f9cd439b897a081a49b20eba",
+          "excerpt": "$ bench test --check ordinary-build-census\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"00d378c29611b005940b2b06304c9f0354fb0e26\",false\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,340,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "ordinary-build-census",
+        "command": "bench test --check ordinary-build-census",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -1941,3 +2259,9 @@ Probes, each `bit` with `restored=yes`:
 Round 2 ran three opus/high axes at `aaef0a2f` over the delta `33f0ce69..aaef0a2f` (chunk tip `a3cfb04c`). Standards confirmed S1 and S2 closed. Spec reaffirmed P1, found the C1 amendment consistent, and graded SB46 met. `CHANGELOG.md:9` is `### Spec stage binding`, the first section under `## [Unreleased]`, and its two bullets match ticket 3 verbatim. Coverage confirmed C1 closed, and its live probe of the `.bench/BENCH.md` grant bit through `docs-currency-workflow`. No axis found a new finding, so SB3 closes with no repair cycle used.
 
 Advice retained: the SB46 seam cell could name the review as the reader of the section. The registry pins `CHANGELOG.md` through file-wide `Require` rows, so "no changelog anchor" is narrower than a precedent. `registry_commitment.go:12` runs long. Ticket 3's per-row list has no SB46 entry.
+
+## Final reconciliation
+
+The orchestrator reconciled every acceptance row at the final source `00d378c2`. All 46 rows are covered. SB01-SB22 and SB45 rest on the SB1 tests and journeys. SB23-SB30 and SB44 rest on the SB2 tests. SB31-SB36, SB41, and SB43 rest on the SB3 mirrors and checks. The review-owned rows SB37-SB40, SB42, and SB46 rest on the SB3 Spec review excerpts above.
+
+The 15 final verifications of the plan ran at that source and passed; the one skip is the host's character-device privilege case. The chunks used repair cycle 1 of 2 (SB1), 1 of 2 (SB2), and 0 of 2 (SB3), with two comment-only corrections. The `main` fold `bc2ea0ff` joined the SB3 review delta. The landing comes next, from the primary checkout, with the base `8c8a6ca5`.
