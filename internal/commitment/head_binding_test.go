@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // headSpec is the spec path that a worktree HEAD holds and main lacks. headRequest is the
@@ -36,13 +37,13 @@ func headCommit(t *testing.T, worktree, body string) {
 	commitmenttest.Commit(t, worktree, "stage the spec")
 }
 
-// headBinding approves the spec bytes body at headSpec with no obligation.
+// headBinding binds the spec bytes body at headSpec with no obligation.
 func headBinding(body string) commitment.DeliveryBinding {
 	return commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "A.spec", Path: headSpec, Identity: commitment.Identity([]byte(body))}}
 }
 
-// Plan accepts the binding of a staged spec that the worktree HEAD holds and main lacks,
-// and approve writes the bound policy into the worktree's policy file.
+// Plan accepts the binding of a staged spec that the worktree HEAD holds and main lacks.
+// Approve then writes the bound policy into the worktree's policy file.
 func TestHeadBindingPlansAStagedSpecThatHEADHolds(t *testing.T) {
 	root, worktree := headWorktree(t)
 	headCommit(t, worktree, commitmenttest.StagedBody)
@@ -174,6 +175,41 @@ func TestHeadBindingKeepsTheDefaultTipForEveryOtherSource(t *testing.T) {
 		commitmenttest.Commit(t, root, "main binds the B spec")
 		if _, err := (commitrepo.Store{Root: worktree}).Plan(commitmenttest.Bound(t, root, headBinding(commitmenttest.StagedBody))); err != nil {
 			t.Fatalf("Plan(a policy that keeps the binding that main added after HEAD) = %v, want acceptance", err)
+		}
+	})
+}
+
+// Plan reads each new deliverable at the checkout HEAD. Each row binds the spec that HEAD
+// holds while main holds no policy, or while main binds that path at another identity.
+func TestHeadBindingReadsEachNewDeliverableAtHEAD(t *testing.T) {
+	t.Run("first-policy", func(t *testing.T) {
+		root := gittest.RepoOnBranch(t, "main")
+		commitmenttest.Write(t, root, "README.md", "# Fixture\n")
+		commitmenttest.Commit(t, root, "main holds no policy")
+		worktree := commitmenttest.Assignment(t, root, headRequest)
+		headCommit(t, worktree, commitmenttest.StagedBody)
+		first := policy([]commitment.Milestone{milestone("M1", headOutcome)}, "M1")
+		first.Milestones[0].Outcomes[0].Deliverables = []commitment.DeliveryBinding{headBinding(commitmenttest.StagedBody)}
+		if _, err := (commitrepo.Store{Root: worktree}).Plan(mustBytes(t, first)); err != nil {
+			t.Fatalf("Plan(the first policy, which binds the spec that HEAD holds) = %v, want acceptance", err)
+		}
+	})
+	t.Run("rebinding", func(t *testing.T) {
+		const restaged = commitmenttest.StagedBody + "A body that main does not bind.\n"
+		root, worktree := headWorktree(t)
+		commitmenttest.Write(t, root, headSpec, commitmenttest.StagedBody)
+		commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
+			policy.Milestones[0].Outcomes[0].Deliverables = []commitment.DeliveryBinding{headBinding(commitmenttest.StagedBody)}
+		})
+		commitmenttest.Commit(t, root, "main binds the spec")
+		headCommit(t, worktree, restaged)
+		rebound, _, err := commitrepo.Store{Root: root}.Policy()
+		if err != nil {
+			t.Fatal(err)
+		}
+		rebound.Milestones[0].Outcomes[0].Deliverables[0] = headBinding(restaged)
+		if _, err := (commitrepo.Store{Root: worktree}).Plan(mustBytes(t, rebound)); err != nil {
+			t.Fatalf("Plan(a binding of the path that main binds, at the identity that HEAD holds) = %v, want acceptance", err)
 		}
 	})
 }
