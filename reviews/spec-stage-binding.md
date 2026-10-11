@@ -831,7 +831,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sb2-standards-r1",
+          "performer": "claude:ssb_sb2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cb26e2e71529a7049810ba22ae3e86aae6d701e4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb2_standards",
+            "digest": "sha256:f938b0cc32aaf377e383ca7bb4bb6f0e5a731b523379f6eabefe23698beab922",
+            "excerpt": "claude:ssb_sb2_standards (opus/high) — SB2 round 1 Standards axis over a95df291..1350865e (chunk tip 05862c08)\n\nFindings: 2. Worst: S1.\n\nS1 (auto-fix, confidence 8): most of the chunk's independent expectations have no red recorded in the tree. Rule: AGENTS.md (an independent expectation needs a recorded and demonstrated red) and craft-comments (the commit or spec owns the red record). Ticket 2 lines 80-95 require pre-edit reds for SB23-SB28 and SB44, an SB29 red, and six bench probe reds; the SB2 verification block (record lines 749-833) keeps only the central probe (bit SB25, SB27, SB44), and commit 05862c08 carries no red. SB23, SB24, SB26, SB28, SB29, SB30 have no red in the tree (the fixture-id expectation, the first + \" \" + second pair, the unknownBinding phrase, the Shape token, the pair order). Repair (evidence only): record the pre-edit reds and probes 2-6 with restored=yes.\n\nS2 (auto-fix, confidence 5): craft-comments Aging. internal/handoff/render_test.go:53, the comment on TestSectionRendersAssignmentPins still says \"The six pins carry the values a resuming session acts on\", while a request section now carries seven label kinds; the diff swept \"six pins\" from document.go and document_test.go but missed this file, which it edits. Repair: \"The pins carry the values a resuming session acts on.\" The test still asserts six lines, hence confidence 5.\n\nRefuted: DefaultUnresolved shared by the handoff and Store.Outlook is the spec's decision (line 210); BindingOutcomes reuses settle and unsettled (delivery.go:142-154); commitBinding duplicates no shared helper (all 24 SeedAdmission call sites enumerated; only store_test.go:133-135 and publication_test.go:26-28 repeat the triple, in other packages); the tests read the production constants unbound and unknownBinding; every new comment sentence is 25 words or fewer (requireSpecBinding exactly 25); the Shape sentence is gate-graded; document.go and handoff_single_source_test.go are 400 lines, facts.go 268.\n\nAdvice: BindingOutcomes, Unsettled, and deliveredOutcomes repeat the same settle-and-walk loop; the type name bindings and parameter bound read opaquely (bindingState). For the other axes: SB28 compares against the unknownBinding constant, so a respelled phrase stays green; BindingOutcomes walks every milestone, not only the active one.\n\nExamined: check-current current=true at 1350865e, clean; git diff --stat, -- internal, -- specs, git log (three spill files read); craft-review SKILL and finding-discipline, craft-comments, projects/benchkit.md search; ticket 2 in full and spec lines 196-217; record lines 725-983; facts.go, render_test.go, delivery.go:60-260, handoff.go:30-89, commitmenttest/admission.go:1-35, the commitmenttest helper list, the SeedAdmission call sites; wc -l on five files. No native-ref logs; no test or probe.\n"
+          },
+          "axis": "Standards",
+          "base": "a95df2915a4c887558a96b00539ee878b9e5fb30",
+          "tip": "05862c08818afd26fb2fe5731f5e316dddc53d46",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sb2-spec-r1",
+          "performer": "claude:ssb_sb2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cb26e2e71529a7049810ba22ae3e86aae6d701e4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb2_spec",
+            "digest": "sha256:70b5b55622b09ae6b4f73dd9e6b20bea6f59b43f1b65c55a94000db350d4779c",
+            "excerpt": "claude:ssb_sb2_spec (opus/high) — SB2 round 1 Spec axis over a95df291..1350865e (chunk tip 05862c08)\n\nFindings: 2. Worst: P1.\n\nP1 (auto-fix, confidence 7): the review record keeps no red for six of the nine SB2 rows. Validation plan: \"Each independent expectation then records one red through a named omission or a behavioral swap.\" Ticket 2 lines 80-95 require pre-edit reds for SB23-SB28, SB44, SB29, and six named probes. The SB2 block (record lines 733-834) keeps one probe, the central swap in t2-handoff-focused-ssb_t2, whose failures redden SB25, SB27, SB44. No red for SB23, SB24, SB26 (first-match probe), SB28 (error-return probe), SB29 (token before the Shape edit), SB30 (binding line between the pair). The author's native refs are outside the tree. Repair: rerun those probes at the clean tip and keep them under a Retained red evidence heading for SB2.\n\nP2 (no-op, confidence 7): the chunk table at spec.md:301 reads \"SB2 / planned: 2-...\" and row 302 \"planned: 3-...\" although the tickets exist since slicing (513e3642, cce6f51b); bench-implement-spec.md:52 assigns only the planned seam cells to the ticket commit; no behavior changes. Optional: drop \"planned:\" from both rows in one orchestrator plan commit at final reconciliation.\n\nPredicates confirmed: pins appends LabelSpecBinding directly after LabelSpecStatus; bindings.value joins BindingOutcomes with one space, unbound when empty, unknownBinding on a fault; readBindings maps DefaultUnresolved to an empty policy (unbound); Store.Policy returns nil error for an absent policy (policyAt \"absent\") so unbound; a parse failure sets fault and the handoff exits 0; one read per run at handoff.go:76 through Store.Policy (ls-tree on the resolved default branch, never the worktree file); errDefaultUnresolved stays private, DefaultUnresolved is the one exported test with two callers; BindingOutcomes reuses settle/unsettled; handoffdoc changes only the constant and a comment; ShapeSection names Spec binding; new production import edges are only facts.go to commitment and commitment/repository; no new string literal in either commitment package.\n\nRows: SB23 met (red not kept), SB24 met (red not kept), SB25 met (central probe kept), SB26 met (expected first + \" \" + second from the fixture policy; red not kept), SB27 met (central probe kept), SB28 met (empty policy committed, runIn requires exit 0; red not kept), SB29 met (token added; red not kept), SB30 met (TestSectionRendersOnePairPerLiveSpec unchanged; probe red not kept), SB44 met (main renamed to trunk plus branch other; ResolvedDefault fails at default_branch.go:26-30; central probe kept).\n\nAdvice: BindingOutcomes repeats the milestone/outcome loop of Unsettled (Standards); the SB44 red in the record comes from the central swap, so no kept run shows the unresolved branch read as a fault; add the DefaultUnresolved probe when P1 is repaired.\n\nExamined: check-current current=true at 1350865e, clean; git diff --stat and one git diff a95df291..1350865e -- internal specs (spill 1791735994930692775 in full); the whole spec and ticket 2; craft-review SKILL and finding-discipline; record lines 728-897 plus searches; handoff.go:30-159, facts.go:1-60, render_test.go:70-105, sections_test.go helpers, delivery.go:60-210, repository.go:25-44 and policyAt, sources.go:140-171, default_branch.go:18-31; import-edge rg; git log of tickets 2 and 3; rg for planned in the guidance. No test, probe, or native-ref file.\n"
+          },
+          "axis": "Spec",
+          "base": "a95df2915a4c887558a96b00539ee878b9e5fb30",
+          "tip": "05862c08818afd26fb2fe5731f5e316dddc53d46",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sb2-coverage-r1",
+          "performer": "claude:ssb_sb2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cb26e2e71529a7049810ba22ae3e86aae6d701e4",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb2_coverage",
+            "digest": "sha256:dcf3c36bdfa808ae0d0249faa0d39b5e189e8f68faebe96b182ed209e4c62557",
+            "excerpt": "claude:ssb_sb2_coverage (opus/high) — SB2 round 1 Coverage axis over a95df291..1350865e (chunk tip 05862c08)\n\nFindings: 1. Worst: C1.\n\nC1 (auto-fix, confidence 6): state: the default-branch policy has two milestones, and an outcome in the non-active milestone has an unsettled deliverable that names the live spec path (the base policy has active_milestone quality-2 while quality-1 carries deliverables). Break: spec line 201 says the value lists \"each outcome whose undelivered deliverable binding in the default-branch policy names the spec path\", the whole policy; an active-only filter writes unbound and no test reds (probe A). Missing: an SB26-style case in TestSectionRendersTheSpecBinding, or a unit test of BindingOutcomes in internal/commitment/delivery_test.go (both on the Writes line), with a binding in a non-active milestone that expects that outcome's id. Read: delivery.go BindingOutcomes (142-154), parse.go Validate (88-131), which allows deliverables in any milestone.\n\nProbes (bench worktree exec spec-stage-binding-build -- ..., GOFLAGS=-p=4 -parallel=4):\nA1. bench probe internal/commitment/delivery.go --swap \"_, bindings := settled.unsettled(outcome)\" --with \"_, bindings := settled.unsettled(outcome); if milestone.ID != policy.ActiveMilestone { continue }\" --package ./internal/handoff: silent, 0 of 55, restored yes\nA2. the same mutation, --package ./internal/commitment: silent, 0 of 175, restored yes\nB. --swap \"_, bindings := settled.unsettled(outcome)\" --with \"_, bindings := settled.unsettled(outcome); bindings = outcome.Deliverables\" --package ./internal/commitment: silent, 0 of 175, restored yes (not a finding: the Edge inventory line 431 marks a settled binding on a live spec as Won't handle)\n\nAdvice: the premise of spec line 431 holds only in the tree that delivered; a sibling worktree branched before the delivery can still list the spec as staged (liveSpecs reads the assignment worktree, facts.go:205), and then the settlement alone keeps the value unbound, which probe B shows nothing tests; the Won't-handle line could reopen. No row writes a bound outcome id into the main section (SB44 covers the primary checkout with unbound only; the code path is shared at pins line 135). Hostile inputs checked: a symlink or directory at the policy path ends in a read or parse error (binding unknown); a numeric-looking id cannot occur (validIdentity requires a leading letter); a duplicate path within one outcome is refused (parse.go:243); absent versus empty policy is SB27 and SB28. The noteRoot/root split is safe (same default branch through shared refs).\n\nExamined: (a) the default-branch policy through Store.Policy, defaultPolicy, policyAt (repository.go:31-40, 241-263); ResolvedDefault (default_branch.go:18-30) and defaultRevision (sources.go:148-155); liveSpecs paths; outcome ids and delivery facts through settle and unsettled (delivery.go:180-199); the caller root and noteRoot (handoff.go:58-76). (b) ticket 2's Writes line; the delta's 9 code files and 2 record files are inside it. Call sites: readBindings one (handoff.go:76), bindings.value one (facts.go:135), BindingOutcomes one (facts.go:87, no unit test), DefaultUnresolved two (outlook.go:21, facts.go:75). Read: craft-review SKILL and finding-discipline; spec stories 22-30, lines 196-216, rows 389-397, Edge inventory 412-432; ticket 2; the diff for internal; handoff.go, facts.go, delivery.go, parse.go Validate, repository.go Policy and policyAt; the record's probe list. Not read: craft-tdd, projects/benchkit.md. Evidence bound current=true; no pages fetched. git status clean; every probe restored=yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "a95df2915a4c887558a96b00539ee878b9e5fb30",
+          "tip": "05862c08818afd26fb2fe5731f5e316dddc53d46",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -980,3 +1048,46 @@ Orchestrator reruns at `b6e6b0d9` (bodies `claude-agent:ssb-orchestrator-2026101
 - C2: `bench probe internal/commitment/delivery.go --swap '(current == nil || !namesDeliverable(*current, source))' --with '(current != nil && !namesDeliverable(*current, source))' --package ./internal/commitment --run '^TestHeadBindingReadsEachNewDeliverableAtHEAD$'`; 1 failed: `head_binding_test.go:194: Plan(the first policy, which binds the spec that HEAD holds) = commitment source "A.spec" refused: missing or nonregular tree file specs/head/spec.md, want acceptance`.
 - C3: `bench probe internal/commitment/delivery.go --swap 'return binding.Source == source' --with 'return binding.Source.Path == source.Path' --package ./internal/commitment --run '^TestHeadBindingReadsEachNewDeliverableAtHEAD$'`; 1 failed: `head_binding_test.go:212: Plan(a binding of the path that main binds, at the identity that HEAD holds) = commitment source "A.spec" changed from sha256:d836... to sha256:c072...`.
 - The orchestrator's independent probe at `b6e6b0d9`: `bench probe internal/commitment/delivery.go --omit 'namesDeliverable(proposed, source) && ' --package ./internal/commitment --run '^TestHeadBindingKeepsTheDefaultTipForEveryOtherSource$'`; `bit`, 1 failed (`changed-row`, `:164`), `restored=yes`.
+
+## SB2 round 1
+
+Chunk SB2 round 1 ran three opus/high axes in parallel at `1350865e` over the frozen pair `a95df291..1350865e` (chunk tip `05862c08`). Only the Coverage axis ran probes, and the tree was clean after every return. SB2 uses repair cycle 1 of 2 through one fresh repair session for ticket 2, which takes S2 and C1. C1 is the chunk's one hardening cycle. S1 and P1 are one record gap with no code change. The repair session reruns the author's probes at its tip, and the orchestrator retains them below.
+
+### Standards
+
+Findings: 2. Worst issue: S1.
+
+- S1 (`auto-fix`, confidence 8): the SB2 verification block keeps only the central probe. SB23, SB24, SB26, SB28, SB29, and SB30 have no red in the tree. Rule: AGENTS.md, an independent expectation needs a recorded and demonstrated red. Closed evidence-only once the reruns below are retained.
+- S2 (`auto-fix`, confidence 5): `internal/handoff/render_test.go:53` still says "The six pins carry the values a resuming session acts on". A request section now carries seven label kinds. Rule: `craft-comments`, Aging. Repair: "The pins carry the values a resuming session acts on."
+
+Advice: `BindingOutcomes`, `Unsettled`, and `deliveredOutcomes` repeat one settle-and-walk loop. The type name `bindings` and the parameter `bound` read opaquely.
+
+### Spec
+
+Findings: 1. Worst issue: P1.
+
+- P1 (`auto-fix`, confidence 7): the same record gap as S1, against the Validation plan sentence on recorded reds. Closed with S1.
+- P2 (`no-op`, confidence 7): the chunk table rows read `SB2 / planned: 2-...` and `planned: 3-...` although the tickets exist. No rule assigns that cell to the ticket author, and nothing changes behavior. The orchestrator drops both prefixes in a later plan commit.
+
+Advice: no kept run shows the unresolved default branch read as a fault; the `DefaultUnresolved` probe joins the reruns below.
+
+### Coverage
+
+Findings: 1. Worst issue: C1.
+
+- C1 (`auto-fix`, confidence 6): with an active-milestone-only filter in `BindingOutcomes`, an outcome of a non-active milestone that binds the live spec drops to `unbound`. No test notices (probes A1 and A2 silent). Spec line: "each outcome whose undelivered deliverable binding in the default-branch policy names the spec path". Repair: a case with a binding in a non-active milestone that expects that outcome's id, in `TestSectionRendersTheSpecBinding` or in `internal/commitment/delivery_test.go`.
+
+Advice: probe B (the settlement dropped) stays silent. The Edge inventory marks a settled binding on a live spec as Won't handle. A sibling worktree branched before the delivery can still list that spec as staged. No row writes a bound id into the `main` section; the code path is shared.
+
+### Retained red evidence of SB2
+
+The author observed these reds before the production edit, on source `44a3eab2` plus the new tests (author logs `claude-agent:ssb_t2/red-before-edit-head.txt`, `red-before-edit-failures.txt`, `red-sb29.txt`):
+
+- SB23: `render_test.go:148: section carries no "Spec: specs/alpha/spec.md\nSpec status: staged\nSpec binding: delivery\n"`.
+- SB24 and SB25: `render_test.go:148: section carries no "Spec: specs/beta/spec.md\nSpec status: staged\nSpec binding: unbound\n"`.
+- SB26: `render_test.go:148: section carries no "...Spec binding: delivery B\n"`.
+- SB27 and SB44: `render_test.go:162` and `:180: section carries no "...Spec binding: unbound\n"`.
+- SB28: `render_test.go:171: section carries no "...Spec binding: binding unknown (policy unreadable)\n"`.
+- SB29, after the constant and the token and before the Shape edit: `handoff_single_source_test.go:183: the Shape text names no "Spec binding", so it does not describe the section grammar`.
+
+The orchestrator's independent probe at `1350865e`: `bench probe internal/handoff/facts.go --omit ', fault: err' --package ./internal/handoff --run '^TestSectionRendersAnUnavailableBinding$'`; `bit`, 1 failed (SB28, `render_test.go:171`), `restored=yes`.
