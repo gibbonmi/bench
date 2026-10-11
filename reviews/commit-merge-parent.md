@@ -806,7 +806,83 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "mp2-standards-r1",
+          "performer": "claude:cmp_mp2_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d8900dd4fbecce79b12367bfe698ef54d459d9ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp2_standards",
+            "digest": "sha256:58acb62628a80ab18a6be670211d273ea584549e388308243a1d323836477abf",
+            "excerpt": "MP2 Standards axis, claude:cmp_mp2_standards, opus/high, one iteration, frozen pair 004e4e94..fabb55f3 (chunk tip eb7c791c), evidence sha256:93aa46bc81afba73fd184bf0df7e7ab4a4592e2dd2de5aac6fed6eeae1e4016b current=true, clean tree.\n\nFindings: 8 (S1-S4 auto-fix, S8 ask-user, S5-S7 no-op). Worst issue: S3. None changes behavior.\n\nS1 (auto-fix, confidence 6). craft-comments follows ste-prose.md (25-word descriptive sentences; a vertical list for three or more parallel items). The edited commit-named-path doc comment at internal/refusalroute/faces_commit.go:44-47 is one 40-word sentence that lists five causes in a comma run. Ticket 2 line 39 requires the cause, not the form.\nS2 (auto-fix, confidence 4). The same 25-word limit on new comment prose: internal/commit/merge_parent_test.go:16-19 (45 words), :35-39 (about 30 and 27), :158-162 (about 29); internal/landing/pending_merge_fixture_test.go:59-62 (about 35); internal/landing/pending_merge_test.go:43-46 (about 32). Nearby repo comments often break the same limit.\nS3 (auto-fix, confidence 5). AGENTS.md one source per fact; Duplicated Code. internal/commit/lane_test.go:87-90 owns head(t, root) with 8 call sites; merge_parent_test.go re-derives it as strings.TrimSpace(string(runGit(t, ..., \"rev-parse\", \"HEAD\"))) at lines 57, 77, 153 and as revParse(\"HEAD\") at 176 and 193.\nS4 (auto-fix, confidence 4). craft-comments \"One source owns a fact\": the composedSnapshot doc at landing.go:58 (\"the merge heads that its name-set check read\") and the composeAuthorized sentence at landing.go:126-127 (\"The snapshot keeps the merge heads that the attribution read\") state the same fact; ticket 3 line 37 asks that doc to state the waiver, recheck, parents, and completion step.\nS5 (no-op, confidence 8). One merge fixture and its constants per package (startPendingMerge vs mergeCheckout/pendingMerge; mergeConflictPath, mergeIncoming, mergeNameSet, mergeNameSetRefusal) follow ticket 2 lines 46-47 and 60 and ticket 3 lines 47 and 51. stagedPaths is the only listing helper (attribution.go:70, :74); mergeStatePath has no earlier copy; the commit side reuses adminPath (refusal_route_test.go:242).\nS6 (no-op, confidence 3). Long Function: Owner.Land at landing.go:168-208 is 40 lines in six straight steps; ticket 3 line 33 keeps commit-tree there, and line 40 moves a helper out only past 400 lines (393 now).\nS7 (no-op, confidence 3). Primitive Obsession and Data Clumps: attributedPaths returns ([]string, []string, error) (attribution.go:35); ticket 3 line 16 and git.PendingMerge's []string answer decide the shape.\nS8 (ask-user, confidence 4). AGENTS.md: an independently authored test expectation needs a recorded and demonstrated red. mergeNameSetRefusal (merge_parent_test.go:31, pending_merge_test.go:16), const changed = \"pending merge changed during the commit\" (pending_merge_test.go:131), and the \"read pending merge:\" prefixes spell refusal sentences. The record holds one matching red (the landing omission at reviews/commit-merge-parent.md:588) and none for the recheck sentence or the commit-side expectation. Spec line 619 asks one recorded red for each independent expectation; tickets 2 line 22 and 3 line 26 fix each sentence as a spec contract.\n\nAdvice: refusedLine (merge_parent_test.go:70-75) builds its own name-to-face lookup like refusal_route_test.go:117-120; \"tracked.txt\" appears 12 times in merge_parent_test.go; the stagedPaths error text ties a generic helper to one caller; both fixture comments end with \"no shared helper crosses the package boundary\", a reviewer-facing clause; the plant closure in TestLandRefusesAMergeStateChangeDuringAuthorization has no t.Helper().\n\nRule checks: the two new .bench/BENCH-reference.md sentences (lines 285-287) are 15 and 13 words, active, present tense, word for word from ticket 4 line 15, paragraph of six sentences, no other doc states the rule (only .bench/commitment.json:456 planning data); whether \"further\" is an approved STE word was not checked. Unchanged surfaces pass: commit.go and landing_reviewed_test.go empty diff stat; faces_commit.go comment only; new literals hold no next=, next[, run bench , or ; then . git-plumbing-owner pass: no --git-path in the delta; compositionState now reads through git.AdminPath. Budgets pass: landing.go 393, landing_helpers_test.go 388, pending_merge_test.go 255, pending_merge_fixture_test.go 132, merge_parent_test.go 196, attribution.go 278, commitment_test.go 247, faces_commit.go 70; landing_reviewed_test.go 437 with no line added. No FT<n> story tag. MP56 verdict: pass (11 changed files, none under ROADMAP.md or roadmap/, commit.go untouched).\n\nExamined: the full delta for internal and .bench/BENCH-reference.md; tickets 2, 3, 4; spec lines 600-629; AGENTS.md, .bench/BENCH.md, projects/benchkit.md (Seams, Gate), craft-review and finding-discipline.md, craft-comments, ste-prose.md; checkout.go, staged.go, gitexec.go, landing.go:1-215, attribution.go:1-111, refusal_route_test.go:95-254, routetest.go:115-169, lane_test.go:78-93, the git-plumbing-owner check; rg searches; the mutation entries of reviews/commit-merge-parent.md.\nEvidence cursors fetched: none beyond --check-current; ten spilled command outputs read (one listing only, one not opened).\n"
+          },
+          "axis": "Standards",
+          "base": "004e4e94019144653de1ec8e179abe015b704242",
+          "tip": "eb7c791c83709ec159c6e8dd98592170b8bedc7e",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6",
+            "S7",
+            "S8"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "mp2-spec-r1",
+          "performer": "claude:cmp_mp2_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d8900dd4fbecce79b12367bfe698ef54d459d9ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp2_spec",
+            "digest": "sha256:1f84413eec0c0d67196c25759401632d0d0d58286df95f5d0efcb849fe20f71e",
+            "excerpt": "MP2 Spec axis, claude:cmp_mp2_spec, opus/high, one iteration, frozen pair 004e4e94..fabb55f3 (chunk tip eb7c791c), evidence sha256:93aa46bc81afba73fd184bf0df7e7ab4a4592e2dd2de5aac6fed6eeae1e4016b current=true, clean tree.\n\nFindings: 1. Worst issue: P1 (documentation only).\n\nP1 (auto-fix, confidence 8). Spec line 350 (MP42 why cell): \"A newline-framed git diff-index read C-quotes that name, so the correct name set refuses.\" Both listings come from one helper (stagedPaths at attribution.go:97-109; merged at :70, covered at :74), as spec line 171 requires. Trace: drop -z and split on newlines; both listings carry the same C-quoted string, covers[path] still matches at :83-87, the name set publishes, and the MP42 row stays green. MP41 catches that mutation (merge_parent_test.go:162). The row is met; only its rationale is wrong. Fix: reword the MP42 why cell to what it guards (a correct literal spelling of a hostile merged path publishes) and point the framing catch at MP41; a spec-text plan commit with no behavior change.\n\nAdvice: spec line 233 \"the route anchor at line 307\" is now 310 (reviews/commit-merge-parent.md:510 retains the anchors output); spec lines 172 (attribution.go:154, :177) and 186 (landing.go:139-141, now :146-148) cite pre-edit line numbers. For Coverage: no row seems to catch a dropped :(literal) prefix at attribution.go:100 (a glob name such as * would cover every merged path; unverified reading of Git's matcher). Two plain-error sentences are not in the promised labels (list the paths of the pending merge: at attribution.go:104; end the pending merge: at landing.go:196); both wrap required failure modes and carry no route token; not scope creep.\n\nRequirement trace, no further defect: the D1 listing flags at attribution.go:98 read raw through outputRaw (gitexec.go:40-42) and split on NUL (:107-108); the covered listing appends :(literal)+name (:99-101); the complement walks the merged listing in order (:83-87); NamedPathError with the exact prefix, strconv.Quote per path, one-space joins (:85, :89); a reader refusal returns a plain error (:66-68) that landingFace maps to handback (commit.go:215-229); D1 runs after the name checks and before compose (attribution.go:53-58, landing.go:133-137) and before AuthorizeCandidate (commit.go:136, :140, :144); the empty-diff waiver applies only during a merge (landing.go:146) and DryRun reuses composeAuthorized (:158-161); the recheck sentence, plain error, and reader refusal all refuse before commit-tree (:173-179); parents -p expected then each head in file order (:181-185); git merge --quit after updateRef and before reconcile, only when heads exist (:189-199); every failure after the ref update returns *PublishedUnreconciledError (:196, :201-205). Scope: the diff file list holds no commit.go, help, record, or route text; every path sits inside a ticket Writes: line or the review pickup.\n\nRow audit: MP19-MP50, MP52-MP54, MP62 met; each seam cell cites an existing test in citation form; MP22 (landing_test.go:336), MP31 (state_test.go:63-71), MP43 (landing_test.go:69) exist. MP40 discriminates the ordering (conflict.txt is not a planning path, commitment/model.go:118). Review-owned: MP51 met (run(r.Root, \"merge\", \"--quit\") at landing.go:194-198; the only os.Remove calls in non-test landing code clean temp directories). MP55 met (.bench/BENCH-reference.md:285-287 holds the two sentences after the fast-lane note, six-sentence paragraph; the retained anchors excerpt shows every require row nonzero and every forbid row 0, Command Notes needle at 280, route needle at 310). MP56 met (no ROADMAP.md, roadmap/, or internal/commit/commit.go in the diff or the fence).\n\nExamined: spec lines 1-260 and 296-640; tickets 2, 3, 4 in full and ticket 5's Writes line; attribution.go, landing.go:100-209, gitexec.go, checkout.go, commit.go:105-234, state_test.go:18-97, commitment_test.go:40-129, commitment/model.go:105-139, BENCH-reference.md:272-311; the three new test files; reviews/commit-merge-parent.md:485-574; craft-review Spec axis; finding-discipline.md. No test or probe run.\nEvidence cursors fetched: the full delta spill; the diff name list; the symbol grep; the coverage projection (lines 60-113); the planningCommitRepo uses. Not read: the spec heading list and the review-record grep spills.\n"
+          },
+          "axis": "Spec",
+          "base": "004e4e94019144653de1ec8e179abe015b704242",
+          "tip": "eb7c791c83709ec159c6e8dd98592170b8bedc7e",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "mp2-coverage-r1",
+          "performer": "claude:cmp_mp2_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d8900dd4fbecce79b12367bfe698ef54d459d9ad",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp2_coverage",
+            "digest": "sha256:595369c2c812d7dfe516f99f9374e878e52a4afa139c6cd180bb326eb99360c1",
+            "excerpt": "MP2 Coverage axis, claude:cmp_mp2_coverage, opus/high, one iteration, frozen pair 004e4e94..fabb55f3 (chunk tip eb7c791c), evidence sha256:93aa46bc81afba73fd184bf0df7e7ab4a4592e2dd2de5aac6fed6eeae1e4016b current=true, dirty=false.\n\nEnumeration: git.PendingMerge gives absent, heads in file order, or a read pending merge: refusal; coverPendingMerge runs diff-index --cached --name-only --no-renames -z twice (merged listing with no names, covered listing with one :(literal) pathspec per name) and builds the refusal with strconv.Quote (attribution.go:65-109); names are cleaned by repositoryPath and de-duplicated and sorted by unique (:127-141, :267-278); the heads pass through composedSnapshot.mergeHeads to the waiver (landing.go:146), the recheck (:173-179), the commit-tree parents (:181-185), merge --quit (:194-198), then reconcile (:199). Write set: every changed file sits inside the Writes: line of the ticket that changed it; ticket 2 did not touch landing.go.\n\nC1 (auto-fix, confidence 5). State: a pending octopus merge whose name set omits a merged path. Bypass: swap `if err != nil || len(heads) == 0 { return nil, err` for `if err != nil || len(heads) != 1 { return heads, err`: silent, restored yes, 22 landing tests pass; every commit-package merge journey uses the one-head startPendingMerge. Needed: an octopus refusal row in TestLandRefusesAnIncompleteMergeNameSet (octopusMerge naming only side-a and expecting \"side-b\").\nC2 (no-op, confidence 8). Newline framing in both listings: the MP42 reason is false (both listings C-quote alike, coverage still matches, MP42 stays green; landing run silent, commit run bit on MP41 two_paths_omitted). MP42 still catches a dropped :(literal) (the ticket 2 probe). Fix: amend the MP42 reason to cite the :(literal) swap; non-behavioral spec inaccuracy flagged for veto.\nC3 (auto-fix, confidence 4). State: during authorization PendingMerge returns the same heads in a different order; the spec says another merge head list refuses and the code does (slices.Equal, landing.go:177). Bypass: compare sorted copies: silent, restored yes, 8 tests. Needed: a \"reordered merge heads\" row in TestLandRefusesAMergeStateChangeDuringAuthorization from octopusMerge with MERGE_HEAD lines reversed.\n\nAdvice: the command-level waiver holds (an ours resolution in TestCommitRecordsTheMergeParent still published a two-parent merge; silent exploration), and no MP29-style row exists at the Command seam; Owner.DryRun and bench commit --dry-run have no positive row during a pending merge (no non-contrived mutation separates it from Land); a directory that covers a deleted path below it was not run; a merged path that the caller unstages drops out of the index listing and the merge commit records ours for it (observation B hazard), and no Won't handle line names this; the AuthorizeCandidate read of the heads (commit.go:144) precedes composeAuthorized and the recheck does not cover that window (for the MP3 review); a stale MERGE_HEAD from a pre-fix one-parent commit makes the next ordinary commit a merge commit (allowed by .pending, no row pins it); a merge of thousands of paths produces one unbounded refusal line.\n\nProbes (all restored yes): 1 landing.go waiver == 0 to >= 0, run UnchangedTree and PreAuthorizationRefusalTable: bit (MP29, MP30), 2 failed. 2 waiver to < 0: bit (MP31 symlink row), 1 failed. 3 attribution.go D1 skipped when len(heads) != 1 with heads kept: silent (C1). 4 merge_parent_test.go ours resolution (exploration): silent. 5 attribution.go newline framing in both listings, landing IncompleteMergeNameSet: silent (C2). 6 same in commit: bit (MP41 two_paths_omitted), 1 failed. 7 attribution.go D1 always on, TestLandComposesOnlyNamedPathsAndCASesExpectedBase: bit (MP43), 1 failed. 8 landing.go recheck compares sorted copies: silent (C3). Two device rows skipped for privilege. Final git status --short: empty.\n\nFindings: 3 (C1 auto-fix, C2 no-op, C3 auto-fix). Worst issue: C1.\n\nConsumer rows touched=false walked: commit.go:136, :140, :187 (faces map NamedPathError to commit-named-path and a plain error to commit-handback); the Land callers in landing_test.go, state_test.go, composition_test.go, landing_reviewed_test.go (no pending merge, D1 does nothing); composedSnapshot uses at landing_test.go:289 and :315 (parameter type only); compositionState at composition_test.go:221 and :229 (AdminPath, same path in a primary checkout); refusalroute/registry.go:204 (comment only); the landingRepo callers (label value unchanged).\n\nExamined: the internal delta and per-commit file list; spec rows MP19-MP56 and MP62, Edge inventory, Testing decisions, Observations; tickets 2, 3, 4; the hostile-input checklist; craft-review Coverage axis and finding-discipline.md; attribution.go (full), landing.go:100-208, gitexec.go, lane_owner.go, checkout.go:28-73, commit.go:95-229; pending_merge_test.go, pending_merge_fixture_test.go, merge_parent_test.go, landing_test.go (MP43 at :69, MP22 at :336).\nEvidence cursors fetched: the summary, manifest page v1.93aa46bc...4016b.m.0.0, source s20 page 0 (consumers), s.20.1 (stream_end). Not fetched: m.0.1 and any other source page.\n"
+          },
+          "axis": "Coverage",
+          "base": "004e4e94019144653de1ec8e179abe015b704242",
+          "tip": "eb7c791c83709ec159c6e8dd98592170b8bedc7e",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -863,6 +939,10 @@ Chunk MP1 round 1 ran three opus/high axes in parallel at `f7b5027b` over the fr
 
 The ticket 1 repair session `claude:cmp_t1_rep1` closed S1 and C1 to C5 in `a329d3ab` with tests only. It refroze MP1 at that tip in `4e6fd43a`. MP1 round 2 ran three opus/high axes in parallel over the repair delta `f7b5027b..4e6fd43a`. Every axis confirmed each fold, the Coverage axis bit each fold with an independent probe, and no axis found a new finding. MP1 closes with repair cycle 1 of 2 used and no open finding.
 
+Chunk MP2 round 1 ran three opus/high axes in parallel at `fabb55f3` over the frozen pair `004e4e94..fabb55f3`. The chunk tip is `eb7c791c`. Only the Coverage axis ran probes, and the tree was clean after every return. MP2 uses repair cycle 1 of 2 through one fresh repair session for ticket 3, which takes S2, S3, S4, C1, and C3. Every path of those findings sits inside the ticket 3 `Writes:` line.
+
+S1 is a comment-only Go correction, so the orchestrator commits it as evidence-only work. P1 and C2 are one spec-text amendment, which the orchestrator commits as a plan commit. S8 closes evidence-only below. S5, S6, and S7 are `no-op`.
+
 ## Standards
 
 Findings: 2. Worst issue: S2.
@@ -885,11 +965,58 @@ spilled{lines=20,bytes=3881,omitted_lines=11,cut_lines=0,path=/home/mgibs/.bench
 skips[0]{package,test,reason}:
 ```
 
+MP2 findings: 8. Worst issue: S3.
+
+- S1 (`auto-fix`, confidence 6): the `commit-named-path` doc comment in `internal/refusalroute/faces_commit.go` is one 40-word sentence with five causes in a comma run. Rule: `craft-comments` follows the STE sentence rules. Orchestrator reflow.
+- S2 (`auto-fix`, confidence 4): five new test comments pass 25 words (`merge_parent_test.go:16-19`, `:35-39`, `:158-162`; `pending_merge_fixture_test.go:59-62`; `pending_merge_test.go:43-46`). Repair: split them.
+- S3 (`auto-fix`, confidence 5): `merge_parent_test.go` re-derives the `head(t, root)` helper of `internal/commit/lane_test.go:87-90` at five sites. Repair: call `head`.
+- S4 (`auto-fix`, confidence 4): the `composedSnapshot` doc and the `composeAuthorized` doc in `landing.go` state the same merge-heads fact. Repair: keep it once.
+- S5 (`no-op`, confidence 8): one merge fixture per package follows the ticket keep decisions. Ticket 2 lines 46-47 and 60 and ticket 3 lines 47 and 51 state them.
+- S6 (`no-op`, confidence 3): `Owner.Land` holds six straight steps in 40 lines. Ticket 3 line 33 keeps `commit-tree` there, and line 40 moves a helper out only past 400 lines.
+- S7 (`no-op`, confidence 3): the `[]string` merge heads follow ticket 3 line 16 and the `git.PendingMerge` answer.
+- S8 (`ask-user`, confidence 4): the refusal-sentence expectations `pending merge changed during the commit` and the commit-side `pending merge changed paths that the commit does not name:` had no recorded red. The AGENTS.md exception needs a named mutation and a recorded red, so the orchestrator ran both sentence swaps on the clean tip `fabb55f3`:
+
+```text
+tree[1]{target,head,dirty}:
+  commit-merge-parent-build,fabb55f385f1b69e66983f9245175369eff3a435,false
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/landing/landing.go,swap,failed,3,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/landing,^TestLandRefusesAMergeStateChangeDuringAuthorization$,passed,5
+spilled{lines=13,bytes=1375,omitted_lines=4,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/f80fcedec92401bd6cf2acfce17ca107/1791700649488204910-267ca0fb63d13b80.out}
+failures[3]{package,test,line,lines}:
+  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAMergeStateChangeDuringAuthorization/another_merge_head,"pending_merge_test.go:171: Land error = pending merge differs after the commit authorization, want the plain refusal \"pending merge changed during the commit\"",1
+  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAMergeStateChangeDuringAuthorization/merge_appears,"pending_merge_test.go:171: Land error = pending merge differs after the commit authorization, want the plain refusal \"pending merge changed during the commit\"",1
+  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAMergeStateChangeDuringAuthorization/merge_disappears,"pending_merge_test.go:171: Land error = pending merge differs after the commit authorization, want the plain refusal \"pending merge changed during the commit\"",1
+skips[0]{package,test,reason}:
+```
+
+```text
+tree[1]{target,head,dirty}:
+  commit-merge-parent-build,fabb55f385f1b69e66983f9245175369eff3a435,false
+probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
+  bit,internal/landing/attribution.go,swap,failed,3,yes
+selection[1]{form,target,run,baseline,ran}:
+  package,./internal/commit,^TestCommitRefusesAnIncompleteMergeNameSet$,passed,4
+spilled{lines=13,bytes=1687,omitted_lines=4,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/f80fcedec92401bd6cf2acfce17ca107/1791700664748895789-11dd68777e96e21e.out}
+failures[3]{package,test,line,lines}:
+  github.com/gibbonmi/bench/internal/commit,TestCommitRefusesAnIncompleteMergeNameSet/added_path_omitted,"merge_parent_test.go:126: refusal = (\"error: pending merge left paths that the commit does not name: \\\\\"added.txt\\\\\"\", [\"correct the paths or the files that the refusal names\" \"bench commit --in 'commit-fixture' -m 'm' -- 'conflict.txt' 'trac… (455 bytes)",1
+  github.com/gibbonmi/bench/internal/commit,TestCommitRefusesAnIncompleteMergeNameSet/modified_path_omitted,"merge_parent_test.go:126: refusal = (\"error: pending merge left paths that the commit does not name: \\\\\"tracked.txt\\\\\"\", [\"correct the paths or the files that the refusal names\" \"bench commit --in 'commit-fixture' -m 'm' -- 'conflict.txt' 'ad… (455 bytes)",1
+  github.com/gibbonmi/bench/internal/commit,TestCommitRefusesAnIncompleteMergeNameSet/two_paths_omitted,"merge_parent_test.go:126: refusal = (\"error: pending merge left paths that the commit does not name: \\\\\"esc\\\\\\\\x1b name*\\\\\\\\n.txt\\\\\" \\\\\"tracked.txt\\\\\"\", [\"correct the paths or the files that the refusal names\" \"bench commit --in 'commit-fixture' -m… (493 bytes)",1
+skips[0]{package,test,reason}:
+```
+
 ## Spec
 
 Findings: 0. Worst issue: none. Every row MP01 to MP18 is met, and every MP01 to MP15 seam cell cites an existing test.
 
 Advice: the owner section cites `land_refusal.go:82-91` and `:78-81` in the present tense, and the function now sits at `:76-83`; final reconciliation decides a currency touch.
+
+MP2 findings: 1. Worst issue: P1 (documentation only).
+
+- P1 (`auto-fix`, confidence 8): the MP42 why cell says a newline-framed listing makes the correct name set refuse. Both listings share one framing, so that mutation leaves MP42 green, and MP41 catches it. Repair: a spec-text plan commit rewords the cell to the `:(literal)` coverage it guards and points the framing catch at MP41. The same commit refreshes the stale line citations that the axis listed.
+
+Review-owned rows: MP51 is met, because `Land` runs `git merge --quit` and Bench removes no admin entry file. MP55 is met, because the two sentences sit after the fast-lane note and the retained anchors excerpt shows every require row nonzero. MP56 is met, because no roadmap path and no `internal/commit/commit.go` appear in the diff or the fence.
 
 ## Coverage
 
@@ -900,3 +1027,11 @@ Findings: 5. Worst issue: C2.
 - C3 (`auto-fix`, confidence 7): no row plants an annotated tag object ID, and a `len(commit) == len(line)` mutant stayed silent. Repair: an annotated-tag case in `TestPendingMergeRefusesMalformedState`.
 - C4 (`auto-fix`, confidence 6): CRLF, trailing space, and a double final newline refuse but have no pin; a `TrimSpace` mutant stayed silent. Repair: three malformed cases.
 - C5 (`auto-fix`, confidence 5): a file-presence copy of the reader in `land_refusal.go` would pass MP15 to MP18. Repair: an MP15 subtest with a non-empty malformed MERGE_HEAD that expects false.
+
+MP2 findings: 3. Worst issue: C1.
+
+- C1 (`auto-fix`, confidence 5): a D1 check gated on one head stays silent, because no refusal row uses an octopus merge. Repair: an octopus refusal row in `TestLandRefusesAnIncompleteMergeNameSet`.
+- C2 (`no-op`, confidence 8): the newline-framing mutation leaves MP42 green; the MP42 why cell is inexact, and P1 carries the spec fix.
+- C3 (`auto-fix`, confidence 4): a recheck that compares sorted copies stays silent. Repair: a reordered-heads row in `TestLandRefusesAMergeStateChangeDuringAuthorization`.
+
+Advice kept for the final reconciliation: no positive `DryRun` row exists during a pending merge. A merged path that the caller unstages drops out of the index listing, and the Edge inventory now names that case. The `AuthorizeCandidate` read of the heads precedes `composeAuthorized`, and the MP3 review reads that window.
