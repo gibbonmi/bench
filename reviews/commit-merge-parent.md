@@ -923,6 +923,125 @@
           "requirement": "t3-ordinary-build-census",
           "command": "bench test --check ordinary-build-census",
           "exit_code": 0
+        },
+        {
+          "id": "t2-landing-focused-cmp_t2-r2",
+          "performer": "claude:cmp_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t2/tip2/t2-landing-focused.txt",
+            "digest": "sha256:cd0d76454af9c3d951d23ebf7fdd4f5d05fd4248130c332af3e64cf1b8173c44",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --package ./internal/landing --run 'TestLandRefusesAnIncompleteMergeNameSet|TestLandRefusesAnUnreadableMergeState|TestLandComposesOnlyNamedPathsAndCASesExpectedBase'\nexit 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc50e71e7019b1c84766fd059a5e4d85ee047276,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,335,9\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec \"commit-merge-parent-build\" -- bench probe internal/landing/attribution.go --omit 'return nil, NamedPathError{errors.New(\"pending merge changed paths that the commit does not name: \" + strings.Join(omitted, \" \"))}' --package ./internal/landing --run '^TestLandRefusesAnIncompleteMergeNameSet$'\nexit 1 (the mutant bit)\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc50e71e7019b1c84766fd059a5e4d85ee047276,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/attribution.go,omit,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,^TestLandRefusesAnIncompleteMergeNameSet$,passed,7\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAnIncompleteMergeNameSet/conflicted_path_omitted,\"pending_merge_test.go:83: Land error = <nil>, want the named-path refusal \\\"pending merge changed paths that the commit does not name: \\\\\\\\\\\"conflict.txt\\\\\\\\\\\"\\\"\",1\n  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAnIncompleteMergeNameSet/deleted_path_omitted,\"pending_merge_test.go:83: Land error = <nil>, want the named-path refusal \\\"pending merge changed paths that the commit does not name: \\\\\\\\\\\"gone.txt\\\\\\\\\\\"\\\"\",1\n  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAnIncompleteMergeNameSet/directory_does_not_cover_a_prefix_sibling,\"pending_merge_test.go:83: Land error = <nil>, want the named-path refusal \\\"pending merge changed paths that the commit does not name: \\\\\\\\\\\"pkgx/a.go\\\\\\\\\\\"\\\"\",1\n  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAnIncompleteMergeNameSet/octopus_side_path_omitted,\"pending_merge_test.go:83: Land error = <nil>, want the named-path refusal \\\"pending merge changed paths that the commit does not name: \\\\\\\\\\\"side-b\\\\\\\\\\\"\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-landing-focused",
+          "command": "bench test --package ./internal/landing --run 'TestLandRefusesAnIncompleteMergeNameSet|TestLandRefusesAnUnreadableMergeState|TestLandComposesOnlyNamedPathsAndCASesExpectedBase'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the NamedPathError refusal that attributedPaths raises for the omitted merged paths in internal/landing/attribution.go, so that an incomplete name set composes. TestLandRefusesAnIncompleteMergeNameSet turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:cmp_t2/tip2/t2-landing-focused.txt",
+              "digest": "sha256:cd0d76454af9c3d951d23ebf7fdd4f5d05fd4248130c332af3e64cf1b8173c44",
+              "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --package ./internal/landing --run 'TestLandRefusesAnIncompleteMergeNameSet|TestLandRefusesAnUnreadableMergeState|TestLandComposesOnlyNamedPathsAndCASesExpectedBase'\nexit 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc50e71e7019b1c84766fd059a5e4d85ee047276,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,335,9\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec \"commit-merge-parent-build\" -- bench probe internal/landing/attribution.go --omit 'return nil, NamedPathError{errors.New(\"pending merge changed paths that the commit does not name: \" + strings.Join(omitted, \" \"))}' --package ./internal/landing --run '^TestLandRefusesAnIncompleteMergeNameSet$'\nexit 1 (the mutant bit)\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc50e71e7019b1c84766fd059a5e4d85ee047276,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/attribution.go,omit,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,^TestLandRefusesAnIncompleteMergeNameSet$,passed,7\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAnIncompleteMergeNameSet/conflicted_path_omitted,\"pending_merge_test.go:83: Land error = <nil>, want the named-path refusal \\\"pending merge changed paths that the commit does not name: \\\\\\\\\\\"conflict.txt\\\\\\\\\\\"\\\"\",1\n  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAnIncompleteMergeNameSet/deleted_path_omitted,\"pending_merge_test.go:83: Land error = <nil>, want the named-path refusal \\\"pending merge changed paths that the commit does not name: \\\\\\\\\\\"gone.txt\\\\\\\\\\\"\\\"\",1\n  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAnIncompleteMergeNameSet/directory_does_not_cover_a_prefix_sibling,\"pending_merge_test.go:83: Land error = <nil>, want the named-path refusal \\\"pending merge changed paths that the commit does not name: \\\\\\\\\\\"pkgx/a.go\\\\\\\\\\\"\\\"\",1\n  github.com/gibbonmi/bench/internal/landing,TestLandRefusesAnIncompleteMergeNameSet/octopus_side_path_omitted,\"pending_merge_test.go:83: Land error = <nil>, want the named-path refusal \\\"pending merge changed paths that the commit does not name: \\\\\\\\\\\"side-b\\\\\\\\\\\"\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t2-commit-focused-cmp_t2-r2",
+          "performer": "claude:cmp_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t2/tip2/t2-commit-focused.txt",
+            "digest": "sha256:9445587a6aeeadb8f60eb8b3fca99c5e018c0b40ebb0210b7605e4ba362f48bc",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --package ./internal/commit --run 'TestCommitRefusesAnIncompleteMergeNameSet|TestCommitRefusesAnUnreadableMergeState|TestDryRunRefusesAnIncompleteMergeNameSet|TestMergeNameSetRefusalPrecedesCommitment'\nexit 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc50e71e7019b1c84766fd059a5e4d85ee047276,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,284,7\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-commit-focused",
+          "command": "bench test --package ./internal/commit --run 'TestCommitRefusesAnIncompleteMergeNameSet|TestCommitRefusesAnUnreadableMergeState|TestDryRunRefusesAnIncompleteMergeNameSet|TestMergeNameSetRefusalPrecedesCommitment'",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-floor-cmp_t2-r2",
+          "performer": "claude:cmp_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t2/tip2/t2-floor.txt",
+            "digest": "sha256:cedbb577665f6d1d27224768c6d50dfa4c0ff08950d7ebc620092fd50ab65682",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --package ./internal/git --package ./internal/landing --package ./internal/commit --package ./internal/refusalroute\nexit 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc50e71e7019b1c84766fd059a5e4d85ee047276,false\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,10065,117\n  github.com/gibbonmi/bench/internal/git,pass,1353,171\n  github.com/gibbonmi/bench/internal/landing,pass,8434,220\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,17\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t2-floor",
+          "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-root-conformance-cmp_t2-r2",
+          "performer": "claude:cmp_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t2/tip2/t2-root-conformance.txt",
+            "digest": "sha256:fd09ef17d0f4cf6b76b4cfb3da229ab141dd1aaafea90663b1ceee1396c0bd72",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --check root-conformance\nexit 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc50e71e7019b1c84766fd059a5e4d85ee047276,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15223,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-git-plumbing-owner-cmp_t2-r2",
+          "performer": "claude:cmp_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t2/tip2/t2-git-plumbing-owner.txt",
+            "digest": "sha256:b4951e9056477caec3514134afd93b01d1cea27d787025195f373f37c0886272",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --check git-plumbing-owner\nexit 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc50e71e7019b1c84766fd059a5e4d85ee047276,false\ncheck[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,95,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-git-plumbing-owner",
+          "command": "bench test --check git-plumbing-owner",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-ordinary-build-census-cmp_t2-r2",
+          "performer": "claude:cmp_t2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t2/tip2/t2-ordinary-build-census.txt",
+            "digest": "sha256:4b091d7bef2191abaf4b46b78d4e4f91670a6e8a1ad83a3e6858f6558e61c4bd",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --check ordinary-build-census\nexit 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc50e71e7019b1c84766fd059a5e4d85ee047276,false\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,317,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-ordinary-build-census",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
         }
       ],
       "reviews": [
