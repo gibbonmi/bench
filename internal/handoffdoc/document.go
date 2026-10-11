@@ -32,9 +32,8 @@ const (
 	shapeHeading         = "## Shape"
 )
 
-// The label lines a section carries. The six pins are exported because the
-// command that fills a section names them, and a second spelling there would
-// render a field this parser reads back under a different label.
+// The label lines of a section. The handoff command names them, so a second
+// spelling there renders a field that this parser reads under another label.
 const (
 	LabelRequestToken = "Request token"
 	LabelLabel        = "Label"
@@ -42,6 +41,7 @@ const (
 	LabelRecordedBase = "Recorded base"
 	LabelSpec         = "Spec"
 	LabelSpecStatus   = "Spec status"
+	LabelSpecBinding  = "Spec binding"
 	LabelNextCommand  = "Next command"
 )
 

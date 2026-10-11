@@ -176,6 +176,7 @@ func TestHandoffShapeNamesTheSectionGrammar(t *testing.T) {
 		handoffdoc.LabelWorktreeTip,
 		handoffdoc.LabelRecordedBase,
 		handoffdoc.LabelSpecStatus,
+		handoffdoc.LabelSpecBinding,
 		handoffdoc.LabelNextCommand,
 	} {
 		if !strings.Contains(handoff.ShapeSection, strings.TrimSpace(token)) {

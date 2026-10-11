@@ -3,7 +3,10 @@ package handoff
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/gibbonmi/bench/internal/commitment"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
@@ -50,17 +53,52 @@ const (
 	unknownUnpushed = "unpushed count unknown"
 	unknownToken    = "token not recorded"
 	unknownTip      = "tip unknown (neither tree nor branch resolves)"
+	unknownBinding  = "binding unknown (policy unreadable)"
 )
 
-// collect gathers the header facts from documentRoot and the section pins from the
-// owner's tree. It never fails: each query that cannot answer degrades to its explicit
-// unknown. A session resuming into a half-initialized repo still needs the fields that
-// do resolve.
+// unbound is the binding value of a spec path that no outcome of the default-branch
+// policy binds.
+const unbound = "unbound"
+
+// bindings is the default-branch policy that one run reads. fault holds the error of a
+// policy that does not read or does not parse.
+type bindings struct {
+	policy commitment.Policy
+	fault  error
+}
+
+// readBindings reads the default-branch policy, never the policy file of a checkout. Start
+// reads only that policy, so a binding that only a worktree holds reads as unbound. Every
+// checkout of root resolves the same default branch.
+func readBindings(root string) bindings {
+	policy, _, err := commitrepo.Store{Root: root}.Policy()
+	if commitrepo.DefaultUnresolved(err) {
+		return bindings{}
+	}
+	return bindings{policy: policy, fault: err}
+}
+
+// value renders the binding state of the spec at path: its binding outcome ids, unbound,
+// or the unknown phrase.
+func (b bindings) value(path string) string {
+	if b.fault != nil {
+		return unknownBinding
+	}
+	if ids := commitment.BindingOutcomes(b.policy, path); len(ids) > 0 {
+		return strings.Join(ids, " ")
+	}
+	return unbound
+}
+
+// collect gathers the header facts from documentRoot, and the section pins from the
+// owner's tree and bound. It never fails: each query that cannot answer degrades to its
+// explicit unknown. A session resuming into a half-initialized repo still needs the
+// fields that do resolve.
 //
 // The header reads documentRoot, the checkout the document lives in, rather than the
 // caller's tree. A worktree run that pinned its own HEAD in the header would state the
 // branch of one phase above the sections of every phase.
-func collect(documentRoot string, o owner) facts {
+func collect(documentRoot string, o owner, bound bindings) facts {
 	f := facts{
 		Repo:   filepath.Base(documentRoot),
 		Path:   renderPath(documentRoot, os.Getenv("HOME")),
@@ -68,7 +106,7 @@ func collect(documentRoot string, o owner) facts {
 		Head:   head(documentRoot),
 		Gate:   gateField(status.GateVerdict(documentRoot)),
 		Key:    o.Key,
-		Pins:   pins(documentRoot, o),
+		Pins:   pins(documentRoot, o, bound),
 	}
 	if origin, err := git.Output("-C", documentRoot, "remote", "get-url", "origin"); err == nil {
 		f.Origin = origin
@@ -80,7 +118,7 @@ func collect(documentRoot string, o owner) facts {
 // pins renders the owned section's label lines. main carries no assignment, so it renders
 // its live specs alone: its request, label, tip, and base are the header's repository
 // facts, and a second copy of them under the heading would drift from the header.
-func pins(documentRoot string, o owner) []handoffdoc.Field {
+func pins(documentRoot string, o owner, bound bindings) []handoffdoc.Field {
 	var fields []handoffdoc.Field
 	if o.Key != handoffdoc.MainKey {
 		fields = append(fields,
@@ -94,6 +132,7 @@ func pins(documentRoot string, o owner) []handoffdoc.Field {
 		fields = append(fields,
 			handoffdoc.Field{Label: handoffdoc.LabelSpec, Value: live.Path},
 			handoffdoc.Field{Label: handoffdoc.LabelSpecStatus, Value: live.Status},
+			handoffdoc.Field{Label: handoffdoc.LabelSpecBinding, Value: bound.value(live.Path)},
 		)
 	}
 	return fields

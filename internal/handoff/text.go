@@ -25,8 +25,8 @@ const ShapeSection = "One section per live assignment, each rewritten in full by
 	"\n" +
 	"A section opens at `## main` or at `## request <digest>`, and this section closes the\n" +
 	"document. Below a section heading come its label lines: `Request token`, `Label`,\n" +
-	"`Worktree tip`, `Recorded base`, and one `Spec` and `Spec status` pair per live spec.\n" +
-	"One `Next command` line and a `### State` body follow them.\n" +
+	"`Worktree tip`, `Recorded base`, and the `Spec`, `Spec status`, and `Spec binding`\n" +
+	"lines of each live spec. One `Next command` line and a `### State` body follow them.\n" +
 	"\n" +
 	"A label line carries no sentence terminator, so the prose lane skips it. **State**\n" +
 	"holds what is true now for that assignment, including anything uncommitted. **Next\n" +

@@ -137,6 +137,22 @@ func Unsettled(policy Policy) ([]SourceBinding, []DeliveryBinding) {
 	return sources, bindings
 }
 
+// BindingOutcomes returns, in policy order, the id of each outcome whose unsettled
+// deliverable binding names path. The settlement of Unsettled decides which bindings count.
+func BindingOutcomes(policy Policy, path string) []string {
+	settled := settle(policy)
+	var ids []string
+	for _, milestone := range policy.Milestones {
+		for _, outcome := range milestone.Outcomes {
+			_, bindings := settled.unsettled(outcome)
+			if slices.ContainsFunc(bindings, func(binding DeliveryBinding) bool { return binding.Source.Path == path }) {
+				ids = append(ids, outcome.ID)
+			}
+		}
+	}
+	return ids
+}
+
 // NewDeliverable reports whether a deliverable of proposed names source and no deliverable of
 // current names that id, path, and identity. A nil current names no deliverable.
 func NewDeliverable(current *Policy, proposed Policy, source SourceBinding) bool {
