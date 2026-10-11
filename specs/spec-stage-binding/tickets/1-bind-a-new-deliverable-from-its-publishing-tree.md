@@ -1,8 +1,8 @@
 # Bind a new deliverable from its publishing tree
 
 Blocked by: none
-Writes: .bench/commitment.json, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/commitment/commitcmd/command.go, internal/commitment/commitmenttest/repo.go, internal/commitment/delivery.go, internal/commitment/head_binding_test.go (new), internal/commitment/repository/admission.go, internal/commitment/repository/candidate.go, internal/commitment/repository/closure.go, internal/commitment/repository/head_binding_test.go (new), internal/commitment/repository/publication.go, internal/commitment/repository/readiness.go, internal/commitment/repository/repository.go, internal/commitment/repository/sources.go, internal/commitment/store_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: SB01, SB02, SB03, SB04, SB05, SB06, SB07, SB08, SB09, SB10, SB11, SB12, SB13, SB14, SB15, SB16, SB20, SB21, SB22
+Writes: .bench/commitment.json, CHANGELOG.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/commitment/commitcmd/command.go, internal/commitment/commitmenttest/repo.go, internal/commitment/delivery.go, internal/commitment/head_binding_test.go (new), internal/commitment/repository/admission.go, internal/commitment/repository/candidate.go, internal/commitment/repository/closure.go, internal/commitment/repository/head_binding_test.go (new), internal/commitment/repository/publication.go, internal/commitment/repository/readiness.go, internal/commitment/repository/repository.go, internal/commitment/repository/sources.go, internal/commitment/store_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/land_specless_test.go, internal/worktree/parallel_census_test.go, tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns, tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary
+Covers: SB01, SB02, SB03, SB04, SB05, SB06, SB07, SB08, SB09, SB10, SB11, SB12, SB13, SB14, SB15, SB16, SB17, SB18, SB19, SB20, SB21, SB22
 
 ## What to build
 
@@ -10,7 +10,7 @@ A spec author binds a staged spec that the worktree HEAD holds and main does not
 `bench commitment plan` and `bench commitment approve` read each new deliverable source at the checkout HEAD.
 `bench commit` and `bench worktree land` read each new deliverable source at the candidate tree.
 Every other source keeps the default-branch tip, and start, readiness, and the outlook keep the default-branch policy.
-So a binding counts for start, readiness, and status only after it lands.
+So one spec-less landing publishes the staged spec and its binding, and the binding counts for start, readiness, and status only after it lands.
 
 The spec terms apply here.
 A deliverable of the proposed policy names a new deliverable source.
@@ -76,20 +76,56 @@ After the edit, record one red through `bench probe` for each row that passes be
 
 Each probe reports a restored subject.
 
+Add the planned `TestCommitmentSpecStageLandsSpecAndBinding` to `internal/worktree/land_specless_test.go`.
+The journey runs these steps:
+
+1. Make the fixture with `planningLandingFixture` and an adopted policy.
+2. In the planning worktree, write a staged spec with a `Roadmap:` line, and commit it through `benchCommit`.
+3. Add one deliverable binding of that spec to the outcome that `bench commitment show` names, with the identity from `commitment.Identity` over the spec bytes.
+4. Run `bench commitment plan` and `bench commitment approve` in the planning worktree.
+5. Commit `.bench/commitment.json` and each other path that approve staged, through `benchCommit`.
+6. Run `bench commitment show` in the primary checkout and in the planning worktree.
+7. Land the planning worktree spec-less once.
+8. Run `bench commitment show` in the primary checkout again.
+
+`TestCommitmentPlanningBootstrap` is the precedent for the steps that commit and land.
+The journey reads each spec path from its fixture writes and each outcome id from the fixture policy.
+These checks prove the rows:
+
+- SB17: the landing exits zero and releases the worktree, and main holds the spec bytes and the bound policy.
+- SB18: after the landing, the primary checkout prints `--deliverable specs/<slug>/spec.md` in the start command.
+- SB19: before the landing, the planning worktree prints `--deliverable <path>` in the start command, although its policy file holds the binding.
+
+The journey also requires `--deliverable <path>` from the primary checkout before the landing.
+SB17 and SB18 fail before the production edit, because the current landing validates the new deliverable at the default-branch tip.
+SB19 passes before the edit, so its red comes from a probe that makes `Store.Outlook` read the policy at the checkout HEAD.
+If the landing refuses for a reason outside this ticket, stop and report the refusal with its detail.
+
+The journey calls `t.Parallel`, as every test of that file does, so `worktreeSerialCeiling` stays at 45.
+Raise `worktreeTestCount` at `internal/worktree/parallel_census_test.go:1061` by one for the new top-level test.
+That file holds 1096 lines, so the edit changes one line and adds none.
+`land_specless_test.go` holds 300 lines, so keep it at 400 lines or fewer.
+
 The `Writes:` line names `.bench/commitment.json` under decision D5, and no other ticket of this spec names it.
 The spec-stage close commits the binding inside the range that the plan-only preflight grades.
 This ticket does not change the policy file.
 
-The binding registry binds the five command registry files to `internal/commitment`, so they join this `Writes:` line.
+The binding registry binds the five command registry files to `internal/commitment`, `internal/worktree`, and `internal/anchors`, so they join this `Writes:` line.
 This ticket does not change them, and four of them hold more than 400 lines.
+
+The `Writes:` line names `CHANGELOG.md` as an upper bound, because a research return named it for this chunk.
+This ticket does not write the `CHANGELOG.md` entry, because the spec gives the one entry to the last ticket.
+The anchor registry files `internal/anchors/registry_data.go` and `internal/anchors/registry_data_test.go` name `CHANGELOG.md`, and two canary units pin it.
+So these four files join the `Writes:` line, and this ticket does not change them.
+
 `admission.go`, `readiness.go`, `closure.go`, `publication.go`, and `commitcmd/command.go` call a function that this ticket can change.
 Each one changes only when a signature changes.
 `commitmenttest/repo.go` and `delivery.go` are possible helper sites.
 The comment at `store_test.go:146` says that the default branch does not hold a spec, and it can name the checkout HEAD instead.
 
-This ticket gives ticket 2 this contract.
-In a linked planning worktree, plan, approve, and `bench commit` accept a binding of a staged spec that HEAD holds and main does not hold.
-`AdmitPublication` admits the composed tree that holds the spec and its approved binding.
+This ticket gives tickets 2 and 3 this contract.
+One spec-less landing of a planning worktree publishes a staged spec and its approved binding.
+After that landing, `bench commitment show` prints the start command with the bound spec path.
 Start, readiness, and the outlook read only the default-branch policy.
 
 ## Acceptance
@@ -110,7 +146,12 @@ Start, readiness, and the outlook read only the default-branch policy.
 - [ ] `Store.AdmitPublication` admits a spec-less publication whose composed tree holds the staged spec and its approved binding.
 - [ ] `Store.AdmitPublication` refuses a composed tree whose spec bytes differ from the approved identity.
 - [ ] `bench commit` refuses a policy candidate whose transition has no exact approved plan.
+- [ ] A spec-less `bench worktree land` of the planning worktree publishes the staged spec and its binding in one landing.
+- [ ] After that landing, `bench commitment show` in the primary checkout prints the start command with `--deliverable specs/<slug>/spec.md`.
+- [ ] Before that landing, `bench commitment show` in the planning worktree prints the start command with `--deliverable <path>`.
+- [ ] Before that landing, `bench commitment show` in the primary checkout prints the start command with `--deliverable <path>`.
 - [ ] `bench commitment start` admits a staged spec that the default-branch policy binds.
 - [ ] Before the landing, `Store.Start` from the planning worktree refuses the HEAD-bound spec with `is not approved for outcome`.
 - [ ] The bound start command keeps the `--request <request>` placeholder.
 - [ ] `internal/commitment/repository/repository.go` holds 400 lines or fewer.
+- [ ] `worktreeTestCount` equals the count of top-level tests in `internal/worktree`.
