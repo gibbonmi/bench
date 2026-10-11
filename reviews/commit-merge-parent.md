@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/commit-merge-parent/spec.md",
-  "plan_digest": "sha256:06b9db25ba9dba1eee9e58f5e427693c6ff3473a78c4ce1e7ad3e6aa8c2f09dd",
+  "plan_digest": "sha256:ab73d3743fe659a20eb212cb44af6b2b0cdee6be76c7a5a1bcb2f22d924d2c7c",
   "implementation_session": "",
   "chunks": [
     {
@@ -459,6 +459,15 @@
     {
       "from": "sha256:3b3b51e2c87d4449eb3044f3d9d1fb6c5eb414dd8b48e9d711f48822bfe6eda6",
       "to": "sha256:06b9db25ba9dba1eee9e58f5e427693c6ff3473a78c4ce1e7ad3e6aa8c2f09dd",
+      "chunk_ids": {
+        "MP1": [
+          "MP1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:06b9db25ba9dba1eee9e58f5e427693c6ff3473a78c4ce1e7ad3e6aa8c2f09dd",
+      "to": "sha256:ab73d3743fe659a20eb212cb44af6b2b0cdee6be76c7a5a1bcb2f22d924d2c7c",
       "chunk_ids": {
         "MP1": [
           "MP1"
