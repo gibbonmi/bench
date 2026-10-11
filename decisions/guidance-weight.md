@@ -32,6 +32,12 @@ Use craft-research for Research tickets and craft-grill for Grill tickets. The s
 - [What byte limit does each existing budget row start with?](guidance-weight/tickets/6.md): the file's size at the switch, rounded up to a multiple of 100 bytes.
 - [Does AGENTS.md get a byte budget row?](guidance-weight/tickets/7.md): yes, an exact row at its size after this outcome.
 - [Does the kit's CLAUDE.md take the managed form?](guidance-weight/tickets/8.md): yes; the repeated sentences go.
+- [Where does each always-loaded clause act, and where else does it live?](guidance-weight/tickets/5.md): see `assets/clause-inventory.md`; the build clauses and B43 act only in some phases.
+- [Where do the build-orchestration clauses move?](guidance-weight/tickets/9.md): into one build reference beside the build phase, with their pointers and anchors.
+- [How do the light-path clauses merge into one block?](guidance-weight/tickets/10.md): one block under the table; the repeated drain sentences go.
+- [What byte bound does BENCH.md get?](guidance-weight/tickets/11.md): its size after this outcome, rounded up to a multiple of 100 bytes; about 11,600.
+- [Which repeated copies go now?](guidance-weight/tickets/14.md): the B10 exception, B12, and A17; their anchors move to the kept copies.
+- [Where does the batch-approval rule go?](guidance-weight/tickets/15.md): beside the sign-off stop in `/bench-write-spec`; the drain line gets its own words.
 
 ## Not yet specified
 
@@ -40,6 +46,7 @@ Use craft-research for Research tickets and craft-grill for Grill tickets. The s
 - How the byte count treats line endings and the final newline.
 - The order of the moves inside the spec.
 - Whether a check holds the kit's `CLAUDE.md` to the managed form.
+- The name of the build reference file.
 
 ## Out of scope
 
@@ -49,6 +56,9 @@ Use craft-research for Research tickets and craft-grill for Grill tickets. The s
 
 ## Sources
 
+- Path: `decisions/guidance-weight/assets/clause-inventory.md`
+  Supports: #9, #10, #14, and #15.
+  Drift: an edit of `.bench/BENCH.md`, `AGENTS.md`, or an anchor row that names either file.
 - Path: `roadmap/FT100.md`
   Supports: the scope, the anchor-first order, and the budget-measure requirement.
   Drift: a drain edit of the row.
