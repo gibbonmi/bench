@@ -732,9 +732,9 @@
     {
       "id": "SB2",
       "base": "a95df2915a4c887558a96b00539ee878b9e5fb30",
-      "tip": "05862c08818afd26fb2fe5731f5e316dddc53d46",
-      "plan_digest": "sha256:b702956291e72022b136c6a26df45e62a8ed410dade0bfcfea45dcea51e638b3",
-      "source_digest": "cb26e2e71529a7049810ba22ae3e86aae6d701e4",
+      "tip": "666e240c433cef52b4ab7ac40c27740a4e884e97",
+      "plan_digest": "sha256:cbb0b99854c104a0adee3eb06e6934661bd1a83b84906e3f94c7211ee19c366f",
+      "source_digest": "cb37c3d60fa0ebc02a02e036095b7c35100b829e",
       "acceptance_rows": [
         "SB23",
         "SB24",
@@ -825,6 +825,89 @@
             "ref": "claude-agent:ssb_t2/t2-root-conformance.txt",
             "digest": "sha256:d5dcad5613af1591289cd1e66876bf0ba4bb4e3ee9eb580435a62fb08b3be250",
             "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,44a3eab293520e3b5e245c2a6507866bdab631a9,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17110,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-handoff-focused-ssb_t2_rep1",
+          "performer": "claude:ssb_t2_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "cb37c3d60fa0ebc02a02e036095b7c35100b829e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t2_rep1/t2-handoff-focused.txt",
+            "digest": "sha256:64d4ba31440bc7958d73841ddbd0aca6cd8dee9de39ee79b8c95f5cc487a1c5b",
+            "excerpt": "$ bench test --package ./internal/handoff --run 'TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,666e240c433cef52b4ab7ac40c27740a4e884e97,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoff,pass,713,11\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nnamed probe (central): swap the default-branch policy read for a read of the calling checkout's own .bench/commitment.json\n$ bench probe internal/handoff/facts.go --swap 'policy, _, err := commitrepo.Store{Root: root}.Policy()' --with 'data, _ := os.ReadFile(filepath.Join(root, commitment.PolicyPath)); policy, err := commitment.Parse(data)' --package ./internal/handoff --run 'TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,666e240c433cef52b4ab7ac40c27740a4e884e97,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoff/facts.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoff,TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec,passed,11\nspilled{lines=13,bytes=1311,omitted_lines=4,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/117ec43b4dcf3574d4c69d0aecedb569/1791736645486052834-d497d3d778993535.out}\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersAnUnavailableBinding/SB27_no_policy_on_main,\"render_test.go:176: section carries no \\\"Spec: specs/alpha/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",11\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersAnUnavailableBinding/SB44_no_default_branch_resolves,\"render_test.go:194: section carries no \\\"Spec: specs/alpha/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",7\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersTheSpecBinding/SB25_bound_only_in_the_worktree,\"render_test.go:162: section carries no \\\"Spec: specs/beta/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",14\nskips[0]{package,test,reason}:\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoff/facts.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoff,TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec,passed,11\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,894\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoff,fail,659,11\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersAnUnavailableBinding/SB27_no_policy_on_main,\"render_test.go:176: section carries no \\\"Spec: specs/alpha/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",11\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersAnUnavailableBinding/SB44_no_default_branch_resolves,\"render_test.go:194: section carries no \\\"Spec: specs/alpha/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",7\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersTheSpecBinding/SB25_bound_only_in_the_worktree,\"render_test.go:162: section carries no \\\"Spec: specs/beta/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",14\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-handoff-focused",
+          "command": "bench test --package ./internal/handoff --run 'TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap the default-branch policy read for a read of the calling worktree's own .bench/commitment.json at the one policy read of a bench handoff run in internal/handoff, so that a binding that only the worktree holds reads as bound. The SB25 case of TestSectionRendersTheSpecBinding turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ssb_t2_rep1/t2-handoff-focused.txt",
+              "digest": "sha256:64d4ba31440bc7958d73841ddbd0aca6cd8dee9de39ee79b8c95f5cc487a1c5b",
+              "excerpt": "$ bench test --package ./internal/handoff --run 'TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,666e240c433cef52b4ab7ac40c27740a4e884e97,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoff,pass,713,11\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nnamed probe (central): swap the default-branch policy read for a read of the calling checkout's own .bench/commitment.json\n$ bench probe internal/handoff/facts.go --swap 'policy, _, err := commitrepo.Store{Root: root}.Policy()' --with 'data, _ := os.ReadFile(filepath.Join(root, commitment.PolicyPath)); policy, err := commitment.Parse(data)' --package ./internal/handoff --run 'TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,666e240c433cef52b4ab7ac40c27740a4e884e97,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoff/facts.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoff,TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec,passed,11\nspilled{lines=13,bytes=1311,omitted_lines=4,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/117ec43b4dcf3574d4c69d0aecedb569/1791736645486052834-d497d3d778993535.out}\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersAnUnavailableBinding/SB27_no_policy_on_main,\"render_test.go:176: section carries no \\\"Spec: specs/alpha/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",11\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersAnUnavailableBinding/SB44_no_default_branch_resolves,\"render_test.go:194: section carries no \\\"Spec: specs/alpha/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",7\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersTheSpecBinding/SB25_bound_only_in_the_worktree,\"render_test.go:162: section carries no \\\"Spec: specs/beta/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",14\nskips[0]{package,test,reason}:\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/handoff/facts.go,swap,failed,3,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoff,TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec,passed,11\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,894\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoff,fail,659,11\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersAnUnavailableBinding/SB27_no_policy_on_main,\"render_test.go:176: section carries no \\\"Spec: specs/alpha/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",11\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersAnUnavailableBinding/SB44_no_default_branch_resolves,\"render_test.go:194: section carries no \\\"Spec: specs/alpha/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",7\n  github.com/gibbonmi/bench/internal/handoff,TestSectionRendersTheSpecBinding/SB25_bound_only_in_the_worktree,\"render_test.go:162: section carries no \\\"Spec: specs/beta/spec.md\\\\\\\\nSpec status: staged\\\\\\\\nSpec binding: unbound\\\\\\\\n\\\"\",14\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t2-shape-focused-ssb_t2_rep1",
+          "performer": "claude:ssb_t2_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "cb37c3d60fa0ebc02a02e036095b7c35100b829e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t2_rep1/t2-shape-focused.txt",
+            "digest": "sha256:39e34b29079f32a1b023f31c24c1e29f36709e41db72a63834b6e64698f47c1d",
+            "excerpt": "$ bench test --package ./internal/conformance --run 'TestHandoffShapeNamesTheSectionGrammar'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,666e240c433cef52b4ab7ac40c27740a4e884e97,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,10,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t2-shape-focused",
+          "command": "bench test --package ./internal/conformance --run 'TestHandoffShapeNamesTheSectionGrammar'",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-floor-ssb_t2_rep1",
+          "performer": "claude:ssb_t2_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "cb37c3d60fa0ebc02a02e036095b7c35100b829e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t2_rep1/t2-floor.txt",
+            "digest": "sha256:1571dad0555faec84e9ebd8caaf216d5fc337614d2ea262d3979ef7d966bc91a",
+            "excerpt": "$ bench test --package ./internal/handoff --package ./internal/handoffdoc --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,666e240c433cef52b4ab7ac40c27740a4e884e97,false\npackages[9]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16030,333\n  github.com/gibbonmi/bench/internal/anchors,pass,2294,179\n  github.com/gibbonmi/bench/internal/commitment,pass,6168,175\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,860,19\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,5628,107\n  github.com/gibbonmi/bench/internal/conformance,pass,57321,1685\n  github.com/gibbonmi/bench/internal/handoff,pass,3393,56\n  github.com/gibbonmi/bench/internal/handoffdoc,pass,31,24\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t2-floor",
+          "command": "bench test --package ./internal/handoff --package ./internal/handoffdoc --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t2-root-conformance-ssb_t2_rep1",
+          "performer": "claude:ssb_t2_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "cb37c3d60fa0ebc02a02e036095b7c35100b829e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t2_rep1/t2-root-conformance.txt",
+            "digest": "sha256:5abf18a61841bc611999bdf34f79fa5958257af4486db7243eeffe5df328623e",
+            "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,666e240c433cef52b4ab7ac40c27740a4e884e97,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15650,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "t2-root-conformance",
           "command": "bench test --check root-conformance",
