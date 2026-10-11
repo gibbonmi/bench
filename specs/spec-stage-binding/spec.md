@@ -141,7 +141,7 @@ The coordinator locked the engineering decisions below. Each one is open to revi
 - D2 Derivation. The close derives the binding from the inventory row of the staged spec. No new verb or flag joins the commitment grammar. Reason: `Store.Inventory` already joins the `Roadmap:` value, the path, and the plan identity (`internal/commitment/repository/repository.go:61-79`).
 - D3 Complete command. "Complete" means that the deliverable path is filled. The `--request <request>` placeholder stays. Reason: `withCommand` keeps it by design, because only the worker names a request (`internal/commitment/commitcmd/command.go:181-182`), and no request exists at status time.
 - D4 Handoff binding state. `bench handoff` writes one derived `Spec binding` line after each `Spec status` line. Reason: a separate label keeps one fact per field, and no code reads the `Spec status` value (`internal/handoff/facts.go:83-100`).
-- D5 Writes rule. Every spec's fence and exactly one ticket's `Writes:` line own `.bench/commitment.json`. Reason: the close commits the binding inside the spec-stage range, and the plan-only preflight grades that range (`internal/preflight/paths_authorized.go:24-47`).
+- D5 Writes rule. Every spec's fence and exactly one ticket's `Writes:` line own `.bench/commitment.json`. Reason: the close commits the binding inside the spec-stage range, and the plan-only preflight grades that range (`internal/preflight/paths_authorized.go:24-47`). No preflight row requires a `Writes:` path to change: `writes-resolve` passes when the path exists, and no closure row pins `.bench/commitment.json` (`internal/preflight/decision.go:201-222`, `internal/preflight/ticket_rows.go:13-27`, `internal/anchors/registry_ticket_passes.go:64-65`). `internal/preflight/decision_test.go:179-183` pins the `paths-authorized` red of an unfenced path.
 - D6 Guidance. The write-spec Exit handoff owns the close order. `.bench/BENCH.md` owns the binding authority, and `AGENTS.md` owns the pin list of a phase-close handoff. Reason: one source per fact.
 - D7 An eligible outcome with no approved deliverable keeps its current status output. Reason: the decision source states the status output after the binding, not a new route.
 - D8 Bootstrap. This spec's own close binds through the current two-landing route, because the one-landing route ships with this spec.
@@ -170,6 +170,10 @@ The tickets-only rule of `ticketsOnlyAt` applies at the same HEAD.
 One owner decides which tree each source reads, so plan, approve, and the approval check cannot drift.
 The inventory reads the same checkout HEAD that plan reads for a new deliverable.
 
+`.bench/commitment.json` is a planning path (`internal/commitment/model.go:112-113`), so a commit that changes only the policy ends at `internal/commitment/repository/candidate.go:99-100` with no light-path grading.
+Each later commit in the same worktree grades the transition again, because `branchReference` returns the tip while the base policy differs (`internal/commitment/repository/candidate.go:131-144`).
+SB13 therefore holds for the whole life of the worktree, not only for its first commit.
+
 ### The approval check
 
 `approvedTransition` receives the candidate tree beside the default-branch revision.
@@ -192,6 +196,7 @@ The outlook comment at `internal/commitment/outlook.go:37-40` says that a reader
 
 `pins` writes one `Spec binding` line directly after the `Spec status` line of each live spec.
 `handoffdoc` gains the label constant `LabelSpecBinding` with the value `Spec binding`.
+The parser already reads any label line as a generic field (`internal/handoffdoc/document.go:381`), so the parser takes no edit beside the constant.
 The value lists the id of each outcome whose undelivered deliverable binding in the default-branch policy names the spec path.
 The ids follow policy order, with one space between two ids.
 
@@ -243,7 +248,16 @@ The comment stays on its one line, so the skill keeps its line count.
 `.agents/commands/bench-write-spec.md` holds 87 lines against its 87-line budget, and `.bench/BENCH.md` holds 192 against 192 (`projects/benchkit.md:488-501`).
 `.agents/skills/bench-craft-spec/SKILL.md` holds 155 against 155.
 No budget rises, because a raised budget weakens a check.
-Each edit therefore replaces or extends existing lines, and `guidance-prose-budgets` grades the result.
+`guidance-prose-budgets` grades the result of each edit.
+
+The Exit handoff paragraph of the command already holds five sentences, and a paragraph holds at most six (`internal/prose/prose.go:17-18`).
+The close order therefore takes a new block after that paragraph.
+To pay for that block, the edit joins the wrapped prose of command lines 9-11, 20-23, 28-29, and 32-35 into one physical line each.
+That join frees nine lines and changes no word.
+
+The edit keeps the two `Require` sentences that `internal/anchors/registry_data.go:336-337` pin on command line 16.
+The edit adds no needle that `internal/anchors/registry_data.go:335`, `:358-359`, or `internal/anchors/registry_ft311_preparation.go:50` forbid.
+The `.bench/BENCH.md` grant extends the paragraph of line 149 from three sentences to four, so it adds no line.
 
 ### The anchors
 
@@ -392,7 +406,7 @@ The gate observes the feature through the package suites and the guidance checks
 | SB06 | 7 | In a linked worktree whose HEAD holds a tickets-only folder that main lacks, `Store.Plan` accepts a policy that binds that folder | planned TestHeadBindingPlansATicketsOnlyFolder in internal/commitment/head_binding_test.go | A HEAD rule that skips `ticketsOnlyAt` refuses the folder as a source file. |
 | SB07 | 10 | `Store.Plan` in the worktree refuses a staged spec that only the working tree holds | planned TestHeadBindingRefusesAnUnheldDeliverable in internal/commitment/head_binding_test.go | A plan that reads the working tree binds bytes that no commit holds. |
 | SB08 | 11 | `Store.Plan` in a worktree whose HEAD lacks a spec that main holds refuses a new binding of that spec | planned TestHeadBindingRefusesAnUnheldDeliverable in internal/commitment/head_binding_test.go | A fallback to the default-branch tip makes one new binding read two trees. |
-| SB09 | 12 | `Store.Plan` in the worktree refuses a HEAD-held spec that carries no `Status: staged` line | planned TestHeadBindingRefusesAnUnheldDeliverable in internal/commitment/head_binding_test.go | A HEAD read that skips the staged check binds a draft or an implemented spec. |
+| SB09 | 12 | `Store.Plan` in the worktree refuses a HEAD-held spec that carries no `Status: staged` line, with the sentence `deliverable "<path>" is not staged` | planned TestHeadBindingRefusesAnUnheldDeliverable in internal/commitment/head_binding_test.go | A HEAD read that skips the staged check binds a draft or an implemented spec. |
 | SB10 | 16 | `Store.Plan` in a worktree that commits a changed roadmap row refuses a plan that names the changed row identity | planned TestHeadBindingKeepsTheDefaultTipForEveryOtherSource in internal/commitment/head_binding_test.go | A rule that moves every source to HEAD lets a worktree row edit pass as current. |
 | SB11 | 17 | `Store.Plan` in a worktree whose HEAD predates another outcome's binding on main accepts a policy that keeps that binding | planned TestHeadBindingKeepsTheDefaultTipForEveryOtherSource in internal/commitment/head_binding_test.go | A rule that reads every deliverable at HEAD refuses the retained binding that HEAD lacks. |
 | SB12 | 3 | In the worktree, `Store.AuthorizeCandidate` admits a candidate tree that holds the staged spec and its approved binding | planned TestAuthorizeCandidateAdmitsAHeadHeldBinding in internal/commitment/repository/head_binding_test.go | The current approval check validates the plan sources at the default-branch tip, so it refuses. |
@@ -468,18 +482,19 @@ These estimates are planning figures, not approved priorities.
 ## Further notes
 
 Evidence status: source-backed proposal, with no Bench runtime claim.
-Remaining uncertainty: future red-to-green evidence and the independent spec review.
+Remaining uncertainty: future red-to-green evidence and the ticket review.
 
 ### Flagged additions
 
 Each item below goes beyond the literal decision source, and the reviewer can veto it at sign-off:
 
-- E1: a new deliverable source reads only the checkout HEAD, so a worktree that predates the spec folds main first (SB08).
+- E1: a new deliverable source reads only the checkout HEAD, so a worktree that predates the spec folds main first (SB08). The spec review judged this strict rule safer than a fallback to the tip. A fallback at plan forces the same fallback into the approval check. A candidate tree that lacks the spec could then publish a binding without its spec.
 - E2: `bench commitment inventory` reads staged specs at the checkout HEAD, not the default-branch tip (SB03-SB05).
 - E3: the `Spec binding` value format, its policy-order join, and the phrase `binding unknown (policy unreadable)` (SB23-SB28).
 - E4: `AGENTS.md` moves the spec-stage handoff to the primary checkout after its landing (SB39).
-- E5: the `Roadmap:` comment of the `craft-spec` template (SB40).
+- E5: the `Roadmap:` comment of the `craft-spec` template (SB40). It changes no behavior, and its removal costs nothing.
 - E6: the new anchors and mirrors of the guidance sentences (SB31-SB36).
+- E7: the close passes the start command to `bench handoff --next` (SB33). The Shape text calls `Next command` the exact harness-native invocation (`internal/handoff/text.go:31-33`), and the start command keeps the `<request>` placeholder. The alternative pins `/bench-implement-spec specs/<slug>/spec.md` as the next command and puts the start command in the State body. The reviewer decides between the two forms.
 
 ### Source sentence to row
 
@@ -515,7 +530,7 @@ The 2026-10-10 build-directions occurrence is the second landing and gate (SB17)
   - `pins` and `liveSpecs` resolve in `internal/handoff/facts.go`, and `ShapeSection` in `internal/handoff/text.go`.
 - `Import edges`: `internal/handoff` gains direct edges to `internal/commitment` and `internal/commitment/repository`. `go list -f '{{.Imports}}' ./internal/handoff` shows neither today, and `go list -f '{{join .Deps " "}}' ./internal/handoff` already lists both through `internal/status`. `go list -f '{{join .Deps "\n"}}' ./internal/commitment/repository` lists no `internal/handoff`, `internal/handoffdoc`, or `internal/status`, so the edges add no cycle.
 - `Source-row clauses and occurrences`: the source table above quotes each clause, and the paragraph after it maps every occurrence.
-- `Promised field labels`: `Spec binding`, `unbound`, `binding unknown (policy unreadable)`, and the refusals `commitment source "<id>" refused:` and `is not approved for outcome`.
+- `Promised field labels`: `Spec binding`, `unbound`, `binding unknown (policy unreadable)`, and the refusals `commitment source "<id>" refused:`, `deliverable "<path>" is not staged` (`internal/commitment/repository/sources.go:60-63`), and `is not approved for outcome`.
 - `Changed-function callers`: `bench consumers --production` lists each caller below.
   - `validateDeliverable`: `internal/commitment/repository/admission.go:41` (`Store.Start`), `internal/commitment/repository/readiness.go:60` (`Store.readyFor`), and `internal/commitment/repository/sources.go:71` (`validateDeliverables`)
   - `validateDeliverables`: `internal/commitment/repository/repository.go:119` (`Store.Plan`)
@@ -573,14 +588,18 @@ All five binding commits of the problem table changed only `.bench/commitment.js
 The landing of each binding needed an exact approved plan receipt (`internal/commitment/repository/candidate.go:160-188`).
 Only `acba6bed` names its plan in its message.
 
+Each existing plan and approve test roots at the primary repository, where HEAD equals the tip (`internal/commitment/commitmenttest/repo.go:134-146`).
+The one worktree-rooted `AuthorizeCandidate` test uses a legacy adoption that binds no deliverable (`internal/commitment/repository/publication_test.go:201-212`, `internal/commitment/commitmenttest/admission.go:76-79`).
+So the static search finds no existing fixture that the HEAD rule turns red. The SB1 author runs the commitment packages before the first production edit to confirm it, and lists each red as a posture change.
+
 ### Not verified
 
 - Whether `spec.CommitTree` and `ticketsOnlyAt` resolve a tree object id as they resolve a commit. `protectedCandidate` already reads roadmap rows at a tree id, but no current test binds a tickets-only folder at a tree id.
-- Whether a ticket whose `Writes:` line names a path that its commit never changes meets a preflight row other than `fence-writes`. The slicing checks call `Writes:` an upper bound (`.agents/skills/bench-craft-tickets/references/slicing-checks.md:73`).
 - The line budget of `internal/worktree/land_specless_test.go` and of `internal/handoff/render_test.go` against the structure ratchet.
 - Whether the landing gate runs a commitment check other than `AdmitPublication` over the composed tree.
 - The exact path of the FT393 `paths-authorized` red. The tree keeps only the occurrence line at `roadmap/FT395.md:17`.
-- The census of existing tests that run plan or approve from a worktree whose HEAD lacks a new deliverable that main holds. The SB1 author runs the commitment packages before the first production edit and lists each such red as a posture change.
+- The executed census of existing tests under the HEAD rule. A static search finds none that would turn red, and Observations states the evidence.
+- Whether `roadmap.ProjectSequence` leaves `ROADMAP.md` byte-identical for an approve that only adds a binding (`internal/commitment/repository/repository.go:302-313`).
 - Whether a test outside `internal/handoff` pins the exact bytes of a handoff section, such as a session-start system test.
 
 ### Validation plan
@@ -603,3 +622,8 @@ The coordinator runs the whole gate only at the landing.
 This spec's own close binds through the current two-landing route, because the one-landing route ships with this spec.
 The close lands the spec and its tickets spec-less, and a second planning worktree then plans, approves, commits, and lands the binding.
 The handoff then pins the start command that `bench status` prints for FT395.
+
+### Review chronology
+
+- SR1: the spec review ran on Fable at xhigh effort, by reviewer direction of 2026-10-11, over commit `a0cc7a54`. It accepted in iteration 1 with eight findings, and none of them blocked.
+- The coordinator folded the eight findings into this revision. R1 names the freed command lines and the kept anchors. R2 names the SB09 refusal sentence. R3, R4, R5, and R6 move settled facts into the evidence. R7 becomes the flagged decision E7. R8 keeps E5 flagged for veto.
