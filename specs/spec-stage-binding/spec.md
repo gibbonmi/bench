@@ -220,13 +220,13 @@ The Shape text of `internal/handoff/text.go` names the new label beside `Spec` a
 The Exit handoff of `.agents/commands/bench-write-spec.md` states this order after sign-off:
 
 1. Write the verification log into the spec and the scorecard updates, and commit them.
-2. Copy the spec's `bench commitment inventory` row into one new deliverable binding of the current policy. Put it on the outcome whose sources hold the row's scope, with that scope as the obligation.
+2. After the last spec edit, copy the spec's `bench commitment inventory` row into one new deliverable binding of the current policy. Put it on the outcome whose sources hold the row's scope, with that scope as the obligation. A spec with no `Roadmap:` line binds to the outcome that `bench status` names.
 3. Run `bench commitment plan` and `bench commitment approve` with the sign-off as the decision, and commit the binding.
 4. Run `bench preflight build <slug> --plan-only` at that tip.
 5. Land spec-less once.
 6. From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.
 
-A spec with no `Roadmap:` line binds to the outcome that `bench status` names, and plan's obligation rule still guards it (`internal/commitment/authority.go:120-135`).
+Plan's obligation rule still guards the binding of a spec with no `Roadmap:` line (`internal/commitment/authority.go:120-135`).
 The binding comes after the last spec edit, because the identity is the digest of the spec bytes (`internal/commitment/repository/sources.go:23-39`).
 The Exit handoff keeps the planning-only staged-spec sentence that `internal/anchors/registry_commitment.go:42` pins.
 
@@ -288,8 +288,8 @@ The last ticket writes it, because that ticket follows both behaviors.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| SB1 / 1-bind-a-new-deliverable-from-its-publishing-tree.md | A new deliverable binds from the tree that publishes it, so one spec-less landing publishes a staged spec and its binding, and `bench status` then prints the complete start command | SB01-SB22 | the `internal/commitment`, `internal/commitment/repository`, `internal/commit`, `internal/worktree`, and `cmd/bench` package tests | yes |
-| SB2 / planned: 2-name-the-binding-state-in-the-handoff.md | `bench handoff` names the binding state of each live spec | SB23-SB30, SB44 | the `internal/handoff`, `internal/handoffdoc`, `internal/commitment`, `internal/commitment/repository`, `cmd/bench`, and `internal/conformance` package tests | no |
+| SB1 / 1-bind-a-new-deliverable-from-its-publishing-tree.md | A new deliverable binds from the tree that publishes it, so one spec-less landing publishes a staged spec and its binding, and `bench status` then prints the complete start command | SB01-SB22 | the `internal/commitment`, `internal/commitment/repository`, `internal/commitment/commitmenttest`, `internal/commit`, `internal/worktree`, `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests | yes |
+| SB2 / planned: 2-name-the-binding-state-in-the-handoff.md | `bench handoff` names the binding state of each live spec | SB23-SB30, SB44 | the `internal/handoff`, `internal/handoffdoc`, `internal/commitment`, `internal/commitment/repository`, `internal/commitment/commitmenttest`, `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests | no |
 | SB3 / planned: 3-state-the-one-landing-close.md | The guidance states the one-landing close, the binding grant, the handoff pin, the Writes rule, and the template comment | SB31-SB43 | the `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `skills-index-command-adapters` checks | no |
 
 SB1 and SB2 both write files of `internal/commitment`, so the serial order also keeps their shared helper files apart.
@@ -313,9 +313,10 @@ The ticket names are planned, and the slicing replaces them with the sliced name
       "id": "SB1",
       "tickets": ["1-bind-a-new-deliverable-from-its-publishing-tree.md"],
       "verification": [
-        {"id": "commitment-packages", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd"},
+        {"id": "commitment-packages", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest"},
         {"id": "commit-package", "command": "bench test --package ./internal/commit"},
         {"id": "worktree-package", "command": "bench test --package ./internal/worktree"},
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"},
@@ -328,7 +329,8 @@ The ticket names are planned, and the slicing replaces them with the sliced name
       "tickets": ["2-name-the-binding-state-in-the-handoff.md"],
       "verification": [
         {"id": "handoff-packages", "command": "bench test --package ./internal/handoff --package ./internal/handoffdoc"},
-        {"id": "commitment-packages", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd"},
+        {"id": "commitment-packages", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest"},
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
@@ -351,7 +353,7 @@ The ticket names are planned, and the slicing replaces them with the sliced name
   ],
   "final_verification": [
     {"id": "coverage", "command": "bench coverage --check specs/spec-stage-binding/spec.md"},
-    {"id": "commitment-packages", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd"},
+    {"id": "commitment-packages", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest"},
     {"id": "commit-package", "command": "bench test --package ./internal/commit"},
     {"id": "worktree-package", "command": "bench test --package ./internal/worktree"},
     {"id": "handoff-packages", "command": "bench test --package ./internal/handoff --package ./internal/handoffdoc"},
