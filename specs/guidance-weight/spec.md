@@ -148,10 +148,16 @@ The forbid rows at `registry_retained_workflow.go:295` to `:302` keep their phas
 No new forbid row binds `.bench/BENCH.md`, because 27 canary overlays carry a whole old `BENCH.md` with these paragraphs.
 
 Each moved row's diagnostic that names "operating guide" names "build rules" instead.
+The B11 row `registry_data.go:377` names `.bench/BENCH.md` as the file that dropped its text, so its diagnostic names the build rules too.
 The mirrors repoint with their rows: `internal/conformance/retained_workflow_test.go:118-137`, `:151-166`, `:183-202`, and `internal/conformance/implementation_continuation_test.go:81-84`.
 The `wantDiagnostics` list of `retained_workflow_test.go:46-95` takes the renamed diagnostics.
 Two new require rows pin the new pointer in `.bench/BENCH.md` and the lead of the build rules.
-`TestReferenceFileAnchorsRedOnAbsence` (`internal/anchors/registry_data_test.go:571`) gains the build rules and its lead, as its three precedents carry theirs.
+A planned test proves the absence and lead diagnostics of the build rules, as `TestReferenceFileAnchorsRedOnAbsence` (`internal/anchors/registry_data_test.go:571`) proves them for its three precedents.
+
+The structure lane reds a Go file that is over its cap and gains a line (`internal/structure/structure.go:308-331`, cap 400 lines).
+`internal/anchors/registry_data.go` (478 lines) and `internal/anchors/registry_data_test.go` (1,286 lines) are over the cap with no grant.
+So each ticket keeps those two files at or below their base line counts.
+The new require rows go in `internal/anchors/registry_chunk_chain.go`, which already binds the staleness pass, and the new tests go in `internal/anchors/registry_chunk_chain_test.go`.
 
 ### The pointer lines
 
@@ -170,8 +176,10 @@ The anchors that quote a repointed line take the new text.
 They are `registry_retained_workflow.go:47`, `:212`, `:218` to `:220`, `:280`, `:303`, `:307`, `:310`, and `:316`.
 They also include `registry_data.go:136`, `:140`, `:442`, `registry_chunk_chain.go:62`, and `registry_ft311_review_dispatch.go:42`.
 The mirrors that quote them take the new text: `retained_workflow_test.go:138-141`, `:146-150`, `:167-178`, and `internal/conformance/recurrence_maintenance_contract_test.go:91`, `:217`.
+The anchor harness mirrors take it too: `internal/anchors/registry_data_test.go:349` and `:892`, and `internal/anchors/registry_chunk_chain_test.go:51`.
+
 The canaries `review-repair-ticket-owner`, `review-repair-ticket-covers`, and `delegated-serial-ticket-checkpoint` quote the new text in `MUTATE.json`.
-The six canaries `delegated-chunk-tip-review`, `delegated-green-predecessor`, `delegated-opt-in-entry`, `delegated-pending-predecessor-stop`, `delegated-prerequisite-checkpoint`, and `delegated-repair-ownership` repoint `BASE` and the `MUTATE.json` path.
+The six canaries `delegated-chunk-tip-review`, `delegated-green-predecessor`, `delegated-opt-in-entry`, `delegated-pending-predecessor-stop`, `delegated-prerequisite-checkpoint`, and `delegated-repair-ownership` repoint `BASE` and the `MUTATE.json` path, and each `EXPECT` takes the renamed diagnostic.
 
 ### The predicate lead-in
 
@@ -216,7 +224,8 @@ The row `registry_commitment.go:26` and the mirror `commitment_guidance_test.go:
 ### The batch-approval move
 
 B43 (`.bench/BENCH.md:156-159`) moves word for word into `.agents/commands/bench-write-spec.md`.
-It sits as its own paragraph in `## Exit handoff`, directly after the paragraph that ends "Stop for sign-off.", and that paragraph stays byte-identical.
+It sits as its own paragraph in `## Exit handoff`, directly after the paragraph that holds "Stop for sign-off.", and that paragraph stays byte-identical.
+That paragraph runs over lines 15 and 16 and ends at "`bench commitment start`.", so B43 starts after line 16.
 The craft-tickets sentence at `.agents/skills/bench-craft-tickets/SKILL.md:37` becomes this text:
 
 ```text
@@ -233,6 +242,7 @@ Decision #16 puts every move before the byte switch, so the line rows grade each
 `.agents/commands/bench-write-spec.md` sits at 87 of 87 lines and `.agents/commands/bench-implement-spec.md` at 93 of 93 (`projects/benchkit.md:491-492`).
 Each pointer edit stays on its physical line, so it adds no line.
 The GW4 ticket raises the `bench-write-spec.md` line row by the lines that B43 adds, in the same commit.
+At base `bc2ea0ff` that is four lines and one blank line, so the row goes from 87 to 92.
 The `guidance-prose-budgets` lane runs only on a profile edit, so each move ticket runs `bench test --check guidance-prose-budgets` itself.
 
 ### The byte budget
@@ -249,7 +259,14 @@ The glob row takes the largest tracked `SKILL.md` that no exact row names: `benc
 `AGENTS.md` takes a new exact row, and `.bench/BENCH.md` takes its size after this outcome, about 11,600.
 `.agents/skills/bench-craft-spec/SKILL.md:68` says "current size" in place of "current line count".
 
-The tests change their unit: `TestGuidanceProseBudgetBoundaryIsNewlineIndifferent` becomes a byte-boundary test, and `proseBudgetLines` and `healthyProseBudgetFiles` build byte sizes.
+The tests change their unit: `TestGuidanceProseBudgetBoundaryIsNewlineIndifferent` becomes `TestGuidanceProseBudgetBoundaryCountsEveryByte`, and `proseBudgetLines` and `healthyProseBudgetFiles` build byte sizes.
+
+`internal/conformance/prose_budget_test.go` has 579 lines, over the 400-line structure cap with no grant, so the GW5 ticket keeps it at or below its base line count.
+The rename replaces the old test, so the file gains no test.
+`internal/conformance/checks_test.go:576` reads `proseBudgetRows`, so it changes only if that helper changes shape.
+The over-budget canary's fixture skill and `MUTATE.json` describe the mutation in lines, and both take byte wording.
+`CONTEXT.md` defines "prose budget" as "the per-surface line-count ceiling", so the GW5 ticket makes it a byte ceiling.
+
 The expected diagnostics at `prose_budget_test.go:276`, `:284`, `:335`, `:506-508`, and `:534` name bytes.
 The canary `tests/canary/guidance-prose-budgets/over-budget-skill` sets its fixture row in bytes, and its mutation adds bytes past it.
 `skill_description_budgets_test.go` reuses `proseBudgetPolicy` and `limitFor` but has its own parse loop, so it changes nothing.
@@ -267,7 +284,7 @@ Each ticket writes its own bullet, so the tickets that write `CHANGELOG.md` run 
 | GW2 / TBD | The repeated copies B12 and A17 go with their anchors, and the B10 exception lives in the staleness pass | GW16-GW22 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow` and `prose-mechanics` checks | no |
 | GW3 / TBD | The light-path rules read as one block under the table, and the repeated drain sentences go | GW23-GW31 | the `internal/anchors` and `internal/conformance` package tests, and the `docs-currency-workflow`, `prose-mechanics`, and `guidance-prose-budgets` checks | no |
 | GW4 / TBD | The batch-approval rule sits beside the sign-off stop, and the drain names its own approval | GW32-GW37 | the `internal/anchors` and `internal/conformance` package tests, and the `docs-currency-workflow`, `prose-mechanics`, and `guidance-prose-budgets` checks | no |
-| GW5 / TBD | Every budget row limits its subject in bytes, `AGENTS.md` has a row, and `.bench/BENCH.md` has its bound | GW38-GW51 | the `internal/conformance` package tests, and the `guidance-prose-budgets`, `skill-description-budgets`, and `prose-mechanics` checks | yes |
+| GW5 / TBD | Every budget row limits its subject in bytes, `AGENTS.md` has a row, and `.bench/BENCH.md` has its bound | GW38-GW51, GW53 | the `internal/conformance` package tests, and the `guidance-prose-budgets`, `skill-description-budgets`, and `prose-mechanics` checks | yes |
 
 GW1 to GW4 write `.bench/BENCH.md`, `CHANGELOG.md`, and the same anchor registries, so they run serially in the order of the table.
 Each chunk review also grades GW51, because each ticket writes its own changelog bullet.
@@ -300,8 +317,8 @@ GW5 follows GW4, because its rows take the sizes after every move.
 |---|---|---|---|---|
 | GW01 | 1 | `.bench/BENCH.md` holds none of the needles of B11 and B26 to B33 | review-owned: the GW1 review runs `rg` for each moved needle over `.bench/BENCH.md` | No forbid row binds `.bench/BENCH.md` for this text, so only review sees a copy left behind. |
 | GW02 | 2 | `build-rules.md` holds each moved clause word for word, in the current order | review-owned: the GW1 review compares the clauses of `.bench/BENCH.md` at the base with the new file | A require row pins only its needle, so a reworded sentence beside a needle passes every check. |
-| GW03 | 3 | `.bench/BENCH.md` holds the one-line pointer to `build-rules.md` in `## Workflow` | planned TestBuildRulesPointerAnchorsRedOnRemoval in internal/anchors/registry_data_test.go | The new require row reds when the pointer goes, so the always-loaded guide cannot lose its route. |
-| GW04 | 4 | `build-rules.md` opens with its lead sentence | `internal/anchors/registry_data_test.go` (`TestReferenceFileAnchorsRedOnAbsence`) | The new entry reds when the file is absent or its lead goes. |
+| GW03 | 3 | `.bench/BENCH.md` holds the one-line pointer to `build-rules.md` in `## Workflow` | planned TestBuildRulesPointerAnchorsRedOnRemoval in internal/anchors/registry_chunk_chain_test.go | The new require row reds when the pointer goes, so the always-loaded guide cannot lose its route. |
+| GW04 | 4 | `build-rules.md` opens with its lead sentence | planned TestBuildRulesReferenceAnchorsRedOnAbsence in internal/anchors/registry_chunk_chain_test.go | The new test reds when the file is absent or its lead goes. |
 | GW05 | 5 | Each of the 21 moved require rows binds `build-rules.md` and keeps its needle | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | A row that kept `.bench/BENCH.md` reds on the live tree, because the needle left that file. |
 | GW06 | 6 | The continuation row names section `Ticket authors` of `build-rules.md` | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`) | A row that kept section `Workflow` reds, because the new file has no such section. |
 | GW07 | 7 | The forbid row `registry_retained_workflow.go:217` binds `build-rules.md` | `internal/conformance/retained_workflow_test.go` (`TestRetainedWorkflow`) | The mirror at `:163-166` names the file, so the row left on `.bench/BENCH.md` reds the comparison. |
@@ -319,7 +336,7 @@ GW5 follows GW4, because its rows take the sizes after every move.
 | GW18 | 17 | `projects/benchkit.md` keeps the hand-run route and its anchor | `internal/anchors/registry_data_test.go` (`TestSystemSuiteRouteAnchorsRedOnRemoval`) | The kept half of the test reds when the benchkit copy goes. |
 | GW19 | 18 | No check expects the A17 sentence in `AGENTS.md` | `cmd/bench/anchor_help_test.go` (`TestAnchorsReportsNeedleLines`) | A plant left in the fixture repo matches no require row, so the help test reds. |
 | GW20 | 18 | The canary `agents-system-suite-route` is gone with its row | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A canary whose owner row retired never sees its `EXPECT`, so the test reds. |
-| GW21 | 19 | `staleness-pass.md` states the moved exception with its flag duty | planned TestStalenessExceptionAnchorRedsOnRemoval in internal/anchors/registry_data_test.go | The new require row reds when the moved sentence or its flag duty goes. |
+| GW21 | 19 | `staleness-pass.md` states the moved exception with its flag duty | planned TestStalenessExceptionAnchorRedsOnRemoval in internal/anchors/registry_chunk_chain_test.go | The new require row reds when the moved sentence or its flag duty goes. |
 | GW22 | 20 | The B10 bullet of `.bench/BENCH.md` ends at "Ask about a behavioral one." | review-owned: the GW2 review reads the bullet | The row `registry_data.go:376` pins only the first sentence, so only review sees a kept exception. |
 | GW23 | 21 | The light-path paragraphs sit directly under the right-size table | review-owned: the GW3 review reads the Workflow section order | Every block row is section-scoped or whole-file, so no row reds a scattered order. |
 | GW24 | 22 | The table keeps its inline route needle | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | The require row `registry_data.go:187` reds when the table text changes. |
@@ -334,7 +351,7 @@ GW5 follows GW4, because its rows take the sizes after every move.
 | GW33 | 31 | `.bench/BENCH.md` holds no B43 sentence | review-owned: the GW4 review runs `rg "batch approval covers"` over `.bench/BENCH.md` | No row pins B43, so only review sees a copy left behind. |
 | GW34 | 32 | craft-tickets names `/bench-write-spec` as the home of the carve-out | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | The canary `ticket-light-path-carve-out` bites the row `registry_data.go:207`, which takes the new text. |
 | GW35 | 33 | `bench-drain.md` names the reviewer's sign-off on its own diff, not the batch approval rule | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | The require row `registry_retained_workflow.go:29` takes the new sentence, so the old pointer text reds. |
-| GW36 | 34 | The forbid rows on `bench-drain.md` stay green after the edit | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | The canary `drain-anchor` bites the row `:28`, so a broken forbid row reds. |
+| GW36 | 34 | The forbid rows on `bench-drain.md` stay green after the edit | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | Each forbid row reds on the live tree when its needle returns to `bench-drain.md`, and no canary expects these diagnostics. |
 | GW37 | 35 | `bench-write-spec.md` stays inside its line row after B43 lands | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | A line added past the row reds this live-tree check. |
 | GW38 | 36 | The check grades each subject by `len` of its bytes | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsComeFromTheProfileTable`) | The test lowers a row below a fixture's byte size and requires the byte diagnostic, which a line count never raises. |
 | GW39 | 37 | A subject one byte over its limit reds | planned TestGuidanceProseBudgetBoundaryCountsEveryByte in internal/conformance/prose_budget_test.go | A count that drops a byte, such as the trimmed final newline, passes the one-byte-over fixture. |
@@ -350,6 +367,7 @@ GW5 follows GW4, because its rows take the sizes after every move.
 | GW49 | 46 | The over-budget canary bites with a byte diagnostic | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetCanaryFixtureBites`) | A fixture left in lines raises a line diagnostic, which the byte `EXPECT` does not match. |
 | GW50 | 47 | The craft-spec budget sentence names the current size | review-owned: the GW5 review reads `.agents/skills/bench-craft-spec/SKILL.md:68` | No anchor pins that sentence. |
 | GW51 | 50 | `CHANGELOG.md` holds one section with one bullet for each chunk | review-owned: each chunk review reads the entry | `CHANGELOG.md` is excluded from prose grading, and no row pins a new entry. |
+| GW53 | 45 | `CONTEXT.md` defines "prose budget" as a byte ceiling | review-owned: the GW5 review reads the "prose budget" entry of `CONTEXT.md` | No anchor pins the definition, so only review sees the old line-count wording. |
 
 Not covered: story 48 — a reviewed exclusion that adds no behavior; GW01, GW16, and GW33 show that each removal has another copy.
 Not covered: story 49 — a reviewed exclusion that adds no behavior; no ticket edits a `description:` line.
@@ -420,6 +438,7 @@ The consultant settled E1 to E12 on 2026-10-11, and the author chose E13 to E17.
 - E15: each moved row's diagnostic names "build rules" in place of "operating guide" (GW13).
 - E16: each pointer names the build rules by its full path, on its own physical line (GW08).
 - E17: the table prose names the byte unit, and craft-spec says "current size" (GW48, GW50).
+- E18: the slicing research adds the `CONTEXT.md` "prose budget" entry to GW5, so the glossary names the byte unit (GW53).
 
 ### Source sentence to row
 
