@@ -14,19 +14,10 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
-// newLinkedCheckout returns a fresh repository and a linked worktree of it.
-func newLinkedCheckout(t *testing.T) (root, linked string) {
-	t.Helper()
-	root = newRepo(t)
-	linked = filepath.Join(t.TempDir(), "linked")
-	runGit(t, root, "worktree", "add", "-q", "-b", "linked", linked)
-	return root, linked
-}
-
 // mergeHeadPath answers the MERGE_HEAD path that Git resolves for checkout.
 func mergeHeadPath(t *testing.T, checkout string) string {
 	t.Helper()
-	return strings.TrimSpace(runGit(t, checkout, "rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD"))
+	return independentRevParse(t, checkout, "--path-format=absolute", "--git-path", "MERGE_HEAD")
 }
 
 // pendingMergeWithin runs PendingMerge under the test deadline, so a reader that blocks
@@ -60,7 +51,8 @@ func requirePendingMergeRefusal(t *testing.T, root string) {
 }
 
 func TestIsPrimaryCheckoutSeparatesLinkedWorktree(t *testing.T) {
-	root, linked := newLinkedCheckout(t)
+	root := newRepo(t)
+	linked := linkedWorktree(t, root)
 
 	primary, err := IsPrimaryCheckout(root)
 	if err != nil || !primary {
@@ -73,11 +65,12 @@ func TestIsPrimaryCheckoutSeparatesLinkedWorktree(t *testing.T) {
 }
 
 // TestPendingMergeReadsEveryHead proves the reader answers the merge heads that Git
-// writes in a linked worktree in file order, and no merge head without a MERGE_HEAD.
-// (Coverage rows MP01-MP04.)
+// writes in a linked worktree in file order, through an absolute and a relative gitdir:
+// pointer, and no merge head without a MERGE_HEAD. (Coverage rows MP01-MP04.)
 func TestPendingMergeReadsEveryHead(t *testing.T) {
-	root, linked := newLinkedCheckout(t)
-	base := strings.TrimSpace(runGit(t, linked, "rev-parse", "HEAD"))
+	root := newRepo(t)
+	linked := linkedWorktree(t, root)
+	base := independentRevParse(t, linked, "HEAD")
 	var heads []string
 	for _, name := range []string{"one", "two"} {
 		runGit(t, root, "checkout", "-q", "-b", name, base)
@@ -86,13 +79,15 @@ func TestPendingMergeReadsEveryHead(t *testing.T) {
 		}
 		runGit(t, root, "add", name+".txt")
 		runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", name)
-		heads = append(heads, strings.TrimSpace(runGit(t, root, "rev-parse", "HEAD")))
+		heads = append(heads, independentRevParse(t, root, "HEAD"))
 	}
 	merge := func(t *testing.T, commits ...string) {
 		t.Helper()
 		runGit(t, linked, append([]string{"-c", "user.email=bench@local", "-c", "user.name=bench", "merge", "-q", "--no-commit", "--no-ff"}, commits...)...)
 	}
-	// Each step starts from the merge state that the step before it leaves.
+	// Each step starts from the merge state that the step before it leaves. The two
+	// octopus steps give the heads in opposite orders, so a reader that sorts the heads
+	// fails one of them whatever the commit IDs are.
 	for _, step := range []struct {
 		name    string
 		prepare func(t *testing.T)
@@ -101,9 +96,23 @@ func TestPendingMergeReadsEveryHead(t *testing.T) {
 		{"absent", func(*testing.T) {}, nil},
 		{"merge", func(t *testing.T) { merge(t, heads[0]) }, heads[:1]},
 		{"octopus", func(t *testing.T) { runGit(t, linked, "merge", "--abort"); merge(t, heads...) }, heads},
+		{"octopus in reverse order", func(t *testing.T) {
+			runGit(t, linked, "merge", "--abort")
+			merge(t, heads[1], heads[0])
+		}, []string{heads[1], heads[0]}},
 		{"unterminated last line", func(t *testing.T) {
 			runGit(t, linked, "merge", "--abort")
 			if err := os.WriteFile(mergeHeadPath(t, linked), []byte(heads[0]+"\n"+heads[1]), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}, heads},
+		{"relative gitdir pointer", func(t *testing.T) {
+			admin := independentRevParse(t, linked, "--path-format=absolute", "--git-dir")
+			relative, err := filepath.Rel(independentRevParse(t, linked, "--show-toplevel"), admin)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(linked, ".git"), []byte("gitdir: "+relative+"\n"), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}, heads},
@@ -122,10 +131,10 @@ func TestPendingMergeReadsEveryHead(t *testing.T) {
 // repository and each MERGE_HEAD that is not a regular file, a link to a valid merge
 // record included. (Coverage rows MP05-MP09.)
 func TestPendingMergeRefusesUnreadableState(t *testing.T) {
-	_, linked := newLinkedCheckout(t)
+	linked := linkedWorktree(t, newRepo(t))
 	mergeHead := mergeHeadPath(t, linked)
 	record := filepath.Join(t.TempDir(), "record")
-	if err := os.WriteFile(record, []byte(strings.TrimSpace(runGit(t, linked, "rev-parse", "HEAD"))+"\n"), 0o644); err != nil {
+	if err := os.WriteFile(record, []byte(independentRevParse(t, linked, "HEAD")+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	for _, tc := range []struct {
@@ -157,18 +166,26 @@ func TestPendingMergeRefusesUnreadableState(t *testing.T) {
 }
 
 // TestPendingMergeRefusesMalformedState proves the reader refuses each MERGE_HEAD whose
-// content is not a list of full commit IDs. (Coverage rows MP10-MP14.)
+// content is not a list of full commit IDs, one to a line: an annotated tag ID that
+// peels to a commit and a full commit ID with trailing white space included.
+// (Coverage rows MP10-MP14.)
 func TestPendingMergeRefusesMalformedState(t *testing.T) {
-	root, linked := newLinkedCheckout(t)
+	root := newRepo(t)
+	linked := linkedWorktree(t, root)
 	mergeHead := mergeHeadPath(t, linked)
-	head := strings.TrimSpace(runGit(t, linked, "rev-parse", "HEAD"))
+	head := independentRevParse(t, linked, "HEAD")
 	runGit(t, root, "update-ref", "refs/heads/main", head)
+	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "tag", "-a", "-m", "annotated", "annotated", head)
 	for _, tc := range []struct{ name, content string }{
 		{"empty", ""},
 		{"abbreviated commit ID", head[:7] + "\n"},
 		{"branch name", "main\n"},
 		{"unknown object", strings.Repeat("e", len(head)) + "\n"},
-		{"tree", strings.TrimSpace(runGit(t, linked, "rev-parse", "HEAD^{tree}")) + "\n"},
+		{"tree", independentRevParse(t, linked, "HEAD^{tree}") + "\n"},
+		{"annotated tag", independentRevParse(t, linked, "annotated") + "\n"},
+		{"trailing space", head + " \n"},
+		{"carriage return", head + "\r\n"},
+		{"two final newlines", head + "\n\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if err := os.WriteFile(mergeHead, []byte(tc.content), 0o644); err != nil {

@@ -68,14 +68,24 @@ func TestSourceMergePendingIsFalseWhenUndecided(t *testing.T) {
 }
 
 // TestSourceMergePendingReadsTheSharedOwner proves the merge-pending probe reads
-// MERGE_HEAD through git.PendingMerge: an empty MERGE_HEAD is an unreadable merge
-// state, so the probe answers false. (Coverage row MP15.)
+// MERGE_HEAD through git.PendingMerge: an empty MERGE_HEAD and a MERGE_HEAD that holds
+// a line other than a full commit ID are unreadable merge states, so the probe answers
+// false. (Coverage row MP15.)
 func TestSourceMergePendingReadsTheSharedOwner(t *testing.T) {
 	t.Parallel()
-	source := newOwnedAssignment(t, "merge-pending-empty").creation.Path
-	mustWrite(t, mustAdminPath(t, source, "MERGE_HEAD"), nil, 0o644)
-	if sourceMergePending(source) {
-		t.Fatal("sourceMergePending over an empty MERGE_HEAD = true, want false")
+	source := newOwnedAssignment(t, "merge-pending-unreadable").creation.Path
+	mergeHead := mustAdminPath(t, source, "MERGE_HEAD")
+	for _, tc := range []struct{ name, content string }{
+		{"empty", ""},
+		{"branch name", "main\n"},
+		{"tree", gitOutput(t, source, "rev-parse", "HEAD^{tree}") + "\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mustWrite(t, mergeHead, []byte(tc.content), 0o644)
+			if sourceMergePending(source) {
+				t.Fatalf("sourceMergePending over the MERGE_HEAD %q = true, want false", tc.content)
+			}
+		})
 	}
 }
 
