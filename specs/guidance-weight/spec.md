@@ -431,8 +431,8 @@ No test swaps a package variable.
 
 ## Ownership fences
 
-This fence is the union of the ticket `Writes:` lines, which the plan-only preflight grades.
-Each slicer extends it with its chunk, so `--propose-writes` can grade each ticket during the slicing.
+This fence is the union of the ticket Writes lines, which the plan-only preflight grades.
+Each slicer extends it with its chunk, so the propose-writes preflight can grade each ticket during the slicing.
 The coordinator owns the review pickup, which the coverage check requires in a declared fence section.
 
 - `reviews/guidance-weight.md`
