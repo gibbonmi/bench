@@ -246,8 +246,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   It is append-only, carries no status or lifecycle, and the maintenance phase
   drains it to zero into the **roadmap**.
 - **park** — to capture an idea in the **ideas inbox** without committing to it
-  (`bench idea "<text>"`). A *parked idea* graduates into committed work only when
-  `/bench-shape-idea` pulls it into a decision map. Not "stash", not "file" — park.
+  (`bench idea "<text>"`). A reviewed `/bench-drain` moves a *parked idea* to the
+  **roadmap** as **uncommitted roadmap work**. Only an approved commitment plan admits
+  it to the **delivery commitment**. Not "stash", not "file" — park.
 - **implementation chunk** — a coherent, verifiable unit with a stable ID, outcome, acceptance rows, tests, and a review checkpoint.
   Not "delegate group", not "implementation session" — implementation chunk.
 - **decision map** — a situational working map for a multi-session unresolved

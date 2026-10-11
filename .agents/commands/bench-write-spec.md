@@ -83,5 +83,5 @@ acceptance coverage, hostile-input attachment, and gate attachment; shaping sour
    Every review round follows one loop. The round declares its iteration cap before the first charge. The invoking session repairs a rejected spec or ticket set, and the same round grades the repair alone. The invoking session folds the findings of each round and names them in the verification log.
 
    At close, write `Verification log: <n> iteration(s) to accept — <note>` into the spec. The count `<n>` sums the iterations of the spec round and of the ticket round. The note names each round that took more than one iteration.
-   When a round takes more than one iteration to accept, append one `capture/learnings.md` entry for that round. The entry names the stage that missed,
+   When a round takes more than one iteration to accept, append one `capture/learnings.md` entry for that round. Write it with `bench learning`. The entry names the stage that missed,
    what review caught, why it was missed, and the proposed rule change.
