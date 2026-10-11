@@ -564,7 +564,7 @@
             },
             {
               "id": "FT342-FT253.override",
-              "text": "Only a recorded reviewer-owned override with a reason lets a landing move main after the last chunk checkpoint, and an agent cannot grant that override to itself."
+              "text": "Only a recorded reviewer-owned override with a reason lets a landing move main after the last chunk's freeze, and an agent cannot grant that override to itself."
             },
             {
               "id": "FT342-FT253.fold",
@@ -695,10 +695,6 @@
             {
               "id": "FT379.record-only-cycle",
               "text": "A record-only correction that changes a disposition consumes no repair cycle."
-            },
-            {
-              "id": "FT379.record-only-round",
-              "text": "A confirming round on a record-only correction checks only the findings that it names, and a new preference in that prose is advice."
             },
             {
               "id": "FT379.evidence-confirmation",
