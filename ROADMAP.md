@@ -84,9 +84,9 @@ and the small cuts. The rows below hold the rest.
 
 **FT344 (MEDIUM) — every rebuild remedy for a pool worktree names `bench worktree build` from one owner.**
 
-**FT406 (MEDIUM, decision required) — a commit in a build worktree leaves no stale `dist/bench` for the next preflight or `--in` verb.**
+**FT406 (MEDIUM) — a commit in a build worktree leaves no stale `dist/bench` for the next preflight or `--in` verb.**
 
-**FT413 (MEDIUM, decision required) — parallel landings compose `CHANGELOG.md` with no conflict.**
+**FT413 (MEDIUM) — parallel landings compose `CHANGELOG.md` with no conflict.**
 
 **FT354 (MEDIUM) — strict JSON, atomic replace, and shell quoting each have one owner.**
 
@@ -324,18 +324,20 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT380-plan-commit
-2. FT403
-3. FT168-probe-subjects
-4. FT168-probe-batch
-5. FT342-FT253
-6. FT293-ownership-closure
-7. FT375-spec-staleness
-8. FT405
-9. FT379
-10. FT409
-11. FT402
-12. FT411
-13. FT354-durable-replace
-14. FT354-strict-json
-15. FT258-merge-parent
+1. FT258-merge-parent
+2. FT395
+3. FT342-FT253
+4. FT354-durable-replace
+5. FT354-strict-json
+6. FT411
+7. FT380-plan-commit
+8. FT414
+9. FT403
+10. FT168-probe-subjects
+11. FT168-probe-batch
+12. FT293-ownership-closure
+13. FT375-spec-staleness
+14. FT405
+15. FT379
+16. FT409
+17. FT402
