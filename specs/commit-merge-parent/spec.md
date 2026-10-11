@@ -241,12 +241,12 @@ The next `/bench-drain` reconciles the merge-parent sentences of `roadmap/FT258.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | MP1 / 1-read-the-pending-merge-through-one-owner.md | One owner reads the pending merge of any checkout, and the landing conflict route reads it through that owner | MP01-MP18 | the `internal/git` checkout tests, the worktree admin reader tests, and the LRS6 and LRS22 journey | no |
-| MP2 / 2-refuse-an-incomplete-merge-name-set.md, 3-record-each-merge-head-and-end-the-merge.md, 4-document-the-merge-contract-of-bench-commit.md | `bench commit` publishes a true merge commit for a complete name set, refuses an incomplete name set, and ends the merge | MP19-MP56, MP62 | the `internal/landing` pending-merge tests, the `internal/commit` merge tests, the current `Land` and refusal tables, the `docs-currency-workflow` check, and the `internal/anchors` package tests | yes |
-| MP3 / 5-grade-a-pending-merge-by-the-branch-change.md | The commitment grading of a pending merge reads the merged commits of the default branch as the default branch's own | MP57-MP61 | the repository pending-merge candidate test and `TestStaleBaseCandidate` | no |
+| MP2 / 2-refuse-an-incomplete-merge-name-set.md, 3-record-each-merge-head-and-end-the-merge.md, 4-document-the-merge-contract-of-bench-commit.md | `bench commit` publishes a true merge commit for a complete name set, refuses an incomplete name set, and ends the merge | MP19-MP56, MP62 | the `internal/landing` pending-merge tests, the `internal/commit` merge tests, the current `Land` and refusal tables, the `docs-currency-workflow` and `skills-index-command-adapters` checks, and the `internal/anchors` package tests | yes |
+| MP3 / 5-grade-a-pending-merge-by-the-branch-change.md | The commitment grading of a pending merge reads the merged commits of the default branch as the default branch's own | MP57-MP61 | the repository pending-merge candidate test, `TestStaleBaseCandidate`, the `docs-currency-workflow` check, and the `internal/anchors` package tests | no |
 
 MP1 creates the seam that MP2 and MP3 consume, so it stays small, and its chunk review closes before a consumer ticket starts.
-MP2 and MP3 change disjoint files, but a ticket in each chunk names the command registry files in its `Writes:` line.
-The binding registry binds those files to `internal/anchors` and to `internal/commitment`, so the MP3 ticket waits for the last MP2 ticket.
+MP2 and MP3 change disjoint files, but tickets 4 and 5 both list the command registry files and two anchor registry files in `Writes:`.
+Preflight requires those closure files, so the MP3 ticket waits for the last MP2 ticket.
 The serial order is MP1, MP2, and then MP3, because MP2 delivers the `.parent` and `.pending` criteria.
 The orchestrator reconciles the final acceptance after the MP3 checkpoint.
 
@@ -283,6 +283,7 @@ Its commands are future obligations, not executed proof.
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
         {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"},
         {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
         {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"}
@@ -313,6 +314,7 @@ Its commands are future obligations, not executed proof.
     {"id": "command-package", "command": "bench test --package ./cmd/bench"},
     {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
     {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+    {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
     {"id": "root-conformance", "command": "bench test --check root-conformance"},
     {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
     {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"},
@@ -615,7 +617,7 @@ The two probes differ in kind and in site, and each one must report a restored s
 Run `bench test --package ./internal/git --package ./internal/landing --package ./internal/commit` for MP1 and MP2.
 Run `bench test --package ./internal/commitment/repository` for MP3, and `bench test --package ./internal/worktree` for the route rows.
 Run `bench test --check root-conformance`, `bench test --check git-plumbing-owner`, and `bench test --check ordinary-build-census` at each ticket.
-Run `bench test --check docs-currency-workflow` for the `.bench/BENCH-reference.md` change.
+Run the `docs-currency-workflow` check and the `internal/anchors` package tests for the `.bench/BENCH-reference.md` and `CHANGELOG.md` changes, and the `skills-index-command-adapters` check for the reference change.
 Run `bench test --check skip-ownership` when a new test can skip, such as a FIFO fixture.
 The coordinator runs the whole gate only at the landing.
 
