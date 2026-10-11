@@ -497,6 +497,18 @@
               "path": "roadmap/FT395.md",
               "identity": "sha256:5e901fe4e622cbce7d01f38123f3d116771c96f72cd2f72548f6c109f9093dc8"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "spec-stage-binding",
+                "path": "specs/spec-stage-binding/spec.md",
+                "identity": "sha256:f4499d582585cd086bf5ef0e46002eff2dbc748ae28253b44883715b64b04ff8"
+              },
+              "obligations": [
+                "FT395"
+              ]
+            }
           ]
         },
         {
