@@ -57,9 +57,8 @@ func mergeCheckout(t *testing.T, added ...string) (root, base string) {
 // pendingMerge starts a conflicted merge of the incoming branch in the worktree of
 // mergeCheckout, and it returns the worktree and its HEAD before the merge. The fixture
 // writes the resolution to the worktree file only, so the index keeps the unmerged entries
-// of the conflicted path. The landing helper git fails on the exit 1 of a conflicted merge,
-// so the merge runs through its own call, as stageHandMerge in internal/worktree does; no
-// shared helper crosses the package boundary.
+// of the conflicted path. The landing helper git fails on the exit 1 of a conflicted merge.
+// The merge therefore runs through its own call, as stageHandMerge in internal/worktree does.
 func pendingMerge(t *testing.T, added ...string) (root, base string) {
 	t.Helper()
 	root, base = mergeCheckout(t, added...)

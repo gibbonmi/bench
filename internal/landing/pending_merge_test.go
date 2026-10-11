@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -41,26 +42,33 @@ func TestLandRefusesAnUnreadableMergeState(t *testing.T) {
 
 // TestLandRefusesAnIncompleteMergeNameSet proves that during a pending merge the name set
 // must cover each merged path, the conflicted path and a deleted path included. A directory
-// name covers the merged paths below it and not a sibling that shares its prefix, and the
-// literal spelling of a merged path with hostile bytes covers that path. A refusal changes
-// no ref, index entry, worktree byte, or merge state. (Coverage rows MP35-MP38 and MP42.)
+// name covers the merged paths below it and not a sibling that shares its prefix. The
+// literal spelling of a merged path with hostile bytes covers that path. The rule applies to
+// an octopus merge too. A refusal changes no ref, index entry, worktree byte, or merge state.
+// (Coverage rows MP35-MP38 and MP42.)
 func TestLandRefusesAnIncompleteMergeNameSet(t *testing.T) {
 	// hostile holds a space, glob characters, a newline, and non-ASCII bytes.
 	const hostile = "a b[x]*\né.txt"
+	octopus := func(t *testing.T, _ ...string) (string, string) {
+		root, base, _, _ := octopusMerge(t)
+		return root, base
+	}
 	for _, row := range []struct {
 		name         string
+		start        func(t *testing.T, added ...string) (root, base string)
 		added, paths []string
 		// omitted is each omitted path as the refusal quotes it; an empty value publishes.
 		omitted string
 	}{
-		{"conflicted path omitted", nil, []string{mergeDeletedPath}, `"conflict.txt"`},
-		{"deleted path omitted", nil, []string{mergeConflictPath}, `"gone.txt"`},
-		{"directory covers its subtree", []string{"pkg/b.go", "pkg/sub/c.go"}, []string{mergeConflictPath, mergeDeletedPath, "pkg"}, ""},
-		{"directory does not cover a prefix sibling", []string{"pkg/b.go", "pkgx/a.go"}, []string{mergeConflictPath, mergeDeletedPath, "pkg"}, `"pkgx/a.go"`},
-		{"hostile path spelled literally", []string{hostile}, []string{mergeConflictPath, mergeDeletedPath, hostile}, ""},
+		{"conflicted path omitted", pendingMerge, nil, []string{mergeDeletedPath}, `"conflict.txt"`},
+		{"deleted path omitted", pendingMerge, nil, []string{mergeConflictPath}, `"gone.txt"`},
+		{"directory covers its subtree", pendingMerge, []string{"pkg/b.go", "pkg/sub/c.go"}, []string{mergeConflictPath, mergeDeletedPath, "pkg"}, ""},
+		{"directory does not cover a prefix sibling", pendingMerge, []string{"pkg/b.go", "pkgx/a.go"}, []string{mergeConflictPath, mergeDeletedPath, "pkg"}, `"pkgx/a.go"`},
+		{"hostile path spelled literally", pendingMerge, []string{hostile}, []string{mergeConflictPath, mergeDeletedPath, hostile}, ""},
+		{"octopus side path omitted", octopus, nil, []string{"side-a"}, `"side-b"`},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			root, base := pendingMerge(t, row.added...)
+			root, base := row.start(t, row.added...)
 			before := compositionState(t, root)
 			got, err := greenOwner().Land(context.Background(), topicLanding(root, base, row.paths...))
 			if row.omitted == "" {
@@ -126,41 +134,57 @@ func TestComposeAfterMergeCommitReadsTheMergedBase(t *testing.T) {
 // TestLandRefusesAMergeStateChangeDuringAuthorization proves that Owner.Land reads the
 // pending merge again after authorization. A merge that appears, a merge that disappears,
 // another merge head, or a directory at MERGE_HEAD refuses with a plain error, and no ref
-// moves. (Coverage rows MP26-MP28.)
+// moves. The recheck compares the merge heads in order, so the same heads in another order
+// also refuse. (Coverage rows MP26-MP28.)
 func TestLandRefusesAMergeStateChangeDuringAuthorization(t *testing.T) {
 	const changed = "pending merge changed during the commit"
-	plant := func(t *testing.T, root, mergeHead string) {
-		if err := os.WriteFile(mergeHead, []byte(git(t, root, "rev-parse", "main")+"\n"), 0o644); err != nil {
+	// plantHeads writes heads to MERGE_HEAD as Git does, one head on each line.
+	plantHeads := func(t *testing.T, mergeHead string, heads ...string) {
+		if err := os.WriteFile(mergeHead, []byte(strings.Join(heads, "\n")+"\n"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
+	plant := func(t *testing.T, root, mergeHead string) {
+		plantHeads(t, mergeHead, git(t, root, "rev-parse", "main"))
+	}
+	reverse := func(t *testing.T, _, mergeHead string) {
+		heads := strings.Fields(string(mustRead(t, mergeHead)))
+		slices.Reverse(heads)
+		plantHeads(t, mergeHead, heads...)
+	}
+	// Each start returns the checkout, its HEAD, and the complete name set.
+	noMerge := func(t *testing.T) (string, string, []string) {
+		root, base := mergeCheckout(t)
+		write(t, root, "named", "changed\n")
+		return root, base, []string{"named"}
+	}
+	conflicted := func(t *testing.T) (string, string, []string) {
+		root, base := pendingMerge(t)
+		return root, base, mergeNameSet
+	}
+	octopus := func(t *testing.T) (string, string, []string) {
+		root, base, _, added := octopusMerge(t)
+		return root, base, added
+	}
 	for _, row := range []struct {
-		name string
-		// pending starts the row in the conflicted merge of pendingMerge.
-		pending bool
+		name  string
+		start func(*testing.T) (root, base string, paths []string)
 		// change runs during authorization.
 		change func(t *testing.T, root, mergeHead string)
 		want   string
 	}{
-		{"merge appears", false, plant, changed},
-		{"merge disappears", true, func(t *testing.T, _, mergeHead string) {
+		{"merge appears", noMerge, plant, changed},
+		{"merge disappears", conflicted, func(t *testing.T, _, mergeHead string) {
 			if err := os.Remove(mergeHead); err != nil {
 				t.Fatal(err)
 			}
 		}, changed},
-		{"another merge head", true, plant, changed},
-		{"directory at MERGE_HEAD", true, func(t *testing.T, root, _ string) { plantMergeHeadDirectory(t, root) }, "read pending merge:"},
+		{"another merge head", conflicted, plant, changed},
+		{"reordered merge heads", octopus, reverse, changed},
+		{"directory at MERGE_HEAD", conflicted, func(t *testing.T, root, _ string) { plantMergeHeadDirectory(t, root) }, "read pending merge:"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			var root, base string
-			paths := mergeNameSet
-			if row.pending {
-				root, base = pendingMerge(t)
-			} else {
-				root, base = mergeCheckout(t)
-				write(t, root, "named", "changed\n")
-				paths = []string{"named"}
-			}
+			root, base, paths := row.start(t)
 			o := greenOwner()
 			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
 				row.change(t, root, mergeStatePath(t, root, "MERGE_HEAD"))

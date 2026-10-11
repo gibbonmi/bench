@@ -123,9 +123,8 @@ func New() Owner {
 }
 
 // composeAuthorized runs the prospective half every landing verdict shares: attribute,
-// compose, refuse an empty diff, then authorize the exact composed tree. The snapshot keeps
-// the merge heads that the attribution read. A pending merge waives the empty-diff refusal,
-// because the merge parent is the change.
+// compose, refuse an empty diff, then authorize the exact composed tree. A pending merge
+// waives the empty-diff refusal, because the merge parent is the change.
 func (o Owner) composeAuthorized(ctx context.Context, r Request) ([]string, composedSnapshot, error) {
 	if err := validRequest(r); err != nil {
 		return nil, composedSnapshot{}, err

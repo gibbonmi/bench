@@ -13,10 +13,10 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
-// The paths and the branch of a pending merge journey: both sides change mergeConflictPath,
-// the incoming commit on the branch mergeIncoming modifies tracked.txt, and the incoming
-// commit can add mergeAddedPath and mergeHostilePath, which holds a space, a glob character,
-// an ESC byte, and a newline.
+// The paths and the branch of a pending merge journey. Both sides change mergeConflictPath,
+// and the incoming commit on the branch mergeIncoming modifies tracked.txt. The incoming
+// commit can also add mergeAddedPath and mergeHostilePath. mergeHostilePath holds a space, a
+// glob character, an ESC byte, and a newline.
 const (
 	mergeConflictPath = "conflict.txt"
 	mergeAddedPath    = "added.txt"
@@ -33,10 +33,9 @@ const mergeNameSetRefusal = "error: pending merge changed paths that the commit 
 // startPendingMerge starts a conflicted merge of an incoming commit in checkout, and it
 // returns HEAD before the merge. It first resets the staged tracked.txt that
 // prepareLandingCheckout leaves. The incoming commit on a side branch modifies tracked.txt,
-// changes the conflicted path, and adds each path of added; the checkout's own commit
+// changes the conflicted path, and adds each path of added. The checkout's own commit
 // changes the conflicted path too. A conflicted merge exits 1, so the merge runs through
-// its own call, as stageHandMerge in internal/worktree does; no shared helper crosses the
-// package boundary.
+// its own call, as stageHandMerge in internal/worktree does.
 func startPendingMerge(t *testing.T, checkout string, added ...string) string {
 	t.Helper()
 	runGit(t, checkout, "reset", "-q", "--hard", "HEAD")
@@ -54,7 +53,7 @@ func startPendingMerge(t *testing.T, checkout string, added ...string) string {
 	if out, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(out), "CONFLICT") {
 		t.Fatalf("merge = %v, %s; want the conflict", err, out)
 	}
-	return strings.TrimSpace(string(runGit(t, checkout, "rev-parse", "HEAD")))
+	return head(t, checkout)
 }
 
 // refusedLine fails t unless the commit at root refused with exit 1, printed one error line
@@ -74,7 +73,7 @@ func refusedLine(t *testing.T, root, before, face string, code int, stderr strin
 		}
 	}
 	steps := routetest.Steps(t, registered, next, "", nil)
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+	if after := head(t, root); after != before {
 		t.Fatalf("HEAD moved from %s to %s", before, after)
 	}
 	return lines[0], steps
@@ -150,30 +149,29 @@ func TestMergeNameSetRefusalPrecedesCommitment(t *testing.T) {
 	if code != 1 || !strings.Contains(stderr, mergeNameSetRefusal+`"tracked.txt"`) || strings.Contains(stderr, "commitment") {
 		t.Fatalf("commit = (%d, %q, %q), want exit 1 with the merge name-set refusal and no commitment refusal", code, stdout, stderr)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+	if after := head(t, root); after != before {
 		t.Fatalf("HEAD moved from %s to %s", before, after)
 	}
 }
 
 // TestCommitRecordsTheMergeParent proves that after a conflicted merge, a commit of the
-// complete name set publishes the previous tip and the incoming commit as its two parents.
-// Its record keeps the committed fields with the count of the name set, the worktree status
-// is clean, and a later commit of a new change publishes one parent. (Coverage rows MP19,
-// MP44, MP46, and MP54.)
+// complete name set publishes two parents. The parents are the previous tip and the incoming
+// commit. Its record keeps the committed fields with the count of the name set. After the
+// commit, the worktree status is clean, and a later commit of a new change publishes one
+// parent. (Coverage rows MP19, MP44, MP46, and MP54.)
 func TestCommitRecordsTheMergeParent(t *testing.T) {
 	root, _ := landingRepo(t, 0, func(*testing.T, string) {})
 	before := startPendingMerge(t, root)
-	revParse := func(rev string) string { return strings.TrimSpace(string(runGit(t, root, "rev-parse", rev))) }
 	headParents := func() string {
 		return strings.TrimSpace(string(runGit(t, root, "rev-list", "--parents", "-n", "1", "HEAD")))
 	}
-	incoming := revParse(mergeIncoming)
+	incoming := strings.TrimSpace(string(runGit(t, root, "rev-parse", mergeIncoming)))
 	mustWrite(t, filepath.Join(root, mergeConflictPath), "resolution\n", 0o644)
 	code, stdout, stderr := runCommand(t, root, append([]string{"-m", "merge", "--"}, mergeNameSet...)...)
 	if code != 0 {
 		t.Fatalf("commit = (%d, %q, %q), want exit 0", code, stdout, stderr)
 	}
-	merge := revParse("HEAD")
+	merge := head(t, root)
 	if parents, want := headParents(), merge+" "+before+" "+incoming; parents != want {
 		t.Fatalf("merge commit and parents = %q, want %q", parents, want)
 	}
@@ -190,7 +188,7 @@ func TestCommitRecordsTheMergeParent(t *testing.T) {
 	if code, stdout, stderr := runCommand(t, root, "-m", "after", "--", "a.txt"); code != 0 {
 		t.Fatalf("second commit = (%d, %q, %q), want exit 0", code, stdout, stderr)
 	}
-	if parents, want := headParents(), revParse("HEAD")+" "+merge; parents != want {
+	if parents, want := headParents(), head(t, root)+" "+merge; parents != want {
 		t.Fatalf("second commit and parents = %q, want %q", parents, want)
 	}
 }
