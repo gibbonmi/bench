@@ -550,6 +550,19 @@
               "path": "roadmap/FT253.md",
               "identity": "sha256:9d938849720caefc4635ddcd03ca0ba2d9882bff85bf1c57d6dc4e80f6ff5739"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "build-landing-window",
+                "path": "specs/build-landing-window/spec.md",
+                "identity": "sha256:bbb72629c91efb80a2d6536a53304aaf8a73577f05940bc26afef87bd6620dbf"
+              },
+              "obligations": [
+                "FT342",
+                "FT253"
+              ]
+            }
           ]
         },
         {
