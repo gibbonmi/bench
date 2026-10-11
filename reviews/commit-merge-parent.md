@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/commit-merge-parent/spec.md",
-  "plan_digest": "sha256:c33386af16d809dae57c6aa52b45be0a7ec575fcd82cd9719fac41b9a6e04fde",
+  "plan_digest": "sha256:568d1e25be6f83d61cc16e685fc45a3c379c6c899b593be41c85ee82830726c4",
   "implementation_session": "",
   "chunks": [
     {
@@ -1823,7 +1823,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "mp3-standards-r1",
+          "performer": "claude:cmp_mp3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cadaa7285c46483bf060571415556c21dce6bdab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp3_standards",
+            "digest": "sha256:d88822d367eeb9f2896af92aab636365e90776242045fc858f8cb93e513777e5",
+            "excerpt": "MP3 Standards axis, claude:cmp_mp3_standards, opus/high, one iteration, frozen pair 0b64dd54..c40769c4 (chunk tip b82ba53f), evidence sha256:0d919b9dbe6eaaef50f8c85d0d2ce50a2833658546aa4c09e66313b6fcbaeeae current=true, clean tree. The range touches CHANGELOG.md, candidate.go, stale_base_test.go, the review record, and the spec; not internal/commit/commit.go.\n\nFindings: 4, all no-op. Worst issue: S1 (allowed by a keep decision).\nS1 (no-op, confidence 5): stale_base_test.go:115-134 repeats the row loop of TestStaleBaseCandidate (:48-67) and TestLightPathCandidate (light_path_test.go:142-161), differing in the pending step, write-tree, and strconv.Quote; one harness would edit TestStaleBaseCandidate, which ticket 5 lines 38 and 54 keep unchanged.\nS2 (no-op, confidence 2): the light step pair at :77 repeats :22; moving it would edit TestStaleBaseCandidate; TestLightPathCandidate spells the pair inline more than ten times.\nS3 (no-op, confidence 2): the capture/notes.md planning step at :92-94 repeats :29-31; same keep decision; no shared helper exists.\nS4 (no-op, confidence 1, flagged for veto): candidate.go:136 builds merge-base revision HEAD plus heads in one argument list, while ticket 5 line 22 spells HEAD <default tip> for the no-head case; the merge base of two commits is symmetric, and one list is the single-source form; reasoned, not run.\n\nAdvice: two new inline three-item lists (candidate.go:129; stale_base_test.go:72-73) match the files' idiom; the merge --no-commit --no-ff setup has a private helper in six test packages, which a shared gittest helper could collapse (new-seam work, a bench idea).\n\nJudged clean: the local merge closure (:78-80) is one source for its two callers; const path = \"sibling.go\" (:96) feeds the write and the expectation; the git diff-tree read (:112) takes main's added path from landProduction's commit. The branchReference doc (candidate.go:122-130) is present tense, longest sentence 25 words, states the pending-merge reference and the fallback (ticket line 25); the TestPendingMergeCandidate doc (:71-74) follows the sibling form. CHANGELOG.md:9-11 follows the current entry form with five sentences of 22 words or fewer and all four behaviors; :13-15 unchanged. candidate.go has no --git-path and no MERGE_HEAD read; it reads only through git.PendingMerge (:132). Budgets: candidate.go 292, stale_base_test.go 186. No smell survives.\n\nEvidence cursors fetched: none beyond --check-current; the spilled diff response and one git diff --stat read.\n"
+          },
+          "axis": "Standards",
+          "base": "0b64dd54e311e2f2ef2948a4552593c40cb772ad",
+          "tip": "b82ba53fb6fbc52b710147011d1c499043268cdd",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "mp3-spec-r1",
+          "performer": "claude:cmp_mp3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cadaa7285c46483bf060571415556c21dce6bdab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp3_spec",
+            "digest": "sha256:1dcf58a2e63e3df5b98dc479ea4285e906a82b11ee29c2e463ba5f755b36575b",
+            "excerpt": "MP3 Spec axis, claude:cmp_mp3_spec, opus/high, one iteration, frozen pair 0b64dd54..c40769c4 (chunk tip b82ba53f), evidence sha256:0d919b9dbe6eaaef50f8c85d0d2ce50a2833658546aa4c09e66313b6fcbaeeae current=true.\n\nFindings: 1 (P1, no-op). Worst issue: none material.\nP1 (no-op, confidence 8): spec line 215 and ticket line 22 spell `git merge-base HEAD <default tip>` for the no-head case; candidate.go:136 runs merge-base <tip> HEAD with no heads. The best-common-ancestor set of two commits is symmetric, so the base, the base == revision check, and the policy-identity check behave the same; TestStaleBaseCandidate stays unedited and runs on this path. Residual: a criss-cross history with tied committer dates could order tied bases by operand; negligible and outside every row.\n\nD2 trace at the tip: branchReference reads git.PendingMerge before merge-base (candidate.go:132); a reader refusal returns the tip (:133-135); with heads the call is merge-base <tip> HEAD <head>... in file order (:136; spec 211, D2 at 131); base equal to the tip and a policy mismatch return the tip (:138-143; spec 216); the doc comment states the pending-merge reference and the fallback (:125-130); rg finds only git.PendingMerge at :132, no MERGE_HEAD read, no --git-path; authorizeCandidate calls branchReference only when !publication (:52-55) and publication.go:51 passes true; candidate.go 293 lines, stale_base_test.go 187; internal/commit/commit.go untouched. CHANGELOG.md:9-11 adds \"### Commit merge parent\" above \"### Commit success record\" with one Fixed entry that states the four behaviors and ends \"Before, the commit recorded one parent, and the merge stayed pending.\"; :13-15 unchanged. Scope: b82ba53f touches CHANGELOG.md, candidate.go, stale_base_test.go, and the spec (MP57-MP60 citations; specs/ is a planning path, commitment/model.go:124); 17135cf1, 42c5e52e, c40769c4 are plan and record commits.\n\nThe round 2 Coverage advice on the window between the AuthorizeCandidate read of the heads (commit.go:144) and the composeAuthorized read contradicts no decision: \"The recheck\" (spec 192-196) spans authorization to commit-tree and guards .pending; D2 and \"The merge grading\" choose the reference from one read; Edge inventory line 386 rests on the single-writer premise; composeAuthorized re-applies D1 and publishes from its own read (line 184). A guarded window would be new scope.\n\nAdvice: for MP59 only the replace reading of the named probe turns red (merge-base S HEAD S gives S); the reorder reading (merge-base S HEAD T) stays green because main did not move in MP59. The author's recorded probe used the replace form `\"merge-base\", heads[0], \"HEAD\"}, heads...`.\n\nRow audit: MP57 pass (light-path-merges-main at stale_base_test.go:91; the merge base is the tip T', so only covered paths change; the old reference T would refuse fix.go). MP58 pass (planning-merges-main :92-94). MP59 pass (light-path-merges-sibling :95-102 asserts strconv.Quote(\"sibling.go\"), matching lightPathCover's %q at light_path.go:85). MP60 pass (unreadable-merge-state :103-113 plants a directory through git.AdminPath with no merge; the expected path comes from diff-tree of main's HEAD). MP61 pass (the unchanged TestStaleBaseCandidate :20-69).\n\nExamined: spec stories 39-46, Terms, Closed decisions, the pending-merge owner, the recheck, the merge grading, the unchanged surfaces, Testing decisions, the seam diagram, rows MP57-MP61, Edge inventory, Reader inventory, Observations item 2, Not verified; the ticket; candidate.go (whole), publication.go:40-60, stale_base_test.go (whole), CHANGELOG.md:1-20, commit.go:125-200, the light_path_test.go helpers, light_path.go:85, commitmenttest.Assignment (repo.go:134-146), gittest.Output, commitment.PlanningPath. No test or probe run.\nEvidence cursors fetched: the base..tip diff spill and the chunk git log --stat spill; no preflight evidence page beyond --check-current.\n"
+          },
+          "axis": "Spec",
+          "base": "0b64dd54e311e2f2ef2948a4552593c40cb772ad",
+          "tip": "b82ba53fb6fbc52b710147011d1c499043268cdd",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "mp3-coverage-r1",
+          "performer": "claude:cmp_mp3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cadaa7285c46483bf060571415556c21dce6bdab",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp3_coverage",
+            "digest": "sha256:ef6bd855d372693b38d183d7183121c7bfdf7ec21c547d26525c5922ea660325",
+            "excerpt": "MP3 Coverage axis, claude:cmp_mp3_coverage, opus/high, one iteration, frozen pair 0b64dd54..c40769c4 (chunk tip b82ba53f), evidence sha256:0d919b9dbe6eaaef50f8c85d0d2ce50a2833658546aa4c09e66313b6fcbaeeae current=true. Consumers capture s14: one row, repository.Store.branchReference at candidate.go:54, touched=true.\n\nInput family: the three git.PendingMerge answers; one or several heads in file order; a head equal to the tip, a strict ancestor of the tip, a sibling main lacks, or unrelated history; HEAD on the tip or behind it; the base equal to the tip and the policy-identity check; a bound or unbound owner; the publication bypass (candidate.go:52-55, publication.go:51 passes true). The only production caller of AuthorizeCandidate is commit.go:144 after ResolveAttributedPaths at :136, so the reader-refusal fallback is unreachable from bench commit. Write set: b82ba53f touches CHANGELOG.md, candidate.go, stale_base_test.go, and the spec (MP57-MP60 seam cells).\n\nC1 (auto-fix, confidence 8). All four TestPendingMergeCandidate rows (stale_base_test.go:91-113) use a head equal to the tip, a sibling built on the tip, or a reader fault; in each the D2 form and the plain rule \"grade against the tip during a pending merge\" give the same reference. Probe P2 replaced the D2 form with that rule and both tests stayed green. The behavior D2 adds is a head that is a strict ancestor of the tip (main moved while the merge was pending; bench worktree merge --from an older default-branch commit; a merge of a sibling main already contains); D2 admits with the head as the reference, the tip rule counts main's later production change as the branch's deletion, and lightPathCover falsely refuses (light_path.go:81-87); story 39 and the doc at candidate.go:126 promise the admission. Missing row: in a light-path worktree, merge main, then commit a second production file on main, then expect admission.\nC2 (auto-fix, confidence 7). No row grades more than one merge head; probe P1 kept only the first head and both tests stayed green. State: the branch and a sibling start at the old main B, main moves to T, an octopus merge of the sibling and main writes MERGE_HEAD [S, T]; D2 resolves the tip and refuses only the sibling path; a first-head-only reference resolves B and names main's fix.go first, and a planning-only branch gets a false refusal. spec.md:547 maps \"each merge head\" only to MP03 and MP21; no Won't handle line decides octopus grading. Missing row: an octopus merge of a sibling that main lacks plus main, with a refusal that names the sibling path.\n\nBypass attempt: git merge-base always answers an ancestor of the tip, so an ancestor reference grades more strictly only; a reference that admits a sibling's change must leave the tip's ancestry, and MP59 catches that class. No permissive bypass found; both surviving mutants are stricter-direction regressions (false refusals of a legitimate merge).\n\nAdvice: b82ba53f edits the spec seam cells (the normal coverage-map update, outside the ticket Writes line by convention); the no-head operand order is symmetric for two commits, with criss-cross history unknown; no row grades a bound candidate during a pending merge (a C1 variant that also edits the policy would pin \"candidate policy has no exact approval\"); the CHANGELOG entry is review-owned.\n\nFindings: 2 (C1, C2). Worst issue: C1.\nProbes: P1 `heads...)...)` to `heads[:min(len(heads), 1)]...)...)`, both tests: silent, 0 of 14, restored yes. P2 append `; if len(heads) > 0 { return revision }` to the PendingMerge line, both tests: silent, 0 of 14, restored yes. P3 (calibration) append `; heads = heads[:0]`, TestPendingMergeCandidate: bit, 2 failed (light-path-merges-main, planning-merges-main), restored yes. Final git status --short: ` M reviews/commit-merge-parent.md` from the orchestrator's concurrent record write; candidate.go restored and unmodified.\n\nExamined: the internal delta; the ticket; spec.md:88-127, 205-224, 264-288, 364-399; candidate.go and light_path.go (whole); stale_base_test.go (whole), light_path_test.go:1-110; checkout.go, sources.go:70-99; publication.go:40-54, commit.go:125-154; craft-review SKILL.md:50-123 and finding-discipline.md; git log --name-status, git diff 42c5e52e b82ba53f -- spec.md, bench consumers for AuthorizeCandidate and authorizeCandidate.\nEvidence cursors fetched: the summary, manifest page v1.0d919b9d...eeae.m.0.0, source s14 page 0 (consumers), source s8 page 0 (the CHANGELOG diff).\n"
+          },
+          "axis": "Coverage",
+          "base": "0b64dd54e311e2f2ef2948a4552593c40cb772ad",
+          "tip": "b82ba53fb6fbc52b710147011d1c499043268cdd",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1917,6 +1988,21 @@
           "MP2"
         ]
       }
+    },
+    {
+      "from": "sha256:c33386af16d809dae57c6aa52b45be0a7ec575fcd82cd9719fac41b9a6e04fde",
+      "to": "sha256:568d1e25be6f83d61cc16e685fc45a3c379c6c899b593be41c85ee82830726c4",
+      "chunk_ids": {
+        "MP1": [
+          "MP1"
+        ],
+        "MP2": [
+          "MP2"
+        ],
+        "MP3": [
+          "MP3"
+        ]
+      }
     }
   ]
 }
@@ -1941,6 +2027,8 @@ The orchestrator then ran two probes at `54dc1636`: the `:(literal)` spelling sw
 The ticket 2 repair session `claude:cmp_t2_rep1` closed C21 in `cca1013b` with one test row. It refroze MP2 at that tip in `a026c7d1`, and the ticket 3 repair session and the ticket 4 author re-recorded their entries at that source. MP2 round 3 ran three opus/high axes over the delta `54dc1636..f10aeedf`. Standards confirmed S21 closed, and Coverage confirmed C21 closed with a `:(glob)` probe.
 
 Spec confirmed P21 and raised P31, a record gap: the MP42 spelling probe had prose but no retained run. The orchestrator retains both probe runs at the frozen tip below, and the Spec axis reaffirms P31. MP2 then closes with repair cycle 2 of 2 used and no open finding.
+
+Chunk MP3 round 1 ran three opus/high axes in parallel at `c40769c4` over the frozen pair `0b64dd54..c40769c4`, whose chunk tip is `b82ba53f`. Only the Coverage axis ran probes. Standards returned four `no-op` findings, and Spec returned one `no-op` finding, the symmetric operand order. MP3 uses repair cycle 1 of 2 through one fresh repair session for ticket 5, which takes C1 and C2. Both are new rows in `stale_base_test.go`.
 
 ## Standards
 
@@ -2006,6 +2094,13 @@ failures[3]{package,test,line,lines}:
 skips[0]{package,test,reason}:
 ```
 
+MP3 findings: 4, all `no-op`. Worst issue: S1, which a keep decision allows.
+
+- S1 (`no-op`, confidence 5): `TestPendingMergeCandidate` repeats the row loop of `TestStaleBaseCandidate`. Ticket 5 keeps `TestStaleBaseCandidate` unchanged.
+- S2 (`no-op`, confidence 2): the `light` step pair repeats. Same keep decision.
+- S3 (`no-op`, confidence 2): the `capture/notes.md` planning step repeats. Same keep decision.
+- S4 (`no-op`, confidence 1): the no-head call runs `merge-base <tip> HEAD`, the symmetric form of the ticket's order, in one operand list.
+
 ## Spec
 
 Findings: 0. Worst issue: none. Every row MP01 to MP18 is met, and every MP01 to MP15 seam cell cites an existing test.
@@ -2037,6 +2132,10 @@ skips[0]{package,test,reason}:
 ```
 
 Review-owned rows: MP51 is met, because `Land` runs `git merge --quit` and Bench removes no admin entry file. MP55 is met, because the two sentences sit after the fast-lane note and the retained anchors excerpt shows every require row nonzero. MP56 is met, because no roadmap path and no `internal/commit/commit.go` appear in the diff or the fence.
+
+MP3 findings: 1. Worst issue: none material.
+
+- P1 (`no-op`, confidence 8): the no-head call order is symmetric for two commits, and `TestStaleBaseCandidate` stays green on that path. Rows MP57 to MP61 pass.
 
 ## Coverage
 
@@ -2074,3 +2173,8 @@ skips[0]{package,test,reason}:
 ```
 
 Advice kept for the final reconciliation: no positive `DryRun` row exists during a pending merge. A merged path that the caller unstages drops out of the index listing, and the Edge inventory now names that case. The `AuthorizeCandidate` read of the heads precedes `composeAuthorized`, and the MP3 review reads that window.
+
+MP3 findings: 2. Worst issue: C1.
+
+- C1 (`auto-fix`, confidence 8): no row pins a merge head that is a strict ancestor of the tip. A rule that grades every pending merge against the tip therefore stays silent. Repair: a row that merges main, then moves main again with a second production file, and expects admission.
+- C2 (`auto-fix`, confidence 7): no row grades more than one merge head, so a first-head-only reference stays silent. Repair: an octopus merge of a sibling that main lacks plus main, with a refusal that names the sibling path.
