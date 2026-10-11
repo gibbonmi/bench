@@ -36,6 +36,7 @@ The commitment grading of a merge commit reads the merged commits of the default
 Line: opus / xhigh
 Implementation-line reason: MP2 is the hardest material chunk. It changes the composition, publication, and completion steps of the landing owner, and real Git merges prove each step. Its tickets cross owner seams, and a repair round there costs over 100k tokens, so the scorecard routes them to Opus at xhigh. Each ticket author starts on this line, and `craft-line` owns any effort change inside that session.
 Harder chunks: MP2
+Run line, by reviewer direction on 2026-10-11: opus / xhigh for each ticket author, opus / high for each review axis, and opus / xhigh for each consultation. An opus / max shadow author on tickets 1, 2, and 3 supplies the effort assessment, and its work lands nothing.
 
 ### The merge parent
 
@@ -254,56 +255,72 @@ The orchestrator reconciles the final acceptance after the MP3 checkpoint.
 
 ### Completion plan
 
-This version-1 completion plan is a planning verification inventory, not a dispatch plan.
+This version 2 completion plan declares the delegated run and one verification inventory for each ticket.
 Its commands are future obligations, not executed proof.
+Each probe field names the mutation kind, its site, and the test that turns red, and the author derives the exact mutated text.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "commit-merge-parent-build-20261011",
+    "orchestrator_session": "claude:cmp-orchestrator-20261011",
+    "author_limit": 1,
+    "assignments": {
+      "1-read-the-pending-merge-through-one-owner.md": [],
+      "2-refuse-an-incomplete-merge-name-set.md": [],
+      "3-record-each-merge-head-and-end-the-merge.md": [],
+      "4-document-the-merge-contract-of-bench-commit.md": [],
+      "5-grade-a-pending-merge-by-the-branch-change.md": []
+    }
+  },
   "chunks": [
     {
       "id": "MP1",
       "tickets": ["1-read-the-pending-merge-through-one-owner.md"],
       "verification": [
-        {"id": "owner-packages", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},
-        {"id": "route-package", "command": "bench test --package ./internal/worktree"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"},
-        {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
-        {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"},
-        {"id": "skip-ownership", "command": "bench test --check skip-ownership"}
+        {"id": "t1-reader-focused", "ticket": "1-read-the-pending-merge-through-one-owner.md", "command": "bench test --package ./internal/git --run 'TestPendingMerge'", "probe": "Omit the regular-file refusal after os.Lstat in git.PendingMerge in internal/git/checkout.go, so that a directory at MERGE_HEAD reaches the read. TestPendingMergeRefusesUnreadableState turns red."},
+        {"id": "t1-route-focused", "ticket": "1-read-the-pending-merge-through-one-owner.md", "command": "bench test --package ./internal/worktree --run 'TestSourceMergePending|TestLandCommandPublicConflictRepairRequiresNewReviewedTip|TestPackageTestCountPin'"},
+        {"id": "t1-floor", "ticket": "1-read-the-pending-merge-through-one-owner.md", "command": "bench test --package ./internal/git --package ./internal/worktree --package ./internal/conformance --package ./cmd/bench"},
+        {"id": "t1-root-conformance", "ticket": "1-read-the-pending-merge-through-one-owner.md", "command": "bench test --check root-conformance"},
+        {"id": "t1-git-plumbing-owner", "ticket": "1-read-the-pending-merge-through-one-owner.md", "command": "bench test --check git-plumbing-owner"},
+        {"id": "t1-ordinary-build-census", "ticket": "1-read-the-pending-merge-through-one-owner.md", "command": "bench test --check ordinary-build-census"},
+        {"id": "t1-skip-ownership", "ticket": "1-read-the-pending-merge-through-one-owner.md", "command": "bench test --check skip-ownership"}
       ]
     },
     {
       "id": "MP2",
       "tickets": ["2-refuse-an-incomplete-merge-name-set.md", "3-record-each-merge-head-and-end-the-merge.md", "4-document-the-merge-contract-of-bench-commit.md"],
       "verification": [
-        {"id": "owner-packages", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},
-        {"id": "refusal-registry", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"},
-        {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
-        {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"}
+        {"id": "t2-landing-focused", "ticket": "2-refuse-an-incomplete-merge-name-set.md", "command": "bench test --package ./internal/landing --run 'TestLandRefusesAnIncompleteMergeNameSet|TestLandRefusesAnUnreadableMergeState|TestLandComposesOnlyNamedPathsAndCASesExpectedBase'", "probe": "Omit the NamedPathError refusal that attributedPaths raises for the omitted merged paths in internal/landing/attribution.go, so that an incomplete name set composes. TestLandRefusesAnIncompleteMergeNameSet turns red."},
+        {"id": "t2-commit-focused", "ticket": "2-refuse-an-incomplete-merge-name-set.md", "command": "bench test --package ./internal/commit --run 'TestCommitRefusesAnIncompleteMergeNameSet|TestCommitRefusesAnUnreadableMergeState|TestDryRunRefusesAnIncompleteMergeNameSet|TestMergeNameSetRefusalPrecedesCommitment'"},
+        {"id": "t2-floor", "ticket": "2-refuse-an-incomplete-merge-name-set.md", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit --package ./internal/refusalroute"},
+        {"id": "t2-root-conformance", "ticket": "2-refuse-an-incomplete-merge-name-set.md", "command": "bench test --check root-conformance"},
+        {"id": "t2-git-plumbing-owner", "ticket": "2-refuse-an-incomplete-merge-name-set.md", "command": "bench test --check git-plumbing-owner"},
+        {"id": "t2-ordinary-build-census", "ticket": "2-refuse-an-incomplete-merge-name-set.md", "command": "bench test --check ordinary-build-census"},
+        {"id": "t3-landing-focused", "ticket": "3-record-each-merge-head-and-end-the-merge.md", "command": "bench test --package ./internal/landing --run 'TestLandRecordsEachMergeHeadAsAParent|TestComposeAfterMergeCommitReadsTheMergedBase|TestLandRefusesAMergeStateChangeDuringAuthorization|TestLandPublishesAMergeWithAnUnchangedTree|TestLandEndsThePendingMerge|TestLandReportsPublishedMergeWhenReconciliationFails|TestLandDetachedHEADHasOneExpectedParent|TestLandPreAuthorizationRefusalTable'", "probe": "Omit the merge-head -p arguments from the commit-tree call of Owner.Land in internal/landing/landing.go, so that the publication records one parent during a pending merge. TestLandRecordsEachMergeHeadAsAParent turns red."},
+        {"id": "t3-commit-focused", "ticket": "3-record-each-merge-head-and-end-the-merge.md", "command": "bench test --package ./internal/commit --run 'TestCommitRecordsTheMergeParent'"},
+        {"id": "t3-floor", "ticket": "3-record-each-merge-head-and-end-the-merge.md", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},
+        {"id": "t3-root-conformance", "ticket": "3-record-each-merge-head-and-end-the-merge.md", "command": "bench test --check root-conformance"},
+        {"id": "t3-git-plumbing-owner", "ticket": "3-record-each-merge-head-and-end-the-merge.md", "command": "bench test --check git-plumbing-owner"},
+        {"id": "t3-ordinary-build-census", "ticket": "3-record-each-merge-head-and-end-the-merge.md", "command": "bench test --check ordinary-build-census"},
+        {"id": "t4-guidance", "ticket": "4-document-the-merge-contract-of-bench-commit.md", "command": "bench test --check docs-currency-workflow"},
+        {"id": "t4-skills-index", "ticket": "4-document-the-merge-contract-of-bench-commit.md", "command": "bench test --check skills-index-command-adapters"},
+        {"id": "t4-floor", "ticket": "4-document-the-merge-contract-of-bench-commit.md", "command": "bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench"},
+        {"id": "t4-root-conformance", "ticket": "4-document-the-merge-contract-of-bench-commit.md", "command": "bench test --check root-conformance"}
       ]
     },
     {
       "id": "MP3",
       "tickets": ["5-grade-a-pending-merge-by-the-branch-change.md"],
       "verification": [
-        {"id": "owner-packages", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},
-        {"id": "grading-package", "command": "bench test --package ./internal/commitment/repository"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"},
-        {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
-        {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"}
+        {"id": "t5-grading-focused", "ticket": "5-grade-a-pending-merge-by-the-branch-change.md", "command": "bench test --package ./internal/commitment/repository --run 'TestPendingMergeCandidate|TestStaleBaseCandidate'", "probe": "Swap the default tip for the merge head as the first git merge-base operand in branchReference in internal/commitment/repository/candidate.go, so that the merged sibling's change grades as the default branch's own. TestPendingMergeCandidate turns red."},
+        {"id": "t5-floor", "ticket": "5-grade-a-pending-merge-by-the-branch-change.md", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit --package ./internal/commitment/repository --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench"},
+        {"id": "t5-guidance", "ticket": "5-grade-a-pending-merge-by-the-branch-change.md", "command": "bench test --check docs-currency-workflow"},
+        {"id": "t5-root-conformance", "ticket": "5-grade-a-pending-merge-by-the-branch-change.md", "command": "bench test --check root-conformance"},
+        {"id": "t5-git-plumbing-owner", "ticket": "5-grade-a-pending-merge-by-the-branch-change.md", "command": "bench test --check git-plumbing-owner"},
+        {"id": "t5-ordinary-build-census", "ticket": "5-grade-a-pending-merge-by-the-branch-change.md", "command": "bench test --check ordinary-build-census"}
       ]
     }
   ],
