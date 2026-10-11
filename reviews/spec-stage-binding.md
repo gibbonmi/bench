@@ -1334,6 +1334,161 @@
           "requirement": "t3-root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t3-guidance-focused-ssb_t3-r2",
+          "performer": "claude:ssb_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t3/t3-guidance-focused-r2.txt",
+            "digest": "sha256:e7f1866e701c82ab464f3ee6dcf8fcb30c4c884eca0018faa61a57ea4eece889",
+            "excerpt": "$ bench test --package ./internal/conformance --run 'TestCommitmentGuidance'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,3004,53\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/anchors/registry_commitment.go --omit '{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Section: \"Exit handoff\", Needle: \"From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.\", Diagnostic: CommitmentDiagnosticPrefix + \"spec authoring dropped the start command as the handoff next command\"},' --package ./internal/conformance --run TestCommitmentGuidance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/anchors/registry_commitment.go,omit,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3037,53\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/start_command_as_the_handoff_next_command,\"commitment_guidance_test.go:108: mutated .agents/commands/bench-write-spec.md raised [], want only \\\"commitment guidance: spec authoring dropped the start command as the handoff next command\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-guidance-focused",
+          "command": "bench test --package ./internal/conformance --run 'TestCommitmentGuidance'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the SB33 anchor row, which requires the step 6 sentence that passes the start command to bench handoff --next, from internal/anchors/registry_commitment.go, so that the registry no longer requires that sentence in the Exit handoff. The SB33 remove case of TestCommitmentGuidance turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ssb_t3/t3-guidance-focused-r2.txt",
+              "digest": "sha256:e7f1866e701c82ab464f3ee6dcf8fcb30c4c884eca0018faa61a57ea4eece889",
+              "excerpt": "$ bench test --package ./internal/conformance --run 'TestCommitmentGuidance'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,3004,53\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/anchors/registry_commitment.go --omit '{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Section: \"Exit handoff\", Needle: \"From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.\", Diagnostic: CommitmentDiagnosticPrefix + \"spec authoring dropped the start command as the handoff next command\"},' --package ./internal/conformance --run TestCommitmentGuidance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/anchors/registry_commitment.go,omit,failed,1,yes\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3037,53\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestCommitmentGuidance/start_command_as_the_handoff_next_command,\"commitment_guidance_test.go:108: mutated .agents/commands/bench-write-spec.md raised [], want only \\\"commitment guidance: spec authoring dropped the start command as the handoff next command\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t3-slicing-focused-ssb_t3-r2",
+          "performer": "claude:ssb_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t3/t3-slicing-focused-r2.txt",
+            "digest": "sha256:28d17bfcc7b99a91352bed40d78177b94c2625296a7bb8399673aec633182fc1",
+            "excerpt": "$ bench test --package ./internal/anchors --run 'TestTicketSlicingPasses'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,145,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-slicing-focused",
+          "command": "bench test --package ./internal/anchors --run 'TestTicketSlicingPasses'",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-floor-ssb_t3-r2",
+          "performer": "claude:ssb_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t3/t3-floor-r2.txt",
+            "digest": "sha256:751a3a50a60228273c586c07a574bc82c0ba9cf1605cc87a85e1d70d3e2d2487",
+            "excerpt": "$ bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16297,333\n  github.com/gibbonmi/bench/internal/anchors,pass,2214,179\n  github.com/gibbonmi/bench/internal/conformance,pass,57361,1689\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-floor",
+          "command": "bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-guidance-ssb_t3-r2",
+          "performer": "claude:ssb_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t3/t3-guidance-r2.txt",
+            "digest": "sha256:65e541c5bc95f40dea649535848789606a8d94749ab5ba2d9fc3e3d73f71c611",
+            "excerpt": "$ bench test --check docs-currency-workflow\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,5446,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-budgets-ssb_t3-r2",
+          "performer": "claude:ssb_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t3/t3-budgets-r2.txt",
+            "digest": "sha256:941358be0d757a156f3c0ca479106a625aebf8a74909e8491a086d5b5a68fd0d",
+            "excerpt": "$ bench test --check guidance-prose-budgets\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\ncheck[1]{name,kind,tests_run,subjects}:\n  guidance-prose-budgets,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-budgets",
+          "command": "bench test --check guidance-prose-budgets",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-prose-ssb_t3-r2",
+          "performer": "claude:ssb_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t3/t3-prose-r2.txt",
+            "digest": "sha256:ef3444937f6dc5bbaf1f682884142f2dda6ba90c95637825af0c05f33ba0ab7e",
+            "excerpt": "$ bench test --check prose-mechanics\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\ncheck[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,296,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-prose",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-skills-index-ssb_t3-r2",
+          "performer": "claude:ssb_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t3/t3-skills-index-r2.txt",
+            "digest": "sha256:7bf6dd71b9f4d1ee8542212de9e9e5a0199e63bd753486f72043de8a2401d0a9",
+            "excerpt": "$ bench test --check skills-index-command-adapters\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\ncheck[1]{name,kind,tests_run,subjects}:\n  skills-index-command-adapters,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-skills-index",
+          "command": "bench test --check skills-index-command-adapters",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-root-conformance-ssb_t3-r2",
+          "performer": "claude:ssb_t3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t3/t3-root-conformance-r2.txt",
+            "digest": "sha256:3b7fd64f9bb60d383e7ed70d22dcf7a13592f870902abe7ef1181d2b6fc28c2d",
+            "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,e10c0b965a7cd28d79c9774f7233ff7f39d3193f,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16069,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
