@@ -449,6 +449,167 @@
           ]
         },
         {
+          "id": "FT258-merge-parent",
+          "criteria": [
+            {
+              "id": "FT258-merge-parent.parent",
+              "text": "When MERGE_HEAD exists, bench commit records the merge parent as the second parent of the commit."
+            },
+            {
+              "id": "FT258-merge-parent.pending",
+              "text": "bench commit never authors a one-parent commit while merge state is pending."
+            },
+            {
+              "id": "FT258-merge-parent.open",
+              "text": "The delivery closes no roadmap row, and the candidate-set forms --changed, --dry-run --changed, and --ticket stay on FT258."
+            }
+          ],
+          "sources": []
+        },
+        {
+          "id": "FT395",
+          "criteria": [
+            {
+              "id": "FT395.close-lands",
+              "text": "A spec-stage close lands its staged spec and its deliverable binding on main before the handoff, and the handoff names the binding state."
+            },
+            {
+              "id": "FT395.status-command",
+              "text": "bench status prints the complete bench commitment start command, with the deliverable that the spec's Roadmap line and path derive."
+            },
+            {
+              "id": "FT395.preflight-green",
+              "text": "A ticket Writes line owns .bench/commitment.json, so the build preflight stays green after the binding."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT395",
+              "path": "roadmap/FT395.md",
+              "identity": "sha256:5e901fe4e622cbce7d01f38123f3d116771c96f72cd2f72548f6c109f9093dc8"
+            }
+          ]
+        },
+        {
+          "id": "FT342-FT253",
+          "criteria": [
+            {
+              "id": "FT342-FT253.lease",
+              "text": "bench worktree land holds one lease in the intent ledger, keyed by the destination branch, from composition through publish, and a second landing on the same destination refuses with the owner's assignment id and a route that waits."
+            },
+            {
+              "id": "FT342-FT253.window",
+              "text": "While a chunked build is open, bench worktree land refuses a landing that is not that build's own landing outside a recorded chunk gap, and the refusal names the build and the gap to wait for."
+            },
+            {
+              "id": "FT342-FT253.lifetime",
+              "text": "The open-build window opens at bench commitment start and closes on completion, on bench commitment block, or on abandon."
+            },
+            {
+              "id": "FT342-FT253.override",
+              "text": "Only a recorded reviewer-owned override with a reason lets a landing move main after the last chunk's freeze, and an agent cannot grant that override to itself."
+            },
+            {
+              "id": "FT342-FT253.fold",
+              "text": "A record form accepts a fold-delta review in which only conflict-resolved hunks get review, and the final checks include the packages of the merged test files."
+            },
+            {
+              "id": "FT342-FT253.route",
+              "text": "A refusal for a moved destination names bench worktree merge and the landing rerun, not bench doctor."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT342",
+              "path": "roadmap/FT342.md",
+              "identity": "sha256:8a0636b72dcccda2bdb2760f04179238cb36cc9befb8ae3c5cc47aa61a4c0db5"
+            },
+            {
+              "id": "FT253",
+              "path": "roadmap/FT253.md",
+              "identity": "sha256:9d938849720caefc4635ddcd03ca0ba2d9882bff85bf1c57d6dc4e80f6ff5739"
+            }
+          ]
+        },
+        {
+          "id": "FT354-durable-replace",
+          "criteria": [
+            {
+              "id": "FT354-durable-replace.leaf",
+              "text": "The internal/durablefile leaf replaces one regular file through an adjacent temporary file, synchronizes the file before the rename and the parent directory after it, and reports a failure after the rename with the statement that new bytes may already be visible."
+            },
+            {
+              "id": "FT354-durable-replace.review",
+              "text": "The review-record writer replaces its file through the internal/durablefile leaf, so it synchronizes the parent directory and returns an injected directory-sync failure."
+            },
+            {
+              "id": "FT354-durable-replace.open",
+              "text": "The delivery closes no roadmap row, and FT354 stays open for its other outcomes."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "durable-file-replacement",
+                "path": "specs/durable-file-replacement/spec.md",
+                "identity": "sha256:b871086abe0d08e0674c031ec71ffe7711961dcaebe1d1d6a327d43d23e61fd5"
+              }
+            }
+          ]
+        },
+        {
+          "id": "FT354-strict-json",
+          "criteria": [
+            {
+              "id": "FT354-strict-json.vulnerability",
+              "text": "The vulnerability exception reader accepts exactly one JSON document with surrounding whitespace, and it refuses trailing non-JSON bytes, a second JSON value, a repeated exception key, and an unknown exception field."
+            },
+            {
+              "id": "FT354-strict-json.owner",
+              "text": "The gate verdict store, the review records, and the release evidence read strict JSON through jsonfile, and a registered conformance check refuses a strict reader that bypasses jsonfile or keeps its own recursive duplicate-key walk."
+            },
+            {
+              "id": "FT354-strict-json.preserved",
+              "text": "Each migrated reader keeps its newline framing, its domain validation, and its diagnostic sentinels."
+            },
+            {
+              "id": "FT354-strict-json.open",
+              "text": "The delivery closes no roadmap row, and FT354 stays open for its other outcomes."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "strict-json-ownership",
+                "path": "specs/strict-json-ownership/spec.md",
+                "identity": "sha256:f2adb0820fd7be13bd9d3e4ce79d772450b84c289435dcf13950bf994da0563e"
+              }
+            }
+          ]
+        },
+        {
+          "id": "FT411",
+          "criteria": [
+            {
+              "id": "FT411.cut",
+              "text": "Each test that the reviewer selects from the 2026-10-09 test-efficiency review tables is cut."
+            },
+            {
+              "id": "FT411.probe",
+              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT411",
+              "path": "roadmap/FT411.md",
+              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
+            }
+          ]
+        },
+        {
           "id": "FT380-plan-commit",
           "criteria": [
             {
@@ -469,6 +630,30 @@
             }
           ],
           "sources": []
+        },
+        {
+          "id": "FT414",
+          "criteria": [
+            {
+              "id": "FT414.record-status",
+              "text": "A read-only bench record status form lists the required chunk base, each stale or missing record entry, and each commit that breaks the review chain, before a gate runs."
+            },
+            {
+              "id": "FT414.record-next",
+              "text": "A bench record next form prints the next required record or plan action and its preconditions."
+            },
+            {
+              "id": "FT414.out",
+              "text": "bench probe and bench test take an --out option that writes the complete response, and bench record verification reads the probe exit code from that file."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT414",
+              "path": "roadmap/FT414.md",
+              "identity": "sha256:8e8bd51dbaeb72a31ace026a43c5e31e793fc18b4988af9df9107fc335051c89"
+            }
+          ]
         },
         {
           "id": "FT403",
@@ -546,47 +731,6 @@
             }
           ],
           "sources": []
-        },
-        {
-          "id": "FT342-FT253",
-          "criteria": [
-            {
-              "id": "FT342-FT253.lease",
-              "text": "bench worktree land holds one lease in the intent ledger, keyed by the destination branch, from composition through publish, and a second landing on the same destination refuses with the owner's assignment id and a route that waits."
-            },
-            {
-              "id": "FT342-FT253.window",
-              "text": "While a chunked build is open, bench worktree land refuses a landing that is not that build's own landing outside a recorded chunk gap, and the refusal names the build and the gap to wait for."
-            },
-            {
-              "id": "FT342-FT253.lifetime",
-              "text": "The open-build window opens at bench commitment start and closes on completion, on bench commitment block, or on abandon."
-            },
-            {
-              "id": "FT342-FT253.override",
-              "text": "Only a recorded reviewer-owned override with a reason lets a landing move main after the last chunk's freeze, and an agent cannot grant that override to itself."
-            },
-            {
-              "id": "FT342-FT253.fold",
-              "text": "A record form accepts a fold-delta review in which only conflict-resolved hunks get review, and the final checks include the packages of the merged test files."
-            },
-            {
-              "id": "FT342-FT253.route",
-              "text": "A refusal for a moved destination names bench worktree merge and the landing rerun, not bench doctor."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT342",
-              "path": "roadmap/FT342.md",
-              "identity": "sha256:8a0636b72dcccda2bdb2760f04179238cb36cc9befb8ae3c5cc47aa61a4c0db5"
-            },
-            {
-              "id": "FT253",
-              "path": "roadmap/FT253.md",
-              "identity": "sha256:9d938849720caefc4635ddcd03ca0ba2d9882bff85bf1c57d6dc4e80f6ff5739"
-            }
-          ]
         },
         {
           "id": "FT293-ownership-closure",
@@ -759,102 +903,6 @@
           "dependencies": [
             "FT409"
           ]
-        },
-        {
-          "id": "FT411",
-          "criteria": [
-            {
-              "id": "FT411.cut",
-              "text": "Each test that the reviewer selects from the 2026-10-09 test-efficiency review tables is cut."
-            },
-            {
-              "id": "FT411.probe",
-              "text": "Before each cut, a probe proves that the subsuming test turns red on the same mutation."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT411",
-              "path": "roadmap/FT411.md",
-              "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
-            }
-          ]
-        },
-        {
-          "id": "FT354-durable-replace",
-          "criteria": [
-            {
-              "id": "FT354-durable-replace.leaf",
-              "text": "The internal/durablefile leaf replaces one regular file through an adjacent temporary file, synchronizes the file before the rename and the parent directory after it, and reports a failure after the rename with the statement that new bytes may already be visible."
-            },
-            {
-              "id": "FT354-durable-replace.review",
-              "text": "The review-record writer replaces its file through the internal/durablefile leaf, so it synchronizes the parent directory and returns an injected directory-sync failure."
-            },
-            {
-              "id": "FT354-durable-replace.open",
-              "text": "The delivery closes no roadmap row, and FT354 stays open for its other outcomes."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "durable-file-replacement",
-                "path": "specs/durable-file-replacement/spec.md",
-                "identity": "sha256:b871086abe0d08e0674c031ec71ffe7711961dcaebe1d1d6a327d43d23e61fd5"
-              }
-            }
-          ]
-        },
-        {
-          "id": "FT354-strict-json",
-          "criteria": [
-            {
-              "id": "FT354-strict-json.vulnerability",
-              "text": "The vulnerability exception reader accepts exactly one JSON document with surrounding whitespace, and it refuses trailing non-JSON bytes, a second JSON value, a repeated exception key, and an unknown exception field."
-            },
-            {
-              "id": "FT354-strict-json.owner",
-              "text": "The gate verdict store, the review records, and the release evidence read strict JSON through jsonfile, and a registered conformance check refuses a strict reader that bypasses jsonfile or keeps its own recursive duplicate-key walk."
-            },
-            {
-              "id": "FT354-strict-json.preserved",
-              "text": "Each migrated reader keeps its newline framing, its domain validation, and its diagnostic sentinels."
-            },
-            {
-              "id": "FT354-strict-json.open",
-              "text": "The delivery closes no roadmap row, and FT354 stays open for its other outcomes."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "strict-json-ownership",
-                "path": "specs/strict-json-ownership/spec.md",
-                "identity": "sha256:f2adb0820fd7be13bd9d3e4ce79d772450b84c289435dcf13950bf994da0563e"
-              }
-            }
-          ]
-        },
-        {
-          "id": "FT258-merge-parent",
-          "criteria": [
-            {
-              "id": "FT258-merge-parent.parent",
-              "text": "When MERGE_HEAD exists, bench commit records the merge parent as the second parent of the commit."
-            },
-            {
-              "id": "FT258-merge-parent.pending",
-              "text": "bench commit never authors a one-parent commit while merge state is pending."
-            },
-            {
-              "id": "FT258-merge-parent.open",
-              "text": "The delivery closes no roadmap row, and the candidate-set forms --changed, --dry-run --changed, and --ticket stay on FT258."
-            }
-          ],
-          "sources": []
         }
       ]
     }
