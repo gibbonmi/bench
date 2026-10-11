@@ -328,6 +328,19 @@ Each slicer adds its chunk to this plan when it writes the chunk's tickets, beca
         {"id": "prose", "command": "bench test --check prose-mechanics"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
+    },
+    {
+      "id": "GW3",
+      "tickets": ["4-merge-the-light-path-rules-into-one-block.md"],
+      "verification": [
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
+        {"id": "prose", "command": "bench test --check prose-mechanics"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+      ]
     }
   ],
   "final_verification": [
@@ -494,10 +507,12 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `internal/anchors/registry_ticket_passes.go`
 - `internal/anchors/registry_ticket_passes_test.go`
 - `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/commitment_guidance_test.go`
 - `internal/conformance/implementation_continuation_test.go`
 - `internal/conformance/recurrence_maintenance_contract_test.go`
 - `internal/conformance/retained_workflow_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/validity_checks_test.go`
 - `tests/canary/claude-agent-definitions/agent-unnamed-in-skill`
 - `tests/canary/claude-agent-definitions/model-declared`
 - `tests/canary/claude-agent-definitions/name-mismatch`
