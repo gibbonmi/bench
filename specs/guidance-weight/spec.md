@@ -145,10 +145,13 @@ The row at `registry_retained_workflow.go:341` is `RequireInSection` with sectio
 
 The forbid rows with `File` `.bench/BENCH.md` at `registry_ft311_review_dispatch.go:41`, `:49`, `:50` and `registry_retained_workflow.go:217`, `:270` repoint to the build rules.
 The forbid rows at `registry_retained_workflow.go:295` to `:302` keep their phase files.
-No new forbid row binds `.bench/BENCH.md`, because 27 canary overlays carry a whole old `BENCH.md` with these paragraphs.
+No new forbid row binds `.bench/BENCH.md` for this text, so GW01 stays review-owned. No canary overlay holds B11 or B26 to B33, so a forbid row there stays a reviewer option.
 
-Each moved row's diagnostic that names "operating guide" names "build rules" instead.
+A diagnostic that names the operating guide as the owner of a moved rule names the new owner instead.
+The new owner is the build rules for GW1 and `/bench-write-spec` for GW4.
+The rule covers moved rows and unmoved rows, such as `registry_retained_workflow.go:46`, `:245`, `:295-303`, `:345`, and `:30-31`.
 The B11 row `registry_data.go:377` names `.bench/BENCH.md` as the file that dropped its text, so its diagnostic names the build rules too.
+
 The mirrors repoint with their rows: `internal/conformance/retained_workflow_test.go:118-137`, `:151-166`, `:183-202`, and `internal/conformance/implementation_continuation_test.go:81-84`.
 The `wantDiagnostics` list of `retained_workflow_test.go:46-95` takes the renamed diagnostics.
 Two new require rows pin the new pointer in `.bench/BENCH.md` and the lead of the build rules.
@@ -165,7 +168,7 @@ Each of these lines names the build rules by its full path in place of `.bench/B
 
 - `.agents/commands/bench-implement-spec.md:21`, `:23`, `:33`, `:54`, `:60`, `:90`
 - `.agents/commands/bench-review-implementation.md:34`, `:44`, `:50`, `:52`
-- `.agents/commands/bench-final-check.md:194`, `.agents/commands/bench-write-spec.md:50`, `.agents/commands/bench-debug.md:157`, `.agents/commands/bench-drain.md:72`
+- `.agents/commands/bench-final-check.md:194`, `.agents/commands/bench-write-spec.md:50`, `.agents/commands/bench-debug.md:157`
 - `.agents/skills/bench-craft-spec/SKILL.md:68`, `:70`, `.agents/skills/bench-craft-delegate/SKILL.md:13`, `:122`, `.agents/skills/bench-craft-gate/SKILL.md:28`
 - `.agents/skills/bench-craft-tickets/SKILL.md:67`, and `:95`, which says "the operating guide's delegated policy"
 - `.agents/skills/bench-craft-delegate/references/delegation-discipline.md:10`, `:39`, `:94`, `:105`
@@ -175,7 +178,7 @@ Each of these lines names the build rules by its full path in place of `.bench/B
 The anchors that quote a repointed line take the new text.
 They are `registry_retained_workflow.go:47`, `:212`, `:218` to `:220`, `:280`, `:303`, `:307`, `:310`, and `:316`.
 They also include `registry_data.go:136`, `:140`, `:442`, `registry_chunk_chain.go:62`, and `registry_ft311_review_dispatch.go:42`.
-The mirrors that quote them take the new text: `retained_workflow_test.go:138-141`, `:146-150`, `:167-178`, and `internal/conformance/recurrence_maintenance_contract_test.go:91`, `:217`.
+The mirrors that quote them take the new text: `retained_workflow_test.go:138-141`, `:146-150`, `:167-178`. The line `.agents/commands/bench-drain.md:72` names the light-path dispatch rule, which stays, so it and its mirrors `recurrence_maintenance_contract_test.go:91` and `:217` stay unchanged.
 The anchor harness mirrors take it too: `internal/anchors/registry_data_test.go:349` and `:892`, and `internal/anchors/registry_chunk_chain_test.go:51`.
 
 The canaries `review-repair-ticket-owner`, `review-repair-ticket-covers`, and `delegated-serial-ticket-checkpoint` quote the new text in `MUTATE.json`.
@@ -274,7 +277,7 @@ The canary `tests/canary/guidance-prose-budgets/over-budget-skill` sets its fixt
 ### The changelog entry
 
 One `### Always-loaded guidance weight` section under `## [Unreleased]` of `CHANGELOG.md` holds one bullet for each chunk.
-Each ticket writes its own bullet, so the tickets that write `CHANGELOG.md` run serially.
+Each chunk has one bullet. A later ticket of the same chunk extends that bullet, so the tickets that write `CHANGELOG.md` run serially.
 
 ## Implementation chunks
 
@@ -289,6 +292,96 @@ Each ticket writes its own bullet, so the tickets that write `CHANGELOG.md` run 
 GW1 to GW4 write `.bench/BENCH.md`, `CHANGELOG.md`, and the same anchor registries, so they run serially in the order of the table.
 Each chunk review also grades GW51, because each ticket writes its own changelog bullet.
 GW5 follows GW4, because its rows take the sizes after every move.
+
+### Completion plan
+
+This version-1 completion plan is a planning verification inventory, not a dispatch plan.
+Its commands are future obligations, not executed proof.
+The GW2 to GW5 ticket names are planned, and the slicing replaces them with the sliced names.
+
+```bench-completion-plan
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "GW1",
+      "tickets": ["1-move-the-build-rules-into-their-own-file.md", "2-repoint-the-build-rule-pointers.md"],
+      "verification": [
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
+        {"id": "prose", "command": "bench test --check prose-mechanics"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+      ]
+    },
+    {
+      "id": "GW2",
+      "tickets": ["3-remove-the-repeated-copies.md"],
+      "verification": [
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "prose", "command": "bench test --check prose-mechanics"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+      ]
+    },
+    {
+      "id": "GW3",
+      "tickets": ["4-merge-the-light-path-block.md"],
+      "verification": [
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
+        {"id": "prose", "command": "bench test --check prose-mechanics"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+      ]
+    },
+    {
+      "id": "GW4",
+      "tickets": ["5-move-the-batch-approval-rule.md"],
+      "verification": [
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
+        {"id": "prose", "command": "bench test --check prose-mechanics"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+      ]
+    },
+    {
+      "id": "GW5",
+      "tickets": ["6-measure-the-guidance-budgets-in-bytes.md"],
+      "verification": [
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
+        {"id": "descriptions", "command": "bench test --check skill-description-budgets"},
+        {"id": "prose", "command": "bench test --check prose-mechanics"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+      ]
+    }
+  ],
+  "final_verification": [
+    {"id": "coverage", "command": "bench coverage --check specs/guidance-weight/spec.md"},
+    {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+    {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+    {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+    {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+    {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
+    {"id": "descriptions", "command": "bench test --check skill-description-budgets"},
+    {"id": "prose", "command": "bench test --check prose-mechanics"},
+    {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
+    {"id": "root-conformance", "command": "bench test --check root-conformance"}
+  ]
+}
+```
 
 ## Testing decisions
 
@@ -323,12 +416,12 @@ GW5 follows GW4, because its rows take the sizes after every move.
 | GW06 | 6 | The continuation row names section `Ticket authors` of `build-rules.md` | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`) | A row that kept section `Workflow` reds, because the new file has no such section. |
 | GW07 | 7 | The forbid row `registry_retained_workflow.go:217` binds `build-rules.md` | `internal/conformance/retained_workflow_test.go` (`TestRetainedWorkflow`) | The mirror at `:163-166` names the file, so the row left on `.bench/BENCH.md` reds the comparison. |
 | GW52 | 7 | The four fresh-author forbid rows `registry_ft311_review_dispatch.go:41`, `:49`, `:50` and `registry_retained_workflow.go:270` bind `build-rules.md` | review-owned: the GW1 review reads the `File` of each of the four rows | `TestFreshTicketAuthors` plants each needle in the row's own `File`, so a row left on `.bench/BENCH.md` passes it. |
-| GW08 | 8 | No line under `.agents`, `docs`, or `.bench/BENCH-reference.md` names `.bench/BENCH.md` as the owner of a moved rule | review-owned: the GW1 review runs `rg -F "BENCH.md"` and reads each hit against the 28-line list | Only 15 of the 28 pointer lines carry an anchor, so review sees a stale unanchored pointer. |
+| GW08 | 8 | No line under `.agents`, `docs`, or `.bench/BENCH-reference.md` names `.bench/BENCH.md` as the owner of a moved rule | review-owned: the GW1 review runs `rg -F "BENCH.md"` and reads each hit against the 27-line list | Only 15 of the 27 pointer lines carry an anchor, so review sees a stale unanchored pointer. |
 | GW09 | 9 | Each anchor that quotes a repointed line quotes its new text | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | An anchor that kept the old text reds, because the old pointer text left the line. |
 | GW10 | 10 | The mirrors of `retained_workflow_test.go` name `build-rules.md` for each moved row | `internal/conformance/retained_workflow_test.go` (`TestRetainedWorkflow`) | The drift check compares File, Section, and Needle, so a stale mirror reds against the moved row. |
 | GW11 | 11 | Each of the six delegated canaries mutates `build-rules.md` and bites its moved row | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A canary that kept `.bench/BENCH.md` finds no `old` text, so its materializer refuses and the test reds. |
 | GW12 | 12 | The three pointer canaries quote the new pointer text in `MUTATE.json` | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A stale `old` string matches zero times, so the materializer refuses and the test reds. |
-| GW13 | 13 | No moved row's diagnostic names the operating guide | review-owned: the GW1 review runs `rg "operating guide"` over the moved rows | A diagnostic is a label that no check grades, so only review sees a stale subject. |
+| GW13 | 13 | No diagnostic names the operating guide as the owner of a moved rule | review-owned: the GW1 review runs `rg "operating guide"` over the anchor registries | A diagnostic is a label that no check grades, so only review sees a stale subject. |
 | GW14 | 14 | The predicate lead-in of `.bench/BENCH.md` counts the bullets under it | review-owned: the GW1 and GW2 reviews read the lead-in | No anchor pins the lead-in, so only review sees a wrong count. |
 | GW15 | 2 | `build-rules.md` passes the prose bounds | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | The `prose-mechanics` check grades every tracked Markdown file, so a moved paragraph over a bound reds. |
 | GW16 | 15 | `.bench/BENCH.md` no longer holds the B12 needle "only diff-owned reds count toward fix-loop convergence" | review-owned: the GW2 review runs `rg` for the needle | The row retires with the sentence, so no check reds a sentence left behind. |
@@ -428,14 +521,14 @@ The consultant settled E1 to E12 on 2026-10-11, and the author chose E13 to E17.
 - E5: the light-path block spans four paragraphs (GW23, GW30). Paragraph 2 keeps the B40 lead word for word and adds the #4 route as two sentences (GW25, GW29).
 - E6: the predicate lead-in counts its bullets, ending at "One predicate rides with them:" (GW14).
 - E7: the five forbid rows of the build rules repoint to the new file (GW07, GW52).
-- E8: 28 pointer lines repoint, not the 17 that decision #9 counted (GW08, GW09, GW12).
+- E8: 27 pointer lines repoint, not the 17 that decision #9 counted (GW08, GW09, GW12).
 - E9: the GW4 ticket raises the `bench-write-spec.md` line row until the byte switch (GW37).
 - E10: the glob row sizes from tracked files only (GW45).
 - E11: "rounded up to the next multiple of 100" means the smallest multiple of 100 that is not less than the size (GW44).
 - E12: the byte count counts every byte, the final newline included (GW39, GW41). This settles the first discretion item of the map. The map's discretion item on a `CLAUDE.md` check goes to Out of scope.
 - E13: the new file is `build-rules.md`, its H2 sections, and its lead sentence (GW02, GW04). This settles the fourth discretion item of the map.
 - E14: three new require rows pin the `.bench/BENCH.md` pointer, the lead of the build rules, and the moved B10 sentence (GW03, GW04, GW21).
-- E15: each moved row's diagnostic names "build rules" in place of "operating guide" (GW13).
+- E15: each diagnostic that names the operating guide as the owner of a moved rule names the new owner, moved and unmoved rows alike (GW13).
 - E16: each pointer names the build rules by its full path, on its own physical line (GW08).
 - E17: the table prose names the byte unit, and craft-spec says "current size" (GW48, GW50).
 - E18: the slicing research adds the `CONTEXT.md` "prose budget" entry to GW5, so the glossary names the byte unit (GW53).
