@@ -241,11 +241,12 @@ The next `/bench-drain` reconciles the merge-parent sentences of `roadmap/FT258.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | MP1 / 1-read-the-pending-merge-through-one-owner.md | One owner reads the pending merge of any checkout, and the landing conflict route reads it through that owner | MP01-MP18 | the `internal/git` checkout tests, the worktree admin reader tests, and the LRS6 and LRS22 journey | no |
-| MP2 / sliced after the spec review | `bench commit` publishes a true merge commit for a complete name set, refuses an incomplete name set, and ends the merge | MP19-MP56, MP62 | the `internal/landing` pending-merge tests, the `internal/commit` merge tests, and the current `Land` and refusal tables | yes |
+| MP2 / 2-refuse-an-incomplete-merge-name-set.md, 3-record-each-merge-head-and-end-the-merge.md, 4-document-the-merge-contract-of-bench-commit.md | `bench commit` publishes a true merge commit for a complete name set, refuses an incomplete name set, and ends the merge | MP19-MP56, MP62 | the `internal/landing` pending-merge tests, the `internal/commit` merge tests, and the current `Land` and refusal tables | yes |
 | MP3 / sliced after the spec review | The commitment grading of a pending merge reads the merged commits of the default branch as the default branch's own | MP57-MP61 | the repository pending-merge candidate test and `TestStaleBaseCandidate` | no |
 
 MP1 creates the seam that MP2 and MP3 consume, so it stays small, and its chunk review closes before a consumer ticket starts.
-MP2 and MP3 write disjoint files, and each one depends only on MP1.
+MP2 and MP3 change disjoint files, but a ticket in each chunk names the command registry files in its `Writes:` line.
+The binding registry binds those files to `internal/anchors` and to `internal/commitment`, so the MP3 ticket waits for the last MP2 ticket.
 The serial order is MP1, MP2, and then MP3, because MP2 delivers the `.parent` and `.pending` criteria.
 The orchestrator reconciles the final acceptance after the MP3 checkpoint.
 

@@ -50,6 +50,7 @@ Put MP15 in the planned `TestSourceMergePendingReadsTheSharedOwner` in `internal
 The test plants an empty MERGE_HEAD in a source worktree and expects false.
 The current file-presence read answers true, so MP15 stays red while that copy survives.
 The test calls `t.Parallel()` and binds no environment, PATH, or working directory, so the serial ceiling stays.
+Keep `internal/git/checkout_test.go` and `internal/worktree/admin_readers_test.go` at 400 lines or fewer.
 
 Each new top-level test in `internal/worktree` reds `TestPackageTestCountPin`.
 Raise `worktreeTestCount` by one for each such test in this ticket.
@@ -81,6 +82,3 @@ This ticket does not change them.
 - [ ] The landing conflict route names `merge --continue` for a source with a valid MERGE_HEAD.
 - [ ] The landing conflict route names the commit-and-review form for a directory at MERGE_HEAD.
 - [ ] `land_refusal.go` holds no read of MERGE_HEAD of its own.
-- [ ] `checkout_test.go` and `admin_readers_test.go` stay at 400 lines or fewer.
-- [ ] `land_journey_test.go` and `parallel_census_test.go` do not grow.
-- [ ] Every other `internal/git` and `internal/worktree` assertion stays green.
