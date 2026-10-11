@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/spec-stage-binding/spec.md",
-  "plan_digest": "sha256:e279e6de12a31db14190481ef8ba8a08db4095c51c8229dfa30516079660fb3b",
+  "plan_digest": "sha256:e0d7919a1baa4b87b3d0fb04ba661388574677875ab1cedd7b79ec276b08f93a",
   "implementation_session": "",
   "chunks": [
     {
@@ -256,7 +256,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:e279e6de12a31db14190481ef8ba8a08db4095c51c8229dfa30516079660fb3b",
+      "to": "sha256:e0d7919a1baa4b87b3d0fb04ba661388574677875ab1cedd7b79ec276b08f93a",
+      "chunk_ids": {
+        "SB1": [
+          "SB1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
