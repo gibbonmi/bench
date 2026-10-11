@@ -17,8 +17,11 @@ const fencesHeading = "## Ownership fences"
 
 var fencesEndRe = regexp.MustCompile(`^#{2,} `)
 
-// FenceTokens extracts every backticked token in the `## Ownership fences` section
-// that is not inside parentheses; parenthetical prose is annotation, never
+var fenceItemRe = regexp.MustCompile(`^[ \t]*[-*] `)
+
+// FenceTokens extracts every backticked token that is not inside parentheses from the
+// list items of the `## Ownership fences` section and their indented continuation
+// lines. A prose line of the section and parenthetical prose are annotation, never
 // authorization. declared reports whether the section heading appeared at all, which
 // separates a spec that declares no fences from one whose section is empty.
 //
@@ -27,6 +30,7 @@ var fencesEndRe = regexp.MustCompile(`^#{2,} `)
 // Depth returns to zero once it closes, so a later real entry authorizes normally.
 func FenceTokens(content []byte) (tokens []string, declared bool) {
 	inSection := false
+	inItem := false
 	depth := 0
 	inTick := false
 	depthAtOpen := 0
@@ -42,10 +46,27 @@ func FenceTokens(content []byte) (tokens []string, declared bool) {
 			inSection = false
 		}
 		if inSection {
-			fenceTokensInLine(line, &depth, &inTick, &depthAtOpen, &cur, &tokens)
+			inItem = fenceItemLine(line, inItem)
+			if inItem {
+				fenceTokensInLine(line, &depth, &inTick, &depthAtOpen, &cur, &tokens)
+			}
 		}
 	}
 	return tokens, declared
+}
+
+// fenceItemLine reports whether line belongs to a list item, given whether the line
+// before it did. A line that starts with `- ` or `* ` after optional indentation opens
+// an item, and an indented line continues the item above it. A blank line keeps the
+// state, so an indented line after a blank line still continues the item.
+func fenceItemLine(line string, inItem bool) bool {
+	switch {
+	case fenceItemRe.MatchString(line):
+		return true
+	case strings.TrimSpace(line) == "", line[0] == ' ', line[0] == '\t':
+		return inItem
+	}
+	return false
 }
 
 // fenceTokensInLine is one line's pass through the fence-section state machine. Paren
