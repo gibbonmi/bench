@@ -136,6 +136,9 @@ The closure adds `internal/anchors/registry_commitment.go` and `internal/anchors
 It also adds the 34 other fixture directories that pin `.bench/BENCH.md` through `BASE`, an overlay, or a mutation.
 Ticket 2 holds the research paths that only the pointer edits can touch, and this ticket drops no research path.
 
+`TestAnchorHarnessAttributesFailureDiagnostics` (`internal/anchors/anchor_harness_diagnostics_test.go:155-171`) needs one `retained workflow:` row on `.bench/BENCH.md`, and every such row moves.
+So its `other` constant names the build rules, and the test keeps its assertion.
+
 ## Acceptance
 
 - [ ] `.bench/BENCH.md` holds no needle of B11 or B26 to B33 (GW01).
@@ -143,6 +146,7 @@ Ticket 2 holds the research paths that only the pointer edits can touch, and thi
 - [ ] `## Workflow` of `.bench/BENCH.md` holds the pointer, and a tree without it raises the GW03 diagnostic (GW03).
 - [ ] The build rules open with the lead, and an absent or leadless file raises its diagnostic (GW04).
 - [ ] Each of the 21 moved `Require` rows binds the build rules with its base needle, and `TestRootConformance` passes (GW05).
+- [ ] `TestAnchorHarnessAttributesFailureDiagnostics` finds a `retained workflow:` row on the build rules and passes (GW05).
 - [ ] The continuation row names the section `Ticket authors`, and `TestImplementationContinuation` passes (GW06).
 - [ ] The `Forbid` row at `internal/anchors/registry_retained_workflow.go:217` binds the build rules, and `TestRetainedWorkflow` passes (GW07).
 - [ ] The four fresh-author `Forbid` rows bind the build rules (GW52).

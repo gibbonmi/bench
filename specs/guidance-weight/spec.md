@@ -181,6 +181,8 @@ They also include `registry_data.go:136`, `:140`, `:442`, `registry_chunk_chain.
 The mirrors that quote them take the new text: `retained_workflow_test.go:138-141`, `:146-150`, `:167-178`. The line `.agents/commands/bench-drain.md:72` names the light-path dispatch rule, which stays, so it and its mirrors `recurrence_maintenance_contract_test.go:91` and `:217` stay unchanged.
 The anchor harness mirrors take it too: `internal/anchors/registry_data_test.go:349` and `:892`, and `internal/anchors/registry_chunk_chain_test.go:51`.
 
+`TestAnchorHarnessAttributesFailureDiagnostics` (`internal/anchors/anchor_harness_diagnostics_test.go:155-171`) takes the build rules as its `other` file, because every `retained workflow:` row on `.bench/BENCH.md` moves.
+
 The canaries `review-repair-ticket-owner`, `review-repair-ticket-covers`, and `delegated-serial-ticket-checkpoint` quote the new text in `MUTATE.json`.
 The six canaries `delegated-chunk-tip-review`, `delegated-green-predecessor`, `delegated-opt-in-entry`, `delegated-pending-predecessor-stop`, `delegated-prerequisite-checkpoint`, and `delegated-repair-ownership` repoint `BASE` and the `MUTATE.json` path, and each `EXPECT` takes the renamed diagnostic.
 
@@ -908,6 +910,7 @@ The consultant settled E1 to E12 on 2026-10-11, and the author chose E13 to E17.
 - E16: each pointer names the build rules by its full path, on its own physical line (GW08).
 - E17: the table prose names the byte unit, and craft-spec says "current size" (GW48, GW50).
 - E18: the slicing research adds the `CONTEXT.md` "prose budget" entry to GW5, so the glossary names the byte unit (GW53).
+- E19: the GW1 ticket repoints the `other` file of `TestAnchorHarnessAttributesFailureDiagnostics`. The map-only arm of the experiment found this after the ticket review (GW05).
 
 ### Source sentence to row
 
