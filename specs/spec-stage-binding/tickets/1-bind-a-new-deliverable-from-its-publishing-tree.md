@@ -46,7 +46,7 @@ The lane runs `bench structure --growth`, and a file over 400 lines that gains a
 Put SB01-SB11 and SB21 in `internal/commitment/head_binding_test.go` (new), in the planned tests that the spec coverage map names.
 Put SB12-SB15 in `internal/commitment/repository/head_binding_test.go` (new), in the planned tests that the spec coverage map names.
 
-SB45 joins that file after the SB1 review (C1). The planning worktree commits the spec, and `main` lands a production commit. The binding commit refuses, the worktree folds `main`, and the approval check admits the binding. The fold in a fixture is the merge that `bench worktree merge --from main` performs. `landProduction` in `stale_base_test.go` is the precedent for the `main` move.
+SB45 joins that file after the SB1 review (C1). The planning worktree commits the spec, and `main` lands a production commit. A binding commit on that base refuses. When the worktree folds `main` before the plan, the approval check admits the binding commit. The fold in a fixture is the merge that `bench worktree merge --from main` performs. `landProduction` in `stale_base_test.go` is the precedent for the `main` move.
 
 Each test commits a staged spec in a linked worktree from `commitmenttest.Assignment`, and runs plan and approve there.
 SB12 and SB13 grade the worktree candidate, and SB14 and SB15 grade a composed tree that the test builds.

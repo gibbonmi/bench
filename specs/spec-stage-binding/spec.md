@@ -172,7 +172,7 @@ One owner decides which tree each source reads, so plan, approve, and the approv
 The inventory reads the same checkout HEAD that plan reads for a new deliverable.
 
 `.bench/commitment.json` is a planning path (`internal/commitment/model.go:112-113`), so a commit that changes only the policy ends at `internal/commitment/repository/candidate.go:99-100` with no light-path grading.
-Each later commit in the same worktree grades the transition again, because `branchReference` returns the tip while the base policy differs (`internal/commitment/repository/candidate.go:131-144`).
+Each later commit in the same worktree grades the transition again, because `branchReference` returns the tip while the base policy differs (`internal/commitment/repository/candidate.go:131-145`).
 SB13 therefore holds for the whole life of the worktree, not only for its first commit.
 
 ### The approval check
@@ -230,7 +230,7 @@ The fold in step 1 comes before the plan, because approve dirties the tree and a
 `branchReference` returns that tip when the merge base's policy differs from the candidate's (`internal/commitment/repository/candidate.go:131-145`).
 A worktree behind `main` then sees `main`'s production change in reverse, and `bench commit` refuses with `assignment has no current delivery binding`.
 After the fold, the merge base is the tip, so the diff holds only the planning paths.
-The composed tree at the landing stays safe when `main` moves again (SB45; SB1 review C1, consultant decision 2026-10-11).
+The composed tree at the landing stays safe when `main` moves again, as SB14 proves with a production landing after the binding commit. SB45 proves the fold route (SB1 review C1, consultant decision 2026-10-11).
 
 Plan's obligation rule still guards the binding of a spec with no `Roadmap:` line (`internal/commitment/authority.go:120-135`).
 The binding comes after the last spec edit, because the identity is the digest of the spec bytes (`internal/commitment/repository/sources.go:24-40`).
@@ -425,7 +425,7 @@ The refusal rows cover a fault at plan (SB07-SB09), at commit (SB13), and at the
 - **Won't handle**: a primary checkout whose HEAD is not the default-branch tip — `bench commit` refuses the primary checkout, so no binding from there reaches a landing.
 - **Won't handle**: an unborn HEAD — `Store.Plan` already refuses a repository whose default branch does not resolve.
 - **Won't handle**: a moved policy on main between plan and landing — `Store.Approve` refuses a changed predecessor, and `TestCommitmentStaleApproval` pins that refusal.
-- **Won't handle**: a production landing on `main` between the close order's fold and the binding commit — `bench commit` refuses again, and a second fold clears it.
+- **Won't handle**: a production landing on `main` between the fold and the binding commit — the commit refuses again; `git restore` the approve output, fold, and plan.
 - **Won't handle**: a spec stage for an outcome that is not next — its `Spec binding` line names the outcome, and `bench status` names the next one.
 - **Won't handle**: a ticket author who edits `.bench/commitment.json` under its `Writes:` line — `bench commit` refuses a policy change without an exact approved plan (SB16).
 - **Won't handle**: a live spec whose binding a delivery already settled — a delivery flips its spec to implemented, so that spec is no longer live.
