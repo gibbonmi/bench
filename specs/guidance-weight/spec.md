@@ -315,6 +315,18 @@ Each slicer adds its chunk to this plan when it writes the chunk's tickets, beca
         {"id": "prose", "command": "bench test --check prose-mechanics"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
+    },
+    {
+      "id": "GW2",
+      "tickets": ["3-remove-the-repeated-copies.md"],
+      "verification": [
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "prose", "command": "bench test --check prose-mechanics"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+      ]
     }
   ],
   "final_verification": [
@@ -451,10 +463,13 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `.agents/skills/bench-implement-spec/references/staleness-pass.md`
 - `.bench/BENCH-reference.md`
 - `.bench/BENCH.md`
+- `AGENTS.md`
 - `CHANGELOG.md`
+- `cmd/bench/anchor_help_test.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
+- `cmd/bench/testdata/anchors/fixture-repo/AGENTS.md`
 - `docs/field-guide.html`
 - `internal/anchors/anchor_harness_diagnostics_test.go`
 - `internal/anchors/registry_calibration.go`
@@ -509,6 +524,7 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `tests/canary/skills-index-command-adapters/unindexed-skill`
 - `tests/canary/workflow-guidance-anchors/acceptance-coverage-anchor`
 - `tests/canary/workflow-guidance-anchors/agents-handoff-section-rule`
+- `tests/canary/workflow-guidance-anchors/agents-system-suite-route`
 - `tests/canary/workflow-guidance-anchors/bootstrap-authority-before-after-softening`
 - `tests/canary/workflow-guidance-anchors/bootstrap-authority-rule-deletion`
 - `tests/canary/workflow-guidance-anchors/calibration-abstained-row`
