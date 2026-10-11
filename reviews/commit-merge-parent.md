@@ -446,6 +446,129 @@
           ]
         }
       ]
+    },
+    {
+      "id": "MP2",
+      "base": "004e4e94019144653de1ec8e179abe015b704242",
+      "tip": "eb7c791c83709ec159c6e8dd98592170b8bedc7e",
+      "plan_digest": "sha256:26c4daa7f1486d87e7341202b339d5fe7ef02fdf1a4d1fdfbc7b0f8f723304f3",
+      "source_digest": "d8900dd4fbecce79b12367bfe698ef54d459d9ad",
+      "acceptance_rows": [
+        "MP24",
+        "MP25",
+        "MP32",
+        "MP33",
+        "MP34",
+        "MP35",
+        "MP36",
+        "MP37",
+        "MP38",
+        "MP39",
+        "MP40",
+        "MP41",
+        "MP42",
+        "MP43",
+        "MP62",
+        "MP19",
+        "MP20",
+        "MP21",
+        "MP22",
+        "MP23",
+        "MP26",
+        "MP27",
+        "MP28",
+        "MP29",
+        "MP30",
+        "MP31",
+        "MP44",
+        "MP45",
+        "MP46",
+        "MP47",
+        "MP48",
+        "MP49",
+        "MP50",
+        "MP51",
+        "MP52",
+        "MP53",
+        "MP54",
+        "MP56",
+        "MP55"
+      ],
+      "verification": [
+        {
+          "id": "t4-guidance-cmp_t4",
+          "performer": "claude:cmp_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d8900dd4fbecce79b12367bfe698ef54d459d9ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t4/t4-guidance.txt",
+            "digest": "sha256:7d84934d23da9414fadfeaedfe5bdd166c3405cf0fd161de56a1da00eb9198b8",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --check docs-currency-workflow\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,9410ea4139b8528a6541f211d2dfe31a45219a94,true\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4946,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec \"commit-merge-parent-build\" -- bench anchors .bench/BENCH-reference.md\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,9410ea4139b8528a6541f211d2dfe31a45219a94,true\nanchors[47]{kind,section,step,needle,line}:\n  require,\"\",0,ship only in the Bench kit repository,25\n  require,\"\",0,a linked repo upgrades with `bench upgrade`,25\n  require,\"\",0,`.agents/skills/bench-craft-synthesis/SKILL.md` (kit-only),98\n  require,\"\",0,Do not append to,43\n  require,\"\",0,The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.,39\n  require,\"\",0,/bench-final-check` writes `capture/retros/<spec-slug>.md`,45\n  require,\"\",0,/bench-drain` owns their reviewed drain,47\n  require,\"\",0,A reviewed spec-backed build keeps its serial ticket commits in one retained integration source,277\n  require,\"\",0,\"no separate conformance phase, driver, or per-check evidence partition\",400\n  require,\"\",0,The spec is optional on the landing and on its resume,289\n  require,\"\",0,constructs through the shared refusal-route registry,296\n  require-in-section,Command Notes,0,\"runs the fast lane on a private checkout of the composed snapshot, and a lane pass\",280\n  forbid,\"\",0,may inherit exact per-check evidence,0\n  require,\"\",0,bench harnesses codex,537\n  require,\"\",0,The destructive-git guard allows an agent push to any branch other than the default branch.,527\n  require,\"\",0,\"A red run prints one `failures[N]{phase,line}` table, and then `gate: red`.\",468\n  require,\"\",0,\"guidance, not rules\",19\n  require,\"\",0,with authority you do not have,27\n  require,\"\",0,Read `CONTEXT.md` for the mental model,13\n  require,\"\",0,Setup and adoption connect a repository to the kit,216\n  require,\"\",0,Context commands expose current state,217\n  require,\"\",0,Oracle commands inspect or enforce readiness,218\n  require,\"\",0,Work commands own isolated execution,219\n  forbid,\"\",0,progressive loading,0\n  require,\"\",0,the plan amendment declares version 2 with a delegate execution block. The amendment splits each chunk verification into one verification for each ticket.,277\n  forbid,\"\",0,\"the rule is guidance, not a hook\",0\n  forbid,\"\",0,\"`bench commit` enforces this boundary: it refuses the primary checkout\",0\n  require,\"\",0,\"Every phase lands this way, and `.bench/BENCH.md` states how `bench commit` enforces that rule.\",291\n  forbid,\"\",0,\"A stale Bench executable is rebuilt, and the landing re-runs under it.\",0\n  require,\"\",0,the reviewer merges the destination into the source worktree with raw Git,310\n  forbid,\"\",0,owns their reviewed drain and its capture commit,0\n  require,\"\",0,`/bench-final-check` states when a tracked or an ignored retro commits.,48\n  forbid,\"\",0,A tracked retro commits with the phase close,0\n  require,\"\",0,The primary checkout owns the `main` section.,361\n  require,\"\",0,The verb keeps a non-empty Next command.,362\n  require,\"\",0,refuses a State that pins a commit outside the tip's ancestry,363\n  require-in-section,Plumbing subcommands,0,`bench gate-prose` is the one internal verb that a session runs directly; Command Notes gives its forms.,383\n  require,\"\",0,\"A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table\",472\n  require,\"\",0,`bench handoff` rewrites only the calling worktree's assignment section.,360\n  forbid,\"\",0,\"`bench handoff [--harness <name>]\",0\n  forbid,\"\",0,`bench worktree reset --to <commit> <target>` plans,0\n  forbid,\"\",0,`bench retro <slug> (--body <markdown>,0\n  require,\"\",0,\"Before the first dispatch, the plan amendment makes the authored version 1 fence a version 2 plan.\",409\n  forbid,\"\",0,`.claude/skills/` carries only the,0\n  forbid,\"\",0,because Claude already has each phase as a command,0\n  forbid,\"\",0,`.claude/skills/` links every `.agents/skills/` skill that has no same-named command.,0\n  require,\"\",0,`.claude/README.md` states which skills `.claude/skills/` links.,73\nhelp[0]{cmd,why}:\n\nNote: every require row has a nonzero line and every forbid row reads 0. The route needle moved from line 307 to line 310 because the three new physical lines sit above it; the needle text is intact.\n"
+          },
+          "requirement": "t4-guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-skills-index-cmp_t4",
+          "performer": "claude:cmp_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d8900dd4fbecce79b12367bfe698ef54d459d9ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t4/t4-skills-index.txt",
+            "digest": "sha256:68eaad6ef1677791e3fa0793edfb52e87a8628c577cb560e5b53f371efaf806f",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --check skills-index-command-adapters\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,9410ea4139b8528a6541f211d2dfe31a45219a94,true\ncheck[1]{name,kind,tests_run,subjects}:\n  skills-index-command-adapters,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-skills-index",
+          "command": "bench test --check skills-index-command-adapters",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-floor-cmp_t4",
+          "performer": "claude:cmp_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d8900dd4fbecce79b12367bfe698ef54d459d9ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t4/t4-floor.txt",
+            "digest": "sha256:61c8c362fb9fa09172621197a00d1bd63eaba093f2265d0b504af84eae3b47da",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,9410ea4139b8528a6541f211d2dfe31a45219a94,true\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,23732,333\n  github.com/gibbonmi/bench/internal/anchors,pass,2460,179\n  github.com/gibbonmi/bench/internal/conformance,pass,60166,1685\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t4-floor",
+          "command": "bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t4-root-conformance-cmp_t4",
+          "performer": "claude:cmp_t4",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d8900dd4fbecce79b12367bfe698ef54d459d9ad",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t4/t4-root-conformance.txt",
+            "digest": "sha256:e2d0f33981051f90e9c89cbba2d8f33a30ac50729e5d12fc98c2455844b206e0",
+            "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --check root-conformance\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,9410ea4139b8528a6541f211d2dfe31a45219a94,true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17236,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t4-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
