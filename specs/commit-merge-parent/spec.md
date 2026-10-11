@@ -240,7 +240,7 @@ The next `/bench-drain` reconciles the merge-parent sentences of `roadmap/FT258.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| MP1 / sliced after the spec review | One owner reads the pending merge of any checkout, and the landing conflict route reads it through that owner | MP01-MP18 | the `internal/git` checkout tests, the worktree admin reader tests, and the LRS6 and LRS22 journey | no |
+| MP1 / 1-read-the-pending-merge-through-one-owner.md | One owner reads the pending merge of any checkout, and the landing conflict route reads it through that owner | MP01-MP18 | the `internal/git` checkout tests, the worktree admin reader tests, and the LRS6 and LRS22 journey | no |
 | MP2 / sliced after the spec review | `bench commit` publishes a true merge commit for a complete name set, refuses an incomplete name set, and ends the merge | MP19-MP56, MP62 | the `internal/landing` pending-merge tests, the `internal/commit` merge tests, and the current `Land` and refusal tables | yes |
 | MP3 / sliced after the spec review | The commitment grading of a pending merge reads the merged commits of the default branch as the default branch's own | MP57-MP61 | the repository pending-merge candidate test and `TestStaleBaseCandidate` | no |
 
