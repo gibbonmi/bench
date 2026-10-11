@@ -1,6 +1,6 @@
 # Record the merge parent in bench commit
 
-Status: staged
+Status: implemented
 
 Related roadmap: FT258, partial. This spec settles the merge-parent rule. The candidate-set forms `--changed`, `--dry-run --changed`, and `--ticket`, and their derivation decision, stay on FT258.
 
@@ -36,6 +36,7 @@ The commitment grading of a merge commit reads the merged commits of the default
 Line: opus / xhigh
 Implementation-line reason: MP2 is the hardest material chunk. It changes the composition, publication, and completion steps of the landing owner, and real Git merges prove each step. Its tickets cross owner seams, and a repair round there costs over 100k tokens, so the scorecard routes them to Opus at xhigh. Each ticket author starts on this line, and `craft-line` owns any effort change inside that session.
 Harder chunks: MP2
+Run line, by reviewer direction on 2026-10-11: opus / xhigh for each ticket author, opus / high for each review axis, and opus / xhigh for each consultation. An opus / max shadow author on tickets 1, 2, and 3 supplies the effort assessment, and its work lands nothing.
 
 ### The merge parent
 
@@ -150,9 +151,9 @@ An empty file refuses.
 The reader returns the merge heads in file order.
 Each refusal carries the sentence prefix `read pending merge:`.
 
-Three consumers read through this owner: the landing owner, `branchReference` (`internal/commitment/repository/candidate.go:128-137`), and `sourceMergePending` (`internal/worktree/land_refusal.go:82-91`).
+Three consumers read through this owner: the landing owner, `branchReference` (`internal/commitment/repository/candidate.go:128-137`), and `sourceMergePending` (`internal/worktree/land_refusal.go:80-83`).
 `sourceMergePending` answers true only when the reader returns a merge head.
-A reader refusal answers false, which keeps the undecided policy of its comment at `internal/worktree/land_refusal.go:78-81`.
+A reader refusal answers false, which keeps the undecided policy of its comment at `internal/worktree/land_refusal.go:76-79`.
 The old file read in `sourceMergePending` goes away.
 
 ### The complete name set
@@ -168,7 +169,7 @@ The listing names an unmerged path once, and it names a deleted path (observatio
 With `--no-renames`, a merged rename appears as its deleted path and its added path.
 
 The covered paths come from the same listing, limited by one `:(literal)` pathspec for each name.
-Git's pathspec therefore decides what a name covers, as it does for `compose` and `reconcile` (`internal/landing/attribution.go:154`, `:177`).
+Git's pathspec therefore decides what a name covers, as it does for `compose` and `reconcile` (`internal/landing/attribution.go:213`, `:234`).
 A directory name covers the merged paths below it, and `pkg` does not cover `pkgx/a.go` (observation 7).
 The omitted paths are the merged paths that the limited listing does not print.
 D1 runs after the name checks of `attributedPaths` and before `compose`.
@@ -182,7 +183,7 @@ The rule applies only during a pending merge, so a staged unnamed path stays all
 
 `Owner.composeAuthorized` keeps the merge heads that its D1 check reads, so `Owner.Land` and the recheck use that one list.
 A pending merge waives the `nothing to commit` refusal, because the merge parent is the change.
-Without a pending merge, that refusal stays as it is (`internal/landing/landing.go:139-141`).
+Without a pending merge, that refusal stays as it is (`internal/landing/landing.go:145-147`).
 `Owner.Land` publishes `commit-tree <tree> -p <expected> -p <merge head>...`, with the merge heads in file order.
 `Owner.DryRun` applies the same D1 rule and the same waiver, and it publishes nothing.
 
@@ -229,7 +230,7 @@ The landing faces stay unchanged: `composition-conflict-pending` keeps `git merg
 
 `.bench/BENCH-reference.md` gains two sentences after the fast-lane note in its Command Notes.
 The proposed text is: "During a pending merge, a worktree `bench commit` requires every path that the merge changed. It records each merge head as a further parent and then ends the merge."
-The anchors of that file stay intact, including the Command Notes anchor at line 280 and the route anchor at line 307.
+The anchors of that file stay intact, including the Command Notes anchor at line 280 and the route anchor at line 310.
 
 `CHANGELOG.md` gains one `Fixed` entry for this delivery under `## [Unreleased]`, and the commit record entry stays unchanged.
 
@@ -254,76 +255,12 @@ The orchestrator reconciles the final acceptance after the MP3 checkpoint.
 
 ### Completion plan
 
-This version-1 completion plan is a planning verification inventory, not a dispatch plan.
+This version 2 completion plan declares the delegated run and one verification inventory for each ticket.
 Its commands are future obligations, not executed proof.
+Each probe field names the mutation kind, its site, and the test that turns red, and the author derives the exact mutated text.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "MP1",
-      "tickets": ["1-read-the-pending-merge-through-one-owner.md"],
-      "verification": [
-        {"id": "owner-packages", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},
-        {"id": "route-package", "command": "bench test --package ./internal/worktree"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"},
-        {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
-        {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"},
-        {"id": "skip-ownership", "command": "bench test --check skip-ownership"}
-      ]
-    },
-    {
-      "id": "MP2",
-      "tickets": ["2-refuse-an-incomplete-merge-name-set.md", "3-record-each-merge-head-and-end-the-merge.md", "4-document-the-merge-contract-of-bench-commit.md"],
-      "verification": [
-        {"id": "owner-packages", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},
-        {"id": "refusal-registry", "command": "bench test --package ./internal/refusalroute"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"},
-        {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
-        {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"}
-      ]
-    },
-    {
-      "id": "MP3",
-      "tickets": ["5-grade-a-pending-merge-by-the-branch-change.md"],
-      "verification": [
-        {"id": "owner-packages", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},
-        {"id": "grading-package", "command": "bench test --package ./internal/commitment/repository"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"},
-        {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
-        {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "coverage", "command": "bench coverage --check specs/commit-merge-parent/spec.md"},
-    {"id": "owner-packages", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},
-    {"id": "grading-package", "command": "bench test --package ./internal/commitment/repository"},
-    {"id": "route-package", "command": "bench test --package ./internal/worktree"},
-    {"id": "refusal-registry", "command": "bench test --package ./internal/refusalroute"},
-    {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-    {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-    {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-    {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-    {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
-    {"id": "root-conformance", "command": "bench test --check root-conformance"},
-    {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
-    {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"},
-    {"id": "skip-ownership", "command": "bench test --check skip-ownership"}
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"commit-merge-parent-build-20261011","orchestrator_session":"claude:cmp-orchestrator-20261011","author_limit":1,"assignments":{"1-read-the-pending-merge-through-one-owner.md":[{"session":"claude:cmp_t1","assignment":"f80fcedec92401bd6cf2acfce17ca107","model":"opus","effort":"xhigh","source":"d840865b7e05a6ee64d31b6270beccca151eb982","native_ref":"claude-agent:cmp_t1"},{"session":"claude:cmp_t1_rep1","assignment":"f80fcedec92401bd6cf2acfce17ca107","model":"opus","effort":"xhigh","source":"2f304925041473956e29977e695aad0921ef8ecb","native_ref":"claude-agent:cmp_t1_rep1","predecessor":"claude:cmp_t1","trigger":"user-directed","stopped":"claude:cmp_t1 ended after its ticket commit dfacb0be and its MP1 verification entries in record commit f7b5027b","preserved":"no uncommitted work; the ticket commit dfacb0be and the record commit f7b5027b on the commit-merge-parent-build branch"}],"2-refuse-an-incomplete-merge-name-set.md":[{"session":"claude:cmp_t2","assignment":"f80fcedec92401bd6cf2acfce17ca107","model":"opus","effort":"xhigh","source":"004e4e94019144653de1ec8e179abe015b704242","native_ref":"claude-agent:cmp_t2"},{"session":"claude:cmp_t2_rep1","assignment":"f80fcedec92401bd6cf2acfce17ca107","model":"opus","effort":"xhigh","source":"1539f297a3e1dd53a3b80eda76340b0c657f6340","native_ref":"claude-agent:cmp_t2_rep1","predecessor":"claude:cmp_t2","trigger":"user-directed","stopped":"claude:cmp_t2 ended after its ticket commit 7fa14194 and its MP2 verification entries in record commits bc5312c8 and 27aaedba","preserved":"no uncommitted work; the ticket commit 7fa14194 and the record commits bc5312c8 and 27aaedba on the commit-merge-parent-build branch"}],"3-record-each-merge-head-and-end-the-merge.md":[{"session":"claude:cmp_t3","assignment":"f80fcedec92401bd6cf2acfce17ca107","model":"opus","effort":"xhigh","source":"7fa14194ad4ae8aabb3d313d4ddf992be0bf541c","native_ref":"claude-agent:cmp_t3"},{"session":"claude:cmp_t3_rep1","assignment":"f80fcedec92401bd6cf2acfce17ca107","model":"opus","effort":"xhigh","source":"188a3f5539d7dc836b295ee838b1b577ac903f62","native_ref":"claude-agent:cmp_t3_rep1","predecessor":"claude:cmp_t3","trigger":"user-directed","stopped":"claude:cmp_t3 ended after its ticket commit 1a3e8992 and its MP2 verification entries in record commit fabb55f3","preserved":"no uncommitted work; the ticket commit 1a3e8992 and the record commit fabb55f3 on the commit-merge-parent-build branch"}],"4-document-the-merge-contract-of-bench-commit.md":[{"session":"claude:cmp_t4","assignment":"f80fcedec92401bd6cf2acfce17ca107","model":"opus","effort":"xhigh","source":"1a3e8992d388cff0bbad82d896cfb5b2bd984221","native_ref":"claude-agent:cmp_t4"}],"5-grade-a-pending-merge-by-the-branch-change.md":[{"session":"claude:cmp_t5","assignment":"f80fcedec92401bd6cf2acfce17ca107","model":"opus","effort":"xhigh","source":"0b64dd54e311e2f2ef2948a4552593c40cb772ad","native_ref":"claude-agent:cmp_t5"},{"session":"claude:cmp_t5_rep1","assignment":"f80fcedec92401bd6cf2acfce17ca107","model":"opus","effort":"xhigh","source":"c40769c4a25c051474270f3e279e9e5c6c67141d","native_ref":"claude-agent:cmp_t5_rep1","predecessor":"claude:cmp_t5","trigger":"user-directed","stopped":"claude:cmp_t5 ended after its ticket commit b82ba53f and its MP3 verification entries in record commit c40769c4","preserved":"no uncommitted work; the ticket commit b82ba53f and the record commit c40769c4 on the commit-merge-parent-build branch"}]}},"chunks":[{"id":"MP1","tickets":["1-read-the-pending-merge-through-one-owner.md"],"verification":[{"id":"t1-reader-focused","command":"bench test --package ./internal/git --run 'TestPendingMerge'","probe":"Omit the regular-file refusal after os.Lstat in git.PendingMerge in internal/git/checkout.go, so that a directory at MERGE_HEAD reaches the read. TestPendingMergeRefusesUnreadableState turns red.","ticket":"1-read-the-pending-merge-through-one-owner.md"},{"id":"t1-route-focused","command":"bench test --package ./internal/worktree --run 'TestSourceMergePending|TestLandCommandPublicConflictRepairRequiresNewReviewedTip|TestPackageTestCountPin'","ticket":"1-read-the-pending-merge-through-one-owner.md"},{"id":"t1-floor","command":"bench test --package ./internal/git --package ./internal/worktree --package ./internal/conformance --package ./cmd/bench","ticket":"1-read-the-pending-merge-through-one-owner.md"},{"id":"t1-root-conformance","command":"bench test --check root-conformance","ticket":"1-read-the-pending-merge-through-one-owner.md"},{"id":"t1-git-plumbing-owner","command":"bench test --check git-plumbing-owner","ticket":"1-read-the-pending-merge-through-one-owner.md"},{"id":"t1-ordinary-build-census","command":"bench test --check ordinary-build-census","ticket":"1-read-the-pending-merge-through-one-owner.md"},{"id":"t1-skip-ownership","command":"bench test --check skip-ownership","ticket":"1-read-the-pending-merge-through-one-owner.md"}]},{"id":"MP2","tickets":["2-refuse-an-incomplete-merge-name-set.md","3-record-each-merge-head-and-end-the-merge.md","4-document-the-merge-contract-of-bench-commit.md"],"verification":[{"id":"t2-landing-focused","command":"bench test --package ./internal/landing --run 'TestLandRefusesAnIncompleteMergeNameSet|TestLandRefusesAnUnreadableMergeState|TestLandComposesOnlyNamedPathsAndCASesExpectedBase'","probe":"Omit the NamedPathError refusal that attributedPaths raises for the omitted merged paths in internal/landing/attribution.go, so that an incomplete name set composes. TestLandRefusesAnIncompleteMergeNameSet turns red.","ticket":"2-refuse-an-incomplete-merge-name-set.md"},{"id":"t2-commit-focused","command":"bench test --package ./internal/commit --run 'TestCommitRefusesAnIncompleteMergeNameSet|TestCommitRefusesAnUnreadableMergeState|TestDryRunRefusesAnIncompleteMergeNameSet|TestMergeNameSetRefusalPrecedesCommitment'","ticket":"2-refuse-an-incomplete-merge-name-set.md"},{"id":"t2-floor","command":"bench test --package ./internal/git --package ./internal/landing --package ./internal/commit --package ./internal/refusalroute","ticket":"2-refuse-an-incomplete-merge-name-set.md"},{"id":"t2-root-conformance","command":"bench test --check root-conformance","ticket":"2-refuse-an-incomplete-merge-name-set.md"},{"id":"t2-git-plumbing-owner","command":"bench test --check git-plumbing-owner","ticket":"2-refuse-an-incomplete-merge-name-set.md"},{"id":"t2-ordinary-build-census","command":"bench test --check ordinary-build-census","ticket":"2-refuse-an-incomplete-merge-name-set.md"},{"id":"t3-landing-focused","command":"bench test --package ./internal/landing --run 'TestLandRecordsEachMergeHeadAsAParent|TestComposeAfterMergeCommitReadsTheMergedBase|TestLandRefusesAMergeStateChangeDuringAuthorization|TestLandPublishesAMergeWithAnUnchangedTree|TestLandEndsThePendingMerge|TestLandReportsPublishedMergeWhenReconciliationFails|TestLandDetachedHEADHasOneExpectedParent|TestLandPreAuthorizationRefusalTable'","probe":"Omit the merge-head -p arguments from the commit-tree call of Owner.Land in internal/landing/landing.go, so that the publication records one parent during a pending merge. TestLandRecordsEachMergeHeadAsAParent turns red.","ticket":"3-record-each-merge-head-and-end-the-merge.md"},{"id":"t3-commit-focused","command":"bench test --package ./internal/commit --run 'TestCommitRecordsTheMergeParent'","ticket":"3-record-each-merge-head-and-end-the-merge.md"},{"id":"t3-floor","command":"bench test --package ./internal/git --package ./internal/landing --package ./internal/commit","ticket":"3-record-each-merge-head-and-end-the-merge.md"},{"id":"t3-root-conformance","command":"bench test --check root-conformance","ticket":"3-record-each-merge-head-and-end-the-merge.md"},{"id":"t3-git-plumbing-owner","command":"bench test --check git-plumbing-owner","ticket":"3-record-each-merge-head-and-end-the-merge.md"},{"id":"t3-ordinary-build-census","command":"bench test --check ordinary-build-census","ticket":"3-record-each-merge-head-and-end-the-merge.md"},{"id":"t4-guidance","command":"bench test --check docs-currency-workflow","ticket":"4-document-the-merge-contract-of-bench-commit.md"},{"id":"t4-skills-index","command":"bench test --check skills-index-command-adapters","ticket":"4-document-the-merge-contract-of-bench-commit.md"},{"id":"t4-floor","command":"bench test --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench","ticket":"4-document-the-merge-contract-of-bench-commit.md"},{"id":"t4-root-conformance","command":"bench test --check root-conformance","ticket":"4-document-the-merge-contract-of-bench-commit.md"}]},{"id":"MP3","tickets":["5-grade-a-pending-merge-by-the-branch-change.md"],"verification":[{"id":"t5-grading-focused","command":"bench test --package ./internal/commitment/repository --run 'TestPendingMergeCandidate|TestStaleBaseCandidate'","probe":"Swap the default tip for the merge head as the first git merge-base operand in branchReference in internal/commitment/repository/candidate.go, so that the merged sibling's change grades as the default branch's own. TestPendingMergeCandidate turns red.","ticket":"5-grade-a-pending-merge-by-the-branch-change.md"},{"id":"t5-floor","command":"bench test --package ./internal/git --package ./internal/landing --package ./internal/commit --package ./internal/commitment/repository --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench","ticket":"5-grade-a-pending-merge-by-the-branch-change.md"},{"id":"t5-guidance","command":"bench test --check docs-currency-workflow","ticket":"5-grade-a-pending-merge-by-the-branch-change.md"},{"id":"t5-root-conformance","command":"bench test --check root-conformance","ticket":"5-grade-a-pending-merge-by-the-branch-change.md"},{"id":"t5-git-plumbing-owner","command":"bench test --check git-plumbing-owner","ticket":"5-grade-a-pending-merge-by-the-branch-change.md"},{"id":"t5-ordinary-build-census","command":"bench test --check ordinary-build-census","ticket":"5-grade-a-pending-merge-by-the-branch-change.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/commit-merge-parent/spec.md"},{"id":"owner-packages","command":"bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},{"id":"grading-package","command":"bench test --package ./internal/commitment/repository"},{"id":"route-package","command":"bench test --package ./internal/worktree"},{"id":"refusal-registry","command":"bench test --package ./internal/refusalroute"},{"id":"anchors-package","command":"bench test --package ./internal/anchors"},{"id":"command-package","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"skills-index","command":"bench test --check skills-index-command-adapters"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"git-plumbing-owner","command":"bench test --check git-plumbing-owner"},{"id":"ordinary-build-census","command":"bench test --check ordinary-build-census"},{"id":"skip-ownership","command":"bench test --check skip-ownership"}]}
 ```
 
 ## Testing decisions
@@ -369,68 +306,68 @@ The gate observes the feature through the package suites, and the fast lane runs
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| MP01 | 11 | `git.PendingMerge` returns the merge head that `git merge --no-commit --no-ff` writes in a linked worktree | planned TestPendingMergeReadsEveryHead in internal/git/checkout_test.go | A hand-joined `.git/MERGE_HEAD` reads nothing in a linked worktree, so it answers no merge. |
-| MP02 | 4 | `git.PendingMerge` returns no merge head and no error when MERGE_HEAD is absent | planned TestPendingMergeReadsEveryHead in internal/git/checkout_test.go | A reader that refuses absence refuses every ordinary commit. |
-| MP03 | 5 | `git.PendingMerge` returns both merge heads of a pending octopus merge in file order | planned TestPendingMergeReadsEveryHead in internal/git/checkout_test.go | A `git rev-parse MERGE_HEAD` reader returns only the first head (observation E). |
-| MP04 | 16 | `git.PendingMerge` returns the merge head of a MERGE_HEAD whose last line has no newline | planned TestPendingMergeReadsEveryHead in internal/git/checkout_test.go | A reader that requires a final newline refuses a hand-edited file. |
-| MP05 | 12 | `git.PendingMerge` refuses a root outside every repository | planned TestPendingMergeRefusesUnreadableState in internal/git/checkout_test.go | A reader that reads a resolution failure as no merge lets a one-parent commit through. |
-| MP06 | 12 | `git.PendingMerge` refuses a directory at MERGE_HEAD | planned TestPendingMergeRefusesUnreadableState in internal/git/checkout_test.go | A reader that reads each read error as no merge lets a one-parent commit through. |
-| MP07 | 15 | `git.PendingMerge` refuses a FIFO at MERGE_HEAD within the bounded test deadline | planned TestPendingMergeRefusesUnreadableState in internal/git/checkout_test.go | A plain read of a FIFO blocks the commit. |
-| MP08 | 15 | `git.PendingMerge` refuses a dangling symbolic link at MERGE_HEAD | planned TestPendingMergeRefusesUnreadableState in internal/git/checkout_test.go | A plain read reports a dangling link as absent, so the commit sees no merge. |
-| MP09 | 15 | `git.PendingMerge` refuses a live symbolic link at MERGE_HEAD | planned TestPendingMergeRefusesUnreadableState in internal/git/checkout_test.go | A followed link makes bytes outside the checkout administration directory a parent. |
-| MP10 | 13 | `git.PendingMerge` refuses an empty MERGE_HEAD | planned TestPendingMergeRefusesMalformedState in internal/git/checkout_test.go | A reader that reads an empty file as absent lets a one-parent commit through during a pending merge. |
-| MP11 | 14 | `git.PendingMerge` refuses an abbreviated commit ID line | planned TestPendingMergeRefusesMalformedState in internal/git/checkout_test.go | A revision-resolving reader accepts a shorthand that Git never writes. |
-| MP12 | 14 | `git.PendingMerge` refuses the line `main` | planned TestPendingMergeRefusesMalformedState in internal/git/checkout_test.go | A revision-resolving reader turns a branch name into a parent. |
-| MP13 | 14 | `git.PendingMerge` refuses a full object ID that names no object | planned TestPendingMergeRefusesMalformedState in internal/git/checkout_test.go | A syntax-only reader gives an unknown parent to `commit-tree`. |
-| MP14 | 14 | `git.PendingMerge` refuses a full object ID that names a tree | planned TestPendingMergeRefusesMalformedState in internal/git/checkout_test.go | An existence-only reader gives a non-commit parent to `commit-tree`. |
-| MP15 | 17, 18 | `sourceMergePending` answers false for an empty MERGE_HEAD in a source worktree | planned TestSourceMergePendingReadsTheSharedOwner in internal/worktree/admin_readers_test.go | The current file-presence read answers true for an empty file, so the row stays red while that copy survives. |
+| MP01 | 11 | `git.PendingMerge` returns the merge head that `git merge --no-commit --no-ff` writes in a linked worktree | `internal/git/checkout_test.go` (`TestPendingMergeReadsEveryHead`) | A hand-joined `.git/MERGE_HEAD` reads nothing in a linked worktree, so it answers no merge. |
+| MP02 | 4 | `git.PendingMerge` returns no merge head and no error when MERGE_HEAD is absent | `internal/git/checkout_test.go` (`TestPendingMergeReadsEveryHead`) | A reader that refuses absence refuses every ordinary commit. |
+| MP03 | 5 | `git.PendingMerge` returns both merge heads of a pending octopus merge in file order | `internal/git/checkout_test.go` (`TestPendingMergeReadsEveryHead`) | A `git rev-parse MERGE_HEAD` reader returns only the first head (observation E). |
+| MP04 | 16 | `git.PendingMerge` returns the merge head of a MERGE_HEAD whose last line has no newline | `internal/git/checkout_test.go` (`TestPendingMergeReadsEveryHead`) | A reader that requires a final newline refuses a hand-edited file. |
+| MP05 | 12 | `git.PendingMerge` refuses a root outside every repository | `internal/git/checkout_test.go` (`TestPendingMergeRefusesUnreadableState`) | A reader that reads a resolution failure as no merge lets a one-parent commit through. |
+| MP06 | 12 | `git.PendingMerge` refuses a directory at MERGE_HEAD | `internal/git/checkout_test.go` (`TestPendingMergeRefusesUnreadableState`) | A reader that reads each read error as no merge lets a one-parent commit through. |
+| MP07 | 15 | `git.PendingMerge` refuses a FIFO at MERGE_HEAD within the bounded test deadline | `internal/git/checkout_test.go` (`TestPendingMergeRefusesUnreadableState`) | A plain read of a FIFO blocks the commit. |
+| MP08 | 15 | `git.PendingMerge` refuses a dangling symbolic link at MERGE_HEAD | `internal/git/checkout_test.go` (`TestPendingMergeRefusesUnreadableState`) | A plain read reports a dangling link as absent, so the commit sees no merge. |
+| MP09 | 15 | `git.PendingMerge` refuses a live symbolic link at MERGE_HEAD | `internal/git/checkout_test.go` (`TestPendingMergeRefusesUnreadableState`) | A followed link makes bytes outside the checkout administration directory a parent. |
+| MP10 | 13 | `git.PendingMerge` refuses an empty MERGE_HEAD | `internal/git/checkout_test.go` (`TestPendingMergeRefusesMalformedState`) | A reader that reads an empty file as absent lets a one-parent commit through during a pending merge. |
+| MP11 | 14 | `git.PendingMerge` refuses an abbreviated commit ID line | `internal/git/checkout_test.go` (`TestPendingMergeRefusesMalformedState`) | A revision-resolving reader accepts a shorthand that Git never writes. |
+| MP12 | 14 | `git.PendingMerge` refuses the line `main` | `internal/git/checkout_test.go` (`TestPendingMergeRefusesMalformedState`) | A revision-resolving reader turns a branch name into a parent. |
+| MP13 | 14 | `git.PendingMerge` refuses a full object ID that names no object | `internal/git/checkout_test.go` (`TestPendingMergeRefusesMalformedState`) | A syntax-only reader gives an unknown parent to `commit-tree`. |
+| MP14 | 14 | `git.PendingMerge` refuses a full object ID that names a tree | `internal/git/checkout_test.go` (`TestPendingMergeRefusesMalformedState`) | An existence-only reader gives a non-commit parent to `commit-tree`. |
+| MP15 | 17, 18 | `sourceMergePending` answers false for an empty MERGE_HEAD in a source worktree | `internal/worktree/admin_readers_test.go` (`TestSourceMergePendingReadsTheSharedOwner`) | The current file-presence read answers true for an empty file, so the row stays red while that copy survives. |
 | MP16 | 18 | `sourceMergePending` answers false for a source outside every repository | `internal/worktree/admin_readers_test.go` (`TestSourceMergePendingIsFalseWhenUndecided`) | A migration that reads a resolution failure as a pending merge fails this test. |
 | MP17 | 19 | The landing conflict route names `merge --continue` for a source that holds a valid MERGE_HEAD | `internal/worktree/land_journey_test.go` (`TestLandCommandPublicConflictRepairRequiresNewReviewedTip`) | LRS6 fails when the migration loses the pending state. |
 | MP18 | 18 | The landing conflict route names the commit-and-review form for a directory at MERGE_HEAD | `internal/worktree/land_journey_test.go` (`TestLandCommandPublicConflictRepairRequiresNewReviewedTip`) | LRS22 fails when an unreadable state reads as a pending merge. |
-| MP19 | 1 | After a conflicted merge of an incoming commit, `bench commit` with the complete name set publishes the previous tip and the incoming commit as the two parents | planned TestCommitRecordsTheMergeParent in internal/commit/merge_parent_test.go | The current single `-p` publication records only the previous tip. |
-| MP20 | 2 | `Owner.Land` publishes the expected base as parent 1 and the merge head as parent 2 | planned TestLandRecordsEachMergeHeadAsAParent in internal/landing/pending_merge_test.go | A parent list that puts the merge head first breaks every first-parent reader. |
-| MP21 | 5 | `Owner.Land` publishes both merge heads of a pending octopus merge as parents 2 and 3 in file order | planned TestLandRecordsEachMergeHeadAsAParent in internal/landing/pending_merge_test.go | A first-head reader drops the second merge head. |
+| MP19 | 1 | After a conflicted merge of an incoming commit, `bench commit` with the complete name set publishes the previous tip and the incoming commit as the two parents | `internal/commit/merge_parent_test.go` (`TestCommitRecordsTheMergeParent`) | The current single `-p` publication records only the previous tip. |
+| MP20 | 2 | `Owner.Land` publishes the expected base as parent 1 and the merge head as parent 2 | `internal/landing/pending_merge_test.go` (`TestLandRecordsEachMergeHeadAsAParent`) | A parent list that puts the merge head first breaks every first-parent reader. |
+| MP21 | 5 | `Owner.Land` publishes both merge heads of a pending octopus merge as parents 2 and 3 in file order | `internal/landing/pending_merge_test.go` (`TestLandRecordsEachMergeHeadAsAParent`) | A first-head reader drops the second merge head. |
 | MP22 | 4 | `Owner.Land` without a pending merge publishes exactly one parent | `internal/landing/landing_test.go` (`TestLandDetachedHEADHasOneExpectedParent`) | An implementation that always adds a parent fails this pinned one-parent shape. |
-| MP23 | 6 | After the merge commit, `Owner.Compose` of the source onto the incoming commit reports no conflict | planned TestComposeAfterMergeCommitReadsTheMergedBase in internal/landing/pending_merge_test.go | A one-parent resolution keeps the old merge base, so the textual conflict comes back. |
-| MP24 | 3, 12 | `Owner.Land` refuses a directory at MERGE_HEAD and moves no ref | planned TestLandRefusesAnUnreadableMergeState in internal/landing/pending_merge_test.go | A consumer that reads the reader refusal as no merge publishes a one-parent commit. |
-| MP25 | 12 | `bench commit` prints the `commit-handback` route for an unreadable merge state | planned TestCommitRefusesAnUnreadableMergeState in internal/commit/merge_parent_test.go | A typed path error sends a reviewer's fault to the agent as a path correction. |
-| MP26 | 3, 10 | `Owner.Land` refuses and moves no ref when MERGE_HEAD appears during authorization | planned TestLandRefusesAMergeStateChangeDuringAuthorization in internal/landing/pending_merge_test.go | Without the recheck, the commit publishes one parent while a merge is pending. |
-| MP27 | 10 | `Owner.Land` refuses and moves no ref when MERGE_HEAD disappears during authorization | planned TestLandRefusesAMergeStateChangeDuringAuthorization in internal/landing/pending_merge_test.go | Without the recheck, the commit records a parent for an ended merge. |
-| MP28 | 10 | `Owner.Land` refuses and moves no ref when MERGE_HEAD names another commit after authorization | planned TestLandRefusesAMergeStateChangeDuringAuthorization in internal/landing/pending_merge_test.go | Without the recheck, the published parent differs from the graded state. |
-| MP29 | 7 | `Owner.Land` publishes a merge commit whose tree equals the base tree after an ours resolution | planned TestLandPublishesAMergeWithAnUnchangedTree in internal/landing/pending_merge_test.go | The current empty-diff refusal blocks the only Bench route to that merge parent. |
-| MP30 | 8 | `Owner.Land` publishes a merge commit with an unchanged tree for a pending merge with no merged path | planned TestLandPublishesAMergeWithAnUnchangedTree in internal/landing/pending_merge_test.go | The empty true merges `8cd1e045` and `93c0e93b` needed a raw commit for this shape. |
+| MP23 | 6 | After the merge commit, `Owner.Compose` of the source onto the incoming commit reports no conflict | `internal/landing/pending_merge_test.go` (`TestComposeAfterMergeCommitReadsTheMergedBase`) | A one-parent resolution keeps the old merge base, so the textual conflict comes back. |
+| MP24 | 3, 12 | `Owner.Land` refuses a directory at MERGE_HEAD and moves no ref | `internal/landing/pending_merge_test.go` (`TestLandRefusesAnUnreadableMergeState`) | A consumer that reads the reader refusal as no merge publishes a one-parent commit. |
+| MP25 | 12 | `bench commit` prints the `commit-handback` route for an unreadable merge state | `internal/commit/merge_parent_test.go` (`TestCommitRefusesAnUnreadableMergeState`) | A typed path error sends a reviewer's fault to the agent as a path correction. |
+| MP26 | 3, 10 | `Owner.Land` refuses and moves no ref when MERGE_HEAD appears during authorization | `internal/landing/pending_merge_test.go` (`TestLandRefusesAMergeStateChangeDuringAuthorization`) | Without the recheck, the commit publishes one parent while a merge is pending. |
+| MP27 | 10 | `Owner.Land` refuses and moves no ref when MERGE_HEAD disappears during authorization | `internal/landing/pending_merge_test.go` (`TestLandRefusesAMergeStateChangeDuringAuthorization`) | Without the recheck, the commit records a parent for an ended merge. |
+| MP28 | 10 | `Owner.Land` refuses and moves no ref when MERGE_HEAD names another commit after authorization | `internal/landing/pending_merge_test.go` (`TestLandRefusesAMergeStateChangeDuringAuthorization`) | Without the recheck, the published parent differs from the graded state. |
+| MP29 | 7 | `Owner.Land` publishes a merge commit whose tree equals the base tree after an ours resolution | `internal/landing/pending_merge_test.go` (`TestLandPublishesAMergeWithAnUnchangedTree`) | The current empty-diff refusal blocks the only Bench route to that merge parent. |
+| MP30 | 8 | `Owner.Land` publishes a merge commit with an unchanged tree for a pending merge with no merged path | `internal/landing/pending_merge_test.go` (`TestLandPublishesAMergeWithAnUnchangedTree`) | The empty true merges `8cd1e045` and `93c0e93b` needed a raw commit for this shape. |
 | MP31 | 9 | `Owner.Land` without a pending merge refuses an unchanged tree with `nothing to commit` | `internal/landing/state_test.go` (`TestLandPreAuthorizationRefusalTable`) | A blanket removal of the empty-diff refusal fails the tracked-symlink row of this table. |
-| MP32 | 20, 32 | `bench commit` refuses a pending merge whose name set omits a modified merged path | planned TestCommitRefusesAnIncompleteMergeNameSet in internal/commit/merge_parent_test.go | A partial merge commit makes the later landing revert the incoming change (observation B). |
-| MP33 | 21 | `bench commit` refuses a pending merge whose name set omits an added merged path | planned TestCommitRefusesAnIncompleteMergeNameSet in internal/commit/merge_parent_test.go | A partial merge commit makes the later landing drop the incoming file (observation B). |
-| MP34 | 24 | The incomplete-merge refusal names each of two omitted paths | planned TestCommitRefusesAnIncompleteMergeNameSet in internal/commit/merge_parent_test.go | A refusal that names only the first path costs one rerun for each omitted path. |
-| MP35 | 22 | `Owner.Land` refuses a pending merge whose name set omits the conflicted path | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | A merged-path list built from stage-0 index entries alone misses the unmerged path. |
-| MP36 | 23 | `Owner.Land` refuses a pending merge whose name set omits a path that the merge deleted | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | A merged-path list built from worktree files misses a deleted path. |
-| MP37 | 25 | `Owner.Land` publishes when a named directory covers every merged path below it | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | An exact-match coverage rule refuses a merged subtree that its directory names. |
-| MP38 | 26 | With merged paths `pkg/b.go` and `pkgx/a.go`, `Owner.Land` refuses the name set `pkg` and names `pkgx/a.go` | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | A prefix match without the separator reads `pkg` as a cover of `pkgx/a.go`. |
-| MP39 | 27 | `bench commit --dry-run` refuses an incomplete merge name set with exit 1 | planned TestDryRunRefusesAnIncompleteMergeNameSet in internal/commit/merge_parent_test.go | A rule that runs only in `Owner.Land` lets the rehearsal pass a commit that refuses. |
-| MP40 | 28 | In an unbound planning worktree, the incomplete-merge refusal prints in place of the commitment refusal | planned TestMergeNameSetRefusalPrecedesCommitment in internal/commit/merge_parent_test.go | A rule in `Owner.composeAuthorized` alone runs after `AuthorizeCandidate`, so the commitment refusal wins. |
-| MP41 | 29 | The refusal prints an omitted path that holds a space, a glob character, an ESC byte, and a newline in Go-quoted form on one line | planned TestCommitRefusesAnIncompleteMergeNameSet in internal/commit/merge_parent_test.go | A raw path splits or corrupts the one-line refusal. |
-| MP42 | 30 | `Owner.Land` publishes when the name set spells a merged path that holds a space, a glob character, a newline, and a non-ASCII byte | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | A newline-framed `git diff-index` read C-quotes that name, so the correct name set refuses. |
+| MP32 | 20, 32 | `bench commit` refuses a pending merge whose name set omits a modified merged path | `internal/commit/merge_parent_test.go` (`TestCommitRefusesAnIncompleteMergeNameSet`) | A partial merge commit makes the later landing revert the incoming change (observation B). |
+| MP33 | 21 | `bench commit` refuses a pending merge whose name set omits an added merged path | `internal/commit/merge_parent_test.go` (`TestCommitRefusesAnIncompleteMergeNameSet`) | A partial merge commit makes the later landing drop the incoming file (observation B). |
+| MP34 | 24 | The incomplete-merge refusal names each of two omitted paths | `internal/commit/merge_parent_test.go` (`TestCommitRefusesAnIncompleteMergeNameSet`) | A refusal that names only the first path costs one rerun for each omitted path. |
+| MP35 | 22 | `Owner.Land` refuses a pending merge whose name set omits the conflicted path | `internal/landing/pending_merge_test.go` (`TestLandRefusesAnIncompleteMergeNameSet`) | A merged-path list built from stage-0 index entries alone misses the unmerged path. |
+| MP36 | 23 | `Owner.Land` refuses a pending merge whose name set omits a path that the merge deleted | `internal/landing/pending_merge_test.go` (`TestLandRefusesAnIncompleteMergeNameSet`) | A merged-path list built from worktree files misses a deleted path. |
+| MP37 | 25 | `Owner.Land` publishes when a named directory covers every merged path below it | `internal/landing/pending_merge_test.go` (`TestLandRefusesAnIncompleteMergeNameSet`) | An exact-match coverage rule refuses a merged subtree that its directory names. |
+| MP38 | 26 | With merged paths `pkg/b.go` and `pkgx/a.go`, `Owner.Land` refuses the name set `pkg` and names `pkgx/a.go` | `internal/landing/pending_merge_test.go` (`TestLandRefusesAnIncompleteMergeNameSet`) | A prefix match without the separator reads `pkg` as a cover of `pkgx/a.go`. |
+| MP39 | 27 | `bench commit --dry-run` refuses an incomplete merge name set with exit 1 | `internal/commit/merge_parent_test.go` (`TestDryRunRefusesAnIncompleteMergeNameSet`) | A rule that runs only in `Owner.Land` lets the rehearsal pass a commit that refuses. |
+| MP40 | 28 | In an unbound planning worktree, the incomplete-merge refusal prints in place of the commitment refusal | `internal/commit/merge_parent_test.go` (`TestMergeNameSetRefusalPrecedesCommitment`) | A rule in `Owner.composeAuthorized` alone runs after `AuthorizeCandidate`, so the commitment refusal wins. |
+| MP41 | 29 | The refusal prints an omitted path that holds a space, a glob character, an ESC byte, and a newline in Go-quoted form on one line | `internal/commit/merge_parent_test.go` (`TestCommitRefusesAnIncompleteMergeNameSet`) | A raw path splits or corrupts the one-line refusal. |
+| MP42 | 30 | `Owner.Land` publishes when the name set spells a merged path that holds a space, a glob character, a newline, and a non-ASCII byte | `internal/landing/pending_merge_test.go` (`TestLandRefusesAnIncompleteMergeNameSet`) | A rule that changes the name before it becomes a pathspec refuses the correct literal spelling; MP41 holds the framing catch. |
 | MP43 | 31 | `Owner.Land` without a pending merge publishes while an unnamed path stays staged | `internal/landing/landing_test.go` (`TestLandComposesOnlyNamedPathsAndCASesExpectedBase`) | A coverage rule that applies without a pending merge refuses this staged foreign path. |
-| MP44 | 33 | After the merge commit, a second `bench commit` of a new change publishes one parent | planned TestCommitRecordsTheMergeParent in internal/commit/merge_parent_test.go | A commit that leaves MERGE_HEAD in place records the merge head again. |
-| MP45 | 34 | After the merge commit, `git ls-files -u` prints nothing | planned TestLandEndsThePendingMerge in internal/landing/pending_merge_test.go | A reconcile that skips unmerged entries leaves stage 1 to 3 entries behind. |
-| MP46 | 34 | After the merge commit, `git status --porcelain=v1` prints nothing in the worktree | planned TestCommitRecordsTheMergeParent in internal/commit/merge_parent_test.go | A partial reconcile leaves merged content staged against the new tip. |
-| MP47 | 35 | After the merge commit, MERGE_HEAD is absent from the checkout administration directory | planned TestLandEndsThePendingMerge in internal/landing/pending_merge_test.go | The current publication leaves MERGE_HEAD pending, as the 2026-09-12 retro reports. |
-| MP48 | 35 | After the merge commit, MERGE_MSG is absent from the checkout administration directory | planned TestLandEndsThePendingMerge in internal/landing/pending_merge_test.go | A removal of MERGE_HEAD alone leaves MERGE_MSG behind. |
-| MP49 | 35 | After the merge commit, MERGE_MODE is absent from the checkout administration directory | planned TestLandEndsThePendingMerge in internal/landing/pending_merge_test.go | A removal of MERGE_HEAD alone leaves MERGE_MODE behind. |
-| MP50 | 35 | After the merge commit, AUTO_MERGE is absent from the checkout administration directory | planned TestLandEndsThePendingMerge in internal/landing/pending_merge_test.go | A removal of MERGE_HEAD alone leaves AUTO_MERGE behind. |
+| MP44 | 33 | After the merge commit, a second `bench commit` of a new change publishes one parent | `internal/commit/merge_parent_test.go` (`TestCommitRecordsTheMergeParent`) | A commit that leaves MERGE_HEAD in place records the merge head again. |
+| MP45 | 34 | After the merge commit, `git ls-files -u` prints nothing | `internal/landing/pending_merge_test.go` (`TestLandEndsThePendingMerge`) | A reconcile that skips unmerged entries leaves stage 1 to 3 entries behind. |
+| MP46 | 34 | After the merge commit, `git status --porcelain=v1` prints nothing in the worktree | `internal/commit/merge_parent_test.go` (`TestCommitRecordsTheMergeParent`) | A partial reconcile leaves merged content staged against the new tip. |
+| MP47 | 35 | After the merge commit, MERGE_HEAD is absent from the checkout administration directory | `internal/landing/pending_merge_test.go` (`TestLandEndsThePendingMerge`) | The current publication leaves MERGE_HEAD pending, as the 2026-09-12 retro reports. |
+| MP48 | 35 | After the merge commit, MERGE_MSG is absent from the checkout administration directory | `internal/landing/pending_merge_test.go` (`TestLandEndsThePendingMerge`) | A removal of MERGE_HEAD alone leaves MERGE_MSG behind. |
+| MP49 | 35 | After the merge commit, MERGE_MODE is absent from the checkout administration directory | `internal/landing/pending_merge_test.go` (`TestLandEndsThePendingMerge`) | A removal of MERGE_HEAD alone leaves MERGE_MODE behind. |
+| MP50 | 35 | After the merge commit, AUTO_MERGE is absent from the checkout administration directory | `internal/landing/pending_merge_test.go` (`TestLandEndsThePendingMerge`) | A removal of MERGE_HEAD alone leaves AUTO_MERGE behind. |
 | MP51 | 36 | The commit ends the merge through `git merge --quit` and removes no admin entry file itself | review-owned: the MP2 review reads the completion step | A hand removal writes Git-owned state that CONTEXT.md reserves for Git. |
-| MP52 | 37 | `Owner.Land` returns `PublishedUnreconciledError` with the published merge commit when reconcile fails during a pending merge | planned TestLandReportsPublishedMergeWhenReconciliationFails in internal/landing/pending_merge_test.go | A merge branch that returns a plain error after publication hides the published commit. |
-| MP53 | 38 | MERGE_HEAD is absent after a reconcile failure during a pending merge | planned TestLandReportsPublishedMergeWhenReconciliationFails in internal/landing/pending_merge_test.go | A completion step after the reconcile leaves the merge pending when the reconcile fails. |
-| MP54 | 44 | The last stdout line of a merge commit is `committed{published_commit,path_count}` with the count of the name set | planned TestCommitRecordsTheMergeParent in internal/commit/merge_parent_test.go | A merge field in the record breaks its pinned readers. |
+| MP52 | 37 | `Owner.Land` returns `PublishedUnreconciledError` with the published merge commit when reconcile fails during a pending merge | `internal/landing/pending_merge_test.go` (`TestLandReportsPublishedMergeWhenReconciliationFails`) | A merge branch that returns a plain error after publication hides the published commit. |
+| MP53 | 38 | MERGE_HEAD is absent after a reconcile failure during a pending merge | `internal/landing/pending_merge_test.go` (`TestLandReportsPublishedMergeWhenReconciliationFails`) | A completion step after the reconcile leaves the merge pending when the reconcile fails. |
+| MP54 | 44 | The last stdout line of a merge commit is `committed{published_commit,path_count}` with the count of the name set | `internal/commit/merge_parent_test.go` (`TestCommitRecordsTheMergeParent`) | A merge field in the record breaks its pinned readers. |
 | MP55 | 45 | `.bench/BENCH-reference.md` states the merge contract of `bench commit` in its Command Notes | review-owned: the MP2 review reads the two sentences and the `bench anchors .bench/BENCH-reference.md` output | Without the note, a cold reader learns the name-set rule only from a refusal. |
 | MP56 | 46 | The ownership fence names no roadmap path and does not name `internal/commit/commit.go` | review-owned: the fence review, which the `source-not-fenced` landing refusal enforces | A fence that admits a roadmap or grammar edit lets the delivery close FT258 or add a candidate-set flag. |
-| MP57 | 39 | In a light-path worktree, `AuthorizeCandidate` admits a complete merge of main that carries a production change of main | planned TestPendingMergeCandidate in internal/commitment/repository/stale_base_test.go | The current reference counts the change of main as the branch's, so `lightPathCover` refuses it. |
-| MP58 | 40 | In an unbound planning worktree, `AuthorizeCandidate` admits a complete merge of main that carries a production change of main | planned TestPendingMergeCandidate in internal/commitment/repository/stale_base_test.go | The current reference raises the unbound refusal for the change of main. |
-| MP59 | 41 | In a light-path worktree, `AuthorizeCandidate` refuses a pending merge of a sibling commit that adds an uncovered production path | planned TestPendingMergeCandidate in internal/commitment/repository/stale_base_test.go | A reference that exempts every merge head admits the change of the sibling. |
-| MP60 | 42 | With a directory at MERGE_HEAD, `AuthorizeCandidate` refuses a light-path candidate that lacks a later production change of main | planned TestPendingMergeCandidate in internal/commitment/repository/stale_base_test.go | A fallback to the old merge base admits that candidate on a fault. |
+| MP57 | 39 | In a light-path worktree, `AuthorizeCandidate` admits a complete merge of main that carries a production change of main | `internal/commitment/repository/stale_base_test.go` (`TestPendingMergeCandidate`) | The current reference counts the change of main as the branch's, so `lightPathCover` refuses it. |
+| MP58 | 40 | In an unbound planning worktree, `AuthorizeCandidate` admits a complete merge of main that carries a production change of main | `internal/commitment/repository/stale_base_test.go` (`TestPendingMergeCandidate`) | The current reference raises the unbound refusal for the change of main. |
+| MP59 | 41 | In a light-path worktree, `AuthorizeCandidate` refuses a pending merge of a sibling commit that adds an uncovered production path | `internal/commitment/repository/stale_base_test.go` (`TestPendingMergeCandidate`) | A reference that exempts every merge head admits the change of the sibling. |
+| MP60 | 42 | With a directory at MERGE_HEAD, `AuthorizeCandidate` refuses a light-path candidate that lacks a later production change of main | `internal/commitment/repository/stale_base_test.go` (`TestPendingMergeCandidate`) | A fallback to the old merge base admits that candidate on a fault. |
 | MP61 | 43 | Without a pending merge, `AuthorizeCandidate` keeps every stale-base admission and refusal | `internal/commitment/repository/stale_base_test.go` (`TestStaleBaseCandidate`) | A reference change that ignores the pending condition fails these rows. |
-| MP62 | 24 | The incomplete-merge refusal prints the `commit-named-path` route | planned TestCommitRefusesAnIncompleteMergeNameSet in internal/commit/merge_parent_test.go | A plain error sends the agent's own name-set fix to the reviewer. |
+| MP62 | 24 | The incomplete-merge refusal prints the `commit-named-path` route | `internal/commit/merge_parent_test.go` (`TestCommitRefusesAnIncompleteMergeNameSet`) | A plain error sends the agent's own name-set fix to the reviewer. |
 
 ### Edge inventory
 
@@ -457,6 +394,8 @@ The refusal rows cover each fault before publication, inside authorization, and 
 - **Won't handle**: a case-variant name on a case-folding file system — the rule of `landing.attributedPaths` compares names byte for byte, so the commit refuses.
 - **Won't handle**: a merged gitlink — the listing names it as one path, and the coverage rule of `landing.attributedPaths` treats it as any other path.
 - **Won't handle**: a type change of a merged path — the name-only listing carries no status letter, so the coverage rule of MP32 serves it.
+- **Won't handle**: a merge of an annotated tag — Git writes the tag object ID to MERGE_HEAD, so the reader refuses it and `bench commit` fails closed.
+- **Won't handle**: a merged path that the caller unstages before the commit — D1 reads the index as decided, and the landing review grades the result.
 - **Won't handle**: a merge in the primary checkout — `bench commit` refuses the primary checkout before any merge read (`internal/commit/commit.go:116-123`).
 
 ## Ownership fences

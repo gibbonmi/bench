@@ -282,6 +282,9 @@ publishes onto the worktree branch. The lane writes a lane record and no gate
 verdict. From the destination, `bench worktree land` is the operational handoff: it
 composes and runs the one whole-project gate on that pair before publication and
 source release. Executable help owns its flags and positional grammar.
+During a pending merge, a worktree `bench commit` requires every path that the
+merge changed. It records each merge head as a further parent and then ends the
+merge.
 
 The spec is optional on the landing and on its resume: a spec-less phase lands
 with no `--spec`, and a tickets-only `--spec` closes its folder.

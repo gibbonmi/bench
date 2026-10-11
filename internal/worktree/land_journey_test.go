@@ -304,7 +304,7 @@ func TestLandCommandPublicConflictRepairRequiresNewReviewedTip(t *testing.T) {
 	if code != 1 || !strings.Contains(stdout, "next="+reviewerRoute+"git -C '"+f.creation.Path+"' merge --continue") || strings.Contains(stdout, "then bench commit") {
 		t.Fatalf("pending-merge conflict route = (%d, %q, %q), want the merge continuation", code, stdout, stderr)
 	}
-	// LRS22: an unreadable source Git directory leaves the merge state undecided, so the
+	// LRS22: a directory at MERGE_HEAD leaves the merge state undecided, so the
 	// route falls back to the commit-and-review form the committed resolution needs.
 	if err := os.Remove(mergeHead); err != nil {
 		t.Fatal(err)

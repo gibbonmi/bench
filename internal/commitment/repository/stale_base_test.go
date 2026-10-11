@@ -3,12 +3,14 @@ package repository_test
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
@@ -61,6 +63,99 @@ func TestStaleBaseCandidate(t *testing.T) {
 			}
 			if err == nil || !strings.Contains(err.Error(), row.want) {
 				t.Fatalf("AuthorizeCandidate = %v, want a refusal naming %q", err, row.want)
+			}
+		})
+	}
+}
+
+// Each row commits its own change in an unbound assignment and then leaves a merge state
+// there. The state is a merge of main, of a sibling commit that main lacks, or of both. One
+// row moves main again after its merge, and another row leaves a directory at MERGE_HEAD. A
+// row whose pending step returns a wanted path wants a refusal that names that path and not
+// the absent path. Every other row wants admission.
+func TestPendingMergeCandidate(t *testing.T) {
+	t.Parallel()
+	const siblingPath = "sibling.go"
+	light := steps(ticket(lightTicket, "change.go"), write("change.go"))
+	merge := func(t *testing.T, worktree string, revisions ...string) {
+		gittest.Output(t, worktree, append([]string{"merge", "--no-commit", "--no-ff"}, revisions...)...)
+	}
+	// moveMain lands production on main and returns the path of that move.
+	moveMain := func(t *testing.T, root string) string {
+		landProduction(t, root)
+		return gittest.Output(t, root, "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD")
+	}
+	mergeMain := func(t *testing.T, root, worktree string) (string, string) {
+		landProduction(t, root)
+		merge(t, worktree, "main")
+		return "", ""
+	}
+	// sibling commits siblingPath in a sibling assignment from the current main and returns
+	// that commit.
+	sibling := func(t *testing.T, root string) string {
+		worktree := commitmenttest.Assignment(t, root, "sibling")
+		write(siblingPath)(t, worktree)
+		commitmenttest.Commit(t, worktree, "a sibling lands production")
+		return gittest.Output(t, worktree, "rev-parse", "HEAD")
+	}
+	for _, row := range []struct {
+		name    string
+		steps   []func(*testing.T, string)
+		pending func(t *testing.T, root, worktree string) (want, absent string)
+	}{
+		{name: "light-path-merges-main", steps: light, pending: mergeMain},
+		{name: "planning-merges-main", steps: steps(func(t *testing.T, worktree string) {
+			commitmenttest.Write(t, worktree, "capture/notes.md", "A planning note.\n")
+		}), pending: mergeMain},
+		// The merged main is older than the tip, so the later move of main stays main's.
+		{name: "light-path-merges-older-main", steps: light, pending: func(t *testing.T, root, worktree string) (string, string) {
+			mergeMain(t, root, worktree)
+			write("later.go")(t, root)
+			commitmenttest.Commit(t, root, "main lands a later production fix")
+			return "", ""
+		}},
+		{name: "light-path-merges-sibling", steps: light, pending: func(t *testing.T, root, worktree string) (string, string) {
+			merge(t, worktree, sibling(t, root))
+			return siblingPath, ""
+		}},
+		// Main is the last merge head, so the reference must read beyond the first head to count
+		// main's change as main's.
+		{name: "light-path-merges-sibling-and-main", steps: light, pending: func(t *testing.T, root, worktree string) (string, string) {
+			head := sibling(t, root)
+			moved := moveMain(t, root)
+			merge(t, worktree, head, "main")
+			return siblingPath, moved
+		}},
+		{name: "unreadable-merge-state", steps: light, pending: func(t *testing.T, root, worktree string) (string, string) {
+			moved := moveMain(t, root)
+			path, err := git.AdminPath(worktree, "MERGE_HEAD")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Mkdir(path, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			return moved, ""
+		}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			root, _ := lightPathRepo(t)
+			worktree := commitmenttest.Assignment(t, root, row.name)
+			for _, step := range row.steps {
+				step(t, worktree)
+			}
+			commitmenttest.Commit(t, worktree, row.name)
+			want, absent := row.pending(t, root, worktree)
+			err := (commitrepo.Store{Root: worktree}).AuthorizeCandidate(gittest.Output(t, worktree, "write-tree"))
+			if want == "" {
+				if err != nil {
+					t.Fatalf("AuthorizeCandidate = %v, want admission", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), strconv.Quote(want)) || (absent != "" && strings.Contains(err.Error(), strconv.Quote(absent))) {
+				t.Fatalf("AuthorizeCandidate = %v, want a refusal naming %q and not %q", err, want, absent)
 			}
 		})
 	}

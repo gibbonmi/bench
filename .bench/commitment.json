@@ -1021,6 +1021,14 @@
       "identity": "sha256:65d4c78f189356ab57657c587b67f18a03523a7e560b0620579b84b11215b73a",
       "source": "ee538f7cd1f7ae96eb59a9d5fc054d756911b472",
       "evidence": "6434f6261cd16c0e0e115b57b2b8725a8414bbe1"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT258-merge-parent",
+      "binding": "commit-merge-parent",
+      "identity": "sha256:0d5ce814e2961df64529a78f557193ae58dce237cac568ad22263e54ab692bf0",
+      "source": "d23f5eff7d3475c355e051757b4d9135a46a9c05",
+      "evidence": "aa0ce9c18d1c220ec00ede59127f9ca2d56f493f"
     }
   ]
 }

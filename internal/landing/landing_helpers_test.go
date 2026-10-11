@@ -306,7 +306,7 @@ type compositionSnapshot struct{ refs, index, status, worktree, mergeHead string
 
 func compositionState(t *testing.T, root string) compositionSnapshot {
 	t.Helper()
-	mergeHead, err := os.ReadFile(filepath.Join(root, ".git", "MERGE_HEAD"))
+	mergeHead, err := os.ReadFile(mergeStatePath(t, root, "MERGE_HEAD"))
 	if err != nil && !os.IsNotExist(err) {
 		t.Fatal(err)
 	}

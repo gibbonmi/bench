@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
@@ -29,35 +30,93 @@ type NamedPathError struct{ Err error }
 func (e NamedPathError) Error() string { return e.Err.Error() }
 func (e NamedPathError) Unwrap() error { return e.Err }
 
-func attributedPaths(root, expected string, raw []string) ([]string, error) {
+// attributedPaths returns the attributed names of raw and the merge heads of the pending
+// merge whose changed paths those names cover.
+func attributedPaths(root, expected string, raw []string) ([]string, []string, error) {
 	if len(raw) == 0 {
-		return nil, NamedPathError{errors.New("at least one path is required")}
+		return nil, nil, NamedPathError{errors.New("at least one path is required")}
 	}
 	paths := make([]string, 0, len(raw))
 	for _, p := range raw {
 		rel, err := repositoryPath(root, p)
 		if err != nil {
-			return nil, NamedPathError{err}
+			return nil, nil, NamedPathError{err}
 		}
 		if rel == "." || rel == "" {
-			return nil, NamedPathError{errors.New("repository root is not an attributed path")}
+			return nil, nil, NamedPathError{errors.New("repository root is not an attributed path")}
 		}
 		if err := safePath(root, expected, rel); err != nil {
-			return nil, NamedPathError{err}
+			return nil, nil, NamedPathError{err}
 		}
 		paths = append(paths, rel)
 	}
-	return unique(paths), nil
+	named := unique(paths)
+	heads, err := coverPendingMerge(root, expected, named)
+	if err != nil {
+		return nil, nil, err
+	}
+	return named, heads, nil
+}
+
+// coverPendingMerge refuses names that omit a path the pending merge changed: a merge commit
+// without that path makes the later landing revert it. An unreadable merge state refuses as
+// a plain error, because the caller cannot clear it by naming paths. It returns the merge
+// heads that it read.
+func coverPendingMerge(root, expected string, names []string) ([]string, error) {
+	heads, err := benchgit.PendingMerge(root)
+	if err != nil || len(heads) == 0 {
+		return nil, err
+	}
+	merged, err := stagedPaths(root, expected, nil)
+	if err != nil {
+		return nil, err
+	}
+	covered, err := stagedPaths(root, expected, names)
+	if err != nil {
+		return nil, err
+	}
+	covers := make(map[string]bool, len(covered))
+	for _, path := range covered {
+		covers[path] = true
+	}
+	var omitted []string
+	for _, path := range merged {
+		if !covers[path] {
+			omitted = append(omitted, strconv.Quote(path))
+		}
+	}
+	if len(omitted) > 0 {
+		return nil, NamedPathError{errors.New("pending merge changed paths that the commit does not name: " + strings.Join(omitted, " "))}
+	}
+	return heads, nil
+}
+
+// stagedPaths lists each index path that differs from base, limited to what names cover
+// when names is not empty. Git's pathspec decides what a name covers, as it does for compose
+// and reconcile, and the NUL framing keeps each path byte for byte.
+func stagedPaths(root, base string, names []string) ([]string, error) {
+	args := []string{"diff-index", "--cached", "--name-only", "--no-renames", "-z", base, "--"}
+	for _, name := range names {
+		args = append(args, ":(literal)"+name)
+	}
+	out, err := outputRaw(root, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list the paths of the pending merge: %w", err)
+	}
+	// A NUL ends each path, so the last field is always empty.
+	paths := strings.Split(string(out), "\x00")
+	return paths[:len(paths)-1], nil
 }
 
 // ResolveAttributedPaths returns the safe repository-relative ownership fence for raw.
 func ResolveAttributedPaths(root, expected string, raw []string) ([]string, error) {
-	return attributedPaths(root, expected, raw)
+	named, _, err := attributedPaths(root, expected, raw)
+	return named, err
 }
 
 // CandidateTree composes the attributed working changes without modifying the real index.
 func CandidateTree(root, expected string, paths []string) (string, error) {
-	named, err := attributedPaths(root, expected, paths)
+	named, _, err := attributedPaths(root, expected, paths)
 	if err != nil {
 		return "", err
 	}

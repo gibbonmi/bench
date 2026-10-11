@@ -122,11 +122,18 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 // branchReference names the commit that a commit candidate's own change is read from. The
 // candidate composes onto the checkout's HEAD, so the branch's change starts at the merge
 // base of HEAD and the default-branch tip, and each commit main made since then is main's.
-// A branch that changes the policy proposes a transition from the tip, so it grades against
-// the tip. A merge base that does not resolve, or a base policy that does not read, also
-// leaves the tip as the reference, which is the stricter grading.
+// During a pending merge, the branch's change starts at the base of the tip and a merge of
+// HEAD and every merge head. A merged commit of main thus stays main's, and a merged
+// sibling's change stays the branch's. A branch that changes the policy proposes a
+// transition from the tip, so it grades against the tip. An unreadable merge state, an
+// unresolved merge base, or an unreadable base policy also leaves the tip as the reference,
+// which is the stricter grading.
 func (store Store) branchReference(revision, identity string) string {
-	out, err := git.Output("-C", store.Root, "merge-base", "HEAD", revision)
+	heads, err := git.PendingMerge(store.Root)
+	if err != nil {
+		return revision
+	}
+	out, err := git.Output(append([]string{"-C", store.Root, "merge-base", revision, "HEAD"}, heads...)...)
 	base := strings.TrimSpace(out)
 	if err != nil || base == "" || base == revision {
 		return revision
