@@ -219,12 +219,18 @@ The Shape text of `internal/handoff/text.go` names the new label beside `Spec` a
 
 The Exit handoff of `.agents/commands/bench-write-spec.md` states this order after sign-off:
 
-1. Write the verification log into the spec and the scorecard updates, and commit them.
+1. Write the verification log into the spec and the scorecard updates, and commit them. Fold `main` with `bench worktree merge --from main <target>`.
 2. After the last spec edit, copy the spec's `bench commitment inventory` row into one new deliverable binding of the current policy. Put it on the outcome whose sources hold the row's scope, with that scope as the obligation. A spec with no `Roadmap:` line binds to the outcome that `bench status` names.
 3. Run `bench commitment plan` and `bench commitment approve` with the sign-off as the decision, and commit the binding.
 4. Run `bench preflight build <slug> --plan-only` at that tip.
 5. Land spec-less once.
 6. From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.
+
+The fold in step 1 comes before the plan, because approve dirties the tree and a policy change grades against the default-branch tip.
+`branchReference` returns that tip when the merge base's policy differs from the candidate's (`internal/commitment/repository/candidate.go:131-145`).
+A worktree behind `main` then sees `main`'s production change in reverse, and `bench commit` refuses with `assignment has no current delivery binding`.
+After the fold, the merge base is the tip, so the diff holds only the planning paths.
+The composed tree at the landing stays safe when `main` moves again (SB45; SB1 review C1, consultant decision 2026-10-11).
 
 Plan's obligation rule still guards the binding of a spec with no `Roadmap:` line (`internal/commitment/authority.go:120-135`).
 The binding comes after the last spec edit, because the identity is the digest of the spec bytes (`internal/commitment/repository/sources.go:24-40`).
@@ -291,7 +297,7 @@ The last ticket writes it, because that ticket follows both behaviors.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| SB1 / 1-bind-a-new-deliverable-from-its-publishing-tree.md | A new deliverable binds from the tree that publishes it, so one spec-less landing publishes a staged spec and its binding, and `bench status` then prints the complete start command | SB01-SB22 | the `internal/commitment`, `internal/commitment/repository`, `internal/commitment/commitmenttest`, `internal/commit`, `internal/worktree`, `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests | yes |
+| SB1 / 1-bind-a-new-deliverable-from-its-publishing-tree.md | A new deliverable binds from the tree that publishes it, so one spec-less landing publishes a staged spec and its binding, and `bench status` then prints the complete start command | SB01-SB22, SB45 | the `internal/commitment`, `internal/commitment/repository`, `internal/commitment/commitmenttest`, `internal/commit`, `internal/worktree`, `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests | yes |
 | SB2 / planned: 2-name-the-binding-state-in-the-handoff.md | `bench handoff` names the binding state of each live spec | SB23-SB30, SB44 | the `internal/handoff`, `internal/handoffdoc`, `internal/commitment`, `internal/commitment/repository`, `internal/commitment/commitmenttest`, `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests | no |
 | SB3 / planned: 3-state-the-one-landing-close.md | The guidance states the one-landing close, the binding grant, the handoff pin, the Writes rule, and the template comment | SB31-SB43 | the `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `skills-index-command-adapters` checks | no |
 
@@ -379,6 +385,7 @@ The gate observes the feature through the package suites and the guidance checks
 | SB20 | 9 | `bench commitment start` admits a staged spec that the default-branch policy binds | `internal/commitment/deliverable_test.go` (`TestCommitmentDeliverableTypes`) | A HEAD rule that breaks the shared default-tip read of `validateDeliverable` fails this pinned admission. SB21 owns a start read that moves to HEAD. |
 | SB21 | 19 | Before the landing, `Store.Start` from the planning worktree refuses the HEAD-bound spec with `is not approved for outcome` | `internal/commitment/head_binding_test.go` (`TestHeadBindingStartRefusesBeforeTheLanding`) | A start that reads the worktree policy or HEAD admits a binding that main lacks. |
 | SB22 | 20 | The bound start command keeps the `--request <request>` placeholder | `cmd/bench/commitment_test.go` (`TestCommitmentNextProjection`) | A change that fills the request from the checkout fails this pinned command. |
+| SB45 | 3 | After `main` lands a production commit past the planning worktree's base, `Store.AuthorizeCandidate` refuses the binding commit with `assignment has no current delivery binding`, and admits it after the worktree folds `main` | planned TestAuthorizeCandidateAdmitsAFoldedBinding in internal/commitment/repository/head_binding_test.go | A close order with no fold meets the reversed-diff refusal of `branchReference` on a stale base, so the row proves the fold route of the close order. |
 | SB23 | 22, 23 | With a binding on main, `bench handoff` writes `Spec binding: <outcome>` on the line after the spec's `Spec status` line | planned TestSectionRendersTheSpecBinding in internal/handoff/render_test.go | The current pins write no binding line. |
 | SB24 | 24 | `bench handoff` writes `Spec binding: unbound` for a live spec that the default-branch policy does not bind | planned TestSectionRendersTheSpecBinding in internal/handoff/render_test.go | A writer that omits the unbound state lets a reader read silence as a binding. |
 | SB25 | 25 | `bench handoff` writes `Spec binding: unbound` when only the worktree's policy binds the spec | planned TestSectionRendersTheSpecBinding in internal/handoff/render_test.go | A reader of the worktree policy reports a binding that main lacks, as the FT376 handoff did. |
@@ -418,6 +425,7 @@ The refusal rows cover a fault at plan (SB07-SB09), at commit (SB13), and at the
 - **Won't handle**: a primary checkout whose HEAD is not the default-branch tip — `bench commit` refuses the primary checkout, so no binding from there reaches a landing.
 - **Won't handle**: an unborn HEAD — `Store.Plan` already refuses a repository whose default branch does not resolve.
 - **Won't handle**: a moved policy on main between plan and landing — `Store.Approve` refuses a changed predecessor, and `TestCommitmentStaleApproval` pins that refusal.
+- **Won't handle**: a production landing on `main` between the close order's fold and the binding commit — `bench commit` refuses again, and a second fold clears it.
 - **Won't handle**: a spec stage for an outcome that is not next — its `Spec binding` line names the outcome, and `bench status` names the next one.
 - **Won't handle**: a ticket author who edits `.bench/commitment.json` under its `Writes:` line — `bench commit` refuses a policy change without an exact approved plan (SB16).
 - **Won't handle**: a live spec whose binding a delivery already settled — a delivery flips its spec to implemented, so that spec is no longer live.

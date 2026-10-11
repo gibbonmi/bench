@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: .bench/commitment.json, CHANGELOG.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/commitment/commitcmd/command.go, internal/commitment/commitmenttest/repo.go, internal/commitment/delivery.go, internal/commitment/head_binding_test.go (new), internal/commitment/repository/admission.go, internal/commitment/repository/candidate.go, internal/commitment/repository/closure.go, internal/commitment/repository/head_binding_test.go (new), internal/commitment/repository/publication.go, internal/commitment/repository/readiness.go, internal/commitment/repository/repository.go, internal/commitment/repository/sources.go, internal/commitment/store_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/land_specless_test.go, internal/worktree/parallel_census_test.go, tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns, tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary
-Covers: SB01, SB02, SB03, SB04, SB05, SB06, SB07, SB08, SB09, SB10, SB11, SB12, SB13, SB14, SB15, SB16, SB17, SB18, SB19, SB20, SB21, SB22
+Covers: SB01, SB02, SB03, SB04, SB05, SB06, SB07, SB08, SB09, SB10, SB11, SB12, SB13, SB14, SB15, SB16, SB17, SB18, SB19, SB20, SB21, SB22, SB45
 
 ## What to build
 
@@ -45,6 +45,9 @@ The lane runs `bench structure --growth`, and a file over 400 lines that gains a
 
 Put SB01-SB11 and SB21 in `internal/commitment/head_binding_test.go` (new), in the planned tests that the spec coverage map names.
 Put SB12-SB15 in `internal/commitment/repository/head_binding_test.go` (new), in the planned tests that the spec coverage map names.
+
+SB45 joins that file after the SB1 review (C1). The planning worktree commits the spec, and `main` lands a production commit. The binding commit refuses, the worktree folds `main`, and the approval check admits the binding. The fold in a fixture is the merge that `bench worktree merge --from main` performs. `landProduction` in `stale_base_test.go` is the precedent for the `main` move.
+
 Each test commits a staged spec in a linked worktree from `commitmenttest.Assignment`, and runs plan and approve there.
 SB12 and SB13 grade the worktree candidate, and SB14 and SB15 grade a composed tree that the test builds.
 Each identity comes from `commitment.Identity` over the fixture bytes, and each path comes from the fixture writes.
@@ -153,5 +156,6 @@ Start, readiness, and the outlook read only the default-branch policy.
 - [ ] `bench commitment start` admits a staged spec that the default-branch policy binds.
 - [ ] Before the landing, `Store.Start` from the planning worktree refuses the HEAD-bound spec with `is not approved for outcome`.
 - [ ] The bound start command keeps the `--request <request>` placeholder.
+- [ ] After `main` lands a production commit past the worktree's base, `Store.AuthorizeCandidate` refuses the binding commit, and admits it after the worktree folds `main`.
 - [ ] `internal/commitment/repository/repository.go` holds 400 lines or fewer.
 - [ ] `worktreeTestCount` equals the count of top-level tests in `internal/worktree`.

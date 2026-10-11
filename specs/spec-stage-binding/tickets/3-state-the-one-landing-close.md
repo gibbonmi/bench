@@ -32,7 +32,7 @@ The block is one intro line and six steps, with no blank line between them.
 
 ```markdown
 After sign-off, close the spec stage in this order, so one spec-less landing carries the staged spec and its binding.
-1. Write the verification log into the spec and the scorecard updates, and commit them.
+1. Write the verification log into the spec and the scorecard updates, and commit them. Fold `main` with `bench worktree merge --from main <target>`.
 2. After the last spec edit, copy the spec's `bench commitment inventory` row into one new deliverable binding of the current policy. Put it on the outcome whose sources hold the row's scope, with that scope as the obligation. A spec with no `Roadmap:` line binds to the outcome that `bench status` names.
 3. Run `bench commitment plan` and `bench commitment approve` with the sign-off as the decision, and commit the binding.
 4. Run `bench preflight build <slug> --plan-only` at that tip.
@@ -43,6 +43,8 @@ After sign-off, close the spec stage in this order, so one spec-less landing car
 The intro line carries SB31, step 2 carries SB32, and step 6 carries SB33.
 The six steps are the steps of the spec section "The close order".
 Step 2 adds "After the last spec edit," and the no-`Roadmap:` sentence, because SB32 and that spec section state both.
+Step 1 holds the fold sentence on the same line, because the budget allows no ninth line. The SB1 review (C1) found that a binding commit on a base behind `main` refuses.
+
 A list marker starts a new paragraph for `prose-mechanics` (`internal/prose/parse.go:181-183`), so each step is its own paragraph.
 The block keeps the staged-spec sentence of line 16, which `internal/anchors/registry_commitment.go:42` pins (SB43).
 
