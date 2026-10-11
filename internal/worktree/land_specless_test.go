@@ -8,7 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment"
+	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 )
 
 // WL1, WL2, WL5, and WL10: the spec-less landing publishes and releases like a spec
@@ -250,6 +253,56 @@ func TestCommitmentPlanningBootstrap(t *testing.T) {
 	}
 	if got := gitOutput(t, f.root, "show", published+":decisions/delivery-map.md"); !strings.Contains(got, "Decide the delivery order.") {
 		t.Fatalf("published decision map = %q", got)
+	}
+}
+
+// A spec-stage close commits a staged spec and its approved binding in a planning worktree
+// and lands them spec-less once. Main then holds both, and the start command names the
+// spec. Before the landing, each checkout shows the start command with the path placeholder.
+func TestCommitmentSpecStageLandsSpecAndBinding(t *testing.T) {
+	t.Parallel()
+	const request = "spec-stage"
+	f := planningLandingFixture(t, request, true)
+	worktree := f.creation.Path
+	policy, _, err := commitrepo.Store{Root: f.root}.Policy()
+	if err != nil {
+		t.Fatal(err)
+	}
+	row := policy.Milestones[0].Outcomes[0].Sources[0].ID
+	path, body := "specs/stage/spec.md", "# Stage\n\nStatus: staged\n\nRoadmap: "+row+"\n"
+	mustMkdirAll(t, filepath.Join(worktree, filepath.Dir(filepath.FromSlash(path))), 0o755)
+	mustWrite(t, filepath.Join(worktree, filepath.FromSlash(path)), []byte(body), 0o644)
+	if code, out := benchCommit(t, worktree, path); code != 0 {
+		t.Fatalf("spec commit = (%d, %q), want exit 0", code, out)
+	}
+	proposal := commitmenttest.Bound(t, f.root, commitment.DeliveryBinding{Source: commitment.SourceBinding{ID: "spec", Path: path, Identity: commitment.Identity([]byte(body))}, Obligations: []string{row}})
+	plan, err := commitrepo.Store{Root: worktree}.Plan(proposal)
+	if err != nil {
+		t.Fatalf("plan of the HEAD binding = %v, want acceptance", err)
+	}
+	if out, code := commitcmd.Command(worktree, []string{"approve", "--plan", plan.ID, "--decision", "reviewer sign-off", "--delayed", "none", "--removed", "none"}); code != 0 {
+		t.Fatalf("approve = (%q, %d), want exit 0", out, code)
+	}
+	if code, out := benchCommit(t, worktree, strings.Fields(gitOutput(t, worktree, "diff", "--name-only"))...); code != 0 {
+		t.Fatalf("binding commit = (%d, %q), want exit 0", code, out)
+	}
+	for _, checkout := range []string{f.root, worktree} {
+		if out, code := commitcmd.Command(checkout, []string{"show"}); code != 0 || !strings.Contains(out, "--deliverable <path>") {
+			t.Fatalf("show in %s before the landing = (%q, %d), want --deliverable <path>", checkout, out, code)
+		}
+	}
+	tip := gitOutput(t, worktree, "rev-parse", "HEAD")
+	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, tip, worktree)...))
+	if r.exit != 0 || !strings.Contains(r.stdout, "worktree=released") {
+		t.Fatalf("spec-stage landing = (%d, %q, %q), want a published release", r.exit, r.stdout, r.stderr)
+	}
+	for file, want := range map[string]string{path: body, commitment.PolicyPath: string(proposal)} {
+		if got := gitOutput(t, f.root, "show", "main:"+file); got != strings.TrimSpace(want) {
+			t.Fatalf("published %s = %q, want %q", file, got, want)
+		}
+	}
+	if out, code := commitcmd.Command(f.root, []string{"show"}); code != 0 || !strings.Contains(out, "--deliverable "+path) {
+		t.Fatalf("show after the landing = (%q, %d), want --deliverable %s", out, code, path)
 	}
 }
 

@@ -10,11 +10,15 @@ import (
 // errDefaultUnresolved refuses a policy read when no default branch resolves.
 var errDefaultUnresolved = errors.New("commitment source: default branch is unresolved")
 
+// DefaultUnresolved reports whether err refuses a policy read because no default branch
+// resolves.
+func DefaultUnresolved(err error) bool { return errors.Is(err, errDefaultUnresolved) }
+
 // Outlook projects the published policy and the local runtime state. A repository with
 // no resolved default branch has published no commitment, so it reads as adoption-required.
 func (store Store) Outlook() (commitment.Outlook, error) {
 	policy, exists, err := store.Policy()
-	if errors.Is(err, errDefaultUnresolved) {
+	if DefaultUnresolved(err) {
 		return commitment.Project(nil, intent.CommitmentState{}), nil
 	}
 	if err != nil {

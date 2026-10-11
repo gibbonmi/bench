@@ -6,27 +6,30 @@ description: Turn a reviewed decision source into a build spec with user stories
 
 ## Entry orientation
 
-Charge `bench-craft-spec` on one authorized decision source. It owns the process: explore, find seams, and
-synthesize, with no interview. It owns the discipline: stories, acceptance coverage map, edge inventory,
-**Won't handle**, hostile-input checklist, fences, and review rubric. It yields `specs/<feature>/spec.md` plus tickets.
+Charge `bench-craft-spec` on one authorized decision source. It owns the process: explore, find seams, and synthesize, with no interview. It owns the discipline: stories, acceptance coverage map, edge inventory, **Won't handle**, hostile-input checklist, fences, and review rubric. It yields `specs/<feature>/spec.md` plus tickets.
 
 ## Exit handoff
 
 The spec carries `Status: staged` (staged → implemented at the green gate → promote-then-delete on merge). Stop for sign-off.
 Then recommend the approved implementation line for fresh ticket authors on one integration source. Review each frozen chunk before its successor, reconcile the final source, and hand it to `bench worktree land`. A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.
 
+After sign-off, close the spec stage in this order, so one spec-less landing carries the staged spec and its binding.
+1. Write the verification log into the spec and the scorecard updates, and commit them. Fold `main` with `bench worktree merge --from main <target>`.
+2. After the last spec edit, copy the spec's `bench commitment inventory` row into one new deliverable binding of the current policy. Put it on the outcome whose sources hold the row's scope, with that scope as the obligation. A spec with no `Roadmap:` line binds to the outcome that `bench status` names.
+3. Run `bench commitment plan` and `bench commitment approve` with the sign-off as the decision, and commit the binding.
+4. Run `bench preflight build <slug> --plan-only` at that tip.
+5. Land spec-less once.
+6. From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.
+
 ## Entry contract
 
-Accept exactly one of three decision sources: a ready compiled map, the
-reviewer-confirmed current conversation, or a named reviewed artifact. No
-unnamed memory, unreviewed note, or fourth override authorizes a draft. Top-level `decisions/` holds pre-spec
-working maps; compiled maps live under `specs/<slug>/decisions/`.
+Accept exactly one of three decision sources: a ready compiled map, the reviewer-confirmed current conversation, or a named reviewed artifact. No
+unnamed memory, unreviewed note, or fourth override authorizes a draft. Top-level `decisions/` holds pre-spec working maps; compiled maps live under `specs/<slug>/decisions/`.
 
 - **Ready compiled map.** Validate it.
   Move the topic folder, its tickets and assets included, into the spec's decisions folder as one unit.
   Move the index file out with its topic folder, from top-level `decisions/` into `specs/<slug>/decisions/`; do not copy either one. Then update every reference to the moved paths in the same green change. A re-run reads the already-compiled spec-local map; it never recreates a top-level copy.
-- **Reviewer-confirmed current conversation.** Close every load-bearing product or scope fork here, dated. Do
-  not manufacture a map to restate it.
+- **Reviewer-confirmed current conversation.** Close every load-bearing product or scope fork here, dated. Do not manufacture a map to restate it.
 - **Named reviewed artifact.** Name it. It holds settled decisions, not unresolved prompts. A resolved ticket answer and its asset in a multi-item shaping map also count, even while a sibling ticket stays open. The phase copies only that ticket's asset, and the map stays in place.
 
 Record exactly one `Decision source:` line in the spec. For a map-backed source, re-read and re-verify every structured `## Sources`
@@ -48,8 +51,7 @@ Each delegate returns its findings and its not-verified list under `craft-resear
 After every research delegate returns, the invoking session forks the current conversation and charges that fork to author the spec and its chunk table only. The charge gives the fork the findings as compressed inputs, and the fork does not repeat their reads. The fork inherits the invoking session's line. Omit a model override. Keep all spec-and-ticket writes in the phase worktree. The invoking session coordinates the phase, slices the tickets, and presents the completed approval table to the reviewer.
 
 After ticket approval, each ticket goes to a fresh author session under `.bench/BENCH.md`'s authorship rule. Spec authoring owns engineering seams, deep-versus-thin design, tests,
-acceptance coverage, hostile-input attachment, and gate attachment; shaping sources constrain behavior, scope,
-compatibility, or a reviewer-chosen seam.
+acceptance coverage, hostile-input attachment, and gate attachment; shaping sources constrain behavior, scope, compatibility, or a reviewer-chosen seam.
 
 ## Process
 
@@ -60,9 +62,7 @@ compatibility, or a reviewer-chosen seam.
    A spec that ships a phase declares it on one `Introduces commands:` line, valid in its own directory while staged.
    When no hostile-input checklist class covers a surface, quarry the seams library and propose a tuned profile addition. Apply `craft-spec`'s named
    `Bootstrap authority before execution` rule. A spec that inherits a closed decision about a bench signal quotes that signal's current value in its first status update.
-2. **Retire superseded work by promotion then deletion.** Leave no `Superseded by` marker: promote durable
-   decisions, delete the old spec under a `spec-retire: <name>` commit, repair references. The same
-   promote-then-delete commit removes the spec's `ROADMAP.md` row and that row's `roadmap/FT<n>.md` detail file. Whole-folder retirement removes the compiled topic folders, their tickets and assets included. It removes each compiled index file too.
+2. **Retire superseded work by promotion then deletion.** Leave no `Superseded by` marker: promote durable decisions, delete the old spec under a `spec-retire: <name>` commit, repair references. The same promote-then-delete commit removes the spec's `ROADMAP.md` row and that row's `roadmap/FT<n>.md` detail file. Whole-folder retirement removes the compiled topic folders, their tickets and assets included. It removes each compiled index file too.
 3. **Review the spec alone.** After the spec fork returns, one independent review round grades the spec alone under `craft-spec`'s review rubric, its chunk table included.
    The round runs on `craft-line`'s spec review line. It returns accept or reject, and slicing starts only after it accepts. The fence section stays empty until the slicing writes it.
 4. **Slice one chunk at a time.** Where the stories partition into disjoint package or fence sets, could a narrower

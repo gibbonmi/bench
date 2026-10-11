@@ -144,7 +144,7 @@ func TestCommitmentInventoryIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The default branch does not hold this spec, so plan cannot bind it yet.
+	// The checkout HEAD does not hold this spec, so plan cannot bind it yet.
 	commitmenttest.Write(t, root, "specs/uncommitted/spec.md", commitmenttest.StagedBody)
 	// Uncommitted edits make the working tree differ from the revision that plan validates.
 	commitmenttest.Write(t, root, "roadmap/FT1.md", "**FT1 — A**\n\nAn uncommitted edit.\n")

@@ -7,11 +7,12 @@ const CommitmentRuleMarker = "**Deliver only the committed outcome.**"
 // CommitmentDiagnosticPrefix opens every diagnostic of the commitment guidance family.
 const CommitmentDiagnosticPrefix = "commitment guidance: "
 
-// commitmentAnchors pin the canonical delivery commitment rule, each phase route to its
-// commands, and the light-path exemption with its pointer to the build rule. Each prohibition
-// refuses one retired rule. One grant let work start or displace the commitment outside the
-// committed outcome. Another grant let a build ship a light-path fix. A restriction held
-// light-path work behind the active commitment.
+// commitmentAnchors pin the canonical delivery commitment rule and each phase route to its
+// commands. They also pin the spec-stage close with its binding grant, and the light-path
+// exemption with its pointer to the build rule. Each prohibition refuses one retired rule. One grant let
+// work start or displace the commitment outside the committed outcome. Another grant let a
+// build ship a light-path fix. A restriction held light-path work behind the active
+// commitment.
 var commitmentAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: CommitmentRuleMarker, Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the canonical delivery commitment rule"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "A spec implementation starts only through `bench commitment start` for the eligible outcome that `bench status` names.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the spec start route"},
@@ -27,6 +28,7 @@ var commitmentAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "`/bench-implement-spec` states the build rule.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the pointer to the build rule"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "At a phase close, do the preparation and run `bench commitment start` from the outcome's own worktree; never hand me a `bench` command.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the next-outcome start"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "That plan changes only the deliverable binding; a reorder or a new admission still needs my direction.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the binding-only limit"},
+	{Group: AfterImplementSpec, File: operatingGuide, Kind: RequireInSection, Section: "Workflow", Needle: "A spec-stage close binds its approved spec the same way and cites my sign-off as the decision.", Diagnostic: CommitmentDiagnosticPrefix + "operating guide dropped the spec-stage binding grant"},
 	{Group: AfterImplementSpec, File: drainCommand, Kind: Require, Needle: "After the landing, the coordinator starts the `commitment_outlook` outcome under the next-outcome rule in `.bench/BENCH.md`.", Diagnostic: CommitmentDiagnosticPrefix + "drain dropped its next-outcome start"},
 	{Group: AfterImplementSpec, File: drainCommand, Kind: Require, Needle: "The commitment rule in `.bench/BENCH.md` decides whether spec intake starts; a drain approval never admits it.", Diagnostic: CommitmentDiagnosticPrefix + "drain dropped its route to the commitment rule"},
 	{Group: AfterImplementSpec, File: drainCommand, Kind: Require, Needle: "A drained light-path item needs no commitment: the drain dispatches it under the light-path fix rule in `.bench/BENCH.md`.", Diagnostic: CommitmentDiagnosticPrefix + "drain dropped the delegate route for a light-path item"},
@@ -39,7 +41,10 @@ var commitmentAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: finalCheckCommand, Kind: RequireInSection, Section: "Exit handoff", Needle: "Verified closure is part of delivery.", Diagnostic: CommitmentDiagnosticPrefix + "final check dropped verified closure from delivery"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams.", Diagnostic: CommitmentDiagnosticPrefix + "implementation dropped its commitment start"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-implement-spec.md", Kind: Require, Needle: "A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.", Diagnostic: CommitmentDiagnosticPrefix + "implementation dropped the light-path start exemption"},
-	{Group: AfterImplementSpec, File: ".agents/commands/bench-write-spec.md", Kind: Require, Needle: "A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.", Diagnostic: CommitmentDiagnosticPrefix + "spec authoring dropped the planning-only staged spec"},
+	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: Require, Needle: "A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.", Diagnostic: CommitmentDiagnosticPrefix + "spec authoring dropped the planning-only staged spec"},
+	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Section: "Exit handoff", Needle: "After sign-off, close the spec stage in this order, so one spec-less landing carries the staged spec and its binding.", Diagnostic: CommitmentDiagnosticPrefix + "spec authoring dropped the one-landing close"},
+	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Section: "Exit handoff", Needle: "After the last spec edit, copy the spec's `bench commitment inventory` row into one new deliverable binding of the current policy.", Diagnostic: CommitmentDiagnosticPrefix + "spec authoring dropped the binding from the inventory row after the last spec edit"},
+	{Group: AfterImplementSpec, File: writeSpecCommand, Kind: RequireInSection, Section: "Exit handoff", Needle: "From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.", Diagnostic: CommitmentDiagnosticPrefix + "spec authoring dropped the start command as the handoff next command"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-debug.md", Kind: Require, Needle: "Diagnosis needs no commitment start, but each commit of the repro or the fix follows the commitment rule in `.bench/BENCH.md`.", Diagnostic: CommitmentDiagnosticPrefix + "debug dropped its route to the commitment rule"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench.md", Kind: Require, Needle: "take its `commitment_outlook` row", Diagnostic: CommitmentDiagnosticPrefix + "router dropped the commitment outlook"},
 	{Group: AfterImplementSpec, File: ".agents/commands/bench-setup-repo.md", Kind: Require, Needle: "Delivery work waits for the initial commitment.", Diagnostic: CommitmentDiagnosticPrefix + "setup dropped the initial commitment"},

@@ -1041,6 +1041,14 @@
       "identity": "sha256:0d5ce814e2961df64529a78f557193ae58dce237cac568ad22263e54ab692bf0",
       "source": "d23f5eff7d3475c355e051757b4d9135a46a9c05",
       "evidence": "aa0ce9c18d1c220ec00ede59127f9ca2d56f493f"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT395",
+      "binding": "spec-stage-binding",
+      "identity": "sha256:f4499d582585cd086bf5ef0e46002eff2dbc748ae28253b44883715b64b04ff8",
+      "source": "7130e46ec4b764a97085e7a725ddb6d568d3e10c",
+      "evidence": "f98ab73b78b16dfbf1d811ba6c2585ce6cc080f3"
     }
   ]
 }

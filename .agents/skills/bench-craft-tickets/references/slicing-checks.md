@@ -56,6 +56,7 @@ differ.
   The search covers the tests, the help inventories, the generated references, and their anchor registry files.
   The spec-wide fence masks a hit that is absent from one ticket's `Writes:` line, so the fence alone does not close the gap.
 - A ticket that moves a test expectation names the file that holds the old expectation in its own `Writes:` line. Otherwise the old expectation stays behind as a second copy.
+- The ownership fence and exactly one ticket's `Writes:` line name `.bench/commitment.json`. The spec-stage close commits the binding inside the range that the plan-only preflight grades.
 
 ## Fence-expansion evidence
 

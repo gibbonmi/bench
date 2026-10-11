@@ -64,7 +64,7 @@ func (store Store) authorizeCandidate(ledger intent.Ledger, owner intent.Assignm
 		if closed {
 			err = store.closureAuthority(ledger, owner, delivery.Spec)
 		} else {
-			err = store.approvedTransition(ledger, current, candidate, revision)
+			err = store.approvedTransition(ledger, current, candidate, revision, tree)
 		}
 		if err != nil {
 			return err
@@ -157,7 +157,9 @@ func (store Store) retiredRecord(tree string, change git.TreeChange) bool {
 	return err == nil && record == change.Path && !spec.CommitTree(store.Root, tree).FolderIsDirectory(slug)
 }
 
-func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *commitment.Policy, revision string) error {
+// approvedTransition admits candidate only under an exact approved plan from current. Each
+// plan source reads the tree that readTree names, with tree as the publishing tree.
+func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *commitment.Policy, revision, tree string) error {
 	if candidate == nil {
 		return refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: errors.New("commitment policy deletion is not approved")}
 	}
@@ -178,7 +180,7 @@ func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *
 			continue
 		}
 		for _, source := range expected.Sources {
-			if err := store.validateSourceAt(revision, source); err != nil {
+			if err := store.validateSourceAt(readTree(current, *candidate, source, tree, revision), source); err != nil {
 				return err
 			}
 		}

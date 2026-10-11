@@ -9,7 +9,7 @@ import (
 )
 
 // twoSectionDocument is the fixture the round-trip and prose rows share: a header,
-// main, one request section carrying all six pins with a repeated spec pair, and a
+// main, one request section carrying every pin with a repeated spec group, and a
 // Shape body. It is built through the exported types, so a render the parser cannot
 // read back fails here rather than in a consumer.
 func twoSectionDocument() *Document {
@@ -30,8 +30,10 @@ func twoSectionDocument() *Document {
 					{LabelRecordedBase, "`8252957`"},
 					{LabelSpec, "`specs/handoff-sections/spec.md`"},
 					{LabelSpecStatus, "`staged`"},
+					{LabelSpecBinding, "`FT395`"},
 					{LabelSpec, "`specs/binary-freshness/spec.md`"},
 					{LabelSpecStatus, "`implemented`"},
+					{LabelSpecBinding, "`unbound`"},
 				},
 				Next:  "`bench worktree exec handoff-sections -- bench gate`",
 				State: "The leaf package is in the tree.\n\nThe verb still owns the whole file.",

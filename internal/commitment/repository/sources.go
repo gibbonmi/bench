@@ -71,11 +71,31 @@ func ticketsOnlyAt(root, revision, path string) bool {
 	return path == spec.ClosedFolderPath(name) && spec.TicketsOnly(spec.CommitTree(root, revision), name)
 }
 
+// readTree names the tree that source reads in a transition from current to proposed. A new
+// deliverable source reads tree, which publishes it, and every other source reads revision.
+func readTree(current *commitment.Policy, proposed commitment.Policy, source commitment.SourceBinding, tree, revision string) string {
+	if commitment.NewDeliverable(current, proposed, source) {
+		return tree
+	}
+	return revision
+}
+
+// checkoutHead resolves the commit that HEAD names in the store root.
+func (store Store) checkoutHead() (string, error) {
+	head, err := git.Output("-C", store.Root, "rev-parse", "HEAD")
+	return strings.TrimSpace(head), err
+}
+
+// validateDeliverable validates source at the default-branch tip.
 func (store Store) validateDeliverable(source commitment.SourceBinding) error {
 	revision, err := store.sourceRevision()
 	if err != nil {
 		return err
 	}
+	return store.validateDeliverableAt(revision, source)
+}
+
+func (store Store) validateDeliverableAt(revision string, source commitment.SourceBinding) error {
 	isSpec := spec.IsLiveSpecPath(source.Path)
 	if !isSpec && !ticketsOnlyAt(store.Root, revision, source.Path) {
 		return fmt.Errorf("deliverable %q is not an approved spec or tickets-only folder", source.Path)
@@ -92,10 +112,27 @@ func (store Store) validateDeliverable(source commitment.SourceBinding) error {
 	return validateIdentity(source, identity)
 }
 
-func (store Store) validateDeliverables(policy commitment.Policy) error {
-	_, bindings := commitment.Unsettled(policy)
+func (store Store) validateDeliverables(current *commitment.Policy, proposed commitment.Policy, head string) error {
+	revision, err := store.sourceRevision()
+	if err != nil {
+		return err
+	}
+	_, bindings := commitment.Unsettled(proposed)
 	for _, binding := range bindings {
-		if err := store.validateDeliverable(binding.Source); err != nil {
+		if err := store.validateDeliverableAt(readTree(current, proposed, binding.Source, head, revision), binding.Source); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (store Store) validateSources(current *commitment.Policy, proposed commitment.Policy, head string, sources []commitment.SourceBinding) error {
+	revision, err := store.sourceRevision()
+	if err != nil {
+		return err
+	}
+	for _, source := range sources {
+		if err := store.validateSourceAt(readTree(current, proposed, source, head, revision), source); err != nil {
 			return err
 		}
 	}

@@ -73,7 +73,7 @@ func Command(args []string) (string, int) {
 	}
 	target := filepath.Join(noteRoot, status.HandoffFile)
 
-	p := plan{facts: collect(noteRoot, owned), tip: sectionTip(noteRoot, owned), scanRoot: noteRoot}
+	p := plan{facts: collect(noteRoot, owned, readBindings(root)), tip: sectionTip(noteRoot, owned), scanRoot: noteRoot}
 	if path, present := parsed.Flags["--state-file"]; present {
 		state, err := readStateFile(path)
 		if err != nil {

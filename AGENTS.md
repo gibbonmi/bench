@@ -42,13 +42,14 @@ decision; it is not a default.
 **Phase-close handoff.** A Bench phase closes when a drain commits, a spec
 stages, a build lands, or a review phase delivers outside a `--full` build.
 A spec-stage close commits its scorecard updates and no retro.
-A phase close runs `bench handoff` from its own worktree.
+A phase close runs `bench handoff` from its own worktree, but a spec-stage close
+runs it from the primary checkout after its landing.
 A drain runs it from the primary checkout after its landing.
 `.bench/BENCH-reference.md` states how `bench handoff` writes the handoff file.
 
 This repo git-ignores the handoff, so it is a local file. The handoff must pin
-the spec path and status, the decisions that stay closed, and the exact
-harness-native next command. This way, resumption never depends on
+the spec path, the spec status, the binding state, the decisions that stay closed,
+and the exact harness-native next command. This way, resumption never depends on
 conversation history. When the handoff and the tree disagree, the tree wins.
 
 **Shell conventions for agents in this repo.**
