@@ -183,7 +183,7 @@ The rule applies only during a pending merge, so a staged unnamed path stays all
 
 `Owner.composeAuthorized` keeps the merge heads that its D1 check reads, so `Owner.Land` and the recheck use that one list.
 A pending merge waives the `nothing to commit` refusal, because the merge parent is the change.
-Without a pending merge, that refusal stays as it is (`internal/landing/landing.go:146-148`).
+Without a pending merge, that refusal stays as it is (`internal/landing/landing.go:145-147`).
 `Owner.Land` publishes `commit-tree <tree> -p <expected> -p <merge head>...`, with the merge heads in file order.
 `Owner.DryRun` applies the same D1 rule and the same waiver, and it publishes nothing.
 
