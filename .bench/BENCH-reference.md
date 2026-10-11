@@ -120,17 +120,18 @@ the Claude model may reach for the command on its own. It also records
 whether Codex may invoke the adapter implicitly. The gate grades both
 surfaces against the table.
 
-On Claude, the model may start a phase on its own, except a setup or
-maintenance phase. `/bench-drain` is the maintenance exception on Claude: the
-model may start it, because the drain lands nothing until the reviewer approves
-its batch diff.
+On Claude, the model may start each phase in the Workflow list of
+`.bench/BENCH.md`, and the bug path. It may also start `/bench-drain`, because
+the drain lands nothing until the reviewer approves its batch diff. A setup or
+maintenance phase stays reviewer-chosen. Read a phase's own row for which case
+applies.
 
 On Codex, a phase is a reviewer-chosen entry point that a model does not start
 unbidden. `$bench-debug` is the exception. Codex may invoke it implicitly,
 because a reported symptom should route to the bug path without the operator
 remembering the phase name. Model-invoked Bench guidance otherwise uses the
 visible `craft-*` skill names, leaving `$bench` for phases a reviewer
-deliberately runs. Read a phase's own row for which case applies.
+deliberately runs.
 
 The rule for translating a recommended phase into *this* harness's invocation
 form lives with the communication rules in `.bench/BENCH.md`.

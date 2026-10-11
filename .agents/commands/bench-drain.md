@@ -1,5 +1,5 @@
 ---
-description: The roadmap-maintenance phase — reconcile ROADMAP.md against the tree, drain capture/IDEAS.md, the retros, and the learnings journal into it, and propose the pass as one batch diff. Use it as the single exit for parked ideas and open learnings.
+description: Roadmap-maintenance phase — reconcile ROADMAP.md against the tree, drain capture/IDEAS.md, the retros, and the learnings journal into it, and propose the pass as one batch diff. Use it as the single exit for parked ideas and open learnings.
 ---
 
 # /bench-drain — reconcile the roadmap, drain the capture

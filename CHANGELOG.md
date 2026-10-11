@@ -10,7 +10,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Fixed the `/bench` and `/bench-drain` descriptions so that each carries a trigger phrase. The `/bench-drain` description now calls the drain the roadmap-maintenance phase, as its body does. Before, `/bench` had no trigger phrase, and `/bench-drain` ended with the label "Maintenance, not a phase."
 - Fixed `/bench-implement-spec` and `/bench-write-spec` so that they name the light path of `.bench/BENCH.md`. Before, they named a "lighter-path threshold" that `.bench/BENCH.md` does not use.
-- Fixed the invocation account in `.bench/BENCH-reference.md` so that it agrees with the invocation policy. The Claude model may start each phase except a setup or maintenance phase, and `/bench-drain` is the maintenance exception. Before, the account said that a model does not start most phases unbidden.
+- Fixed the invocation account in `.bench/BENCH-reference.md` so that it agrees with the invocation policy. On Claude, the model may start each workflow phase, the bug path, and `/bench-drain`; a setup or maintenance phase stays reviewer-chosen. Before, the account said that a model does not start most phases unbidden.
 
 ### Inventory revision metadata
 

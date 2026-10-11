@@ -20,8 +20,8 @@ No anchored sentence changes, and no canary mutation anchors on a changed line. 
 - [ ] The `/bench` and `/bench-drain` descriptions each carry a trigger phrase that starts with "Use".
 - [ ] The `/bench-drain` description and body call the drain a phase, and no line of the file holds a "not a phase" label.
 - [ ] No line of `/bench-implement-spec` or `/bench-write-spec` holds the word "threshold", and each description names the light path.
-- [ ] The Harness Invocation account says that the Claude model may start each phase except a setup or maintenance phase.
+- [ ] The Harness Invocation account names the phase classes that the Claude model may start, and it agrees with every row of the invocation-policy table.
 - [ ] The Harness Invocation account says that only `$bench-debug` is implicit on Codex.
-- [ ] Each edited description has 250 characters or fewer, and the `skill-description-budgets` check passes.
-- [ ] The anchors, the skills-index command-adapter check, and the prose grade of each edited file pass.
+- [ ] Each edited description has 250 characters or fewer.
+- [ ] No anchored sentence of an edited file changes, and no canary mutation holds a changed line.
 - [ ] `CHANGELOG.md` has one entry for the description fixes.
