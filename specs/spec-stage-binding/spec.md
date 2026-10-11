@@ -204,7 +204,7 @@ The ids follow policy order, with one space between two ids.
 The value is `unbound` when no outcome binds the path.
 The value is `unbound` when the repository has no policy, or when no default branch resolves, as the outlook reads that state (`internal/commitment/repository/outlook.go:17-19`).
 The value is `binding unknown (policy unreadable)` when the policy does not read or does not parse.
-That phrase joins the unknown phrases of `internal/handoff/facts.go:44-52`, and the handoff still writes.
+That phrase joins the unknown phrases of `internal/handoff/facts.go:44-53`, and the handoff still writes.
 
 The handoff reads the policy once per run through `commitrepo.Store.Policy`.
 `errDefaultUnresolved` is private (`internal/commitment/repository/outlook.go:10-19`), so the repository package exports one test for an unresolved default branch, and the outlook and the handoff both call it.
@@ -289,7 +289,7 @@ The last ticket writes it, because that ticket follows both behaviors.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | SB1 / 1-bind-a-new-deliverable-from-its-publishing-tree.md | A new deliverable binds from the tree that publishes it, so one spec-less landing publishes a staged spec and its binding, and `bench status` then prints the complete start command | SB01-SB22 | the `internal/commitment`, `internal/commitment/repository`, `internal/commit`, `internal/worktree`, and `cmd/bench` package tests | yes |
-| SB2 / planned: 2-name-the-binding-state-in-the-handoff.md | `bench handoff` names the binding state of each live spec | SB23-SB30 | the `internal/handoff`, `internal/handoffdoc`, `internal/commitment`, `internal/commitment/repository`, `cmd/bench`, and `internal/conformance` package tests | no |
+| SB2 / planned: 2-name-the-binding-state-in-the-handoff.md | `bench handoff` names the binding state of each live spec | SB23-SB30, SB44 | the `internal/handoff`, `internal/handoffdoc`, `internal/commitment`, `internal/commitment/repository`, `cmd/bench`, and `internal/conformance` package tests | no |
 | SB3 / planned: 3-state-the-one-landing-close.md | The guidance states the one-landing close, the binding grant, the handoff pin, the Writes rule, and the template comment | SB31-SB43 | the `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `skills-index-command-adapters` checks | no |
 
 SB1 and SB2 both write files of `internal/commitment`, so the serial order also keeps their shared helper files apart.
@@ -441,6 +441,7 @@ The gate observes the feature through the package suites and the guidance checks
 | SB26 | 26 | `bench handoff` writes both outcome ids in policy order with one space between them when two outcomes bind the spec | planned TestSectionRendersTheSpecBinding in internal/handoff/render_test.go | A first-match reader drops the second binding. |
 | SB27 | 27 | `bench handoff` writes `Spec binding: unbound` in a repository whose default branch holds no policy | planned TestSectionRendersAnUnavailableBinding in internal/handoff/render_test.go | A reader that treats an absent policy as a fault refuses the handoff of a kit without a commitment. |
 | SB28 | 28 | With an unparseable policy on main, `bench handoff` writes `Spec binding: binding unknown (policy unreadable)` | planned TestSectionRendersAnUnavailableBinding in internal/handoff/render_test.go | A reader that returns the policy error refuses the whole handoff. |
+| SB44 | 27 | In a primary checkout whose default branch does not resolve, `bench handoff` writes `Spec binding: unbound` | planned TestSectionRendersAnUnavailableBinding in internal/handoff/render_test.go | A reader that treats the unresolved default branch as a policy fault writes `binding unknown (policy unreadable)` or refuses the handoff. |
 | SB29 | 29 | The Shape text names the `Spec binding` label | `internal/conformance/handoff_single_source_test.go` (`TestHandoffShapeNamesTheSectionGrammar`) | Once the token list holds the label, a Shape that omits it reds this test. |
 | SB30 | 30 | Each live spec keeps its `Spec` line directly before its `Spec status` line | `internal/handoff/render_test.go` (`TestSectionRendersOnePairPerLiveSpec`) | A binding line placed between the pair breaks this pinned pair. |
 | SB31 | 31 | The write-spec Exit handoff states that one spec-less landing carries the staged spec and its binding | `internal/conformance/commitment_guidance_test.go` (`TestCommitmentGuidance`) | The new mirror removes the sentence and requires its anchor diagnostic. |
@@ -621,7 +622,7 @@ Each ticket therefore keeps these files at 400 lines or fewer.
 - The exact path of the FT393 `paths-authorized` red. The tree keeps only the occurrence line at `roadmap/FT395.md:17`.
 - The executed census of existing tests under the HEAD rule. A static search finds none that would turn red, and Observations states the evidence.
 - Whether `roadmap.ProjectSequence` leaves `ROADMAP.md` byte-identical for an approve that only adds a binding (`internal/commitment/repository/repository.go:302-313`).
-- Whether a test outside `internal/handoff` pins the exact bytes of a handoff section, such as a session-start system test.
+- Whether a test outside `internal/handoff` pins the exact bytes of a handoff section by a form other than the label text. A tree-wide search for `Spec status`, `Recorded base`, and `Worktree tip:` finds no such test outside `internal/handoff`, `internal/handoffdoc`, and `internal/conformance`.
 
 ### Validation plan
 
@@ -650,3 +651,4 @@ The handoff then pins the start command that `bench status` prints for FT395.
 - The coordinator folded the eight findings into this revision. R1 names the freed command lines and the kept anchors. R2 names the SB09 refusal sentence. R3, R4, R5, and R6 move settled facts into the evidence. R7 became the decision E7, which the reviewer closed on 2026-10-11. R8 keeps E5 flagged for veto.
 - Slicing research: two blind readers for each chunk, one on Haiku at xhigh and one on Sonnet at high. The coordinator folded five findings, and none changes a row or a chunk. F1 corrects the package overlap of SB1 and SB2, and F2 replaces the line joins that broke three canary needles. F3 exports the unresolved-default test for the handoff, and F4 names the one `CHANGELOG.md` entry. F5 adds the `cmd/bench` check floor to SB2 and SB3, and the commitment packages to SB2.
 - SB1 slicing: one fresh slicer on Opus at high effort. The coordinator merged its second ticket into the first, because that ticket added only a journey test over the first ticket's seam. SB19 moves to the planning worktree, where a wrong outlook can turn it red, and story 18 drops "on main" to match. SB20 names the default-tip read that it pins, because SB21 owns a start read that moves to HEAD. The planned SB2 and SB3 tickets take the numbers 2 and 3.
+- SB2 slicing: one fresh slicer on Opus at high effort, with no re-cut. SB44 joins the map, because the spec promised `unbound` for an unresolved default branch and no row graded it. The primary checkout owns the main section whatever the default branch is (`internal/handoff/handoff.go:140-147`), so the case is reachable.

@@ -2,7 +2,7 @@
 
 Blocked by: 1-bind-a-new-deliverable-from-its-publishing-tree.md
 Writes: CHANGELOG.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/commitment/commitmenttest/repo.go, internal/commitment/delivery.go, internal/commitment/delivery_test.go, internal/commitment/repository/outlook.go, internal/conformance/axi_query_registry_test.go, internal/conformance/handoff_single_source_test.go, internal/conformance/subcommand_routing_table_test.go, internal/handoff/facts.go, internal/handoff/facts_test.go, internal/handoff/handoff.go, internal/handoff/render.go, internal/handoff/render_test.go, internal/handoff/sections_test.go, internal/handoff/text.go, internal/handoffdoc/document.go, internal/handoffdoc/document_test.go, tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns, tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary
-Covers: SB23, SB24, SB25, SB26, SB27, SB28, SB29, SB30
+Covers: SB23, SB24, SB25, SB26, SB27, SB28, SB29, SB30, SB44
 
 ## What to build
 
@@ -53,7 +53,7 @@ Obey these size limits:
 - Keep every file that this ticket writes at 400 lines or fewer. The lane runs `bench structure --growth`, and a file over 400 lines that gains a line turns it red.
 
 Put SB23, SB24, SB25, and SB26 in the planned `TestSectionRendersTheSpecBinding` in `internal/handoff/render_test.go`.
-Put SB27 and SB28 in the planned `TestSectionRendersAnUnavailableBinding` in the same file.
+Put SB27, SB28, and SB44 in the planned `TestSectionRendersAnUnavailableBinding` in the same file.
 `TestSectionRendersTheAssignmentPins` and `TestSectionRendersOnePairPerLiveSpec` are the precedents.
 Each case builds its repository with `benchRepo` and its worktree with `activeAssignment`, and commits the policy on main through `commitmenttest`.
 Each expected outcome id comes from the fixture policy, and each spec path comes from the fixture writes.
@@ -67,18 +67,16 @@ These fixtures prove the rows:
 - SB26: two outcomes of the policy on main bind the spec. The line names both ids in policy order with one space between them.
 - SB27: main holds no policy. The line reads `Spec binding: unbound`.
 - SB28: main holds a policy file that does not parse, such as an empty file. The handoff exits zero, and the line reads `Spec binding: binding unknown (policy unreadable)`.
+- SB44: the primary checkout has two local branches, neither one named `main`, and no `origin/HEAD`, so no default branch resolves (`internal/git/default_branch.go:18-30`). A run with `--next` writes the main section, and the line reads `Spec binding: unbound`, because the outlook reads that state as no policy.
 
 SB29 is `TestHandoffShapeNamesTheSectionGrammar`, and SB30 is `TestSectionRendersOnePairPerLiveSpec`.
 `TestSectionRendersOnePairPerLiveSpec` counts `Spec: ` lines, and a `Spec binding: ` line does not match that count.
-
-Add one case to `TestSectionRendersAnUnavailableBinding` for a repository whose default branch does not resolve.
-The line reads `Spec binding: unbound` there, because the outlook reads that state as no policy.
-No coverage row owns this case, and no other test observes the exported test of `outlook.go`.
-If the handoff refuses in that repository for a reason outside this ticket, stop and report the refusal with its detail.
+SB44 is the only test that observes the exported test of `outlook.go`.
+If the handoff refuses in the SB44 repository for a reason outside this ticket, stop and report the refusal with its detail.
 
 Record these reds before the production edit:
 
-- SB23, SB24, SB25, SB26, SB27, and SB28 fail, because the planned tests find no `Spec binding` line.
+- SB23, SB24, SB25, SB26, SB27, SB28, and SB44 fail, because the planned tests find no `Spec binding` line.
 - SB29 fails after the label constant and its token join the test, and before the Shape edit.
 - SB30 passes before the edit and stays green with no edit, so its red comes from a probe.
 
@@ -89,7 +87,7 @@ After the edit, record one red through `bench probe` for each probe below:
 - Make the rule return only the first binding outcome. SB26 fails.
 - Give `binding unknown (policy unreadable)` when the default branch holds no policy. SB27 fails.
 - Return the policy error from the handoff run in place of the phrase. SB28 fails.
-- Make the exported test of `outlook.go` report no unresolved default branch. The unresolved-default case fails.
+- Make the exported test of `outlook.go` report no unresolved default branch. SB44 fails.
 
 Each probe reports a restored subject.
 
