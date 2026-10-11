@@ -40,6 +40,20 @@ func TestFenceTokensSkipParentheticalAnnotation(t *testing.T) {
 	}
 }
 
+// TestFenceTokensReadOnlyListItems pins the rule that only a list item and its indented
+// continuation lines authorize. A backticked token in a prose line of the section is
+// description, never a fence entry.
+func TestFenceTokensReadOnlyListItems(t *testing.T) {
+	content := []byte("## Ownership fences\n\nThe `Writes:` lines bound `internal/prose/`.\n\n- `internal/a/`\n  `internal/b/`\n* `internal/c/`\n\n`.bench/BENCH.md` governs plan changes.\n")
+	got, declared := FenceTokens(content)
+	if !declared {
+		t.Fatal("FenceTokens reported no declared section for content that opens one")
+	}
+	if want := []string{"internal/a/", "internal/b/", "internal/c/"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("FenceTokens = %#v, want %#v", got, want)
+	}
+}
+
 // TestFenceTokensEndTheSectionAtAnyHeading pins the section bound. A level-2-or-deeper
 // heading closes the section, so an entry written under a subsection is outside it.
 // internal/coverage's review-pickup check depends on this bound.

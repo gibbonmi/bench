@@ -70,12 +70,17 @@ func TestFenceWritesIgnoresImplicitAuthority(t *testing.T) {
 	assertFenceWrites(t, fencedFacts([]string{"a/", "specs/example/", "capture/"}, "a"), "")
 }
 
-// TestCommandBuildFenceWritesReportsProseToken covers SC20. A backticked token in a
-// prose sentence of the fence section parses as a fence entry, and no ticket writes it.
-func TestCommandBuildFenceWritesReportsProseToken(t *testing.T) {
-	slug := "example"
+// fenceFixtureSlug is the spec slug that buildWithFenceLine seeds.
+const fenceFixtureSlug = "example"
+
+// buildWithFenceLine runs `bench preflight build` on a fresh repo whose spec adds
+// fenceLine to the conformant fence section. The one ticket writes only the conformant
+// fence, so a token that fenceLine authorizes is fence-only.
+func buildWithFenceLine(t *testing.T, fenceLine string) (string, int) {
+	t.Helper()
+	slug := fenceFixtureSlug
 	preflighttest.StartRepo(t)
-	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug, "Edit the shared rules only in `.bench/BENCH.md`."))
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", preflighttest.SpecBody(slug, fenceLine))
 	preflighttest.MustWriteFile(t, "specs/"+slug+"/tickets/one.md", preflighttest.TicketDoc("One", "PF1", "PF2"))
 	preflighttest.RunGit(t, "add", ".")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
@@ -83,12 +88,31 @@ func TestCommandBuildFenceWritesReportsProseToken(t *testing.T) {
 	preflighttest.MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n")
 	preflighttest.RunGit(t, "add", ".")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c1")
+	return Command([]string{"build", slug})
+}
 
-	out, code := Command([]string{"build", slug})
+// TestCommandBuildFenceWritesReportsListItemToken covers SC20. The fence-writes row
+// reads the parser that the preflight facts read, so a list-item token that no ticket
+// writes is fence-only.
+func TestCommandBuildFenceWritesReportsListItemToken(t *testing.T) {
+	out, code := buildWithFenceLine(t, "- `.bench/BENCH.md`")
 	want := "  fence-writes,red,\"" + fenceWritesLead + "fence only: .bench/BENCH.md\",\"\"\n"
 	if code != 1 || !strings.Contains(out, want) {
 		t.Fatalf("build = (%d), want the row %q:\n%s", code, want, out)
 	}
+}
+
+// TestCommandBuildFenceWritesIgnoresProseToken pins the list-item rule at the CLI. A
+// backticked token in a prose line of the fence section authorizes nothing, so the
+// fence-writes row stays green. A green row prints only as a count, so the test reads
+// the rendered verdict for an absent row and the decided verdict for its green.
+func TestCommandBuildFenceWritesIgnoresProseToken(t *testing.T) {
+	out, _ := buildWithFenceLine(t, "Edit the shared rules only in `.bench/BENCH.md`.")
+	summaryCounts(t, out)
+	if strings.Contains(out, "  fence-writes,") {
+		t.Fatalf("build printed a fence-writes row for a prose token:\n%s", out)
+	}
+	requireVerdict(t, decidedVerdicts(t, modeBuild, fenceFixtureSlug), verdictGreen, "fence-writes")
 }
 
 // TestProposeWritesToleratesFenceWrites covers SC21. The proposal reports the fence
