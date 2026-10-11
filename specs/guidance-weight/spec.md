@@ -354,6 +354,19 @@ Each slicer adds its chunk to this plan when it writes the chunk's tickets, beca
         {"id": "prose", "command": "bench test --check prose-mechanics"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
+    },
+    {
+      "id": "GW5",
+      "tickets": ["6-measure-the-guidance-budgets-in-bytes.md"],
+      "verification": [
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
+        {"id": "descriptions", "command": "bench test --check skill-description-budgets"},
+        {"id": "prose", "command": "bench test --check prose-mechanics"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+      ]
     }
   ],
   "final_verification": [
@@ -492,6 +505,7 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `.bench/BENCH.md`
 - `AGENTS.md`
 - `CHANGELOG.md`
+- `CONTEXT.md`
 - `cmd/bench/anchor_help_test.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
@@ -520,11 +534,15 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `internal/anchors/registry_ticket_passes.go`
 - `internal/anchors/registry_ticket_passes_test.go`
 - `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/checks_test.go`
 - `internal/conformance/commitment_guidance_test.go`
 - `internal/conformance/implementation_continuation_test.go`
+- `internal/conformance/prose_budget_test.go`
 - `internal/conformance/recurrence_maintenance_contract_test.go`
 - `internal/conformance/retained_workflow_test.go`
+- `internal/conformance/skill_description_budgets_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/tier_live_tree_test.go`
 - `internal/conformance/validity_checks_test.go`
 - `projects/benchkit.md`
 - `tests/canary/claude-agent-definitions/agent-unnamed-in-skill`
@@ -540,6 +558,7 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `tests/canary/docs-currency-token-diet/dogfood-referent-shipped`
 - `tests/canary/docs-currency-token-diet/introduces-undeclared-command`
 - `tests/canary/docs-currency-token-diet/missing-cli-inventory`
+- `tests/canary/docs-currency-token-diet/signal-vocabulary-drift`
 - `tests/canary/docs-currency-token-diet/stale-cli-doc-reference`
 - `tests/canary/docs-currency-token-diet/stale-command-reference`
 - `tests/canary/guidance-prose-budgets/over-budget-skill`
@@ -584,6 +603,13 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
 - `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 - `tests/canary/workflow-guidance-anchors/command-handoff-anchor`
+- `tests/canary/workflow-guidance-anchors/context-acceptance-row-vocabulary`
+- `tests/canary/workflow-guidance-anchors/context-coverage-map-term`
+- `tests/canary/workflow-guidance-anchors/context-coverage-row-parts`
+- `tests/canary/workflow-guidance-anchors/context-coverage-row-vocabulary`
+- `tests/canary/workflow-guidance-anchors/context-decision-map-term`
+- `tests/canary/workflow-guidance-anchors/context-reader-sweep-term`
+- `tests/canary/workflow-guidance-anchors/context-ticket-vocabulary`
 - `tests/canary/workflow-guidance-anchors/core-absent-bench-operational-layer`
 - `tests/canary/workflow-guidance-anchors/core-absent-category-context`
 - `tests/canary/workflow-guidance-anchors/core-absent-category-oracle`
