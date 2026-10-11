@@ -8,7 +8,7 @@ Decision source: specs/guidance-weight/decisions/guidance-weight.md (ready compi
 
 Audience: every repository that links the kit, for `.bench/BENCH.md` and the phase files, and this repository, for `AGENTS.md`, the profile, and the checks
 
-Verification log: <n> iteration(s) to accept — <note>
+Verification log: 3 iteration(s) to accept — spec review 2 (SR1 caught a dropped B40 timing rule), ticket review 1.
 
 ## Problem
 
@@ -52,7 +52,7 @@ Harder chunks: GW1, GW5.
 5. As a maintainer, I want the 21 moved require anchors to bind `build-rules.md`, so that a dropped rule still reds the gate.
 6. As a maintainer, I want the continuation row to name a section of `build-rules.md`, so that the move does not red it.
 7. As a maintainer, I want the five build-rule forbid rows to bind `build-rules.md`, so that a retired sentence cannot return there.
-8. As a reader of a phase file, I want each of the 28 build-rule pointers to name `build-rules.md`, so that none misleads me.
+8. As a reader of a phase file, I want each of the 27 build-rule pointers to name `build-rules.md`, so that none misleads me.
 9. As a maintainer, I want each anchor that quotes a repointed line to quote its new text, so that it stays green and bites.
 10. As a maintainer, I want the conformance mirrors of the moved rows to name `build-rules.md`, so that the independent expectations still match their rows.
 11. As a maintainer, I want the six delegated canaries to mutate `build-rules.md`, so that each canary still bites its moved row.

@@ -128,7 +128,7 @@ This is the proposed text:
 
 **The structure limits.** `internal/anchors/registry_data.go` has 478 lines and `internal/anchors/registry_data_test.go` has 1,286 lines.
 Both are over the 400-line cap with no grant, so neither file gains a line (`internal/structure/structure.go:308-331`).
-`internal/anchors/registry_retained_workflow.go` has 397 lines, so its edits stay in place.
+`internal/anchors/registry_retained_workflow.go` has 396 lines, so its edits stay in place.
 The build rules file has no budget row, because reference files stay outside the budget universe.
 
 **The Writes line.** The line holds each research path that this design can touch, and the five bound files of `internal/anchors` (`internal/tickets/registry_data.go:21-27`, `:45`).
