@@ -1558,6 +1558,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sb3-standards-r2",
+          "performer": "claude:ssb_sb3_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb3_standards_r2",
+            "digest": "sha256:1b5cdb596d949a8959e053cd795d565f954a86eaf10e01c2c00bd1f3e1846546",
+            "excerpt": "claude:ssb_sb3_standards_r2 (opus/high) — SB3 round 2 Standards axis over 33f0ce69..aaef0a2f (chunk tip a3cfb04c)\n\n0 new findings. S1 and S2 stay closed. Evidence current=true at aaef0a2f, clean.\n\nS1 confirmed closed: the comment at internal/anchors/registry_commitment.go:10-15 holds six sentences of 14, 21, 6, 13, 9, and 9 words (ste-prose:17-18); the paragraph is at the six-sentence limit.\nS2 confirmed closed (evidence-only): the record quotes the pre-anchor reds for SB31-SB34 and SB36 and the SB41 budget red, names the six observed red: mirrors (the log line is t.Logf(\"observed red: %s\", mutation.want) at commitment_guidance_test.go:110), and holds the SB33, SB36, and SB34 probes with their commands, bit, and restored=yes (finding-discipline:17-18).\nSpec and ticket text: no finding. Story 43 has 25 words (parse.go:55 counts a code span as one token), active, one predicate; the SB46 seam cell names reviews/spec-stage-binding.md (finding-discipline:17); the SB3 Covers cell matches ticket 3 line 5.\n\nAdvice: the SB46 seam cell could read \"the SB3 Spec review in reviews/spec-stage-binding.md reads the CHANGELOG section\"; its why-cell ends with \"(SB3 review C1)\" as line 234 does; registry_commitment.go:12 runs to about 104 columns against about 92 around it; ticket 3's per-row verification list has no SB46 entry.\n\nExamined: the bind; one git diff 33f0ce69..aaef0a2f read in full; git log of the three commits; registry_commitment.go:1-20, spec.md:395-412, rg over ticket 3 and the spec; craft-review, finding-discipline, craft-comments, ste-prose; the internal/prose code-span folding. No test, probe, or write.\n"
+          },
+          "axis": "Standards",
+          "base": "c1e5efdcec54fd74cd51f740fff86de498f99ef0",
+          "tip": "a3cfb04c34ffa2422dfdb7b0032ae03bee59d157",
+          "finding_ids": [],
+          "supersedes": [
+            "sb3-standards-r1"
+          ]
+        },
+        {
+          "id": "sb3-spec-r2",
+          "performer": "claude:ssb_sb3_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb3_spec_r2",
+            "digest": "sha256:7fe2a1646dea9b3be227c4a755671f5d6809617c8cd826fb0003f52f6750a822",
+            "excerpt": "claude:ssb_sb3_spec_r2 (opus/high) — SB3 round 2 Spec axis over 33f0ce69..aaef0a2f (chunk tip a3cfb04c)\n\nEvidence bound at aaef0a2f (current=true, clean). The delta has four files.\n\nP1 reaffirmed: \"Retained red evidence of SB3\" (record :1852-1871) records SB31-SB34 omission reds (mutated <file> raised []), the SB36 tree-broken red, the SB41 95-line budget red, the observed red: log for SB35 and SB43 (ticket line 187 keeps those mirrors unedited), and all three ticket-line-194 probes with bit and restored=yes (SB33 omit, SB36 omit, SB34 swap at :1867-1869). This satisfies spec line 750.\n\nC1 amendment consistent: story 43 (spec.md:116) \"As a maintainer, I want one typed `CHANGELOG.md` section to state the one-landing close and the `Spec binding` line, so that the release notes carry both.\"; SB46 (spec.md:412) \"`CHANGELOG.md` holds one typed section under `## [Unreleased]`, first in order, with one `Changed` bullet ... and one `Added` bullet ... | review-owned: the SB3 Spec review reads the section in `reviews/spec-stage-binding.md`\"; the chunk table (:303) \"SB3 / 3-state-the-one-landing-close.md | ... | SB31-SB43, SB46\"; ticket 3 line 5 \"Covers: SB31, ... SB43, SB46\". No stale row or story count remains.\n\nSB46 met: CHANGELOG.md:7 is \"## [Unreleased]\", :9 is \"### Spec stage binding\" (the first section); :11 begins \"- Changed the spec-stage close so that one spec-less landing publishes the staged spec and its deliverable binding.\"; :12 begins \"- Added a `Spec binding` line after each `Spec status` line of a `bench handoff` section.\"; a fixed-string whole-line rg shows both bullets identical to ticket 3 lines 177-178; \"### Phase descriptions\" follows at :14.\n\nRegistry: the only hunk in internal/anchors/registry_commitment.go (@@ -7,9 +7,9) rewrites three comment lines into two sentences; no anchor row, needle, or diagnostic changed.\n\nAdvice: the retained reds cite commitment_guidance_test.go:107, now :108/:110 (line numbers as of 9f93a469); the SB31-SB36 and SB41 entries give failure lines and log names but not the commands (ticket lines 185-188 hold them); SB46's evidence must land in the review record, which this excerpt does.\n\nExamined: record :1816-1871; spec.md:116, 303, 399-412, 747-750; ticket 3 :5, 170-201; CHANGELOG.md:1-20; finding-discipline; git diff 33f0ce69..aaef0a2f non-review files in full (one spill). Not read: craft-review SKILL. No test or probe.\n"
+          },
+          "axis": "Spec",
+          "base": "c1e5efdcec54fd74cd51f740fff86de498f99ef0",
+          "tip": "a3cfb04c34ffa2422dfdb7b0032ae03bee59d157",
+          "finding_ids": [],
+          "supersedes": [
+            "sb3-spec-r1"
+          ]
+        },
+        {
+          "id": "sb3-coverage-r2",
+          "performer": "claude:ssb_sb3_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb3_coverage_r2",
+            "digest": "sha256:58285e48a928e32c672e7917a15ff57ff1ef43e5c7e0a25d881be9e25322d676",
+            "excerpt": "claude:ssb_sb3_coverage_r2 (opus/high) — SB3 round 2 Coverage axis over 33f0ce69..aaef0a2f (chunk tip a3cfb04c)\n\nC1 confirmed closed. Evidence current=true at aaef0a2f. Row SB46 at spec.md:412, story 43 at :116; ticket 3 Covers includes SB46; the behavior cell covers the sentence at :294 and narrows it (first section, one Changed and one Added bullet). finding-discipline:36 places a review-owned seam's evidence in the review record, and :17 requires the row to name the artifact; SB46 names reviews/spec-stage-binding.md, whose SB3 Spec section (:1840) reads \"The CHANGELOG section is first under ## [Unreleased] with the two bullets verbatim.\" The live tree matches: CHANGELOG.md:9-12 holds \"### Spec stage binding\" first, with one \"Changed...\" bullet and one \"Added a `Spec binding` line...\" bullet. New findings: none.\n\nProbe: bench probe .bench/BENCH.md --omit 'A spec-stage close binds its approved spec the same way and cites my sign-off as the decision. ' --check docs-currency-workflow (matched once at .bench/BENCH.md:144): bit, 1 failed, restored=yes; TestRootConformance gate_entry_test.go:29: gate: commitment guidance: operating guide dropped the spec-stage binding grant. The comment-only correction left the anchor intact.\n\nAdvice: the \"kit precedent\" is wrong as stated: the registry pins CHANGELOG entries through file-wide Require rows (registry_data.go:135, :334, :371, :372, :401); SB46's why-cell (\"No anchor pins a changelog section\") is narrower and literally true, so the row stands.\n\nExamined: the delta (registry_commitment.go comment, spec.md, ticket 3, the SB3 round 1 record section); finding-discipline:13-36; CHANGELOG.md:7-19; .bench/BENCH.md:144; the CHANGELOG matches in internal/anchors. git status clean after the probe.\n"
+          },
+          "axis": "Coverage",
+          "base": "c1e5efdcec54fd74cd51f740fff86de498f99ef0",
+          "tip": "a3cfb04c34ffa2422dfdb7b0032ae03bee59d157",
+          "finding_ids": [],
+          "supersedes": [
+            "sb3-coverage-r1"
+          ]
         }
       ]
     }
@@ -1869,3 +1935,9 @@ Probes, each `bit` with `restored=yes`:
 - SB34, the orchestrator at `33f0ce69`: `bench probe internal/anchors/registry_commitment.go --swap 'Needle: "A spec-stage close binds its approved spec the same way and cites my sign-off as the decision."' --with 'Needle: "A spec-stage close binds its approved spec in the same way and cites the reviewer sign-off as the decision."' --package ./internal/conformance --run '^TestCommitmentGuidance$'`; 20 failed, the grant case with `live .bench/BENCH.md raised ["...dropped the spec-stage binding grant"]`.
 - The orchestrator's live-tree probe at `33f0ce69`: `bench probe .agents/commands/bench-write-spec.md --omit 'After sign-off, close the spec stage in this order, so one spec-less landing carries the staged spec and its binding.' --check docs-currency-workflow`; 1 failed, `gate: commitment guidance: spec authoring dropped the one-landing close`.
 - The Coverage axis at `33f0ce69`, through `--check docs-currency-workflow`: step 2's first sentence omitted (bit, 1). The live grant reworded (bit, 1). The slicing rule's first sentence omitted (bit, 1).
+
+## SB3 round 2 (confirming)
+
+Round 2 ran three opus/high axes at `aaef0a2f` over the delta `33f0ce69..aaef0a2f` (chunk tip `a3cfb04c`). Standards confirmed S1 and S2 closed. Spec reaffirmed P1, found the C1 amendment consistent, and graded SB46 met. `CHANGELOG.md:9` is `### Spec stage binding`, the first section under `## [Unreleased]`, and its two bullets match ticket 3 verbatim. Coverage confirmed C1 closed, and its live probe of the `.bench/BENCH.md` grant bit through `docs-currency-workflow`. No axis found a new finding, so SB3 closes with no repair cycle used.
+
+Advice retained: the SB46 seam cell could name the review as the reader of the section. The registry pins `CHANGELOG.md` through file-wide `Require` rows, so "no changelog anchor" is narrower than a precedent. `registry_commitment.go:12` runs long. Ticket 3's per-row list has no SB46 entry.
