@@ -134,6 +134,7 @@ The FT395 criteria (`.bench/commitment.json:479-493`) state the outcome:
 - `.preflight-green`: "A ticket Writes line owns .bench/commitment.json, so the build preflight stays green after the binding."
 
 The reviewer directed on 2026-10-11 that `bench commitment start` follows the spec stage with the bound deliverable, and that the handoff pins that command.
+On the same date, the reviewer decided that the close passes that command to `bench handoff --next` (E7).
 
 The coordinator locked the engineering decisions below. Each one is open to reviewer veto at sign-off.
 
@@ -494,7 +495,7 @@ Each item below goes beyond the literal decision source, and the reviewer can ve
 - E4: `AGENTS.md` moves the spec-stage handoff to the primary checkout after its landing (SB39).
 - E5: the `Roadmap:` comment of the `craft-spec` template (SB40). It changes no behavior, and its removal costs nothing.
 - E6: the new anchors and mirrors of the guidance sentences (SB31-SB36).
-- E7: the close passes the start command to `bench handoff --next` (SB33). The Shape text calls `Next command` the exact harness-native invocation (`internal/handoff/text.go:31-33`), and the start command keeps the `<request>` placeholder. The alternative pins `/bench-implement-spec specs/<slug>/spec.md` as the next command and puts the start command in the State body. The reviewer decides between the two forms.
+- E7: the close passes the start command to `bench handoff --next` (SB33). The reviewer chose this form on 2026-10-11 over a next command of `/bench-implement-spec specs/<slug>/spec.md` with the start command in the State body. `bench handoff` already derives the same placeholder command as its next command when the commitment row leads the board (`internal/handoff/handoff.go:84-90`).
 
 ### Source sentence to row
 
@@ -626,4 +627,4 @@ The handoff then pins the start command that `bench status` prints for FT395.
 ### Review chronology
 
 - SR1: the spec review ran on Fable at xhigh effort, by reviewer direction of 2026-10-11, over commit `a0cc7a54`. It accepted in iteration 1 with eight findings, and none of them blocked.
-- The coordinator folded the eight findings into this revision. R1 names the freed command lines and the kept anchors. R2 names the SB09 refusal sentence. R3, R4, R5, and R6 move settled facts into the evidence. R7 becomes the flagged decision E7. R8 keeps E5 flagged for veto.
+- The coordinator folded the eight findings into this revision. R1 names the freed command lines and the kept anchors. R2 names the SB09 refusal sentence. R3, R4, R5, and R6 move settled facts into the evidence. R7 became the decision E7, which the reviewer closed on 2026-10-11. R8 keeps E5 flagged for veto.
