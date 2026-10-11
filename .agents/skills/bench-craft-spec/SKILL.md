@@ -120,7 +120,7 @@ Modules, interfaces, schema or contract changes, and architectural calls. Record
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | <ID / ticket basenames> | <coherent behavior outcome> | <row IDs> | <named checks> | <yes or no> |
-
+### Completion plan — <the `bench-completion-plan` fence that `references/completion-plan.md` shapes>
 ## Testing decisions
 - What external behavior a good test exercises.
 - Which engineering seams receive tests and their prior art.
