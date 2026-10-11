@@ -2107,11 +2107,327 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+    "performer": "claude:cmp-orchestrator-20261011",
+    "reconciliation": {
+      "MP01": "covered",
+      "MP02": "covered",
+      "MP03": "covered",
+      "MP04": "covered",
+      "MP05": "covered",
+      "MP06": "covered",
+      "MP07": "covered",
+      "MP08": "covered",
+      "MP09": "covered",
+      "MP10": "covered",
+      "MP11": "covered",
+      "MP12": "covered",
+      "MP13": "covered",
+      "MP14": "covered",
+      "MP15": "covered",
+      "MP16": "covered",
+      "MP17": "covered",
+      "MP18": "covered",
+      "MP19": "covered",
+      "MP20": "covered",
+      "MP21": "covered",
+      "MP22": "covered",
+      "MP23": "covered",
+      "MP24": "covered",
+      "MP25": "covered",
+      "MP26": "covered",
+      "MP27": "covered",
+      "MP28": "covered",
+      "MP29": "covered",
+      "MP30": "covered",
+      "MP31": "covered",
+      "MP32": "covered",
+      "MP33": "covered",
+      "MP34": "covered",
+      "MP35": "covered",
+      "MP36": "covered",
+      "MP37": "covered",
+      "MP38": "covered",
+      "MP39": "covered",
+      "MP40": "covered",
+      "MP41": "covered",
+      "MP42": "covered",
+      "MP43": "covered",
+      "MP44": "covered",
+      "MP45": "covered",
+      "MP46": "covered",
+      "MP47": "covered",
+      "MP48": "covered",
+      "MP49": "covered",
+      "MP50": "covered",
+      "MP51": "covered",
+      "MP52": "covered",
+      "MP53": "covered",
+      "MP54": "covered",
+      "MP55": "covered",
+      "MP56": "covered",
+      "MP57": "covered",
+      "MP58": "covered",
+      "MP59": "covered",
+      "MP60": "covered",
+      "MP61": "covered",
+      "MP62": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/coverage.txt",
+          "digest": "sha256:8de02705d1cbc6b3874eceb21ad6ed4fdf8e1f2f55e44d4413e61cd59c51bb3c",
+          "excerpt": "$ bench coverage --check specs/commit-merge-parent/spec.md\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\nok: coverage map valid — 62 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/commit-merge-parent/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-owner-packages",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/owner-packages.txt",
+          "digest": "sha256:60de8bbaaa9d5994931a87a101724a8a756915cdc0d3f6f192e18bff2cee1210",
+          "excerpt": "$ bench test --package ./internal/git --package ./internal/landing --package ./internal/commit\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,9579,117\n  github.com/gibbonmi/bench/internal/git,pass,1346,171\n  github.com/gibbonmi/bench/internal/landing,pass,8164,221\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+        },
+        "requirement": "owner-packages",
+        "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit",
+        "exit_code": 0
+      },
+      {
+        "id": "final-grading-package",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/grading-package.txt",
+          "digest": "sha256:2006bc181427b5090ae39b33f758493259832fd378960485db995b5c7cad28c0",
+          "excerpt": "$ bench test --package ./internal/commitment/repository\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,4040,99\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "grading-package",
+        "command": "bench test --package ./internal/commitment/repository",
+        "exit_code": 0
+      },
+      {
+        "id": "final-route-package",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/route-package.txt",
+          "digest": "sha256:e1ebe4ca8b814a5e6eb4d5b7705badf9b6393f93a8c85902e62756da00ed3796",
+          "excerpt": "$ bench test --package ./internal/worktree\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,56850,1398\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "route-package",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "final-refusal-registry",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/refusal-registry.txt",
+          "digest": "sha256:b0829039549018b56d35294dc83b019faacb9a087671c0e7c939986d7fa3d82a",
+          "excerpt": "$ bench test --package ./internal/refusalroute\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,17\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "refusal-registry",
+        "command": "bench test --package ./internal/refusalroute",
+        "exit_code": 0
+      },
+      {
+        "id": "final-anchors-package",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/anchors-package.txt",
+          "digest": "sha256:659fd9f22980673c611770d0655133fc36b36e08b75ecc00d8fc41a47030a926",
+          "excerpt": "$ bench test --package ./internal/anchors\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,1637,179\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "anchors-package",
+        "command": "bench test --package ./internal/anchors",
+        "exit_code": 0
+      },
+      {
+        "id": "final-command-package",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/command-package.txt",
+          "digest": "sha256:493b67f4b9d0c56356dbfbdf9efeb44e9c896a9a134c50a4d563c0429471d1a1",
+          "excerpt": "$ bench test --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,12481,333\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "command-package",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance-package",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/conformance-package.txt",
+          "digest": "sha256:b30e4b28f12e609e6299c81423221858f9098c9c2024de3d069fd0263aaacd6c",
+          "excerpt": "$ bench test --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,54123,1685\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+        },
+        "requirement": "conformance-package",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-guidance",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/guidance.txt",
+          "digest": "sha256:bd95b98667d957f174d972e8cabe447d5d5030e46417a51f5d268cc7cdeb5535",
+          "excerpt": "$ bench test --check docs-currency-workflow\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4898,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "guidance",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "final-skills-index",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/skills-index.txt",
+          "digest": "sha256:14a2834764ae16088a495073934898d72b77af6d8e4c5f0c1f1fd826185e0553",
+          "excerpt": "$ bench test --check skills-index-command-adapters\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\ncheck[1]{name,kind,tests_run,subjects}:\n  skills-index-command-adapters,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "skills-index",
+        "command": "bench test --check skills-index-command-adapters",
+        "exit_code": 0
+      },
+      {
+        "id": "final-root-conformance",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/root-conformance.txt",
+          "digest": "sha256:09b85be818b7c523936f3692756f26978522b27da3d84a44c9aec0b100c04ead",
+          "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15250,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "root-conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-git-plumbing-owner",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/git-plumbing-owner.txt",
+          "digest": "sha256:7aa0d1d4c334f572d0e6a7a7e5fc6e08dd0ca334b317eca14083040b0b72d725",
+          "excerpt": "$ bench test --check git-plumbing-owner\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\ncheck[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,95,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "git-plumbing-owner",
+        "command": "bench test --check git-plumbing-owner",
+        "exit_code": 0
+      },
+      {
+        "id": "final-ordinary-build-census",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/ordinary-build-census.txt",
+          "digest": "sha256:334244d29397d3fd9287b1a62863c34c4d633746cc2a3641af97060b2358f45e",
+          "excerpt": "$ bench test --check ordinary-build-census\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,320,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "ordinary-build-census",
+        "command": "bench test --check ordinary-build-census",
+        "exit_code": 0
+      },
+      {
+        "id": "final-skip-ownership",
+        "performer": "claude:cmp-orchestrator-20261011",
+        "role": "integration-verification",
+        "model": "fable",
+        "effort": "high",
+        "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-orchestrator:final/skip-ownership.txt",
+          "digest": "sha256:cf090d7a18332fb8401dd1d39dbd05160cde17c606e24b5c4e9991cd18a07e67",
+          "excerpt": "$ bench test --check skip-ownership\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,949740efac4faca24ae8aee5c854266ab423a778,false\ncheck[1]{name,kind,tests_run,subjects}:\n  skip-ownership,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,44,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "skip-ownership",
+        "command": "bench test --check skip-ownership",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -2242,6 +2558,16 @@ Chunk MP3 round 1 ran three opus/high axes in parallel at `c40769c4` over the fr
 The ticket 5 repair session `claude:cmp_t5_rep1` closed C1 and C2 in `96201315` with two test rows. It refroze MP3 at that tip in `4b658680`. MP3 round 2 ran three opus/high axes over the repair delta `c40769c4..4b658680`. Standards and Spec accepted their `no-op` dispositions, and Coverage confirmed both folds with independent probes.
 
 Coverage raised one more candidate, a last-head-only mutant that the C2 row's argument order leaves silent. The axes agreed that it is optional advice under the hardening-cycle rule of the bounded repair policy, so it carries no finding ID. MP3 closes with repair cycle 1 of 2 used and no open finding.
+
+## Final reconciliation
+
+The build closed three chunks on the retained integration source `commit-merge-parent-build`. MP1 closed at tip `a329d3ab` with repair cycle 1 of 2 used. MP2 closed at tip `cca1013b` with repair cycle 2 of 2 used. MP3 closed at tip `96201315` with repair cycle 1 of 2 used. The `main` branch stayed at `342975e3` through the build, so no fold ran and the landing base is that tip.
+
+Every acceptance row is covered at the final source. MP01 to MP15 and MP24 to MP54 and MP62 cite the new tests in `internal/git`, `internal/landing`, and `internal/commit`, and MP57 to MP60 cite `TestPendingMergeCandidate`. MP16, MP17, MP18, MP22, MP31, MP43, and MP61 are the current tests that stayed green without an edit. MP51, MP55, and MP56 are review-owned, and the MP2 Spec axis found each met.
+
+`Owner.Land` ends the merge through `git merge --quit` and removes no admin entry itself. `.bench/BENCH-reference.md` states the merge contract after the fast-lane note with every anchor intact. The diff touches no roadmap path and not `internal/commit/commit.go`.
+
+The 14 final verification commands exit 0 at `949740ef` as integration verification, and the completion entry records 62 rows. The build changed neither `ROADMAP.md` nor `roadmap/FT258.md`, so the next `/bench-drain` reconciles `roadmap/FT258.md`. Two shadow comparisons of opus / xhigh against opus / max on tickets 1 to 3 live in `capture/build-log/commit-merge-parent.log` and the assessment run `commit-merge-parent-build-20261011`.
 
 ## Standards
 
