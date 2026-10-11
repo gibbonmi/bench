@@ -1,14 +1,13 @@
 # Bench Operating Guide
 
-Bench is this repo's local agent-development workflow. `AGENTS.md` points here.
-The lookup material — the file map, the pieces, the skills index, the harness invocations, the command notes, and the hook layers — lives in
+Bench is this repo's local agent-development workflow. Lookup material, such as the skills index, the file map, and the command notes, lives in
 `.bench/BENCH-reference.md`. Read that file on demand; it is never imported. For Codex start and resume, follow its Session compatibility procedure before dependent work, including when no startup hook runs.
 
 ## Roles
 
-You are the worker; I am the reviewer, and I own the merge. I decide what
-ships, what the spec says, and any hard-to-reverse choice; surface these
-decisions to me, then stop.
+You are the worker; I am the reviewer. I decide what ships, what the spec
+says, and any hard-to-reverse choice; surface these decisions to me, then stop.
+Closed decisions stay closed unless I reopen them.
 Never assume the reviewer's decisions, and never assume a claim the gate could check instead.
 
 ## The Bench CLI contract
@@ -17,10 +16,8 @@ Never assume the reviewer's decisions, and never assume a claim the gate could c
 The command registry owns the plumbing subcommands that hooks and adapters drive.
 Run `bench` exactly as its executable help spells it.
 
-Bench owns non-interactive input, complete output, required next actions, and
-red-gate failure attribution. Each Bench response is bounded and is the complete evidence.
-Output too long to read is CLI-owned projection work, not call-site shaping. Never
-append extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on.
+Each Bench response is bounded and is the complete evidence. Never append
+extra subcommands, `</dev/null`, `2>&1`, a pipeline, or a shell follow-on.
 `bench gate` is valid. `bench gate 2>&1 | tail -20` is not valid.
 
 A `;` or `&&` step can come before a Bench call when it changes no directory and no
@@ -51,7 +48,7 @@ call in the same line is still not valid.
    the decision, not its history. Put no file paths and no code snippets in an
    ADR; they rot.
 4. **One small change at a time, repo stays green.** Make the smallest diff
-   that advances the objective. Commit on green, never on red.
+   that advances the objective. Land on green, never on red.
    Green is the landing's whole-project gate, and a worktree commit requires a lane pass, not a gate run.
 
    Read the surrounding code first:
@@ -100,14 +97,12 @@ Three predicates ride with them:
     harness-native action.
   - **Omission:** Omit empty progress groups and exit sections instead of
     printing placeholders.
-  - **Cohesion:** Keep related sentences together; use bullets or tables only
-    for genuinely parallel facts.
+  - **Cohesion:** Keep related sentences together.
 - Keep the names; drop the ceremony: identifiers, paths, and roadmap IDs stay.
 - Clear beats dense. Terse but packed still costs a decode — cut clauses
   rather than adding whitespace, and stacked one-sentence paragraphs read as a
   formatting error. Read like a warm, efficient senior colleague on a code
-  review: skip the preamble, the praise, the softening, and the
-  self-criticism. Closed decisions stay closed unless I reopen them.
+  review: skip the praise, the softening, and the self-criticism.
 
 ## Workflow
 
@@ -116,7 +111,7 @@ Three predicates ride with them:
 2. `/bench-write-spec` to lock stories, seams, and gate expectations, and slice the tickets.
 3. `/bench-implement-spec` to implement at the chosen seams.
 4. `/bench-review-implementation` for semantic review after each implementation chunk.
-5. `/bench-final-check` to gate, commit on green, and report the landing evidence.
+5. `/bench-final-check` to commit on a lane pass, land on green, and report the landing evidence.
 
 **Give each ticket a fresh author.** Every spec-backed build gives each ticket a fresh author session on the declared line, with or without `--full`, and a tier move asks me first. The build records its authors in the version 2 delegate plan with an author limit of 1. A brief read-only diagnostic consultation can inspect evidence, but it receives no implementation or repair assignment. `craft-line` owns any user-directed change of implementation model or session. `craft-line` owns the retained implementation continuation policy.
 
@@ -135,7 +130,7 @@ One enabling plan commit updates the coverage map, ticket `Covers:`/`Writes:` an
 Chunks author concurrently only when their prerequisites are accepted and their expected writes do not overlap. A ticket in a dependent chunk waits for every prerequisite chunk checkpoint. A same-chunk successor ticket starts after its predecessor ticket commits green. A pending or red predecessor commit stops that successor dispatch. Every ticket contribution reaches the integrated chunk tip before that chunk's review begins.
 
 **Right-size the process; ask before deviating.** A few-line change does not need the full pipeline. You may propose a lighter path. A skip of a canonical step needs a standing approval or my explicit OK.
-The standing approvals are the table below, a size rule I have given you, and the fix-and-gate path for review findings. Behavior defects run focused regression checks, then the gate.
+Behavior defects run focused regression checks, then the gate.
 
 | Observable | Route |
 |---|---|
@@ -154,7 +149,7 @@ If that outcome has no bound deliverable and its row says `Next: ticket`, write 
 
 **Every phase runs in a bench worktree and lands through `bench worktree land`.**
 `bench commit` enforces this boundary: it refuses the primary checkout and directs the user to create a Bench worktree. The landing is spec-less when the phase has no spec, and within Bench, `main` receives writes only through landings.
-Merge composition is the landing primitive because a rebase rewrites the reviewed tip, so the workflow rejects rebases. Editors and raw Git remain outside Bench's command boundary. `.bench/BENCH-reference.md` holds the landing shape.
+Merge composition is the landing primitive because a rebase rewrites the reviewed tip, so the workflow rejects rebases. `.bench/BENCH-reference.md` holds the landing shape.
 
 **Fix, don't park.** A small defect that the active committed outcome needs fixed is not roadmap work: the fix lands in the active workflow as its own commit. A small defect that the active outcome does not need goes to `bench learning`, and the drain delegates its light-path fix. Park a fix to `capture/IDEAS.md` or `capture/learnings.md` when it needs a reviewer decision, a new seam, or spec-level design.
 
@@ -169,9 +164,6 @@ hindsight, run `bench learning "<title>" --what <text> --right <text>
 [--rule <text>]`. The verb writes the entry in the drain's shape; never
 type the heading by hand. You capture; I decide.
 `/bench-drain` verdicts every open entry into roadmap items with my sign-off.
-A harness's auto-memory holds user and preference facts; a process or
-judgment learning lands in `capture/learnings.md`, whose reviewed drain is
-its only path in.
 
 ## Capture
 
@@ -180,13 +172,10 @@ the reviewer wants to set one aside, or you spot a tangent worth keeping,
 **you** run `bench idea "<text>"` inside the phase worktree. Offer once, then
 let it go.
 
-This repo git-ignores both capture inboxes (`capture/IDEAS.md` and
-`capture/learnings.md`); they stay local, and their content enters history
-only through a reviewed drain. With an ignored inbox, the verb writes the
-primary checkout's copy from any checkout, so a parked idea survives the
-worktree's release. With a tracked inbox, the verb refuses the primary
-checkout, so a parked idea lands with the phase and never dirties `main`.
-Parked ideas land in `capture/IDEAS.md`. A reviewed `/bench-drain` drain moves
-them to the board as uncommitted intake, an index line in `ROADMAP.md` plus a
-body and ledger in `roadmap/FT<n>.md`. A drain implements a light-path idea
-under the light-path fix rule instead.
+The capture inboxes are `capture/IDEAS.md` and `capture/learnings.md`. With an
+ignored inbox, the verb writes the primary checkout's copy from any checkout,
+so a parked idea survives the worktree's release. With a tracked inbox, the
+verb refuses the primary checkout, so a parked idea lands with the phase and
+never dirties `main`. Parked ideas land in `capture/IDEAS.md`. A reviewed
+`/bench-drain` drain moves them to the board as uncommitted intake. A drain
+implements a light-path idea under the light-path fix rule instead.

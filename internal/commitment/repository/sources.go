@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/commitment"
@@ -37,6 +38,32 @@ func sourceAt(root, revision, path string) (string, []byte, error) {
 		return "", nil, err
 	}
 	return commitment.Identity(normalized), data, nil
+}
+
+// stagedSpecs lists each staged spec that revision holds, in slug order. The status, the
+// scope, and the identity of a row come from the same bytes, so plan binds the row that the
+// inventory prints.
+func (store Store) stagedSpecs(revision string) ([]InventoryItem, error) {
+	held, err := git.Output("-C", store.Root, "ls-tree", "-r", "-z", "--name-only", revision, "--", spec.SpecsDir)
+	if err != nil {
+		return nil, err
+	}
+	paths := slices.DeleteFunc(strings.Split(held, "\x00"), func(path string) bool { return !spec.IsLiveSpecPath(path) })
+	// Git lists specs/a-b/ before specs/a/, so the sort restores slug order.
+	slices.SortFunc(paths, func(left, right string) int {
+		return strings.Compare(spec.LiveSpecSlug(left), spec.LiveSpecSlug(right))
+	})
+	var items []InventoryItem
+	for _, path := range paths {
+		identity, data, err := sourceAt(store.Root, revision, path)
+		if err != nil {
+			return nil, fmt.Errorf("commitment inventory refused: deliverable %s: %w", path, err)
+		}
+		if status, scope := spec.Metadata(data); status == "staged" {
+			items = append(items, InventoryItem{Kind: "deliverable", ID: path, State: status, Identity: identity, Scope: scope})
+		}
+	}
+	return items, nil
 }
 
 func ticketsOnlyAt(root, revision, path string) bool {

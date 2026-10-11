@@ -16,7 +16,6 @@ import (
 	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/sanitize"
-	"github.com/gibbonmi/bench/internal/spec"
 )
 
 // Store addresses one repository's tracked policy and local receipts.
@@ -58,25 +57,11 @@ func (store Store) Inventory() ([]InventoryItem, error) {
 		}
 		items = append(items, InventoryItem{Kind: "roadmap", ID: row.ID, State: row.SpecStatus, Identity: identity, Scope: roadmap.RowFilePath(row.ID)})
 	}
-	facts, err := spec.Facts(store.Root)
+	specs, err := store.stagedSpecs(revision)
 	if err != nil {
 		return nil, err
 	}
-	held, err := git.Output("-C", store.Root, "ls-tree", "-r", "-z", "--name-only", revision, "--", "specs")
-	if err != nil {
-		return nil, err
-	}
-	for _, fact := range facts {
-		// A spec that the revision does not hold is not yet a source that plan can bind.
-		if fact.Status != "staged" || !slices.Contains(strings.Split(held, "\x00"), fact.Path) {
-			continue
-		}
-		identity, err := SourceIdentity(store.Root, revision, fact.Path)
-		if err != nil {
-			return nil, fmt.Errorf("commitment inventory refused: deliverable %s: %w", fact.Path, err)
-		}
-		items = append(items, InventoryItem{Kind: "deliverable", ID: fact.Path, State: fact.Status, Identity: identity, Scope: fact.RoadmapID})
-	}
+	items = append(items, specs...)
 	ledger, err := intent.Read(store.Root)
 	if err != nil {
 		return nil, err

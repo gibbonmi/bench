@@ -6,6 +6,16 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Inventory revision metadata
+
+- Fixed `bench commitment inventory` so that each `deliverable` row takes its status, its scope, and its identity from the same spec bytes. The inventory reads those bytes at the revision that plan validates, so an uncommitted edit of a `Status:` or `Roadmap:` line changes no row. A spec that Git cannot read at that revision refuses the inventory, whatever its status. Before, the inventory read the status and the scope from the working tree, so a row could disagree with its identity.
+
+### Operating guide trim
+
+- Changed `.bench/BENCH.md` so that workflow step 5 and invariant 4 say that a commit needs a lane pass and that a landing needs green. Before, both said "commit on green", which contradicted the lane-pass rule beside them.
+- Removed stale text from `.bench/BENCH.md`. The guide no longer names a fix-and-gate path or a size rule as standing approvals. It no longer says that harness auto-memory holds user and preference facts, or that the repo ignores both capture inboxes. It also drops the sentence that put editors and raw Git outside the command boundary.
+- Removed repeated text from `.bench/BENCH.md`: extra statements of the drain route, the board layout, and the list-or-prose rule, and two restatements beside the complete-evidence rule. The closed-decisions rule moved to Roles.
+
 ### Help title
 
 - Changed `bench help` so that its first line states what Bench does and names `bench status` as the command that gives the next action. The line now reads "bench — agent work in isolated worktrees, graded by one gate, landed only on green. Run bench status for the next action." Before, the line named the projects that Bench borrows from.
