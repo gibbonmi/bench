@@ -341,6 +341,19 @@ Each slicer adds its chunk to this plan when it writes the chunk's tickets, beca
         {"id": "prose", "command": "bench test --check prose-mechanics"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
+    },
+    {
+      "id": "GW4",
+      "tickets": ["5-move-the-batch-approval-rule-beside-the-sign-off-stop.md"],
+      "verification": [
+        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
+        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
+        {"id": "prose", "command": "bench test --check prose-mechanics"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+      ]
     }
   ],
   "final_verification": [
@@ -513,6 +526,7 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `internal/conformance/retained_workflow_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/conformance/validity_checks_test.go`
+- `projects/benchkit.md`
 - `tests/canary/claude-agent-definitions/agent-unnamed-in-skill`
 - `tests/canary/claude-agent-definitions/model-declared`
 - `tests/canary/claude-agent-definitions/name-mismatch`
@@ -528,9 +542,16 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `tests/canary/docs-currency-token-diet/missing-cli-inventory`
 - `tests/canary/docs-currency-token-diet/stale-cli-doc-reference`
 - `tests/canary/docs-currency-token-diet/stale-command-reference`
+- `tests/canary/guidance-prose-budgets/over-budget-skill`
+- `tests/canary/line-routing/line-binding-prose-drift`
 - `tests/canary/load-validity-metadata/readme-shared-rule-drift`
 - `tests/canary/load-validity-metadata/shared-rule-drift`
 - `tests/canary/row-next-grammar/token-table-lacks-kit-edit`
+- `tests/canary/skill-description-budgets/budget-table-missing`
+- `tests/canary/skill-description-budgets/description-folded`
+- `tests/canary/skill-description-budgets/description-missing`
+- `tests/canary/skill-description-budgets/over-budget-command`
+- `tests/canary/skill-description-budgets/over-budget-description`
 - `tests/canary/skills-index-command-adapters/adapter-inert-invocation-key`
 - `tests/canary/skills-index-command-adapters/command-invocation-disabled-against-policy`
 - `tests/canary/skills-index-command-adapters/dangling-index`
@@ -541,6 +562,11 @@ The coordinator owns the review pickup, which the coverage check requires in a d
 - `tests/canary/workflow-guidance-anchors/acceptance-coverage-anchor`
 - `tests/canary/workflow-guidance-anchors/agents-handoff-section-rule`
 - `tests/canary/workflow-guidance-anchors/agents-system-suite-route`
+- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading`
+- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner`
+- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing`
+- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership`
+- `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route`
 - `tests/canary/workflow-guidance-anchors/bootstrap-authority-before-after-softening`
 - `tests/canary/workflow-guidance-anchors/bootstrap-authority-rule-deletion`
 - `tests/canary/workflow-guidance-anchors/calibration-abstained-row`
