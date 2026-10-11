@@ -461,10 +461,10 @@ The refusal rows cover each fault before publication, inside authorization, and 
 
 ## Ownership fences
 
-The ticket slice derives this fence, so it equals the union of the ticket `Writes:` lines, plus the review pickup.
+The ticket slice derives this fence, so it equals the union of the ticket Writes lines, plus the review pickup.
 It holds the owner and test files, the command registry closure, the anchor registry closure, and each canary unit that pins an edited guidance file.
 No ticket changes a closure file or a canary unit.
-The fence names no roadmap path and does not name `internal/commit/commit.go` (MP56).
+The fence names no roadmap path and does not name the production file of the commit command (MP56).
 The coordinator owns the review pickup.
 
 - `.bench/BENCH-reference.md`
