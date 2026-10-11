@@ -314,6 +314,12 @@ coverage map; a class skipped here returns as a regression.
   tree. A `base..HEAD` query names nothing there, so a check that reads it passes
   every commit. Compare the base against the working tree. Prove the check with a
   detached checkout plus `read-tree`, never with a shell stand-in
+- a commitment policy change on a worktree whose base trails `main`. A
+  `bench commitment plan` or `approve` output makes such a change. Its commit
+  grades the tree against the tip of `main`, not against the merge base. The diff
+  then shows each newer production change of `main` in reverse, so the commit
+  refuses. Fold `main` before the plan. Assert both the refusal on the stale base
+  and the admission after the fold
 
 Known residual risk: `bench setup`'s real-TTY confirm wiring is one untested
 constructor line binding stdin. Testing it needs a pty dependency, which is a
