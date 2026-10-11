@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/spec-stage-binding/spec.md",
-  "plan_digest": "sha256:cf148be21df8f31bb0415dbfdde024a5d662432697586924b33d8fc50f4005af",
+  "plan_digest": "sha256:69911f2cc96251a542f06d5fadfb31b6a0b1d21df0e72973c93f7f5d313cf116",
   "implementation_session": "",
   "chunks": [
     {
@@ -1160,9 +1160,9 @@
     {
       "id": "SB3",
       "base": "c1e5efdcec54fd74cd51f740fff86de498f99ef0",
-      "tip": "c397220dc69e443fa7826ebf33c92997d1eb69e0",
-      "plan_digest": "sha256:cf148be21df8f31bb0415dbfdde024a5d662432697586924b33d8fc50f4005af",
-      "source_digest": "a967d6ff59ea383308eda4c96e601ac42fe6bfcc",
+      "tip": "a3cfb04c34ffa2422dfdb7b0032ae03bee59d157",
+      "plan_digest": "sha256:69911f2cc96251a542f06d5fadfb31b6a0b1d21df0e72973c93f7f5d313cf116",
+      "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
       "acceptance_rows": [
         "SB31",
         "SB32",
@@ -1176,7 +1176,8 @@
         "SB40",
         "SB41",
         "SB42",
-        "SB43"
+        "SB43",
+        "SB46"
       ],
       "verification": [
         {
@@ -1335,7 +1336,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sb3-standards-r1",
+          "performer": "claude:ssb_sb3_standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb3_standards",
+            "digest": "sha256:9a1845fadf3bcf0f9191f71fcc1352b759beef7aacc95ff2fef8c2756404f098",
+            "excerpt": "claude:ssb_sb3_standards (opus/high) — SB3 round 1 Standards axis over c1e5efdc..33f0ce69 (chunk tip c397220d)\n\nFindings: 7 (S1 auto-fix, S2 auto-fix record-only, S3-S7 no-op). Worst: S2.\n\nS1 (auto-fix, confidence 8): the edited first sentence of the commitmentAnchors comment at internal/anchors/registry_commitment.go:10-12 grew from 24 to 31 words and lists four parallel items (ste-prose.md:17-18, :27; craft-comments:12 applies STE to comments; prose-mechanics reads only Markdown). Repair: split into two sentences.\nS2 (auto-fix, record only, confidence 7): the SB3 entry holds only the SB33 probe and the SB41 red; the reds for SB31, SB32, SB34, SB36 and the SB36 omit and SB34 swap probes (ticket lines 194-198) are not in the tree (AGENTS.md recorded-red rule; finding-discipline:17-18). Repair: run the two probes and the four red runs and append them to the SB3 record.\nS3 (no-op, confidence 7): the SB41 red is valid; TestRootConformance and TestGuidanceProseBudgetsHoldOnTheLiveTree (prose_budget_test.go:543-548) both call checkGuidanceProseBudgets, and the red carries the check's own message (prose_budget_test.go:100); the seam cell at spec.md:408 names a test that --check does not run (inferred, not run).\nS4 (no-op, confidence 8): craft-gate:72 asks a Forbid row for retired text; ticket line 105 decides no AGENTS.md anchor row, which is the valid ground; the author's prefix reason is inaccurate (the retired needle ends \"worktree.\" and the new line reads \"worktree, but\"); the rewritten \"spec path and status\" sentence at AGENTS.md:50-52 has no Forbid row under the same decision.\nS5 (no-op, confidence 8): moving the staged-spec row to writeSpecCommand is an in-fence tidy (registry_commitment.go on the Writes line; the constant exists at registry_ticket_passes.go:82; needle and diagnostic unchanged; the test constant at commitment_guidance_test.go:31 is independent as ticket line 127 requires).\nS6 (no-op, confidence 8): bench-write-spec.md:17 and :19 each give two instructions (ste-prose:19), and line 17 can read as \"write the log into ... the scorecard updates\"; ticket lines 33-41 and 46 fix the block word for word.\nS7 (no-op, confidence 5): the template comment at bench-craft-spec/SKILL.md:96 restates step 2; ticket lines 117-121 and SB40 require it.\n\nAdvice: point the SB41 seam cell at the guidance-prose-budgets check; record S6 through bench learning for a later light path; the CHANGELOG heading spells \"Spec stage\" while the body uses \"spec-stage\", as the ticket fixes.\n\nExamined: check-current current=true at 33f0ce69, no pages; the full diff with the record left out, the record diff, and git diff bc2ea0ff 33f0ce69 to separate the fold (bench-drain.md, bench-implement-spec.md, bench.md, CLAUDE.md, BENCH-reference.md, the Phase descriptions section and description line, not graded); the commit message, ticket 3, spec rows SB38-SB42, craft-review, finding-discipline, craft-gate, craft-comments, ste-prose, craft-synthesis:74, benchkit.md 481-536; gate_entry_test.go, prose_budget_test.go:536-579; rg over the write-spec path constants, the template line, the record and spec for the mirrors; --help of worktree merge and handoff. All 24 new guidance sentences graded; the one new Go comment is registry_commitment.go:10-15.\n"
+          },
+          "axis": "Standards",
+          "base": "c1e5efdcec54fd74cd51f740fff86de498f99ef0",
+          "tip": "a3cfb04c34ffa2422dfdb7b0032ae03bee59d157",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sb3-spec-r1",
+          "performer": "claude:ssb_sb3_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb3_spec",
+            "digest": "sha256:25197de2e9ca32547faa213c93c94fde04b7227c5e501edc23f727c64358cb3f",
+            "excerpt": "claude:ssb_sb3_spec (opus/high) — SB3 round 1 Spec axis over c1e5efdc..33f0ce69 (chunk tip c397220d)\n\nFindings: 1. Worst: P1. The guidance edits match the spec and ticket 3 exactly; evidence bound current=true at 33f0ce69, clean.\n\nP1 (auto-fix, evidence-only, confidence 6): ticket 3:183 (\"Record each red in the return, with its command and its failure line\") and :194 (one bench probe red for each of three probes); story 41 asks for a recorded mutation red. The SB3 block (record :1181-1336) keeps only the SB33 omit probe (:1194) and the SB41 budget red (:1277). Missing: the pre-anchor reds for SB31, SB32, SB34, SB36; the SB36 omit probe; the SB34 needle-swap probe; the observed red: log lines. They are in the author's scratchpad logs (red-sb31-sb34.txt, red-sb36.txt, green-sb31-sb35-sb43-observed-red.txt, probes.txt), not citable at the landing (finding-discipline:17). Repair: retain those logs under a Retained red evidence of SB3 heading; probes.txt writes the two omit commands as placeholders, so rerun probes 2 and 3 with exact commands.\n\nConfirmed: the six joins changed no word (porcelain word-diff shows only the description line from the fold and the added block; the kept newlines at base 21-22 and 50-51 remain); bench worktree merge --help prints --from <commit|target> <target>, bench handoff --help lists --next; steps 1-6 match spec :222-227 byte-for-byte; the block sits after the 15-16 paragraph, one intro line and six steps, no blank line inside, one blank line on each side.\n\nRows: SB31 met (intro line; anchor registry_commitment.go:45, mirror commitment_guidance_test.go:72); SB32 met (step 2 with the no-Roadmap sentence; :46, :73); SB33 met (step 6; :47, :74; probe bit at record :1194); SB34 met (BENCH.md:144 grant directly before the limit sentence; :31, :58); SB35 met (limit sentence unchanged, mirror :57); SB36 met (last bullet under Slicing rules, slicing-checks.md:59, next heading :61; registry_ticket_passes.go:24, rule registry_ticket_passes_test.go:28); SB37 met (spec fence :445 lists .bench/commitment.json; one Writes line only, ticket 1 line 4; tickets 2 and 3 mention it in prose only); SB38 met (AGENTS.md:48-50 \"The handoff must pin the spec path, the spec status, the binding state, the decisions that stay closed, and the exact harness-native next command.\"); SB39 met (AGENTS.md:45-46 \"A phase close runs `bench handoff` from its own worktree, but a spec-stage close runs it from the primary checkout after its landing.\"; line 47 \"A drain runs it from the primary checkout after its landing.\" unchanged on its own line); SB40 met (craft-spec SKILL.md:96 one line with the binding clause; 155 lines); SB41 met (87/87, 181/192, 155/155; budget red at 95 recorded :1277); SB42 met with a partial record (five rows :31, :45-47, ticket_passes:24; five mirrors; each remove case logs observed red: at commitment_guidance_test.go:110; author logs show the four pre-anchor reds, the tree broken at red, and three probes bit); SB43 met (write-spec.md:23 staged-spec sentence unchanged; its row uses writeSpecCommand, equal to the old literal; mirror :71). CHANGELOG: \"### Spec stage binding\" first under Unreleased, ahead of the fold's \"### Phase descriptions\", one Changed and one Added bullet verbatim from ticket 3:177-178.\n\nAdvice: the red logs cite commitment_guidance_test.go:107 and :109, now :108 and :110, because const writeSpec was added after the red runs. Step 6 reads against \"never hand me a bench command\" but E7 closed it on 2026-10-11.\n\nExamined: check-current current=true at 33f0ce69; git diff --stat and one diff over guidance, internal, specs; a porcelain word-diff of the command; git log; the whole spec, ticket 3, craft-review SKILL and finding-discipline; record 1155-1420 and 1569-1576; commitment_guidance_test.go:20-119, registry_ticket_passes_test.go:1-80; rg for commitment.json over the tickets, writeSpecCommand, the slicing-checks headings; wc -l on four files; --help of worktree merge and handoff; the author's scratchpad logs. No test, probe, or write.\n"
+          },
+          "axis": "Spec",
+          "base": "c1e5efdcec54fd74cd51f740fff86de498f99ef0",
+          "tip": "a3cfb04c34ffa2422dfdb7b0032ae03bee59d157",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sb3-coverage-r1",
+          "performer": "claude:ssb_sb3_coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b79b993c4e36f648e33a74c130f208b92c336c38",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb3_coverage",
+            "digest": "sha256:59c02429fc760f7363480c5f916295874ac4c25d95529fb8aa59a63bdb64d94e",
+            "excerpt": "claude:ssb_sb3_coverage (opus/high) — SB3 round 1 Coverage axis over c1e5efdc..33f0ce69 (chunk tip c397220d)\n\nFindings: 1 (low). Worst: C1. Every probe on an anchored sentence bit; the canary claim holds at 65 of 65.\n\nC1 (ask-user, confidence 4): deleting the \"### Spec stage binding\" heading and the lead sentence of the Changed bullet from CHANGELOG.md is silent (P6). Spec line 293 (\"One typed section under ## [Unreleased] of CHANGELOG.md states the one-landing close and the Spec binding line\") and ticket line 248 have no row (SB31-SB43 map none, and none marks it review-owned). A review-owned row that names the review record as the evidence is enough; kit precedent does not anchor changelog entries.\n\nDecided by the ticket, not retained: steps 1, 3, 4, 5 carry no anchor (line 43); SB38-SB40 review-owned (105, 189-191); SB35 presence only (86); SB32 pins only step 2's first sentence (133); RequireInSection for SB31-SB34 (132-135); no retired-text Forbid rows for the rewritten AGENTS.md sentences or the template line.\n\nProbes (bench worktree exec spec-stage-binding-build -- env GOFLAGS=\"-p=4 -parallel=4\" bench probe <file> ... --check docs-currency-workflow):\nP1 omit step 2's first sentence from bench-write-spec.md: bit, 1, restored yes (\"spec authoring dropped the binding from the inventory row after the last spec edit\")\nP2 swap the live BENCH.md grant for \"...binds its spec the same way and cites the spec author as the decision.\": bit, 1, restored yes (\"operating guide dropped the spec-stage binding grant\")\nP3 omit the first sentence of the live slicing rule: bit, 1, restored yes (\"ticket slicing: the fence and one Writes line own the commitment policy\")\nP4 swap the BENCH.md grant and the binding-only limit sentence: silent, 0, restored yes (SB35 presence only by ticket decision)\nP5 swap the bodies of steps 5 and 6 with numbers kept: silent, 0, restored yes\nP6 omit \"### Spec stage binding\" and the lead sentence of the Changed bullet: silent, 0, restored yes (C1)\nP1-P3 failed in TestRootConformance (gate_entry_test.go:29); they differ in kind and site from the author's three registry probes and the orchestrator's intro-line omission.\n\nAdvice: P5 shows a reorder of the anchored steps passes; the RequireInStep kind (internal/anchors/match.go:24, locate.go:168-175) matches on the written step number, so SB32 as step 2 and SB33 as step 6 would catch it (parser read, not run); the ticket chose RequireInSection, so this needs a reviewer decision. P4: RequireInSection \"Workflow\" lets the grant move to any Workflow paragraph.\n\nExamined: check-current current=true at 33f0ce69 (a first call outside the worktree refused); one git diff c1e5efdc..33f0ce69 excluding reviews/; the fold's paths not graded; the ticket 3 Writes line holds the six edit sites, registries, mirrors, and canary units, and the diff stays inside it; a script parsed all 417 MUTATE.json files under tests/canary, 65 old strings target the six edited files and each occurs exactly once with 0 overlay resolutions; two overlay stubs unaffected; fixture-bite needles at :368-369 match live lines 63-64 and 68-69 byte-exact; a focused run of TestWorkflowCadenceAnchorsRejectDeletionAndSwap, TestEveryRetainedFixtureBitesThroughRegisteredOwner, TestCommitmentGuidance passed (662 tests); conformance-canary-families and canary-fixture-compliance passed (meta checks). Every spilled body read. git status clean; no repository file written.\n"
+          },
+          "axis": "Coverage",
+          "base": "c1e5efdcec54fd74cd51f740fff86de498f99ef0",
+          "tip": "a3cfb04c34ffa2422dfdb7b0032ae03bee59d157",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1412,6 +1481,21 @@
         ],
         "SB2": [
           "SB2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:cf148be21df8f31bb0415dbfdde024a5d662432697586924b33d8fc50f4005af",
+      "to": "sha256:69911f2cc96251a542f06d5fadfb31b6a0b1d21df0e72973c93f7f5d313cf116",
+      "chunk_ids": {
+        "SB1": [
+          "SB1"
+        ],
+        "SB2": [
+          "SB2"
+        ],
+        "SB3": [
+          "SB3"
         ]
       }
     }
@@ -1573,3 +1657,60 @@ Round 2 ran three opus/high axes at `77a5da6a` over the repair delta `1350865e..
 - S21 (`auto-fix`, confidence 5): the edited comment line of `TestSectionRendersTheAssignmentPins` still opened with the provenance tag "HS2 and HS10, stories 4 and 13." Rule: `craft-comments`, remove existing provenance when editing its line. Closed by the orchestrator's comment-only correction `429c1f3a` (evidence-only, no plan assignment), which the Standards axis reaffirmed. SB2 is refrozen at `a95df291..429c1f3a`, and the repair session re-records its verification there.
 
 Advice retained: the second sentence of that comment holds 27 words and predates this build. The C1 case shares the SB23 name prefix. No recorded probe ignores the path match for SB24 alone.
+
+## SB3 round 1
+
+Chunk SB3 round 1 ran three opus/high axes in parallel at `33f0ce69` over the frozen pair `c1e5efdc..33f0ce69` (chunk tip `c397220d`). The range holds the `main` fold `1949621f`, which the axes did not grade. Only the Coverage axis ran probes, and the tree was clean after every return. SB3 consumes no repair cycle: S1 is a comment-only correction, S2 and P1 are one record gap, and C1 takes a coverage-map row. The orchestrator committed the correction and the row at `a3cfb04c`, refroze SB3 there, and the author re-records its verification at that tip.
+
+### Standards
+
+Findings: 7. Worst issue: S2.
+
+- S1 (`auto-fix`, confidence 8): the first sentence of the `commitmentAnchors` comment in `internal/anchors/registry_commitment.go` grew to 31 words. Rule: `ste-prose.md`, 25 words per sentence; `craft-comments` applies it to comments. Closed by the comment-only correction in `a3cfb04c`, which splits it into two sentences.
+- S2 (`auto-fix`, record only, confidence 7): the SB3 entry held only the SB33 probe and the SB41 red. Rule: AGENTS.md, an independent expectation needs a recorded and demonstrated red. Closed evidence-only by the section "Retained red evidence of SB3" below.
+- S3 (`no-op`, confidence 7): the SB41 red came through `TestRootConformance`; both it and `TestGuidanceProseBudgetsHoldOnTheLiveTree` call the one owner `checkGuidanceProseBudgets`, so the check's own message served.
+- S4 (`no-op`, confidence 8): no Forbid row for the rewritten `AGENTS.md` sentences, by ticket line 105.
+- S5 (`no-op`, confidence 8): the staged-spec row moved to `writeSpecCommand` is an in-fence tidy with the needle and diagnostic unchanged.
+- S6 (`no-op`, confidence 8): steps 1 and 3 each hold two instructions; the ticket fixes the block word for word.
+- S7 (`no-op`, confidence 5): the template comment restates step 2; SB40 requires it.
+
+Advice: point the SB41 seam cell at the `guidance-prose-budgets` check. A later light path can split the two-instruction steps. The CHANGELOG heading spells "Spec stage" while the body uses "spec-stage".
+
+### Spec
+
+Findings: 1. Worst issue: P1.
+
+- P1 (`auto-fix`, evidence-only, confidence 6): the same record gap as S2. Closed with S2.
+- Every row SB31-SB43 is met, and the review-owned rows hold their evidence in the Spec axis excerpt. SB37: the fence and ticket 1's `Writes:` line alone name `.bench/commitment.json`. SB38: the pin sentence at `AGENTS.md:48-50`. SB39: the venue sentence at `AGENTS.md:45-46` and the unchanged drain sentence at `:47`. SB40: the one-line template comment at `SKILL.md:96`. SB42: five anchor rows and five mirrors with their reds.
+- The six joins changed no word. The CHANGELOG section is first under `## [Unreleased]` with the two bullets verbatim.
+
+Advice: the red logs cite `commitment_guidance_test.go:107` and `:109`, now `:108` and `:110`, because the test constant was added after the red runs.
+
+### Coverage
+
+Findings: 1. Worst issue: C1.
+
+- C1 (`ask-user`, confidence 4): deleting the CHANGELOG section heading and its lead sentence stays silent. No row covered the spec sentence on the typed section. Closed by the plan commit `a3cfb04c`: story 43 and the review-owned row SB46 cite the SB3 Spec review, which read the section bytes. Ticket 3 covers SB46. The orchestrator took the pre-approved spec expansion without a consultant.
+
+Advice retained: a reorder of the anchored steps passes, and `RequireInStep` would catch it, but the ticket chose `RequireInSection`. The `.bench/BENCH.md` grant can move within the Workflow section.
+
+### Retained red evidence of SB3
+
+The author observed these reds on source `9f93a469` plus the new mirrors, before the anchor rows existed (author logs `claude-agent:ssb_t3/red-sb31-sb34.txt`, `red-sb36.txt`, `red-sb41.txt`):
+
+- SB31: `commitment_guidance_test.go:107: mutated .agents/commands/bench-write-spec.md raised [], want only "commitment guidance: spec authoring dropped the one-landing close"`.
+- SB32: the same line, `want only "...dropped the binding from the inventory row after the last spec edit"`.
+- SB33: the same line, `want only "...dropped the start command as the handoff next command"`.
+- SB34: `commitment_guidance_test.go:107: mutated .bench/BENCH.md raised [], want only "commitment guidance: operating guide dropped the spec-stage binding grant"`.
+- SB36: `registry_ticket_passes_test.go:45: tree broken at "The ownership fence and exactly one ticket's `Writes:` line name `.bench/commitment.json`." in .agents/skills/bench-craft-tickets/references/slicing-checks.md = [], want "ticket slicing: ..."`.
+- SB41, with the block added and before the joins: `gate_entry_test.go:29: gate: prose-budget exceeded: .agents/commands/bench-write-spec.md is 95 lines, over its 87-line budget`.
+
+The green run logged `observed red:` for each mirror (author log `green-sb31-sb35-sb43-observed-red.txt`, `go test -v` on the six cases). The six are the binding-only limit, the spec-stage binding grant, the planning-only staged spec, the one-landing close, the inventory-row binding, and the handoff next command.
+
+Probes, each `bit` with `restored=yes`:
+
+- SB33, the author at `c397220d`: `bench probe internal/anchors/registry_commitment.go --omit '<the SB33 row>' --package ./internal/conformance --run TestCommitmentGuidance`; 1 failed. The verification entry `t3-guidance-focused-ssb_t3` keeps it.
+- SB36, the orchestrator at `33f0ce69`: `bench probe internal/anchors/registry_ticket_passes.go --omit '<the SB36 row, line 24>' --package ./internal/anchors --run '^TestTicketSlicingPasses$'`; 1 failed, `registry_ticket_passes_test.go:45: tree broken at ...`.
+- SB34, the orchestrator at `33f0ce69`: `bench probe internal/anchors/registry_commitment.go --swap 'Needle: "A spec-stage close binds its approved spec the same way and cites my sign-off as the decision."' --with 'Needle: "A spec-stage close binds its approved spec in the same way and cites the reviewer sign-off as the decision."' --package ./internal/conformance --run '^TestCommitmentGuidance$'`; 20 failed, the grant case with `live .bench/BENCH.md raised ["...dropped the spec-stage binding grant"]`.
+- The orchestrator's live-tree probe at `33f0ce69`: `bench probe .agents/commands/bench-write-spec.md --omit 'After sign-off, close the spec stage in this order, so one spec-less landing carries the staged spec and its binding.' --check docs-currency-workflow`; 1 failed, `gate: commitment guidance: spec authoring dropped the one-landing close`.
+- The Coverage axis at `33f0ce69`, through `--check docs-currency-workflow`: step 2's first sentence omitted (bit, 1). The live grant reworded (bit, 1). The slicing rule's first sentence omitted (bit, 1).
