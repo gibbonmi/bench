@@ -28,7 +28,7 @@ Change these four sites through the owner:
 
 - `Store.Plan` validates each unsettled deliverable of the proposed policy and each plan source, with the checkout HEAD as the publishing tree.
 - `Store.Approve` and its replay validate each plan source, with the checkout HEAD as the publishing tree.
-- `Store.Inventory` lists each staged spec that the checkout HEAD holds, reads its identity at that HEAD, and keeps the `spec.Facts` join for its scope.
+- `Store.Inventory` gives the checkout HEAD to `stagedSpecs` in `internal/commitment/repository/sources.go`. That function reads the status, the scope, and the identity of each spec from the same bytes.
 - `approvedTransition` receives the candidate tree from `authorizeCandidate`, and validates each source of the expected plan with the candidate tree as the publishing tree.
 
 The inventory roadmap rows keep the default-branch tip.
@@ -38,9 +38,8 @@ A new deliverable source that the publishing tree does not hold refuses with `co
 The receipt match, the plan identity, and the refusal `candidate policy has no exact approval` stay unchanged.
 The commitment grammar, its help rows, its refusal faces, and `internal/commit/commit.go` stay unchanged.
 
-`internal/commitment/repository/repository.go` holds 400 of 400 lines, so keep it at 400 lines or fewer.
-Each edit there removes as many lines as it adds.
-`sources.go` holds 106 lines, and `candidate.go` holds 292 lines.
+`internal/commitment/repository/repository.go` holds 385 of 400 lines, so keep it at 400 lines or fewer.
+`sources.go` holds 133 lines, and `candidate.go` holds 292 lines.
 Keep every file that this ticket writes at 400 lines or fewer.
 The lane runs `bench structure --growth`, and a file over 400 lines that gains a line turns it red.
 
@@ -121,7 +120,7 @@ So these four files join the `Writes:` line, and this ticket does not change the
 `admission.go`, `readiness.go`, `closure.go`, `publication.go`, and `commitcmd/command.go` call a function that this ticket can change.
 Each one changes only when a signature changes.
 `commitmenttest/repo.go` and `delivery.go` are possible helper sites.
-The comment at `store_test.go:146` says that the default branch does not hold a spec, and it can name the checkout HEAD instead.
+The comment at `store_test.go:147` says that the default branch does not hold a spec, and it can name the checkout HEAD instead.
 
 This ticket gives tickets 2 and 3 this contract.
 One spec-less landing of a planning worktree publishes a staged spec and its approved binding.

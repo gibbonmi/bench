@@ -110,7 +110,7 @@ The other paths of the `Writes:` line are possible sites:
 
 A search for the rendered `Spec status` text finds `text.go`, `facts.go`, `document.go`, `document_test.go`, `render_test.go`, and `handoff_single_source_test.go`.
 Each one is on this `Writes:` line.
-`AGENTS.md:69` belongs to ticket 3, and the capture note `capture/codex-workflow-companion/README.md:35` is hand-written text, not a rendered output.
+The pin list of `AGENTS.md` belongs to ticket 3, and the capture note `capture/codex-workflow-companion/README.md:35` is hand-written text, not a rendered output.
 This ticket does not name `.bench/commitment.json`, because ticket 1 owns it under decision D5.
 
 This ticket gives ticket 3 this contract:
