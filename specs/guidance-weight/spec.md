@@ -197,6 +197,7 @@ B12 (`.bench/BENCH.md:66-67`) goes, and its row `registry_data.go:378` retires.
 The `craft-line` copy (`.agents/skills/bench-craft-line/SKILL.md:80-81`) keeps its row `registry_data.go:191`.
 A17 (`AGENTS.md:85-86`) goes, and its row `registry_data.go:383` retires with three dependents.
 The dependents are the `AGENTS.md` half of `TestSystemSuiteRouteAnchorsRedOnRemoval` (`registry_data_test.go:1240-1255`), the canary `agents-system-suite-route`, and the plant `cmd/bench/testdata/anchors/fixture-repo/AGENTS.md:11` that `cmd/bench/anchor_help_test.go` reads.
+The other readers of the plant, `cmd/bench/anchors_dir_test.go` and `cmd/bench/command_registry_test.go`, count from the registry and need no edit.
 The `projects/benchkit.md:676-677` copy keeps its row `registry_data.go:385` and its canary `benchkit-system-suite-route`.
 
 The B10 exception moves into `staleness-pass.md`.
@@ -221,7 +222,7 @@ It holds four paragraphs, because a bold label counts as one sentence and the bo
 The Capture sentence "A drain implements a light-path idea under the light-path fix rule instead." goes.
 The second sentence of paragraph 2 is the B40 lead word for word, so its timing rule stays.
 The third and fourth sentences of paragraph 2 add the delegated route of #4.
-Each sentence that `TestCommitmentGuidance` quotes with a leading space stays in the middle of a physical line (`internal/conformance/commitment_guidance_test.go:49-54`).
+Each sentence that `TestCommitmentGuidance` quotes with a leading space stays in the middle of a physical line (`internal/conformance/commitment_guidance_test.go:49-52` and `:54`).
 The row `registry_commitment.go:26` and the mirror `commitment_guidance_test.go:53` keep their needle and their diagnostic.
 
 ### The batch-approval move
@@ -262,7 +263,7 @@ The glob row takes the largest tracked `SKILL.md` that no exact row names: `benc
 `AGENTS.md` takes a new exact row, and `.bench/BENCH.md` takes its size after this outcome, about 11,600.
 `.agents/skills/bench-craft-spec/SKILL.md:68` says "current size" in place of "current line count".
 
-The tests change their unit: `TestGuidanceProseBudgetBoundaryIsNewlineIndifferent` becomes `TestGuidanceProseBudgetBoundaryCountsEveryByte`, and `proseBudgetLines` and `healthyProseBudgetFiles` build byte sizes.
+The tests change their unit: `TestGuidanceProseBudgetBoundaryIsNewlineIndifferent` becomes `TestGuidanceProseBudgetBoundaryCountsEveryByte`, and `proseBudgetLines` becomes `proseBudgetBytes`, and it and `healthyProseBudgetFiles` build byte sizes.
 
 `internal/conformance/prose_budget_test.go` has 579 lines, over the 400-line structure cap with no grant, so the GW5 ticket keeps it at or below its base line count.
 The rename replaces the old test, so the file gains no test.
@@ -270,7 +271,7 @@ The rename replaces the old test, so the file gains no test.
 The over-budget canary's fixture skill and `MUTATE.json` describe the mutation in lines, and both take byte wording.
 `CONTEXT.md` defines "prose budget" as "the per-surface line-count ceiling", so the GW5 ticket makes it a byte ceiling.
 
-The expected diagnostics at `prose_budget_test.go:276`, `:284`, `:335`, `:506-508`, and `:534` name bytes.
+The expected diagnostics at `prose_budget_test.go:276`, `:284`, `:335`, `:506-508`, and `:534` name bytes, and the `invalid limit` case at `:315` matches the whole new limit error.
 The canary `tests/canary/guidance-prose-budgets/over-budget-skill` sets its fixture row in bytes, and its mutation adds bytes past it.
 `skill_description_budgets_test.go` reuses `proseBudgetPolicy` and `limitFor` but has its own parse loop, so it changes nothing.
 
@@ -283,11 +284,11 @@ Each chunk has one bullet. A later ticket of the same chunk extends that bullet,
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| GW1 / TBD | The build rules live in `build-rules.md`, with their anchors, mirrors, canaries, and every pointer, and `.bench/BENCH.md` keeps one pointer | GW01-GW15, GW52 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow`, `prose-mechanics`, and `guidance-prose-budgets` checks | yes |
-| GW2 / TBD | The repeated copies B12 and A17 go with their anchors, and the B10 exception lives in the staleness pass | GW16-GW22 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow` and `prose-mechanics` checks | no |
-| GW3 / TBD | The light-path rules read as one block under the table, and the repeated drain sentences go | GW23-GW31 | the `internal/anchors` and `internal/conformance` package tests, and the `docs-currency-workflow`, `prose-mechanics`, and `guidance-prose-budgets` checks | no |
-| GW4 / TBD | The batch-approval rule sits beside the sign-off stop, and the drain names its own approval | GW32-GW37 | the `internal/anchors` and `internal/conformance` package tests, and the `docs-currency-workflow`, `prose-mechanics`, and `guidance-prose-budgets` checks | no |
-| GW5 / TBD | Every budget row limits its subject in bytes, `AGENTS.md` has a row, and `.bench/BENCH.md` has its bound | GW38-GW51, GW53 | the `internal/conformance` package tests, and the `guidance-prose-budgets`, `skill-description-budgets`, and `prose-mechanics` checks | yes |
+| GW1 / `1-move-the-build-rules-into-their-own-file.md`, `2-repoint-the-build-rule-pointers.md` | The build rules live in `build-rules.md`, with their anchors, mirrors, canaries, and every pointer, and `.bench/BENCH.md` keeps one pointer | GW01-GW15, GW51, GW52 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `root-conformance` checks | yes |
+| GW2 / `3-remove-the-repeated-copies.md` | The repeated copies B12 and A17 go with their anchors, and the B10 exception lives in the staleness pass | GW14, GW16-GW22, GW51 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `root-conformance` checks | no |
+| GW3 / `4-merge-the-light-path-rules-into-one-block.md` | The light-path rules read as one block under the table, and the repeated drain sentences go | GW23-GW31, GW51 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `root-conformance` checks | no |
+| GW4 / `5-move-the-batch-approval-rule-beside-the-sign-off-stop.md` | The batch-approval rule sits beside the sign-off stop, and the drain names its own approval | GW32-GW37, GW51 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `root-conformance` checks | no |
+| GW5 / `6-measure-the-guidance-budgets-in-bytes.md` | Every budget row limits its subject in bytes, `AGENTS.md` has a row, and `.bench/BENCH.md` has its bound | GW38-GW51, GW53 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `guidance-prose-budgets`, `skill-description-budgets`, `prose-mechanics`, and `root-conformance` checks | yes |
 
 GW1 to GW4 write `.bench/BENCH.md`, `CHANGELOG.md`, and the same anchor registries, so they run serially in the order of the table.
 Each chunk review also grades GW51, because each ticket writes its own changelog bullet.
@@ -428,7 +429,7 @@ Each slicer adds its chunk to this plan when it writes the chunk's tickets, beca
 | GW16 | 15 | `.bench/BENCH.md` no longer holds the B12 needle "only diff-owned reds count toward fix-loop convergence" | review-owned: the GW2 review runs `rg` for the needle | The row retires with the sentence, so no check reds a sentence left behind. |
 | GW17 | 16 | The `craft-line` row `registry_data.go:191` still binds its kept copy | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | The row reds if the GW2 edit touches the kept copy. |
 | GW18 | 17 | `projects/benchkit.md` keeps the hand-run route and its anchor | `internal/anchors/registry_data_test.go` (`TestSystemSuiteRouteAnchorsRedOnRemoval`) | The kept half of the test reds when the benchkit copy goes. |
-| GW19 | 18 | No check expects the A17 sentence in `AGENTS.md` | `cmd/bench/anchor_help_test.go` (`TestAnchorsReportsNeedleLines`) | A plant left in the fixture repo matches no require row, so the help test reds. |
+| GW19 | 18 | No check expects the A17 sentence in `AGENTS.md` | `cmd/bench/anchor_help_test.go` (`TestAnchorsReportsNeedleLines`) | A plant left in the fixture repo moves each later plant two lines down, so the help test reds. |
 | GW20 | 18 | The canary `agents-system-suite-route` is gone with its row | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | A canary whose owner row retired never sees its `EXPECT`, so the test reds. |
 | GW21 | 19 | `staleness-pass.md` states the moved exception with its flag duty | planned TestStalenessExceptionAnchorRedsOnRemoval in internal/anchors/registry_chunk_chain_test.go | The new require row reds when the moved sentence or its flag duty goes. |
 | GW22 | 20 | The B10 bullet of `.bench/BENCH.md` ends at "Ask about a behavioral one." | review-owned: the GW2 review reads the bullet | The row `registry_data.go:376` pins only the first sentence, so only review sees a kept exception. |
@@ -453,7 +454,7 @@ Each slicer adds its chunk to this plan when it writes the chunk's tickets, beca
 | GW41 | 39 | A final newline counts as one byte | planned TestGuidanceProseBudgetBoundaryCountsEveryByte in internal/conformance/prose_budget_test.go | A count that trims the final newline passes a fixture whose newline is its one excess byte. |
 | GW42 | 40 | The diagnostic reads "is <n> bytes, over its <limit>-byte budget" | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetReportsEverySubjectInOneRun`) | The expected diagnostics name bytes, so a stale line format reds. |
 | GW43 | 40 | A non-positive limit cell fails closed with "not a positive byte count" | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetPolicyFaultsFailClosed`) | The fault case requires the new text, so a stale message reds. |
-| GW44 | 41 | Each exact row equals its file's size after GW4, rounded up to a multiple of 100 | review-owned: the GW5 review runs `wc -c` on each subject at the GW5 commit and checks the arithmetic | A row equal to any value below the size reds the live tree, but a loose row passes, so only review sees slack. |
+| GW44 | 41 | Each exact row equals its file's size at the GW5 commit, rounded up to a multiple of 100 | review-owned: the GW5 review runs `wc -c` on each subject at the GW5 commit and checks the arithmetic | A row equal to any value below the size reds the live tree, but a loose row passes, so only review sees slack. |
 | GW45 | 42 | The glob row equals the largest tracked `SKILL.md` that no exact row names, rounded up | review-owned: the GW5 review runs `git ls-files` and `wc -c` over `.agents/skills/*/SKILL.md` | A loose glob row passes every check, so only review sees slack. |
 | GW46 | 43 | `AGENTS.md` has an exact row at its size rounded up | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | An exact row enters the universe, so a growth of `AGENTS.md` past its row reds. |
 | GW47 | 44 | The `.bench/BENCH.md` row equals its size after this outcome, rounded up | review-owned: the GW5 review runs `wc -c .bench/BENCH.md` at the GW5 commit | A loose row passes the live tree, so only review sees slack. |
@@ -473,7 +474,7 @@ The read already refuses a symlink, a special file, an oversized file, and inval
 The absent-versus-empty pair holds for the skills root: an absent root and an unreadable root each raise their diagnostic (`:448-493`).
 No test swaps a package variable.
 
-- **Won't handle**: the git-ignored `.agents/skills/typesafe-ai/SKILL.md` in a primary checkout — the landing tree lacks it, and its 149 lines already exceed the 120-line glob row today.
+- **Won't handle**: the git-ignored `.agents/skills/typesafe-ai/SKILL.md` in a primary checkout — the landing tree lacks it, and it exceeds the glob row before this outcome.
 - **Won't handle**: a budget row for `build-rules.md` — reference files stay outside the budget universe (`prose_budget_test.go:35-37`), and its bytes leave every session.
 - **Won't handle**: a subject with CRLF line endings — none exists, and a carriage return is a byte that the reader pays for.
 - **Won't handle**: the 27 canary overlays that carry an old whole `BENCH.md` — each holds old text by design, and each still bites its own row.
@@ -931,7 +932,7 @@ The consultant settled E1 to E12 on 2026-10-11, and the author chose E13 to E17.
 
 ### Pre-review proof checklist
 
-- `Cited symbols`: `checkGuidanceProseBudgets`, `parseProseBudgetPolicy`, `proseBudgetLineCount`, `limitFor`, `proseBudgetSubjects`, `proseBudgetLines`, and `healthyProseBudgetFiles` resolve in `internal/conformance/prose_budget_test.go`. `proseBudgetPolicy` and `profileBudgetTable` resolve there too, and `skill_description_budgets_test.go` reads them.
+- `Cited symbols`: `checkGuidanceProseBudgets`, `parseProseBudgetPolicy`, `proseBudgetLineCount`, `limitFor`, `proseBudgetSubjects`, `proseBudgetLines` (renamed `proseBudgetBytes`), and `healthyProseBudgetFiles` resolve in `internal/conformance/prose_budget_test.go`. `proseBudgetPolicy` and `profileBudgetTable` resolve there too, and `skill_description_budgets_test.go` reads them.
 - `Import edges`: none. No ticket adds an import.
 - `Source-row clauses and occurrences`: the source table above quotes each clause of the eight decisions.
 - `Promised field labels`: the diagnostic "prose-budget exceeded: %s is %d bytes, over its %d-byte budget" and the error "not a positive byte count". The labels also include the six H2 sections of the build rules.
