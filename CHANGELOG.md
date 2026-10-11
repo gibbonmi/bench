@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Inventory revision metadata
+
+- Fixed `bench commitment inventory` so that each `deliverable` row takes its status, its scope, and its identity from the same spec bytes. The inventory reads those bytes at the revision that plan validates, so an uncommitted edit of a `Status:` or `Roadmap:` line changes no row. A spec that Git cannot read at that revision refuses the inventory, whatever its status. Before, the inventory read the status and the scope from the working tree, so a row could disagree with its identity.
+
 ### Operating guide trim
 
 - Changed `.bench/BENCH.md` so that workflow step 5 and invariant 4 say that a commit needs a lane pass and that a landing needs green. Before, both said "commit on green", which contradicted the lane-pass rule beside them.
