@@ -464,7 +464,16 @@
               "text": "The delivery closes no roadmap row, and the candidate-set forms --changed, --dry-run --changed, and --ticket stay on FT258."
             }
           ],
-          "sources": []
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "commit-merge-parent",
+                "path": "specs/commit-merge-parent/spec.md",
+                "identity": "sha256:0d5ce814e2961df64529a78f557193ae58dce237cac568ad22263e54ab692bf0"
+              }
+            }
+          ]
         },
         {
           "id": "FT395",
