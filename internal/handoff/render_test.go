@@ -50,7 +50,7 @@ func TestRenderPathOutsideHome(t *testing.T) {
 	}
 }
 
-// HS2 and HS10, stories 4 and 13. The six pins carry the values a resuming session acts
+// HS2 and HS10, stories 4 and 13. The pins carry the values a resuming session acts
 // on. The request token is the plain caller token byte for byte, because a landing passes
 // that value back and the digest is not accepted in its place. The tip is the assignment's
 // own worktree HEAD, read after a commit that only that tree carries.
@@ -105,7 +105,8 @@ func TestSectionRendersOnePairPerLiveSpec(t *testing.T) {
 }
 
 // The line after a live spec's status names the outcomes that the policy on main binds to
-// that path, in policy order. A binding that only the worktree commits reads unbound.
+// that path, in policy order. An outcome of a milestone that is not active still binds. A
+// binding that only the worktree commits reads unbound.
 func TestSectionRendersTheSpecBinding(t *testing.T) {
 	const alpha, beta = "specs/alpha/spec.md", "specs/beta/spec.md"
 	for _, tc := range []struct {
@@ -115,6 +116,19 @@ func TestSectionRendersTheSpecBinding(t *testing.T) {
 		{"SB23 one binding outcome", func(t *testing.T, root string) (intent.Assignment, string, string) {
 			id := commitBinding(t, root, alpha)
 			return activeAssignment(t, root, "sb23", "sb23"), alpha, id
+		}},
+		{"SB23 binding outside the active milestone", func(t *testing.T, root string) (intent.Assignment, string, string) {
+			commitmenttest.Write(t, root, alpha, commitmenttest.StagedBody)
+			commitmenttest.SeedRowless(t, root, alpha)
+			var id string
+			commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
+				bound := &policy.Milestones[0]
+				active := commitment.Milestone{ID: "later", Outcomes: bound.Outcomes[1:]}
+				id, bound.Outcomes = bound.Outcomes[0].ID, bound.Outcomes[:1]
+				policy.Milestones, policy.ActiveMilestone = append(policy.Milestones, active), active.ID
+			})
+			commitmenttest.Commit(t, root, "activate a later milestone")
+			return activeAssignment(t, root, "sb23-later", "sb23-later"), alpha, id
 		}},
 		{"SB24 another path bound", func(t *testing.T, root string) (intent.Assignment, string, string) {
 			commitBinding(t, root, alpha)
