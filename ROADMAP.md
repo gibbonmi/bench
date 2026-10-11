@@ -36,7 +36,7 @@ and review cost that recent builds paid.
 
 **FT215 (HIGH, decision required) — the path-aware lane closes its correctness edges before cost tuning.**
 
-**FT258 (HIGH, decision required) — `bench commit` derives a complete change set and preserves merge parents.**
+**FT258 (HIGH, decision required) — `bench commit` derives a complete change set from the checkout.**
 
 **FT342 (HIGH) — a chunked build has one sanctioned route for a moved `main`, from preflight through completion and landing.**
 
@@ -164,6 +164,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT403 (MEDIUM) — a review axis sweeps for each variant of a held finding and checks every registry of an extended family.**
 
+**FT417 (LOW) — a reworded spec sentence keeps each predicate of the old sentence unless a decision deletes it.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -227,8 +229,6 @@ qualification requirements are met.
 
 **FT346 (EXPERIMENT, decision required) — decide whether a controlled trial tests aibadger topology against current Bench.**
 
-**FT348 (MEDIUM, decision required) — decide the disposition of each retained stream from the 2026-09-22 parallel implementation wave.**
-
 **FT374 (MEDIUM, decision required) — each Go-only code-aware verb and check has a decided TypeScript, JavaScript, and Python equivalent.**
 
 ## Parked and scheduled work
@@ -256,6 +256,8 @@ qualification requirements are met.
 **FT399 (MEDIUM, parked pending a repro) — the advertised recovery of an ignored-residual landing writes the terminal receipt.**
 
 **FT416 (MEDIUM, parked pending a repro) — `bench commitment plan` effects show a milestone activation.**
+
+**FT418 (LOW, parked pending a repro) — a Bench route discards an unapproved `bench commitment approve` output after a refused binding commit.**
 
 
 ## Release and bank reassessment gate
@@ -302,7 +304,7 @@ recommended table is sequencing advice.
 
 | FT | Depends on | Why |
 |---|---|---|
-| FT100 | FT231 | Editorial cuts need the measurement harness. |
+| FT100 | FT231 | A rule deletion and the craft-skill library audit need the measurement harness. |
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305 | Adoption follows durable execution. |
@@ -317,7 +319,6 @@ recommended table is sequencing advice.
 | FT100 | FT89 | Cut prose after coherence identifies authoritative guidance. |
 | FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
 | FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
-| FT254 | FT258 | Resolution follows the `MERGE_HEAD` contract. |
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
 
 ## Recommended sequence

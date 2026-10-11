@@ -1,4 +1,4 @@
-# Run binary provenance in a `bench test` result (FT290)
+# Run binary provenance in a `bench test` result (FT341)
 
 Status: shaping
 
@@ -13,9 +13,9 @@ source in the calling checkout.
 Domain: the run binary selection and the `bench test` result projection.
 Charge `bench-craft-research` for ticket #1.
 
-This map is the second half of the FT290 split. The first half is delivered.
-It added the `check` row of a named-check result, and a provenance fact can
-join that row.
+This map is the second half of the FT290 split, and FT341 owns it. The first
+half is delivered. It added the `check` row of a named-check result, and a
+provenance fact can join that row.
 
 A map-owned asset stays in the map's assets folder,
 decisions/run-binary-provenance/assets/.
