@@ -356,7 +356,7 @@ func helpCommand(c Command, args []string) int {
 	return 0
 }
 
-const helpInventoryTitle = "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
+const helpInventoryTitle = "bench — agent work in isolated worktrees, graded by one gate, landed only on green. Run bench status for the next action."
 
 func renderCommandHelp() string {
 	type orderedRow struct {

@@ -131,7 +131,7 @@ func TestRootAndHelpAlignWrapperAndBinary(t *testing.T) {
 	}
 
 	binaryHelp := run(binary, "help")
-	if !strings.HasPrefix(binaryHelp, "bench — Pocock"+" pipeline") {
+	if !strings.HasPrefix(binaryHelp, helpInventoryTitle+"\n") {
 		t.Fatalf("binary help = %q, want inventory", binaryHelp)
 	}
 	if !strings.Contains(binaryHelp, "bench canary [--in <label|primary>] [root]  validate fixture inventory") {
