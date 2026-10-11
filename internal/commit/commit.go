@@ -195,7 +195,7 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 		}
 		return refused(err)
 	}
-	fmt.Fprintf(stdout, "committed{published_commit=%s,path_count=%d}\n", result.Commit, len(named))
+	fmt.Fprintf(stdout, "committed{"+recordKeyPublishedCommit+"=%s,path_count=%d}\n", result.Commit, len(named))
 	return 0
 }
 
@@ -266,7 +266,7 @@ func publicationRemainder(stdout io.Writer, root string, remainder *landing.Publ
 	next := refusalroute.New(facePublishedUnreconciled, refusalroute.Facts{Values: map[string]string{
 		refusalroute.FactPublishedCommit: remainder.Commit, refusalroute.FactCheckout: root,
 	}}).Route
-	fmt.Fprintf(stdout, "committed{published_commit=%s,path=%s,%s=%s}\n",
+	fmt.Fprintf(stdout, "committed{"+recordKeyPublishedCommit+"=%s,path=%s,%s=%s}\n",
 		remainder.Commit, sanitize.Controls(remainder.Path), refusalroute.NextField, next)
 	return 3
 }
