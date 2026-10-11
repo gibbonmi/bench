@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Help title
+
+- Changed `bench help` so that its first line states what Bench does and names `bench status` as the command that gives the next action. The line now reads "bench — agent work in isolated worktrees, graded by one gate, landed only on green. Run bench status for the next action." Before, the line named the projects that Bench borrows from.
+
 ### Commit merge parent
 
 - Fixed `bench commit` so that during a pending merge, a worktree commit records the previous tip and then each merge head as parents. After the publication, the commit ends the merge through Git. The commit refuses when its named paths omit a path that the merge changed, and the refusal names each omitted path. The commitment grading counts the merged commits of the default branch as the default branch's own. Before, the commit recorded one parent, and the merge stayed pending.
