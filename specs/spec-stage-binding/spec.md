@@ -113,6 +113,7 @@ Harder chunks: SB1
 40. As the reviewer, I want each guidance edit to fit its current prose budget, so that no budget rises.
 41. As a maintainer, I want each new pinned sentence to carry an anchor and a recorded mutation red, so that the gate keeps its bite.
 42. As a reviewer, I want the Exit handoff to keep the planning-only staged-spec sentence, so that delivery still waits for the start.
+43. As a maintainer, I want one typed `CHANGELOG.md` section to state the one-landing close and the `Spec binding` line, so that the release notes carry both.
 
 ## Implementation decisions
 
@@ -299,7 +300,7 @@ The last ticket writes it, because that ticket follows both behaviors.
 | --- | --- | --- | --- | --- |
 | SB1 / 1-bind-a-new-deliverable-from-its-publishing-tree.md | A new deliverable binds from the tree that publishes it, so one spec-less landing publishes a staged spec and its binding, and `bench status` then prints the complete start command | SB01-SB22, SB45 | the `internal/commitment`, `internal/commitment/repository`, `internal/commitment/commitmenttest`, `internal/commit`, `internal/worktree`, `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests | yes |
 | SB2 / 2-name-the-binding-state-in-the-handoff.md | `bench handoff` names the binding state of each live spec | SB23-SB30, SB44 | the `internal/handoff`, `internal/handoffdoc`, `internal/commitment`, `internal/commitment/repository`, `internal/commitment/commitmenttest`, `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests | no |
-| SB3 / 3-state-the-one-landing-close.md | The guidance states the one-landing close, the binding grant, the handoff pin, the Writes rule, and the template comment | SB31-SB43 | the `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `skills-index-command-adapters` checks | no |
+| SB3 / 3-state-the-one-landing-close.md | The guidance states the one-landing close, the binding grant, the handoff pin, the Writes rule, and the template comment | SB31-SB43, SB46 | the `internal/anchors`, `cmd/bench`, and `internal/conformance` package tests, and the `docs-currency-workflow`, `guidance-prose-budgets`, `prose-mechanics`, and `skills-index-command-adapters` checks | no |
 
 SB1 and SB2 both write files of `internal/commitment`, so the serial order also keeps their shared helper files apart.
 SB3 describes the shipped behavior of both, so it waits for the SB1 and SB2 checkpoints.
@@ -408,6 +409,7 @@ The gate observes the feature through the package suites and the guidance checks
 | SB41 | 40 | Each edited guidance file stays within its `guidance-prose-budgets` limit | `internal/conformance/prose_budget_test.go` (`TestGuidanceProseBudgetsHoldOnTheLiveTree`) | A line added to a full file reds this live-tree check. |
 | SB42 | 41 | Each new pinned sentence has one anchor row and one mutation mirror that logs its observed red | review-owned: the SB3 review reads the anchor rows and the red log of the author | A sentence without a mirror keeps an anchor whose bite no run proved. |
 | SB43 | 42 | The write-spec Exit handoff keeps the planning-only staged-spec sentence | `internal/conformance/commitment_guidance_test.go` (`TestCommitmentGuidance`) | The existing `staged spec` mirror reds when an edit drops or rewords that sentence. |
+| SB46 | 43 | `CHANGELOG.md` holds one typed section under `## [Unreleased]`, first in order, with one `Changed` bullet for the one-landing close and one `Added` bullet for the `Spec binding` line | review-owned: the SB3 Spec review reads the section in `reviews/spec-stage-binding.md` | No anchor pins a changelog section, so only review sees a dropped or reworded entry (SB3 review C1). |
 
 ### Edge inventory
 

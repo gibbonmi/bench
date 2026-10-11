@@ -7,9 +7,9 @@ const CommitmentRuleMarker = "**Deliver only the committed outcome.**"
 // CommitmentDiagnosticPrefix opens every diagnostic of the commitment guidance family.
 const CommitmentDiagnosticPrefix = "commitment guidance: "
 
-// commitmentAnchors pin the canonical delivery commitment rule, each phase route to its
-// commands, the spec-stage close with its binding grant, and the light-path exemption with
-// its pointer to the build rule. Each prohibition refuses one retired rule. One grant let
+// commitmentAnchors pin the canonical delivery commitment rule and each phase route to its
+// commands. They also pin the spec-stage close with its binding grant, and the light-path
+// exemption with its pointer to the build rule. Each prohibition refuses one retired rule. One grant let
 // work start or displace the commitment outside the committed outcome. Another grant let a
 // build ship a light-path fix. A restriction held light-path work behind the active
 // commitment.
