@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/spec-stage-binding/spec.md",
-  "plan_digest": "sha256:db05f81a3108f51695589a8ed4fae8c3fe1f7105e3b13f06d3025c6f8dfd8310",
+  "plan_digest": "sha256:fdde5d5d572db7e6a130bb0d1c329f4db191d94be6d1432462f10164af4410ce",
   "implementation_session": "",
   "chunks": [
     {
@@ -759,6 +759,15 @@
     {
       "from": "sha256:1197b2b8b97eefb9608d833cd04421ca53f18b7cbb179ca7b1c455cb826dac68",
       "to": "sha256:db05f81a3108f51695589a8ed4fae8c3fe1f7105e3b13f06d3025c6f8dfd8310",
+      "chunk_ids": {
+        "SB1": [
+          "SB1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:db05f81a3108f51695589a8ed4fae8c3fe1f7105e3b13f06d3025c6f8dfd8310",
+      "to": "sha256:fdde5d5d572db7e6a130bb0d1c329f4db191d94be6d1432462f10164af4410ce",
       "chunk_ids": {
         "SB1": [
           "SB1"
