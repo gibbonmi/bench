@@ -64,7 +64,7 @@ func TestHelpRendersTreeTargetFromScope(t *testing.T) {
 func TestHelpInventoryIsComplete(t *testing.T) {
 	// The independently authored expectation is the omission oracle. Deriving it from
 	// commandRegistry would let a deleted public or child row disappear from both sides.
-	const want = `bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
+	const want = `bench — agent work in isolated worktrees, graded by one gate, landed only on green. Run bench status for the next action.
   bench setup [--in <label|primary>] [--plan|--yes]  inspect, preview, and converge the current repository
   bench link [--in <label|primary>] [copy|symlink]  safely wire the kit into this repo for every harness
   bench init [--in <label|primary>]  scaffold .bench/gate.sh in the current repo

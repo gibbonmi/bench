@@ -19,7 +19,7 @@ func checkRoadmapHelpLine(helpInventorySource string) []string {
 	return []string{"cmd/bench/main.go help inventory does not describe the top-10 board"}
 }
 
-const helpInventoryTitle = "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
+const helpInventoryTitle = "bench — agent work in isolated worktrees, graded by one gate, landed only on green. Run bench status for the next action."
 
 // helpRowProjections names each command whose help rows derive from its own form
 // registry, and the projection call that must supply them. Every other public command keeps
@@ -176,7 +176,7 @@ func TestHelpInventorySingleSourceBites(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	title := "bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants."
+	title := helpInventoryTitle
 	registry := "package main\n\nvar commandRegistry = []commandDefinition{\n\t{Name: \"help\", Inventory: publicInventory()},\n\t{Name: \"repair\", WrapperOnly: true, Inventory: publicInventory(helpRow{Order: 1, Description: \"repair\"})},\n\t{Name: \"status\", Inventory: publicInventory(helpRow{Order: 2, Description: \"state\"})},\n\t{Name: \"plumbing\", Inventory: internalInventory},\n}\n"
 	write("cmd/bench/main.go", registry)
 	write("cmd/bench/command_registry.go", "package main\nconst title = \""+title+"\"\nfunc render(definition commandDefinition, row helpRow) { _ = definition.Name + row.Suffix }\n")
