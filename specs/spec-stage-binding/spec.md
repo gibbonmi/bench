@@ -8,7 +8,7 @@ Decision source: named reviewed artifact `roadmap/FT395.md` at `0bdc11c5`, with 
 
 Audience: every repository that links the kit
 
-Verification log: pending
+Verification log: 2 iteration(s) to accept — the spec review SR1 and the ticket review TR1 each accepted in iteration 1 on Fable at xhigh, so no round took more than one iteration
 
 ## Problem
 
