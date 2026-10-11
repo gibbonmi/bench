@@ -2012,6 +2012,96 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "mp3-standards-r2",
+          "performer": "claude:cmp_mp3_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp3_standards_r2",
+            "digest": "sha256:047ac45b38b11a8366c8195905db178b19e01a848fe66d5605353ca5bbdd1de2",
+            "excerpt": "MP3 Standards axis round 2 (confirming), claude:cmp_mp3_standards_r2, opus/high, one iteration, frozen pair 0b64dd54..4b658680 (chunk tip 96201315), evidence sha256:c3800c8498b8c1edee7124416114f32a3926ed2b8a15b8044e0115a3b10c0640 current=true, clean tree. The repair delta under internal touches only stale_base_test.go.\n\nS1 accepted no-op (the row loop still repeats TestStaleBaseCandidate; ticket 5 lines 38 and 54 keep that test unchanged; the delta does not touch lines 17-69 or landProduction at 169-173). S2 accepted no-op (the light pair at :79 repeats :22 under the same keep decision). S3 accepted no-op (the planning step at :107-109 repeats :29-31 under the same decision). S4 accepted no-op (the delta does not touch candidate.go; the symmetric no-head order stands).\n\nRepair delta findings: 0. One source per fact holds: one variadic merge closure (:80-82) reused at :126; one siblingPath constant (:78) read at :97, :119, :127; moveMain (:84-87) is the only source of main's moved path through diff-tree, called at :125 and :130, and the inline diff-tree in the unreadable row is gone; sibling (:95-100) serves both sibling rows. The pending step returns (want, absent) at :104 and the check at :157-158 matches TestLightPathPublication (light_path_test.go:177, :225-226). Comments at :71-75, :83, :93-94, :110, :121-122 state a why or a contract in the present tense; the longest sentences are 21 words. stale_base_test.go is 212 lines.\n\nAdvice: mergeMain (:88-92) calls landProduction directly without moveMain (incidental); the older-main row (:113-114) moves main inline with later.go because landProduction cannot commit fix.go twice (incidental); \"the reference\" at :121 could read \"the branch reference\".\n\nFindings: 0 new; S1-S4 stay accepted no-op. Worst issue: none open.\nExamined: reviews/commit-merge-parent.md:2216-2221; ticket 5 in full; stale_base_test.go at the tip in full; light_path_test.go:170, :177, :194-196, :225-226; craft-comments; ste-prose.md:17-18. No test or probe run.\nEvidence cursors fetched: --check-current; the spilled diff (116 lines).\n"
+          },
+          "axis": "Standards",
+          "base": "0b64dd54e311e2f2ef2948a4552593c40cb772ad",
+          "tip": "96201315d6a8a3ab0cdc0ce353ae3cea03662150",
+          "finding_ids": [],
+          "supersedes": [
+            "mp3-standards-r1"
+          ]
+        },
+        {
+          "id": "mp3-spec-r2",
+          "performer": "claude:cmp_mp3_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp3_spec_r2",
+            "digest": "sha256:0b9b0be4fba4658c654d2701880c2f04d30ae3b07d94a65d720c3af6f9822f5e",
+            "excerpt": "MP3 Spec axis round 2 (confirming), claude:cmp_mp3_spec_r2, opus/high, one iteration, frozen pair 0b64dd54..4b658680 (chunk tip 96201315), evidence sha256:c3800c8498b8c1edee7124416114f32a3926ed2b8a15b8044e0115a3b10c0640 current=true, clean tree.\n\nP1 accepted no-op: a two-operand git merge-base is symmetric; the repair delta does not touch candidate.go; candidate.go:136 and spec.md:215 give the same base.\nPoint 2 confirmed: the only internal change is stale_base_test.go. light-path-merges-older-main (:110-116): main moves to M1 (fix.go), the branch merges M1, main moves to M2 (later.go); merge-base of M2, HEAD, M1 is M1; read from M1 the change is only change.go and the ticket, so the row admits; a tip reference would show later.go deleted and refuse; the old two-operand base M0 would show fix.go and refuse. light-path-merges-sibling-and-main (:121-128): an octopus merge of S1 (sibling.go) and M1 (fix.go); merge-base of M1, HEAD, S1, M1 is M1; read from M1 the change adds sibling.go, which no ticket covers. Expected values: siblingPath is a constant the fixture writes (:78, :97); moved comes from diff-tree of main's move commit (:84-87).\nPoint 3 confirmed: the spec part of the delta changes only the plan JSON (claude:cmp_t5_rep1); rows MP57-MP61 (spec.md:365-369) unchanged; MP57-MP60 cite TestPendingMergeCandidate (stale_base_test.go:76), MP61 cites TestStaleBaseCandidate (:20-69, body unchanged); the form matches MP62.\nPoint 4 confirmed: pending returns (want, absent) (:104, :149); the check at :157 needs a refusal naming strconv.Quote(want) and not strconv.Quote(absent). The octopus row returns (\"sibling.go\", \"fix.go\"); lightPathCover (light_path.go:81-87) names the first uncovered path; with M1 as the reference that is sibling.go; a first-head-only mutant makes the base M0, fix.go sorts first, and the want check fails. The older-main row returns (\"\", \"\") and :151 requires admission.\n\nFindings: 0. Worst issue: none.\nAdvice: by hand trace the plan probe (merge head as the first operand) now turns red only through the octopus row (merge-base of S1, HEAD, M1 is M0 and the refusal names fix.go), so the probe record must cite that row; no MP row describes the octopus case or the later move of main in its own words (they fall under MP59 and MP57); the axis ran no test, so the green state at the tip rests on the author and repair records.\n\nExamined: the repair delta under internal and the spec; spec.md:208-217, :365-370; candidate.go:40-145; stale_base_test.go (whole); light_path.go:27-99; light_path_test.go:47-69, :238-254; sources.go:78-90; gittest.go:264-273.\nEvidence cursors fetched: --check-current; the spilled diff (129 lines, read in full).\n"
+          },
+          "axis": "Spec",
+          "base": "0b64dd54e311e2f2ef2948a4552593c40cb772ad",
+          "tip": "96201315d6a8a3ab0cdc0ce353ae3cea03662150",
+          "finding_ids": [],
+          "supersedes": [
+            "mp3-spec-r1"
+          ]
+        },
+        {
+          "id": "mp3-coverage-r2",
+          "performer": "claude:cmp_mp3_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp3_coverage_r2",
+            "digest": "sha256:c6122a16009b155dd8349a7fa1c035c7bfc6a6e414018099c4c2d01385dc12cf",
+            "excerpt": "MP3 Coverage axis round 2 (confirming), claude:cmp_mp3_coverage_r2, opus/high, one iteration, frozen pair 0b64dd54..4b658680 (chunk tip 96201315), evidence sha256:c3800c8498b8c1edee7124416114f32a3926ed2b8a15b8044e0115a3b10c0640 current=true. The repair delta touches only stale_base_test.go; candidate.go unchanged.\n\nC1 confirmed closed: row light-path-merges-older-main at stale_base_test.go:111-116 (mergeMain, then later.go on main, expects admission). Probe (swap `base == \"\" || base == revision {` for `base == \"\" || base == revision || (len(heads) > 0 && base != revision) {`): bit, 1 failed (light-path-merges-older-main at :153, \"production path \\\"later.go\\\" is outside the Writes line ..., want admission\"), restored yes.\nC2 confirmed closed: row light-path-merges-sibling-and-main at :123-128 (sibling head, moveMain, merge(t, worktree, head, \"main\"), returns siblingPath, moved); expected values from const siblingPath (:78), moveMain (:84-87), sibling (:95-100); gittest.Output trims, so the absent check is not vacuous. Probe (swap `\"HEAD\"}, heads...)...)` for `\"HEAD\"}, heads[:max(1, len(heads)-1)]...)...)`, drops the last head when several): bit, 1 failed (light-path-merges-sibling-and-main at :158, names \"fix.go\", want \"sibling.go\" and not \"fix.go\"), restored yes.\nFocused run on the tip: TestPendingMergeCandidate|TestStaleBaseCandidate pass, 372 ms, 16 tests.\n\nC21 (auto-fix, confidence 5; the axis states that no-op with a recorded reason is also defensible): a reference that reads only the last merge head stays silent. State: the C2 octopus merge with main first and the sibling last (MERGE_HEAD [T, S]); a last-head-only reference computes merge-base T HEAD S = B and falsely refuses fix.go. Probe (swap for `heads[max(0, len(heads)-1):]`): silent, 7 tests, restored yes, because the C2 row always puts main last (:126). Row that would exist: the same row with merge(t, worktree, \"main\", head), or both orders.\n\nAdvice: computing the base from the heads alone (drop HEAD) is silent on TestPendingMergeCandidate; the difference appears only when HEAD already holds main commits newer than every head (a stricter-direction false refusal); predates the repair. The C1 row commits later.go as a literal because landProduction always writes fix.go. The refusal names only the first offending path, so the want clause already catches a mutant that adds fix.go.\n\nFindings: 1 (C21). Worst issue: C21. Final git status --short: ` M reviews/commit-merge-parent.md` from the orchestrator's concurrent record write; candidate.go unmodified; every probe restored yes.\nExamined: --check-current; the repair delta (spill read in full); reviews/commit-merge-parent.md:2259-2300; candidate.go:110-154; stale_base_test.go:1-129 and :170-173; light_path_test.go lightPathRepo (:47) and write (:243); one focused run and four probes.\nEvidence cursors fetched: the repair-delta spill; no preflight evidence page beyond --check-current; the four probe spills not opened.\n"
+          },
+          "axis": "Coverage",
+          "base": "0b64dd54e311e2f2ef2948a4552593c40cb772ad",
+          "tip": "96201315d6a8a3ab0cdc0ce353ae3cea03662150",
+          "finding_ids": [
+            "C21"
+          ],
+          "supersedes": [
+            "mp3-coverage-r1"
+          ]
+        },
+        {
+          "id": "mp3-coverage-r2b",
+          "performer": "claude:cmp_mp3_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp3_coverage_r2/advice",
+            "digest": "sha256:e3adeeb746cdbc2bafa7093f438c99f811a3617927940ac94d97605290ff9ae2",
+            "excerpt": "MP3 Coverage axis round 2, amended read-only pass, claude:cmp_mp3_coverage_r2, opus/high, frozen pair 0b64dd54..4b658680 (chunk tip 96201315), evidence sha256:c3800c8498b8c1edee7124416114f32a3926ed2b8a15b8044e0115a3b10c0640. No probe and no test this pass.\n\nC1 confirmed closed (row light-path-merges-older-main at stale_base_test.go:111-116; probe swap on the base check: bit, 1 failed at :153, restored yes). C2 confirmed closed (row light-path-merges-sibling-and-main at :123-128, expected values from siblingPath :78, moveMain :84-87, sibling :95-100; probe drops the last head when several: bit, 1 failed at :158, restored yes). Focused run on the tip: 16 tests pass.\n\nC21 accepted as optional advice, with no disposition and no finding ID, under bounded-repair-policy.md:38-40 (\"A later finding that grades only a check from that hardening cycle is optional advice, unless it meets a blocking condition above\"), :34-35 (optional advice is neither a finding nor a repair target), and :43 (no no-op label to obtain a pass). No blocking condition at :27-31 holds: the focused run passes; MP57-MP61 proved in round 1 and the C1 and C2 rows are the chunk's one hardening cycle; candidate.go:136 passes every head to merge-base, which does not depend on argument order; no documented mandatory standard fails.\n\nAdvice: a reference that reads only the last merge head stays silent because the octopus row at :126 always merges main last; a second octopus row that merges main first would pin the other order (reasoned, not run); a merge base computed from the heads alone without HEAD is silent and differs only when HEAD already holds main commits newer than every head (predates the repair); the C1 row's literal later.go is correct because landProduction always writes fix.go; the absent clause is redundant for this fixture.\n\nOpen findings: 0. Worst issue: none open. Final git status --short: ` M reviews/commit-merge-parent.md` from the orchestrator's concurrent record write; candidate.go unmodified.\nRead this pass: bounded-repair-policy.md:20-44. Evidence cursors fetched in the first pass: the repair-delta spill and --check-current.\n"
+          },
+          "axis": "Coverage",
+          "base": "0b64dd54e311e2f2ef2948a4552593c40cb772ad",
+          "tip": "96201315d6a8a3ab0cdc0ce353ae3cea03662150",
+          "finding_ids": [],
+          "supersedes": [
+            "mp3-coverage-r2"
+          ]
         }
       ]
     }
@@ -2148,6 +2238,10 @@ The ticket 2 repair session `claude:cmp_t2_rep1` closed C21 in `cca1013b` with o
 Spec confirmed P21 and raised P31, a record gap: the MP42 spelling probe had prose but no retained run. The orchestrator retains both probe runs at the frozen tip below, and the Spec axis reaffirms P31. MP2 then closes with repair cycle 2 of 2 used and no open finding.
 
 Chunk MP3 round 1 ran three opus/high axes in parallel at `c40769c4` over the frozen pair `0b64dd54..c40769c4`, whose chunk tip is `b82ba53f`. Only the Coverage axis ran probes. Standards returned four `no-op` findings, and Spec returned one `no-op` finding, the symmetric operand order. MP3 uses repair cycle 1 of 2 through one fresh repair session for ticket 5, which takes C1 and C2. Both are new rows in `stale_base_test.go`.
+
+The ticket 5 repair session `claude:cmp_t5_rep1` closed C1 and C2 in `96201315` with two test rows. It refroze MP3 at that tip in `4b658680`. MP3 round 2 ran three opus/high axes over the repair delta `c40769c4..4b658680`. Standards and Spec accepted their `no-op` dispositions, and Coverage confirmed both folds with independent probes.
+
+Coverage raised one more candidate, a last-head-only mutant that the C2 row's argument order leaves silent. The axes agreed that it is optional advice under the hardening-cycle rule of the bounded repair policy, so it carries no finding ID. MP3 closes with repair cycle 1 of 2 used and no open finding.
 
 ## Standards
 
@@ -2297,3 +2391,5 @@ MP3 findings: 2. Worst issue: C1.
 
 - C1 (`auto-fix`, confidence 8): no row pins a merge head that is a strict ancestor of the tip. A rule that grades every pending merge against the tip therefore stays silent. Repair: a row that merges main, then moves main again with a second production file, and expects admission.
 - C2 (`auto-fix`, confidence 7): no row grades more than one merge head, so a first-head-only reference stays silent. Repair: an octopus merge of a sibling that main lacks plus main, with a refusal that names the sibling path.
+
+MP3 round 2: C1 and C2 closed in `96201315`. Optional advice with no finding ID: a second octopus row that merges main first would pin the last-head-only mutant. A merge base from the heads alone without HEAD differs only when HEAD holds main commits newer than every head. The `absent` clause of the `pending` step is redundant for this fixture.
