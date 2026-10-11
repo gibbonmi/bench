@@ -13,7 +13,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
-	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
 func fixture(t *testing.T) string {
@@ -307,11 +306,7 @@ type compositionSnapshot struct{ refs, index, status, worktree, mergeHead string
 
 func compositionState(t *testing.T, root string) compositionSnapshot {
 	t.Helper()
-	mergeHeadPath, err := benchgit.AdminPath(root, "MERGE_HEAD")
-	if err != nil {
-		t.Fatal(err)
-	}
-	mergeHead, err := os.ReadFile(mergeHeadPath)
+	mergeHead, err := os.ReadFile(mergeStatePath(t, root, "MERGE_HEAD"))
 	if err != nil && !os.IsNotExist(err) {
 		t.Fatal(err)
 	}

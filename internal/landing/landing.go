@@ -55,7 +55,11 @@ type ReviewedResult struct {
 	SourceBase, SourceTip, DestinationBase, Commit, Tree string
 }
 
-type composedSnapshot struct{ tree string }
+// composedSnapshot is the composed tree and the merge heads that its name-set check read.
+type composedSnapshot struct {
+	tree       string
+	mergeHeads []string
+}
 
 // ReconcileError names the attributed path whose checkout reconciliation failed. Every
 // return of the reconcile step carries one, so a caller renders the remaining path from
@@ -119,12 +123,14 @@ func New() Owner {
 }
 
 // composeAuthorized runs the prospective half every landing verdict shares: attribute,
-// compose, refuse an empty diff, then authorize the exact composed tree.
+// compose, refuse an empty diff, then authorize the exact composed tree. The snapshot keeps
+// the merge heads that the attribution read. A pending merge waives the empty-diff refusal,
+// because the merge parent is the change.
 func (o Owner) composeAuthorized(ctx context.Context, r Request) ([]string, composedSnapshot, error) {
 	if err := validRequest(r); err != nil {
 		return nil, composedSnapshot{}, err
 	}
-	paths, err := attributedPaths(r.Root, r.Expected, r.Paths)
+	paths, heads, err := attributedPaths(r.Root, r.Expected, r.Paths)
 	if err != nil {
 		return nil, composedSnapshot{}, err
 	}
@@ -132,11 +138,12 @@ func (o Owner) composeAuthorized(ctx context.Context, r Request) ([]string, comp
 	if err != nil {
 		return nil, composedSnapshot{}, err
 	}
+	snapshot.mergeHeads = heads
 	baseTree, err := output(r.Root, "rev-parse", r.Expected+"^{tree}")
 	if err != nil {
 		return nil, composedSnapshot{}, fmt.Errorf("read expected base tree: %w", err)
 	}
-	if snapshot.tree == baseTree {
+	if snapshot.tree == baseTree && len(heads) == 0 {
 		return nil, composedSnapshot{}, NamedPathError{errors.New("nothing to commit")}
 	}
 	if got := o.authorize(ctx, r.Root, snapshot.tree, r.Stdout, r.Stderr); !o.publishes.permits(got.Kind) {
@@ -154,18 +161,40 @@ func (o Owner) DryRun(ctx context.Context, r Request) error {
 }
 
 // Land publishes a commit only when the exact composed tree receives green authorization.
+// Parent 1 is the expected base, and each merge head that the composition read follows in
+// file order. Land reads the pending merge again after authorization and refuses a changed
+// answer before publication. After the ref update, Git ends a recorded merge before the
+// named paths reconcile, so a reconcile failure leaves no pending merge.
 func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 	paths, snapshot, err := o.composeAuthorized(ctx, r)
 	if err != nil {
 		return Result{}, err
 	}
+	heads, err := benchgit.PendingMerge(r.Root)
+	if err != nil {
+		return Result{}, err
+	}
+	if !slices.Equal(heads, snapshot.mergeHeads) {
+		return Result{}, errors.New("pending merge changed during the commit")
+	}
 	tree := snapshot.tree
-	commit, err := output(r.Root, "commit-tree", tree, "-p", r.Expected, "-m", r.Message)
+	args := []string{"commit-tree", tree}
+	for _, parent := range append([]string{r.Expected}, snapshot.mergeHeads...) {
+		args = append(args, "-p", parent)
+	}
+	commit, err := output(r.Root, append(args, "-m", r.Message)...)
 	if err != nil {
 		return Result{}, fmt.Errorf("create landing commit: %w", err)
 	}
 	if err := o.updateRef(r.Root, r.Destination, commit, r.Expected); err != nil {
 		return Result{}, destinationUpdateFailure(r.Root, r.Destination, r.Expected, err)
+	}
+	result := Result{Base: r.Expected, Commit: commit, Tree: tree}
+	// Git owns its merge-state files, so Git removes them.
+	if len(snapshot.mergeHeads) > 0 {
+		if err := run(r.Root, "merge", "--quit"); err != nil {
+			return result, &PublishedUnreconciledError{Commit: commit, Err: fmt.Errorf("end the pending merge: %w", err)}
+		}
 	}
 	if err := o.reconcile(r, paths, snapshot); err != nil {
 		var failed *ReconcileError
@@ -173,9 +202,9 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 		if errors.As(err, &failed) {
 			remainder.Path = failed.Path
 		}
-		return Result{Base: r.Expected, Commit: commit, Tree: tree}, remainder
+		return result, remainder
 	}
-	return Result{Base: r.Expected, Commit: commit, Tree: tree}, nil
+	return result, nil
 }
 
 // LandReviewed composes an exact reviewed source, applies its staged-spec
