@@ -12,6 +12,9 @@ import (
 	"testing"
 )
 
+// landingLabel is the label of the assignment that owns the worktree of landingRepo.
+const landingLabel = "commit-fixture"
+
 // landingRepo builds the minimal linked worktree `bench commit` lands into. It returns
 // that worktree and its pre-landing HEAD.
 func landingRepo(t *testing.T, gateExit int, write func(t *testing.T, root string)) (root, before string) {
@@ -21,8 +24,8 @@ func landingRepo(t *testing.T, gateExit int, write func(t *testing.T, root strin
 	initializeLandingRepo(t, primary, gateExit)
 	root = filepath.Join(t.TempDir(), "linked")
 	runGit(t, primary, "worktree", "add", "-q", "-b", "topic", root)
-	commitmenttest.Register(t, root, "commit-fixture")
-	commitmenttest.Admit(t, root, "commit-fixture", "specs/commit-fixture/spec.md")
+	commitmenttest.Register(t, root, landingLabel)
+	commitmenttest.Admit(t, root, landingLabel, "specs/commit-fixture/spec.md")
 	return prepareLandingCheckout(t, root, write)
 }
 

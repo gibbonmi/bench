@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
@@ -47,7 +48,60 @@ func attributedPaths(root, expected string, raw []string) ([]string, error) {
 		}
 		paths = append(paths, rel)
 	}
-	return unique(paths), nil
+	named := unique(paths)
+	if err := coverPendingMerge(root, expected, named); err != nil {
+		return nil, err
+	}
+	return named, nil
+}
+
+// coverPendingMerge refuses names that omit a path the pending merge changed: a merge commit
+// without that path makes the later landing revert it. An unreadable merge state refuses as
+// a plain error, because the caller cannot clear it by naming paths.
+func coverPendingMerge(root, expected string, names []string) error {
+	heads, err := benchgit.PendingMerge(root)
+	if err != nil || len(heads) == 0 {
+		return err
+	}
+	merged, err := stagedPaths(root, expected, nil)
+	if err != nil {
+		return err
+	}
+	covered, err := stagedPaths(root, expected, names)
+	if err != nil {
+		return err
+	}
+	covers := make(map[string]bool, len(covered))
+	for _, path := range covered {
+		covers[path] = true
+	}
+	var omitted []string
+	for _, path := range merged {
+		if !covers[path] {
+			omitted = append(omitted, strconv.Quote(path))
+		}
+	}
+	if len(omitted) > 0 {
+		return NamedPathError{errors.New("pending merge changed paths that the commit does not name: " + strings.Join(omitted, " "))}
+	}
+	return nil
+}
+
+// stagedPaths lists each index path that differs from base, limited to what names cover
+// when names is not empty. Git's pathspec decides what a name covers, as it does for compose
+// and reconcile, and the NUL framing keeps each path byte for byte.
+func stagedPaths(root, base string, names []string) ([]string, error) {
+	args := []string{"diff-index", "--cached", "--name-only", "--no-renames", "-z", base, "--"}
+	for _, name := range names {
+		args = append(args, ":(literal)"+name)
+	}
+	out, err := outputRaw(root, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list the paths of the pending merge: %w", err)
+	}
+	// A NUL ends each path, so the last field is always empty.
+	paths := strings.Split(string(out), "\x00")
+	return paths[:len(paths)-1], nil
 }
 
 // ResolveAttributedPaths returns the safe repository-relative ownership fence for raw.

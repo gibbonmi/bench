@@ -1,0 +1,149 @@
+package commit
+
+import (
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
+	"github.com/gibbonmi/bench/internal/sanitize"
+)
+
+// The paths of a pending merge journey: both sides change mergeConflictPath, the incoming
+// commit modifies tracked.txt, and the incoming commit can add mergeAddedPath and
+// mergeHostilePath, which holds a space, a glob character, an ESC byte, and a newline.
+const (
+	mergeConflictPath = "conflict.txt"
+	mergeAddedPath    = "added.txt"
+	mergeHostilePath  = "esc\x1b name*\n.txt"
+)
+
+// mergeNameSetRefusal opens the error line of a name set that omits a merged path.
+const mergeNameSetRefusal = "error: pending merge changed paths that the commit does not name: "
+
+// startPendingMerge starts a conflicted merge of an incoming commit in checkout, and it
+// returns HEAD before the merge. It first resets the staged tracked.txt that
+// prepareLandingCheckout leaves. The incoming commit on a side branch modifies tracked.txt,
+// changes the conflicted path, and adds each path of added; the checkout's own commit
+// changes the conflicted path too. A conflicted merge exits 1, so the merge runs through
+// its own call, as stageHandMerge in internal/worktree does; no shared helper crosses the
+// package boundary.
+func startPendingMerge(t *testing.T, checkout string, added ...string) string {
+	t.Helper()
+	runGit(t, checkout, "reset", "-q", "--hard", "HEAD")
+	runGit(t, checkout, "checkout", "-q", "-b", "incoming")
+	for _, path := range append([]string{"tracked.txt", mergeConflictPath}, added...) {
+		mustWrite(t, filepath.Join(checkout, path), "incoming\n", 0o644)
+	}
+	runGit(t, checkout, "add", "-A")
+	runGit(t, checkout, "commit", "-qm", "incoming")
+	runGit(t, checkout, "checkout", "-q", "-")
+	mustWrite(t, filepath.Join(checkout, mergeConflictPath), "ours\n", 0o644)
+	runGit(t, checkout, "add", mergeConflictPath)
+	runGit(t, checkout, "commit", "-qm", "ours")
+	merge := exec.Command("git", "-C", checkout, "merge", "--no-commit", "incoming")
+	if out, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(out), "CONFLICT") {
+		t.Fatalf("merge = %v, %s; want the conflict", err, out)
+	}
+	return strings.TrimSpace(string(runGit(t, checkout, "rev-parse", "HEAD")))
+}
+
+// refusedLine fails t unless the commit at root refused with exit 1, printed one error line
+// and the route of the registered face, and left HEAD at before. It returns the error line
+// and the printed route steps.
+func refusedLine(t *testing.T, root, before, face string, code int, stderr string) (string, []string) {
+	t.Helper()
+	lines := strings.Split(strings.TrimSuffix(stderr, "\n"), "\n")
+	next, printed := printedNext(stderr)
+	if code != 1 || len(lines) != 2 || !printed {
+		t.Fatalf("commit = (%d, %q), want exit 1, one error line, and one next= line", code, stderr)
+	}
+	var registered refusalroute.Face
+	for _, candidate := range refusalroute.Inventory() {
+		if candidate.Name == face {
+			registered = candidate
+		}
+	}
+	steps := routetest.Steps(t, registered, next, "", nil)
+	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+		t.Fatalf("HEAD moved from %s to %s", before, after)
+	}
+	return lines[0], steps
+}
+
+// TestCommitRefusesAnUnreadableMergeState proves that a directory at MERGE_HEAD refuses the
+// commit through the reviewer's handback route, although the name set covers every merged
+// path. (Coverage row MP25.)
+func TestCommitRefusesAnUnreadableMergeState(t *testing.T) {
+	root, _ := landingRepo(t, 0, func(*testing.T, string) {})
+	before := startPendingMerge(t, root)
+	mergeHead := adminPath(t, root, "MERGE_HEAD")
+	mustRemove(t, mergeHead)
+	mustMkdirAll(t, mergeHead)
+	code, _, stderr := runCommand(t, root, "-m", "m", "--", mergeConflictPath, "tracked.txt")
+	if line, _ := refusedLine(t, root, before, faceHandback, code, stderr); !strings.HasPrefix(line, "error: read pending merge: ") {
+		t.Fatalf("error line = %q, want the read pending merge refusal", line)
+	}
+}
+
+// TestCommitRefusesAnIncompleteMergeNameSet proves that a commit during a pending merge
+// refuses a name set that omits a modified or an added merged path. The refusal quotes each
+// omitted path on its one error line, and its route ends with the caller's own commit.
+// (Coverage rows MP32-MP34, MP41, and MP62.)
+func TestCommitRefusesAnIncompleteMergeNameSet(t *testing.T) {
+	quoted := sanitize.ShellQuote
+	rerun := func(paths ...string) string {
+		return callerCommit(quoted(landingLabel), append([]string{"-m", quoted("m"), "--"}, paths...)...)
+	}
+	for _, row := range []struct {
+		name  string
+		paths []string
+		// omitted is each omitted path as the refusal quotes it.
+		omitted, rerun string
+	}{
+		{"modified path omitted", []string{mergeConflictPath, mergeAddedPath, mergeHostilePath}, `"tracked.txt"`,
+			rerun(quoted(mergeConflictPath), quoted(mergeAddedPath), "<path>")},
+		{"added path omitted", []string{mergeConflictPath, "tracked.txt", mergeHostilePath}, `"added.txt"`,
+			rerun(quoted(mergeConflictPath), quoted("tracked.txt"), "<path>")},
+		{"two paths omitted", []string{mergeConflictPath, mergeAddedPath}, `"esc\x1b name*\n.txt" "tracked.txt"`,
+			rerun(quoted(mergeConflictPath), quoted(mergeAddedPath))},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root, _ := landingRepo(t, 0, func(*testing.T, string) {})
+			before := startPendingMerge(t, root, mergeAddedPath, mergeHostilePath)
+			code, _, stderr := runCommand(t, root, append([]string{"-m", "m", "--"}, row.paths...)...)
+			line, steps := refusedLine(t, root, before, faceNamedPath, code, stderr)
+			if line != mergeNameSetRefusal+row.omitted || steps[len(steps)-1] != row.rerun {
+				t.Fatalf("refusal = (%q, %q), want (%q, a route that ends with %q)", line, steps, mergeNameSetRefusal+row.omitted, row.rerun)
+			}
+		})
+	}
+}
+
+// TestDryRunRefusesAnIncompleteMergeNameSet proves that a rehearsal refuses the name set
+// that the commit refuses. (Coverage row MP39.)
+func TestDryRunRefusesAnIncompleteMergeNameSet(t *testing.T) {
+	root, _ := landingRepo(t, 0, func(*testing.T, string) {})
+	before := startPendingMerge(t, root)
+	code, _, stderr := runCommand(t, root, "--dry-run", "-m", "m", "--", mergeConflictPath)
+	if line, _ := refusedLine(t, root, before, faceNamedPath, code, stderr); line != mergeNameSetRefusal+`"tracked.txt"` {
+		t.Fatalf("error line = %q, want the refusal of the omitted tracked.txt", line)
+	}
+}
+
+// TestMergeNameSetRefusalPrecedesCommitment proves that in an unbound planning worktree,
+// whose production change the commitment refuses, the merge name-set refusal prints in
+// place of the commitment refusal. (Coverage row MP40.)
+func TestMergeNameSetRefusalPrecedesCommitment(t *testing.T) {
+	root := planningCommitRepo(t)
+	before := startPendingMerge(t, root)
+	code, stdout, stderr := runCommand(t, root, "-m", "m", "--", mergeConflictPath)
+	if code != 1 || !strings.Contains(stderr, mergeNameSetRefusal+`"tracked.txt"`) || strings.Contains(stderr, "commitment") {
+		t.Fatalf("commit = (%d, %q, %q), want exit 1 with the merge name-set refusal and no commitment refusal", code, stdout, stderr)
+	}
+	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+		t.Fatalf("HEAD moved from %s to %s", before, after)
+	}
+}

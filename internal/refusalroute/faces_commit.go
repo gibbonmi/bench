@@ -42,8 +42,9 @@ var commitFaces = []Face{
 	},
 	{
 		// A named path or the file at it does not compose: the path is absent, escapes the
-		// repository, or names nothing to commit, or the Go file does not parse. The caller
-		// corrects the paths or the files in its own worktree. The landing owns the sentence.
+		// repository, or names nothing to commit, the Go file does not parse, or the paths
+		// omit a path that a pending merge changed. The caller corrects the paths or the
+		// files in its own worktree. The landing owns the sentence.
 		Verb:      Commit,
 		Name:      "commit-named-path",
 		Authority: Agent,
