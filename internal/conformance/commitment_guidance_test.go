@@ -28,6 +28,7 @@ func TestCommitmentGuidance(t *testing.T) {
 		drain      = ".agents/commands/bench-drain.md"
 		finalCheck = ".agents/commands/bench-final-check.md"
 		router     = ".agents/commands/bench.md"
+		writeSpec  = ".agents/commands/bench-write-spec.md"
 		prefix     = "commitment guidance: "
 	)
 	ticket := "The coordinator verifies the done-claim against the ticket's acceptance rows and the gate."
@@ -54,6 +55,7 @@ func TestCommitmentGuidance(t *testing.T) {
 		remove("build rule pointer", guide, " `/bench-implement-spec` states the build rule.", "operating guide dropped the pointer to the build rule"),
 		remove("next-outcome start", guide, " At a phase close, do the preparation and run `bench commitment start` from the outcome's own worktree; never hand me a `bench` command.", "operating guide dropped the next-outcome start"),
 		remove("binding-only limit", guide, " That plan changes only the deliverable binding; a reorder or a new admission still needs my direction.", "operating guide dropped the binding-only limit"),
+		remove("spec-stage binding grant", guide, " A spec-stage close binds its approved spec the same way and cites my sign-off as the decision.", "operating guide dropped the spec-stage binding grant"),
 		remove("drain next-outcome start", drain, "After the landing, the coordinator starts the `commitment_outlook` outcome under the next-outcome rule in `.bench/BENCH.md`.", "drain dropped its next-outcome start"),
 		remove("drain spec intake route", drain, "The commitment rule in `.bench/BENCH.md` decides whether spec intake starts; a drain approval never admits it.", "drain dropped its route to the commitment rule"),
 		remove("drain delegate route", drain, "A drained light-path item needs no commitment: the drain dispatches it under the light-path fix rule in `.bench/BENCH.md`.", "drain dropped the delegate route for a light-path item"),
@@ -66,7 +68,10 @@ func TestCommitmentGuidance(t *testing.T) {
 		remove("final-check closure", finalCheck, "Verified closure is part of delivery. ", "final check dropped verified closure from delivery"),
 		remove("implementation start", ".agents/commands/bench-implement-spec.md", "It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams.", "implementation dropped its commitment start"),
 		remove("implementation light-path exemption", ".agents/commands/bench-implement-spec.md", "A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.", "implementation dropped the light-path start exemption"),
-		remove("staged spec", ".agents/commands/bench-write-spec.md", " A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.", "spec authoring dropped the planning-only staged spec"),
+		remove("staged spec", writeSpec, " A staged spec is planning work: `bench preflight build <slug> --plan-only` validates it, and its delivery waits for `bench commitment start`.", "spec authoring dropped the planning-only staged spec"),
+		remove("one-landing close", writeSpec, "After sign-off, close the spec stage in this order, so one spec-less landing carries the staged spec and its binding.", "spec authoring dropped the one-landing close"),
+		remove("binding from the inventory row", writeSpec, "After the last spec edit, copy the spec's `bench commitment inventory` row into one new deliverable binding of the current policy.", "spec authoring dropped the binding from the inventory row after the last spec edit"),
+		remove("start command as the handoff next command", writeSpec, "From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.", "spec authoring dropped the start command as the handoff next command"),
 		remove("debug route", ".agents/commands/bench-debug.md", " Diagnosis needs no commitment start, but each commit of the repro or the fix follows the commitment rule in `.bench/BENCH.md`.", "debug dropped its route to the commitment rule"),
 		remove("router outlook", router, "take its `commitment_outlook` row", "router dropped the commitment outlook"),
 		remove("setup commitment", ".agents/commands/bench-setup-repo.md", "Delivery work waits for the initial commitment. ", "setup dropped the initial commitment"),

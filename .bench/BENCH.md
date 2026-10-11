@@ -141,7 +141,7 @@ Behavior defects run focused regression checks, then the gate.
 
 **Start the next outcome yourself.** The next eligible outcome in the approved order needs no new direction, because the closing phase's approval covers its start. At a phase close, do the preparation and run `bench commitment start` from the outcome's own worktree; never hand me a `bench` command. A row that needs a spec routes to `/bench-write-spec`.
 
-If that outcome has no bound deliverable and its row says `Next: ticket`, write and land that ticket folder first. Then bind it through `bench commitment plan` and `bench commitment approve`, and cite the closing phase's approval as the decision. That plan changes only the deliverable binding; a reorder or a new admission still needs my direction.
+If that outcome has no bound deliverable and its row says `Next: ticket`, write and land that ticket folder first. Then bind it through `bench commitment plan` and `bench commitment approve`, and cite the closing phase's approval as the decision. A spec-stage close binds its approved spec the same way and cites my sign-off as the decision. That plan changes only the deliverable binding; a reorder or a new admission still needs my direction.
 
 **A light-path change needs no commitment.** It carries one tickets-only folder with exactly one ticket, and it lands with that folder as `--spec`. Its production paths stay inside that ticket's `Writes:` line. It may remove a roadmap row that no committed outcome pins as a source; a pinned row changes only through its outcome.
 
