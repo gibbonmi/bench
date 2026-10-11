@@ -8,7 +8,7 @@ Decision source: named reviewed artifact `roadmap/FT258.md` at `1a947e86`, with 
 
 Audience: every repository that links the kit
 
-Verification log: pending
+Verification log: pending — the spec review accepted in 1 iteration, and the ticket review is pending
 
 ## Problem
 
@@ -34,7 +34,7 @@ The commitment grading of a merge commit reads the merged commits of the default
 ## User stories
 
 Line: opus / xhigh
-Implementation-line reason: MP2 is the hardest material chunk. It changes the composition, publication, and completion steps of the landing owner, and real Git merges prove each step. Its tickets cross owner seams, and a repair round there costs over 100k tokens, so the scorecard routes them to Opus at xhigh. MP1 also crosses two owners, while MP3 edits one owner package and may start at medium.
+Implementation-line reason: MP2 is the hardest material chunk. It changes the composition, publication, and completion steps of the landing owner, and real Git merges prove each step. Its tickets cross owner seams, and a repair round there costs over 100k tokens, so the scorecard routes them to Opus at xhigh. Each ticket author starts on this line, and `craft-line` owns any effort change inside that session.
 Harder chunks: MP2
 
 ### The merge parent
@@ -112,6 +112,10 @@ Harder chunks: MP2
 
 The spec uses these terms only in its own text. It adds no CONTEXT.md entry.
 
+D1 names the merged-path listing.
+Git aborts a merge when the index differs from HEAD (`git help merge`, PRE-MERGE CHECKS, Git 2.43.0), so the listing starts as the record of the merge.
+A path that the caller stages after the merge also joins the listing, and the caller then names that path too.
+
 ### Closed decisions
 
 The `FT258-merge-parent` criteria (`.bench/commitment.json:452-465`) state the outcome:
@@ -122,7 +126,7 @@ The `FT258-merge-parent` criteria (`.bench/commitment.json:452-465`) state the o
 
 The reviewer decided two forks in this phase on 2026-10-10:
 
-- D1: During a pending merge, `bench commit` refuses unless the name set covers every merged path. The refusal names each omitted path. A named directory covers the merged paths below it, as `git add -A` composes them.
+- D1: During a pending merge, `bench commit` refuses unless the named paths include every path that the merge changed, as `git diff-index --cached HEAD` lists them. The refusal lists each omitted path through the existing `commit-named-path` face. The caller still names every path, so status discovery grants no write.
 - D2: During a pending merge, the commitment grading of the commit reads the branch's own change from `git merge-base <default tip> HEAD <each merge head>`. Only commits on the default branch count as the default branch's own, so the changes that a merged sibling made still grade as the branch's.
 
 The row sentence at `roadmap/FT258.md:17` ("A conflict-resolution lane commit does not complete that merge state.") describes the defect before this fix.
@@ -159,10 +163,15 @@ Its three callers then share the rule: `ResolveAttributedPaths`, `CandidateTree`
 The D1 refusal therefore prints before a commitment refusal.
 
 The merged paths come from `git diff-index --cached --name-only --no-renames -z <base>`, where the base is the expected commit.
-The NUL framing keeps each name byte for byte, so no C-quoting reaches the comparison.
-The listing names an unmerged path once, and it names a deleted path.
+The NUL framing keeps each name byte for byte, so no C-quoting reaches the comparison (observation 7).
+The listing names an unmerged path once, and it names a deleted path (observations 1 and 7).
 With `--no-renames`, a merged rename appears as its deleted path and its added path.
-A name covers a merged path when it equals that path, or when the merged path starts with the name and a `/`.
+
+The covered paths come from the same listing, limited by one `:(literal)` pathspec for each name.
+Git's pathspec therefore decides what a name covers, as it does for `compose` and `reconcile` (`internal/landing/attribution.go:154`, `:177`).
+A directory name covers the merged paths below it, and `pkg` does not cover `pkgx/a.go` (observation 7).
+The omitted paths are the merged paths that the limited listing does not print.
+D1 runs after the name checks of `attributedPaths` and before `compose`.
 
 An uncovered merged path raises `landing.NamedPathError`, so the commit prints the `commit-named-path` face.
 The sentence starts with `pending merge changed paths that the commit does not name:`.
@@ -199,6 +208,8 @@ Every failure after the ref update returns `landing.PublishedUnreconciledError`,
 
 `branchReference` reads the pending merge of the store root.
 With merge heads, it runs `git merge-base <default tip> HEAD <merge head>...`.
+`git help merge-base` defines that form as the base of the first commit and a hypothetical merge of the other commits (Git 2.43.0).
+
 A reader refusal leaves the default tip as the reference, which is the stricter grading that the function already applies to a failure.
 Without a merge head, it keeps `git merge-base HEAD <default tip>`.
 The rest of `branchReference` stays: a base equal to the tip gives the tip, and a policy identity mismatch gives the tip.
@@ -213,7 +224,7 @@ A failure after publication raises `commit-published-unreconciled`.
 No new refusal literal holds `next=`, `next[`, `run bench `, or `; then ` (`internal/conformance/refusal_route_bypass_test.go`).
 
 The `committed{published_commit,path_count}` record, the dry-run lines, the help text, and the `bench help` row stay unchanged.
-`internal/commit/commit.go` stays unchanged, because it holds 400 of 400 lines, and the growth ratchet reds a file that grows past its limit (`internal/structure/structure.go:283-339`).
+`internal/commit/commit.go` stays unchanged, because it is at its line budget, and the growth ratchet reds a file that grows past its limit (`internal/structure/structure.go:283-339`).
 The landing faces stay unchanged: `composition-conflict-pending` keeps `git merge --continue`, and `handMerge` keeps its bare `bench commit` step.
 
 `.bench/BENCH-reference.md` gains two sentences after the fast-lane note in its Command Notes.
@@ -257,7 +268,7 @@ These seams receive tests:
 No system test joins the build.
 The command-level journeys already cross the public seam with real Git, and the system suite caps its shared repositories at three.
 A new test file in `internal/commit` or `internal/landing` adds only advisory crowding debt, because the growth ratchet grades files and no directory count.
-`internal/worktree/land_journey_test.go` holds 422 lines over its limit, so no ticket adds a line there.
+`internal/worktree/land_journey_test.go` is over its line budget, so no ticket adds a line there.
 The gate observes the feature through the package suites, and the fast lane runs the focused packages at each ticket commit.
 
 ### Seam diagram
@@ -318,7 +329,7 @@ The gate observes the feature through the package suites, and the fast lane runs
 | MP35 | 22 | `Owner.Land` refuses a pending merge whose name set omits the conflicted path | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | A merged-path list built from stage-0 index entries alone misses the unmerged path. |
 | MP36 | 23 | `Owner.Land` refuses a pending merge whose name set omits a path that the merge deleted | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | A merged-path list built from worktree files misses a deleted path. |
 | MP37 | 25 | `Owner.Land` publishes when a named directory covers every merged path below it | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | An exact-match coverage rule refuses a merged subtree that its directory names. |
-| MP38 | 26 | `Owner.Land` refuses when `pkg` is the only name for a merged path under `pkgx/` | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | A prefix match without the separator reads `pkg` as a cover of `pkgx/a.go`. |
+| MP38 | 26 | With merged paths `pkg/b.go` and `pkgx/a.go`, `Owner.Land` refuses the name set `pkg` and names `pkgx/a.go` | planned TestLandRefusesAnIncompleteMergeNameSet in internal/landing/pending_merge_test.go | A prefix match without the separator reads `pkg` as a cover of `pkgx/a.go`. |
 | MP39 | 27 | `bench commit --dry-run` refuses an incomplete merge name set with exit 1 | planned TestDryRunRefusesAnIncompleteMergeNameSet in internal/commit/merge_parent_test.go | A rule that runs only in `Owner.Land` lets the rehearsal pass a commit that refuses. |
 | MP40 | 28 | In an unbound planning worktree, the incomplete-merge refusal prints in place of the commitment refusal | planned TestMergeNameSetRefusalPrecedesCommitment in internal/commit/merge_parent_test.go | A rule in `Owner.composeAuthorized` alone runs after `AuthorizeCandidate`, so the commitment refusal wins. |
 | MP41 | 29 | The refusal prints an omitted path that holds a space, a glob character, an ESC byte, and a newline in Go-quoted form on one line | planned TestCommitRefusesAnIncompleteMergeNameSet in internal/commit/merge_parent_test.go | A raw path splits or corrupts the one-line refusal. |
@@ -507,6 +518,7 @@ The guard refused a later top-level raw `git reset` in the same repository, and 
 4. Observation C: an ours resolution gave a tree equal to the HEAD tree, and the two-parent `commit-tree` succeeded.
 5. Observation D: `git merge --quit` with no pending merge exited 0.
 6. Observation E: an octopus merge wrote one MERGE_HEAD line for each head, and `git rev-parse MERGE_HEAD` answered only the first.
+7. Observation F ran at the top level with only `git add` and `git diff-index`, which the guard allows. It used the observation-1 worktree, which still held the unmerged entries of `conflict.txt` after `git merge --quit`. `git diff-index --cached --name-only --no-renames -z HEAD` printed `conflict.txt` once, beside the added and the modified path. The coordinator then staged `pkg/b.go`, `pkgx/a.go`, and a name that holds a space, a newline, and `*`. The `-z` listing printed the raw newline byte, and the newline-framed listing printed that name C-quoted. The listing limited by `:(literal)pkg` printed `pkg/b.go` and not `pkgx/a.go`, and `:(literal)name*` printed nothing.
 
 ### Not verified
 
@@ -525,7 +537,7 @@ The build first observes MP19 red at the public `Command` seam, before the first
 Each independent expectation then records one red through a named omission or a behavioral swap.
 
 The central author probe omits the merge heads from the `commit-tree` arguments in `internal/landing/landing.go`. MP20 must fail through `bench probe`.
-The coordinator probe swaps the coverage separator test in `internal/landing/attribution.go` for a bare prefix test. MP38 must fail.
+The coordinator probe swaps the merged listing for the covered listing in the D1 complement in `internal/landing/attribution.go`, so no merged path reads as omitted. MP32 must fail.
 The two probes differ in kind and in site, and each one must report a restored subject.
 
 Run `bench test --package ./internal/git --package ./internal/landing --package ./internal/commit` for MP1 and MP2.
@@ -534,3 +546,18 @@ Run `bench test --check root-conformance`, `bench test --check git-plumbing-owne
 Run `bench test --check docs-currency-workflow` for the `.bench/BENCH-reference.md` change.
 Run `bench test --check skip-ownership` when a new test can skip, such as a FIFO fixture.
 The coordinator runs the whole gate only at the landing.
+
+### Review chronology
+
+An independent Fable high-effort review accepted the spec in iteration 1 on 2026-10-10 at commit `58295efb`.
+It returned seven non-blocking findings, and this acceptance folds six of them:
+
+- Git's literal pathspec now decides name coverage, so the coverage rule has one source with `compose`.
+- The Terms section states that the D1 listing starts as the record of the merge.
+- Observation F records the exact listing flags over an unmerged path and a hostile name.
+- The spec states two line budgets without copied line counts.
+- MP38 names its fixture paths, and the spec places D1 between the name checks and `compose`.
+- The line reason leaves each effort change to `craft-line`.
+
+The seventh finding reads `roadmap/FT258.md:17` as the reviewer's veto point, and the flagged addition E1 carries that reading.
+The review recommended that each flagged addition stay, and it found no unlisted addition.
