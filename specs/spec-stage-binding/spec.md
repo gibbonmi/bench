@@ -304,53 +304,61 @@ The orchestrator reconciles the final acceptance after the SB3 checkpoint.
 
 ### Completion plan
 
-This version-1 completion plan is a planning verification inventory, not a dispatch plan.
-Its commands are future obligations, not executed proof.
-The ticket names are planned, and the slicing replaces them with the sliced names.
+Run line, by reviewer direction on 2026-10-11: opus / xhigh for each ticket author, opus / high for each review axis, and opus / high for each consultation. The reviewer defers every build question to the consultant, so no reviewer stop occurs.
+
+This version 2 completion plan declares the delegated run and one verification inventory for each ticket.
+Each probe field names the mutation kind, its site, and the test that turns red, and the author derives the exact mutated text.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "spec-stage-binding-build-20261011",
+    "orchestrator_session": "claude:ssb-orchestrator-20261011",
+    "author_limit": 1,
+    "assignments": {
+      "1-bind-a-new-deliverable-from-its-publishing-tree.md": [],
+      "2-name-the-binding-state-in-the-handoff.md": [],
+      "3-state-the-one-landing-close.md": []
+    }
+  },
   "chunks": [
     {
       "id": "SB1",
       "tickets": ["1-bind-a-new-deliverable-from-its-publishing-tree.md"],
       "verification": [
-        {"id": "commitment-packages", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest"},
-        {"id": "commit-package", "command": "bench test --package ./internal/commit"},
-        {"id": "worktree-package", "command": "bench test --package ./internal/worktree"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"},
-        {"id": "git-plumbing-owner", "command": "bench test --check git-plumbing-owner"},
-        {"id": "ordinary-build-census", "command": "bench test --check ordinary-build-census"}
+        {"id": "t1-approval-focused", "ticket": "1-bind-a-new-deliverable-from-its-publishing-tree.md", "command": "bench test --package ./internal/commitment/repository --run 'TestAuthorizeCandidateAdmitsAHeadHeldBinding|TestAuthorizeCandidateRefusesAChangedBoundSpec|TestAdmitPublicationGradesANewBindingAtTheComposedTree'", "probe": "Swap the candidate tree for the default-branch revision in the new-deliverable branch of approvedTransition in internal/commitment/repository/candidate.go, so that the approval check reads a new deliverable at the default-branch tip. TestAuthorizeCandidateAdmitsAHeadHeldBinding and TestAdmitPublicationGradesANewBindingAtTheComposedTree turn red."},
+        {"id": "t1-plan-focused", "ticket": "1-bind-a-new-deliverable-from-its-publishing-tree.md", "command": "bench test --package ./internal/commitment --run 'TestHeadBinding'"},
+        {"id": "t1-journey-focused", "ticket": "1-bind-a-new-deliverable-from-its-publishing-tree.md", "command": "bench test --package ./internal/worktree --run 'TestCommitmentSpecStageLandsSpecAndBinding|TestPackageTestCountPin'"},
+        {"id": "t1-floor", "ticket": "1-bind-a-new-deliverable-from-its-publishing-tree.md", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest --package ./internal/commit --package ./internal/worktree --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t1-root-conformance", "ticket": "1-bind-a-new-deliverable-from-its-publishing-tree.md", "command": "bench test --check root-conformance"},
+        {"id": "t1-git-plumbing-owner", "ticket": "1-bind-a-new-deliverable-from-its-publishing-tree.md", "command": "bench test --check git-plumbing-owner"},
+        {"id": "t1-ordinary-build-census", "ticket": "1-bind-a-new-deliverable-from-its-publishing-tree.md", "command": "bench test --check ordinary-build-census"}
       ]
     },
     {
       "id": "SB2",
       "tickets": ["2-name-the-binding-state-in-the-handoff.md"],
       "verification": [
-        {"id": "handoff-packages", "command": "bench test --package ./internal/handoff --package ./internal/handoffdoc"},
-        {"id": "commitment-packages", "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest"},
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "t2-handoff-focused", "ticket": "2-name-the-binding-state-in-the-handoff.md", "command": "bench test --package ./internal/handoff --run 'TestSectionRendersTheSpecBinding|TestSectionRendersAnUnavailableBinding|TestSectionRendersOnePairPerLiveSpec'", "probe": "Swap the default-branch policy read for a read of the calling worktree's own .bench/commitment.json at the one policy read of a bench handoff run in internal/handoff, so that a binding that only the worktree holds reads as bound. The SB25 case of TestSectionRendersTheSpecBinding turns red."},
+        {"id": "t2-shape-focused", "ticket": "2-name-the-binding-state-in-the-handoff.md", "command": "bench test --package ./internal/conformance --run 'TestHandoffShapeNamesTheSectionGrammar'"},
+        {"id": "t2-floor", "ticket": "2-name-the-binding-state-in-the-handoff.md", "command": "bench test --package ./internal/handoff --package ./internal/handoffdoc --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t2-root-conformance", "ticket": "2-name-the-binding-state-in-the-handoff.md", "command": "bench test --check root-conformance"}
       ]
     },
     {
       "id": "SB3",
       "tickets": ["3-state-the-one-landing-close.md"],
       "verification": [
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
-        {"id": "prose", "command": "bench test --check prose-mechanics"},
-        {"id": "skills-index", "command": "bench test --check skills-index-command-adapters"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
+        {"id": "t3-guidance-focused", "ticket": "3-state-the-one-landing-close.md", "command": "bench test --package ./internal/conformance --run 'TestCommitmentGuidance'", "probe": "Omit the SB33 anchor row, which requires the step 6 sentence that passes the start command to bench handoff --next, from internal/anchors/registry_commitment.go, so that the registry no longer requires that sentence in the Exit handoff. The SB33 remove case of TestCommitmentGuidance turns red."},
+        {"id": "t3-slicing-focused", "ticket": "3-state-the-one-landing-close.md", "command": "bench test --package ./internal/anchors --run 'TestTicketSlicingPasses'"},
+        {"id": "t3-floor", "ticket": "3-state-the-one-landing-close.md", "command": "bench test --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance"},
+        {"id": "t3-guidance", "ticket": "3-state-the-one-landing-close.md", "command": "bench test --check docs-currency-workflow"},
+        {"id": "t3-budgets", "ticket": "3-state-the-one-landing-close.md", "command": "bench test --check guidance-prose-budgets"},
+        {"id": "t3-prose", "ticket": "3-state-the-one-landing-close.md", "command": "bench test --check prose-mechanics"},
+        {"id": "t3-skills-index", "ticket": "3-state-the-one-landing-close.md", "command": "bench test --check skills-index-command-adapters"},
+        {"id": "t3-root-conformance", "ticket": "3-state-the-one-landing-close.md", "command": "bench test --check root-conformance"}
       ]
     }
   ],
