@@ -1,5 +1,5 @@
 ---
-description: Route from the repository's observed state into the one current Bench action.
+description: Route from the repository's observed state into the one current Bench action. Use when you do not know the next Bench action.
 ---
 
 # /bench
