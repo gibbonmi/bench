@@ -151,9 +151,9 @@ An empty file refuses.
 The reader returns the merge heads in file order.
 Each refusal carries the sentence prefix `read pending merge:`.
 
-Three consumers read through this owner: the landing owner, `branchReference` (`internal/commitment/repository/candidate.go:128-137`), and `sourceMergePending` (`internal/worktree/land_refusal.go:82-91`).
+Three consumers read through this owner: the landing owner, `branchReference` (`internal/commitment/repository/candidate.go:128-137`), and `sourceMergePending` (`internal/worktree/land_refusal.go:80-83`).
 `sourceMergePending` answers true only when the reader returns a merge head.
-A reader refusal answers false, which keeps the undecided policy of its comment at `internal/worktree/land_refusal.go:78-81`.
+A reader refusal answers false, which keeps the undecided policy of its comment at `internal/worktree/land_refusal.go:76-79`.
 The old file read in `sourceMergePending` goes away.
 
 ### The complete name set
@@ -169,7 +169,7 @@ The listing names an unmerged path once, and it names a deleted path (observatio
 With `--no-renames`, a merged rename appears as its deleted path and its added path.
 
 The covered paths come from the same listing, limited by one `:(literal)` pathspec for each name.
-Git's pathspec therefore decides what a name covers, as it does for `compose` and `reconcile` (`internal/landing/attribution.go:154`, `:177`).
+Git's pathspec therefore decides what a name covers, as it does for `compose` and `reconcile` (`internal/landing/attribution.go:213`, `:234`).
 A directory name covers the merged paths below it, and `pkg` does not cover `pkgx/a.go` (observation 7).
 The omitted paths are the merged paths that the limited listing does not print.
 D1 runs after the name checks of `attributedPaths` and before `compose`.
@@ -183,7 +183,7 @@ The rule applies only during a pending merge, so a staged unnamed path stays all
 
 `Owner.composeAuthorized` keeps the merge heads that its D1 check reads, so `Owner.Land` and the recheck use that one list.
 A pending merge waives the `nothing to commit` refusal, because the merge parent is the change.
-Without a pending merge, that refusal stays as it is (`internal/landing/landing.go:139-141`).
+Without a pending merge, that refusal stays as it is (`internal/landing/landing.go:146-148`).
 `Owner.Land` publishes `commit-tree <tree> -p <expected> -p <merge head>...`, with the merge heads in file order.
 `Owner.DryRun` applies the same D1 rule and the same waiver, and it publishes nothing.
 
@@ -230,7 +230,7 @@ The landing faces stay unchanged: `composition-conflict-pending` keeps `git merg
 
 `.bench/BENCH-reference.md` gains two sentences after the fast-lane note in its Command Notes.
 The proposed text is: "During a pending merge, a worktree `bench commit` requires every path that the merge changed. It records each merge head as a further parent and then ends the merge."
-The anchors of that file stay intact, including the Command Notes anchor at line 280 and the route anchor at line 307.
+The anchors of that file stay intact, including the Command Notes anchor at line 280 and the route anchor at line 310.
 
 `CHANGELOG.md` gains one `Fixed` entry for this delivery under `## [Unreleased]`, and the commit record entry stays unchanged.
 
@@ -347,7 +347,7 @@ The gate observes the feature through the package suites, and the fast lane runs
 | MP39 | 27 | `bench commit --dry-run` refuses an incomplete merge name set with exit 1 | `internal/commit/merge_parent_test.go` (`TestDryRunRefusesAnIncompleteMergeNameSet`) | A rule that runs only in `Owner.Land` lets the rehearsal pass a commit that refuses. |
 | MP40 | 28 | In an unbound planning worktree, the incomplete-merge refusal prints in place of the commitment refusal | `internal/commit/merge_parent_test.go` (`TestMergeNameSetRefusalPrecedesCommitment`) | A rule in `Owner.composeAuthorized` alone runs after `AuthorizeCandidate`, so the commitment refusal wins. |
 | MP41 | 29 | The refusal prints an omitted path that holds a space, a glob character, an ESC byte, and a newline in Go-quoted form on one line | `internal/commit/merge_parent_test.go` (`TestCommitRefusesAnIncompleteMergeNameSet`) | A raw path splits or corrupts the one-line refusal. |
-| MP42 | 30 | `Owner.Land` publishes when the name set spells a merged path that holds a space, a glob character, a newline, and a non-ASCII byte | `internal/landing/pending_merge_test.go` (`TestLandRefusesAnIncompleteMergeNameSet`) | A newline-framed `git diff-index` read C-quotes that name, so the correct name set refuses. |
+| MP42 | 30 | `Owner.Land` publishes when the name set spells a merged path that holds a space, a glob character, a newline, and a non-ASCII byte | `internal/landing/pending_merge_test.go` (`TestLandRefusesAnIncompleteMergeNameSet`) | A rule that changes the name before it becomes a pathspec refuses the correct literal spelling; MP41 holds the framing catch. |
 | MP43 | 31 | `Owner.Land` without a pending merge publishes while an unnamed path stays staged | `internal/landing/landing_test.go` (`TestLandComposesOnlyNamedPathsAndCASesExpectedBase`) | A coverage rule that applies without a pending merge refuses this staged foreign path. |
 | MP44 | 33 | After the merge commit, a second `bench commit` of a new change publishes one parent | `internal/commit/merge_parent_test.go` (`TestCommitRecordsTheMergeParent`) | A commit that leaves MERGE_HEAD in place records the merge head again. |
 | MP45 | 34 | After the merge commit, `git ls-files -u` prints nothing | `internal/landing/pending_merge_test.go` (`TestLandEndsThePendingMerge`) | A reconcile that skips unmerged entries leaves stage 1 to 3 entries behind. |
@@ -395,6 +395,7 @@ The refusal rows cover each fault before publication, inside authorization, and 
 - **Won't handle**: a merged gitlink — the listing names it as one path, and the coverage rule of `landing.attributedPaths` treats it as any other path.
 - **Won't handle**: a type change of a merged path — the name-only listing carries no status letter, so the coverage rule of MP32 serves it.
 - **Won't handle**: a merge of an annotated tag — Git writes the tag object ID to MERGE_HEAD, so the reader refuses it and `bench commit` fails closed.
+- **Won't handle**: a merged path that the caller unstages before the commit — D1 reads the index as decided, and the landing review grades the result.
 - **Won't handle**: a merge in the primary checkout — `bench commit` refuses the primary checkout before any merge read (`internal/commit/commit.go:116-123`).
 
 ## Ownership fences
