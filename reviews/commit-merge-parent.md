@@ -1664,6 +1664,28 @@
           "supersedes": [
             "mp2-spec-r2"
           ]
+        },
+        {
+          "id": "mp2-spec-r3b",
+          "performer": "claude:cmp_mp2_spec_r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "aeb6aa53b0b6b6b07aff0a70df38bd3cecc724b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp2_spec_r3/reaffirm",
+            "digest": "sha256:d2117ef9ed530a24dcc32c5c971f435c91877dd89c12e1823e41ef08a34a82c4",
+            "excerpt": "MP2 Spec axis round 3, P31 reaffirmation pass (read-only), claude:cmp_mp2_spec_r3, opus/high, frozen pair 004e4e94..f10aeedf (chunk tip cca1013b), record commit 7dad2729 read (105 lines added to reviews/commit-merge-parent.md only), clean tree.\n\n1. P21 confirmed (landing.go:145-147 is the empty-diff refusal block).\n2. P22 record evidence: P31 confirmed closed.\n3. C21 repair row confirmed (pending_merge_test.go:69 states the :(literal) rule of spec lines 171-174, fixture-derived expectations, no production change, no MP row).\n4. Seam cells MP19-MP56 and MP62 confirmed; MP51, MP55, MP56 keep the review-owned form.\n\nP31 confirmed closed: record lines 1838-1854 retain the MP42 spelling-swap run (bit, failed 1, restored yes; baseline 8 tests; failure hostile_path_spelled_literally at pending_merge_test.go:78, Land refuses and names \"a b[x]*\\\\né.txt\" where the row wants a publication), which is the red the MP42 why cell claims; the spill 1791703477562998030-fe03b600eb0a1623.out matches with focused_exit_code=1. The C21 fold check is also closed: lines 1875-1890 retain the prefix-drop swap (bit, failed 1, restored yes; failure glob-shaped_name_covers_only_itself at :85).\n\nFindings: 0 open. Worst issue: none.\nAdvice: the blocks named the probes in prose and not by command (the orchestrator then added a `$ bench probe ...` line above each block); both tree rows read dirty during the runs because the record edit was in progress, and restored=yes holds.\nRead this pass: git rev-parse HEAD; git show --stat 7dad2729; git status --short; record searches; reviews/commit-merge-parent.md:1827-1893; the P31 probe spill in full. No test or probe run. Evidence cursors fetched: none.\n"
+          },
+          "axis": "Spec",
+          "base": "004e4e94019144653de1ec8e179abe015b704242",
+          "tip": "cca1013b089a78e230bb6f15d9f3266ce0ab0ffa",
+          "finding_ids": [],
+          "supersedes": [
+            "mp2-spec-r3"
+          ]
         }
       ]
     }
@@ -1836,9 +1858,10 @@ MP2 findings: 1. Worst issue: P1 (documentation only).
 
 - P21 (`auto-fix`, confidence 9, round 2): the `landing.go` empty-diff citation was one line off after the repair. Closed in `1539f297`.
 - P22 (`no-op`, confidence 5, round 2): the record claimed an MP42 probe that no run retained. The orchestrator ran the `:(literal)` spelling swap at `54dc1636`, and it bit the hostile-path row.
-- P31 (evidence-only, confidence 8, round 3): the MP42 spelling probe had no retained run. The orchestrator reran it on the clean frozen tip `f10aeedf` (source `cca1013b`), and it bit the hostile-path row with the subject restored:
+- P31 (evidence-only, confidence 8, round 3): the MP42 spelling probe had no retained run. The orchestrator reran it on the clean frozen tip `f10aeedf` (source `cca1013b`), and it bit the hostile-path row with the subject restored. The tree row reads dirty because the round 3 Spec entry of this record was uncommitted during the run:
 
 ```text
+$ bench probe internal/landing/attribution.go --swap 'args = append(args, ":(literal)"+name)' --with 'args = append(args, ":(literal)"+strings.Trim(strconv.Quote(name), "\""))' --package ./internal/landing --run '^TestLandRefusesAnIncompleteMergeNameSet$'
 tree[1]{target,head,dirty}:
   commit-merge-parent-build,f10aeedf2dc9151d660516d1c7a33f9eefdec7a7,true
 probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
@@ -1875,6 +1898,7 @@ MP2 findings: 3. Worst issue: C1.
   Closed in `cca1013b`. The orchestrator reran the prefix-drop swap on the clean frozen tip `f10aeedf`, and it bit the new row with the subject restored:
 
 ```text
+$ bench probe internal/landing/attribution.go --swap 'args = append(args, ":(literal)"+name)' --with 'args = append(args, name)' --package ./internal/landing --run '^TestLandRefusesAnIncompleteMergeNameSet$'
 tree[1]{target,head,dirty}:
   commit-merge-parent-build,f10aeedf2dc9151d660516d1c7a33f9eefdec7a7,true
 probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:
