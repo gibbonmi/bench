@@ -25,7 +25,7 @@ Keep the rewrite inside that budget, or raise the budget in the same change with
 Update `.agents/commands/bench-review-implementation.md:99`, `:217`, and `:244` for the fold record, the resolution review, and the landing base after a fold.
 Retire the clause at `:99` that says the review chain refuses a `main` merge between two chunks.
 Give that clause its own forbid row, and move the anchor at `registry_chunk_chain.go:56`.
-`.agents/commands/bench-final-check.md:24` names the moved-destination route and no `bench doctor` route for a moved destination.
+The `.agents/commands/bench-final-check.md` paragraph that holds line 24 names the moved-destination route and no `bench doctor` route for a moved destination.
 
 Add Command Notes to `.bench/BENCH-reference.md` for the lease, the window, the gap, and the override.
 They also name `bench commitment block` as the reviewer's stop for a stalled build that still holds the window.

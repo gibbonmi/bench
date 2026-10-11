@@ -10,7 +10,12 @@ A landing holds one lease on its destination ref in the intent ledger from compo
 A second landing on the same destination refuses before composition and names the owner's assignment id.
 The refusal routes the operator to wait for that landing and then rerun.
 
-First add the three record lists to `CommitmentState` under the spec's Records decision: `leases`, `gaps`, and `overrides`, each `omitempty`.
+First add the three record lists to `CommitmentState` under the spec's Records decision, each `omitempty`:
+
+- `leases`: one `LandingLease{Destination, Assignment}` for each leased destination ref
+- `gaps`: one `ChunkGap{Milestone, Outcome, Chunk, Open, Last}` for each outcome that has dispatched or checkpointed a chunk
+- `overrides`: one `LandingOverride{Assignment, Reason}` for each assignment that holds an unconsumed override
+
 `ValidateCommitment` refuses each of these records:
 
 - a second lease on one destination

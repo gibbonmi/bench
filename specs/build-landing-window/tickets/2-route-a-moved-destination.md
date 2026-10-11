@@ -13,6 +13,7 @@ Three refusals take the new face:
 - a `TipMovedError` from the compare-and-swap at publish (`internal/landing/gitexec.go:22-31`)
 - an authorization result with the completion proof cause, when the destination base is not an ancestor of the source tip
 
+The recheck at `landing.go:283-285` compares only a checkout fingerprint today, so add a comparison of the destination ref with the destination base.
 A post-gate checkout change with an unmoved ref keeps `land-handback`.
 A completion proof cause over a source that holds the destination base also routes to `land-handback`.
 
