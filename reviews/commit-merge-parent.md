@@ -450,9 +450,9 @@
     {
       "id": "MP2",
       "base": "004e4e94019144653de1ec8e179abe015b704242",
-      "tip": "eb7c791c83709ec159c6e8dd98592170b8bedc7e",
-      "plan_digest": "sha256:26c4daa7f1486d87e7341202b339d5fe7ef02fdf1a4d1fdfbc7b0f8f723304f3",
-      "source_digest": "d8900dd4fbecce79b12367bfe698ef54d459d9ad",
+      "tip": "83d43fbaf4cbf79f571cafdfeb054cc5ad434120",
+      "plan_digest": "sha256:a04f42ffc9dfb7f7f9d0fa07008db4015b2556030e54abef1763c39e19541c70",
+      "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
       "acceptance_rows": [
         "MP24",
         "MP25",
@@ -800,6 +800,125 @@
             "ref": "claude-agent:cmp_t3/tip/t3-ordinary-build-census.txt",
             "digest": "sha256:51e86f07ca98f62bd4d268aaae757990575f783d0a043c16bccff0b641adfb86",
             "excerpt": "$ bench worktree exec \"commit-merge-parent-build\" -- bench test --check ordinary-build-census\nexit 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,bc5312c81de0dcf8d42e6384a71ef69346fc9a1d,false\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,318,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-ordinary-build-census",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-landing-focused-cmp_t3_rep1",
+          "performer": "claude:cmp_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t3_rep1/t3-landing-focused.txt",
+            "digest": "sha256:69b288c285abc8e5a2c5a30c1663f40cda51b4609a3794137ae3cc7d8cb92922",
+            "excerpt": "$ bench test --package ./internal/landing --run 'TestLandRecordsEachMergeHeadAsAParent|TestComposeAfterMergeCommitReadsTheMergedBase|TestLandRefusesAMergeStateChangeDuringAuthorization|TestLandPublishesAMergeWithAnUnchangedTree|TestLandEndsThePendingMerge|TestLandReportsPublishedMergeWhenReconciliationFails|TestLandDetachedHEADHasOneExpectedParent|TestLandPreAuthorizationRefusalTable'\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,83d43fbaf4cbf79f571cafdfeb054cc5ad434120,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,627,28\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n\n$ bench probe internal/landing/landing.go --swap 'append([]string{r.Expected}, snapshot.mergeHeads...)' --with '[]string{r.Expected}' --package ./internal/landing --run '^TestLandRecordsEachMergeHeadAsAParent$'\nexit_code=1\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,83d43fbaf4cbf79f571cafdfeb054cc5ad434120,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/landing.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,^TestLandRecordsEachMergeHeadAsAParent$,passed,3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,fail,123,3\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLandRecordsEachMergeHeadAsAParent/octopus_merge,\"pending_merge_test.go:113: commit and parents = \\\"8b85c33f3ac25d8cb56c91a3615c2ccefaf83eba e7bf41ab64d9c45b59043cd857d35560bb3496d3\\\", want \\\"8b85c33f3ac25d8cb56c91a3615c2ccefaf83eba e7bf41ab64d9c45b59043cd857d35560bb3496d3 b5f323234c3fe9780e2… (303 bytes)\",1\n  github.com/gibbonmi/bench/internal/landing,TestLandRecordsEachMergeHeadAsAParent/one_merge_head,\"pending_merge_test.go:113: commit and parents = \\\"657256f7881fd7eb2767f8bbd13ca4d44f25e6fb e7bf41ab64d9c45b59043cd857d35560bb3496d3\\\", want \\\"657256f7881fd7eb2767f8bbd13ca4d44f25e6fb e7bf41ab64d9c45b59043cd857d35560bb3496d3 1f21e0cce56cd255e9b… (262 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-landing-focused",
+          "command": "bench test --package ./internal/landing --run 'TestLandRecordsEachMergeHeadAsAParent|TestComposeAfterMergeCommitReadsTheMergedBase|TestLandRefusesAMergeStateChangeDuringAuthorization|TestLandPublishesAMergeWithAnUnchangedTree|TestLandEndsThePendingMerge|TestLandReportsPublishedMergeWhenReconciliationFails|TestLandDetachedHEADHasOneExpectedParent|TestLandPreAuthorizationRefusalTable'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the merge-head -p arguments from the commit-tree call of Owner.Land in internal/landing/landing.go, so that the publication records one parent during a pending merge. TestLandRecordsEachMergeHeadAsAParent turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:cmp_t3_rep1/t3-landing-focused.txt",
+              "digest": "sha256:69b288c285abc8e5a2c5a30c1663f40cda51b4609a3794137ae3cc7d8cb92922",
+              "excerpt": "$ bench test --package ./internal/landing --run 'TestLandRecordsEachMergeHeadAsAParent|TestComposeAfterMergeCommitReadsTheMergedBase|TestLandRefusesAMergeStateChangeDuringAuthorization|TestLandPublishesAMergeWithAnUnchangedTree|TestLandEndsThePendingMerge|TestLandReportsPublishedMergeWhenReconciliationFails|TestLandDetachedHEADHasOneExpectedParent|TestLandPreAuthorizationRefusalTable'\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,83d43fbaf4cbf79f571cafdfeb054cc5ad434120,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,627,28\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n\n$ bench probe internal/landing/landing.go --swap 'append([]string{r.Expected}, snapshot.mergeHeads...)' --with '[]string{r.Expected}' --package ./internal/landing --run '^TestLandRecordsEachMergeHeadAsAParent$'\nexit_code=1\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,83d43fbaf4cbf79f571cafdfeb054cc5ad434120,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/landing/landing.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,^TestLandRecordsEachMergeHeadAsAParent$,passed,3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,fail,123,3\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLandRecordsEachMergeHeadAsAParent/octopus_merge,\"pending_merge_test.go:113: commit and parents = \\\"8b85c33f3ac25d8cb56c91a3615c2ccefaf83eba e7bf41ab64d9c45b59043cd857d35560bb3496d3\\\", want \\\"8b85c33f3ac25d8cb56c91a3615c2ccefaf83eba e7bf41ab64d9c45b59043cd857d35560bb3496d3 b5f323234c3fe9780e2… (303 bytes)\",1\n  github.com/gibbonmi/bench/internal/landing,TestLandRecordsEachMergeHeadAsAParent/one_merge_head,\"pending_merge_test.go:113: commit and parents = \\\"657256f7881fd7eb2767f8bbd13ca4d44f25e6fb e7bf41ab64d9c45b59043cd857d35560bb3496d3\\\", want \\\"657256f7881fd7eb2767f8bbd13ca4d44f25e6fb e7bf41ab64d9c45b59043cd857d35560bb3496d3 1f21e0cce56cd255e9b… (262 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t3-commit-focused-cmp_t3_rep1",
+          "performer": "claude:cmp_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t3_rep1/t3-commit-focused.txt",
+            "digest": "sha256:9b8d9fb2cd0c350c8c3908596f06c2af6103b452c991974e0023722441a6b26d",
+            "excerpt": "$ bench test --package ./internal/commit --run 'TestCommitRecordsTheMergeParent'\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,83d43fbaf4cbf79f571cafdfeb054cc5ad434120,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,224,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-commit-focused",
+          "command": "bench test --package ./internal/commit --run 'TestCommitRecordsTheMergeParent'",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-floor-cmp_t3_rep1",
+          "performer": "claude:cmp_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t3_rep1/t3-floor.txt",
+            "digest": "sha256:5eaf7eeb599bf29000b9a0c82547e1275d18379a1e755afceef526ef96c4af6b",
+            "excerpt": "$ bench test --package ./internal/git --package ./internal/landing --package ./internal/commit\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,83d43fbaf4cbf79f571cafdfeb054cc5ad434120,false\npackages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,9767,117\n  github.com/gibbonmi/bench/internal/git,pass,1311,171\n  github.com/gibbonmi/bench/internal/landing,pass,8218,220\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t3-floor",
+          "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-root-conformance-cmp_t3_rep1",
+          "performer": "claude:cmp_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t3_rep1/t3-root-conformance.txt",
+            "digest": "sha256:112ccba215724ede4a68753a9b350703416469bc6976220731a9e9b6083b139c",
+            "excerpt": "$ bench test --check root-conformance\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,83d43fbaf4cbf79f571cafdfeb054cc5ad434120,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15671,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-git-plumbing-owner-cmp_t3_rep1",
+          "performer": "claude:cmp_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t3_rep1/t3-git-plumbing-owner.txt",
+            "digest": "sha256:84f92cf01355486a1ac29227818e2308358e3d76e8cc0b3d5db0d996e66cec10",
+            "excerpt": "$ bench test --check git-plumbing-owner\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,83d43fbaf4cbf79f571cafdfeb054cc5ad434120,false\ncheck[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,96,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t3-git-plumbing-owner",
+          "command": "bench test --check git-plumbing-owner",
+          "exit_code": 0
+        },
+        {
+          "id": "t3-ordinary-build-census-cmp_t3_rep1",
+          "performer": "claude:cmp_t3_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d75d13e7419a494ab08ca5090d3bf6b660deff16",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t3_rep1/t3-ordinary-build-census.txt",
+            "digest": "sha256:50aaf5dd5a580b3093585a881d98e60ee57d70f62b5761960891f9da5d4a37ad",
+            "excerpt": "$ bench test --check ordinary-build-census\nexit_code=0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,83d43fbaf4cbf79f571cafdfeb054cc5ad434120,false\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,318,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "t3-ordinary-build-census",
           "command": "bench test --check ordinary-build-census",
