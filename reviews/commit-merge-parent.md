@@ -378,6 +378,72 @@
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "mp1-standards-r2",
+          "performer": "claude:cmp_mp1_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp1_standards_r2",
+            "digest": "sha256:86b7af5200687c3ed985be27f7d1572b87c1f11466bce00d99f79636d3529b90",
+            "excerpt": "MP1 Standards axis round 2 (confirming), claude:cmp_mp1_standards_r2, opus/high, one iteration, frozen pair 342975e3..4e6fd43a (chunk tip a329d3ab), evidence sha256:f7212784ac42b5449c862c82e97af8a19cbbe7db9685196db1f9a0d6c68b94cf current=true, clean tree.\n\nS1: confirmed closed. newLinkedCheckout no longer exists under internal/ (rg finds nothing). Each former call site builds its checkout from newRepo plus linkedWorktree (checkout_test.go:54-55, :71-72, :134, :173-174); linkedWorktree stays the only linked-worktree fixture (admin_readers_test.go:34-40). The merges at checkout_test.go:84-87 run on a detached HEAD.\nS2: confirmed closed (evidence only). The expectation stays independently authored at checkout_test.go:48; reviews/commit-merge-parent.md:415-430 keeps the prefix-swap probe on the clean tip f7b5027b: bit, swap, failed 10, restored yes, selection ^TestPendingMergeRefuses with a passing baseline of 12.\n\nNew findings on the repair delta f7b5027b..4e6fd43a: 0. Worst issue: none.\n\nGrade of the repair delta: doc comments at checkout_test.go:67-69, :168-171, and admin_readers_test.go:70-73 are present tense with no narration and no FT tag; the why comment at checkout_test.go:88-90 states the constraint (both octopus orders stay). No new helper; six raw rev-parse spellings now call independentRevParse and three new calls use it; no raw \"rev-parse\" spelling is left. The -c user.email flags match the package idiom (testhelpers_test.go:62, facts_test.go, refs_test.go). The MP15 table at admin_readers_test.go:78-82 reuses three malformed inputs as incidental fixture data. Budgets: checkout_test.go 197, admin_readers_test.go 153; land_journey_test.go and parallel_census_test.go unchanged by the repair. Plan commit 28590065 touches only spec.md (the repair assignment and the Won't handle line at spec.md:397); 2f304925, 4606f4ae, and 4e6fd43a touch only reviews/commit-merge-parent.md; a329d3ab touches only the two _test.go files.\n\nAdvice: the repair report says seven rev-parse conversions, the axis counts six plus three new calls; the doc comment at checkout_test.go:168-171 names \"trailing white space\" and could name the two-final-newlines case.\n\nExamined: the repair delta and its log with stats; checkout_test.go (all); admin_readers_test.go:1-60 (git); worktree admin_readers_test.go:55-94; journey_test.go:155-163; reviews/commit-merge-parent.md:404-447; craft-comments; rg sweeps for newLinkedCheckout, \"rev-parse\", independentRevParse, and the identity flags.\nEvidence cursors fetched: the repair-delta diff spill (197 lines, all), the log spill (16 lines, all), the rg spill (15 lines, all); no preflight evidence page beyond --check-current.\n"
+          },
+          "axis": "Standards",
+          "base": "342975e31979d4a8ea1708282aa4a13ce7a8ef8a",
+          "tip": "a329d3ab9339c2c88dad79d95f48de811e0e0737",
+          "finding_ids": [],
+          "supersedes": [
+            "mp1-standards-r1"
+          ]
+        },
+        {
+          "id": "mp1-spec-r2",
+          "performer": "claude:cmp_mp1_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp1_spec_r2",
+            "digest": "sha256:2b79fa8c1c4935980e52754cd021fca55bdfb770db9464cd73585a9e2193ade2",
+            "excerpt": "MP1 Spec axis round 2 (confirming), claude:cmp_mp1_spec_r2, opus/high, one iteration, frozen pair 342975e3..4e6fd43a (chunk tip a329d3ab), evidence sha256:f7212784ac42b5449c862c82e97af8a19cbbe7db9685196db1f9a0d6c68b94cf current=true, clean tree.\n\n1. Production behavior unchanged, no unrequested behavior: confirmed. The repair delta lists four files: two test files (internal/git/checkout_test.go, internal/worktree/admin_readers_test.go) and two records (reviews/commit-merge-parent.md; specs/commit-merge-parent/spec.md with the claude:cmp_t1_rep1 assignment and one Won't handle line). No production .go file changes. The linked fixture moves to a detached HEAD through linkedWorktree, a fixture detail.\n2. New cases state approved rules with fixture-derived expectations: confirmed. Relative gitdir: step (checkout_test.go:109-118) computes the path with filepath.Rel from --show-toplevel and --git-dir and expects the fixture heads (spec.md:379). Octopus orders (:98, :99-102) expect the argument order of each merge call, so a sorting reader fails one step for any IDs (spec.md:151, MP03). Annotated tag (:178, :185) plants git rev-parse annotated, the unpeeled tag object (spec.md:148-149). Trailing space, CRLF, and \"\\n\\n\" (:186-188) match spec.md:147-148. Every refusal goes through requirePendingMergeRefusal (:45-51) with its own literal prefix (spec.md:152). MP15 (worktree admin_readers_test.go:78-89): subtests empty, main\\n, and a tree ID from gitOutput HEAD^{tree}, each expects false (spec.md:155-156).\n3. New Won't handle line (spec.md:397): confirmed. It follows from the reader rule at spec.md:148-149 and story 12; the refusal authors no one-parent commit, so story 3 and the .pending criterion hold; it contradicts none of stories 11-19, D1, or D2. The Git fact (git merge <annotated tag> writes the tag object ID to MERGE_HEAD) comes from the axis's memory of builtin/merge.c write_merge_heads, not from a run in this pass.\n4. Rows MP01-MP18 cite existing tests in the citation form: confirmed (spec.md:309-326); the six named tests exist at checkout_test.go:70, :133, :172, worktree admin_readers_test.go:62, :74, and land_journey_test.go:278.\n\nFindings: 0. Worst issue: none.\n\nAdvice: spec.md:323 describes MP15 as only \"an empty MERGE_HEAD\" and its why-cell describes the removed read; final reconciliation could widen the behavior cell. spec.md:397 could name the remedy (merge the tag's peeled commit). The doc comment of TestSourceMergePendingIsFalseWhenUndecided cites \"Coverage row GR12\" while MP16 also cites that test; this predates the delta.\n\nExamined: --check-current output; the full repair delta with stat and log; spec.md:1-170 and 300-399; checkout_test.go in full; worktree admin_readers_test.go:59-90; the helpers independentRevParse, linkedWorktree, gitOutput, mustAdminPath; an existence sweep of the six cited tests.\nEvidence cursors fetched: the diff spill (501 lines, all) and the helper spill (49 lines, all). Not fetched: the spec heading-grep spill and any preflight evidence page beyond --check-current.\n"
+          },
+          "axis": "Spec",
+          "base": "342975e31979d4a8ea1708282aa4a13ce7a8ef8a",
+          "tip": "a329d3ab9339c2c88dad79d95f48de811e0e0737",
+          "finding_ids": [],
+          "supersedes": [
+            "mp1-spec-r1"
+          ]
+        },
+        {
+          "id": "mp1-coverage-r2",
+          "performer": "claude:cmp_mp1_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_mp1_coverage_r2",
+            "digest": "sha256:25f993b472905014e769d70b784181fa7a270c371c6fbf54add4e894651a8642",
+            "excerpt": "MP1 Coverage axis round 2 (confirming), claude:cmp_mp1_coverage_r2, opus/high, one iteration, frozen pair 342975e3..4e6fd43a (chunk tip a329d3ab), evidence sha256:f7212784ac42b5449c862c82e97af8a19cbbe7db9685196db1f9a0d6c68b94cf current=true, dirty=false. The repair changed no production file.\n\nFocused runs on the tip: bench test --package ./internal/git --run '^TestPendingMerge' passed, 23 tests; bench test --package ./internal/worktree --run '^TestSourceMergePending' passed, 5 tests.\n\nC1 confirmed closed: step \"relative gitdir pointer\" at checkout_test.go:109-118 expects heads from independentRevParse of the fixture commits. Probe (swap AdminPath for a reader that joins the raw gitdir: value unresolved, run ^TestPendingMergeReadsEveryHead$): bit, failed 1 (relative_gitdir_pointer), restored yes.\nC2 confirmed closed: step \"octopus in reverse order\" at :99-102 expects [heads[1], heads[0]]. Probe (append then descending insertion sort): bit, failed 3 (octopus, unterminated last line, relative gitdir pointer), restored yes.\nC3 confirmed closed: case \"annotated tag\" at :185 plants the unpeeled tag object ID from independentRevParse(t, linked, \"annotated\"). Probe (swap commit == line for commit != \"\"): bit, failed 2 (annotated_tag, abbreviated_commit_ID), restored yes.\nC4 confirmed closed: cases \"trailing space\", \"carriage return\", \"two final newlines\" at :186-188. Probe (swap strings.Split(content, \"\\n\") for strings.Fields(content)): bit, failed 3 (exactly those cases), restored yes.\nC5 confirmed closed: subtests \"branch name\" and \"tree\" at worktree admin_readers_test.go:78-89, the tree bytes from gitOutput rev-parse HEAD^{tree}. Probe (land_refusal.go:82, swap the return for one that also answers true when the error holds \"holds the line\", run ^TestSourceMergePending): bit, failed 2 (branch_name, tree), restored yes; the empty case and GR12 stayed green.\n\nNew findings on the repair delta: 0. Worst issue: none. Final git status --short: empty.\n\nAdvice: the steps of TestPendingMergeReadsEveryHead depend on each other (checkout_test.go:88), so a run filtered to one later step alone fails; this shape comes from round 1. No real git merge of an annotated tag checks the Won't handle claim at spec.md:397; the test plants the bytes, and the behavior is fail-closed either way.\n\nExamined: the full repair diff (501 lines); checkout.go, checkout_test.go, worktree admin_readers_test.go (whole); land_refusal.go:1-25 and :60-99; git.go:220-234; reviews/commit-merge-parent.md:406-446.\nEvidence cursors fetched: --check-current only (no evidence pages); the diff spill (whole). The five probe spill files were not read; each inline verdict and failure row was complete.\n"
+          },
+          "axis": "Coverage",
+          "base": "342975e31979d4a8ea1708282aa4a13ce7a8ef8a",
+          "tip": "a329d3ab9339c2c88dad79d95f48de811e0e0737",
+          "finding_ids": [],
+          "supersedes": [
+            "mp1-coverage-r1"
+          ]
         }
       ]
     }
@@ -406,6 +472,8 @@
 ## Repair state
 
 Chunk MP1 round 1 ran three opus/high axes in parallel at `f7b5027b` over the frozen pair `342975e3..f7b5027b`. Only the Coverage axis ran probes, and the tree was clean after every return. MP1 uses repair cycle 1 of 2 through one fresh repair session for ticket 1, which takes S1, C1, C2, C3, C4, and C5. S2 is a record gap with no code change, so the orchestrator closes it below as evidence-only work. Under `--auto-approve`, the reviewer approved every repair round and fence expansion in advance.
+
+The ticket 1 repair session `claude:cmp_t1_rep1` closed S1 and C1 to C5 in `a329d3ab` with tests only. It refroze MP1 at that tip in `4e6fd43a`. MP1 round 2 ran three opus/high axes in parallel over the repair delta `f7b5027b..4e6fd43a`. Every axis confirmed each fold, the Coverage axis bit each fold with an independent probe, and no axis found a new finding. MP1 closes with repair cycle 1 of 2 used and no open finding.
 
 ## Standards
 
