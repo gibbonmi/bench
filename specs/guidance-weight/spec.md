@@ -324,6 +324,7 @@ Each slicer adds its chunk to this plan when it writes the chunk's tickets, beca
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
         {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
+        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
         {"id": "prose", "command": "bench test --check prose-mechanics"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
