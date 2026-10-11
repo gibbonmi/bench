@@ -732,9 +732,9 @@
     {
       "id": "SB2",
       "base": "a95df2915a4c887558a96b00539ee878b9e5fb30",
-      "tip": "666e240c433cef52b4ab7ac40c27740a4e884e97",
+      "tip": "429c1f3a78208f4c56dfdfc673619da745022b65",
       "plan_digest": "sha256:cbb0b99854c104a0adee3eb06e6934661bd1a83b84906e3f94c7211ee19c366f",
-      "source_digest": "cb37c3d60fa0ebc02a02e036095b7c35100b829e",
+      "source_digest": "454a11d795015e0c6a4b6bf9a4f056152764f1f1",
       "acceptance_rows": [
         "SB23",
         "SB24",
@@ -981,6 +981,96 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sb2-standards-r2",
+          "performer": "claude:ssb_sb2_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "454a11d795015e0c6a4b6bf9a4f056152764f1f1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb2_standards_r2",
+            "digest": "sha256:323e26a4251639c0cfa28c548e879f75d91813fb3da6960b33630425f72d7867",
+            "excerpt": "claude:ssb_sb2_standards_r2 (opus/high) — SB2 round 2 Standards axis over 1350865e..77a5da6a (chunk tip 666e240c)\n\nFindings: 1. Worst: S21.\n\nS1 confirmed closed: ticket 2 lines 80-95 ask for pre-edit reds for SB23-SB28 and SB44, an SB29 red, and six probes; the record covers each: SB23, SB24, SB26, SB28 pre-edit failure lines in \"Retained red evidence of SB2\"; SB29 at handoff_single_source_test.go:183; SB30, SB26, SB27, SB28, SB44 probe commands with failure lines in \"Retained reruns at the SB2 repair tip\" (bit, restored=yes each); SB23 also the orchestrator probe at 56333365; the central probe excerpt shows restored=yes.\nS2 confirmed closed: render_test.go:53 reads \"The pins carry the values a resuming session acts on.\" (10 words); the new sentences at lines 108-109 have 11 and 9 words; the lead sentence 22; every sentence timeless.\n\nS21 (auto-fix, confidence 5): the edited line 53 still opens with provenance: \"// HS2 and HS10, stories 4 and 13. The pins carry ...\". Rule: craft-comments lines 44-46 (\"Treat an identifier as provenance ... Remove existing provenance only when editing its line. State the constraint first\"); craft-review exempts only untouched legacy tags. rg over specs, internal/coverage, internal/handoff finds HS2/HS10 only in this file. Confidence 5 because round 1 prescribed exactly this text. Repair: drop \"HS2 and HS10, stories 4 and 13. \" and rewrap.\n\nThe new case \"SB23 binding outside the active milestone\" (render_test.go:120-132) raises no finding: its expected id is read from the fixture policy inside EditPolicy (line 127); the Write plus SeedRowless pair shared with SB26 is incidental repetition.\n\nAdvice: the record sentence that reds the C1 case under Coverage probe A gives neither the command nor restored=yes (SB23's own probe at 56333365 does). SB24's only red is the pre-edit absence of the line, which the ticket decided (line 82).\n\nExamined: check-current current=true at 77a5da6a, clean; git diff 1350865e..77a5da6a (spill read in full, 336 lines); render_test.go:48-197, ticket 2 lines 76-97, craft-review SKILL, finding-discipline, craft-comments; one rg for the HS tags; no test or probe.\n"
+          },
+          "axis": "Standards",
+          "base": "a95df2915a4c887558a96b00539ee878b9e5fb30",
+          "tip": "429c1f3a78208f4c56dfdfc673619da745022b65",
+          "finding_ids": [
+            "S21"
+          ],
+          "supersedes": [
+            "sb2-standards-r1"
+          ]
+        },
+        {
+          "id": "sb2-spec-r2",
+          "performer": "claude:ssb_sb2_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "454a11d795015e0c6a4b6bf9a4f056152764f1f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb2_spec_r2",
+            "digest": "sha256:91fb28261fa917ef319e730b0230a35dbe11f2389db1ec9c6da069dcb2aab6d7",
+            "excerpt": "claude:ssb_sb2_spec_r2 (opus/high) — SB2 round 2 Spec axis over 1350865e..77a5da6a (chunk tip 666e240c)\n\nNo new finding.\n\nP1 reaffirmed: ticket 2 lines 80-95 ask for nine reds, and all nine are in the tree with failure lines in \"Retained red evidence of SB2\" and \"Retained reruns at the SB2 repair tip\": pre-edit SB23, SB24 and SB25, SB26, SB27 and SB44, SB28; SB29 after the constant and token and before the Shape edit; probe reds at 666e240c for SB30, SB26, SB27, SB28, SB44 with commands and restored=yes; the central swap reds SB25, SB27, SB44. Every probe swap site checked against the frozen tree (facts.go:74, facts.go:135, handoff.go:76, delivery.go:148-149, outlook.go:15), which satisfies spec.md:748.\nP2 confirmed: spec.md:301 and :302 read \"SB2 / 2-name-the-binding-state-in-the-handoff.md\" and \"SB3 / 3-state-the-one-landing-close.md\"; both ticket files are tracked; bench coverage --check does not read the chunk table (internal/coverage/coverage.go reads User stories :196, the map :223, Ownership fences :169).\nC1 case met: spec.md:201; SeedAdmission puts outcome delivery (binds alpha) in milestone fixture; SeedRowless adds outcome B; the case (render_test.go:120-132) keeps delivery in fixture, moves B into milestone later, makes later active, commits on main; the expectation reads id = bound.Outcomes[0].ID from the fixture policy; the delta touches only this test and two comments; BindingOutcomes already walks every milestone.\n\nAdvice: SB24's only red is the pre-edit one; no recorded probe ignores the path match for it (the orchestrator's Source.ID swap leaves SB24 green because its value is unbound). The C1 case shares the SB23 name prefix; a C1-tied name would read more clearly.\n\nExamined: evidence bound current=true at 77a5da6a, clean; one git diff 1350865e..77a5da6a in full; spec.md:196-217, 296-315, 389-397, 744-759; ticket 2 lines 4-5, 76-97; render_test.go:100-196, 319-338; admission.go; light.go:85-123; repo.go:1-100; delivery.go:135-164; rg over the probe sites, the coverage parser, and the chunk-table readers; finding-discipline. No test, probe, or native-ref body.\n"
+          },
+          "axis": "Spec",
+          "base": "a95df2915a4c887558a96b00539ee878b9e5fb30",
+          "tip": "429c1f3a78208f4c56dfdfc673619da745022b65",
+          "finding_ids": [],
+          "supersedes": [
+            "sb2-spec-r1"
+          ]
+        },
+        {
+          "id": "sb2-coverage-r2",
+          "performer": "claude:ssb_sb2_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "454a11d795015e0c6a4b6bf9a4f056152764f1f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb2_coverage_r2",
+            "digest": "sha256:cbabe57c5f5c6ecf2ef51af493a8c7febf6b536ab4efb40d35edbb0b55917649",
+            "excerpt": "claude:ssb_sb2_coverage_r2 (opus/high) — SB2 round 2 Coverage axis over 1350865e..77a5da6a (chunk tip 666e240c)\n\nC1 confirmed closed: two milestone-scoped mutations of BindingOutcomes (delivery.go:142-154), independent of the repair's and the orchestrator's probes, each red the case \"SB23 binding outside the active milestone\" (render_test.go:120-132) at render_test.go:162 while the other four cases stay green. Fixture source verified: SeedAdmission (commitmenttest/admission.go:27-29) writes milestone fixture with DeliveryOutcome binding the spec path; SeedRowless (light.go:101-109) appends outcome B with no deliverable; the EditPolicy closure (render_test.go:124-129) leaves Outcomes[0] in fixture, moves B to the new milestone later, and makes later active; the expected id is Outcomes[0].ID. The unmutated test passes (5 subtests). New findings: none.\n\nProbes (bit, restored yes):\nD1. bench probe internal/commitment/delivery.go --swap 'ids = append(ids, outcome.ID)' --with 'if milestone.ID == policy.ActiveMilestone { ids = append(ids, outcome.ID) }' --package ./internal/handoff --run '^TestSectionRendersTheSpecBinding$': 1 failed (SB23_binding_outside_the_active_milestone, :162)\nD2. bench probe internal/commitment/delivery.go --swap 'func BindingOutcomes(policy Policy, path string) []string {' --with '...{ policy.Milestones = slices.DeleteFunc(slices.Clone(policy.Milestones), func(m Milestone) bool { return m.ID != policy.ActiveMilestone })' (same package and run): 1 failed (same case); it scopes the settlement too, a different shape from the repair's in-loop filter.\n\nAdvice: C1 is guarded only at the handoff seam; no case in delivery_test.go, which the round 1 repair allowed.\n\nExamined: check-current base 1350865e tip 77a5da6a current=true; one git diff (code delta render_test.go only); record lines 1147-1203; delivery.go:135-259; commitmenttest/light.go:60-123, admission.go:21-30; render_test.go:107-166, 321-335; finding-discipline vocabulary. git status clean at 77a5da6a.\n"
+          },
+          "axis": "Coverage",
+          "base": "a95df2915a4c887558a96b00539ee878b9e5fb30",
+          "tip": "429c1f3a78208f4c56dfdfc673619da745022b65",
+          "finding_ids": [],
+          "supersedes": [
+            "sb2-coverage-r1"
+          ]
+        },
+        {
+          "id": "sb2-standards-r2b",
+          "performer": "claude:ssb_sb2_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "454a11d795015e0c6a4b6bf9a4f056152764f1f1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb2_standards_r2",
+            "digest": "sha256:63d9a698d79c8102c7ab40bbd63d4ebfef9f1264db42adadd2780ec34c0dcd7b",
+            "excerpt": "claude:ssb_sb2_standards_r2 (opus/high) — SB2 round 2 Standards reaffirmation of S21 at 429c1f3a\n\nS21 confirmed closed: internal/handoff/render_test.go line 53 now reads \"// The pins carry the values a resuming session acts on. The request token is the plain\", and the \"HS2 and HS10, stories 4 and 13.\" tag is gone. Sentence word counts: 10, 27, 17. The 27-word sentence is older text that the change only rewrapped, so S21 does not cover it; it is over the 25-word bound (advice, not a finding of this round). Lines 53-56 read from the worktree; HEAD not checked against 429c1f3a.\n"
+          },
+          "axis": "Standards",
+          "base": "a95df2915a4c887558a96b00539ee878b9e5fb30",
+          "tip": "429c1f3a78208f4c56dfdfc673619da745022b65",
+          "finding_ids": [],
+          "supersedes": [
+            "sb2-standards-r2"
+          ]
         }
       ]
     }
@@ -1200,3 +1290,11 @@ The repair session `claude:ssb_t2_rep1` reran the author's five non-central prob
 | SB44 | `bench probe internal/commitment/repository/outlook.go --swap 'func DefaultUnresolved(err error) bool { return errors.Is(err, errDefaultUnresolved) }' --with 'func DefaultUnresolved(err error) bool { return errors.Is(err, errDefaultUnresolved) && false }' --package ./internal/handoff --run '^TestSectionRendersAnUnavailableBinding$'` | 1 | `render_test.go:194: section carries no "...Spec binding: unbound\n"` |
 
 The C1 case `SB23 binding outside the active milestone` reds under the Coverage probe A mutation at `666e240c`: `render_test.go:162: section carries no "...Spec binding: delivery\n"`. The central probe at `666e240c` bit with 3 failed (SB25, SB27, SB44). The orchestrator's independent probe at `56333365`, `bench probe internal/commitment/delivery.go --swap 'return binding.Source.Path == path' --with 'return binding.Source.ID == path' --package ./internal/handoff --run '^TestSectionRendersTheSpecBinding$'`: `bit`, 3 failed (both SB23 cases and SB26), `restored=yes`.
+
+## SB2 round 2 (confirming)
+
+Round 2 ran three opus/high axes at `77a5da6a` over the repair delta `1350865e..77a5da6a` (chunk tip `666e240c`). Standards confirmed S1 and S2 closed. Spec reaffirmed P1, confirmed P2, and graded the C1 case met. Coverage confirmed C1 closed with two independent milestone-scoped probes. Repair cycle 1 of 2 stays the only consumed cycle.
+
+- S21 (`auto-fix`, confidence 5): the edited comment line of `TestSectionRendersTheAssignmentPins` still opened with the provenance tag "HS2 and HS10, stories 4 and 13." Rule: `craft-comments`, remove existing provenance when editing its line. Closed by the orchestrator's comment-only correction `429c1f3a` (evidence-only, no plan assignment), which the Standards axis reaffirmed. SB2 is refrozen at `a95df291..429c1f3a`, and the repair session re-records its verification there.
+
+Advice retained: the second sentence of that comment holds 27 words and predates this build. The C1 case shares the SB23 name prefix. No recorded probe ignores the path match for SB24 alone.
