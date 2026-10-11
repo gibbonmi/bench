@@ -1,11 +1,11 @@
 ---
-description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change the lighter-path threshold in .bench/BENCH.md allows without a spec. An opt-in `--full <spec>` run reaches the final green landing.
+description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change the light path in .bench/BENCH.md allows without a spec. An opt-in `--full <spec>` run reaches the final green landing.
 ---
 
 # /bench-implement-spec — do the work at the seams
 
 ## Entry orientation
-This is the implementation phase. It starts from an approved spec, or from a change small enough for the lighter-path threshold. It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams. If there is no spec, the change must fall under that threshold in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fall under that threshold, route to `/bench-write-spec` first.
+This is the implementation phase. It starts from an approved spec, or from a change small enough for the light path. It declares the line, starts its committed outcome through `bench commitment start`, and works vertical slices at the pre-agreed seams. If there is no spec, the change must fit the light path in `.bench/BENCH.md`'s "Right-size the process" paragraph. If it does not fit the light path, route to `/bench-write-spec` first.
 If a spec-backed run has no `specs/<slug>/tickets/` directory or that directory contains no ticket files, return to `/bench-write-spec`; ticket slicing and approval belong there.
 
 A light-path change needs no commitment start; `.bench/BENCH.md` owns that rule.

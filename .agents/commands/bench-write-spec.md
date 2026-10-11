@@ -1,5 +1,5 @@
 ---
-description: Turn a reviewed decision source into a build spec with user stories, engineering seams, and testing decisions. Use before any build past the lighter-path threshold in .bench/BENCH.md.
+description: Turn a reviewed decision source into a build spec with user stories, engineering seams, and testing decisions. Use before any build outside the light path in .bench/BENCH.md.
 ---
 
 # /bench-write-spec — lock the seams before the loop runs

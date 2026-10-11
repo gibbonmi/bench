@@ -1,5 +1,5 @@
 ---
-description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain capture/IDEAS.md, the retros, and the learnings journal into it, and propose the pass as one batch diff. The single exit for parked ideas and open learnings. Maintenance, not a phase.
+description: Roadmap-maintenance phase — reconcile ROADMAP.md against the tree, drain capture/IDEAS.md, the retros, and the learnings journal into it, and propose the pass as one batch diff. Use it as the single exit for parked ideas and open learnings.
 ---
 
 # /bench-drain — reconcile the roadmap, drain the capture
@@ -12,7 +12,7 @@ entries, or `capture/retros/` has pending implementation retros. One run
 reconciles the roadmap against the tree, drains all three capture sources into
 uncommitted intake, and hands the reviewer one diff to approve.
 
-The "not a workflow phase" label above is scope, not an exemption. `main`
+The maintenance scope of this phase is not an exemption. `main`
 still takes writes only through a landing. Implement-now writers use their
 own bench worktrees. Create the batch worktree only when the protocol below
 allows it, and close it through `bench worktree land`.
