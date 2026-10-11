@@ -43,8 +43,9 @@ func TestLandRefusesAnUnreadableMergeState(t *testing.T) {
 // TestLandRefusesAnIncompleteMergeNameSet proves that during a pending merge the name set
 // must cover each merged path, the conflicted path and a deleted path included. A directory
 // name covers the merged paths below it and not a sibling that shares its prefix. The
-// literal spelling of a merged path with hostile bytes covers that path. The rule applies to
-// an octopus merge too. A refusal changes no ref, index entry, worktree byte, or merge state.
+// literal spelling of a merged path with hostile bytes covers that path. A glob-shaped name
+// covers only itself and not a sibling that the glob matches. The rule applies to an octopus
+// merge too. A refusal changes no ref, index entry, worktree byte, or merge state.
 // (Coverage rows MP35-MP38 and MP42.)
 func TestLandRefusesAnIncompleteMergeNameSet(t *testing.T) {
 	// hostile holds a space, glob characters, a newline, and non-ASCII bytes.
@@ -65,6 +66,7 @@ func TestLandRefusesAnIncompleteMergeNameSet(t *testing.T) {
 		{"directory covers its subtree", pendingMerge, []string{"pkg/b.go", "pkg/sub/c.go"}, []string{mergeConflictPath, mergeDeletedPath, "pkg"}, ""},
 		{"directory does not cover a prefix sibling", pendingMerge, []string{"pkg/b.go", "pkgx/a.go"}, []string{mergeConflictPath, mergeDeletedPath, "pkg"}, `"pkgx/a.go"`},
 		{"hostile path spelled literally", pendingMerge, []string{hostile}, []string{mergeConflictPath, mergeDeletedPath, hostile}, ""},
+		{"glob-shaped name covers only itself", pendingMerge, []string{"side-*", "side-a"}, []string{mergeConflictPath, mergeDeletedPath, "side-*"}, `"side-a"`},
 		{"octopus side path omitted", octopus, nil, []string{"side-a"}, `"side-b"`},
 	} {
 		t.Run(row.name, func(t *testing.T) {
