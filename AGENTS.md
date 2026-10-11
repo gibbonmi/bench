@@ -1,28 +1,10 @@
 # Working agreement
 
-This file is the canonical instruction file for project-owned content. Every
-harness reads this file. Claude Code reads it through the `@AGENTS.md` and
-`@.bench/BENCH.md` imports in `CLAUDE.md`. Codex, OpenCode, and other AGENTS.md
-harnesses read the file directly.
-
-The shared platform rules are canonical in `.bench/BENCH.md` (see below).
-These rules cover the roles, the four invariants, the workflow and its
-proportionality rules, and the communication rules.
+This file holds the project-owned rules, and every harness reads it. The shared
+platform rules are canonical in `.bench/BENCH.md`; read that file before you
+start work, and do not restate its rules here.
 `.bench/BENCH-reference.md` holds how the pieces fit and the skills index.
-Edit this file for project-owned content. Edit
-`.bench/BENCH.md` for the shared rules. Do not edit `CLAUDE.md`.
-
-## Shared platform rules
-
-The platform rules are the same for this repo and for every project that runs
-`bench link`. These rules are **canonical in `.bench/BENCH.md`**; read them
-there before you start work. Do not restate the rules here, because a second
-copy drifts from the source. If a shared rule's exact marker phrase reappears
-in this file, the gate fails.
-
-A paraphrase of the same rule can pass the gate's substring check, but a
-paraphrase still violates the one-source rule. Review catches this
-violation, not the gate.
+Do not edit `CLAUDE.md`.
 
 ## This repo
 
@@ -59,33 +41,15 @@ decision; it is not a default.
 
 **Phase-close handoff.** A Bench phase closes when a drain commits, a spec
 stages, a build lands, or a review phase delivers outside a `--full` build.
-The closing message must then
-do one of two things. It must emit a copy-paste fresh-session
-continuation prompt, or it must update `capture/session-handoff.md`. This
-repo git-ignores the handoff, so it is a local file. Write the primary
-checkout's copy from any checkout; `bench handoff` does this itself.
-
-The update must pin the repository, the branch, and the commit. It must also
-pin the spec path and status, the decisions that stay closed, and the exact
-harness-native next command. This way, resumption never depends on
-conversation history.
-
-A phase close commits its tracked capture artifacts — the retro and the
-scorecard updates — together in one commit on a lane pass. Only the
-implementation close writes the retro, one for each spec. A spec-stage close
-commits its scorecard updates and no retro. The git-ignored
-capture files stay local and never join that commit. Read
-`bench retro <slug> --scaffold` before you write the retrospective, because
-that draft carries the headings, the stage timings, and one row per ticket.
-
+A spec-stage close commits its scorecard updates and no retro.
 A phase close runs `bench handoff` from its own worktree.
 A drain runs it from the primary checkout after its landing.
 `.bench/BENCH-reference.md` states how `bench handoff` writes the handoff file.
 
-When the handoff and the tree disagree, the tree wins. `bench
-status` dates each section by the branch commits past its recorded tip, and
-`main` keeps the file-age rule. So a stale section is only ambient
-information; the next session does not need to confirm it.
+This repo git-ignores the handoff, so it is a local file. The handoff must pin
+the spec path and status, the decisions that stay closed, and the exact
+harness-native next command. This way, resumption never depends on
+conversation history. When the handoff and the tree disagree, the tree wins.
 
 **Shell conventions for agents in this repo.**
 
@@ -118,6 +82,5 @@ information; the next session does not need to confirm it.
   and `bench <verb> --help` for a grammar. Note that `bench commands --brief`
   is a three-verb liveness probe, not an inventory. Never discover a verb by
   trying a bare unknown verb.
-- Before a commit, run `bench gate-prose . -- <path>` on each edited Markdown file.
 - Run the system suite by hand through `bench test --check system`.
   The verb supplies the sealed run binary and the kit root.
