@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Commit merge parent
+
+- Fixed `bench commit` so that during a pending merge, a worktree commit records the previous tip and then each merge head as parents. After the publication, the commit ends the merge through Git. The commit refuses when its named paths omit a path that the merge changed, and the refusal names each omitted path. The commitment grading counts the merged commits of the default branch as the default branch's own. Before, the commit recorded one parent, and the merge stayed pending.
+
 ### Commit success record
 
 - Changed `bench commit` so that a successful commit prints `committed{published_commit=<hash>,path_count=<n>}`. The record names the published commit with the exit-3 record's key. Before, the line printed only `committed N path(s)`, so authors asked `git` for the hash.

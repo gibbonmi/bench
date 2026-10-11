@@ -3,12 +3,14 @@ package repository_test
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
@@ -61,6 +63,73 @@ func TestStaleBaseCandidate(t *testing.T) {
 			}
 			if err == nil || !strings.Contains(err.Error(), row.want) {
 				t.Fatalf("AuthorizeCandidate = %v, want a refusal naming %q", err, row.want)
+			}
+		})
+	}
+}
+
+// Each row commits its own change in an unbound assignment and then leaves a merge state
+// there. The state is a merge of main, a merge of a sibling commit that main lacks, or a
+// directory at MERGE_HEAD. A row whose pending step returns a path wants a refusal that
+// names that path, and every other row wants admission.
+func TestPendingMergeCandidate(t *testing.T) {
+	t.Parallel()
+	light := steps(ticket(lightTicket, "change.go"), write("change.go"))
+	merge := func(t *testing.T, worktree, revision string) {
+		gittest.Output(t, worktree, "merge", "--no-commit", "--no-ff", revision)
+	}
+	mergeMain := func(t *testing.T, root, worktree string) string {
+		landProduction(t, root)
+		merge(t, worktree, "main")
+		return ""
+	}
+	for _, row := range []struct {
+		name    string
+		steps   []func(*testing.T, string)
+		pending func(t *testing.T, root, worktree string) string
+	}{
+		{name: "light-path-merges-main", steps: light, pending: mergeMain},
+		{name: "planning-merges-main", steps: steps(func(t *testing.T, worktree string) {
+			commitmenttest.Write(t, worktree, "capture/notes.md", "A planning note.\n")
+		}), pending: mergeMain},
+		{name: "light-path-merges-sibling", steps: light, pending: func(t *testing.T, root, worktree string) string {
+			const path = "sibling.go"
+			sibling := commitmenttest.Assignment(t, root, "sibling")
+			write(path)(t, sibling)
+			commitmenttest.Commit(t, sibling, "a sibling lands production")
+			merge(t, worktree, gittest.Output(t, sibling, "rev-parse", "HEAD"))
+			return path
+		}},
+		{name: "unreadable-merge-state", steps: light, pending: func(t *testing.T, root, worktree string) string {
+			landProduction(t, root)
+			path, err := git.AdminPath(worktree, "MERGE_HEAD")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Mkdir(path, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			return gittest.Output(t, root, "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD")
+		}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			root, _ := lightPathRepo(t)
+			worktree := commitmenttest.Assignment(t, root, row.name)
+			for _, step := range row.steps {
+				step(t, worktree)
+			}
+			commitmenttest.Commit(t, worktree, row.name)
+			want := row.pending(t, root, worktree)
+			err := (commitrepo.Store{Root: worktree}).AuthorizeCandidate(gittest.Output(t, worktree, "write-tree"))
+			if want == "" {
+				if err != nil {
+					t.Fatalf("AuthorizeCandidate = %v, want admission", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), strconv.Quote(want)) {
+				t.Fatalf("AuthorizeCandidate = %v, want a refusal naming %q", err, want)
 			}
 		})
 	}
