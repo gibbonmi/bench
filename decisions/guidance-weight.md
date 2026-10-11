@@ -1,6 +1,6 @@
 # Always-loaded guidance weight (FT100)
 
-Status: shaping
+Status: ready
 
 ## Destination
 
@@ -38,6 +38,9 @@ Use craft-research for Research tickets and craft-grill for Grill tickets. The s
 - [What byte bound does BENCH.md get?](guidance-weight/tickets/11.md): its size after this outcome, rounded up to a multiple of 100 bytes; about 11,600.
 - [Which repeated copies go now?](guidance-weight/tickets/14.md): the B10 exception, B12, and A17; their anchors move to the kept copies.
 - [Where does the batch-approval rule go?](guidance-weight/tickets/15.md): beside the sign-off stop in `/bench-write-spec`; the drain line gets its own words.
+- [Which part of each listed description does its trigger need?](guidance-weight/tickets/12.md): see `assets/description-inventory.md`; content restates the body, and four defects need a fix.
+- [What byte limit does a listed description get?](guidance-weight/tickets/13.md): 250 stays; the defects get fixed, and a trim waits for an FT231 trial.
+- [Does this outcome ship as one spec or split?](guidance-weight/tickets/16.md): one spec for the moves and the budget; two light-path tickets for the small fixes.
 
 ## Not yet specified
 
@@ -52,6 +55,7 @@ Use craft-research for Research tickets and craft-grill for Grill tickets. The s
 
 - The craft-skill library audit and the merge of overlapping craft skills: a later FT100 outcome.
 - The deletion of a rule that has no other copy: it waits for an FT231 result.
+- A trim of the description content phrases: it waits for an FT231 trial of skill selection.
 - The admission of this outcome into the delivery commitment: a commitment plan that the reviewer approves decides it.
 
 ## Sources
@@ -59,6 +63,9 @@ Use craft-research for Research tickets and craft-grill for Grill tickets. The s
 - Path: `decisions/guidance-weight/assets/clause-inventory.md`
   Supports: #9, #10, #14, and #15.
   Drift: an edit of `.bench/BENCH.md`, `AGENTS.md`, or an anchor row that names either file.
+- Path: `decisions/guidance-weight/assets/description-inventory.md`
+  Supports: #13 and #16.
+  Drift: an edit of a listed `description:` line.
 - Path: `roadmap/FT100.md`
   Supports: the scope, the anchor-first order, and the budget-measure requirement.
   Drift: a drain edit of the row.
