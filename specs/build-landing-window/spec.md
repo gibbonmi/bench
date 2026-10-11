@@ -8,7 +8,7 @@ Related roadmap: FT253. This spec settles the whole commitment outcome FT342-FT2
 
 Decision source: named reviewed artifact — the approved commitment outcome FT342-FT253 in `.bench/commitment.json` with its six criteria (lease, window, lifetime, override, fold, route), its sources `roadmap/FT342.md` (reviewer decisions of 2026-10-09) and `roadmap/FT253.md`, and the `/bench-write-spec FT342 —reviewer fable high` invocation of 2026-10-11
 
-Verification log: <n> iteration(s) to accept — <note>
+Verification log: 3 iteration(s) to accept — the fable/high spec round took 2 iterations. Iteration 1 rejected two predicates that admitted unintended callers, and iteration 2 accepted the repairs. The fable/high ticket round accepted in 1 iteration.
 
 ## Problem
 
