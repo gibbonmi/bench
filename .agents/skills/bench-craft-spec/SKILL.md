@@ -93,7 +93,7 @@ An anchor needle longer than the STE sentence bound is a spec smell. Re-cut it i
 
 Status: staged
 
-Roadmap: <optional — the FT<n> row this spec settles; `bench spec retire` names that row's detail file>
+Roadmap: <optional — the FT<n> row this spec settles; the spec-stage close binds this spec to the outcome whose sources hold that row, and `bench spec retire` names that row's detail file>
 
 Decision source: <one ready compiled map, reviewer-confirmed conversation with date, or named reviewed artifact>
 

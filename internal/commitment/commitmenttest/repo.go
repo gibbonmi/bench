@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -71,6 +72,23 @@ func EditPolicy(t testing.TB, root string, edit func(*commitment.Policy)) {
 	}
 	edit(&policy)
 	WritePolicy(t, root, policy)
+}
+
+// Bound is plan input that adds binding to the first outcome of the policy that root's
+// default branch holds.
+func Bound(t testing.TB, root string, binding commitment.DeliveryBinding) []byte {
+	t.Helper()
+	policy, _, err := (commitrepo.Store{Root: root}).Policy()
+	if err != nil {
+		t.Fatal(err)
+	}
+	outcome := &policy.Milestones[0].Outcomes[0]
+	outcome.Deliverables = append(outcome.Deliverables, binding)
+	data, err := commitment.Bytes(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 // Commit records the fixture's current tree on main.

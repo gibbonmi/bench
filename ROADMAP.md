@@ -156,8 +156,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT386 (LOW, decision required) — the spec stage proposes a split above a row or ticket threshold.**
 
-**FT395 (MEDIUM) — a spec-stage close lands its staged spec and states its outcome's deliverable binding.**
-
 **FT396 (LOW) — a phase that moves its work to a new worktree releases the superseded one.**
 
 **FT397 (LOW, decision required) — a phase close names the parallel tracks that write disjoint files and cross disjoint seams.**
@@ -324,19 +322,18 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT395
-2. FT342-FT253
-3. FT354-durable-replace
-4. FT354-strict-json
-5. FT411
-6. FT380-plan-commit
-7. FT414
-8. FT403
-9. FT168-probe-subjects
-10. FT168-probe-batch
-11. FT293-ownership-closure
-12. FT375-spec-staleness
-13. FT405
-14. FT379
-15. FT409
-16. FT402
+1. FT342-FT253
+2. FT354-durable-replace
+3. FT354-strict-json
+4. FT411
+5. FT380-plan-commit
+6. FT414
+7. FT403
+8. FT168-probe-subjects
+9. FT168-probe-batch
+10. FT293-ownership-closure
+11. FT375-spec-staleness
+12. FT405
+13. FT379
+14. FT409
+15. FT402

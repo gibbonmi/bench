@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Spec stage binding
+
+- Changed the spec-stage close so that one spec-less landing publishes the staged spec and its deliverable binding. `bench commitment plan` and `bench commitment approve` read a new deliverable at the worktree's HEAD, and `bench commit` and `bench worktree land` read it in the candidate tree. `/bench-write-spec` now states the close order, and `.bench/BENCH.md` lets a spec-stage close bind its spec on the reviewer's sign-off. The slicing checks put `.bench/commitment.json` in the fence and in one ticket's `Writes:` line, so the plan-only preflight stays green. After the landing, `bench status` prints the complete `bench commitment start` command with the spec path. Before, the binding needed a second landing and a second gate.
+- Added a `Spec binding` line after each `Spec status` line of a `bench handoff` section. The line names each outcome that the default-branch policy binds to the spec, or it reads `unbound`. When the policy does not parse, the line reads `binding unknown (policy unreadable)`, and the handoff still writes. Before, the handoff named no binding, so a handoff could call a spec ready while main held no binding.
+
 ### Phase descriptions
 
 - Fixed the `/bench` and `/bench-drain` descriptions so that each carries a trigger phrase. The `/bench-drain` description now calls the drain the roadmap-maintenance phase, as its body does. Before, `/bench` had no trigger phrase, and `/bench-drain` ended with the label "Maintenance, not a phase."
