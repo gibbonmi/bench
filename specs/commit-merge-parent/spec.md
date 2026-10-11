@@ -8,7 +8,7 @@ Decision source: named reviewed artifact `roadmap/FT258.md` at `1a947e86`, with 
 
 Audience: every repository that links the kit
 
-Verification log: pending — the spec review accepted in 1 iteration, and the ticket review is pending
+Verification log: 2 iteration(s) to accept — the spec review and the ticket review each accepted in their first iteration
 
 ## Problem
 
@@ -231,6 +231,8 @@ The landing faces stay unchanged: `composition-conflict-pending` keeps `git merg
 The proposed text is: "During a pending merge, a worktree `bench commit` requires every path that the merge changed. It records each merge head as a further parent and then ends the merge."
 The anchors of that file stay intact, including the Command Notes anchor at line 280 and the route anchor at line 307.
 
+`CHANGELOG.md` gains one `Fixed` entry for this delivery under `## [Unreleased]`, and the commit record entry stays unchanged.
+
 ### The roadmap
 
 The delivery edits neither `ROADMAP.md` nor `roadmap/FT258.md`.
@@ -293,6 +295,7 @@ Its commands are future obligations, not executed proof.
       "id": "MP3",
       "tickets": ["5-grade-a-pending-merge-by-the-branch-change.md"],
       "verification": [
+        {"id": "owner-packages", "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit"},
         {"id": "grading-package", "command": "bench test --package ./internal/commitment/repository"},
         {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
         {"id": "command-package", "command": "bench test --package ./cmd/bench"},
@@ -458,10 +461,77 @@ The refusal rows cover each fault before publication, inside authorization, and 
 
 ## Ownership fences
 
-- `reviews/commit-merge-parent.md`
-
+The ticket slice derives this fence, so it equals the union of the ticket `Writes:` lines, plus the review pickup.
+It holds the owner and test files, the command registry closure, the anchor registry closure, and each canary unit that pins an edited guidance file.
+No ticket changes a closure file or a canary unit.
+The fence names no roadmap path and does not name `internal/commit/commit.go` (MP56).
 The coordinator owns the review pickup.
-The slicer adds the ticket paths after the ticket review accepts the ticket graph.
+
+- `.bench/BENCH-reference.md`
+- `CHANGELOG.md`
+- `cmd/bench/command_registry.go`
+- `cmd/bench/command_registry_test.go`
+- `cmd/bench/help_inventory_test.go`
+- `internal/anchors/registry_data.go`
+- `internal/anchors/registry_data_test.go`
+- `internal/anchors/registry_retained_workflow.go`
+- `internal/commit/commitment_test.go`
+- `internal/commit/dry_run_test.go`
+- `internal/commit/landing_test.go`
+- `internal/commit/merge_parent_test.go`
+- `internal/commit/refusal_route_test.go`
+- `internal/commitment/repository/candidate.go`
+- `internal/commitment/repository/stale_base_test.go`
+- `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/subcommand_routing_table_test.go`
+- `internal/git/checkout.go`
+- `internal/git/checkout_test.go`
+- `internal/landing/attribution.go`
+- `internal/landing/composition_test.go`
+- `internal/landing/gitexec.go`
+- `internal/landing/landing.go`
+- `internal/landing/landing_helpers_test.go`
+- `internal/landing/landing_reviewed_test.go`
+- `internal/landing/landing_test.go`
+- `internal/landing/lane_owner.go`
+- `internal/landing/pending_merge.go`
+- `internal/landing/pending_merge_fixture_test.go`
+- `internal/landing/pending_merge_test.go`
+- `internal/landing/state_test.go`
+- `internal/refusalroute/faces_commit.go`
+- `internal/worktree/admin_readers_test.go`
+- `internal/worktree/land_journey_test.go`
+- `internal/worktree/land_refusal.go`
+- `internal/worktree/parallel_census_test.go`
+- `reviews/commit-merge-parent.md`
+- `tests/canary/docs-currency-token-diet/benchref-imported`
+- `tests/canary/docs-currency-token-diet/benchref-pointer-dropped`
+- `tests/canary/docs-currency-token-diet/benchref-section-duplicated`
+- `tests/canary/skills-index-command-adapters/adapter-inert-invocation-key`
+- `tests/canary/skills-index-command-adapters/command-invocation-disabled-against-policy`
+- `tests/canary/skills-index-command-adapters/dangling-index`
+- `tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted`
+- `tests/canary/skills-index-command-adapters/missing-index-field`
+- `tests/canary/skills-index-command-adapters/stale-index-wording`
+- `tests/canary/skills-index-command-adapters/unindexed-skill`
+- `tests/canary/workflow-guidance-anchors/agents-handoff-section-rule`
+- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
+- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
+- `tests/canary/workflow-guidance-anchors/reference-agent-push-rule`
+- `tests/canary/workflow-guidance-anchors/reference-bench-operational-layer`
+- `tests/canary/workflow-guidance-anchors/reference-category-context`
+- `tests/canary/workflow-guidance-anchors/reference-category-oracle`
+- `tests/canary/workflow-guidance-anchors/reference-category-setup`
+- `tests/canary/workflow-guidance-anchors/reference-category-work`
+- `tests/canary/workflow-guidance-anchors/reference-gate-authority`
+- `tests/canary/workflow-guidance-anchors/reference-kit-only-ship`
+- `tests/canary/workflow-guidance-anchors/reference-no-path-fallback`
+- `tests/canary/workflow-guidance-anchors/reference-progressive-loading-term`
+- `tests/canary/workflow-guidance-anchors/reference-refusal-route-shape`
+- `tests/canary/workflow-guidance-anchors/reference-retro-capture-owner`
+- `tests/canary/workflow-guidance-anchors/reference-retro-drain-owner`
+- `tests/canary/workflow-guidance-anchors/reference-skills-guidance`
+- `tests/canary/workflow-guidance-anchors/reference-upgrade-route`
 
 ## Out of scope
 
@@ -635,3 +705,15 @@ It returned seven non-blocking findings, and this acceptance folds six of them:
 
 The seventh finding reads `roadmap/FT258.md:17` as the reviewer's veto point, and the flagged addition E1 carries that reading.
 The review recommended that each flagged addition stay, and it found no unlisted addition.
+
+An independent Fable high-effort review accepted the ticket set in iteration 1 on 2026-10-10 at commit `24b6991b`.
+It returned seven non-blocking findings, and this acceptance folds three of them:
+
+- The unchanged surfaces now state the `CHANGELOG.md` entry that ticket 5 writes.
+- The MP3 chunk of the completion plan runs the `internal/git`, `internal/landing`, and `internal/commit` package tests.
+- Ticket 5 names the production path of main in its MP60 refusal criterion.
+
+The other four findings need no change.
+One is a line-budget risk in `internal/landing/pending_merge_test.go`, which an in-scope plan expansion covers.
+Two correct coordinator citations that no ticket cites.
+One is a fence overlap with the staged `specs/shared-test-fixtures/spec.md`, and no check compares the fences of two specs (`internal/coverage/coverage.go:189`, `internal/preflight/gather.go:56`).

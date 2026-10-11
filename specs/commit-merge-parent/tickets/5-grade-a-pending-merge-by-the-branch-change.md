@@ -75,7 +75,7 @@ Keep the entry under `### Commit success record` unchanged.
 - [ ] In a light-path worktree, `AuthorizeCandidate` admits a complete merge of main that carries a production change of main.
 - [ ] In an unbound planning worktree, `AuthorizeCandidate` admits a complete merge of main that carries a production change of main.
 - [ ] In a light-path worktree, `AuthorizeCandidate` refuses a pending merge of a sibling commit that adds an uncovered production path, and the refusal names that path.
-- [ ] With a directory at MERGE_HEAD, `AuthorizeCandidate` refuses a light-path candidate that lacks a later production change of main, and the refusal names that path.
+- [ ] With a directory at MERGE_HEAD, `AuthorizeCandidate` refuses a light-path candidate without the later production change of main, and names that production path.
 - [ ] Without a pending merge, `AuthorizeCandidate` keeps every stale-base admission and refusal.
 - [ ] `candidate.go` holds no read of MERGE_HEAD of its own.
 - [ ] One typed `CHANGELOG.md` entry under `## [Unreleased]` states the merge parents, the merge completion, the name-set refusal, and the merge grading.
