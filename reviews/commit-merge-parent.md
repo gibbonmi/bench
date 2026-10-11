@@ -1692,9 +1692,9 @@
     {
       "id": "MP3",
       "base": "0b64dd54e311e2f2ef2948a4552593c40cb772ad",
-      "tip": "b82ba53fb6fbc52b710147011d1c499043268cdd",
-      "plan_digest": "sha256:c33386af16d809dae57c6aa52b45be0a7ec575fcd82cd9719fac41b9a6e04fde",
-      "source_digest": "cadaa7285c46483bf060571415556c21dce6bdab",
+      "tip": "96201315d6a8a3ab0cdc0ce353ae3cea03662150",
+      "plan_digest": "sha256:568d1e25be6f83d61cc16e685fc45a3c379c6c899b593be41c85ee82830726c4",
+      "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
       "acceptance_rows": [
         "MP57",
         "MP58",
@@ -1817,6 +1817,125 @@
             "ref": "claude-agent:cmp_t5/t5-ordinary-build-census.txt",
             "digest": "sha256:bebfe595f6e1f89b596b9b21aa7cec332be4ab0467c60aa5a1af4a44e947e931",
             "excerpt": "command: bench test --check ordinary-build-census\nexit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,42c5e52e60df034975dd095e826737385961c681,true\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,316,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-ordinary-build-census",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-grading-focused-cmp_t5_rep1",
+          "performer": "claude:cmp_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t5_rep1/t5-grading-focused.txt",
+            "digest": "sha256:1082b102557f764beb5d9d59083446bac2ffe800c279f094b43a87ce3c3896a1",
+            "excerpt": "command: bench test --package ./internal/commitment/repository --run 'TestPendingMergeCandidate|TestStaleBaseCandidate'\nexit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,96201315d6a8a3ab0cdc0ce353ae3cea03662150,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,395,16\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nprobe command: bench probe internal/commitment/repository/candidate.go --swap '\"merge-base\", revision, \"HEAD\"}, heads...' --with '\"merge-base\", heads[0], \"HEAD\"}, heads...' --package ./internal/commitment/repository --run '^TestPendingMergeCandidate$'\nprobe exit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,96201315d6a8a3ab0cdc0ce353ae3cea03662150,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/candidate.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,^TestPendingMergeCandidate$,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,735\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,230,7\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestPendingMergeCandidate/light-path-merges-sibling,\"stale_base_test.go:158: AuthorizeCandidate = <nil>, want a refusal naming \\\"sibling.go\\\" and not \\\"\\\"\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestPendingMergeCandidate/light-path-merges-sibling-and-main,\"stale_base_test.go:158: AuthorizeCandidate = production path \\\"fix.go\\\" is outside the Writes line of light-path ticket \\\"specs/lp/tickets/one.md\\\", want a refusal naming \\\"sibling.go\\\" and not \\\"fix.go\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-grading-focused",
+          "command": "bench test --package ./internal/commitment/repository --run 'TestPendingMergeCandidate|TestStaleBaseCandidate'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap the default tip for the merge head as the first git merge-base operand in branchReference in internal/commitment/repository/candidate.go, so that the merged sibling's change grades as the default branch's own. TestPendingMergeCandidate turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:cmp_t5_rep1/t5-grading-focused.txt",
+              "digest": "sha256:1082b102557f764beb5d9d59083446bac2ffe800c279f094b43a87ce3c3896a1",
+              "excerpt": "command: bench test --package ./internal/commitment/repository --run 'TestPendingMergeCandidate|TestStaleBaseCandidate'\nexit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,96201315d6a8a3ab0cdc0ce353ae3cea03662150,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,395,16\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\nprobe command: bench probe internal/commitment/repository/candidate.go --swap '\"merge-base\", revision, \"HEAD\"}, heads...' --with '\"merge-base\", heads[0], \"HEAD\"}, heads...' --package ./internal/commitment/repository --run '^TestPendingMergeCandidate$'\nprobe exit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,96201315d6a8a3ab0cdc0ce353ae3cea03662150,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/candidate.go,swap,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,^TestPendingMergeCandidate$,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,735\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,230,7\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestPendingMergeCandidate/light-path-merges-sibling,\"stale_base_test.go:158: AuthorizeCandidate = <nil>, want a refusal naming \\\"sibling.go\\\" and not \\\"\\\"\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestPendingMergeCandidate/light-path-merges-sibling-and-main,\"stale_base_test.go:158: AuthorizeCandidate = production path \\\"fix.go\\\" is outside the Writes line of light-path ticket \\\"specs/lp/tickets/one.md\\\", want a refusal naming \\\"sibling.go\\\" and not \\\"fix.go\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t5-floor-cmp_t5_rep1",
+          "performer": "claude:cmp_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t5_rep1/t5-floor.txt",
+            "digest": "sha256:c37030b44444286a40726ae91684831b5261e50b98692acb71c9b30a13ec2473",
+            "excerpt": "command: bench test --package ./internal/git --package ./internal/landing --package ./internal/commit --package ./internal/commitment/repository --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench\nexit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,96201315d6a8a3ab0cdc0ce353ae3cea03662150,false\npackages[7]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,16135,333\n  github.com/gibbonmi/bench/internal/anchors,pass,2019,179\n  github.com/gibbonmi/bench/internal/commit,pass,12009,117\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,4705,99\n  github.com/gibbonmi/bench/internal/conformance,pass,56289,1685\n  github.com/gibbonmi/bench/internal/git,pass,1369,171\n  github.com/gibbonmi/bench/internal/landing,pass,9744,221\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t5-floor",
+          "command": "bench test --package ./internal/git --package ./internal/landing --package ./internal/commit --package ./internal/commitment/repository --package ./internal/anchors --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-guidance-cmp_t5_rep1",
+          "performer": "claude:cmp_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t5_rep1/t5-guidance.txt",
+            "digest": "sha256:5ea29a9f0dcd0b24361675d6a498cc66ee40a6fd066525fc3b10ec0027317cef",
+            "excerpt": "command: bench test --check docs-currency-workflow\nexit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,96201315d6a8a3ab0cdc0ce353ae3cea03662150,false\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4905,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-root-conformance-cmp_t5_rep1",
+          "performer": "claude:cmp_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t5_rep1/t5-root-conformance.txt",
+            "digest": "sha256:f86926b3ec54202bce607aad925e89e9ee88f274e507e1fc514b963e596d39d1",
+            "excerpt": "command: bench test --check root-conformance\nexit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,96201315d6a8a3ab0cdc0ce353ae3cea03662150,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14911,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-git-plumbing-owner-cmp_t5_rep1",
+          "performer": "claude:cmp_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t5_rep1/t5-git-plumbing-owner.txt",
+            "digest": "sha256:28a35cecccfae4a5c292c8ac5cbfd9f098b2f54beae87e0ae788f5f6b23573db",
+            "excerpt": "command: bench test --check git-plumbing-owner\nexit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,96201315d6a8a3ab0cdc0ce353ae3cea03662150,false\ncheck[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,95,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t5-git-plumbing-owner",
+          "command": "bench test --check git-plumbing-owner",
+          "exit_code": 0
+        },
+        {
+          "id": "t5-ordinary-build-census-cmp_t5_rep1",
+          "performer": "claude:cmp_t5_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "b9c0743e3e880cc1d7be3ec445e67fe705a5d1db",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t5_rep1/t5-ordinary-build-census.txt",
+            "digest": "sha256:4894faa1406b790df3f574f6ae5544baff92f2a368c2bf338caf645282f9730f",
+            "excerpt": "command: bench test --check ordinary-build-census\nexit: 0\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,96201315d6a8a3ab0cdc0ce353ae3cea03662150,false\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,314,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "t5-ordinary-build-census",
           "command": "bench test --check ordinary-build-census",
