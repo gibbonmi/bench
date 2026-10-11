@@ -6,10 +6,6 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
-### Inventory revision metadata
-
-- Fixed `bench commitment inventory` so that each `deliverable` row takes its status, its scope, and its identity from the same spec bytes. The inventory reads those bytes at the revision that plan validates, so an uncommitted edit of a `Status:` or `Roadmap:` line changes no row. A spec that Git cannot read at that revision refuses the inventory, whatever its status. Before, the inventory read the status and the scope from the working tree, so a row could disagree with its identity.
-
 ### Help title
 
 - Changed `bench help` so that its first line states what Bench does and names `bench status` as the command that gives the next action. The line now reads "bench — agent work in isolated worktrees, graded by one gate, landed only on green. Run bench status for the next action." Before, the line named the projects that Bench borrows from.
