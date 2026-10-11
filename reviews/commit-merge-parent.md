@@ -10,9 +10,9 @@
     {
       "id": "MP1",
       "base": "342975e31979d4a8ea1708282aa4a13ce7a8ef8a",
-      "tip": "dfacb0be4c0870e191535bb104620168643d4bb1",
-      "plan_digest": "sha256:3b3b51e2c87d4449eb3044f3d9d1fb6c5eb414dd8b48e9d711f48822bfe6eda6",
-      "source_digest": "13b4c96a6f5f097d6ee83647525079d6c6f7c401",
+      "tip": "a329d3ab9339c2c88dad79d95f48de811e0e0737",
+      "plan_digest": "sha256:06b9db25ba9dba1eee9e58f5e427693c6ff3473a78c4ce1e7ad3e6aa8c2f09dd",
+      "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
       "acceptance_rows": [
         "MP01",
         "MP02",
@@ -166,6 +166,143 @@
             "ref": "claude-agent:cmp_t1/t1-skip-ownership.txt",
             "digest": "sha256:bd95de563ff079a0c3a8c60cb063827b6b8b8ece2f4720742001cc5e96a3feed",
             "excerpt": "$ bench test --check skip-ownership\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,dfacb0be4c0870e191535bb104620168643d4bb1,false\ncheck[1]{name,kind,tests_run,subjects}:\n  skip-ownership,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,48,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-skip-ownership",
+          "command": "bench test --check skip-ownership",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-reader-focused-cmp_t1_rep1",
+          "performer": "claude:cmp_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t1_rep1/t1-reader-focused.txt",
+            "digest": "sha256:7ad4cb9031aaa92759916d77c7d0c254f4c999a4d7ebc88f2f894cae1f72038d",
+            "excerpt": "$ bench test --package ./internal/git --run 'TestPendingMerge'\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,120,23\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/git/checkout.go --omit 'return nil, fmt.Errorf(\"%q is not a regular file\", path)' --package ./internal/git --run '^TestPendingMergeRefusesUnreadableState$'\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/git/checkout.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/git,^TestPendingMergeRefusesUnreadableState$,passed,6\n  github.com/gibbonmi/bench/internal/git,fail,20026,6\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestPendingMergeRefusesUnreadableState/fifo,\"checkout_test.go:163: timeout: waited 20s for git.PendingMerge\",1\n  github.com/gibbonmi/bench/internal/git,TestPendingMergeRefusesUnreadableState/live_symbolic_link,\"checkout_test.go:163: PendingMerge = [\\\"1bf766ee2035832490c56523abfe04b50676b93c\\\"], <nil>; want no merge head and a read pending merge refusal\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-reader-focused",
+          "command": "bench test --package ./internal/git --run 'TestPendingMerge'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the regular-file refusal after os.Lstat in git.PendingMerge in internal/git/checkout.go, so that a directory at MERGE_HEAD reaches the read. TestPendingMergeRefusesUnreadableState turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:cmp_t1_rep1/t1-reader-focused.txt",
+              "digest": "sha256:7ad4cb9031aaa92759916d77c7d0c254f4c999a4d7ebc88f2f894cae1f72038d",
+              "excerpt": "$ bench test --package ./internal/git --run 'TestPendingMerge'\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,120,23\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench probe internal/git/checkout.go --omit 'return nil, fmt.Errorf(\"%q is not a regular file\", path)' --package ./internal/git --run '^TestPendingMergeRefusesUnreadableState$'\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/git/checkout.go,omit,failed,2,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/git,^TestPendingMergeRefusesUnreadableState$,passed,6\n  github.com/gibbonmi/bench/internal/git,fail,20026,6\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestPendingMergeRefusesUnreadableState/fifo,\"checkout_test.go:163: timeout: waited 20s for git.PendingMerge\",1\n  github.com/gibbonmi/bench/internal/git,TestPendingMergeRefusesUnreadableState/live_symbolic_link,\"checkout_test.go:163: PendingMerge = [\\\"1bf766ee2035832490c56523abfe04b50676b93c\\\"], <nil>; want no merge head and a read pending merge refusal\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1-route-focused-cmp_t1_rep1",
+          "performer": "claude:cmp_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t1_rep1/t1-route-focused.txt",
+            "digest": "sha256:e956c541df1c698d298a3ae9e3ea763865779ae9185fc7039fef900a1d3cc94a",
+            "excerpt": "$ bench test --package ./internal/worktree --run 'TestSourceMergePending|TestLandCommandPublicConflictRepairRequiresNewReviewedTip|TestPackageTestCountPin'\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,1081,7\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-route-focused",
+          "command": "bench test --package ./internal/worktree --run 'TestSourceMergePending|TestLandCommandPublicConflictRepairRequiresNewReviewedTip|TestPackageTestCountPin'",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-floor-cmp_t1_rep1",
+          "performer": "claude:cmp_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t1_rep1/t1-floor.txt",
+            "digest": "sha256:89095dc78a8e85390c4012629036364adb2eaa68370041924fbab5d2b416a4ea",
+            "excerpt": "$ bench test --package ./internal/git --package ./internal/worktree --package ./internal/conformance --package ./cmd/bench\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\npackages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19328,333\n  github.com/gibbonmi/bench/internal/conformance,pass,71380,1685\n  github.com/gibbonmi/bench/internal/git,pass,1410,171\n  github.com/gibbonmi/bench/internal/worktree,pass,66134,1398\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t1-floor",
+          "command": "bench test --package ./internal/git --package ./internal/worktree --package ./internal/conformance --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-root-conformance-cmp_t1_rep1",
+          "performer": "claude:cmp_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t1_rep1/t1-root-conformance.txt",
+            "digest": "sha256:5101cffaf168b4be4452bed5c6a1f4510b1132376c3b8211d596c149a7dc954b",
+            "excerpt": "$ bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15725,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-git-plumbing-owner-cmp_t1_rep1",
+          "performer": "claude:cmp_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t1_rep1/t1-git-plumbing-owner.txt",
+            "digest": "sha256:4e6fc1df11319885edb7acdb0ed3db9e5503f3858037683b08040712168bd5a6",
+            "excerpt": "$ bench test --check git-plumbing-owner\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\ncheck[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,96,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-git-plumbing-owner",
+          "command": "bench test --check git-plumbing-owner",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-ordinary-build-census-cmp_t1_rep1",
+          "performer": "claude:cmp_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t1_rep1/t1-ordinary-build-census.txt",
+            "digest": "sha256:3c208c334d71b82937e934334f1d757ebdf695074c2d2b6e9ae0b4a1004e27bd",
+            "excerpt": "$ bench test --check ordinary-build-census\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,318,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-ordinary-build-census",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-skip-ownership-cmp_t1_rep1",
+          "performer": "claude:cmp_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ab34cb06d3a7b1e5a3167d0bde0283b276f72ac9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:cmp_t1_rep1/t1-skip-ownership.txt",
+            "digest": "sha256:1620a53acc1838b37297f8ba81926ea90b6bb9622a28902e523f7f35a512e59e",
+            "excerpt": "$ bench test --check skip-ownership\ntree[1]{target,head,dirty}:\n  commit-merge-parent-build,a329d3ab9339c2c88dad79d95f48de811e0e0737,false\ncheck[1]{name,kind,tests_run,subjects}:\n  skip-ownership,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,46,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "requirement": "t1-skip-ownership",
           "command": "bench test --check skip-ownership",
