@@ -297,7 +297,7 @@ GW5 follows GW4, because its rows take the sizes after every move.
 
 This version-1 completion plan is a planning verification inventory, not a dispatch plan.
 Its commands are future obligations, not executed proof.
-The GW2 to GW5 ticket names are planned, and the slicing replaces them with the sliced names.
+Each slicer adds its chunk to this plan when it writes the chunk's tickets, because the plan names only ticket files that exist.
 
 ```bench-completion-plan
 {
@@ -312,57 +312,6 @@ The GW2 to GW5 ticket names are planned, and the slicing replaces them with the 
         {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
         {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
         {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
-        {"id": "prose", "command": "bench test --check prose-mechanics"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "GW2",
-      "tickets": ["3-remove-the-repeated-copies.md"],
-      "verification": [
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "prose", "command": "bench test --check prose-mechanics"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "GW3",
-      "tickets": ["4-merge-the-light-path-block.md"],
-      "verification": [
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
-        {"id": "prose", "command": "bench test --check prose-mechanics"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "GW4",
-      "tickets": ["5-move-the-batch-approval-rule.md"],
-      "verification": [
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
-        {"id": "prose", "command": "bench test --check prose-mechanics"},
-        {"id": "root-conformance", "command": "bench test --check root-conformance"}
-      ]
-    },
-    {
-      "id": "GW5",
-      "tickets": ["6-measure-the-guidance-budgets-in-bytes.md"],
-      "verification": [
-        {"id": "anchors-package", "command": "bench test --package ./internal/anchors"},
-        {"id": "command-package", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance-package", "command": "bench test --package ./internal/conformance"},
-        {"id": "budgets", "command": "bench test --check guidance-prose-budgets"},
-        {"id": "descriptions", "command": "bench test --check skill-description-budgets"},
         {"id": "prose", "command": "bench test --check prose-mechanics"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
