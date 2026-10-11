@@ -13,10 +13,10 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
-// The paths and the branch of a pending merge journey. Both sides change mergeConflictPath,
-// and the incoming commit on the branch mergeIncoming modifies tracked.txt. The incoming
-// commit can also add mergeAddedPath and mergeHostilePath. mergeHostilePath holds a space, a
-// glob character, an ESC byte, and a newline.
+// These constants name the paths and the branch of a pending merge journey. Both sides
+// change mergeConflictPath, and the incoming commit on the branch mergeIncoming modifies
+// tracked.txt. The incoming commit can also add mergeAddedPath and mergeHostilePath.
+// mergeHostilePath holds a space, a glob character, an ESC byte, and a newline.
 const (
 	mergeConflictPath = "conflict.txt"
 	mergeAddedPath    = "added.txt"
