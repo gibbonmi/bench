@@ -9,7 +9,7 @@ Shrink the always-loaded guidance that every session pays for: `.bench/BENCH.md`
 ## Notes
 
 FT100 is the source row. FT231 owns the measurement that a rule deletion needs, and FT89 owns the guidance contradictions.
-A map-owned asset stays in the map's assets folder, decisions/guidance-weight/assets/.
+A map-owned asset stays in the map's assets folder, specs/guidance-weight/decisions/guidance-weight/assets/.
 
 Terms:
 
@@ -60,10 +60,10 @@ Use craft-research for Research tickets and craft-grill for Grill tickets. The s
 
 ## Sources
 
-- Path: `decisions/guidance-weight/assets/clause-inventory.md`
+- Path: `specs/guidance-weight/decisions/guidance-weight/assets/clause-inventory.md`
   Supports: #9, #10, #14, and #15.
   Drift: an edit of `.bench/BENCH.md`, `AGENTS.md`, or an anchor row that names either file.
-- Path: `decisions/guidance-weight/assets/description-inventory.md`
+- Path: `specs/guidance-weight/decisions/guidance-weight/assets/description-inventory.md`
   Supports: #13 and #16.
   Drift: an edit of a listed `description:` line.
 - Path: `roadmap/FT100.md`

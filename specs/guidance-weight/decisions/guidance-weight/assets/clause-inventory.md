@@ -30,7 +30,7 @@ Bytes are the clause's lines at `e7ba5386`, counted with `awk` over the line ran
 | B8 | 252 | M | doc and ADR writing | `.agents/skills/bench-craft-adr/SKILL.md:7-13`, `:43` | c21af5ea; no failure |
 | B9 | 482 | 2, M | every session | `docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md`; `CONTEXT.md:8-16` | c21af5ea; 45581e89; bed3aa17, failure PG19 |
 | B10 | 240 | 1 | every session; the exception only in the staleness pass | `.agents/skills/bench-implement-spec/references/staleness-pass.md:44-46` | bed3aa17, failure PG20; ec30797e, direction |
-| B11 | 155 | 1 | spec build | `docs/adr/0023-each-ticket-gets-a-fresh-author.md:17` | bed3aa17; no failure |
+| B11 | 155 | 1 | spec-backed build | `docs/adr/0023-each-ticket-gets-a-fresh-author.md:17` | bed3aa17; no failure |
 | B12 | 122 | 1 | fix loop | `.agents/skills/bench-craft-line/SKILL.md:76-95` | bed3aa17, failure PG18 |
 | B13 | 322 | 0 | every session | `.agents/skills/bench-craft-spec/references/ste-prose.md:1-8` | fedbf484; a comparison, no failure |
 | B14 | 170 | 0 | every session | none | 3e323a6d; no failure |
@@ -45,12 +45,12 @@ Bytes are the clause's lines at `e7ba5386`, counted with `awk` over the line ran
 | B23 | 235 | 0 | every session | `.bench/BENCH-reference.md:42-44`; `CONTEXT.md:245-249` | d263bec7, direction |
 | B24 | 528 | 1 | every session | `.agents/commands/bench-drain.md:13`, `:214-220` | e0f9d5e7, aa55b83f, and 583f71e8, direction |
 | B25 | 486 | 0 | every session, as orientation | `README.md:134-140` | d8cbd48e; no failure |
-| B26 | 535 | 4 | spec build | `docs/adr/0023-each-ticket-gets-a-fresh-author.md:6-8` | 41f19bce, failure at `specs/fresh-ticket-authors/spec.md:11` |
-| B27 | 313 | 2 | spec build | `CONTEXT.md:251` | 53fc8a34, direction |
-| B28 | 343 | 3 | spec build | `docs/adr/0023-each-ticket-gets-a-fresh-author.md:15` | 53fc8a34, direction |
-| B29 | 492 | 1 | spec build | `docs/adr/0023-each-ticket-gets-a-fresh-author.md:16-17` | 41f19bce; failure at `roadmap/FT293.md:104` |
-| B30 | 772 | 4 | spec build | `docs/adr/0021-benchmark-workflow-orchestration.md:10` | 1212e8ec; direction in decision ticket 5 of 53fc8a34 |
-| B31 | 177 | 0 | spec build | `.agents/commands/bench-implement-spec.md:21` | 1e0fb140 and d2a2e1ae; no failure |
+| B26 | 535 | 4 | spec-backed build | `docs/adr/0023-each-ticket-gets-a-fresh-author.md:6-8` | 41f19bce, failure at `specs/fresh-ticket-authors/spec.md:11` |
+| B27 | 313 | 2 | spec-backed build | `CONTEXT.md:251` | 53fc8a34, direction |
+| B28 | 343 | 3 | spec-backed build | `docs/adr/0023-each-ticket-gets-a-fresh-author.md:15` | 53fc8a34, direction |
+| B29 | 492 | 1 | spec-backed build | `docs/adr/0023-each-ticket-gets-a-fresh-author.md:16-17` | 41f19bce; failure at `roadmap/FT293.md:104` |
+| B30 | 772 | 4 | spec-backed build | `docs/adr/0021-benchmark-workflow-orchestration.md:10` | 1212e8ec; direction in decision ticket 5 of 53fc8a34 |
+| B31 | 177 | 0 | spec-backed build | `.agents/commands/bench-implement-spec.md:21` | 1e0fb140 and d2a2e1ae; no failure |
 | B32 | 390 | 2 | delegated run | `docs/adr/0023-each-ticket-gets-a-fresh-author.md:13` | fd2b5de9, direction at `specs/delegated-implementation/spec.md:5` |
 | B33 | 431 | 4 | delegated run | `.agents/skills/bench-craft-delegate/references/delegation-discipline.md:11-13` | fd2b5de9, direction |
 | B34 | 268 | 1, M | every session | `.agents/commands/bench-implement-spec.md:8` | cea2f42b; 75749bd9, a learning |
@@ -89,7 +89,7 @@ Seventeen lines point to the build rules in `.bench/BENCH.md`. They are in `benc
 
 ## Inferences
 
-Under #2, a clause moves when it acts only in some phases. That set is B11 and B26–B33, which act only in a spec build or a delegated run, and B43, which acts only at spec sign-off. B10's exception and B12 also act only in some phases, but an on-demand owner already holds each one, so each is a repeated copy.
+Under #2, a clause moves when it acts only in some phases. That set is B11 and B26–B33, which act only in a spec-backed build or a delegated run, and B43, which acts only at spec sign-off. B10's exception and B12 also act only in some phases, but an on-demand owner already holds each one, so each is a repeated copy.
 
 Three clauses act in every phase, so they stay. B19 governs every phase conversation, and B37 and B38 govern every phase close. A copy in each phase file would repeat each rule many times.
 
