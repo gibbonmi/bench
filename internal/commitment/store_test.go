@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -183,6 +184,51 @@ func TestCommitmentInventoryIdentity(t *testing.T) {
 	}
 	if got, want := find("run", intent.RequestDigest(continued)[:32]).Scope, "owned.txt notes.txt"; got != want {
 		t.Errorf("unbound run scope = %q, want its continuation scope %q and not the bound deliverable %q", got, want, deliverable)
+	}
+}
+
+// TestCommitmentInventoryRevisionMetadata reads the status and the scope of each spec from
+// the bytes whose identity its row carries. An uncommitted edit of either line thus changes
+// no row, and the deliverable rows keep slug order.
+func TestCommitmentInventoryRevisionMetadata(t *testing.T) {
+	const rowA, rowB = "FT1", "FT2"
+	type fixture struct{ path, committed, edited string }
+	staged := fixture{"specs/staged/spec.md", commitmenttest.StagedBody, strings.Replace(commitmenttest.StagedBody, "staged", "implemented", 1)}
+	scoped := fixture{"specs/staged-scope/spec.md", commitmenttest.StagedBody + "Roadmap: " + rowA + "\n", commitmenttest.StagedBody + "Roadmap: " + rowB + "\n"}
+	drafted := fixture{"specs/drafted/spec.md", strings.Replace(commitmenttest.StagedBody, "staged", "draft", 1), commitmenttest.StagedBody}
+	root := commitmenttest.Repo(t, policy([]commitment.Milestone{milestone("M1", "A")}, "M1"))
+	for _, spec := range []fixture{scoped, staged, drafted} {
+		commitmenttest.Write(t, root, spec.path, spec.committed)
+	}
+	commitmenttest.Commit(t, root, "commit the specs")
+	for _, spec := range []fixture{scoped, staged, drafted} {
+		commitmenttest.Write(t, root, spec.path, spec.edited)
+	}
+
+	items, err := commitrepo.Store{Root: root}.Inventory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var order []string
+	rows := map[string]commitrepo.InventoryItem{}
+	for _, item := range items {
+		if item.Kind == "deliverable" {
+			order = append(order, item.ID)
+			rows[item.ID] = item
+		}
+	}
+	if got := rows[scoped.path].Scope; got != rowA {
+		t.Errorf("scope of %s = %q, want the committed row %q", scoped.path, got, rowA)
+	}
+	want := commitrepo.InventoryItem{Kind: "deliverable", ID: staged.path, State: "staged", Identity: commitment.Identity([]byte(staged.committed))}
+	if got := rows[staged.path]; got != want {
+		t.Errorf("row of %s = %+v, want the committed staged row %+v", staged.path, got, want)
+	}
+	if got, listed := rows[drafted.path]; listed {
+		t.Errorf("inventory lists the committed draft %s as %+v", drafted.path, got)
+	}
+	if want := []string{staged.path, scoped.path}; !slices.Equal(order, want) {
+		t.Errorf("deliverable order = %v, want slug order %v", order, want)
 	}
 }
 
