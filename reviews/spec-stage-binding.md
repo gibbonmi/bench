@@ -457,6 +457,72 @@
           "supersedes": [
             "sb1-coverage-r1"
           ]
+        },
+        {
+          "id": "sb1-standards-r2b",
+          "performer": "claude:ssb_sb1_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a731cd5d93d27a8536508e178e3f4d38a557f50a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb1_standards_r2",
+            "digest": "sha256:6af5d0961823634224e07f2c5bb3217d8d0a44d062f6787bf0f94bada6a59a34",
+            "excerpt": "claude:ssb_sb1_standards_r2 (opus/high) — SB1 round 2 Standards reaffirmation of S21 at 6c4d2160\n\nS21 confirmed closed. reviews/spec-stage-binding.md lines 580-581 at 6c4d2160 record both reruns at b6e6b0d9, each bit with restored=yes and the full command: the nil-clause swap on delivery.go failed head_binding_test.go:194 (first-policy Fatalf); the path-only swap failed :212 (rebinding Fatalf). Both line numbers match the frozen test. Both swaps are the round 1 Coverage probes 1 and 4, which were silent before the repair, so the mutations now turn the new rows red. No new Standards finding from the record commit. Advice: record line 563 could name them as the round 1 Coverage probes 1 and 4.\n"
+          },
+          "axis": "Standards",
+          "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
+          "tip": "d0a21c7467ce76700ee8377cbe69d9a4f6df6d0c",
+          "finding_ids": [],
+          "supersedes": [
+            "sb1-standards-r2"
+          ]
+        },
+        {
+          "id": "sb1-spec-r2b",
+          "performer": "claude:ssb_sb1_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a731cd5d93d27a8536508e178e3f4d38a557f50a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb1_spec_r2",
+            "digest": "sha256:dd1ec1d1fdbb7b060fdcef1fc144ae7df28268e8fd86863c9ea78bb4d1b62104",
+            "excerpt": "claude:ssb_sb1_spec_r2 (opus/high) — SB1 round 2 Spec reaffirmation of P1 and P21 at 6c4d2160\n\nP1 confirmed closed: \"Retained reds of round 2\" gives each of the three rows a red at its own assertion: SB02 probe 11 at head_binding_test.go:56 (the Approve Fatalf), SB04 probe 12 at :86 (the scope Errorf), SB05 probe 13 at :89 (the identity Errorf), each with restored=yes; the frozen-tip assertions sit at 57, 87, and 90 because the repair added an import line.\nP21 confirmed closed: the Won't-handle line reads \"the commit refuses again; `git restore` the approve output, fold, and plan.\"; the restore leaves the tree clean, so the fold that merge.go:184-195 requires can run. Ticket 1 line 49 reads \"When the worktree folds `main` before the plan, the approval check admits the binding commit.\"\nThe texts agree: spec step 1 at :222, the fold-first reason at :229, the Won't-handle line, ticket 1 line 49, ticket 3 line 35, and the test's beforePlan fold all put the fold before the plan. Read a4ffe486 and 6c4d2160 through git show; no test or probe run.\n"
+          },
+          "axis": "Spec",
+          "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
+          "tip": "d0a21c7467ce76700ee8377cbe69d9a4f6df6d0c",
+          "finding_ids": [],
+          "supersedes": [
+            "sb1-spec-r2"
+          ]
+        },
+        {
+          "id": "sb1-coverage-r2b",
+          "performer": "claude:ssb_sb1_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a731cd5d93d27a8536508e178e3f4d38a557f50a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb1_coverage_r2",
+            "digest": "sha256:f8449baf03e4a2138d7b27b4fce3bb0e49c345198b16fd66fc122154cef5047e",
+            "excerpt": "claude:ssb_sb1_coverage_r2 (opus/high) — SB1 round 2 Coverage reaffirmation of C21 at 6c4d2160\n\nC21 confirmed closed. Line 233 of specs/spec-stage-binding/spec.md now reads: \"The composed tree at the landing stays safe when `main` moves again, as SB14 proves with a production landing after the binding commit. SB45 proves the fold route (SB1 review C1, consultant decision 2026-10-11).\" It cites SB14 for landing safety, which matches the fixture at internal/commitment/repository/head_binding_test.go:139. The worktree HEAD is 6c4d2160; a4ffe486 is an ancestor, and the line was read at HEAD. Nothing else reviewed.\n"
+          },
+          "axis": "Coverage",
+          "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
+          "tip": "d0a21c7467ce76700ee8377cbe69d9a4f6df6d0c",
+          "finding_ids": [],
+          "supersedes": [
+            "sb1-coverage-r2"
+          ]
         }
       ]
     }
