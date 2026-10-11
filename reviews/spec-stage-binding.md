@@ -10,9 +10,9 @@
     {
       "id": "SB1",
       "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
-      "tip": "d0a21c7467ce76700ee8377cbe69d9a4f6df6d0c",
-      "plan_digest": "sha256:1197b2b8b97eefb9608d833cd04421ca53f18b7cbb179ca7b1c455cb826dac68",
-      "source_digest": "a731cd5d93d27a8536508e178e3f4d38a557f50a",
+      "tip": "0372a2a0eaab1248838db66e5b234efc396c216f",
+      "plan_digest": "sha256:db05f81a3108f51695589a8ed4fae8c3fe1f7105e3b13f06d3025c6f8dfd8310",
+      "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
       "acceptance_rows": [
         "SB01",
         "SB02",
@@ -312,6 +312,143 @@
           "requirement": "t1-ordinary-build-census",
           "command": "bench test --check ordinary-build-census",
           "exit_code": 0
+        },
+        {
+          "id": "t1-approval-focused-ssb_t1_rep1-r2",
+          "performer": "claude:ssb_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t1_rep1/t1-approval-focused-r2.txt",
+            "digest": "sha256:fef1d9a482a5f07ae994b6c968850fb0a70604ed31e890d745accf96b5b3854c",
+            "excerpt": "$ bench worktree exec spec-stage-binding-build -- bench test --package ./internal/commitment/repository --run 'TestAuthorizeCandidateAdmitsAHeadHeldBinding|TestAuthorizeCandidateRefusesAChangedBoundSpec|TestAdmitPublicationGradesANewBindingAtTheComposedTree|TestAuthorizeCandidateAdmitsAFoldedBinding'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,241,8\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec spec-stage-binding-build -- bench probe internal/commitment/repository/candidate.go --swap 'readTree(current, *candidate, source, tree, revision)' --with 'readTree(current, *candidate, source, revision, revision)' --package ./internal/commitment/repository --run 'TestAuthorizeCandidateAdmitsAHeadHeldBinding|TestAuthorizeCandidateRefusesAChangedBoundSpec|TestAdmitPublicationGradesANewBindingAtTheComposedTree'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/candidate.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,TestAuthorizeCandidateAdmitsAHeadHeldBinding|TestAuthorizeCandidateRefusesAChangedBoundSpec|TestAdmitPublicationGradesANewBindingAtTheComposedTree,passed,5\nspilled{lines=14,bytes=2063,omitted_lines=5,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/117ec43b4dcf3574d4c69d0aecedb569/1791734174514286594-adfaf2cb5676ec1a.out}\n  github.com/gibbonmi/bench/internal/commitment/repository,TestAdmitPublicationGradesANewBindingAtTheComposedTree/approved,\"head_binding_test.go:144: AdmitPublication(the composed approved binding) = commitment source \\\"spec\\\" refused: missing or nonregular tree file specs/stage/spec.md, want admission\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestAdmitPublicationGradesANewBindingAtTheComposedTree/changed-after-approval,\"head_binding_test.go:149: AdmitPublication(a composed changed spec) = commitment source \\\"spec\\\" refused: missing or nonregular tree file specs/stage/spec.md, want a refusal naming \\\"commitment source \\\\\\\\\\\"spec\\\\\\\\\\\" changed from sha256:c0724cf0547d5… (367 bytes)\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestAuthorizeCandidateAdmitsAHeadHeldBinding,\"head_binding_test.go:71: AuthorizeCandidate(the approved binding beside its spec) = commitment source \\\"spec\\\" refused: missing or nonregular tree file specs/stage/spec.md, want admission\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestAuthorizeCandidateRefusesAChangedBoundSpec,\"head_binding_test.go:121: AuthorizeCandidate(a changed bound spec) = commitment source \\\"spec\\\" refused: missing or nonregular tree file specs/stage/spec.md, want a refusal naming \\\"commitment source \\\\\\\\\\\"spec\\\\\\\\\\\" changed from sha256:c0724cf0547d5f… (366 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-approval-focused",
+          "command": "bench test --package ./internal/commitment/repository --run 'TestAuthorizeCandidateAdmitsAHeadHeldBinding|TestAuthorizeCandidateRefusesAChangedBoundSpec|TestAdmitPublicationGradesANewBindingAtTheComposedTree'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap the candidate tree for the default-branch revision in the new-deliverable branch of approvedTransition in internal/commitment/repository/candidate.go, so that the approval check reads a new deliverable at the default-branch tip. TestAuthorizeCandidateAdmitsAHeadHeldBinding and TestAdmitPublicationGradesANewBindingAtTheComposedTree turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ssb_t1_rep1/t1-approval-focused-r2.txt",
+              "digest": "sha256:fef1d9a482a5f07ae994b6c968850fb0a70604ed31e890d745accf96b5b3854c",
+              "excerpt": "$ bench worktree exec spec-stage-binding-build -- bench test --package ./internal/commitment/repository --run 'TestAuthorizeCandidateAdmitsAHeadHeldBinding|TestAuthorizeCandidateRefusesAChangedBoundSpec|TestAdmitPublicationGradesANewBindingAtTheComposedTree|TestAuthorizeCandidateAdmitsAFoldedBinding'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,241,8\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n\n$ bench worktree exec spec-stage-binding-build -- bench probe internal/commitment/repository/candidate.go --swap 'readTree(current, *candidate, source, tree, revision)' --with 'readTree(current, *candidate, source, revision, revision)' --package ./internal/commitment/repository --run 'TestAuthorizeCandidateAdmitsAHeadHeldBinding|TestAuthorizeCandidateRefusesAChangedBoundSpec|TestAdmitPublicationGradesANewBindingAtTheComposedTree'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\nprobe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/candidate.go,swap,failed,4,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,TestAuthorizeCandidateAdmitsAHeadHeldBinding|TestAuthorizeCandidateRefusesAChangedBoundSpec|TestAdmitPublicationGradesANewBindingAtTheComposedTree,passed,5\nspilled{lines=14,bytes=2063,omitted_lines=5,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/117ec43b4dcf3574d4c69d0aecedb569/1791734174514286594-adfaf2cb5676ec1a.out}\n  github.com/gibbonmi/bench/internal/commitment/repository,TestAdmitPublicationGradesANewBindingAtTheComposedTree/approved,\"head_binding_test.go:144: AdmitPublication(the composed approved binding) = commitment source \\\"spec\\\" refused: missing or nonregular tree file specs/stage/spec.md, want admission\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestAdmitPublicationGradesANewBindingAtTheComposedTree/changed-after-approval,\"head_binding_test.go:149: AdmitPublication(a composed changed spec) = commitment source \\\"spec\\\" refused: missing or nonregular tree file specs/stage/spec.md, want a refusal naming \\\"commitment source \\\\\\\\\\\"spec\\\\\\\\\\\" changed from sha256:c0724cf0547d5… (367 bytes)\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestAuthorizeCandidateAdmitsAHeadHeldBinding,\"head_binding_test.go:71: AuthorizeCandidate(the approved binding beside its spec) = commitment source \\\"spec\\\" refused: missing or nonregular tree file specs/stage/spec.md, want admission\",1\n  github.com/gibbonmi/bench/internal/commitment/repository,TestAuthorizeCandidateRefusesAChangedBoundSpec,\"head_binding_test.go:121: AuthorizeCandidate(a changed bound spec) = commitment source \\\"spec\\\" refused: missing or nonregular tree file specs/stage/spec.md, want a refusal naming \\\"commitment source \\\\\\\\\\\"spec\\\\\\\\\\\" changed from sha256:c0724cf0547d5f… (366 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t1-plan-focused-ssb_t1_rep1-r2",
+          "performer": "claude:ssb_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t1_rep1/t1-plan-focused-r2.txt",
+            "digest": "sha256:c3ead114a6870bd1936eb72989b06a814365ae3f68465816356f87f06ca06daa",
+            "excerpt": "$ bench worktree exec spec-stage-binding-build -- bench test --package ./internal/commitment --run 'TestHeadBinding'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment,pass,442,14\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-plan-focused",
+          "command": "bench test --package ./internal/commitment --run 'TestHeadBinding'",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-journey-focused-ssb_t1_rep1-r2",
+          "performer": "claude:ssb_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t1_rep1/t1-journey-focused-r2.txt",
+            "digest": "sha256:1ab9b8e24684249c720758decf143cc87e180bbbf723e9db08a3765c6b02d53e",
+            "excerpt": "$ bench worktree exec spec-stage-binding-build -- bench test --package ./internal/worktree --run 'TestCommitmentSpecStageLandsSpecAndBinding|TestPackageTestCountPin'\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,901,2\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-journey-focused",
+          "command": "bench test --package ./internal/worktree --run 'TestCommitmentSpecStageLandsSpecAndBinding|TestPackageTestCountPin'",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-floor-ssb_t1_rep1-r2",
+          "performer": "claude:ssb_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t1_rep1/t1-floor-r2.txt",
+            "digest": "sha256:fe0bce23293844a608f7a75fdf63b01dbc33825e11664fd61ea9970e00149648",
+            "excerpt": "$ bench worktree exec spec-stage-binding-build -- bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest --package ./internal/commit --package ./internal/worktree --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\npackages[9]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,21843,333\n  github.com/gibbonmi/bench/internal/anchors,pass,2281,179\n  github.com/gibbonmi/bench/internal/commit,pass,13420,117\n  github.com/gibbonmi/bench/internal/commitment,pass,5846,175\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,812,19\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,5326,107\n  github.com/gibbonmi/bench/internal/conformance,pass,73924,1685\n  github.com/gibbonmi/bench/internal/worktree,pass,69713,1399\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "t1-floor",
+          "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --package ./internal/commitment/commitcmd --package ./internal/commitment/commitmenttest --package ./internal/commit --package ./internal/worktree --package ./internal/anchors --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-root-conformance-ssb_t1_rep1-r2",
+          "performer": "claude:ssb_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t1_rep1/t1-root-conformance-r2.txt",
+            "digest": "sha256:65229aa2a07dfe2a994267cc913a45132895e83fbca6c107b56ea6f32825b038",
+            "excerpt": "$ bench worktree exec spec-stage-binding-build -- bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15805,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-git-plumbing-owner-ssb_t1_rep1-r2",
+          "performer": "claude:ssb_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t1_rep1/t1-git-plumbing-owner-r2.txt",
+            "digest": "sha256:182fd6a34f84106c22709edca9c258ff07228374c18c6a6f7fdbce275902a411",
+            "excerpt": "$ bench worktree exec spec-stage-binding-build -- bench test --check git-plumbing-owner\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\ncheck[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,95,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-git-plumbing-owner",
+          "command": "bench test --check git-plumbing-owner",
+          "exit_code": 0
+        },
+        {
+          "id": "t1-ordinary-build-census-ssb_t1_rep1-r2",
+          "performer": "claude:ssb_t1_rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_t1_rep1/t1-ordinary-build-census-r2.txt",
+            "digest": "sha256:20ba4b8d513a603ebf9b47f13ce37d1e5b1afe6cbc129408b42fc005722fd471",
+            "excerpt": "$ bench worktree exec spec-stage-binding-build -- bench test --check ordinary-build-census\ntree[1]{target,head,dirty}:\n  spec-stage-binding-build,\"0372a2a0eaab1248838db66e5b234efc396c216f\",true\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,338,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t1-ordinary-build-census",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -522,6 +659,72 @@
           "finding_ids": [],
           "supersedes": [
             "sb1-coverage-r2"
+          ]
+        },
+        {
+          "id": "sb1-standards-r2c",
+          "performer": "claude:ssb_sb1_standards_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb1_standards_r2",
+            "digest": "sha256:6af5d0961823634224e07f2c5bb3217d8d0a44d062f6787bf0f94bada6a59a34",
+            "excerpt": "claude:ssb_sb1_standards_r2 (opus/high) — SB1 round 2 Standards reaffirmation of S21 at 6c4d2160\n\nS21 confirmed closed. reviews/spec-stage-binding.md lines 580-581 at 6c4d2160 record both reruns at b6e6b0d9, each bit with restored=yes and the full command: the nil-clause swap on delivery.go failed head_binding_test.go:194 (first-policy Fatalf); the path-only swap failed :212 (rebinding Fatalf). Both line numbers match the frozen test. Both swaps are the round 1 Coverage probes 1 and 4, which were silent before the repair, so the mutations now turn the new rows red. No new Standards finding from the record commit. Advice: record line 563 could name them as the round 1 Coverage probes 1 and 4.\n"
+          },
+          "axis": "Standards",
+          "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
+          "tip": "0372a2a0eaab1248838db66e5b234efc396c216f",
+          "finding_ids": [],
+          "supersedes": [
+            "sb1-standards-r2b"
+          ]
+        },
+        {
+          "id": "sb1-spec-r2c",
+          "performer": "claude:ssb_sb1_spec_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb1_spec_r2",
+            "digest": "sha256:dd1ec1d1fdbb7b060fdcef1fc144ae7df28268e8fd86863c9ea78bb4d1b62104",
+            "excerpt": "claude:ssb_sb1_spec_r2 (opus/high) — SB1 round 2 Spec reaffirmation of P1 and P21 at 6c4d2160\n\nP1 confirmed closed: \"Retained reds of round 2\" gives each of the three rows a red at its own assertion: SB02 probe 11 at head_binding_test.go:56 (the Approve Fatalf), SB04 probe 12 at :86 (the scope Errorf), SB05 probe 13 at :89 (the identity Errorf), each with restored=yes; the frozen-tip assertions sit at 57, 87, and 90 because the repair added an import line.\nP21 confirmed closed: the Won't-handle line reads \"the commit refuses again; `git restore` the approve output, fold, and plan.\"; the restore leaves the tree clean, so the fold that merge.go:184-195 requires can run. Ticket 1 line 49 reads \"When the worktree folds `main` before the plan, the approval check admits the binding commit.\"\nThe texts agree: spec step 1 at :222, the fold-first reason at :229, the Won't-handle line, ticket 1 line 49, ticket 3 line 35, and the test's beforePlan fold all put the fold before the plan. Read a4ffe486 and 6c4d2160 through git show; no test or probe run.\n"
+          },
+          "axis": "Spec",
+          "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
+          "tip": "0372a2a0eaab1248838db66e5b234efc396c216f",
+          "finding_ids": [],
+          "supersedes": [
+            "sb1-spec-r2b"
+          ]
+        },
+        {
+          "id": "sb1-coverage-r2c",
+          "performer": "claude:ssb_sb1_coverage_r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4b8d9b23361a50207348e8f343a3a45a6f144bfa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ssb_sb1_coverage_r2",
+            "digest": "sha256:f8449baf03e4a2138d7b27b4fce3bb0e49c345198b16fd66fc122154cef5047e",
+            "excerpt": "claude:ssb_sb1_coverage_r2 (opus/high) — SB1 round 2 Coverage reaffirmation of C21 at 6c4d2160\n\nC21 confirmed closed. Line 233 of specs/spec-stage-binding/spec.md now reads: \"The composed tree at the landing stays safe when `main` moves again, as SB14 proves with a production landing after the binding commit. SB45 proves the fold route (SB1 review C1, consultant decision 2026-10-11).\" It cites SB14 for landing safety, which matches the fixture at internal/commitment/repository/head_binding_test.go:139. The worktree HEAD is 6c4d2160; a4ffe486 is an ancestor, and the line was read at HEAD. Nothing else reviewed.\n"
+          },
+          "axis": "Coverage",
+          "base": "8c8a6ca52da262197b60a93236a5fd7ad8fcb38d",
+          "tip": "0372a2a0eaab1248838db66e5b234efc396c216f",
+          "finding_ids": [],
+          "supersedes": [
+            "sb1-coverage-r2b"
           ]
         }
       ]
