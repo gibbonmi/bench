@@ -31,7 +31,7 @@ Each recent spec stage then needed a second landing and a second gate for the bi
 | commit-merge-parent (FT258-merge-parent) | `66af483b` | `342975e3` | 8m41s |
 
 The second landing exists because each binding check reads the default-branch tip.
-`Store.Plan` and `Store.Approve` validate every source at that tip (`internal/commitment/repository/sources.go:47-66`, `:78-91`, `internal/commitment/repository/repository.go:119`, `:126`, `:198`).
+`Store.Plan` and `Store.Approve` validate every source at that tip (`internal/commitment/repository/sources.go:74-93`, `:105-118`, `internal/commitment/repository/repository.go:104`, `:111`, `:183`).
 The approval check of `bench commit` and of `bench worktree land` does the same (`internal/commitment/repository/candidate.go:39-45`, `:160-188`).
 A spec that only the spec-stage worktree holds therefore cannot bind until a landing puts it on main.
 
@@ -227,7 +227,7 @@ The Exit handoff of `.agents/commands/bench-write-spec.md` states this order aft
 6. From the primary checkout, run `bench handoff --next` with the start command that `bench status` prints.
 
 Plan's obligation rule still guards the binding of a spec with no `Roadmap:` line (`internal/commitment/authority.go:120-135`).
-The binding comes after the last spec edit, because the identity is the digest of the spec bytes (`internal/commitment/repository/sources.go:23-39`).
+The binding comes after the last spec edit, because the identity is the digest of the spec bytes (`internal/commitment/repository/sources.go:24-40`).
 The Exit handoff keeps the planning-only staged-spec sentence that `internal/anchors/registry_commitment.go:42` pins.
 
 `.bench/BENCH.md:144` gains the spec-stage grant before its binding-only limit sentence.
@@ -551,11 +551,11 @@ The 2026-10-10 build-directions occurrence is the second landing and gate (SB17)
   - `pins` and `liveSpecs` resolve in `internal/handoff/facts.go`, and `ShapeSection` in `internal/handoff/text.go`.
 - `Import edges`: `internal/handoff` gains direct edges to `internal/commitment` and `internal/commitment/repository`. `go list -f '{{.Imports}}' ./internal/handoff` shows neither today, and `go list -f '{{join .Deps " "}}' ./internal/handoff` already lists both through `internal/status`. `go list -f '{{join .Deps "\n"}}' ./internal/commitment/repository` lists no `internal/handoff`, `internal/handoffdoc`, or `internal/status`, so the edges add no cycle.
 - `Source-row clauses and occurrences`: the source table above quotes each clause, and the paragraph after it maps every occurrence.
-- `Promised field labels`: `Spec binding`, `unbound`, `binding unknown (policy unreadable)`, and the refusals `commitment source "<id>" refused:`, `deliverable "<path>" is not staged` (`internal/commitment/repository/sources.go:60-63`), and `is not approved for outcome`.
+- `Promised field labels`: `Spec binding`, `unbound`, `binding unknown (policy unreadable)`, and the refusals `commitment source "<id>" refused:`, `deliverable "<path>" is not staged` (`internal/commitment/repository/sources.go:89`), and `is not approved for outcome`.
 - `Changed-function callers`: `bench consumers --production` lists each caller below.
-  - `validateDeliverable`: `internal/commitment/repository/admission.go:41` (`Store.Start`), `internal/commitment/repository/readiness.go:60` (`Store.readyFor`), and `internal/commitment/repository/sources.go:71` (`validateDeliverables`)
-  - `validateDeliverables`: `internal/commitment/repository/repository.go:119` (`Store.Plan`)
-  - `validateSources`: `internal/commitment/repository/repository.go:126` (`Store.Plan`) and `:198` (`Store.Approve`)
+  - `validateDeliverable`: `internal/commitment/repository/admission.go:41` (`Store.Start`), `internal/commitment/repository/readiness.go:60` (`Store.readyFor`), and `internal/commitment/repository/sources.go:98` (`validateDeliverables`)
+  - `validateDeliverables`: `internal/commitment/repository/repository.go:104` (`Store.Plan`)
+  - `validateSources`: `internal/commitment/repository/repository.go:111` (`Store.Plan`) and `:183` (`Store.Approve`)
   - `approvedTransition`: `internal/commitment/repository/candidate.go:67` (`authorizeCandidate`)
   - `Store.Inventory`: `internal/commitment/commitcmd/command.go:212` (`inventory`)
   - `pins`: `internal/handoff/facts.go:71` (`collect`)
@@ -611,13 +611,19 @@ Only `acba6bed` names its plan in its message.
 
 Each existing plan and approve test roots at the primary repository, where HEAD equals the tip (`internal/commitment/commitmenttest/repo.go:134-146`).
 The one worktree-rooted `AuthorizeCandidate` test uses a legacy adoption that binds no deliverable (`internal/commitment/repository/publication_test.go:201-212`, `internal/commitment/commitmenttest/admission.go:76-79`).
-So the static search finds no existing fixture that the HEAD rule turns red. The SB1 author runs the commitment packages before the first production edit to confirm it, and lists each red as a posture change.
+So the static search finds no existing fixture that the HEAD rule turns red. The SB1 author runs the commitment packages before the first production edit to confirm it, and lists each red as a posture change. A red in a file outside the ticket's `Writes:` line is a plan expansion under `.bench/BENCH.md`, not an inline fix.
 
-The slicing research found three files at the 400-line structure limit.
-`internal/commitment/repository/repository.go` and `internal/handoffdoc/document.go` hold 400 lines, and `internal/conformance/handoff_single_source_test.go` holds 399.
+The slicing research found three files at or near the 400-line structure limit.
+`internal/handoffdoc/document.go` holds 400 lines, `internal/conformance/handoff_single_source_test.go` holds 399, and `internal/commitment/repository/repository.go` holds 385.
 The lane's growth check reds a file over the limit that gains a line (`internal/structure/structure.go:308-331`).
 Each ticket therefore keeps these files at 400 lines or fewer.
 `internal/worktree/parallel_census_test.go:1061` pins the package test count at 773, so each new top-level `internal/worktree` test raises that pin in the same ticket.
+
+The reviewer stated on 2026-10-11 that light-path tickets of FT231 land on main during this build.
+Each one can move a cited line and add a `CHANGELOG.md` section, so the build finds each guidance edit by its quoted text.
+`bench worktree merge` refuses a textual `CHANGELOG.md` conflict, and the raw merge belongs to the reviewer.
+When the reviewer is away, one commit holds back the branch's own section, the fold runs, and one commit restores the section on top.
+The inventory light path used that route at `fa9f149c`.
 
 ### Not verified
 
@@ -625,7 +631,7 @@ Each ticket therefore keeps these files at 400 lines or fewer.
 - Whether the landing gate runs a commitment check other than `AdmitPublication` over the composed tree.
 - The exact path of the FT393 `paths-authorized` red. The tree keeps only the occurrence line at `roadmap/FT395.md:17`.
 - The executed census of existing tests under the HEAD rule. A static search finds none that would turn red, and Observations states the evidence.
-- Whether `roadmap.ProjectSequence` leaves `ROADMAP.md` byte-identical for an approve that only adds a binding (`internal/commitment/repository/repository.go:302-313`).
+- Whether `roadmap.ProjectSequence` leaves `ROADMAP.md` byte-identical for an approve that only adds a binding (`internal/commitment/repository/repository.go:287`).
 - Whether a test outside `internal/handoff` pins the exact bytes of a handoff section by a form other than the label text. A tree-wide search for `Spec status`, `Recorded base`, and `Worktree tip:` finds no such test outside `internal/handoff`, `internal/handoffdoc`, and `internal/conformance`.
 
 ### Validation plan
@@ -658,3 +664,4 @@ The handoff then pins the start command that `bench status` prints for FT395.
 - SB2 slicing: one fresh slicer on Opus at high effort, with no re-cut. SB44 joins the map, because the spec promised `unbound` for an unresolved default branch and no row graded it. The primary checkout owns the main section whatever the default branch is (`internal/handoff/handoff.go:140-147`), so the case is reachable.
 - SB3 slicing: one fresh slicer on Opus at xhigh effort, by reviewer direction, with no re-cut. The coordinator added the `internal/anchors` and `commitmenttest` floors to the completion plan. It also put "After the last spec edit" into step 2 of the close order. The command and `AGENTS.md` both name the handoff venue, because the command ships to linked repositories and `AGENTS.md` does not.
 - Main moved twice during slicing. The guidance-trim landing moved the cited lines of `.bench/BENCH.md` and `AGENTS.md`. The inventory-revision-metadata light path, by reviewer direction of 2026-10-11, makes the inventory read the status and the scope from the identity bytes. So the Won't handle line for a working-tree `Roadmap:` edit left the edge inventory.
+- TR1: the ticket review ran on Fable at xhigh effort, by reviewer direction, over commit `513e3642`. It accepted in iteration 1 with nine findings, and none of them blocked. The coordinator folded T1-T9. They fix the line citations after the light path, the size counts, and the venue sentence's word count. They also name the Shape prose test, ticket 2's edge, the out-of-line red rule, the journey obligation, and the SB44 fixture.

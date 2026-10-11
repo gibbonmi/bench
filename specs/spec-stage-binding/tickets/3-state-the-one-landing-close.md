@@ -93,7 +93,7 @@ The handoff must pin the spec path, the spec status, the binding state, the deci
 Replace "A phase close runs `bench handoff` from its own worktree." at line 45 with this sentence:
 
 ```markdown
-A phase close runs `bench handoff` from its own worktree, but a spec-stage close runs it from the primary checkout after its landing releases the worktree.
+A phase close runs `bench handoff` from its own worktree, but a spec-stage close runs it from the primary checkout after its landing.
 ```
 
 The paragraph at lines 42-47 already holds six sentences, and its bold label counts as one (`internal/prose/parse.go:298`, `:321-325`).
@@ -202,7 +202,7 @@ Also run the checks `docs-currency-workflow`, `guidance-prose-budgets`, `prose-m
 **The Writes line.** The five guidance files and `CHANGELOG.md` are the edit sites.
 Each anchor registry file that names a guidance path joins the line under the anchor closure rule: fourteen files in `internal/anchors`.
 `internal/anchors` is a bound package, so the five command registry files join the line.
-This ticket does not change those five files, and four of them hold more than 400 lines.
+This ticket does not change those five files, and two of them hold more than 400 lines.
 `internal/conformance/commitment_guidance_test.go` holds the commitment mirrors.
 
 Each of the 102 fixture directories that pin a guidance file joins the line, as the `fixture-closure` row of build preflight lists them.

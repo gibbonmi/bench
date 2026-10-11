@@ -58,6 +58,7 @@ SB16, SB20, and SB22 are current pins, and each one stays green with no edit:
 
 Before the first production edit, run the three commitment packages.
 Record the SB01 red at `Store.Plan`, and list each other red as a posture change.
+A red in a file outside this `Writes:` line is a plan expansion under `.bench/BENCH.md`, not an inline fix.
 SB01, SB02, SB03, SB04, SB05, SB06, SB08, and SB09 fail before the edit, because the current code reads each source at the default-branch tip.
 SB09 asserts the sentence `deliverable "<path>" is not staged`, and the current code gives `commitment source "<id>" refused:` there.
 
@@ -80,7 +81,7 @@ The journey runs these steps:
 
 1. Make the fixture with `planningLandingFixture` and an adopted policy.
 2. In the planning worktree, write a staged spec with a `Roadmap:` line, and commit it through `benchCommit`.
-3. Add one deliverable binding of that spec to the outcome that `bench commitment show` names, with the identity from `commitment.Identity` over the spec bytes.
+3. Add one deliverable binding of that spec to the outcome that `bench commitment show` names. Give it the identity from `commitment.Identity` over the spec bytes, and the row that the spec's `Roadmap:` line names as its obligation.
 4. Run `bench commitment plan` and `bench commitment approve` in the planning worktree.
 5. Commit `.bench/commitment.json` and each other path that approve staged, through `benchCommit`.
 6. Run `bench commitment show` in the primary checkout and in the planning worktree.
@@ -110,7 +111,7 @@ The spec-stage close commits the binding inside the range that the plan-only pre
 This ticket does not change the policy file.
 
 The binding registry binds the five command registry files to `internal/commitment`, `internal/worktree`, and `internal/anchors`, so they join this `Writes:` line.
-This ticket does not change them, and four of them hold more than 400 lines.
+This ticket does not change them, and two of them hold more than 400 lines.
 
 The `Writes:` line names `CHANGELOG.md` as an upper bound, because a research return named it for this chunk.
 This ticket does not write the `CHANGELOG.md` entry, because the spec gives the one entry to the last ticket.

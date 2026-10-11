@@ -14,11 +14,12 @@ The handoff still writes when the policy is absent or unreadable.
 The spec term applies here.
 The binding state of a spec path is the ids of the outcomes whose undelivered deliverable binding in the default-branch policy names that path.
 
-This ticket reads this contract from ticket 1:
+This ticket starts after ticket 1 commits, because both tickets write `internal/commitment/delivery.go`, `internal/commitment/commitmenttest/repo.go`, and the five command registry files.
+Ticket 1 can add a policy rule beside `Unsettled` in `internal/commitment/delivery.go`. If it does, reuse that rule, and do not restate a settlement rule.
+These facts of the current tree stay true after ticket 1:
 
-- Start, readiness, and the outlook read only the default-branch policy.
+- Start, readiness, and the outlook read only the default-branch policy (`internal/commitment/repository/repository.go:31-40`, `:220-250`).
 - After one spec-less landing publishes a staged spec and its approved binding, the default-branch policy binds that spec.
-- Ticket 1 can add a policy rule beside `Unsettled` in `internal/commitment/delivery.go`. If it does, reuse that rule, and do not restate a settlement rule.
 
 The value of the line is one of these:
 
@@ -34,7 +35,7 @@ Make these edits:
 - In `internal/commitment/repository/outlook.go`, export one test that reports an unresolved default branch. `errDefaultUnresolved` stays private (`outlook.go:10-11`), and `Store.Outlook` calls the exported test in place of its own `errors.Is` check.
 - In `internal/handoff`, read the policy once per run through `commitrepo.Store.Policy`, and give the result to `pins`. The handoff calls the same exported test to find an unresolved default branch.
 - Add `binding unknown (policy unreadable)` to the unknown phrases at `internal/handoff/facts.go:44-53`.
-- In `internal/handoff/text.go`, name the `Spec binding` label in the Shape text beside `Spec` and `Spec status`.
+- In `internal/handoff/text.go`, name the `Spec binding` label in the Shape text beside `Spec` and `Spec status`. `TestTemplatesPassProse` (`internal/handoff/prose_test.go:13-23`) grades that sentence, so keep it at 25 words or fewer.
 - In `internal/conformance/handoff_single_source_test.go`, add `handoffdoc.LabelSpecBinding` to the token list of `TestHandoffShapeNamesTheSectionGrammar` (`:171-180`).
 
 The new import edges are `internal/handoff` to `internal/commitment` and to `internal/commitment/repository`.
@@ -49,13 +50,15 @@ Obey these size limits:
 
 - `internal/handoffdoc/document.go` holds 400 of 400 lines. Pay for the new constant with an equal cut. The stale "six pins" comment at `document.go:35-37` predates the seventh pin, so a shorter comment can free the line.
 - `internal/conformance/handoff_single_source_test.go` holds 399 lines, so it takes at most one more line.
-- `internal/commitment/repository/repository.go` holds 400 lines and takes no growth. So put the exported test in `outlook.go`, which holds 32 lines.
+- `internal/commitment/repository/repository.go` holds 385 of 400 lines. Put the exported test in `outlook.go`, which holds 32 lines and owns the unresolved-default rule.
 - Keep every file that this ticket writes at 400 lines or fewer. The lane runs `bench structure --growth`, and a file over 400 lines that gains a line turns it red.
 
 Put SB23, SB24, SB25, and SB26 in the planned `TestSectionRendersTheSpecBinding` in `internal/handoff/render_test.go`.
 Put SB27, SB28, and SB44 in the planned `TestSectionRendersAnUnavailableBinding` in the same file.
 `TestSectionRendersTheAssignmentPins` and `TestSectionRendersOnePairPerLiveSpec` are the precedents.
+
 Each case builds its repository with `benchRepo` and its worktree with `activeAssignment`, and commits the policy on main through `commitmenttest`.
+`benchRepo` runs `git init -q -b main` (`internal/handoff/sections_test.go:76`), so the SB44 case renames `main` after `benchRepo`.
 Each expected outcome id comes from the fixture policy, and each spec path comes from the fixture writes.
 No expectation calls the code under test.
 
@@ -92,7 +95,7 @@ After the edit, record one red through `bench probe` for each probe below:
 Each probe reports a restored subject.
 
 The binding registry binds the five command registry files to `internal/commitment` and `internal/anchors`, so they join this `Writes:` line.
-This ticket does not change them, and four of them hold more than 400 lines.
+This ticket does not change them, and two of them hold more than 400 lines.
 
 The `Writes:` line names `CHANGELOG.md` as an upper bound, because a research return named it for this chunk.
 This ticket does not write the `CHANGELOG.md` entry, because ticket 3 writes the one entry of this spec.
