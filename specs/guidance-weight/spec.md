@@ -77,8 +77,8 @@ Harder chunks: GW1, GW5.
 24. As a build orchestrator, I want the block to keep the build-hold pointer, so that a build dispatches no light-path fix.
 25. As any session, I want the fix-don't-park split in the block, without the repeated drain clause, so that the split reads once.
 26. As any session, I want the Capture section without its repeated drain sentence, so that the drain dispatch has one statement.
-27. As a maintainer, I want each anchored needle of the block kept word for word, except the reworded lead, so that each anchor binds.
-28. As a maintainer, I want the commitment mirrors to read the reworded lead, so that the outside-a-build mirror still bites.
+27. As a maintainer, I want each anchored needle of the block kept word for word, the B40 lead included, so that each anchor binds.
+28. As a maintainer, I want the commitment mirrors to find the kept B40 lead once, so that the outside-a-build mirror still bites.
 29. As a maintainer, I want the three shared-rule markers to stay in the Workflow section, so that the single-source and section checks stay green.
 
 ### The batch-approval rule (decision #15)
@@ -184,7 +184,7 @@ No anchor or check pins the lead-in.
 
 B12 (`.bench/BENCH.md:66-67`) goes, and its row `registry_data.go:378` retires.
 The `craft-line` copy (`.agents/skills/bench-craft-line/SKILL.md:80-81`) keeps its row `registry_data.go:191`.
-A17 (`AGENTS.md:85-86`) goes, and its row `registry_data.go:383` retires with four dependents.
+A17 (`AGENTS.md:85-86`) goes, and its row `registry_data.go:383` retires with three dependents.
 The dependents are the `AGENTS.md` half of `TestSystemSuiteRouteAnchorsRedOnRemoval` (`registry_data_test.go:1240-1255`), the canary `agents-system-suite-route`, and the plant `cmd/bench/testdata/anchors/fixture-repo/AGENTS.md:11` that `cmd/bench/anchor_help_test.go` reads.
 The `projects/benchkit.md:676-677` copy keeps its row `registry_data.go:385` and its canary `benchkit-system-suite-route`.
 
@@ -203,20 +203,27 @@ The block sits directly under the right-size table in `## Workflow`, before the 
 It holds four paragraphs, because a bold label counts as one sentence and the bound is six sentences (`internal/prose/prose.go:18`).
 
 1. B39 stays word for word: "**A light-path change needs no commitment.**" and its three sentences.
-2. "**Delegate each light-path fix.** Outside a build, every light-path fix from a `bench learning` entry or a drain goes to a write delegate. Only a change that I ask for in the session goes inline under the table. `/bench-implement-spec` states the build rule. `/bench-drain` implements no light-path fix inline: it dispatches every light-path fix in its run, whatever its source and whatever the active commitment is."
+2. "**Delegate each light-path fix.** Outside a build, a `bench learning` entry's light-path fix ships at once only when the active outcome needs it; `/bench-implement-spec` states the build rule. Every light-path fix from a `bench learning` entry or a drain goes to a write delegate. Only a change that I ask for in the session goes inline under the table. `/bench-drain` implements no light-path fix inline: it dispatches every light-path fix in its run, whatever its source and whatever the active commitment is."
 3. The three remaining B40 sentences stay word for word. They run from "Dispatch that fix" to "as the light-path row states."
 4. B42 stays word for word, except that ", and the drain delegates its light-path fix" goes from its second sentence.
 
 The Capture sentence "A drain implements a light-path idea under the light-path fix rule instead." goes.
-The second and third sentences of paragraph 2 are the reworded lead of #4.
+The second sentence of paragraph 2 is the B40 lead word for word, so its timing rule stays.
+The third and fourth sentences of paragraph 2 add the delegated route of #4.
 Each sentence that `TestCommitmentGuidance` quotes with a leading space stays in the middle of a physical line (`internal/conformance/commitment_guidance_test.go:49-54`).
-The row `registry_commitment.go:26` and the mirror `commitment_guidance_test.go:53` take the first sentence of the new lead, and their diagnostic stays.
+The row `registry_commitment.go:26` and the mirror `commitment_guidance_test.go:53` keep their needle and their diagnostic.
 
 ### The batch-approval move
 
 B43 (`.bench/BENCH.md:156-159`) moves word for word into `.agents/commands/bench-write-spec.md`.
 It sits as its own paragraph in `## Exit handoff`, directly after the paragraph that ends "Stop for sign-off.", and that paragraph stays byte-identical.
-The craft-tickets sentence at `.agents/skills/bench-craft-tickets/SKILL.md:37` names `/bench-write-spec` in place of `.bench/BENCH.md` as the home of the carve-out, and the row `registry_data.go:207` takes that text.
+The craft-tickets sentence at `.agents/skills/bench-craft-tickets/SKILL.md:37` becomes this text:
+
+```text
+For spec-backed builds, this is the only route onto the frontier; the batch-approval AFK carve-out in `/bench-write-spec` is the sole no-round-trip exception.
+```
+
+The row `registry_data.go:207` takes that sentence as the first half of its needle, and its second sentence at `:38` stays byte-identical.
 The second sentence of `bench-drain.md:291` becomes "That approval is the reviewer's sign-off on this drain's proposed diff.", and the row `registry_retained_workflow.go:29` takes it.
 The forbid rows `registry_retained_workflow.go:28`, `:30`, `:31` and `registry_data.go:182` stay.
 
@@ -256,13 +263,14 @@ Each ticket writes its own bullet, so the tickets that write `CHANGELOG.md` run 
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| GW1 / TBD | The build rules live in `build-rules.md`, with their anchors, mirrors, canaries, and every pointer, and `.bench/BENCH.md` keeps one pointer | GW01-GW15 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow`, `prose-mechanics`, and `guidance-prose-budgets` checks | yes |
+| GW1 / TBD | The build rules live in `build-rules.md`, with their anchors, mirrors, canaries, and every pointer, and `.bench/BENCH.md` keeps one pointer | GW01-GW15, GW52 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow`, `prose-mechanics`, and `guidance-prose-budgets` checks | yes |
 | GW2 / TBD | The repeated copies B12 and A17 go with their anchors, and the B10 exception lives in the staleness pass | GW16-GW22 | the `internal/anchors`, `internal/conformance`, and `cmd/bench` package tests, and the `docs-currency-workflow` and `prose-mechanics` checks | no |
 | GW3 / TBD | The light-path rules read as one block under the table, and the repeated drain sentences go | GW23-GW31 | the `internal/anchors` and `internal/conformance` package tests, and the `docs-currency-workflow`, `prose-mechanics`, and `guidance-prose-budgets` checks | no |
 | GW4 / TBD | The batch-approval rule sits beside the sign-off stop, and the drain names its own approval | GW32-GW37 | the `internal/anchors` and `internal/conformance` package tests, and the `docs-currency-workflow`, `prose-mechanics`, and `guidance-prose-budgets` checks | no |
 | GW5 / TBD | Every budget row limits its subject in bytes, `AGENTS.md` has a row, and `.bench/BENCH.md` has its bound | GW38-GW51 | the `internal/conformance` package tests, and the `guidance-prose-budgets`, `skill-description-budgets`, and `prose-mechanics` checks | yes |
 
 GW1 to GW4 write `.bench/BENCH.md`, `CHANGELOG.md`, and the same anchor registries, so they run serially in the order of the table.
+Each chunk review also grades GW51, because each ticket writes its own changelog bullet.
 GW5 follows GW4, because its rows take the sizes after every move.
 
 ## Testing decisions
@@ -291,12 +299,13 @@ GW5 follows GW4, because its rows take the sizes after every move.
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
 | GW01 | 1 | `.bench/BENCH.md` holds none of the needles of B11 and B26 to B33 | review-owned: the GW1 review runs `rg` for each moved needle over `.bench/BENCH.md` | No forbid row binds `.bench/BENCH.md` for this text, so only review sees a copy left behind. |
-| GW02 | 2 | `build-rules.md` holds each moved clause byte for byte, in the current order | review-owned: the GW1 review compares the clauses of `.bench/BENCH.md` at the base with the new file | A require row pins only its needle, so a reworded sentence beside a needle passes every check. |
+| GW02 | 2 | `build-rules.md` holds each moved clause word for word, in the current order | review-owned: the GW1 review compares the clauses of `.bench/BENCH.md` at the base with the new file | A require row pins only its needle, so a reworded sentence beside a needle passes every check. |
 | GW03 | 3 | `.bench/BENCH.md` holds the one-line pointer to `build-rules.md` in `## Workflow` | planned TestBuildRulesPointerAnchorsRedOnRemoval in internal/anchors/registry_data_test.go | The new require row reds when the pointer goes, so the always-loaded guide cannot lose its route. |
 | GW04 | 4 | `build-rules.md` opens with its lead sentence | `internal/anchors/registry_data_test.go` (`TestReferenceFileAnchorsRedOnAbsence`) | The new entry reds when the file is absent or its lead goes. |
 | GW05 | 5 | Each of the 21 moved require rows binds `build-rules.md` and keeps its needle | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | A row that kept `.bench/BENCH.md` reds on the live tree, because the needle left that file. |
 | GW06 | 6 | The continuation row names section `Ticket authors` of `build-rules.md` | `internal/conformance/implementation_continuation_test.go` (`TestImplementationContinuation`) | A row that kept section `Workflow` reds, because the new file has no such section. |
-| GW07 | 7 | The five forbid rows of the build rules bind `build-rules.md` | `internal/conformance/retained_workflow_test.go` (`TestRetainedWorkflow`) | The mirror at `:163-166` names the file, so a forbid row left on `.bench/BENCH.md` reds the comparison. |
+| GW07 | 7 | The forbid row `registry_retained_workflow.go:217` binds `build-rules.md` | `internal/conformance/retained_workflow_test.go` (`TestRetainedWorkflow`) | The mirror at `:163-166` names the file, so the row left on `.bench/BENCH.md` reds the comparison. |
+| GW52 | 7 | The four fresh-author forbid rows `registry_ft311_review_dispatch.go:41`, `:49`, `:50` and `registry_retained_workflow.go:270` bind `build-rules.md` | review-owned: the GW1 review reads the `File` of each of the four rows | `TestFreshTicketAuthors` plants each needle in the row's own `File`, so a row left on `.bench/BENCH.md` passes it. |
 | GW08 | 8 | No line under `.agents`, `docs`, or `.bench/BENCH-reference.md` names `.bench/BENCH.md` as the owner of a moved rule | review-owned: the GW1 review runs `rg -F "BENCH.md"` and reads each hit against the 28-line list | Only 15 of the 28 pointer lines carry an anchor, so review sees a stale unanchored pointer. |
 | GW09 | 9 | Each anchor that quotes a repointed line quotes its new text | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | An anchor that kept the old text reds, because the old pointer text left the line. |
 | GW10 | 10 | The mirrors of `retained_workflow_test.go` name `build-rules.md` for each moved row | `internal/conformance/retained_workflow_test.go` (`TestRetainedWorkflow`) | The drift check compares File, Section, and Needle, so a stale mirror reds against the moved row. |
@@ -314,11 +323,11 @@ GW5 follows GW4, because its rows take the sizes after every move.
 | GW22 | 20 | The B10 bullet of `.bench/BENCH.md` ends at "Ask about a behavioral one." | review-owned: the GW2 review reads the bullet | The row `registry_data.go:376` pins only the first sentence, so only review sees a kept exception. |
 | GW23 | 21 | The light-path paragraphs sit directly under the right-size table | review-owned: the GW3 review reads the Workflow section order | Every block row is section-scoped or whole-file, so no row reds a scattered order. |
 | GW24 | 22 | The table keeps its inline route needle | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | The require row `registry_data.go:187` reds when the table text changes. |
-| GW25 | 23 | The block sends a learning or drain fix to a write delegate | `internal/conformance/commitment_guidance_test.go` (`TestCommitmentGuidance`) | The `outside-a-build learning fix` case removes the new lead and requires its diagnostic. |
+| GW25 | 23 | The block sends a learning or drain fix to a write delegate | review-owned: the GW3 review reads paragraph 2 for the route sentences of #4 | No row pins the new route sentences, so only review sees them missing. |
 | GW26 | 24 | The block keeps "`/bench-implement-spec` states the build rule." | `internal/conformance/commitment_guidance_test.go` (`TestCommitmentGuidance`) | The `build rule pointer` case removes the sentence and requires its diagnostic. |
 | GW27 | 25 | The fix-don't-park paragraph holds no drain clause | review-owned: the GW3 review runs `rg "drain delegates its light-path fix"` over `.bench/BENCH.md` | No row pins the removed clause, so only review sees it kept. |
 | GW28 | 26 | The Capture section holds no "light-path fix rule instead" sentence | review-owned: the GW3 review runs `rg` for the sentence | No row pins the removed sentence, so only review sees it kept. |
-| GW29 | 27 | Each block row except the reworded lead keeps its needle and stays green | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | Each row of `registry_commitment.go:22-25`, `:27` and `registry_retained_workflow.go:243-244` reds when its needle changes. |
+| GW29 | 27 | Each block row keeps its needle and stays green | `internal/conformance/gate_entry_test.go` (`TestRootConformance`) | Each row of `registry_commitment.go:22-27` and `registry_retained_workflow.go:243-244` reds when its needle changes. |
 | GW30 | 28 | Each commitment mirror finds its sentence exactly once in the live guide | `internal/conformance/commitment_guidance_test.go` (`TestCommitmentGuidance`) | A sentence that moved to a line start loses its leading space, so its count is zero and the case reds. |
 | GW31 | 29 | The right-size, fix-don't-park, and commitment markers stay in `## Workflow` of `.bench/BENCH.md` | `internal/conformance/fixture_bite_test.go` (`TestEveryRetainedFixtureBitesThroughRegisteredOwner`) | The canary `fix-dont-park-section-relocated` bites the section rule, and the section rows red a marker outside Workflow. |
 | GW32 | 30 | `bench-write-spec.md` holds B43 word for word after the sign-off paragraph | review-owned: the GW4 review compares B43 at the base with the new paragraph | B43 has no anchor of its own, so only review sees a reworded rule. |
@@ -398,17 +407,16 @@ The consultant settled E1 to E12 on 2026-10-11, and the author chose E13 to E17.
 - E2: the B12 row `registry_data.go:378` retires, because the `craft-line` copy keeps its own row (GW16, GW17).
 - E3: the drain sentence "That approval is the reviewer's sign-off on this drain's proposed diff." and its row (GW35).
 - E4: the craft-tickets carve-out names `/bench-write-spec`, and its row takes the text (GW34).
-- E5: the light-path block spans four paragraphs, and its lead reads as two sentences (GW23, GW25, GW30).
-  The old lead said a learning fix "ships at once only when the active outcome needs it". The new lead drops that timing. The fix-don't-park split and the drain dispatch sentence then carry it.
+- E5: the light-path block spans four paragraphs (GW23, GW30). Paragraph 2 keeps the B40 lead word for word and adds the #4 route as two sentences (GW25, GW29).
 - E6: the predicate lead-in counts its bullets, ending at "One predicate rides with them:" (GW14).
-- E7: the five forbid rows of the build rules repoint to the new file (GW07).
+- E7: the five forbid rows of the build rules repoint to the new file (GW07, GW52).
 - E8: 28 pointer lines repoint, not the 17 that decision #9 counted (GW08, GW09, GW12).
 - E9: the GW4 ticket raises the `bench-write-spec.md` line row until the byte switch (GW37).
 - E10: the glob row sizes from tracked files only (GW45).
 - E11: "rounded up to the next multiple of 100" means the smallest multiple of 100 that is not less than the size (GW44).
 - E12: the byte count counts every byte, the final newline included (GW39, GW41). This settles the first discretion item of the map. The map's discretion item on a `CLAUDE.md` check goes to Out of scope.
 - E13: the new file is `build-rules.md`, its H2 sections, and its lead sentence (GW02, GW04). This settles the fourth discretion item of the map.
-- E14: two new require rows pin the `.bench/BENCH.md` pointer and the moved B10 sentence (GW03, GW21).
+- E14: three new require rows pin the `.bench/BENCH.md` pointer, the lead of the build rules, and the moved B10 sentence (GW03, GW04, GW21).
 - E15: each moved row's diagnostic names "build rules" in place of "operating guide" (GW13).
 - E16: each pointer names the build rules by its full path, on its own physical line (GW08).
 - E17: the table prose names the byte unit, and craft-spec says "current size" (GW48, GW50).
@@ -418,7 +426,7 @@ The consultant settled E1 to E12 on 2026-10-11, and the author chose E13 to E17.
 | source sentence | rows |
 | --- | --- |
 | #9: "B11 and B26–B33 move word for word into one new reference file beside the build phase" | GW01, GW02, GW15 |
-| #9: "The 17 lines that point to these rules in `.bench/BENCH.md` point to the new file, and their anchors follow." | GW05, GW06, GW07, GW08, GW09, GW10, GW11, GW12 |
+| #9: "The 17 lines that point to these rules in `.bench/BENCH.md` point to the new file, and their anchors follow." | GW05, GW06, GW07, GW08, GW09, GW10, GW11, GW12, GW52 |
 | #9: "`.bench/BENCH.md` keeps a one-line pointer." | GW03 |
 | #14: "The B10 staleness-pass exception, B12, and A17 go from always-loaded guidance." | GW16, GW19, GW22 |
 | #14: "Each anchor moves to the kept copy." and "the `AGENTS.md` anchor of A17 retires" | GW17, GW18, GW20, GW21 |
@@ -447,13 +455,13 @@ The consultant settled E1 to E12 on 2026-10-11, and the author chose E13 to E17.
 - `Entry reads`: none. The check reads the root that its harness passes.
 - `Derived expectations`: each fixture size comes from the fixture bytes that the test writes, not from the check.
 - `Consolidated rules`: the table below lists each consolidated light-path site.
-- `Quantified obligations`: "each anchor" maps to GW05, GW07, GW09, GW17, GW21, GW29, and GW35. "Every pointer" maps to GW08 and GW09. "Every row" maps to GW44 to GW47.
+- `Quantified obligations`: "each anchor" maps to GW05, GW07, GW09, GW17, GW52, GW21, GW29, and GW35. "Every pointer" maps to GW08 and GW09. "Every row" maps to GW44 to GW47.
 - `Workflow-step writes`: none. The spec adds no workflow step.
 
 | site | old rule | new rule | row |
 | --- | --- | --- | --- |
 | right-size table row | the inline light-path route | unchanged | GW24 |
-| B40 lead | a learning fix ships at once only when the active outcome needs it | a learning or drain fix goes to a write delegate, and a reviewer-asked change goes inline | GW25 |
+| B40 lead | a learning fix ships at once only when the active outcome needs it | unchanged, plus the #4 route: a learning or drain fix goes to a write delegate, and a reviewer-asked change goes inline | GW25, GW29 |
 | B42 second sentence | an unneeded defect goes to `bench learning`, and the drain delegates its fix | an unneeded defect goes to `bench learning` | GW27 |
 | Capture paragraph | a drain implements a light-path idea under the light-path fix rule | removed | GW28 |
 
