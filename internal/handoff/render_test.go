@@ -50,10 +50,10 @@ func TestRenderPathOutsideHome(t *testing.T) {
 	}
 }
 
-// HS2 and HS10, stories 4 and 13. The pins carry the values a resuming session acts
-// on. The request token is the plain caller token byte for byte, because a landing passes
-// that value back and the digest is not accepted in its place. The tip is the assignment's
-// own worktree HEAD, read after a commit that only that tree carries.
+// The pins carry the values a resuming session acts on. The request token is the plain
+// caller token byte for byte, because a landing passes that value back and the digest is
+// not accepted in its place. The tip is the assignment's own worktree HEAD, read after a
+// commit that only that tree carries.
 func TestSectionRendersTheAssignmentPins(t *testing.T) {
 	root := benchRepo(t)
 	const token = "hs-plain-token-20260904"
