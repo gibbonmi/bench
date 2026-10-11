@@ -1,7 +1,7 @@
 # Move the build rules into their own reference file
 
 Blocked by: none
-Writes: .agents/skills/bench-implement-spec/references/build-rules.md (new), .bench/BENCH.md, CHANGELOG.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_retained_workflow.go, internal/conformance/axi_query_registry_test.go, internal/conformance/implementation_continuation_test.go, internal/conformance/retained_workflow_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/workflow-guidance-anchors/delegated-chunk-tip-review, tests/canary/workflow-guidance-anchors/delegated-green-predecessor, tests/canary/workflow-guidance-anchors/delegated-opt-in-entry, tests/canary/workflow-guidance-anchors/delegated-pending-predecessor-stop, tests/canary/workflow-guidance-anchors/delegated-per-ticket-author, tests/canary/workflow-guidance-anchors/delegated-prerequisite-checkpoint, tests/canary/workflow-guidance-anchors/delegated-repair-ownership
+Writes: .agents/skills/bench-implement-spec/references/build-rules.md (new), .bench/BENCH.md, CHANGELOG.md, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/anchors/anchor_harness_diagnostics_test.go, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/anchors/registry_commitment.go, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_retained_workflow.go, internal/conformance/axi_query_registry_test.go, internal/conformance/implementation_continuation_test.go, internal/conformance/retained_workflow_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/docs-currency-token-diet/benchref-imported, tests/canary/docs-currency-token-diet/benchref-pointer-dropped, tests/canary/docs-currency-token-diet/benchref-section-duplicated, tests/canary/docs-currency-token-diet/dogfood-referent-shipped, tests/canary/docs-currency-token-diet/missing-cli-inventory, tests/canary/docs-currency-token-diet/stale-cli-doc-reference, tests/canary/load-validity-metadata/readme-shared-rule-drift, tests/canary/load-validity-metadata/shared-rule-drift, tests/canary/skills-index-command-adapters/adapter-inert-invocation-key, tests/canary/skills-index-command-adapters/command-invocation-disabled-against-policy, tests/canary/skills-index-command-adapters/debug-implicit-invocation-reverted, tests/canary/workflow-guidance-anchors/capture-sink-anchor, tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns, tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary, tests/canary/workflow-guidance-anchors/core-absent-bench-operational-layer, tests/canary/workflow-guidance-anchors/core-absent-category-context, tests/canary/workflow-guidance-anchors/core-absent-category-oracle, tests/canary/workflow-guidance-anchors/core-absent-category-setup, tests/canary/workflow-guidance-anchors/core-absent-category-work, tests/canary/workflow-guidance-anchors/core-absent-gate-authority, tests/canary/workflow-guidance-anchors/core-absent-kit-only-ship, tests/canary/workflow-guidance-anchors/core-absent-no-path-fallback, tests/canary/workflow-guidance-anchors/core-absent-retained-integration-source, tests/canary/workflow-guidance-anchors/core-absent-retro-capture-owner, tests/canary/workflow-guidance-anchors/core-absent-retro-drain-owner, tests/canary/workflow-guidance-anchors/core-absent-skills-guidance, tests/canary/workflow-guidance-anchors/core-absent-upgrade-route, tests/canary/workflow-guidance-anchors/core-cli-bounded-complete-response, tests/canary/workflow-guidance-anchors/core-cli-call-pair, tests/canary/workflow-guidance-anchors/core-progressive-loading-term, tests/canary/workflow-guidance-anchors/delegated-chunk-tip-review, tests/canary/workflow-guidance-anchors/delegated-green-predecessor, tests/canary/workflow-guidance-anchors/delegated-opt-in-entry, tests/canary/workflow-guidance-anchors/delegated-pending-predecessor-stop, tests/canary/workflow-guidance-anchors/delegated-per-ticket-author, tests/canary/workflow-guidance-anchors/delegated-prerequisite-checkpoint, tests/canary/workflow-guidance-anchors/delegated-repair-ownership, tests/canary/workflow-guidance-anchors/fix-dont-park-section-relocated, tests/canary/workflow-guidance-anchors/light-path-inline, tests/canary/workflow-guidance-anchors/structured-phase-progress-anchor, tests/canary/workflow-guidance-anchors/ticket-light-path-anchor
 Covers: GW01, GW02, GW03, GW04, GW05, GW06, GW07, GW10, GW11, GW13, GW14, GW15, GW51, GW52
 
 ## What to build
@@ -61,7 +61,7 @@ The 21 `Require` rows sit in three registry files:
 The row at `internal/anchors/registry_retained_workflow.go:341` is `RequireInSection`, and its section changes from `Workflow` to `Ticket authors`.
 The five moved `Forbid` rows are `internal/anchors/registry_ft311_review_dispatch.go:41`, `:49`, `:50`, and `internal/anchors/registry_retained_workflow.go:217`, `:270`.
 The `Forbid` rows at `internal/anchors/registry_retained_workflow.go:295-302` keep their phase files.
-Add no `Forbid` row that binds `.bench/BENCH.md`, because 27 canary overlays carry a whole old `.bench/BENCH.md` with these paragraphs.
+The spec keeps GW01 review-owned, so add no `Forbid` row that binds `.bench/BENCH.md` for the moved text.
 
 **The diagnostics.** In each moved row, "operating guide" becomes "build rules", and the verb takes the plural form where it needs it.
 For example, the row at `internal/anchors/registry_ft311_review_dispatch.go:47` reads "build rules allow advancement before three-axis chunk review".
@@ -85,7 +85,7 @@ The research found them at `internal/anchors/registry_ft311_review_dispatch.go:7
 Also read `internal/anchors/registry_retained_workflow.go:224-235`.
 The doc comment of `chunkChainAnchors` at `internal/anchors/registry_chunk_chain.go:3-17` describes the two new rows.
 
-**The new rows.** Add two `Require` rows to `chunkChainAnchors`:
+**The new rows.** Add two `Require` rows in the group `AfterImplementSpec` to `chunkChainAnchors`:
 
 | row | `File` | kind and section | needle | diagnostic |
 |---|---|---|---|---|
@@ -130,6 +130,11 @@ This is the proposed text:
 Both are over the 400-line cap with no grant, so neither file gains a line (`internal/structure/structure.go:308-331`).
 `internal/anchors/registry_retained_workflow.go` has 397 lines, so its edits stay in place.
 The build rules file has no budget row, because reference files stay outside the budget universe.
+
+**The Writes line.** The line holds each research path that this design can touch, and the five bound files of `internal/anchors` (`internal/tickets/registry_data.go:21-27`, `:45`).
+The closure adds `internal/anchors/registry_commitment.go` and `internal/anchors/anchor_harness_diagnostics_test.go`, which name `.bench/BENCH.md`.
+It also adds the 34 other fixture directories that pin `.bench/BENCH.md` through `BASE`, an overlay, or a mutation.
+Ticket 2 holds the research paths that only the pointer edits can touch, and this ticket drops no research path.
 
 ## Acceptance
 
