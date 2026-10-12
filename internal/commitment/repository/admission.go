@@ -38,7 +38,7 @@ func (store Store) Start(outcome, request, deliverable string) error {
 		if source == nil {
 			return ledger, false, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: fmt.Errorf("deliverable %q is not approved for outcome %q", deliverable, outcome)}
 		}
-		if err := store.validateDeliverable(*source); err != nil {
+		if _, err := store.validateDeliverable(*source); err != nil {
 			return ledger, false, err
 		}
 		binding := intent.DeliveryBinding{Assignment: owner.ID, Request: owner.Request, Milestone: policy.ActiveMilestone, Outcome: outcome, Deliverable: deliverable, Identity: source.Identity}

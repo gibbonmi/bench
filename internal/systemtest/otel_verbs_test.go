@@ -29,6 +29,7 @@ func TestOtelCommitAndLandingRecordJourney(t *testing.T) {
 	if admitted.code != 0 {
 		t.Fatalf("admit record fixture: %s %s", admitted.stdout, admitted.stderr)
 	}
+	openChunkGaps(t, fixture.root)
 	base := systemGitOutput(t, fixture.root, "rev-parse", "main")
 
 	if err := os.WriteFile(filepath.Join(source.path, "landed.txt"), []byte("landed\n"), 0o644); err != nil {

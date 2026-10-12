@@ -86,30 +86,31 @@ func (store Store) checkoutHead() (string, error) {
 	return strings.TrimSpace(head), err
 }
 
-// validateDeliverable validates source at the default-branch tip.
-func (store Store) validateDeliverable(source commitment.SourceBinding) error {
+// validateDeliverable validates source at the default-branch tip. A valid source is a staged
+// spec or a tickets-only folder, and staged reports which one.
+func (store Store) validateDeliverable(source commitment.SourceBinding) (staged bool, err error) {
 	revision, err := store.sourceRevision()
 	if err != nil {
-		return err
+		return false, err
 	}
 	return store.validateDeliverableAt(revision, source)
 }
 
-func (store Store) validateDeliverableAt(revision string, source commitment.SourceBinding) error {
+func (store Store) validateDeliverableAt(revision string, source commitment.SourceBinding) (bool, error) {
 	isSpec := spec.IsLiveSpecPath(source.Path)
 	if !isSpec && !ticketsOnlyAt(store.Root, revision, source.Path) {
-		return fmt.Errorf("deliverable %q is not an approved spec or tickets-only folder", source.Path)
+		return false, fmt.Errorf("deliverable %q is not an approved spec or tickets-only folder", source.Path)
 	}
 	identity, data, err := sourceAt(store.Root, revision, source.Path)
 	if err != nil {
-		return fmt.Errorf("commitment source %q refused: %w", source.ID, err)
+		return false, fmt.Errorf("commitment source %q refused: %w", source.ID, err)
 	}
 	if isSpec {
 		if _, err := spec.Implemented(data); err != nil {
-			return fmt.Errorf("deliverable %q is not staged: %w", source.Path, err)
+			return false, fmt.Errorf("deliverable %q is not staged: %w", source.Path, err)
 		}
 	}
-	return validateIdentity(source, identity)
+	return isSpec, validateIdentity(source, identity)
 }
 
 func (store Store) validateDeliverables(current *commitment.Policy, proposed commitment.Policy, head string) error {
@@ -119,7 +120,7 @@ func (store Store) validateDeliverables(current *commitment.Policy, proposed com
 	}
 	_, bindings := commitment.Unsettled(proposed)
 	for _, binding := range bindings {
-		if err := store.validateDeliverableAt(readTree(current, proposed, binding.Source, head, revision), binding.Source); err != nil {
+		if _, err := store.validateDeliverableAt(readTree(current, proposed, binding.Source, head, revision), binding.Source); err != nil {
 			return err
 		}
 	}

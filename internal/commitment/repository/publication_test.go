@@ -19,7 +19,8 @@ import (
 const publicationDeliverable = "specs/x/spec.md"
 
 // publicationRepo approves one delivery and registers two assignments. Only the bound
-// assignment starts that delivery. The returned tree adds a production file to main.
+// assignment starts that delivery. The build sits in an open chunk gap, so a spec-less
+// publication passes the build window. The returned tree adds a production file to main.
 func publicationRepo(t *testing.T) (root string, bound, unbound commitrepo.Publication, tree string) {
 	t.Helper()
 	root = gittest.RepoOnBranch(t, "main")
@@ -28,6 +29,7 @@ func publicationRepo(t *testing.T) (root string, bound, unbound commitrepo.Publi
 	commitmenttest.Commit(t, root, "approve fixture delivery")
 	boundPath := commitmenttest.Assignment(t, root, "bound")
 	commitmenttest.Admit(t, boundPath, "bound", publicationDeliverable)
+	putGap(t, root, intent.ChunkGap{Outcome: commitmenttest.DeliveryOutcome, Chunk: "C1", Open: true})
 	unboundPath := commitmenttest.Assignment(t, root, "unbound")
 	commitmenttest.Write(t, boundPath, "tool.go", "package tool\n")
 	commitmenttest.Commit(t, boundPath, "production file")

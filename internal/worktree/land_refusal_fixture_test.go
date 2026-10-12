@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 )
 
@@ -154,6 +155,15 @@ func landingRefusalFixtures() []landingRefusalFixture {
 				otherLanding = holdLandingLease(t, root, otherLandingID)
 			},
 			carry: map[int]func(*testing.T, landingFixture){0: func(*testing.T, landingFixture) { otherLanding.Release() }},
+		},
+		{
+			// A second build holds main outside its gap. Its gap, which the wait step stands
+			// for, lets the re-run through.
+			face: faceLandBuildWindow,
+			mutate: func(t *testing.T, root string, _ Creation) {
+				mustNoError(t, startOtherBuild(root, commitmenttest.Assignment(t, root, "landing-face-other-build")))
+			},
+			carry: map[int]func(*testing.T, landingFixture){0: func(t *testing.T, f landingFixture) { openChunkGaps(t, f.root) }},
 		},
 		{
 			// The destination gains a commit that the reviewed source lacks, so the completion

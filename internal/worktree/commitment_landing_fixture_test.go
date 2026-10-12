@@ -42,16 +42,22 @@ const lightLandingSlug = "lp"
 var lightPathTicket = landing.ClosedFolderPath(lightLandingSlug) + "/tickets/one.md"
 
 // lightLandingFixture is the spec-less landing fixture whose source is a second assignment
-// that request names. That assignment starts at the base with no delivery binding. It
-// commits one light-path ticket whose Writes line lists owned.txt, and owned.txt, which the
-// gate needs.
+// that request names.
 func lightLandingFixture(t *testing.T, request string) landingFixture {
 	t.Helper()
-	f := specLessLandingFixture(t, request+"-bound")
+	return lightLandingOn(t, specLessLandingFixture(t, request+"-bound"), request)
+}
+
+// lightLandingOn is f with a second assignment that request names as its source. That
+// assignment starts at the base with no delivery binding. It commits one light-path ticket
+// whose Writes line lists owned.txt, and owned.txt, which the gate needs. The bytes equal
+// the bound source's bytes, so the change also composes over the bound source's landing.
+func lightLandingOn(t *testing.T, f landingFixture, request string) landingFixture {
+	t.Helper()
 	f.creation = mustCreate(t, f.root, f.home, request, "light-path landing")
 	commitmenttest.WriteLightTicket(t, f.creation.Path, lightPathTicket, "owned.txt")
 	gitRun(t, f.creation.Path, "add", "--", lightPathTicket)
-	commitInWorktree(t, f.creation.Path, "owned.txt", "light-path bytes\n", "light-path change")
+	commitInWorktree(t, f.creation.Path, "owned.txt", reviewedSource, "light-path change")
 	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	return f
 }

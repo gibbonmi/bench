@@ -197,17 +197,17 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
 		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
 	}
-	lease, err := leaseLanding(root, request.Destination, assignment, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path)
-	if err != nil {
+	publication := commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable(), Destination: request.Destination}
+	// The window decides before the lease, so a landing never waits for a lease and then for a gap.
+	if err := (commitrepo.Store{Root: root}).AdmitWindow(publication); err != nil {
+		return landRefusalError(stdout, landingSourceRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID))
+	}
+	if publication.Lease, err = leaseLanding(root, request.Destination, assignment, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path); err != nil {
 		return landRefusalError(stdout, err)
 	}
-	result, err := j.landReviewed(ctx, request, commitmentAdmission{
-		store:  commitrepo.Store{Root: root},
-		source: commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable(), Lease: lease},
-		gap:    j.publicationGap,
-	})
+	result, err := j.landReviewed(ctx, request, commitmentAdmission{store: commitrepo.Store{Root: root}, source: publication, gap: j.publicationGap})
 	if err != nil {
-		lease.Release()
+		publication.Lease.Release()
 		var conflict landing.ConflictError
 		if errors.As(err, &conflict) {
 			return landRefusalError(stdout, landingConflictRefusal(conflict, destination, assignment.ID, parsed.Flags["--spec"], path, assignment.Worktree))
@@ -307,7 +307,8 @@ func (a commitmentAdmission) Check(tree string) error {
 }
 
 // Publish leaves a publication failure unwrapped, so compare-and-swap and recovery
-// refusals keep their own text. Only an admission refusal carries the commitment prefix.
+// refusals keep their own text. Only an admission refusal carries the commitment prefix. The
+// window refusal keeps the sentence that it prints before the lease.
 func (a commitmentAdmission) Publish(tree string, publish func() error) error {
 	ran := false
 	err := a.store.PublishAdmitted(a.source, tree, func() error {
@@ -315,7 +316,7 @@ func (a commitmentAdmission) Publish(tree string, publish func() error) error {
 		ran = true
 		return publish()
 	})
-	if ran || err == nil {
+	if ran || err == nil || landingFaceName(err) == faceLandBuildWindow {
 		return err
 	}
 	return fmt.Errorf("commitment: %w", err)

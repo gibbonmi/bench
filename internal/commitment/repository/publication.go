@@ -10,11 +10,11 @@ import (
 
 // Publication is the source assignment identity a landing froze before its gate, with
 // the reviewed source commit that it publishes and the reviewed deliverable that it
-// closes, if any: a staged spec or a tickets-only folder. Lease is the landing's lease on
-// its destination, if it holds one.
+// closes, if any: a staged spec or a tickets-only folder. Destination is the ref that the
+// landing publishes, and Lease is the landing's lease on it, if it holds one.
 type Publication struct {
-	Assignment, Request, Worktree, Source, Deliverable string
-	Lease                                              *Lease
+	Assignment, Request, Worktree, Source, Deliverable, Destination string
+	Lease                                                           *Lease
 }
 
 // AdmitPublication grades the exact composed tree for the frozen source assignment.
@@ -26,13 +26,17 @@ func (store Store) AdmitPublication(source Publication, tree string) error {
 	return store.admitPublication(ledger, source, tree)
 }
 
-// PublishAdmitted decides tree again under the intent lock and runs publish before that
-// lock releases. No competing claim, blocker, or receipt can change the decision between
-// that final check and the ref update that publish performs. The same decision drops the
-// publication's lease, so the next landing can take it once this lock releases.
+// PublishAdmitted decides the build window and tree again under the intent lock and runs
+// publish before that lock releases. No competing claim, blocker, receipt, or gap change can
+// alter the decision between that final check and the ref update that publish performs. The
+// same decision drops the publication's lease, so the next landing can take it once this
+// lock releases.
 func (store Store) PublishAdmitted(source Publication, tree string, publish func() error) error {
 	published := false
 	err := intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+		if err := store.window(ledger, source); err != nil {
+			return ledger, false, err
+		}
 		if err := store.admitPublication(ledger, source, tree); err != nil {
 			return ledger, false, err
 		}

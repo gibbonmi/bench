@@ -1,10 +1,12 @@
 package refusalroute
 
 // A policy outside the landing raises these land faces. The landing lease names its owner,
-// and a lease lock fault stops the landing as an infrastructure outcome.
+// and a lease lock fault stops the landing as an infrastructure outcome. The build window
+// names the open build that holds the destination.
 const (
 	LandLeaseHeld      = "land-lease-held"
 	LandInfrastructure = "land-infrastructure"
+	LandBuildWindow    = "land-build-window"
 )
 
 // destinationClean is the repair a destination that carries uncommitted work demands. The
@@ -73,6 +75,14 @@ var landFaces = []Face{
 		Name:      LandLeaseHeld,
 		Authority: Agent,
 		Route:     []Step{Instruction(Text("wait until the landing of assignment"), Composed(FactLeaseOwner), Text("ends")), rerun},
+	},
+	{
+		// The window policy owns the sentence, which names the build and the gap to wait for.
+		// The build's gap, or a reviewer override for this landing, lets the re-run through.
+		Verb:      Land,
+		Name:      LandBuildWindow,
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("wait for the gap that the refusal names, or ask the reviewer for an override")), rerun},
 	},
 	{
 		// The fold brings the moved destination into the source. The raising site points the

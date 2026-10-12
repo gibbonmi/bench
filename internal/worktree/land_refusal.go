@@ -127,6 +127,9 @@ const (
 	// The landing lease raises this face before composition, when another live landing
 	// holds the destination.
 	faceLandLeaseHeld = refusalroute.LandLeaseHeld
+	// The build window raises this face before the lease and again at publish, for a
+	// landing that an open build holds outside its gap.
+	faceLandBuildWindow = refusalroute.LandBuildWindow
 	// The landing raises this face for a destination that moved past the reviewed source.
 	faceLandDestinationMoved = "land-destination-moved"
 	// The landing raises these two from the composed tree's authorization refusal, by the

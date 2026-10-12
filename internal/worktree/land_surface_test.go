@@ -371,6 +371,8 @@ func TestLandCommandConflictNextPlaceholdsAnUnsafeSpec(t *testing.T) {
 	t.Parallel()
 	request := "land-surface-conflict-unsafe-spec"
 	f := landSurface(t, request)
+	// A tickets-only landing from the bound source passes the build window only in a gap.
+	openChunkGaps(t, f.root)
 	slug := "close\x1bme"
 	mustMkdirAll(t, filepath.Join(f.creation.Path, "specs", slug, "tickets"), 0o755)
 	commitInWorktree(t, f.creation.Path, filepath.Join("specs", slug, "tickets", "one.md"), "Ticket.\n", "tickets-only folder")

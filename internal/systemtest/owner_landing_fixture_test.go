@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -66,6 +67,24 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	base := systemGitOutput(t, root, "rev-parse", "HEAD")
 	systemGit(t, root, "update-ref", "refs/bench/green/main", base)
 	return root, home, tally, trees, ready, release
+}
+
+// openChunkGaps records an open chunk gap for each claimed outcome of the ledger at root,
+// as a green chunk checkpoint records it. A spec-less landing from a bound source passes
+// the build window only in a gap.
+func openChunkGaps(t *testing.T, root string) {
+	t.Helper()
+	if err := intent.Transact(root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+		state := *ledger.Commitment
+		state.Gaps = nil
+		for _, claim := range state.Claims {
+			state.Gaps = append(state.Gaps, intent.ChunkGap{Milestone: claim.Milestone, Outcome: claim.Outcome, Chunk: "C1", Open: true})
+		}
+		ledger.Commitment = &state
+		return ledger, true, nil
+	}, nil); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // linkedDeliverable is the staged spec that a linked project's adoption approves.
