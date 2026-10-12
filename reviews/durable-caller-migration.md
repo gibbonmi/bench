@@ -2776,7 +2776,83 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "dcm-b6-r1-standards",
+          "performer": "claude:dcm_rev_b6_std",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6db04c672387f77749e07f16235df9cbe9e9566a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b6_std",
+            "digest": "sha256:6a8b3c6592e83b10475bb59d154315425c72ae181aa32d9b039f9b0c30978d4d",
+            "excerpt": "## Standards (D-B6, 3cf04078..c9670e29) — 5 findings; worst S1\nS1 | auto-fix | 8 | internal/commitment/repository/replacement_test.go:96 | the test builds the intent lock path a second time; intent.LockPath owns it | use intent.LockPath\nS2 | ask-user (orchestrator: auto-fix by plan expansion) | 5 | replacement_test.go:78-138 vs internal/gate/durable_replacement_test.go:231-269 | two routers send a replacement by destination and ordinal to a Recorder; D-C4 would add a third | one router in durablefiletest, used by both tests\nS3 | ask-user (orchestrator: auto-fix by plan expansion) | 5 | replacement_test.go:24,36-76 | the repo fixture repeats commitmenttest.Repo | expose approve through export_test.go, move the test to repository_test, start from commitmenttest.Repo\nS4 | auto-fix | 6 | replacement_test.go:277-283 | setup closures built outside t.Run call the parent t.Fatal from a subtest | pass the subtest t into setup\nS5 | auto-fix | 4 | replacement_test.go:262-264 | the lock-release check after the call repeats a fact intent owns and tests | delete it\nClean: no algorithm copy; one published classifier; Compensation signature unchanged; restore errors joined and named; repository.go 289 lines.\n"
+          },
+          "axis": "Standards",
+          "base": "3cf04078eb7bf8169f1af53cde9074f0a1da206e",
+          "tip": "67d8443bb5fd5574b6496be39fb9f7668632664e",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b6-r1-spec",
+          "performer": "claude:dcm_rev_b6_spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6db04c672387f77749e07f16235df9cbe9e9566a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b6_spec",
+            "digest": "sha256:5109c0d0b008cdaae763c680a5279e3e3d7f010be07afccdf80b0f197d6da0c4",
+            "excerpt": "## Spec (D-B6, 3cf04078..c9670e29) — 0 findings\nD23, D46-D51 meet the commitment and restore paragraphs, the seam paragraph, and Source headroom. Restoring after every stage failure matches spec line 130. Plan reorder 661c5ec7 changes only the chunk order and keeps every ordering constraint.\nAdvice: D47 checks policy bytes only; D51 has no policy-absent case; the spec chunk table order differs from the plan order.\n"
+          },
+          "axis": "Spec",
+          "base": "3cf04078eb7bf8169f1af53cde9074f0a1da206e",
+          "tip": "67d8443bb5fd5574b6496be39fb9f7668632664e",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "dcm-b6-r1-coverage",
+          "performer": "claude:dcm_rev_b6_cov",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6db04c672387f77749e07f16235df9cbe9e9566a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:dcm_rev_b6_cov",
+            "digest": "sha256:b4ce360ddc313ab37fba80128b0f2094b9a147980461f366eafecae133db5db1",
+            "excerpt": "## Coverage (D-B6, 3cf04078..c9670e29) — 8 findings; worst C1. Nine probes, each restored=yes; author probes 18/18 bite.\nC1 | auto-fix | 9 | replacement.go:68 | restoreAll stopping at the first failed restore is silent | D50 row: ledger#1 rename then policy#2 restore fault; assert the board restored and the policy named\nC2 | auto-fix | 9 | replacement.go:49 | skipping the restore after an unpublished board error is silent | board#1 rename row asserting the old policy bytes and mode\nC3 | auto-fix | 8 | replacement.go:103 | an absent snapshot restore returning nil is silent | no-policy fixture; policy#1 sync and ledger#1 rename failures leave the policy absent\nC4 | auto-fix | 8 | replacement.go:113 | a read-back that ignores bytes is silent | read-back row that rewrites the bytes\nC5 | auto-fix | 8 | replacement.go:26 | dropping the board snapshot error is silent | board-directory refusal row\nC6 | auto-fix | 8 | replacement.go:36 | dropping the ProjectSequence error is silent | refusal row for a board with no sequence; no trace, both files kept\nC7 | ask-user (orchestrator: auto-fix, same as S5) | 6 | replacement_test.go:259-264 | the lock-release check has no safe red and repeats intent's tests | delete it\nC8 | auto-fix | 9 | replacement_test.go:302 | the D30 no-file-written checks had no recorded red; H1 and H2 demonstrated | record H1 and H2\nCovered: probe G, an empty Replacer in the exported Approve, panics in ./internal/commitment.\n"
+          },
+          "axis": "Coverage",
+          "base": "3cf04078eb7bf8169f1af53cde9074f0a1da206e",
+          "tip": "67d8443bb5fd5574b6496be39fb9f7668632664e",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C7",
+            "C8"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3250,3 +3326,34 @@ Chunk D-C1 used 0 of its 2 repair cycles before repair 1. S1 and C1 fall on tick
 Chunk D-C1 used 1 of its 2 repair cycles.
 
 The D-C1 confirming round at 41bc07d3 closed S1 and C1 with no new finding. Chunk D-C1 closed with 1 of its 2 repair cycles used.
+
+## Standards (D-B6)
+
+Chunk D-B6 has 5 findings. The worst issue is S1.
+
+- S1, auto-fix, confidence 8: `internal/commitment/repository/replacement_test.go:96` builds the intent lock path again. Use `intent.LockPath`.
+- S2, auto-fix by the --auto-approve plan expansion, confidence 5: the test router at `replacement_test.go:78-138` repeats the router at `internal/gate/durable_replacement_test.go:231-269`. Move one router into `internal/durablefile/durablefiletest`, and use it in both tests.
+- S3, auto-fix by the --auto-approve plan expansion, confidence 5: the repo fixture at `replacement_test.go:24,36-76` repeats `commitmenttest.Repo`. Expose `approve` through an `export_test.go`, move the test to the external package, and start from `commitmenttest.Repo`.
+- S4, auto-fix, confidence 6: the setup closures at `replacement_test.go:277-283` call the parent test from a subtest. Pass the subtest into each setup.
+- S5, auto-fix, confidence 4: the lock-release check after the call at `replacement_test.go:262-264` repeats a fact that intent owns. Delete it.
+
+## Spec (D-B6)
+
+Chunk D-B6 has 0 findings.
+
+## Coverage (D-B6)
+
+Chunk D-B6 has 8 findings. The worst issue is C1.
+
+- C1, auto-fix, confidence 9: `restoreAll` at `internal/commitment/repository/replacement.go:68` can stop at the first failed restore unseen. Add a D50 row in which a first restore fails and a later restore succeeds.
+- C2, auto-fix, confidence 9: a skipped restore after an unpublished board failure at `replacement.go:49` is silent. Add a board rename row that asserts the old policy bytes and mode.
+- C3, auto-fix, confidence 8: an absent snapshot restore at `replacement.go:103` that returns early is silent. Add a fixture with no policy, and assert the policy stays absent after the policy and ledger failures.
+- C4, auto-fix, confidence 8: a read-back at `replacement.go:113` that ignores bytes is silent. Add a read-back row that rewrites the bytes.
+- C5, auto-fix, confidence 8: a dropped board snapshot error at `replacement.go:26` is silent. Add a board-directory refusal row.
+- C6, auto-fix, confidence 8: a dropped sequence projection error at `replacement.go:36` is silent. Add a refusal row for a board with no sequence section.
+- C7, auto-fix, confidence 6: this finding is the same as S5.
+- C8, auto-fix, confidence 9: the two D30 no-file-written checks need their recorded reds. Record the demonstrated reds H1 and H2.
+
+## Repair allowance (D-B6)
+
+Chunk D-B6 used 0 of its 2 repair cycles before repair 1. Every finding falls on ticket 07, so one combined repair session takes them.
