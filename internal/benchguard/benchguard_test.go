@@ -260,6 +260,32 @@ func TestPoolReferenceRefusesAPoolPathOutsideTheExecVerb(t *testing.T) {
 	}
 }
 
+// TestGuardDeniesTheOverrideVerb is BW82 and BW83. The guard denies the reviewer's override
+// verb in a tool call: the bare form, the tree-target form, the exec child, and a wrapper
+// string. A mention of the verb that runs no Bench call, and an override word in a flag
+// value, stay allowed.
+func TestGuardDeniesTheOverrideVerb(t *testing.T) {
+	for _, tc := range []struct {
+		command string
+		denied  bool
+	}{
+		{"bench commitment override --assignment x --reason y", true},
+		{"bench commitment --in primary override", true},
+		{"bench worktree exec t -- bench commitment override", true},
+		{"bench worktree exec t -- bash -lc 'bench commitment override --assignment x --reason y'", true},
+		{"bash -c 'bench commitment override --assignment x --reason y'", true},
+		{"env X=1 ./bin/bench.sh commitment override --assignment x --reason y", true},
+		{"bench commitment show", false},
+		{"bench commitment block --outcome A --reason override", false},
+		{"rg 'bench commitment override' .", false},
+		{"echo commitment override", false},
+	} {
+		if got := ReviewerVerb(tc.command, [2]string{"commitment", "override"}, notBenchResolver()); got != tc.denied {
+			t.Errorf("ReviewerVerb(%q) = %t, want %t", tc.command, got, tc.denied)
+		}
+	}
+}
+
 // TestPoolReferenceMessageNamesTheTarget proves the refusal states the one command form
 // and the path it read.
 func TestPoolReferenceMessageNamesTheTarget(t *testing.T) {

@@ -28,29 +28,42 @@ func (store Store) AdmitWindow(source Publication) error {
 	return store.window(ledger, source)
 }
 
-// window refuses source unless each open build admits it. A build admits its own landing and
-// every landing during its open gap. An override for the assignment of source admits it
-// through every build. The first refusing build in claim order names the refusal.
+// window refuses source unless each open build admits it. An override for the assignment of
+// source admits it through every build. The first refusing build in claim order names the
+// refusal.
 func (store Store) window(ledger intent.Ledger, source Publication) error {
 	state := storedState(ledger)
-	if slices.ContainsFunc(state.Overrides, func(override intent.LandingOverride) bool { return override.Assignment == source.Assignment }) {
+	if holdsOverride(state.Overrides, source.Assignment) {
 		return nil
 	}
-	builds, err := store.openBuilds(ledger)
+	refusing, err := store.refusingBuilds(ledger, source)
 	if err != nil {
 		return refusalroute.Raised{Name: refusalroute.LandInfrastructure, Err: fmt.Errorf("build window unavailable: %w", err)}
 	}
-	for _, build := range builds {
+	if len(refusing) == 0 {
+		return nil
+	}
+	build := refusing[0]
+	gap, recorded := chunkGap(state, build.claim)
+	return refusalroute.Raised{Name: refusalroute.LandBuildWindow, Err: fmt.Errorf("landing destination %s is held by open build %s (%s); wait for %s", source.Destination, build.claim.Outcome, build.deliverable, waitFor(gap, recorded))}
+}
+
+// refusingBuilds are the open builds of ledger that refuse source, in claim order, whatever
+// override the ledger holds. A build admits its own landing and every landing during its
+// open gap.
+func (store Store) refusingBuilds(ledger intent.Ledger, source Publication) ([]openBuild, error) {
+	builds, err := store.openBuilds(ledger)
+	if err != nil {
+		return nil, err
+	}
+	state := storedState(ledger)
+	return slices.DeleteFunc(builds, func(build openBuild) bool {
 		if deliverable, own := build.bound[source.Assignment]; own && deliverable == source.Deliverable {
-			continue
+			return true
 		}
 		gap, recorded := chunkGap(state, build.claim)
-		if recorded && gap.Open {
-			continue
-		}
-		return refusalroute.Raised{Name: refusalroute.LandBuildWindow, Err: fmt.Errorf("landing destination %s is held by open build %s (%s); wait for %s", source.Destination, build.claim.Outcome, build.deliverable, waitFor(gap, recorded))}
-	}
-	return nil
+		return recorded && gap.Open
+	}), nil
 }
 
 // openBuilds derives the open builds of ledger in claim order. A qualifying binding names an

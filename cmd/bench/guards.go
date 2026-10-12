@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/census"
+	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gitguard"
 	"github.com/gibbonmi/bench/internal/lines"
@@ -168,6 +169,10 @@ func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writ
 	// faults, and the pool reference is the cause the reader repairs.
 	if target := benchguard.PoolReference(command, poolkey.Pools(worktree.Home())); target != "" {
 		fmt.Fprintln(stderr, benchguard.PoolReferenceMessage(target))
+		return 2
+	}
+	if benchguard.ReviewerVerb(command, commitcmd.ReviewerVerb, benchguard.DefaultResolver()) {
+		fmt.Fprintln(stderr, benchguard.ReviewerVerbMessage(commitcmd.ReviewerVerb))
 		return 2
 	}
 	verdict := benchguard.Classify(command, benchguard.DefaultResolver())

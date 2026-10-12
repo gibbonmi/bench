@@ -1,6 +1,7 @@
 package commitment
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -148,6 +149,15 @@ func permitsParallel(policy Policy, active map[string]bool, continuations []inte
 	return false
 }
 
+// ValidReason refuses an empty reason or a reason with a control byte, so a recorded reason
+// stays one readable line. An outcome blocker and a landing override both apply this rule.
+func ValidReason(reason string) error {
+	if strings.TrimSpace(reason) == "" || !sanitize.LineSafe(reason) {
+		return errors.New("reason must be one nonempty line")
+	}
+	return nil
+}
+
 // SetBlocker records or clears a blocker without displacing another active claim.
 func SetBlocker(policy Policy, state intent.CommitmentState, outcome, reason string, blocked bool) (intent.CommitmentState, error) {
 	if _, err := ActiveOutcome(policy, outcome); err != nil {
@@ -156,8 +166,10 @@ func SetBlocker(policy Policy, state intent.CommitmentState, outcome, reason str
 	if deliveredOutcomes(policy)[outcome] {
 		return state, fmt.Errorf("outcome %q is already delivered", outcome)
 	}
-	if blocked && (strings.TrimSpace(reason) == "" || !sanitize.LineSafe(reason)) {
-		return state, fmt.Errorf("blocker reason must be one nonempty line")
+	if blocked {
+		if err := ValidReason(reason); err != nil {
+			return state, err
+		}
 	}
 	state.Blockers = slices.DeleteFunc(slices.Clone(state.Blockers), func(item intent.OutcomeBlocker) bool { return item.Outcome == outcome })
 	if blocked {

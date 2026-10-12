@@ -108,6 +108,14 @@ func TestDashboardStdoutStaysComplete(t *testing.T) {
 	}
 }
 
+// `bench commitment override` writes its prompt to the terminal before it reads the
+// confirmation, so it stays outside the bound. Every other commitment form stays bounded.
+func TestCommitmentOverrideStaysComplete(t *testing.T) {
+	registry := registryWith("commitment", linesHandler(stdoutOf, fixtureLines))
+	requireComplete(t, []string{"commitment", "override"}, withoutRows(runRegistry(t, registry, "commitment", "override")), numberedLines(fixtureLines))
+	requireBounded(t, []string{"commitment", "show"}, withoutRows(runRegistry(t, registry, "commitment", "show")))
+}
+
 // BO12: the exempt set equals its closed members, and each exemption names a reason.
 func TestBoundExemptionsAreClosed(t *testing.T) {
 	exempt := map[string]string{"help forms": boundHelpForm.exempt}
@@ -124,7 +132,7 @@ func TestBoundExemptionsAreClosed(t *testing.T) {
 		}
 	}
 	sort.Strings(members)
-	want := []string{"dashboard --stdout", "help forms", "prep-release", "release", "release-preflight", "repair", "setup", "worktree shell"}
+	want := []string{"commitment override", "dashboard --stdout", "help forms", "prep-release", "release", "release-preflight", "repair", "setup", "worktree shell"}
 	if !reflect.DeepEqual(members, want) {
 		t.Fatalf("exempt set = %q, want %q", members, want)
 	}

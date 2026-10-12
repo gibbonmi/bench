@@ -38,6 +38,7 @@ var forms = []form{
 		{"--plan", "<id>"}, {"--decision", "<reference>"}, {"--delayed", "<ids-or-none>"}, {"--removed", "<ids-or-none>"},
 	}},
 	{name: "verify", description: "verify milestone criterion evidence and record a completion receipt", flags: []flag{{"--milestone", "<id>"}, {"--evidence", "<file>"}}},
+	{name: overrideForm, description: "grant one landing a reviewer override through every open build, from the reviewer's terminal", flags: []flag{{"--assignment", "<id>"}, {"--reason", "<text>"}}},
 }
 
 // suffix is the form's help grammar after the family name: every flag shows its placeholder.
@@ -77,8 +78,17 @@ func HelpRows() []HelpRow {
 	return rows
 }
 
-// Command runs one commitment operation in root.
+// Command runs one commitment operation in root and returns its complete response. It
+// offers the override form no terminal, so that form refuses here.
 func Command(root string, args []string) (string, int) {
+	var out strings.Builder
+	code := Run(root, args, strings.NewReader(""), &out)
+	return out.String(), code
+}
+
+// dispatch runs one commitment operation and returns its response. Only the override form
+// reads the console before it returns.
+func dispatch(root string, args []string, con console) (string, int) {
 	if len(args) == 1 && (args[0] == "help" || args[0] == "--help" || args[0] == "-h") {
 		return usageText(), 0
 	}
@@ -111,6 +121,8 @@ func Command(root string, args []string) (string, int) {
 		return approve(store, c)
 	case "verify":
 		return verify(store, c)
+	case overrideForm:
+		return override(store, c, con)
 	default:
 		panic("unreachable commitment form")
 	}

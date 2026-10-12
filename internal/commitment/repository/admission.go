@@ -132,9 +132,19 @@ func runtimeState(ledger intent.Ledger) intent.CommitmentState {
 
 // activeAssignment reports whether the ledger holds id as an active assignment.
 func activeAssignment(ledger intent.Ledger, id string) bool {
-	return slices.ContainsFunc(ledger.Assignments, func(run intent.Assignment) bool {
+	_, active := activeByID(ledger, id)
+	return active
+}
+
+// activeByID is the active assignment that id names in the ledger, if one exists.
+func activeByID(ledger intent.Ledger, id string) (intent.Assignment, bool) {
+	index := slices.IndexFunc(ledger.Assignments, func(run intent.Assignment) bool {
 		return run.ID == id && run.State == intent.StateActive
 	})
+	if index < 0 {
+		return intent.Assignment{}, false
+	}
+	return ledger.Assignments[index], true
 }
 
 // storedState is the commitment state as the ledger holds it.

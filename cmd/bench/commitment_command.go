@@ -9,8 +9,10 @@ func commitmentHelpRows(order int) []helpRow {
 	return formHelpRows(order, commitcmd.HelpRows())
 }
 
-func commitmentCommand(args []string) (string, int) {
-	return commitcmd.Command(boundaryRoot(), args)
+// commitmentCommand runs the commitment family over the caller's stdin and stdout, because
+// the override form prompts on the terminal before it reads the confirmation.
+func commitmentCommand(c Command, args []string) int {
+	return commitcmd.Run(boundaryRoot(), args, c.Stdin, c.Stdout)
 }
 
 // commitmentOutlook is the roadmap reader's commitment source: the same projection that
