@@ -11,7 +11,7 @@ Verification log: 2 original-spec iterations, 1 split-spec iteration, and 1 tick
 File replacement has separate owners with different synchronization steps.
 The review-record writer omits parent-directory synchronization.
 A leaf capability must complete and land before its independent process-policy consumer can use it.
-Sources: internal/reviewrecord/write.go:92 and the named PL-R1-DELIVERY review.
+Sources: internal/reviewrecord/write.go:110 and the named PL-R1-DELIVERY review.
 
 ## Solution
 
@@ -86,11 +86,16 @@ The caller promises no automatic rollback after that failure.
 
 ### Current caller inventory
 
-The pinned production source is a382f4848d432815968f044820fad593e856e297.
+The pinned production source is 901b02bb6b32e88080f4ad8ffe19298c3907f5f6.
 
 | caller | source and symbol | caller mode | caller payload | row |
 |---|---|---|---|---|
-| review record | `internal/reviewrecord/write.go:92` (`replace`) | 0644 | Graded rendered document | D19 |
+| review record | `internal/reviewrecord/write.go:110` (`replace`) | 0644 | Graded rendered document | D19 |
+
+Two review-record transactions call `replace`: the record write at `internal/reviewrecord/write.go:96` and the assignment write at `internal/reviewrecord/assignment.go:84`.
+Both calls migrate with D19, because they share the one `replace` wrapper.
+The current `replace` creates the parent directory before it writes.
+That parent creation stays in the review-record caller.
 
 The source census for other replacement callers belongs to specs/durable-caller-migration/spec.md.
 This prerequisite migrates only the review-record caller.
@@ -126,7 +131,16 @@ The orchestrator adds required version 2 author sessions before dispatch.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "durable-file-replacement-build-20261011",
+    "orchestrator_session": "claude:dfr-orchestrator-20261011",
+    "author_limit": 1,
+    "assignments": {
+      "01-own-replacement-and-review.md": []
+    }
+  },
   "chunks": [
     {
       "id": "D-A",
@@ -136,39 +150,52 @@ The orchestrator adds required version 2 author sessions before dispatch.
       "verification": [
         {
           "id": "owner-tests",
-          "command": "bench test --package ./internal/durablefile"
+          "command": "bench test --package ./internal/durablefile",
+          "ticket": "01-own-replacement-and-review.md"
         },
         {
           "id": "caller-tests",
-          "command": "bench test --package ./internal/reviewrecord"
+          "command": "bench test --package ./internal/reviewrecord",
+          "ticket": "01-own-replacement-and-review.md"
         },
         {
           "id": "linux-native",
-          "command": "bench test --package ./internal/durablefile --run 'TestNativeReplacement'"
+          "command": "bench test --package ./internal/durablefile --run 'TestNativeReplacement'",
+          "ticket": "01-own-replacement-and-review.md"
         },
         {
           "id": "macos-native",
-          "command": "bench test --package ./internal/durablefile --run 'TestNativeReplacement'"
+          "command": "bench test --package ./internal/durablefile --run 'TestNativeReplacement'",
+          "ticket": "01-own-replacement-and-review.md"
         },
         {
           "id": "owner-omission-proof",
           "command": "bench test --package ./internal/durablefile",
-          "probe": "Omit file sync, omit directory sync, rename before file close, or accept a short write. Each named owner assertion must fail, then pass after restoring the source."
+          "probe": "Omit file sync, omit directory sync, rename before file close, or accept a short write. Each named owner assertion must fail, then pass after restoring the source.",
+          "ticket": "01-own-replacement-and-review.md"
         },
         {
           "id": "owner-preservation",
           "command": "bench test --package ./internal/durablefile",
-          "probe": "Corrupt supplied payload bytes, requested mode, temporary cleanup, or wrapped error cause. The corresponding independent owner assertion must fail, then pass after source restoration."
+          "probe": "Corrupt supplied payload bytes, requested mode, temporary cleanup, or wrapped error cause. The corresponding independent owner assertion must fail, then pass after source restoration.",
+          "ticket": "01-own-replacement-and-review.md"
         },
         {
           "id": "caller-bypass-proof",
           "command": "bench test --package ./internal/reviewrecord",
-          "probe": "Restore the former review-record writer or bypass the shared replacement operation in the real record transaction. TestReviewReplacement must fail its directory-sync cause assertion, then pass after source restoration."
+          "probe": "Restore the former review-record writer or bypass the shared replacement operation in the real record transaction. TestReviewReplacement must fail its directory-sync cause assertion, then pass after source restoration.",
+          "ticket": "01-own-replacement-and-review.md"
         },
         {
           "id": "caller-preservation",
           "command": "bench test --package ./internal/reviewrecord",
-          "probe": "Corrupt the review-record rendered payload, 0644 mode, or pre-write refusal policy. The real caller assertion must fail, then pass after source restoration."
+          "probe": "Corrupt the review-record rendered payload, 0644 mode, or pre-write refusal policy. The real caller assertion must fail, then pass after source restoration.",
+          "ticket": "01-own-replacement-and-review.md"
+        },
+        {
+          "id": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "ticket": "01-own-replacement-and-review.md"
         }
       ]
     }
@@ -181,6 +208,10 @@ The orchestrator adds required version 2 author sessions before dispatch.
     {
       "id": "coverage",
       "command": "bench coverage --check durable-file-replacement"
+    },
+    {
+      "id": "root-conformance",
+      "command": "bench test --check root-conformance"
     }
   ]
 }
@@ -204,7 +235,7 @@ Owner omissions and caller bypasses use their respective package commands and in
 
 Preserve every existing review-record assertion and independent payload expectation.
 Record a named omission red, restore the source, and record the pass before accepting independent expectations.
-Prior art: internal/reviewrecord/write.go:44 and internal/repairpilot/command_test.go:107.
+Prior art: `Render` in internal/reviewrecord/write.go and `TestRepairPilotStorage` in internal/repairpilot/command_test.go.
 The dev gate grades affected packages, and the whole-project gate remains the acceptance oracle.
 
 ### Seam diagram
@@ -260,6 +291,7 @@ Review pickup is phase-owned.
 The implementation ticket Writes union must match this union after reviewed slicing.
 
 - `internal/durablefile`
+- `internal/reviewrecord/assignment.go`
 - `internal/reviewrecord/replacement_test.go`
 - `internal/reviewrecord/write.go`
 - `reviews/durable-file-replacement.md`
