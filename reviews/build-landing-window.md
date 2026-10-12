@@ -69,7 +69,7 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
 {
   "version": 2,
   "spec": "specs/build-landing-window/spec.md",
-  "plan_digest": "sha256:b02696cfc82f5e064c45f5a220cc8788f75b5d8615aec9daf12beb59d9b6815e",
+  "plan_digest": "sha256:8904922ddfc352d633273c7ad04451a6f79cd3ae66cfcc47ca01822aa510b0fb",
   "implementation_session": "",
   "chunks": [
     {
@@ -1831,6 +1831,166 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
           ]
         }
       ]
+    },
+    {
+      "id": "BW-D",
+      "base": "901d91524635f47b5c646f02c990db0817c6f1b5",
+      "tip": "b68ee13d37c2c3bb3241daba5c2a5f9fdd9700d3",
+      "plan_digest": "sha256:8904922ddfc352d633273c7ad04451a6f79cd3ae66cfcc47ca01822aa510b0fb",
+      "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+      "acceptance_rows": [
+        "BW46",
+        "BW47",
+        "BW48",
+        "BW49",
+        "BW50",
+        "BW51",
+        "BW52",
+        "BW53",
+        "BW54",
+        "BW55",
+        "BW56",
+        "BW57",
+        "BW58",
+        "BW59",
+        "BW94",
+        "BW96",
+        "BW97",
+        "BW60",
+        "BW61",
+        "BW62",
+        "BW63",
+        "BW64",
+        "BW65",
+        "BW66",
+        "BW67",
+        "BW68",
+        "BW69",
+        "BW70",
+        "BW95"
+      ],
+      "verification": [
+        {
+          "id": "t6-gate-focused-v1",
+          "performer": "claude:blw_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t6/t6-gate-focused.txt",
+            "digest": "sha256:11388125904afd1dd9f6734586df5dd34977f4eb65a1b591e446b3fd18b35c23",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/gate --run 'TestGreenChunkCheckpointOpensAGap|TestLastChunkOpensNoGap|TestRedCheckpointOpensNoGap|TestUnboundCheckpointOpensNoGap'\ntree[1]{target,head,dirty}:\n  FT342-FT253,b68ee13d37c2c3bb3241daba5c2a5f9fdd9700d3,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,561,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall 2.45 s\n"
+          },
+          "requirement": "t6-gate-focused",
+          "command": "bench test --package ./internal/gate --run 'TestGreenChunkCheckpointOpensAGap|TestLastChunkOpensNoGap|TestRedCheckpointOpensNoGap|TestUnboundCheckpointOpensNoGap'",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-dispatch-focused-v1",
+          "performer": "claude:blw_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t6/plan-probe-answer.out",
+            "digest": "sha256:6d8f8bb05f568c1680bd4d65291e77381d85dcf4c9ec56d22ddbb6b69258d4ed",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/gap.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,TestFirstDispatchClosesTheGap|TestDispatchRefusesAnUnfoldedMain|TestDispatchInsideAChunkKeepsTheGap,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,569\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,383,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestDispatchRefusesAnUnfoldedMain,\"dispatch_gap_test.go:107: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",0ab46fdf5999519c3a3c38831a5e2aad197e802a\\\\\\\\n\\\"; want exit 1 naming \\\"dispatch refused: th… (503 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "t6-dispatch-focused",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd --run 'TestFirstDispatchClosesTheGap|TestDispatchRefusesAnUnfoldedMain|TestDispatchInsideAChunkKeepsTheGap'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit the default-branch ancestry refusal from the first-dispatch ledger decision, so that a dispatch over an unfolded main closes the gap. TestDispatchRefusesAnUnfoldedMain turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t6/plan-probe-answer.out",
+              "digest": "sha256:6d8f8bb05f568c1680bd4d65291e77381d85dcf4c9ec56d22ddbb6b69258d4ed",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,restored}:\n  bit,internal/commitment/repository/gap.go,omit,failed,1,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,TestFirstDispatchClosesTheGap|TestDispatchRefusesAnUnfoldedMain|TestDispatchInsideAChunkKeepsTheGap,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v1,0,1,569\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,383,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestDispatchRefusesAnUnfoldedMain,\"dispatch_gap_test.go:107: assignment = exit 0, output \\\"assignment[1]{ticket,session,occurrence,predecessor,source}:\\\\\\\\n  1.md,fixture-author-1.md,\\\\\\\\\\\"1\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\",0ab46fdf5999519c3a3c38831a5e2aad197e802a\\\\\\\\n\\\"; want exit 1 naming \\\"dispatch refused: th… (503 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t6-land-focused-v1",
+          "performer": "claude:blw_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t6/t6-land-focused.txt",
+            "digest": "sha256:751425b063533c3c86daf5bf8860349201de4ccca219909f2425b5edaddc56be",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/worktree --run 'TestOpenGapAdmitsAnUnrelatedLanding|TestWindowRecheckAtPublish'\ntree[1]{target,head,dirty}:\n  FT342-FT253,b68ee13d37c2c3bb3241daba5c2a5f9fdd9700d3,false\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,490,4\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall 4.09 s\n"
+          },
+          "requirement": "t6-land-focused",
+          "command": "bench test --package ./internal/worktree --run 'TestOpenGapAdmitsAnUnrelatedLanding|TestWindowRecheckAtPublish'",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-floor-v1",
+          "performer": "claude:blw_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t6/t6-floor.txt",
+            "digest": "sha256:5aed53e3a030bc1858e5d84dac93b9a70be222b6797697e59c04eed797110a95",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --package ./internal/commitment/... --package ./internal/gate/... --package ./internal/reviewrecord/... --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,b68ee13d37c2c3bb3241daba5c2a5f9fdd9700d3,false\npackages[14]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,20784,333\n  github.com/gibbonmi/bench/internal/commitment,pass,5457,175\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,859,19\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,5861,119\n  github.com/gibbonmi/bench/internal/conformance,pass,76020,1690\n  github.com/gibbonmi/bench/internal/gate,pass,31445,434\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,250,14\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,46,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,303,36\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2994,94\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,11036,184\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/worktree,pass,73419,1430\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\nexit 0; wall 94.88 s\n"
+          },
+          "requirement": "t6-floor",
+          "command": "bench test --package ./internal/commitment/... --package ./internal/gate/... --package ./internal/reviewrecord/... --package ./internal/worktree --package ./cmd/bench --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-system-v1",
+          "performer": "claude:blw_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t6/t6-system.txt",
+            "digest": "sha256:d18e746b9abeadfee95a96451b6058fb9056911213aca912fbe45072a089f593",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --check system\ntree[1]{target,head,dirty}:\n  FT342-FT253,b68ee13d37c2c3bb3241daba5c2a5f9fdd9700d3,false\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,169,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,69224,169\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall 71.50 s\n"
+          },
+          "requirement": "t6-system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t6-root-conformance-v1",
+          "performer": "claude:blw_t6",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8b6237a561f270d421a7d45b9024e7a74fc572b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "/tmp/claude-1000/-home-mgibs-workspace-bench/145e33b1-639f-44f5-b13c-f23a9a43ac0e/scratchpad/blw/t6/t6-root-conformance.txt",
+            "digest": "sha256:b490f1e74f522308e279536005cfdb79c1252978d5dc39f84af774260b68f227",
+            "excerpt": "$ bench worktree exec \"FT342-FT253\" -- bench test --check root-conformance\ntree[1]{target,head,dirty}:\n  FT342-FT253,b68ee13d37c2c3bb3241daba5c2a5f9fdd9700d3,false\ncheck[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16750,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nexit 0; wall 18.75 s\n"
+          },
+          "requirement": "t6-root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1901,6 +2061,21 @@ BW-C findings: 4. Worst issue: BW-C C1, a fold resolution path that a later comm
     {
       "from": "sha256:b48b0493be97dee45f23a112128b66238d7c62246a8f6d5c50f0d04f36db7781",
       "to": "sha256:b02696cfc82f5e064c45f5a220cc8788f75b5d8615aec9daf12beb59d9b6815e",
+      "chunk_ids": {
+        "BW-A": [
+          "BW-A"
+        ],
+        "BW-B": [
+          "BW-B"
+        ],
+        "BW-C": [
+          "BW-C"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b02696cfc82f5e064c45f5a220cc8788f75b5d8615aec9daf12beb59d9b6815e",
+      "to": "sha256:8904922ddfc352d633273c7ad04451a6f79cd3ae66cfcc47ca01822aa510b0fb",
       "chunk_ids": {
         "BW-A": [
           "BW-A"
